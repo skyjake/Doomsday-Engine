@@ -26,8 +26,9 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <QMap>
+#include <QtAlgorithms>
 #include <de/memory.h>
-
 #include "am_map.h"
 #include "g_common.h"
 #include "g_controls.h"
@@ -54,24 +55,6 @@ using namespace common;
 #else
 #  define FIXED_LINE_HEIGHT (19+1)
 #endif
-
-struct cvarbutton_t
-{
-    char active;
-    char const *cvarname;
-    char const *yes;
-    char const *no;
-    int mask;
-
-    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
-                 int mask = 0)
-        : active(active)
-        , cvarname(cvarname)
-        , yes(yes)
-        , no(no)
-        , mask(mask)
-    {}
-};
 
 int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void *parameters);
 int Hu_MenuActionInitNewGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
@@ -143,7 +126,6 @@ static void initAllPages();
 static void destroyAllPages();
 
 static void initAllObjectsOnAllPages();
-static void updatePageObjects(mn_page_t *page);
 
 static void Hu_MenuUpdateCursorState();
 
@@ -649,14 +631,8 @@ static mn_object_t HudMenuObjects[] = {
 
 static dd_bool inited;
 
-struct pagerecord_t
-{
-    mn_page_t *page;
-    ddstring_t name; // Symbolic name.
-};
-
-static int pageCount;
-static pagerecord_t *pages;
+typedef QMap<String, mn_page_t *> Pages;
+static Pages pages;
 
 static menucommand_e chooseCloseMethod()
 {
@@ -669,13 +645,10 @@ mn_page_t *Hu_MenuFindPageByName(char const *name)
 {
     if(name && name[0])
     {
-        for(int i = 0; i < pageCount; ++i)
+        Pages::iterator found = pages.find(String(name).toLower());
+        if(found != pages.end())
         {
-            pagerecord_t *rec = pages + i;
-            if(!stricmp(name, Str_Text(&rec->name)))
-            {
-                return rec->page;
-            }
+            return *found;
         }
     }
     return 0; // Not found.
@@ -696,7 +669,7 @@ static void Hu_MenuUpdateCursorState()
     if(menuActive)
     {
         mn_page_t *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
-        if(mn_object_t *ob = MNPage_FocusObject(page))
+        if(mn_object_t *ob = page->focusObject())
         {
             cursorHasRotation = Hu_MenuHasCursorRotation(ob);
             return;
@@ -792,7 +765,7 @@ void Hu_MenuInitColorWidgetPage()
     uint const numObjects = 10;
 
     mn_page_t *page = Hu_MenuNewPage("ColorWidget", &origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -960,7 +933,7 @@ void Hu_MenuInitColorWidgetPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitMainPage()
@@ -989,7 +962,7 @@ void Hu_MenuInitMainPage()
 #else
     mn_page_t *page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
 #endif
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1181,7 +1154,7 @@ void Hu_MenuInitMainPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitGameTypePage()
@@ -1194,8 +1167,8 @@ void Hu_MenuInitGameTypePage()
     uint const numObjects = 3;
 
     mn_page_t *page = Hu_MenuNewPage("GameType", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawGameTypePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1240,7 +1213,7 @@ void Hu_MenuInitGameTypePage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitSkillPage()
@@ -1275,21 +1248,21 @@ void Hu_MenuInitSkillPage()
     uint const numObjects = NUM_SKILL_MODES + 1;
 
     mn_page_t *page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
 #if __JHEXEN__
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("PlayerClass"));
+    page->setPreviousPage(Hu_MenuFindPageByName("PlayerClass"));
 #elif __JHERETIC__
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Episode"));
+    page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
 #elif __JDOOM64__
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 #else // __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
     {
-        MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+        page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
     }
     else
     {
-        MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Episode"));
+        page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
     }
 #endif
 
@@ -1329,7 +1302,7 @@ void Hu_MenuInitSkillPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 
 #if __JDOOM__
     if(gameMode != doom2_hacx && gameMode != doom_chex)
@@ -1350,8 +1323,8 @@ void Hu_MenuInitMultiplayerPage()
     uint const numObjects = 3;
 
     mn_page_t *page = Hu_MenuNewPage("Multiplayer", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1393,7 +1366,7 @@ void Hu_MenuInitMultiplayerPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitPlayerSetupPage()
@@ -1410,9 +1383,9 @@ void Hu_MenuInitPlayerSetupPage()
 #endif
 
     mn_page_t *page = Hu_MenuNewPage("PlayerSetup", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPredefinedFont(page, MENU_FONT2, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Multiplayer"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("Multiplayer"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1624,7 +1597,7 @@ void Hu_MenuInitPlayerSetupPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitSaveOptionsPage()
@@ -1633,9 +1606,9 @@ void Hu_MenuInitSaveOptionsPage()
     uint const numObjects = 8;
 
     mn_page_t *page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Save Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Save Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1751,7 +1724,7 @@ void Hu_MenuInitSaveOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -1761,8 +1734,8 @@ void Hu_MenuInitFilesPage()
     uint const numObjects = 3;
 
     mn_page_t *page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -1807,18 +1780,18 @@ void Hu_MenuInitFilesPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 #endif
 
-static void deleteGameSave(de::String slotId)
+static void deleteGameSave(String slotId)
 {
     DD_Executef(true, "deletegamesave %s", slotId.toLatin1().constData());
 }
 
 int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    DENG_ASSERT(ob != 0 && ob->_type == MN_EDIT);
+    DENG2_ASSERT(ob != 0 && ob->_type == MN_EDIT);
     if(MCMD_DELETE == cmd &&
        (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
     {
@@ -1831,7 +1804,7 @@ int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 
 int Hu_MenuSaveSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    DENG_ASSERT(ob != 0);
+    DENG2_ASSERT(ob != 0);
     if(MCMD_DELETE == cmd &&
        (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
     {
@@ -1925,14 +1898,14 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     saveMenuObjects[i]._type = MN_NONE;
 
     mn_page_t *page = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = loadMenuObjects;
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    page->_objects = loadMenuObjects;
 
     page = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
-    page->objects = saveMenuObjects;
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    page->_objects = saveMenuObjects;
 }
 
 void Hu_MenuInitOptionsPage()
@@ -1949,8 +1922,8 @@ void Hu_MenuInitOptionsPage()
 #endif
 
     mn_page_t *page = Hu_MenuNewPage("Options", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawOptionsPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Main"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -2174,7 +2147,7 @@ void Hu_MenuInitOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitGameplayOptionsPage()
@@ -2197,9 +2170,9 @@ void Hu_MenuInitGameplayOptionsPage()
 #endif
 
     mn_page_t *page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Gameplay Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Gameplay Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -2914,7 +2887,7 @@ void Hu_MenuInitGameplayOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 void Hu_MenuInitHUDOptionsPage()
@@ -2926,10 +2899,10 @@ void Hu_MenuInitHUDOptionsPage()
 #endif
 
     mn_page_t *page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "HUD Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
-    page->objects = HudMenuObjects;
+    page->setTitle("HUD Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->_objects = HudMenuObjects;
 }
 
 void Hu_MenuInitAutomapOptionsPage()
@@ -2946,9 +2919,9 @@ void Hu_MenuInitAutomapOptionsPage()
 #endif
 
     mn_page_t *page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Automap Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Automap Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -3413,7 +3386,7 @@ void Hu_MenuInitAutomapOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 static int compareWeaponPriority(void const *_a, void const *_b)
@@ -3490,9 +3463,9 @@ void Hu_MenuInitWeaponsPage()
     };
 
     mn_page_t *page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawWeaponsPage, NULL, NULL);
-    MNPage_SetTitle(page, "Weapons Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Weapons Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -3796,7 +3769,7 @@ void Hu_MenuInitWeaponsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -3806,9 +3779,9 @@ void Hu_MenuInitInventoryOptionsPage()
     uint const numObjects = 16;
 
     mn_page_t *page = Hu_MenuNewPage("InventoryOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Inventory Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Inventory Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -4062,7 +4035,7 @@ void Hu_MenuInitInventoryOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 #endif
 
@@ -4078,9 +4051,9 @@ void Hu_MenuInitSoundOptionsPage()
     uint const numObjects = 6;
 
     mn_page_t *page = Hu_MenuNewPage("SoundOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
-    MNPage_SetTitle(page, "Sound Options");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->setTitle("Sound Options");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
     mn_object_t *ob = objects;
@@ -4177,7 +4150,7 @@ void Hu_MenuInitSoundOptionsPage()
 
     ob->_type = MN_NONE;
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -4269,10 +4242,10 @@ void Hu_MenuInitEpisodePage()
     ob->_type = MN_NONE;
 
     mn_page_t *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 #endif
 
@@ -4383,92 +4356,47 @@ void Hu_MenuInitPlayerClassPage()
     ob->_type = MN_NONE;
 
     mn_page_t *page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTB));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("GameType"));
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
+    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
-    page->objects = objects;
+    page->_objects = objects;
 }
 #endif
 
-mn_page_t *MNPage_New(Point2Raw const *origin, int flags,
-    void (*ticker) (struct mn_page_s *page),
-    void (*drawer) (struct mn_page_s *page, Point2Raw const *origin),
-    int (*cmdResponder) (struct mn_page_s *page, menucommand_e cmd),
+static mn_page_t *addPageToCollection(mn_page_t *page, String name)
+{
+    String nameInIndex = name.toLower();
+    if(pages.contains(nameInIndex))
+    {
+        delete pages[nameInIndex];
+    }
+    pages.insert(nameInIndex, page);
+    return page;
+}
+
+mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
+    void (*ticker) (mn_page_t *page),
+    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
+    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
     void *userData)
 {
-    mn_page_t *page = (mn_page_t *) M_Malloc(sizeof(*page));
-
-    page->origin.x     = origin? origin->x : 0;
-    page->origin.y     = origin? origin->y : 0;
-    page->flags        = flags;
-    page->objects      = 0;
-    page->objectsCount = 0;
-    page->ticker       = ticker;
-    page->drawer       = drawer;
-    page->cmdResponder = cmdResponder;
-    page->previous     = 0;
-    page->userData     = userData;
-    Str_Init(&page->title);
-
-    fontid_t fontId = FID(GF_FONTA);
-    for(int i = 0; i < MENU_FONT_COUNT; ++i)
-    {
-        page->fonts[i] = fontId;
-    }
-
-    de::zap(page->colors);
-    page->colors[0]    = 0;
-    page->colors[1]    = 1;
-    page->colors[2]    = 2;
-    page->focus        = -1; /// @todo Make this a page flag.
-    page->geometry     = Rect_New();
-
-    return page;
-}
-
-static mn_page_t *addPageToCollection(mn_page_t *page, char const *name)
-{
-    if(page)
-    {
-        pages = (pagerecord_t *)M_Realloc(pages, sizeof(*pages) * ++pageCount);
-
-        pagerecord_t *rec = &pages[pageCount-1];
-        rec->page = page;
-        Str_Init(&rec->name); Str_Set(&rec->name, name);
-    }
-    return page;
-}
-
-mn_page_t* Hu_MenuNewPage(const char* name, Point2Raw const *origin, int flags,
-    void (*ticker) (struct mn_page_s* page),
-    void (*drawer) (struct mn_page_s* page, Point2Raw const *origin),
-    int (*cmdResponder) (struct mn_page_s* page, menucommand_e cmd),
-    void* userData)
-{
-    if(!name || !name[0])
-    {
-        DENG_ASSERT(!"Hu_MenuNewPage: Attempt to create page with an invalid name");
-        return NULL;
-    }
-
-    return addPageToCollection(MNPage_New(origin, flags, ticker, drawer, cmdResponder, userData), name);
+    DENG2_ASSERT(origin != 0);
+    DENG2_ASSERT(name != 0 && name[0]);
+    return addPageToCollection(new mn_page_t(*origin, flags, ticker, drawer, cmdResponder, userData), name);
 }
 
 void Hu_MenuInit()
 {
-    cvarbutton_t* cvb;
+    cvarbutton_t *cvb;
 
     if(inited) return;
 
-    pageCount = 0;
-    pages = NULL;
-
     mnAlpha = mnTargetAlpha = 0;
-    menuActivePage = NULL;
-    menuActive = false;
+    menuActivePage    = 0;
+    menuActive        = false;
     cursorHasRotation = false;
-    cursorAngle = 0;
-    cursorAnimFrame = 0;
+    cursorAngle       = 0;
+    cursorAnimFrame   = 0;
     cursorAnimCounter = MENU_CURSOR_TICSPERFRAME;
 
     DD_Execute(true, "deactivatebcontext menu");
@@ -4609,14 +4537,14 @@ void Hu_MenuSetActivePage2(mn_page_t *page, dd_bool canReactivate)
     if(menuActivePage == page)
     {
         if(!canReactivate) return;
-        MNPage_ClearFocusObject(page);
+        page->clearFocusObject();
     }
 
-    updatePageObjects(page);
+    page->updateObjects();
 
     // This is now the "active" page.
     menuActivePage = page;
-    MNPage_Initialize(page);
+    page->initialize();
 }
 
 void Hu_MenuSetActivePage(mn_page_t *page)
@@ -4739,8 +4667,6 @@ void Hu_MenuDrawer()
 #define OVERLAY_DARKEN          .7f
 
     dgl_borderedprojectionstate_t bp;
-    dd_bool showFocusCursor = true;
-    mn_object_t* focusObj;
 
     if(!Hu_MenuIsVisible()) return;
 
@@ -4749,10 +4675,11 @@ void Hu_MenuDrawer()
     GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
-    focusObj = MNPage_FocusObject(Hu_MenuActivePage());
-    if(focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
+    mn_object_t *focusOb   = Hu_MenuActivePage()->focusObject();
+    dd_bool showFocusCursor = true;
+    if(focusOb && (MNObject_Flags(focusOb) & MNF_ACTIVE))
     {
-        if(MNObject_Type(focusObj) == MN_COLORBOX || MNObject_Type(focusObj) == MN_BINDINGS)
+        if(MNObject_Type(focusOb) == MN_COLORBOX || MNObject_Type(focusOb) == MN_BINDINGS)
         {
             showFocusCursor = false;
         }
@@ -4773,9 +4700,9 @@ void Hu_MenuDrawer()
     GL_EndBorderedProjection(&bp);
 
     // Drawing any overlays?
-    if(focusObj && (MNObject_Flags(focusObj) & MNF_ACTIVE))
+    if(focusOb && (MNObject_Flags(focusOb) & MNF_ACTIVE))
     {
-        switch(MNObject_Type(focusObj))
+        switch(MNObject_Type(focusOb))
         {
         case MN_COLORBOX:
         case MN_BINDINGS:
@@ -4783,9 +4710,9 @@ void Hu_MenuDrawer()
             GL_BeginBorderedProjection(&bp);
 
             beginOverlayDraw();
-            if(MNObject_Type(focusObj) == MN_BINDINGS)
+            if(MNObject_Type(focusOb) == MN_BINDINGS)
             {
-                Hu_MenuControlGrabDrawer(MNBindings_ControlName(focusObj), 1);
+                Hu_MenuControlGrabDrawer(MNBindings_ControlName(focusOb), 1);
             }
             else
             {
@@ -4805,7 +4732,7 @@ void Hu_MenuDrawer()
 void Hu_MenuPageTicker(mn_page_t *page)
 {
     // Normal ticker actions first.
-    MNPage_Ticker(page);
+    page->tick();
 
     /// @todo Move game-menu specific page tick functionality here.
 }
@@ -4837,238 +4764,9 @@ void Hu_MenuNavigatePage(mn_page_t * /*page*/, int /*pageDelta*/)
     if(index != oldIndex)
     {
         S_LocalSound(SFX_MENU_NAV_RIGHT, NULL);
-        MNPage_SetFocus(page, page->objects + index);
+        page->setFocus(page->objects + index);
     }
 #endif
-}
-
-static void initPageObjects(mn_page_t *page)
-{
-    mn_object_t *ob;
-    assert(page);
-
-    page->objectsCount = 0;
-
-    for(ob = page->objects; MNObject_Type(ob) != MN_NONE; ob++)
-    {
-        page->objectsCount += 1;
-
-        ob->_page = page;
-        ob->_geometry = Rect_New();
-
-        ob->timer = 0;
-        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
-
-        if(0 != ob->_shortcut)
-        {
-            int shortcut = ob->_shortcut;
-            ob->_shortcut = 0; // Clear invalid defaults.
-            MNObject_SetShortcut(ob, shortcut);
-        }
-
-        switch(MNObject_Type(ob))
-        {
-        case MN_TEXT: {
-            mndata_text_t *txt = (mndata_text_t *)ob->_typedata;
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
-
-            if(txt->text && (PTR2INT(txt->text) > 0 && PTR2INT(txt->text) < NUMTEXT))
-            {
-                txt->text = GET_TXT(PTR2INT(txt->text));
-            }
-            break; }
-
-        case MN_BUTTON: {
-            /*mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);*/
-            mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
-
-            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
-            {
-                btn->text = GET_TXT(PTR2INT(btn->text));
-                /// @todo Should not be done here.
-                MNObject_SetShortcut(ob, btn->text[0]);
-            }
-            break; }
-
-        case MN_EDIT: {
-            mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
-
-            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
-            {
-                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
-            }
-            break; }
-
-        case MN_LIST:
-        case MN_LISTINLINE: {
-            mndata_list_t *list = (mndata_list_t *) ob->_typedata;
-
-            for(int i = 0; i < list->count; ++i)
-            {
-                mndata_listitem_t *item = &((mndata_listitem_t *)list->items)[i];
-                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
-                {
-                    item->text = GET_TXT(PTR2INT(item->text));
-                }
-            }
-            break; }
-
-        case MN_COLORBOX: {
-            mndata_colorbox_t *cbox = (mndata_colorbox_t *) ob->_typedata;
-
-            if(!cbox->rgbaMode)
-                cbox->a = 1.f;
-            if(0 >= cbox->width)
-                cbox->width = MNDATA_COLORBOX_WIDTH;
-            if(0 >= cbox->height)
-                cbox->height = MNDATA_COLORBOX_HEIGHT;
-            break; }
-
-        case MN_MOBJPREVIEW:
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
-            break;
-
-        default: break;
-        }
-    }
-}
-
-/**
- * Main task is to update objects linked to cvars.
- */
-static void updatePageObjects(mn_page_t *page)
-{
-    DENG_ASSERT(page != 0);
-
-    mn_object_t *ob;
-    for(ob = page->objects; MNObject_Type(ob) != MN_NONE; ob++)
-    {
-        switch(MNObject_Type(ob))
-        {
-        case MN_TEXT:
-        case MN_MOBJPREVIEW:
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
-            break;
-
-        case MN_BUTTON: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
-            mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
-
-            if(action && action->callback == Hu_MenuCvarButton)
-            {
-                cvarbutton_t *cvb;
-                if(ob->data1)
-                {
-                    // This button has already been initialized.
-                    cvb = (cvarbutton_t *) ob->data1;
-                    cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
-                    //strcpy(obj->text, cvb->active ? cvb->yes : cvb->no);
-                    btn->text = cvb->active ? cvb->yes : cvb->no;
-                    continue;
-                }
-
-                // Find the cvarbutton representing this one.
-                for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
-                {
-                    if(!strcmp((char const *)btn->data, cvb->cvarname) && ob->data2 == cvb->mask)
-                    {
-                        cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
-                        ob->data1 = (void*) cvb;
-
-                        btn->yes  = cvb->yes;
-                        btn->no   = cvb->no;
-                        btn->text = (cvb->active ? btn->yes : btn->no);
-                        break;
-                    }
-                }
-                cvb = 0;
-            }
-            break; }
-
-        case MN_LIST:
-        case MN_LISTINLINE: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
-            mndata_list_t *list = (mndata_list_t *) ob->_typedata;
-
-            if(action && action->callback == Hu_MenuCvarList)
-            {
-                MNList_SelectItemByValue(ob, MNLIST_SIF_NO_ACTION, Con_GetInteger((char const *)list->data));
-            }
-            break; }
-
-        case MN_EDIT: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
-            mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
-
-            if(action && action->callback == Hu_MenuCvarEdit)
-            {
-                MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, Con_GetString((char const *)edit->data1));
-            }
-            break; }
-
-        case MN_SLIDER: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
-            mndata_slider_t *sldr = (mndata_slider_t *) ob->_typedata;
-            if(action && action->callback == Hu_MenuCvarSlider)
-            {
-                float value;
-                if(sldr->floatMode)
-                    value = Con_GetFloat((char const *)sldr->data1);
-                else
-                    value = Con_GetInteger((char const *)sldr->data1);
-                MNSlider_SetValue(ob, MNSLIDER_SVF_NO_ACTION, value);
-            }
-            break; }
-
-        case MN_COLORBOX: {
-            mndata_colorbox_t *cbox = (mndata_colorbox_t *) ob->_typedata;
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
-
-            if(action && action->callback == Hu_MenuCvarColorBox)
-            {
-                float rgba[4];
-                rgba[CR] = Con_GetFloat((char const *)cbox->data1);
-                rgba[CG] = Con_GetFloat((char const *)cbox->data2);
-                rgba[CB] = Con_GetFloat((char const *)cbox->data3);
-                rgba[CA] = (cbox->rgbaMode? Con_GetFloat((char const *)cbox->data4) : 1.f);
-                MNColorBox_SetColor4fv(ob, MNCOLORBOX_SCF_NO_ACTION, rgba);
-            }
-            break; }
-
-        default: break;
-        }
-    }
-}
-
-static void destroyPageObjects(mn_page_t *page)
-{
-    mn_object_t *obj;
-    if(!page) return;
-    for(obj = page->objects; MNObject_Type(obj) != MN_NONE; obj++)
-    {
-        if(obj->_geometry)
-        {
-            Rect_Delete(obj->_geometry);
-            obj->_geometry = NULL;
-        }
-    }
-}
-
-static void destroyPage(mn_page_t *page)
-{
-    if(!page) return;
-
-    destroyPageObjects(page);
-
-    Str_Free(&page->title);
-
-    if(page->geometry)
-    {
-        Rect_Delete(page->geometry);
-        page->geometry = NULL;
-    }
-
-    free(page);
 }
 
 static void initAllPages()
@@ -5104,30 +4802,21 @@ static void initAllPages()
 
 static void destroyAllPages()
 {
-    int i;
-    if(!pages) return;
-    for(i = 0; i < pageCount; ++i)
-    {
-        pagerecord_t* rec = pages + i;
-        destroyPage(rec->page);
-        Str_Free(&rec->name);
-    }
-    free(pages);
+    qDeleteAll(pages);
+    pages.clear();
 }
 
 static void initAllObjectsOnAllPages()
 {
-    int i;
-    for(i = 0; i < pageCount; ++i)
+    foreach(mn_page_t *page, pages)
     {
-        pagerecord_t* rec = pages + i;
-        initPageObjects(rec->page);
+        page->initObjects();
     }
 }
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
 {
-    assert(page);
+    DENG2_ASSERT(page);
     switch(cmd)
     {
     case MCMD_NAV_OUT: {
@@ -5166,7 +4855,7 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
 
 static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
 {
-    assert(page);
+    DENG2_ASSERT(page != 0);
     switch(cmd)
     {
     case MCMD_NAV_PAGEUP:
@@ -5177,7 +4866,7 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
 
     case MCMD_NAV_UP:
     case MCMD_NAV_DOWN: {
-        mn_object_t *obj = MNPage_FocusObject(page);
+        mn_object_t *obj = page->focusObject();
         // An object on this page must have focus in order to navigate.
         if(obj)
         {
@@ -5186,15 +4875,15 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
             {
                 giveFocus += (cmd == MCMD_NAV_UP? -1 : 1);
                 if(giveFocus < 0)
-                    giveFocus = page->objectsCount - 1;
-                else if(giveFocus >= page->objectsCount)
+                    giveFocus = page->objectsCount() - 1;
+                else if(giveFocus >= page->objectsCount())
                     giveFocus = 0;
-            } while(++i < page->objectsCount && (MNObject_Flags(page->objects + giveFocus) & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
+            } while(++i < page->objectsCount() && (MNObject_Flags(&page->objects()[giveFocus]) & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
 
             if(giveFocus != page->focus)
             {
                 S_LocalSound(cmd == MCMD_NAV_UP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
-                MNPage_SetFocus(page, page->objects + giveFocus);
+                page->setFocus(&page->objects()[giveFocus]);
             }
         }
         break;
@@ -5211,6 +4900,7 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
             Hu_MenuSetActivePage(page->previous);
         }
         break;
+
     default:
 //        DEBUG_Message("Warning: fallbackCommandResponder: Command %i not processed, ignoring.\n", (int) cmd);
         break;
@@ -5224,7 +4914,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
     // "active" widget - interpret the command instead as "navigate out".
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
-        mn_object_t *obj = MNPage_FocusObject(Hu_MenuActivePage());
+        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
         if(obj)
         {
             switch(MNObject_Type(obj))
@@ -5248,7 +4938,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
 void Hu_MenuCommand(menucommand_e cmd)
 {
     mn_page_t *page;
-    mn_object_t *obj;
+    mn_object_t *ob;
 
     cmd = translateCommand(cmd);
 
@@ -5326,10 +5016,10 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 
     // Try the current focus object.
-    obj = MNPage_FocusObject(page);
-    if(obj && obj->cmdResponder)
+    ob = page->focusObject();
+    if(ob && ob->cmdResponder)
     {
-        if(obj->cmdResponder(obj, cmd))
+        if(ob->cmdResponder(ob, cmd))
             return;
     }
 
@@ -5347,7 +5037,7 @@ int Hu_MenuPrivilegedResponder(event_t* ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *obj = MNPage_FocusObject(Hu_MenuActivePage());
+        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
         if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
         {
             if(obj->privilegedResponder)
@@ -5363,7 +5053,7 @@ int Hu_MenuResponder(event_t* ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *obj = MNPage_FocusObject(Hu_MenuActivePage());
+        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
         if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
         {
             if(obj->responder)
@@ -5375,7 +5065,7 @@ int Hu_MenuResponder(event_t* ev)
     return false; // Not eaten.
 }
 
-int Hu_MenuFallbackResponder(event_t* ev)
+int Hu_MenuFallbackResponder(event_t *ev)
 {
     mn_page_t *page = Hu_MenuActivePage();
 
@@ -5385,16 +5075,15 @@ int Hu_MenuFallbackResponder(event_t* ev)
     {
         if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         {
-            int i;
-            for(i = 0; i < page->objectsCount; ++i)
+            for(int i = 0; i < page->objectsCount(); ++i)
             {
-                mn_object_t *obj = &page->objects[i];
+                mn_object_t *obj = &page->objects()[i];
                 if(MNObject_Flags(obj) & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN))
                     continue;
 
                 if(MNObject_Shortcut(obj) == ev->data1)
                 {
-                    MNPage_SetFocus(page, obj);
+                    page->setFocus(obj);
                     return true;
                 }
             }
@@ -5406,14 +5095,14 @@ int Hu_MenuFallbackResponder(event_t* ev)
 /**
  * User wants to load this game
  */
-int Hu_MenuSelectLoadSlot(mn_object_t *obj, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectLoadSlot(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t *edit = (mndata_edit_t *)obj->_typedata;
+    mndata_edit_t *edit = (mndata_edit_t *)ob->_typedata;
 
     if(MNA_ACTIVEOUT != action) return 1;
 
     mn_page_t *saveGamePage = Hu_MenuFindPageByName("SaveGame");
-    MNPage_SetFocus(saveGamePage, MNPage_FindObject(saveGamePage, 0, obj->data2));
+    saveGamePage->setFocus(saveGamePage->findObject(0, ob->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
@@ -5496,12 +5185,12 @@ static void composeNotDesignedForMessage(char const *str)
  */
 void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob)
 {
-    DENG_ASSERT(ob != 0);
+    DENG2_ASSERT(ob != 0);
 
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = MNPage_FocusObject(MNObject_Page(ob)))
+    if(mn_object_t *mop = MNObject_Page(ob)->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -5527,12 +5216,12 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob)
  */
 void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob)
 {
-    DENG_ASSERT(ob != 0);
+    DENG2_ASSERT(ob != 0);
 
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = MNPage_FocusObject(MNObject_Page(ob)))
+    if(mn_object_t *mop = MNObject_Page(ob)->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -5575,8 +5264,8 @@ void Hu_MenuDrawEpisodePage(mn_page_t *page, Point2Raw const *origin)
     DENG2_UNUSED(origin);
 
     // Inform the user episode 6 is designed for deathmatch only.
-    mn_object_t *obj = MNPage_FindObject(page, 0, MNF_ID0);
-    if(obj && obj == MNPage_FocusObject(page))
+    mn_object_t *obj = page->findObject(0, MNF_ID0);
+    if(obj && obj == page->focusObject())
     {
         Point2Raw origin;
 
@@ -5649,10 +5338,10 @@ int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*contex
     }
 
     mn_page_t *page = Hu_MenuFindPageByName("SaveGame");
-    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, ob->data2));
+    page->setFocus(MN_MustFindObjectOnPage(page, 0, ob->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
-    MNPage_SetFocus(page, MN_MustFindObjectOnPage(page, 0, ob->data2));
+    page->setFocus(MN_MustFindObjectOnPage(page, 0, ob->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
@@ -5819,7 +5508,7 @@ int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void * /*c
 
     colorWidgetActive = true;
 
-    MNPage_Initialize(colorWidgetPage);
+    colorWidgetPage->initialize();
     colorWidgetPage->userData = ob;
 
     MNColorBox_CopyColor(cboxMix, 0, ob);
@@ -5926,7 +5615,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t * /*page*/, Point2Raw const *origin)
 void Hu_MenuDrawWeaponsPage(mn_page_t *page, Point2Raw const * /*offset*/)
 {
     // Inform the user how to change the order.
-    if(MNPage_FocusObject(page) == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
+    if(page->focusObject() == MN_MustFindObjectOnPage(page, 0, MNF_ID0))
     {
         char const *helpText = "Use left/right to move weapon up/down";
         Point2Raw origin;
@@ -6285,9 +5974,9 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*con
 
     switch(mnPlrClass)
     {
-    case PCLASS_FIGHTER:    MNPage_SetX(skillPage, 120); break;
-    case PCLASS_CLERIC:     MNPage_SetX(skillPage, 116); break;
-    case PCLASS_MAGE:       MNPage_SetX(skillPage, 112); break;
+    case PCLASS_FIGHTER:    skillPage->setX(120); break;
+    case PCLASS_CLERIC:     skillPage->setX(116); break;
+    case PCLASS_MAGE:       skillPage->setX(112); break;
     }
     Hu_MenuSetActivePage(skillPage);
     return 0;

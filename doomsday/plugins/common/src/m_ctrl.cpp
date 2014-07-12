@@ -336,10 +336,10 @@ void Hu_MenuInitControlsPage()
     objects[objectIdx]._type = MN_NONE; // Terminate.
 
     mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
-    page->objects = objects;
-    MNPage_SetTitle(page, "Controls");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
+    page->_objects = objects;
+    page->setTitle("Controls");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 }
 
 static void drawSmallText(char const *string, int x, int y, float alpha)

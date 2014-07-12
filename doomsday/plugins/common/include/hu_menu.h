@@ -20,16 +20,15 @@
 
 #ifndef LIBCOMMON_HU_MENU_H
 #define LIBCOMMON_HU_MENU_H
+#ifdef __cplusplus
 
 #include "dd_types.h"
 #include "hu_lib.h"
 
-DENG_EXTERN_C int menuTime;
-DENG_EXTERN_C dd_bool menuNominatingQuickSaveSlot;
+extern int menuTime;
+extern dd_bool menuNominatingQuickSaveSlot;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern cvarbutton_t mnCVarButtons[];
 
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
@@ -81,7 +80,7 @@ extern "C" {
 #define MENU_CURSOR_TICSPERFRAME    8
 
 /// Register the console commands, variables, etc..., of this module.
-void Hu_MenuRegister(void);
+void Hu_MenuRegister();
 
 /**
  * Menu initialization.
@@ -90,17 +89,17 @@ void Hu_MenuRegister(void);
  * Initializes the various vars, fonts, adjust the menu structs and
  * anything else that needs to be done before the menu can be used.
  */
-void Hu_MenuInit(void);
+void Hu_MenuInit();
 
 /**
  * Menu shutdown, to be called when the game menu is no longer needed.
  */
-void Hu_MenuShutdown(void);
+void Hu_MenuShutdown();
 
 /**
  * Load any resources the menu needs.
  */
-void Hu_MenuLoadResources(void);
+void Hu_MenuLoadResources();
 
 /**
  * Updates on Game Tick.
@@ -108,7 +107,7 @@ void Hu_MenuLoadResources(void);
 void Hu_MenuTicker(timespan_t ticLength);
 
 /// @return  @c true if the menu is presently visible.
-dd_bool Hu_MenuIsVisible(void);
+dd_bool Hu_MenuIsVisible();
 
 mn_page_t *Hu_MenuFindPageByName(char const *name);
 
@@ -132,9 +131,9 @@ mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
  * loop) Draws the current menu 'page' by calling the funcs attached to
  * each menu obj.
  */
-void Hu_MenuDrawer(void);
+void Hu_MenuDrawer();
 
-void Hu_MenuPageTicker(struct mn_page_s *page);
+void Hu_MenuPageTicker(mn_page_t *page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
@@ -156,12 +155,12 @@ int Hu_MenuFallbackResponder(event_t *ev);
 /**
  * @return  @c true iff the menu is currently active (open).
  */
-dd_bool Hu_MenuIsActive(void);
+dd_bool Hu_MenuIsActive();
 
 /**
  * @return  Current alpha level of the menu.
  */
-float Hu_MenuAlpha(void);
+float Hu_MenuAlpha();
 
 /**
  * Set the alpha level of the entire menu.
@@ -173,7 +172,7 @@ void Hu_MenuSetAlpha(float alpha);
 /**
  * Retrieve the currently active page.
  */
-mn_page_t *Hu_MenuActivePage(void);
+mn_page_t *Hu_MenuActivePage();
 
 /**
  * Change the current active page.
@@ -204,8 +203,5 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void *p
 D_CMD(MenuOpen);
 D_CMD(MenuCommand);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif // LIBCOMMON_HU_MENU_H

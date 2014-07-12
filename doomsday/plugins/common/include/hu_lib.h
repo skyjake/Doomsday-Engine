@@ -24,8 +24,10 @@
 #include "common.h"
 #include "hu_stuff.h"
 
-struct mn_object_s;
-struct mn_page_s;
+#ifdef __cplusplus
+struct mn_object_t;
+struct mn_page_t;
+#endif
 
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
@@ -86,11 +88,14 @@ typedef enum {
 #define MNF_ID0                 0x80000000
 ///@}
 
-typedef enum {
+#ifdef __cplusplus
+
+enum flagop_t
+{
     FO_CLEAR,
     FO_SET,
     FO_TOGGLE
-} flagop_t;
+};
 
 /**
  * Logical Menu (object) Action identifiers. Associated with/to events which
@@ -98,7 +103,8 @@ typedef enum {
  * or "actioned" through the type-specific event/command responders of the
  * various widgets, according to their own widget-specific logic.
  */
-typedef enum {
+enum mn_actionid_t
+{
     MNA_NONE = -1,
     MNACTION_FIRST = 0,
     MNA_MODIFIED = MNACTION_FIRST, /// Object's internal "modified" status changed.
@@ -108,7 +114,7 @@ typedef enum {
     MNA_FOCUSOUT,               /// Loses selection "focus".
     MNA_FOCUS,                  /// Gains selection "focus".
     MNACTION_LAST = MNA_FOCUS
-} mn_actionid_t;
+};
 
 /// Total number of known Menu Actions.
 #define MNACTION_COUNT          (MNACTION_LAST + 1 - MNACTION_FIRST)
@@ -120,7 +126,8 @@ typedef enum {
  * Menu Action Info (Record). Holds information about an "actionable" menu
  * event, such as an object being activated or upon receiving focus.
  */
-typedef struct {
+struct mn_actioninfo_t
+{
     /// Callback to be made when this action is executed. Can be @c NULL in
     /// which case attempts to action this will be NOPs.
     ///
@@ -129,13 +136,14 @@ typedef struct {
     /// @param parameters  Passed to the callback from event which actioned this.
     /// @return  Callback return value. Callback should return zero if the action
     ///     was recognised and processed, regardless of outcome.
-    int (*callback) (struct mn_object_s *ob, mn_actionid_t action, void *parameters);
-} mn_actioninfo_t;
+    int (*callback) (mn_object_t *ob, mn_actionid_t action, void *parameters);
+};
 
 /**
  * MNObject. Abstract base from which all menu page objects must be derived.
  */
-typedef struct mn_object_s {
+struct mn_object_t
+{
     /// Type of the object.
     mn_obtype_e _type;
 
@@ -160,29 +168,29 @@ typedef struct mn_object_s {
     int _pageColorIdx;
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (struct mn_object_s *ob);
+    void (*ticker) (mn_object_t *ob);
 
     /// Calculate geometry for this when visible on the specified page.
-    void (*updateGeometry) (struct mn_object_s *ob, struct mn_page_s *page);
+    void (*updateGeometry) (mn_object_t *ob, mn_page_t *page);
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (struct mn_object_s *ob, Point2Raw const *origin);
+    void (*drawer) (mn_object_t *ob, Point2Raw const *origin);
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
 
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (struct mn_object_s *ob, menucommand_e command);
+    int (*cmdResponder) (mn_object_t *ob, menucommand_e command);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*responder) (struct mn_object_s *ob, event_t *ev);
+    int (*responder) (mn_object_t *ob, event_t *ev);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*privilegedResponder) (struct mn_object_s *ob, event_t *ev);
+    int (*privilegedResponder) (mn_object_t *ob, event_t *ev);
 
     void *_typedata; // Type-specific extra data.
 
@@ -196,18 +204,14 @@ typedef struct mn_object_s {
     Rect *_geometry;
 
     /// MenuPage which owns this object (if any).
-    struct mn_page_s *_page;
+    mn_page_t *_page;
 
     int timer;
-} mn_object_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+};
 
 mn_obtype_e MNObject_Type(mn_object_t const *ob);
 
-struct mn_page_s* MNObject_Page(mn_object_t const *ob);
+mn_page_t *MNObject_Page(mn_object_t const *ob);
 
 int MNObject_Flags(mn_object_t const *ob);
 
@@ -289,9 +293,7 @@ dd_bool MNObject_HasAction(mn_object_t *ob, mn_actionid_t action);
  */
 int MNObject_ExecAction(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+#endif // __cplusplus
 
 typedef enum {
     MENU_COLOR1 = 0,
@@ -333,17 +335,21 @@ typedef enum {
 #define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
 ///@}
 
-typedef struct mn_page_s {
+#ifdef __cplusplus
+
+struct mn_page_t
+{
+public:
     /// Collection of objects on this page.
-    mn_object_t *objects;
-    int objectsCount;
+    mn_object_t *_objects;
+    int _objectsCount;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
     Point2Raw origin;
     Rect *geometry;
 
     /// Previous page else @c NULL
-    struct mn_page_s *previous;
+    mn_page_t *previous;
 
     /// Title of this page.
     ddstring_t title;
@@ -361,108 +367,122 @@ typedef struct mn_page_s {
     uint colors[MENU_COLOR_COUNT];
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (struct mn_page_s *page);
+    void (*ticker) (mn_page_t *page);
 
     /// Page drawing routine.
-    void (*drawer) (struct mn_page_s *page, Point2Raw const *offset);
+    void (*drawer) (mn_page_t *page, Point2Raw const *offset);
 
     /// Menu-command responder routine.
-    int (*cmdResponder) (struct mn_page_s *page, menucommand_e cmd);
+    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd);
 
     /// User data.
     void *userData;
 
-    int timer;
-} mn_page_t;
+    int _timer;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+public:
+    mn_page_t(Point2Raw const &origin = Point2Raw(), int flags = 0,
+        void (*ticker) (mn_page_t *page) = 0,
+        void (*drawer) (mn_page_t *page, Point2Raw const *origin) = 0,
+        int (*cmdResponder) (mn_page_t *page, menucommand_e cmd) = 0,
+        void *userData = 0);
 
-void MNPage_Initialize(mn_page_t *page);
+    ~mn_page_t();
 
-/// Call the ticker routine for each object.
-void MNPage_Ticker(mn_page_t *page);
+    mn_object_t *objects() const;
 
-void MNPage_SetTitle(mn_page_t *page, char const *title);
+    int objectsCount() const;
 
-void MNPage_SetX(mn_page_t *page, int x);
-void MNPage_SetY(mn_page_t *page, int y);
+    void initialize();
 
-void MNPage_SetPreviousPage(mn_page_t *page, mn_page_t *prevPage);
+    void initObjects();
+    void updateObjects();
 
-void MNPage_Refocus(mn_page_t *page);
+    /// Call the ticker routine for each object.
+    void tick();
 
-/// @return  Currently focused object; otherwise @c 0.
-mn_object_t *MNPage_FocusObject(mn_page_t *page);
+    void setTitle(char const *title);
 
-void MNPage_ClearFocusObject(mn_page_t *page);
+    void setX(int x);
+    void setY(int y);
 
-/**
- * Attempt to give focus to the MNObject @a ob which is thought to be on the
- * page. If @a ob is found to present and is not currently in-focus, an out-focus
- * action is first sent to the presently focused object, then this page's focused
- * object is set before finally executing an in-focus action on the new object.
- * If the object is not found on this page then nothing will happen.
- *
- * @param ob  MNObject to be given focus.
- */
-void MNPage_SetFocus(mn_page_t *page, mn_object_t *ob);
+    void setPreviousPage(mn_page_t *prevPage);
 
-/**
- * Determines the size of the menu cursor for the currently focused widget. If
- * no widget is currently focused the default cursor size (i.e., the effective
- * line height for @c MENU_FONT1) is used. (Which means this should @em not be
- * called to determine whether the cursor is actually in use -- for that purpose,
- * use @ref MNPage_FocusObject() instead).
- */
-int MNPage_CursorSize(mn_page_t *page);
+    void refocus();
 
-/**
- * Retrieve an object on this page in the specified object group.
- *
- * @param flags  @ref mnobjectFlags  used to locate the object. All flags specified
- *               must be set.
- *
- * @return  Found MNObject else @c NULL
- */
-mn_object_t *MNPage_FindObject(mn_page_t *page, int group, int flags);
+    /// @return  Currently focused object; otherwise @c 0.
+    mn_object_t *focusObject();
 
-/**
- * Retrieve a predefined color triplet associated with this page by it's logical
- * page color identifier.
- *
- * @param id   Unique identifier of the predefined color being retrieved.
- * @param rgb  Found color values are written here, else set to white.
- */
-void MNPage_PredefinedColor(mn_page_t *page, mn_page_colorid_t id, float rgb[3]);
+    void clearFocusObject();
 
-/**
- * Retrieve a predefined Doomsday font-identifier associated with this page
- * by it's logical page font identifier.
- *
- * @param id  Unique identifier of the predefined font being retrieved.
- *
- * @return  Identifier of the found font else @c 0
- */
-fontid_t MNPage_PredefinedFont(mn_page_t *page, mn_page_fontid_t id);
+    /**
+     * Attempt to give focus to the MNObject @a ob which is thought to be on the
+     * page. If @a ob is found to present and is not currently in-focus, an out-focus
+     * action is first sent to the presently focused object, then this page's focused
+     * object is set before finally executing an in-focus action on the new object.
+     * If the object is not found on this page then nothing will happen.
+     *
+     * @param ob  MNObject to be given focus.
+     */
+    void setFocus(mn_object_t *ob);
 
-void MNPage_SetPredefinedFont(mn_page_t *page, mn_page_fontid_t id, fontid_t fontId);
+    /**
+     * Determines the size of the menu cursor for the currently focused widget. If
+     * no widget is currently focused the default cursor size (i.e., the effective
+     * line height for @c MENU_FONT1) is used. (Which means this should @em not be
+     * called to determine whether the cursor is actually in use -- for that purpose,
+     * use @ref MNPage_FocusObject() instead).
+     */
+    int cursorSize();
 
-/**
- * Returns the effective line height for the predefined @c MENU_FONT1.
- *
- * @param lineOffset  If not @c 0 the line offset is written here.
- */
-int MNPage_LineHeight2(mn_page_t *page, int *lineOffset);
-int MNPage_LineHeight(mn_page_t *page/*, lineOffset = 0*/);
+    /**
+     * Retrieve an object on this page in the specified object group.
+     *
+     * @param flags  @ref mnobjectFlags  used to locate the object. All flags specified
+     *               must be set.
+     *
+     * @return  Found MNObject else @c NULL
+     */
+    mn_object_t *findObject(int group, int flags);
 
-/// @return  Current time in tics since page activation.
-int MNPage_Timer(mn_page_t *page);
+    int findObjectIndex(mn_object_t *ob);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    /**
+     * Retrieve a predefined color triplet associated with this page by it's logical
+     * page color identifier.
+     *
+     * @param id   Unique identifier of the predefined color being retrieved.
+     * @param rgb  Found color values are written here, else set to white.
+     */
+    void predefinedColor(mn_page_colorid_t id, float rgb[3]);
+
+    /**
+     * Retrieve a predefined Doomsday font-identifier associated with this page
+     * by it's logical page font identifier.
+     *
+     * @param id  Unique identifier of the predefined font being retrieved.
+     *
+     * @return  Identifier of the found font else @c 0
+     */
+    fontid_t predefinedFont(mn_page_fontid_t id);
+
+    void setPredefinedFont(mn_page_fontid_t id, fontid_t fontId);
+
+    /**
+     * Returns the effective line height for the predefined @c MENU_FONT1.
+     *
+     * @param lineOffset  If not @c 0 the line offset is written here.
+     */
+    int lineHeight(int *lineOffset = 0);
+
+    /// @return  Current time in tics since page activation.
+    int timer();
+
+    void applyPageLayout();
+
+private:
+    void giveChildFocus(mn_object_t *ob, dd_bool allowRefocus);
+};
 
 /**
  * Rect objects.
@@ -474,10 +494,6 @@ typedef struct mndata_rect_s {
     /// Background patch.
     patchid_t patch;
 } mndata_rect_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 mn_object_t *MNRect_New(void);
 void MNRect_Delete(mn_object_t *ob);
@@ -494,10 +510,6 @@ void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
  *               will be cleared and the Rect will be drawn as a solid color.
  */
 void MNRect_SetBackgroundPatch(mn_object_t *ob, patchid_t patch);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 /**
  * @defgroup mnTextFlags  MNText Flags
@@ -519,10 +531,6 @@ typedef struct mndata_text_s {
     int flags;
 } mndata_text_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 mn_object_t *MNText_New(void);
 void MNText_Delete(mn_object_t *ob);
 
@@ -531,10 +539,6 @@ void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin);
 void MNText_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 int MNText_SetFlags(mn_object_t *ob, flagop_t op, int flags);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 /**
  * @defgroup mnButtonFlags  MNButton Flags
@@ -563,10 +567,6 @@ typedef struct mndata_button_s {
     int flags;
 } mndata_button_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 mn_object_t *MNButton_New(void);
 void MNButton_Delete(mn_object_t *ob);
 
@@ -576,10 +576,6 @@ int MNButton_CommandResponder(mn_object_t *ob, menucommand_e command);
 void MNButton_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 int MNButton_SetFlags(mn_object_t *ob, flagop_t op, int flags);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 /**
  * Edit field.
@@ -613,10 +609,6 @@ typedef struct mndata_edit_s {
     void *data1;
 } mndata_edit_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 mn_object_t *MNEdit_New(void);
 void MNEdit_Delete(mn_object_t *ob);
 
@@ -647,10 +639,6 @@ ddstring_t const *MNEdit_Text(mn_object_t *ob);
  */
 void MNEdit_SetText(mn_object_t *ob, int flags, char const *string);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 /**
  * List selection.
  */
@@ -674,10 +662,6 @@ typedef struct mndata_list_s {
     int first; // First visible item.
     int numvis;
 } mndata_list_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 mn_object_t *MNList_New(void);
 void MNList_Delete(mn_object_t *ob);
@@ -731,10 +715,6 @@ dd_bool MNList_SelectItem(mn_object_t *ob, int flags, int itemIndex);
  */
 dd_bool MNList_SelectItemByValue(mn_object_t *ob, int flags, int itemIndex);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 /**
  * Color preview box.
  */
@@ -752,10 +732,6 @@ typedef struct mndata_colorbox_s {
     void *data3;
     void *data4;
 } mndata_colorbox_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 mn_object_t *MNColorBox_New(void);
 void MNColorBox_Delete(mn_object_t *ob);
@@ -823,10 +799,6 @@ dd_bool MNColorBox_SetAlphaf(mn_object_t *ob, int flags, float alpha);
  */
 dd_bool MNColorBox_CopyColor(mn_object_t *ob, int flags, mn_object_t const *otherObj);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 /**
  * Graphical slider.
  */
@@ -861,10 +833,6 @@ typedef struct mndata_slider_s {
     void *data5;
 } mndata_slider_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 mn_object_t *MNSlider_New(void);
 void MNSlider_Delete(mn_object_t *ob);
 
@@ -893,10 +861,6 @@ float MNSlider_Value(mn_object_t const *ob);
  */
 void MNSlider_SetValue(mn_object_t *ob, int flags, float value);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 /**
  * Mobj preview visual.
  */
@@ -910,10 +874,6 @@ typedef struct mndata_mobjpreview_s {
     int plrClass; /// Player class identifier.
 } mndata_mobjpreview_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 mn_object_t *MNMobjPreview_New(void);
 void MNMobjPreview_Delete(mn_object_t *ob);
 
@@ -926,10 +886,6 @@ void MNMobjPreview_SetTranslationMap(mn_object_t *ob, int tMap);
 void MNMobjPreview_Drawer(mn_object_t *ob, Point2Raw const *origin);
 void MNMobjPreview_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 // Menu render state:
 typedef struct mn_rendstate_s {
     float pageAlpha;
@@ -939,7 +895,7 @@ typedef struct mn_rendstate_s {
     fontid_t textFonts[MENU_FONT_COUNT];
 } mn_rendstate_t;
 
-DENG_EXTERN_C mn_rendstate_t const *mnRendState;
+extern mn_rendstate_t const *mnRendState;
 
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
@@ -952,10 +908,6 @@ DENG_EXTERN_C mn_rendstate_t const *mnRendState;
 #define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
 ///@}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
 mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags);
@@ -967,9 +919,25 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor);
  */
 void Hu_MenuCommand(menucommand_e cmd);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+struct cvarbutton_t
+{
+    char active;
+    char const *cvarname;
+    char const *yes;
+    char const *no;
+    int mask;
+
+    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
+                 int mask = 0)
+        : active(active)
+        , cvarname(cvarname)
+        , yes(yes)
+        , no(no)
+        , mask(mask)
+    {}
+};
+
+#endif // __cplusplus
 
 typedef enum {
     GUI_NONE,

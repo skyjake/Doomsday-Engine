@@ -91,7 +91,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
         if(!page) return; // Not initialized yet?
 
-        mn_object_t *ob = MNPage_FindObject(page, 0, menuWidgetId);
+        mn_object_t *ob = page->findObject(0, menuWidgetId);
         if(!ob)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;

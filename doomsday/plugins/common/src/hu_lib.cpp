@@ -718,9 +718,9 @@ static void MNEdit_LoadResources()
 
 mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags)
 {
-    mn_object_t *ob = MNPage_FindObject(page, group, flags);
-    if(!ob)
-        Con_Error("MN_MustFindObjectOnPage: Failed to locate object in group #%i with flags %i on page %p.", group, flags, page);
+    DENG2_ASSERT(page != 0);
+    mn_object_t *ob = page->findObject(group, flags);
+    if(!ob) Con_Error("MN_MustFindObjectOnPage: Failed to locate object in group #%i with flags %i on page %p.", group, flags, page);
     return ob;
 }
 
@@ -745,11 +745,11 @@ static void setupRenderStateForPageDrawing(mn_page_t *page, float alpha)
 
     for(int i = 0; i < MENU_FONT_COUNT; ++i)
     {
-        rs.textFonts[i] = MNPage_PredefinedFont(page, mn_page_fontid_t(i));
+        rs.textFonts[i] = page->predefinedFont(mn_page_fontid_t(i));
     }
     for(int i = 0; i < MENU_COLOR_COUNT; ++i)
     {
-        MNPage_PredefinedColor(page, mn_page_colorid_t(i), rs.textColors[i]);
+        page->predefinedColor(mn_page_colorid_t(i), rs.textColors[i]);
         rs.textColors[i][CA] = alpha; // For convenience.
     }
 
@@ -766,9 +766,9 @@ static void updatePageObjectGeometries(mn_page_t *page)
     if(!page) return;
 
     // Update objects.
-    for(int i = 0; i < page->objectsCount; ++i)
+    for(int i = 0; i < page->objectsCount(); ++i)
     {
-        mn_object_t *ob = &page->objects[i];
+        mn_object_t *ob = &page->objects()[i];
 
         if(MNObject_Type(ob) == MN_NONE) continue;
 
@@ -788,65 +788,56 @@ dd_bool MNObject_IsDrawable(mn_object_t *ob)
     return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
 }
 
-int MNPage_LineHeight2(mn_page_t *page, int *lineOffset)
+int mn_page_t::lineHeight(int *lineOffset)
 {
-    DENG2_ASSERT(page != 0);
-
     fontid_t oldFont = FR_Font();
 
     /// @kludge We cannot yet query line height from the font...
-    FR_SetFont(MNPage_PredefinedFont(page, MENU_FONT1));
-    int lineHeight = FR_TextHeight("{case}WyQ");
+    FR_SetFont(predefinedFont(MENU_FONT1));
+    int lh = FR_TextHeight("{case}WyQ");
     if(lineOffset)
     {
-        *lineOffset = MAX_OF(1, .5f + lineHeight * .34f);
+        *lineOffset = de::max(1.f, .5f + lh * .34f);
     }
 
     // Restore the old font.
     FR_SetFont(oldFont);
 
-    return lineHeight;
+    return lh;
 }
 
-int MNPage_LineHeight(mn_page_t *page)
+void mn_page_t::applyPageLayout()
 {
-    return MNPage_LineHeight2(page, 0);
-}
-
-static void applyPageLayout(mn_page_t *page)
-{
-    if(!page) return;
-
-    Rect_SetXY(page->geometry, 0, 0);
-    Rect_SetWidthHeight(page->geometry, 0, 0);
+    Rect_SetXY(geometry, 0, 0);
+    Rect_SetWidthHeight(geometry, 0, 0);
 
     // Apply layout logic to this page.
 
-    if(page->flags & MPF_LAYOUT_FIXED)
+    if(flags & MPF_LAYOUT_FIXED)
     {
         // This page uses a fixed layout.
-        for(int i = 0; i < page->objectsCount; ++i)
+        for(int i = 0; i < _objectsCount; ++i)
         {
-            mn_object_t *ob = &page->objects[i];
+            mn_object_t *ob = &_objects[i];
 
             if(!MNObject_IsDrawable(ob)) continue;
 
             Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
-            Rect_Unite(page->geometry, ob->_geometry);
+            Rect_Unite(geometry, ob->_geometry);
         }
         return;
     }
 
     // This page uses a dynamic layout.
     int lineOffset;
-    int lineHeight = MNPage_LineHeight2(page, &lineOffset);
+    int lh = lineHeight(&lineOffset);
 
     Point2Raw origin;
 
-    for(int i = 0; i < page->objectsCount;)
+    for(int i = 0; i < _objectsCount; )
     {
-        mn_object_t *ob = &page->objects[i];
-        mn_object_t *nextOb = i+1 < page->objectsCount? &page->objects[i+1] : 0;
+        mn_object_t *ob = &_objects[i];
+        mn_object_t *nextOb = i + 1 < _objectsCount? &_objects[i + 1] : 0;
 
         if(!MNObject_IsDrawable(ob))
         {
@@ -860,7 +851,7 @@ static void applyPageLayout(mn_page_t *page)
         if(MNObject_Flags(ob) & MNF_POSITION_FIXED)
         {
             Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
-            Rect_Unite(page->geometry, ob->_geometry);
+            Rect_Unite(geometry, ob->_geometry);
 
             // To the next object.
             i += 1;
@@ -897,12 +888,12 @@ static void applyPageLayout(mn_page_t *page)
                 origin.y += Rect_United(ob->_geometry, nextOb->_geometry, &united)
                           ->size.height + lineOffset;
 
-                Rect_UniteRaw(page->geometry, &united);
+                Rect_UniteRaw(geometry, &united);
 
                 // Extra spacing between object groups.
-                if(i+2 < page->objectsCount &&
-                   nextOb->_group != page->objects[i+2]._group)
-                    origin.y += lineHeight;
+                if(i+2 < _objectsCount &&
+                   nextOb->_group != _objects[i + 2]._group)
+                    origin.y += lh;
 
                 // Proceed to the next object!
                 i += 2;
@@ -910,13 +901,13 @@ static void applyPageLayout(mn_page_t *page)
             }
         }
 
-        Rect_Unite(page->geometry, ob->_geometry);
+        Rect_Unite(geometry, ob->_geometry);
 
         origin.y += Rect_Height(ob->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
         if(nextOb && nextOb->_group != ob->_group)
-            origin.y += lineHeight;
+            origin.y += lh;
 
         // Proceed to the next object!
         i += 1;
@@ -1015,10 +1006,10 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     FR_PopAttrib();
 
     // We can now layout the widgets of this page.
-    applyPageLayout(page);
+    page->applyPageLayout();
 
     // Determine the origin of the focus object (this dictates the page scroll location).
-    focusObj = MNPage_FocusObject(page);
+    focusObj = page->focusObject();
     if(focusObj && !MNObject_IsDrawable(focusObj))
     {
         focusObj = 0;
@@ -1027,7 +1018,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     // Are we focusing?
     if(focusObj)
     {
-        focusObjHeight = MNPage_CursorSize(page);
+        focusObjHeight = page->cursorSize();
 
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
@@ -1043,7 +1034,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
             mndata_list_t const *list = (mndata_list_t *)focusObj->_typedata;
 
             FR_PushAttrib();
-            FR_SetFont(MNPage_PredefinedFont(page, mn_page_fontid_t(MNObject_Font(focusObj))));
+            FR_SetFont(page->predefinedFont(mn_page_fontid_t(MNObject_Font(focusObj))));
             focusObjHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
             cursorOrigin.y += (list->selection - list->first) * focusObjHeight;
             FR_PopAttrib();
@@ -1081,9 +1072,9 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     }
 
     // Draw child objects.
-    for(i = 0; i < page->objectsCount; ++i)
+    for(i = 0; i < page->objectsCount(); ++i)
     {
-        mn_object_t *ob = &page->objects[i];
+        mn_object_t *ob = &page->objects()[i];
         RectRaw geometry;
 
         if(MNObject_Type(ob) == MN_NONE || !ob->drawer) continue;
@@ -1123,116 +1114,149 @@ static dd_bool MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
     return (info->callback != 0);
 }
 
-void MNPage_SetTitle(mn_page_t *page, const char* title)
+mn_page_t::mn_page_t(Point2Raw const &origin, int flags,
+    void (*ticker) (mn_page_t *page),
+    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
+    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
+    void *userData)
+    : _objects     (0)
+    , _objectsCount(0)
+    , origin       (origin)
+    , geometry     (Rect_New())
+    , previous     (0)
+    , focus        (-1) /// @todo Make this a page flag.
+    , flags        (flags)
+    , ticker       (ticker)
+    , drawer       (drawer)
+    , cmdResponder (cmdResponder)
+    , userData     (userData)
 {
-    DENG2_ASSERT(page);
-    Str_Set(&page->title, title? title : "");
-}
+    Str_InitStd(&title);
 
-void MNPage_SetX(mn_page_t *page, int x)
-{
-    DENG2_ASSERT(page);
-    page->origin.x = x;
-}
-
-void MNPage_SetY(mn_page_t *page, int y)
-{
-    DENG2_ASSERT(page);
-    page->origin.y = y;
-}
-
-void MNPage_SetPreviousPage(mn_page_t *page, mn_page_t *prevPage)
-{
-    DENG2_ASSERT(page);
-    page->previous = prevPage;
-}
-
-mn_object_t *MNPage_FocusObject(mn_page_t *page)
-{
-    DENG2_ASSERT(page != 0);
-    if(!page->objectsCount || page->focus < 0) return 0;
-    return &page->objects[page->focus];
-}
-
-void MNPage_ClearFocusObject(mn_page_t *page)
-{
-    mn_object_t *ob;
-    int i;
-    DENG2_ASSERT(page);
-    if(page->focus >= 0)
+    fontid_t fontId = FID(GF_FONTA);
+    for(int i = 0; i < MENU_FONT_COUNT; ++i)
     {
-        ob = &page->objects[page->focus];
+        fonts[i] = fontId;
+    }
+
+    de::zap(colors);
+    colors[1] = 1;
+    colors[2] = 2;
+}
+
+mn_page_t::~mn_page_t()
+{
+    Str_Free(&title);
+    if(geometry) Rect_Delete(geometry);
+
+    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    {
+        if(ob->_geometry) Rect_Delete(ob->_geometry);
+    }
+}
+
+mn_object_t *mn_page_t::objects() const
+{
+    return _objects;
+}
+
+int mn_page_t::objectsCount() const
+{
+    return _objectsCount;
+}
+
+void mn_page_t::setTitle(char const *newTitle)
+{
+    Str_Set(&title, newTitle? newTitle : "");
+}
+
+void mn_page_t::setX(int x)
+{
+    origin.x = x;
+}
+
+void mn_page_t::setY(int y)
+{
+    origin.y = y;
+}
+
+void mn_page_t::setPreviousPage(mn_page_t *newPrevious)
+{
+    previous = newPrevious;
+}
+
+mn_object_t *mn_page_t::focusObject()
+{
+    if(!_objectsCount || focus < 0) return 0;
+    return &_objects[focus];
+}
+
+void mn_page_t::clearFocusObject()
+{
+    if(focus >= 0)
+    {
+        mn_object_t *ob = &_objects[focus];
         if(MNObject_Flags(ob) & MNF_ACTIVE)
         {
             return;
         }
     }
-    page->focus = -1;
-    ob = page->objects;
-    for(i = 0; i < page->objectsCount; ++i, ob++)
+    focus = -1;
+    mn_object_t *ob = _objects;
+    for(int i = 0; i < _objectsCount; ++i, ob++)
     {
         MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
     }
-    MNPage_Refocus(page);
+    refocus();
 }
 
-int MNPage_CursorSize(mn_page_t *page)
+int mn_page_t::cursorSize()
 {
-    mn_object_t *focusObj = MNPage_FocusObject(page);
-    int focusObjHeight = focusObj? Size2_Height(MNObject_Size(focusObj)) : 0;
+    mn_object_t *focusOb = focusObject();
+    int focusObHeight = focusOb? Size2_Height(MNObject_Size(focusOb)) : 0;
 
     // Ensure the cursor is at least as tall as the effective line height for
     // the page. This is necessary because some mods replace the menu button
     // graphics with empty and/or tiny images (e.g., Hell Revealed 2).
     /// @note Handling this correctly would mean separate physical/visual
     /// geometries for menu widgets.
-    return MAX_OF(focusObjHeight, MNPage_LineHeight(page));
+    return de::max(focusObHeight, lineHeight());
 }
 
-mn_object_t *MNPage_FindObject(mn_page_t *page, int group, int flags)
+mn_object_t *mn_page_t::findObject(int group, int flags)
 {
-    mn_object_t *ob = page->objects;
+    mn_object_t *ob = _objects;
     for(; MNObject_Type(ob) != MN_NONE; ob++)
     {
         if(MNObject_IsGroupMember(ob, group) && (MNObject_Flags(ob) & flags) == flags)
             return ob;
     }
-    return NULL;
+    return 0; // Not found.
 }
 
-static int MNPage_FindObjectIndex(mn_page_t *page, mn_object_t *ob)
+int mn_page_t::findObjectIndex(mn_object_t *ob)
 {
-    int i;
-    DENG2_ASSERT(page && ob);
-
-    for(i = 0; i < page->objectsCount; ++i)
+    DENG2_ASSERT(ob != 0);
+    for(int i = 0; i < _objectsCount; ++i)
     {
-        if(ob == page->objects+i)
+        if(ob == &_objects[i])
+        {
             return i;
+        }
     }
     return -1; // Not found.
 }
 
-#if 0
-static mn_object_t *MNPage_ObjectByIndex(mn_page_t *page, int idx)
-{
-    DENG2_ASSERT(page);
-    if(idx < 0 || idx >= page->objectsCount)
-        Con_Error("MNPage::ObjectByIndex: Index #%i invalid for page %p.", idx, page);
-    return page->objects + idx;
-}
-#endif
-
 /// @pre @a ob is a child of @a page.
-static void MNPage_GiveChildFocus(mn_page_t *page, mn_object_t *ob, dd_bool allowRefocus)
+void mn_page_t::giveChildFocus(mn_object_t *ob, dd_bool allowRefocus)
 {
-    DENG2_ASSERT(page && ob);
+    DENG2_ASSERT(ob != 0);
 
-    if(!(0 > page->focus))
+    if(!(0 > focus))
     {
-        if(ob != page->objects + page->focus)
+        if(ob != _objects + focus)
         {
-            mn_object_t *oldFocusOb = page->objects + page->focus;
+            mn_object_t *oldFocusOb = _objects + focus;
             if(MNObject_HasAction(oldFocusOb, MNA_FOCUSOUT))
             {
                 MNObject_ExecAction(oldFocusOb, MNA_FOCUSOUT, NULL);
@@ -1245,7 +1269,7 @@ static void MNPage_GiveChildFocus(mn_page_t *page, mn_object_t *ob, dd_bool allo
         }
     }
 
-    page->focus = ob - page->objects;
+    focus = ob - _objects;
     MNObject_SetFlags(ob, FO_SET, MNF_FOCUS);
     if(MNObject_HasAction(ob, MNA_FOCUS))
     {
@@ -1253,34 +1277,30 @@ static void MNPage_GiveChildFocus(mn_page_t *page, mn_object_t *ob, dd_bool allo
     }
 }
 
-void MNPage_SetFocus(mn_page_t *page, mn_object_t *ob)
+void mn_page_t::setFocus(mn_object_t *ob)
 {
-    int objIndex = MNPage_FindObjectIndex(page, ob);
-    if(objIndex < 0)
+    int obIndex = findObjectIndex(ob);
+    if(obIndex < 0)
     {
-#if _DEBUG
-        Con_Error("MNPage::Focus: Failed to determine index for object %p on page %p.", ob, page);
-#endif
+        DENG2_ASSERT(!"mn_page_t::Focus: Failed to determine index for object.");
         return;
     }
-    MNPage_GiveChildFocus(page, page->objects + objIndex, false);
+    giveChildFocus(_objects + obIndex, false);
 }
 
-void MNPage_Refocus(mn_page_t *page)
+void mn_page_t::refocus()
 {
-    DENG2_ASSERT(page);
-
     // If we haven't yet visited this page then find the first focusable
     // object and select it.
-    if(0 > page->focus)
+    if(0 > focus)
     {
         int i, giveFocus = -1;
 
         // First look for a default focus object. There should only be one
         // but find the last with this flag...
-        for(i = 0; i < page->objectsCount; ++i)
+        for(i = 0; i < _objectsCount; ++i)
         {
-            mn_object_t *ob = &page->objects[i];
+            mn_object_t *ob = &_objects[i];
             if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
@@ -1289,9 +1309,9 @@ void MNPage_Refocus(mn_page_t *page)
 
         // No default focus? Find the first focusable object.
         if(-1 == giveFocus)
-        for(i = 0; i < page->objectsCount; ++i)
+        for(i = 0; i < _objectsCount; ++i)
         {
-            mn_object_t *ob = &page->objects[i];
+            mn_object_t *ob = &_objects[i];
             if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
@@ -1301,31 +1321,28 @@ void MNPage_Refocus(mn_page_t *page)
 
         if(-1 != giveFocus)
         {
-            MNPage_GiveChildFocus(page, page->objects + giveFocus, false);
+            giveChildFocus(_objects + giveFocus, false);
         }
         else
         {
-            App_Log(DE2_DEV_WARNING, "MNPage::Refocus: No focusable object on page");
+            LOGDEV_WARNING("mn_page_t::refocus: No focusable object on page");
         }
     }
     else
     {
         // We've been here before; re-focus on the last focused object.
-        MNPage_GiveChildFocus(page, page->objects + page->focus, true);
+        giveChildFocus(_objects + focus, true);
     }
 }
 
-void MNPage_Initialize(mn_page_t *page)
+void mn_page_t::initialize()
 {
-    mn_object_t *ob;
-    int i;
-    DENG2_ASSERT(page);
-
     // Reset page timer.
-    page->timer = 0;
+    _timer = 0;
 
     // (Re)init objects.
-    for(i = 0, ob = page->objects; i < page->objectsCount; ++i, ob++)
+    mn_object_t *ob = _objects;
+    for(int i = 0; i < _objectsCount; ++i, ob++)
     {
         // Reset object timer.
         ob->timer = 0;
@@ -1333,10 +1350,10 @@ void MNPage_Initialize(mn_page_t *page)
         switch(MNObject_Type(ob))
         {
         case MN_BUTTON: {
-            mndata_button_t* btn = (mndata_button_t *)ob->_typedata;
+            mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
             if(btn->staydownMode)
             {
-                const dd_bool activate = (*(char*) ob->data1);
+                dd_bool const activate = (*(char *) ob->data1);
                 MNObject_SetFlags(ob, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
             break; }
@@ -1360,94 +1377,249 @@ void MNPage_Initialize(mn_page_t *page)
         }
     }
 
-    if(0 == page->objectsCount)
+    if(!_objectsCount)
     {
         // Presumably objects will be added later.
         return;
     }
 
-    MNPage_Refocus(page);
+    refocus();
 }
 
-void MNPage_Ticker(mn_page_t *page)
+void mn_page_t::initObjects()
 {
-    mn_object_t *ob;
-    int i;
+    _objectsCount = 0;
 
+    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    {
+        _objectsCount += 1;
+
+        ob->_page     = this;
+        ob->_geometry = Rect_New();
+
+        ob->timer = 0;
+        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+
+        if(0 != ob->_shortcut)
+        {
+            int shortcut = ob->_shortcut;
+            ob->_shortcut = 0; // Clear invalid defaults.
+            MNObject_SetShortcut(ob, shortcut);
+        }
+
+        switch(MNObject_Type(ob))
+        {
+        case MN_TEXT: {
+            mndata_text_t *txt = (mndata_text_t *)ob->_typedata;
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+
+            if(txt->text && (PTR2INT(txt->text) > 0 && PTR2INT(txt->text) < NUMTEXT))
+            {
+                txt->text = GET_TXT(PTR2INT(txt->text));
+            }
+            break; }
+
+        case MN_BUTTON: {
+            /*mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);*/
+            mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+
+            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
+            {
+                btn->text = GET_TXT(PTR2INT(btn->text));
+                /// @todo Should not be done here.
+                MNObject_SetShortcut(ob, btn->text[0]);
+            }
+            break; }
+
+        case MN_EDIT: {
+            mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
+
+            if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
+            {
+                edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
+            }
+            break; }
+
+        case MN_LIST:
+        case MN_LISTINLINE: {
+            mndata_list_t *list = (mndata_list_t *) ob->_typedata;
+
+            for(int i = 0; i < list->count; ++i)
+            {
+                mndata_listitem_t *item = &((mndata_listitem_t *)list->items)[i];
+                if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
+                {
+                    item->text = GET_TXT(PTR2INT(item->text));
+                }
+            }
+            break; }
+
+        case MN_COLORBOX: {
+            mndata_colorbox_t *cbox = (mndata_colorbox_t *) ob->_typedata;
+
+            if(!cbox->rgbaMode)
+                cbox->a = 1.f;
+            if(0 >= cbox->width)
+                cbox->width = MNDATA_COLORBOX_WIDTH;
+            if(0 >= cbox->height)
+                cbox->height = MNDATA_COLORBOX_HEIGHT;
+            break; }
+
+        case MN_MOBJPREVIEW:
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            break;
+
+        default: break;
+        }
+    }
+}
+
+/// Main task is to update objects linked to cvars.
+void mn_page_t::updateObjects()
+{
+    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    {
+        switch(MNObject_Type(ob))
+        {
+        case MN_TEXT:
+        case MN_MOBJPREVIEW:
+            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            break;
+
+        case MN_BUTTON: {
+            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+
+            if(action && action->callback == Hu_MenuCvarButton)
+            {
+                if(ob->data1)
+                {
+                    // This button has already been initialized.
+                    cvarbutton_t *cvb = (cvarbutton_t *) ob->data1;
+                    cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
+                    //strcpy(obj->text, cvb->active ? cvb->yes : cvb->no);
+                    btn->text = cvb->active ? cvb->yes : cvb->no;
+                    continue;
+                }
+
+                // Find the cvarbutton representing this one.
+                for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
+                {
+                    if(!strcmp((char const *)btn->data, cvb->cvarname) && ob->data2 == cvb->mask)
+                    {
+                        cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
+                        ob->data1 = (void*) cvb;
+
+                        btn->yes  = cvb->yes;
+                        btn->no   = cvb->no;
+                        btn->text = (cvb->active ? btn->yes : btn->no);
+                        break;
+                    }
+                }
+            }
+            break; }
+
+        case MN_LIST:
+        case MN_LISTINLINE: {
+            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_list_t *list = (mndata_list_t *) ob->_typedata;
+
+            if(action && action->callback == Hu_MenuCvarList)
+            {
+                MNList_SelectItemByValue(ob, MNLIST_SIF_NO_ACTION, Con_GetInteger((char const *)list->data));
+            }
+            break; }
+
+        case MN_EDIT: {
+            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
+
+            if(action && action->callback == Hu_MenuCvarEdit)
+            {
+                MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, Con_GetString((char const *)edit->data1));
+            }
+            break; }
+
+        case MN_SLIDER: {
+            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mndata_slider_t *sldr = (mndata_slider_t *) ob->_typedata;
+            if(action && action->callback == Hu_MenuCvarSlider)
+            {
+                float value;
+                if(sldr->floatMode)
+                    value = Con_GetFloat((char const *)sldr->data1);
+                else
+                    value = Con_GetInteger((char const *)sldr->data1);
+                MNSlider_SetValue(ob, MNSLIDER_SVF_NO_ACTION, value);
+            }
+            break; }
+
+        case MN_COLORBOX: {
+            mndata_colorbox_t *cbox = (mndata_colorbox_t *) ob->_typedata;
+            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+
+            if(action && action->callback == Hu_MenuCvarColorBox)
+            {
+                float rgba[4];
+                rgba[CR] = Con_GetFloat((char const *)cbox->data1);
+                rgba[CG] = Con_GetFloat((char const *)cbox->data2);
+                rgba[CB] = Con_GetFloat((char const *)cbox->data3);
+                rgba[CA] = (cbox->rgbaMode? Con_GetFloat((char const *)cbox->data4) : 1.f);
+                MNColorBox_SetColor4fv(ob, MNCOLORBOX_SCF_NO_ACTION, rgba);
+            }
+            break; }
+
+        default: break;
+        }
+    }
+}
+
+void mn_page_t::tick()
+{
     // Call the ticker of each object, unless they're hidden or paused.
-    for(i = 0, ob = page->objects; i < page->objectsCount; ++i, ob++)
+    mn_object_t *ob = _objects;
+    for(int i = 0; i < _objectsCount; ++i, ob++)
     {
         if((MNObject_Flags(ob) & MNF_PAUSED) || (MNObject_Flags(ob) & MNF_HIDDEN))
             continue;
 
         if(ob->ticker)
+        {
             ob->ticker(ob);
+        }
 
         // Advance object timer.
         ob->timer++;
     }
 
-    page->timer++;
+    _timer++;
 }
 
-fontid_t MNPage_PredefinedFont(mn_page_t *page, mn_page_fontid_t id)
+fontid_t mn_page_t::predefinedFont(mn_page_fontid_t id)
 {
-    DENG2_ASSERT(page);
-    if(!VALID_MNPAGE_FONTID(id))
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedFont: Invalid font id #%i.", (int)id);
-        exit(1); // Unreachable.
-#endif
-        return 0; // Not a valid font id.
-    }
-    return page->fonts[id];
+    DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
+    return fonts[id];
 }
 
-void MNPage_SetPredefinedFont(mn_page_t *page, mn_page_fontid_t id, fontid_t fontId)
+void mn_page_t::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
 {
-    DENG2_ASSERT(page);
-    if(!VALID_MNPAGE_FONTID(id))
-    {
-        DENG2_ASSERT(!"MNPage::SetPredefinedFont: Invalid font id");
-        return;
-    }
-    page->fonts[id] = fontId;
+    DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
+    fonts[id] = fontId;
 }
 
-void MNPage_PredefinedColor(mn_page_t *page, mn_page_colorid_t id, float rgb[3])
+void mn_page_t::predefinedColor(mn_page_colorid_t id, float rgb[3])
 {
-    uint colorIndex;
-    DENG2_ASSERT(page);
-
-    if(!rgb)
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedColor: Invalid 'rgb' reference.");
-        exit(1); // Unreachable.
-#endif
-        return;
-    }
-    if(!VALID_MNPAGE_COLORID(id))
-    {
-#if _DEBUG
-        Con_Error("MNPage::PredefinedColor: Invalid color id '%i'.", (int)id);
-        exit(1); // Unreachable.
-#endif
-        rgb[CR] = rgb[CG] = rgb[CB] = 1;
-        return;
-    }
-
-    colorIndex = page->colors[id];
+    DENG2_ASSERT(rgb != 0);
+    DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
+    uint colorIndex = colors[id];
     rgb[CR] = cfg.menuTextColors[colorIndex][CR];
     rgb[CG] = cfg.menuTextColors[colorIndex][CG];
     rgb[CB] = cfg.menuTextColors[colorIndex][CB];
 }
 
-int MNPage_Timer(mn_page_t *page)
+int mn_page_t::timer()
 {
-    DENG2_ASSERT(page);
-    return page->timer;
+    return _timer;
 }
 
 mn_obtype_e MNObject_Type(const mn_object_t *ob)
@@ -1766,7 +1938,7 @@ void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin)
     if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(ob->_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -1811,7 +1983,7 @@ void MNText_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
         Rect_SetWidthHeight(ob->_geometry, info.geometry.size.width, info.geometry.size.height);
         return;
     }
-    FR_SetFont(MNPage_PredefinedFont(page, mn_page_fontid_t(ob->_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));
     FR_TextSize(&size, txt->text);
     Rect_SetWidthHeight(ob->_geometry, size.width, size.height);
 }
@@ -1951,7 +2123,7 @@ void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *_origin)
         if(!(ob->_flags & MNF_ACTIVE) && (ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
             float const speed = cfg.menuTextFlashSpeed / 2.f;
-            t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
+            t = (1 + sin(ob->_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
         lerpColor(color, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -2197,7 +2369,7 @@ void MNList_Drawer(mn_object_t *ob, Point2Raw const *_origin)
     if(flashSelection && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(ob->_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(flashColor, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -2485,7 +2657,7 @@ void MNList_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     mndata_list_t *list = (mndata_list_t *)ob->_typedata;
 
     Rect_SetWidthHeight(ob->_geometry, 0, 0);
-    FR_SetFont(MNPage_PredefinedFont(page, mn_page_fontid_t(ob->_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));
 
     RectRaw itemGeometry;
     for(int i = 0; i < list->count; ++i)
@@ -2510,7 +2682,7 @@ void MNListInline_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     mndata_listitem_t *item = ((mndata_listitem_t *) list->items) + list->selection;
     Size2Raw size;
 
-    FR_SetFont(MNPage_PredefinedFont(page, mn_page_fontid_t(ob->_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));
     FR_TextSize(&size, item->text);
     Rect_SetWidthHeight(ob->_geometry, size.width, size.height);
 }
@@ -2562,7 +2734,7 @@ void MNButton_Drawer(mn_object_t *ob, Point2Raw const *origin)
     if((ob->_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         const float speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(MNPage_Timer(ob->_page) / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(ob->_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
     lerpColor(color, rs.textColors[ob->_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
@@ -2688,7 +2860,7 @@ void MNButton_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
         }
     }
 
-    FR_SetFont(MNPage_PredefinedFont(page, mn_page_fontid_t(ob->_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));
     FR_TextSize(&size, text);
 
     Rect_SetWidthHeight(ob->_geometry, size.width, size.height);
@@ -3441,7 +3613,7 @@ void MNSlider_TextualValueUpdateGeometry(mn_object_t *ob, mn_page_t *page)
 
     mndata_slider_t *sldr = (mndata_slider_t *)ob->_typedata;
 
-    fontid_t const font = MNPage_PredefinedFont(page, mn_page_fontid_t(ob->_pageFontIdx));
+    fontid_t const font = page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx));
     float const value = de::clamp(sldr->min, sldr->value, sldr->max);
     char textualValue[41];
     char const *str = composeValueString(value, 0, sldr->floatMode, 0,
