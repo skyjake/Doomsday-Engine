@@ -1,30 +1,22 @@
-/**\file hu_log.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file hu_log.h  Game message logging and display.
  *
- *\author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Game message logging and display.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBCOMMON_HULOGDEV_H
@@ -70,7 +62,7 @@ void UILog_Register(void);
 typedef struct {
     uint ticsRemain, tics;
     int textMaxLen;
-    char* text;
+    char *text;
     byte flags;  /// @ref logMessageFlags
 } guidata_log_message_t;
 
@@ -93,18 +85,18 @@ extern "C" {
 #endif
 
 /// Process gametic for this message log.
-void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength);
+void UILog_Ticker(uiwidget_t *ob, timespan_t ticLength);
 
 /// Draw this message log widget.
-void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset);
+void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset);
 
 /// Calculate the "physical" dimensions of this widget.
-void UILog_UpdateGeometry(uiwidget_t* obj);
+void UILog_UpdateGeometry(uiwidget_t *ob);
 
 /**
  * Empty the message log clearing all messages.
  */
-void UILog_Empty(uiwidget_t* obj);
+void UILog_Empty(uiwidget_t *ob);
 
 /**
  * Post a message to this log.
@@ -113,15 +105,15 @@ void UILog_Empty(uiwidget_t* obj);
  * @param text  Message Text to be posted. Messages may use the same
  *      paramater control blocks as with the engine's Text rendering API.
  */
-void UILog_Post(uiwidget_t* obj, byte flags, const char* text);
+void UILog_Post(uiwidget_t *ob, byte flags, char const *text);
 
 /**
  * Rewind the message log, making the last few messages visible once again.
  */
-void UILog_Refresh(uiwidget_t* obj);
+void UILog_Refresh(uiwidget_t *ob);
 
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBCOMMON_HULOGDEV_H */
+#endif // LIBCOMMON_HULOGDEV_H

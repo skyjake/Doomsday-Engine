@@ -1,11 +1,9 @@
-/**
- * @file hu_msg.c
- * Important state change messages.
+/** @file hu_msg.cpp  Important game state change messages.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,16 +20,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 #include "common.h"
+#include <cstdlib>
+#include <cstring>
+#include <de/memory.h>
 #include "hu_msg.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"
-#include <de/memory.h>
 
-D_CMD(MsgResponse);
+using namespace de;
 
 static dd_bool awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
@@ -39,41 +36,33 @@ static msgresponse_t messageResponse;
 
 static msgtype_t msgType;
 static msgfunc_t msgCallback;
-static char* msgText;
+static char *msgText;
 static int msgUserValue;
-static void* msgUserPointer;
+static void *msgUserPointer;
 
 static char yesNoMessage[160];
 
-void Hu_MsgRegister(void)
-{
-    C_CMD("messageyes",      "",     MsgResponse)
-    C_CMD("messageno",       "",     MsgResponse)
-    C_CMD("messagecancel",   "",     MsgResponse)
-}
-
-void Hu_MsgInit(void)
+void Hu_MsgInit()
 {
     awaitingResponse = false;
-    messageToPrint = 0; // 1 = message to be printed.
+    messageToPrint  = 0; // 1 = message to be printed.
     messageResponse = MSG_CANCEL;
 
-    msgCallback = NULL;
-    msgText = NULL;
-    msgUserValue = 0;
-    msgUserPointer = NULL;
+    msgCallback     = 0;
+    msgText         = 0;
+    msgUserValue    = 0;
+    msgUserPointer  = 0;
 }
 
-void Hu_MsgShutdown(void)
+void Hu_MsgShutdown()
 {
     if(msgText)
     {
-        free(msgText);
-        msgText = NULL;
+        M_Free(msgText); msgText = 0;
     }
 }
 
-static void stopMessage(void)
+static void stopMessage()
 {
 #if __JDOOM__ || __JDOOM64__
 # define SFX_ENDMESSAGE     SFX_SWTCHX
@@ -88,8 +77,7 @@ static void stopMessage(void)
 
     if(msgText)
     {
-        free(msgText);
-        msgText = NULL;
+        M_Free(msgText); msgText = 0;
     }
 
     S_LocalSound(SFX_ENDMESSAGE, NULL);
@@ -104,15 +92,15 @@ static void stopMessage(void)
  * @todo: Query the bindings to determine the actual controls bound to the
  * message response commands.
  */
-static void composeYesNoMessage(void)
+static void composeYesNoMessage()
 {
-    char* buf = yesNoMessage, *in, tmp[2];
+    char *buf = yesNoMessage, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
 
     // Get the message template.
-    in = PRESSYN;
+    char *in = PRESSYN;
 
     for(; *in; in++)
     {
@@ -139,21 +127,20 @@ static void composeYesNoMessage(void)
     }
 }
 
-static void drawMessage(void)
+static void drawMessage()
 {
 #define LEADING             (0)
 
     short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
-    Point2Raw origin = { SCREENWIDTH/2, SCREENHEIGHT/2 };
-    const char* questionString;
+    Point2Raw origin( SCREENWIDTH/2, SCREENHEIGHT/2);
+    char const *questionString;
 
     switch(msgType)
     {
     case MSG_ANYKEY: questionString = PRESSKEY;     break;
     case MSG_YESNO:  questionString = yesNoMessage; break;
-    default:
-        Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
-        exit(1); // Unreachable.
+
+    default: DENG2_ASSERT(!"drawMessage: Internal error, unknown message type.");
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -175,14 +162,13 @@ static void drawMessage(void)
 #undef LEADING
 }
 
-void Hu_MsgDrawer(void)
+void Hu_MsgDrawer()
 {
-    dgl_borderedprojectionstate_t bp;
-
     if(!messageToPrint) return;
 
+    dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
-          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), cfg.menuScaleMode);
+          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.menuScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -199,7 +185,7 @@ void Hu_MsgDrawer(void)
     GL_EndBorderedProjection(&bp);
 }
 
-void Hu_MsgTicker(void)
+void Hu_MsgTicker()
 {
     // Check if there has been a response to a message.
     if(!messageToPrint || awaitingResponse)
@@ -214,7 +200,7 @@ void Hu_MsgTicker(void)
     }
 }
 
-int Hu_MsgResponder(event_t* ev)
+int Hu_MsgResponder(event_t *ev)
 {
     if(!messageToPrint || msgType != MSG_ANYKEY)
         return false;
@@ -231,7 +217,7 @@ int Hu_MsgResponder(event_t* ev)
     return true;
 }
 
-dd_bool Hu_IsMessageActive(void)
+dd_bool Hu_IsMessageActive()
 {
     return messageToPrint;
 }
@@ -244,11 +230,11 @@ dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback)
 void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
     int userValue, void *userPointer)
 {
-    DENG_ASSERT(msg != 0);
-    DENG_ASSERT(!awaitingResponse);
+    DENG2_ASSERT(msg != 0);
+    DENG2_ASSERT(!awaitingResponse);
 
     awaitingResponse = true;
-    messageResponse  = 0;
+    messageResponse  = msgresponse_t(0);
     messageToPrint   = 1;
 
     msgType        = type;
@@ -257,7 +243,7 @@ void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
     msgUserPointer = userPointer;
 
     // Take a copy of the message string.
-    msgText = M_Calloc(strlen(msg) + 1);
+    msgText = (char *)M_Calloc(strlen(msg) + 1);
     strncpy(msgText, msg, strlen(msg));
 
     if(msgType == MSG_YESNO)
@@ -284,8 +270,6 @@ D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {
-        const char* cmd;
-
         // Handle "Press any key to continue" messages.
         if(msgType == MSG_ANYKEY)
         {
@@ -293,7 +277,7 @@ D_CMD(MsgResponse)
             return true;
         }
 
-        cmd = argv[0] + 7;
+        char const *cmd = argv[0] + 7;
         if(!stricmp(cmd, "yes"))
         {
             awaitingResponse = false;
@@ -315,4 +299,11 @@ D_CMD(MsgResponse)
     }
 
     return false;
+}
+
+void Hu_MsgRegister()
+{
+    C_CMD("messageyes",      "",     MsgResponse)
+    C_CMD("messageno",       "",     MsgResponse)
+    C_CMD("messagecancel",   "",     MsgResponse)
 }

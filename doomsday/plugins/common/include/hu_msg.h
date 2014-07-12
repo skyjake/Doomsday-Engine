@@ -1,10 +1,8 @@
-/**
- * @file hu_msg.h
- * Important state change messages.
+/** @file hu_msg.h  Important game state change messages.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -37,7 +35,7 @@ typedef enum {
     NUM_MESSAGE_RESPONSES
 } msgresponse_t;
 
-typedef int     (C_DECL *msgfunc_t) (msgresponse_t response, int userValue, void* userPointer);
+typedef int     (C_DECL *msgfunc_t) (msgresponse_t response, int userValue, void *userPointer);
 
 typedef enum {
     MSG_ANYKEY,
@@ -49,40 +47,40 @@ typedef enum {
  * Called during the PreInit of each game during start up.
  * Register Cvars and CCmds for the important messages.
  */
-void            Hu_MsgRegister(void);
+void Hu_MsgRegister(void);
 
 /**
  * Called during init.
  */
-void            Hu_MsgInit(void);
+void Hu_MsgInit(void);
 
 /**
  * Called during engine shutdown.
  */
-void            Hu_MsgShutdown(void);
+void Hu_MsgShutdown(void);
 
 /**
  * Updates on Game Tick.
  */
-void            Hu_MsgTicker(void);
+void Hu_MsgTicker(void);
 
 /**
  * If an "any key" message is active, respond to the event.
  */
-int             Hu_MsgResponder(event_t* ev);
+int Hu_MsgResponder(event_t *ev);
 
 /**
  * Draw any active message.
  */
-void            Hu_MsgDrawer(void);
+void Hu_MsgDrawer(void);
 
-dd_bool         Hu_IsMessageActive(void);
-dd_bool         Hu_IsMessageActiveWithCallback(msgfunc_t callback);
+dd_bool Hu_IsMessageActive(void);
+dd_bool Hu_IsMessageActiveWithCallback(msgfunc_t callback);
 
 /**
  * Begin a new game state message/question.
  */
-void            Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, int userValue, void* userPointer);
+void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback, int userValue, void *userPointer);
 
 #ifdef __cplusplus
 } // extern "C"

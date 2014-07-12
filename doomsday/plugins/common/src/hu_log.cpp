@@ -1,89 +1,53 @@
-/**\file hu_log.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file hu_log.cpp  Game message logging and display.
  *
- *\author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <string.h>
-#include <stdio.h>
-
-#include "doomsday.h"
-
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-# include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "common.h"
+#include "hu_log.h"
+#include <cstring>
+#include <cstdio>
+#include <de/memory.h>
 #include "p_tick.h"
 #include "hu_stuff.h"
-#include "hu_log.h"
+
+using namespace de;
 
 /**
  * @addtogroup logMessageFlags
  * Flags private to this module.
  * @{
  */
-#define LMF_JUSTADDED               (0x2)
+#define LMF_JUSTADDED  (0x2)
 /**@}*/
 
 /// Mask for clearing non-public flags @ref logMessageFlags
-#define LOG_INTERNAL_MESSAGEFLAGMASK    0xfe
-
-void UILog_Register(void)
-{
-    cvartemplate_t cvars[] = {
-        // Behavior
-        { "msg-uptime",  0, CVT_FLOAT, &cfg.msgUptime, 1, 60 },
-
-        // Display
-        { "msg-align",   0, CVT_INT, &cfg.msgAlign, 0, 2, ST_LogUpdateAlignment },
-        { "msg-blink",   CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0 },
-        { "msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1 },
-        { "msg-color-g", 0, CVT_FLOAT, &cfg.msgColor[CG], 0, 1 },
-        { "msg-color-b", 0, CVT_FLOAT, &cfg.msgColor[CB], 0, 1 },
-        { "msg-count",   0, CVT_INT, &cfg.msgCount, 1, 8 },
-        { "msg-scale",   0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1 },
-        { "msg-show",    0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1, ST_LogPostVisibilityChangeNotification },
-        { NULL }
-    };
-    int i;
-    for(i = 0; cvars[i].path; ++i)
-        Con_AddVariable(cvars + i);
-}
+#define LOG_INTERNAL_MESSAGEFLAGMASK  (0xfe)
 
 /// @return  Index of the first (i.e., earliest) message that is potentially visible.
-static int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
+static int UILog_FirstPVisMessageIdx(uiwidget_t const *ob)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    assert(obj->type == GUI_LOG);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
     if(0 != log->_pvisMsgCount)
     {
-        int n = log->_nextUsedMsg - MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+        int n = log->_nextUsedMsg - de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
         if(n < 0) n += LOG_MAX_MESSAGES; // Wrap around.
         return n;
     }
@@ -91,10 +55,10 @@ static int UILog_FirstPVisMessageIdx(const uiwidget_t* obj)
 }
 
 /// @return  Index of the first (i.e., earliest) message.
-static int UILog_FirstMessageIdx(const uiwidget_t* obj)
+static int UILog_FirstMessageIdx(uiwidget_t const *ob)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    assert(obj->type == GUI_LOG);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
     if(0 != log->_pvisMsgCount)
     {
@@ -106,14 +70,14 @@ static int UILog_FirstMessageIdx(const uiwidget_t* obj)
 }
 
 /// @return  Index of the next (possibly already used) message.
-static __inline int UILog_NextMessageIdx(const uiwidget_t* obj, int current)
+static inline int UILog_NextMessageIdx(uiwidget_t const * /*ob*/, int current)
 {
     if(current < LOG_MAX_MESSAGES - 1) return current + 1;
     return 0; // Wrap around.
 }
 
 /// @return  Index of the previous (possibly already used) message.
-static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
+static inline int UILog_PrevMessageIdx(uiwidget_t const * /*ob*/, int current)
 {
     if(current > 0) return current - 1;
     return LOG_MAX_MESSAGES - 1; // Wrap around.
@@ -126,28 +90,24 @@ static __inline int UILog_PrevMessageIdx(const uiwidget_t* obj, int current)
  * @param text  Message to be added.
  * @param tics  Length of time the message should be visible.
  */
-static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char* text, int tics)
+static guidata_log_message_t *UILog_Push(uiwidget_t *ob, int flags, char const *text, int tics)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    guidata_log_message_t* msg;
-    int len;
-    assert(obj->type == GUI_LOG && text);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG && text);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
-    len = (int)strlen(text);
-    if(0 == len)
+    int len = (int)strlen(text);
+    if(!len)
     {
-        Con_Error("Log::Push: Attempted to log zero-length message.");
-        exit(1); // Unreachable.
+        DENG2_ASSERT(!"Log::Push: Attempted to log zero-length message.");
+        return 0;
     }
 
-    msg = &log->_msgs[log->_nextUsedMsg];
-    log->_nextUsedMsg = UILog_NextMessageIdx(obj, log->_nextUsedMsg);
+    guidata_log_message_t *msg = &log->_msgs[log->_nextUsedMsg];
+    log->_nextUsedMsg = UILog_NextMessageIdx(ob, log->_nextUsedMsg);
     if(len >= msg->textMaxLen)
     {
         msg->textMaxLen = len+1;
-        msg->text = (char*) Z_Realloc(msg->text, msg->textMaxLen, PU_GAMESTATIC);
-        if(!msg->text)
-            Con_Error("Log::Push: Failed on (re)allocation of %lu bytes for log message.", (unsigned long) msg->textMaxLen);
+        msg->text = (char *) Z_Realloc(msg->text, msg->textMaxLen, PU_GAMESTATIC);
     }
 
     if(log->_msgCount < LOG_MAX_MESSAGES)
@@ -162,17 +122,15 @@ static guidata_log_message_t* UILog_Push(uiwidget_t* obj, int flags, const char*
 }
 
 /// Remove the oldest message from the log.
-static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
+static guidata_log_message_t *UILog_Pop(uiwidget_t *ob)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    guidata_log_message_t* msg;
-    int oldest;
-    assert(obj->type == GUI_LOG);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
-    oldest = UILog_FirstMessageIdx(obj);
+    int oldest = UILog_FirstMessageIdx(ob);
     if(0 > oldest) return NULL;
 
-    msg = &log->_msgs[oldest];
+    guidata_log_message_t *msg = &log->_msgs[oldest];
     --log->_pvisMsgCount;
 
     msg->ticsRemain = LOG_MESSAGE_SCROLLTICS;
@@ -180,60 +138,56 @@ static guidata_log_message_t* UILog_Pop(uiwidget_t* obj)
     return msg;
 }
 
-void UILog_Empty(uiwidget_t* obj)
+void UILog_Empty(uiwidget_t *ob)
 {
-    while(UILog_Pop(obj)) {}
+    while(UILog_Pop(ob)) {}
 }
 
-void UILog_Post(uiwidget_t* obj, byte flags, const char* text)
+void UILog_Post(uiwidget_t *ob, byte flags, char const *text)
 {
 #define SMALLBUF_MAXLEN 128
 
-    //guidata_log_t* log = (guidata_log_t*)obj->typedata;
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG && text != 0);
+    //guidata_log_t *log = (guidata_log_t *)ob->typedata;
     char smallBuf[SMALLBUF_MAXLEN+1];
-    char* bigBuf = NULL, *p;
-    size_t requiredLen = strlen(text);
-    assert(obj->type == GUI_LOG && text);
 
-    if(0 == requiredLen) return;
+    int requiredLen = (int)strlen(text);
+    if(!requiredLen) return;
 
     flags &= ~LOG_INTERNAL_MESSAGEFLAGMASK;
 
+    char *bigBuf = 0, *p;
     if(requiredLen <= SMALLBUF_MAXLEN)
     {
         p = smallBuf;
     }
     else
     {
-        bigBuf = (char*) malloc(requiredLen + 1);
-        if(NULL == bigBuf)
-            Con_Error("Log::Post: Failed on allocation of %lu bytes for temporary "
-                "local message buffer.", (unsigned long) (requiredLen + 1));
+        bigBuf = (char *) M_Malloc(requiredLen + 1);
         p = bigBuf;
     }
     p[requiredLen] = '\0';
     sprintf(p, "%s", text);
 
-    UILog_Push(obj, flags, p, cfg.msgUptime * TICSPERSEC);
-    if(NULL != bigBuf)
-        free(bigBuf);
+    UILog_Push(ob, flags, p, cfg.msgUptime * TICSPERSEC);
+
+    M_Free(bigBuf);
 
 #undef SMALLBUF_MAXLEN
 }
 
-void UILog_Refresh(uiwidget_t* obj)
+void UILog_Refresh(uiwidget_t *ob)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    int i, n;
-    assert(obj->type == GUI_LOG);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
-    log->_pvisMsgCount = MIN_OF(log->_msgCount, MAX_OF(0, cfg.msgCount));
-    n = UILog_FirstMessageIdx(obj);
+    log->_pvisMsgCount = de::min(log->_msgCount, de::max(0, cfg.msgCount));
+    int n = UILog_FirstMessageIdx(ob);
     if(0 > n) return;
 
-    for(i = 0; i < log->_pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
+    for(int i = 0; i < log->_pvisMsgCount; ++i, n = UILog_NextMessageIdx(ob, n))
     {
-        guidata_log_message_t* msg = &log->_msgs[n];
+        guidata_log_message_t *msg = &log->_msgs[n];
 
         // Change the tics remaining to that at post time plus a small bonus
         // so that they do not all disappear at once.
@@ -246,48 +200,47 @@ void UILog_Refresh(uiwidget_t* obj)
  * Process gametic. Jobs include ticking messages and adjusting values
  * used when drawing the buffer for animation.
  */
-void UILog_Ticker(uiwidget_t* obj, timespan_t ticLength)
+void UILog_Ticker(uiwidget_t *ob, timespan_t /*ticLength*/)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    int i, oldest;
-    assert(obj->type == GUI_LOG);
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
     // All messags tic away.
-    for(i = 0; i < LOG_MAX_MESSAGES; ++i)
+    for(int i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
         guidata_log_message_t* msg = &log->_msgs[i];
-        if(0 == msg->ticsRemain) continue;
+        if(!msg->ticsRemain) continue;
         --msg->ticsRemain;
     }
 
     // Is it time to pop?
-    oldest = UILog_FirstMessageIdx(obj);
+    int oldest = UILog_FirstMessageIdx(ob);
     if(oldest >= 0)
     {
-        guidata_log_message_t* msg = &log->_msgs[oldest];
-        if(0 == msg->ticsRemain)
+        guidata_log_message_t *msg = &log->_msgs[oldest];
+        if(!msg->ticsRemain)
         {
-            UILog_Pop(obj);
+            UILog_Pop(ob);
         }
     }
 }
 
-void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
+void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    const int alignFlags = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
-    const short textFlags = DTF_NO_EFFECTS;
-    const float textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    //const float iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
+    int const alignFlags  = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
+    short const textFlags = DTF_NO_EFFECTS;
+    float const textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
+    //float const iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
     int lineHeight;
-    int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
     float offsetDueToMapTitle = 0;
-    guidata_log_message_t* msg;
-    assert(obj->type == GUI_LOG);
+    guidata_log_message_t *msg;
 
     if(Hu_IsMapTitleVisible() && !cfg.automapTitleAtBottom)
     {
@@ -302,14 +255,14 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Translatef(0, offsetDueToMapTitle, 0);
     DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
 
-    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(ob);
     if(!cfg.hudShown[HUD_LOG])
     {
         // Advance to the first non-hidden message.
         i = 0;
         while(0 == (log->_msgs[firstMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
-            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
+            firstMsg = UILog_NextMessageIdx(ob, firstMsg);
         }
 
         // Nothing visible?
@@ -329,11 +282,11 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
         i = 0;
         while(0 == (log->_msgs[lastMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
-            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
+            lastMsg = UILog_PrevMessageIdx(ob, lastMsg);
         }
     }
 
-    FR_SetFont(obj->font);
+    FR_SetFont(ob->font);
     /// @todo Query line height from the font.
     lineHeight = FR_CharHeight('Q')+1;
 
@@ -358,7 +311,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     n = firstMsg;
     drawnMsgCount = 0;
 
-    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(ob, n))
     {
         msg = &log->_msgs[n];
         if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NO_HIDE))
@@ -381,12 +334,12 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
 
         if((msg->flags & LMF_JUSTADDED) && 0 != cfg.msgBlink)
         {
-            const uint blinkSpeed = cfg.msgBlink;
-            const uint msgTics = msg->tics - msg->ticsRemain;
+            uint const blinkSpeed = cfg.msgBlink;
+            uint const msgTics = msg->tics - msg->ticsRemain;
 
             if(msgTics < blinkSpeed)
             {
-                const uint td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
+                uint const td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
                 if(n == lastMsg && (0 == msgTics || (td & 2)))
                 {
                     // Use the "flash" color.
@@ -396,7 +349,7 @@ void UILog_Drawer(uiwidget_t* obj, const Point2Raw* offset)
             else if(msgTics < blinkSpeed + LOG_MESSAGE_FLASHFADETICS && msgTics >= blinkSpeed)
             {
                 // Fade color to normal.
-                const float fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
+                float const fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
                 col[CR] += (1.0f - col[CR]) / LOG_MESSAGE_FLASHFADETICS * fade;
                 col[CG] += (1.0f - col[CG]) / LOG_MESSAGE_FLASHFADETICS * fade;
                 col[CB] += (1.0f - col[CB]) / LOG_MESSAGE_FLASHFADETICS * fade;
@@ -416,29 +369,29 @@ stateCleanup:
     DGL_PopMatrix();
 }
 
-void UILog_UpdateGeometry(uiwidget_t* obj)
+void UILog_UpdateGeometry(uiwidget_t *ob)
 {
-    guidata_log_t* log = (guidata_log_t*)obj->typedata;
-    guidata_log_message_t* msg;
+    DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
+    guidata_log_t *log = (guidata_log_t *)ob->typedata;
+    guidata_log_message_t *msg;
     int lineHeight;
-    int i, n, pvisMsgCount = MIN_OF(log->_pvisMsgCount, MAX_OF(0, cfg.msgCount));
+    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float scrollFactor;
     RectRaw lineGeometry;
-    assert(obj->type == GUI_LOG);
 
-    Rect_SetWidthHeight(obj->geometry, 0, 0);
+    Rect_SetWidthHeight(ob->geometry, 0, 0);
 
-    if(0 == pvisMsgCount) return;
+    if(!pvisMsgCount) return;
 
-    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(obj);
+    firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(ob);
     if(!cfg.hudShown[HUD_LOG])
     {
         // Advance to the first non-hidden message.
         i = 0;
         while(0 == (log->_msgs[firstMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
-            firstMsg = UILog_NextMessageIdx(obj, firstMsg);
+            firstMsg = UILog_NextMessageIdx(ob, firstMsg);
         }
 
         // Nothing visible?
@@ -458,7 +411,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
         i = 0;
         while(0 == (log->_msgs[lastMsg].flags & LMF_NO_HIDE) && ++i < pvisMsgCount)
         {
-            lastMsg = UILog_PrevMessageIdx(obj, lastMsg);
+            lastMsg = UILog_PrevMessageIdx(ob, lastMsg);
         }
     }
 
@@ -482,7 +435,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
 
     lineGeometry.origin.x = lineGeometry.origin.y = 0;
 
-    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(obj, n))
+    for(i = 0; i < pvisMsgCount; ++i, n = UILog_NextMessageIdx(ob, n))
     {
         msg = &log->_msgs[n];
         if(!cfg.hudShown[HUD_LOG] && !(msg->flags & LMF_NO_HIDE)) continue;
@@ -490,7 +443,7 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
         ++drawnMsgCount;
 
         FR_TextSize(&lineGeometry.size, msg->text);
-        Rect_UniteRaw(obj->geometry, &lineGeometry);
+        Rect_UniteRaw(ob->geometry, &lineGeometry);
 
         lineGeometry.origin.y += lineHeight;
     }
@@ -498,9 +451,25 @@ void UILog_UpdateGeometry(uiwidget_t* obj)
     if(0 != drawnMsgCount)
     {
         // Subtract the scroll offset.
-        Rect_SetHeight(obj->geometry, Rect_Height(obj->geometry) - lineHeight * scrollFactor);
+        Rect_SetHeight(ob->geometry, Rect_Height(ob->geometry) - lineHeight * scrollFactor);
     }
 
-    Rect_SetWidthHeight(obj->geometry, Rect_Width(obj->geometry)  * cfg.msgScale,
-                                       Rect_Height(obj->geometry) * cfg.msgScale);
+    Rect_SetWidthHeight(ob->geometry, Rect_Width(ob->geometry)  * cfg.msgScale,
+                                      Rect_Height(ob->geometry) * cfg.msgScale);
+}
+
+void UILog_Register()
+{
+    // Behavior
+    C_VAR_FLOAT("msg-uptime",  &cfg.msgUptime,          0, 1, 60);
+
+    // Display
+    C_VAR_INT2 ("msg-align",   &cfg.msgAlign,           0, 0, 2, ST_LogUpdateAlignment);
+    C_VAR_INT  ("msg-blink",   &cfg.msgBlink,           CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("msg-color-r", &cfg.msgColor[CR],       0, 0, 1);
+    C_VAR_FLOAT("msg-color-g", &cfg.msgColor[CG],       0, 0, 1);
+    C_VAR_FLOAT("msg-color-b", &cfg.msgColor[CB],       0, 0, 1);
+    C_VAR_INT  ("msg-count",   &cfg.msgCount,           0, 1, 8);
+    C_VAR_FLOAT("msg-scale",   &cfg.msgScale,           0, 0.1f, 1);
+    C_VAR_BYTE2("msg-show",    &cfg.hudShown[HUD_LOG],  0, 0, 1, ST_LogPostVisibilityChangeNotification);
 }

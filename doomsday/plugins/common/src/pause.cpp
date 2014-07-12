@@ -1,10 +1,8 @@
-/**
- * @file pause.c
- * Pausing the game. @ingroup libcommon
+/** @file pause.cpp  Pausing the game.
  *
- * @authors Copyright &copy; 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 1993-1996 by id Software, Inc.
+ * @authors Copyright © 1999-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,19 +19,21 @@
  * 02110-1301 USA</small>
  */
 
-#include "pause.h"
 #include "common.h"
+#include "pause.h"
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "d_net.h"
+
+using namespace de;
 
 #define PAUSEF_PAUSED           0x1
 #define PAUSEF_FORCED_PERIOD    0x2
 
 #define READONLYCVAR        (CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE)
 
-int paused = 0;
+int paused;
 
 static int gamePauseWhenFocusLost; // cvar
 static int gameUnpauseWhenFocusGained; // cvar
@@ -65,11 +65,11 @@ static void beginPause(int flags)
     }
 }
 
-static void endPause(void)
+static void endPause()
 {
     if(paused)
     {
-        App_Log(DE2_LOG_VERBOSE, "Pause ends (state:%x)", paused);
+        LOG_VERBOSE("Pause ends (state:%i)") << paused;
 
         forcedPeriodTicsRemaining = 0;
 
@@ -85,7 +85,7 @@ static void endPause(void)
     paused = 0;
 }
 
-static void checkForcedPeriod(void)
+static void checkForcedPeriod()
 {
     if((paused != 0) && (paused & PAUSEF_FORCED_PERIOD))
     {
@@ -96,28 +96,12 @@ static void checkForcedPeriod(void)
     }
 }
 
-void Pause_Register(void)
-{
-    forcedPeriodTicsRemaining = 0;
-
-    // Default values (overridden by values from .cfg files).
-    gamePauseWhenFocusLost     = true;
-    gameUnpauseWhenFocusGained = false;
-
-    C_CMD("pause", "", Pause);
-
-    C_VAR_INT("game-paused",              &paused,                     READONLYCVAR, 0,  0);
-    C_VAR_INT("game-pause-focuslost",     &gamePauseWhenFocusLost,     0,            0,  1);
-    C_VAR_INT("game-unpause-focusgained", &gameUnpauseWhenFocusGained, 0,            0,  1);
-    C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            -1, 70);
-}
-
-dd_bool Pause_IsPaused(void)
+dd_bool Pause_IsPaused()
 {
     return (paused != 0) || (!IS_NETGAME && (Hu_MenuIsActive() || Hu_IsMessageActive()));
 }
 
-dd_bool Pause_IsUserPaused(void)
+dd_bool Pause_IsUserPaused()
 {
     return (paused != 0) && !(paused & PAUSEF_FORCED_PERIOD);
 }
@@ -153,13 +137,13 @@ void Pause_SetForcedPeriod(int tics)
 {
     if(tics <= 0) return;
 
-    App_Log(DE2_LOG_MESSAGE, "Forced pause for %i tics", tics);
+    LOG_MSG("Forced pause for %i tics") << tics;
 
     forcedPeriodTicsRemaining = tics;
     beginPause(PAUSEF_FORCED_PERIOD);
 }
 
-void Pause_Ticker(void)
+void Pause_Ticker()
 {
     checkForcedPeriod();
 }
@@ -182,7 +166,7 @@ dd_bool Pause_Responder(event_t *ev)
     return false;
 }
 
-void Pause_MapStarted(void)
+void Pause_MapStarted()
 {
     if(!IS_CLIENT)
     {
@@ -199,21 +183,35 @@ void Pause_MapStarted(void)
     }
 }
 
+void Pause_Register()
+{
+    forcedPeriodTicsRemaining = 0;
+
+    // Default values (overridden by values from .cfg files).
+    gamePauseWhenFocusLost     = true;
+    gameUnpauseWhenFocusGained = false;
+
+    C_CMD("pause", "", Pause);
+
+    C_VAR_INT("game-paused",              &paused,                     READONLYCVAR, 0,  0);
+    C_VAR_INT("game-pause-focuslost",     &gamePauseWhenFocusLost,     0,            0,  1);
+    C_VAR_INT("game-unpause-focusgained", &gameUnpauseWhenFocusGained, 0,            0,  1);
+    C_VAR_INT("game-pause-mapstart-tics", &gamePauseAfterMapStartTics, 0,            -1, 70);
+}
+
 void NetSv_Paused(int pauseState)
 {
-    Writer* writer;
-
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
-    writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteByte(writer,
             (pauseState & PAUSEF_PAUSED?        1 : 0) |
             (pauseState & PAUSEF_FORCED_PERIOD? 2 : 0));
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_PAUSE, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetCl_Paused(Reader *msg)
+void NetCl_Paused(reader_s *msg)
 {
     byte flags = Reader_ReadByte(msg);
     paused = 0;

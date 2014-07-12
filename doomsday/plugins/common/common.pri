@@ -93,12 +93,12 @@ SOURCES += \
     $$common_src/gl_drawpatch.c \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.cpp \
-    $$common_src/hu_chat.c \
+    $$common_src/hu_chat.cpp \
     $$common_src/hu_inventory.c \
     $$common_src/hu_lib.cpp \
-    $$common_src/hu_log.c \
+    $$common_src/hu_log.cpp \
     $$common_src/hu_menu.cpp \
-    $$common_src/hu_msg.c \
+    $$common_src/hu_msg.cpp \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.cpp \
@@ -106,7 +106,7 @@ SOURCES += \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.cpp \
-    $$common_src/pause.c \
+    $$common_src/pause.cpp \
     $$common_src/p_actor.cpp \
     $$common_src/p_ceiling.cpp \
     $$common_src/p_door.cpp \
