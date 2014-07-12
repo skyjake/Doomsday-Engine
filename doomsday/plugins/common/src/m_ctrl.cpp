@@ -599,9 +599,9 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
         ob->_flags |= MNF_ACTIVE;
-        if(MNObject_HasAction(ob, MNA_ACTIVE))
+        if(ob->hasAction(MNA_ACTIVE))
         {
-            MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+            ob->execAction(MNA_ACTIVE, NULL);
             return true;
         }
         break;

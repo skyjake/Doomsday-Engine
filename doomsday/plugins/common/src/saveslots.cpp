@@ -99,11 +99,11 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
         DENG2_ASSERT(ob->_type == MN_EDIT);
 
-        MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
+        ob->setFlags(FO_SET, MNF_DISABLED);
         if(status == Loadable)
         {
             MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
-            MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
+            ob->setFlags(FO_CLEAR, MNF_DISABLED);
         }
         else
         {

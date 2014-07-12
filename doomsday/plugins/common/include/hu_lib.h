@@ -144,6 +144,7 @@ struct mn_actioninfo_t
  */
 struct mn_object_t
 {
+public:
     /// Type of the object.
     mn_obtype_e _type;
 
@@ -207,91 +208,92 @@ struct mn_object_t
     mn_page_t *_page;
 
     int timer;
+
+public:
+    mn_obtype_e type() const;
+
+    mn_page_t *page() const;
+
+    int flags() const;
+
+    /**
+     * Retrieve the current geometry of object within the two-dimensioned
+     * coordinate space of the owning object.
+     *
+     * @return  Rectangluar region of the parent space.
+     */
+    Rect const *geometry() const;
+
+    /**
+     * Retrieve the origin of the object within the two-dimensioned coordinate
+     * space of the owning object.
+     * @return  Origin point within the parent space.
+     */
+    Point2 const *origin() const;
+
+    /**
+     * Retrieve the boundary dimensions of the object expressed as units of
+     * the coordinate space of the owning object.
+     * @return  Size of this object in units of the parent's coordinate space.
+     */
+    Size2 const *size() const;
+
+    /**
+     * Retreive the current fixed origin coordinates.
+     *
+     * @param ob  MNObject-derived instance.
+     * @return  Fixed origin.
+     */
+    Point2Raw const *fixedOrigin() const;
+    int fixedX() const;
+    int fixedY() const;
+
+    /**
+     * Change the current fixed origin coordinates.
+     *
+     * @param ob  MNObject-derived instance.
+     * @param origin  New origin coordinates.
+     * @return  Same as @a ob for caller convenience.
+     */
+    mn_object_t *setFixedOrigin(Point2Raw const *origin);
+    mn_object_t *setFixedX(int x);
+    mn_object_t *setFixedY(int y);
+
+    /// @return  Flags value post operation for caller convenience.
+    int setFlags(flagop_t op, int flags);
+
+    int shortcut();
+
+    void setShortcut(int ddkey);
+
+    /// @return  Index of the font used from the owning/active page.
+    int font();
+
+    /// @return  Index of the color used from the owning/active page.
+    int color();
+
+    dd_bool isGroupMember(int group) const;
+
+    /**
+     * Lookup the unique ActionInfo associated with the identifier @a id.
+     * @return  Associated info if found else @c NULL.
+     */
+    mn_actioninfo_t const *action(mn_actionid_t action);
+
+    /// @return  @c true if this object has a registered executeable action
+    /// associated with the unique identifier @a action.
+    dd_bool hasAction(mn_actionid_t action);
+
+    /**
+     * Execute the action associated with @a id
+     * @param action  Identifier of the action to be executed (if found).
+     * @param parameters  Passed to the action callback.
+     * @return  Return value of the executed action else @c -1 if NOP.
+     */
+    int execAction(mn_actionid_t action, void *parameters);
 };
 
-mn_obtype_e MNObject_Type(mn_object_t const *ob);
-
-mn_page_t *MNObject_Page(mn_object_t const *ob);
-
-int MNObject_Flags(mn_object_t const *ob);
-
-/**
- * Retrieve the current geometry of object within the two-dimensioned
- * coordinate space of the owning object.
- *
- * @return  Rectangluar region of the parent space.
- */
-Rect const *MNObject_Geometry(mn_object_t const *ob);
-
-/**
- * Retrieve the origin of the object within the two-dimensioned coordinate
- * space of the owning object.
- * @return  Origin point within the parent space.
- */
-Point2 const *MNObject_Origin(mn_object_t const *ob);
-
-/**
- * Retrieve the boundary dimensions of the object expressed as units of
- * the coordinate space of the owning object.
- * @return  Size of this object in units of the parent's coordinate space.
- */
-Size2 const *MNObject_Size(mn_object_t const *ob);
-
-/**
- * Retreive the current fixed origin coordinates.
- *
- * @param ob  MNObject-derived instance.
- * @return  Fixed origin.
- */
-Point2Raw const *MNObject_FixedOrigin(mn_object_t const *ob);
-int MNObject_FixedX(mn_object_t const *ob);
-int MNObject_FixedY(mn_object_t const *ob);
-
-/**
- * Change the current fixed origin coordinates.
- *
- * @param ob  MNObject-derived instance.
- * @param origin  New origin coordinates.
- * @return  Same as @a ob for caller convenience.
- */
-mn_object_t *MNObject_SetFixedOrigin(mn_object_t *ob, Point2Raw const *origin);
-mn_object_t *MNObject_SetFixedX(mn_object_t *ob, int x);
-mn_object_t *MNObject_SetFixedY(mn_object_t *ob, int y);
-
-/// @return  Flags value post operation for caller convenience.
-int MNObject_SetFlags(mn_object_t *ob, flagop_t op, int flags);
-
-int MNObject_Shortcut(mn_object_t *ob);
-
-void MNObject_SetShortcut(mn_object_t *ob, int ddkey);
-
-/// @return  Index of the font used from the owning/active page.
-int MNObject_Font(mn_object_t *ob);
-
-/// @return  Index of the color used from the owning/active page.
-int MNObject_Color(mn_object_t *ob);
-
-dd_bool MNObject_IsGroupMember(mn_object_t const *ob, int group);
-
 int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e command);
-
-/**
- * Lookup the unique ActionInfo associated with the identifier @a id.
- * @return  Associated info if found else @c NULL.
- */
-mn_actioninfo_t const *MNObject_Action(mn_object_t *ob, mn_actionid_t action);
-
-/// @return  @c true if this object has a registered executeable action
-/// associated with the unique identifier @a action.
-dd_bool MNObject_HasAction(mn_object_t *ob, mn_actionid_t action);
-
-/**
- * Execute the action associated with @a id
- * @param action  Identifier of the action to be executed (if found).
- * @param parameters  Passed to the action callback.
- * @return  Return value of the executed action else @c -1 if NOP.
- */
-int MNObject_ExecAction(mn_object_t *ob, mn_actionid_t action, void *parameters);
 
 #endif // __cplusplus
 

@@ -770,7 +770,7 @@ static void updatePageObjectGeometries(mn_page_t *page)
     {
         mn_object_t *ob = &page->objects()[i];
 
-        if(MNObject_Type(ob) == MN_NONE) continue;
+        if(ob->type() == MN_NONE) continue;
 
         FR_PushAttrib();
         if(ob->updateGeometry)
@@ -785,7 +785,7 @@ static void updatePageObjectGeometries(mn_page_t *page)
 /// @return  @c true iff this object is drawable (potentially visible).
 dd_bool MNObject_IsDrawable(mn_object_t *ob)
 {
-    return !(MNObject_Type(ob) == MN_NONE || !ob->drawer || (MNObject_Flags(ob) & MNF_HIDDEN));
+    return !(ob->type() == MN_NONE || !ob->drawer || (ob->flags() & MNF_HIDDEN));
 }
 
 int mn_page_t::lineHeight(int *lineOffset)
@@ -848,7 +848,7 @@ void mn_page_t::applyPageLayout()
 
         // If the object has a fixed position, we will ignore it while doing
         // dynamic layout.
-        if(MNObject_Flags(ob) & MNF_POSITION_FIXED)
+        if(ob->flags() & MNF_POSITION_FIXED)
         {
             Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
             Rect_Unite(geometry, ob->_geometry);
@@ -859,7 +859,7 @@ void mn_page_t::applyPageLayout()
         }
 
         // An additional offset requested?
-        if(MNObject_Flags(ob) & MNF_LAYOUT_OFFSET)
+        if(ob->flags() & MNF_LAYOUT_OFFSET)
         {
             origin.x += ob->_origin.x;
             origin.y += ob->_origin.y;
@@ -871,14 +871,14 @@ void mn_page_t::applyPageLayout()
         // vertical dividing line, with the label on the left, other object
         // on the right.
         // @todo Do not assume pairing, an object should designate it's pair.
-        if(MNObject_Type(ob) == MN_TEXT && nextOb)
+        if(ob->type() == MN_TEXT && nextOb)
         {
             if(MNObject_IsDrawable(nextOb) &&
-               (MNObject_Type(nextOb) == MN_BUTTON ||
-                MNObject_Type(nextOb) == MN_LISTINLINE ||
-                MNObject_Type(nextOb) == MN_COLORBOX ||
-                MNObject_Type(nextOb) == MN_BINDINGS ||
-                (MNObject_Type(nextOb) == MN_SLIDER && nextOb->drawer == MNSlider_TextualValueDrawer)))
+               (nextOb->type() == MN_BUTTON ||
+                nextOb->type() == MN_LISTINLINE ||
+                nextOb->type() == MN_COLORBOX ||
+                nextOb->type() == MN_BINDINGS ||
+                (nextOb->type() == MN_SLIDER && nextOb->drawer == MNSlider_TextualValueDrawer)))
             {
                 int const margin = lineOffset * 2;
                 RectRaw united;
@@ -1023,18 +1023,18 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
         cursorOrigin.x = -1;
-        cursorOrigin.y = Point2_Y(MNObject_Origin(focusObj));
+        cursorOrigin.y = Point2_Y(focusObj->origin());
 
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(MN_LIST == MNObject_Type(focusObj) && (MNObject_Flags(focusObj) & MNF_ACTIVE) &&
+        if(MN_LIST == focusObj->type() && (focusObj->flags() & MNF_ACTIVE) &&
            MNList_SelectionIsVisible(focusObj))
         {
             mndata_list_t const *list = (mndata_list_t *)focusObj->_typedata;
 
             FR_PushAttrib();
-            FR_SetFont(page->predefinedFont(mn_page_fontid_t(MNObject_Font(focusObj))));
+            FR_SetFont(page->predefinedFont(mn_page_fontid_t(focusObj->font())));
             focusObjHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
             cursorOrigin.y += (list->selection - list->first) * focusObjHeight;
             FR_PopAttrib();
@@ -1077,10 +1077,10 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
         mn_object_t *ob = &page->objects()[i];
         RectRaw geometry;
 
-        if(MNObject_Type(ob) == MN_NONE || !ob->drawer) continue;
-        if(MNObject_Flags(ob) & MNF_HIDDEN) continue;
+        if(ob->type() == MN_NONE || !ob->drawer) continue;
+        if(ob->flags() & MNF_HIDDEN) continue;
 
-        Rect_Raw(MNObject_Geometry(ob), &geometry);
+        Rect_Raw(ob->geometry(), &geometry);
 
         FR_PushAttrib();
         MN_DrawObject(ob, &geometry.origin);
@@ -1149,7 +1149,7 @@ mn_page_t::~mn_page_t()
     Str_Free(&title);
     if(geometry) Rect_Delete(geometry);
 
-    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    for(mn_object_t *ob = _objects; ob->type() != MN_NONE; ob++)
     {
         if(ob->_geometry) Rect_Delete(ob->_geometry);
     }
@@ -1196,7 +1196,7 @@ void mn_page_t::clearFocusObject()
     if(focus >= 0)
     {
         mn_object_t *ob = &_objects[focus];
-        if(MNObject_Flags(ob) & MNF_ACTIVE)
+        if(ob->flags() & MNF_ACTIVE)
         {
             return;
         }
@@ -1205,7 +1205,7 @@ void mn_page_t::clearFocusObject()
     mn_object_t *ob = _objects;
     for(int i = 0; i < _objectsCount; ++i, ob++)
     {
-        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+        ob->setFlags(FO_CLEAR, MNF_FOCUS);
     }
     refocus();
 }
@@ -1213,7 +1213,7 @@ void mn_page_t::clearFocusObject()
 int mn_page_t::cursorSize()
 {
     mn_object_t *focusOb = focusObject();
-    int focusObHeight = focusOb? Size2_Height(MNObject_Size(focusOb)) : 0;
+    int focusObHeight = focusOb? Size2_Height(focusOb->size()) : 0;
 
     // Ensure the cursor is at least as tall as the effective line height for
     // the page. This is necessary because some mods replace the menu button
@@ -1226,9 +1226,9 @@ int mn_page_t::cursorSize()
 mn_object_t *mn_page_t::findObject(int group, int flags)
 {
     mn_object_t *ob = _objects;
-    for(; MNObject_Type(ob) != MN_NONE; ob++)
+    for(; ob->type() != MN_NONE; ob++)
     {
-        if(MNObject_IsGroupMember(ob, group) && (MNObject_Flags(ob) & flags) == flags)
+        if(ob->isGroupMember(group) && (ob->flags() & flags) == flags)
             return ob;
     }
     return 0; // Not found.
@@ -1257,11 +1257,11 @@ void mn_page_t::giveChildFocus(mn_object_t *ob, dd_bool allowRefocus)
         if(ob != _objects + focus)
         {
             mn_object_t *oldFocusOb = _objects + focus;
-            if(MNObject_HasAction(oldFocusOb, MNA_FOCUSOUT))
+            if(oldFocusOb->hasAction(MNA_FOCUSOUT))
             {
-                MNObject_ExecAction(oldFocusOb, MNA_FOCUSOUT, NULL);
+                oldFocusOb->execAction(MNA_FOCUSOUT, NULL);
             }
-            MNObject_SetFlags(oldFocusOb, FO_CLEAR, MNF_FOCUS);
+            oldFocusOb->setFlags(FO_CLEAR, MNF_FOCUS);
         }
         else if(!allowRefocus)
         {
@@ -1270,10 +1270,10 @@ void mn_page_t::giveChildFocus(mn_object_t *ob, dd_bool allowRefocus)
     }
 
     focus = ob - _objects;
-    MNObject_SetFlags(ob, FO_SET, MNF_FOCUS);
-    if(MNObject_HasAction(ob, MNA_FOCUS))
+    ob->setFlags(FO_SET, MNF_FOCUS);
+    if(ob->hasAction(MNA_FOCUS))
     {
-        MNObject_ExecAction(ob, MNA_FOCUS, NULL);
+        ob->execAction(MNA_FOCUS, NULL);
     }
 }
 
@@ -1301,7 +1301,7 @@ void mn_page_t::refocus()
         for(i = 0; i < _objectsCount; ++i)
         {
             mn_object_t *ob = &_objects[i];
-            if((MNObject_Flags(ob) & MNF_DEFAULT) && !(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            if((ob->flags() & MNF_DEFAULT) && !(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
             }
@@ -1312,7 +1312,7 @@ void mn_page_t::refocus()
         for(i = 0; i < _objectsCount; ++i)
         {
             mn_object_t *ob = &_objects[i];
-            if(!(MNObject_Flags(ob) & (MNF_DISABLED|MNF_NO_FOCUS)))
+            if(!(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
                 break;
@@ -1347,14 +1347,14 @@ void mn_page_t::initialize()
         // Reset object timer.
         ob->timer = 0;
 
-        switch(MNObject_Type(ob))
+        switch(ob->type())
         {
         case MN_BUTTON: {
             mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
             if(btn->staydownMode)
             {
                 dd_bool const activate = (*(char *) ob->data1);
-                MNObject_SetFlags(ob, (activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
+                ob->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
             break; }
 
@@ -1390,7 +1390,7 @@ void mn_page_t::initObjects()
 {
     _objectsCount = 0;
 
-    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    for(mn_object_t *ob = _objects; ob->type() != MN_NONE; ob++)
     {
         _objectsCount += 1;
 
@@ -1398,20 +1398,20 @@ void mn_page_t::initObjects()
         ob->_geometry = Rect_New();
 
         ob->timer = 0;
-        MNObject_SetFlags(ob, FO_CLEAR, MNF_FOCUS);
+        ob->setFlags(FO_CLEAR, MNF_FOCUS);
 
         if(0 != ob->_shortcut)
         {
             int shortcut = ob->_shortcut;
             ob->_shortcut = 0; // Clear invalid defaults.
-            MNObject_SetShortcut(ob, shortcut);
+            ob->setShortcut(shortcut);
         }
 
-        switch(MNObject_Type(ob))
+        switch(ob->type())
         {
         case MN_TEXT: {
             mndata_text_t *txt = (mndata_text_t *)ob->_typedata;
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            ob->setFlags(FO_SET, MNF_NO_FOCUS);
 
             if(txt->text && (PTR2INT(txt->text) > 0 && PTR2INT(txt->text) < NUMTEXT))
             {
@@ -1420,14 +1420,14 @@ void mn_page_t::initObjects()
             break; }
 
         case MN_BUTTON: {
-            /*mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);*/
+            /*mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);*/
             mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
 
             if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
             {
                 btn->text = GET_TXT(PTR2INT(btn->text));
                 /// @todo Should not be done here.
-                MNObject_SetShortcut(ob, btn->text[0]);
+                ob->setShortcut(btn->text[0]);
             }
             break; }
 
@@ -1466,7 +1466,7 @@ void mn_page_t::initObjects()
             break; }
 
         case MN_MOBJPREVIEW:
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            ob->setFlags(FO_SET, MNF_NO_FOCUS);
             break;
 
         default: break;
@@ -1477,17 +1477,17 @@ void mn_page_t::initObjects()
 /// Main task is to update objects linked to cvars.
 void mn_page_t::updateObjects()
 {
-    for(mn_object_t *ob = _objects; MNObject_Type(ob) != MN_NONE; ob++)
+    for(mn_object_t *ob = _objects; ob->type() != MN_NONE; ob++)
     {
-        switch(MNObject_Type(ob))
+        switch(ob->type())
         {
         case MN_TEXT:
         case MN_MOBJPREVIEW:
-            MNObject_SetFlags(ob, FO_SET, MNF_NO_FOCUS);
+            ob->setFlags(FO_SET, MNF_NO_FOCUS);
             break;
 
         case MN_BUTTON: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);
             mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
 
             if(action && action->callback == Hu_MenuCvarButton)
@@ -1521,7 +1521,7 @@ void mn_page_t::updateObjects()
 
         case MN_LIST:
         case MN_LISTINLINE: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);
             mndata_list_t *list = (mndata_list_t *) ob->_typedata;
 
             if(action && action->callback == Hu_MenuCvarList)
@@ -1531,7 +1531,7 @@ void mn_page_t::updateObjects()
             break; }
 
         case MN_EDIT: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);
             mndata_edit_t *edit = (mndata_edit_t *) ob->_typedata;
 
             if(action && action->callback == Hu_MenuCvarEdit)
@@ -1541,7 +1541,7 @@ void mn_page_t::updateObjects()
             break; }
 
         case MN_SLIDER: {
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);
             mndata_slider_t *sldr = (mndata_slider_t *) ob->_typedata;
             if(action && action->callback == Hu_MenuCvarSlider)
             {
@@ -1556,7 +1556,7 @@ void mn_page_t::updateObjects()
 
         case MN_COLORBOX: {
             mndata_colorbox_t *cbox = (mndata_colorbox_t *) ob->_typedata;
-            mn_actioninfo_t const *action = MNObject_Action(ob, MNA_MODIFIED);
+            mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);
 
             if(action && action->callback == Hu_MenuCvarColorBox)
             {
@@ -1580,7 +1580,7 @@ void mn_page_t::tick()
     mn_object_t *ob = _objects;
     for(int i = 0; i < _objectsCount; ++i, ob++)
     {
-        if((MNObject_Flags(ob) & MNF_PAUSED) || (MNObject_Flags(ob) & MNF_HIDDEN))
+        if((ob->flags() & MNF_PAUSED) || (ob->flags() & MNF_HIDDEN))
             continue;
 
         if(ob->ticker)
@@ -1622,131 +1622,112 @@ int mn_page_t::timer()
     return _timer;
 }
 
-mn_obtype_e MNObject_Type(const mn_object_t *ob)
+mn_obtype_e mn_object_t::type() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_type;
+    return _type;
 }
 
-mn_page_t *MNObject_Page(const mn_object_t *ob)
+mn_page_t *mn_object_t::page() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_page;
+    return _page;
 }
 
-int MNObject_Flags(const mn_object_t *ob)
+int mn_object_t::flags() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_flags;
+    return _flags;
 }
 
-const Rect* MNObject_Geometry(const mn_object_t *ob)
+Rect const *mn_object_t::geometry() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_geometry;
+    return _geometry;
 }
 
-const Point2* MNObject_Origin(const mn_object_t *ob)
+Point2 const *mn_object_t::origin() const
 {
-    DENG2_ASSERT(ob);
-    return Rect_Origin(ob->_geometry);
+    return Rect_Origin(_geometry);
 }
 
-const Size2* MNObject_Size(const mn_object_t *ob)
+Size2 const *mn_object_t::size() const
 {
-    DENG2_ASSERT(ob);
-    return Rect_Size(ob->_geometry);
+    return Rect_Size(_geometry);
 }
 
-const Point2Raw* MNObject_FixedOrigin(const mn_object_t *ob)
+Point2Raw const *mn_object_t::fixedOrigin() const
 {
-    DENG2_ASSERT(ob);
-    return &ob->_origin;
+    return &_origin;
 }
 
-int MNObject_FixedX(const mn_object_t *ob)
+int mn_object_t::fixedX() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_origin.x;
+    return _origin.x;
 }
 
-int MNObject_FixedY(const mn_object_t *ob)
+int mn_object_t::fixedY() const
 {
-    DENG2_ASSERT(ob);
-    return ob->_origin.y;
+    return _origin.y;
 }
 
-mn_object_t *MNObject_SetFixedOrigin(mn_object_t *ob, const Point2Raw* origin)
+mn_object_t *mn_object_t::setFixedOrigin(Point2Raw const *newOrigin)
 {
-    DENG2_ASSERT(ob);
-    if(origin)
+    if(newOrigin)
     {
-        ob->_origin.x = origin->x;
-        ob->_origin.y = origin->y;
+        _origin.x = newOrigin->x;
+        _origin.y = newOrigin->y;
     }
-    return ob;
+    return this;
 }
 
-mn_object_t *MNObject_SetFixedX(mn_object_t *ob, int x)
+mn_object_t *mn_object_t::setFixedX(int newX)
 {
-    DENG2_ASSERT(ob);
-    ob->_origin.x = x;
-    return ob;
+    _origin.x = newX;
+    return this;
 }
 
-mn_object_t *MNObject_SetFixedY(mn_object_t *ob, int y)
+mn_object_t *mn_object_t::setFixedY(int newY)
 {
-    DENG2_ASSERT(ob);
-    ob->_origin.y = y;
-    return ob;
+    _origin.y = newY;
+    return this;
 }
 
-int MNObject_SetFlags(mn_object_t *ob, flagop_t op, int flags)
+int mn_object_t::setFlags(flagop_t op, int flagsToChange)
 {
-    DENG2_ASSERT(ob != 0);
     switch(op)
     {
-    case FO_CLEAR:  ob->_flags &= ~flags;  break;
-    case FO_SET:    ob->_flags |= flags;   break;
-    case FO_TOGGLE: ob->_flags ^= flags;   break;
-    default:
-        Con_Error("MNObject::SetFlags: Unknown op %i\n", op);
-        exit(1); // Unreachable.
+    case FO_CLEAR:  _flags &= ~flagsToChange;  break;
+    case FO_SET:    _flags |= flagsToChange;   break;
+    case FO_TOGGLE: _flags ^= flagsToChange;   break;
+
+    default: DENG2_ASSERT(!"MNObject::SetFlags: Unknown op.");
     }
-    return ob->_flags;
+    return _flags;
 }
 
-int MNObject_Shortcut(mn_object_t *ob)
+int mn_object_t::shortcut()
 {
-    DENG2_ASSERT(ob);
-    return ob->_shortcut;
+    return _shortcut;
 }
 
-void MNObject_SetShortcut(mn_object_t *ob, int ddkey)
+void mn_object_t::setShortcut(int ddkey)
 {
-    DENG2_ASSERT(ob);
     if(isalnum(ddkey))
     {
-        ob->_shortcut = tolower(ddkey);
+        _shortcut = tolower(ddkey);
     }
 }
 
-int MNObject_Font(mn_object_t *ob)
+int mn_object_t::font()
 {
-    DENG2_ASSERT(ob);
-    return ob->_pageFontIdx;
+    return _pageFontIdx;
 }
 
-int MNObject_Color(mn_object_t *ob)
+int mn_object_t::color()
 {
-    DENG2_ASSERT(ob);
-    return ob->_pageColorIdx;
+    return _pageColorIdx;
 }
 
-dd_bool MNObject_IsGroupMember(const mn_object_t *ob, int group)
+dd_bool mn_object_t::isGroupMember(int group) const
 {
-    DENG2_ASSERT(ob);
-    return (ob->_group == group);
+    return (_group == group);
 }
 
 int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e cmd)
@@ -1758,53 +1739,51 @@ int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e cmd)
         if(!(ob->_flags & MNF_ACTIVE))
         {
             ob->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVE))
+            if(ob->hasAction(MNA_ACTIVE))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+                ob->execAction(MNA_ACTIVE, NULL);
             }
         }
 
         ob->_flags &= ~MNF_ACTIVE;
-        if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+        if(ob->hasAction(MNA_ACTIVEOUT))
         {
-            MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+            ob->execAction(MNA_ACTIVEOUT, NULL);
         }
         return true;
     }
     return false; // Not eaten.
 }
 
-static mn_actioninfo_t* MNObject_FindActionInfoForId(mn_object_t *ob, mn_actionid_t id)
+static mn_actioninfo_t *MNObject_FindActionInfoForId(mn_object_t *ob, mn_actionid_t id)
 {
-    DENG2_ASSERT(ob);
+    DENG2_ASSERT(ob != 0);
     if(VALID_MNACTION(id))
     {
         return &ob->actions[id];
     }
-    return NULL; // Not found.
+    return 0; // Not found.
 }
 
-const mn_actioninfo_t* MNObject_Action(mn_object_t *ob, mn_actionid_t id)
+mn_actioninfo_t const *mn_object_t::action(mn_actionid_t id)
 {
-    return MNObject_FindActionInfoForId(ob, id);
+    return MNObject_FindActionInfoForId(this, id);
 }
 
-dd_bool MNObject_HasAction(mn_object_t *ob, mn_actionid_t id)
+dd_bool mn_object_t::hasAction(mn_actionid_t id)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
+    mn_actioninfo_t *info = MNObject_FindActionInfoForId(this, id);
     return (info && MNActionInfo_IsActionExecuteable(info));
 }
 
-int MNObject_ExecAction(mn_object_t *ob, mn_actionid_t id, void* paramaters)
+int mn_object_t::execAction(mn_actionid_t id, void *parameters)
 {
-    mn_actioninfo_t* info = MNObject_FindActionInfoForId(ob, id);
+    mn_actioninfo_t *info = MNObject_FindActionInfoForId(this, id);
     if(info && MNActionInfo_IsActionExecuteable(info))
     {
-        return info->callback(ob, id, paramaters);
+        return info->callback(this, id, parameters);
     }
-#if _DEBUG
-    Con_Error("MNObject::ExecAction: Attempt to execute non-existent action #%i on object %p.", (int) id, ob);
-#endif
+    DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
     /// @todo Need an error handling mechanic.
     return -1; // NOP
 }
@@ -2162,9 +2141,9 @@ int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             ob->timer = 0;
             // Store a copy of the present text value so we can restore it.
             Str_Copy(&edit->oldtext, &edit->text);
-            if(MNObject_HasAction(ob, MNA_ACTIVE))
+            if(ob->hasAction(MNA_ACTIVE))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+                ob->execAction(MNA_ACTIVE, NULL);
             }
         }
         else
@@ -2172,9 +2151,9 @@ int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             Str_Copy(&edit->oldtext, &edit->text);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+            if(ob->hasAction(MNA_ACTIVEOUT))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+                ob->execAction(MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2187,9 +2166,9 @@ int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         case MCMD_NAV_OUT:
             Str_Copy(&edit->text, &edit->oldtext);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_CLOSE))
+            if(ob->hasAction(MNA_CLOSE))
             {
-                MNObject_ExecAction(ob, MNA_CLOSE, NULL);
+                ob->execAction(MNA_CLOSE, NULL);
             }
             return true;
 
@@ -2254,9 +2233,9 @@ void MNEdit_SetText(mn_object_t *ob, int flags, const char* string)
     {
         Str_Copy(&edit->oldtext, &edit->text);
     }
-    if(!(flags & MNEDIT_STF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+    if(!(flags & MNEDIT_STF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
     {
-        MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+        ob->execAction(MNA_MODIFIED, NULL);
     }
 }
 
@@ -2286,9 +2265,9 @@ int MNEdit_Responder(mn_object_t *ob, event_t* ev)
         if(!Str_IsEmpty(&edit->text))
         {
             Str_Truncate(&edit->text, Str_Length(&edit->text)-1);
-            if(MNObject_HasAction(ob, MNA_MODIFIED))
+            if(ob->hasAction(MNA_MODIFIED))
             {
-                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                ob->execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2307,9 +2286,9 @@ int MNEdit_Responder(mn_object_t *ob, event_t* ev)
         if(!edit->maxLength || (unsigned)Str_Length(&edit->text) < edit->maxLength)
         {
             Str_AppendChar(&edit->text, ch);
-            if(MNObject_HasAction(ob, MNA_MODIFIED))
+            if(ob->hasAction(MNA_MODIFIED))
             {
-                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                ob->execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2439,9 +2418,9 @@ int MNList_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             if(list->selection != oldSelection)
             {
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
-                if(MNObject_HasAction(ob, MNA_MODIFIED))
+                if(ob->hasAction(MNA_MODIFIED))
                 {
-                    MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                    ob->execAction(MNA_MODIFIED, NULL);
                 }
             }
             return true;
@@ -2453,9 +2432,9 @@ int MNList_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_CLOSE))
+            if(ob->hasAction(MNA_CLOSE))
             {
-                MNObject_ExecAction(ob, MNA_CLOSE, NULL);
+                ob->execAction(MNA_CLOSE, NULL);
             }
             return true;
         }
@@ -2466,18 +2445,18 @@ int MNList_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             ob->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVE))
+            if(ob->hasAction(MNA_ACTIVE))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+                ob->execAction(MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+            if(ob->hasAction(MNA_ACTIVEOUT))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+                ob->execAction(MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2546,9 +2525,9 @@ dd_bool MNList_SelectItem(mn_object_t *ob, int flags, int itemIndex)
     list->selection = itemIndex;
     if(list->selection == oldSelection) return false;
 
-    if(!(flags & MNLIST_SIF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+    if(!(flags & MNLIST_SIF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
     {
-        MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+        ob->execAction(MNA_MODIFIED, NULL);
     }
     return true;
 }
@@ -2638,9 +2617,9 @@ int MNListInline_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         if(oldSelection != list->selection)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(MNObject_HasAction(ob, MNA_MODIFIED))
+            if(ob->hasAction(MNA_MODIFIED))
             {
-                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                ob->execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2780,9 +2759,9 @@ int MNButton_CommandResponder(mn_object_t *ob, menucommand_e cmd)
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             ob->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVE))
+            if(ob->hasAction(MNA_ACTIVE))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+                ob->execAction(MNA_ACTIVE, NULL);
             }
         }
 
@@ -2791,9 +2770,9 @@ int MNButton_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             // We are not going to receive an "up event" so action that now.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+            if(ob->hasAction(MNA_ACTIVEOUT))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+                ob->execAction(MNA_ACTIVEOUT, NULL);
             }
         }
         else
@@ -2807,18 +2786,18 @@ int MNButton_CommandResponder(mn_object_t *ob, menucommand_e cmd)
                 void* data = ob->data1;
 
                 *((char*)data) = (ob->_flags & MNF_ACTIVE) != 0;
-                if(MNObject_HasAction(ob, MNA_MODIFIED))
+                if(ob->hasAction(MNA_MODIFIED))
                 {
-                    MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                    ob->execAction(MNA_MODIFIED, NULL);
                 }
             }
 
             if(!justActivated && !(ob->_flags & MNF_ACTIVE))
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+                if(ob->hasAction(MNA_ACTIVEOUT))
                 {
-                    MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+                    ob->execAction(MNA_ACTIVEOUT, NULL);
                 }
             }
         }
@@ -3036,18 +3015,18 @@ int MNColorBox_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             ob->_flags |= MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVE))
+            if(ob->hasAction(MNA_ACTIVE))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+                ob->execAction(MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             ob->_flags &= ~MNF_ACTIVE;
-            if(MNObject_HasAction(ob, MNA_ACTIVEOUT))
+            if(ob->hasAction(MNA_ACTIVEOUT))
             {
-                MNObject_ExecAction(ob, MNA_ACTIVEOUT, NULL);
+                ob->execAction(MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -3174,9 +3153,9 @@ dd_bool MNColorBox_SetRedf(mn_object_t *ob, int flags, float red)
     cbox->r = red;
     if(cbox->r != oldRed)
     {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
         {
-            MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+            ob->execAction(MNA_MODIFIED, NULL);
         }
         return true;
     }
@@ -3192,9 +3171,9 @@ dd_bool MNColorBox_SetGreenf(mn_object_t *ob, int flags, float green)
     cbox->g = green;
     if(cbox->g != oldGreen)
     {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
         {
-            MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+            ob->execAction(MNA_MODIFIED, NULL);
         }
         return true;
     }
@@ -3210,9 +3189,9 @@ dd_bool MNColorBox_SetBluef(mn_object_t *ob, int flags, float blue)
     cbox->b = blue;
     if(cbox->b != oldBlue)
     {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
         {
-            MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+            ob->execAction(MNA_MODIFIED, NULL);
         }
         return true;
     }
@@ -3230,9 +3209,9 @@ dd_bool MNColorBox_SetAlphaf(mn_object_t *ob, int flags, float alpha)
         cbox->a = alpha;
         if(cbox->a != oldAlpha)
         {
-            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
             {
-                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                ob->execAction(MNA_MODIFIED, NULL);
             }
             return true;
         }
@@ -3254,9 +3233,9 @@ dd_bool MNColorBox_SetColor4f(mn_object_t *ob, int flags, float red, float green
 
     if(0 == setComps) return false;
 
-    if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && MNObject_HasAction(ob, MNA_MODIFIED))
+    if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && ob->hasAction(MNA_MODIFIED))
     {
-        MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+        ob->execAction(MNA_MODIFIED, NULL);
     }
     return true;
 }
@@ -3443,9 +3422,9 @@ int MNSlider_CommandResponder(mn_object_t *ob, menucommand_e cmd)
         if(oldvalue != sldr->value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(MNObject_HasAction(ob, MNA_MODIFIED))
+            if(ob->hasAction(MNA_MODIFIED))
             {
-                MNObject_ExecAction(ob, MNA_MODIFIED, NULL);
+                ob->execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;

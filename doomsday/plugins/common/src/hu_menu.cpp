@@ -659,8 +659,8 @@ mn_page_t *Hu_MenuFindPageByName(char const *name)
 static dd_bool Hu_MenuHasCursorRotation(mn_object_t *ob)
 {
     DENG2_ASSERT(ob != 0);
-    return (!(MNObject_Flags(ob) & MNF_DISABLED) &&
-              (MNObject_Type(ob) == MN_LISTINLINE || MNObject_Type(ob) == MN_SLIDER));
+    return (!(ob->flags() & MNF_DISABLED) &&
+              (ob->type() == MN_LISTINLINE || ob->type() == MN_SLIDER));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).
@@ -4417,10 +4417,10 @@ void Hu_MenuInit()
     if(gameModeBits & GM_ANY_DOOM2)
     {
         mn_object_t *ob = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID0); // Read This!
-        MNObject_SetFlags(ob, FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
+        ob->setFlags(FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
 
         ob = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID1); // Quit Game
-        MNObject_SetFixedY(ob, MNObject_FixedY(ob) - FIXED_LINE_HEIGHT);
+        ob->setFixedY(ob->fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
 
@@ -4677,9 +4677,9 @@ void Hu_MenuDrawer()
     // First determine whether the focus cursor should be visible.
     mn_object_t *focusOb   = Hu_MenuActivePage()->focusObject();
     dd_bool showFocusCursor = true;
-    if(focusOb && (MNObject_Flags(focusOb) & MNF_ACTIVE))
+    if(focusOb && (focusOb->flags() & MNF_ACTIVE))
     {
-        if(MNObject_Type(focusOb) == MN_COLORBOX || MNObject_Type(focusOb) == MN_BINDINGS)
+        if(focusOb->type() == MN_COLORBOX || focusOb->type() == MN_BINDINGS)
         {
             showFocusCursor = false;
         }
@@ -4700,9 +4700,9 @@ void Hu_MenuDrawer()
     GL_EndBorderedProjection(&bp);
 
     // Drawing any overlays?
-    if(focusOb && (MNObject_Flags(focusOb) & MNF_ACTIVE))
+    if(focusOb && (focusOb->flags() & MNF_ACTIVE))
     {
-        switch(MNObject_Type(focusOb))
+        switch(focusOb->type())
         {
         case MN_COLORBOX:
         case MN_BINDINGS:
@@ -4710,7 +4710,7 @@ void Hu_MenuDrawer()
             GL_BeginBorderedProjection(&bp);
 
             beginOverlayDraw();
-            if(MNObject_Type(focusOb) == MN_BINDINGS)
+            if(focusOb->type() == MN_BINDINGS)
             {
                 Hu_MenuControlGrabDrawer(MNBindings_ControlName(focusOb), 1);
             }
@@ -4816,12 +4816,12 @@ static void initAllObjectsOnAllPages()
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
 {
-    DENG2_ASSERT(page);
+    DENG2_ASSERT(page != 0);
     switch(cmd)
     {
     case MCMD_NAV_OUT: {
-        mn_object_t *obj = (mn_object_t*)page->userData;
-        MNObject_SetFlags(obj, FO_CLEAR, MNF_ACTIVE);
+        mn_object_t *ob = (mn_object_t *)page->userData;
+        ob->setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_CANCEL, NULL);
         colorWidgetActive = false;
 
@@ -4829,27 +4829,28 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
         Hu_MenuUpdateCursorState();
         /// kludge end.
-        return true;
-      }
+        return true; }
+
     case MCMD_NAV_PAGEUP:
     case MCMD_NAV_PAGEDOWN:
         return true; // Eat these.
+
     case MCMD_SELECT: {
-        mn_object_t *obj = (mn_object_t*)page->userData;
-        MNObject_SetFlags(obj, FO_CLEAR, MNF_ACTIVE);
+        mn_object_t *ob = (mn_object_t *)page->userData;
+        ob->setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        MNColorBox_CopyColor(obj, 0, MN_MustFindObjectOnPage(page, 0, MNF_ID0));
+        MNColorBox_CopyColor(ob, 0, MN_MustFindObjectOnPage(page, 0, MNF_ID0));
 
         /// @kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
         Hu_MenuUpdateCursorState();
         /// kludge end.
-        return true;
-      }
-    default:
-        break;
+        return true; }
+
+    default: break;
     }
+
     return false;
 }
 
@@ -4865,10 +4866,9 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
         break;
 
     case MCMD_NAV_UP:
-    case MCMD_NAV_DOWN: {
-        mn_object_t *obj = page->focusObject();
+    case MCMD_NAV_DOWN:
         // An object on this page must have focus in order to navigate.
-        if(obj)
+        if(page->focusObject())
         {
             int i = 0, giveFocus = page->focus;
             do
@@ -4878,7 +4878,7 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
                     giveFocus = page->objectsCount() - 1;
                 else if(giveFocus >= page->objectsCount())
                     giveFocus = 0;
-            } while(++i < page->objectsCount() && (MNObject_Flags(&page->objects()[giveFocus]) & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
+            } while(++i < page->objectsCount() && (page->objects()[giveFocus].flags() & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
 
             if(giveFocus != page->focus)
             {
@@ -4887,7 +4887,7 @@ static void fallbackCommandResponder(mn_page_t *page, menucommand_e cmd)
             }
         }
         break;
-      }
+
     case MCMD_NAV_OUT:
         if(!page->previous)
         {
@@ -4914,39 +4914,33 @@ static menucommand_e translateCommand(menucommand_e cmd)
     // "active" widget - interpret the command instead as "navigate out".
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
-        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
-        if(obj)
+        if(mn_object_t *ob = Hu_MenuActivePage()->focusObject())
         {
-            switch(MNObject_Type(obj))
+            switch(ob->type())
             {
             case MN_EDIT:
             case MN_LIST:
             case MN_COLORBOX:
-                if(MNObject_Flags(obj) & MNF_ACTIVE)
+                if(ob->flags() & MNF_ACTIVE)
                 {
                     cmd = MCMD_NAV_OUT;
                 }
                 break;
-            default:
-                break;
+
+            default: break;
             }
         }
     }
+
     return cmd;
 }
 
 void Hu_MenuCommand(menucommand_e cmd)
 {
-    mn_page_t *page;
-    mn_object_t *ob;
-
     cmd = translateCommand(cmd);
 
     // Determine the page which will respond to this command.
-    if(colorWidgetActive)
-        page = Hu_MenuFindPageByName("ColorWidget");
-    else
-        page = Hu_MenuActivePage();
+    mn_page_t *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
 
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
@@ -4959,7 +4953,8 @@ void Hu_MenuCommand(menucommand_e cmd)
             Hu_FogEffectSetAlphaTarget(0);
 
             if(cmd == MCMD_CLOSEFAST)
-            {   // Hide the menu instantly.
+            {
+                // Hide the menu instantly.
                 mnAlpha = mnTargetAlpha = 0;
             }
             else
@@ -4968,7 +4963,9 @@ void Hu_MenuCommand(menucommand_e cmd)
             }
 
             if(cmd != MCMD_CLOSEFAST)
+            {
                 S_LocalSound(SFX_MENU_CLOSE, NULL);
+            }
 
             menuActive = false;
 
@@ -4989,8 +4986,7 @@ void Hu_MenuCommand(menucommand_e cmd)
         if(MCMD_OPEN == cmd)
         {
             // If anyone is currently chatting; the menu cannot be opened.
-            int i;
-            for(i = 0; i < MAXPLAYERS; ++i)
+            for(int i = 0; i < MAXPLAYERS; ++i)
             {
                 if(ST_ChatIsActive(i))
                     return;
@@ -5016,7 +5012,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 
     // Try the current focus object.
-    ob = page->focusObject();
+    mn_object_t *ob = page->focusObject();
     if(ob && ob->cmdResponder)
     {
         if(ob->cmdResponder(ob, cmd))
@@ -5033,32 +5029,32 @@ void Hu_MenuCommand(menucommand_e cmd)
     fallbackCommandResponder(page, cmd);
 }
 
-int Hu_MenuPrivilegedResponder(event_t* ev)
+int Hu_MenuPrivilegedResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
-        if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
+        mn_object_t *ob = Hu_MenuActivePage()->focusObject();
+        if(ob && !(ob->flags() & MNF_DISABLED))
         {
-            if(obj->privilegedResponder)
+            if(ob->privilegedResponder)
             {
-                return obj->privilegedResponder(obj, ev);
+                return ob->privilegedResponder(ob, ev);
             }
         }
     }
     return false;
 }
 
-int Hu_MenuResponder(event_t* ev)
+int Hu_MenuResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *obj = Hu_MenuActivePage()->focusObject();
-        if(obj && !(MNObject_Flags(obj) & MNF_DISABLED))
+        mn_object_t *ob = Hu_MenuActivePage()->focusObject();
+        if(ob && !(ob->flags() & MNF_DISABLED))
         {
-            if(obj->responder)
+            if(ob->responder)
             {
-                return obj->responder(obj, ev);
+                return ob->responder(ob, ev);
             }
         }
     }
@@ -5077,13 +5073,13 @@ int Hu_MenuFallbackResponder(event_t *ev)
         {
             for(int i = 0; i < page->objectsCount(); ++i)
             {
-                mn_object_t *obj = &page->objects()[i];
-                if(MNObject_Flags(obj) & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN))
+                mn_object_t *ob = &page->objects()[i];
+                if(ob->flags() & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN))
                     continue;
 
-                if(MNObject_Shortcut(obj) == ev->data1)
+                if(ob->shortcut() == ev->data1)
                 {
-                    page->setFocus(obj);
+                    page->setFocus(ob);
                     return true;
                 }
             }
@@ -5190,7 +5186,7 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob)
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = MNObject_Page(ob)->focusObject())
+    if(mn_object_t *mop = ob->page()->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -5221,7 +5217,7 @@ void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob)
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = MNObject_Page(ob)->focusObject())
+    if(mn_object_t *mop = ob->page()->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -5517,8 +5513,8 @@ int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void * /*c
     MNSlider_SetValue(sldrBlue,  MNSLIDER_SVF_NO_ACTION, MNColorBox_Bluef(ob));
     MNSlider_SetValue(sldrAlpha, MNSLIDER_SVF_NO_ACTION, MNColorBox_Alphaf(ob));
 
-    MNObject_SetFlags(textAlpha, (MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
-    MNObject_SetFlags(sldrAlpha, (MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    textAlpha->setFlags((MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    sldrAlpha->setFlags((MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
 
     return 0;
 }
@@ -5794,7 +5790,7 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, v
     int selection = MNList_Selection(ob);
     if(selection >= 0)
     {
-        mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+        mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
         MNMobjPreview_SetPlayerClass(mop, selection);
         MNMobjPreview_SetMobjType(mop, PCLASS_INFO(selection)->mobjType);
     }
@@ -5810,7 +5806,7 @@ int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void * /*con
     int selection = MNList_ItemData(ob, MNList_Selection(ob));
     if(selection >= 0)
     {
-        mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+        mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
         MNMobjPreview_SetTranslationMap(mop, selection);
     }
     return 0;
@@ -5818,11 +5814,11 @@ int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void * /*con
 
 int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mn_object_t *plrNameEdit = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID1);
+    mn_object_t *plrNameEdit = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID1);
 #if __JHEXEN__
-    mn_object_t *plrClassList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID2);
+    mn_object_t *plrClassList = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID2);
 #endif
-    mn_object_t *plrColorList = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID3);
+    mn_object_t *plrColorList = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID3);
 
 #if __JHEXEN__
     cfg.netClass = MNList_Selection(plrClassList);
@@ -5950,27 +5946,27 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*con
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID0);
     text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]);
     ((mndata_button_t *)skillObj->_typedata)->text = text;
-    MNObject_SetShortcut(skillObj, text[0]);
+    skillObj->setShortcut(text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID1);
     text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]);
     ((mndata_button_t *)skillObj->_typedata)->text = text;
-    MNObject_SetShortcut(skillObj, text[0]);
+    skillObj->setShortcut(text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID2);
     text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]);
     ((mndata_button_t *)skillObj->_typedata)->text = text;
-    MNObject_SetShortcut(skillObj, text[0]);
+    skillObj->setShortcut(text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID3);
     text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]);
     ((mndata_button_t *)skillObj->_typedata)->text = text;
-    MNObject_SetShortcut(skillObj, text[0]);
+    skillObj->setShortcut(text[0]);
 
     skillObj = MN_MustFindObjectOnPage(skillPage, 0, MNF_ID4);
     text     = GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]);
     ((mndata_button_t *)skillObj->_typedata)->text = text;
-    MNObject_SetShortcut(skillObj, text[0]);
+    skillObj->setShortcut(text[0]);
 
     switch(mnPlrClass)
     {
@@ -5988,7 +5984,7 @@ int Hu_MenuFocusOnPlayerClass(mn_object_t *ob, mn_actionid_t action, void *conte
 
     if(MNA_FOCUS != action) return 1;
 
-    mn_object_t *mop = MN_MustFindObjectOnPage(MNObject_Page(ob), 0, MNF_ID0);
+    mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
     MNMobjPreview_SetPlayerClass(mop, plrClass);
     MNMobjPreview_SetMobjType(mop, (PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 
