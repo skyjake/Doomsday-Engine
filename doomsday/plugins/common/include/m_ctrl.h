@@ -20,30 +20,28 @@
 
 #ifndef LIBCOMMON_MENU_CONTROLS
 #define LIBCOMMON_MENU_CONTROLS
+#ifdef __cplusplus
 
 #include "hu_lib.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(mn_page_t *page, Point2Raw const *origin);
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
 
+struct controlconfig_t;
+
 /**
  * Bindings visualizer widget.
  */
-typedef struct mndata_bindings_s {
-    char const *text;
-    char const *bindContext;
-    char const *controlName;
-    char const *command;
-    int flags;
-} mndata_bindings_t;
+struct mndata_bindings_t : public mn_object_t
+{
+public:
+    controlconfig_t *binds;
 
-mn_object_t *MNBindings_New(void);
-void MNBindings_Delete(mn_object_t *ob);
+public:
+    mndata_bindings_t();
+    virtual ~mndata_bindings_t() {}
+};
 
 void MNBindings_Ticker(mn_object_t *ob);
 void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -53,8 +51,5 @@ void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 char const *MNBindings_ControlName(mn_object_t *ob);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif // LIBCOMMON_MENU_CONTROLS

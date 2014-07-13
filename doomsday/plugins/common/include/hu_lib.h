@@ -25,6 +25,8 @@
 #include "hu_stuff.h"
 
 #ifdef __cplusplus
+#include <QList>
+
 struct mn_object_t;
 struct mn_page_t;
 #endif
@@ -193,8 +195,6 @@ public:
     /// @return  @c true if the event is eaten.
     int (*privilegedResponder) (mn_object_t *ob, event_t *ev);
 
-    void *_typedata; // Type-specific extra data.
-
     // Extra property values.
     void *data1;
     int data2;
@@ -210,6 +210,11 @@ public:
     int timer;
 
 public:
+    mn_object_t();
+    virtual ~mn_object_t() {}
+
+    DENG2_AS_IS_METHODS()
+
     mn_obtype_e type() const;
 
     mn_page_t *page() const;
@@ -342,9 +347,8 @@ typedef enum {
 struct mn_page_t
 {
 public:
-    /// Collection of objects on this page.
-    mn_object_t *_objects;
-    int _objectsCount;
+    typedef QList<mn_object_t *> Widgets;
+    Widgets _widgets;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
     Point2Raw origin;
@@ -391,9 +395,9 @@ public:
 
     ~mn_page_t();
 
-    mn_object_t *objects() const;
+    Widgets const &widgets() const;
 
-    int objectsCount() const;
+    inline int widgetCount() const { return widgets().count(); }
 
     void initialize();
 
@@ -489,16 +493,19 @@ private:
 /**
  * Rect objects.
  */
-typedef struct mndata_rect_s {
+struct mndata_rect_t : public mn_object_t
+{
+public:
     /// Dimensions of the rectangle.
     Size2Raw dimensions;
 
     /// Background patch.
     patchid_t patch;
-} mndata_rect_t;
 
-mn_object_t *MNRect_New(void);
-void MNRect_Delete(mn_object_t *ob);
+public:
+    mndata_rect_t();
+    virtual ~mndata_rect_t() {}
+};
 
 void MNRect_Ticker(mn_object_t *ob);
 void MNRect_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -523,7 +530,9 @@ void MNRect_SetBackgroundPatch(mn_object_t *ob, patchid_t patch);
 /**
  * Text objects.
  */
-typedef struct mndata_text_s {
+struct mndata_text_t : public mn_object_t
+{
+public:
     char const *text;
 
     /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
@@ -531,10 +540,11 @@ typedef struct mndata_text_s {
 
     /// @ref mnTextFlags
     int flags;
-} mndata_text_t;
 
-mn_object_t *MNText_New(void);
-void MNText_Delete(mn_object_t *ob);
+public:
+    mndata_text_t();
+    virtual ~mndata_text_t() {}
+};
 
 void MNText_Ticker(mn_object_t *ob);
 void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -552,7 +562,9 @@ int MNText_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 /**
  * Buttons.
  */
-typedef struct mndata_button_s {
+struct mndata_button_t : public mn_object_t
+{
+public:
     dd_bool staydownMode; /// @c true= this is operating in two-state "staydown" mode.
 
     void *data;
@@ -567,10 +579,11 @@ typedef struct mndata_button_s {
 
     /// @ref mnButtonFlags
     int flags;
-} mndata_button_t;
 
-mn_object_t *MNButton_New(void);
-void MNButton_Delete(mn_object_t *ob);
+public:
+    mndata_button_t();
+    virtual ~mndata_button_t() {}
+};
 
 void MNButton_Ticker(mn_object_t *ob);
 void MNButton_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -602,17 +615,20 @@ int MNButton_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 #  define MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE   ("M_FSLOT")
 #endif
 
-typedef struct mndata_edit_s {
+struct mndata_edit_t : public mn_object_t
+{
+public:
     ddstring_t text;
     ddstring_t oldtext; // If the current edit is canceled...
     uint maxLength;
     uint maxVisibleChars;
     char const *emptyString; // Drawn when editfield is empty/null.
     void *data1;
-} mndata_edit_t;
 
-mn_object_t *MNEdit_New(void);
-void MNEdit_Delete(mn_object_t *ob);
+public:
+    mndata_edit_t();
+    virtual ~mndata_edit_t();
+};
 
 void MNEdit_Ticker(mn_object_t *ob);
 void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -655,7 +671,9 @@ typedef struct {
 } mndata_listitem_t;
 
 /// @note Also used for MN_LISTINLINE!
-typedef struct mndata_list_s {
+struct mndata_list_t : public mn_object_t
+{
+public:
     void *items;
     int count; // Number of items.
     void *data;
@@ -663,10 +681,18 @@ typedef struct mndata_list_s {
     int selection; // Selected item (-1 if none).
     int first; // First visible item.
     int numvis;
-} mndata_list_t;
 
-mn_object_t *MNList_New(void);
-void MNList_Delete(mn_object_t *ob);
+public:
+    mndata_list_t();
+    virtual ~mndata_list_t() {}
+};
+
+struct mndata_inlinelist_t : public mndata_list_t
+{
+public:
+    mndata_inlinelist_t();
+    virtual ~mndata_inlinelist_t() {}
+};
 
 void MNList_Ticker(mn_object_t *ob);
 void MNList_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -685,9 +711,6 @@ dd_bool MNList_SelectionIsVisible(mn_object_t *ob);
 
 /// @return  Index of the found item associated with @a dataValue else -1.
 int MNList_FindItem(mn_object_t const *ob, int dataValue);
-
-mn_object_t *MNListInline_New(void);
-void MNListInline_Delete(mn_object_t *ob);
 
 void MNListInline_Ticker(mn_object_t *ob);
 void MNListInline_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -723,7 +746,9 @@ dd_bool MNList_SelectItemByValue(mn_object_t *ob, int flags, int itemIndex);
 #define MNDATA_COLORBOX_WIDTH   4 // Default inner width in fixed 320x200 space.
 #define MNDATA_COLORBOX_HEIGHT  4 // Default inner height in fixed 320x200 space.
 
-typedef struct mndata_colorbox_s {
+struct mndata_colorbox_t : public mn_object_t
+{
+public:
     /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default
     /// dimensions will be used instead.
     int width, height;
@@ -733,10 +758,11 @@ typedef struct mndata_colorbox_s {
     void *data2;
     void *data3;
     void *data4;
-} mndata_colorbox_t;
 
-mn_object_t *MNColorBox_New(void);
-void MNColorBox_Delete(mn_object_t *ob);
+public:
+    mndata_colorbox_t();
+    virtual ~mndata_colorbox_t() {}
+};
 
 void MNColorBox_Ticker(mn_object_t *ob);
 void MNColorBox_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -822,7 +848,9 @@ dd_bool MNColorBox_CopyColor(mn_object_t *ob, int flags, mn_object_t const *othe
 #  define MNDATA_SLIDER_PATCH_HANDLE    ("M_SLDKB")
 #endif
 
-typedef struct mndata_slider_s {
+struct mndata_slider_t : public mn_object_t
+{
+public:
     float min, max;
     float value;
     float step; // Button step.
@@ -833,10 +861,11 @@ typedef struct mndata_slider_s {
     void *data3;
     void *data4;
     void *data5;
-} mndata_slider_t;
 
-mn_object_t *MNSlider_New(void);
-void MNSlider_Delete(mn_object_t *ob);
+public:
+    mndata_slider_t();
+    virtual ~mndata_slider_t() {}
+};
 
 void MNSlider_Ticker(mn_object_t *ob);
 void MNSlider_Drawer(mn_object_t *ob, Point2Raw const *origin);
@@ -869,15 +898,18 @@ void MNSlider_SetValue(mn_object_t *ob, int flags, float value);
 #define MNDATA_MOBJPREVIEW_WIDTH    44
 #define MNDATA_MOBJPREVIEW_HEIGHT   66
 
-typedef struct mndata_mobjpreview_s {
+struct mndata_mobjpreview_t : public mn_object_t
+{
+public:
     int mobjType;
     /// Color translation class and map.
     int tClass, tMap;
     int plrClass; /// Player class identifier.
-} mndata_mobjpreview_t;
 
-mn_object_t *MNMobjPreview_New(void);
-void MNMobjPreview_Delete(mn_object_t *ob);
+public:
+    mndata_mobjpreview_t();
+    virtual ~mndata_mobjpreview_t() {}
+};
 
 void MNMobjPreview_Ticker(mn_object_t *ob);
 void MNMobjPreview_SetMobjType(mn_object_t *ob, int mobjType);

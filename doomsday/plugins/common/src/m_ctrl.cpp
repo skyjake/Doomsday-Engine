@@ -54,7 +54,15 @@ struct bindingdrawerdata_t
     float alpha;
 };
 
-static mndata_bindings_t controlConfig[] =
+struct controlconfig_t
+{
+    char const *text;
+    char const *bindContext;
+    char const *controlName;
+    char const *command;
+    int flags;
+};
+static controlconfig_t controlConfig[] =
 {
     { "Movement" },
     { "Forward", 0, "walk", 0, CCF_NON_INVERSE },
@@ -262,7 +270,7 @@ void Hu_MenuInitControlsPage()
     int bindingsCount = 0;
     for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t *binds = &controlConfig[i];
+        controlconfig_t *binds = &controlConfig[i];
         if(!binds->command && !binds->controlName)
         {
             ++textCount;
@@ -274,72 +282,46 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    // Allocate the menu items array.
-    int totalItems = textCount + bindingsCount + 1/*terminator*/;
-    mn_object_t *objects =   (mn_object_t *)Z_Calloc(sizeof(*objects) * totalItems, PU_GAMESTATIC, 0);
-    mndata_text_t *texts = (mndata_text_t *)Z_Calloc(sizeof(*texts)   * textCount,  PU_GAMESTATIC, 0);
-    size_t objectIdx = 0;
-    size_t textIdx   = 0;
+    mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    page->setTitle("Controls");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     int group = 0;
     for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t *binds = &controlConfig[i];
+        controlconfig_t *binds = &controlConfig[i];
 
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mn_object_t *ob    = &objects[objectIdx++];
-            mndata_text_t *txt = &texts[textIdx++];
-
-            ob->_type           = MN_TEXT;
-            txt->text           = binds->text;
-            ob->_typedata       = txt;
-            ob->_pageFontIdx    = MENU_FONT1;
-            ob->_pageColorIdx   = MENU_COLOR2;
-            ob->ticker          = MNText_Ticker;
-            ob->drawer          = MNText_Drawer;
-            ob->updateGeometry  = MNText_UpdateGeometry;
+            mndata_text_t *txt = new mndata_text_t;
+            txt->text          = binds->text;
+            txt->_pageColorIdx = MENU_COLOR2;
 
             // A new group begins;
-            ob->_group = ++group;
+            txt->_group = ++group;
+
+            page->_widgets << txt;
         }
         else
         {
-            mn_object_t *labelOb    = &objects[objectIdx++];
-            mn_object_t *bindingsOb = &objects[objectIdx++];
-            mndata_text_t *txt = &texts[textIdx++];
 
-            txt->text = binds->text;
+            mndata_text_t *labelOb = new mndata_text_t;
+            labelOb->text   = binds->text;
+            labelOb->_group = group;
 
-            labelOb->_type          = MN_TEXT;
-            labelOb->_typedata      = txt;
-            labelOb->ticker         = MNText_Ticker;
-            labelOb->drawer         = MNText_Drawer;
-            labelOb->updateGeometry = MNText_UpdateGeometry;
-            labelOb->_pageFontIdx   = MENU_FONT1;
-            labelOb->_pageColorIdx  = MENU_COLOR1;
-            labelOb->_group         = group;
+            page->_widgets << labelOb;
 
-            bindingsOb->_type               = MN_BINDINGS;
-            bindingsOb->ticker              = MNBindings_Ticker;
-            bindingsOb->drawer              = MNBindings_Drawer;
-            bindingsOb->cmdResponder        = MNBindings_CommandResponder;
-            bindingsOb->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsOb->updateGeometry      = MNBindings_UpdateGeometry;
+            mndata_bindings_t *bindingsOb = new mndata_bindings_t;
+            bindingsOb->binds  = binds;
+            bindingsOb->_group = group;
             bindingsOb->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             bindingsOb->actions[MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
-            bindingsOb->_typedata           = binds;
-            bindingsOb->_group              = group;
+
+            page->_widgets << bindingsOb;
         }
     }
-    objects[objectIdx]._type = MN_NONE; // Terminate.
-
-    mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
-    page->_objects = objects;
-    page->setTitle("Controls");
-    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 }
 
 static void drawSmallText(char const *string, int x, int y, float alpha)
@@ -426,7 +408,7 @@ static char const *findInString(char const *str, char const *token, int n)
     return 0;
 }
 
-static void iterateBindings(mndata_bindings_t const *binds, char const *bindings, int flags, void *data,
+static void iterateBindings(controlconfig_t const *binds, char const *bindings, int flags, void *data,
     void (*callback)(bindingitertype_t type, int bid, char const *ev, dd_bool isInverse, void *data))
 {
     DENG2_ASSERT(binds != 0);
@@ -525,32 +507,22 @@ static void iterateBindings(mndata_bindings_t const *binds, char const *bindings
     }
 }
 
-mn_object_t *MNBindings_New()
+mndata_bindings_t::mndata_bindings_t()
+    : mn_object_t()
+    , binds(0)
 {
-    mn_object_t *ob = (mn_object_t *)Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
-
-    ob->_typedata           = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
-    ob->_type               = MN_BINDINGS;
-    ob->_pageFontIdx        = MENU_FONT1;
-    ob->_pageColorIdx       = MENU_COLOR1;
-    ob->updateGeometry      = MNBindings_UpdateGeometry;
-    ob->drawer              = MNBindings_Drawer;
-    ob->cmdResponder        = MNBindings_CommandResponder;
-    ob->privilegedResponder = MNBindings_PrivilegedResponder;
-
-    return ob;
-}
-
-void MNBindings_Delete(mn_object_t *ob)
-{
-    DENG2_ASSERT(ob && ob->_type == MN_BINDINGS);
-    Z_Free(ob->_typedata);
-    Z_Free(ob);
+    mn_object_t::_type               = MN_BINDINGS;
+    mn_object_t::_pageFontIdx        = MENU_FONT1;
+    mn_object_t::_pageColorIdx       = MENU_COLOR1;
+    mn_object_t::updateGeometry      = MNBindings_UpdateGeometry;
+    mn_object_t::drawer              = MNBindings_Drawer;
+    mn_object_t::cmdResponder        = MNBindings_CommandResponder;
+    mn_object_t::privilegedResponder = MNBindings_PrivilegedResponder;
 }
 
 void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
 {
-    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
+    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -570,7 +542,7 @@ void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
 
 int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
+    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -661,7 +633,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
     // We're interested in key or button down events.
     if((ob->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
+        controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
         char const *bindContext = "game";
         char const *symbol = 0;
         char cmd[512];
@@ -785,7 +757,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
 char const *MNBindings_ControlName(mn_object_t *ob)
 {
     DENG2_ASSERT(ob != 0);
-    mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
+    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
     DENG2_ASSERT(binds != 0);
 
     // Map to a text definition?
