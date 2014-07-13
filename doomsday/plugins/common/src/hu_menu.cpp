@@ -325,310 +325,6 @@ static patchid_t pRotatingSkull[18];
 
 static patchid_t pCursors[MENU_CURSOR_FRAMECOUNT];
 
-#if __JDOOM64__
-mndata_slider_t sld_hud_viewsize = { 3, 11, 0, 1, false, (void *)"view-size", 0, 0, 0, 0 };
-#else
-mndata_slider_t sld_hud_viewsize = { 3, 13, 0, 1, false, (void *)"view-size", 0, 0, 0, 0 };
-#endif
-mndata_slider_t sld_hud_uptime = { 0, 60, 0, 1.f, true, (void *)"hud-timer", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds" };
-mndata_slider_t sld_hud_xhair_size = { 0, 1, 0, .1f, true, (void *)"view-cross-size", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_xhair_angle = { 0, 1, 0, .0625f, true, (void *)"view-cross-angle", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_xhair_opacity = { 0, 1, 0, .1f, true, (void *)"view-cross-a", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_size = { 0, 1, 0, .1f, true, (void *)"hud-scale", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_cntr_size = { 0, 1, 0, .1f, true, (void *)"hud-cheat-counter-scale", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_sbar_size = { 0, 1, 0, .1f, true, (void *)"hud-status-size", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_sbar_opacity = { 0, 1, 0, .1f, true, (void *)"hud-status-alpha", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_msg_size = { 0, 1, 0, .1f, true, (void *)"msg-scale", 0, 0, 0, 0 };
-mndata_slider_t sld_hud_msg_uptime = { 0, 60, 0, 1.f, true, (void *)"msg-uptime", (void *)"Disabled", NULL, (void *)" second", (void *)" seconds" };
-
-mndata_colorbox_t cbox_hud_color = {
-    0, 0, 0, 0, 0, 0, true,
-    (void *)"hud-color-r", (void *)"hud-color-g", (void *)"hud-color-b", (void *)"hud-color-a"
-};
-
-mndata_colorbox_t cbox_hud_msg_color = {
-    0, 0, 0, 0, 0, 0, false,
-    (void *)"msg-color-r", (void *)"msg-color-g", (void *)"msg-color-b", 0
-};
-
-mndata_listitem_t listit_hud_xhair_symbols[] = {
-    { "None", 0 },
-    { "Cross", 1 },
-    { "Twin Angles", 2 },
-    { "Square", 3 },
-    { "Open Square", 4 },
-    { "Angle", 5 }
-};
-mndata_list_t list_hud_xhair_symbol = {
-    listit_hud_xhair_symbols, NUMLISTITEMS(listit_hud_xhair_symbols), (void *)"view-cross-type", 0, 0, 0, 0
-};
-
-mndata_colorbox_t cbox_hud_xhair_color = {
-    0, 0, 0, 0, 0, 0, false,
-    (void *)"view-cross-r", (void *)"view-cross-g", (void *)"view-cross-b", 0
-};
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_listitem_t listit_hud_killscounter_displaymethods[] = {
-    { "Hidden",         0 },
-    { "Count",          CCH_KILLS },
-    { "Percent",        CCH_KILLS_PRCNT },
-    { "Count+Percent",  CCH_KILLS | CCH_KILLS_PRCNT },
-};
-mndata_list_t list_hud_cntr_kills = {
-    listit_hud_killscounter_displaymethods,
-    NUMLISTITEMS(listit_hud_killscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT, 0, 0, 0
-};
-
-mndata_listitem_t listit_hud_itemscounter_displaymethods[] = {
-    { "Hidden",         0 },
-    { "Count",          CCH_ITEMS },
-    { "Percent",        CCH_ITEMS_PRCNT },
-    { "Count+Percent",  CCH_ITEMS | CCH_ITEMS_PRCNT },
-};
-mndata_list_t list_hud_cntr_items = {
-    listit_hud_itemscounter_displaymethods,
-    NUMLISTITEMS(listit_hud_itemscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT, 0, 0, 0
-};
-
-mndata_listitem_t listit_hud_secretscounter_displaymethods[] = {
-    { "Hidden",         0 },
-    { "Count",          CCH_SECRETS },
-    { "Percent",        CCH_SECRETS_PRCNT },
-    { "Count+Percent",  CCH_SECRETS | CCH_SECRETS_PRCNT },
-};
-mndata_list_t list_hud_cntr_secrets = {
-    listit_hud_secretscounter_displaymethods,
-    NUMLISTITEMS(listit_hud_secretscounter_displaymethods),
-    (void *)"hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT, 0, 0, 0
-};
-#endif
-
-mndata_text_t txt_hud_view_size = { "View Size", 0, 0 };
-#if __JDOOM__
-mndata_text_t txt_hud_single_key_display = { "Single Key Display", 0, 0 };
-#endif
-mndata_text_t txt_hud_autohide = { "AutoHide", 0, 0 };
-mndata_text_t txt_hud_unhide_events = { "UnHide Events", 0, 0 };
-mndata_text_t txt_hud_unhide_receive_damage = { "Receive Damage", 0, 0 };
-mndata_text_t txt_hud_unhide_pickup_health = { "Pickup Health", 0, 0 };
-mndata_text_t txt_hud_unhide_pickup_armor = { "Pickup Armor", 0, 0 };
-mndata_text_t txt_hud_unhide_pickup_powerup = { "Pickup Powerup", 0, 0 };
-mndata_text_t txt_hud_unhide_pickup_weapon = { "Pickup Weapon", 0, 0 };
-#if __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Mana", 0, 0 };
-#else
-mndata_text_t txt_hud_unhide_pickup_ammo = { "Pickup Ammo", 0, 0 };
-#endif
-mndata_text_t txt_hud_unhide_pickup_key = { "Pickup Key", 0, 0 };
-#if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_unhide_pickup_item = { "Pickup Item", 0, 0 };
-#endif
-
-mndata_text_t txt_hud_messages = { "Messages", 0, 0 };
-mndata_text_t txt_hud_msg_shown = { "Shown", 0, 0 };
-mndata_text_t txt_hud_msg_size = { "Size", 0, 0 };
-mndata_text_t txt_hud_msg_color = { "Color", 0, 0 };
-mndata_text_t txt_hud_msg_uptime = { "Uptime", 0, 0 };
-
-mndata_text_t txt_hud_crosshair = { "Crosshair", 0, 0 };
-mndata_text_t txt_hud_xhair_symbol = { "Symbol", 0, 0 };
-mndata_text_t txt_hud_xhair_size = { "Size", 0, 0 };
-mndata_text_t txt_hud_xhair_angle = { "Angle", 0, 0 };
-mndata_text_t txt_hud_xhair_opacity = { "Opacity", 0, 0 };
-mndata_text_t txt_hud_xhair_vitality_color = { "Vitality Color", 0, 0 };
-mndata_text_t txt_hud_xhair_color = { "Color", 0, 0 };
-
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_statusbar = { "Statusbar", 0, 0 };
-mndata_text_t txt_hud_sbar_size = { "Size", 0, 0 };
-mndata_text_t txt_hud_sbar_opacity = { "Opacity", 0, 0 };
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_counters = { "Counters", 0, 0 };
-mndata_text_t txt_hud_cntr_kills = { "Kills", 0, 0 };
-mndata_text_t txt_hud_cntr_items = { "Items", 0, 0 };
-mndata_text_t txt_hud_cntr_secrets = { "Secrets", 0, 0 };
-mndata_text_t txt_hud_cntr_size = { "Size", 0, 0 };
-#endif
-
-mndata_text_t txt_hud_fullscreen = { "Fullscreen", 0, 0 };
-mndata_text_t txt_hud_full_size = { "Size", 0, 0 };
-mndata_text_t txt_hud_full_text_color = { "Text Color", 0, 0 };
-#if __JHEXEN__
-mndata_text_t txt_hud_full_show_mana = { "Show Mana", 0, 0 };
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_ammo = { "Show Ammo", 0, 0 };
-mndata_text_t txt_hud_full_show_armor = { "Show Armor", 0, 0 };
-#endif
-#if __JDOOM64__
-mndata_text_t txt_hud_full_show_powerkeys = { "Show PowerKeys", 0, 0 };
-#endif
-#if __JDOOM__
-mndata_text_t txt_hud_full_show_status = { "Show Status", 0, 0 };
-#endif
-mndata_text_t txt_hud_full_show_health = { "Show Health", 0, 0 };
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_full_show_keys = { "Show Keys", 0, 0 };
-#endif
-#if __JHERETIC__ || __JHEXEN__
-mndata_text_t txt_hud_full_show_readyitem = { "Show Ready-Item", 0, 0 };
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_text_t txt_hud_cntr_mapopen = { "Automap Only", 0, 0 };
-#endif
-
-mndata_button_t btn_hud_single_key_display = { true, (void *)"hud-keys-combine", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_receive_damage = { true, (void *)"hud-unhide-damage", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_health = { true, (void *)"hud-unhide-pickup-health", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_armor = { true, (void *)"hud-unhide-pickup-armor", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_powerup = { true, (void *)"hud-unhide-pickup-powerup", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_weapon = { true, (void *)"hud-unhide-pickup-weapon", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_ammo = { true, (void *)"hud-unhide-pickup-ammo", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_unhide_pickup_key = { true, (void *)"hud-unhide-pickup-key", 0, 0, 0, 0, 0 };
-#if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_unhide_pickup_item = { true, (void *)"hud-unhide-pickup-invitem", 0, 0, 0, 0, 0 };
-#endif
-mndata_button_t btn_hud_msg_shown = { true, (void *)"msg-show", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_xhair_vitality_color = { true, (void *)"view-cross-vitality", 0, 0, 0, 0, 0 };
-#if __JHEXEN__
-mndata_button_t btn_hud_full_show_mana = { true, (void *)"hud-mana", 0, 0, 0, 0, 0 };
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_ammo = { true, (void *)"hud-ammo", 0, 0, 0, 0, 0 };
-mndata_button_t btn_hud_full_show_armor = { true, (void *)"hud-armor", 0, 0, 0, 0, 0 };
-#endif
-#if __JDOOM64__
-mndata_button_t btn_hud_full_show_powerkeys = { true, (void *)"hud-power", 0, 0, 0, 0, 0 };
-#endif
-#if __JDOOM__
-mndata_button_t btn_hud_full_show_face = { true, (void *)"hud-face", 0, 0, 0, 0, 0 };
-#endif
-mndata_button_t btn_hud_full_show_health = { true, (void *)"hud-health", 0, 0, 0, 0, 0 };
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_full_show_keys = { true, (void *)"hud-keys", 0, 0, 0, 0, 0 };
-#endif
-#if __JHERETIC__ || __JHEXEN__
-mndata_button_t btn_hud_full_show_readyitem = { true, (void *)"hud-currentitem", 0, 0, 0, 0, 0 };
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-mndata_button_t btn_hud_cntr_mapopen = { true, (void *)"hud-cheat-counter-show-mapopen", 0, 0, 0, 0, 0 };
-#endif
-
-static mn_object_t HudMenuObjects[] = {
-    { MN_TEXT,      0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_view_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_viewsize, 0, 0, 0, 0, 0 },
-#if __JDOOM__
-    { MN_TEXT,      0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_single_key_display, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_single_key_display, 0, 0, 0, 0, 0 },
-#endif
-    { MN_TEXT,      0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_autohide, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNSlider_Ticker,      MNSlider_TextualValueUpdateGeometry, MNSlider_TextualValueDrawer, { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_uptime, 0, 0, 0, 0, 0 },
-
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_events, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_receive_damage, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_receive_damage, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_health, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_health, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_armor, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_armor, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_powerup, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_powerup, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_weapon, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_weapon, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_ammo, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_ammo, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_key, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_key, 0, 0, 0, 0, 0 },
-#if __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_unhide_pickup_item, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    1,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_unhide_pickup_item, 0, 0, 0, 0, 0 },
-#endif
-
-    { MN_TEXT,      2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_messages, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_msg_shown, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    2,  0,  Point2Raw(), 'm',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_msg_shown, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_msg_uptime, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNSlider_Ticker,      MNSlider_TextualValueUpdateGeometry, MNSlider_TextualValueDrawer, { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_msg_uptime, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_msg_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_msg_size, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_msg_color, 0, 0, 0, 0, 0 },
-    { MN_COLORBOX,  2,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker,    MNColorBox_UpdateGeometry,      MNColorBox_Drawer,              { { Hu_MenuCvarColorBox }, { Hu_MenuCvarColorBox }, { Hu_MenuActivateColorWidget }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_msg_color, 0, 0, 0, 0, 0 },
-
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_crosshair, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 'c',MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_symbol, 0, 0, 0, 0, 0 },
-    { MN_LISTINLINE, 3, 0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNListInline_Ticker,  MNListInline_UpdateGeometry,    MNListInline_Drawer,            { { Hu_MenuCvarList }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNListInline_CommandResponder, NULL, NULL, &list_hud_xhair_symbol, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_size, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_angle, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_angle, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_opacity, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_xhair_opacity, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_vitality_color, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_xhair_vitality_color, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_xhair_color, 0, 0, 0, 0, 0 },
-    { MN_COLORBOX,  3,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker,    MNColorBox_UpdateGeometry,      MNColorBox_Drawer,              { { Hu_MenuCvarColorBox }, { Hu_MenuCvarColorBox }, { Hu_MenuActivateColorWidget }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_xhair_color, 0, 0, 0, 0, 0 },
-
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      4,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_statusbar, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      4,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_sbar_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    4,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_sbar_size, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      4,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_sbar_opacity, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    4,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_sbar_opacity, 0, 0, 0, 0, 0 },
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_counters, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_cntr_items, 0, 0, 0, 0, 0 },
-    { MN_LISTINLINE, 5, 0,  Point2Raw(), 'i',MENU_FONT1, MENU_COLOR3, MNListInline_Ticker,  MNListInline_UpdateGeometry,    MNListInline_Drawer,            { { Hu_MenuCvarList }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_items, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_cntr_kills, 0, 0, 0, 0, 0 },
-    { MN_LISTINLINE, 5, 0,  Point2Raw(), 'k',MENU_FONT1, MENU_COLOR3, MNListInline_Ticker,  MNListInline_UpdateGeometry,    MNListInline_Drawer,            { { Hu_MenuCvarList }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_kills, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_cntr_secrets, 0, 0, 0, 0, 0 },
-    { MN_LISTINLINE, 5, 0,  Point2Raw(), 's',MENU_FONT1, MENU_COLOR3, MNListInline_Ticker,  MNListInline_UpdateGeometry,    MNListInline_Drawer,            { { Hu_MenuCvarList }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNListInline_CommandResponder, NULL, NULL, &list_hud_cntr_secrets, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_cntr_mapopen, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_cntr_mapopen, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_cntr_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    5,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_cntr_size, 0, 0, 0, 0, 0 },
-#endif
-
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR2, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_fullscreen, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_size, 0, 0, 0, 0, 0 },
-    { MN_SLIDER,    6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNSlider_Ticker,      MNSlider_UpdateGeometry,        MNSlider_Drawer,                { { Hu_MenuCvarSlider }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNSlider_CommandResponder, NULL, NULL, &sld_hud_size, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_text_color, 0, 0, 0, 0, 0 },
-    { MN_COLORBOX,  6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNColorBox_Ticker,    MNColorBox_UpdateGeometry,      MNColorBox_Drawer,              { { Hu_MenuCvarColorBox }, { Hu_MenuCvarColorBox }, { Hu_MenuActivateColorWidget }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNColorBox_CommandResponder, NULL, NULL, &cbox_hud_color, 0, 0, 0, 0, 0 },
-#if __JHEXEN__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_mana, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_mana, 0, 0, 0, 0, 0 },
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_ammo, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 'a',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_ammo, 0, 0, 0, 0, 0 },
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_armor, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 'r',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_armor, 0, 0, 0, 0, 0 },
-#endif
-#if __JDOOM64__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_powerkeys, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 'p',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_powerkeys, 0, 0, 0, 0, 0 },
-#endif
-#if __JDOOM__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_status, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 'f',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_face, 0, 0, 0, 0, 0 },
-#endif
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_health, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 'h',MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_health, 0, 0, 0, 0, 0 },
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_keys, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_keys, 0, 0, 0, 0, 0 },
-#endif
-#if __JHERETIC__ || __JHEXEN__
-    { MN_TEXT,      6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, MNText_Ticker,        MNText_UpdateGeometry,          MNText_Drawer,                  { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, &txt_hud_full_show_readyitem, 0, 0, 0, 0, 0 },
-    { MN_BUTTON,    6,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR3, MNButton_Ticker,      MNButton_UpdateGeometry,        MNButton_Drawer,                { { Hu_MenuCvarButton }, { 0 }, { 0 }, { 0 }, { 0 }, { Hu_MenuDefaultFocusAction } }, MNButton_CommandResponder, NULL, NULL, &btn_hud_full_show_readyitem, 0, 0, 0, 0, 0 },
-#endif
-    { MN_NONE,      0,  0,  Point2Raw(), 0,  MENU_FONT1, MENU_COLOR1, 0,                    0,                              0,                              { { 0 }, { 0 }, { 0 }, { 0 }, { 0 }, { 0 } }, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0 }
-};
-
 static dd_bool inited;
 
 typedef QMap<String, mn_page_t *> Pages;
@@ -2897,12 +2593,1517 @@ void Hu_MenuInitHUDOptionsPage()
 #else
     Point2Raw const origin(97, 28);
 #endif
+#if __JDOOM64__
+    uint const numObjects = 68;
+#elif __JDOOM__
+    uint const numObjects = 75;
+#elif __JHERETIC__
+    uint const numObjects = 75;
+#elif __JHEXEN__
+    uint const numObjects = 60;
+#endif
 
     mn_page_t *page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("HUD Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
-    page->_objects = HudMenuObjects;
+
+    mn_object_t *objects = (mn_object_t *)Z_Calloc(sizeof(*objects) * numObjects, PU_GAMESTATIC, 0);
+    mn_object_t *ob = objects;
+
+    ob->_type          = MN_TEXT;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "View Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 3;
+#if __JDOOM64__
+        sld->max       = 11;
+#else
+        sld->max       = 13;
+#endif
+        sld->value     = 0;
+        sld->step      = 1;
+        sld->floatMode = false;
+        sld->data1     = (void *)"view-size";
+    }
+    ob++;
+
+#if __JDOOM__
+    ob->_type          = MN_TEXT;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Single Key Display";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data = (void *)"hud-keys-combine";
+    }
+    ob++;
+#endif
+
+    ob->_type          = MN_TEXT;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "AutoHide";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_TextualValueUpdateGeometry;
+    ob->drawer         = MNSlider_TextualValueDrawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 60;
+        sld->value     = 0;
+        sld->step      = 1;
+        sld->floatMode = true;
+        sld->data1     = (void *)"hud-timer";
+        sld->data2     = (void *)"Disabled";
+        sld->data4     = (void *)" second";
+        sld->data5     = (void *)" seconds";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "UnHide Events";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Receive Damage";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-damage";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Health";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-health";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Armor";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-armor";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Powerup";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-powerup";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Weapon";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-weapon";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+#if __JHEXEN__
+        text->text = "Pickup Mana";
+#else
+        text->text = "Pickup Ammo";
+#endif
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-ammo";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Key";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-key";
+    }
+    ob++;
+
+#if __JHERETIC__ || __JHEXEN__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Pickup Item";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 1;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-unhide-pickup-invitem";
+    }
+    ob++;
+#endif // __JHERETIC__ || __JHEXEN__
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Messages";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Shown";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 2;
+    ob->_shortcut      = 'm';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"msg-show";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Uptime";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_TextualValueUpdateGeometry;
+    ob->drawer         = MNSlider_TextualValueDrawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 60;
+        sld->value     = 0;
+        sld->step      = 1;
+        sld->floatMode = true;
+        sld->data1     = (void *)"msg-uptime";
+        sld->data2     = (void *)"Disabled";
+        sld->data4     = (void *)" second";
+        sld->data5     = (void *)" seconds";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = .1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"msg-scale";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Color";
+    }
+    ob++;
+
+    ob->_type          = MN_COLORBOX;
+    ob->_group         = 2;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer         = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNColorBox_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    {
+        mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
+        cbox->rgbaMode = false;
+        cbox->data1    = (void *)"msg-color-r";
+        cbox->data2    = (void *)"msg-color-g";
+        cbox->data3    = (void *)"msg-color-b";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Crosshair";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_shortcut      = 'c';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Symbol";
+    }
+    ob++;
+
+    ob->_type          = MN_LISTINLINE;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer         = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNListInline_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    {
+        mndata_list_t *list = (mndata_list_t *)ob->_typedata;
+        list->data  = (void *)"view-cross-type";
+        list->count = 6;
+        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+        {
+            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
+            item->text = "None";
+            item->data = 0;
+            item++;
+
+            item->text = "Cross";
+            item->data = 1;
+            item++;
+
+            item->text = "Twin Angles";
+            item->data = 2;
+            item++;
+
+            item->text = "Square";
+            item->data = 3;
+            item++;
+
+            item->text = "Open Square";
+            item->data = 4;
+            item++;
+
+            item->text = "Angle";
+            item->data = 5;
+        }
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = .1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"view-cross-size";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Angle";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.0625f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"view-cross-angle";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Opacity";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"view-cross-a";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Vitality Color";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"view-cross-vitality";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Color";
+    }
+    ob++;
+
+    ob->_type          = MN_COLORBOX;
+    ob->_group         = 3;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer         = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNColorBox_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    {
+        mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
+        cbox->rgbaMode = false;
+        cbox->data1    = (void *)"view-cross-r";
+        cbox->data2    = (void *)"view-cross-g";
+        cbox->data3    = (void *)"view-cross-b";
+    }
+    ob++;
+
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 4;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Statusbar";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 4;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 4;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"hud-status-size";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 4;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Opacity";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 4;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"hud-status-alpha";
+    }
+    ob++;
+
+#endif // __JDOOM__ || __JHERETIC__ || __JHEXEN__
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Counters";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Items";
+    }
+    ob++;
+
+    ob->_type          = MN_LISTINLINE;
+    ob->_group         = 5;
+    ob->_shortcut      = 'i';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer         = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNListInline_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    {
+        mndata_list_t *list = (mndata_list_t *)ob->_typedata;
+        list->data  = (void *)"hud-cheat-counter";
+        list->mask  = CCH_ITEMS | CCH_ITEMS_PRCNT;
+        list->count = 4;
+        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+        {
+            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
+            item->text = "Hidden";
+            item->data = 0;
+            item++;
+
+            item->text = "Count";
+            item->data = CCH_ITEMS;
+            item++;
+
+            item->text = "Percent";
+            item->data = CCH_ITEMS_PRCNT;
+            item++;
+
+            item->text = "Count+Percent";
+            item->data = CCH_ITEMS | CCH_ITEMS_PRCNT;
+        }
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Kills";
+    }
+    ob++;
+
+    ob->_type          = MN_LISTINLINE;
+    ob->_group         = 5;
+    ob->_shortcut      = 'k';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer         = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNListInline_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    {
+        mndata_list_t *list = (mndata_list_t *)ob->_typedata;
+        list->data  = (void *)"hud-cheat-counter";
+        list->mask  = CCH_KILLS | CCH_KILLS_PRCNT;
+        list->count = 4;
+        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+        {
+            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
+            item->text = "Hidden";
+            item->data = 0;
+            item++;
+
+            item->text = "Count";
+            item->data = CCH_KILLS;
+            item++;
+
+            item->text = "Percent";
+            item->data = CCH_KILLS_PRCNT;
+            item++;
+
+            item->text = "Count+Percent";
+            item->data = CCH_KILLS | CCH_KILLS_PRCNT;
+        }
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Secrets";
+    }
+    ob++;
+
+    ob->_type          = MN_LISTINLINE;
+    ob->_group         = 5;
+    ob->_shortcut      = 's';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNListInline_Ticker;
+    ob->updateGeometry = MNListInline_UpdateGeometry;
+    ob->drawer         = MNListInline_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNListInline_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_list_t), PU_GAMESTATIC, 0);
+    {
+        mndata_list_t *list = (mndata_list_t *)ob->_typedata;
+        list->data  = (void *)"hud-cheat-counter";
+        list->mask  = CCH_SECRETS | CCH_SECRETS_PRCNT;
+        list->count = 4;
+        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+        {
+            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
+            item->text = "Hidden";
+            item->data = 0;
+            item++;
+
+            item->text = "Count";
+            item->data = CCH_SECRETS;
+            item++;
+
+            item->text = "Percent";
+            item->data = CCH_SECRETS_PRCNT;
+            item++;
+
+            item->text = "Count+Percent";
+            item->data = CCH_SECRETS | CCH_SECRETS_PRCNT;
+        }
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Automap Only";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-cheat-counter-show-mapopen";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 5;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"hud-cheat-counter-scale";
+    }
+    ob++;
+
+#endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR2;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Fullscreen";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Size";
+    }
+    ob++;
+
+    ob->_type          = MN_SLIDER;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNSlider_Ticker;
+    ob->updateGeometry = MNSlider_UpdateGeometry;
+    ob->drawer         = MNSlider_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNSlider_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_slider_t), PU_GAMESTATIC, 0);
+    {
+        mndata_slider_t *sld = (mndata_slider_t *)ob->_typedata;
+        sld->min       = 0;
+        sld->max       = 1;
+        sld->value     = 0;
+        sld->step      = 0.1f;
+        sld->floatMode = true;
+        sld->data1     = (void *)"hud-scale";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Text Color";
+    }
+    ob++;
+
+    ob->_type          = MN_COLORBOX;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNColorBox_Ticker;
+    ob->updateGeometry = MNColorBox_UpdateGeometry;
+    ob->drawer         = MNColorBox_Drawer;
+    ob->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+    ob->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+    ob->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNColorBox_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_colorbox_t), PU_GAMESTATIC, 0);
+    {
+        mndata_colorbox_t *cbox = (mndata_colorbox_t *)ob->_typedata;
+        cbox->rgbaMode = true;
+        cbox->data1    = (void *)"hud-color-r";
+        cbox->data2    = (void *)"hud-color-g";
+        cbox->data3    = (void *)"hud-color-b";
+        cbox->data4    = (void *)"hud-color-a";
+    }
+    ob++;
+
+#if __JHEXEN__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Mana";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-mana";
+    }
+    ob++;
+
+#endif // __JHEXEN__
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Ammo";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_shortcut      = 'a';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-ammo";
+    }
+    ob++;
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Armor";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_shortcut      = 'r';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-armor";
+    }
+    ob++;
+
+#endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
+
+#if __JDOOM64__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show PowerKeys";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_shortcut      = 'p';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-power";
+    }
+    ob++;
+
+#endif // __JDOOM64__
+
+#if __JDOOM__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Status";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_shortcut      = 'f';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-face";
+    }
+    ob++;
+
+#endif // __JDOOM__
+
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Health";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_shortcut      = 'h';
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-health";
+    }
+    ob++;
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Keys";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-keys";
+    }
+    ob++;
+
+#endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
+
+#if __JHERETIC__ || __JHEXEN__
+    ob->_type          = MN_TEXT;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR1;
+    ob->ticker         = MNText_Ticker;
+    ob->updateGeometry = MNText_UpdateGeometry;
+    ob->drawer         = MNText_Drawer;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_text_t), PU_GAMESTATIC, 0);
+    {
+        mndata_text_t *text = (mndata_text_t *)ob->_typedata;
+        text->text = "Show Ready-Item";
+    }
+    ob++;
+
+    ob->_type          = MN_BUTTON;
+    ob->_group         = 6;
+    ob->_pageFontIdx   = MENU_FONT1;
+    ob->_pageColorIdx  = MENU_COLOR3;
+    ob->ticker         = MNButton_Ticker;
+    ob->updateGeometry = MNButton_UpdateGeometry;
+    ob->drawer         = MNButton_Drawer;
+    ob->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
+    ob->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    ob->cmdResponder   = MNButton_CommandResponder;
+    ob->_typedata      = Z_Calloc(sizeof(mndata_button_t), PU_GAMESTATIC, 0);
+    {
+        mndata_button_t *btn = (mndata_button_t *)ob->_typedata;
+        btn->staydownMode = true;
+        btn->data         = (void *)"hud-currentitem";
+    }
+    ob++;
+
+#endif // __JHERETIC__ || __JHEXEN__
+
+    ob->_type = MN_NONE;
+
+    page->_objects = objects;
 }
 
 void Hu_MenuInitAutomapOptionsPage()
