@@ -465,7 +465,7 @@ DENG2_PIMPL(WorldSystem)
         if(MapDef *mapDef = map->def())
         {
             Uri const mapUri = mapDef->composeUri();
-            defs.getMapInfo(&mapUri);
+            mapInfo = defs.getMapInfo(&mapUri);
         }
 
         if(!mapInfo)
