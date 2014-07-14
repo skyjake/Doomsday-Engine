@@ -41,15 +41,15 @@ public:
 public:
     mndata_bindings_t();
     virtual ~mndata_bindings_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
+    char const *controlName();
 };
 
-void MNBindings_Ticker(mn_object_t *ob);
-void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin);
 int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e command);
 int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev);
-void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-char const *MNBindings_ControlName(mn_object_t *ob);
 
 #endif // __cplusplus
 #endif // LIBCOMMON_MENU_CONTROLS

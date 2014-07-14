@@ -352,11 +352,11 @@ mn_page_t *Hu_MenuFindPageByName(char const *name)
 
 /// @todo Make this state an object property flag.
 /// @return  @c true if the rotation of a cursor on this object should be animated.
-static dd_bool Hu_MenuHasCursorRotation(mn_object_t *ob)
+static dd_bool Hu_MenuHasCursorRotation(mn_object_t *wi)
 {
-    DENG2_ASSERT(ob != 0);
-    return (!(ob->flags() & MNF_DISABLED) &&
-              (ob->type() == MN_LISTINLINE || ob->type() == MN_SLIDER));
+    DENG2_ASSERT(wi != 0);
+    return (!(wi->flags() & MNF_DISABLED) &&
+              (wi->is<mndata_inlinelist_t>() || wi->is<mndata_slider_t>()));
 }
 
 /// To be called to re-evaluate the state of the cursor (e.g., when focus changes).
@@ -467,7 +467,7 @@ void Hu_MenuInitColorWidgetPage()
         cbox->_flags   = MNF_ID0 | MNF_NO_FOCUS;
         cbox->width    = SCREENHEIGHT / 7;
         cbox->height   = SCREENHEIGHT / 7;
-        cbox->rgbaMode = true;
+        cbox->_rgbaMode = true;
         page->_widgets << cbox;
     }
 
@@ -484,7 +484,7 @@ void Hu_MenuInitColorWidgetPage()
         sld->data2     = (void*)CR;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -505,7 +505,7 @@ void Hu_MenuInitColorWidgetPage()
         sld->data2     = (void*)CG;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -526,7 +526,7 @@ void Hu_MenuInitColorWidgetPage()
         sld->data2     = (void*)CB;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -548,7 +548,7 @@ void Hu_MenuInitColorWidgetPage()
         sld->data2     = (void*)CA;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -901,7 +901,7 @@ void Hu_MenuInitPlayerSetupPage()
         edit->_flags    = MNF_ID1 | MNF_LAYOUT_OFFSET;
         edit->_origin.y = 75;
         edit->data1     = (void *)"net-name";
-        edit->maxLength = 24;
+        edit->_maxLength = 24;
         edit->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << edit;
     }
@@ -1107,7 +1107,7 @@ static void deleteGameSave(String slotId)
 
 int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
 {
-    DENG2_ASSERT(ob != 0 && ob->_type == MN_EDIT);
+    DENG2_ASSERT(ob != 0);
     if(MCMD_DELETE == cmd &&
        (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
     {
@@ -1161,7 +1161,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
         edit->actions[MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuLoadSlotCommandResponder;
-        edit->maxLength      = 24;
+        edit->_maxLength      = 24;
         edit->data1          = Str_Text(Str_Appendf(Str_New(), "%i", i));
         edit->data2          = saveSlotObjectIds[i];
         edit->emptyString    = (char const *) TXT_EMPTYSTRING;
@@ -1186,7 +1186,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->actions[MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuSaveSlotCommandResponder;
         edit->emptyString    = (char const *) TXT_EMPTYSTRING;
-        edit->maxLength      = 24;
+        edit->_maxLength      = 24;
         edit->data1          = Str_Text(Str_Appendf(Str_New(), "%i", i));
         edit->data2          = saveSlotObjectIds[i];
         savePage->_widgets << edit;
@@ -1789,7 +1789,7 @@ void Hu_MenuInitHUDOptionsPage()
 #else
         sld->max       = 13;
 #endif
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 1;
         sld->floatMode = false;
         sld->data1     = (void *)"view-size";
@@ -1824,21 +1824,19 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        mndata_slider_t *sld = new mndata_slider_t;
+        mndata_slider_t *sld = new mndata_textualslider_t;
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->updateGeometry = MNSlider_TextualValueUpdateGeometry;
-        sld->drawer         = MNSlider_TextualValueDrawer;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         sld->min            = 0;
         sld->max            = 60;
-        sld->value          = 0;
+        sld->_value         = 0;
         sld->step           = 1;
         sld->floatMode      = true;
         sld->data1          = (void *)"hud-timer";
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
         sld->data5          = (void *)" seconds";
+        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2044,22 +2042,20 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        mndata_slider_t *sld = new mndata_slider_t;
+        mndata_slider_t *sld = new mndata_textualslider_t;
         sld->_group         = 2;
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->updateGeometry = MNSlider_TextualValueUpdateGeometry;
-        sld->drawer         = MNSlider_TextualValueDrawer;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         sld->min            = 0;
         sld->max            = 60;
-        sld->value          = 0;
+        sld->_value         = 0;
         sld->step           = 1;
         sld->floatMode      = true;
         sld->data1          = (void *)"msg-uptime";
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
         sld->data5          = (void *)" seconds";
+        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2075,7 +2071,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 2;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .1f;
         sld->floatMode = true;
         sld->data1     = (void *)"msg-scale";
@@ -2094,7 +2090,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         mndata_colorbox_t *cbox = new mndata_colorbox_t;
         cbox->_group   = 2;
-        cbox->rgbaMode = false;
+        cbox->_rgbaMode = false;
         cbox->data1    = (void *)"msg-color-r";
         cbox->data2    = (void *)"msg-color-g";
         cbox->data3    = (void *)"msg-color-b";
@@ -2152,7 +2148,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 3;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = .1f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-size";
@@ -2173,7 +2169,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 3;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.0625f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-angle";
@@ -2194,7 +2190,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 3;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-a";
@@ -2232,7 +2228,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         mndata_colorbox_t *cbox = new mndata_colorbox_t;
         cbox->_group   = 3;
-        cbox->rgbaMode = false;
+        cbox->_rgbaMode = false;
         cbox->data1    = (void *)"view-cross-r";
         cbox->data2    = (void *)"view-cross-g";
         cbox->data3    = (void *)"view-cross-b";
@@ -2264,7 +2260,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 4;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-status-size";
@@ -2285,7 +2281,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 4;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-status-alpha";
@@ -2411,7 +2407,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 5;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-cheat-counter-scale";
@@ -2442,7 +2438,7 @@ void Hu_MenuInitHUDOptionsPage()
         sld->_group    = 6;
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-scale";
@@ -2461,7 +2457,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         mndata_colorbox_t *cbox = new mndata_colorbox_t;
         cbox->_group   = 6;
-        cbox->rgbaMode = true;
+        cbox->_rgbaMode = true;
         cbox->data1    = (void *)"hud-color-r";
         cbox->data2    = (void *)"hud-color-g";
         cbox->data3    = (void *)"hud-color-b";
@@ -2673,7 +2669,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->_shortcut = 'o';
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-opacity";
@@ -2693,7 +2689,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->_shortcut = 'l';
         sld->min       = 0;
         sld->max       = 1;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-line-opacity";
@@ -2712,7 +2708,7 @@ void Hu_MenuInitAutomapOptionsPage()
         mndata_slider_t *sld = new mndata_slider_t;
         sld->min       = .1f;
         sld->max       = 2;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-line-width";
@@ -2773,7 +2769,7 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->_shortcut = 'g';
         sld->min       = 0;
         sld->max       = 200;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 5;
         sld->floatMode = true;
         sld->data1     = (void *)"map-door-glow";
@@ -3135,7 +3131,6 @@ void Hu_MenuInitWeaponsPage()
 
     {
         mndata_button_t *btn = new mndata_button_t;
-        btn->_type         = MN_BUTTON;
         btn->_group        = 2;
         btn->_shortcut     = 'b';
         btn->_pageFontIdx  = MENU_FONT1;
@@ -3185,7 +3180,6 @@ void Hu_MenuInitInventoryOptionsPage()
 
     {
         mndata_button_t *btn = new mndata_button_t;
-        btn->_type         = MN_BUTTON;
         btn->_shortcut     = 'w';
         btn->_pageFontIdx  = MENU_FONT1;
         btn->_pageColorIdx = MENU_COLOR3;
@@ -3239,22 +3233,20 @@ void Hu_MenuInitInventoryOptionsPage()
     }
 
     {
-        mndata_slider_t *sld = new mndata_slider_t;
-        sld->_shortcut      = 'h';
-        sld->_pageColorIdx  = MENU_COLOR3;
-        sld->updateGeometry = MNSlider_TextualValueUpdateGeometry;
-        sld->drawer         = MNSlider_TextualValueDrawer;
+        mndata_slider_t *sld = new mndata_textualslider_t;
+        sld->_shortcut     = 'h';
+        sld->_pageColorIdx = MENU_COLOR3;
+        sld->min           = 0;
+        sld->max           = 30;
+        sld->_value        = 0;
+        sld->step          = 1.f;
+        sld->floatMode     = true;
+        sld->data1         = (void *)"hud-inventory-timer";
+        sld->data2         = (void *)"Disabled";
+        sld->data4         = (void *)" second";
+        sld->data5         = (void *)" seconds";
         sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
         sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        sld->min       = 0;
-        sld->max       = 30;
-        sld->value     = 0;
-        sld->step      = 1.f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"hud-inventory-timer";
-        sld->data2     = (void *)"Disabled";
-        sld->data4     = (void *)" second";
-        sld->data5     = (void *)" seconds";
         page->_widgets << sld;
     }
 
@@ -3274,21 +3266,19 @@ void Hu_MenuInitInventoryOptionsPage()
     }
 
     {
-        mndata_slider_t *sld = new mndata_slider_t;
+        mndata_slider_t *sld = new mndata_textualslider_t;
         sld->_group         = 1;
         sld->_shortcut      = 'v';
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->updateGeometry = MNSlider_TextualValueUpdateGeometry;
-        sld->drawer         = MNSlider_TextualValueDrawer;
+        sld->min            = 0;
+        sld->max            = 16;
+        sld->_value         = 0;
+        sld->step           = 1;
+        sld->floatMode      = false;
+        sld->data1          = (void *)"hud-inventory-slot-max";
+        sld->data2          = (void *)"Automatic";
         sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
         sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        sld->min       = 0;
-        sld->max       = 16;
-        sld->value     = 0;
-        sld->step      = 1;
-        sld->floatMode = false;
-        sld->data1     = (void *)"hud-inventory-slot-max";
-        sld->data2     = (void *)"Automatic";
         page->_widgets << sld;
     }
 
@@ -3340,7 +3330,7 @@ void Hu_MenuInitSoundOptionsPage()
         sld->_shortcut = 's';
         sld->min       = 0;
         sld->max       = 255;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 5;
         sld->floatMode = false;
         sld->data1     = (void *)"sound-volume";
@@ -3360,7 +3350,7 @@ void Hu_MenuInitSoundOptionsPage()
         sld->_shortcut = 'm';
         sld->min       = 0;
         sld->max       = 255;
-        sld->value     = 0;
+        sld->_value     = 0;
         sld->step      = 5;
         sld->floatMode = false;
         sld->data1     = (void *)"music-volume";
@@ -3516,7 +3506,7 @@ void Hu_MenuInitPlayerClassPage()
         rect->_flags         = MNF_NO_FOCUS|MNF_ID1;
         rect->_origin.x      = 108;
         rect->_origin.y      = -58;
-        rect->ticker         = Hu_MenuPlayerClassBackgroundTicker;
+        rect->onTickCallback = Hu_MenuPlayerClassBackgroundTicker;
         rect->_pageFontIdx   = MENU_FONT1;
         rect->_pageColorIdx  = MENU_COLOR1;
         page->_widgets << rect;
@@ -3528,7 +3518,7 @@ void Hu_MenuInitPlayerClassPage()
         mprev->_flags         = MNF_ID0;
         mprev->_origin.x      = 108 + 55;
         mprev->_origin.y      = -58 + 76;
-        mprev->ticker         = Hu_MenuPlayerClassPreviewTicker;
+        mprev->onTickCallback = Hu_MenuPlayerClassPreviewTicker;
         page->_widgets << mprev;
     }
 }
@@ -3850,7 +3840,7 @@ void Hu_MenuDrawer()
     dd_bool showFocusCursor = true;
     if(focusOb && (focusOb->flags() & MNF_ACTIVE))
     {
-        if(focusOb->type() == MN_COLORBOX || focusOb->type() == MN_BINDINGS)
+        if(focusOb->is<mndata_colorbox_t>() || focusOb->is<mndata_bindings_t>())
         {
             showFocusCursor = false;
         }
@@ -3873,27 +3863,27 @@ void Hu_MenuDrawer()
     // Drawing any overlays?
     if(focusOb && (focusOb->flags() & MNF_ACTIVE))
     {
-        switch(focusOb->type())
+        if(focusOb->is<mndata_colorbox_t>())
         {
-        case MN_COLORBOX:
-        case MN_BINDINGS:
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
 
             beginOverlayDraw();
-            if(focusOb->type() == MN_BINDINGS)
-            {
-                Hu_MenuControlGrabDrawer(MNBindings_ControlName(focusOb), 1);
-            }
-            else
-            {
                 MN_DrawPage(Hu_MenuFindPageByName("ColorWidget"), 1, true);
-            }
             endOverlayDraw();
 
             GL_EndBorderedProjection(&bp);
-            break;
-        default: break;
+        }
+        if(mndata_bindings_t *binds = focusOb->maybeAs<mndata_bindings_t>())
+        {
+            drawOverlayBackground(OVERLAY_DARKEN);
+            GL_BeginBorderedProjection(&bp);
+
+            beginOverlayDraw();
+                Hu_MenuControlGrabDrawer(binds->controlName(), 1);
+            endOverlayDraw();
+
+            GL_EndBorderedProjection(&bp);
         }
     }
 
@@ -4007,11 +3997,11 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
         return true; // Eat these.
 
     case MCMD_SELECT: {
-        mn_object_t *ob = (mn_object_t *)page->userData;
-        ob->setFlags(FO_CLEAR, MNF_ACTIVE);
+        mndata_colorbox_t &cbox = ((mn_object_t *)page->userData)->as<mndata_colorbox_t>();
+        cbox.setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        MNColorBox_CopyColor(ob, 0, MN_MustFindObjectOnPage(page, 0, MNF_ID0));
+        cbox.copyColor(0, MN_MustFindObjectOnPage(page, 0, MNF_ID0)->as<mndata_colorbox_t>());
 
         /// @kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
@@ -4087,18 +4077,10 @@ static menucommand_e translateCommand(menucommand_e cmd)
     {
         if(mn_object_t *ob = Hu_MenuActivePage()->focusObject())
         {
-            switch(ob->type())
+            if((ob->flags() & MNF_ACTIVE) &&
+               (ob->is<mndata_edit_t>() || ob->is<mndata_list_t>() || ob->is<mndata_colorbox_t>()))
             {
-            case MN_EDIT:
-            case MN_LIST:
-            case MN_COLORBOX:
-                if(ob->flags() & MNF_ACTIVE)
-                {
-                    cmd = MCMD_NAV_OUT;
-                }
-                break;
-
-            default: break;
+                cmd = MCMD_NAV_OUT;
             }
         }
     }
@@ -4349,14 +4331,15 @@ static void composeNotDesignedForMessage(char const *str)
  * A specialization of MNRect_Ticker() which implements the animation logic
  * for the player class selection page's player visual background.
  */
-void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob)
+void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *wi)
 {
-    DENG2_ASSERT(ob != 0);
+    DENG2_ASSERT(wi != 0);
+    mndata_rect_t &bg = wi->as<mndata_rect_t>();
 
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = ob->page()->focusObject())
+    if(mn_object_t *mop = wi->page()->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -4369,25 +4352,23 @@ void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob)
         /// @todo Only change here if in the "random" state.
         pClass = playerclass_t(int(pClass) % 3); // Number of user-selectable classes.
 
-        MNRect_SetBackgroundPatch(ob, pPlayerClassBG[pClass]);
+        bg.setBackgroundPatch(pPlayerClassBG[pClass]);
     }
-
-    // Call MNRect's ticker now we've done our own processing.
-    MNRect_Ticker(ob);
 }
 
 /**
  * A specialization of MNMobjPreview_Ticker() which implements the animation
  * logic for the player class selection page's player visual.
  */
-void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob)
+void Hu_MenuPlayerClassPreviewTicker(mn_object_t *wi)
 {
-    DENG2_ASSERT(ob != 0);
+    DENG2_ASSERT(wi != 0);
+    mndata_mobjpreview_t &mprev = wi->as<mndata_mobjpreview_t>();
 
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(mn_object_t *mop = ob->page()->focusObject())
+    if(mn_object_t *mop = wi->page()->focusObject())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -4397,17 +4378,14 @@ void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob)
             pClass = playerclass_t(PCLASS_FIRST + (menuTime / 5));
             pClass = playerclass_t(int(pClass) % 3); // Number of user-selectable classes.
 
-            MNMobjPreview_SetPlayerClass(ob, pClass);
-            MNMobjPreview_SetMobjType(ob, PCLASS_INFO(pClass)->mobjType);
+            mprev.setPlayerClass(pClass);
+            mprev.setMobjType(PCLASS_INFO(pClass)->mobjType);
         }
 
         // Fighter is Yellow, others Red by default.
-        MNMobjPreview_SetTranslationClass(ob, pClass);
-        MNMobjPreview_SetTranslationMap(ob, pClass == PCLASS_FIGHTER? 2 : 0);
+        mprev.setTranslationClass(pClass);
+        mprev.setTranslationMap(pClass == PCLASS_FIGHTER? 2 : 0);
     }
-
-    // Call MNMobjPreview's ticker now we've done our own processing.
-    MNMobjPreview_Ticker(ob);
 }
 
 void Hu_MenuDrawPlayerClassPage(mn_page_t * /*page*/, Point2Raw const *origin)
@@ -4486,10 +4464,10 @@ void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
  */
 int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t *edit = &ob->as<mndata_edit_t>();
-    char const *saveSlotId = (char *)edit->data1;
-
     if(MNA_ACTIVEOUT != action) return 1;
+
+    mndata_edit_t &edit = ob->as<mndata_edit_t>();
+    char const *saveSlotId = (char *)edit.data1;
 
     if(menuNominatingQuickSaveSlot)
     {
@@ -4497,7 +4475,7 @@ int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*contex
         menuNominatingQuickSaveSlot = false;
     }
 
-    de::String userDescription = Str_Text(MNEdit_Text(ob));
+    de::String userDescription = Str_Text(edit.text());
     if(!G_SetGameActionSaveSession(saveSlotId, &userDescription))
     {
         return 0;
@@ -4554,12 +4532,12 @@ int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void * /*parameters*/
 
     if(MNA_MODIFIED != action) return 1;
 
-    if(MNList_Selection(ob) < 0) return 0; // Hmm?
+    if(list->selection() < 0) return 0; // Hmm?
 
     cvartype_t varType = Con_GetVariableType((char const *)list->data);
     if(CVT_NULL == varType) return 0;
 
-    mndata_listitem_t const *item = list->items()[list->selection];
+    mndata_listitem_t const *item = list->items()[list->_selection];
     int value;
     if(list->mask)
     {
@@ -4586,34 +4564,36 @@ int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void * /*parameters*/
     return 0;
 }
 
-int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSaveSlotEdit(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
+    DENG2_ASSERT(wi != 0);
     if(MNA_ACTIVE != action) return 1;
     if(cfg.menuGameSaveSuggestDescription)
     {
         de::String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
-        MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
+        wi->as<mndata_edit_t>().setText(MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
     }
     return 0;
 }
 
-int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuCvarEdit(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t const *edit = &ob->as<mndata_edit_t>();
-    cvartype_t varType = Con_GetVariableType((char const *)edit->data1);
+    DENG2_ASSERT(wi != 0);
+    mndata_edit_t const &edit = wi->as<mndata_edit_t>();
+    cvartype_t varType = Con_GetVariableType((char const *)edit.data1);
 
     if(MNA_MODIFIED != action) return 1;
 
     switch(varType)
     {
     case CVT_CHARPTR:
-        Con_SetString2((char const *)edit->data1, Str_Text(MNEdit_Text(ob)), SVF_WRITE_OVERRIDE);
+        Con_SetString2((char const *)edit.data1, Str_Text(edit.text()), SVF_WRITE_OVERRIDE);
         break;
 
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
-        de::Uri uri(Str_Text(MNEdit_Text(ob)), RC_NULL);
-        Con_SetUri2((char const *)edit->data1, reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
+        de::Uri uri(Str_Text(edit.text()), RC_NULL);
+        Con_SetUri2((char const *)edit.data1, reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
         break; }
 
     default: break;
@@ -4621,86 +4601,89 @@ int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
     return 0;
 }
 
-int Hu_MenuCvarSlider(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuCvarSlider(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    mndata_slider_t const *sldr = &ob->as<mndata_slider_t>();
-    cvartype_t varType = Con_GetVariableType((char const *)sldr->data1);
-    float value = MNSlider_Value(ob);
-
     if(MNA_MODIFIED != action) return 1;
 
+    mndata_slider_t &sldr = wi->as<mndata_slider_t>();
+    cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
     if(CVT_NULL == varType) return 0;
 
+    float value = sldr.value();
     switch(varType)
     {
     case CVT_FLOAT:
-        if(sldr->step >= .01f)
+        if(sldr.step >= .01f)
         {
-            Con_SetFloat2((char const *)sldr->data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2((char const *)sldr.data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat2((char const *)sldr->data1, value, SVF_WRITE_OVERRIDE);
+            Con_SetFloat2((char const *)sldr.data1, value, SVF_WRITE_OVERRIDE);
         }
         break;
+
     case CVT_INT:
-        Con_SetInteger2((char const *)sldr->data1, (int) value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2((char const *)sldr.data1, (int) value, SVF_WRITE_OVERRIDE);
         break;
+
     case CVT_BYTE:
-        Con_SetInteger2((char const *)sldr->data1, (byte) value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2((char const *)sldr.data1, (byte) value, SVF_WRITE_OVERRIDE);
         break;
-    default:
-        break;
+
+    default: break;
     }
+
     return 0;
 }
 
-int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuActivateColorWidget(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    mn_object_t *cboxMix, *sldrRed, *sldrGreen, *sldrBlue, *textAlpha, *sldrAlpha;
-    mn_page_t *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
-
     if(action != MNA_ACTIVE) return 1;
 
-    cboxMix   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID0);
-    sldrRed   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID1);
-    sldrGreen = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID2);
-    sldrBlue  = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID3);
-    textAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID4);
-    sldrAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID5);
+    mndata_colorbox_t &cbox = wi->as<mndata_colorbox_t>();
+    mn_page_t *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
+
+    mndata_colorbox_t &cboxMix = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID0)->as<mndata_colorbox_t>();
+    mndata_slider_t &sldrRed   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID1)->as<mndata_slider_t>();
+    mndata_slider_t &sldrGreen = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID2)->as<mndata_slider_t>();
+    mndata_slider_t &sldrBlue  = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID3)->as<mndata_slider_t>();
+    mndata_slider_t &textAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID4)->as<mndata_slider_t>();
+    mndata_slider_t &sldrAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID5)->as<mndata_slider_t>();
 
     colorWidgetActive = true;
 
     colorWidgetPage->initialize();
-    colorWidgetPage->userData = ob;
+    colorWidgetPage->userData = wi;
 
-    MNColorBox_CopyColor(cboxMix, 0, ob);
-    MNSlider_SetValue(sldrRed,   MNSLIDER_SVF_NO_ACTION, MNColorBox_Redf(ob));
-    MNSlider_SetValue(sldrGreen, MNSLIDER_SVF_NO_ACTION, MNColorBox_Greenf(ob));
-    MNSlider_SetValue(sldrBlue,  MNSLIDER_SVF_NO_ACTION, MNColorBox_Bluef(ob));
-    MNSlider_SetValue(sldrAlpha, MNSLIDER_SVF_NO_ACTION, MNColorBox_Alphaf(ob));
+    cboxMix.copyColor(0, cbox);
 
-    textAlpha->setFlags((MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
-    sldrAlpha->setFlags((MNColorBox_RGBAMode(ob)? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    sldrRed  .setValue(MNSLIDER_SVF_NO_ACTION, cbox.redf());
+    sldrGreen.setValue(MNSLIDER_SVF_NO_ACTION, cbox.greenf());
+    sldrBlue .setValue(MNSLIDER_SVF_NO_ACTION, cbox.bluef());
+    sldrAlpha.setValue(MNSLIDER_SVF_NO_ACTION, cbox.alphaf());
+
+    textAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
 
     return 0;
 }
 
-int Hu_MenuCvarColorBox(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuCvarColorBox(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    mndata_colorbox_t *cbox = &ob->as<mndata_colorbox_t>();
+    mndata_colorbox_t *cbox = &wi->as<mndata_colorbox_t>();
 
     if(action != MNA_MODIFIED) return 1;
 
     // MNColorBox's current color has already been updated and we know
     // that at least one of the color components have changed.
     // So our job is to simply update the associated cvars.
-    Con_SetFloat2((char const *)cbox->data1, MNColorBox_Redf(ob),   SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data2, MNColorBox_Greenf(ob), SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data3, MNColorBox_Bluef(ob),  SVF_WRITE_OVERRIDE);
-    if(MNColorBox_RGBAMode(ob))
+    Con_SetFloat2((char const *)cbox->data1, cbox->redf(),   SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data2, cbox->greenf(), SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data3, cbox->bluef(),  SVF_WRITE_OVERRIDE);
+    if(cbox->rgbaMode())
     {
-        Con_SetFloat2((char const *)cbox->data4, MNColorBox_Alphaf(ob), SVF_WRITE_OVERRIDE);
+        Con_SetFloat2((char const *)cbox->data4, cbox->alphaf(), SVF_WRITE_OVERRIDE);
     }
 
     return 0;
@@ -4806,21 +4789,22 @@ int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void * /*c
     return 0;
 }
 
-int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuUpdateColorWidgetColor(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    float value = MNSlider_Value(ob);
-    mn_object_t *cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0);
-
     if(MNA_MODIFIED != action) return 1;
 
-    switch(ob->data2)
+    mndata_slider_t &sldr = wi->as<mndata_slider_t>();
+    float value = sldr.value();
+    mndata_colorbox_t &cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0)->as<mndata_colorbox_t>();
+
+    switch(wi->data2)
     {
-    case CR: MNColorBox_SetRedf(  cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CG: MNColorBox_SetGreenf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CB: MNColorBox_SetBluef( cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CA: MNColorBox_SetAlphaf(cboxMix, MNCOLORBOX_SCF_NO_ACTION, value); break;
-    default:
-        Con_Error("Hu_MenuUpdateColorWidgetColor: Invalid value (%i) for data2.", ob->data2);
+    case CR: cboxMix.setRedf  (MNCOLORBOX_SCF_NO_ACTION, value); break;
+    case CG: cboxMix.setGreenf(MNCOLORBOX_SCF_NO_ACTION, value); break;
+    case CB: cboxMix.setBluef (MNCOLORBOX_SCF_NO_ACTION, value); break;
+    case CA: cboxMix.setAlphaf(MNCOLORBOX_SCF_NO_ACTION, value); break;
+
+    default: DENG2_ASSERT(!"Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
     }
 
     return 0;
@@ -4917,93 +4901,95 @@ int Hu_MenuSelectJoinGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*p
 
 int Hu_MenuSelectPlayerSetup(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
 {
-    mn_page_t *playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
-    mn_object_t *mop    = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0);
-    mn_object_t *name   = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID1);
-    mn_object_t *color  = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID3);
-#if __JHEXEN__
-    mn_object_t *class_;
-#endif
-
     if(MNA_ACTIVEOUT != action) return 1;
 
+    mn_page_t *playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
+    mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0)->as<mndata_mobjpreview_t>();
+    mndata_edit_t &name       = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID1)->as<mndata_edit_t>();
+    mndata_list_t &color      = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID3)->as<mndata_list_t>();
+
 #if __JHEXEN__
-    MNMobjPreview_SetMobjType(mop, PCLASS_INFO(cfg.netClass)->mobjType);
-    MNMobjPreview_SetPlayerClass(mop, cfg.netClass);
+    mop.setMobjType(PCLASS_INFO(cfg.netClass)->mobjType);
+    mop.setPlayerClass(cfg.netClass);
 #else
-    MNMobjPreview_SetMobjType(mop, MT_PLAYER);
-    MNMobjPreview_SetPlayerClass(mop, PCLASS_PLAYER);
+    mop.setMobjType(MT_PLAYER);
+    mop.setPlayerClass(PCLASS_PLAYER);
 #endif
-    MNMobjPreview_SetTranslationClass(mop, 0);
-    MNMobjPreview_SetTranslationMap(mop, cfg.netColor);
+    mop.setTranslationClass(0);
+    mop.setTranslationMap(cfg.netColor);
 
-    MNList_SelectItemByValue(color, MNLIST_SIF_NO_ACTION, cfg.netColor);
+    color.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netColor);
 #if __JHEXEN__
-    class_ = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID2);
-    MNList_SelectItemByValue(class_, MNLIST_SIF_NO_ACTION, cfg.netClass);
+    mndata_list_t &class_ = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID2)->as<mndata_list_t>();
+    class_.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netClass);
 #endif
 
-    MNEdit_SetText(name, MNEDIT_STF_NO_ACTION|MNEDIT_STF_REPLACEOLD, Con_GetString("net-name"));
+    name.setText(MNEDIT_STF_NO_ACTION|MNEDIT_STF_REPLACEOLD, Con_GetString("net-name"));
 
     Hu_MenuSetActivePage(playerSetupPage);
     return 0;
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
+    DENG2_ASSERT(wi != 0);
     if(MNA_MODIFIED != action) return 1;
 
-    int selection = MNList_Selection(ob);
+    mndata_list_t &list = wi->as<mndata_list_t>();
+    int selection = list.selection();
     if(selection >= 0)
     {
-        mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
-        MNMobjPreview_SetPlayerClass(mop, selection);
-        MNMobjPreview_SetMobjType(mop, PCLASS_INFO(selection)->mobjType);
+        mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<mndata_mobjpreview_t>();
+        mop.setPlayerClass(selection);
+        mop.setMobjType(PCLASS_INFO(selection)->mobjType);
     }
     return 0;
 }
 #endif
 
-int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerColor(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
+    DENG2_ASSERT(wi != 0);
     if(MNA_MODIFIED != action) return 1;
 
     // The color translation map is stored in the list item data member.
-    int selection = MNList_ItemData(ob, MNList_Selection(ob));
+    mndata_list_t &list = wi->as<mndata_list_t>();
+    int selection = list.itemData(list.selection());
     if(selection >= 0)
     {
-        mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
-        MNMobjPreview_SetTranslationMap(mop, selection);
+        mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<mndata_mobjpreview_t>();
+        mop.setTranslationMap(selection);
     }
     return 0;
 }
 
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
 {
-    mn_object_t *plrNameEdit = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID1);
+    DENG2_ASSERT(wi != 0);
+    mndata_edit_t &plrNameEdit  = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID1)->as<mndata_edit_t>();
 #if __JHEXEN__
-    mn_object_t *plrClassList = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID2);
+    mndata_list_t &plrClassList = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID2)->as<mndata_list_t>();
 #endif
-    mn_object_t *plrColorList = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID3);
+    mndata_list_t &plrColorList = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID3)->as<mndata_list_t>();
 
 #if __JHEXEN__
-    cfg.netClass = MNList_Selection(plrClassList);
+    cfg.netClass = plrClassList.selection();
 #endif
     // The color translation map is stored in the list item data member.
-    cfg.netColor = MNList_ItemData(plrColorList, MNList_Selection(plrColorList));
+    cfg.netColor = plrColorList.itemData(plrColorList.selection());
 
     if(MNA_ACTIVEOUT != action) return 1;
 
     char buf[300];
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, Str_Text(MNEdit_Text(plrNameEdit)), 300);
+    M_StrCatQuoted(buf, Str_Text(plrNameEdit.text()), 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         strcpy(buf, "setname ");
-        M_StrCatQuoted(buf, Str_Text(MNEdit_Text(plrNameEdit)), 300);
+        M_StrCatQuoted(buf, Str_Text(plrNameEdit.text()), 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change
@@ -5145,27 +5131,29 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*con
     return 0;
 }
 
-int Hu_MenuFocusOnPlayerClass(mn_object_t *ob, mn_actionid_t action, void *context)
+int Hu_MenuFocusOnPlayerClass(mn_object_t *wi, mn_actionid_t action, void *context)
 {
-    playerclass_t plrClass = (playerclass_t)ob->data2;
+    DENG2_ASSERT(wi != 0);
 
     if(MNA_FOCUS != action) return 1;
 
-    mn_object_t *mop = MN_MustFindObjectOnPage(ob->page(), 0, MNF_ID0);
-    MNMobjPreview_SetPlayerClass(mop, plrClass);
-    MNMobjPreview_SetMobjType(mop, (PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
+    playerclass_t plrClass = (playerclass_t)wi->data2;
+    mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<mndata_mobjpreview_t>();
+    mop.setPlayerClass(plrClass);
+    mop.setMobjType((PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 
-    Hu_MenuDefaultFocusAction(ob, action, context);
+    Hu_MenuDefaultFocusAction(wi, action, context);
     return 0;
 }
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t *ob, mn_actionid_t action, void *context)
+int Hu_MenuFocusEpisode(mn_object_t *wi, mn_actionid_t action, void *context)
 {
+    DENG2_ASSERT(wi != 0);
     if(MNA_FOCUS != action) return 1;
-    mnEpisode = ob->data2;
-    Hu_MenuDefaultFocusAction(ob, action, context);
+    mnEpisode = wi->data2;
+    Hu_MenuDefaultFocusAction(wi, action, context);
     return 0;
 }
 

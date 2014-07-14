@@ -46,21 +46,6 @@ typedef enum menucommand_e {
     MCMD_DELETE
 } menucommand_e;
 
-// Menu object types.
-typedef enum {
-    MN_NONE,
-    MN_RECT,
-    MN_TEXT,
-    MN_BUTTON,
-    MN_EDIT,
-    MN_LIST,
-    MN_LISTINLINE,
-    MN_SLIDER,
-    MN_COLORBOX,
-    MN_BINDINGS,
-    MN_MOBJPREVIEW
-} mn_obtype_e;
-
 /**
  * @defgroup menuObjectFlags Menu Object Flags
  */
@@ -138,7 +123,7 @@ struct mn_actioninfo_t
     /// @param parameters  Passed to the callback from event which actioned this.
     /// @return  Callback return value. Callback should return zero if the action
     ///     was recognised and processed, regardless of outcome.
-    int (*callback) (mn_object_t *ob, mn_actionid_t action, void *parameters);
+    int (*callback) (mn_object_t *wi, mn_actionid_t action, void *parameters);
 };
 
 /**
@@ -147,9 +132,6 @@ struct mn_actioninfo_t
 struct mn_object_t
 {
 public:
-    /// Type of the object.
-    mn_obtype_e _type;
-
     /// Object group identifier.
     int _group;
 
@@ -171,29 +153,31 @@ public:
     int _pageColorIdx;
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (mn_object_t *ob);
+    virtual void tick();
 
     /// Calculate geometry for this when visible on the specified page.
-    void (*updateGeometry) (mn_object_t *ob, mn_page_t *page);
+    virtual void updateGeometry(mn_page_t * /*page*/) {}
 
     /// Draw this at the specified offset within the owning view-space.
     /// Can be @c NULL in which case this will never be drawn.
-    void (*drawer) (mn_object_t *ob, Point2Raw const *origin);
+    virtual void draw(Point2Raw const * /*origin*/) {}
 
     /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
 
+    void (*onTickCallback) (mn_object_t *wi);
+
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (mn_object_t *ob, menucommand_e command);
+    int (*cmdResponder) (mn_object_t *wi, menucommand_e command);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*responder) (mn_object_t *ob, event_t *ev);
+    int (*responder) (mn_object_t *wi, event_t *ev);
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
-    int (*privilegedResponder) (mn_object_t *ob, event_t *ev);
+    int (*privilegedResponder) (mn_object_t *wi, event_t *ev);
 
     // Extra property values.
     void *data1;
@@ -214,8 +198,6 @@ public:
     virtual ~mn_object_t() {}
 
     DENG2_AS_IS_METHODS()
-
-    mn_obtype_e type() const;
 
     mn_page_t *page() const;
 
@@ -264,8 +246,7 @@ public:
     mn_object_t *setFixedX(int x);
     mn_object_t *setFixedY(int y);
 
-    /// @return  Flags value post operation for caller convenience.
-    int setFlags(flagop_t op, int flags);
+    void setFlags(flagop_t op, int flags);
 
     int shortcut();
 
@@ -298,7 +279,7 @@ public:
     int execAction(mn_actionid_t action, void *parameters);
 };
 
-int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e command);
+int MNObject_DefaultCommandResponder(mn_object_t *wi, menucommand_e command);
 
 #endif // __cplusplus
 
@@ -430,7 +411,7 @@ public:
      *
      * @param ob  MNObject to be given focus.
      */
-    void setFocus(mn_object_t *ob);
+    void setFocus(mn_object_t *wi);
 
     /**
      * Determines the size of the menu cursor for the currently focused widget. If
@@ -451,7 +432,7 @@ public:
      */
     mn_object_t *findObject(int group, int flags);
 
-    int findObjectIndex(mn_object_t *ob);
+    int findObjectIndex(mn_object_t *wi);
 
     /**
      * Retrieve a predefined color triplet associated with this page by it's logical
@@ -487,7 +468,7 @@ public:
     void applyPageLayout();
 
 private:
-    void giveChildFocus(mn_object_t *ob, dd_bool allowRefocus);
+    void giveChildFocus(mn_object_t *wi, dd_bool allowRefocus);
 };
 
 /**
@@ -496,29 +477,24 @@ private:
 struct mndata_rect_t : public mn_object_t
 {
 public:
-    /// Dimensions of the rectangle.
-    Size2Raw dimensions;
-
-    /// Background patch.
-    patchid_t patch;
+    Size2Raw dimensions; ///< Dimensions of the rectangle.
+    patchid_t patch;     ///< Background patch.
 
 public:
     mndata_rect_t();
     virtual ~mndata_rect_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
+    /**
+     * Apply the Patch graphic referenced by @a patch as the background for this rect.
+     *
+     * @param newBackgroundPatch  Unique identifier of the patch. If @c <= 0 the current
+     * background will be cleared and the Rect will be drawn as a solid color.
+     */
+    void setBackgroundPatch(patchid_t newBackgroundPatch);
 };
-
-void MNRect_Ticker(mn_object_t *ob);
-void MNRect_Drawer(mn_object_t *ob, Point2Raw const *origin);
-void MNRect_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-/**
- * Apply the Patch graphic referenced by @a patch as the background for this rect.
- *
- * @param ob  MNObject instance.
- * @param patch  Unique identifier of the patch. If @c <= 0 the current background
- *               will be cleared and the Rect will be drawn as a solid color.
- */
-void MNRect_SetBackgroundPatch(mn_object_t *ob, patchid_t patch);
 
 /**
  * @defgroup mnTextFlags  MNText Flags
@@ -544,13 +520,12 @@ public:
 public:
     mndata_text_t();
     virtual ~mndata_text_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
 };
 
-void MNText_Ticker(mn_object_t *ob);
-void MNText_Drawer(mn_object_t *ob, Point2Raw const *origin);
-void MNText_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-int MNText_SetFlags(mn_object_t *ob, flagop_t op, int flags);
+void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags);
 
 /**
  * @defgroup mnButtonFlags  MNButton Flags
@@ -565,32 +540,25 @@ int MNText_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 struct mndata_button_t : public mn_object_t
 {
 public:
-    dd_bool staydownMode; /// @c true= this is operating in two-state "staydown" mode.
-
+    dd_bool staydownMode;  ///< @c true= this is operating in two-state "staydown" mode.
     void *data;
-
-    /// Label text.
-    char const *text;
-
-    /// Patch to be used when drawing this instead of text.
-    patchid_t *patch;
-
-    char const *yes, *no;
-
-    /// @ref mnButtonFlags
-    int flags;
+    char const *text;      ///< Label text.
+    patchid_t *patch;      ///< Used when drawing this instead of text, if set.
+    char const *yes;
+    char const *no;
+    int flags;             ///< @ref mnButtonFlags
 
 public:
     mndata_button_t();
     virtual ~mndata_button_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
 };
 
-void MNButton_Ticker(mn_object_t *ob);
-void MNButton_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNButton_CommandResponder(mn_object_t *ob, menucommand_e command);
-void MNButton_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
+int MNButton_CommandResponder(mn_object_t *wi, menucommand_e command);
 
-int MNButton_SetFlags(mn_object_t *ob, flagop_t op, int flags);
+void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags);
 
 /**
  * Edit field.
@@ -615,30 +583,6 @@ int MNButton_SetFlags(mn_object_t *ob, flagop_t op, int flags);
 #  define MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE   ("M_FSLOT")
 #endif
 
-struct mndata_edit_t : public mn_object_t
-{
-public:
-    ddstring_t text;
-    ddstring_t oldtext; // If the current edit is canceled...
-    uint maxLength;
-    uint maxVisibleChars;
-    char const *emptyString; // Drawn when editfield is empty/null.
-    void *data1;
-
-public:
-    mndata_edit_t();
-    virtual ~mndata_edit_t();
-};
-
-void MNEdit_Ticker(mn_object_t *ob);
-void MNEdit_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNEdit_CommandResponder(mn_object_t *ob, menucommand_e command);
-int MNEdit_Responder(mn_object_t *ob, event_t* ev);
-void MNEdit_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-uint MNEdit_MaxLength(mn_object_t *ob);
-void MNEdit_SetMaxLength(mn_object_t *ob, uint newMaxLength);
-
 /**
  * @defgroup mneditSetTextFlags  MNEdit Set Text Flags
  * @{
@@ -647,15 +591,40 @@ void MNEdit_SetMaxLength(mn_object_t *ob, uint newMaxLength);
 #define MNEDIT_STF_REPLACEOLD           0x2 /// Replace the "old" copy (used for canceled edits).
 /**@}*/
 
-/// @return  A pointer to an immutable copy of the current contents of the edit field.
-ddstring_t const *MNEdit_Text(mn_object_t *ob);
+struct mndata_edit_t : public mn_object_t
+{
+public:
+    ddstring_t _text;
+    ddstring_t oldtext;       ///< If the current edit is canceled...
+    uint _maxLength;
+    uint maxVisibleChars;
+    char const *emptyString;  ///< Drawn when editfield is empty/null.
+    void *data1;
 
-/**
- * Change the current contents of the edit field.
- * @param flags  @ref mneditSetTextFlags
- * @param string  New text string which will replace the existing string.
- */
-void MNEdit_SetText(mn_object_t *ob, int flags, char const *string);
+public:
+    mndata_edit_t();
+    virtual ~mndata_edit_t();
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
+    uint maxLength() const;
+
+    void setMaxLength(uint newMaxLength);
+
+    /// @return  A pointer to an immutable copy of the current contents of the edit field.
+    ddstring_t const *text() const;
+
+    /**
+     * Change the current contents of the edit field.
+     * @param flags  @ref mneditSetTextFlags
+     * @param string  New text string which will replace the existing string.
+     */
+    void setText(int flags, char const *string);
+};
+
+int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e command);
+int MNEdit_Responder(mn_object_t *wi, event_t* ev);
 
 /**
  * List selection.
@@ -663,7 +632,12 @@ void MNEdit_SetText(mn_object_t *ob, int flags, char const *string);
 #define MNDATA_LIST_LEADING     .5f /// Inter-item leading factor (does not apply to MNListInline_Drawer).
 #define MNDATA_LIST_NONSELECTION_LIGHT  .7f /// Light value multiplier for non-selected items (does not apply to MNListInline_Drawer).
 
-#define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
+/**
+ * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
+ */
+///@{
+#define MNLIST_SIF_NO_ACTION            0x1 /// Do not call any linked action function.
+///@}
 
 struct mndata_listitem_t
 {
@@ -683,7 +657,7 @@ public:
     Items _items;
     void *data;
     int mask;
-    int selection; // Selected item (-1 if none).
+    int _selection; // Selected item (-1 if none).
     int first; // First visible item.
     int numvis;
 
@@ -691,108 +665,61 @@ public:
     mndata_list_t();
     virtual ~mndata_list_t();
 
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
     Items const &items() const;
 
     inline int itemCount() const { return items().count(); }
+
+    /**
+     * Change the currently selected item.
+     * @param flags  @ref mnlistSelectItemFlags
+     * @param itemIndex  Index of the new selection.
+     * @return  @c true if the selected item changed.
+     */
+    dd_bool selectItem(int flags, int itemIndex);
+
+    /**
+     * Change the currently selected item by looking up its data value.
+     * @param flags  @ref mnlistSelectItemFlags
+     * @param dataValue  Value associated to the candidate item being selected.
+     * @return  @c true if the selected item changed.
+     */
+    dd_bool selectItemByValue(int flags, int itemIndex);
+
+    /// @return  Index of the currently selected item else -1.
+    int selection() const;
+
+    /// @return  Data of item at position @a index. 0 if index is out of bounds.
+    int itemData(int index) const;
+
+    /// @return  @c true if the currently selected item is presently visible.
+    dd_bool selectionIsVisible() const;
+
+    /// @return  Index of the found item associated with @a dataValue else -1.
+    int findItem(int dataValue) const;
 };
+
+int MNList_CommandResponder(mn_object_t *wi, menucommand_e command);
 
 struct mndata_inlinelist_t : public mndata_list_t
 {
 public:
     mndata_inlinelist_t();
     virtual ~mndata_inlinelist_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
 };
 
-void MNList_Ticker(mn_object_t *ob);
-void MNList_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNList_CommandResponder(mn_object_t *ob, menucommand_e command);
-
-void MNList_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-/// @return  Index of the currently selected item else -1.
-int MNList_Selection(mn_object_t *ob);
-
-/// @return  Data of item at position @a index. 0 if index is out of bounds.
-int MNList_ItemData(mn_object_t const *ob, int index);
-
-/// @return  @c true if the currently selected item is presently visible.
-dd_bool MNList_SelectionIsVisible(mn_object_t *ob);
-
-/// @return  Index of the found item associated with @a dataValue else -1.
-int MNList_FindItem(mn_object_t const *ob, int dataValue);
-
-void MNListInline_Ticker(mn_object_t *ob);
-void MNListInline_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNListInline_CommandResponder(mn_object_t *ob, menucommand_e command);
-void MNListInline_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-
-/**
- * @defgroup mnlistSelectItemFlags  MNList Select Item Flags
- */
-///@{
-#define MNLIST_SIF_NO_ACTION            0x1 /// Do not call any linked action function.
-///@}
-
-/**
- * Change the currently selected item.
- * @param flags  @ref mnlistSelectItemFlags
- * @param itemIndex  Index of the new selection.
- * @return  @c true if the selected item changed.
- */
-dd_bool MNList_SelectItem(mn_object_t *ob, int flags, int itemIndex);
-
-/**
- * Change the currently selected item by looking up its data value.
- * @param flags  @ref mnlistSelectItemFlags
- * @param dataValue  Value associated to the candidate item being selected.
- * @return  @c true if the selected item changed.
- */
-dd_bool MNList_SelectItemByValue(mn_object_t *ob, int flags, int itemIndex);
+int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e command);
 
 /**
  * Color preview box.
  */
 #define MNDATA_COLORBOX_WIDTH   4 // Default inner width in fixed 320x200 space.
 #define MNDATA_COLORBOX_HEIGHT  4 // Default inner height in fixed 320x200 space.
-
-struct mndata_colorbox_t : public mn_object_t
-{
-public:
-    /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default
-    /// dimensions will be used instead.
-    int width, height;
-    float r, g, b, a;
-    dd_bool rgbaMode;
-    void *data1;
-    void *data2;
-    void *data3;
-    void *data4;
-
-public:
-    mndata_colorbox_t();
-    virtual ~mndata_colorbox_t() {}
-};
-
-void MNColorBox_Ticker(mn_object_t *ob);
-void MNColorBox_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNColorBox_CommandResponder(mn_object_t *ob, menucommand_e command);
-void MNColorBox_UpdateGeometry(mn_object_t *ob, mn_page_t* page);
-
-/// @return  @c true if this colorbox is operating in RGBA mode.
-dd_bool MNColorBox_RGBAMode(mn_object_t *ob);
-
-/// @return  Current red color component.
-float MNColorBox_Redf(mn_object_t const *ob);
-
-/// @return  Current green color component.
-float MNColorBox_Greenf(mn_object_t const *ob);
-
-/// @return  Current blue color component.
-float MNColorBox_Bluef(mn_object_t const *ob);
-
-/// @return  Current alpha value or @c 1 if this colorbox is not
-///          operating in "rgba mode".
-float MNColorBox_Alphaf(mn_object_t const *ob);
 
 /**
  * @defgroup mncolorboxSetColorFlags  MNColorBox Set Color Flags.
@@ -801,40 +728,79 @@ float MNColorBox_Alphaf(mn_object_t const *ob);
 #define MNCOLORBOX_SCF_NO_ACTION        0x1 /// Do not call any linked action function.
 ///@}
 
-/**
- * Change the current color of the color box.
- * @param flags  @ref mncolorboxSetColorFlags
- * @param rgba  New color and alpha. Note: will be NOP if this colorbox
- *              is not operating in "rgba mode".
- * @return  @c true if the current color changed.
- */
-dd_bool MNColorBox_SetColor4fv(mn_object_t *ob, int flags, float rgba[4]);
-dd_bool MNColorBox_SetColor4f(mn_object_t *ob, int flags, float red, float green,
-    float blue, float alpha);
+struct mndata_colorbox_t : public mn_object_t
+{
+public:
+    /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default
+    /// dimensions will be used instead.
+    int width, height;
+    float _r, _g, _b, _a;
+    dd_bool _rgbaMode;
+    void *data1;
+    void *data2;
+    void *data3;
+    void *data4;
 
-/// Change the current red color component.
-/// @return  @c true if the value changed.
-dd_bool MNColorBox_SetRedf(mn_object_t *ob, int flags, float red);
+public:
+    mndata_colorbox_t();
+    virtual ~mndata_colorbox_t() {}
 
-/// Change the current green color component.
-/// @return  @c true if the value changed.
-dd_bool MNColorBox_SetGreenf(mn_object_t *ob, int flags, float green);
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
 
-/// Change the current blue color component.
-/// @return  @c true if the value changed.
-dd_bool MNColorBox_SetBluef(mn_object_t *ob, int flags, float blue);
+    /// @return  @c true if this colorbox is operating in RGBA mode.
+    dd_bool rgbaMode() const;
 
-/// Change the current alpha value. Note: will be NOP if this colorbox
-/// is not operating in "rgba mode".
-/// @return  @c true if the value changed.
-dd_bool MNColorBox_SetAlphaf(mn_object_t *ob, int flags, float alpha);
+    /// @return  Current red color component.
+    float redf() const;
 
-/**
- * Copy the current color from @a other.
- * @param flags  @ref mncolorboxSetColorFlags
- * @return  @c true if the current color changed.
- */
-dd_bool MNColorBox_CopyColor(mn_object_t *ob, int flags, mn_object_t const *otherObj);
+    /// @return  Current green color component.
+    float greenf() const;
+
+    /// @return  Current blue color component.
+    float bluef() const;
+
+    /// @return  Current alpha value or @c 1 if this colorbox is not
+    ///          operating in "rgba mode".
+    float alphaf() const;
+
+    /**
+     * Change the current color of the color box.
+     * @param flags  @ref mncolorboxSetColorFlags
+     * @param rgba  New color and alpha. Note: will be NOP if this colorbox
+     *              is not operating in "rgba mode".
+     * @return  @c true if the current color changed.
+     */
+    dd_bool setColor4fv(int flags, float rgba[4]);
+
+    dd_bool setColor4f(int flags, float red, float green, float blue, float alpha);
+
+    /// Change the current red color component.
+    /// @return  @c true if the value changed.
+    dd_bool setRedf(int flags, float red);
+
+    /// Change the current green color component.
+    /// @return  @c true if the value changed.
+    dd_bool setGreenf(int flags, float green);
+
+    /// Change the current blue color component.
+    /// @return  @c true if the value changed.
+    dd_bool setBluef(int flags, float blue);
+
+    /// Change the current alpha value. Note: will be NOP if this colorbox
+    /// is not operating in "rgba mode".
+    /// @return  @c true if the value changed.
+    dd_bool setAlphaf(int flags, float alpha);
+
+    /**
+     * Copy the current color from @a other.
+     * @param flags  @ref mncolorboxSetColorFlags
+     * @return  @c true if the current color changed.
+     */
+    dd_bool copyColor(int flags, mndata_colorbox_t const &otherObj);
+};
+
+int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e command);
 
 /**
  * Graphical slider.
@@ -857,11 +823,18 @@ dd_bool MNColorBox_CopyColor(mn_object_t *ob, int flags, mn_object_t const *othe
 #  define MNDATA_SLIDER_PATCH_HANDLE    ("M_SLDKB")
 #endif
 
+/**
+ * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
+ */
+///@{
+#define MNSLIDER_SVF_NO_ACTION            0x1 /// Do not call any linked action function.
+///@}
+
 struct mndata_slider_t : public mn_object_t
 {
 public:
     float min, max;
-    float value;
+    float _value;
     float step; // Button step.
     dd_bool floatMode; // Otherwise only integers are allowed.
     /// @todo Turn this into a property record or something.
@@ -874,32 +847,34 @@ public:
 public:
     mndata_slider_t();
     virtual ~mndata_slider_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
+    int thumbPos() const;
+
+    /// @return  Current value represented by the slider.
+    float value() const;
+
+    /**
+     * Change the current value represented by the slider.
+     * @param flags  @ref mnsliderSetValueFlags
+     * @param value  New value.
+     */
+    void setValue(int flags, float value);
 };
 
-void MNSlider_Ticker(mn_object_t *ob);
-void MNSlider_Drawer(mn_object_t *ob, Point2Raw const *origin);
-void MNSlider_TextualValueDrawer(mn_object_t *ob, Point2Raw const *origin);
-int MNSlider_CommandResponder(mn_object_t *ob, menucommand_e command);
-void MNSlider_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
-void MNSlider_TextualValueUpdateGeometry(mn_object_t *ob, mn_page_t *page);
-int MNSlider_ThumbPos(mn_object_t const *ob);
+int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e command);
 
-/// @return  Current value represented by the slider.
-float MNSlider_Value(mn_object_t const *ob);
+struct mndata_textualslider_t : public mndata_slider_t
+{
+public:
+    mndata_textualslider_t();
+    virtual ~mndata_textualslider_t() {}
 
-/**
- * @defgroup mnsliderSetValueFlags  MNSlider Set Value Flags
- */
-///@{
-#define MNSLIDER_SVF_NO_ACTION            0x1 /// Do not call any linked action function.
-///@}
-
-/**
- * Change the current value represented by the slider.
- * @param flags  @ref mnsliderSetValueFlags
- * @param value  New value.
- */
-void MNSlider_SetValue(mn_object_t *ob, int flags, float value);
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+};
 
 /**
  * Mobj preview visual.
@@ -918,16 +893,16 @@ public:
 public:
     mndata_mobjpreview_t();
     virtual ~mndata_mobjpreview_t() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(mn_page_t *page);
+
+    void setMobjType(int mobjType);
+    void setPlayerClass(int plrClass);
+    void setTranslationClass(int tClass);
+    void setTranslationMap(int tMap);
 };
 
-void MNMobjPreview_Ticker(mn_object_t *ob);
-void MNMobjPreview_SetMobjType(mn_object_t *ob, int mobjType);
-void MNMobjPreview_SetPlayerClass(mn_object_t *ob, int plrClass);
-void MNMobjPreview_SetTranslationClass(mn_object_t *ob, int tClass);
-void MNMobjPreview_SetTranslationMap(mn_object_t *ob, int tMap);
-
-void MNMobjPreview_Drawer(mn_object_t *ob, Point2Raw const *origin);
-void MNMobjPreview_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
 
 // Menu render state:
 typedef struct mn_rendstate_s {

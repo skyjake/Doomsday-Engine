@@ -91,23 +91,23 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
         if(!page) return; // Not initialized yet?
 
-        mn_object_t *ob = page->findObject(0, menuWidgetId);
-        if(!ob)
+        mn_object_t *wi = page->findObject(0, menuWidgetId);
+        if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
             return;
         }
-        DENG2_ASSERT(ob->_type == MN_EDIT);
+        mndata_edit_t &edit = wi->as<mndata_edit_t>();
 
-        ob->setFlags(FO_SET, MNF_DISABLED);
+        wi->setFlags(FO_SET, MNF_DISABLED);
         if(status == Loadable)
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
-            ob->setFlags(FO_CLEAR, MNF_DISABLED);
+            edit.setText(MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
+            wi->setFlags(FO_CLEAR, MNF_DISABLED);
         }
         else
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, "");
+            edit.setText(MNEDIT_STF_NO_ACTION, "");
         }
 
         if(Hu_MenuIsActive() &&

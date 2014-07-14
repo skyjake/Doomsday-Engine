@@ -511,18 +511,14 @@ mndata_bindings_t::mndata_bindings_t()
     : mn_object_t()
     , binds(0)
 {
-    mn_object_t::_type               = MN_BINDINGS;
     mn_object_t::_pageFontIdx        = MENU_FONT1;
     mn_object_t::_pageColorIdx       = MENU_COLOR1;
-    mn_object_t::updateGeometry      = MNBindings_UpdateGeometry;
-    mn_object_t::drawer              = MNBindings_Drawer;
     mn_object_t::cmdResponder        = MNBindings_CommandResponder;
     mn_object_t::privilegedResponder = MNBindings_PrivilegedResponder;
 }
 
-void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
+void mndata_bindings_t::draw(Point2Raw const *origin)
 {
-    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -584,11 +580,10 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
+void mndata_bindings_t::updateGeometry(mn_page_t * /*page*/)
 {
     // @todo calculate visible dimensions properly!
-    DENG2_ASSERT(ob);
-    Rect_SetWidthHeight(ob->_geometry, 60, 10 * SMALL_SCALE);
+    Rect_SetWidthHeight(_geometry, 60, 10 * SMALL_SCALE);
 }
 
 /**
@@ -617,13 +612,6 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     FR_DrawTextXY3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     DGL_Disable(DGL_TEXTURE_2D);
-}
-
-void MNBindings_Ticker(mn_object_t * /*ob*/)
-{
-    //DENG2_ASSERT(ob != 0 && ob->_type == MN_BINDINGS);
-    //mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
-    // Stub.
 }
 
 int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
@@ -754,17 +742,13 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
     return false;
 }
 
-char const *MNBindings_ControlName(mn_object_t *ob)
+char const *mndata_bindings_t::controlName()
 {
-    DENG2_ASSERT(ob != 0);
-    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
     DENG2_ASSERT(binds != 0);
-
     // Map to a text definition?
     if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
     {
         return GET_TXT(PTR2INT(binds->text));
     }
-
     return binds->text;
 }
