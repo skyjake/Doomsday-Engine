@@ -100,7 +100,7 @@ static void composeYesNoMessage()
     tmp[1] = 0;
 
     // Get the message template.
-    char *in = PRESSYN;
+    char const *in = PRESSYN;
 
     for(; *in; in++)
     {
