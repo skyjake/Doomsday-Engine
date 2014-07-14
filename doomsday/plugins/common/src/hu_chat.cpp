@@ -34,7 +34,7 @@ void UIChat_LoadMacros()
     for(int i = 0; i < 10; ++i)
     {
         if(cfg.chatMacros[i]) continue;
-        cfg.chatMacros[i] = GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+        cfg.chatMacros[i] = (char *) GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
     }
 }
 

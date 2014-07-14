@@ -255,7 +255,7 @@ static void drawBackground()
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawFinishedTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -279,7 +279,7 @@ static void drawFinishedTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TI
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     /// @kludge We need to properly externalize the map progression.
     if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) &&
@@ -453,7 +453,7 @@ static void drawPercent(int x, int y, int p)
 /**
  * Display map completion time and par, or "sucks" message if overflow.
  */
-static void drawTime(Vector2i &origin, int t)
+static void drawTime(Vector2i origin, int t)
 {
     if(t < 0) return;
 
@@ -677,7 +677,7 @@ static void updateDeathmatchStats()
     }
 }
 
-static void drawDeathmatchStats(Vector2i &origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
+static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);

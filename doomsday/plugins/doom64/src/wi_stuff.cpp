@@ -122,7 +122,7 @@ static void drawBackground()
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawFinishedTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     String const mapTitle = G_MapTitle(); // current map
 
@@ -145,7 +145,7 @@ static void drawFinishedTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TI
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawEnteringTitle(Vector2i &origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
+static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     // See if there is a map name...
     char *mapName = 0;
@@ -198,7 +198,7 @@ static void drawPercent(int x, int y, int p)
 /**
  * Display map completion time and par, or "sucks" message if overflow.
  */
-static void drawTime(Vector2i &origin, int t)
+static void drawTime(Vector2i origin, int t)
 {
     if(t < 0) return;
 
@@ -352,7 +352,7 @@ static void updateDeathmatchStats()
     }
 }
 
-static void drawDeathmatchStats(Vector2i &origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
+static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACINGX, DM_MATRIXY))
 {
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
