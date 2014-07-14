@@ -1338,7 +1338,7 @@ void mn_page_t::initialize()
         if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
         {
             // Determine number of potentially visible items.
-            list->numvis = list->count;
+            list->numvis = list->itemCount();
             if(list->selection >= 0)
             {
                 if(list->selection < list->first)
@@ -1403,9 +1403,8 @@ void mn_page_t::initObjects()
         }
         if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
         {
-            for(int i = 0; i < list->count; ++i)
+            foreach(mndata_listitem_t *item, list->items())
             {
-                mndata_listitem_t *item = &((mndata_listitem_t *)list->items)[i];
                 if(item->text && (PTR2INT(item->text) > 0 && PTR2INT(item->text) < NUMTEXT))
                 {
                     item->text = GET_TXT(PTR2INT(item->text));
@@ -2246,10 +2245,12 @@ void MNEdit_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
     Rect_SetWidthHeight(ob->_geometry, 170, 14);
 }
 
+mndata_listitem_t::mndata_listitem_t(char const *text, int data)
+    : text(text), data(data)
+{}
+
 mndata_list_t::mndata_list_t()
     : mn_object_t()
-    , items    (0)
-    , count    (0)
     , data     (0)
     , mask     (0)
     , selection(0)
@@ -2263,6 +2264,16 @@ mndata_list_t::mndata_list_t()
     mn_object_t::drawer         = MNList_Drawer;
     mn_object_t::updateGeometry = MNList_UpdateGeometry;
     mn_object_t::cmdResponder   = MNList_CommandResponder;
+}
+
+mndata_list_t::~mndata_list_t()
+{
+    qDeleteAll(_items);
+}
+
+mndata_list_t::Items const &mndata_list_t::items() const
+{
+    return _items;
 }
 
 void MNList_Ticker(mn_object_t *ob)
@@ -2297,7 +2308,7 @@ void MNList_Drawer(mn_object_t *ob, Point2Raw const *_origin)
     dimColor[CG] *= MNDATA_LIST_NONSELECTION_LIGHT;
     dimColor[CB] *= MNDATA_LIST_NONSELECTION_LIGHT;
 
-    if(list->first < list->count && list->numvis > 0)
+    if(list->first < list->itemCount() && list->numvis > 0)
     {
         int i = list->first;
 
@@ -2308,7 +2319,7 @@ void MNList_Drawer(mn_object_t *ob, Point2Raw const *_origin)
         origin.y = _origin->y;
         do
         {
-            const mndata_listitem_t* item = &((const mndata_listitem_t*) list->items)[i];
+            mndata_listitem_t const *item = list->items()[i];
 
             if(list->selection == i)
             {
@@ -2324,7 +2335,7 @@ void MNList_Drawer(mn_object_t *ob, Point2Raw const *_origin)
 
             FR_DrawText3(item->text, &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
             origin.y += FR_TextHeight(item->text) * (1+MNDATA_LIST_LEADING);
-        } while(++i < list->count && i < list->first + list->numvis);
+        } while(++i < list->itemCount() && i < list->first + list->numvis);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -2344,7 +2355,7 @@ int MNList_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             int oldSelection = list->selection;
             if(MCMD_NAV_DOWN == cmd)
             {
-                if(list->selection < list->count - 1)
+                if(list->selection < list->itemCount() - 1)
                     ++list->selection;
             }
             else
@@ -2422,12 +2433,10 @@ int MNList_ItemData(const mn_object_t *ob, int index)
 {
     DENG2_ASSERT(ob && (ob->_type == MN_LIST || ob->_type == MN_LISTINLINE));
     mndata_list_t const *list = static_cast<mndata_list_t const *>(ob);
-    mndata_listitem_t *item;
 
-    if(index < 0 || index >= list->count) return 0;
+    if(index < 0 || index >= list->_items.count()) return 0;
 
-    item = &((mndata_listitem_t*) list->items)[index];
-    return item->data;
+    return list->_items[index]->data;
 }
 
 int MNList_FindItem(const mn_object_t *ob, int dataValue)
@@ -2435,9 +2444,9 @@ int MNList_FindItem(const mn_object_t *ob, int dataValue)
     DENG2_ASSERT(ob && (ob->_type == MN_LIST || ob->_type == MN_LISTINLINE));
     mndata_list_t const *list = static_cast<mndata_list_t const *>(ob);
 
-    for(int i = 0; i < list->count; ++i)
+    for(int i = 0; i < list->_items.count(); ++i)
     {
-        mndata_listitem_t* item = &((mndata_listitem_t*) list->items)[i];
+        mndata_listitem_t *item = list->_items[i];
         if(list->mask)
         {
             if((dataValue & list->mask) == item->data)
@@ -2457,7 +2466,7 @@ dd_bool MNList_SelectItem(mn_object_t *ob, int flags, int itemIndex)
     int oldSelection = list->selection;
     DENG2_ASSERT(ob && (ob->_type == MN_LIST || ob->_type == MN_LISTINLINE));
 
-    if(0 > itemIndex || itemIndex >= list->count) return false;
+    if(0 > itemIndex || itemIndex >= list->_items.count()) return false;
 
     list->selection = itemIndex;
     if(list->selection == oldSelection) return false;
@@ -2496,7 +2505,7 @@ void MNListInline_Drawer(mn_object_t *ob, Point2Raw const *origin)
 {
     DENG2_ASSERT(ob->_type == MN_LISTINLINE);
     mndata_list_t const *list = static_cast<mndata_list_t const *>(ob);
-    mndata_listitem_t const *item = ((mndata_listitem_t const *)list->items) + list->selection;
+    mndata_listitem_t const *item = list->_items[list->selection];
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(rs.textFonts[ob->_pageFontIdx]);
@@ -2524,11 +2533,11 @@ int MNListInline_CommandResponder(mn_object_t *ob, menucommand_e cmd)
             if(list->selection > 0)
                 --list->selection;
             else
-                list->selection = list->count - 1;
+                list->selection = list->itemCount() - 1;
         }
         else
         {
-            if(list->selection < list->count - 1)
+            if(list->selection < list->itemCount() - 1)
                 ++list->selection;
             else
                 list->selection = 0;
@@ -2562,13 +2571,15 @@ void MNList_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));
 
     RectRaw itemGeometry;
-    for(int i = 0; i < list->count; ++i)
+    for(int i = 0; i < list->_items.count(); ++i)
     {
-        mndata_listitem_t *item = &((mndata_listitem_t*)list->items)[i];
+        mndata_listitem_t *item = list->_items[i];
 
         FR_TextSize(&itemGeometry.size, item->text);
-        if(i != list->count-1)
+        if(i != list->_items.count() - 1)
+        {
             itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
+        }
 
         Rect_UniteRaw(ob->_geometry, &itemGeometry);
 
@@ -2581,7 +2592,7 @@ void MNListInline_UpdateGeometry(mn_object_t *ob, mn_page_t *page)
     DENG2_ASSERT(ob->_type == MN_LISTINLINE);
 
     mndata_list_t *list = static_cast<mndata_list_t *>(ob);
-    mndata_listitem_t *item = ((mndata_listitem_t *) list->items) + list->selection;
+    mndata_listitem_t *item = list->_items[list->selection];
     Size2Raw size;
 
     FR_SetFont(page->predefinedFont(mn_page_fontid_t(ob->_pageFontIdx)));

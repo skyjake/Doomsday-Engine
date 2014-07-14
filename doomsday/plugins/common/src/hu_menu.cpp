@@ -922,21 +922,11 @@ void Hu_MenuInitPlayerSetupPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerSetupPlayerClass;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->count = 3;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = (char const *)TXT_PLAYERCLASS1;
-            item->data = PCLASS_FIGHTER;
-            item++;
 
-            item->text = (char const *)TXT_PLAYERCLASS2;
-            item->data = PCLASS_CLERIC;
-            item++;
+        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS1, PCLASS_FIGHTER);
+        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS2, PCLASS_CLERIC);
+        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS3, PCLASS_MAGE);
 
-            item->text = (char const *)TXT_PLAYERCLASS3;
-            item->data = PCLASS_MAGE;
-        }
         page->_widgets << list;
     }
 #endif
@@ -958,77 +948,35 @@ void Hu_MenuInitPlayerSetupPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerColor;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-#if __JHEXEN__
-        // Hexen v1.0 has only four player colors.
-        list->count = (gameMode == hexen_v10? 4 : NUMPLAYERCOLORS) + 1/*auto*/;
-#else
-        list->count = NUMPLAYERCOLORS + 1/*auto*/;
-#endif
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
         /// @todo Read these names from Text definitions.
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
+        int colorIdx = 0;
 #if __JHEXEN__
-            item->text = "Red";         item->data = 0;
-            item++;
-
-            item->text = "Blue";        item->data = 1;
-            item++;
-
-            item->text = "Yellow";      item->data = 2;
-            item++;
-
-            item->text = "Green";       item->data = 3;
-            item++;
-
-            // Hexen v1.0 has only four player colors.
-            if(gameMode != hexen_v10)
-            {
-                item->text = "Jade";    item->data = 4;
-                item++;
-
-                item->text = "White";   item->data = 5;
-                item++;
-
-                item->text = "Hazel";   item->data = 6;
-                item++;
-
-                item->text = "Purple";  item->data = 7;
-                item++;
-            }
-
-            item->text = "Automatic";   item->data = 8;
-#elif __JHERETIC__
-            item->text = "Green";       item->data = 0;
-            item++;
-
-            item->text = "Orange";      item->data = 1;
-            item++;
-
-            item->text = "Red";         item->data = 2;
-            item++;
-
-            item->text = "Blue";        item->data = 3;
-            item++;
-
-            item->text = "Automatic";   item->data = 4;
-#else
-            item->text = "Green";       item->data = 0;
-            item++;
-
-            item->text = "Indigo";      item->data = 1;
-            item++;
-
-            item->text = "Brown";       item->data = 2;
-            item++;
-
-            item->text = "Red";         item->data = 3;
-            item++;
-
-            item->text = "Automatic";   item->data = 4;
-#endif
+        list->_items << new mndata_listitem_t("Red",    colorIdx++);
+        list->_items << new mndata_listitem_t("Blue",   colorIdx++);
+        list->_items << new mndata_listitem_t("Yellow", colorIdx++);
+        list->_items << new mndata_listitem_t("Green",  colorIdx++);
+        if(gameMode != hexen_v10) // Hexen v1.0 has only four player colors.
+        {
+            list->_items << new mndata_listitem_t("Jade",   colorIdx++);
+            list->_items << new mndata_listitem_t("White",  colorIdx++);
+            list->_items << new mndata_listitem_t("Hazel",  colorIdx++);
+            list->_items << new mndata_listitem_t("Purple", colorIdx++);
         }
+#elif __JHERETIC__
+        list->_items << new mndata_listitem_t("Green",  colorIdx++);
+        list->_items << new mndata_listitem_t("Orange", colorIdx++);
+        list->_items << new mndata_listitem_t("Red",    colorIdx++);
+        list->_items << new mndata_listitem_t("Blue",   colorIdx++);
+#else
+        list->_items << new mndata_listitem_t("Green",  colorIdx++);
+        list->_items << new mndata_listitem_t("Indigo", colorIdx++);
+        list->_items << new mndata_listitem_t("Brown",  colorIdx++);
+        list->_items << new mndata_listitem_t("Red",    colorIdx++);
+
+#endif
+        list->_items << new mndata_listitem_t("Automatic", colorIdx++);
+
         page->_widgets << list;
     }
 
@@ -2180,34 +2128,15 @@ void Hu_MenuInitHUDOptionsPage()
         list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"view-cross-type";
-        list->count = 6;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
 
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "None";
-            item->data = 0;
-            item++;
+        int xhairIdx = 0;
+        list->_items << new mndata_listitem_t("None",        xhairIdx++);
+        list->_items << new mndata_listitem_t("Cross",       xhairIdx++);
+        list->_items << new mndata_listitem_t("Twin Angles", xhairIdx++);
+        list->_items << new mndata_listitem_t("Square",      xhairIdx++);
+        list->_items << new mndata_listitem_t("Open Square", xhairIdx++);
+        list->_items << new mndata_listitem_t("Angle",       xhairIdx++);
 
-            item->text = "Cross";
-            item->data = 1;
-            item++;
-
-            item->text = "Twin Angles";
-            item->data = 2;
-            item++;
-
-            item->text = "Square";
-            item->data = 3;
-            item++;
-
-            item->text = "Open Square";
-            item->data = 4;
-            item++;
-
-            item->text = "Angle";
-            item->data = 5;
-        }
         page->_widgets << list;
     }
 
@@ -2392,25 +2321,12 @@ void Hu_MenuInitHUDOptionsPage()
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_ITEMS | CCH_ITEMS_PRCNT;
-        list->count = 4;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Hidden";
-            item->data = 0;
-            item++;
 
-            item->text = "Count";
-            item->data = CCH_ITEMS;
-            item++;
+        list->_items << new mndata_listitem_t("Hidden",        0);
+        list->_items << new mndata_listitem_t("Count",         CCH_ITEMS);
+        list->_items << new mndata_listitem_t("Percent",       CCH_ITEMS_PRCNT);
+        list->_items << new mndata_listitem_t("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT);
 
-            item->text = "Percent";
-            item->data = CCH_ITEMS_PRCNT;
-            item++;
-
-            item->text = "Count+Percent";
-            item->data = CCH_ITEMS | CCH_ITEMS_PRCNT;
-        }
         page->_widgets << list;
     }
 
@@ -2430,25 +2346,12 @@ void Hu_MenuInitHUDOptionsPage()
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_KILLS | CCH_KILLS_PRCNT;
-        list->count = 4;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Hidden";
-            item->data = 0;
-            item++;
 
-            item->text = "Count";
-            item->data = CCH_KILLS;
-            item++;
+        list->_items << new mndata_listitem_t("Hidden",        0);
+        list->_items << new mndata_listitem_t("Count",         CCH_KILLS);
+        list->_items << new mndata_listitem_t("Percent",       CCH_KILLS_PRCNT);
+        list->_items << new mndata_listitem_t("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT);
 
-            item->text = "Percent";
-            item->data = CCH_KILLS_PRCNT;
-            item++;
-
-            item->text = "Count+Percent";
-            item->data = CCH_KILLS | CCH_KILLS_PRCNT;
-        }
         page->_widgets << list;
     }
 
@@ -2468,25 +2371,12 @@ void Hu_MenuInitHUDOptionsPage()
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_SECRETS | CCH_SECRETS_PRCNT;
-        list->count = 4;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Hidden";
-            item->data = 0;
-            item++;
 
-            item->text = "Count";
-            item->data = CCH_SECRETS;
-            item++;
+        list->_items << new mndata_listitem_t("Hidden",        0);
+        list->_items << new mndata_listitem_t("Count",         CCH_SECRETS);
+        list->_items << new mndata_listitem_t("Percent",       CCH_SECRETS_PRCNT);
+        list->_items << new mndata_listitem_t("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT);
 
-            item->text = "Percent";
-            item->data = CCH_SECRETS_PRCNT;
-            item++;
-
-            item->text = "Count+Percent";
-            item->data = CCH_SECRETS | CCH_SECRETS_PRCNT;
-        }
         page->_widgets << list;
     }
 
@@ -2845,21 +2735,11 @@ void Hu_MenuInitAutomapOptionsPage()
         list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"map-huddisplay";
-        list->count = 3;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "None";
-            item->data = 0;
-            item++;
 
-            item->text = "Current";
-            item->data = 1;
-            item++;
+        list->_items << new mndata_listitem_t("None",      0);
+        list->_items << new mndata_listitem_t("Current",   1);
+        list->_items << new mndata_listitem_t("Statusbar", 2);
 
-            item->text = "Statusbar";
-            item->data = 2;
-        }
         page->_widgets << list;
     }
 #endif
@@ -2913,22 +2793,12 @@ void Hu_MenuInitAutomapOptionsPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->count = 3;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
         list->data  = (void *)"map-customcolors";
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Never";
-            item->data = 0;
-            item++;
 
-            item->text = "Auto";
-            item->data = 1;
-            item++;
+        list->_items << new mndata_listitem_t("Never",  0);
+        list->_items << new mndata_listitem_t("Auto",   1);
+        list->_items << new mndata_listitem_t("Always", 2);
 
-            item->text = "Always";
-            item->data = 2;
-        }
         page->_widgets << list;
     }
 
@@ -3040,12 +2910,9 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 }
 
-static int compareWeaponPriority(void const *_a, void const *_b)
+static bool compareWeaponPriority(mndata_listitem_t const *a, mndata_listitem_t const *b)
 {
-    mndata_listitem_t const *a = (mndata_listitem_t const *)_a;
-    mndata_listitem_t const *b = (mndata_listitem_t const *)_b;
     int i = 0, aIndex = -1, bIndex = -1;
-
     do
     {
         if(cfg.weaponOrder[i] == a->data)
@@ -3058,9 +2925,7 @@ static int compareWeaponPriority(void const *_a, void const *_b)
         }
     } while(!(aIndex != -1 && bIndex != -1) && ++i < NUM_WEAPON_TYPES);
 
-    if(aIndex > bIndex) return 1;
-    if(aIndex < bIndex) return -1;
-    return 0; // Should never happen.
+    return aIndex < bIndex;
 }
 
 void Hu_MenuInitWeaponsPage()
@@ -3128,17 +2993,13 @@ void Hu_MenuInitWeaponsPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuChangeWeaponPriority;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->count = NUM_WEAPON_TYPES;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
+
+        for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
         {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i, item++)
-            {
-                item->text = weaponOrder[i].text;
-                item->data = weaponOrder[i].data;
-            }
-            qsort(list->items, list->count, sizeof(mndata_listitem_t), compareWeaponPriority);
+            list->_items << new mndata_listitem_t(weaponOrder[i].text, weaponOrder[i].data);
         }
+        qSort(list->_items.begin(), list->_items.end(), compareWeaponPriority);
+
         page->_widgets << list;
     }
 
@@ -3212,22 +3073,12 @@ void Hu_MenuInitWeaponsPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->count = 3;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
         list->data  = (void *)"player-autoswitch";
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Never";
-            item->data = 0;
-            item++;
 
-            item->text = "If Better";
-            item->data = 1;
-            item++;
+        list->_items << new mndata_listitem_t("Never",     0);
+        list->_items << new mndata_listitem_t("If Better", 1);
+        list->_items << new mndata_listitem_t("Always",    2);
 
-            item->text = "Always";
-            item->data = 2;
-        }
         page->_widgets << list;
     }
 
@@ -3265,22 +3116,12 @@ void Hu_MenuInitWeaponsPage()
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
         list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->count = 3;
-        list->items = (mndata_listitem_t *)Z_Calloc(sizeof(mndata_listitem_t) * list->count, PU_GAMESTATIC, 0);
         list->data  = (void *)"player-autoswitch-ammo";
-        {
-            mndata_listitem_t *item = (mndata_listitem_t *)list->items;
-            item->text = "Never";
-            item->data = 0;
-            item++;
 
-            item->text = "If Better";
-            item->data = 1;
-            item++;
+        list->_items << new mndata_listitem_t("Never",     0);
+        list->_items << new mndata_listitem_t("If Better", 1);
+        list->_items << new mndata_listitem_t("Always",    2);
 
-            item->text = "Always";
-            item->data = 2;
-        }
         page->_widgets << list;
     }
 
@@ -4710,18 +4551,16 @@ int Hu_MenuCvarButton(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
 int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void * /*parameters*/)
 {
     mndata_list_t const *list = &ob->as<mndata_list_t>();
-    mndata_listitem_t const *item;
-    cvartype_t varType;
-    int value;
 
     if(MNA_MODIFIED != action) return 1;
 
     if(MNList_Selection(ob) < 0) return 0; // Hmm?
 
-    varType = Con_GetVariableType((char const *)list->data);
+    cvartype_t varType = Con_GetVariableType((char const *)list->data);
     if(CVT_NULL == varType) return 0;
 
-    item = &((mndata_listitem_t *) list->items)[list->selection];
+    mndata_listitem_t const *item = list->items()[list->selection];
+    int value;
     if(list->mask)
     {
         value = Con_GetInteger((char const *)list->data);

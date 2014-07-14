@@ -665,17 +665,22 @@ void MNEdit_SetText(mn_object_t *ob, int flags, char const *string);
 
 #define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
-typedef struct {
+struct mndata_listitem_t
+{
+public:
     char const *text;
     int data;
-} mndata_listitem_t;
+
+public:
+    mndata_listitem_t(char const *text = 0, int data = 0);
+};
 
 /// @note Also used for MN_LISTINLINE!
 struct mndata_list_t : public mn_object_t
 {
 public:
-    void *items;
-    int count; // Number of items.
+    typedef QList<mndata_listitem_t *> Items;
+    Items _items;
     void *data;
     int mask;
     int selection; // Selected item (-1 if none).
@@ -684,7 +689,11 @@ public:
 
 public:
     mndata_list_t();
-    virtual ~mndata_list_t() {}
+    virtual ~mndata_list_t();
+
+    Items const &items() const;
+
+    inline int itemCount() const { return items().count(); }
 };
 
 struct mndata_inlinelist_t : public mndata_list_t
