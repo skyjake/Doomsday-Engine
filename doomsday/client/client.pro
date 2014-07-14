@@ -772,14 +772,7 @@ SOURCES += \
     SOURCES += src/audio/sys_audiod_sdlmixer.cpp
 }
 
-DOOMSDAY_SCRIPTS += \
-    modules/appconfig.de \
-    modules/bootstrap.de \
-    modules/Updater.de
-
 OTHER_FILES += \
-    $$DOOMSDAY_SCRIPTS \
-    data/cphelp.txt \
     include/template.h.template \
     src/template.c.template \
     client-mac.doxy \
@@ -788,13 +781,6 @@ OTHER_FILES += \
 # Resources ------------------------------------------------------------------
 
 data.files = $$OUT_PWD/../doomsday.pk3
-
-mod.files = \
-    $$DOOMSDAY_SCRIPTS \
-    $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/Log.de \
-    $$DENG_MODULES_DIR/recutil.de \
-    $$DENG_MODULES_DIR/../../libgui/modules/gui.de
 
 # These fonts may be needed during the initial startup busy mode.
 startupfonts.files = \
@@ -818,10 +804,9 @@ macx {
         res/macx/deng.icns
 
     data.path         = $${res.path}
-    mod.path          = $${res.path}/modules
     startupfonts.path = $${res.path}/data/fonts
 
-    QMAKE_BUNDLE_DATA += mod res data startupfonts
+    QMAKE_BUNDLE_DATA += res data startupfonts
 
     QMAKE_INFO_PLIST = res/macx/Info.plist
 
@@ -858,14 +843,17 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
+DENG_PACKAGES += net.dengine.pack
+
+deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
+
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupfonts mod
+    INSTALLS += target data startupfonts
 
     target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
-    mod.path          = $$DENG_BASE_DIR/modules
 
     win32 {
         # Windows-specific installation.

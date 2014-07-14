@@ -33,6 +33,7 @@
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "sys_system.h"
+#include "def_main.h"
 
 #if WIN32
 #  include "dd_winit.h"
@@ -151,6 +152,10 @@ void ServerApp::initialize()
         LogBuffer::get().enableStandardOutput(false);
     }
 
+    Def_Init();
+
+    // Load the server's packages.
+    addInitPackage("net.dengine.base");
     initSubsystems();
 
     // Initialize.

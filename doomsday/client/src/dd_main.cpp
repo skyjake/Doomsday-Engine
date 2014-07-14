@@ -2120,9 +2120,6 @@ static int DD_StartupWorker(void * /*context*/)
     initPathMappings();
     App_FileSystem().resetAllSchemes();
 
-    // Initialize the definition databases.
-    Def_Init();
-
     Con_SetProgress(40);
 
     Net_Init();

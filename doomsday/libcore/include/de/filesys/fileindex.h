@@ -34,7 +34,7 @@ class File;
  *
  * @ingroup fs
  */
-class FileIndex
+class DENG2_PUBLIC FileIndex
 {
 public:
     typedef std::multimap<String, File *> Index;
@@ -42,7 +42,7 @@ public:
     typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
     typedef std::list<File *> FoundFiles;
 
-    class IPredicate
+    class DENG2_PUBLIC IPredicate
     {
     public:
         virtual ~IPredicate() {}

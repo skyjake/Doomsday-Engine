@@ -27,6 +27,7 @@
 namespace de {
 
 static String const PACKAGE("package");
+static String const PACKAGE_IMPORT_PATH("package.importPath");
 
 DENG2_PIMPL(Package)
 , DENG2_OBSERVES(File, Deletion)
@@ -56,6 +57,21 @@ DENG2_PIMPL(Package)
         {
             throw SourceError("Package::verify", "Package's source file missing");
         }
+    }
+
+    StringList importPaths() const
+    {
+        StringList paths;
+        if(self.info().has(PACKAGE_IMPORT_PATH))
+        {
+            ArrayValue const &imp = self.info().geta(PACKAGE_IMPORT_PATH);
+            DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, imp.elements())
+            {
+                // The import paths are relative to the package root, and must exist.
+                paths << self.root().locate<File const>((*i)->asText()).path();
+            }
+        }
+        return paths;
     }
 };
 
@@ -112,12 +128,23 @@ bool Package::executeFunction(String const &name)
 
 void Package::didLoad()
 {
+    // The package's own import paths come into effect when loaded.
+    foreach(String imp, d->importPaths())
+    {
+        App::scriptSystem().addModuleImportPath(imp);
+    }
+
     executeFunction("onLoad");
 }
 
 void Package::aboutToUnload()
 {
     executeFunction("onUnload");
+
+    foreach(String imp, d->importPaths())
+    {
+        App::scriptSystem().removeModuleImportPath(imp);
+    }
 }
 
 void Package::parseMetadata(File &packageFile) // static
@@ -232,6 +259,17 @@ String Package::identifierForFile(File const &file)
         parent = parent->parent();
     }
     return prefix + extractIdentifier(file.name());
+}
+
+String Package::identifierForContainerOfFile(File const &file)
+{
+    // Find the containing package.
+    File const *i = file.parent();
+    while(i && i->name().fileNameExtension() != ".pack")
+    {
+        i = i->parent();
+    }
+    return i? identifierForFile(*i) : "";
 }
 
 } // namespace de

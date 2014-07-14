@@ -109,6 +109,14 @@ public:
                              String const &appName, String const &appVersion) = 0;
 
     /**
+     * Add a new package to be loaded at initialization time. Call this before
+     * initSubsystems().
+     *
+     * @param identifier  Package identifier.
+     */
+    void addInitPackage(String const &identifier);
+
+    /**
      * Sets the path of the configuration script that will be automatically run if needed
      * during application launch. The script governs the contents of the special
      * persistent Config module. @see Config

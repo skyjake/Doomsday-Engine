@@ -74,3 +74,5 @@ macx {
         linkBinaryToBundledLibcore($${1}.dylib)
     }
 }
+
+DENG_PACKAGES += net.dengine.stdlib.pack

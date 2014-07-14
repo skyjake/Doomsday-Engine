@@ -26,23 +26,6 @@ namespace de {
 
 class Package;
 
-#if 0
-/**
- * Interface for anything that can contain a Package instance.
- */
-class IPackageContainer
-{
-public:
-    virtual ~IPackageContainer() {}
-
-    virtual Package &package() = 0;
-
-    virtual Package const &package() const {
-        return const_cast<IPackageContainer *>(this)->package();
-    }
-};
-#endif
-
 /**
  * Container package with metadata, data, and/or files.
  * @ingroup fs
@@ -131,6 +114,8 @@ public:
     static void validateMetadata(Record const &packageInfo);
 
     static String identifierForFile(File const &file);
+
+    static String identifierForContainerOfFile(File const &file);
 
 private:
     DENG2_PRIVATE(d)

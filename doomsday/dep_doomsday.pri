@@ -18,3 +18,5 @@ macx {
         fixInstallName($${1}.bundle/$$1, libdeng_doomsday.1.dylib, ..)
     }
 }
+
+DENG_PACKAGES += net.dengine.base.pack

@@ -43,6 +43,7 @@
 #include "dd_def.h"
 #include "dd_loop.h"
 #include "de_audio.h"
+#include "def_main.h"
 #include "sys_system.h"
 #include "audio/s_main.h"
 #include "gl/gl_main.h"
@@ -330,6 +331,11 @@ void ClientApp::initialize()
     // subsystems and Config.
     DisplayMode_Init();
 
+    // Initialize definitions before the files are indexed.
+    Def_Init();
+
+    addInitPackage("net.dengine.base");
+    addInitPackage("net.dengine.client");
     initSubsystems(); // loads Config
 
     // Set up the log alerts (observes Config variables).

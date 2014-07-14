@@ -585,11 +585,17 @@ static void readAllDefinitions()
     /*
      * Start with engine's own top-level definition file.
      */
+
+    /*
     String foundPath = App_FileSystem().findPath(de::Uri("doomsday.ded", RC_DEFINITION),
                                                   RLF_DEFAULT, App_ResourceClass(RC_DEFINITION));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
     readDefinitionFile(foundPath);
+    */
+
+    readDefinitionFile(App::packageLoader().package("net.dengine.base").root()
+                       .locate<File const>("defs/doomsday.ded").path());
 
     /*
      * Now any definition files required by the game on load.

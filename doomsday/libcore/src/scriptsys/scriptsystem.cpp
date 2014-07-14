@@ -120,6 +120,8 @@ DENG2_PIMPL(ScriptSystem)
     typedef QMap<String, Module *> Modules; // owned
     Modules modules;
 
+    QList<Path> additionalImportPaths;
+
     Instance(Public *i) : Base(*i)
     {
         initCoreModule();
@@ -230,6 +232,16 @@ ScriptSystem::~ScriptSystem()
     _scriptSystem = 0;
 }
 
+void ScriptSystem::addModuleImportPath(Path const &path)
+{
+    d->additionalImportPaths << path;
+}
+
+void ScriptSystem::removeModuleImportPath(Path const &path)
+{
+    d->additionalImportPaths.removeOne(path);
+}
+
 void ScriptSystem::addNativeModule(String const &name, Record &module)
 {
     d->addNativeModule(name, module);
@@ -271,10 +283,20 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
     catch(Record::NotFoundError const &)
     {}
 
-    // Search the import path (array of paths).
+    // Compile a list of all possible import locations.
+    StringList importPaths;
     DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, importPath->elements())
     {
-        String dir = (*i)->asText();
+        importPaths << (*i)->asText();
+    }
+    foreach(Path const &path, d->additionalImportPaths)
+    {
+        importPaths << path;
+    }
+
+    // Search all import locations.
+    foreach(String dir, importPaths)
+    {
         String p;
         FileSystem::FoundFiles matching;
         File *found = 0;

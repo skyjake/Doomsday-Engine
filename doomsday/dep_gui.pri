@@ -25,3 +25,4 @@ INCLUDEPATH += $$PWD/libgui/include
     }
 }
 
+DENG_PACKAGES += net.dengine.stdlib.gui.pack

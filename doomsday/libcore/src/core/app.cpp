@@ -93,6 +93,7 @@ DENG2_PIMPL(App)
 
     game::Game *currentGame;
 
+    StringList packagesToLoadAtInit;
     PackageLoader packageLoader;
 
     void (*terminateFunc)(char const *);
@@ -123,11 +124,13 @@ DENG2_PIMPL(App)
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
-        , configPath("/modules/Config.de")
+        , configPath("/packs/net.dengine.stdlib/modules/Config.de")
         , config(0)
         , currentGame(0)
         , terminateFunc(0)
     {
+        packagesToLoadAtInit << "net.dengine.stdlib";
+
         singletonApp = a;
         mainThread = QThread::currentThread();
 
@@ -171,6 +174,16 @@ DENG2_PIMPL(App)
         Clock::setAppClock(0);
     }
 
+    NativePath defaultNativeModulePath() const
+    {
+#ifdef WIN32
+        NativePath appDir = appPath.fileNamePath();
+        return appDir / "..\\modules";
+#else
+        return self.nativeBasePath() / "modules";
+#endif
+    }
+
     void initFileSystem(bool allowPlugins)
     {
         Folder &binFolder = fs.makeFolder("/bin");
@@ -194,19 +207,17 @@ DENG2_PIMPL(App)
             NativePath appDir = appPath.fileNamePath();
             binFolder.attach(new DirectoryFeed(appDir));
             fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-            if((self.nativeBasePath() / "modules").exists())
-            {
-                fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
-            }
 #elif WIN32
             NativePath appDir = appPath.fileNamePath();
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-            fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
             fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
+            if(defaultNativeModulePath().exists())
+            {
+                fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
+            }
         }
 
         if(allowPlugins)
@@ -347,6 +358,11 @@ App::~App()
     d.reset();
 
     singletonApp = 0;
+}
+
+void App::addInitPackage(String const &identifier)
+{
+    d->packagesToLoadAtInit << identifier;
 }
 
 void App::setConfigScript(Path const &path)
@@ -543,11 +559,17 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->initFileSystem(allowPlugins);
 
+    // Load the init packages.
+    foreach(String pkg, d->packagesToLoadAtInit)
+    {
+        d->packageLoader.load(pkg);
+    }
+
     if(!flags.testFlag(DisablePersistentData))
     {
+        // Recreate the persistent state data package, if necessary.
         if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
-            // Recreate the persistent state data package.
             ZipArchive arch;
             arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
             Writer(homeFolder().replaceFile("persist.pack")) << arch;
@@ -555,6 +577,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             homeFolder().populate(Folder::PopulateOnlyThisFolder);
         }
 
+        // Load the persistent data.
         d->persistentData = &homeFolder().locate<ArchiveFolder>("persist.pack").archive();
     }
 
@@ -623,7 +646,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->clock.setTime(Time::currentHighPerformanceTime());
 
     // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange() += this;
+    d->clock.audienceForTimeChange() += this;    
 
     if(allowPlugins)
     {
