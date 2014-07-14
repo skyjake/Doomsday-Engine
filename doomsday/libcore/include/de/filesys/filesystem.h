@@ -266,6 +266,21 @@ public:
     FileIndex const &indexFor(String const &typeIdentifier) const;
 
     /**
+     * Adds a new custom index to the file system.
+     *
+     * @param userIndex  Index where files will be included. Ownership not taken;
+     *                   index must exist until removed from use.
+     */
+    void addUserIndex(FileIndex &userIndex);
+
+    /**
+     * Removes a custom index from the file system.
+     *
+     * @param userIndex
+     */
+    void removeUserIndex(FileIndex &userIndex);
+
+    /**
      * Adds a file to the main index.
      *
      * @param file  File to index.

@@ -40,8 +40,10 @@ DENG2_PIMPL_NOREF(FileSystem)
 
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
-    typedef QMap<String, FileIndex *> TypeIndex;
+    typedef QMap<String, FileIndex *> TypeIndex; // owned
     TypeIndex typeIndex;
+
+    QSet<FileIndex *> userIndices; // not owned
 
     /// The root folder of the entire file system.
     Folder root;
@@ -49,6 +51,7 @@ DENG2_PIMPL_NOREF(FileSystem)
     ~Instance()
     {
         qDeleteAll(typeIndex.values());
+        typeIndex.clear();
     }
 };
 
@@ -248,14 +251,29 @@ void FileSystem::index(File &file)
         d->typeIndex.insert(typeName, new FileIndex);
     }
     d->typeIndex[typeName]->maybeAdd(file);
+
+    // Also offer to custom indices.
+    foreach(FileIndex *user, d->userIndices)
+    {
+        user->maybeAdd(file);
+    }
 }
 
 void FileSystem::deindex(File &file)
 {
     d->index.remove(file);
 
-    DENG2_ASSERT(d->typeIndex.contains(DENG2_TYPE_NAME(file)));
-    d->typeIndex[DENG2_TYPE_NAME(file)]->remove(file);
+    String const typeName = DENG2_TYPE_NAME(file);
+    if(d->typeIndex.contains(typeName))
+    {
+        d->typeIndex[typeName]->remove(file);
+    }
+
+    // Also remove from any custom indices.
+    foreach(FileIndex *user, d->userIndices)
+    {
+        user->remove(file);
+    }
 }
 
 File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
@@ -297,9 +315,19 @@ FileIndex const &FileSystem::indexFor(String const &typeName) const
     return emptyIndex;
 }
 
+void FileSystem::addUserIndex(FileIndex &userIndex)
+{
+    d->userIndices.insert(&userIndex);
+}
+
+void FileSystem::removeUserIndex(FileIndex &userIndex)
+{
+    d->userIndices.remove(&userIndex);
+}
+
 void FileSystem::printIndex()
 {
-    if(!LogBuffer::get().isEnabled(LogEntry::Dev | LogEntry::Verbose))
+    if(!LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Dev | LogEntry::Verbose))
         return;
 
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
