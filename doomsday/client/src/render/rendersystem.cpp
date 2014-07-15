@@ -98,8 +98,8 @@ DENG2_PIMPL(RenderSystem)
         LOG_AS("RenderSystem");
 
         // Load the required packages.
-        App::packageLoader().load("net.dengine.renderer");
-        App::packageLoader().load("net.dengine.renderer.lensflares");
+        App::packageLoader().load("net.dengine.client.renderer");
+        App::packageLoader().load("net.dengine.client.renderer.lensflares");
 
         loadAllShaders();
         loadImages();

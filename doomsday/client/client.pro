@@ -843,7 +843,7 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
-DENG_PACKAGES += net.dengine.pack
+DENG_PACKAGES += net.dengine.client.pack
 
 deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
 

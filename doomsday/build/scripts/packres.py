@@ -86,10 +86,10 @@ p = Pack()
 p.add_files( [ ('libgui/net.dengine.stdlib.gui.pack', '') ] )
 p.create('net.dengine.stdlib.gui.pack')
 
-# net.dengine.pack (client stuff)
+# net.dengine.client.pack
 p = Pack()
-p.add_files( [ ('client/net.dengine.pack', '') ] )
-p.create('net.dengine.pack')
+p.add_files( [ ('client/net.dengine.client.pack', '') ] )
+p.create('net.dengine.client.pack')
 
 # libdoom.pk3
 p = Pack()
