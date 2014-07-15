@@ -28,7 +28,7 @@ namespace common {
 namespace menu {
 
 void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(mn_page_t *page, Point2Raw const *origin);
+void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
 
 struct controlconfig_t;
@@ -36,24 +36,24 @@ struct controlconfig_t;
 /**
  * Bindings visualizer widget.
  */
-struct mndata_bindings_t : public mn_object_t
+struct InputBindingWidget : public Widget
 {
 public:
     controlconfig_t *binds;
 
 public:
-    mndata_bindings_t();
-    virtual ~mndata_bindings_t() {}
+    InputBindingWidget();
+    virtual ~InputBindingWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     int handleEvent_Privileged(event_t *ev);
 
     char const *controlName();
 };
 
-int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e command);
+int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
 
 } // namespace menu
 } // namespace common

@@ -30,7 +30,7 @@ namespace common {
 extern int menuTime;
 extern dd_bool menuNominatingQuickSaveSlot;
 
-extern cvarbutton_t mnCVarButtons[];
+extern menu::cvarbutton_t mnCVarButtons[];
 
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
@@ -111,7 +111,7 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 dd_bool Hu_MenuIsVisible();
 
-menu::mn_page_t *Hu_MenuFindPageByName(char const *name);
+menu::Page *Hu_MenuFindPageByName(char const *name);
 
 /**
  * @param name  Symbolic name.
@@ -122,10 +122,10 @@ menu::mn_page_t *Hu_MenuFindPageByName(char const *name);
  * @param cmdResponder  Menu-command responder routine.
  * @param userData  User data pointer to be associated with the page.
  */
-menu::mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
-    void (*ticker) (menu::mn_page_t *page),
-    void (*drawer) (menu::mn_page_t *page, Point2Raw const *origin),
-    int (*cmdResponder) (menu::mn_page_t *page, menucommand_e cmd),
+menu::Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
+    void (*ticker) (menu::Page *page),
+    void (*drawer) (menu::Page *page, Point2Raw const *origin),
+    int (*cmdResponder) (menu::Page *page, menucommand_e cmd),
     void *userData);
 
 /**
@@ -135,7 +135,7 @@ menu::mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int f
  */
 void Hu_MenuDrawer();
 
-void Hu_MenuPageTicker(menu::mn_page_t *page);
+void Hu_MenuPageTicker(menu::Page *page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
@@ -174,13 +174,13 @@ void Hu_MenuSetAlpha(float alpha);
 /**
  * Retrieve the currently active page.
  */
-menu::mn_page_t *Hu_MenuActivePage();
+menu::Page *Hu_MenuActivePage();
 
 /**
  * Change the current active page.
  */
-void Hu_MenuSetActivePage2(menu::mn_page_t *page, dd_bool canReactivate);
-void Hu_MenuSetActivePage(menu::mn_page_t *page);
+void Hu_MenuSetActivePage2(menu::Page *page, dd_bool canReactivate);
+void Hu_MenuSetActivePage(menu::Page *page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.
@@ -190,7 +190,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed);
 
 void Hu_MenuCommand(menucommand_e cmd);
 
-int Hu_MenuDefaultFocusAction(menu::mn_object_t *wi, menu::mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action, void *parameters);
 
 } // namespace common
 

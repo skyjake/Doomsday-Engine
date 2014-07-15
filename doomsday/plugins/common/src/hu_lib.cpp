@@ -233,8 +233,8 @@ void GUI_LoadResources()
     if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
 
     UIAutomap_LoadResources();
-    menu::mndata_edit_t::loadResources();
-    menu::mndata_slider_t::loadResources();
+    menu::LineEditWidget::loadResources();
+    menu::SliderWidget::loadResources();
 }
 
 void GUI_ReleaseResources()
@@ -679,10 +679,10 @@ namespace menu {
 static mn_rendstate_t rs;
 mn_rendstate_t const *mnRendState = &rs;
 
-mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags)
+Widget *MN_MustFindObjectOnPage(Page *page, int group, int flags)
 {
     DENG2_ASSERT(page != 0);
-    mn_object_t *ob = page->findObject(group, flags);
+    Widget *ob = page->findObject(group, flags);
     if(!ob) Con_Error("MN_MustFindObjectOnPage: Failed to locate object in group #%i with flags %i on page %p.", group, flags, page);
     return ob;
 }
@@ -692,13 +692,13 @@ short MN_MergeMenuEffectWithDrawTextFlags(short f)
     return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-static void MN_DrawObject(mn_object_t *wi, Point2Raw const *offset)
+static void MN_DrawObject(Widget *wi, Point2Raw const *offset)
 {
     if(!wi) return;
     wi->draw(offset);
 }
 
-static void setupRenderStateForPageDrawing(mn_page_t *page, float alpha)
+static void setupRenderStateForPageDrawing(Page *page, float alpha)
 {
     if(!page) return; // Huh?
 
@@ -724,12 +724,12 @@ static void setupRenderStateForPageDrawing(mn_page_t *page, float alpha)
     FR_SetGlitterStrength(rs.textGlitter);
 }
 
-static void updatePageObjectGeometries(mn_page_t *page)
+static void updatePageObjectGeometries(Page *page)
 {
     if(!page) return;
 
     // Update objects.
-    foreach(mn_object_t *wi, page->widgets())
+    foreach(Widget *wi, page->widgets())
     {
         FR_PushAttrib();
         Rect_SetXY(wi->_geometry, 0, 0);
@@ -739,12 +739,12 @@ static void updatePageObjectGeometries(mn_page_t *page)
 }
 
 /// @return  @c true iff this object is drawable (potentially visible).
-dd_bool MNObject_IsDrawable(mn_object_t *wi)
+dd_bool MNObject_IsDrawable(Widget *wi)
 {
     return !(wi->flags() & MNF_HIDDEN);
 }
 
-int mn_page_t::lineHeight(int *lineOffset)
+int Page::lineHeight(int *lineOffset)
 {
     fontid_t oldFont = FR_Font();
 
@@ -762,7 +762,7 @@ int mn_page_t::lineHeight(int *lineOffset)
     return lh;
 }
 
-void mn_page_t::applyPageLayout()
+void Page::applyPageLayout()
 {
     Rect_SetXY(geometry, 0, 0);
     Rect_SetWidthHeight(geometry, 0, 0);
@@ -772,7 +772,7 @@ void mn_page_t::applyPageLayout()
     if(flags & MPF_LAYOUT_FIXED)
     {
         // This page uses a fixed layout.
-        foreach(mn_object_t *wi, _widgets)
+        foreach(Widget *wi, _widgets)
         {
             if(!MNObject_IsDrawable(wi)) continue;
 
@@ -790,8 +790,8 @@ void mn_page_t::applyPageLayout()
 
     for(int i = 0; i < _widgets.count(); )
     {
-        mn_object_t *ob = _widgets[i];
-        mn_object_t *nextOb = i + 1 < _widgets.count()? _widgets[i + 1] : 0;
+        Widget *ob = _widgets[i];
+        Widget *nextOb = i + 1 < _widgets.count()? _widgets[i + 1] : 0;
 
         if(!MNObject_IsDrawable(ob))
         {
@@ -825,14 +825,14 @@ void mn_page_t::applyPageLayout()
         // vertical dividing line, with the label on the left, other object
         // on the right.
         // @todo Do not assume pairing, an object should designate it's pair.
-        if(ob->is<mndata_text_t>() && nextOb)
+        if(ob->is<LabelWidget>() && nextOb)
         {
             if(MNObject_IsDrawable(nextOb) &&
-               (nextOb->is<mndata_button_t>()     ||
-                nextOb->is<mndata_inlinelist_t>() ||
-                nextOb->is<mndata_colorbox_t>()   ||
-                nextOb->is<mndata_bindings_t>()   ||
-                nextOb->is<mndata_textualslider_t>()))
+               (nextOb->is<ButtonWidget>()     ||
+                nextOb->is<InlineListWidget>() ||
+                nextOb->is<ColorPreviewWidget>()   ||
+                nextOb->is<InputBindingWidget>()   ||
+                nextOb->is<TextualSliderWidget>()))
             {
                 int const margin = lineOffset * 2;
 
@@ -870,7 +870,7 @@ void mn_page_t::applyPageLayout()
 }
 
 #if __JDOOM__ || __JDOOM64__
-static void composeSubpageString(mn_page_t *page, char *buf, size_t bufSize)
+static void composeSubpageString(Page *page, char *buf, size_t bufSize)
 {
     DENG2_ASSERT(page != 0);
     DENG2_UNUSED(page);
@@ -879,7 +879,7 @@ static void composeSubpageString(mn_page_t *page, char *buf, size_t bufSize)
 }
 #endif
 
-static void drawPageNavigation(mn_page_t *page, int x, int y)
+static void drawPageNavigation(Page *page, int x, int y)
 {
     int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
     int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
@@ -913,7 +913,7 @@ static void drawPageNavigation(mn_page_t *page, int x, int y)
 #endif
 }
 
-static void drawPageHeading(mn_page_t *page, Point2Raw const *offset)
+static void drawPageHeading(Page *page, Point2Raw const *offset)
 {
     Point2Raw origin;
 
@@ -937,7 +937,7 @@ static void drawPageHeading(mn_page_t *page, Point2Raw const *offset)
     FR_PopAttrib();
 }
 
-void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
+void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
 {
     if(!page) return;
 
@@ -963,7 +963,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     page->applyPageLayout();
 
     // Determine the origin of the focus object (this dictates the page scroll location).
-    mn_object_t *focusObj = page->focusObject();
+    Widget *focusObj = page->focusObject();
     if(focusObj && !MNObject_IsDrawable(focusObj))
     {
         focusObj = 0;
@@ -984,7 +984,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
         /// so we must calculate them ourselves, here.
         if(focusObj->flags() & MNF_ACTIVE)
         {
-            if(mndata_list_t const *list = focusObj->maybeAs<mndata_list_t>())
+            if(ListWidget const *list = focusObj->maybeAs<ListWidget>())
             {
                 if(list->selectionIsVisible())
                 {
@@ -1029,7 +1029,7 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     }
 
     // Draw child objects.
-    foreach(mn_object_t *wi, page->widgets())
+    foreach(Widget *wi, page->widgets())
     {
         RectRaw geometry;
 
@@ -1063,10 +1063,10 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     }
 }
 
-mn_page_t::mn_page_t(Point2Raw const &origin, int flags,
-    void (*ticker) (mn_page_t *page),
-    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
-    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
+Page::Page(Point2Raw const &origin, int flags,
+    void (*ticker) (Page *page),
+    void (*drawer) (Page *page, Point2Raw const *origin),
+    int (*cmdResponder) (Page *page, menucommand_e cmd),
     void *userData)
     : origin       (origin)
     , geometry     (Rect_New())
@@ -1091,70 +1091,70 @@ mn_page_t::mn_page_t(Point2Raw const &origin, int flags,
     colors[2] = 2;
 }
 
-mn_page_t::~mn_page_t()
+Page::~Page()
 {
     Str_Free(&title);
     if(geometry) Rect_Delete(geometry);
 
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         if(wi->_geometry) Rect_Delete(wi->_geometry);
     }
     qDeleteAll(_widgets);
 }
 
-mn_page_t::Widgets const &mn_page_t::widgets() const
+Page::Widgets const &Page::widgets() const
 {
     return _widgets;
 }
 
-void mn_page_t::setTitle(char const *newTitle)
+void Page::setTitle(char const *newTitle)
 {
     Str_Set(&title, newTitle? newTitle : "");
 }
 
-void mn_page_t::setX(int x)
+void Page::setX(int x)
 {
     origin.x = x;
 }
 
-void mn_page_t::setY(int y)
+void Page::setY(int y)
 {
     origin.y = y;
 }
 
-void mn_page_t::setPreviousPage(mn_page_t *newPrevious)
+void Page::setPreviousPage(Page *newPrevious)
 {
     previous = newPrevious;
 }
 
-mn_object_t *mn_page_t::focusObject()
+Widget *Page::focusObject()
 {
     if(_widgets.isEmpty() || focus < 0) return 0;
     return _widgets[focus];
 }
 
-void mn_page_t::clearFocusObject()
+void Page::clearFocusObject()
 {
     if(focus >= 0)
     {
-        mn_object_t *wi = _widgets[focus];
+        Widget *wi = _widgets[focus];
         if(wi->flags() & MNF_ACTIVE)
         {
             return;
         }
     }
     focus = -1;
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         wi->setFlags(FO_CLEAR, MNF_FOCUS);
     }
     refocus();
 }
 
-int mn_page_t::cursorSize()
+int Page::cursorSize()
 {
-    mn_object_t *focusOb = focusObject();
+    Widget *focusOb = focusObject();
     int focusObHeight = focusOb? Size2_Height(focusOb->size()) : 0;
 
     // Ensure the cursor is at least as tall as the effective line height for
@@ -1165,9 +1165,9 @@ int mn_page_t::cursorSize()
     return de::max(focusObHeight, lineHeight());
 }
 
-mn_object_t *mn_page_t::findObject(int group, int flags)
+Widget *Page::findObject(int group, int flags)
 {
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         if(wi->isGroupMember(group) && (wi->flags() & flags) == flags)
             return wi;
@@ -1175,13 +1175,13 @@ mn_object_t *mn_page_t::findObject(int group, int flags)
     return 0; // Not found.
 }
 
-int mn_page_t::findObjectIndex(mn_object_t *wi)
+int Page::findObjectIndex(Widget *wi)
 {
     return _widgets.indexOf(wi);
 }
 
 /// @pre @a ob is a child of @a page.
-void mn_page_t::giveChildFocus(mn_object_t *wi, dd_bool allowRefocus)
+void Page::giveChildFocus(Widget *wi, dd_bool allowRefocus)
 {
     DENG2_ASSERT(wi != 0);
 
@@ -1189,10 +1189,10 @@ void mn_page_t::giveChildFocus(mn_object_t *wi, dd_bool allowRefocus)
     {
         if(wi != _widgets[focus])
         {
-            mn_object_t *oldFocusOb = _widgets[focus];
-            if(oldFocusOb->hasAction(mn_object_t::MNA_FOCUSOUT))
+            Widget *oldFocusOb = _widgets[focus];
+            if(oldFocusOb->hasAction(Widget::MNA_FOCUSOUT))
             {
-                oldFocusOb->execAction(mn_object_t::MNA_FOCUSOUT, NULL);
+                oldFocusOb->execAction(Widget::MNA_FOCUSOUT, NULL);
             }
             oldFocusOb->setFlags(FO_CLEAR, MNF_FOCUS);
         }
@@ -1204,24 +1204,24 @@ void mn_page_t::giveChildFocus(mn_object_t *wi, dd_bool allowRefocus)
 
     focus = _widgets.indexOf(wi);
     wi->setFlags(FO_SET, MNF_FOCUS);
-    if(wi->hasAction(mn_object_t::MNA_FOCUS))
+    if(wi->hasAction(Widget::MNA_FOCUS))
     {
-        wi->execAction(mn_object_t::MNA_FOCUS, NULL);
+        wi->execAction(Widget::MNA_FOCUS, NULL);
     }
 }
 
-void mn_page_t::setFocus(mn_object_t *wi)
+void Page::setFocus(Widget *wi)
 {
     int index = findObjectIndex(wi);
     if(index < 0)
     {
-        DENG2_ASSERT(!"mn_page_t::Focus: Failed to determine index-in-page for widget.");
+        DENG2_ASSERT(!"Page::Focus: Failed to determine index-in-page for widget.");
         return;
     }
     giveChildFocus(_widgets[index], false);
 }
 
-void mn_page_t::refocus()
+void Page::refocus()
 {
     // If we haven't yet visited this page then find the first focusable
     // object and select it.
@@ -1233,7 +1233,7 @@ void mn_page_t::refocus()
         // but find the last with this flag...
         for(i = 0; i < _widgets.count(); ++i)
         {
-            mn_object_t *ob = _widgets[i];
+            Widget *ob = _widgets[i];
             if((ob->flags() & MNF_DEFAULT) && !(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
@@ -1244,7 +1244,7 @@ void mn_page_t::refocus()
         if(-1 == giveFocus)
         for(i = 0; i < _widgets.count(); ++i)
         {
-            mn_object_t *ob = _widgets[i];
+            Widget *ob = _widgets[i];
             if(!(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
@@ -1258,7 +1258,7 @@ void mn_page_t::refocus()
         }
         else
         {
-            LOGDEV_WARNING("mn_page_t::refocus: No focusable object on page");
+            LOGDEV_WARNING("Page::refocus: No focusable object on page");
         }
     }
     else
@@ -1268,18 +1268,18 @@ void mn_page_t::refocus()
     }
 }
 
-void mn_page_t::initialize()
+void Page::initialize()
 {
     // Reset page timer.
     _timer = 0;
 
     // (Re)init objects.
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         // Reset object timer.
         wi->timer = 0;
 
-        if(mndata_button_t *btn = wi->maybeAs<mndata_button_t>())
+        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
         {
             if(btn->staydownMode)
             {
@@ -1287,7 +1287,7 @@ void mn_page_t::initialize()
                 wi->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
             }
         }
-        if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
+        if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
             // Determine number of potentially visible items.
             list->numvis = list->itemCount();
@@ -1310,9 +1310,9 @@ void mn_page_t::initialize()
     refocus();
 }
 
-void mn_page_t::initObjects()
+void Page::initObjects()
 {
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         wi->_page     = this;
         wi->_geometry = Rect_New();
@@ -1327,7 +1327,7 @@ void mn_page_t::initObjects()
             wi->setShortcut(shortcut);
         }
 
-        if(mndata_text_t *txt = wi->maybeAs<mndata_text_t>())
+        if(LabelWidget *txt = wi->maybeAs<LabelWidget>())
         {
             wi->setFlags(FO_SET, MNF_NO_FOCUS);
 
@@ -1336,7 +1336,7 @@ void mn_page_t::initObjects()
                 txt->text = GET_TXT(PTR2INT(txt->text));
             }
         }
-        if(mndata_button_t *btn = wi->maybeAs<mndata_button_t>())
+        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
         {
             /*mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);*/
             if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
@@ -1346,14 +1346,14 @@ void mn_page_t::initObjects()
                 wi->setShortcut(btn->text[0]);
             }
         }
-        if(mndata_edit_t *edit = wi->maybeAs<mndata_edit_t>())
+        if(LineEditWidget *edit = wi->maybeAs<LineEditWidget>())
         {
             if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
             {
                 edit->emptyString = GET_TXT(PTR2INT(edit->emptyString));
             }
         }
-        if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
+        if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
             foreach(mndata_listitem_t *item, list->items())
             {
@@ -1363,7 +1363,7 @@ void mn_page_t::initObjects()
                 }
             }
         }
-        if(mndata_colorbox_t *cbox = wi->maybeAs<mndata_colorbox_t>())
+        if(ColorPreviewWidget *cbox = wi->maybeAs<ColorPreviewWidget>())
         {
             if(!cbox->_rgbaMode)
                 cbox->_a = 1.f;
@@ -1372,7 +1372,7 @@ void mn_page_t::initObjects()
             if(0 >= cbox->height)
                 cbox->height = MNDATA_COLORBOX_HEIGHT;
         }
-        if(mndata_mobjpreview_t *mprev = wi->maybeAs<mndata_mobjpreview_t>())
+        if(MobjPreviewWidget *mprev = wi->maybeAs<MobjPreviewWidget>())
         {
             mprev->setFlags(FO_SET, MNF_NO_FOCUS);
         }
@@ -1380,23 +1380,23 @@ void mn_page_t::initObjects()
 }
 
 /// Main task is to update objects linked to cvars.
-void mn_page_t::updateObjects()
+void Page::updateObjects()
 {
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
-        if(mndata_text_t *text = wi->maybeAs<mndata_text_t>())
+        if(LabelWidget *text = wi->maybeAs<LabelWidget>())
         {
             text->setFlags(FO_SET, MNF_NO_FOCUS);
         }
-        if(mndata_mobjpreview_t *mprev = wi->maybeAs<mndata_mobjpreview_t>())
+        if(MobjPreviewWidget *mprev = wi->maybeAs<MobjPreviewWidget>())
         {
             mprev->setFlags(FO_SET, MNF_NO_FOCUS);
         }
-        if(mndata_button_t *btn = wi->maybeAs<mndata_button_t>())
+        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
         {
-            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == Hu_MenuCvarButton)
+            if(action && action->callback == CvarButtonWidget_UpdateCvar)
             {
                 if(wi->data1)
                 {
@@ -1424,29 +1424,29 @@ void mn_page_t::updateObjects()
                 }
             }
         }
-        if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
+        if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
-            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == Hu_MenuCvarList)
+            if(action && action->callback == CvarListWidget_UpdateCvar)
             {
                 list->selectItemByValue(MNLIST_SIF_NO_ACTION, Con_GetInteger((char const *)list->data));
             }
         }
-        if(mndata_edit_t *edit = wi->maybeAs<mndata_edit_t>())
+        if(LineEditWidget *edit = wi->maybeAs<LineEditWidget>())
         {
-            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == Hu_MenuCvarEdit)
+            if(action && action->callback == CvarLineEditWidget_UpdateCvar)
             {
                 edit->setText(MNEDIT_STF_NO_ACTION, Con_GetString((char const *)edit->data1));
             }
         }
-        if(mndata_slider_t *sldr = wi->maybeAs<mndata_slider_t>())
+        if(SliderWidget *sldr = wi->maybeAs<SliderWidget>())
         {
-            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == Hu_MenuCvarSlider)
+            if(action && action->callback == CvarSliderWidget_UpdateCvar)
             {
                 float value;
                 if(sldr->floatMode)
@@ -1456,11 +1456,11 @@ void mn_page_t::updateObjects()
                 sldr->setValue(MNSLIDER_SVF_NO_ACTION, value);
             }
         }
-        if(mndata_colorbox_t *cbox = wi->maybeAs<mndata_colorbox_t>())
+        if(ColorPreviewWidget *cbox = wi->maybeAs<ColorPreviewWidget>())
         {
-            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == Hu_MenuCvarColorBox)
+            if(action && action->callback == CvarColorPreviewWidget_UpdateCvar)
             {
                 float rgba[4];
                 rgba[CR] = Con_GetFloat((char const *)cbox->data1);
@@ -1473,10 +1473,10 @@ void mn_page_t::updateObjects()
     }
 }
 
-void mn_page_t::tick()
+void Page::tick()
 {
     // Call the ticker of each object, unless they're hidden or paused.
-    foreach(mn_object_t *wi, _widgets)
+    foreach(Widget *wi, _widgets)
     {
         if((wi->flags() & MNF_PAUSED) || (wi->flags() & MNF_HIDDEN))
             continue;
@@ -1490,19 +1490,19 @@ void mn_page_t::tick()
     _timer++;
 }
 
-fontid_t mn_page_t::predefinedFont(mn_page_fontid_t id)
+fontid_t Page::predefinedFont(mn_page_fontid_t id)
 {
     DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
     return fonts[id];
 }
 
-void mn_page_t::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
+void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
 {
     DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
     fonts[id] = fontId;
 }
 
-void mn_page_t::predefinedColor(mn_page_colorid_t id, float rgb[3])
+void Page::predefinedColor(mn_page_colorid_t id, float rgb[3])
 {
     DENG2_ASSERT(rgb != 0);
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
@@ -1512,12 +1512,12 @@ void mn_page_t::predefinedColor(mn_page_colorid_t id, float rgb[3])
     rgb[CB] = cfg.menuTextColors[colorIndex][CB];
 }
 
-int mn_page_t::timer()
+int Page::timer()
 {
     return _timer;
 }
 
-mn_object_t::mn_object_t()
+Widget::Widget()
     : _group             (0)
     , _flags             (0)
     , _shortcut          (0)
@@ -1534,17 +1534,17 @@ mn_object_t::mn_object_t()
     de::zap(actions);
 }
 
-int mn_object_t::handleEvent(event_t * /*ev*/)
+int Widget::handleEvent(event_t * /*ev*/)
 {
     return 0; // Not handled.
 }
 
-int mn_object_t::handleEvent_Privileged(event_t * /*ev*/)
+int Widget::handleEvent_Privileged(event_t * /*ev*/)
 {
     return 0; // Not handled.
 }
 
-void mn_object_t::tick()
+void Widget::tick()
 {
     if(onTickCallback)
     {
@@ -1552,27 +1552,27 @@ void mn_object_t::tick()
     }
 }
 
-mn_page_t *mn_object_t::page() const
+Page *Widget::page() const
 {
     return _page;
 }
 
-int mn_object_t::flags() const
+int Widget::flags() const
 {
     return _flags;
 }
 
-Rect const *mn_object_t::geometry() const
+Rect const *Widget::geometry() const
 {
     return _geometry;
 }
 
-Point2Raw const *mn_object_t::fixedOrigin() const
+Point2Raw const *Widget::fixedOrigin() const
 {
     return &_origin;
 }
 
-mn_object_t &mn_object_t::setFixedOrigin(Point2Raw const *newOrigin)
+Widget &Widget::setFixedOrigin(Point2Raw const *newOrigin)
 {
     if(newOrigin)
     {
@@ -1582,19 +1582,19 @@ mn_object_t &mn_object_t::setFixedOrigin(Point2Raw const *newOrigin)
     return *this;
 }
 
-mn_object_t &mn_object_t::setFixedX(int newX)
+Widget &Widget::setFixedX(int newX)
 {
     _origin.x = newX;
     return *this;
 }
 
-mn_object_t &mn_object_t::setFixedY(int newY)
+Widget &Widget::setFixedY(int newY)
 {
     _origin.y = newY;
     return *this;
 }
 
-mn_object_t &mn_object_t::setFlags(flagop_t op, int flagsToChange)
+Widget &Widget::setFlags(flagop_t op, int flagsToChange)
 {
     switch(op)
     {
@@ -1607,12 +1607,12 @@ mn_object_t &mn_object_t::setFlags(flagop_t op, int flagsToChange)
     return *this;
 }
 
-int mn_object_t::shortcut()
+int Widget::shortcut()
 {
     return _shortcut;
 }
 
-mn_object_t &mn_object_t::setShortcut(int ddkey)
+Widget &Widget::setShortcut(int ddkey)
 {
     if(isalnum(ddkey))
     {
@@ -1621,22 +1621,22 @@ mn_object_t &mn_object_t::setShortcut(int ddkey)
     return *this;
 }
 
-int mn_object_t::font()
+int Widget::font()
 {
     return _pageFontIdx;
 }
 
-int mn_object_t::color()
+int Widget::color()
 {
     return _pageColorIdx;
 }
 
-dd_bool mn_object_t::isGroupMember(int group) const
+dd_bool Widget::isGroupMember(int group) const
 {
     return (_group == group);
 }
 
-int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e cmd)
+int Widget_DefaultCommandResponder(Widget *ob, menucommand_e cmd)
 {
     DENG2_ASSERT(ob);
     if(MCMD_SELECT == cmd && (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_DISABLED))
@@ -1645,35 +1645,35 @@ int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e cmd)
         if(!(ob->_flags & MNF_ACTIVE))
         {
             ob->_flags |= MNF_ACTIVE;
-            if(ob->hasAction(mn_object_t::MNA_ACTIVE))
+            if(ob->hasAction(Widget::MNA_ACTIVE))
             {
-                ob->execAction(mn_object_t::MNA_ACTIVE, NULL);
+                ob->execAction(Widget::MNA_ACTIVE, NULL);
             }
         }
 
         ob->_flags &= ~MNF_ACTIVE;
-        if(ob->hasAction(mn_object_t::MNA_ACTIVEOUT))
+        if(ob->hasAction(Widget::MNA_ACTIVEOUT))
         {
-            ob->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+            ob->execAction(Widget::MNA_ACTIVEOUT, NULL);
         }
         return true;
     }
     return false; // Not eaten.
 }
 
-mn_object_t::mn_actioninfo_t const *mn_object_t::action(mn_actionid_t id)
+Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
 {
     DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
     return &actions[id];
 }
 
-dd_bool mn_object_t::hasAction(mn_actionid_t id)
+dd_bool Widget::hasAction(mn_actionid_t id)
 {
     mn_actioninfo_t const *info = action(id);
     return (info && info->callback != 0);
 }
 
-int mn_object_t::execAction(mn_actionid_t id, void *parameters)
+int Widget::execAction(mn_actionid_t id, void *parameters)
 {
     if(hasAction(id))
     {
@@ -1684,15 +1684,15 @@ int mn_object_t::execAction(mn_actionid_t id, void *parameters)
     return -1; // NOP
 }
 
-mndata_rect_t::mndata_rect_t()
-    : mn_object_t()
+RectWidget::RectWidget()
+    : Widget()
     , patch      (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
 }
 
-void mndata_rect_t::draw(Point2Raw const *origin)
+void RectWidget::draw(Point2Raw const *origin)
 {
     if(origin)
     {
@@ -1721,7 +1721,7 @@ void mndata_rect_t::draw(Point2Raw const *origin)
     }
 }
 
-void mndata_rect_t::updateGeometry(mn_page_t * /*page*/)
+void RectWidget::updateGeometry(Page * /*page*/)
 {
     if(dimensions.width == 0 && dimensions.height == 0)
     {
@@ -1735,28 +1735,28 @@ void mndata_rect_t::updateGeometry(mn_page_t * /*page*/)
     Rect_SetWidthHeight(_geometry, dimensions.width, dimensions.height);
 }
 
-void mndata_rect_t::setBackgroundPatch(patchid_t newBackgroundPatch)
+void RectWidget::setBackgroundPatch(patchid_t newBackgroundPatch)
 {
     patch = newBackgroundPatch;
 }
 
-mndata_text_t::mndata_text_t()
-    : mn_object_t()
+LabelWidget::LabelWidget()
+    : Widget()
     , text (0)
     , patch(0)
     , flags(0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
 }
 
-void mndata_text_t::draw(Point2Raw const *origin)
+void LabelWidget::draw(Point2Raw const *origin)
 {
     fontid_t fontId = rs.textFonts[_pageFontIdx];
-    float color[4], t = (mn_object_t::_flags & MNF_FOCUS)? 1 : 0;
+    float color[4], t = (Widget::_flags & MNF_FOCUS)? 1 : 0;
 
     // Flash if focused?
-    if((mn_object_t::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+    if((Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
         t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
@@ -1790,7 +1790,7 @@ void mndata_text_t::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void mndata_text_t::updateGeometry(mn_page_t *page)
+void LabelWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
 
@@ -1808,10 +1808,10 @@ void mndata_text_t::updateGeometry(mn_page_t *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags)
+void LabelWidget_SetFlags(Widget *wi, flagop_t op, int flags)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_text_t *txt = static_cast<mndata_text_t *>(wi);
+    LabelWidget *txt = static_cast<LabelWidget *>(wi);
 
     switch(op)
     {
@@ -1819,32 +1819,32 @@ void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags)
     case FO_SET:    txt->flags |= flags;   break;
     case FO_TOGGLE: txt->flags ^= flags;   break;
 
-    default: DENG2_ASSERT(!"mndata_text_t::SetFlags: Unknown op.");
+    default: DENG2_ASSERT(!"LabelWidget::SetFlags: Unknown op.");
     }
 }
 
-mndata_edit_t::mndata_edit_t()
-    : mn_object_t()
+LineEditWidget::LineEditWidget()
+    : Widget()
     , _maxLength     (0)
     , maxVisibleChars(0)
     , emptyString    (0)
     , data1          (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNEdit_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = LineEditWidget_CommandResponder;
 
     Str_InitStd(&_text);
     Str_InitStd(&oldtext);
 }
 
-mndata_edit_t::~mndata_edit_t()
+LineEditWidget::~LineEditWidget()
 {
     Str_Free(&_text);
     Str_Free(&oldtext);
 }
 
-void mndata_edit_t::loadResources() // static
+void LineEditWidget::loadResources() // static
 {
 #if defined(MNDATA_EDIT_BACKGROUND_PATCH_LEFT)
     pEditLeft   = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT);
@@ -1859,7 +1859,7 @@ void mndata_edit_t::loadResources() // static
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-static void drawEditBackground(mn_object_t const *wi, int x, int y, int width, float alpha)
+static void drawEditBackground(Widget const *wi, int x, int y, int width, float alpha)
 {
     DENG2_UNUSED(wi);
 
@@ -1889,7 +1889,7 @@ static void drawEditBackground(mn_object_t const *wi, int x, int y, int width, f
     }
 }
 
-void mndata_edit_t::draw(Point2Raw const *_origin)
+void LineEditWidget::draw(Point2Raw const *_origin)
 {
     DENG2_ASSERT(_origin != 0);
 
@@ -1903,7 +1903,7 @@ void mndata_edit_t::draw(Point2Raw const *_origin)
     {
         string = Str_Text(&_text);
     }
-    else if(!((mn_object_t::_flags & MNF_ACTIVE) && (mn_object_t::_flags & MNF_FOCUS)))
+    else if(!((Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS)))
     {
         string = emptyString;
         light *= .5f;
@@ -1928,7 +1928,7 @@ void mndata_edit_t::draw(Point2Raw const *_origin)
         float color[4], t = 0;
 
         // Flash if focused?
-        if(!(mn_object_t::_flags & MNF_ACTIVE) && (mn_object_t::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+        if(!(Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
         {
             float const speed = cfg.menuTextFlashSpeed / 2.f;
             t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
@@ -1945,7 +1945,7 @@ void mndata_edit_t::draw(Point2Raw const *_origin)
         FR_DrawText3(string, &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
-        if((mn_object_t::_flags & MNF_ACTIVE) && (mn_object_t::_flags & MNF_FOCUS) && (menuTime & 8) &&
+        if((Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS) && (menuTime & 8) &&
            (!_maxLength || (unsigned)Str_Length(&_text) < _maxLength))
         {
             origin.x += FR_TextWidth(string);
@@ -1956,10 +1956,10 @@ void mndata_edit_t::draw(Point2Raw const *_origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_edit_t *edit = static_cast<mndata_edit_t *>(wi);
+    LineEditWidget *edit = static_cast<LineEditWidget *>(wi);
 
     if(cmd == MCMD_SELECT)
     {
@@ -1970,9 +1970,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             wi->timer = 0;
             // Store a copy of the present text value so we can restore it.
             Str_Copy(&edit->oldtext, &edit->_text);
-            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
+            if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE, NULL);
             }
         }
         else
@@ -1980,9 +1980,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             Str_Copy(&edit->oldtext, &edit->_text);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
+            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -1995,9 +1995,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         case MCMD_NAV_OUT:
             Str_Copy(&edit->_text, &edit->oldtext);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_CLOSE))
+            if(wi->hasAction(Widget::MNA_CLOSE))
             {
-                wi->execAction(mn_object_t::MNA_CLOSE, NULL);
+                wi->execAction(Widget::MNA_CLOSE, NULL);
             }
             return true;
 
@@ -2017,12 +2017,12 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-uint mndata_edit_t::maxLength() const
+uint LineEditWidget::maxLength() const
 {
     return _maxLength;
 }
 
-void mndata_edit_t::setMaxLength(uint newMaxLength)
+void LineEditWidget::setMaxLength(uint newMaxLength)
 {
     if(newMaxLength < _maxLength)
     {
@@ -2032,12 +2032,12 @@ void mndata_edit_t::setMaxLength(uint newMaxLength)
     _maxLength = newMaxLength;
 }
 
-ddstring_t const *mndata_edit_t::text() const
+ddstring_t const *LineEditWidget::text() const
 {
     return &_text;
 }
 
-void mndata_edit_t::setText(int flags, char const *newText)
+void LineEditWidget::setText(int flags, char const *newText)
 {
     if(!_maxLength)
     {
@@ -2062,11 +2062,11 @@ void mndata_edit_t::setText(int flags, char const *newText)
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int mndata_edit_t::handleEvent(event_t *ev)
+int LineEditWidget::handleEvent(event_t *ev)
 {
     DENG2_ASSERT(ev != 0);
 
-    if(!(mn_object_t::_flags & MNF_ACTIVE) || ev->type != EV_KEY)
+    if(!(Widget::_flags & MNF_ACTIVE) || ev->type != EV_KEY)
         return false;
 
     if(DDKEY_RSHIFT == ev->data1)
@@ -2115,19 +2115,19 @@ int mndata_edit_t::handleEvent(event_t *ev)
     return false;
 }
 
-void mndata_edit_t::updateGeometry(mn_page_t * /*page*/)
+void LineEditWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly.
     Rect_SetWidthHeight(_geometry, 170, 14);
 }
 
-int Hu_MenuCvarEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_edit_t const &edit = wi->as<mndata_edit_t>();
+    LineEditWidget const &edit = wi->as<LineEditWidget>();
     cvartype_t varType = Con_GetVariableType((char const *)edit.data1);
 
-    if(mn_object_t::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return 1;
 
     switch(varType)
     {
@@ -2150,34 +2150,34 @@ mndata_listitem_t::mndata_listitem_t(char const *text, int data)
     : text(text), data(data)
 {}
 
-mndata_list_t::mndata_list_t()
-    : mn_object_t()
+ListWidget::ListWidget()
+    : Widget()
     , data     (0)
     , mask     (0)
     , _selection(0)
     , first    (0)
     , numvis   (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNList_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = ListWidget_CommandResponder;
 }
 
-mndata_list_t::~mndata_list_t()
+ListWidget::~ListWidget()
 {
     qDeleteAll(_items);
 }
 
-mndata_list_t::Items const &mndata_list_t::items() const
+ListWidget::Items const &ListWidget::items() const
 {
     return _items;
 }
 
-void mndata_list_t::draw(Point2Raw const *_origin)
+void ListWidget::draw(Point2Raw const *_origin)
 {
     DENG2_ASSERT(_origin != 0);
 
-    dd_bool const flashSelection = ((mn_object_t::_flags & MNF_ACTIVE) && selectionIsVisible());
+    dd_bool const flashSelection = ((Widget::_flags & MNF_ACTIVE) && selectionIsVisible());
     float const *color = rs.textColors[_pageColorIdx];
     float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
 
@@ -2227,10 +2227,10 @@ void mndata_list_t::draw(Point2Raw const *_origin)
     }
 }
 
-int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_list_t *list = static_cast<mndata_list_t *>(wi);
+    ListWidget *list = static_cast<ListWidget *>(wi);
 
     switch(cmd)
     {
@@ -2253,9 +2253,9 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             if(list->_selection != oldSelection)
             {
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
-                if(wi->hasAction(mn_object_t::MNA_MODIFIED))
+                if(wi->hasAction(Widget::MNA_MODIFIED))
                 {
-                    wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
+                    wi->execAction(Widget::MNA_MODIFIED, NULL);
                 }
             }
             return true;
@@ -2267,9 +2267,9 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_CLOSE))
+            if(wi->hasAction(Widget::MNA_CLOSE))
             {
-                wi->execAction(mn_object_t::MNA_CLOSE, NULL);
+                wi->execAction(Widget::MNA_CLOSE, NULL);
             }
             return true;
         }
@@ -2280,18 +2280,18 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
+            if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
+            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2300,24 +2300,24 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     }
 }
 
-int mndata_list_t::selection() const
+int ListWidget::selection() const
 {
     return _selection;
 }
 
-dd_bool mndata_list_t::selectionIsVisible() const
+dd_bool ListWidget::selectionIsVisible() const
 {
     return (_selection >= first && _selection < first + numvis);
 }
 
-int mndata_list_t::itemData(int index) const
+int ListWidget::itemData(int index) const
 {
     if(index < 0 || index >= _items.count()) return 0;
 
     return _items[index]->data;
 }
 
-int mndata_list_t::findItem(int dataValue) const
+int ListWidget::findItem(int dataValue) const
 {
     for(int i = 0; i < _items.count(); ++i)
     {
@@ -2335,7 +2335,7 @@ int mndata_list_t::findItem(int dataValue) const
     return -1;
 }
 
-dd_bool mndata_list_t::selectItem(int flags, int itemIndex)
+dd_bool ListWidget::selectItem(int flags, int itemIndex)
 {
     int oldSelection = _selection;
 
@@ -2351,16 +2351,16 @@ dd_bool mndata_list_t::selectItem(int flags, int itemIndex)
     return true;
 }
 
-dd_bool mndata_list_t::selectItemByValue(int flags, int dataValue)
+dd_bool ListWidget::selectItemByValue(int flags, int dataValue)
 {
     return selectItem(flags, findItem(dataValue));
 }
 
-int Hu_MenuCvarList(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*parameters*/)
+int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*parameters*/)
 {
-    mndata_list_t const *list = &wi->as<mndata_list_t>();
+    ListWidget const *list = &wi->as<ListWidget>();
 
-    if(mn_object_t::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return 1;
 
     if(list->selection() < 0) return 0; // Hmm?
 
@@ -2394,13 +2394,13 @@ int Hu_MenuCvarList(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /
     return 0;
 }
 
-mndata_inlinelist_t::mndata_inlinelist_t()
-    : mndata_list_t()
+InlineListWidget::InlineListWidget()
+    : ListWidget()
 {
-    mndata_list_t::cmdResponder = MNListInline_CommandResponder;
+    ListWidget::cmdResponder = InlineListWidget_CommandResponder;
 }
 
-void mndata_inlinelist_t::draw(Point2Raw const *origin)
+void InlineListWidget::draw(Point2Raw const *origin)
 {
     mndata_listitem_t const *item = _items[_selection];
 
@@ -2412,10 +2412,10 @@ void mndata_inlinelist_t::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_list_t *list = static_cast<mndata_list_t *>(wi);
+    ListWidget *list = static_cast<ListWidget *>(wi);
 
     switch(cmd)
     {
@@ -2445,9 +2445,9 @@ int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         if(oldSelection != list->_selection)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(mn_object_t::MNA_MODIFIED))
+            if(wi->hasAction(Widget::MNA_MODIFIED))
             {
-                wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
+                wi->execAction(Widget::MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2457,7 +2457,7 @@ int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     }
 }
 
-void mndata_list_t::updateGeometry(mn_page_t *page)
+void ListWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
     Rect_SetWidthHeight(_geometry, 0, 0);
@@ -2480,7 +2480,7 @@ void mndata_list_t::updateGeometry(mn_page_t *page)
     }
 }
 
-void mndata_inlinelist_t::updateGeometry(mn_page_t *page)
+void InlineListWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
     mndata_listitem_t *item = _items[_selection];
@@ -2491,8 +2491,8 @@ void mndata_inlinelist_t::updateGeometry(mn_page_t *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-mndata_button_t::mndata_button_t()
-    : mn_object_t()
+ButtonWidget::ButtonWidget()
+    : Widget()
     , staydownMode(false)
     , data        (0)
     , text        (0)
@@ -2501,23 +2501,23 @@ mndata_button_t::mndata_button_t()
     , no          (0)
     , flags       (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT2;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNButton_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT2;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = ButtonWidget_CommandResponder;
 }
 
-void mndata_button_t::draw(Point2Raw const *origin)
+void ButtonWidget::draw(Point2Raw const *origin)
 {
     DENG2_ASSERT(origin != 0);
-    //int dis   = (mn_object_t::_flags & MNF_DISABLED) != 0;
-    //int act   = (mn_object_t::_flags & MNF_ACTIVE)   != 0;
-    //int click = (mn_object_t::_flags & MNF_CLICKED)  != 0;
+    //int dis   = (Widget::_flags & MNF_DISABLED) != 0;
+    //int act   = (Widget::_flags & MNF_ACTIVE)   != 0;
+    //int click = (Widget::_flags & MNF_CLICKED)  != 0;
     //dd_bool down = act || click;
     fontid_t const fontId = rs.textFonts[_pageFontIdx];
-    float color[4], t = (mn_object_t::_flags & MNF_FOCUS)? 1 : 0;
+    float color[4], t = (Widget::_flags & MNF_FOCUS)? 1 : 0;
 
     // Flash if focused?
-    if((mn_object_t::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+    if((Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
         t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
@@ -2551,10 +2551,10 @@ void mndata_button_t::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_button_t *btn = static_cast<mndata_button_t *>(wi);
+    ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
 
     if(cmd == MCMD_SELECT)
     {
@@ -2566,9 +2566,9 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
+            if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE, NULL);
             }
         }
 
@@ -2577,9 +2577,9 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             // We are not going to receive an "up event" so action that now.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
+            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
             }
         }
         else
@@ -2593,18 +2593,18 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
                 void* data = wi->data1;
 
                 *((char*)data) = (wi->_flags & MNF_ACTIVE) != 0;
-                if(wi->hasAction(mn_object_t::MNA_MODIFIED))
+                if(wi->hasAction(Widget::MNA_MODIFIED))
                 {
-                    wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
+                    wi->execAction(Widget::MNA_MODIFIED, NULL);
                 }
             }
 
             if(!justActivated && !(wi->_flags & MNF_ACTIVE))
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
+                if(wi->hasAction(Widget::MNA_ACTIVEOUT))
                 {
-                    wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+                    wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
                 }
             }
         }
@@ -2616,12 +2616,12 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void mndata_button_t::updateGeometry(mn_page_t *page)
+void ButtonWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
-    //int dis   = (mn_object_t::_flags & MNF_DISABLED) != 0;
-    //int act   = (mn_object_t::_flags & MNF_ACTIVE)   != 0;
-    //int click = (mn_object_t::_flags & MNF_CLICKED)  != 0;
+    //int dis   = (Widget::_flags & MNF_DISABLED) != 0;
+    //int act   = (Widget::_flags & MNF_ACTIVE)   != 0;
+    //int click = (Widget::_flags & MNF_CLICKED)  != 0;
     //dd_bool down = act || click;
     char const *useText = text;
     Size2Raw size;
@@ -2652,10 +2652,10 @@ void mndata_button_t::updateGeometry(mn_page_t *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags)
+void ButtonWidget_SetFlags(Widget *wi, flagop_t op, int flags)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_button_t *btn = static_cast<mndata_button_t *>(wi);
+    ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
 
     switch(op)
     {
@@ -2667,14 +2667,14 @@ void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags)
     }
 }
 
-int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+int CvarButtonWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
 {
-    mndata_button_t *btn = &wi->as<mndata_button_t>();
+    ButtonWidget *btn = &wi->as<ButtonWidget>();
     cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
 
-    if(mn_object_t::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return 1;
 
     //strcpy(btn->text, cb->active? cb->yes : cb->no);
     btn->text = cb->active? cb->yes : cb->no;
@@ -2702,8 +2702,8 @@ int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *
     return 0;
 }
 
-mndata_colorbox_t::mndata_colorbox_t()
-    : mn_object_t()
+ColorPreviewWidget::ColorPreviewWidget()
+    : Widget()
     , width   (0)
     , height  (0)
     , _r       (0)
@@ -2716,12 +2716,12 @@ mndata_colorbox_t::mndata_colorbox_t()
     , data3   (0)
     , data4   (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNColorBox_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = ColorPreviewWidget_CommandResponder;
 }
 
-void mndata_colorbox_t::draw(Point2Raw const *offset)
+void ColorPreviewWidget::draw(Point2Raw const *offset)
 {
     DENG2_ASSERT(offset != 0);
 
@@ -2830,10 +2830,10 @@ void mndata_colorbox_t::draw(Point2Raw const *offset)
     DGL_DrawRectf2Color(x, y, w, h, _r, _g, _b, _a * rs.pageAlpha);
 }
 
-int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    //mndata_colorbox_t* cbox = (mndata_colorbox_t*)ob->_typedata;
+    //ColorPreviewWidget* cbox = (ColorPreviewWidget*)ob->_typedata;
 
     switch(cmd)
     {
@@ -2842,18 +2842,18 @@ int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
+            if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
+            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2862,7 +2862,7 @@ int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     }
 }
 
-void mndata_colorbox_t::updateGeometry(mn_page_t * /*page*/)
+void ColorPreviewWidget::updateGeometry(Page * /*page*/)
 {
     patchinfo_t info;
 
@@ -2933,32 +2933,32 @@ void mndata_colorbox_t::updateGeometry(mn_page_t * /*page*/)
     }
 }
 
-dd_bool mndata_colorbox_t::rgbaMode() const
+dd_bool ColorPreviewWidget::rgbaMode() const
 {
     return _rgbaMode;
 }
 
-float mndata_colorbox_t::redf() const
+float ColorPreviewWidget::redf() const
 {
     return _r;
 }
 
-float mndata_colorbox_t::greenf() const
+float ColorPreviewWidget::greenf() const
 {
     return _g;
 }
 
-float mndata_colorbox_t::bluef() const
+float ColorPreviewWidget::bluef() const
 {
     return _b;
 }
 
-float mndata_colorbox_t::alphaf() const
+float ColorPreviewWidget::alphaf() const
 {
     return (_rgbaMode? _a : 1.0f);
 }
 
-dd_bool mndata_colorbox_t::setRedf(int flags, float red)
+dd_bool ColorPreviewWidget::setRedf(int flags, float red)
 {
     float oldRed = _r;
 
@@ -2974,7 +2974,7 @@ dd_bool mndata_colorbox_t::setRedf(int flags, float red)
     return false;
 }
 
-dd_bool mndata_colorbox_t::setGreenf(int flags, float green)
+dd_bool ColorPreviewWidget::setGreenf(int flags, float green)
 {
     float oldGreen = _g;
 
@@ -2990,7 +2990,7 @@ dd_bool mndata_colorbox_t::setGreenf(int flags, float green)
     return false;
 }
 
-dd_bool mndata_colorbox_t::setBluef(int flags, float blue)
+dd_bool ColorPreviewWidget::setBluef(int flags, float blue)
 {
     float oldBlue = _b;
 
@@ -3006,7 +3006,7 @@ dd_bool mndata_colorbox_t::setBluef(int flags, float blue)
     return false;
 }
 
-dd_bool mndata_colorbox_t::setAlphaf(int flags, float alpha)
+dd_bool ColorPreviewWidget::setAlphaf(int flags, float alpha)
 {
     if(_rgbaMode)
     {
@@ -3024,7 +3024,7 @@ dd_bool mndata_colorbox_t::setAlphaf(int flags, float alpha)
     return false;
 }
 
-dd_bool mndata_colorbox_t::setColor4f(int flags, float red, float green,
+dd_bool ColorPreviewWidget::setColor4f(int flags, float red, float green,
     float blue, float alpha)
 {
     int setComps = 0, setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
@@ -3043,22 +3043,22 @@ dd_bool mndata_colorbox_t::setColor4f(int flags, float red, float green,
     return true;
 }
 
-dd_bool mndata_colorbox_t::setColor4fv(int flags, float rgba[4])
+dd_bool ColorPreviewWidget::setColor4fv(int flags, float rgba[4])
 {
     if(!rgba) return false;
     return setColor4f(flags, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
 }
 
-dd_bool mndata_colorbox_t::copyColor(int flags, mndata_colorbox_t const &other)
+dd_bool ColorPreviewWidget::copyColor(int flags, ColorPreviewWidget const &other)
 {
     return setColor4f(flags, other.redf(), other.greenf(), other.bluef(), other.alphaf());
 }
 
-int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
 {
-    mndata_colorbox_t *cbox = &wi->as<mndata_colorbox_t>();
+    ColorPreviewWidget *cbox = &wi->as<ColorPreviewWidget>();
 
-    if(action != mn_object_t::MNA_MODIFIED) return 1;
+    if(action != Widget::MNA_MODIFIED) return 1;
 
     // MNColorBox's current color has already been updated and we know
     // that at least one of the color components have changed.
@@ -3074,8 +3074,8 @@ int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void
     return 0;
 }
 
-mndata_slider_t::mndata_slider_t()
-    : mn_object_t()
+SliderWidget::SliderWidget()
+    : Widget()
     , min      (0)
     , max      (0)
     , _value    (0)
@@ -3087,12 +3087,12 @@ mndata_slider_t::mndata_slider_t()
     , data4    (0)
     , data5    (0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNSlider_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = SliderWidget_CommandResponder;
 }
 
-void mndata_slider_t::loadResources() // static
+void SliderWidget::loadResources() // static
 {
     pSliderLeft   = R_DeclarePatch(MNDATA_SLIDER_PATCH_LEFT);
     pSliderRight  = R_DeclarePatch(MNDATA_SLIDER_PATCH_RIGHT);
@@ -3100,7 +3100,7 @@ void mndata_slider_t::loadResources() // static
     pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
 }
 
-float mndata_slider_t::value() const
+float SliderWidget::value() const
 {
     if(floatMode)
     {
@@ -3109,13 +3109,13 @@ float mndata_slider_t::value() const
     return (int) (_value + (_value > 0? .5f : -.5f));
 }
 
-void mndata_slider_t::setValue(int /*flags*/, float value)
+void SliderWidget::setValue(int /*flags*/, float value)
 {
     if(floatMode) _value = value;
     else          _value = (int) (value + (value > 0? + .5f : -.5f));
 }
 
-int mndata_slider_t::thumbPos() const
+int SliderWidget::thumbPos() const
 {
 #define WIDTH           (middleInfo.geometry.size.width)
 
@@ -3131,7 +3131,7 @@ int mndata_slider_t::thumbPos() const
 #undef WIDTH
 }
 
-void mndata_slider_t::draw(Point2Raw const *origin)
+void SliderWidget::draw(Point2Raw const *origin)
 {
 #define WIDTH                   (middleInfo.geometry.size.width)
 #define HEIGHT                  (middleInfo.geometry.size.height)
@@ -3184,10 +3184,10 @@ void mndata_slider_t::draw(Point2Raw const *origin)
 #undef WIDTH
 }
 
-int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e cmd)
+int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    mndata_slider_t *sldr = static_cast<mndata_slider_t *>(wi);
+    SliderWidget *sldr = static_cast<SliderWidget *>(wi);
 
     switch(cmd)
     {
@@ -3212,9 +3212,9 @@ int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         if(oldvalue != sldr->_value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(mn_object_t::MNA_MODIFIED))
+            if(wi->hasAction(Widget::MNA_MODIFIED))
             {
-                wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
+                wi->execAction(Widget::MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -3224,11 +3224,11 @@ int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e cmd)
     }
 }
 
-int Hu_MenuCvarSlider(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
 {
-    if(mn_object_t::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return 1;
 
-    mndata_slider_t &sldr = wi->as<mndata_slider_t>();
+    SliderWidget &sldr = wi->as<SliderWidget>();
     cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
     if(CVT_NULL == varType) return 0;
 
@@ -3362,7 +3362,7 @@ static char *composeValueString(float value, float defaultValue, dd_bool floatMo
     return buf;
 }
 
-void mndata_slider_t::updateGeometry(mn_page_t * /*page*/)
+void SliderWidget::updateGeometry(Page * /*page*/)
 {
     patchinfo_t info;
     if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
@@ -3386,11 +3386,11 @@ void mndata_slider_t::updateGeometry(mn_page_t * /*page*/)
                                    .5f + Rect_Height(_geometry) * MNDATA_SLIDER_SCALE);
 }
 
-mndata_textualslider_t::mndata_textualslider_t()
-    : mndata_slider_t()
+TextualSliderWidget::TextualSliderWidget()
+    : SliderWidget()
 {}
 
-void mndata_textualslider_t::draw(Point2Raw const *origin)
+void TextualSliderWidget::draw(Point2Raw const *origin)
 {
     DENG2_ASSERT(origin != 0);
 
@@ -3414,7 +3414,7 @@ void mndata_textualslider_t::draw(Point2Raw const *origin)
     DGL_Translatef(-origin->x, -origin->y, 0);
 }
 
-void mndata_textualslider_t::updateGeometry(mn_page_t *page)
+void TextualSliderWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
 
@@ -3431,15 +3431,15 @@ void mndata_textualslider_t::updateGeometry(mn_page_t *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-mndata_mobjpreview_t::mndata_mobjpreview_t()
-    : mn_object_t()
+MobjPreviewWidget::MobjPreviewWidget()
+    : Widget()
     , mobjType(0)
     , tClass  (0)
     , tMap    (0)
     , plrClass(0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
 }
 
 static void findSpriteForMobjType(int mobjType, spritetype_e *sprite, int *frame)
@@ -3452,28 +3452,28 @@ static void findSpriteForMobjType(int mobjType, spritetype_e *sprite, int *frame
     *frame  = ((menuTime >> 3) & 3);
 }
 
-void mndata_mobjpreview_t::setMobjType(int newMobjType)
+void MobjPreviewWidget::setMobjType(int newMobjType)
 {
     mobjType = newMobjType;
 }
 
-void mndata_mobjpreview_t::setPlayerClass(int newPlayerClass)
+void MobjPreviewWidget::setPlayerClass(int newPlayerClass)
 {
     plrClass = newPlayerClass;
 }
 
-void mndata_mobjpreview_t::setTranslationClass(int newTranslationClass)
+void MobjPreviewWidget::setTranslationClass(int newTranslationClass)
 {
     tClass = newTranslationClass;
 }
 
-void mndata_mobjpreview_t::setTranslationMap(int newTranslationMap)
+void MobjPreviewWidget::setTranslationMap(int newTranslationMap)
 {
     tMap = newTranslationMap;
 }
 
 /// @todo We can do better - the engine should be able to render this visual for us.
-void mndata_mobjpreview_t::draw(Point2Raw const *offset)
+void MobjPreviewWidget::draw(Point2Raw const *offset)
 {
     DENG2_ASSERT(offset != 0);
 
@@ -3546,7 +3546,7 @@ void mndata_mobjpreview_t::draw(Point2Raw const *offset)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void mndata_mobjpreview_t::updateGeometry(mn_page_t * /*page*/)
+void MobjPreviewWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly!
     Rect_SetWidthHeight(_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);

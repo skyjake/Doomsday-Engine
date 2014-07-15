@@ -249,7 +249,7 @@ static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*na
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(mn_object_t * /*ob*/, mn_object_t::mn_actionid_t /*action*/, void * /*parameters*/)
+int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/, void * /*parameters*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
@@ -285,7 +285,7 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    Page *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
@@ -298,7 +298,7 @@ void Hu_MenuInitControlsPage()
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mndata_text_t *txt = new mndata_text_t;
+            LabelWidget *txt = new LabelWidget;
             txt->text          = binds->text;
             txt->_pageColorIdx = MENU_COLOR2;
 
@@ -310,17 +310,17 @@ void Hu_MenuInitControlsPage()
         else
         {
 
-            mndata_text_t *labelOb = new mndata_text_t;
+            LabelWidget *labelOb = new LabelWidget;
             labelOb->text   = binds->text;
             labelOb->_group = group;
 
             page->_widgets << labelOb;
 
-            mndata_bindings_t *bindingsOb = new mndata_bindings_t;
+            InputBindingWidget *bindingsOb = new InputBindingWidget;
             bindingsOb->binds  = binds;
             bindingsOb->_group = group;
-            bindingsOb->actions[mn_object_t::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[mn_object_t::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+            bindingsOb->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            bindingsOb->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
 
             page->_widgets << bindingsOb;
         }
@@ -510,16 +510,16 @@ static void iterateBindings(controlconfig_t const *binds, char const *bindings, 
     }
 }
 
-mndata_bindings_t::mndata_bindings_t()
-    : mn_object_t()
+InputBindingWidget::InputBindingWidget()
+    : Widget()
     , binds(0)
 {
-    mn_object_t::_pageFontIdx  = MENU_FONT1;
-    mn_object_t::_pageColorIdx = MENU_COLOR1;
-    mn_object_t::cmdResponder  = MNBindings_CommandResponder;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = InputBindingWidget_CommandResponder;
 }
 
-void mndata_bindings_t::draw(Point2Raw const *origin)
+void InputBindingWidget::draw(Point2Raw const *origin)
 {
     bindingdrawerdata_t draw;
     char buf[1024];
@@ -538,9 +538,9 @@ void mndata_bindings_t::draw(Point2Raw const *origin)
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 
-int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
+int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
 {
-    controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
+    controlconfig_t *binds = static_cast<InputBindingWidget *>(ob)->binds;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -569,9 +569,9 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
         ob->_flags |= MNF_ACTIVE;
-        if(ob->hasAction(mn_object_t::MNA_ACTIVE))
+        if(ob->hasAction(Widget::MNA_ACTIVE))
         {
-            ob->execAction(mn_object_t::MNA_ACTIVE, NULL);
+            ob->execAction(Widget::MNA_ACTIVE, NULL);
             return true;
         }
         break;
@@ -582,7 +582,7 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void mndata_bindings_t::updateGeometry(mn_page_t * /*page*/)
+void InputBindingWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly!
     Rect_SetWidthHeight(_geometry, 60, 10 * SMALL_SCALE);
@@ -591,7 +591,7 @@ void mndata_bindings_t::updateGeometry(mn_page_t * /*page*/)
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t * /*page*/, Point2Raw const * /*offset*/)
+void Hu_MenuDrawControlsPage(Page * /*page*/, Point2Raw const * /*offset*/)
 {
     Point2Raw origin;
     origin.x = SCREENWIDTH/2;
@@ -616,12 +616,12 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int mndata_bindings_t::handleEvent_Privileged(event_t *ev)
+int InputBindingWidget::handleEvent_Privileged(event_t *ev)
 {
     DENG2_ASSERT(ev != 0);
 
     // We're interested in key or button down events.
-    if((mn_object_t::_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if((Widget::_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
         char const *bindContext = "game";
         char const *symbol = 0;
@@ -654,7 +654,7 @@ int mndata_bindings_t::handleEvent_Privileged(event_t *ev)
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                throw Error("mndata_bindings_t::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
+                throw Error("InputBindingWidget::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
@@ -734,7 +734,7 @@ int mndata_bindings_t::handleEvent_Privileged(event_t *ev)
         DD_Execute(true, cmd);
 
         // We've finished the grab.
-        mn_object_t::_flags &= ~MNF_ACTIVE;
+        Widget::_flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
@@ -743,7 +743,7 @@ int mndata_bindings_t::handleEvent_Privileged(event_t *ev)
     return false;
 }
 
-char const *mndata_bindings_t::controlName()
+char const *InputBindingWidget::controlName()
 {
     DENG2_ASSERT(binds != 0);
     // Map to a text definition?

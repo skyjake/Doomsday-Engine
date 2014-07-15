@@ -89,16 +89,16 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     {
         if(!menuWidgetId) return;
 
-        mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
+        Page *page = Hu_MenuFindPageByName("LoadGame");
         if(!page) return; // Not initialized yet?
 
-        mn_object_t *wi = page->findObject(0, menuWidgetId);
+        Widget *wi = page->findObject(0, menuWidgetId);
         if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
             return;
         }
-        mndata_edit_t &edit = wi->as<mndata_edit_t>();
+        LineEditWidget &edit = wi->as<LineEditWidget>();
 
         wi->setFlags(FO_SET, MNF_DISABLED);
         if(status == Loadable)

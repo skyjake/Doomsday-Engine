@@ -83,7 +83,7 @@ typedef enum mn_page_fontid_e
 namespace common {
 namespace menu {
 
-struct mn_page_t;
+struct Page;
 
 enum flagop_t
 {
@@ -126,7 +126,7 @@ enum flagop_t
 /**
  * MNObject. Base class from which all menu widgets must be derived.
  */
-struct mn_object_t
+struct Widget
 {
 public:
     /**
@@ -163,7 +163,7 @@ public:
         /// @param parameters  Passed to the callback from event which actioned this.
         /// @return  Callback return value. Callback should return zero if the action
         ///     was recognised and processed, regardless of outcome.
-        int (*callback) (mn_object_t *wi, mn_actionid_t action, void *parameters);
+        int (*callback) (Widget *wi, mn_actionid_t action, void *parameters);
     };
 
 public:
@@ -183,24 +183,24 @@ public:
 
     mn_actioninfo_t actions[MNACTION_COUNT];
 
-    void (*onTickCallback) (mn_object_t *wi);
+    void (*onTickCallback) (Widget *wi);
 
     /// Respond to the given (menu) @a command. Can be @c NULL.
     /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (mn_object_t *wi, menucommand_e command);
+    int (*cmdResponder) (Widget *wi, menucommand_e command);
 
     // Extra property values.
     void *data1;
     int data2;
 
     Rect *_geometry;   ///< Current geometry.
-    mn_page_t *_page;  ///< MenuPage which owns this object (if any).
+    Page *_page;  ///< MenuPage which owns this object (if any).
 
     int timer;
 
 public:
-    mn_object_t();
-    virtual ~mn_object_t() {}
+    Widget();
+    virtual ~Widget() {}
 
     DENG2_AS_IS_METHODS()
 
@@ -209,7 +209,7 @@ public:
     virtual void draw(Point2Raw const * /*origin*/) {}
 
     /// Calculate geometry for this when visible on the specified page.
-    virtual void updateGeometry(mn_page_t * /*page*/) {}
+    virtual void updateGeometry(Page * /*page*/) {}
 
     /// Respond to the given (input) event @a ev. Can be @c NULL.
     /// @return  @c true if the event is eaten.
@@ -222,11 +222,11 @@ public:
     /// Process time (the "tick") for this object.
     virtual void tick();
 
-    mn_page_t *page() const;
+    Page *page() const;
 
     int flags() const;
 
-    mn_object_t &setFlags(flagop_t op, int flags);
+    Widget &setFlags(flagop_t op, int flags);
 
     /**
      * Retrieve the current geometry of object within the two-dimensioned
@@ -267,13 +267,13 @@ public:
      * @param origin  New origin coordinates.
      * @return  Same as @a ob for caller convenience.
      */
-    mn_object_t &setFixedOrigin(Point2Raw const *origin);
-    mn_object_t &setFixedX(int x);
-    mn_object_t &setFixedY(int y);
+    Widget &setFixedOrigin(Point2Raw const *origin);
+    Widget &setFixedX(int x);
+    Widget &setFixedY(int y);
 
     int shortcut();
 
-    mn_object_t &setShortcut(int ddkey);
+    Widget &setShortcut(int ddkey);
 
     /// @return  Index of the color used from the owning/active page.
     int color();
@@ -302,7 +302,7 @@ public:
     int execAction(mn_actionid_t action, void *parameters);
 };
 
-int MNObject_DefaultCommandResponder(mn_object_t *wi, menucommand_e command);
+int Widget_DefaultCommandResponder(Widget *wi, menucommand_e command);
 
 /**
  * @defgroup menuPageFlags  Menu Page Flags
@@ -312,10 +312,10 @@ int MNObject_DefaultCommandResponder(mn_object_t *wi, menucommand_e command);
 #define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
 ///@}
 
-struct mn_page_t
+struct Page
 {
 public:
-    typedef QList<mn_object_t *> Widgets;
+    typedef QList<Widget *> Widgets;
     Widgets _widgets;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
@@ -323,7 +323,7 @@ public:
     Rect *geometry;
 
     /// Previous page else @c NULL
-    mn_page_t *previous;
+    Page *previous;
 
     /// Title of this page.
     ddstring_t title;
@@ -341,13 +341,13 @@ public:
     uint colors[MENU_COLOR_COUNT];
 
     /// Process time (the "tick") for this object.
-    void (*ticker) (mn_page_t *page);
+    void (*ticker) (Page *page);
 
     /// Page drawing routine.
-    void (*drawer) (mn_page_t *page, Point2Raw const *offset);
+    void (*drawer) (Page *page, Point2Raw const *offset);
 
     /// Menu-command responder routine.
-    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd);
+    int (*cmdResponder) (Page *page, menucommand_e cmd);
 
     /// User data.
     void *userData;
@@ -355,13 +355,13 @@ public:
     int _timer;
 
 public:
-    mn_page_t(Point2Raw const &origin = Point2Raw(), int flags = 0,
-        void (*ticker) (mn_page_t *page) = 0,
-        void (*drawer) (mn_page_t *page, Point2Raw const *origin) = 0,
-        int (*cmdResponder) (mn_page_t *page, menucommand_e cmd) = 0,
-        void *userData = 0);
+    Page(Point2Raw const &origin = Point2Raw(), int flags = 0,
+         void (*ticker) (Page *page) = 0,
+         void (*drawer) (Page *page, Point2Raw const *origin) = 0,
+         int (*cmdResponder) (Page *page, menucommand_e cmd) = 0,
+         void *userData = 0);
 
-    ~mn_page_t();
+    ~Page();
 
     Widgets const &widgets() const;
 
@@ -380,12 +380,12 @@ public:
     void setX(int x);
     void setY(int y);
 
-    void setPreviousPage(mn_page_t *prevPage);
+    void setPreviousPage(Page *prevPage);
 
     void refocus();
 
     /// @return  Currently focused object; otherwise @c 0.
-    mn_object_t *focusObject();
+    Widget *focusObject();
 
     void clearFocusObject();
 
@@ -398,7 +398,7 @@ public:
      *
      * @param ob  MNObject to be given focus.
      */
-    void setFocus(mn_object_t *wi);
+    void setFocus(Widget *wi);
 
     /**
      * Determines the size of the menu cursor for the currently focused widget. If
@@ -417,9 +417,9 @@ public:
      *
      * @return  Found MNObject else @c NULL
      */
-    mn_object_t *findObject(int group, int flags);
+    Widget *findObject(int group, int flags);
 
-    int findObjectIndex(mn_object_t *wi);
+    int findObjectIndex(Widget *wi);
 
     /**
      * Retrieve a predefined color triplet associated with this page by it's logical
@@ -455,24 +455,24 @@ public:
     void applyPageLayout();
 
 private:
-    void giveChildFocus(mn_object_t *wi, dd_bool allowRefocus);
+    void giveChildFocus(Widget *wi, dd_bool allowRefocus);
 };
 
 /**
- * Rect objects.
+ * A simple rectangluar widget with a background.
  */
-struct mndata_rect_t : public mn_object_t
+struct RectWidget : public Widget
 {
 public:
     Size2Raw dimensions; ///< Dimensions of the rectangle.
     patchid_t patch;     ///< Background patch.
 
 public:
-    mndata_rect_t();
-    virtual ~mndata_rect_t() {}
+    RectWidget();
+    virtual ~RectWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     /**
      * Apply the Patch graphic referenced by @a patch as the background for this rect.
@@ -493,7 +493,7 @@ public:
 /**
  * Text objects.
  */
-struct mndata_text_t : public mn_object_t
+struct LabelWidget : public Widget
 {
 public:
     char const *text;
@@ -505,14 +505,14 @@ public:
     int flags;
 
 public:
-    mndata_text_t();
-    virtual ~mndata_text_t() {}
+    LabelWidget();
+    virtual ~LabelWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 };
 
-void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags);
+void LabelWidget_SetFlags(Widget *wi, flagop_t op, int flags);
 
 /**
  * @defgroup mnButtonFlags  MNButton Flags
@@ -524,7 +524,7 @@ void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags);
 /**
  * Buttons.
  */
-struct mndata_button_t : public mn_object_t
+struct ButtonWidget : public Widget
 {
 public:
     dd_bool staydownMode;  ///< @c true= this is operating in two-state "staydown" mode.
@@ -536,18 +536,36 @@ public:
     int flags;             ///< @ref mnButtonFlags
 
 public:
-    mndata_button_t();
-    virtual ~mndata_button_t() {}
+    ButtonWidget();
+    virtual ~ButtonWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 };
 
-int MNButton_CommandResponder(mn_object_t *wi, menucommand_e command);
+int ButtonWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags);
+void ButtonWidget_SetFlags(Widget *wi, flagop_t op, int flags);
 
-int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+struct cvarbutton_t
+{
+    char active;
+    char const *cvarname;
+    char const *yes;
+    char const *no;
+    int mask;
+
+    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
+                 int mask = 0)
+        : active(active)
+        , cvarname(cvarname)
+        , yes(yes)
+        , no(no)
+        , mask(mask)
+    {}
+};
+
+int CvarButtonWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
 /**
  * Edit field.
@@ -580,7 +598,7 @@ int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *
 #define MNEDIT_STF_REPLACEOLD           0x2 /// Replace the "old" copy (used for canceled edits).
 /**@}*/
 
-struct mndata_edit_t : public mn_object_t
+struct LineEditWidget : public Widget
 {
 public:
     ddstring_t _text;
@@ -591,11 +609,11 @@ public:
     void *data1;
 
 public:
-    mndata_edit_t();
-    virtual ~mndata_edit_t();
+    LineEditWidget();
+    virtual ~LineEditWidget();
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     int handleEvent(event_t *ev);
 
@@ -617,9 +635,9 @@ public:
     static void loadResources();
 };
 
-int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e command);
+int LineEditWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int Hu_MenuCvarEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
 /**
  * List selection.
@@ -645,7 +663,7 @@ public:
 };
 
 /// @note Also used for MN_LISTINLINE!
-struct mndata_list_t : public mn_object_t
+struct ListWidget : public Widget
 {
 public:
     typedef QList<mndata_listitem_t *> Items;
@@ -657,11 +675,11 @@ public:
     int numvis;
 
 public:
-    mndata_list_t();
-    virtual ~mndata_list_t();
+    ListWidget();
+    virtual ~ListWidget();
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     Items const &items() const;
 
@@ -696,21 +714,21 @@ public:
     int findItem(int dataValue) const;
 };
 
-int MNList_CommandResponder(mn_object_t *wi, menucommand_e command);
+int ListWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int Hu_MenuCvarList(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
-struct mndata_inlinelist_t : public mndata_list_t
+struct InlineListWidget : public ListWidget
 {
 public:
-    mndata_inlinelist_t();
-    virtual ~mndata_inlinelist_t() {}
+    InlineListWidget();
+    virtual ~InlineListWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 };
 
-int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e command);
+int InlineListWidget_CommandResponder(Widget *wi, menucommand_e command);
 
 /**
  * Color preview box.
@@ -725,7 +743,7 @@ int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e command);
 #define MNCOLORBOX_SCF_NO_ACTION        0x1 /// Do not call any linked action function.
 ///@}
 
-struct mndata_colorbox_t : public mn_object_t
+struct ColorPreviewWidget : public Widget
 {
 public:
     /// Inner dimensions in fixed 320x200 space. If @c <= 0 the default
@@ -739,11 +757,11 @@ public:
     void *data4;
 
 public:
-    mndata_colorbox_t();
-    virtual ~mndata_colorbox_t() {}
+    ColorPreviewWidget();
+    virtual ~ColorPreviewWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     /// @return  @c true if this colorbox is operating in RGBA mode.
     dd_bool rgbaMode() const;
@@ -794,12 +812,12 @@ public:
      * @param flags  @ref mncolorboxSetColorFlags
      * @return  @c true if the current color changed.
      */
-    dd_bool copyColor(int flags, mndata_colorbox_t const &otherObj);
+    dd_bool copyColor(int flags, ColorPreviewWidget const &otherObj);
 };
 
-int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e command);
+int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
 /**
  * Graphical slider.
@@ -829,7 +847,7 @@ int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void
 #define MNSLIDER_SVF_NO_ACTION            0x1 /// Do not call any linked action function.
 ///@}
 
-struct mndata_slider_t : public mn_object_t
+struct SliderWidget : public Widget
 {
 public:
     float min, max;
@@ -844,11 +862,11 @@ public:
     void *data5;
 
 public:
-    mndata_slider_t();
-    virtual ~mndata_slider_t() {}
+    SliderWidget();
+    virtual ~SliderWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     int thumbPos() const;
 
@@ -866,18 +884,18 @@ public:
     static void loadResources();
 };
 
-int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e command);
+int SliderWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int Hu_MenuCvarSlider(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
-struct mndata_textualslider_t : public mndata_slider_t
+struct TextualSliderWidget : public SliderWidget
 {
 public:
-    mndata_textualslider_t();
-    virtual ~mndata_textualslider_t() {}
+    TextualSliderWidget();
+    virtual ~TextualSliderWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 };
 
 /**
@@ -886,7 +904,7 @@ public:
 #define MNDATA_MOBJPREVIEW_WIDTH    44
 #define MNDATA_MOBJPREVIEW_HEIGHT   66
 
-struct mndata_mobjpreview_t : public mn_object_t
+struct MobjPreviewWidget : public Widget
 {
 public:
     int mobjType;
@@ -895,11 +913,11 @@ public:
     int plrClass; /// Player class identifier.
 
 public:
-    mndata_mobjpreview_t();
-    virtual ~mndata_mobjpreview_t() {}
+    MobjPreviewWidget();
+    virtual ~MobjPreviewWidget() {}
 
     void draw(Point2Raw const *origin);
-    void updateGeometry(mn_page_t *page);
+    void updateGeometry(Page *page);
 
     void setMobjType(int mobjType);
     void setPlayerClass(int plrClass);
@@ -920,9 +938,9 @@ public:
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags);
+Widget *MN_MustFindObjectOnPage(Page *page, int group, int flags);
 
-void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor);
+void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor);
 
 // Menu render state:
 typedef struct mn_rendstate_s {
@@ -937,24 +955,6 @@ extern mn_rendstate_t const *mnRendState;
 
 } // namespace menu
 } // namespace common
-
-struct cvarbutton_t
-{
-    char active;
-    char const *cvarname;
-    char const *yes;
-    char const *no;
-    int mask;
-
-    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
-                 int mask = 0)
-        : active(active)
-        , cvarname(cvarname)
-        , yes(yes)
-        , no(no)
-        , mask(mask)
-    {}
-};
 
 #endif // __cplusplus
 
