@@ -27,6 +27,7 @@
 namespace de {
 
 static String const PACKAGE("package");
+static String const PACKAGE_ORDER("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 
 DENG2_PIMPL(Package)
@@ -126,6 +127,16 @@ bool Package::executeFunction(String const &name)
     return false;
 }
 
+void Package::setOrder(int ordinal)
+{
+    info().set(PACKAGE_ORDER, ordinal);
+}
+
+int Package::order() const
+{
+    return info().geti(PACKAGE_ORDER);
+}
+
 void Package::didLoad()
 {
     // The package's own import paths come into effect when loaded.
@@ -145,6 +156,9 @@ void Package::aboutToUnload()
     {
         App::scriptSystem().removeModuleImportPath(imp);
     }
+
+    // Not loaded any more, so doesn't have an ordinal.
+    delete info().remove(PACKAGE_ORDER);
 }
 
 void Package::parseMetadata(File &packageFile) // static

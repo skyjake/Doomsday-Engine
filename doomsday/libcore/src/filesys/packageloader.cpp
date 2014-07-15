@@ -28,8 +28,9 @@ namespace de {
 DENG2_PIMPL(PackageLoader)
 {
     LoadedPackages loaded;
+    int loadCounter;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i) : Base(i), loadCounter(0)
     {}
 
     ~Instance()
@@ -148,6 +149,7 @@ DENG2_PIMPL(PackageLoader)
 
         Package *pkg = new Package(source);
         loaded.insert(packageId, pkg);
+        pkg->setOrder(loadCounter++);
         pkg->didLoad();
     }
 
@@ -226,6 +228,43 @@ Package const &PackageLoader::package(String const &packageId) const
         throw NotFoundError("PackageLoader::package", "Package '" + packageId + "' is not loaded");
     }
     return *d->loaded[packageId];
+}
+
+namespace internal
+{
+    typedef std::pair<File *, int> FileAndOrder;
+
+    static bool packageOrderLessThan(FileAndOrder const &a, FileAndOrder const &b) {
+        return a.second < b.second;
+    }
+}
+
+using namespace internal;
+
+void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
+{
+    // Find the packages for files.
+    QList<FileAndOrder> all;
+    DENG2_FOR_EACH_CONST(FS::FoundFiles, i, filesToSort)
+    {
+        Package const *pkg = 0;
+        String identifier = Package::identifierForContainerOfFile(**i);
+        if(isLoaded(identifier))
+        {
+            pkg = &package(identifier);
+        }
+        all << FileAndOrder(*i, pkg? pkg->order() : -1);
+    }
+
+    // Sort by package order.
+    std::sort(all.begin(), all.end(), packageOrderLessThan);
+
+    // Put the results back in the given array.
+    filesToSort.clear();
+    foreach(FileAndOrder const &f, all)
+    {
+        filesToSort.push_back(f.first);
+    }
 }
 
 } // namespace de

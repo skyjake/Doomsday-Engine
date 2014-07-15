@@ -162,6 +162,15 @@ public:
     Variable *remove(Variable &variable);
 
     /**
+     * Removes a variable from the record.
+     *
+     * @param variableName  Name of the variable.
+     *
+     * @return  Caller gets ownership of the removed variable.
+     */
+    Variable *remove(String const &variableName);
+
+    /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
      * variable with the given name, the old variable is deleted first.
      *
@@ -283,7 +292,7 @@ public:
      *
      * @return  Caller gets ownership of the removed record.
      */
-    Record *remove(String const &name);
+    Record *removeSubrecord(String const &name);
 
     /**
      * Sets the value of a variable, creating the variable if needed.

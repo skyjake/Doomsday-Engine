@@ -18,6 +18,8 @@
 
 #include "de/FileIndex"
 #include "de/ReadWriteLockable"
+#include "de/PackageLoader"
+#include "de/App"
 
 namespace de {
 
@@ -139,9 +141,27 @@ int FileIndex::size() const
     return d->index.size();
 }
 
-void FileIndex::findPartialPath(String const &path, FoundFiles &found) const
+static bool fileNotInAnyLoadedPackage(File *file)
+{
+    String const identifier = Package::identifierForContainerOfFile(*file);
+    return !App::packageLoader().isLoaded(identifier);
+}
+
+void FileIndex::findPartialPath(String const &path, FoundFiles &found, Behavior behavior) const
 {
     d->findPartialPath(path, found);
+
+    if(behavior == FindOnlyInLoadedPackages)
+    {
+        found.remove_if(fileNotInAnyLoadedPackage);
+    }
+}
+
+int FileIndex::findPartialPathInPackageOrder(String const &path, FoundFiles &found, Behavior behavior) const
+{
+    findPartialPath(path, found, behavior);
+    App::packageLoader().sortInPackageOrder(found);
+    return int(found.size());
 }
 
 FileIndex::Index::const_iterator FileIndex::begin() const

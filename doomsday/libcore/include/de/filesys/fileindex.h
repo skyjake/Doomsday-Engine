@@ -89,7 +89,28 @@ public:
 
     int size() const;
 
-    void findPartialPath(String const &path, FoundFiles &found) const;
+    enum Behavior { FindInEntireIndex, FindOnlyInLoadedPackages };
+
+    void findPartialPath(String const &path, FoundFiles &found,
+                         Behavior behavior = FindInEntireIndex) const;
+
+    /**
+     * Finds all instances of a (partial) path within the index. The results are sorted
+     * so that they are in the same order as the packages in which the files are located.
+     * Files that are not in any package appear before files that belong to a package
+     * (when using FindInEntireIndex behavior).
+     *
+     * If package A has been loaded before package B, files from A are sorted before B
+     * in the resulting list of files.
+     *
+     * @param path      Partial path to find.
+     * @param found     Found files.
+     * @param behavior  Behavior for finding: which results to filter out.
+     *
+     * @return  Number of files found.
+     */
+    int findPartialPathInPackageOrder(String const &path, FoundFiles &found,
+                                      Behavior behavior = FindOnlyInLoadedPackages) const;
 
     void print() const;
 

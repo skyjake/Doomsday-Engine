@@ -309,6 +309,11 @@ Variable *Record::remove(Variable &variable)
     return &variable;
 }
 
+Variable *Record::remove(String const &variableName)
+{
+    return remove((*this)[variableName]);
+}
+
 Variable &Record::add(String const &name)
 {
     return d->parentRecordByPath(name)
@@ -388,7 +393,7 @@ Record &Record::addRecord(String const &name)
     return add(name, new Record);
 }
 
-Record *Record::remove(String const &name)
+Record *Record::removeSubrecord(String const &name)
 {
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))

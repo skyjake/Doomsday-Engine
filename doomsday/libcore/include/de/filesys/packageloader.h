@@ -22,6 +22,7 @@
 #include "../String"
 #include "../Package"
 #include "../ArchiveFolder"
+#include "../FileSystem"
 
 #include <QMap>
 
@@ -80,6 +81,17 @@ public:
      * @return Package.
      */
     Package const &package(String const &packageId) const;
+
+    /**
+     * Sorts the files in the provided list in package order: files from earlier-loaded
+     * packages are sorted before files from later-loaded packages.
+     *
+     * If a file is not containing inside a package, it will appear before all files that
+     * are in packages.
+     *
+     * @param filesToSort  File list.
+     */
+    void sortInPackageOrder(FileSystem::FoundFiles &filesToSort) const;
 
 private:
     DENG2_PRIVATE(d)

@@ -87,6 +87,10 @@ public:
      */
     bool executeFunction(String const &name);
 
+    void setOrder(int ordinal);
+
+    int order() const;
+
     /**
      * Called by PackageLoader after the package has been marked as loaded.
      */
