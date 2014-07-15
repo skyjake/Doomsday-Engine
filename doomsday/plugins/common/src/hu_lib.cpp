@@ -35,7 +35,7 @@
 // @todo Remove external dependencies
 #include "hu_menu.h" // For the menu sound ids.
 
-extern int menuTime;
+using namespace common;
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
@@ -47,10 +47,6 @@ static uiwidget_t *widgets;
 static ui_rendstate_t uiRS;
 const ui_rendstate_t *uiRendState = &uiRS;
 
-// Menu (page) render state.
-static mn_rendstate_t rs;
-const mn_rendstate_t *mnRendState = &rs;
-
 static patchid_t pSliderLeft;
 static patchid_t pSliderRight;
 static patchid_t pSliderMiddle;
@@ -58,24 +54,6 @@ static patchid_t pSliderHandle;
 static patchid_t pEditLeft;
 static patchid_t pEditRight;
 static patchid_t pEditMiddle;
-
-static void MNSlider_LoadResources();
-static void MNEdit_LoadResources();
-
-static mn_actioninfo_t *MNObject_FindActionInfoForId(mn_object_t *ob, mn_actionid_t id);
-
-/**
- * Lookup the logical index of an object thought to be on this page.
- * @param ob  MNObject to lookup the index of.
- * @return  Index of the found object else @c -1.
- */
-static int MNPage_FindObjectIndex(mn_page_t *page, mn_object_t *ob);
-
-/**
- * Retrieve an object on this page by it's logical index.
- * @return  Found MNObject else fatal error.
- */
-//static mn_object_t *MNPage_ObjectByIndex(mn_page_t *page, int idx);
 
 static void errorIfNotInited(char const *callerName)
 {
@@ -255,8 +233,8 @@ void GUI_LoadResources()
     if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
 
     UIAutomap_LoadResources();
-    MNEdit_LoadResources();
-    MNSlider_LoadResources();
+    menu::mndata_edit_t::loadResources();
+    menu::mndata_slider_t::loadResources();
 }
 
 void GUI_ReleaseResources()
@@ -694,28 +672,12 @@ void UIWidget_SetOpacity(uiwidget_t *ob, float opacity)
     }
 }
 
-static void MNSlider_LoadResources()
-{
-    pSliderLeft   = R_DeclarePatch(MNDATA_SLIDER_PATCH_LEFT);
-    pSliderRight  = R_DeclarePatch(MNDATA_SLIDER_PATCH_RIGHT);
-    pSliderMiddle = R_DeclarePatch(MNDATA_SLIDER_PATCH_MIDDLE);
-    pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
-}
+namespace common {
+namespace menu {
 
-static void MNEdit_LoadResources()
-{
-#if defined(MNDATA_EDIT_BACKGROUND_PATCH_LEFT)
-    pEditLeft   = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT);
-#else
-    pEditLeft   = 0;
-#endif
-#if defined(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT)
-    pEditRight  = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT);
-#else
-    pEditRight  = 0;
-#endif
-    pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
-}
+// Menu (page) render state.
+static mn_rendstate_t rs;
+mn_rendstate_t const *mnRendState = &rs;
 
 mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags)
 {
@@ -1101,12 +1063,6 @@ void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor)
     }
 }
 
-static dd_bool MNActionInfo_IsActionExecuteable(mn_actioninfo_t* info)
-{
-    DENG2_ASSERT(info);
-    return (info->callback != 0);
-}
-
 mn_page_t::mn_page_t(Point2Raw const &origin, int flags,
     void (*ticker) (mn_page_t *page),
     void (*drawer) (mn_page_t *page, Point2Raw const *origin),
@@ -1234,9 +1190,9 @@ void mn_page_t::giveChildFocus(mn_object_t *wi, dd_bool allowRefocus)
         if(wi != _widgets[focus])
         {
             mn_object_t *oldFocusOb = _widgets[focus];
-            if(oldFocusOb->hasAction(MNA_FOCUSOUT))
+            if(oldFocusOb->hasAction(mn_object_t::MNA_FOCUSOUT))
             {
-                oldFocusOb->execAction(MNA_FOCUSOUT, NULL);
+                oldFocusOb->execAction(mn_object_t::MNA_FOCUSOUT, NULL);
             }
             oldFocusOb->setFlags(FO_CLEAR, MNF_FOCUS);
         }
@@ -1248,9 +1204,9 @@ void mn_page_t::giveChildFocus(mn_object_t *wi, dd_bool allowRefocus)
 
     focus = _widgets.indexOf(wi);
     wi->setFlags(FO_SET, MNF_FOCUS);
-    if(wi->hasAction(MNA_FOCUS))
+    if(wi->hasAction(mn_object_t::MNA_FOCUS))
     {
-        wi->execAction(MNA_FOCUS, NULL);
+        wi->execAction(mn_object_t::MNA_FOCUS, NULL);
     }
 }
 
@@ -1438,7 +1394,7 @@ void mn_page_t::updateObjects()
         }
         if(mndata_button_t *btn = wi->maybeAs<mndata_button_t>())
         {
-            mn_actioninfo_t const *action = wi->action(MNA_MODIFIED);
+            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
 
             if(action && action->callback == Hu_MenuCvarButton)
             {
@@ -1470,7 +1426,7 @@ void mn_page_t::updateObjects()
         }
         if(mndata_list_t *list = wi->maybeAs<mndata_list_t>())
         {
-            mn_actioninfo_t const *action = wi->action(MNA_MODIFIED);
+            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
 
             if(action && action->callback == Hu_MenuCvarList)
             {
@@ -1479,7 +1435,7 @@ void mn_page_t::updateObjects()
         }
         if(mndata_edit_t *edit = wi->maybeAs<mndata_edit_t>())
         {
-            mn_actioninfo_t const *action = wi->action(MNA_MODIFIED);
+            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
 
             if(action && action->callback == Hu_MenuCvarEdit)
             {
@@ -1488,7 +1444,8 @@ void mn_page_t::updateObjects()
         }
         if(mndata_slider_t *sldr = wi->maybeAs<mndata_slider_t>())
         {
-            mn_actioninfo_t const *action = wi->action(MNA_MODIFIED);
+            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
+
             if(action && action->callback == Hu_MenuCvarSlider)
             {
                 float value;
@@ -1501,7 +1458,7 @@ void mn_page_t::updateObjects()
         }
         if(mndata_colorbox_t *cbox = wi->maybeAs<mndata_colorbox_t>())
         {
-            mn_actioninfo_t const *action = wi->action(MNA_MODIFIED);
+            mn_object_t::mn_actioninfo_t const *action = wi->action(mn_object_t::MNA_MODIFIED);
 
             if(action && action->callback == Hu_MenuCvarColorBox)
             {
@@ -1568,8 +1525,6 @@ mn_object_t::mn_object_t()
     , _pageColorIdx      (0)
     , onTickCallback     (0)
     , cmdResponder       (0)
-    , responder          (0)
-    , privilegedResponder(0)
     , data1              (0)
     , data2              (0)
     , _geometry          (0)
@@ -1577,6 +1532,16 @@ mn_object_t::mn_object_t()
     , timer              (0)
 {
     de::zap(actions);
+}
+
+int mn_object_t::handleEvent(event_t * /*ev*/)
+{
+    return 0; // Not handled.
+}
+
+int mn_object_t::handleEvent_Privileged(event_t * /*ev*/)
+{
+    return 0; // Not handled.
 }
 
 void mn_object_t::tick()
@@ -1602,54 +1567,34 @@ Rect const *mn_object_t::geometry() const
     return _geometry;
 }
 
-Point2 const *mn_object_t::origin() const
-{
-    return Rect_Origin(_geometry);
-}
-
-Size2 const *mn_object_t::size() const
-{
-    return Rect_Size(_geometry);
-}
-
 Point2Raw const *mn_object_t::fixedOrigin() const
 {
     return &_origin;
 }
 
-int mn_object_t::fixedX() const
-{
-    return _origin.x;
-}
-
-int mn_object_t::fixedY() const
-{
-    return _origin.y;
-}
-
-mn_object_t *mn_object_t::setFixedOrigin(Point2Raw const *newOrigin)
+mn_object_t &mn_object_t::setFixedOrigin(Point2Raw const *newOrigin)
 {
     if(newOrigin)
     {
         _origin.x = newOrigin->x;
         _origin.y = newOrigin->y;
     }
-    return this;
+    return *this;
 }
 
-mn_object_t *mn_object_t::setFixedX(int newX)
+mn_object_t &mn_object_t::setFixedX(int newX)
 {
     _origin.x = newX;
-    return this;
+    return *this;
 }
 
-mn_object_t *mn_object_t::setFixedY(int newY)
+mn_object_t &mn_object_t::setFixedY(int newY)
 {
     _origin.y = newY;
-    return this;
+    return *this;
 }
 
-void mn_object_t::setFlags(flagop_t op, int flagsToChange)
+mn_object_t &mn_object_t::setFlags(flagop_t op, int flagsToChange)
 {
     switch(op)
     {
@@ -1659,6 +1604,7 @@ void mn_object_t::setFlags(flagop_t op, int flagsToChange)
 
     default: DENG2_ASSERT(!"MNObject::SetFlags: Unknown op.");
     }
+    return *this;
 }
 
 int mn_object_t::shortcut()
@@ -1666,12 +1612,13 @@ int mn_object_t::shortcut()
     return _shortcut;
 }
 
-void mn_object_t::setShortcut(int ddkey)
+mn_object_t &mn_object_t::setShortcut(int ddkey)
 {
     if(isalnum(ddkey))
     {
         _shortcut = tolower(ddkey);
     }
+    return *this;
 }
 
 int mn_object_t::font()
@@ -1698,49 +1645,39 @@ int MNObject_DefaultCommandResponder(mn_object_t *ob, menucommand_e cmd)
         if(!(ob->_flags & MNF_ACTIVE))
         {
             ob->_flags |= MNF_ACTIVE;
-            if(ob->hasAction(MNA_ACTIVE))
+            if(ob->hasAction(mn_object_t::MNA_ACTIVE))
             {
-                ob->execAction(MNA_ACTIVE, NULL);
+                ob->execAction(mn_object_t::MNA_ACTIVE, NULL);
             }
         }
 
         ob->_flags &= ~MNF_ACTIVE;
-        if(ob->hasAction(MNA_ACTIVEOUT))
+        if(ob->hasAction(mn_object_t::MNA_ACTIVEOUT))
         {
-            ob->execAction(MNA_ACTIVEOUT, NULL);
+            ob->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
         }
         return true;
     }
     return false; // Not eaten.
 }
 
-static mn_actioninfo_t *MNObject_FindActionInfoForId(mn_object_t *ob, mn_actionid_t id)
+mn_object_t::mn_actioninfo_t const *mn_object_t::action(mn_actionid_t id)
 {
-    DENG2_ASSERT(ob != 0);
-    if(VALID_MNACTION(id))
-    {
-        return &ob->actions[id];
-    }
-    return 0; // Not found.
-}
-
-mn_actioninfo_t const *mn_object_t::action(mn_actionid_t id)
-{
-    return MNObject_FindActionInfoForId(this, id);
+    DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
+    return &actions[id];
 }
 
 dd_bool mn_object_t::hasAction(mn_actionid_t id)
 {
-    mn_actioninfo_t *info = MNObject_FindActionInfoForId(this, id);
-    return (info && MNActionInfo_IsActionExecuteable(info));
+    mn_actioninfo_t const *info = action(id);
+    return (info && info->callback != 0);
 }
 
 int mn_object_t::execAction(mn_actionid_t id, void *parameters)
 {
-    mn_actioninfo_t *info = MNObject_FindActionInfoForId(this, id);
-    if(info && MNActionInfo_IsActionExecuteable(info))
+    if(hasAction(id))
     {
-        return info->callback(this, id, parameters);
+        return action(id)->callback(this, id, parameters);
     }
     DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
     /// @todo Need an error handling mechanic.
@@ -1888,7 +1825,7 @@ void MNText_SetFlags(mn_object_t *wi, flagop_t op, int flags)
 
 mndata_edit_t::mndata_edit_t()
     : mn_object_t()
-    , _maxLength      (0)
+    , _maxLength     (0)
     , maxVisibleChars(0)
     , emptyString    (0)
     , data1          (0)
@@ -1896,7 +1833,6 @@ mndata_edit_t::mndata_edit_t()
     mn_object_t::_pageFontIdx  = MENU_FONT1;
     mn_object_t::_pageColorIdx = MENU_COLOR1;
     mn_object_t::cmdResponder  = MNEdit_CommandResponder;
-    mn_object_t::responder     = MNEdit_Responder;
 
     Str_InitStd(&_text);
     Str_InitStd(&oldtext);
@@ -1906,6 +1842,21 @@ mndata_edit_t::~mndata_edit_t()
 {
     Str_Free(&_text);
     Str_Free(&oldtext);
+}
+
+void mndata_edit_t::loadResources() // static
+{
+#if defined(MNDATA_EDIT_BACKGROUND_PATCH_LEFT)
+    pEditLeft   = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_LEFT);
+#else
+    pEditLeft   = 0;
+#endif
+#if defined(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT)
+    pEditRight  = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_RIGHT);
+#else
+    pEditRight  = 0;
+#endif
+    pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
 static void drawEditBackground(mn_object_t const *wi, int x, int y, int width, float alpha)
@@ -2019,9 +1970,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             wi->timer = 0;
             // Store a copy of the present text value so we can restore it.
             Str_Copy(&edit->oldtext, &edit->_text);
-            if(wi->hasAction(MNA_ACTIVE))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
             {
-                wi->execAction(MNA_ACTIVE, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
             }
         }
         else
@@ -2029,9 +1980,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             Str_Copy(&edit->oldtext, &edit->_text);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVEOUT))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
             {
-                wi->execAction(MNA_ACTIVEOUT, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2044,9 +1995,9 @@ int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         case MCMD_NAV_OUT:
             Str_Copy(&edit->_text, &edit->oldtext);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_CLOSE))
+            if(wi->hasAction(mn_object_t::MNA_CLOSE))
             {
-                wi->execAction(MNA_CLOSE, NULL);
+                wi->execAction(mn_object_t::MNA_CLOSE, NULL);
             }
             return true;
 
@@ -2111,12 +2062,11 @@ void mndata_edit_t::setText(int flags, char const *newText)
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int MNEdit_Responder(mn_object_t *wi, event_t *ev)
+int mndata_edit_t::handleEvent(event_t *ev)
 {
-    DENG2_ASSERT(wi != 0 && ev != 0);
-    mndata_edit_t *edit = static_cast<mndata_edit_t *>(wi);
+    DENG2_ASSERT(ev != 0);
 
-    if(!(wi->_flags & MNF_ACTIVE) || ev->type != EV_KEY)
+    if(!(mn_object_t::_flags & MNF_ACTIVE) || ev->type != EV_KEY)
         return false;
 
     if(DDKEY_RSHIFT == ev->data1)
@@ -2130,12 +2080,12 @@ int MNEdit_Responder(mn_object_t *wi, event_t *ev)
 
     if(DDKEY_BACKSPACE == ev->data1)
     {
-        if(!Str_IsEmpty(&edit->_text))
+        if(!Str_IsEmpty(&_text))
         {
-            Str_Truncate(&edit->_text, Str_Length(&edit->_text)-1);
-            if(wi->hasAction(MNA_MODIFIED))
+            Str_Truncate(&_text, Str_Length(&_text)-1);
+            if(hasAction(MNA_MODIFIED))
             {
-                wi->execAction(MNA_MODIFIED, NULL);
+                execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2151,12 +2101,12 @@ int MNEdit_Responder(mn_object_t *wi, event_t *ev)
         if(ch == '%')
             return true;
 
-        if(!edit->_maxLength || (unsigned)Str_Length(&edit->_text) < edit->_maxLength)
+        if(!_maxLength || (unsigned)Str_Length(&_text) < _maxLength)
         {
-            Str_AppendChar(&edit->_text, ch);
-            if(wi->hasAction(MNA_MODIFIED))
+            Str_AppendChar(&_text, ch);
+            if(hasAction(MNA_MODIFIED))
             {
-                wi->execAction(MNA_MODIFIED, NULL);
+                execAction(MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2169,6 +2119,31 @@ void mndata_edit_t::updateGeometry(mn_page_t * /*page*/)
 {
     // @todo calculate visible dimensions properly.
     Rect_SetWidthHeight(_geometry, 170, 14);
+}
+
+int Hu_MenuCvarEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+{
+    DENG2_ASSERT(wi != 0);
+    mndata_edit_t const &edit = wi->as<mndata_edit_t>();
+    cvartype_t varType = Con_GetVariableType((char const *)edit.data1);
+
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
+
+    switch(varType)
+    {
+    case CVT_CHARPTR:
+        Con_SetString2((char const *)edit.data1, Str_Text(edit.text()), SVF_WRITE_OVERRIDE);
+        break;
+
+    case CVT_URIPTR: {
+        /// @todo Sanitize and validate against known schemas.
+        de::Uri uri(Str_Text(edit.text()), RC_NULL);
+        Con_SetUri2((char const *)edit.data1, reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
+        break; }
+
+    default: break;
+    }
+    return 0;
 }
 
 mndata_listitem_t::mndata_listitem_t(char const *text, int data)
@@ -2278,9 +2253,9 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             if(list->_selection != oldSelection)
             {
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
-                if(wi->hasAction(MNA_MODIFIED))
+                if(wi->hasAction(mn_object_t::MNA_MODIFIED))
                 {
-                    wi->execAction(MNA_MODIFIED, NULL);
+                    wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
                 }
             }
             return true;
@@ -2292,9 +2267,9 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_CLOSE))
+            if(wi->hasAction(mn_object_t::MNA_CLOSE))
             {
-                wi->execAction(MNA_CLOSE, NULL);
+                wi->execAction(mn_object_t::MNA_CLOSE, NULL);
             }
             return true;
         }
@@ -2305,18 +2280,18 @@ int MNList_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVE))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
             {
-                wi->execAction(MNA_ACTIVE, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVEOUT))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
             {
-                wi->execAction(MNA_ACTIVEOUT, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
@@ -2381,6 +2356,44 @@ dd_bool mndata_list_t::selectItemByValue(int flags, int dataValue)
     return selectItem(flags, findItem(dataValue));
 }
 
+int Hu_MenuCvarList(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*parameters*/)
+{
+    mndata_list_t const *list = &wi->as<mndata_list_t>();
+
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
+
+    if(list->selection() < 0) return 0; // Hmm?
+
+    cvartype_t varType = Con_GetVariableType((char const *)list->data);
+    if(CVT_NULL == varType) return 0;
+
+    mndata_listitem_t const *item = list->items()[list->_selection];
+    int value;
+    if(list->mask)
+    {
+        value = Con_GetInteger((char const *)list->data);
+        value = (value & ~list->mask) | (item->data & list->mask);
+    }
+    else
+    {
+        value = item->data;
+    }
+
+    switch(varType)
+    {
+    case CVT_INT:
+        Con_SetInteger2((char const *)list->data, value, SVF_WRITE_OVERRIDE);
+        break;
+    case CVT_BYTE:
+        Con_SetInteger2((char const *)list->data, (byte) value, SVF_WRITE_OVERRIDE);
+        break;
+    default:
+        Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
+        break;
+    }
+    return 0;
+}
+
 mndata_inlinelist_t::mndata_inlinelist_t()
     : mndata_list_t()
 {
@@ -2432,9 +2445,9 @@ int MNListInline_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         if(oldSelection != list->_selection)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(MNA_MODIFIED))
+            if(wi->hasAction(mn_object_t::MNA_MODIFIED))
             {
-                wi->execAction(MNA_MODIFIED, NULL);
+                wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -2553,9 +2566,9 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVE))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
             {
-                wi->execAction(MNA_ACTIVE, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
             }
         }
 
@@ -2564,9 +2577,9 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
             // We are not going to receive an "up event" so action that now.
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVEOUT))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
             {
-                wi->execAction(MNA_ACTIVEOUT, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
             }
         }
         else
@@ -2580,18 +2593,18 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e cmd)
                 void* data = wi->data1;
 
                 *((char*)data) = (wi->_flags & MNF_ACTIVE) != 0;
-                if(wi->hasAction(MNA_MODIFIED))
+                if(wi->hasAction(mn_object_t::MNA_MODIFIED))
                 {
-                    wi->execAction(MNA_MODIFIED, NULL);
+                    wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
                 }
             }
 
             if(!justActivated && !(wi->_flags & MNF_ACTIVE))
             {
                 S_LocalSound(SFX_MENU_CYCLE, NULL);
-                if(wi->hasAction(MNA_ACTIVEOUT))
+                if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
                 {
-                    wi->execAction(MNA_ACTIVEOUT, NULL);
+                    wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
                 }
             }
         }
@@ -2652,6 +2665,41 @@ void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags)
 
     default: DENG2_ASSERT(!"MNButton::SetFlags: Unknown op.");
     }
+}
+
+int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+{
+    mndata_button_t *btn = &wi->as<mndata_button_t>();
+    cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
+    cvartype_t varType = Con_GetVariableType(cb->cvarname);
+    int value;
+
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
+
+    //strcpy(btn->text, cb->active? cb->yes : cb->no);
+    btn->text = cb->active? cb->yes : cb->no;
+
+    if(CVT_NULL == varType) return 0;
+
+    if(cb->mask)
+    {
+        value = Con_GetInteger(cb->cvarname);
+        if(cb->active)
+        {
+            value |= cb->mask;
+        }
+        else
+        {
+            value &= ~cb->mask;
+        }
+    }
+    else
+    {
+        value = cb->active;
+    }
+
+    Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
+    return 0;
 }
 
 mndata_colorbox_t::mndata_colorbox_t()
@@ -2794,23 +2842,23 @@ int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVE))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVE))
             {
-                wi->execAction(MNA_ACTIVE, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVE, NULL);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(MNA_ACTIVEOUT))
+            if(wi->hasAction(mn_object_t::MNA_ACTIVEOUT))
             {
-                wi->execAction(MNA_ACTIVEOUT, NULL);
+                wi->execAction(mn_object_t::MNA_ACTIVEOUT, NULL);
             }
         }
         return true;
-    default:
-        return false; // Not eaten.
+
+    default: return false; // Not eaten.
     }
 }
 
@@ -3006,6 +3054,26 @@ dd_bool mndata_colorbox_t::copyColor(int flags, mndata_colorbox_t const &other)
     return setColor4f(flags, other.redf(), other.greenf(), other.bluef(), other.alphaf());
 }
 
+int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+{
+    mndata_colorbox_t *cbox = &wi->as<mndata_colorbox_t>();
+
+    if(action != mn_object_t::MNA_MODIFIED) return 1;
+
+    // MNColorBox's current color has already been updated and we know
+    // that at least one of the color components have changed.
+    // So our job is to simply update the associated cvars.
+    Con_SetFloat2((char const *)cbox->data1, cbox->redf(),   SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data2, cbox->greenf(), SVF_WRITE_OVERRIDE);
+    Con_SetFloat2((char const *)cbox->data3, cbox->bluef(),  SVF_WRITE_OVERRIDE);
+    if(cbox->rgbaMode())
+    {
+        Con_SetFloat2((char const *)cbox->data4, cbox->alphaf(), SVF_WRITE_OVERRIDE);
+    }
+
+    return 0;
+}
+
 mndata_slider_t::mndata_slider_t()
     : mn_object_t()
     , min      (0)
@@ -3022,6 +3090,14 @@ mndata_slider_t::mndata_slider_t()
     mn_object_t::_pageFontIdx  = MENU_FONT1;
     mn_object_t::_pageColorIdx = MENU_COLOR1;
     mn_object_t::cmdResponder  = MNSlider_CommandResponder;
+}
+
+void mndata_slider_t::loadResources() // static
+{
+    pSliderLeft   = R_DeclarePatch(MNDATA_SLIDER_PATCH_LEFT);
+    pSliderRight  = R_DeclarePatch(MNDATA_SLIDER_PATCH_RIGHT);
+    pSliderMiddle = R_DeclarePatch(MNDATA_SLIDER_PATCH_MIDDLE);
+    pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
 }
 
 float mndata_slider_t::value() const
@@ -3136,9 +3212,9 @@ int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e cmd)
         if(oldvalue != sldr->_value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(MNA_MODIFIED))
+            if(wi->hasAction(mn_object_t::MNA_MODIFIED))
             {
-                wi->execAction(MNA_MODIFIED, NULL);
+                wi->execAction(mn_object_t::MNA_MODIFIED, NULL);
             }
         }
         return true;
@@ -3146,6 +3222,42 @@ int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e cmd)
 
     default: return false; // Not eaten.
     }
+}
+
+int Hu_MenuCvarSlider(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
+{
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
+
+    mndata_slider_t &sldr = wi->as<mndata_slider_t>();
+    cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
+    if(CVT_NULL == varType) return 0;
+
+    float value = sldr.value();
+    switch(varType)
+    {
+    case CVT_FLOAT:
+        if(sldr.step >= .01f)
+        {
+            Con_SetFloat2((char const *)sldr.data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
+        }
+        else
+        {
+            Con_SetFloat2((char const *)sldr.data1, value, SVF_WRITE_OVERRIDE);
+        }
+        break;
+
+    case CVT_INT:
+        Con_SetInteger2((char const *)sldr.data1, (int) value, SVF_WRITE_OVERRIDE);
+        break;
+
+    case CVT_BYTE:
+        Con_SetInteger2((char const *)sldr.data1, (byte) value, SVF_WRITE_OVERRIDE);
+        break;
+
+    default: break;
+    }
+
+    return 0;
 }
 
 static inline dd_bool valueIsOne(float value, dd_bool floatMode)
@@ -3439,3 +3551,6 @@ void mndata_mobjpreview_t::updateGeometry(mn_page_t * /*page*/)
     // @todo calculate visible dimensions properly!
     Rect_SetWidthHeight(_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }
+
+} // namespace menu
+} // namespace common

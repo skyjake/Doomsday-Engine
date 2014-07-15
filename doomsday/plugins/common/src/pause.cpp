@@ -27,6 +27,7 @@
 #include "d_net.h"
 
 using namespace de;
+using namespace common;
 
 #define PAUSEF_PAUSED           0x1
 #define PAUSEF_FORCED_PERIOD    0x2

@@ -47,7 +47,10 @@
 #include "x_hair.h"
 
 using namespace de;
-using namespace common;
+
+namespace common {
+
+using namespace common::menu;
 
 /// Original game line height for pages that employ the fixed layout (in 320x200 pixels).
 #if __JDOOM__
@@ -56,49 +59,49 @@ using namespace common;
 #  define FIXED_LINE_HEIGHT (19+1)
 #endif
 
-int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuActionInitNewGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuActionSetActivePage(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuActionInitNewGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
-int Hu_MenuSelectLoadGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectSaveGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectLoadGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectSaveGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #if __JHEXEN__
-int Hu_MenuSelectFiles(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectFiles(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #endif
-int Hu_MenuSelectPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectJoinGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectPlayerSetup(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectJoinGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectHelp(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #endif
-int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectControlPanelLink(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
-int Hu_MenuSelectSingleplayer(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectMultiplayer(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectSingleplayer(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectMultiplayer(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuFocusEpisode(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #endif
 #if __JHEXEN__
-int Hu_MenuFocusOnPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuFocusOnPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #endif
-int Hu_MenuFocusSkillMode(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectLoadSlot(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectQuitGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectEndGame(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuFocusSkillMode(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectLoadSlot(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectQuitGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectEndGame(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
-int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectSaveSlot(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
-int Hu_MenuChangeWeaponPriority(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuChangeWeaponPriority(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 #endif
-int Hu_MenuSelectPlayerColor(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuSelectPlayerColor(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
 #if __JHEXEN__
-void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *ob);
-void Hu_MenuPlayerClassPreviewTicker(mn_object_t *ob);
+void Hu_MenuPlayerClassBackgroundTicker(mn_object_t *wi);
+void Hu_MenuPlayerClassPreviewTicker(mn_object_t *wi);
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -122,6 +125,12 @@ void Hu_MenuDrawPlayerSetupPage(mn_page_t *page, Point2Raw const *origin);
 
 int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd);
 
+int Hu_MenuSaveSlotEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuBindings(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+
+int Hu_MenuActivateColorWidget(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+int Hu_MenuUpdateColorWidgetColor(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+
 static void initAllPages();
 static void destroyAllPages();
 
@@ -129,7 +138,7 @@ static void initAllObjectsOnAllPages();
 
 static void Hu_MenuUpdateCursorState();
 
-static dd_bool Hu_MenuHasCursorRotation(mn_object_t *obj);
+static dd_bool Hu_MenuHasCursorRotation(mn_object_t *wi);
 
 cvarbutton_t mnCVarButtons[] = {
     cvarbutton_t(0, "ctl-aim-noauto"),
@@ -365,9 +374,9 @@ static void Hu_MenuUpdateCursorState()
     if(menuActive)
     {
         mn_page_t *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
-        if(mn_object_t *ob = page->focusObject())
+        if(mn_object_t *wi = page->focusObject())
         {
-            cursorHasRotation = Hu_MenuHasCursorRotation(ob);
+            cursorHasRotation = Hu_MenuHasCursorRotation(wi);
             return;
         }
     }
@@ -487,8 +496,8 @@ void Hu_MenuInitColorWidgetPage()
         sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -508,8 +517,8 @@ void Hu_MenuInitColorWidgetPage()
         sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
         page->_widgets << sld;
     }
 
@@ -529,8 +538,8 @@ void Hu_MenuInitColorWidgetPage()
         sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -551,8 +560,8 @@ void Hu_MenuInitColorWidgetPage()
         sld->_value     = 0;
         sld->step      = .05f;
         sld->floatMode = true;
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 }
@@ -602,8 +611,8 @@ void Hu_MenuInitMainPage()
 #else
         btn->text         = "New Game";
 #endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -620,8 +629,8 @@ void Hu_MenuInitMainPage()
 #else
         btn->text         = "Options";
 #endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -638,8 +647,8 @@ void Hu_MenuInitMainPage()
 # else
         btn->patch       = &pLoadGame;
 # endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -655,8 +664,8 @@ void Hu_MenuInitMainPage()
 # else
         btn->patch        = &pSaveGame;
 # endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -670,8 +679,8 @@ void Hu_MenuInitMainPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"Files";
         btn->text         = "Game Files";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -694,8 +703,8 @@ void Hu_MenuInitMainPage()
 # else
         btn->text         = "Info";
 # endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectHelp;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectHelp;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -715,8 +724,8 @@ void Hu_MenuInitMainPage()
 #else
         btn->text        = "Quit Game";
 #endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectQuitGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectQuitGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -741,8 +750,8 @@ void Hu_MenuInitGameTypePage()
         btn->_shortcut    = 's';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = (char const *)TXT_SINGLEPLAYER;
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSingleplayer;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectSingleplayer;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -754,8 +763,8 @@ void Hu_MenuInitGameTypePage()
         btn->_shortcut    = 'm';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = (char const *)TXT_MULTIPLAYER;
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectMultiplayer;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectMultiplayer;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -827,16 +836,16 @@ void Hu_MenuInitSkillPage()
         btn->patch          = &pSkillModeNames[i];
 # endif
 #endif
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionInitNewGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuFocusSkillMode;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionInitNewGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuFocusSkillMode;
         page->_widgets << btn;
     }
 
 #if __JDOOM__
     if(gameMode != doom2_hacx && gameMode != doom_chex)
     {
-        mn_object_t *ob = MN_MustFindObjectOnPage(page, 0, MNF_ID4);
-        MNButton_SetFlags(ob, FO_SET, MNBUTTON_NO_ALTTEXT);
+        mn_object_t *wi = MN_MustFindObjectOnPage(page, 0, MNF_ID4);
+        MNButton_SetFlags(wi, FO_SET, MNBUTTON_NO_ALTTEXT);
     }
 #endif
 }
@@ -859,8 +868,8 @@ void Hu_MenuInitMultiplayerPage()
         btn->_shortcut    = 'j';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Join Game";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectJoinGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectJoinGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -869,8 +878,8 @@ void Hu_MenuInitMultiplayerPage()
         btn->_shortcut    = 's';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Player Setup";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerSetup;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerSetup;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -902,7 +911,7 @@ void Hu_MenuInitPlayerSetupPage()
         edit->_origin.y = 75;
         edit->data1     = (void *)"net-name";
         edit->_maxLength = 24;
-        edit->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+        edit->actions[mn_object_t::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << edit;
     }
 
@@ -920,8 +929,8 @@ void Hu_MenuInitPlayerSetupPage()
         list->_flags         = MNF_ID2;
         list->_shortcut      = 'c';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerSetupPlayerClass;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuSelectPlayerSetupPlayerClass;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 
         list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS1, PCLASS_FIGHTER);
         list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS2, PCLASS_CLERIC);
@@ -946,8 +955,8 @@ void Hu_MenuInitPlayerSetupPage()
         mndata_inlinelist_t *list = new mndata_inlinelist_t;
         list->_flags         = MNF_ID3;
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuSelectPlayerColor;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuSelectPlayerColor;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 
         /// @todo Read these names from Text definitions.
         int colorIdx = 0;
@@ -984,8 +993,8 @@ void Hu_MenuInitPlayerSetupPage()
         mndata_button_t *btn = new mndata_button_t;
         btn->_shortcut = 's';
         btn->text      = "Save Changes";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectAcceptPlayerSetup;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectAcceptPlayerSetup;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -1012,8 +1021,8 @@ void Hu_MenuInitSaveOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-save-confirm";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1030,8 +1039,8 @@ void Hu_MenuInitSaveOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-save-confirm-loadonreborn";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1058,8 +1067,8 @@ void Hu_MenuInitSaveOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-save-last-loadonreborn";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -1081,8 +1090,8 @@ void Hu_MenuInitFilesPage()
         btn->_shortcut    = 'l';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Load Game";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
     y += FIXED_LINE_HEIGHT;
@@ -1093,8 +1102,8 @@ void Hu_MenuInitFilesPage()
         btn->_shortcut    = 's';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Save Game";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -1105,30 +1114,30 @@ static void deleteGameSave(String slotId)
     DD_Executef(true, "deletegamesave %s", slotId.toLatin1().constData());
 }
 
-int Hu_MenuLoadSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
+int Hu_MenuLoadSlotCommandResponder(mn_object_t *wi, menucommand_e cmd)
 {
-    DENG2_ASSERT(ob != 0);
+    DENG2_ASSERT(wi != 0);
     if(MCMD_DELETE == cmd &&
-       (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
+       (wi->_flags & MNF_FOCUS) && !(wi->_flags & MNF_ACTIVE) && !(wi->_flags & MNF_DISABLED))
     {
-        mndata_edit_t &edit = ob->as<mndata_edit_t>();
+        mndata_edit_t &edit = wi->as<mndata_edit_t>();
         deleteGameSave((char *)edit.data1);
         return true;
     }
-    return MNObject_DefaultCommandResponder(ob, cmd);
+    return MNObject_DefaultCommandResponder(wi, cmd);
 }
 
-int Hu_MenuSaveSlotCommandResponder(mn_object_t *ob, menucommand_e cmd)
+int Hu_MenuSaveSlotCommandResponder(mn_object_t *wi, menucommand_e cmd)
 {
-    DENG2_ASSERT(ob != 0);
+    DENG2_ASSERT(wi != 0);
     if(MCMD_DELETE == cmd &&
-       (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_ACTIVE) && !(ob->_flags & MNF_DISABLED))
+       (wi->_flags & MNF_FOCUS) && !(wi->_flags & MNF_ACTIVE) && !(wi->_flags & MNF_DISABLED))
     {
-        mndata_edit_t &edit = ob->as<mndata_edit_t>();
+        mndata_edit_t &edit = wi->as<mndata_edit_t>();
         deleteGameSave((char *)edit.data1);
         return true;
     }
-    return MNEdit_CommandResponder(ob, cmd);
+    return MNEdit_CommandResponder(wi, cmd);
 }
 
 void Hu_MenuInitLoadGameAndSaveGamePages()
@@ -1158,8 +1167,8 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->_origin.y      = y;
         edit->_flags         = saveSlotObjectIds[i] | MNF_DISABLED;
         edit->_shortcut      = '0' + i;
-        edit->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
-        edit->actions[MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
+        edit->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
+        edit->actions[mn_object_t::MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuLoadSlotCommandResponder;
         edit->_maxLength      = 24;
         edit->data1          = Str_Text(Str_Appendf(Str_New(), "%i", i));
@@ -1181,9 +1190,9 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->_origin.y      = y;
         edit->_flags         = saveSlotObjectIds[i];
         edit->_shortcut      = '0' + i;
-        edit->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
-        edit->actions[MNA_ACTIVE   ].callback = Hu_MenuSaveSlotEdit;
-        edit->actions[MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
+        edit->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectSaveSlot;
+        edit->actions[mn_object_t::MNA_ACTIVE   ].callback = Hu_MenuSaveSlotEdit;
+        edit->actions[mn_object_t::MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuSaveSlotCommandResponder;
         edit->emptyString    = (char const *) TXT_EMPTYSTRING;
         edit->_maxLength      = 24;
@@ -1211,8 +1220,8 @@ void Hu_MenuInitOptionsPage()
         btn->_shortcut    = 'e';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "End Game";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectEndGame;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectEndGame;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1221,8 +1230,8 @@ void Hu_MenuInitOptionsPage()
         btn->_shortcut    = 't';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Show Taskbar";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectControlPanelLink;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectControlPanelLink;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1232,8 +1241,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"ControlOptions";
         btn->text         = "Controls";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1243,8 +1252,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"GameplayOptions";
         btn->text         = "Gameplay";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1254,8 +1263,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"SaveOptions";
         btn->text         = "Game saves";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1265,8 +1274,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"HUDOptions";
         btn->text         = "HUD";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1276,8 +1285,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"AutomapOptions";
         btn->text         = "Automap";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1287,8 +1296,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"WeaponOptions";
         btn->text         = "Weapons";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1299,8 +1308,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"InventoryOptions";
         btn->text         = "Inventory";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -1311,8 +1320,8 @@ void Hu_MenuInitOptionsPage()
         btn->_pageFontIdx = MENU_FONT1;
         btn->data1        = (void *)"SoundOptions";
         btn->text         = "Sound";
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -1345,8 +1354,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-run";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1363,8 +1372,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-look-spring";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1381,8 +1390,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-aim-noauto";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1400,8 +1409,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-jump";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -1419,8 +1428,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-weapon-recoil";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -1450,8 +1459,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-anybossdeath666";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1471,8 +1480,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-raiseghosts";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1492,8 +1501,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-vilechase-usevileradius";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 # endif
@@ -1514,8 +1523,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-maxskulls";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1533,8 +1542,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-skullsinwalls";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 # endif // __JDOOM__ || __JDOOM64__
@@ -1553,8 +1562,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-monsters-floatoverblocking";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1573,8 +1582,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-monsters-stuckindoors";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1593,8 +1602,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-objects-neverhangoverledges";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1613,8 +1622,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-objects-falloff";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1634,8 +1643,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-objects-gibcrushednonbleeders";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -1655,8 +1664,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-corpse-sliding";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1675,8 +1684,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-objects-clipping";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1695,8 +1704,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-player-wallrun-northonly";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1716,8 +1725,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"game-zombiescanexit";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1735,8 +1744,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-face-ouchfix";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1754,8 +1763,8 @@ void Hu_MenuInitGameplayOptionsPage()
         btn->_pageColorIdx  = MENU_COLOR3;
         btn->staydownMode = true;
         btn->data         = (void *)"hud-status-weaponslots-ownedfix";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 # endif // __JDOOM__ || __JDOOM64__
@@ -1793,8 +1802,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 1;
         sld->floatMode = false;
         sld->data1     = (void *)"view-size";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -1811,8 +1820,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-keys-combine";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -1835,8 +1844,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
         sld->data5          = (void *)" seconds";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -1862,8 +1871,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-damage";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1881,8 +1890,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-health";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1900,8 +1909,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-armor";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1919,8 +1928,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-powerup";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1938,8 +1947,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-weapon";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1961,8 +1970,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-ammo";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -1980,8 +1989,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-key";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2000,8 +2009,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-unhide-pickup-invitem";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif // __JHERETIC__ || __JHEXEN__
@@ -2029,8 +2038,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"msg-show";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2054,8 +2063,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
         sld->data5          = (void *)" seconds";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2075,8 +2084,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = .1f;
         sld->floatMode = true;
         sld->data1     = (void *)"msg-scale";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2094,10 +2103,10 @@ void Hu_MenuInitHUDOptionsPage()
         cbox->data1    = (void *)"msg-color-r";
         cbox->data2    = (void *)"msg-color-g";
         cbox->data3    = (void *)"msg-color-b";
-        cbox->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2121,8 +2130,8 @@ void Hu_MenuInitHUDOptionsPage()
         mndata_inlinelist_t *list = new mndata_inlinelist_t;
         list->_group         = 3;
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"view-cross-type";
 
         int xhairIdx = 0;
@@ -2152,8 +2161,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = .1f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-size";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2173,8 +2182,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.0625f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-angle";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2194,8 +2203,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"view-cross-a";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2213,8 +2222,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"view-cross-vitality";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2232,10 +2241,10 @@ void Hu_MenuInitHUDOptionsPage()
         cbox->data1    = (void *)"view-cross-r";
         cbox->data2    = (void *)"view-cross-g";
         cbox->data3    = (void *)"view-cross-b";
-        cbox->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2264,8 +2273,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-status-size";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2285,8 +2294,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-status-alpha";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2313,8 +2322,8 @@ void Hu_MenuInitHUDOptionsPage()
         list->_group         = 5;
         list->_shortcut      = 'i';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_ITEMS | CCH_ITEMS_PRCNT;
 
@@ -2338,8 +2347,8 @@ void Hu_MenuInitHUDOptionsPage()
         list->_group         = 5;
         list->_shortcut      = 'k';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_KILLS | CCH_KILLS_PRCNT;
 
@@ -2363,8 +2372,8 @@ void Hu_MenuInitHUDOptionsPage()
         list->_group         = 5;
         list->_shortcut      = 's';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"hud-cheat-counter";
         list->mask  = CCH_SECRETS | CCH_SECRETS_PRCNT;
 
@@ -2390,8 +2399,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-cheat-counter-show-mapopen";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2411,8 +2420,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-cheat-counter-scale";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2442,8 +2451,8 @@ void Hu_MenuInitHUDOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"hud-scale";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2462,10 +2471,10 @@ void Hu_MenuInitHUDOptionsPage()
         cbox->data2    = (void *)"hud-color-g";
         cbox->data3    = (void *)"hud-color-b";
         cbox->data4    = (void *)"hud-color-a";
-        cbox->actions[MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED ].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2484,8 +2493,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-mana";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2507,8 +2516,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-ammo";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2527,8 +2536,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-armor";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2550,8 +2559,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-power";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2573,8 +2582,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-face";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2595,8 +2604,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-health";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2615,8 +2624,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-keys";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2637,8 +2646,8 @@ void Hu_MenuInitHUDOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-currentitem";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2673,8 +2682,8 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-opacity";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2693,8 +2702,8 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-line-opacity";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2712,8 +2721,8 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->step      = 0.1f;
         sld->floatMode = true;
         sld->data1     = (void *)"map-line-width";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2728,8 +2737,8 @@ void Hu_MenuInitAutomapOptionsPage()
         mndata_inlinelist_t *list = new mndata_inlinelist_t;
         list->_shortcut      = 'h';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"map-huddisplay";
 
         list->_items << new mndata_listitem_t("None",      0);
@@ -2753,8 +2762,8 @@ void Hu_MenuInitAutomapOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"map-door-colors";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -2773,8 +2782,8 @@ void Hu_MenuInitAutomapOptionsPage()
         sld->step      = 5;
         sld->floatMode = true;
         sld->data1     = (void *)"map-door-glow";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -2787,8 +2796,8 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         mndata_inlinelist_t *list = new mndata_inlinelist_t;
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"map-customcolors";
 
         list->_items << new mndata_listitem_t("Never",  0);
@@ -2810,9 +2819,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1     = (void *)"map-wall-r";
         cbox->data2     = (void *)"map-wall-g";
         cbox->data3     = (void *)"map-wall-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2828,9 +2837,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1     = (void *)"map-wall-floorchange-r";
         cbox->data2     = (void *)"map-wall-floorchange-g";
         cbox->data3     = (void *)"map-wall-floorchange-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2845,9 +2854,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1 = (void *)"map-wall-ceilingchange-r";
         cbox->data2 = (void *)"map-wall-ceilingchange-g";
         cbox->data3 = (void *)"map-wall-ceilingchange-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2863,9 +2872,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1     = (void *)"map-wall-unseen-r";
         cbox->data2     = (void *)"map-wall-unseen-g";
         cbox->data3     = (void *)"map-wall-unseen-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2881,9 +2890,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1     = (void *)"map-mobj-r";
         cbox->data2     = (void *)"map-mobj-g";
         cbox->data3     = (void *)"map-mobj-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 
@@ -2899,9 +2908,9 @@ void Hu_MenuInitAutomapOptionsPage()
         cbox->data1     = (void *)"map-background-r";
         cbox->data2     = (void *)"map-background-g";
         cbox->data3     = (void *)"map-background-b";
-        cbox->actions[MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
-        cbox->actions[MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarColorBox;
+        cbox->actions[mn_object_t::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
+        cbox->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
 }
@@ -2987,8 +2996,8 @@ void Hu_MenuInitWeaponsPage()
         list->_flags         = MNF_ID0;
         list->_shortcut      = 'p';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuChangeWeaponPriority;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuChangeWeaponPriority;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 
         for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
         {
@@ -3022,8 +3031,8 @@ void Hu_MenuInitWeaponsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-weapon-nextmode";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3042,8 +3051,8 @@ void Hu_MenuInitWeaponsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-weapon-cycle-sequential";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3067,8 +3076,8 @@ void Hu_MenuInitWeaponsPage()
         list->_group         = 2;
         list->_shortcut      = 'w';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"player-autoswitch";
 
         list->_items << new mndata_listitem_t("Never",     0);
@@ -3093,8 +3102,8 @@ void Hu_MenuInitWeaponsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-autoswitch-notfiring";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3110,8 +3119,8 @@ void Hu_MenuInitWeaponsPage()
         list->_group         = 2;
         list->_shortcut      = 'a';
         list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[MNA_MODIFIED].callback = Hu_MenuCvarList;
-        list->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        list->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarList;
+        list->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         list->data  = (void *)"player-autoswitch-ammo";
 
         list->_items << new mndata_listitem_t("Never",     0);
@@ -3137,8 +3146,8 @@ void Hu_MenuInitWeaponsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"player-autoswitch-berserk";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 #endif
@@ -3167,8 +3176,8 @@ void Hu_MenuInitInventoryOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-inventory-mode";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3185,8 +3194,8 @@ void Hu_MenuInitInventoryOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-inventory-wrap";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3203,8 +3212,8 @@ void Hu_MenuInitInventoryOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-inventory-use-immediate";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3221,8 +3230,8 @@ void Hu_MenuInitInventoryOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"ctl-inventory-use-next";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 
@@ -3245,8 +3254,8 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->data2         = (void *)"Disabled";
         sld->data4         = (void *)" second";
         sld->data5         = (void *)" seconds";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -3277,8 +3286,8 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->floatMode      = false;
         sld->data1          = (void *)"hud-inventory-slot-max";
         sld->data2          = (void *)"Automatic";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -3297,8 +3306,8 @@ void Hu_MenuInitInventoryOptionsPage()
         btn->_pageColorIdx = MENU_COLOR3;
         btn->staydownMode  = true;
         btn->data          = (void *)"hud-inventory-slot-showempty";
-        btn->actions[MNA_MODIFIED].callback = Hu_MenuCvarButton;
-        btn->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        btn->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarButton;
+        btn->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
 }
@@ -3334,8 +3343,8 @@ void Hu_MenuInitSoundOptionsPage()
         sld->step      = 5;
         sld->floatMode = false;
         sld->data1     = (void *)"sound-volume";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 
@@ -3354,8 +3363,8 @@ void Hu_MenuInitSoundOptionsPage()
         sld->step      = 5;
         sld->floatMode = false;
         sld->data1     = (void *)"music-volume";
-        sld->actions[MNA_MODIFIED].callback = Hu_MenuCvarSlider;
-        sld->actions[MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+        sld->actions[mn_object_t::MNA_MODIFIED].callback = Hu_MenuCvarSlider;
+        sld->actions[mn_object_t::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
 }
@@ -3415,11 +3424,11 @@ void Hu_MenuInitEpisodePage()
 #endif
            )
         {
-            btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
+            btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
         }
         else
         {
-            btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
+            btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
             btn->data1 = (void *)"Skill";
 #if __JHERETIC__
             if(gameMode == heretic_extended && i == 5)
@@ -3429,7 +3438,7 @@ void Hu_MenuInitEpisodePage()
 #endif
         }
 
-        btn->actions[MNA_FOCUS].callback = Hu_MenuFocusEpisode;
+        btn->actions[mn_object_t::MNA_FOCUS].callback = Hu_MenuFocusEpisode;
         btn->data2           = i;
         btn->_pageFontIdx    = MENU_FONT1;
         page->_widgets << btn;
@@ -3475,8 +3484,8 @@ void Hu_MenuInitPlayerClassPage()
         btn->text = info->niceName;
         btn->_origin.x      = 0;
         btn->_origin.y      = y;
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuFocusOnPlayerClass;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuFocusOnPlayerClass;
         btn->data2          = (int)info->plrClass;
         btn->_shortcut      = tolower(btn->text[0]);
         btn->_pageFontIdx   = MENU_FONT1;
@@ -3491,8 +3500,8 @@ void Hu_MenuInitPlayerClassPage()
         btn->text = GET_TXT(TXT_RANDOMPLAYERCLASS);
         btn->_origin.x      = 0;
         btn->_origin.y      = y;
-        btn->actions[MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
-        btn->actions[MNA_FOCUS    ].callback = Hu_MenuFocusOnPlayerClass;
+        btn->actions[mn_object_t::MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerClass;
+        btn->actions[mn_object_t::MNA_FOCUS    ].callback = Hu_MenuFocusOnPlayerClass;
         btn->data2          = (int)PCLASS_NONE;
         btn->_shortcut      = tolower(btn->text[0]);
         btn->_pageFontIdx   = MENU_FONT1;
@@ -3577,11 +3586,11 @@ void Hu_MenuInit()
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        mn_object_t *ob = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID0); // Read This!
-        ob->setFlags(FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
+        mn_object_t *wi = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID0); // Read This!
+        wi->setFlags(FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
 
-        ob = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID1); // Quit Game
-        ob->setFixedY(ob->fixedY() - FIXED_LINE_HEIGHT);
+        wi = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID1); // Quit Game
+        wi->setFixedY(wi->fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
 
@@ -3718,9 +3727,9 @@ dd_bool Hu_MenuIsVisible()
     return (menuActive || mnAlpha > .0001f);
 }
 
-int Hu_MenuDefaultFocusAction(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuDefaultFocusAction(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_FOCUS != action) return 1;
+    if(mn_object_t::MNA_FOCUS != action) return 1;
     Hu_MenuUpdateCursorState();
     return 0;
 }
@@ -3735,16 +3744,16 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
 # define OFFSET_Y         (3)
 #endif
 
-    const int cursorIdx = cursorAnimFrame;
-    const float angle = cursorAngle;
+    int const cursorIdx = cursorAnimFrame;
+    float const angle = cursorAngle;
     patchid_t pCursor = pCursors[cursorIdx % MENU_CURSOR_FRAMECOUNT];
-    float scale, pos[2];
-    patchinfo_t info;
 
+    patchinfo_t info;
     if(!R_GetPatchInfo(pCursor, &info))
         return;
 
-    scale = MIN_OF((float) (focusObjectHeight * 1.267f) / info.geometry.size.height, 1);
+    float scale = de::min((focusObjectHeight * 1.267f) / info.geometry.size.height, 1.f);
+    float pos[2];
     pos[VX] = x + OFFSET_X * scale;
     pos[VY] = y + OFFSET_Y * scale + focusObjectHeight/2;
 
@@ -3981,8 +3990,8 @@ int Hu_MenuColorWidgetCmdResponder(mn_page_t *page, menucommand_e cmd)
     switch(cmd)
     {
     case MCMD_NAV_OUT: {
-        mn_object_t *ob = (mn_object_t *)page->userData;
-        ob->setFlags(FO_CLEAR, MNF_ACTIVE);
+        mn_object_t *wi = (mn_object_t *)page->userData;
+        wi->setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_CANCEL, NULL);
         colorWidgetActive = false;
 
@@ -4075,10 +4084,10 @@ static menucommand_e translateCommand(menucommand_e cmd)
     // "active" widget - interpret the command instead as "navigate out".
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
-        if(mn_object_t *ob = Hu_MenuActivePage()->focusObject())
+        if(mn_object_t *wi = Hu_MenuActivePage()->focusObject())
         {
-            if((ob->flags() & MNF_ACTIVE) &&
-               (ob->is<mndata_edit_t>() || ob->is<mndata_list_t>() || ob->is<mndata_colorbox_t>()))
+            if((wi->flags() & MNF_ACTIVE) &&
+               (wi->is<mndata_edit_t>() || wi->is<mndata_list_t>() || wi->is<mndata_colorbox_t>()))
             {
                 cmd = MCMD_NAV_OUT;
             }
@@ -4165,10 +4174,10 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 
     // Try the current focus object.
-    mn_object_t *ob = page->focusObject();
-    if(ob && ob->cmdResponder)
+    mn_object_t *wi = page->focusObject();
+    if(wi && wi->cmdResponder)
     {
-        if(ob->cmdResponder(ob, cmd))
+        if(wi->cmdResponder(wi, cmd))
             return;
     }
 
@@ -4186,13 +4195,10 @@ int Hu_MenuPrivilegedResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *ob = Hu_MenuActivePage()->focusObject();
-        if(ob && !(ob->flags() & MNF_DISABLED))
+        mn_object_t *wi = Hu_MenuActivePage()->focusObject();
+        if(wi && !(wi->flags() & MNF_DISABLED))
         {
-            if(ob->privilegedResponder)
-            {
-                return ob->privilegedResponder(ob, ev);
-            }
+            return wi->handleEvent_Privileged(ev);
         }
     }
     return false;
@@ -4202,13 +4208,10 @@ int Hu_MenuResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        mn_object_t *ob = Hu_MenuActivePage()->focusObject();
-        if(ob && !(ob->flags() & MNF_DISABLED))
+        mn_object_t *wi = Hu_MenuActivePage()->focusObject();
+        if(wi && !(wi->flags() & MNF_DISABLED))
         {
-            if(ob->responder)
-            {
-                return ob->responder(ob, ev);
-            }
+            return wi->handleEvent(ev);
         }
     }
     return false; // Not eaten.
@@ -4243,14 +4246,14 @@ int Hu_MenuFallbackResponder(event_t *ev)
 /**
  * User wants to load this game
  */
-int Hu_MenuSelectLoadSlot(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectLoadSlot(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    mndata_edit_t *edit = &ob->as<mndata_edit_t>();
+    mndata_edit_t *edit = &wi->as<mndata_edit_t>();
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     mn_page_t *saveGamePage = Hu_MenuFindPageByName("SaveGame");
-    saveGamePage->setFocus(saveGamePage->findObject(0, ob->data2));
+    saveGamePage->setFocus(saveGamePage->findObject(0, wi->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
@@ -4273,7 +4276,7 @@ void Hu_MenuDrawMainPage(mn_page_t * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
     WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pMainTitle),
-                 de::Vector2i(origin->x + TITLEOFFSET_X, origin->y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + TITLEOFFSET_X, origin->y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #if __JHEXEN__
     GL_DrawPatchXY(pBullWithFire[(frame + 2) % 7], origin->x - 73, origin->y + 24);
     GL_DrawPatchXY(pBullWithFire[frame], origin->x + 168, origin->y + 24);
@@ -4431,7 +4434,7 @@ void Hu_MenuDrawEpisodePage(mn_page_t *page, Point2Raw const *origin)
     FR_SetAlpha(mnRendState->pageAlpha);
 
     WI_DrawPatch(pEpisode, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pEpisode),
-                 de::Vector2i(origin->x + 7, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 7, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -4447,9 +4450,9 @@ void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pNewGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pNewGame),
-                 de::Vector2i(origin->x + 48, origin->y - 49), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 48, origin->y - 49), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
     WI_DrawPatch(pSkill, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSkill),
-                 de::Vector2i(origin->x + 6, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 6, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JHEXEN__
@@ -4462,184 +4465,50 @@ void Hu_MenuDrawSkillPage(mn_page_t * /*page*/, Point2Raw const *origin)
 /**
  * Called after the save name has been modified and to action the game-save.
  */
-int Hu_MenuSelectSaveSlot(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectSaveSlot(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
-    mndata_edit_t &edit = ob->as<mndata_edit_t>();
+    mndata_edit_t &edit = wi->as<mndata_edit_t>();
     char const *saveSlotId = (char *)edit.data1;
 
     if(menuNominatingQuickSaveSlot)
     {
-        Con_SetInteger("game-save-quick-slot", de::String(saveSlotId).toInt());
+        Con_SetInteger("game-save-quick-slot", String(saveSlotId).toInt());
         menuNominatingQuickSaveSlot = false;
     }
 
-    de::String userDescription = Str_Text(edit.text());
+    String userDescription = Str_Text(edit.text());
     if(!G_SetGameActionSaveSession(saveSlotId, &userDescription))
     {
         return 0;
     }
 
     mn_page_t *page = Hu_MenuFindPageByName("SaveGame");
-    page->setFocus(MN_MustFindObjectOnPage(page, 0, ob->data2));
+    page->setFocus(MN_MustFindObjectOnPage(page, 0, wi->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
-    page->setFocus(MN_MustFindObjectOnPage(page, 0, ob->data2));
+    page->setFocus(MN_MustFindObjectOnPage(page, 0, wi->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
     return 0;
 }
 
-int Hu_MenuCvarButton(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
-{
-    mndata_button_t *btn = &ob->as<mndata_button_t>();
-    cvarbutton_t const *cb = (cvarbutton_t *)ob->data1;
-    cvartype_t varType = Con_GetVariableType(cb->cvarname);
-    int value;
-
-    if(MNA_MODIFIED != action) return 1;
-
-    //strcpy(btn->text, cb->active? cb->yes : cb->no);
-    btn->text = cb->active? cb->yes : cb->no;
-
-    if(CVT_NULL == varType) return 0;
-
-    if(cb->mask)
-    {
-        value = Con_GetInteger(cb->cvarname);
-        if(cb->active)
-        {
-            value |= cb->mask;
-        }
-        else
-        {
-            value &= ~cb->mask;
-        }
-    }
-    else
-    {
-        value = cb->active;
-    }
-
-    Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
-    return 0;
-}
-
-int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void * /*parameters*/)
-{
-    mndata_list_t const *list = &ob->as<mndata_list_t>();
-
-    if(MNA_MODIFIED != action) return 1;
-
-    if(list->selection() < 0) return 0; // Hmm?
-
-    cvartype_t varType = Con_GetVariableType((char const *)list->data);
-    if(CVT_NULL == varType) return 0;
-
-    mndata_listitem_t const *item = list->items()[list->_selection];
-    int value;
-    if(list->mask)
-    {
-        value = Con_GetInteger((char const *)list->data);
-        value = (value & ~list->mask) | (item->data & list->mask);
-    }
-    else
-    {
-        value = item->data;
-    }
-
-    switch(varType)
-    {
-    case CVT_INT:
-        Con_SetInteger2((char const *)list->data, value, SVF_WRITE_OVERRIDE);
-        break;
-    case CVT_BYTE:
-        Con_SetInteger2((char const *)list->data, (byte) value, SVF_WRITE_OVERRIDE);
-        break;
-    default:
-        Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
-        break;
-    }
-    return 0;
-}
-
-int Hu_MenuSaveSlotEdit(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSaveSlotEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     DENG2_ASSERT(wi != 0);
-    if(MNA_ACTIVE != action) return 1;
+    if(mn_object_t::MNA_ACTIVE != action) return 1;
     if(cfg.menuGameSaveSuggestDescription)
     {
-        de::String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
+        String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
         wi->as<mndata_edit_t>().setText(MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
     }
     return 0;
 }
 
-int Hu_MenuCvarEdit(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuActivateColorWidget(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    DENG2_ASSERT(wi != 0);
-    mndata_edit_t const &edit = wi->as<mndata_edit_t>();
-    cvartype_t varType = Con_GetVariableType((char const *)edit.data1);
-
-    if(MNA_MODIFIED != action) return 1;
-
-    switch(varType)
-    {
-    case CVT_CHARPTR:
-        Con_SetString2((char const *)edit.data1, Str_Text(edit.text()), SVF_WRITE_OVERRIDE);
-        break;
-
-    case CVT_URIPTR: {
-        /// @todo Sanitize and validate against known schemas.
-        de::Uri uri(Str_Text(edit.text()), RC_NULL);
-        Con_SetUri2((char const *)edit.data1, reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
-        break; }
-
-    default: break;
-    }
-    return 0;
-}
-
-int Hu_MenuCvarSlider(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
-{
-    if(MNA_MODIFIED != action) return 1;
-
-    mndata_slider_t &sldr = wi->as<mndata_slider_t>();
-    cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
-    if(CVT_NULL == varType) return 0;
-
-    float value = sldr.value();
-    switch(varType)
-    {
-    case CVT_FLOAT:
-        if(sldr.step >= .01f)
-        {
-            Con_SetFloat2((char const *)sldr.data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
-        }
-        else
-        {
-            Con_SetFloat2((char const *)sldr.data1, value, SVF_WRITE_OVERRIDE);
-        }
-        break;
-
-    case CVT_INT:
-        Con_SetInteger2((char const *)sldr.data1, (int) value, SVF_WRITE_OVERRIDE);
-        break;
-
-    case CVT_BYTE:
-        Con_SetInteger2((char const *)sldr.data1, (byte) value, SVF_WRITE_OVERRIDE);
-        break;
-
-    default: break;
-    }
-
-    return 0;
-}
-
-int Hu_MenuActivateColorWidget(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
-{
-    if(action != MNA_ACTIVE) return 1;
+    if(action != mn_object_t::MNA_ACTIVE) return 1;
 
     mndata_colorbox_t &cbox = wi->as<mndata_colorbox_t>();
     mn_page_t *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
@@ -4669,26 +4538,6 @@ int Hu_MenuActivateColorWidget(mn_object_t *wi, mn_actionid_t action, void * /*c
     return 0;
 }
 
-int Hu_MenuCvarColorBox(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
-{
-    mndata_colorbox_t *cbox = &wi->as<mndata_colorbox_t>();
-
-    if(action != MNA_MODIFIED) return 1;
-
-    // MNColorBox's current color has already been updated and we know
-    // that at least one of the color components have changed.
-    // So our job is to simply update the associated cvars.
-    Con_SetFloat2((char const *)cbox->data1, cbox->redf(),   SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data2, cbox->greenf(), SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data3, cbox->bluef(),  SVF_WRITE_OVERRIDE);
-    if(cbox->rgbaMode())
-    {
-        Con_SetFloat2((char const *)cbox->data4, cbox->alphaf(), SVF_WRITE_OVERRIDE);
-    }
-
-    return 0;
-}
-
 void Hu_MenuDrawLoadGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
@@ -4700,7 +4549,7 @@ void Hu_MenuDrawLoadGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
     FR_DrawTextXY3("Load Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pLoadGame),
-                 de::Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -4721,7 +4570,7 @@ void Hu_MenuDrawSaveGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pSaveGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSaveGame),
-                 de::Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -4733,9 +4582,9 @@ void Hu_MenuDrawSaveGamePage(mn_page_t * /*page*/, Point2Raw const *origin)
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectHelp(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
     G_StartHelp();
     return 0;
 }
@@ -4752,7 +4601,7 @@ void Hu_MenuDrawOptionsPage(mn_page_t * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pOptionsTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pOptionsTitle),
-                 de::Vector2i(origin->x + 42, origin->y - 20), ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 42, origin->y - 20), ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -4781,17 +4630,17 @@ void Hu_MenuDrawPlayerSetupPage(mn_page_t * /*page*/, Point2Raw const *origin)
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, origin->y - 28);
 }
 
-int Hu_MenuActionSetActivePage(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuActionSetActivePage(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    DENG2_ASSERT(ob != 0);
-    if(MNA_ACTIVEOUT != action) return 1;
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName((char *)ob->data1));
+    DENG2_ASSERT(wi != 0);
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName((char *)wi->data1));
     return 0;
 }
 
-int Hu_MenuUpdateColorWidgetColor(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuUpdateColorWidgetColor(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_MODIFIED != action) return 1;
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
 
     mndata_slider_t &sldr = wi->as<mndata_slider_t>();
     float value = sldr.value();
@@ -4810,9 +4659,9 @@ int Hu_MenuUpdateColorWidgetColor(mn_object_t *wi, mn_actionid_t action, void * 
     return 0;
 }
 
-int Hu_MenuChangeWeaponPriority(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuChangeWeaponPriority(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_MODIFIED != action) return 1;
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
 
     /*int choice = option >> NUM_WEAPON_TYPES;
 
@@ -4837,9 +4686,9 @@ int Hu_MenuChangeWeaponPriority(mn_object_t * /*ob*/, mn_actionid_t action, void
     return 0;
 }
 
-int Hu_MenuSelectSingleplayer(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectSingleplayer(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
     {
@@ -4863,13 +4712,13 @@ int Hu_MenuSelectSingleplayer(mn_object_t * /*ob*/, mn_actionid_t action, void *
     return 0;
 }
 
-int Hu_MenuSelectMultiplayer(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectMultiplayer(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     mn_page_t *multiplayerPage = Hu_MenuFindPageByName("Multiplayer");
-    mn_object_t *labelObj = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
-    mndata_button_t *btn  = &labelObj->as<mndata_button_t>();
+    mn_object_t *label   = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
+    mndata_button_t *btn = &label->as<mndata_button_t>();
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     // Set the appropriate label.
     if(IS_NETGAME)
@@ -4884,9 +4733,9 @@ int Hu_MenuSelectMultiplayer(mn_object_t * /*ob*/, mn_actionid_t action, void * 
     return 0;
 }
 
-int Hu_MenuSelectJoinGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*parameters*/)
+int Hu_MenuSelectJoinGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*parameters*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
     {
@@ -4899,9 +4748,9 @@ int Hu_MenuSelectJoinGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*p
     return 0;
 }
 
-int Hu_MenuSelectPlayerSetup(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerSetup(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     mn_page_t *playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
     mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0)->as<mndata_mobjpreview_t>();
@@ -4931,10 +4780,10 @@ int Hu_MenuSelectPlayerSetup(mn_object_t * /*ob*/, mn_actionid_t action, void * 
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     DENG2_ASSERT(wi != 0);
-    if(MNA_MODIFIED != action) return 1;
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
 
     mndata_list_t &list = wi->as<mndata_list_t>();
     int selection = list.selection();
@@ -4948,10 +4797,10 @@ int Hu_MenuSelectPlayerSetupPlayerClass(mn_object_t *wi, mn_actionid_t action, v
 }
 #endif
 
-int Hu_MenuSelectPlayerColor(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerColor(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     DENG2_ASSERT(wi != 0);
-    if(MNA_MODIFIED != action) return 1;
+    if(mn_object_t::MNA_MODIFIED != action) return 1;
 
     // The color translation map is stored in the list item data member.
     mndata_list_t &list = wi->as<mndata_list_t>();
@@ -4964,7 +4813,7 @@ int Hu_MenuSelectPlayerColor(mn_object_t *wi, mn_actionid_t action, void * /*con
     return 0;
 }
 
-int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     DENG2_ASSERT(wi != 0);
     mndata_edit_t &plrNameEdit  = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID1)->as<mndata_edit_t>();
@@ -4979,7 +4828,7 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_actionid_t action, void *
     // The color translation map is stored in the list item data member.
     cfg.netColor = plrColorList.itemData(plrColorList.selection());
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     char buf[300];
     strcpy(buf, "net-name ");
@@ -5005,23 +4854,23 @@ int Hu_MenuSelectAcceptPlayerSetup(mn_object_t *wi, mn_actionid_t action, void *
     return 0;
 }
 
-int Hu_MenuSelectQuitGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*parameters*/)
+int Hu_MenuSelectQuitGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*parameters*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
     G_QuitGame();
     return 0;
 }
 
-int Hu_MenuSelectEndGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectEndGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
     DD_Executef(true, "endgame");
     return 0;
 }
 
-int Hu_MenuSelectLoadGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectLoadGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     if(!Get(DD_DEDICATED))
     {
@@ -5036,11 +4885,11 @@ int Hu_MenuSelectLoadGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*c
     return 0;
 }
 
-int Hu_MenuSelectSaveGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectSaveGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     player_t *player = &players[CONSOLEPLAYER];
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     if(!Get(DD_DEDICATED))
     {
@@ -5071,14 +4920,14 @@ int Hu_MenuSelectSaveGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*c
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
     mn_page_t *skillPage = Hu_MenuFindPageByName("Skill");
-    int option = ob->data2;
+    int option = wi->data2;
     mn_object_t *skillObj;
     char const *text;
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
     if(IS_NETGAME)
     {
@@ -5087,7 +4936,8 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*con
     }
 
     if(option < 0)
-    {   // Random class.
+    {
+        // Random class.
         // Number of user-selectable classes.
         mnPlrClass = (menuTime / 5) % 3;
     }
@@ -5131,11 +4981,11 @@ int Hu_MenuSelectPlayerClass(mn_object_t *ob, mn_actionid_t action, void * /*con
     return 0;
 }
 
-int Hu_MenuFocusOnPlayerClass(mn_object_t *wi, mn_actionid_t action, void *context)
+int Hu_MenuFocusOnPlayerClass(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *context)
 {
     DENG2_ASSERT(wi != 0);
 
-    if(MNA_FOCUS != action) return 1;
+    if(mn_object_t::MNA_FOCUS != action) return 1;
 
     playerclass_t plrClass = (playerclass_t)wi->data2;
     mndata_mobjpreview_t &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<mndata_mobjpreview_t>();
@@ -5148,10 +4998,10 @@ int Hu_MenuFocusOnPlayerClass(mn_object_t *wi, mn_actionid_t action, void *conte
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(mn_object_t *wi, mn_actionid_t action, void *context)
+int Hu_MenuFocusEpisode(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *context)
 {
     DENG2_ASSERT(wi != 0);
-    if(MNA_FOCUS != action) return 1;
+    if(mn_object_t::MNA_FOCUS != action) return 1;
     mnEpisode = wi->data2;
     Hu_MenuDefaultFocusAction(wi, action, context);
     return 0;
@@ -5163,21 +5013,21 @@ int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userV
     return true;
 }
 
-int Hu_MenuActivateNotSharewareEpisode(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuActivateNotSharewareEpisode(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
     return 0;
 }
 #endif
 
-int Hu_MenuFocusSkillMode(mn_object_t *ob, mn_actionid_t action, void *context)
+int Hu_MenuFocusSkillMode(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *context)
 {
-    DENG2_ASSERT(ob != 0);
+    DENG2_ASSERT(wi != 0);
 
-    if(MNA_FOCUS != action) return 1;
-    mnSkillmode = (skillmode_t)ob->data2;
-    Hu_MenuDefaultFocusAction(ob, action, context);
+    if(mn_object_t::MNA_FOCUS != action) return 1;
+    mnSkillmode = (skillmode_t)wi->data2;
+    Hu_MenuDefaultFocusAction(wi, action, context);
     return 0;
 }
 
@@ -5221,14 +5071,14 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     G_SetGameActionNewSession(newMapUri, 0/*default*/, newRules);
 }
 
-int Hu_MenuActionInitNewGame(mn_object_t * /*ob*/, mn_actionid_t action, void * /*context*/)
+int Hu_MenuActionInitNewGame(mn_object_t * /*wi*/, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
     Hu_MenuInitNewGame(false);
     return 0;
 }
 
-int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void * /*context*/)
+int Hu_MenuSelectControlPanelLink(mn_object_t *wi, mn_object_t::mn_actionid_t action, void * /*context*/)
 {
 #define NUM_PANEL_NAMES         1
 
@@ -5238,9 +5088,9 @@ int Hu_MenuSelectControlPanelLink(mn_object_t *ob, mn_actionid_t action, void * 
         //"panel input"
     };
 
-    if(MNA_ACTIVEOUT != action) return 1;
+    if(mn_object_t::MNA_ACTIVEOUT != action) return 1;
 
-    int idx = ob->data2;
+    int idx = wi->data2;
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
     {
         idx = 0;
@@ -5390,3 +5240,5 @@ void Hu_MenuRegister()
     C_CMD("menudelete",     "",     MenuCommand);
     C_CMD("menuback",       "",     MenuCommand);
 }
+
+} // namespace common

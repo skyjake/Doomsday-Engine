@@ -29,6 +29,7 @@
 #include "hu_stuff.h"
 
 using namespace de;
+using namespace common;
 
 static dd_bool awaitingResponse;
 static int messageToPrint; // 1 = message to be printed.
@@ -131,7 +132,7 @@ static void drawMessage()
 {
 #define LEADING             (0)
 
-    short textFlags = MN_MergeMenuEffectWithDrawTextFlags(0);
+    short textFlags = menu::MN_MergeMenuEffectWithDrawTextFlags(0);
     Point2Raw origin( SCREENWIDTH/2, SCREENHEIGHT/2);
     char const *questionString;
 

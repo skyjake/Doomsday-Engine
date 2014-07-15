@@ -34,6 +34,8 @@
 #include "p_start.h"
 #include "r_common.h"
 
+using namespace common;
+
 #define MANGLE_STATE(x)     (INT2PTR(state_t, ((x)? (x)-STATES : -1)))
 #define RESTORE_STATE(x)    (PTR2INT(x) < 0? NULL : &STATES[PTR2INT(x)])
 

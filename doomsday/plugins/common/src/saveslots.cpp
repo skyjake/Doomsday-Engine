@@ -36,6 +36,7 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 using namespace de;
 using namespace common;
+using namespace menu;
 
 using de::game::SavedSession;
 

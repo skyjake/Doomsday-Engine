@@ -28,6 +28,9 @@
 
 using namespace de;
 
+namespace common {
+namespace menu {
+
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
 #define CCF_INVERSE             0x2
@@ -246,7 +249,7 @@ static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*na
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(mn_object_t * /*ob*/, mn_actionid_t /*action*/, void * /*parameters*/)
+int Hu_MenuActivateBindingsGrab(mn_object_t * /*ob*/, mn_object_t::mn_actionid_t /*action*/, void * /*parameters*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
@@ -316,8 +319,8 @@ void Hu_MenuInitControlsPage()
             mndata_bindings_t *bindingsOb = new mndata_bindings_t;
             bindingsOb->binds  = binds;
             bindingsOb->_group = group;
-            bindingsOb->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+            bindingsOb->actions[mn_object_t::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            bindingsOb->actions[mn_object_t::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
 
             page->_widgets << bindingsOb;
         }
@@ -511,10 +514,9 @@ mndata_bindings_t::mndata_bindings_t()
     : mn_object_t()
     , binds(0)
 {
-    mn_object_t::_pageFontIdx        = MENU_FONT1;
-    mn_object_t::_pageColorIdx       = MENU_COLOR1;
-    mn_object_t::cmdResponder        = MNBindings_CommandResponder;
-    mn_object_t::privilegedResponder = MNBindings_PrivilegedResponder;
+    mn_object_t::_pageFontIdx  = MENU_FONT1;
+    mn_object_t::_pageColorIdx = MENU_COLOR1;
+    mn_object_t::cmdResponder  = MNBindings_CommandResponder;
 }
 
 void mndata_bindings_t::draw(Point2Raw const *origin)
@@ -567,9 +569,9 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
         ob->_flags |= MNF_ACTIVE;
-        if(ob->hasAction(MNA_ACTIVE))
+        if(ob->hasAction(mn_object_t::MNA_ACTIVE))
         {
-            ob->execAction(MNA_ACTIVE, NULL);
+            ob->execAction(mn_object_t::MNA_ACTIVE, NULL);
             return true;
         }
         break;
@@ -614,14 +616,13 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
+int mndata_bindings_t::handleEvent_Privileged(event_t *ev)
 {
-    DENG2_ASSERT(ob != 0 && ev != 0);
+    DENG2_ASSERT(ev != 0);
 
     // We're interested in key or button down events.
-    if((ob->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if((mn_object_t::_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        controlconfig_t *binds = static_cast<mndata_bindings_t *>(ob)->binds;
         char const *bindContext = "game";
         char const *symbol = 0;
         char cmd[512];
@@ -653,7 +654,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                App_Log(DE2_INPUT_ERROR, "The Delete key in the Menu context is reserved for deleting bindings");
+                throw Error("mndata_bindings_t::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
@@ -733,7 +734,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
         DD_Execute(true, cmd);
 
         // We've finished the grab.
-        ob->_flags &= ~MNF_ACTIVE;
+        mn_object_t::_flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
@@ -752,3 +753,7 @@ char const *mndata_bindings_t::controlName()
     }
     return binds->text;
 }
+
+} // namespace menu
+} // namespace common
+

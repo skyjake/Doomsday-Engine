@@ -24,6 +24,9 @@
 
 #include "hu_lib.h"
 
+namespace common {
+namespace menu {
+
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(mn_page_t *page, Point2Raw const *origin);
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
@@ -45,11 +48,15 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(mn_page_t *page);
 
+    int handleEvent_Privileged(event_t *ev);
+
     char const *controlName();
 };
 
 int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e command);
-int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev);
+
+} // namespace menu
+} // namespace common
 
 #endif // __cplusplus
 #endif // LIBCOMMON_MENU_CONTROLS

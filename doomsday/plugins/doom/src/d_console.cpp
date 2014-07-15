@@ -24,6 +24,7 @@
 #include "hu_stuff.h"
 
 using namespace de;
+using namespace common;
 
 D_CMD(Cheat);
 D_CMD(CheatGive);

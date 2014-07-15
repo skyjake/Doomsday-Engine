@@ -44,6 +44,8 @@
 #include <cstring>
 #include <map>
 
+using namespace common;
+
 /**
  * @defgroup tableColumnFlags  Table Column flags
  */

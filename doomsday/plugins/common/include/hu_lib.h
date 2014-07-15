@@ -26,12 +26,10 @@
 
 #ifdef __cplusplus
 #include <QList>
-
-struct mn_object_t;
-struct mn_page_t;
 #endif
 
-typedef enum menucommand_e {
+typedef enum menucommand_e
+{
     MCMD_OPEN, // Open the menu.
     MCMD_CLOSE, // Close the menu.
     MCMD_CLOSEFAST, // Instantly close the menu.
@@ -45,6 +43,54 @@ typedef enum menucommand_e {
     MCMD_SELECT, // Execute whatever action is attaced to the current item.
     MCMD_DELETE
 } menucommand_e;
+
+typedef enum mn_page_colorid_e
+{
+    MENU_COLOR1 = 0,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    MENU_COLOR4,
+    MENU_COLOR5,
+    MENU_COLOR6,
+    MENU_COLOR7,
+    MENU_COLOR8,
+    MENU_COLOR9,
+    MENU_COLOR10,
+    MENU_COLOR_COUNT
+} mn_page_colorid_t;
+
+#define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
+
+typedef enum mn_page_fontid_e
+{
+    MENU_FONT1 = 0,
+    MENU_FONT2,
+    MENU_FONT3,
+    MENU_FONT4,
+    MENU_FONT5,
+    MENU_FONT6,
+    MENU_FONT7,
+    MENU_FONT8,
+    MENU_FONT9,
+    MENU_FONT10,
+    MENU_FONT_COUNT
+} mn_page_fontid_t;
+
+#define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
+
+#ifdef __cplusplus
+
+namespace common {
+namespace menu {
+
+struct mn_page_t;
+
+enum flagop_t
+{
+    FO_CLEAR,
+    FO_SET,
+    FO_TOGGLE
+};
 
 /**
  * @defgroup menuObjectFlags Menu Object Flags
@@ -75,68 +121,54 @@ typedef enum menucommand_e {
 #define MNF_ID0                 0x80000000
 ///@}
 
-#ifdef __cplusplus
-
-enum flagop_t
-{
-    FO_CLEAR,
-    FO_SET,
-    FO_TOGGLE
-};
-
-/**
- * Logical Menu (object) Action identifiers. Associated with/to events which
- * produce/result-in callbacks made either automatically by this subsystem,
- * or "actioned" through the type-specific event/command responders of the
- * various widgets, according to their own widget-specific logic.
- */
-enum mn_actionid_t
-{
-    MNA_NONE = -1,
-    MNACTION_FIRST = 0,
-    MNA_MODIFIED = MNACTION_FIRST, /// Object's internal "modified" status changed.
-    MNA_ACTIVEOUT,              /// Deactivated i.e., no longer active.
-    MNA_ACTIVE,                 /// Becomes "active".
-    MNA_CLOSE,                  /// Normally means changed-state to be discarded.
-    MNA_FOCUSOUT,               /// Loses selection "focus".
-    MNA_FOCUS,                  /// Gains selection "focus".
-    MNACTION_LAST = MNA_FOCUS
-};
-
 /// Total number of known Menu Actions.
-#define MNACTION_COUNT          (MNACTION_LAST + 1 - MNACTION_FIRST)
-
-/// Non-zero if the value @a val can be interpreted as a known, valid Menu Action identifier.
-#define VALID_MNACTION(val)     ((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST)
 
 /**
- * Menu Action Info (Record). Holds information about an "actionable" menu
- * event, such as an object being activated or upon receiving focus.
- */
-struct mn_actioninfo_t
-{
-    /// Callback to be made when this action is executed. Can be @c NULL in
-    /// which case attempts to action this will be NOPs.
-    ///
-    /// @param ob  Object being referenced for this callback.
-    /// @param action  Identifier of the Menu Action to be processed.
-    /// @param parameters  Passed to the callback from event which actioned this.
-    /// @return  Callback return value. Callback should return zero if the action
-    ///     was recognised and processed, regardless of outcome.
-    int (*callback) (mn_object_t *wi, mn_actionid_t action, void *parameters);
-};
-
-/**
- * MNObject. Abstract base from which all menu page objects must be derived.
+ * MNObject. Base class from which all menu widgets must be derived.
  */
 struct mn_object_t
 {
 public:
-    /// Object group identifier.
-    int _group;
+    /**
+     * Logical Menu (object) Action identifiers. Associated with/to events which
+     * produce/result-in callbacks made either automatically by this subsystem,
+     * or "actioned" through the type-specific event/command responders of the
+     * various widgets, according to their own widget-specific logic.
+     */
+    enum mn_actionid_t
+    {
+        MNA_NONE = -1,
+        MNACTION_FIRST = 0,
+        MNA_MODIFIED = MNACTION_FIRST, /// Object's internal "modified" status changed.
+        MNA_ACTIVEOUT,              /// Deactivated i.e., no longer active.
+        MNA_ACTIVE,                 /// Becomes "active".
+        MNA_CLOSE,                  /// Normally means changed-state to be discarded.
+        MNA_FOCUSOUT,               /// Loses selection "focus".
+        MNA_FOCUS,                  /// Gains selection "focus".
+        MNACTION_LAST = MNA_FOCUS
+    };
+    static int const MNACTION_COUNT = (MNACTION_LAST + 1 - MNACTION_FIRST);
 
-    /// @ref menuObjectFlags.
-    int _flags;
+    /**
+     * Menu Action Info (Record). Holds information about an "actionable" menu
+     * event, such as an object being activated or upon receiving focus.
+     */
+    struct mn_actioninfo_t
+    {
+        /// Callback to be made when this action is executed. Can be @c NULL in
+        /// which case attempts to action this will be NOPs.
+        ///
+        /// @param ob  Object being referenced for this callback.
+        /// @param action  Identifier of the Menu Action to be processed.
+        /// @param parameters  Passed to the callback from event which actioned this.
+        /// @return  Callback return value. Callback should return zero if the action
+        ///     was recognised and processed, regardless of outcome.
+        int (*callback) (mn_object_t *wi, mn_actionid_t action, void *parameters);
+    };
+
+public:
+    int _group;        ///< Object group identifier.
+    int _flags;        ///< @ref menuObjectFlags.
 
     /// Used with the fixed layout method for positioning this object in
     /// the owning page's coordinate space.
@@ -146,23 +178,9 @@ public:
     /// @c 0= no shortcut defined.
     int _shortcut;
 
-    /// Index of the predefined page font to use when drawing this.
-    int _pageFontIdx;
+    int _pageFontIdx;  ///< Index of the predefined page font to use when drawing this.
+    int _pageColorIdx; ///< Index of the predefined page color to use when drawing this.
 
-    /// Index of the predefined page color to use when drawing this.
-    int _pageColorIdx;
-
-    /// Process time (the "tick") for this object.
-    virtual void tick();
-
-    /// Calculate geometry for this when visible on the specified page.
-    virtual void updateGeometry(mn_page_t * /*page*/) {}
-
-    /// Draw this at the specified offset within the owning view-space.
-    /// Can be @c NULL in which case this will never be drawn.
-    virtual void draw(Point2Raw const * /*origin*/) {}
-
-    /// Info about "actionable event" callbacks.
     mn_actioninfo_t actions[MNACTION_COUNT];
 
     void (*onTickCallback) (mn_object_t *wi);
@@ -171,25 +189,12 @@ public:
     /// @return  @c true if the command is eaten.
     int (*cmdResponder) (mn_object_t *wi, menucommand_e command);
 
-    /// Respond to the given (input) event @a ev. Can be @c NULL.
-    /// @return  @c true if the event is eaten.
-    int (*responder) (mn_object_t *wi, event_t *ev);
-
-    /// Respond to the given (input) event @a ev. Can be @c NULL.
-    /// @return  @c true if the event is eaten.
-    int (*privilegedResponder) (mn_object_t *wi, event_t *ev);
-
     // Extra property values.
     void *data1;
     int data2;
 
-    // Auto initialized:
-
-    /// Current geometry.
-    Rect *_geometry;
-
-    /// MenuPage which owns this object (if any).
-    mn_page_t *_page;
+    Rect *_geometry;   ///< Current geometry.
+    mn_page_t *_page;  ///< MenuPage which owns this object (if any).
 
     int timer;
 
@@ -199,9 +204,29 @@ public:
 
     DENG2_AS_IS_METHODS()
 
+    /// Draw this at the specified offset within the owning view-space.
+    /// Can be @c NULL in which case this will never be drawn.
+    virtual void draw(Point2Raw const * /*origin*/) {}
+
+    /// Calculate geometry for this when visible on the specified page.
+    virtual void updateGeometry(mn_page_t * /*page*/) {}
+
+    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// @return  @c true if the event is eaten.
+    virtual int handleEvent(event_t *ev);
+
+    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// @return  @c true if the event is eaten.
+    virtual int handleEvent_Privileged(event_t *ev);
+
+    /// Process time (the "tick") for this object.
+    virtual void tick();
+
     mn_page_t *page() const;
 
     int flags() const;
+
+    mn_object_t &setFlags(flagop_t op, int flags);
 
     /**
      * Retrieve the current geometry of object within the two-dimensioned
@@ -216,14 +241,14 @@ public:
      * space of the owning object.
      * @return  Origin point within the parent space.
      */
-    Point2 const *origin() const;
+    inline Point2 const *origin() const { return Rect_Origin(geometry()); }
 
     /**
      * Retrieve the boundary dimensions of the object expressed as units of
      * the coordinate space of the owning object.
      * @return  Size of this object in units of the parent's coordinate space.
      */
-    Size2 const *size() const;
+    inline Size2 const *size() const { return Rect_Size(geometry()); }
 
     /**
      * Retreive the current fixed origin coordinates.
@@ -232,8 +257,8 @@ public:
      * @return  Fixed origin.
      */
     Point2Raw const *fixedOrigin() const;
-    int fixedX() const;
-    int fixedY() const;
+    inline int fixedX() const { return fixedOrigin()->x; }
+    inline int fixedY() const { return fixedOrigin()->y; }
 
     /**
      * Change the current fixed origin coordinates.
@@ -242,33 +267,31 @@ public:
      * @param origin  New origin coordinates.
      * @return  Same as @a ob for caller convenience.
      */
-    mn_object_t *setFixedOrigin(Point2Raw const *origin);
-    mn_object_t *setFixedX(int x);
-    mn_object_t *setFixedY(int y);
-
-    void setFlags(flagop_t op, int flags);
+    mn_object_t &setFixedOrigin(Point2Raw const *origin);
+    mn_object_t &setFixedX(int x);
+    mn_object_t &setFixedY(int y);
 
     int shortcut();
 
-    void setShortcut(int ddkey);
-
-    /// @return  Index of the font used from the owning/active page.
-    int font();
+    mn_object_t &setShortcut(int ddkey);
 
     /// @return  Index of the color used from the owning/active page.
     int color();
 
+    /// @return  Index of the font used from the owning/active page.
+    int font();
+
     dd_bool isGroupMember(int group) const;
+
+    /// @return  @c true if this object has a registered executeable action
+    /// associated with the unique identifier @a action.
+    dd_bool hasAction(mn_actionid_t action);
 
     /**
      * Lookup the unique ActionInfo associated with the identifier @a id.
      * @return  Associated info if found else @c NULL.
      */
     mn_actioninfo_t const *action(mn_actionid_t action);
-
-    /// @return  @c true if this object has a registered executeable action
-    /// associated with the unique identifier @a action.
-    dd_bool hasAction(mn_actionid_t action);
 
     /**
      * Execute the action associated with @a id
@@ -281,40 +304,6 @@ public:
 
 int MNObject_DefaultCommandResponder(mn_object_t *wi, menucommand_e command);
 
-#endif // __cplusplus
-
-typedef enum {
-    MENU_COLOR1 = 0,
-    MENU_COLOR2,
-    MENU_COLOR3,
-    MENU_COLOR4,
-    MENU_COLOR5,
-    MENU_COLOR6,
-    MENU_COLOR7,
-    MENU_COLOR8,
-    MENU_COLOR9,
-    MENU_COLOR10,
-    MENU_COLOR_COUNT
-} mn_page_colorid_t;
-
-#define VALID_MNPAGE_COLORID(v)      ((v) >= MENU_COLOR1 && (v) < MENU_COLOR_COUNT)
-
-typedef enum {
-    MENU_FONT1 = 0,
-    MENU_FONT2,
-    MENU_FONT3,
-    MENU_FONT4,
-    MENU_FONT5,
-    MENU_FONT6,
-    MENU_FONT7,
-    MENU_FONT8,
-    MENU_FONT9,
-    MENU_FONT10,
-    MENU_FONT_COUNT
-} mn_page_fontid_t;
-
-#define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
-
 /**
  * @defgroup menuPageFlags  Menu Page Flags
  */
@@ -322,8 +311,6 @@ typedef enum {
 #define MPF_LAYOUT_FIXED            0x1 ///< Page uses a fixed layout.
 #define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
 ///@}
-
-#ifdef __cplusplus
 
 struct mn_page_t
 {
@@ -560,6 +547,8 @@ int MNButton_CommandResponder(mn_object_t *wi, menucommand_e command);
 
 void MNButton_SetFlags(mn_object_t *wi, flagop_t op, int flags);
 
+int Hu_MenuCvarButton(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+
 /**
  * Edit field.
  */
@@ -608,6 +597,8 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(mn_page_t *page);
 
+    int handleEvent(event_t *ev);
+
     uint maxLength() const;
 
     void setMaxLength(uint newMaxLength);
@@ -621,10 +612,14 @@ public:
      * @param string  New text string which will replace the existing string.
      */
     void setText(int flags, char const *string);
+
+public:
+    static void loadResources();
 };
 
 int MNEdit_CommandResponder(mn_object_t *wi, menucommand_e command);
-int MNEdit_Responder(mn_object_t *wi, event_t* ev);
+
+int Hu_MenuCvarEdit(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
 /**
  * List selection.
@@ -702,6 +697,8 @@ public:
 };
 
 int MNList_CommandResponder(mn_object_t *wi, menucommand_e command);
+
+int Hu_MenuCvarList(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
 struct mndata_inlinelist_t : public mndata_list_t
 {
@@ -802,6 +799,8 @@ public:
 
 int MNColorBox_CommandResponder(mn_object_t *wi, menucommand_e command);
 
+int Hu_MenuCvarColorBox(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
+
 /**
  * Graphical slider.
  */
@@ -862,9 +861,14 @@ public:
      * @param value  New value.
      */
     void setValue(int flags, float value);
+
+public:
+    static void loadResources();
 };
 
 int MNSlider_CommandResponder(mn_object_t *wi, menucommand_e command);
+
+int Hu_MenuCvarSlider(mn_object_t *wi, mn_object_t::mn_actionid_t action, void *parameters);
 
 struct mndata_textualslider_t : public mndata_slider_t
 {
@@ -903,18 +907,6 @@ public:
     void setTranslationMap(int tMap);
 };
 
-
-// Menu render state:
-typedef struct mn_rendstate_s {
-    float pageAlpha;
-    float textGlitter;
-    float textShadow;
-    float textColors[MENU_COLOR_COUNT][4];
-    fontid_t textFonts[MENU_FONT_COUNT];
-} mn_rendstate_t;
-
-extern mn_rendstate_t const *mnRendState;
-
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
  */
@@ -932,10 +924,19 @@ mn_object_t *MN_MustFindObjectOnPage(mn_page_t *page, int group, int flags);
 
 void MN_DrawPage(mn_page_t *page, float alpha, dd_bool showFocusCursor);
 
-/**
- * Execute a menu navigation/action command.
- */
-void Hu_MenuCommand(menucommand_e cmd);
+// Menu render state:
+typedef struct mn_rendstate_s {
+    float pageAlpha;
+    float textGlitter;
+    float textShadow;
+    float textColors[MENU_COLOR_COUNT][4];
+    fontid_t textFonts[MENU_FONT_COUNT];
+} mn_rendstate_t;
+
+extern mn_rendstate_t const *mnRendState;
+
+} // namespace menu
+} // namespace common
 
 struct cvarbutton_t
 {

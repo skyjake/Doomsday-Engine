@@ -25,6 +25,8 @@
 #include "dd_types.h"
 #include "hu_lib.h"
 
+namespace common {
+
 extern int menuTime;
 extern dd_bool menuNominatingQuickSaveSlot;
 
@@ -109,7 +111,7 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 dd_bool Hu_MenuIsVisible();
 
-mn_page_t *Hu_MenuFindPageByName(char const *name);
+menu::mn_page_t *Hu_MenuFindPageByName(char const *name);
 
 /**
  * @param name  Symbolic name.
@@ -120,10 +122,10 @@ mn_page_t *Hu_MenuFindPageByName(char const *name);
  * @param cmdResponder  Menu-command responder routine.
  * @param userData  User data pointer to be associated with the page.
  */
-mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
-    void (*ticker) (mn_page_t *page),
-    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
-    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
+menu::mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
+    void (*ticker) (menu::mn_page_t *page),
+    void (*drawer) (menu::mn_page_t *page, Point2Raw const *origin),
+    int (*cmdResponder) (menu::mn_page_t *page, menucommand_e cmd),
     void *userData);
 
 /**
@@ -133,7 +135,7 @@ mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
  */
 void Hu_MenuDrawer();
 
-void Hu_MenuPageTicker(mn_page_t *page);
+void Hu_MenuPageTicker(menu::mn_page_t *page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
@@ -172,13 +174,13 @@ void Hu_MenuSetAlpha(float alpha);
 /**
  * Retrieve the currently active page.
  */
-mn_page_t *Hu_MenuActivePage();
+menu::mn_page_t *Hu_MenuActivePage();
 
 /**
  * Change the current active page.
  */
-void Hu_MenuSetActivePage2(mn_page_t *page, dd_bool canReactivate);
-void Hu_MenuSetActivePage(mn_page_t *page);
+void Hu_MenuSetActivePage2(menu::mn_page_t *page, dd_bool canReactivate);
+void Hu_MenuSetActivePage(menu::mn_page_t *page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.
@@ -186,22 +188,11 @@ void Hu_MenuSetActivePage(mn_page_t *page);
  */
 void Hu_MenuInitNewGame(dd_bool confirmed);
 
-int Hu_MenuDefaultFocusAction(mn_object_t *obj, mn_actionid_t action, void *parameters);
+void Hu_MenuCommand(menucommand_e cmd);
 
-int Hu_MenuCvarButton(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarSlider(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarColorBox(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuDefaultFocusAction(menu::mn_object_t *wi, menu::mn_object_t::mn_actionid_t action, void *parameters);
 
-int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuBindings(mn_object_t *ob, mn_actionid_t action, void *parameters);
-
-int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void *parameters);
-
-D_CMD(MenuOpen);
-D_CMD(MenuCommand);
+} // namespace common
 
 #endif // __cplusplus
 #endif // LIBCOMMON_HU_MENU_H

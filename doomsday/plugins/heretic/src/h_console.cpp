@@ -23,6 +23,8 @@
 #include "hu_stuff.h"
 #include "p_inventory.h"
 
+using namespace common;
+
 D_CMD(Cheat);
 D_CMD(CheatGive);
 D_CMD(CheatGod);
