@@ -32,7 +32,6 @@ static String const VAR_BLOCK_TYPE  = "__type__";
 static String const VAR_SOURCE      = "__source__";
 
 DENG2_PIMPL(ScriptedInfo)
-//, public Info::IIncludeFinder
 {
     typedef Info::Element::Value InfoValue;
 
@@ -41,10 +40,10 @@ DENG2_PIMPL(ScriptedInfo)
     Process process;               ///< Execution context.
     String currentNamespace;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, Record *globalNamespace)
+        : Base(i)
+        , process(globalNamespace)
     {
-        //info.setFinder(*this); // finding includes based on sourcePath
-
         // No limitation on duplicates for the special block types.
         info.setAllowDuplicateBlocksOfType(
                     QStringList() << BLOCK_GROUP << BLOCK_NAMESPACE);
@@ -56,14 +55,6 @@ DENG2_PIMPL(ScriptedInfo)
         process.clear();
         script.reset();
     }
-
-    /*
-    String findIncludedInfoSource(String const &includeName, Info const &) const
-    {
-        return String::fromUtf8(Block(App::rootFolder().locate<File const>
-                                      (info.sourcePath().fileNamePath() / includeName)));
-    }
-    */
 
     /**
      * Iterates through the parsed Info contents and processes each element.
@@ -374,7 +365,7 @@ DENG2_PIMPL(ScriptedInfo)
         process.globals().addArray(variableName(list), av);
     }
 
-    void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
+    static void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
     {
         if(rec.hasMember(VAR_BLOCK_TYPE) &&
            !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
@@ -391,7 +382,8 @@ DENG2_PIMPL(ScriptedInfo)
     }
 };
 
-ScriptedInfo::ScriptedInfo() : d(new Instance(this))
+ScriptedInfo::ScriptedInfo(Record *globalNamespace)
+    : d(new Instance(this, globalNamespace))
 {}
 
 void ScriptedInfo::clear()
@@ -435,8 +427,26 @@ Variable const &ScriptedInfo::operator [] (String const &name) const
 
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
 {
+    return allBlocksOfType(blockType, d->process.globals());
+}
+
+String ScriptedInfo::absolutePathInContext(Record const &context, String const &relativePath) // static
+{
+    if(context.has("__source__"))
+    {
+        String src = context["__source__"].value<TextValue>();
+        int pos = src.lastIndexOf(':');
+        if(pos < 0) return src / relativePath;
+        src.truncate(pos);
+        return src.fileNamePath() / relativePath;
+    }
+    return relativePath;
+}
+
+ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Record const &root) // static
+{
     Paths found;
-    d->findBlocks(blockType, found, d->process.globals());
+    Instance::findBlocks(blockType, found, root);
     return found;
 }
 

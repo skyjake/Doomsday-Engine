@@ -388,17 +388,12 @@ SOURCES += \
     $$SRC/src/world/worldsystem.cpp
 
 OTHER_FILES += \
-    data/cphelp.txt \
     include/template.h.template \
     src/template.c.template
 
 # Resources ------------------------------------------------------------------
 
 data.files = $$OUT_PWD/../doomsday.pk3
-
-mod.files = \
-    $$DENG_MODULES_DIR/Config.de \
-    $$DENG_MODULES_DIR/recutil.de
 
 macx {
     res.path = Contents/Resources
@@ -407,9 +402,8 @@ macx {
         $$SRC/res/macx/deng.icns
 
     data.path = $${res.path}
-    mod.path  = $${res.path}/modules
 
-    QMAKE_BUNDLE_DATA += mod res data
+    QMAKE_BUNDLE_DATA += res data
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
@@ -421,11 +415,10 @@ macx {
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data mod
+    INSTALLS += target data
 
     target.path = $$DENG_BIN_DIR
     data.path   = $$DENG_DATA_DIR
-    mod.path    = $$DENG_BASE_DIR/modules
 
     win32 {
         # Windows-specific installation.

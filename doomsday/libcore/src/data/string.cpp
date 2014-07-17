@@ -54,6 +54,10 @@ String::String(char const *nullTerminatedCStr)
     : QString(QString::fromUtf8(nullTerminatedCStr))
 {}
 
+String::String(wchar_t const *nullTerminatedWideStr)
+    : QString(QString::fromWCharArray(nullTerminatedWideStr))
+{}
+
 String::String(char const *cStr, size_type length)
     : QString(QString::fromUtf8(cStr, length))
 {}

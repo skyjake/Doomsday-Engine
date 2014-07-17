@@ -118,3 +118,24 @@ defineTest(publicHeaders) {
         export(sdk_headers_$${1}.path)
     }
 }
+
+defineTest(deployPackages) {
+    # 1: list of package identifiers
+    # 2: path where packages are installed from
+    for(pkg, 1) {
+        fn = "$$2/$$pkg"
+        exists($$fn): dengPacks.files += $$fn
+    }
+    macx {
+        dengPacks.path = Contents/Resources
+        QMAKE_BUNDLE_DATA += dengPacks
+        export(QMAKE_BUNDLE_DATA)
+    }
+    else {
+        dengPacks.path = $$DENG_DATA_DIR
+        INSTALLS += dengPacks
+        export(INSTALLS)
+    }
+    export(dengPacks.files)
+    export(dengPacks.path)
+}

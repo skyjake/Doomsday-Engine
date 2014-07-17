@@ -37,15 +37,16 @@ def setDefaults(d)
     # Additional Log defaults.
     d.log.filterBySubsystem = False
     d.log.showMetadata = False
-    record d.alert
-    d.alert.generic  = Log.WARNING
-    d.alert.resource = Log.WARNING
-    d.alert.map      = Log.WARNING
-    d.alert.script   = Log.WARNING
-    d.alert.gl       = Log.WARNING
-    d.alert.audio    = Log.WARNING
-    d.alert.input    = Log.WARNING
-    d.alert.network  = Log.WARNING
+    record d.alert()
+        generic  = Log.WARNING
+        resource = Log.WARNING
+        map      = Log.WARNING
+        script   = Log.WARNING
+        gl       = Log.WARNING
+        audio    = Log.WARNING
+        input    = Log.WARNING
+        network  = Log.WARNING
+    end
     
     # Input defaults.
     record d.input
@@ -53,25 +54,26 @@ def setDefaults(d)
     d.input.mouse.syncSensitivity = True
 
     # Defaults for the automatic updater.
-    record d.updater
-
-    d.updater.frequency = Updater.WEEKLY
-    if Version.STABLE
-        d.updater.channel = Updater.CHANNEL_STABLE
-    else
-        d.updater.channel = Updater.CHANNEL_UNSTABLE
+    record d.updater()
+        frequency = Updater.WEEKLY
+        if Version.STABLE
+            channel = Updater.CHANNEL_STABLE
+        else
+            channel = Updater.CHANNEL_UNSTABLE
+        end
+        lastChecked = Time("")
+        onlyManually = (Version.OS == 'unix')
+        autoDownload = False
+        delete = True
+        downloadPath = "${DEFAULT}"
+        deleteAtStartup = ""
     end
-    d.updater.lastChecked = Time("")
-    d.updater.onlyManually = (Version.OS == 'unix')
-    d.updater.autoDownload = False
-    d.updater.delete = True
-    d.updater.downloadPath = "${DEFAULT}"
-    d.updater.deleteAtStartup = ""
     
     # Console defaults.
-    record d.console
-    d.console.snap = True
-    d.console.script = False
+    record d.console()
+        snap = True
+        script = False
+    end
     
     # Master server settings.
     record d.masterServer

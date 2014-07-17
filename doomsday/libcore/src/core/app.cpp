@@ -25,13 +25,14 @@
 #include "de/DictionaryValue"
 #include "de/DirectoryFeed"
 #include "de/FileLogSink"
+#include "de/PackageFeed"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
 #include "de/Module"
 #include "de/NativeFile"
 #include "de/NumberValue"
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/Record"
 #include "de/ScriptSystem"
 #include "de/Version"
@@ -49,6 +50,7 @@ namespace de {
 static App *singletonApp;
 
 DENG2_PIMPL(App)
+, DENG2_OBSERVES(PackageLoader, Activity)
 {
     QThread *mainThread;
 
@@ -74,9 +76,9 @@ DENG2_PIMPL(App)
     /// Subsystems (not owned).
     QList<System *> systems;
 
+    ScriptSystem scriptSys;
     FileSystem fs;
     QScopedPointer<NativeFile> basePackFile;
-    ScriptSystem scriptSys;
     Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
@@ -90,6 +92,9 @@ DENG2_PIMPL(App)
     Config *config;
 
     game::Game *currentGame;
+
+    StringList packagesToLoadAtInit;
+    PackageLoader packageLoader;
 
     void (*terminateFunc)(char const *);
 
@@ -119,11 +124,13 @@ DENG2_PIMPL(App)
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
-        , configPath("/modules/Config.de")
+        , configPath("/packs/net.dengine.stdlib/modules/Config.de")
         , config(0)
         , currentGame(0)
         , terminateFunc(0)
     {
+        packagesToLoadAtInit << "net.dengine.stdlib";
+
         singletonApp = a;
         mainThread = QThread::currentThread();
 
@@ -145,6 +152,8 @@ DENG2_PIMPL(App)
 
     ~Instance()
     {
+        packageLoader.audienceForActivity() -= this;
+
         if(!errorSink.isNull())
         {
             logBuffer.removeSink(*errorSink);
@@ -163,6 +172,16 @@ DENG2_PIMPL(App)
         }
 
         Clock::setAppClock(0);
+    }
+
+    NativePath defaultNativeModulePath() const
+    {
+#ifdef WIN32
+        NativePath appDir = appPath.fileNamePath();
+        return appDir / "..\\modules";
+#else
+        return self.nativeBasePath() / "modules";
+#endif
     }
 
     void initFileSystem(bool allowPlugins)
@@ -188,19 +207,17 @@ DENG2_PIMPL(App)
             NativePath appDir = appPath.fileNamePath();
             binFolder.attach(new DirectoryFeed(appDir));
             fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
-            if((self.nativeBasePath() / "modules").exists())
-            {
-                fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
-            }
 #elif WIN32
             NativePath appDir = appPath.fileNamePath();
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-            fs.makeFolder("/modules").attach(new DirectoryFeed(appDir / "..\\modules"));
 
 #else // UNIX
             fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
-            fs.makeFolder("/modules").attach(new DirectoryFeed(self.nativeBasePath() / "modules"));
 #endif
+            if(defaultNativeModulePath().exists())
+            {
+                fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
+            }
         }
 
         if(allowPlugins)
@@ -212,8 +229,12 @@ DENG2_PIMPL(App)
         fs.makeFolder("/home", FS::DontInheritFeeds).attach(new DirectoryFeed(self.nativeHomePath(),
                 DirectoryFeed::AllowWrite | DirectoryFeed::CreateIfMissing));
 
+        fs.makeFolder("/packs").attach(new PackageFeed(packageLoader));
+
         // Populate the file system.
         fs.refresh();
+
+        packageLoader.audienceForActivity() += this;
     }
 
     void setLogLevelAccordingToOptions()
@@ -275,6 +296,27 @@ DENG2_PIMPL(App)
         }
     }
 
+    void setOfLoadedPackagesChanged()
+    {
+        // Make sure the package links are up to date.
+        fs.root().locate<Folder>("/packs").populate();
+    }
+
+    Record const *findAsset(String const &identifier) const
+    {
+        // Access the package that has this asset via a link.
+        Folder const *pkg = fs.root().tryLocate<Folder>("/packs/asset." + identifier + "/.");
+        if(!pkg) return 0;
+
+        // Find the record that has this asset's metadata.
+        String const ns = "package." + identifier;
+        if(pkg->info().has(ns))
+        {
+            return &pkg->info()[ns].valueAsRecord();
+        }
+        return 0;
+    }
+
     DENG2_PIMPL_AUDIENCE(StartupComplete)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
@@ -331,6 +373,11 @@ App::~App()
     d.reset();
 
     singletonApp = 0;
+}
+
+void App::addInitPackage(String const &identifier)
+{
+    d->packagesToLoadAtInit << identifier;
 }
 
 void App::setConfigScript(Path const &path)
@@ -527,11 +574,17 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     d->initFileSystem(allowPlugins);
 
+    // Load the init packages.
+    foreach(String pkg, d->packagesToLoadAtInit)
+    {
+        d->packageLoader.load(pkg);
+    }
+
     if(!flags.testFlag(DisablePersistentData))
     {
+        // Recreate the persistent state data package, if necessary.
         if(!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
-            // Recreate the persistent state data package.
             ZipArchive arch;
             arch.add("Info", String(QString("# Package for %1's persistent state.\n").arg(d->appName)).toUtf8());
             Writer(homeFolder().replaceFile("persist.pack")) << arch;
@@ -539,7 +592,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
             homeFolder().populate(Folder::PopulateOnlyThisFolder);
         }
 
-        d->persistentData = &homeFolder().locate<PackageFolder>("persist.pack").archive();
+        // Load the persistent data.
+        d->persistentData = &homeFolder().locate<ArchiveFolder>("persist.pack").archive();
     }
 
     // The configuration.
@@ -559,7 +613,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
     }
 
     // Set up the log buffer.
-    LogBuffer &logBuf = LogBuffer::appBuffer();
+    LogBuffer &logBuf = LogBuffer::get();
 
     // Update the log buffer max entry count: number of items to hold in memory.
     logBuf.setMaxEntryCount(d->config->getui("log.bufferSize", 1000));
@@ -603,6 +657,12 @@ void App::initSubsystems(SubsystemInitFlags flags)
     // We can start flushing now when the destination is known.
     logBuf.enableFlushing(true);
 
+    // Update the wall clock time.
+    d->clock.setTime(Time::currentHighPerformanceTime());
+
+    // Now we can start observing progress of time.
+    d->clock.audienceForTimeChange() += this;    
+
     if(allowPlugins)
     {
 #if 0 // not yet handled by libcore
@@ -610,12 +670,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
         loadPlugins();
 #endif
     }
-
-    // Update the wall clock time.
-    d->clock.setTime(Time::currentHighPerformanceTime());
-
-    // Now we can start observing progress of time.
-    d->clock.audienceForTimeChange() += this;
 
     LOG_VERBOSE("libcore::App %s subsystems initialized.") << Version().asText();
 }
@@ -669,7 +723,28 @@ FileSystem &App::fileSystem()
     return DENG2_APP->d->fs;
 }
 
-ScriptSystem &de::App::scriptSystem()
+PackageLoader &App::packageLoader()
+{
+    return DENG2_APP->d->packageLoader;
+}
+
+bool App::assetExists(String const &identifier)
+{
+    return DENG2_APP->d->findAsset(identifier) != 0;
+}
+
+Package::Asset App::asset(String const &identifier)
+{
+    Record const *info = DENG2_APP->d->findAsset(identifier);
+    if(!info)
+    {
+        throw AssetNotFoundError("App::asset", "Asset \"" + identifier +
+                                 "\" does not exist");
+    }
+    return *info;
+}
+
+ScriptSystem &App::scriptSystem()
 {
     return DENG2_APP->d->scriptSys;
 }

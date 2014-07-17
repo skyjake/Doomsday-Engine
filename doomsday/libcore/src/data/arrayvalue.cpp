@@ -279,12 +279,16 @@ ArrayValue &ArrayValue::operator << (Value const &value)
     return *this;
 }
     
-Value *ArrayValue::pop()
+Value *ArrayValue::popLast()
 {
     DENG2_ASSERT(size() > 0);
-    Value *popped = _elements.back();
-    _elements.pop_back();
-    return popped;
+    return _elements.takeLast();
+}
+
+Value *ArrayValue::popFirst()
+{
+    DENG2_ASSERT(size() > 0);
+    return _elements.takeFirst();
 }
 
 void ArrayValue::reverse()

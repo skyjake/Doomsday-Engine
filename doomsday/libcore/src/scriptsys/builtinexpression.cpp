@@ -31,6 +31,8 @@
 #include "de/Reader"
 #include "de/Script"
 #include "de/Process"
+#include "de/File"
+#include "de/App"
 #include "de/math.h"
 
 using namespace de;
@@ -173,6 +175,17 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         throw WrongArgumentsError("BuiltInExpression::evaluate",
                                   "Expected less than two arguments for AS_RECORD");
     }
+
+    case AS_FILE:
+    {
+        if(args.size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                                      "Expected exactly one argument for AS_FILE");
+        }
+        // The only argument is an absolute path of the file.
+        return new RecordValue(App::rootFolder().locate<File>(args.at(1).asText()).info());
+    }
     
     case AS_NUMBER:
         if(args.size() != 2)
@@ -238,7 +251,17 @@ Value *BuiltInExpression::evaluate(Evaluator &evaluator) const
         }
         return new RecordValue(evaluator.localNamespace());
     }
-    
+
+    case GLOBAL_NAMESPACE:
+    {
+        if(args.size() != 1)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "No arguments expected for GLOBAL_NAMESPACE");
+        }
+        return new RecordValue(evaluator.process().globals());
+    }
+
     case SERIALIZE:
     {
         if(args.size() != 2)
@@ -341,6 +364,7 @@ static struct {
     char const *str;
     BuiltInExpression::Type type;
 } types[] = {
+    { "File",        BuiltInExpression::AS_FILE },
     { "Number",      BuiltInExpression::AS_NUMBER },
     { "Record",      BuiltInExpression::AS_RECORD },
     { "Text",        BuiltInExpression::AS_TEXT },
@@ -351,6 +375,7 @@ static struct {
     { "dir",         BuiltInExpression::DIR },
     { "eval",        BuiltInExpression::EVALUATE },
     { "floor",       BuiltInExpression::FLOOR },
+    { "globals",     BuiltInExpression::GLOBAL_NAMESPACE },
     { "len",         BuiltInExpression::LENGTH },
     { "locals",      BuiltInExpression::LOCAL_NAMESPACE },
     { "members",     BuiltInExpression::RECORD_MEMBERS },

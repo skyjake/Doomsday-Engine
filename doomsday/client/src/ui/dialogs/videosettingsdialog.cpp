@@ -55,7 +55,9 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ChoiceWidget *depths;
 #endif
 
-    Instance(Public *i) : Base(i), win(ClientWindow::main())
+    Instance(Public *i)
+        : Base(i)
+        , win(ClientWindow::main())
     {
         ScrollAreaWidget &area = self.area();
 
@@ -127,6 +129,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Instance(this))
 {
+    bool const gotDisplayMode = DisplayMode_Count() > 0;
+
     heading().setText(tr("Video Settings"));
 
     // Toggles for video/window options.
@@ -145,44 +149,48 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->vsync->setText(tr("VSync"));
 
-    LabelWidget *modeLabel = new LabelWidget;
-    modeLabel->setText(tr("Resolution:"));
-    area().add(modeLabel);
-
-    // Choice of display modes + 16/32-bit color depth.
-    d->modes->setOpeningDirection(ui::Up);
-    if(DisplayMode_Count() > 10)
+    LabelWidget *modeLabel = 0;
+    if(gotDisplayMode)
     {
-        d->modes->popup().menu().setGridSize(2, ui::Expand, 0, ui::Expand);
-    }
-    for(int i = 0; i < DisplayMode_Count(); ++i)
-    {
-        DisplayMode const *m = DisplayMode_ByIndex(i);
-        QPoint const res(m->width, m->height);
+        modeLabel = new LabelWidget;
+        modeLabel->setText(tr("Resolution:"));
+        area().add(modeLabel);
 
-        if(d->modes->items().findData(res) != ui::Data::InvalidPos)
+        // Choice of display modes + 16/32-bit color depth.
+        d->modes->setOpeningDirection(ui::Up);
+        if(DisplayMode_Count() > 10)
         {
-            // Got this already.
-            continue;
+            d->modes->popup().menu().setGridSize(2, ui::Expand, 0, ui::Expand);
+        }
+        for(int i = 0; i < DisplayMode_Count(); ++i)
+        {
+            DisplayMode const *m = DisplayMode_ByIndex(i);
+            QPoint const res(m->width, m->height);
+
+            if(d->modes->items().findData(res) != ui::Data::InvalidPos)
+            {
+                // Got this already.
+                continue;
+            }
+
+            String desc = String("%1 x %2 (%3:%4)")
+                    .arg(m->width).arg(m->height)
+                    .arg(m->ratioX).arg(m->ratioY);
+
+            d->modes->items() << new ChoiceItem(desc, res);
         }
 
-        String desc = String("%1 x %2 (%3:%4)")
-                .arg(m->width).arg(m->height)
-                .arg(m->ratioX).arg(m->ratioY);
-
-        d->modes->items() << new ChoiceItem(desc, res);
-    }
-
 #ifdef USE_COLOR_DEPTH_CHOICE
-    LabelWidget *colorLabel = new LabelWidget;
-    colorLabel->setText(tr("Colors:"));
-    area().add(colorLabel);
+        LabelWidget *colorLabel = new LabelWidget;
+        colorLabel->setText(tr("Colors:"));
+        area().add(colorLabel);
 
-    d->depths->items()
-            << new ChoiceItem(tr("32-bit"), 32)
-            << new ChoiceItem(tr("24-bit"), 24)
-            << new ChoiceItem(tr("16-bit"), 16);
+        d->depths->items()
+                << new ChoiceItem(tr("32-bit"), 32)
+                << new ChoiceItem(tr("24-bit"), 24)
+                << new ChoiceItem(tr("16-bit"), 16);
 #endif
+    }
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))
@@ -207,30 +215,38 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
            << *d->maximized
            << *d->centered;
 
-    GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
-    modeLayout.setGridSize(2, 0);
-    modeLayout.setColumnAlignment(0, ui::AlignRight);
-    modeLayout << *modeLabel;
+    if(gotDisplayMode)
+    {
+        GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
+        modeLayout.setGridSize(2, 0);
+        modeLayout.setColumnAlignment(0, ui::AlignRight);
+        modeLayout << *modeLabel;
 
-    modeLayout.append(*d->modes, d->modes->rule().width() + d->windowButton->rule().width());
+        modeLayout.append(*d->modes, d->modes->rule().width() + d->windowButton->rule().width());
 
-    d->windowButton->rule()
-            .setInput(Rule::Top,  d->modes->rule().top())
-            .setInput(Rule::Left, d->modes->rule().right());
+        d->windowButton->rule()
+                .setInput(Rule::Top,  d->modes->rule().top())
+                .setInput(Rule::Left, d->modes->rule().right());
 
 #ifdef USE_COLOR_DEPTH_CHOICE
-    modeLayout << *colorLabel << *d->depths;
+        modeLayout << *colorLabel << *d->depths;
 #endif
 
-    ButtonWidget *adjustButton = new ButtonWidget;
-    adjustButton->setText(tr("Color Adjustments..."));
-    adjustButton->setAction(new SignalAction(this, SLOT(showColorAdjustments())));
-    area().add(adjustButton);
+        ButtonWidget *adjustButton = new ButtonWidget;
+        adjustButton->setText(tr("Color Adjustments..."));
+        adjustButton->setAction(new SignalAction(this, SLOT(showColorAdjustments())));
+        area().add(adjustButton);
 
-    modeLayout << Const(0) << *adjustButton;
+        modeLayout << Const(0) << *adjustButton;
 
-    area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
-                          layout.height() + gap + modeLayout.height());
+        area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
+                              layout.height() + gap + modeLayout.height());
+    }
+    else
+    {
+        // There are no widgets for configuring display mode.
+        area().setContentSize(layout.width(), layout.height());
+    }
 
     d->fetch();
 

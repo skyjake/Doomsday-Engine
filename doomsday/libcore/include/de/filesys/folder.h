@@ -230,15 +230,7 @@ public:
      */
     virtual File *remove(File &file);
 
-    /**
-     * Locates a file in this folder or in one of its subfolders. Looks recursively
-     * through subfolders.
-     *
-     * @param path  Path to look for. Relative to this folder.
-     *
-     * @return  The located file, or @c NULL if the path was not found.
-     */
-    virtual File *tryLocateFile(String const &path) const;
+    File *tryLocateFile(String const &path) const;
 
     template <typename Type>
     Type *tryLocate(String const &path) const {
@@ -304,6 +296,10 @@ public:
     Feeds const &feeds() const;
 
     String contentsAsText() const;
+
+    // filesys::Node overrides:
+    Node const *tryFollowPath(PathRef const &path) const;
+    Node const *tryGetChild(String const &name) const;
 
 private:
     DENG2_PRIVATE(d)

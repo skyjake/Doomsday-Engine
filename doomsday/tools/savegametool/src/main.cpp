@@ -169,7 +169,7 @@ int main(int argc, char **argv)
         app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         // Name the log output file appropriately.
-        LogBuffer::appBuffer().setOutputFile(app.homeFolder().path() / "savegametool.out",
+        LogBuffer::get().setOutputFile(app.homeFolder().path() / "savegametool.out",
                                              LogBuffer::DontFlush);
 
         // Default /output to the current working directory.

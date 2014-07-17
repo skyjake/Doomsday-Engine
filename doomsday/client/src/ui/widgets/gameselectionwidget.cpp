@@ -94,10 +94,10 @@ DENG_GUI_PIMPL(GameSelectionWidget)
                 break;
             }
 
-            QObject::connect(menu,              SIGNAL(sessionSelected(de::ui::Item const *)),
-                             owner->thisPublic, SLOT  (select(de::ui::Item const *)));
-            QObject::connect(menu,              SIGNAL(availabilityChanged()),
-                             owner->thisPublic, SLOT  (updateSubsetLayout()));
+            QObject::connect(menu,         SIGNAL(sessionSelected(de::ui::Item const *)),
+                             &owner->self, SLOT  (select(de::ui::Item const *)));
+            QObject::connect(menu,         SIGNAL(availabilityChanged()),
+                             &owner->self, SLOT  (updateSubsetLayout()));
 
             menu->items().audienceForAddition() += this;
 

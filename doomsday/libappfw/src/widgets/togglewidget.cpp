@@ -79,10 +79,11 @@ DENG2_OBSERVES(ButtonWidget, Press)
             verts.makeQuad(recti, _accentColor * p + _textColor * (1-p) * .8f, atlas().imageRectf(onOff));
 
             // The flipper.
-            int flipWidth = size().x - size().y + 2;
+            int flipWidth = size().x - size().y + GuiWidget::toDevicePixels(2);
             Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
-                                                   Vector2i(1 + de::round<int>(p * (size().x - flipWidth)), 1),
-                                                   Vector2ui(flipWidth, size().y) - Vector2ui(2, 2));
+                                                   Vector2i(GuiWidget::toDevicePixels(1) + de::round<int>(p * (size().x - flipWidth)),
+                                                            GuiWidget::toDevicePixels(1)),
+                                                   Vector2ui(flipWidth, size().y) - toDevicePixels(Vector2ui(2, 2)));
             verts.makeQuad(flip, _bgColor * Vector4f(1, 1, 1, 3),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }

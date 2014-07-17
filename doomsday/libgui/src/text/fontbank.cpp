@@ -62,6 +62,12 @@ DENG2_PIMPL(FontBank)
             String const style = def["style"];
             font.setStyle(style == "italic"? QFont::StyleItalic : QFont::StyleNormal);
 
+            // Transformation function.
+            String const caps = def.gets("transform", "normal");
+            font.setCapitalization(caps == "uppercase"? QFont::AllUppercase :
+                                   caps == "lowercase"? QFont::AllLowercase :
+                                                        QFont::MixedCase);
+
             return new Font(font);
         }
     };

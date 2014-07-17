@@ -318,7 +318,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
          */
         void modifyAccordingToOptions()
         {
-            CommandLine const &cmdLine = App::app().commandLine();
+            CommandLine const &cmdLine = App::commandLine();
 
             // We will compose a set of attributes based on the options.
             QVector<int> attribs;

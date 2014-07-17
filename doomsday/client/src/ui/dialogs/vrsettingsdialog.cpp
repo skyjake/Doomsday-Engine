@@ -118,8 +118,9 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
            << *dominantLabel << *d->dominantEye
            << Const(0)       << *d->swapEyes;
 
-    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(1)_E(D) + tr("Oculus Rift"), &area());
+    LabelWidget *ovrLabel    = LabelWidget::newWithText(_E(D) + tr("Oculus Rift"), &area());
     LabelWidget *sampleLabel = LabelWidget::newWithText(tr("Multisampling:"), &area());
+    ovrLabel->setFont("separator.label");
     ovrLabel->margins().setTop("gap");
     sampleLabel->setTextLineAlignment(ui::AlignRight);
 

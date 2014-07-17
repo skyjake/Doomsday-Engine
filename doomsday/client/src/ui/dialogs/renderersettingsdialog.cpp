@@ -134,7 +134,8 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     d->multiShiny->setText(tr("3D Model Shiny Surfaces"));
     d->multiDetail->setText(tr("Surface Details"));
 
-    LabelWidget *capLabel = LabelWidget::newWithText(_E(1)_E(D) + tr("Behavior"), &area());
+    LabelWidget *capLabel = LabelWidget::newWithText(_E(D) + tr("Behavior"), &area());
+    capLabel->setFont("separator.label");
     capLabel->margins().setTop("gap");
 
     // Layout.

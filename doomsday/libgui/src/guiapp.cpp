@@ -46,7 +46,10 @@ GuiApp::GuiApp(int &argc, char **argv)
     : QApplication(argc, argv),
       App(applicationFilePath(), arguments()),
       d(new Instance(this))
-{}
+{
+    // Core packages for GUI functionality.
+    addInitPackage("net.dengine.stdlib.gui");
+}
 
 void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
                          String const &appName, String const &appVersion)
@@ -116,7 +119,7 @@ void GuiApp::loopIteration()
 {
     // Update the clock time. de::App listens to this clock and will inform
     // subsystems in the order they've been added.
-    Clock::appClock().setTime(Time::currentHighPerformanceTime());
+    Clock::get().setTime(Time::currentHighPerformanceTime());
 }
 
 NativePath GuiApp::appDataPath() const

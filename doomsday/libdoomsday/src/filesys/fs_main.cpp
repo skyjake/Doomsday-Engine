@@ -650,7 +650,7 @@ int FS1::unloadAllNonStartupFiles()
 {
 #ifdef DENG_DEBUG
     // List all open files with their identifiers.
-    if(LogBuffer::appBuffer().isEnabled(LogEntry::Generic | LogEntry::Verbose))
+    if(LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Verbose))
     {
         LOGDEV_RES_VERBOSE("Open files at reset:");
         printFileList(d->openFiles);

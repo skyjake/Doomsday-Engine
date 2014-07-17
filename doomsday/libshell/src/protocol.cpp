@@ -80,7 +80,7 @@ LogEntryPacket::Entries const &LogEntryPacket::entries() const
 void LogEntryPacket::execute() const
 {
     // Copies of all entries in the packet are added to the LogBuffer.
-    LogBuffer &buf = LogBuffer::appBuffer();
+    LogBuffer &buf = LogBuffer::get();
     foreach(LogEntry *e, _entries)
     {
         buf.add(new LogEntry(*e, LogEntry::Remote));

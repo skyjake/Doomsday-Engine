@@ -1,0 +1,6 @@
+title: Doomsday Script Standard Library
+version: 1.15.0
+license: GPL 3+
+tags: core script
+
+importPath <modules>

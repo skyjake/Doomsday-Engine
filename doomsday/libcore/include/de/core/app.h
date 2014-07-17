@@ -28,6 +28,7 @@
 #include "../LogFilter"
 #include "../System"
 #include "../FileSystem"
+#include "../PackageLoader"
 #include "../ScriptSystem"
 #include "../Module"
 #include "../Config"
@@ -44,10 +45,7 @@ namespace de {
 
 class Archive;
 
-namespace game
-{
-    class Game;
-}
+namespace game { class Game; }
 
 /**
  * Represents the application and its subsystems. This is the common
@@ -67,8 +65,12 @@ public:
     };
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
-    /// Throws if attempting to access persistent data when it has been disabled at init.
+    /// Attempting to access persistent data when it has been disabled at init.
+    /// @ingroup errors
     DENG2_ERROR(PersistentDataNotAvailable);
+
+    /// Asset with given identifier was not found. @ingroup errors
+    DENG2_ERROR(AssetNotFoundError);
 
     /**
      * Notified when application startup has been fully completed.
@@ -109,6 +111,14 @@ public:
      */
     virtual void setMetadata(String const &orgName, String const &orgDomain,
                              String const &appName, String const &appVersion) = 0;
+
+    /**
+     * Add a new package to be loaded at initialization time. Call this before
+     * initSubsystems().
+     *
+     * @param identifier  Package identifier.
+     */
+    void addInitPackage(String const &identifier);
 
     /**
      * Sets the path of the configuration script that will be automatically run if needed
@@ -257,11 +267,6 @@ public:
     static FileSystem &fileSystem();
 
     /**
-     * Returns the application's script system.
-     */
-    static ScriptSystem &scriptSystem();
-
-    /**
      * Returns the root folder of the file system.
      */
     static Folder &rootFolder();
@@ -270,6 +275,34 @@ public:
      * Returns the /home folder.
      */
     static Folder &homeFolder();
+
+    /**
+     * Returns the application's package loader.
+     */
+    static PackageLoader &packageLoader();
+
+    /**
+     * Checks if an asset exists.
+     *
+     * @param identifier  Identifier.
+     *
+     * @return @c true, if assetInfo() can be called.
+     */
+    static bool assetExists(String const &identifier);
+
+    /**
+     * Retrieves the namespace of an asset.
+     *
+     * @param identifier  Identifier.
+     *
+     * @return Asset namespace accessor.
+     */
+    static Package::Asset asset(String const &identifier);
+
+    /**
+     * Returns the application's script system.
+     */
+    static ScriptSystem &scriptSystem();
 
     /**
      * Returns the configuration.

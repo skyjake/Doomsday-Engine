@@ -60,7 +60,7 @@ public:
      * @param version      Version number in the form "x.y.z".
      * @param buildNumber  Build number.
      */
-    Version(String const &version, int buildNumber);
+    Version(String const &version, int buildNumber = 0);
 
     /**
      * Forms a version string in the form "x.y.z". If a release label is

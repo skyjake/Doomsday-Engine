@@ -82,6 +82,7 @@ public:
     String(String const &other);
     String(QString const &text);
     String(char const *nullTerminatedCStr);
+    String(wchar_t const *nullTerminatedWideStr);
     String(char const *cStr, size_type length);
     String(QChar const *nullTerminatedStr);
     String(QChar const *str, size_type length);

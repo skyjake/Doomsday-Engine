@@ -49,4 +49,6 @@ int DED_Read(ded_t *ded, de::String path);
 
 void DED_SetError(char const *str);
 
+LIBDOOMSDAY_PUBLIC char const *DED_Error();
+
 #endif // LIBDOOMSDAY_DEFS_DED_H

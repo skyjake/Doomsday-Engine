@@ -205,9 +205,9 @@ public:
      */
     static void setAppBuffer(LogBuffer &appBuffer);
 
-    static LogBuffer &appBuffer();
-
     static bool appBufferExists();
+
+    static LogBuffer &get();
 
 public slots:
     /**

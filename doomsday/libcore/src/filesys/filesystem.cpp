@@ -23,28 +23,36 @@
 #include "de/ArchiveFeed"
 #include "de/game/SavedSession"
 #include "de/NativePath"
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/ZipArchive"
 #include "de/Log"
-#include "de/ReadWriteLockable"
+#include "de/LogBuffer"
 #include "de/Guard"
 
 namespace de {
 
-static FileSystem::Index const emptyIndex;
+static FileIndex const emptyIndex; // never contains any files
 
-DENG2_PIMPL_NOREF(FileSystem), public ReadWriteLockable
+DENG2_PIMPL_NOREF(FileSystem)
 {
     /// The main index to all files in the file system.
-    FileSystem::Index index;
+    FileIndex index;
 
     /// Index of file types. Each entry in the index is another index of names
     /// to file instances.
-    typedef std::map<String, Index> TypeIndex;
+    typedef QMap<String, FileIndex *> TypeIndex; // owned
     TypeIndex typeIndex;
+
+    QSet<FileIndex *> userIndices; // not owned
 
     /// The root folder of the entire file system.
     Folder root;
+
+    ~Instance()
+    {
+        qDeleteAll(typeIndex.values());
+        typeIndex.clear();
+    }
 };
 
 FileSystem::FileSystem() : d(new Instance)
@@ -146,7 +154,7 @@ File *FileSystem::interpret(File *sourceData)
             try
             {
                 // It is a ZIP archive: we will represent it as a folder.
-                std::auto_ptr<PackageFolder> package;
+                std::auto_ptr<ArchiveFolder> package;
 
                 if(sourceData->name().fileNameExtension() == ".save")
                 {
@@ -157,7 +165,7 @@ File *FileSystem::interpret(File *sourceData)
                 else
                 {
                     LOG_RES_VERBOSE("Interpreted %s as a ZIP format archive") << sourceData->description();
-                    package.reset(new PackageFolder(*sourceData, sourceData->name()));
+                    package.reset(new ArchiveFolder(*sourceData, sourceData->name()));
                 }
 
                 // Archive opened successfully, give ownership of the source to the folder.
@@ -194,13 +202,8 @@ File *FileSystem::interpret(File *sourceData)
     return sourceData;
 }
 
-#define DENG2_FS_GUARD_INDEX_R()   DENG2_GUARD_READ_FOR(*d, indexAccessGuardRead)
-#define DENG2_FS_GUARD_INDEX_W()   DENG2_GUARD_WRITE_FOR(*d, indexAccessGuardWrite)
-
-FileSystem::Index const &FileSystem::nameIndex() const
+FileIndex const &FileSystem::nameIndex() const
 {
-    DENG2_FS_GUARD_INDEX_R();
-
     return d->index;
 }
 
@@ -209,24 +212,25 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
     LOG_AS("FS::findAll");
 
     found.clear();
-    String baseName = path.fileName().lower();
-    String dir = path.fileNamePath().lower();
-    if(!dir.empty() && !dir.beginsWith("/"))
-    {
-        // Always begin with a slash. We don't want to match partial folder names.
-        dir = "/" + dir;
-    }
+    d->index.findPartialPath(path, found);
+    return int(found.size());
+}
 
-    DENG2_FS_GUARD_INDEX_R();
+int FileSystem::findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const
+{
+    LOG_AS("FS::findAllOfType");
 
-    ConstIndexRange range = d->index.equal_range(baseName);
-    for(Index::const_iterator i = range.first; i != range.second; ++i)
+    return findAllOfTypes(StringList() << typeIdentifier, path, found);
+}
+
+int FileSystem::findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const
+{
+    LOG_AS("FS::findAllOfTypes");
+
+    found.clear();
+    foreach(String const &id, typeIdentifiers)
     {
-        File *file = i->second;
-        if(file->path().fileNamePath().endsWith(dir))
-        {
-            found.push_back(file);
-        }
+        indexFor(id).findPartialPath(path, found);
     }
     return int(found.size());
 }
@@ -238,44 +242,38 @@ File &FileSystem::find(String const &path) const
 
 void FileSystem::index(File &file)
 {
-    DENG2_FS_GUARD_INDEX_W();
-
-    String const lowercaseName = file.name().lower();
-
-    d->index.insert(IndexEntry(lowercaseName, &file));
+    d->index.maybeAdd(file);
 
     // Also make an entry in the type index.
-    Index &indexOfType = d->typeIndex[DENG2_TYPE_NAME(file)];
-    indexOfType.insert(IndexEntry(lowercaseName, &file));
-}
-
-static void removeFromIndex(FileSystem::Index &idx, File &file)
-{
-    if(idx.empty())
+    String const typeName = DENG2_TYPE_NAME(file);
+    if(!d->typeIndex.contains(typeName))
     {
-        return;
-    }       
+        d->typeIndex.insert(typeName, new FileIndex);
+    }
+    d->typeIndex[typeName]->maybeAdd(file);
 
-    // Look up the ones that might be this file.
-    FileSystem::IndexRange range = idx.equal_range(file.name().lower());
-
-    for(FileSystem::Index::iterator i = range.first; i != range.second; ++i)
+    // Also offer to custom indices.
+    foreach(FileIndex *user, d->userIndices)
     {
-        if(i->second == &file)
-        {
-            // This is the one to deindex.
-            idx.erase(i);
-            break;
-        }
+        user->maybeAdd(file);
     }
 }
 
 void FileSystem::deindex(File &file)
 {
-    DENG2_FS_GUARD_INDEX_W();
+    d->index.remove(file);
 
-    removeFromIndex(d->index, file);
-    removeFromIndex(d->typeIndex[DENG2_TYPE_NAME(file)], file);
+    String const typeName = DENG2_TYPE_NAME(file);
+    if(d->typeIndex.contains(typeName))
+    {
+        d->typeIndex[typeName]->remove(file);
+    }
+
+    // Also remove from any custom indices.
+    foreach(FileIndex *user, d->userIndices)
+    {
+        user->remove(file);
+    }
 }
 
 File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
@@ -307,46 +305,49 @@ void FileSystem::timeChanged(Clock const &)
     // perform time-based processing (indexing/pruning/refreshing)
 }
 
-FileSystem::Index const &FileSystem::indexFor(String const &typeName) const
+FileIndex const &FileSystem::indexFor(String const &typeName) const
 {
-    DENG2_FS_GUARD_INDEX_R();
-
-    Instance::TypeIndex::const_iterator found = d->typeIndex.find(typeName);
-    if(found != d->typeIndex.end())
+    Instance::TypeIndex::const_iterator found = d->typeIndex.constFind(typeName);
+    if(found != d->typeIndex.constEnd())
     {
-        return found->second;
+        return *found.value();
     }
     return emptyIndex;
-    /*
-    /// @throw UnknownTypeError No files of type @a typeName have been indexed.
-    throw UnknownTypeError("FS::indexFor", "No files of type '" + typeName + "' have been indexed");
-    */
+}
+
+void FileSystem::addUserIndex(FileIndex &userIndex)
+{
+    d->userIndices.insert(&userIndex);
+}
+
+void FileSystem::removeUserIndex(FileIndex &userIndex)
+{
+    d->userIndices.remove(&userIndex);
 }
 
 void FileSystem::printIndex()
 {
-    DENG2_FS_GUARD_INDEX_R();
+    if(!LogBuffer::get().isEnabled(LogEntry::Generic | LogEntry::Dev | LogEntry::Verbose))
+        return;
 
     LOG_DEBUG("Main FS index has %i entries") << d->index.size();
+    d->index.print();
 
-    for(Index::iterator i = d->index.begin(); i != d->index.end(); ++i)
+    DENG2_FOR_EACH_CONST(Instance::TypeIndex, i, d->typeIndex)
     {
-        LOG_TRACE("\"%s\": ") << i->first << i->second->description();
-    }
+        LOG_DEBUG("Index for type '%s' has %i entries") << i.key() << i.value()->size();
 
-    for(Instance::TypeIndex::iterator k = d->typeIndex.begin(); k != d->typeIndex.end(); ++k)
-    {
-        LOG_DEBUG("Index for type '%s' has %i entries") << k->first << k->second.size();
-
-        LOG_AS_STRING(k->first);
-        for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
-        {
-            LOG_TRACE("\"%s\": ") << i->first << i->second->description();
-        }
+        LOG_AS_STRING(i.key());
+        i.value()->print();
     }
 }
 
 Folder &FileSystem::root()
+{
+    return d->root;
+}
+
+Folder const &FileSystem::root() const
 {
     return d->root;
 }

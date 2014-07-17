@@ -399,6 +399,11 @@ bool Path::isEmpty() const
     return d->path.isEmpty();
 }
 
+bool Path::isAbsolute() const
+{
+    return !isEmpty() && !firstSegment().size();
+}
+
 int Path::length() const
 {
     return d->path.length();
@@ -497,6 +502,19 @@ String Path::normalizeString(String const &text, QChar replaceWith)
 Path Path::normalize(String const &text, QChar replaceWith)
 {
     return Path(normalizeString(text, replaceWith), replaceWith);
+}
+
+Path PathRef::toPath() const
+{
+    if(!segmentCount()) return Path(); // Empty.
+
+    String composed = segment(0);
+    for(int i = 1; i < segmentCount(); ++i)
+    {
+        composed += path().separator();
+        composed += segment(i);
+    }
+    return Path(composed, path().separator());
 }
 
 } // namespace de

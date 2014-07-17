@@ -22,6 +22,7 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
+#include <de/App>
 #include <de/Log>
 
 using namespace de;
@@ -38,6 +39,22 @@ void Def_ReadProcessDED(ded_t *defs, String path)
     LOG_AS("Def_ReadProcessDED");
 
     if(path.isEmpty()) return;
+
+    // Try FS2 first.
+    try
+    {
+        Block text;
+        App::rootFolder().locate<File const>(path) >> text;
+        if(!DED_ReadData(defs, text, path))
+        {
+            App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
+        }
+        return; // Done!
+    }
+    catch(...)
+    {
+        // Try FS1 as fallback.
+    }
 
     de::Uri const uri(path, RC_NULL);
     if(!App_FileSystem().accessFile(uri))
@@ -115,4 +132,9 @@ int DED_Read(ded_t *ded, String path)
 int DED_ReadData(ded_t *ded, char const *buffer, String _sourceFile)
 {
     return DEDParser(ded).parse(buffer, _sourceFile);
+}
+
+char const *DED_Error()
+{
+    return dedReadError;
 }

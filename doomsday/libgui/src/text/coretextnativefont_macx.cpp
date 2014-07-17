@@ -79,24 +79,32 @@ struct CoreTextFontCache : public Lockable
 
     CTFontRef getFont(String const &postScriptName, dfloat pointSize)
     {
-        DENG2_GUARD(this);
+        CTFontRef font;
 
-        Key const key(postScriptName, pointSize);
-        if(fonts.contains(key))
+        // Only lock the cache while accessing the fonts database. If we keep the
+        // lock while printing log output, a flush might occur, which might in turn
+        // lead to text rendering and need for font information -- causing a hang.
         {
-            // Already got it.
-            return fonts[key];
-        }
+            DENG2_GUARD(this);
 
-        // Get a reference to the font.
-        CFStringRef name = CFStringCreateWithCharacters(nil, (UniChar *) postScriptName.data(),
-                                                        postScriptName.size());
-        CTFontRef font = CTFontCreateWithName(name, pointSize, nil);
-        CFRelease(name);
+            Key const key(postScriptName, pointSize);
+            if(fonts.contains(key))
+            {
+                // Already got it.
+                return fonts[key];
+            }
+
+            // Get a reference to the font.
+            CFStringRef name = CFStringCreateWithCharacters(nil, (UniChar *) postScriptName.data(),
+                                                            postScriptName.size());
+            font = CTFontCreateWithName(name, pointSize, nil);
+            CFRelease(name);
+
+            fonts.insert(key, font);
+        }
 
         LOG_GL_VERBOSE("Cached native font '%s' size %.1f") << postScriptName << pointSize;
 
-        fonts.insert(key, font);
         return font;
     }
 
@@ -132,6 +140,8 @@ static CoreTextFontCache fontCache;
 
 DENG2_PIMPL(CoreTextNativeFont)
 {
+    enum Transformation { NoTransform, Uppercase, Lowercase };
+
     CTFontRef font;
     float ascent;
     float descent;
@@ -144,6 +154,8 @@ DENG2_PIMPL(CoreTextNativeFont)
     String lineText;
     CTLineRef line;
 
+    Transformation xform;
+
     Instance(Public *i)
         : Base(i)
         , font(0)
@@ -152,6 +164,7 @@ DENG2_PIMPL(CoreTextNativeFont)
         , height(0)
         , lineSpacing(0)
         , line(0)
+        , xform(NoTransform)
     {}
 
     Instance(Public *i, Instance const &other)
@@ -162,11 +175,28 @@ DENG2_PIMPL(CoreTextNativeFont)
         , height(other.height)
         , lineSpacing(other.lineSpacing)
         , line(0)
+        , xform(other.xform)
     {}
 
     ~Instance()
     {
         release();
+    }
+
+    String applyTransformation(String const &str) const
+    {
+        switch(xform)
+        {
+        case Uppercase:
+            return str.toUpper();
+
+        case Lowercase:
+            return str.toLower();
+
+        default:
+            break;
+        }
+        return str;
     }
 
     void release()
@@ -232,9 +262,13 @@ CoreTextNativeFont::CoreTextNativeFont(String const &family)
 CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
     : NativeFont(font.family()), d(new Instance(this))
 {
-    setSize(font.pointSizeF());
+    setSize  (font.pointSizeF());
     setWeight(font.weight());
-    setStyle(font.italic()? Italic : Regular);
+    setStyle (font.italic()? Italic : Regular);
+
+    d->xform = (font.capitalization() == QFont::AllUppercase? Instance::Uppercase :
+                font.capitalization() == QFont::AllLowercase? Instance::Lowercase :
+                                                              Instance::NoTransform);
 }
 
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
@@ -280,7 +314,7 @@ int CoreTextNativeFont::nativeFontLineSpacing() const
 
 Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 {
-    d->makeLine(text);
+    d->makeLine(d->applyTransformation(text));
 
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
@@ -293,7 +327,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 
 int CoreTextNativeFont::nativeFontWidth(String const &text) const
 {
-    d->makeLine(text);
+    d->makeLine(d->applyTransformation(text));
     return roundi(CTLineGetTypographicBounds(d->line, NULL, NULL, NULL));
 }
 
@@ -312,10 +346,10 @@ QImage CoreTextNativeFont::nativeFontRasterize(String const &text,
 
     // Ensure the color is used by recreating the attributed line string.
     d->releaseLine();
-    d->makeLine(text, fgColor);
+    d->makeLine(d->applyTransformation(text), fgColor);
 
     // Set up the bitmap for drawing into.
-    Rectanglei const bounds = measure(text);
+    Rectanglei const bounds = measure(d->lineText);
     QImage backbuffer(QSize(bounds.width(), bounds.height()), QImage::Format_ARGB32);//_Premultiplied);
     backbuffer.fill(QColor(background.x, background.y, background.z, background.w).rgba());
 

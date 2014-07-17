@@ -393,7 +393,7 @@ public ChildWidgetOrganizer::IFilter
         {
             bg = self.infoStyleBackground();
         }
-        else if(Style::appStyle().isBlurringAllowed())
+        else if(Style::get().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::BlurredWithBorderGlow;

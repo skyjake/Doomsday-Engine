@@ -81,17 +81,21 @@ void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QStr
 
 void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 {
-    d->mapBounds = QRect();
+    d->mapBounds  = QRect();
     d->mapOutline = QPicture();
 
     QPainter painter(&d->mapOutline);
     for(int i = 0; i < outline.lineCount(); ++i)
     {
         shell::MapOutlinePacket::Line const &ln = outline.line(i);
-        painter.setPen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
+        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
+#ifdef DENG2_QT_5_0_OR_NEWER
+        pen.setCosmetic(true); // transformation will not affect line width
+#endif
+        painter.setPen(pen);
 
         QPoint a(ln.start.x, -ln.start.y);
-        QPoint b(ln.end.x, -ln.end.y);
+        QPoint b(ln.end.x,   -ln.end.y);
 
         painter.drawLine(a, b);
 

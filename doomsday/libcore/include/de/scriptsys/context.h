@@ -71,6 +71,8 @@ public:
     /// Returns the expression evaluator of the context.
     Evaluator &evaluator();
 
+    bool hasExternalGlobalNamespace() const;
+
     /**
      * Start the execution of a series of statements.
      *

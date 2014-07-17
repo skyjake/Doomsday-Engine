@@ -32,7 +32,7 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
     try
     {
         // Try to load the specific font.
-        Block data(App::fileSystem().root().locate<File const>(args.at(0)->asText()));
+        Block data(App::rootFolder().locate<File const>(args.at(0)->asText()));
         int id;
         id = QFontDatabase::addApplicationFontFromData(data);
         if(id < 0)
@@ -104,6 +104,11 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
+
+#ifdef DENG2_QT_5_0_OR_NEWER
+    // The device pixel ratio.
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", devicePixelRatio());
+#endif
 
     d->uiState.reset(new PersistentState("UIState"));
 }
