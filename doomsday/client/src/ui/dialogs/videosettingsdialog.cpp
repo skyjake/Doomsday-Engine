@@ -150,6 +150,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     d->vsync->setText(tr("VSync"));
 
     LabelWidget *modeLabel = 0;
+#ifdef USE_COLOR_DEPTH_CHOICE
+    LabelWidget *colorLabel = 0;
+#endif
     if(gotDisplayMode)
     {
         modeLabel = new LabelWidget;
@@ -181,7 +184,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         }
 
 #ifdef USE_COLOR_DEPTH_CHOICE
-        LabelWidget *colorLabel = new LabelWidget;
+        colorLabel = new LabelWidget;
         colorLabel->setText(tr("Colors:"));
         area().add(colorLabel);
 

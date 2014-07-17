@@ -37,7 +37,7 @@ namespace filesys {
  * lock themselves as appropriate. A user may lock the node manually if long-term
  * exclusive access is required.
  */
-class Node : public Lockable
+class DENG2_PUBLIC Node : public Lockable
 {
 public:
     virtual ~Node();
