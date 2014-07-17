@@ -252,7 +252,7 @@ void Package::parseMetadata(File &packageFile) // static
 
         metadata.addTime(TIMESTAMP, parsedAt);
 
-        LOG_RES_MSG("Parsed metadata of '%s':\n")
+        LOGDEV_RES_MSG("Parsed metadata of '%s':\n")
                 << identifierForFile(packageFile)
                 << packageFile.info().asText();
     }
