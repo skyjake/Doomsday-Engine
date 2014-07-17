@@ -21,8 +21,9 @@
 #include "common.h"
 #include "g_update.h"
 
-#include <ctype.h>
+#include <cctype>
 #include "animdefs.h"
+#include "g_common.h"
 #include "hu_chat.h"
 #include "hu_log.h"
 #include "hu_menu.h"
@@ -33,6 +34,7 @@
 #include "p_sound.h"
 #include "p_start.h"
 #include "r_common.h"
+#include "saveslots.h"
 
 using namespace common;
 
@@ -119,6 +121,7 @@ void G_UpdateState(int step)
 #endif
 
         Hu_MenuInit();
+        G_SaveSlots().updateAll();
 
 #if __JHEXEN__
         SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));

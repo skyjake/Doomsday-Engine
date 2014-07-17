@@ -370,6 +370,7 @@ String Hu_MenuFindPageName(Page const *page)
             {
                 return i.key();
             }
+            i++;
         }
     }
     return "";

@@ -216,6 +216,11 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
     }
 }
 
+void SaveSlots::Slot::updateStatus()
+{
+    d->updateStatus();
+}
+
 DENG2_PIMPL(SaveSlots)
 , DENG2_OBSERVES(GameSession::SavedIndex, AvailabilityUpdate)
 {
@@ -367,6 +372,14 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     }
 
     return d->slotById(id);
+}
+
+void SaveSlots::updateAll()
+{
+    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
+    {
+        i->second->updateStatus();
+    }
 }
 
 void SaveSlots::consoleRegister() // static
