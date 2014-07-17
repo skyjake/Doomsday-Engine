@@ -31,7 +31,6 @@
 #include "de/TimeValue"
 #include "de/Vector"
 #include "de/String"
-#include "de/DotPath"
 
 #include <QTextStream>
 

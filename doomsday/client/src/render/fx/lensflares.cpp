@@ -72,8 +72,7 @@ struct FlareData
             DENG_ASSERT_IN_MAIN_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-            Folder const &pack = App::rootFolder().locate<Folder>("/packs/lensflares/.");
-            images.addFromInfo(pack.locate<File>("images.dei"));
+            images.addFromInfo(App::rootFolder().locate<File>("/packs/feature.lensflares/images.dei"));
 
             atlas.setAllocator(new KdTreeAtlasAllocator);
 

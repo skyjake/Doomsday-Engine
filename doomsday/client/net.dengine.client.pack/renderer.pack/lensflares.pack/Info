@@ -3,4 +3,4 @@ version: 1.15.0
 license: GPL 3+
 tags: core fx
 
-alias: lensflares
+alias: feature.lensflares
