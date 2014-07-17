@@ -186,8 +186,7 @@ OTHER_FILES += \
 macx {
     defineTest(fixInstallName) {
         doPostLink("install_name_tool -change $$1 @rpath/$$1 libdeng_core.2.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)lib/$$1 @rpath/$$1 libdeng_core.2.dylib")
-        doPostLink("install_name_tool -change $$(QTDIR)/lib/$$1 @rpath/$$1 libdeng_core.2.dylib")
+        doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$1 @rpath/$$1 libdeng_core.2.dylib")
     }
     doPostLink("install_name_tool -id @rpath/libdeng_core.2.dylib libdeng_core.2.dylib")
     fixInstallName("QtCore.framework/Versions/$$QT_MAJOR_VERSION/QtCore")
