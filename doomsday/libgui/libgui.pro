@@ -79,6 +79,7 @@ publicHeaders(root, \
     include/de/KeyEventSource \
     include/de/MouseEvent \
     include/de/MouseEventSource \
+    include/de/ModelBank \
     include/de/ModelDrawable \
     include/de/NativeFont \
     include/de/PersistentCanvasWindow \
@@ -128,6 +129,7 @@ publicHeaders(graphics, \
     include/de/graphics/kdtreeatlasallocator.h \
     include/de/graphics/opengl.h \
     include/de/graphics/modeldrawable.h \
+    include/de/graphics/modelbank.h \
     include/de/graphics/rowatlasallocator.h \
     include/de/graphics/texturebank.h \
     include/de/graphics/vertexbuilder.h \
@@ -175,6 +177,7 @@ SOURCES +=  \
     src/graphics/imagebank.cpp \
     src/graphics/image.cpp \
     src/graphics/kdtreeatlasallocator.cpp \
+    src/graphics/modelbank.cpp \
     src/graphics/modeldrawable.cpp \
     src/graphics/rowatlasallocator.cpp \
     src/graphics/texturebank.cpp \

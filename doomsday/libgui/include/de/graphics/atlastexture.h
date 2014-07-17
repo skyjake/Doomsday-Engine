@@ -26,6 +26,8 @@ namespace de {
 
 /**
  * Atlas stored on a (2D) GLTexture.
+ *
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC AtlasTexture : public Atlas, public GLTexture
 {

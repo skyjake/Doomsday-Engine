@@ -76,7 +76,7 @@ public:
     void glDeinit();
 
     /**
-     * Atlas to use for any textures needed by the model.
+     * Atlas to use for any textures needed by the model. This is needed for glInit().
      *
      * @param atlas  Atlas for model textures.
      */
