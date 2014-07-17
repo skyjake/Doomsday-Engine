@@ -67,8 +67,9 @@ int Hu_MenuSelectSaveGame(Widget *wi, Widget::mn_actionid_t action, void *parame
 #if __JHEXEN__
 int Hu_MenuSelectFiles(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 #endif
-int Hu_MenuSelectPlayerSetup(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 int Hu_MenuSelectJoinGame(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+
+void Hu_MenuActivatePlayerSetup(Page *page);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 int Hu_MenuSelectHelp(Widget *wi, Widget::mn_actionid_t action, void *parameters);
@@ -895,7 +896,8 @@ void Hu_MenuInitMultiplayerPage()
         btn->_shortcut    = 's';
         btn->_pageFontIdx = MENU_FONT1;
         btn->text         = "Player Setup";
-        btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectPlayerSetup;
+        btn->data1        = (void *)"PlayerSetup";
+        btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
@@ -910,6 +912,7 @@ void Hu_MenuInitPlayerSetupPage()
 #endif
 
     Page *page = Hu_MenuNewPage("PlayerSetup", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
+    page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuFindPageByName("Multiplayer"));
@@ -4782,14 +4785,13 @@ int Hu_MenuSelectJoinGame(Widget * /*wi*/, Widget::mn_actionid_t action, void * 
     return 0;
 }
 
-int Hu_MenuSelectPlayerSetup(Widget * /*wi*/, Widget::mn_actionid_t action, void * /*context*/)
+void Hu_MenuActivatePlayerSetup(Page *page)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    DENG2_ASSERT(page != 0);
 
-    Page *playerSetupPage = Hu_MenuFindPageByName("PlayerSetup");
-    MobjPreviewWidget &mop = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID0)->as<MobjPreviewWidget>();
-    LineEditWidget &name       = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID1)->as<LineEditWidget>();
-    ListWidget &color      = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID3)->as<ListWidget>();
+    MobjPreviewWidget &mop = MN_MustFindObjectOnPage(page, 0, MNF_ID0)->as<MobjPreviewWidget>();
+    LineEditWidget &name   = MN_MustFindObjectOnPage(page, 0, MNF_ID1)->as<LineEditWidget>();
+    ListWidget &color      = MN_MustFindObjectOnPage(page, 0, MNF_ID3)->as<ListWidget>();
 
 #if __JHEXEN__
     mop.setMobjType(PCLASS_INFO(cfg.netClass)->mobjType);
@@ -4803,14 +4805,11 @@ int Hu_MenuSelectPlayerSetup(Widget * /*wi*/, Widget::mn_actionid_t action, void
 
     color.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netColor);
 #if __JHEXEN__
-    ListWidget &class_ = MN_MustFindObjectOnPage(playerSetupPage, 0, MNF_ID2)->as<ListWidget>();
+    ListWidget &class_ = MN_MustFindObjectOnPage(page, 0, MNF_ID2)->as<ListWidget>();
     class_.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netClass);
 #endif
 
     name.setText(MNEDIT_STF_NO_ACTION|MNEDIT_STF_REPLACEOLD, Con_GetString("net-name"));
-
-    Hu_MenuSetActivePage(playerSetupPage);
-    return 0;
 }
 
 #if __JHEXEN__

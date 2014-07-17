@@ -349,6 +349,10 @@ public:
     /// Menu-command responder routine.
     int (*cmdResponder) (Page *page, menucommand_e cmd);
 
+    /// Automatically called when the page is made activate/current.
+    typedef void (*OnActiveCallback) (Page *);
+    OnActiveCallback onActiveCallback;
+
     /// User data.
     void *userData;
 
@@ -453,6 +457,13 @@ public:
     int timer();
 
     void applyPageLayout();
+
+    /**
+     * Change the function to callback on page activation to @a newCallback.
+     *
+     * @param newCallback  Function to callback on page activation. Use @c 0 to clear.
+     */
+    void setOnActiveCallback(OnActiveCallback newCallback);
 
 private:
     void giveChildFocus(Widget *wi, dd_bool allowRefocus);

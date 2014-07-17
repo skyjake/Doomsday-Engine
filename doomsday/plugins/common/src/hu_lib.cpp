@@ -869,6 +869,11 @@ void Page::applyPageLayout()
     }
 }
 
+void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
+{
+    onActiveCallback = newCallback;
+}
+
 #if __JDOOM__ || __JDOOM64__
 static void composeSubpageString(Page *page, char *buf, size_t bufSize)
 {
@@ -1068,15 +1073,16 @@ Page::Page(Point2Raw const &origin, int flags,
     void (*drawer) (Page *page, Point2Raw const *origin),
     int (*cmdResponder) (Page *page, menucommand_e cmd),
     void *userData)
-    : origin       (origin)
-    , geometry     (Rect_New())
-    , previous     (0)
-    , focus        (-1) /// @todo Make this a page flag.
-    , flags        (flags)
-    , ticker       (ticker)
-    , drawer       (drawer)
-    , cmdResponder (cmdResponder)
-    , userData     (userData)
+    : origin          (origin)
+    , geometry        (Rect_New())
+    , previous        (0)
+    , focus           (-1) /// @todo Make this a page flag.
+    , flags           (flags)
+    , ticker          (ticker)
+    , drawer          (drawer)
+    , cmdResponder    (cmdResponder)
+    , onActiveCallback(0)
+    , userData        (userData)
 {
     Str_InitStd(&title);
 
@@ -1308,6 +1314,11 @@ void Page::initialize()
     }
 
     refocus();
+
+    if(onActiveCallback)
+    {
+        onActiveCallback(this);
+    }
 }
 
 void Page::initObjects()
