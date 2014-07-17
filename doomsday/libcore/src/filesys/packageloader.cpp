@@ -138,7 +138,7 @@ DENG2_PIMPL(PackageLoader)
         return found.back();
     }
 
-    void load(String const &packageId, File const &source)
+    Package &load(String const &packageId, File const &source)
     {
         if(loaded.contains(packageId))
         {
@@ -151,6 +151,7 @@ DENG2_PIMPL(PackageLoader)
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
         pkg->didLoad();
+        return *pkg;
     }
 
     bool unload(String const &identifier)
@@ -178,14 +179,14 @@ Package const &PackageLoader::load(String const &packageId)
 {
     LOG_AS("PackageLoader");
 
-    File const *pack = d->selectPackage(packageId);
-    if(!pack)
+    File const *packFile = d->selectPackage(packageId);
+    if(!packFile)
     {
         throw NotFoundError("PackageLoader::load",
                             "Package \"" + packageId + "\" is not available");
     }
 
-    d->load(packageId, *pack);
+    d->load(packageId, *packFile);
 
     DENG2_FOR_AUDIENCE2(Activity, i)
     {

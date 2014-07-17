@@ -347,4 +347,9 @@ Folder &FileSystem::root()
     return d->root;
 }
 
+Folder const &FileSystem::root() const
+{
+    return d->root;
+}
+
 } // namespace de

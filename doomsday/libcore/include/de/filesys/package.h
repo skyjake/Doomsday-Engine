@@ -22,6 +22,8 @@
 #include "../String"
 #include "../File"
 
+#include <QSet>
+
 namespace de {
 
 class Package;
@@ -39,14 +41,41 @@ class Package;
  * Package only consists of state that is relevant while the package is loaded (i.e.,
  * in active use).
  */
-class Package
+class DENG2_PUBLIC Package
 {
 public:
     /// Package's source is missing or inaccessible. @ingroup errors
     DENG2_ERROR(SourceError);
 
+    /// Package fails validation. @ingroup errors
+    DENG2_ERROR(ValidationError);
+
     /// Package is missing some required metadata. @ingroup errors
-    DENG2_ERROR(IncompleteMetadataError);
+    DENG2_SUB_ERROR(ValidationError, IncompleteMetadataError);
+
+    typedef QSet<String> Assets;
+
+    /**
+     * Utility for accessing asset metadata. @ingroup fs
+     */
+    class DENG2_PUBLIC Asset : public RecordAccessor
+    {
+    public:
+        Asset(Record const &rec);
+        Asset(Record const *rec);
+
+        /**
+         * Retrieves the value of a variable and resolves it to an absolute path in
+         * relation to the asset.
+         *
+         * @param name  Variable name in the package asset metadata.
+         *
+         * @return Absolute path.
+         *
+         * @see ScriptedInfo::absolutePathInContext()
+         */
+        String absolutePath(String const &name) const;
+    };
 
 public:
     /**
@@ -76,6 +105,13 @@ public:
      * without any file extension.
      */
     String identifier() const;
+
+    /**
+     * Composes a list of assets contained in the package.
+     *
+     * @return Assets declared in the package metadata.
+     */
+    Assets assets() const;
 
     /**
      * Executes a script function in the metadata of the package.

@@ -65,8 +65,12 @@ public:
     };
     Q_DECLARE_FLAGS(SubsystemInitFlags, SubsystemInitFlag)
 
-    /// Throws if attempting to access persistent data when it has been disabled at init.
+    /// Attempting to access persistent data when it has been disabled at init.
+    /// @ingroup errors
     DENG2_ERROR(PersistentDataNotAvailable);
+
+    /// Asset with given identifier was not found. @ingroup errors
+    DENG2_ERROR(AssetNotFoundError);
 
     /**
      * Notified when application startup has been fully completed.
@@ -276,6 +280,24 @@ public:
      * Returns the application's package loader.
      */
     static PackageLoader &packageLoader();
+
+    /**
+     * Checks if an asset exists.
+     *
+     * @param identifier  Identifier.
+     *
+     * @return @c true, if assetInfo() can be called.
+     */
+    static bool assetExists(String const &identifier);
+
+    /**
+     * Retrieves the namespace of an asset.
+     *
+     * @param identifier  Identifier.
+     *
+     * @return Asset namespace accessor.
+     */
+    static Package::Asset asset(String const &identifier);
 
     /**
      * Returns the application's script system.

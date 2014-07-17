@@ -302,6 +302,21 @@ DENG2_PIMPL(App)
         fs.root().locate<Folder>("/packs").populate();
     }
 
+    Record const *findAsset(String const &identifier) const
+    {
+        // Access the package that has this asset via a link.
+        Folder const *pkg = fs.root().tryLocate<Folder>("/packs/asset." + identifier + "/.");
+        if(!pkg) return 0;
+
+        // Find the record that has this asset's metadata.
+        String const ns = "package." + identifier;
+        if(pkg->info().has(ns))
+        {
+            return &pkg->info()[ns].valueAsRecord();
+        }
+        return 0;
+    }
+
     DENG2_PIMPL_AUDIENCE(StartupComplete)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
@@ -713,7 +728,23 @@ PackageLoader &App::packageLoader()
     return DENG2_APP->d->packageLoader;
 }
 
-ScriptSystem &de::App::scriptSystem()
+bool App::assetExists(String const &identifier)
+{
+    return DENG2_APP->d->findAsset(identifier) != 0;
+}
+
+Package::Asset App::asset(String const &identifier)
+{
+    Record const *info = DENG2_APP->d->findAsset(identifier);
+    if(!info)
+    {
+        throw AssetNotFoundError("App::asset", "Asset \"" + identifier +
+                                 "\" does not exist");
+    }
+    return *info;
+}
+
+ScriptSystem &App::scriptSystem()
 {
     return DENG2_APP->d->scriptSys;
 }

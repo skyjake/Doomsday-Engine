@@ -22,6 +22,7 @@
 #include "de/Script"
 #include "de/ScriptedInfo"
 #include "de/TimeValue"
+#include "de/DotPath"
 #include "de/App"
 
 namespace de {
@@ -29,6 +30,22 @@ namespace de {
 static String const PACKAGE("package");
 static String const PACKAGE_ORDER("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
+
+Package::Asset::Asset(Record const &rec) : RecordAccessor(rec) {}
+
+Package::Asset::Asset(Record const *rec) : RecordAccessor(rec) {}
+
+String Package::Asset::absolutePath(String const &name) const
+{
+    // For the context, we'll accept either the variable's own record or the package
+    // metadata.
+    Record const *context = &accessedRecord().parentRecordForMember(name);
+    if(!context->has("__source__"))
+    {
+        context = &accessedRecord();
+    }
+    return ScriptedInfo::absolutePathInContext(*context, gets(name));
+}
 
 DENG2_PIMPL(Package)
 , DENG2_OBSERVES(File, Deletion)
@@ -74,6 +91,11 @@ DENG2_PIMPL(Package)
         }
         return paths;
     }
+
+    Record &packageInfo()
+    {
+        return self.info().subrecord(PACKAGE);
+    }
 };
 
 Package::Package(File const &file) : d(new Instance(this, &file))
@@ -111,15 +133,19 @@ String Package::identifier() const
     return identifierForFile(*d->file);
 }
 
+Package::Assets Package::assets() const
+{
+    return ScriptedInfo::allBlocksOfType("asset", d->packageInfo());
+}
+
 bool Package::executeFunction(String const &name)
 {
-    QString const funcName = PACKAGE + "." + name;
-
-    if(info().has(funcName))
+    Record &pkgInfo = d->packageInfo();
+    if(pkgInfo.has(name))
     {
         Script script(name + "()");
         // The global namespace for this function is the package's info namespace.
-        Process proc(&info().subrecord(PACKAGE));
+        Process proc(&pkgInfo);
         proc.run(script);
         proc.execute();
         return true;
@@ -234,9 +260,27 @@ void Package::parseMetadata(File &packageFile) // static
 
 void Package::validateMetadata(Record const &packageInfo)
 {
-    char const *required[] = {
-        "title", "version", "license", "tags", 0
-    };
+    // A domain is required in all package identifiers.
+    DotPath const ident(packageInfo.gets("id"));
+
+    if(ident.segmentCount() <= 1)
+    {
+        throw ValidationError("Package::validateMetadata",
+                              QString("Identifier of package \"%1\" must specify a domain")
+                              .arg(packageInfo.gets("path")));
+    }
+
+    String const &topLevelDomain = ident.segment(0).toString();
+    if(topLevelDomain == "feature" || topLevelDomain == "asset")
+    {
+        // Functional top-level domains cannot be used as package identifiers (only aliases).
+        throw ValidationError("Package::validateMetadata",
+                              QString("Package \"%1\" has an invalid domain: functional top-level "
+                                      "domains can only be used as aliases")
+                              .arg(packageInfo.gets("path")));
+    }
+
+    char const *required[] = { "title", "version", "license", "tags", 0 };
 
     for(int i = 0; required[i]; ++i)
     {

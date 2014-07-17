@@ -171,6 +171,20 @@ public:
      */
     Paths allBlocksOfType(String const &blockType) const;
 
+    /**
+     * Checks if the context has a "__source__", and resolves @a relativePath in
+     * relation to it.
+     *
+     * @param context       Namespace.
+     * @param relativePath  Relative path.
+     *
+     * @return Absolute path resolved using the context.
+     */
+    static String absolutePathInContext(Record const &context, String const &relativePath);
+
+public:
+    static Paths allBlocksOfType(String const &blockType, Record const &root);
+
 private:
     DENG2_PRIVATE(d)
 };

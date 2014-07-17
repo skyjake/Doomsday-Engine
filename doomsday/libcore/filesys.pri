@@ -20,10 +20,12 @@ publicHeaders(root, \
 )
 
 publicHeaders(filesys, \
+    include/de/filesys/AssetObserver \
     include/de/filesys/Node \
     include/de/filesys/archiveentryfile.h \
     include/de/filesys/archivefeed.h \
     include/de/filesys/archivefolder.h \
+    include/de/filesys/assetobserver.h \
     include/de/filesys/bytearrayfile.h \
     include/de/filesys/directoryfeed.h \
     include/de/filesys/feed.h \
@@ -45,6 +47,7 @@ SOURCES += \
     src/filesys/archiveentryfile.cpp \
     src/filesys/archivefeed.cpp \
     src/filesys/archivefolder.cpp \
+    src/filesys/assetobserver.cpp \
     src/filesys/bytearrayfile.cpp \
     src/filesys/directoryfeed.cpp \
     src/filesys/feed.cpp \

@@ -31,6 +31,7 @@
 #include "de/TimeValue"
 #include "de/Vector"
 #include "de/String"
+#include "de/DotPath"
 
 #include <QTextStream>
 
@@ -643,6 +644,15 @@ Record &Record::operator << (NativeFunctionSpec const &spec)
 {
     addFunction(spec.name(), refless(spec.make())).setReadOnly();
     return *this;
+}
+
+Record const &Record::parentRecordForMember(String const &name) const
+{
+    String const lastOmitted = name.fileNamePath('.');
+    if(lastOmitted.isEmpty()) return *this;
+
+    // Omit the final segment of the dotted path to find out the parent record.
+    return (*this)[lastOmitted].valueAsRecord();
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

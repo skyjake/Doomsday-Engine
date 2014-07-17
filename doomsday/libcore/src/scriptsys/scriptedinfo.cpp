@@ -365,7 +365,7 @@ DENG2_PIMPL(ScriptedInfo)
         process.globals().addArray(variableName(list), av);
     }
 
-    void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
+    static void findBlocks(String const &blockType, Paths &paths, Record const &rec, String prefix = "")
     {
         if(rec.hasMember(VAR_BLOCK_TYPE) &&
            !rec[VAR_BLOCK_TYPE].value().asText().compareWithoutCase(blockType))
@@ -427,8 +427,26 @@ Variable const &ScriptedInfo::operator [] (String const &name) const
 
 ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
 {
+    return allBlocksOfType(blockType, d->process.globals());
+}
+
+String ScriptedInfo::absolutePathInContext(Record const &context, String const &relativePath) // static
+{
+    if(context.has("__source__"))
+    {
+        String src = context["__source__"].value<TextValue>();
+        int pos = src.lastIndexOf(':');
+        if(pos < 0) return src / relativePath;
+        src.truncate(pos);
+        return src.fileNamePath() / relativePath;
+    }
+    return relativePath;
+}
+
+ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Record const &root) // static
+{
     Paths found;
-    d->findBlocks(blockType, found, d->process.globals());
+    Instance::findBlocks(blockType, found, root);
     return found;
 }
 

@@ -503,6 +503,7 @@ public:
     PathRef subPath(Rangei const &sub) const {
         return PathRef(_path, sub + _range.start);
     }
+    Path toPath() const;
 
 private:
     Path const &_path;

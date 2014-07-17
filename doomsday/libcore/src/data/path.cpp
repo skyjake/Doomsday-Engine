@@ -504,6 +504,19 @@ Path Path::normalize(String const &text, QChar replaceWith)
     return Path(normalizeString(text, replaceWith), replaceWith);
 }
 
+Path PathRef::toPath() const
+{
+    if(!segmentCount()) return Path(); // Empty.
+
+    String composed = segment(0);
+    for(int i = 1; i < segmentCount(); ++i)
+    {
+        composed += path().separator();
+        composed += segment(i);
+    }
+    return Path(composed, path().separator());
+}
+
 } // namespace de
 
 #ifdef _DEBUG

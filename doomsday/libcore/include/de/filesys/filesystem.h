@@ -119,6 +119,8 @@ public:
 
     Folder &root();
 
+    Folder const &root() const;
+
     /**
      * Refresh the file system. Populates all folders with files from the feeds.
      */

@@ -102,15 +102,9 @@ String InfoBank::bankRootPath() const
 
 String InfoBank::relativeToPath(Record const &context) const
 {
-    if(context.has("__source__"))
-    {
-        String src = context["__source__"].value<TextValue>();
-        int pos = src.lastIndexOf(':');
-        if(pos < 0) return src;
-        src.truncate(pos);
-        return src.fileNamePath();
-    }
-    return bankRootPath();
+    String const root = ScriptedInfo::absolutePathInContext(context, "");
+    if(root.isEmpty()) return bankRootPath();
+    return root;
 }
 
 Variable const &InfoBank::operator [] (String const &name) const

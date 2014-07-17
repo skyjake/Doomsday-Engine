@@ -33,7 +33,9 @@ DENG2_PIMPL(PackageFeed)
 
     void linkToPackage(Package &pkg, String const &linkName, Folder &folder)
     {
-        if(folder.has(linkName)) return; // Already there.
+        /// @todo Resolve conflicts: replace, ignore, or fail. -jk
+
+        if(folder.has(linkName)) return; // Already there, keep the existing link.
 
         // Create a link to the loaded package's file.
         LinkFile &link = folder.add(LinkFile::newLinkToFile(pkg.file(), linkName));
@@ -51,10 +53,17 @@ DENG2_PIMPL(PackageFeed)
         {
             Package *pkg = i.value();
             linkToPackage(*pkg, i.key(), folder);
+
             // Also link it under its possible alias identifier (for variants).
             if(pkg->info().has("package.alias"))
             {
                 linkToPackage(*pkg, pkg->info().gets("package.alias"), folder);
+            }
+
+            // Link each contained asset, too.
+            foreach(String ident, pkg->assets())
+            {
+                linkToPackage(*pkg, "asset." + ident, folder);
             }
         }
     }

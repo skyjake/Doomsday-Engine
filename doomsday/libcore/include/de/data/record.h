@@ -427,6 +427,16 @@ public:
      */
     Record &operator << (NativeFunctionSpec const &spec);
 
+    /**
+     * Looks up the record that contains the variable referred to be @a name.
+     * If @a name contains no '.' characters, this always returns this record.
+     *
+     * @param name  Variable name.
+     *
+     * @return Record containing the @a name.
+     */
+    Record const &parentRecordForMember(String const &name) const;
+
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
