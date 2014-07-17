@@ -111,7 +111,14 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 dd_bool Hu_MenuIsVisible();
 
-menu::Page *Hu_MenuFindPageByName(char const *name);
+menu::Page *Hu_MenuFindPageByName(de::String name);
+
+/**
+ * Lookup the unique page identifier/name for the given @a page.
+ *
+ * @return  Unique identifier/name of the page; otherwise an empty string.
+ */
+de::String Hu_MenuFindPageName(menu::Page const *page);
 
 /**
  * @param name  Symbolic name.

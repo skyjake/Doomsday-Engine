@@ -346,17 +346,33 @@ static menucommand_e chooseCloseMethod()
     return Con_GetInteger("con-transition-tics") == 0? MCMD_CLOSE : MCMD_CLOSEFAST;
 }
 
-Page *Hu_MenuFindPageByName(char const *name)
+Page *Hu_MenuFindPageByName(String name)
 {
-    if(name && name[0])
+    if(!name.isEmpty())
     {
-        Pages::iterator found = pages.find(String(name).toLower());
+        Pages::iterator found = pages.find(name.toLower());
         if(found != pages.end())
         {
             return *found;
         }
     }
     return 0; // Not found.
+}
+
+String Hu_MenuFindPageName(Page const *page)
+{
+    if(page)
+    {
+        Pages::const_iterator i = pages.constBegin();
+        while(i != pages.constEnd())
+        {
+            if(i.value() == page)
+            {
+                return i.key();
+            }
+        }
+    }
+    return "";
 }
 
 /// @todo Make this state an object property flag.
@@ -3558,8 +3574,18 @@ Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
 void Hu_MenuInit()
 {
     cvarbutton_t *cvb;
+    bool wasOpen = false;
+    String activePageName;
 
-    if(inited) return;
+    if(inited)
+    {
+        // Remember the previously open menu page, if any.
+        /// @todo Remember the previously focused widget on said page -ds
+        wasOpen = Hu_MenuIsActive();
+        activePageName = Hu_MenuFindPageName(Hu_MenuActivePage());
+
+        Hu_MenuShutdown();
+    }
 
     mnAlpha = mnTargetAlpha = 0;
     menuActivePage    = 0;
@@ -3593,6 +3619,13 @@ void Hu_MenuInit()
         wi->setFixedY(wi->fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
+
+    // Are we re-opening?
+    if(wasOpen)
+    {
+        Hu_MenuCommand(MCMD_OPEN);
+    }
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName(activePageName));
 
     inited = true;
 }
@@ -3686,7 +3719,7 @@ void Hu_MenuTicker(timespan_t ticLength)
 #undef MENUALPHA_FADE_STEP
 }
 
-Page* Hu_MenuActivePage()
+Page *Hu_MenuActivePage()
 {
     return menuActivePage;
 }
