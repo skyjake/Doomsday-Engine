@@ -19,13 +19,14 @@
 #include "de_platform.h"
 #include "clientapp.h"
 #include "render/rendersystem.h"
-
+#include "render/modelrenderer.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include <de/memory.h>
+#include <de/ScriptedInfo>
 
 using namespace de;
 
@@ -87,6 +88,7 @@ uint Store::allocateVertices(uint count)
 
 DENG2_PIMPL(RenderSystem)
 {
+    ModelRenderer models;
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
@@ -100,6 +102,13 @@ DENG2_PIMPL(RenderSystem)
         // Load the required packages.
         App::packageLoader().load("net.dengine.client.renderer");
         App::packageLoader().load("net.dengine.client.renderer.lensflares");
+
+        // -=- DEVEL -=-
+        App::packageLoader().load("net.dengine.client.testmodel");
+
+        /*Package::Asset asset = App::asset("model.thing.possessed");
+        qDebug() << asset.accessedRecord().asText();
+        qDebug() << asset.getPath("path");*/
 
         loadAllShaders();
         loadImages();

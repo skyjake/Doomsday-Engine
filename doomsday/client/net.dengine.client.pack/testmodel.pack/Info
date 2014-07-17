@@ -1,0 +1,8 @@
+title: Test Model
+version: 1.0
+license: GPL 3+
+tags: dev
+
+asset model.thing.possessed {
+    path = "boblampclean.md5mesh"
+}
