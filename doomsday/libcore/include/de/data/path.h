@@ -107,11 +107,7 @@ public:
         hash_type hash() const;
 
         /**
-         * Case and separator insensitive equality test.
-         *
-         * Examples:
-         * - "hello/world" (sep: /) == "HELLO/World" (sep: /)
-         * - "hello/world" (sep: /) == "Hello|World" (sep: |)
+         * Case insensitive equality test.
          *
          * @param other Other segment.
          *
@@ -121,6 +117,14 @@ public:
 
         bool operator != (Segment const &other) const {
             return !(*this == other);
+        }
+
+        bool operator == (QString const &text) const {
+            return !range.compare(text, Qt::CaseInsensitive);
+        }
+
+        bool operator != (QString const &text) const {
+            return !(*this == text);
         }
 
         /**
@@ -216,6 +220,10 @@ public:
     /**
      * Determines if this path is equal to @a other. The test is case
      * and separator insensitive.
+     *
+     * Examples:
+     * - "hello/world" (sep: /) == "HELLO/World" (sep: /)
+     * - "hello/world" (sep: /) == "Hello|World" (sep: |)
      *
      * @param other  Path.
      *
