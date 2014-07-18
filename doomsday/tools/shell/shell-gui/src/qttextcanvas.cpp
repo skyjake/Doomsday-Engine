@@ -18,9 +18,11 @@
 
 #include "qttextcanvas.h"
 #include <QPainter>
-#include <QGuiApplication>
 #include <QImage>
 #include <QMap>
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  include <QGuiApplication>
+#endif
 
 using namespace de;
 using namespace de::shell;

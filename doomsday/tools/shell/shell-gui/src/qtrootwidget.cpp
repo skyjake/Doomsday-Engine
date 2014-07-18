@@ -22,10 +22,12 @@
 #include <de/AnimationVector>
 #include <de/Clock>
 #include <QFontMetrics>
-#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  include <QGuiApplication>
+#endif
 
 using namespace de;
 using namespace de::shell;

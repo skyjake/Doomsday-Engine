@@ -38,7 +38,11 @@ static DotPath const ID_THIN_ROUND_CORNERS = "GuiRootWidget.frame.thin";
 static DotPath const ID_BOLD_ROUND_CORNERS = "GuiRootWidget.frame.bold";
 static DotPath const ID_DOT                = "GuiRootWidget.dot";
 
-#define DPI_SCALED(x)       ((x) * qApp->devicePixelRatio())
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  define DPI_SCALED(x)       ((x) * qApp->devicePixelRatio())
+#else
+#  define DPI_SCALED(x)       (x)
+#endif
 
 DENG2_PIMPL(GuiRootWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
