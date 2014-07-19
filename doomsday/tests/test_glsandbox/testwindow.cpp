@@ -64,6 +64,7 @@ DENG2_OBSERVES(Bank, Load)
     GLTexture frameTex;
     GLTexture testpic;
     ModelDrawable model;
+    ModelDrawable::AnimationState modelAnim;
     QScopedPointer<AtlasTexture> modelAtlas;
     GLUniform uModelTex;
     GLProgram modelProgram;
@@ -84,6 +85,7 @@ DENG2_OBSERVES(Bank, Load)
           uColor    ("uColor",     GLUniform::Vec4),
           uTime     ("uTime",      GLUniform::Float),
           uTex      ("uTex",       GLUniform::Sampler2D),
+          modelAnim (model),
           uModelTex ("uTex",       GLUniform::Sampler2D),
           atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
                                                           Atlas::BackingStore |
@@ -422,13 +424,24 @@ DENG2_OBSERVES(Bank, Load)
         atlasOb.draw();
     }
 
+    void initModelAnimation()
+    {
+        modelAnim.clear();
+        modelAnim.start(0);
+    }
+
     void drawModel()
     {
         GLState::current().target().clear(GLTarget::ColorDepth);
 
         uMvpMatrix = projMatrix * modelMatrix;
-        model.setAnimationTime(startedAt.since());
-        model.draw();
+
+        if(!modelAnim.isEmpty())
+        {
+            modelAnim.at(0).time = startedAt.since();
+        }
+
+        model.draw(&modelAnim);
     }
 
     void timeChanged(Clock const &clock)
@@ -520,11 +533,11 @@ TestWindow::TestWindow() : d(new Instance(this))
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
     tools->addAction("Model", this, SLOT(testModel()));
 
-    d->modelChoice = new QToolBar(tr("Models"));
+    d->modelChoice = addToolBar(tr("Models"));
     d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
     d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
-    addToolBar(Qt::RightToolBarArea, d->modelChoice);
-    d->modelChoice->hide();
+    //addToolBar(Qt::TopToolBarArea, d->modelChoice);
+    //d->modelChoice->hide();
 }
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
@@ -553,9 +566,11 @@ void TestWindow::testModel()
 void TestWindow::loadMD2Model()
 {
     d->model.load(App::rootFolder().locate<File>("/data/models/marine.md2"));
+    d->initModelAnimation();
 }
 
 void TestWindow::loadMD5Model()
 {
     d->model.load(App::rootFolder().locate<File>("/data/models/boblampclean.md5mesh"));
+    d->initModelAnimation();
 }
