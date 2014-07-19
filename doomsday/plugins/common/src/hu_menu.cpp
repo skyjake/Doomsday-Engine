@@ -286,7 +286,9 @@ static float mnAlpha; // Alpha level for the entire menu.
 static float mnTargetAlpha; // Target alpha for the entire UI.
 
 static skillmode_t mnSkillmode = SM_MEDIUM;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 static int mnEpisode;
+#endif
 #if __JHEXEN__
 static int mnPlrClass = PCLASS_FIGHTER;
 #endif

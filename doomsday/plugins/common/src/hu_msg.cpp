@@ -269,6 +269,8 @@ void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
  */
 D_CMD(MsgResponse)
 {
+    DENG2_UNUSED2(src, argc);
+
     if(messageToPrint)
     {
         // Handle "Press any key to continue" messages.

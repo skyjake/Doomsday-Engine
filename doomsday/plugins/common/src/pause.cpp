@@ -109,6 +109,8 @@ dd_bool Pause_IsUserPaused()
 
 D_CMD(Pause)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_QuitInProgress())
         return false;
 

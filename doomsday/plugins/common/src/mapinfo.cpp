@@ -1102,7 +1102,7 @@ de::Uri P_TranslateMapIfExists(uint map)
     {
         MapInfo const &info = i->second;
 
-        if(info.geti("warpTrans") == map)
+        if((unsigned)info.geti("warpTrans") == map)
         {
             if(info.geti("hub"))
             {
