@@ -20,6 +20,9 @@
 #include <QPainter>
 #include <QImage>
 #include <QMap>
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  include <QGuiApplication>
+#endif
 
 using namespace de;
 using namespace de::shell;
@@ -28,6 +31,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
 {
     Size dims;
     QImage backBuffer;
+    float dpiFactor;
     Vector2i charSizePx;
     QFont font;
     QFont boldFont;
@@ -40,16 +44,17 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
     Cache cache;
 
     Instance() : blinkVisible(true)
-    {}
+    {
+#ifdef DENG2_QT_5_1_OR_NEWER
+        dpiFactor = qApp->devicePixelRatio();
+#else
+        dpiFactor = 1;
+#endif
+    }
 
     QSize pixelSize() const
     {
-        return QSize(dims.x * charSizePx.x, dims.y * charSizePx.y);
-    }
-
-    QRect bounds() const
-    {
-        return backBuffer.rect();
+        return QSize(dims.x * charSizePx.x, dims.y * charSizePx.y) * dpiFactor;
     }
 
     void clearCache()
@@ -70,7 +75,7 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
         }
 
         // Render a new one.
-        QImage img(QSize(charSizePx.x, charSizePx.y), QImage::Format_ARGB32);
+        QImage img(QSize(charSizePx.x, charSizePx.y) * dpiFactor, QImage::Format_ARGB32);
         QRect const rect = img.rect();
         QPainter painter(&img);
         painter.setPen(Qt::NoPen);
@@ -101,14 +106,17 @@ DENG2_PIMPL_NOREF(QtTextCanvas)
         cache.insert(ch, img);
         return img;
     }
+
+    void createBackbuffer()
+    {
+        backBuffer = QImage(pixelSize(), QImage::Format_ARGB32);
+    }
 };
 
 QtTextCanvas::QtTextCanvas(TextCanvas::Size const &size) : d(new Instance)
 {
     d->dims = size;
-
-    // Drawing will be first done here, then copied to target buffer.
-    d->backBuffer = QImage(d->pixelSize(), QImage::Format_ARGB32);
+    d->createBackbuffer();
 }
 
 QImage const &QtTextCanvas::image() const
@@ -126,7 +134,7 @@ void QtTextCanvas::resize(TextCanvas::Size const &newSize)
     markDirty();
 
     d->dims = newSize;
-    d->backBuffer = QImage(d->pixelSize(), QImage::Format_ARGB32);
+    d->createBackbuffer();
 }
 
 void QtTextCanvas::setCharSize(Vector2i const &pixelSize)
@@ -139,9 +147,12 @@ void QtTextCanvas::setFont(QFont const &font)
 {
     d->clearCache();
 
-    d->font = font;
+    QFont scaled = font;
+    scaled.setPointSize(font.pointSize() * d->dpiFactor);
 
-    d->boldFont = font;
+    d->font = scaled;
+
+    d->boldFont = scaled;
     d->boldFont.setWeight(QFont::Bold);
 
     markDirty();
@@ -189,7 +200,7 @@ void QtTextCanvas::setBlinkVisible(bool visible)
 void QtTextCanvas::show()
 {
     QPainter painter(&d->backBuffer);
-    QFontMetrics metrics(d->font);
+    QFontMetrics metrics(d->font);   
 
     for(int y = 0; y < height(); ++y)
     {
@@ -202,8 +213,8 @@ void QtTextCanvas::show()
                 continue;
 
             QRect const rect(QPoint(x * d->charSizePx.x,
-                                    y * d->charSizePx.y),
-                             QSize(d->charSizePx.x, d->charSizePx.y));
+                                    y * d->charSizePx.y) * d->dpiFactor,
+                             QSize(d->charSizePx.x, d->charSizePx.y) * d->dpiFactor);
 
             if(ch.attribs.testFlag(Char::Blink) && !d->blinkVisible)
             {

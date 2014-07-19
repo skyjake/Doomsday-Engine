@@ -154,7 +154,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         App::app().audienceForStartupComplete() -= this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
@@ -223,12 +223,12 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     void deferUpdate()
     {
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         updateItemsFromSavedIndex();
     }
 };

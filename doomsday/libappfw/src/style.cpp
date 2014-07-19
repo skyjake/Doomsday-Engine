@@ -23,6 +23,7 @@
 #include <de/Record>
 #include <de/Variable>
 #include <de/RecordValue>
+#include <de/Package>
 
 namespace de {
 
@@ -50,19 +51,17 @@ DENG2_PIMPL(Style)
         module.clear();
     }
 
-    void load(String const &path)
+    void load(Package const &pack)
     {
-        Folder const &pack = App::rootFolder().locate<Folder>(path);
-
         if(CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
         {
             fonts.setFontSizeFactor(arg.params.at(0).toFloat());
         }
 
-        rules.addFromInfo(pack.locate<File>("rules.dei"));
-        fonts.addFromInfo(pack.locate<File>("fonts.dei"));
-        colors.addFromInfo(pack.locate<File>("colors.dei"));
-        images.addFromInfo(pack.locate<File>("images.dei"));
+        rules .addFromInfo(pack.root().locate<File>("rules.dei"));
+        fonts .addFromInfo(pack.root().locate<File>("fonts.dei"));
+        colors.addFromInfo(pack.root().locate<File>("colors.dei"));
+        images.addFromInfo(pack.root().locate<File>("images.dei"));
 
         // Update the subrecords of the native module.
         module.add(new Variable("rules",  new RecordValue(rules.names()),  Variable::AllowRecord));
@@ -78,7 +77,7 @@ Style::Style() : d(new Instance(this))
 Style::~Style()
 {}
 
-void Style::load(String const &pack)
+void Style::load(Package const &pack)
 {
     d->clear();
     d->load(pack);
@@ -203,7 +202,7 @@ bool Style::isBlurringAllowed() const
 
 static Style *theAppStyle = 0;
 
-Style &Style::appStyle()
+Style &Style::get()
 {
     DENG2_ASSERT(theAppStyle != 0);
     return *theAppStyle;

@@ -58,8 +58,8 @@ DENG2_OBSERVES(App, GameChange)
                 d->self.add(pop);
                 pop->setAnchorAndOpeningDirection(widget.rule(), ui::Left);
                 pop->items()
-                        << new ActionItem(tr("Fold All"),   new SignalAction(d->thisPublic, SLOT(foldAll())))
-                        << new ActionItem(tr("Unfold All"), new SignalAction(d->thisPublic, SLOT(unfoldAll())));
+                        << new ActionItem(tr("Fold All"),   new SignalAction(&d->self, SLOT(foldAll())))
+                        << new ActionItem(tr("Unfold All"), new SignalAction(&d->self, SLOT(unfoldAll())));
                 pop->open();
                 return true; }
 

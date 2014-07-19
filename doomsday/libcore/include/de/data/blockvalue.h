@@ -44,6 +44,8 @@ public:
     /// Converts the BlockValue to a plain byte array.
     operator IByteArray &();
 
+    Block &block();
+
     /// Empties the block value.
     void clear();
 

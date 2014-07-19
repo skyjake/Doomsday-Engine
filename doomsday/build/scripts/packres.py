@@ -68,27 +68,28 @@ class Pack:
 # Directory contents added recursively.
 p = Pack()
 p.add_files(
-    [ ('client/defs', 'defs'),
-      ('client/data', 'data') ] )
+    [ ('client/data', 'data') ] )
 p.create('doomsday.pk3')
 
-# defaultstyle.pack
+# net.dengine.base.pack
 p = Pack()
-p.add_files(
-    [ ('client/data/defaultstyle.pack', '') ] )
-p.create('defaultstyle.pack')
+p.add_files( [ ('net.dengine.base.pack', '') ] )
+p.create('net.dengine.base.pack')
 
-# renderer.pack
+# net.dengine.stdlib.pack
 p = Pack()
-p.add_files(
-    [ ('client/data/renderer.pack', '') ] )
-p.create('renderer.pack')
+p.add_files( [ ('libcore/net.dengine.stdlib.pack', '') ] )
+p.create('net.dengine.stdlib.pack')
 
-# lensflares.pack
+# net.dengine.stdlib.gui.pack
 p = Pack()
-p.add_files(
-    [ ('client/data/lensflares.pack', '') ] )
-p.create('lensflares.pack')
+p.add_files( [ ('libgui/net.dengine.stdlib.gui.pack', '') ] )
+p.create('net.dengine.stdlib.gui.pack')
+
+# net.dengine.client.pack
+p = Pack()
+p.add_files( [ ('client/net.dengine.client.pack', '') ] )
+p.create('net.dengine.client.pack')
 
 # libdoom.pk3
 p = Pack()

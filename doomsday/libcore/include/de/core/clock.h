@@ -69,7 +69,7 @@ public:
 
 public:
     static void setAppClock(Clock *c);
-    static Clock &appClock();
+    static Clock &get();
     static Time const &appTime();
 
 private:

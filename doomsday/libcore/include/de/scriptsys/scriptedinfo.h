@@ -126,7 +126,14 @@ public:
     typedef QSet<String> Paths;
 
 public:
-    ScriptedInfo();
+    /**
+     * Creates a new ScriptedInfo parser.
+     *
+     * @param globalNamespace  Optionally an existing namespace where the parsed
+     *                         content will be stored in. If not provided, ScriptedInfo
+     *                         will create a new one (returned by names()).
+     */
+    ScriptedInfo(Record *globalNamespace = 0);
 
     void clear();
 
@@ -163,6 +170,20 @@ public:
      * The records can be accessed via names().
      */
     Paths allBlocksOfType(String const &blockType) const;
+
+    /**
+     * Checks if the context has a "__source__", and resolves @a relativePath in
+     * relation to it.
+     *
+     * @param context       Namespace.
+     * @param relativePath  Relative path.
+     *
+     * @return Absolute path resolved using the context.
+     */
+    static String absolutePathInContext(Record const &context, String const &relativePath);
+
+public:
+    static Paths allBlocksOfType(String const &blockType, Record const &root);
 
 private:
     DENG2_PRIVATE(d)

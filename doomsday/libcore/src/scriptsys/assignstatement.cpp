@@ -63,7 +63,7 @@ void AssignStatement::execute(Context &context) const
 
     // The new value that will be assigned to the destination.
     // Ownership of this instance will be given to the variable.
-    QScopedPointer<Value> value(results.pop());
+    QScopedPointer<Value> value(results.popLast());
 
     if(_indexCount > 0)
     {
@@ -73,7 +73,7 @@ void AssignStatement::execute(Context &context) const
         for(dint i = 0; i < _indexCount; ++i)
         {   
             // Get the evaluated index.
-            QScopedPointer<Value> index(results.pop()); // Not released -- will be destroyed.
+            QScopedPointer<Value> index(results.popLast()); // Not released -- will be destroyed.
             if(i < _indexCount - 1)
             {
                 // Switch targets to a subelement.

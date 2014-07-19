@@ -255,12 +255,12 @@ int Library_IterateAvailableLibraries(int (*func)(void *, const char *, const ch
 
     DENG2_FOR_EACH_CONST(FS::Index, i, libs)
     {
-        LibraryFile *lib = static_cast<LibraryFile *>(i->second);
-        NativeFile const *src = dynamic_cast<de::NativeFile const *>(lib->source());
+        LibraryFile &lib = i->second->as<LibraryFile>();
+        NativeFile const *src = lib.source()->maybeAs<NativeFile>();
         if(src)
         {
-            int result = func(lib, src->name().toUtf8().constData(),
-                              lib->path().toUtf8().constData(), data);
+            int result = func(&lib, src->name().toUtf8().constData(),
+                              lib.path().toUtf8().constData(), data);
             if(result) return result;
         }
     }

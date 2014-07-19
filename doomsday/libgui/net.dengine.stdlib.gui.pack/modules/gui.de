@@ -32,13 +32,13 @@ def setDefaults(d)
            
         # Window manager defaults.
         record d.window
-        d.window.fsaa = True    # Remove this (should be window-specific).
+        d.window.fsaa = False   # Remove this (should be window-specific).
     
         # Configure the main window.
         record d.window.main
         d.window.main.showFps = False
         d.window.main.center  = True
-        d.window.main.fsaa    = True
+        d.window.main.fsaa    = False
         d.window.main.vsync   = True
 
         # The default window parameters depend on the original display mode.

@@ -36,6 +36,8 @@
 
 namespace de {
 
+String const Record::SUPER_NAME = "__super__";
+
 /**
  * Each record is given a unique identifier, so that serialized record
  * references can be tracked to their original target.
@@ -307,6 +309,11 @@ Variable *Record::remove(Variable &variable)
     return &variable;
 }
 
+Variable *Record::remove(String const &variableName)
+{
+    return remove((*this)[variableName]);
+}
+
 Variable &Record::add(String const &name)
 {
     return d->parentRecordByPath(name)
@@ -386,7 +393,7 @@ Record &Record::addRecord(String const &name)
     return add(name, new Record);
 }
 
-Record *Record::remove(String const &name)
+Record *Record::removeSubrecord(String const &name)
 {
     Members::const_iterator found = d->members.find(name);
     if(found != d->members.end() && d->isSubrecord(*found.value()))
@@ -559,18 +566,18 @@ String Record::asText(String const &prefix, List *lines) const
     return result;
 }
 
-Function const *Record::function(String const &name) const
+Function const &Record::function(String const &name) const
 {
-    try
+    return (*this)[name].value<FunctionValue>().function();
+}
+
+void Record::addSuperRecord(Value *superValue)
+{
+    if(!has(SUPER_NAME))
     {
-        FunctionValue const *func = dynamic_cast<FunctionValue const *>(&(*this)[name].value());
-        if(func)
-        {
-            return &func->function();
-        }
+        addArray(SUPER_NAME);
     }
-    catch(NotFoundError &) {}    
-    return 0;
+    (*this)[SUPER_NAME].value<ArrayValue>().add(superValue);
 }
 
 void Record::operator >> (Writer &to) const
@@ -636,6 +643,15 @@ Record &Record::operator << (NativeFunctionSpec const &spec)
 {
     addFunction(spec.name(), refless(spec.make())).setReadOnly();
     return *this;
+}
+
+Record const &Record::parentRecordForMember(String const &name) const
+{
+    String const lastOmitted = name.fileNamePath('.');
+    if(lastOmitted.isEmpty()) return *this;
+
+    // Omit the final segment of the dotted path to find out the parent record.
+    return (*this)[lastOmitted].valueAsRecord();
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

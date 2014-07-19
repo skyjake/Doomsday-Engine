@@ -79,7 +79,7 @@ public:
      */
     static void timer(TimeDelta const &delay, void (*func)(void));
 
-    static Loop &appLoop();
+    static Loop &get();
 
 public slots:
     void nextLoopIteration();

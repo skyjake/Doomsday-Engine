@@ -141,7 +141,7 @@ void Sys_Shutdown(void)
 static int showCriticalMessage(const char* msg)
 {
     // This is going to be the end, I'm afraid.
-    de::Loop::appLoop().stop();
+    de::Loop::get().stop();
 
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
     return 0;

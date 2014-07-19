@@ -27,8 +27,6 @@
 
 namespace de {
 
-String const ScopeStatement::SUPER_NAME = "__super__";
-
 DENG2_PIMPL_NOREF(ScopeStatement)
 {
     QScopedPointer<Expression> identifier;
@@ -59,19 +57,11 @@ void ScopeStatement::execute(Context &context) const
     Record &classRecord = eval.evaluateTo<RecordValue>(d->identifier.data()).dereference();
 
     // Possible super records.
-    ArrayValue &newSupers = eval.evaluateTo<ArrayValue>(d->superRecords.data());
-    if(newSupers.size())
+    eval.evaluate(d->superRecords.data());
+    QScopedPointer<ArrayValue> newSupers(eval.popResultAs<ArrayValue>());
+    while(newSupers->size() > 0)
     {
-        if(!classRecord.has(SUPER_NAME))
-        {
-            classRecord.addArray(SUPER_NAME);
-        }
-        ArrayValue *supers = &classRecord[SUPER_NAME].value<ArrayValue>();
-
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, newSupers.elements())
-        {
-            supers->add((*i)->duplicateAsReference());
-        }
+        classRecord.addSuperRecord(newSupers->popFirst());
     }
 
     // This context continues past the compound.

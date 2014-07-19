@@ -69,7 +69,7 @@ public:
      *
      * @param record     Record.
      */
-    RecordValue(Record &record);
+    RecordValue(Record const &record);
 
     virtual ~RecordValue();
 

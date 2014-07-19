@@ -94,7 +94,7 @@ void Loop::timer(TimeDelta const &delay, void (*func)(void))
     timer->start(delay.asMilliSeconds());
 }
 
-Loop &Loop::appLoop()
+Loop &Loop::get()
 {
     DENG2_ASSERT(loopSingleton != 0);
     return *loopSingleton;

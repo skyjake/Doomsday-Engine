@@ -50,7 +50,7 @@ static bool checkLogEntryMetadata(unsigned int &metadata)
     }
 
     // If this level is not enabled, just ignore.
-    return de::LogBuffer::appBuffer().isEnabled(metadata);
+    return de::LogBuffer::get().isEnabled(metadata);
 }
 
 static void logFragmentPrinter(duint32 metadata, char const *fragment)
@@ -183,18 +183,18 @@ void LogBuffer_Flush(void)
 {
     if(de::LogBuffer::appBufferExists())
     {
-        de::LogBuffer::appBuffer().flush();
+        de::LogBuffer::get().flush();
     }
 }
 
 void LogBuffer_Clear(void)
 {
-    de::LogBuffer::appBuffer().clear();
+    de::LogBuffer::get().clear();
 }
 
 void LogBuffer_EnableStandardOutput(int enable)
 {
-	de::LogBuffer::appBuffer().enableStandardOutput(enable != 0);
+	de::LogBuffer::get().enableStandardOutput(enable != 0);
 }
 
 void LogBuffer_Printf(unsigned int metadata, char const *format, ...)

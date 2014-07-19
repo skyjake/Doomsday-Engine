@@ -74,7 +74,7 @@ void Clock::setAppClock(Clock *c)
     _appClock = c;
 }
 
-Clock &Clock::appClock()
+Clock &Clock::get()
 {
     DENG2_ASSERT(_appClock != 0);
     return *_appClock;
@@ -82,7 +82,7 @@ Clock &Clock::appClock()
 
 Time const &Clock::appTime()
 {
-    return appClock().time();
+    return get().time();
 }
 
 } // namespace de

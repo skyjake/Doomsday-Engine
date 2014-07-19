@@ -28,7 +28,7 @@ class Record;
 /**
  * Utility class with convenient get*() methods. While Record is designed to be used
  * primarily by Doomsday Script, RecordAccessor makes it easy for native code to access
- * the values stored in a Record, too.
+ * the values stored in a Record.
  *
  * Record is derived from RecordAccessor, which makes these methods available in all
  * Record instances, too.

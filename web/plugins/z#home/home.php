@@ -265,7 +265,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
     $('#recentbuilds').interpretFeed({
-        feedUri: 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss',
+        feedUri: 'http://code.iki.fi/builds/events.rss',
         dataType: 'xml',
         maxItems: 3,
         generateItemHtml : function(n, t) {

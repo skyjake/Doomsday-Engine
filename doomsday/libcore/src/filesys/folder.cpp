@@ -355,70 +355,33 @@ File *Folder::remove(File &file)
     return &file;
 }
 
-File *Folder::tryLocateFile(String const &path) const
+filesys::Node const *Folder::tryGetChild(String const &name) const
 {
-    if(path.empty())
-    {
-        File *file = const_cast<Folder *>(this);
-        return file;
-    }
-
-    if(path[0] == '/')
-    {
-        // Route back to the root of the file system.
-        File *file = fileSystem().root().tryLocateFile(path.substr(1));
-        return file;
-    }
-
-    DENG2_GUARD(this);
-
-    // Extract the next component.
-    String::size_type end = path.indexOf('/');
-    if(end == String::npos)
-    {
-        // No more slashes. What remains is the final component.
-        Contents::const_iterator found = d->contents.find(path.lower());
-        if(found != d->contents.end())
-        {
-            File *file = found->second;
-            return file;
-        }
-        return 0;
-    }
-
-    String component = path.substr(0, end);
-    String remainder = path.substr(end + 1);
-
-    // Check for some special cases.
-    if(component == ".")
-    {
-        File *file = tryLocateFile(remainder);
-        return file;
-    }
-    if(component == "..")
-    {
-        if(!parent())
-        {
-            // Can't go there.
-            return 0;
-        }
-        File *file = parent()->tryLocateFile(remainder);
-        return file;
-    }
-    
-    // Do we have a folder for this?
-    Contents::const_iterator found = d->contents.find(component.lower());
+    Contents::const_iterator found = d->contents.find(name.lower());
     if(found != d->contents.end())
     {
-        if(Folder *subFolder = found->second->maybeAs<Folder>())
-        {
-            // Continue recursively to the next component.
-            File *file = subFolder->tryLocateFile(remainder);
-            return file;
-        }
+        return found->second;
     }
-    
-    // Dead end.
+    return 0;
+}
+
+filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
+{
+    // Absolute paths refer to the file system root.
+    if(path.isAbsolute())
+    {
+        return fileSystem().root().tryFollowPath(path.subPath(Rangei(1, path.segmentCount())));
+    }
+
+    return Node::tryFollowPath(path);
+}
+
+File *Folder::tryLocateFile(String const &path) const
+{
+    if(filesys::Node const *node = tryFollowPath(Path(path)))
+    {
+        return const_cast<File *>(node->maybeAs<File>());
+    }
     return 0;
 }
 

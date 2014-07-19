@@ -62,6 +62,9 @@ public:
     /// All variables and subrecords in the record must have a name. @ingroup errors
     DENG2_ERROR(UnnamedError);
 
+    /// Name of the special variable that specifies super records.
+    static String const SUPER_NAME;
+
     typedef QMap<String, Variable *> Members;
     typedef QMap<String, Record *> Subrecords;
     typedef std::pair<String, String> KeyValue;
@@ -157,6 +160,15 @@ public:
      * @return  Caller gets ownership of the removed variable.
      */
     Variable *remove(Variable &variable);
+
+    /**
+     * Removes a variable from the record.
+     *
+     * @param variableName  Name of the variable.
+     *
+     * @return  Caller gets ownership of the removed variable.
+     */
+    Variable *remove(String const &variableName);
 
     /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
@@ -280,7 +292,7 @@ public:
      *
      * @return  Caller gets ownership of the removed record.
      */
-    Record *remove(String const &name);
+    Record *removeSubrecord(String const &name);
 
     /**
      * Sets the value of a variable, creating the variable if needed.
@@ -388,14 +400,23 @@ public:
     }
 
     /**
-     * Convenience method for finding the Function referenced by a member.
+     * Convenience method for getting the Function referenced by a member.
+     *
+     * An exception is thrown if @a name is not found (NotFoundError) or does not have a
+     * FunctionValue (Variable::TypeError).
      *
      * @param name  Name of member.
      *
-     * @return  The function, or @c NULL if the member does not exist or
-     *          has some other value than FunctionValue.
+     * @return  The function instance.
      */
-    Function const *function(String const &name) const;
+    Function const &function(String const &name) const;
+
+    /**
+     * Adds a new record to be used as a superclass of this record.
+     *
+     * @param superValue  Value referencing the super record to add. Ownership taken.
+     */
+    void addSuperRecord(Value *superValue);
 
     /**
      * Adds a new native function to the record according to the specification.
@@ -405,6 +426,16 @@ public:
      * @return  Reference to this record.
      */
     Record &operator << (NativeFunctionSpec const &spec);
+
+    /**
+     * Looks up the record that contains the variable referred to be @a name.
+     * If @a name contains no '.' characters, this always returns this record.
+     *
+     * @param name  Variable name.
+     *
+     * @return Record containing the @a name.
+     */
+    Record const &parentRecordForMember(String const &name) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

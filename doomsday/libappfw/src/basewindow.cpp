@@ -53,7 +53,7 @@ DENG2_PIMPL(BaseWindow)
         /// subsystem passes it to window system. -jk
 
         // Pass the event onto the window system.
-        if(!WindowSystem::appWindowSystem().processEvent(ev))
+        if(!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);
@@ -72,7 +72,7 @@ DENG2_PIMPL(BaseWindow)
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVector2i());
         }
 
-        if(!WindowSystem::appWindowSystem().processEvent(ev))
+        if(!WindowSystem::get().processEvent(ev))
         {
             // Maybe the fallback handler has use for this.
             self.handleFallbackEvent(ev);

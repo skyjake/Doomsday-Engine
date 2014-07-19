@@ -60,8 +60,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
     public static $name = 'buildrepository';
 
     /// Feed URIs:
-    const XML_FEED_URI = 'http://dl.dropboxusercontent.com/u/11948701/builds/events.xml';
-    const RSS_FEED_URI = 'http://dl.dropboxusercontent.com/u/11948701/builds/events.rss';
+    const XML_FEED_URI = 'http://code.iki.fi/builds/events.xml';
+    const RSS_FEED_URI = 'http://code.iki.fi/builds/events.rss';
 
     /**
      * Plaform (Record):

@@ -1,4 +1,4 @@
-/** @file packagefolder.h Folder that hosts a data package archive.
+/** @file archivefolder.h  Folder whose contents represent an archive.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBDENG2_PACKAGEFOLDER_H
-#define LIBDENG2_PACKAGEFOLDER_H
+#ifndef LIBDENG2_ARCHIVEFOLDER_H
+#define LIBDENG2_ARCHIVEFOLDER_H
 
 #include "../Folder"
 #include "../Archive"
@@ -25,25 +25,16 @@
 namespace de {
 
 /**
- * Specialized Folder that hosts a data package.
+ * Specialized Folder that gets its contents from an archive (via ArchiveFeed).
  * @ingroup fs
  *
- * A @em package is a collection of files packaged into a single unit (possibly
- * using an Archive). Examples of packages are add-on packages (in various
- * formats, e.g., PK3/ZIP archive or the Snowberry add-on bundle), savegames,
- * custom maps, and demos.
- *
- * When a ZIP-format file is interpreted, it will be represented in the file
- * system by a PackageFolder, while the contents of the ZIP file are
- * represented by ArchiveEntryFile instances.
- *
- * @todo In addition to providing easy access to the Archive of the package,
- * PackageFolder should also make it convenient to access the metadata of the
- * package (read from the contained Info file).
+ * When a generic ZIP-format file is interpreted, it will be represented in the file
+ * system by an ArchiveFolder, while the contents of the ZIP file are represented by
+ * ArchiveEntryFile instances.
  *
  * @see ArchiveFeed
  */
-class DENG2_PUBLIC PackageFolder : public Folder
+class DENG2_PUBLIC ArchiveFolder : public Folder
 {
 public:
     /**
@@ -53,12 +44,12 @@ public:
      *
      * @param sourceArchiveFile  Source file that contains an archive. The
      *                           ArchiveFeed that will be attached to the
-     *                           PackageFolder uses this file as its source.
+     *                           ArchiveFolder uses this file as its source.
      * @param name               Name for the folder.
      */
-    PackageFolder(File &sourceArchiveFile, String const &name = "");
+    ArchiveFolder(File &sourceArchiveFile, String const &name = "");
 
-    virtual ~PackageFolder();
+    virtual ~ArchiveFolder();
 
     void flush();
 
@@ -75,4 +66,4 @@ public:
 
 } // namespace de
 
-#endif // LIBDENG2_PACKAGEFOLDER_H
+#endif // LIBDENG2_ARCHIVEFOLDER_H

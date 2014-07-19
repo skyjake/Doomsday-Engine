@@ -51,6 +51,11 @@ Name: "{app}\doc"
 
 ; Obsolete files which should be removed if present when upgrading.
 [InstallDelete]
+Type: files; Name: "{app}\bin\QtCore4.dll"
+Type: files; Name: "{app}\bin\QtGui4.dll"
+Type: files; Name: "{app}\bin\QtNetwork4.dll"
+Type: files; Name: "{app}\bin\QtOpenGL4.dll"
+Type: files; Name: "{app}\bin\imageformats\qjpeg4.dll"
 Type: files; Name: "{app}\bin\SDL.dll"
 Type: files; Name: "{app}\bin\SDL_mixer.dll"
 Type: files; Name: "{app}\bin\mikmod.dll"
@@ -104,11 +109,27 @@ Source: "bin\deng_core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Compone
 Source: "bin\deng_gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_legacy.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\deng_shell.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+
+; Qt 4
+; Source: "bin\QtCore4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtGui4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtNetwork4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\QtOpenGL4.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+; Source: "bin\imageformats\qjpeg4.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine 
+
+; Qt 5
+Source: "bin\Qt5Core.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Gui.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Network.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5OpenGL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\Qt5Widgets.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icuin52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icuuc52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\icudt52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\qjpeg.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\qico.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\qgif.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+
 Source: "bin\assimp.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\OpenAL32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine

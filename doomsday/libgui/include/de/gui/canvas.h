@@ -126,9 +126,19 @@ public:
     GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
 
     /**
-     * Returns the size of the canvas in pixels.
+     * Returns the size of the canvas in device pixels.
      */
     Size size() const;
+
+    /**
+     * Returns the width of the canvas in device pixels.
+     */
+    inline int width() const { return size().x; }
+
+    /**
+     * Returns the height of the canvas in device pixels.
+     */
+    inline int height() const { return size().y; }
 
     /**
      * When the mouse is trapped, all mouse input is grabbed, the mouse cursor

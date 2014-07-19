@@ -123,7 +123,7 @@ void DirectoryFeed::populateFile(Folder &folder, String const &entryName)
     // We will decide on pruning this.
     file->setOriginFeed(this);
 
-    // Include files the main index.
+    // Include files in the main index.
     folder.fileSystem().index(*file);
 }
 

@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -26,7 +26,7 @@
 #include "../Record"
 #include "../AccessorValue"
 #include "../Audience"
-#include "../Lockable"
+#include "../filesys/Node"
 
 #include <QFlags>
 
@@ -77,7 +77,7 @@ class Feed;
  * lock themselves as appropriate. A user may lock the file manually if long-term
  * exclusive access is required.
  */
-class DENG2_PUBLIC File : public Lockable, public IIOStream
+class DENG2_PUBLIC File : public filesys::Node, public IIOStream
 {
 public:
     // Mode flags.
@@ -201,8 +201,8 @@ public:
     /// Returns a reference to the application's file system.
     static FileSystem &fileSystem();
 
-    /// Returns the name of the file.
-    String name() const;
+    /// Returns the parent folder.
+    Folder *parent() const;
 
     /**
      * Returns a textual description of the file, intended only for humans.
@@ -221,16 +221,6 @@ public:
      * @return Human-friendly description of this file only.
      */
     virtual String describe() const;
-
-    /**
-     * Sets the parent folder of this file.
-     */
-    void setParent(Folder *parent);
-
-    /**
-     * Returns the parent folder. May be NULL.
-     */
-    Folder *parent() const;
 
     /**
      * Sets the origin Feed of the File. The origin feed is the feed that is able
@@ -297,14 +287,6 @@ public:
      * stream-based file), the size is zero.
      */
     dsize size() const;
-
-    /**
-     * Forms the complete path of this file object.
-     *
-     * @return Path of the object. This is not a native path, but instead
-     *         intended for de::FileSystem.
-     */
-    String const path() const;
 
     /**
      * Returns the mode of the file.

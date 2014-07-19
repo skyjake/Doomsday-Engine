@@ -25,7 +25,7 @@
 #include "de/Log"
 #include "de/NumberValue"
 #include "de/NativePath"
-#include "de/PackageFolder"
+#include "de/ArchiveFolder"
 #include "de/Writer"
 
 namespace de {
@@ -282,7 +282,7 @@ DENG2_PIMPL(SavedSession)
 DENG2_AUDIENCE_METHOD(SavedSession, MetadataChange)
 
 SavedSession::SavedSession(File &sourceArchiveFile, String const &name)
-    : PackageFolder(sourceArchiveFile, name)
+    : ArchiveFolder(sourceArchiveFile, name)
     , d(new Instance(this))
 {}
 
@@ -296,7 +296,7 @@ SavedSession::~SavedSession()
 
 void SavedSession::populate(PopulationBehavior behavior)
 {
-    PackageFolder::populate(behavior);
+    ArchiveFolder::populate(behavior);
     Session::savedIndex().add(*this);
 }
 

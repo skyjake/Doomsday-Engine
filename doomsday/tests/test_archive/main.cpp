@@ -124,7 +124,7 @@ int main(int argc, char **argv)
         TimeDelta(0.5).sleep(); // make the time difference clearer
 
         // Changes were made to the archive via files. The archive won't be
-        // written back to its source file until the PackageFolder instance
+        // written back to its source file until the ArchiveFolder instance
         // is deleted or when a flush is done.
         updated.flush();
 

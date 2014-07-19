@@ -102,7 +102,7 @@ void TextApp::loopIteration()
 {
     // Update the clock time. App listens to this clock and will inform
     // subsystems in the order they've been added in.
-    Clock::appClock().setTime(Time());
+    Clock::get().setTime(Time());
 }
 
 } // namespace de

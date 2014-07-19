@@ -38,7 +38,7 @@ DENG2_PIMPL(ClientWindowSystem)
         : Base(i)
     {
         self.setStyle(new ClientStyle);
-        self.style().load(App::fileSystem().find("defaultstyle.pack").path());
+        self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
         settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
                 .define(SettingsRegister::IntCVar,        "vid-fsaa", 1)

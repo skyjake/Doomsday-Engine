@@ -38,6 +38,12 @@ static DotPath const ID_THIN_ROUND_CORNERS = "GuiRootWidget.frame.thin";
 static DotPath const ID_BOLD_ROUND_CORNERS = "GuiRootWidget.frame.bold";
 static DotPath const ID_DOT                = "GuiRootWidget.dot";
 
+#ifdef DENG2_QT_5_0_OR_NEWER
+#  define DPI_SCALED(x)       ((x) * qApp->devicePixelRatio())
+#else
+#  define DPI_SCALED(x)       (x)
+#endif
+
 DENG2_PIMPL(GuiRootWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
 {
@@ -52,44 +58,44 @@ DENG2_PIMPL(GuiRootWidget)
     };
     struct ThinCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(15, 15), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED(15), DPI_SCALED(15)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setBrush(Qt::NoBrush);
-            painter.setPen(QPen(Qt::white, 1));
-            painter.drawEllipse(QPoint(8, 8), 6, 6);
+            painter.setPen(QPen(Qt::white, DPI_SCALED(1)));
+            painter.drawEllipse(DPI_SCALED(QPointF(8, 8)), DPI_SCALED(6), DPI_SCALED(6));
             return img;
         }
     };
     struct BoldCornersImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(12, 12), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED(12), DPI_SCALED(12)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
-            painter.setPen(QPen(QColor(255, 255, 255, 255), 2));
+            painter.setPen(QPen(QColor(255, 255, 255, 255), DPI_SCALED(2)));
             painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(QPoint(6, 6), 4, 4);
+            painter.drawEllipse(DPI_SCALED(QPointF(6, 6)), DPI_SCALED(4), DPI_SCALED(4));
             return img;
         }
     };
     struct TinyDotImage : public TextureBank::ImageSource {
         Image load() const {
-            QImage img(QSize(5, 5), QImage::Format_ARGB32);
+            QImage img(QSize(DPI_SCALED(5), DPI_SCALED(5)), QImage::Format_ARGB32);
             img.fill(QColor(255, 255, 255, 0).rgba());
             QPainter painter(&img);
             painter.setRenderHint(QPainter::Antialiasing, true);
             painter.setPen(Qt::NoPen);
             painter.setBrush(Qt::white);
-            painter.drawEllipse(QPointF(2.5f, 2.5f), 2, 2);
+            painter.drawEllipse(DPI_SCALED(QPointF(2.5f, 2.5f)), DPI_SCALED(2), DPI_SCALED(2));
             return img;
         }
     };
     struct StyleImage : public TextureBank::ImageSource {
         StyleImage(DotPath const &id) : ImageSource(id) {}
         Image load() const {
-            return Style::appStyle().images().image(id());
+            return Style::get().images().image(id());
         }
     };
 
@@ -146,7 +152,7 @@ DENG2_PIMPL(GuiRootWidget)
         texBank.add(ID_DOT,                new TinyDotImage);
 
         // All style images.
-        Style const &st = Style::appStyle();
+        Style const &st = Style::get();
         ImageBank::Names imageNames;
         st.images().allItems(imageNames);
         foreach(String const &name, imageNames)
@@ -283,109 +289,6 @@ void GuiRootWidget::handleEventAsFallback(Event const &)
 void GuiRootWidget::loadCommonTextures()
 {   
     d->initBankContents();
-
-#if 0
-    // One solid white pixel.
-    Image const solidWhitePixel = Image::solidColor(Image::Color(255, 255, 255, 255),
-                                                    Image::Size(1, 1));
-    d->solidWhiteTex = d->atlas->alloc(solidWhitePixel);
-
-    // Rounded corners.
-    {
-        QImage corners(QSize(15, 15), QImage::Format_ARGB32);
-        corners.fill(QColor(255, 255, 255, 0).rgba());
-        QPainter painter(&corners);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setBrush(Qt::NoBrush);
-        painter.setPen(QPen(Qt::white, 1));
-        painter.drawEllipse(QPoint(8, 8), 6, 6);
-        //painter.setPen(QPen(Qt::black, 1));
-        //painter.drawEllipse(QPoint(10, 10), 8, 8);
-        d->roundCorners = d->atlas->alloc(corners);
-    }
-
-    // Gradient frame.
-    {
-        QImage frame(QSize(12, 12), QImage::Format_ARGB32);
-        frame.fill(QColor(255, 255, 255, 0).rgba());
-        QPainter painter(&frame);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setPen(QPen(QColor(255, 255, 255, 255), 2));
-        painter.setBrush(Qt::NoBrush);//QColor(255, 255, 255, 255));
-        painter.drawEllipse(QPoint(6, 6), 4, 4);
-        /*
-        painter.setCompositionMode(QPainter::CompositionMode_Source);
-        painter.setBrush(Qt::NoBrush);
-        painter.setPen(QColor(255, 255, 255, 32));
-        painter.drawRect(QRect(1, 1, 9, 9));
-        painter.setPen(QColor(255, 255, 255, 64));
-        painter.drawRect(QRect(2, 2, 7, 7));
-        painter.setPen(QColor(255, 255, 255, 128));
-        painter.drawRect(QRect(3, 3, 5, 5));
-        painter.setPen(QColor(255, 255, 255, 255));
-        painter.drawRect(QRect(4, 4, 3, 3));
-        {
-            painter.setPen(QColor(255, 255, 255, 192));
-            QPointF const points[4] = {
-                QPointF(4, 4), QPointF(4, 7),
-                QPointF(7, 4), QPointF(7, 7)
-            };
-            painter.drawPoints(points, 4);
-        }
-        {
-            painter.setPen(QColor(255, 255, 255, 96));
-            QPointF const points[4] = {
-                QPointF(3, 3), QPointF(3, 8),
-                QPointF(8, 3), QPointF(8, 8)
-            };
-            painter.drawPoints(points, 4);
-        }
-        {
-            painter.setPen(QColor(255, 255, 255, 48));
-            QPointF const points[4] = {
-                QPointF(2, 2), QPointF(2, 9),
-                QPointF(9, 2), QPointF(9, 9)
-            };
-            painter.drawPoints(points, 4);
-        }
-        {
-            painter.setPen(QColor(255, 255, 255, 16));
-            QPointF const points[4] = {
-                QPointF(1, 1), QPointF(1, 10),
-                QPointF(10, 1), QPointF(10, 10)
-            };
-            painter.drawPoints(points, 4);
-        }
-        */
-        d->boldRoundCorners = d->atlas->alloc(frame);
-    }
-
-    // Border glow.
-    d->borderGlow = d->atlas->alloc(st.images().image("window.borderglow"));
-
-    // On/Off toggle.
-    d->toggleOnOff = d->atlas->alloc(st.images().image("toggle.onoff"));
-
-    // Fold indicator.
-    d->fold = d->atlas->alloc(st.images().image("fold"));
-
-    // Tiny dot.
-    {
-        QImage dot(QSize(5, 5), QImage::Format_ARGB32);
-        dot.fill(QColor(255, 255, 255, 0).rgba());
-        QPainter painter(&dot);
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(Qt::white);
-        painter.drawEllipse(QPointF(2.5f, 2.5f), 2, 2);
-        d->tinyDot = d->atlas->alloc(dot);
-    }
-
-    // Various wheels.
-    d->largeRing = d->atlas->alloc(st.images().image("progress.wheel"));
-    d->largeGear = d->atlas->alloc(st.images().image("progress.gear"));
-    d->smallGear = d->atlas->alloc(st.images().image("progress.mini"));
-#endif
 }
 
 GuiWidget const *GuiRootWidget::globalHitTest(Vector2i const &pos) const

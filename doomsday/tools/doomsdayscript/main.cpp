@@ -36,7 +36,7 @@ int main(int argc, char **argv)
         TextApp app(argc, argv);
         app.setApplicationName("Doomsday Script");
         app.setConfigScript("");
-        LogBuffer::appBuffer().enableStandardOutput();
+        LogBuffer::get().enableStandardOutput();
         app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         app.commandLine().makeAbsolutePath(1);

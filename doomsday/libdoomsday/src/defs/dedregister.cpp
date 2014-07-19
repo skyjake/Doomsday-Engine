@@ -54,7 +54,7 @@ DENG2_PIMPL(DEDRegister)
         if(names) names->audienceForDeletion() -= this;
     }
 
-    void recordBeingDeleted(Record &record)
+    void recordBeingDeleted(Record &DENG2_DEBUG_ONLY(record))
     {
         DENG2_ASSERT(names == &record);
         names = 0;
@@ -66,11 +66,13 @@ DENG2_PIMPL(DEDRegister)
         // each definition record are deleted.
         (*names)["order"].value<ArrayValue>().clear();
 
+#ifdef DENG2_DEBUG
         DENG2_ASSERT(parents.isEmpty());
         foreach(String const &key, keys.keys())
         {
             DENG2_ASSERT(lookup(key).size() == 0);
         }
+#endif
     }
 
     void addKey(String const &name, LookupFlags const &flags)

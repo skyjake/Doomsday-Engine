@@ -121,6 +121,10 @@ if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
 	ln -fs Versions/$QT_MAJOR/QtGui     $APPDIR/Frameworks/QtGui.framework/QtGui
 	ln -fs Versions/$QT_MAJOR/QtNetwork $APPDIR/Frameworks/QtNetwork.framework/QtNetwork
 	ln -fs Versions/$QT_MAJOR/QtOpenGL  $APPDIR/Frameworks/QtOpenGL.framework/QtOpenGL
+	if [ "$QT_MAJOR" == "5" ]; then
+		ln -fs Versions/$QT_MAJOR/QtWidgets 	 "$APPDIR/Frameworks/QtWidgets.framework/QtWidgets"
+		ln -fs Versions/$QT_MAJOR/QtPrintSupport "$APPDIR/Frameworks/QtPrintSupport.framework/QtPrintSupport"
+	fi
 fi
 
 echo "Bundling Doomsday Shell.app..."
@@ -138,6 +142,10 @@ if [ -e "$APPDIR/Frameworks/QtCore.framework/Versions/$QT_MAJOR" ]; then
 	ln -fs Versions/$QT_MAJOR/QtCore    "$APPDIR/Frameworks/QtCore.framework/QtCore"
 	ln -fs Versions/$QT_MAJOR/QtGui     "$APPDIR/Frameworks/QtGui.framework/QtGui"
 	ln -fs Versions/$QT_MAJOR/QtNetwork "$APPDIR/Frameworks/QtNetwork.framework/QtNetwork"
+	if [ "$QT_MAJOR" == "5" ]; then
+		ln -fs Versions/$QT_MAJOR/QtWidgets  	 "$APPDIR/Frameworks/QtWidgets.framework/QtWidgets"
+		ln -fs Versions/$QT_MAJOR/QtPrintSupport "$APPDIR/Frameworks/QtPrintSupport.framework/QtPrintSupport"
+	fi
 fi
 
 echo "Bundling done."

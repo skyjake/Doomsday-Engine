@@ -38,7 +38,7 @@ namespace de {
  *
  * @see file.h, File1
  *
- * @todo This is obsolete: should use ZipArchive/PackageFolder in libcore.
+ * @todo This is obsolete: should use ZipArchive/ArchiveFolder in libcore.
  */
 class LIBDOOMSDAY_PUBLIC Zip : public File1, public LumpIndex
 {

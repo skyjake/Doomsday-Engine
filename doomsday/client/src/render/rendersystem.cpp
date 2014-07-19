@@ -97,6 +97,10 @@ DENG2_PIMPL(RenderSystem)
     {
         LOG_AS("RenderSystem");
 
+        // Load the required packages.
+        App::packageLoader().load("net.dengine.client.renderer");
+        App::packageLoader().load("net.dengine.client.renderer.lensflares");
+
         loadAllShaders();
         loadImages();
 
@@ -209,12 +213,15 @@ DENG2_PIMPL(RenderSystem)
     /**
      * Reads all shader definitions and sets up a Bank where the actual
      * compiled shaders are stored once they're needed.
+     *
+     * @todo This should be reworked to support unloading packages, and
+     * loading of new shaders from any newly loaded packages. -jk
      */
     void loadAllShaders()
     {
         // Load all the shader program definitions.
         FS::FoundFiles found;
-        App::fileSystem().findAll("shaders.dei", found);
+        App::fileSystem().nameIndex().findPartialPathInPackageOrder("shaders.dei", found);
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();

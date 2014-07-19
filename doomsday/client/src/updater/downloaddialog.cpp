@@ -75,7 +75,7 @@ DENG2_PIMPL(DownloadDialog)
 
         progress = new ProgressWidget;
         area.add(progress);
-        progress->setImageScale(.4f);
+        progress->setImageScale(toDevicePixels(.4f));
         progress->setAlignment(ui::AlignLeft);
         progress->setSizePolicy(ui::Fixed, ui::Expand);
         progress->setRange(Rangei(0, 100));

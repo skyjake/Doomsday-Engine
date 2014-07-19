@@ -21,7 +21,7 @@
 
 #include "../Error"
 #include "../Observers"
-#include "../PackageFolder"
+#include "../ArchiveFolder"
 #include "../Record"
 #include "../String"
 
@@ -29,14 +29,14 @@ namespace de {
 namespace game {
 
 /**
- * Specialized PackageFolder that hosts a serialized game session.
+ * Specialized ArchiveFolder that hosts a serialized game session.
  *
  * Expands upon the services provided by the base class, adding various
  * convenience methods for inspecting the data within.
  *
  * @ingroup game
  */
-class DENG2_PUBLIC SavedSession : public PackageFolder
+class DENG2_PUBLIC SavedSession : public ArchiveFolder
 {
 public:
     /// Notified whenever the cached metadata of the saved session changes.
@@ -132,7 +132,7 @@ public:
     virtual ~SavedSession();
 
     /**
-     * Specialized population behavior which first populates the PackageFolder
+     * Specialized population behavior which first populates the ArchiveFolder
      * before then adding the saved session into the (shared) Session::SavedIndex.
      */
     virtual void populate(PopulationBehavior behavior = PopulateFullTree);

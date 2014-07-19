@@ -43,6 +43,19 @@ public:
     ~ScriptSystem();
 
     /**
+     * Specifies an additional path where modules may be imported from.
+     * "Config.importPath" is checked before any of the paths specified using this
+     * method.
+     *
+     * Paths specified using this method are not saved persistently in Config.
+     *
+     * @param path  Additional module import path.
+     */
+    void addModuleImportPath(Path const &path);
+
+    void removeModuleImportPath(Path const &path);
+
+    /**
      * Adds a native module to the set of modules that can be imported in
      * scripts.
      *
@@ -92,9 +105,12 @@ public:
      */
     File const &findModuleSource(String const &name, String const &localPath = "");
 
+    void timeChanged(Clock const &);
+
+public:
     static Record &builtInClass(String const &name);
 
-    void timeChanged(Clock const &);
+    static ScriptSystem &get();
 
 private:
     DENG2_PRIVATE(d)

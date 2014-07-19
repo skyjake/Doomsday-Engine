@@ -210,13 +210,13 @@ def mac_release():
     os.chdir(MAC_WORK_DIR)
 
     # Choose the appropriate compiler.
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9':
-        mkspec = 'unsupported/macx-clang'
-    else:
-        mkspec = 'macx-g++'
+    #if mac_os_version() == '10.8' or mac_os_version() == '10.9':
+    #    mkspec = 'unsupported/macx-clang'
+    #else:
+    #    mkspec = 'macx-g++'
         
-    if os.system('qmake -r -spec %s CONFIG+=release DENG_BUILD=%s ' % (mkspec, DOOMSDAY_BUILD_NUMBER) +
-                 '../doomsday/doomsday.pro && make -j2 -w'):
+    if os.system('PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH qmake -r CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
+                 '../doomsday/doomsday.pro && PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH make -j2 -w'):
         raise Exception("Failed to build from source.")
 
     # Now we can proceed to packaging.
@@ -242,6 +242,27 @@ def mac_release():
     os.system('chmod -R o-w "Doomsday Engine.app"')
     os.system('chmod -R o-w "Doomsday Shell.app"')
 
+    if mac_os_version() != '10.6':
+        print 'Packaging apps onto a disk image (unsigned)...'
+        templateFile = 'appdisk.sparseimage'
+        os.system('bunzip2 -k -c %s > %s' % (os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage.bz2'),
+                                             templateFile))
+        remkdir('imaging')
+        os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
+    
+        remove('imaging/Doomsday.pkg') # included in bzipped image
+        duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
+        duptree('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
+        shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
+
+        volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
+        os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
+    
+        os.system('hdiutil detach -quiet imaging')
+        os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "../releases/%s"' % (
+                templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
+        remove(templateFile)
+
     def codesign(fn, opts=''):
         os.system('codesign --verbose -s "Developer ID Application: Jaakko Keranen" %s "%s"' % (opts, fn))
         
@@ -263,7 +284,7 @@ def mac_release():
     fw_codesign('Doomsday Shell.app')
 
     print 'Signing Doomsday.app...'
-    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL.framework/SDL')
+    codesign('Doomsday Engine.app/Contents/Doomsday.app/Contents/Frameworks/SDL2.framework/SDL2')
     codesign("Doomsday Engine.app/Contents/Doomsday.app")
 
     print 'Signing Doomsday Engine.app...'
@@ -275,27 +296,6 @@ def mac_release():
 
     print 'Signing Doomsday Shell.app...'
     codesign("Doomsday Shell.app")
-    
-    if mac_os_version() != '10.6':
-        print 'Packaging apps onto a disk image...'
-        templateFile = 'appdisk.sparseimage'
-        os.system('bunzip2 -k -c %s > %s' % (os.path.join(SNOWBERRY_DIR, 'template-image/template.sparseimage.bz2'),
-                                             templateFile))
-        remkdir('imaging')
-        os.system('hdiutil attach %s -noautoopen -quiet -mountpoint imaging' % templateFile)
-    
-        remove('imaging/Doomsday.pkg') # included in bzipped image
-        duptree('Doomsday Engine.app', 'imaging/Doomsday Engine.app')
-        duptree('Doomsday Shell.app',  'imaging/Doomsday Shell.app')
-        shutil.copy(os.path.join(DOOMSDAY_DIR, "doc/output/Read Me.rtf"), 'imaging/Read Me.rtf')
-
-        volumeName = "Doomsday Engine " + DOOMSDAY_VERSION_FULL
-        os.system('/usr/sbin/diskutil rename ' + os.path.abspath('imaging') + ' "' + volumeName + '"')
-    
-        os.system('hdiutil detach -quiet imaging')
-        os.system('hdiutil convert %s -format UDZO -imagekey zlib-level=9 -o "../releases/%s"' % (
-                templateFile, output_filename('_apps-' + mac_osx_suffix() + '.dmg')))
-        remove(templateFile)
     
     # Package the apps and create an installer package.
     os.system('mkdir package')

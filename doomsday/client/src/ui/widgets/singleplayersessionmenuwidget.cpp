@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     ~Instance()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
 
         App_Games().audienceForAddition() -= this;
         App::app().audienceForGameChange() -= this;
@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         pendingGames.put(&game);
 
         // Update from main thread later.
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 
     void addExistingGames()
@@ -111,7 +111,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void loopIteration()
     {
-        Loop::appLoop().audienceForIteration() -= this;
+        Loop::get().audienceForIteration() -= this;
         addPendingGames();
         updateGameAvailability();
     }
@@ -180,7 +180,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 
     void currentGameChanged(game::Game const &)
     {
-        Loop::appLoop().audienceForIteration() += this;
+        Loop::get().audienceForIteration() += this;
     }
 };
 

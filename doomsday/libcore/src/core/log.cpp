@@ -290,7 +290,7 @@ LogEntry::LogEntry(duint32 metadata, String const &section, int sectionDepth, St
     , _disabled(false)
     , _args(args)
 {
-    if(!LogBuffer::appBuffer().isEnabled(metadata))
+    if(!LogBuffer::get().isEnabled(metadata))
     {
         _disabled = true;
     }
@@ -646,7 +646,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     // Staging done.
     d->currentEntryMedata = 0;
 
-    if(!LogBuffer::appBuffer().isEnabled(metadata))
+    if(!LogBuffer::get().isEnabled(metadata))
     {
         DENG2_ASSERT(arguments.isEmpty());
 
@@ -678,7 +678,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     LogEntry *entry = new LogEntry(metadata, context, depth, format, arguments);
     
     // Add it to the application's buffer. The buffer gets ownership.
-    LogBuffer::appBuffer().add(entry);
+    LogBuffer::get().add(entry);
     
     return *entry;
 }
@@ -736,7 +736,7 @@ LogEntryStager::LogEntryStager(duint32 metadata, String const &format)
     }
 
     _disabled = !LogBuffer::appBufferExists() ||
-                !LogBuffer::appBuffer().isEnabled(_metadata);
+                !LogBuffer::get().isEnabled(_metadata);
 
     if(!_disabled)
     {

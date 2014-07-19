@@ -61,3 +61,10 @@ void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
     DENG2_UNUSED(colors);
 }
+
+#ifdef MACOSX
+void DisplayMode_Native_Raise(void* handle)
+{
+    DENG2_UNUSED(handle);
+}
+#endif

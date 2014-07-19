@@ -22,10 +22,10 @@
 
 #include "../libcore.h"
 #include "../Folder"
+#include "../FileIndex"
 #include "../System"
 
 #include <QFlags>
-#include <map>
 
 /**
  * @defgroup fs File System
@@ -105,11 +105,8 @@ public:
     /// between them. @ingroup errors
     DENG2_ERROR(AmbiguousError);
 
-    typedef std::multimap<String, File *> Index;
-    typedef std::pair<Index::iterator, Index::iterator> IndexRange;
-    typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
-    typedef std::pair<String, File *> IndexEntry;
-    typedef std::list<File *> FoundFiles;
+    typedef FileIndex Index;
+    typedef FileIndex::FoundFiles FoundFiles;
 
 public:
     /**
@@ -121,6 +118,8 @@ public:
     void printIndex();
 
     Folder &root();
+
+    Folder const &root() const;
 
     /**
      * Refresh the file system. Populates all folders with files from the feeds.
@@ -174,12 +173,23 @@ public:
      * using the file system's index; no recursive descent into folders is
      * done.
      *
-     * @param path   Path or file name to look for.
-     * @param found  Set of files that match the result.
+     * @param partialPath   Partial path or file name to look for.
+     * @param found         Set of files that match the result.
      *
      * @return  Number of files found.
      */
-    int findAll(String const &path, FoundFiles &found) const;
+    int findAll(String const &partialPath, FoundFiles &found) const;
+
+    template <typename Predicate>
+    int findAll(Predicate exclusion, String const &partialPath, FoundFiles &found) const {
+        findAll(partialPath, found);
+        found.remove_if(exclusion);
+        return int(found.size());
+    }
+
+    int findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const;
+
+    int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
 
     /**
      * Finds a single file matching a full or partial path. The search is
@@ -206,9 +216,8 @@ public:
     template <typename Type>
     Type &find(String const &path) const {
         FoundFiles found;
-        findAll(path, found);
         // Filter out the wrong types.
-        found.remove_if(internal::cannotCastFileTo<Type>);
+        findAll(internal::cannotCastFileTo<Type>, path, found);
         if(found.size() > 1) {
             /// @throw AmbiguousError  More than one file matches the conditions.
             throw AmbiguousError("FS::find", "More than one file found matching '" + path + "'");
@@ -241,7 +250,7 @@ public:
      *
      * @note The file names are indexed in lower case.
      */
-    Index const &nameIndex() const;
+    FileIndex const &nameIndex() const;
 
     /**
      * Retrieves the index of files of a particular type.
@@ -253,10 +262,25 @@ public:
      *
      * For example, to look up the index for NativeFile instances:
      * @code
-     * FS::Index &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
+     * FS::Index const &nativeFileIndex = App::fileSystem().indexFor(DENG2_TYPE_NAME(NativeFile));
      * @endcode
      */
-    Index const &indexFor(String const &typeIdentifier) const;
+    FileIndex const &indexFor(String const &typeIdentifier) const;
+
+    /**
+     * Adds a new custom index to the file system.
+     *
+     * @param userIndex  Index where files will be included. Ownership not taken;
+     *                   index must exist until removed from use.
+     */
+    void addUserIndex(FileIndex &userIndex);
+
+    /**
+     * Removes a custom index from the file system.
+     *
+     * @param userIndex
+     */
+    void removeUserIndex(FileIndex &userIndex);
 
     /**
      * Adds a file to the main index.

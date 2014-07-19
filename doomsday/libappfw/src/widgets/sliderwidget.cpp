@@ -223,7 +223,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         // Range dots.
         int numDots = de::clamp(5, round<int>(range.size() / step) + 1, 11);
-        int dotSpace = sliderArea.width() - endLabelSize;
+        int dotSpace = (sliderArea.width() - endLabelSize) / toDevicePixels(1.f); // in logical space
         int dotX = sliderArea.topLeft.x + endLabelSize / 2;
         float altAlpha = 0;
         if(dotSpace / numDots > 30)
@@ -234,7 +234,8 @@ DENG_GUI_PIMPL(SliderWidget)
         Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
         for(int i = 0; i < numDots; ++i)
         {
-            Vector2i dotPos(dotX + dotSpace * float(i) / float(numDots - 1),
+            // dotSpace converted back to device pixels.
+            Vector2i dotPos(dotX + toDevicePixels(dotSpace * float(i) / float(numDots - 1)),
                             sliderArea.middle().y);
 
             Vector4f dotColor = textColor;
@@ -252,7 +253,9 @@ DENG_GUI_PIMPL(SliderWidget)
         Rectanglei slider = sliderValueRect();
         verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
-        verts.makeFlexibleFrame(slider.expanded(5), 6, Vector4f(1, 1, 1, frameOpacity),
+        verts.makeFlexibleFrame(slider.expanded(SliderWidget::toDevicePixels(5)),
+                                SliderWidget::toDevicePixels(6),
+                                Vector4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
         // Labels.        
