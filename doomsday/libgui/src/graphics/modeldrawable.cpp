@@ -189,6 +189,7 @@ static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
 DENG2_PIMPL(ModelDrawable)
 {
     typedef GLBufferT<ModelVertex> VBuf;
+    typedef QHash<String, int> AnimLookup;
 
     struct VertexBone
     {
@@ -214,22 +215,24 @@ DENG2_PIMPL(ModelDrawable)
 
     QVector<VertexBone> vertexBones; // indexed by vertex
     QHash<String, duint16> boneNameToIndex;
+    QHash<String, aiNode const *> nodeNameToPtr;
     QVector<BoneData> bones; // indexed by bone index
     QVector<Id> materialTexIds; // indexed by material index
+    AnimLookup animNameToIndex;
     Vector3f minPoint; ///< Bounds in default pose.
     Vector3f maxPoint;
     Matrix4f globalInverse;
-    ddouble animTime;
+    //ddouble animTime;
+    //AnimationState const *animation;
 
     AtlasTexture *atlas;
     VBuf *buffer;
     GLProgram *program;
-    GLUniform uBoneMatrices;
+    mutable GLUniform uBoneMatrices;
 
     Instance(Public *i)
         : Base(i)
         , scene(0)
-        , animTime(0)
         , atlas(0)
         , buffer(0)
         , program(0)
@@ -289,10 +292,35 @@ DENG2_PIMPL(ModelDrawable)
         qDebug() << "total bones:" << boneCount();
 
         // Animations.
-        qDebug() << "animations:" << scene->mNumAnimations;
+        animNameToIndex.clear();
+        //qDebug() << "animations:" << scene->mNumAnimations;
         for(duint i = 0; i < scene->mNumAnimations; ++i)
         {
-            qDebug() << "  anim #" << i << "name:" << scene->mAnimations[i]->mName.C_Str();
+            //qDebug() << "  anim #" << i << "name:" << scene->mAnimations[i]->mName.C_Str();
+            String const name = scene->mAnimations[i]->mName.C_Str();
+            if(!name.isEmpty())
+            {
+                animNameToIndex.insert(name, i);
+            }
+        }
+
+        // Create a lookup for node names.
+        nodeNameToPtr.clear();
+        nodeNameToPtr.insert("", scene->mRootNode);
+        buildNodeLookup(*scene->mRootNode);
+    }
+
+    void buildNodeLookup(aiNode const &node)
+    {
+        String const name = node.mName.C_Str();
+        if(!name.isEmpty())
+        {
+            nodeNameToPtr.insert(name, &node);
+        }
+
+        for(duint i = 0; i < node.mNumChildren; ++i)
+        {
+            buildNodeLookup(*node.mChildren[i]);
         }
     }
 
@@ -622,7 +650,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void accumulateAnimationTransforms(ddouble time,
                                        aiAnimation const &anim,
-                                       aiNode const &rootNode)
+                                       aiNode const &rootNode) const
     {
         ddouble const ticksPerSec = anim.mTicksPerSecond? anim.mTicksPerSecond : 25.0;
         ddouble const timeInTicks = time * ticksPerSec;
@@ -735,16 +763,32 @@ DENG2_PIMPL(ModelDrawable)
 
     // Drawing --------------------------------------------------------------------------
 
-    void preDraw()
+    void updateMatricesFromAnimation(AnimationState const *animation) const
+    {
+        if(!scene->HasAnimations() || !animation) return;
+
+        // Apply all current animations.
+        for(int i = 0; i < animation->count(); ++i)
+        {
+            AnimationState::Animation const &anim = animation->at(i);
+
+            // The animation has been validated earlier.
+            DENG2_ASSERT(duint(anim.animId) < scene->mNumAnimations);
+            DENG2_ASSERT(nodeNameToPtr.contains(anim.node));
+
+            accumulateAnimationTransforms(anim.time,
+                                          *scene->mAnimations[anim.animId],
+                                          *nodeNameToPtr[anim.node]);
+        }
+    }
+
+    void preDraw(AnimationState const *animation)
     {
         DENG2_ASSERT(program != 0);
         DENG2_ASSERT(buffer != 0);
 
         // Draw the meshes in this node.
-        if(scene->HasAnimations())
-        {
-            accumulateAnimationTransforms(animTime, *scene->mAnimations[0], *scene->mRootNode);
-        }
+        updateMatricesFromAnimation(animation);
 
         GLState::current().apply();
 
@@ -752,16 +796,16 @@ DENG2_PIMPL(ModelDrawable)
         program->beginUse();
     }
 
-    void draw()
+    void draw(AnimationState const *animation)
     {
-        preDraw();
+        preDraw(animation);
         buffer->draw();
         postDraw();
     }
 
-    void drawInstanced(GLBuffer const &attribs)
+    void drawInstanced(GLBuffer const &attribs, AnimationState const *animation)
     {
-        preDraw();
+        preDraw(animation);
         buffer->drawInstanced(attribs);
         postDraw();
     }
@@ -792,6 +836,27 @@ void ModelDrawable::clear()
 {
     glDeinit();
     d->clear();
+}
+
+int ModelDrawable::animationIdForName(String const &name) const
+{
+    Instance::AnimLookup::const_iterator found = d->animNameToIndex.constFind(name);
+    if(found != d->animNameToIndex.constEnd())
+    {
+        return found.value();
+    }
+    return -1;
+}
+
+int ModelDrawable::animationCount() const
+{
+    if(!d->scene) return 0;
+    return d->scene->mNumAnimations;
+}
+
+bool ModelDrawable::nodeExists(String const &name) const
+{
+    return d->nodeNameToPtr.contains(name);
 }
 
 void ModelDrawable::glInit()
@@ -825,28 +890,24 @@ void ModelDrawable::unsetProgram()
     d->program = 0;
 }
 
-void ModelDrawable::setAnimationTime(TimeDelta const &time)
-{
-    d->animTime = time;
-}
-
-void ModelDrawable::draw() const
+void ModelDrawable::draw(AnimationState const *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->program && d->atlas)
     {
-        d->draw();
+        d->draw(animation);
     }
 }
 
-void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs) const
+void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
+                                  AnimationState const *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
     if(isReady() && d->program && d->atlas)
     {
-        d->drawInstanced(instanceAttribs);
+        d->drawInstanced(instanceAttribs, animation);
     }
 }
 
@@ -858,6 +919,104 @@ Vector3f ModelDrawable::dimensions() const
 Vector3f ModelDrawable::midPoint() const
 {
     return (d->maxPoint + d->minPoint) / 2.f;
+}
+
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(ModelDrawable::AnimationState)
+{
+    ModelDrawable const *model;
+    QList<Animation> anims;
+
+    Instance(ModelDrawable const *mdl = 0) : model(mdl) {}
+
+    Animation &add(Animation const &anim)
+    {
+        DENG2_ASSERT(model != 0);
+
+        // Verify first.
+        if(anim.animId < 0 || anim.animId >= model->animationCount())
+        {
+            throw InvalidError("ModelDrawable::AnimationState::add",
+                               "Specified animation does not exist");
+        }
+        if(!model->nodeExists(anim.node))
+        {
+            throw InvalidError("ModelDrawable::AnimationState::add",
+                               "Node '" + anim.node + "' does not exist");
+        }
+
+        anims.append(anim);
+        return anims.last();
+    }
+};
+
+ModelDrawable::AnimationState::AnimationState() : d(new Instance)
+{}
+
+ModelDrawable::AnimationState::AnimationState(ModelDrawable const &model)
+    : d(new Instance(&model))
+{}
+
+void ModelDrawable::AnimationState::setModel(ModelDrawable const &model)
+{
+    d->model = &model;
+}
+
+ModelDrawable const &ModelDrawable::AnimationState::model() const
+{
+    DENG2_ASSERT(d->model != 0);
+    return *d->model;
+}
+
+int ModelDrawable::AnimationState::count() const
+{
+    return d->anims.size();
+}
+
+ModelDrawable::AnimationState::Animation const &ModelDrawable::AnimationState::at(int index) const
+{
+    return d->anims.at(index);
+}
+
+ModelDrawable::AnimationState::Animation &ModelDrawable::AnimationState::at(int index)
+{
+    return d->anims[index];
+}
+
+ModelDrawable::AnimationState::Animation &
+ModelDrawable::AnimationState::start(String const &animName, String const &rootNode)
+{
+    Animation anim;
+    anim.animId = model().animationIdForName(animName);
+    anim.node   = rootNode;
+    anim.time   = 0.0;
+    return d->add(anim);
+}
+
+ModelDrawable::AnimationState::Animation &
+ModelDrawable::AnimationState::start(int animId, String const &rootNode)
+{
+    Animation anim;
+    anim.animId = animId;
+    anim.node   = rootNode;
+    anim.time   = 0.0;
+    return d->add(anim);
+}
+
+void ModelDrawable::AnimationState::stop(int index)
+{
+    d->anims.removeAt(index);
+}
+
+void ModelDrawable::AnimationState::clear()
+{
+    d->anims.clear();
+}
+
+void ModelDrawable::AnimationState::advanceTime(TimeDelta const &)
+{
+    // overridden
 }
 
 } // namespace de
