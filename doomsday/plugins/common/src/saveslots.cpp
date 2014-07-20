@@ -81,15 +81,16 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             }
         }
 
-        // Update the menu widget right away.
-        updateMenuWidget();
+        // Update the menu widget(s) right away.
+        updateMenuWidget("LoadGame");
+        updateMenuWidget("SaveGame");
     }
 
-    void updateMenuWidget()
+    void updateMenuWidget(String const pageName)
     {
         if(!menuWidgetId) return;
 
-        Page *page = Hu_MenuFindPageByName("LoadGame");
+        Page *page = Hu_MenuFindPageByName(pageName);
         if(!page) return; // Not initialized yet?
 
         Widget *wi = page->findObject(0, menuWidgetId);
@@ -111,8 +112,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             edit.setText(MNEDIT_STF_NO_ACTION, "");
         }
 
-        if(Hu_MenuIsActive() &&
-           (Hu_MenuActivePage() == page || Hu_MenuActivePage() == Hu_MenuFindPageByName("SaveGame")))
+        if(Hu_MenuIsActive() && Hu_MenuActivePage() == page)
         {
             // Re-open the active page to update focus if necessary.
             Hu_MenuSetActivePage2(page, true);

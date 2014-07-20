@@ -4274,8 +4274,12 @@ int Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action, void * /*con
 
     if(Widget::MNA_ACTIVEOUT != action) return 1;
 
-    Page *saveGamePage = Hu_MenuFindPageByName("SaveGame");
-    saveGamePage->setFocus(saveGamePage->findObject(0, wi->data2));
+    // Linked focus between LoadGame and SaveGame pages.
+    Page *page = Hu_MenuFindPageByName("SaveGame");
+    page->setFocus(page->findObject(0, wi->data2));
+
+    page = Hu_MenuFindPageByName("LoadGame");
+    page->setFocus(page->findObject(0, wi->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
