@@ -83,6 +83,8 @@ static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
 D_CMD(PostFx)
 {
+    DENG2_UNUSED(src);
+
     int console = String(argv[1]).toInt();
     String const shader = argv[2];
     TimeDelta const span = (argc == 4? String(argv[3]).toFloat() : 0);

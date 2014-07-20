@@ -645,6 +645,8 @@ void FIPage_Drawer(fi_page_t *p)
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#else
+    DENG2_UNUSED(p);
 #endif
 }
 
@@ -1452,6 +1454,8 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+#else
+    DENG2_UNUSED2(offset, obj);
 #endif
 }
 

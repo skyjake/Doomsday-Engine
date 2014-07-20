@@ -114,6 +114,7 @@ static void vrNonRiftFovXChanged()
 
 D_CMD(LoadRiftParams)
 {
+    DENG2_UNUSED3(src, argc, argv);
     return VR_LoadRiftParameters();
 }
 

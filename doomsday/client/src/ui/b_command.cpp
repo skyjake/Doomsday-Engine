@@ -301,7 +301,7 @@ void B_DestroyCommandBinding(evbinding_t* eb)
  * @param out      String with placeholders replaced.
  */
 static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
-                                  evbinding_t *eb, ddstring_t *out)
+                                  evbinding_t * /*eb*/, ddstring_t *out)
 {
     const char* ptr = command;
 

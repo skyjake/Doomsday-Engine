@@ -190,7 +190,7 @@ static DGLuint prepareLightmap(Texture *tex = 0)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-void Rend_ProjectorInitForMap(Map &map)
+void Rend_ProjectorInitForMap(Map &/*map*/)
 {
     static bool firstTime = true;
     if(firstTime)

@@ -281,7 +281,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         }
     }
 
-    void currentGameChanged(game::Game const &newGame)
+    void currentGameChanged(game::Game const &)
     {
         updateStatus();
         showOrHideMenuItems();
