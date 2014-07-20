@@ -3579,19 +3579,8 @@ Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
 
 void Hu_MenuInit()
 {
-    cvarbutton_t *cvb;
-    bool wasOpen = false;
-    String activePageName;
-
-    if(inited)
-    {
-        // Remember the previously open menu page, if any.
-        /// @todo Remember the previously focused widget on said page -ds
-        wasOpen = Hu_MenuIsActive();
-        activePageName = Hu_MenuFindPageName(Hu_MenuActivePage());
-
-        Hu_MenuShutdown();
-    }
+    // Close the menu (if open) and shutdown (if initialized - we're reinitializing).
+    Hu_MenuShutdown();
 
     mnAlpha = mnTargetAlpha = 0;
     menuActivePage    = 0;
@@ -3606,7 +3595,7 @@ void Hu_MenuInit()
     Hu_MenuLoadResources();
 
     // Set default Yes/No strings.
-    for(cvb = mnCVarButtons; cvb->cvarname; cvb++)
+    for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
     {
         if(!cvb->yes) cvb->yes = "Yes";
         if(!cvb->no) cvb->no = "No";
@@ -3626,13 +3615,6 @@ void Hu_MenuInit()
     }
 #endif
 
-    // Are we re-opening?
-    if(wasOpen)
-    {
-        Hu_MenuCommand(MCMD_OPEN);
-    }
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName(activePageName));
-
     inited = true;
 }
 
@@ -3640,6 +3622,7 @@ void Hu_MenuShutdown()
 {
     if(!inited) return;
 
+    Hu_MenuCommand(MCMD_CLOSEFAST);
     destroyAllPages();
     inited = false;
 }
