@@ -253,7 +253,7 @@ Action *MPSessionMenuWidget::makeAction(ui::Item const &item)
     return new Instance::JoinAction(item.as<Instance::ServerListItem>().info());
 }
 
-GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &item, GuiWidget const *)
+GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
     return new Instance::ServerWidget;
 }

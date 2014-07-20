@@ -223,7 +223,7 @@ DENG_GUI_PIMPL(AlertDialog)
     }
 };
 
-AlertDialog::AlertDialog(String const &name) : d(new Instance(this))
+AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
 {
     // The dialog is connected to the notification icon.
     setAnchorAndOpeningDirection(d->notification->rule(), ui::Down);

@@ -221,6 +221,8 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
         // Bindings go into a separate file.
         writeBindingsState(bindingsFileName);
     }
+#else
+    DENG2_UNUSED(bindingsFileName);
 #endif
     return true;
 }

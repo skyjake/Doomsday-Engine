@@ -244,7 +244,7 @@ void DS_SDLMixerShutdown(void)
     sdlInitOk = false;
 }
 
-void DS_SDLMixerEvent(int type)
+void DS_SDLMixerEvent(int)
 {
     // Not supported.
 }
@@ -460,22 +460,22 @@ void DS_SDLMixer_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     }
 }
 
-void DS_SDLMixer_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void DS_SDLMixer_SFX_Setv(sfxbuffer_t *, int , float *)
 {
     // Not supported.
 }
 
-void DS_SDLMixer_SFX_Listener(int prop, float value)
+void DS_SDLMixer_SFX_Listener(int, float)
 {
     // Not supported.
 }
 
-void SetEnvironment(float* rev)
+void SetEnvironment(float *)
 {
     // Not supported.
 }
 
-void DS_SDLMixer_SFX_Listenerv(int prop, float* values)
+void DS_SDLMixer_SFX_Listenerv(int, float *)
 {
     // Not supported.
 }

@@ -152,7 +152,7 @@ DENG2_PIMPL(Bloom)
      * @param weight       Weight factor for intensity.
      * @param targetOp     Blending factor (should be gl::One unless debugging).
      */
-    void drawBloomPass(Rectanglef const &rectf, Vector2ui const &targetSize,
+    void drawBloomPass(Rectanglef const &rectf, Vector2ui const &/*targetSize*/,
                        GLTexture &colorTarget, float bloomSize, float weight,
                        gl::Blend targetOp = gl::One)
     {

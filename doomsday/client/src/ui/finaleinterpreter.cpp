@@ -1334,7 +1334,10 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 }
 
 DEFFC(Do)
-{   // This command is called even when (cond)skipping.
+{
+    DENG2_UNUSED2(cmd, ops);
+
+    // This command is called even when (cond)skipping.
     if(!fi->_skipNext)
         return;
 
@@ -1346,16 +1349,19 @@ DEFFC(Do)
 
 DEFFC(End)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->_gotoEnd = true;
 }
 
 DEFFC(BGMaterial)
 {
+    DENG2_UNUSED(cmd);
+
     // First attempt to resolve as a Values URI (which defines the material URI).
     Material *material = 0;
     try
     {
-        if(ded_value_t* value = Def_GetValueByUri(OP_URI(0)))
+        if(ded_value_t *value = Def_GetValueByUri(OP_URI(0)))
         {
             material = &App_ResourceSystem().material(de::Uri(value->text, RC_NULL));
         }
@@ -1374,80 +1380,96 @@ DEFFC(BGMaterial)
 
 DEFFC(NoBGMaterial)
 {
+    DENG2_UNUSED2(cmd, ops);
     changePageBackground(fi->_pages[PAGE_PICS], 0);
 }
 
 DEFFC(InTime)
 {
+    DENG2_UNUSED(cmd);
     fi->_inTime = FRACSECS_TO_TICKS(OP_FLOAT(0));
 }
 
 DEFFC(Tic)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->_wait = 1;
 }
 
 DEFFC(Wait)
 {
+    DENG2_UNUSED(cmd);
     fi->_wait = FRACSECS_TO_TICKS(OP_FLOAT(0));
 }
 
 DEFFC(WaitText)
 {
+    DENG2_UNUSED(cmd);
     fi->_waitingText = getObject(fi, FI_TEXT, OP_CSTRING(0));
 }
 
 DEFFC(WaitAnim)
 {
+    DENG2_UNUSED(cmd);
     fi->_waitingPic = getObject(fi, FI_PIC, OP_CSTRING(0));
 }
 
 DEFFC(Color)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetBackgroundTopColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
     FIPage_SetBackgroundBottomColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
 }
 
 DEFFC(ColorAlpha)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetBackgroundTopColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
     FIPage_SetBackgroundBottomColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(Pause)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.paused = true;
     fi->_wait = 1;
 }
 
 DEFFC(CanSkip)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.can_skip = true;
 }
 
 DEFFC(NoSkip)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.can_skip = false;
 }
 
 DEFFC(SkipHere)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->_skipping = false;
 }
 
 DEFFC(Events)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.eat_events = true;
 }
 
 DEFFC(NoEvents)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.eat_events = false;
 }
 
 DEFFC(OnKey)
 {
 #ifdef __CLIENT__
+    DENG2_UNUSED(cmd);
+
     ddevent_t ev;
 
     // Construct a template event for this handler.
@@ -1462,32 +1484,38 @@ DEFFC(OnKey)
         return;
     // Allocate and attach another.
     createEventHandler(fi, &ev, OP_CSTRING(1));
+#else
+    DENG2_UNUSED3(cmd, ops, fi);
 #endif
 }
 
 DEFFC(UnsetKey)
 {
 #ifdef __CLIENT__
-    ddevent_t ev;
-    fi_handler_t* h;
+    DENG2_UNUSED(cmd);
 
     // Construct a template event for what we want to "unset".
-    memset(&ev, 0, sizeof(ev));
+    ddevent_t ev; memset(&ev, 0, sizeof(ev));
     ev.device = IDEV_KEYBOARD;
     ev.type = E_TOGGLE;
     ev.toggle.id = DD_GetKeyCode(OP_CSTRING(0));
     ev.toggle.state = ETOG_DOWN;
 
+    fi_handler_t *h;
     if((h = findEventHandler(fi, &ev)))
     {
         destroyEventHandler(fi, h);
     }
+#else
+    DENG2_UNUSED3(cmd, ops, fi);
 #endif
 }
 
 DEFFC(If)
 {
-    const char* token = OP_CSTRING(0);
+    DENG2_UNUSED2(cmd, ops);
+
+    char const *token = OP_CSTRING(0);
     dd_bool val = false;
 
     LOG_AS("FIC_If");
@@ -1537,34 +1565,45 @@ DEFFC(IfNot)
 }
 
 DEFFC(Else)
-{   // The only time the ELSE condition does not skip is immediately after a skip.
+{
+    DENG2_UNUSED2(cmd, ops);
+    // The only time the ELSE condition does not skip is immediately after a skip.
     fi->_skipNext = !fi->_lastSkipped;
 }
 
 DEFFC(GoTo)
 {
+    DENG2_UNUSED(cmd);
     FinaleInterpreter_SkipToMarker(fi, OP_CSTRING(0));
 }
 
 DEFFC(Marker)
 {
+    DENG2_UNUSED(cmd);
     // Does it match the goto string?
     if(!stricmp(fi->_gotoTarget, OP_CSTRING(0)))
+    {
         fi->_gotoSkip = false;
+    }
 }
 
 DEFFC(Delete)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
+    {
         FI_DeleteObject(removeObjectInNamespace(&fi->_namespace, OP_OBJECT(0)));
+    }
 }
 
 DEFFC(Image)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    const char* name = OP_CSTRING(1);
+    DENG2_UNUSED(cmd);
+
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    char const *name = OP_CSTRING(1);
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
-    rawtex_t* rawTex;
+    rawtex_t *rawTex;
 
     LOG_AS("FIC_Image");
     FIData_PicClearAnimation(obj);
@@ -1581,12 +1620,14 @@ DEFFC(Image)
 
 DEFFC(ImageAt)
 {
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+
+    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
-    const char* name = OP_CSTRING(3);
+    char const *name = OP_CSTRING(3);
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
-    rawtex_t* rawTex;
+    rawtex_t *rawTex;
 
     LOG_AS("FIC_ImageAt");
     AnimatorVector3_Init(obj->pos, x, y, 0);
@@ -1630,6 +1671,8 @@ static DGLuint loadAndPrepareExtTexture(char const *fileName)
 
 DEFFC(XImage)
 {
+    DENG2_UNUSED(cmd);
+
     LOG_AS("FIC_XImage");
 
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
@@ -1654,6 +1697,8 @@ DEFFC(XImage)
 
 DEFFC(Patch)
 {
+    DENG2_UNUSED(cmd);
+
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(3);
     patchid_t patchId;
@@ -1675,6 +1720,8 @@ DEFFC(Patch)
 
 DEFFC(SetPatch)
 {
+    DENG2_UNUSED(cmd);
+
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
     fidata_pic_frame_t *f;
@@ -1704,6 +1751,7 @@ DEFFC(SetPatch)
 
 DEFFC(ClearAnim)
 {
+    DENG2_UNUSED2(cmd, fi);
     if(OP_OBJECT(0) && OP_OBJECT(0)->type == FI_PIC)
     {
         FIData_PicClearAnimation(OP_OBJECT(0));
@@ -1712,6 +1760,7 @@ DEFFC(ClearAnim)
 
 DEFFC(Anim)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
@@ -1731,6 +1780,7 @@ DEFFC(Anim)
 
 DEFFC(AnimImage)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
@@ -1748,12 +1798,14 @@ DEFFC(AnimImage)
 
 DEFFC(Repeat)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     ((fidata_pic_t*)obj)->flags.looping = true;
 }
 
 DEFFC(StateAnim)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     int stateId = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
     int count = OP_INT(2);
@@ -1776,6 +1828,7 @@ DEFFC(StateAnim)
 
 DEFFC(PicSound)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     int sound = Def_Get(DD_DEF_SOUND, OP_CSTRING(1), 0);
     if(!((fidata_pic_t*)obj)->numFrames)
@@ -1790,6 +1843,7 @@ DEFFC(PicSound)
 
 DEFFC(ObjectOffX)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1799,6 +1853,7 @@ DEFFC(ObjectOffX)
 
 DEFFC(ObjectOffY)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1808,6 +1863,7 @@ DEFFC(ObjectOffY)
 
 DEFFC(ObjectOffZ)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1817,10 +1873,13 @@ DEFFC(ObjectOffZ)
 
 DEFFC(ObjectRGB)
 {
-    fi_object_t* obj = OP_OBJECT(0);
-    float rgb[3];
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = OP_OBJECT(0);
+
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
+
+    float rgb[3];
     rgb[CR] = OP_FLOAT(1);
     rgb[CG] = OP_FLOAT(2);
     rgb[CB] = OP_FLOAT(3);
@@ -1829,14 +1888,16 @@ DEFFC(ObjectRGB)
     case FI_TEXT:
         FIData_TextSetColor(obj, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
+
     case FI_PIC: {
-        fidata_pic_t* p = (fidata_pic_t*)obj;
+        fidata_pic_t *p = (fidata_pic_t *)obj;
         AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         // This affects all the colors.
         AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break; }
+
     default:
         DENG_ASSERT(!"FIC_ObjectRGB: Unknown object type");
         break;
@@ -1845,21 +1906,25 @@ DEFFC(ObjectRGB)
 
 DEFFC(ObjectAlpha)
 {
-    fi_object_t* obj = OP_OBJECT(0);
-    float alpha;
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = OP_OBJECT(0);
+
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
-    alpha = OP_FLOAT(1);
+
+    float alpha = OP_FLOAT(1);
     switch(obj->type)
     {
     case FI_TEXT:
         FIData_TextSetAlpha(obj, alpha, fi->_inTime);
         break;
+
     case FI_PIC: {
-        fidata_pic_t* p = (fidata_pic_t*)obj;
+        fidata_pic_t *p = (fidata_pic_t *)obj;
         Animator_Set(&p->color[3], alpha, fi->_inTime);
         Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
         break; }
+
     default:
         DENG_ASSERT(!"FIC_ObjectAlpha: Unknown object type");
         break;
@@ -1868,6 +1933,7 @@ DEFFC(ObjectAlpha)
 
 DEFFC(ObjectScaleX)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1877,6 +1943,7 @@ DEFFC(ObjectScaleX)
 
 DEFFC(ObjectScaleY)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1886,6 +1953,7 @@ DEFFC(ObjectScaleY)
 
 DEFFC(ObjectScaleZ)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1895,6 +1963,7 @@ DEFFC(ObjectScaleZ)
 
 DEFFC(ObjectScale)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1904,6 +1973,7 @@ DEFFC(ObjectScale)
 
 DEFFC(ObjectScaleXY)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1913,6 +1983,7 @@ DEFFC(ObjectScaleXY)
 
 DEFFC(ObjectScaleXYZ)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1922,6 +1993,7 @@ DEFFC(ObjectScaleXYZ)
 
 DEFFC(ObjectAngle)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
         fi_object_t* obj = OP_OBJECT(0);
@@ -1931,7 +2003,8 @@ DEFFC(ObjectAngle)
 
 DEFFC(Rect)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fidata_pic_t *obj = (fidata_pic_t *) getObject(fi, FI_PIC, OP_CSTRING(0));
 
     /**
      * We may be converting an existing Pic to a Rect, so re-init the expected
@@ -1957,7 +2030,8 @@ DEFFC(Rect)
 
 DEFFC(FillColor)
 {
-    fi_object_t* obj = OP_OBJECT(0);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = OP_OBJECT(0);
     int which = 0;
     float rgba[4];
 
@@ -1985,7 +2059,8 @@ DEFFC(FillColor)
 
 DEFFC(EdgeColor)
 {
-    fi_object_t* obj = OP_OBJECT(0);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = OP_OBJECT(0);
     int which = 0;
     float rgba[4];
 
@@ -2013,16 +2088,19 @@ DEFFC(EdgeColor)
 
 DEFFC(OffsetX)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetOffsetX(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
 }
 
 DEFFC(OffsetY)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetOffsetY(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
 }
 
 DEFFC(Sound)
 {
+    DENG2_UNUSED2(cmd, fi);
     int num = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), NULL);
     if(num > 0)
         S_LocalSound(num, NULL);
@@ -2030,6 +2108,7 @@ DEFFC(Sound)
 
 DEFFC(SoundAt)
 {
+    DENG2_UNUSED2(cmd, fi);
     int num = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), NULL);
     float vol = MIN_OF(OP_FLOAT(1), 1);
     if(num > 0)
@@ -2038,6 +2117,7 @@ DEFFC(SoundAt)
 
 DEFFC(SeeSound)
 {
+    DENG2_UNUSED2(cmd, fi);
     int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
     if(num < 0 || runtimeDefs.mobjInfo[num].seeSound <= 0)
         return;
@@ -2046,6 +2126,7 @@ DEFFC(SeeSound)
 
 DEFFC(DieSound)
 {
+    DENG2_UNUSED2(cmd, fi);
     int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
     if(num < 0 || runtimeDefs.mobjInfo[num].deathSound <= 0)
         return;
@@ -2054,22 +2135,26 @@ DEFFC(DieSound)
 
 DEFFC(Music)
 {
+    DENG2_UNUSED3(cmd, ops, fi);
     S_StartMusic(OP_CSTRING(0), true);
 }
 
 DEFFC(MusicOnce)
 {
+    DENG2_UNUSED3(cmd, ops, fi);
     S_StartMusic(OP_CSTRING(0), false);
 }
 
 DEFFC(Filter)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetFilterColorAndAlpha(fi->_pages[PAGE_TEXT], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(Text)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     FIData_TextCopy(obj, OP_CSTRING(3));
     ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
@@ -2077,7 +2162,8 @@ DEFFC(Text)
 
 DEFFC(TextFromDef)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     char *str;
     if(Def_Get(DD_DEF_TEXT, (char*)OP_CSTRING(3), &str))
@@ -2088,11 +2174,12 @@ DEFFC(TextFromDef)
     {
         FIData_TextCopy(obj, "(undefined)"); // Not found!
     }
-    ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
+    ((fidata_text_t *)obj)->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromLump)
 {
+    DENG2_UNUSED(cmd);
     fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     lumpnum_t lumpNum;
 
@@ -2136,14 +2223,16 @@ DEFFC(TextFromLump)
 
 DEFFC(SetText)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     FIData_TextCopy(obj, OP_CSTRING(1));
 }
 
 DEFFC(SetTextDef)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    char* str;
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    char *str;
     if(Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str))
     {
         FIData_TextCopy(obj, str);
@@ -2156,12 +2245,16 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
+    DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
+    {
         FI_DeleteObject(removeObjectInNamespace(&fi->_namespace, OP_OBJECT(0)));
+    }
 }
 
 DEFFC(PredefinedColor)
 {
+    DENG2_UNUSED(cmd);
     FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
     FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
@@ -2169,6 +2262,7 @@ DEFFC(PredefinedColor)
 DEFFC(PredefinedFont)
 {
 #ifdef __CLIENT__
+    DENG2_UNUSED(cmd);
     LOG_AS("FIC_PredefinedFont");
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
@@ -2181,75 +2275,88 @@ DEFFC(PredefinedFont)
 
     AutoStr *fontPath = Uri_ToString(OP_URI(1));
     LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
+#else
+    DENG2_UNUSED3(cmd, ops, fi);
 #endif
 }
 
 DEFFC(TextRGB)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     FIData_TextSetColor(obj, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(TextAlpha)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     FIData_TextSetAlpha(obj, OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextOffX)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     Animator_Set(&obj->pos[0], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextOffY)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     Animator_Set(&obj->pos[1], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextCenter)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->alignFlags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->alignFlags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->alignFlags |= ALIGN_LEFT;
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->alignFlags |= ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->scrollWait = OP_INT(1);
-    ((fidata_text_t*)obj)->scrollTimer = 0;
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->scrollWait = OP_INT(1);
+    ((fidata_text_t *)obj)->scrollTimer = 0;
 }
 
 DEFFC(TextPos)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->cursorPos = OP_INT(1);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->cursorPos = OP_INT(1);
 }
 
 DEFFC(TextRate)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->wait = OP_INT(1);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->wait = OP_INT(1);
 }
 
 DEFFC(TextLineHeight)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t*)obj)->lineHeight = OP_FLOAT(1);
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)obj)->lineHeight = OP_FLOAT(1);
 }
 
 DEFFC(Font)
 {
 #ifdef __CLIENT__
+    DENG2_UNUSED(cmd);
     LOG_AS("FIC_Font");
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
@@ -2257,44 +2364,52 @@ DEFFC(Font)
         return;
     }
 
-    AutoStr* fontPath = Uri_ToString(OP_URI(1));
+    AutoStr *fontPath = Uri_ToString(OP_URI(1));
     LOG_SCR_WARNING("Unknown font '%s'") << Str_Text(fontPath);
+#else
+    DENG2_UNUSED3(cmd, ops, fi);
 #endif
 }
 
 DEFFC(FontA)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 0));
 }
 
 DEFFC(FontB)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 1));
 }
 
 DEFFC(NoMusic)
 {
+    DENG2_UNUSED3(cmd, ops, fi);
     // Stop the currently playing song.
     S_StopMusic();
 }
 
 DEFFC(TextScaleX)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     Animator_Set(&obj->scale[0], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextScaleY)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     Animator_Set(&obj->scale[1], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextScale)
 {
-    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    DENG2_UNUSED(cmd);
+    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     AnimatorVector2_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
 }
 
@@ -2311,20 +2426,25 @@ DEFFC(PlayDemo)
         // Demo playback failed. Here we go again...
         FinaleInterpreter_Resume(fi);
     }
+#else
+    DENG2_UNUSED3(cmd, ops, fi);
 #endif
 }
 
 DEFFC(Command)
 {
+    DENG2_UNUSED2(cmd, fi);
     Con_Executef(CMDS_SCRIPT, false, "%s", OP_CSTRING(0));
 }
 
 DEFFC(ShowMenu)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.show_menu = true;
 }
 
 DEFFC(NoShowMenu)
 {
+    DENG2_UNUSED2(cmd, ops);
     fi->flags.show_menu = false;
 }

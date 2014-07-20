@@ -276,7 +276,7 @@ static void selectTexUnits(int count)
  * Enable, set and optionally lock all enabled arrays.
  */
 static void configureArrays(void *vertices, void *colors, int numCoords = 0,
-    void **coords = 0, int lock = 0)
+    void **coords = 0)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
