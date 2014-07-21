@@ -36,10 +36,34 @@ public:
     void resetToDefaults();
 };
 
+// Central MapInfo database.
+typedef std::map<std::string, MapInfo> MapInfos;
+extern MapInfos mapInfos;
+
 /**
- * Populate the MapInfo database by parsing the MAPINFO lump.
+ * Parser for Hexen's MAPINFO definition lumps.
  */
-void MapInfoParser(Str const *path);
+class MapInfoParser
+{
+public:
+    /// Base class for all parse-related errors. @ingroup errors
+    DENG2_ERROR(ParseError);
+
+public:
+    MapInfoParser();
+
+    void parse(AutoStr const &buffer, de::String sourceFile);
+
+    /**
+     * Clear any custom default map definition currently in use. Map definitions
+     * read after this is called will use the games' default map definition as a
+     * basis (unless specified otherwise).
+     */
+    void clearDefaultMap();
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 /**
  * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
