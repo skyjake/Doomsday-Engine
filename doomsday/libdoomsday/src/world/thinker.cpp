@@ -75,7 +75,6 @@ DENG2_PIMPL_NOREF(Thinker)
       prev    (*this, offsetof(thinker_s, prev    )) \
     , next    (*this, offsetof(thinker_s, next    )) \
     , function(*this, offsetof(thinker_s, function)) \
-    , flags   (*this, offsetof(thinker_s, _flags  )) \
     , id      (*this, offsetof(thinker_s, id      ))
 
 Thinker::Thinker(dsize sizeInBytes, IData *data)

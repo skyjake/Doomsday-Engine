@@ -198,7 +198,6 @@ public:
     MemberDelegate<thinker_s *> prev;
     MemberDelegate<thinker_s *> next;
     MemberDelegate<thinkfunc_t> function;
-    MemberDelegate<uint32_t> flags;
     MemberDelegate<thid_t> id;
 };
 
