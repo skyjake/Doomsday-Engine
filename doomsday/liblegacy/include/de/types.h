@@ -1,6 +1,4 @@
-/**
- * @file types.h
- * Types for libdeng.
+/** @file types.h  Types for liblegacy.
  *
  * @authors Copyright © 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
