@@ -1617,6 +1617,11 @@ static int rebornLoadConfirmed(msgresponse_t response, int, void *)
  */
 static void rebornPlayers()
 {
+    // Reborns are impossible if no game session is in progress.
+    if(!COMMON_GAMESESSION->hasBegun()) return;
+    // ...or if no map is currently loaded.
+    if(G_GameState() != GS_MAP) return;
+
     if(!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
     {
         if(Player_WaitingForReborn(&players[0]))
