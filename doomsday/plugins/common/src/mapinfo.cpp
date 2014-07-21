@@ -32,7 +32,7 @@ using namespace de;
 
 namespace common {
 
-MapInfos mapInfos;
+HexDefs hexDefs;
 
 namespace internal {
 
@@ -104,11 +104,16 @@ void MapInfo::resetToDefaults()
  */
 DENG2_PIMPL(MapInfoParser)
 {
-    AutoStr const *buffer;
+    HexDefs &db;
     HexLex lexer;
     MapInfo *defaultMap;
 
-    Instance(Public *i) : Base(i), buffer(0), defaultMap(0) {}
+    Instance(Public *i, HexDefs &db)
+        : Base(i)
+        , db        (db)
+        , defaultMap(0)
+    {}
+
     ~Instance() { clearDefaultMap(); }
 
     void addDefaultMapIfNeeded(bool resetToDefaultsIfPresent = true)
@@ -377,12 +382,12 @@ DENG2_PIMPL(MapInfoParser)
             }
 
             // Lookup an existing map info from the database.
-            info = P_MapInfo(&mapUri);
+            info = db.getMapInfo(&mapUri);
 
             if(!info)
             {
                 // A new map info.
-                info = &mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
+                info = &db.mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
 
                 // Initialize with custom default values?
                 if(defaultMap)
@@ -934,7 +939,7 @@ DENG2_PIMPL(MapInfoParser)
     }
 };
 
-MapInfoParser::MapInfoParser()
+MapInfoParser::MapInfoParser(HexDefs &db) : d(new Instance(this, db))
 {}
 
 void MapInfoParser::clearDefaultMap()
@@ -947,11 +952,10 @@ void MapInfoParser::parse(AutoStr const &buffer, String /*sourceFile*/)
     LOG_AS("MapInfoParser");
 
     // Nothing to parse?
-    d->buffer = &buffer;
-    if(Str_IsEmpty(d->buffer))
+    if(Str_IsEmpty(&buffer))
         return;
 
-    d->lexer.parse(d->buffer);
+    d->lexer.parse(&buffer);
     while(d->lexer.readToken())
     {
         if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_start_track"))
@@ -1043,7 +1047,12 @@ void MapInfoParser::parse(AutoStr const &buffer, String /*sourceFile*/)
     }
 }
 
-MapInfo *P_MapInfo(de::Uri const *mapUri)
+void HexDefs::clear()
+{
+    mapInfos.clear();
+}
+
+MapInfo *HexDefs::getMapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
@@ -1054,7 +1063,7 @@ MapInfo *P_MapInfo(de::Uri const *mapUri)
     {
         return &found->second;
     }
-    //App_Log(DE2_DEV_MAP_NOTE, "Unknown MAPINFO definition '%s'", Str_Text(mapUriStr));
+    //LOGDEV_MAP_NOTE("Unknown MAPINFO definition '%s'") << Str_Text(mapUriStr);
     return 0;
 }
 
@@ -1062,7 +1071,7 @@ de::Uri P_TranslateMapIfExists(uint map)
 {
     de::Uri matchedWithoutHub("Maps:", RC_NULL);
 
-    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
+    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
 

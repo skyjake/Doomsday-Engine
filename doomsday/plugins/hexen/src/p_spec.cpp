@@ -79,7 +79,7 @@ void P_InitLava(void)
 
 void P_InitSky(de::Uri const &mapUri)
 {
-    if(MapInfo const *mapInfo = P_MapInfo(&mapUri))
+    if(MapInfo const *mapInfo = hexDefs.getMapInfo(&mapUri))
     {
         sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
         sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());
@@ -1044,7 +1044,7 @@ void P_ForceLightning(void)
 void P_InitLightning(void)
 {
     int i, secCount;
-    MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
+    MapInfo const *mapInfo = hexDefs.getMapInfo(0/*current map*/);
 
     if(!mapInfo || !mapInfo->getb("lightning"))
     {

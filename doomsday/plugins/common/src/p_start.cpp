@@ -206,11 +206,11 @@ static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffe
 
 static void readMapInfoDefinitions()
 {
-    // Clear the MapInfo database.
-    mapInfos.clear();
+    // Clear the database.
+    hexDefs.clear();
 
     // Initialize a new parser.
-    MapInfoParser parser;
+    MapInfoParser parser(hexDefs);
 
     // Read the primary MAPINFO (from the IWAD).
     AutoStr *sourceFile = sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
@@ -227,7 +227,7 @@ static void readMapInfoDefinitions()
     }
 
 #ifdef DENG_DEBUG
-    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
+    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
         LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }")
