@@ -192,7 +192,7 @@ DENG2_PIMPL(MapStateWriter)
 
         // Write the header block for this thinker.
         Writer_WriteByte(p.msw->writer(), thInfo->thinkclass); // Thinker type byte.
-        Writer_WriteByte(p.msw->writer(), th->inStasis? 1 : 0); // In stasis?
+        Writer_WriteByte(p.msw->writer(), Thinker_InStasis(th)? 1 : 0); // In stasis?
 
         // Write the thinker data.
         thInfo->writeFunc(th, p.msw);

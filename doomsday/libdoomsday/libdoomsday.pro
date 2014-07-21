@@ -90,7 +90,8 @@ HEADERS += \
     include/doomsday/resource/resourceclass.h \
     include/doomsday/resource/wav.h \
     include/doomsday/uri.h \
-    include/doomsday/world/mobj.h
+    include/doomsday/world/mobj.h \
+    include/doomsday/world/thinker.h
 
 win32: HEADERS += \
     include/doomsday/filesys/fs_windows.h
@@ -126,7 +127,8 @@ SOURCES += \
     src/paths.cpp \
     src/resource/resourceclass.cpp \
     src/resource/wav.cpp \
-    src/uri.cpp
+    src/uri.cpp \
+    src/world/thinker.cpp
 
 win32: SOURCES += \
     src/filesys/fs_windows.cpp

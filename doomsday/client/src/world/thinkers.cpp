@@ -55,21 +55,19 @@ struct ThinkerList
 {
     bool isPublic; ///< All thinkers in this list are visible publically.
 
-    thinker_t sentinel;
+    Thinker sentinel;
 
     ThinkerList(thinkfunc_t func, bool isPublic) : isPublic(isPublic)
     {
-        zap(sentinel);
-
         sentinel.function = func;
-        sentinel.inStasis = true; // Safety measure.
+        sentinel.disable(); // Safety measure.
 
-        sentinel.prev = sentinel.next = &sentinel;
+        sentinel.prev = sentinel.next = sentinel;
     }
 
     void reinit()
     {
-        sentinel.prev = sentinel.next = &sentinel;
+        sentinel.prev = sentinel.next = sentinel;
     }
 
     thinkfunc_t function() const
@@ -81,7 +79,7 @@ struct ThinkerList
     void link(thinker_t &th)
     {
         sentinel.prev->next = &th;
-        th.next = &sentinel;
+        th.next = sentinel;
         th.prev = sentinel.prev;
         sentinel.prev = &th;
     }
@@ -90,14 +88,14 @@ struct ThinkerList
     {
         int num = 0;
         thinker_t *th = sentinel.next;
-        while(th != &sentinel && th)
+        while(th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG_ASSERT(th->next != 0);
             DENG_ASSERT(th->prev != 0);
 #endif
             num += 1;
-            if(numInStasis && th->inStasis)
+            if(numInStasis && Thinker_InStasis(th))
             {
                 (*numInStasis) += 1;
             }
@@ -111,7 +109,7 @@ struct ThinkerList
         int result = false;
 
         thinker_t *th = sentinel.next;
-        while(th != &sentinel && th)
+        while(th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG_ASSERT(th->next != 0);
@@ -380,7 +378,7 @@ void unlinkThinkerFromList(thinker_t *th)
 static int runThinker(thinker_t *th, void * /*context*/)
 {
     // Thinker cannot think when in stasis.
-    if(!th->inStasis)
+    if(!Thinker_InStasis(th))
     {
         // Time to remove it?
         if(th->function == (thinkfunc_t) -1)
@@ -465,15 +463,6 @@ void Thinker_Remove(thinker_t *th)
     Thinker_Map(*th).thinkers().remove(*th);
 }
 
-#undef Thinker_SetStasis
-void Thinker_SetStasis(thinker_t *th, dd_bool on)
-{
-    if(th)
-    {
-        th->inStasis = on;
-    }
-}
-
 #undef Thinker_Iterate
 int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
@@ -488,6 +477,5 @@ DENG_DECLARE_API(Thinker) =
     Thinker_Run,
     Thinker_Add,
     Thinker_Remove,
-    Thinker_SetStasis,
     Thinker_Iterate
 };
