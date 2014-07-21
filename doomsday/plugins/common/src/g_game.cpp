@@ -2248,11 +2248,7 @@ void G_IntermissionBegin()
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
-#else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) G_MapNumberFor(nextMapUri), (int) nextMapEntrance);
-#endif
 
     S_PauseMusic(false);
 }

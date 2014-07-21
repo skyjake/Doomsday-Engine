@@ -392,7 +392,7 @@ void NetSv_TellCycleRulesToPlayer(int destPlr)
 {
     if(!cyclingMaps) return;
 
-    App_Log(DE2_DEV_NET_VERBOSE, "NetSv_TellCycleRulesToPlayer: %i", destPlr);
+    LOGDEV_NET_VERBOSE("NetSv_TellCycleRulesToPlayer: %i") << destPlr;
 
     // Get the rules of the current map.
     maprule_t rules;
@@ -455,7 +455,7 @@ void NetSv_MapCycleTicker()
                 if(NetSv_ScanCycle(cycleIndex = 0, &rules).path().isEmpty())
                 {
                     // Hmm?! Abort cycling.
-                    App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
+                    LOG_MAP_WARNING("All of a sudden MapCycle is invalid; stopping cycle");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -514,7 +514,7 @@ void NetSv_MapCycleTicker()
                 if(mapUri.path().isEmpty())
                 {
                     // Hmm?! Abort cycling.
-                    App_Log(DE2_MAP_WARNING, "All of a sudden MapCycle is invalid; stopping cycle");
+                    LOG_MAP_WARNING("All of a sudden MapCycle is invalid; stopping cycle");
                     DD_Execute(false, "endcycle");
                     return;
                 }
@@ -529,7 +529,7 @@ void NetSv_MapCycleTicker()
 
 void NetSv_ResetPlayerFrags(int plrNum)
 {
-    App_Log(DE2_DEV_NET_VERBOSE, "NetSv_ResetPlayerFrags: Player %i", plrNum);
+    LOGDEV_NET_VERBOSE("NetSv_ResetPlayerFrags: Player %i") << plrNum;
 
     player_t *plr = &players[plrNum];
     de::zap(plr->frags);
@@ -546,7 +546,7 @@ void NetSv_ResetPlayerFrags(int plrNum)
 
 void NetSv_NewPlayerEnters(int plrNum)
 {
-    App_Log(DE2_DEV_MSG, "NetSv_NewPlayerEnters: player %i", plrNum);
+    LOGDEV_MSG("NetSv_NewPlayerEnters: player %i") << plrNum;
 
     player_t *plr = &players[plrNum];
     plr->playerState = PST_REBORN;  // Force an init.
@@ -571,7 +571,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
-            App_Log(DE2_DEV_MAP_MSG, "NetSv_NewPlayerEnters: Spawning player with angle:%x", spot->angle);
+            LOGDEV_MAP_MSG("NetSv_NewPlayerEnters: Spawning player with angle:%x") << spot->angle;
 
             P_SpawnPlayer(plrNum, pClass, spot->origin[VX], spot->origin[VY],
                           spot->origin[VZ], spot->angle, spot->flags,
@@ -599,24 +599,26 @@ void NetSv_Intermission(int flags, int state, int time)
     Writer *msg = D_NetWrite();
     Writer_WriteByte(msg, flags);
 
-#if __JDOOM__ || __JDOOM64__
+    /// @todo jHeretic does not transmit the intermission info!
+#if !defined(__JHERETIC__)
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
+#if __JDOOM__ || __JDOOM64__
         Writer_WriteUInt16(msg, wmInfo.maxKills);
         Writer_WriteUInt16(msg, wmInfo.maxItems);
         Writer_WriteUInt16(msg, wmInfo.maxSecret);
-        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.nextMap));
-        Writer_WriteByte(msg, G_MapNumberFor(wmInfo.currentMap));
-        Writer_WriteByte(msg, wmInfo.didSecret);
-    }
 #endif
-
-#if __JHEXEN__ || __JSTRIFE__
-    if(flags & IMF_BEGIN)
-    {
-        Writer_WriteByte(msg, state); // LeaveMap
-        Writer_WriteByte(msg, time);  // LeavePosition
+#if __JDOOM__ || __JDOOM64__
+        Uri_Write(reinterpret_cast<Uri *>(&::wmInfo.nextMap), msg);
+        Uri_Write(reinterpret_cast<Uri *>(&::wmInfo.currentMap), msg);
+#elif __JHEXEN__
+        Uri_Write(reinterpret_cast<Uri *>(&::nextMapUri), msg);
+        Writer_WriteByte(msg, ::nextMapEntrance);
+#endif
+#if __JDOOM__ || __JDOOM64__
+        Writer_WriteByte(msg, wmInfo.didSecret);
+#endif
     }
 #endif
 
@@ -658,10 +660,10 @@ void NetSv_SendGameState(int flags, int to)
     de::String const gameId = COMMON_GAMESESSION->gameId();
 
     // Print a short message that describes the game state.
-    App_Log(DE2_NET_NOTE, "Sending game setup: %s %s %s",
-            gameId.toLatin1().constData(),
-            gameMapUri.resolved().toLatin1().constData(),
-            gameConfigString);
+    LOG_NET_NOTE("Sending game setup: %s %s %s")
+            << gameId
+            << gameMapUri.resolved()
+            << gameConfigString;
 
     // Send an update to all the players in the game.
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -679,10 +681,11 @@ void NetSv_SendGameState(int flags, int to)
         // The current map.
         Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
 
-        // Also include the episode and map numbers.
-        /// @todo Map references should be transmitted as URI.
+        // The current episode number.
         Writer_WriteByte(writer, ::gameEpisode);
-        Writer_WriteByte(writer, G_CurrentMapNumber());
+
+        // Old map number. Presently unused.
+        Writer_WriteByte(writer, 0);
 
         Writer_WriteByte(writer, (COMMON_GAMESESSION->rules().deathmatch & 0x3)
             | (!COMMON_GAMESESSION->rules().noMonsters? 0x4 : 0)
@@ -733,9 +736,8 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
 {
     if(!IS_SERVER) return;
 
-    App_Log(DE2_DEV_NET_MSG,
-            "NetSv_SendPlayerSpawnPosition: Player #%i pos:[%g, %g, %g] angle:%x",
-            plrNum, x, y, z, angle);
+    LOGDEV_NET_MSG("NetSv_SendPlayerSpawnPosition: Player #%i pos:%s angle:%x")
+            << plrNum << de::Vector3f(x, y, z).asText() << angle;
 
     Writer *writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
@@ -791,8 +793,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, dd_bool /*
     }
 
     // Finally, send the packet.
-    Net_SendPacket(destPlrNum, pType,
-                   Writer_Data(writer), Writer_Size(writer));
+    Net_SendPacket(destPlrNum, pType, Writer_Data(writer), Writer_Size(writer));
 }
 
 void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool /*reliable*/)
@@ -804,7 +805,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool /*r
        (destPlrNum >= 0 && destPlrNum < MAXPLAYERS && !players[destPlrNum].plr->inGame))
         return;
 
-    App_Log(DE2_DEV_NET_MSG, "NetSv_SendPlayerState: src=%i, dest=%i, flags=%x", srcPlrNum, destPlrNum, flags);
+    LOGDEV_NET_MSG("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x") << srcPlrNum << destPlrNum << flags;
 
     Writer *writer = D_NetWrite();
 

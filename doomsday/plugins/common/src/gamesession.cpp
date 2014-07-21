@@ -425,7 +425,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         /*
          * SavedSession deserialization begins.
          */
-        SavedSession const &saved     = App::rootFolder().locate<SavedSession>(internalSavePath);
+        SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
         SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.

@@ -78,7 +78,7 @@ void NetCl_UpdateGameState(Reader *msg)
 
     coord_t gsGravity = Reader_ReadFloat(msg);
 
-    App_Log(DE2_DEV_MAP_NOTE, "NetCl_UpdateGameState: Flags=%x", gsFlags);
+    LOGDEV_MAP_NOTE("NetCl_UpdateGameState: Flags=%x") << gsFlags;
 
     // Demo game state changes are only effective during demo playback.
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
@@ -93,18 +93,18 @@ void NetCl_UpdateGameState(Reader *msg)
     /// while a netgame is running (which currently will end the netgame).
     if(COMMON_GAMESESSION->gameId().compare(gsGameIdentity))
     {
-        App_Log(DE2_NET_ERROR, "Game mismatch: server's identity key (%s) is different to yours (%s)",
-                gsGameIdentity, COMMON_GAMESESSION->gameId().toLatin1().constData());
+        LOG_NET_ERROR("Game mismatch: server's identity key (%s) is different to yours (%s)")
+                << gsGameIdentity << COMMON_GAMESESSION->gameId();
         DD_Execute(false, "net disconnect");
         Uri_Delete(gsMapUri);
         return;
     }
 
     // Some statistics.
-    App_Log(DE2_LOG_NOTE, "%s - %s\n  %s",
-            gsRules.description().toLatin1().constData(),
-            Str_Text(Uri_ToString(gsMapUri)),
-            gsRules.asText().toLatin1().constData());
+    LOG_NOTE("%s - %s\n  %s")
+            << gsRules.description()
+            << Str_Text(Uri_ToString(gsMapUri))
+            << gsRules.asText();
 
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
@@ -155,9 +155,8 @@ void NetCl_UpdateGameState(Reader *msg)
             float mz       = Reader_ReadFloat(msg);
             angle_t angle  = Reader_ReadUInt32(msg);
 
-            App_Log(DE2_DEV_NET_WARNING,
-                    "NetCl_UpdateGameState: Got camera init, but player has no mobj; "
-                    "pos=%f,%f,%f Angle=%x", mx, my, mz, angle);
+            LOGDEV_NET_WARNING("NetCl_UpdateGameState: Got camera init, but player has no mobj; "
+                               "pos=%f,%f,%f Angle=%x") << mx << my << mz << angle;
         }
     }
 
@@ -650,21 +649,25 @@ void NetCl_Intermission(Reader *msg)
         SN_StopAllSequences();
 #endif
 
-        /// @todo Map references should be transmitted as URI.
-#if __JDOOM__ || __JDOOM64__
+        /// @todo jHeretic does not transmit the intermission info!
+#if !defined(__JHERETIC__)
+#  if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
         wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.nextMap    = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
-        wmInfo.currentMap = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
+#  endif
+#  if __JHEXEN__
+        Uri_Read(reinterpret_cast<uri_s *>(&::nextMapUri), msg);
+        ::nextMapEntrance = Reader_ReadByte(msg);
+#  else
+        Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.nextMap), msg);
+        Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.currentMap), msg);
+#  endif
+#  if __JDOOM__ || __JDOOM64__
         wmInfo.didSecret  = Reader_ReadByte(msg);
 
         G_PrepareWIData();
-#elif __JHERETIC__
-        /// @todo jHeretic does not transmit the intermission info!
-#elif __JHEXEN__
-        ::nextMapUri      = G_ComposeMapUri(::gameEpisode, Reader_ReadByte(msg));
-        ::nextMapEntrance = Reader_ReadByte(msg);
+#  endif
 #endif
 
 #if __JDOOM__ || __JDOOM64__
