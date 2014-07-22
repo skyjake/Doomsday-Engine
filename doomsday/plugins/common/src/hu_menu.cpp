@@ -4643,19 +4643,19 @@ int Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action, void * /*
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
     skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID1)->as<ButtonWidget>();
-    skillObj->as<ButtonWidget>().setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
+    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
     skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID2)->as<ButtonWidget>();
-    skillObj->as<ButtonWidget>().setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
+    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
     skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID3)->as<ButtonWidget>();
-    skillObj->as<ButtonWidget>().setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
+    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
     skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID4)->as<ButtonWidget>();
-    skillObj->as<ButtonWidget>().setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
+    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
     switch(mnPlrClass)
