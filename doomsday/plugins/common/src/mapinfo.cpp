@@ -97,6 +97,25 @@ void MapInfo::resetToDefaults()
     addText   ("songLump", "DEFSONG");
 }
 
+EpisodeInfo::EpisodeInfo() : Record()
+{
+    resetToDefaults();
+}
+
+EpisodeInfo &EpisodeInfo::operator = (EpisodeInfo const &other)
+{
+    static_cast<Record &>(*this) = other;
+    return *this;
+}
+
+void EpisodeInfo::resetToDefaults()
+{
+    // Add all expected fields with their default values.
+    addText("startMap", "Maps:"); // URI. Unknown.
+    addText("title", "Untitled");
+    addText("menuImage", "");     // URI. None.
+}
+
 /**
  * @note In the future it is likely that a MAPINFO parser will only be necessary in order to
  * translate such content into Doomsday-native DED file(s) in a plugin. As such it would be
@@ -1049,6 +1068,7 @@ void MapInfoParser::parse(AutoStr const &buffer, String /*sourceFile*/)
 
 void HexDefs::clear()
 {
+    episodeInfos.clear();
     mapInfos.clear();
 }
 

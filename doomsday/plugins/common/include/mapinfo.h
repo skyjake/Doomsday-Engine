@@ -38,6 +38,15 @@ public:
     void resetToDefaults();
 };
 
+class EpisodeInfo : public de::Record
+{
+public:
+    EpisodeInfo();
+    EpisodeInfo &operator = (EpisodeInfo const &other);
+
+    void resetToDefaults();
+};
+
 /**
  * Parser for Hexen's MAPINFO definition lumps.
  */
@@ -71,6 +80,8 @@ private:
  */
 struct HexDefs
 {
+    typedef std::map<std::string, EpisodeInfo> EpisodeInfos;
+    EpisodeInfos episodeInfos;
     typedef std::map<std::string, MapInfo> MapInfos;
     MapInfos mapInfos;
 

@@ -317,9 +317,6 @@ static patchid_t pOptionsTitle;
 
 static patchid_t pSkillModeNames[NUM_SKILL_MODES];
 #endif
-#if __JDOOM__
-static patchid_t pEpisodeNames[4];
-#endif
 
 #if __JHEXEN__
 static patchid_t pPlayerClassBG[3];
@@ -429,19 +426,6 @@ void Hu_MenuLoadResources()
 #  if __JDOOM__
     pSkillModeNames[SM_NIGHTMARE] = R_DeclarePatch("M_NMARE");
 #  endif
-#endif
-
-#if __JDOOM__
-    if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM|GM_DOOM_ULTIMATE))
-    {
-        pEpisodeNames[0] = R_DeclarePatch("M_EPI1");
-        pEpisodeNames[1] = R_DeclarePatch("M_EPI2");
-        pEpisodeNames[2] = R_DeclarePatch("M_EPI3");
-    }
-    if(gameModeBits & GM_DOOM_ULTIMATE)
-    {
-        pEpisodeNames[3] = R_DeclarePatch("M_EPI4");
-    }
 #endif
 
 #if __JHERETIC__
@@ -3100,45 +3084,40 @@ void Hu_MenuInitEpisodePage()
     Point2Raw const origin(80, 50);
 #endif
 
-    int numEpisodes;
-#if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-        numEpisodes = 0;
-    else if(gameMode == doom_ultimate)
-        numEpisodes = 4;
-    else
-        numEpisodes = 3;
-#else // __JHERETIC__
-    if(gameMode == heretic_extended)
-        numEpisodes = 6;
-    else
-        numEpisodes = 3;
-#endif
-
     Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
     int y = 0;
-    for(int i = 0; i < numEpisodes; ++i)
+    int n = 0;
+    DENG2_FOR_EACH_CONST(HexDefs::EpisodeInfos, it, hexDefs.episodeInfos)
     {
+        EpisodeInfo const &info = it->second;
+
         ButtonWidget *btn = new ButtonWidget;
-        btn->_origin.x     = 0;
-        btn->_origin.y     = y;
+        btn->_origin.y = y;
+        btn->setText(info.gets("title"));
+        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber())
+        {
+            btn->setShortcut(btn->text().first().toLower().toLatin1());
+        }
+        de::Uri image(info.gets("menuImage"), RC_NULL);
+        if(!image.path().isEmpty())
+        {
+            if(!image.scheme().compareWithoutCase("Patches"))
+            {
+                btn->setPatch(R_DeclarePatch(image.path().toUtf8().constData()));
+            }
+        }
 
-        btn->setText(GET_TXT(TXT_EPISODE1 + i));
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
-#if __JDOOM__
-        btn->setPatch(pEpisodeNames[i]);
-#endif
-
-        if(i != 0
+        de::Uri startMap(info.gets("startMap"), RC_NULL);
+        if(
 #if __JHERETIC__
-           && gameMode == heretic_shareware
-#else
-           && gameMode == doom_shareware
+           gameMode == heretic_shareware
+#else // __JDOOM__
+           gameMode == doom_shareware
 #endif
-           )
+           && startMap.path() != "E1M1")
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
         }
@@ -3147,19 +3126,20 @@ void Hu_MenuInitEpisodePage()
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
             btn->data1 = (void *)"Skill";
 #if __JHERETIC__
-            if(gameMode == heretic_extended && i == 5)
+            if(gameMode == heretic_extended && startMap.path() == "E6M1")
             {
                 // Inform the user that this episode is not designed for singleplayer.
                 btn->setHelpInfo(composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER)));
             }
 #endif
         }
-
         btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuFocusEpisode;
-        btn->data2           = i;
+        btn->data2           = n;
         btn->_pageFontIdx    = MENU_FONT1;
         page->_widgets << btn;
+
         y += FIXED_LINE_HEIGHT;
+        n += 1;
     }
 }
 #endif

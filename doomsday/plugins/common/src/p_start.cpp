@@ -186,9 +186,6 @@ void P_Init()
     P_Update();
 }
 
-/**
- * Populate the MapInfo database by parsing the MAPINFO lump.
- */
 #if __JHEXEN__
 static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffer, String sourceFile)
 {
@@ -203,12 +200,17 @@ static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffe
                 << NativePath(sourceFile).pretty() << er.asText();
     }
 }
+#endif
 
+/**
+ * Populate the Hexen definition database.
+ */
 static void readMapInfoDefinitions()
 {
     // Clear the database.
     hexDefs.clear();
 
+#if __JHEXEN__
     // Initialize a new parser.
     MapInfoParser parser(hexDefs);
 
@@ -225,6 +227,83 @@ static void readMapInfoDefinitions()
         LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
                 << NativePath(Str_Text(sourceFile)).pretty();
     }
+#endif
+
+    // Generate Episode definitions for the current game mode.
+    /// @todo Move to an external definition once finalized.
+#if __JDOOM__
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap", "Maps:MAP01");
+    }
+    else
+    {
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["1"];
+            info.set("startMap",  "Maps:E1M1");
+            info.set("title",     GET_TXT(TXT_EPISODE1));
+            info.set("menuImage", "Patches:M_EPI1");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["2"];
+            info.set("startMap",  "Maps:E2M1");
+            info.set("title",     GET_TXT(TXT_EPISODE2));
+            info.set("menuImage", "Patches:M_EPI2");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["3"];
+            info.set("startMap",  "Maps:E3M1");
+            info.set("title",     GET_TXT(TXT_EPISODE3));
+            info.set("menuImage", "Patches:M_EPI3");
+        }
+        if(gameMode == doom_ultimate)
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["4"];
+            info.set("startMap",  "Maps:E3M1");
+            info.set("title",     GET_TXT(TXT_EPISODE4));
+            info.set("menuImage", "Patches:M_EPI4");
+        }
+    }
+#elif __JHERETIC__
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap", "Maps:E1M1");
+        info.set("title", GET_TXT(TXT_EPISODE1));
+    }
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["2"];
+        info.set("startMap", "Maps:E2M1");
+        info.set("title", GET_TXT(TXT_EPISODE2));
+    }
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["3"];
+        info.set("startMap", "Maps:E3M1");
+        info.set("title", GET_TXT(TXT_EPISODE3));
+    }
+    if(gameMode == heretic_extended)
+    {
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["4"];
+            info.set("startMap", "Maps:E4M1");
+            info.set("title", GET_TXT(TXT_EPISODE4));
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["5"];
+            info.set("startMap", "Maps:E5M1");
+            info.set("title", GET_TXT(TXT_EPISODE5));
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["6"];
+            info.set("startMap", "Maps:E6M1");
+            info.set("title", GET_TXT(TXT_EPISODE6));
+        }
+    }
+#else // __JHEXEN__ || __JDOOM64__
+    // A single implicit episode.
+    EpisodeInfo &info = hexDefs.episodeInfos["1"];
+    info.set("startMap", "Maps:MAP01");
+#endif
 
 #ifdef DENG_DEBUG
     for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
@@ -236,7 +315,6 @@ static void readMapInfoDefinitions()
     }
 #endif
 }
-#endif
 
 void P_Update()
 {
@@ -244,9 +322,7 @@ void P_Update()
     P_InitInventory();
 #endif
 
-#if __JHEXEN__
     readMapInfoDefinitions();
-#endif
 
     P_InitSwitchList();
     P_InitTerrainTypes();
