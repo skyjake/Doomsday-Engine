@@ -197,7 +197,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed);
 
 void Hu_MenuCommand(menucommand_e cmd);
 
-int Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action, void *parameters);
+int Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action);
 
 } // namespace common
 

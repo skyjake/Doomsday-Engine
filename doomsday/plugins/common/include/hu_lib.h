@@ -158,12 +158,11 @@ public:
         /// Callback to be made when this action is executed. Can be @c NULL in
         /// which case attempts to action this will be NOPs.
         ///
-        /// @param ob  Object being referenced for this callback.
+        /// @param ob      Object being referenced for this callback.
         /// @param action  Identifier of the Menu Action to be processed.
-        /// @param parameters  Passed to the callback from event which actioned this.
         /// @return  Callback return value. Callback should return zero if the action
         ///     was recognised and processed, regardless of outcome.
-        int (*callback) (Widget *wi, mn_actionid_t action, void *parameters);
+        int (*callback) (Widget *wi, mn_actionid_t action);
     };
 
 public:
@@ -295,10 +294,9 @@ public:
     /**
      * Execute the action associated with @a id
      * @param action  Identifier of the action to be executed (if found).
-     * @param parameters  Passed to the action callback.
      * @return  Return value of the executed action else @c -1 if NOP.
      */
-    int execAction(mn_actionid_t action, void *parameters);
+    int execAction(mn_actionid_t action);
 
     de::String const &helpInfo() const;
     Widget &setHelpInfo(de::String newHelpInfo);
@@ -571,7 +569,7 @@ private:
 };
 
 int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd);
-int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct cvarbutton_t
 {
@@ -661,7 +659,7 @@ public:
 
 int LineEditWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 /**
  * List selection.
@@ -740,7 +738,7 @@ public:
 
 int ListWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct InlineListWidget : public ListWidget
 {
@@ -841,7 +839,7 @@ public:
 
 int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 /**
  * Graphical slider.
@@ -910,7 +908,7 @@ public:
 
 int SliderWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
+int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct TextualSliderWidget : public SliderWidget
 {

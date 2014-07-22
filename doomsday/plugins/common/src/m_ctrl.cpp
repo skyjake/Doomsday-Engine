@@ -249,7 +249,7 @@ static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*na
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/, void * /*parameters*/)
+int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
@@ -571,7 +571,7 @@ int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
         ob->_flags |= MNF_ACTIVE;
         if(ob->hasAction(Widget::MNA_ACTIVE))
         {
-            ob->execAction(Widget::MNA_ACTIVE, NULL);
+            ob->execAction(Widget::MNA_ACTIVE);
             return true;
         }
         break;

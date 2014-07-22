@@ -1208,7 +1208,7 @@ void Page::giveChildFocus(Widget *wi, dd_bool allowRefocus)
             Widget *oldFocusOb = _widgets[focus];
             if(oldFocusOb->hasAction(Widget::MNA_FOCUSOUT))
             {
-                oldFocusOb->execAction(Widget::MNA_FOCUSOUT, NULL);
+                oldFocusOb->execAction(Widget::MNA_FOCUSOUT);
             }
             oldFocusOb->setFlags(FO_CLEAR, MNF_FOCUS);
         }
@@ -1222,7 +1222,7 @@ void Page::giveChildFocus(Widget *wi, dd_bool allowRefocus)
     wi->setFlags(FO_SET, MNF_FOCUS);
     if(wi->hasAction(Widget::MNA_FOCUS))
     {
-        wi->execAction(Widget::MNA_FOCUS, NULL);
+        wi->execAction(Widget::MNA_FOCUS);
     }
 }
 
@@ -1663,14 +1663,14 @@ int Widget_DefaultCommandResponder(Widget *ob, menucommand_e cmd)
             ob->_flags |= MNF_ACTIVE;
             if(ob->hasAction(Widget::MNA_ACTIVE))
             {
-                ob->execAction(Widget::MNA_ACTIVE, NULL);
+                ob->execAction(Widget::MNA_ACTIVE);
             }
         }
 
         ob->_flags &= ~MNF_ACTIVE;
         if(ob->hasAction(Widget::MNA_ACTIVEOUT))
         {
-            ob->execAction(Widget::MNA_ACTIVEOUT, NULL);
+            ob->execAction(Widget::MNA_ACTIVEOUT);
         }
         return true;
     }
@@ -1689,11 +1689,11 @@ dd_bool Widget::hasAction(mn_actionid_t id)
     return (info && info->callback != 0);
 }
 
-int Widget::execAction(mn_actionid_t id, void *parameters)
+int Widget::execAction(mn_actionid_t id)
 {
     if(hasAction(id))
     {
-        return action(id)->callback(this, id, parameters);
+        return action(id)->callback(this, id);
     }
     DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
     /// @todo Need an error handling mechanic.
@@ -1999,7 +1999,7 @@ int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             Str_Copy(&edit->oldtext, &edit->_text);
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE);
             }
         }
         else
@@ -2009,7 +2009,7 @@ int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags &= ~MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT);
             }
         }
         return true;
@@ -2024,7 +2024,7 @@ int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags &= ~MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_CLOSE))
             {
-                wi->execAction(Widget::MNA_CLOSE, NULL);
+                wi->execAction(Widget::MNA_CLOSE);
             }
             return true;
 
@@ -2082,7 +2082,7 @@ void LineEditWidget::setText(int flags, char const *newText)
     }
     if(!(flags & MNEDIT_STF_NO_ACTION) && hasAction(MNA_MODIFIED))
     {
-        execAction(MNA_MODIFIED, NULL);
+        execAction(MNA_MODIFIED);
     }
 }
 
@@ -2112,7 +2112,7 @@ int LineEditWidget::handleEvent(event_t *ev)
             Str_Truncate(&_text, Str_Length(&_text)-1);
             if(hasAction(MNA_MODIFIED))
             {
-                execAction(MNA_MODIFIED, NULL);
+                execAction(MNA_MODIFIED);
             }
         }
         return true;
@@ -2133,7 +2133,7 @@ int LineEditWidget::handleEvent(event_t *ev)
             Str_AppendChar(&_text, ch);
             if(hasAction(MNA_MODIFIED))
             {
-                execAction(MNA_MODIFIED, NULL);
+                execAction(MNA_MODIFIED);
             }
         }
         return true;
@@ -2148,7 +2148,7 @@ void LineEditWidget::updateGeometry(Page * /*page*/)
     Rect_SetWidthHeight(_geometry, 170, 14);
 }
 
-int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     LineEditWidget const &edit = wi->as<LineEditWidget>();
@@ -2282,7 +2282,7 @@ int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
                 if(wi->hasAction(Widget::MNA_MODIFIED))
                 {
-                    wi->execAction(Widget::MNA_MODIFIED, NULL);
+                    wi->execAction(Widget::MNA_MODIFIED);
                 }
             }
             return true;
@@ -2296,7 +2296,7 @@ int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags &= ~MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_CLOSE))
             {
-                wi->execAction(Widget::MNA_CLOSE, NULL);
+                wi->execAction(Widget::MNA_CLOSE);
             }
             return true;
         }
@@ -2309,7 +2309,7 @@ int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE);
             }
         }
         else
@@ -2318,7 +2318,7 @@ int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags &= ~MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT);
             }
         }
         return true;
@@ -2373,7 +2373,7 @@ dd_bool ListWidget::selectItem(int flags, int itemIndex)
 
     if(!(flags & MNLIST_SIF_NO_ACTION) && hasAction(MNA_MODIFIED))
     {
-        execAction(MNA_MODIFIED, NULL);
+        execAction(MNA_MODIFIED);
     }
     return true;
 }
@@ -2383,7 +2383,7 @@ dd_bool ListWidget::selectItemByValue(int flags, int dataValue)
     return selectItem(flags, findItem(dataValue));
 }
 
-int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*parameters*/)
+int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     ListWidget const *list = &wi->as<ListWidget>();
 
@@ -2474,7 +2474,7 @@ int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             if(wi->hasAction(Widget::MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED, NULL);
+                wi->execAction(Widget::MNA_MODIFIED);
             }
         }
         return true;
@@ -2598,7 +2598,7 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE);
             }
         }
 
@@ -2607,7 +2607,7 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
         wi->_flags &= ~MNF_ACTIVE;
         if(wi->hasAction(Widget::MNA_ACTIVEOUT))
         {
-            wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+            wi->execAction(Widget::MNA_ACTIVEOUT);
         }
 
         wi->timer = 0;
@@ -2722,7 +2722,7 @@ int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE);
             }
         }
 
@@ -2736,7 +2736,7 @@ int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             *((char*)data) = (wi->_flags & MNF_ACTIVE) != 0;
             if(wi->hasAction(Widget::MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED, NULL);
+                wi->execAction(Widget::MNA_MODIFIED);
             }
         }
 
@@ -2745,7 +2745,7 @@ int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT);
             }
         }
 
@@ -2756,7 +2756,7 @@ int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
     cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
@@ -2932,7 +2932,7 @@ int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE, NULL);
+                wi->execAction(Widget::MNA_ACTIVE);
             }
         }
         else
@@ -2941,7 +2941,7 @@ int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             wi->_flags &= ~MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+                wi->execAction(Widget::MNA_ACTIVEOUT);
             }
         }
         return true;
@@ -3055,7 +3055,7 @@ dd_bool ColorPreviewWidget::setRedf(int flags, float red)
     {
         if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
         {
-            execAction(MNA_MODIFIED, NULL);
+            execAction(MNA_MODIFIED);
         }
         return true;
     }
@@ -3071,7 +3071,7 @@ dd_bool ColorPreviewWidget::setGreenf(int flags, float green)
     {
         if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
         {
-            execAction(MNA_MODIFIED, NULL);
+            execAction(MNA_MODIFIED);
         }
         return true;
     }
@@ -3087,7 +3087,7 @@ dd_bool ColorPreviewWidget::setBluef(int flags, float blue)
     {
         if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
         {
-            execAction(MNA_MODIFIED, NULL);
+            execAction(MNA_MODIFIED);
         }
         return true;
     }
@@ -3104,7 +3104,7 @@ dd_bool ColorPreviewWidget::setAlphaf(int flags, float alpha)
         {
             if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
             {
-                execAction(MNA_MODIFIED, NULL);
+                execAction(MNA_MODIFIED);
             }
             return true;
         }
@@ -3126,7 +3126,7 @@ dd_bool ColorPreviewWidget::setColor4f(int flags, float red, float green,
 
     if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
     {
-        execAction(MNA_MODIFIED, NULL);
+        execAction(MNA_MODIFIED);
     }
     return true;
 }
@@ -3142,7 +3142,7 @@ dd_bool ColorPreviewWidget::copyColor(int flags, ColorPreviewWidget const &other
     return setColor4f(flags, other.redf(), other.greenf(), other.bluef(), other.alphaf());
 }
 
-int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     ColorPreviewWidget *cbox = &wi->as<ColorPreviewWidget>();
 
@@ -3302,7 +3302,7 @@ int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             if(wi->hasAction(Widget::MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED, NULL);
+                wi->execAction(Widget::MNA_MODIFIED);
             }
         }
         return true;
@@ -3312,7 +3312,7 @@ int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
     }
 }
 
-int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     if(Widget::MNA_MODIFIED != action) return 1;
 
