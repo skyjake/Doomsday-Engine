@@ -130,6 +130,14 @@ using namespace de;
 
 static struct xgclass_s *xgClassLinks;
 
+// Helper for managing a dummy definition allocated on the stack.
+template <typename T>
+struct Dummy : public T {
+    Dummy() { zap(*this); }
+    ~Dummy() { T::release(); }
+    void clear() { T::release(); zap(*this); }
+};
+
 void DED_SetXGClassLinks(struct xgclass_s *links)
 {
     xgClassLinks = links;
@@ -914,7 +922,8 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))
             {
                 dd_bool bModify = false;
-                ded_mobj_t* mo, dummyMo;
+                ded_mobj_t* mo;
+                Dummy<ded_mobj_t> dummyMo;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
@@ -938,7 +947,7 @@ DENG2_PIMPL(DEDParser)
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
-                        memset(&dummyMo, 0, sizeof(dummyMo));
+                        dummyMo.clear();
                         mo = &dummyMo;
                     }
                     else
@@ -1014,7 +1023,8 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("State"))
             {
                 dd_bool bModify = false;
-                ded_state_t* st, dummyState;
+                ded_state_t* st;
+                Dummy<ded_state_t> dummyState;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
@@ -1038,7 +1048,7 @@ DENG2_PIMPL(DEDParser)
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
-                        memset(&dummyState, 0, sizeof(dummyState));
+                        dummyState.clear();
                         st = &dummyState;
                     }
                     else
@@ -1179,7 +1189,8 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Material"))
             {
                 bool bModify = false;
-                ded_material_t *mat, dummyMat;
+                ded_material_t *mat;
+                Dummy<ded_material_t> dummyMat;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
@@ -1206,7 +1217,7 @@ DENG2_PIMPL(DEDParser)
 
                         // We'll read into a dummy definition.
                         idx = -1;
-                        memset(&dummyMat, 0, sizeof(dummyMat));
+                        dummyMat.clear();
                         mat = &dummyMat;
                     }
                     else
