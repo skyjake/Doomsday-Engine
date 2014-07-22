@@ -167,7 +167,6 @@ public:
     };
 
 public:
-    int _group;        ///< Object group identifier.
     int _flags;        ///< @ref menuObjectFlags.
 
     /// Used with the fixed layout method for positioning this object in
@@ -194,13 +193,13 @@ public:
     int data2;
 
     Rect *_geometry;   ///< Current geometry.
-    Page *_page;  ///< MenuPage which owns this object (if any).
+    Page *_page;       ///< MenuPage which owns this object (if any).
 
     int timer;
 
 public:
     Widget();
-    virtual ~Widget() {}
+    virtual ~Widget();
 
     DENG2_AS_IS_METHODS()
 
@@ -271,8 +270,10 @@ public:
     Widget &setFixedX(int x);
     Widget &setFixedY(int y);
 
-    int shortcut();
+    int group() const;
+    Widget &setGroup(int newGroup);
 
+    int shortcut();
     Widget &setShortcut(int ddkey);
 
     /// @return  Index of the color used from the owning/active page.
@@ -280,8 +281,6 @@ public:
 
     /// @return  Index of the font used from the owning/active page.
     int font();
-
-    dd_bool isGroupMember(int group) const;
 
     /// @return  @c true if this object has a registered executeable action
     /// associated with the unique identifier @a action.
@@ -300,6 +299,13 @@ public:
      * @return  Return value of the executed action else @c -1 if NOP.
      */
     int execAction(mn_actionid_t action, void *parameters);
+
+    de::String const &helpInfo() const;
+    Widget &setHelpInfo(de::String newHelpInfo);
+    inline bool hasHelpInfo() const { return !helpInfo().isEmpty(); }
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 int Widget_DefaultCommandResponder(Widget *wi, menucommand_e command);

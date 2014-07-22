@@ -303,7 +303,7 @@ void Hu_MenuInitControlsPage()
             txt->_pageColorIdx = MENU_COLOR2;
 
             // A new group begins;
-            txt->_group = ++group;
+            txt->setGroup(++group);
 
             page->_widgets << txt;
         }
@@ -311,14 +311,14 @@ void Hu_MenuInitControlsPage()
         {
 
             LabelWidget *labelOb = new LabelWidget;
-            labelOb->text   = binds->text;
-            labelOb->_group = group;
+            labelOb->text = binds->text;
+            labelOb->setGroup(group);
 
             page->_widgets << labelOb;
 
             InputBindingWidget *bindingsOb = new InputBindingWidget;
-            bindingsOb->binds  = binds;
-            bindingsOb->_group = group;
+            bindingsOb->binds = binds;
+            bindingsOb->setGroup(group);
             bindingsOb->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
             bindingsOb->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
 

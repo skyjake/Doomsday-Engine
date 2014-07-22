@@ -829,8 +829,8 @@ void Page::applyPageLayout()
         if(ob->is<LabelWidget>() && nextOb)
         {
             if(MNObject_IsDrawable(nextOb) &&
-               (nextOb->is<ButtonWidget>()     ||
-                nextOb->is<InlineListWidget>() ||
+               (nextOb->is<ButtonWidget>()         ||
+                nextOb->is<InlineListWidget>()     ||
                 nextOb->is<ColorPreviewWidget>()   ||
                 nextOb->is<InputBindingWidget>()   ||
                 nextOb->is<TextualSliderWidget>()))
@@ -846,7 +846,7 @@ void Page::applyPageLayout()
                 Rect_UniteRaw(geometry, &united);
 
                 // Extra spacing between object groups.
-                if(i + 2 < _widgets.count() && nextOb->_group != _widgets[i + 2]->_group)
+                if(i + 2 < _widgets.count() && nextOb->group() != _widgets[i + 2]->group())
                 {
                     origin.y += lh;
                 }
@@ -862,8 +862,10 @@ void Page::applyPageLayout()
         origin.y += Rect_Height(ob->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
-        if(nextOb && nextOb->_group != ob->_group)
+        if(nextOb && nextOb->group() != ob->group())
+        {
             origin.y += lh;
+        }
 
         // Proceed to the next object!
         i += 1;
@@ -1067,6 +1069,13 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
         page->drawer(page, &page->origin);
         FR_PopAttrib();
     }
+
+    // How about some additional help/information for the focused item?
+    if(focusObj && focusObj->hasHelpInfo())
+    {
+        Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
+        Hu_MenuDrawPageHelp(focusObj->helpInfo().toUtf8().constData(), helpOrigin.x, helpOrigin.y);
+    }
 }
 
 Page::Page(Point2Raw const &origin, int flags,
@@ -1176,7 +1185,7 @@ Widget *Page::findObject(int group, int flags)
 {
     foreach(Widget *wi, _widgets)
     {
-        if(wi->isGroupMember(group) && (wi->flags() & flags) == flags)
+        if(wi->group() == group && (wi->flags() & flags) == flags)
             return wi;
     }
     return 0; // Not found.
@@ -1507,9 +1516,16 @@ int Page::timer()
     return _timer;
 }
 
+DENG2_PIMPL_NOREF(Widget)
+{
+    int group;        ///< Object group identifier.
+    String helpInfo;  ///< Additional help information displayed when the widget has focus.
+
+    Instance() : group(0) {}
+};
+
 Widget::Widget()
-    : _group             (0)
-    , _flags             (0)
+    : _flags             (0)
     , _shortcut          (0)
     , _pageFontIdx       (0)
     , _pageColorIdx      (0)
@@ -1520,9 +1536,13 @@ Widget::Widget()
     , _geometry          (0)
     , _page              (0)
     , timer              (0)
+    , d(new Instance)
 {
     de::zap(actions);
 }
+
+Widget::~Widget()
+{}
 
 int Widget::handleEvent(event_t * /*ev*/)
 {
@@ -1592,8 +1612,19 @@ Widget &Widget::setFlags(flagop_t op, int flagsToChange)
     case FO_SET:    _flags |= flagsToChange;   break;
     case FO_TOGGLE: _flags ^= flagsToChange;   break;
 
-    default: DENG2_ASSERT(!"MNObject::SetFlags: Unknown op.");
+    default: DENG2_ASSERT(!"Widget::SetFlags: Unknown op.");
     }
+    return *this;
+}
+
+int Widget::group() const
+{
+    return d->group;
+}
+
+Widget &Widget::setGroup(int newGroup)
+{
+    d->group = newGroup;
     return *this;
 }
 
@@ -1619,11 +1650,6 @@ int Widget::font()
 int Widget::color()
 {
     return _pageColorIdx;
-}
-
-dd_bool Widget::isGroupMember(int group) const
-{
-    return (_group == group);
 }
 
 int Widget_DefaultCommandResponder(Widget *ob, menucommand_e cmd)
@@ -1674,9 +1700,20 @@ int Widget::execAction(mn_actionid_t id, void *parameters)
     return -1; // NOP
 }
 
+String const &Widget::helpInfo() const
+{
+    return d->helpInfo;
+}
+
+Widget &Widget::setHelpInfo(String newHelpInfo)
+{
+    d->helpInfo = newHelpInfo;
+    return *this;
+}
+
 RectWidget::RectWidget()
     : Widget()
-    , patch      (0)
+    , patch(0)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;

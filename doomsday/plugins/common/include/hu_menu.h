@@ -131,9 +131,9 @@ de::String Hu_MenuFindPageName(menu::Page const *page);
  */
 menu::Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
     void (*ticker) (menu::Page *page),
-    void (*drawer) (menu::Page *page, Point2Raw const *origin),
-    int (*cmdResponder) (menu::Page *page, menucommand_e cmd),
-    void *userData);
+    void (*drawer) (menu::Page *page, Point2Raw const *origin) = 0,
+    int (*cmdResponder) (menu::Page *page, menucommand_e cmd) = 0,
+    void *userData = 0);
 
 /**
  * This is the main menu drawing routine (called every tic by the drawing
