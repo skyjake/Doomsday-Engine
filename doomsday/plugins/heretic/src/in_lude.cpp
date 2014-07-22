@@ -131,7 +131,7 @@ static Point2Raw YAHspot[3][9] = {
 void WI_Register()
 {
     C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, PRM_FIRST, PRM_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
 }
 
 void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)

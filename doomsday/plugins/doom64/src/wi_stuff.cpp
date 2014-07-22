@@ -104,14 +104,14 @@ static patchid_t pTeamIcons[NUMTEAMS];
 /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
 static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
 {
-    return Hu_ChoosePatchReplacement2(patchreplacemode_t(cfg.inludePatchReplaceMode),
-                                      patchId, text);
+    return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
+                                     patchId, text);
 }
 
 void WI_Register()
 {
     C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, PRM_FIRST, PRM_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
 }
 
 static void drawBackground()

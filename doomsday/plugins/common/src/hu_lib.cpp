@@ -35,6 +35,7 @@
 // @todo Remove external dependencies
 #include "hu_menu.h" // For the menu sound ids.
 
+using namespace de;
 using namespace common;
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
@@ -1285,13 +1286,10 @@ void Page::initialize()
         // Reset object timer.
         wi->timer = 0;
 
-        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
+        if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            if(btn->staydownMode)
-            {
-                dd_bool const activate = (*(char *) wi->data1);
-                wi->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
-            }
+            dd_bool const activate = (*(char *) wi->data1);
+            tog->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
         }
         if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
@@ -1347,16 +1345,6 @@ void Page::initObjects()
                 txt->text = GET_TXT(PTR2INT(txt->text));
             }
         }
-        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
-        {
-            /*mn_actioninfo_t const *action = ob->action(MNA_MODIFIED);*/
-            if(btn->text && (PTR2INT(btn->text) > 0 && PTR2INT(btn->text) < NUMTEXT))
-            {
-                btn->text = GET_TXT(PTR2INT(btn->text));
-                /// @todo Should not be done here.
-                wi->setShortcut(btn->text[0]);
-            }
-        }
         if(LineEditWidget *edit = wi->maybeAs<LineEditWidget>())
         {
             if(edit->emptyString && (PTR2INT(edit->emptyString) > 0 && PTR2INT(edit->emptyString) < NUMTEXT))
@@ -1403,35 +1391,26 @@ void Page::updateObjects()
         {
             mprev->setFlags(FO_SET, MNF_NO_FOCUS);
         }
-        if(ButtonWidget *btn = wi->maybeAs<ButtonWidget>())
+        if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
-
-            if(action && action->callback == CvarButtonWidget_UpdateCvar)
+            if(wi->data1)
             {
-                if(wi->data1)
+                // This button has already been initialized.
+                cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
+                cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
+                tog->setText(cvb->active ? cvb->yes : cvb->no);
+                continue;
+            }
+
+            // Find the cvarbutton representing this one.
+            for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
+            {
+                if(!strcmp(tog->cvarPath(), cvb->cvarname) && wi->data2 == cvb->mask)
                 {
-                    // This button has already been initialized.
-                    cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
                     cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
-                    //strcpy(obj->text, cvb->active ? cvb->yes : cvb->no);
-                    btn->text = cvb->active ? cvb->yes : cvb->no;
-                    continue;
-                }
-
-                // Find the cvarbutton representing this one.
-                for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
-                {
-                    if(!strcmp((char const *)btn->data, cvb->cvarname) && wi->data2 == cvb->mask)
-                    {
-                        cvb->active = (Con_GetByte(cvb->cvarname) & (cvb->mask? cvb->mask : ~0)) != 0;
-                        wi->data1 = (void*) cvb;
-
-                        btn->yes  = cvb->yes;
-                        btn->no   = cvb->no;
-                        btn->text = (cvb->active ? btn->yes : btn->no);
-                        break;
-                    }
+                    wi->data1 = (void *) cvb;
+                    tog->setText(cvb->active ? cvb->yes : cvb->no);
+                    break;
                 }
             }
         }
@@ -1785,7 +1764,7 @@ void LabelWidget::draw(Point2Raw const *origin)
         char const *replacement = 0;
         if(!(flags & MNTEXT_NO_ALTTEXT))
         {
-            replacement = Hu_ChoosePatchReplacement2(patchreplacemode_t(cfg.menuPatchReplaceMode), *patch, text);
+            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), *patch, text);
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -2502,33 +2481,37 @@ void InlineListWidget::updateGeometry(Page *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-ButtonWidget::ButtonWidget()
-    : Widget()
-    , staydownMode(false)
-    , data        (0)
-    , text        (0)
-    , patch       (0)
-    , yes         (0)
-    , no          (0)
-    , flags       (0)
+DENG2_PIMPL_NOREF(ButtonWidget)
+{
+    de::String text;  ///< Label text.
+    patchid_t patch;  ///< Used when drawing this instead of text, if set.
+    bool noAltText;
+
+    Instance() : patch(-1), noAltText(false) {}
+};
+
+ButtonWidget::ButtonWidget() : Widget(), d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT2;
     Widget::_pageColorIdx = MENU_COLOR1;
     Widget::cmdResponder  = ButtonWidget_CommandResponder;
 }
 
+ButtonWidget::~ButtonWidget()
+{}
+
 void ButtonWidget::draw(Point2Raw const *origin)
 {
     DENG2_ASSERT(origin != 0);
-    //int dis   = (Widget::_flags & MNF_DISABLED) != 0;
-    //int act   = (Widget::_flags & MNF_ACTIVE)   != 0;
-    //int click = (Widget::_flags & MNF_CLICKED)  != 0;
+    //int dis   = (_flags & MNF_DISABLED) != 0;
+    //int act   = (_flags & MNF_ACTIVE)   != 0;
+    //int click = (_flags & MNF_CLICKED)  != 0;
     //dd_bool down = act || click;
     fontid_t const fontId = rs.textFonts[_pageFontIdx];
-    float color[4], t = (Widget::_flags & MNF_FOCUS)? 1 : 0;
+    float color[4], t = (_flags & MNF_FOCUS)? 1 : 0;
 
     // Flash if focused?
-    if((Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+    if((_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
         t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
@@ -2541,16 +2524,17 @@ void ButtonWidget::draw(Point2Raw const *origin)
     FR_SetColorAndAlphav(color);
     DGL_Color4f(1, 1, 1, color[CA]);
 
-    if(patch)
+    Block textAsUtf8 = d->text.toUtf8();
+    if(d->patch >= 0)
     {
         char const *replacement = 0;
-        if(!(flags & MNBUTTON_NO_ALTTEXT))
+        if(!d->noAltText)
         {
-            replacement = Hu_ChoosePatchReplacement2(patchreplacemode_t(cfg.menuPatchReplaceMode), *patch, text);
+            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, textAsUtf8.constData());
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch(*patch, replacement, de::Vector2i(origin->x, origin->y),
+        WI_DrawPatch(d->patch, replacement, Vector2i(origin->x, origin->y),
                      ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2558,14 +2542,14 @@ void ButtonWidget::draw(Point2Raw const *origin)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(text, origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawText3(textAsUtf8.constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
 int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
-    ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
+    //ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
 
     if(cmd == MCMD_SELECT)
     {
@@ -2573,8 +2557,6 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
         if(!(wi->_flags & MNF_ACTIVE))
         {
             justActivated = true;
-            if(btn->staydownMode)
-                S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
@@ -2583,41 +2565,12 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
             }
         }
 
-        if(!btn->staydownMode)
+        // We are not going to receive an "up event" so action that now.
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        wi->_flags &= ~MNF_ACTIVE;
+        if(wi->hasAction(Widget::MNA_ACTIVEOUT))
         {
-            // We are not going to receive an "up event" so action that now.
-            S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
-            {
-                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
-            }
-        }
-        else
-        {
-            // Stay-down buttons change state.
-            if(!justActivated)
-                wi->_flags ^= MNF_ACTIVE;
-
-            if(wi->data1)
-            {
-                void* data = wi->data1;
-
-                *((char*)data) = (wi->_flags & MNF_ACTIVE) != 0;
-                if(wi->hasAction(Widget::MNA_MODIFIED))
-                {
-                    wi->execAction(Widget::MNA_MODIFIED, NULL);
-                }
-            }
-
-            if(!justActivated && !(wi->_flags & MNF_ACTIVE))
-            {
-                S_LocalSound(SFX_MENU_CYCLE, NULL);
-                if(wi->hasAction(Widget::MNA_ACTIVEOUT))
-                {
-                    wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
-                }
-            }
+            wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
         }
 
         wi->timer = 0;
@@ -2630,27 +2583,28 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 void ButtonWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
-    //int dis   = (Widget::_flags & MNF_DISABLED) != 0;
-    //int act   = (Widget::_flags & MNF_ACTIVE)   != 0;
-    //int click = (Widget::_flags & MNF_CLICKED)  != 0;
+    //int dis   = (_flags & MNF_DISABLED) != 0;
+    //int act   = (_flags & MNF_ACTIVE)   != 0;
+    //int click = (_flags & MNF_CLICKED)  != 0;
     //dd_bool down = act || click;
-    char const *useText = text;
+    Block textAsUtf8 = d->text.toUtf8();
+    char const *useText = textAsUtf8.constData();
     Size2Raw size;
 
     // @todo What if patch replacement is disabled?
-    if(patch)
+    if(d->patch >= 0)
     {
-        if(!(flags & MNBUTTON_NO_ALTTEXT))
+        if(!d->noAltText)
         {
             // Use the replacement string?
-            useText = Hu_ChoosePatchReplacement2(patchreplacemode_t(cfg.menuPatchReplaceMode), *patch, text);
+            useText = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text.toUtf8().constData());
         }
 
         if(!useText || !useText[0])
         {
             // Use the original patch.
             patchinfo_t info;
-            R_GetPatchInfo(*patch, &info);
+            R_GetPatchInfo(d->patch, &info);
             Rect_SetWidthHeight(_geometry, info.geometry.size.width,
                                            info.geometry.size.height);
             return;
@@ -2663,32 +2617,118 @@ void ButtonWidget::updateGeometry(Page *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-void ButtonWidget_SetFlags(Widget *wi, flagop_t op, int flags)
+String const &ButtonWidget::text() const
 {
-    DENG2_ASSERT(wi != 0);
-    ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
-
-    switch(op)
-    {
-    case FO_CLEAR:  btn->flags &= ~flags;  break;
-    case FO_SET:    btn->flags |= flags;   break;
-    case FO_TOGGLE: btn->flags ^= flags;   break;
-
-    default: DENG2_ASSERT(!"MNButton::SetFlags: Unknown op.");
-    }
+    return d->text;
 }
 
-int CvarButtonWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+ButtonWidget &ButtonWidget::setText(String newText)
 {
-    ButtonWidget *btn = &wi->as<ButtonWidget>();
+    d->text = newText;
+    return *this;
+}
+
+patchid_t ButtonWidget::patch() const
+{
+    return d->patch;
+}
+
+ButtonWidget &ButtonWidget::setPatch(patchid_t newPatch)
+{
+    d->patch = newPatch;
+    return *this;
+}
+
+bool ButtonWidget::noAltText() const
+{
+    return d->noAltText;
+}
+
+ButtonWidget &ButtonWidget::setNoAltText(bool yes)
+{
+    d->noAltText = yes;
+    return *this;
+}
+
+CVarToggleWidget::CVarToggleWidget(char const *cvarPath)
+    : ButtonWidget()
+    , _cvarPath(cvarPath)
+{
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR3;
+    Widget::cmdResponder  = CVarToggleWidget_CommandResponder;
+    Widget::actions[MNA_MODIFIED].callback = CvarToggleWidget_UpdateCvar;
+    Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+}
+
+CVarToggleWidget::~CVarToggleWidget()
+{}
+
+char const *CVarToggleWidget::cvarPath() const
+{
+    return _cvarPath;
+}
+
+int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi != 0);
+    //CVarToggleWidget *tog = static_cast<CVarToggleWidget *>(wi);
+
+    if(cmd == MCMD_SELECT)
+    {
+        dd_bool justActivated = false;
+        if(!(wi->_flags & MNF_ACTIVE))
+        {
+            justActivated = true;
+            S_LocalSound(SFX_MENU_CYCLE, NULL);
+
+            wi->_flags |= MNF_ACTIVE;
+            if(wi->hasAction(Widget::MNA_ACTIVE))
+            {
+                wi->execAction(Widget::MNA_ACTIVE, NULL);
+            }
+        }
+
+        if(!justActivated)
+            wi->_flags ^= MNF_ACTIVE;
+
+        if(wi->data1)
+        {
+            void* data = wi->data1;
+
+            *((char*)data) = (wi->_flags & MNF_ACTIVE) != 0;
+            if(wi->hasAction(Widget::MNA_MODIFIED))
+            {
+                wi->execAction(Widget::MNA_MODIFIED, NULL);
+            }
+        }
+
+        if(!justActivated && !(wi->_flags & MNF_ACTIVE))
+        {
+            S_LocalSound(SFX_MENU_CYCLE, NULL);
+            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+            {
+                wi->execAction(Widget::MNA_ACTIVEOUT, NULL);
+            }
+        }
+
+        wi->timer = 0;
+        return true;
+    }
+
+    return false; // Not eaten.
+}
+
+int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void * /*context*/)
+{
+    CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
     cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
 
     if(Widget::MNA_MODIFIED != action) return 1;
 
-    //strcpy(btn->text, cb->active? cb->yes : cb->no);
-    btn->text = cb->active? cb->yes : cb->no;
+    tog->setText(cb->active? cb->yes : cb->no);
 
     if(CVT_NULL == varType) return 0;
 

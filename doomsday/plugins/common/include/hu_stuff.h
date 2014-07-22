@@ -128,13 +128,20 @@ void M_DrawShadowedPatch(patchid_t id, int x, int y);
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags);
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchFlags, float r, float g, float b, float a);
 
-typedef enum {
-    PRM_NONE                    = 0, ///< No replacement.
-    PRM_ALLOW_TEXT                   ///< Use a text replacement if found.
-} patchreplacemode_t;
+/**
+ * Misc specialised elements:
+ */
 
-#define PRM_FIRST               (PRM_NONE)
-#define PRM_LAST                (PRM_ALLOW_TEXT)
+void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
+
+#ifdef __cplusplus
+} // extern "C"
+
+enum patchreplacemode_t
+{
+    PRM_NONE,       ///< No replacement.
+    PRM_ALLOW_TEXT  ///< Use a text replacement if found.
+};
 
 /**
  * @defgroup patchReplacementFlags  Patch Replacement Flags.
@@ -153,7 +160,7 @@ typedef enum {
  *
  * @return  Patch replacement string if defined/found else @c NULL.
  */
-const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
+char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
 
 /**
  * Determine whether a string-replacement for the specified patch is allowed
@@ -165,17 +172,7 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  * @param patchId       Unique identifier of the patch to choose a replacement for.
  * @param text          A prechoosen string replacement to be used if appropriate.
  */
-const char* Hu_ChoosePatchReplacement2(patchreplacemode_t replaceMode, patchid_t patchId, const char* text);
-const char* Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId);
-
-/**
- * Misc specialised elements:
- */
-
-void M_DrawGlowBar(const float a[2], const float b[2], float thickness, dd_bool left, dd_bool right, dd_bool caps, float red, float green, float blue, float alpha);
-
-#ifdef __cplusplus
-} // extern "C"
+char const *Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId, char const *text = 0);
 
 /**
  * Implements patch replacement.

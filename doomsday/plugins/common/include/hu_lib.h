@@ -526,37 +526,46 @@ public:
 void LabelWidget_SetFlags(Widget *wi, flagop_t op, int flags);
 
 /**
- * @defgroup mnButtonFlags  MNButton Flags
- */
-///@{
-#define MNBUTTON_NO_ALTTEXT        0x1 ///< Do not use alt text instead of lump.
-///@}
-
-/**
  * Buttons.
  */
 struct ButtonWidget : public Widget
 {
 public:
-    dd_bool staydownMode;  ///< @c true= this is operating in two-state "staydown" mode.
-    void *data;
-    char const *text;      ///< Label text.
-    patchid_t *patch;      ///< Used when drawing this instead of text, if set.
-    char const *yes;
-    char const *no;
-    int flags;             ///< @ref mnButtonFlags
-
-public:
     ButtonWidget();
-    virtual ~ButtonWidget() {}
+    virtual ~ButtonWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *page);
+
+    de::String const &text() const;
+    ButtonWidget &setText(de::String newText);
+
+    patchid_t patch() const;
+    ButtonWidget &setPatch(patchid_t newPatch);
+
+    bool noAltText() const;
+    ButtonWidget &setNoAltText(bool yes = true);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 int ButtonWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-void ButtonWidget_SetFlags(Widget *wi, flagop_t op, int flags);
+struct CVarToggleWidget : public ButtonWidget
+{
+public:
+    CVarToggleWidget(char const *cvarPath);
+    virtual ~CVarToggleWidget();
+
+    char const *cvarPath() const;
+
+private:
+    char const *_cvarPath;
+};
+
+int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd);
+int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
 struct cvarbutton_t
 {
@@ -575,8 +584,6 @@ struct cvarbutton_t
         , mask(mask)
     {}
 };
-
-int CvarButtonWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action, void *parameters);
 
 /**
  * Edit field.
