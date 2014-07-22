@@ -113,7 +113,9 @@ void EpisodeInfo::resetToDefaults()
     // Add all expected fields with their default values.
     addText("startMap", "Maps:"); // URI. Unknown.
     addText("title", "Untitled");
+    addText("menuHelpInfo", "");  // None.
     addText("menuImage", "");     // URI. None.
+    addText("menuShortcut", "");  // Key name. None.
 }
 
 /**

@@ -3038,41 +3038,6 @@ void Hu_MenuInitSoundOptionsPage()
 
 #if __JDOOM__ || __JHERETIC__
 
-#if __JHERETIC__
-static String composeNotDesignedForMessage(char const *gameModeName)
-{
-    DENG2_ASSERT(gameModeName != 0);
-
-    String msg;
-
-    char tmp[2];
-    tmp[1] = 0;
-
-    // Get the message template.
-    char const *in = GET_TXT(TXT_NOTDESIGNEDFOR);
-
-    for(; *in; in++)
-    {
-        if(in[0] == '%')
-        {
-            if(in[1] == '1')
-            {
-                msg += gameModeName;
-                in++;
-                continue;
-            }
-
-            if(in[1] == '%')
-                in++;
-        }
-        tmp[0] = *in;
-        msg += tmp;
-    }
-
-    return msg;
-}
-#endif
-
 /**
  * Construct the episode selection menu.
  */
@@ -3084,7 +3049,7 @@ void Hu_MenuInitEpisodePage()
     Point2Raw const origin(80, 50);
 #endif
 
-    Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage, NULL, NULL);
+    Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
@@ -3095,19 +3060,35 @@ void Hu_MenuInitEpisodePage()
         EpisodeInfo const &info = it->second;
 
         ButtonWidget *btn = new ButtonWidget;
-        btn->_origin.y = y;
-        btn->setText(info.gets("title"));
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber())
-        {
-            btn->setShortcut(btn->text().first().toLower().toLatin1());
-        }
+
+        btn->setText(info.gets("title"))
+            .setFixedY(y);
+
+        // Has a menu image been specified?
         de::Uri image(info.gets("menuImage"), RC_NULL);
         if(!image.path().isEmpty())
         {
+            // Presently only patches are supported.
             if(!image.scheme().compareWithoutCase("Patches"))
             {
                 btn->setPatch(R_DeclarePatch(image.path().toUtf8().constData()));
             }
+        }
+
+        // Has a menu shortcut/hotkey been specified?
+        /// @todo Validate symbolic dday key names.
+        String const shortcut = info.gets("menuShortcut");
+        if(!shortcut.isEmpty() && shortcut.first().isLetterOrNumber())
+        {
+            btn->setShortcut(shortcut.first().toLower().toLatin1());
+        }
+
+        // Has a menu help/info text been specified?
+        String const helpInfo = info.gets("menuHelpInfo");
+        if(!helpInfo.isEmpty())
+        {
+            // Inform the user that this episode is not designed for singleplayer.
+            btn->setHelpInfo(helpInfo);
         }
 
         de::Uri startMap(info.gets("startMap"), RC_NULL);
@@ -3125,14 +3106,8 @@ void Hu_MenuInitEpisodePage()
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
             btn->data1 = (void *)"Skill";
-#if __JHERETIC__
-            if(gameMode == heretic_extended && startMap.path() == "E6M1")
-            {
-                // Inform the user that this episode is not designed for singleplayer.
-                btn->setHelpInfo(composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER)));
-            }
-#endif
         }
+
         btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuFocusEpisode;
         btn->data2           = n;
         btn->_pageFontIdx    = MENU_FONT1;

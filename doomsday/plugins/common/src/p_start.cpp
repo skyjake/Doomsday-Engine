@@ -186,6 +186,41 @@ void P_Init()
     P_Update();
 }
 
+#if __JHERETIC__
+static String composeNotDesignedForMessage(char const *gameModeName)
+{
+    DENG2_ASSERT(gameModeName != 0);
+
+    String msg;
+
+    char tmp[2];
+    tmp[1] = 0;
+
+    // Get the message template.
+    char const *in = GET_TXT(TXT_NOTDESIGNEDFOR);
+
+    for(; *in; in++)
+    {
+        if(in[0] == '%')
+        {
+            if(in[1] == '1')
+            {
+                msg += gameModeName;
+                in++;
+                continue;
+            }
+
+            if(in[1] == '%')
+                in++;
+        }
+        tmp[0] = *in;
+        msg += tmp;
+    }
+
+    return msg;
+}
+#endif
+
 #if __JHEXEN__
 static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffer, String sourceFile)
 {
@@ -241,62 +276,73 @@ static void readMapInfoDefinitions()
     {
         {
             EpisodeInfo &info = hexDefs.episodeInfos["1"];
-            info.set("startMap",  "Maps:E1M1");
-            info.set("title",     GET_TXT(TXT_EPISODE1));
-            info.set("menuImage", "Patches:M_EPI1");
+            info.set("startMap",     "Maps:E1M1");
+            info.set("title",        GET_TXT(TXT_EPISODE1));
+            info.set("menuImage",    "Patches:M_EPI1");
+            info.set("menuShortcut", "k");
         }
         {
             EpisodeInfo &info = hexDefs.episodeInfos["2"];
-            info.set("startMap",  "Maps:E2M1");
-            info.set("title",     GET_TXT(TXT_EPISODE2));
-            info.set("menuImage", "Patches:M_EPI2");
+            info.set("startMap",     "Maps:E2M1");
+            info.set("title",        GET_TXT(TXT_EPISODE2));
+            info.set("menuImage",    "Patches:M_EPI2");
+            info.set("menuShortcut", "s");
         }
         {
             EpisodeInfo &info = hexDefs.episodeInfos["3"];
-            info.set("startMap",  "Maps:E3M1");
-            info.set("title",     GET_TXT(TXT_EPISODE3));
-            info.set("menuImage", "Patches:M_EPI3");
+            info.set("startMap",     "Maps:E3M1");
+            info.set("title",        GET_TXT(TXT_EPISODE3));
+            info.set("menuImage",    "Patches:M_EPI3");
+            info.set("menuShortcut", "i");
         }
         if(gameMode == doom_ultimate)
         {
             EpisodeInfo &info = hexDefs.episodeInfos["4"];
-            info.set("startMap",  "Maps:E3M1");
-            info.set("title",     GET_TXT(TXT_EPISODE4));
-            info.set("menuImage", "Patches:M_EPI4");
+            info.set("startMap",     "Maps:E3M1");
+            info.set("title",        GET_TXT(TXT_EPISODE4));
+            info.set("menuImage",    "Patches:M_EPI4");
+            info.set("menuShortcut", "f");
         }
     }
 #elif __JHERETIC__
     {
         EpisodeInfo &info = hexDefs.episodeInfos["1"];
-        info.set("startMap", "Maps:E1M1");
-        info.set("title", GET_TXT(TXT_EPISODE1));
+        info.set("startMap",     "Maps:E1M1");
+        info.set("title",        GET_TXT(TXT_EPISODE1));
+        info.set("menuShortcut", "c");
     }
     {
         EpisodeInfo &info = hexDefs.episodeInfos["2"];
-        info.set("startMap", "Maps:E2M1");
-        info.set("title", GET_TXT(TXT_EPISODE2));
+        info.set("startMap",     "Maps:E2M1");
+        info.set("title",        GET_TXT(TXT_EPISODE2));
+        info.set("menuShortcut", "h");
     }
     {
         EpisodeInfo &info = hexDefs.episodeInfos["3"];
-        info.set("startMap", "Maps:E3M1");
-        info.set("title", GET_TXT(TXT_EPISODE3));
+        info.set("startMap",     "Maps:E3M1");
+        info.set("title",        GET_TXT(TXT_EPISODE3));
+        info.set("menuShortcut", "d");
     }
     if(gameMode == heretic_extended)
     {
         {
             EpisodeInfo &info = hexDefs.episodeInfos["4"];
-            info.set("startMap", "Maps:E4M1");
-            info.set("title", GET_TXT(TXT_EPISODE4));
+            info.set("startMap",     "Maps:E4M1");
+            info.set("title",        GET_TXT(TXT_EPISODE4));
+            info.set("menuShortcut", "o");
         }
         {
             EpisodeInfo &info = hexDefs.episodeInfos["5"];
-            info.set("startMap", "Maps:E5M1");
-            info.set("title", GET_TXT(TXT_EPISODE5));
+            info.set("startMap",     "Maps:E5M1");
+            info.set("title",        GET_TXT(TXT_EPISODE5));
+            info.set("menuShortcut", "s");
         }
         {
             EpisodeInfo &info = hexDefs.episodeInfos["6"];
-            info.set("startMap", "Maps:E6M1");
-            info.set("title", GET_TXT(TXT_EPISODE6));
+            info.set("startMap",     "Maps:E6M1");
+            info.set("title",        GET_TXT(TXT_EPISODE6));
+            info.set("menuShortcut", "f");
+            info.set("menuHelpInfo", composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER)));
         }
     }
 #else // __JHEXEN__ || __JDOOM64__
