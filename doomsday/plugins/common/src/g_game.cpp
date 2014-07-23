@@ -2386,7 +2386,12 @@ uint G_MapNumberFor(de::Uri const &mapUri)
 
 uint G_CurrentMapNumber()
 {
-    return G_MapNumberFor(gameMapUri);
+    return G_MapNumberFor(::gameMapUri);
+}
+
+uri_s const *G_CurrentMapUri()
+{
+    return reinterpret_cast<uri_s *>(&::gameMapUri);
 }
 
 de::Uri G_ComposeMapUri(uint episode, uint map)

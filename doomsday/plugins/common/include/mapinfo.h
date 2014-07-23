@@ -88,10 +88,17 @@ struct HexDefs
     void clear();
 
     /**
+     * @param id  Identifier of the episode to lookup info for.
+     *
+     * @return  EpisodeInfo for the specified @a id; otherwise @c 0 (not found).
+     */
+    EpisodeInfo *getEpisodeInfo(de::String id);
+
+    /**
      * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
      *                case the info for the @em current map will be returned (if set).
      *
-     * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
+     * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
      */
     MapInfo *getMapInfo(de::Uri const *mapUri = 0);
 };

@@ -78,8 +78,8 @@ void Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action);
 
 void Hu_MenuSelectSingleplayer(Widget *wi, Widget::mn_actionid_t action);
 void Hu_MenuSelectMultiplayer(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectEpisode(Widget *wi, Widget::mn_actionid_t action);
 #if __JDOOM__ || __JHERETIC__
-void Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action);
 void Hu_MenuActivateNotSharewareEpisode(Widget *wi, Widget::mn_actionid_t action);
 #endif
 #if __JHEXEN__
@@ -114,9 +114,7 @@ void Hu_MenuDrawSkillPage(Page *page, Point2Raw const *origin);
 #if __JHEXEN__
 void Hu_MenuDrawPlayerClassPage(Page *page, Point2Raw const *origin);
 #endif
-#if __JDOOM__ || __JHERETIC__
 void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin);
-#endif
 void Hu_MenuDrawOptionsPage(Page *page, Point2Raw const *origin);
 void Hu_MenuDrawLoadGamePage(Page *page, Point2Raw const *origin);
 void Hu_MenuDrawSaveGamePage(Page *page, Point2Raw const *origin);
@@ -285,9 +283,7 @@ static float mnAlpha; // Alpha level for the entire menu.
 static float mnTargetAlpha; // Target alpha for the entire UI.
 
 static skillmode_t mnSkillmode = SM_MEDIUM;
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-static int mnEpisode;
-#endif
+static String mnEpisode;
 #if __JHEXEN__
 static int mnPlrClass = PCLASS_FIGHTER;
 #endif
@@ -3036,13 +3032,16 @@ void Hu_MenuInitSoundOptionsPage()
     }
 }
 
-#if __JDOOM__ || __JHERETIC__
-
 /**
  * Construct the episode selection menu.
  */
 void Hu_MenuInitEpisodePage()
 {
+#if !defined(__JDOOM__) && !defined(__JHERETIC__)
+    mnEpisode = "1";
+    return;
+#endif
+
 #if __JDOOM__
     Point2Raw const origin(48, 63);
 #else
@@ -3090,6 +3089,7 @@ void Hu_MenuInitEpisodePage()
             btn->setHelpInfo(helpInfo);
         }
 
+#if __JDOOM__ || __JHERETIC__
         de::Uri startMap(info.gets("startMap"), RC_NULL);
         if(
 #if __JHERETIC__
@@ -3102,21 +3102,20 @@ void Hu_MenuInitEpisodePage()
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
         }
         else
+#endif
         {
-            btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-            btn->setData(String("Skill"));
+            btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectEpisode;
+            btn->setData(String::fromStdString(it->first));
         }
 
-        btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuFocusEpisode;
-        btn->data2           = n;
-        btn->_pageFontIdx    = MENU_FONT1;
+        btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+        btn->_pageFontIdx = MENU_FONT1;
         page->_widgets << btn;
 
         y += FIXED_LINE_HEIGHT;
         n += 1;
     }
 }
-#endif
 
 #if __JHEXEN__
 /**
@@ -3622,9 +3621,7 @@ static void initAllPages()
     Hu_MenuInitColorWidgetPage();
     Hu_MenuInitMainPage();
     Hu_MenuInitGameTypePage();
-#if __JDOOM__ || __JHERETIC__
     Hu_MenuInitEpisodePage();
-#endif
 #if __JHEXEN__
     Hu_MenuInitPlayerClassPage();
 #endif
@@ -4053,7 +4050,6 @@ void Hu_MenuDrawPlayerClassPage(Page * /*page*/, Point2Raw const *origin)
 }
 #endif
 
-#if __JDOOM__ || __JHERETIC__
 void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin)
 {
 #if __JDOOM__
@@ -4074,7 +4070,6 @@ void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin)
     DENG2_UNUSED2(page, origin);
 #endif
 }
-#endif
 
 void Hu_MenuDrawSkillPage(Page * /*page*/, Point2Raw const *origin)
 {
@@ -4587,15 +4582,14 @@ void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
 }
 #endif
 
-#if __JDOOM__ || __JHERETIC__
-void Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectEpisode(Widget *wi, Widget::mn_actionid_t /*action*/)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_FOCUS != action) return;
-    mnEpisode = wi->data2;
-    Hu_MenuDefaultFocusAction(wi, action);
+    mnEpisode = wi->as<ButtonWidget>().data().toString();
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
 }
 
+#if __JDOOM__ || __JHERETIC__
 int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userValue*/, void * /*context*/)
 {
     G_StartHelp();
@@ -4603,8 +4597,7 @@ int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userV
 }
 
 void Hu_MenuActivateNotSharewareEpisode(Widget * /*wi*/, Widget::mn_actionid_t action)
-{
-    if(Widget::MNA_ACTIVEOUT != action) return;
+{ if(Widget::MNA_ACTIVEOUT != action) return;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
 }
 #endif
@@ -4650,12 +4643,9 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     GameRuleset newRules(defaultGameRules);
     newRules.skill = mnSkillmode;
 
-#if __JHEXEN__
-    de::Uri newMapUri = P_TranslateMap(0);
-#else
-    de::Uri newMapUri = G_ComposeMapUri(mnEpisode, 0);
-#endif
-    G_SetGameActionNewSession(newMapUri, 0/*default*/, newRules);
+    EpisodeInfo *info = hexDefs.getEpisodeInfo(mnEpisode);
+    DENG2_ASSERT(info != 0);
+    G_SetGameActionNewSession(de::Uri(info->gets("startMap"), RC_NULL), 0/*default*/, newRules);
 }
 
 void Hu_MenuActionInitNewGame(Widget * /*wi*/, Widget::mn_actionid_t action)

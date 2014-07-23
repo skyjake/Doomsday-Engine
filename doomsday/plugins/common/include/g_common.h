@@ -229,6 +229,7 @@ extern "C" {
 #endif
 
 uint G_CurrentMapNumber(void);
+uri_s const *G_CurrentMapUri(void);
 
 int G_Ruleset_Skill();
 #if !__JHEXEN__

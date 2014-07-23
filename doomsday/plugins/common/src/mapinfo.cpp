@@ -1074,6 +1074,19 @@ void HexDefs::clear()
     mapInfos.clear();
 }
 
+EpisodeInfo *HexDefs::getEpisodeInfo(String id)
+{
+    if(!id.isEmpty())
+    {
+        EpisodeInfos::iterator found = episodeInfos.find(id.toLower().toStdString());
+        if(found != episodeInfos.end())
+        {
+            return &found->second;
+        }
+    }
+    return 0; // Not found.
+}
+
 MapInfo *HexDefs::getMapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
@@ -1086,7 +1099,7 @@ MapInfo *HexDefs::getMapInfo(de::Uri const *mapUri)
         return &found->second;
     }
     //LOGDEV_MAP_NOTE("Unknown MAPINFO definition '%s'") << Str_Text(mapUriStr);
-    return 0;
+    return 0; // Not found.
 }
 
 de::Uri P_TranslateMapIfExists(uint map)
