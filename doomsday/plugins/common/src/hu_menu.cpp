@@ -59,46 +59,46 @@ using namespace common::menu;
 #  define FIXED_LINE_HEIGHT (19+1)
 #endif
 
-int Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuActionInitNewGame(Widget *wi, Widget::mn_actionid_t action);
-
-int Hu_MenuSelectLoadGame(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectSaveGame(Widget *wi, Widget::mn_actionid_t action);
-#if __JHEXEN__
-int Hu_MenuSelectFiles(Widget *wi, Widget::mn_actionid_t action);
-#endif
-int Hu_MenuSelectJoinGame(Widget *wi, Widget::mn_actionid_t action);
-
 void Hu_MenuActivatePlayerSetup(Page *page);
 
+void Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuActionInitNewGame(Widget *wi, Widget::mn_actionid_t action);
+
+void Hu_MenuSelectLoadGame(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectSaveGame(Widget *wi, Widget::mn_actionid_t action);
+#if __JHEXEN__
+void Hu_MenuSelectFiles(Widget *wi, Widget::mn_actionid_t action);
+#endif
+void Hu_MenuSelectJoinGame(Widget *wi, Widget::mn_actionid_t action);
+
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectHelp(Widget *wi, Widget::mn_actionid_t action);
 #endif
-int Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action);
 
-int Hu_MenuSelectSingleplayer(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectMultiplayer(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectSingleplayer(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectMultiplayer(Widget *wi, Widget::mn_actionid_t action);
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuActivateNotSharewareEpisode(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuActivateNotSharewareEpisode(Widget *wi, Widget::mn_actionid_t action);
 #endif
 #if __JHEXEN__
-int Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action);
 #endif
-int Hu_MenuFocusSkillMode(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectQuitGame(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectEndGame(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuFocusSkillMode(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectQuitGame(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectEndGame(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action);
 
-int Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action);
 
-int Hu_MenuChangeWeaponPriority(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuChangeWeaponPriority(Widget *wi, Widget::mn_actionid_t action);
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t action);
 #endif
-int Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action);
 
 #if __JHEXEN__
 void Hu_MenuPlayerClassBackgroundTicker(Widget *wi);
@@ -125,11 +125,11 @@ void Hu_MenuDrawPlayerSetupPage(Page *page, Point2Raw const *origin);
 
 int Hu_MenuColorWidgetCmdResponder(Page *page, menucommand_e cmd);
 
-int Hu_MenuSaveSlotEdit(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuBindings(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuSaveSlotEdit(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuBindings(Widget *wi, Widget::mn_actionid_t action);
 
-int Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action);
-int Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action);
+void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action);
 
 static void initAllPages();
 static void destroyAllPages();
@@ -3087,7 +3087,6 @@ void Hu_MenuInitEpisodePage()
         String const helpInfo = info.gets("menuHelpInfo");
         if(!helpInfo.isEmpty())
         {
-            // Inform the user that this episode is not designed for singleplayer.
             btn->setHelpInfo(helpInfo);
         }
 
@@ -3407,11 +3406,10 @@ dd_bool Hu_MenuIsVisible()
     return (menuActive || mnAlpha > .0001f);
 }
 
-int Hu_MenuDefaultFocusAction(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuDefaultFocusAction(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_FOCUS != action) return 1;
+    if(Widget::MNA_FOCUS != action) return;
     Hu_MenuUpdateCursorState();
-    return 0;
 }
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
@@ -3926,11 +3924,11 @@ int Hu_MenuFallbackResponder(event_t *ev)
 /**
  * User wants to load this game
  */
-int Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
 {
     LineEditWidget *edit = &wi->as<LineEditWidget>();
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     // Linked focus between LoadGame and SaveGame pages.
     Page *page = Hu_MenuFindPageByName("SaveGame");
@@ -3941,7 +3939,6 @@ int Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
-    return 0;
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -4103,9 +4100,9 @@ void Hu_MenuDrawSkillPage(Page * /*page*/, Point2Raw const *origin)
 /**
  * Called after the save name has been modified and to action the game-save.
  */
-int Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     LineEditWidget &edit = wi->as<LineEditWidget>();
     char const *saveSlotId = (char *)edit.data1;
@@ -4119,7 +4116,7 @@ int Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
     String userDescription = Str_Text(edit.text());
     if(!G_SetGameActionSaveSession(saveSlotId, &userDescription))
     {
-        return 0;
+        return;
     }
 
     Page *page = Hu_MenuFindPageByName("SaveGame");
@@ -4129,24 +4126,22 @@ int Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
     page->setFocus(MN_MustFindObjectOnPage(page, 0, wi->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
-    return 0;
 }
 
-int Hu_MenuSaveSlotEdit(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSaveSlotEdit(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_ACTIVE != action) return 1;
+    if(Widget::MNA_ACTIVE != action) return;
     if(cfg.menuGameSaveSuggestDescription)
     {
         String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
         wi->as<LineEditWidget>().setText(MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
     }
-    return 0;
 }
 
-int Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
 {
-    if(action != Widget::MNA_ACTIVE) return 1;
+    if(action != Widget::MNA_ACTIVE) return;
 
     ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
     Page *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
@@ -4172,8 +4167,6 @@ int Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
 
     textAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
     sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
-
-    return 0;
 }
 
 void Hu_MenuDrawLoadGamePage(Page * /*page*/, Point2Raw const *origin)
@@ -4191,9 +4184,7 @@ void Hu_MenuDrawLoadGamePage(Page * /*page*/, Point2Raw const *origin)
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
-    Point2Raw helpOrigin;
-    helpOrigin.x = SCREENWIDTH/2;
-    helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin.x, helpOrigin.y);
 }
 
@@ -4213,18 +4204,15 @@ void Hu_MenuDrawSaveGamePage(Page * /*page*/, Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
-    Point2Raw helpOrigin;
-    helpOrigin.x = SCREENWIDTH/2;
-    helpOrigin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
     Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin.x, helpOrigin.y);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-int Hu_MenuSelectHelp(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectHelp(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     G_StartHelp();
-    return 0;
 }
 #endif
 
@@ -4255,17 +4243,16 @@ void Hu_MenuDrawPlayerSetupPage(Page * /*page*/, Point2Raw const *origin)
     Hu_MenuDrawPageTitle(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, origin->y - 28);
 }
 
-int Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     Hu_MenuSetActivePage(Hu_MenuFindPageByName((char *)wi->data1));
-    return 0;
 }
 
-int Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     float value = sldr.value();
@@ -4280,13 +4267,11 @@ int Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 
     default: DENG2_ASSERT(!"Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
     }
-
-    return 0;
 }
 
-int Hu_MenuChangeWeaponPriority(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuChangeWeaponPriority(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     /*int choice = option >> NUM_WEAPON_TYPES;
 
@@ -4308,17 +4293,16 @@ int Hu_MenuChangeWeaponPriority(Widget * /*wi*/, Widget::mn_actionid_t action)
             cfg.weaponOrder[choice-1] = temp;
         }
     }*/
-    return 0;
 }
 
-int Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     if(IS_NETGAME)
     {
         Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, 0, NULL);
-        return 0;
+        return;
     }
 
 #if __JHEXEN__
@@ -4329,21 +4313,23 @@ int Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
 #else // __JDOOM__
     if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+    {
         Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
+    }
     else
+    {
         Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
+    }
 #endif
-
-    return 0;
 }
 
-int Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
     Page *multiplayerPage = Hu_MenuFindPageByName("Multiplayer");
-    Widget *label   = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
+    Widget *label = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
     ButtonWidget *btn = &label->as<ButtonWidget>();
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     // Set the appropriate label.
     if(IS_NETGAME)
@@ -4355,22 +4341,20 @@ int Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         btn->setText("Join Game");
     }
     Hu_MenuSetActivePage(multiplayerPage);
-    return 0;
 }
 
-int Hu_MenuSelectJoinGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectJoinGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     if(IS_NETGAME)
     {
         DD_Execute(false, "net disconnect");
         Hu_MenuCommand(MCMD_CLOSE);
-        return 0;
+        return;
     }
 
     DD_Execute(false, "net setup client");
-    return 0;
 }
 
 void Hu_MenuActivatePlayerSetup(Page *page)
@@ -4401,10 +4385,10 @@ void Hu_MenuActivatePlayerSetup(Page *page)
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     ListWidget &list = wi->as<ListWidget>();
     int selection = list.selection();
@@ -4414,14 +4398,13 @@ int Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t action
         mop.setPlayerClass(selection);
         mop.setMobjType(PCLASS_INFO(selection)->mobjType);
     }
-    return 0;
 }
 #endif
 
-int Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     // The color translation map is stored in the list item data member.
     ListWidget &list = wi->as<ListWidget>();
@@ -4431,13 +4414,12 @@ int Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
         MobjPreviewWidget &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<MobjPreviewWidget>();
         mop.setTranslationMap(selection);
     }
-    return 0;
 }
 
-int Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    LineEditWidget &plrNameEdit  = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID1)->as<LineEditWidget>();
+    LineEditWidget &plrNameEdit = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID1)->as<LineEditWidget>();
 #if __JHEXEN__
     ListWidget &plrClassList = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID2)->as<ListWidget>();
 #endif
@@ -4449,7 +4431,7 @@ int Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
     // The color translation map is stored in the list item data member.
     cfg.netColor = plrColorList.itemData(plrColorList.selection());
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     char buf[300];
     strcpy(buf, "net-name ");
@@ -4472,45 +4454,41 @@ int Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
     }
 
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("Multiplayer"));
-    return 0;
 }
 
-int Hu_MenuSelectQuitGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectQuitGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     G_QuitGame();
-    return 0;
 }
 
-int Hu_MenuSelectEndGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectEndGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     DD_Executef(true, "endgame");
-    return 0;
 }
 
-int Hu_MenuSelectLoadGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectLoadGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     if(!Get(DD_DEDICATED))
     {
         if(IS_CLIENT && !Get(DD_PLAYBACK))
         {
             Hu_MsgStart(MSG_ANYKEY, LOADNET, NULL, 0, NULL);
-            return 0;
+            return;
         }
     }
 
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
-    return 0;
 }
 
-int Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
     player_t *player = &players[CONSOLEPLAYER];
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     if(!Get(DD_DEDICATED))
     {
@@ -4519,40 +4497,39 @@ int Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 #if __JDOOM__ || __JDOOM64__
             Hu_MsgStart(MSG_ANYKEY, SAVENET, NULL, 0, NULL);
 #endif
-            return 0;
+            return;
         }
 
         if(G_GameState() != GS_MAP)
         {
             Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
-            return 0;
+            return;
         }
 
         if(player->playerState == PST_DEAD)
         {
             Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
-            return 0;
+            return;
         }
     }
 
     Hu_MenuCommand(MCMD_OPEN);
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
-    return 0;
 }
 
 #if __JHEXEN__
-int Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
 {
     Page *skillPage = Hu_MenuFindPageByName("Skill");
     int option = wi->data2;
     ButtonWidget *skillObj;
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     if(IS_NETGAME)
     {
         P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, "You can't start a new game from within a netgame!");
-        return 0;
+        return;
     }
 
     if(option < 0)
@@ -4593,14 +4570,13 @@ int Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
     case PCLASS_MAGE:       skillPage->setX(112); break;
     }
     Hu_MenuSetActivePage(skillPage);
-    return 0;
 }
 
-int Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
 
-    if(Widget::MNA_FOCUS != action) return 1;
+    if(Widget::MNA_FOCUS != action) return;
 
     playerclass_t plrClass = (playerclass_t)wi->data2;
     MobjPreviewWidget &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<MobjPreviewWidget>();
@@ -4608,18 +4584,16 @@ int Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
     mop.setMobjType((PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 
     Hu_MenuDefaultFocusAction(wi, action);
-    return 0;
 }
 #endif
 
 #if __JDOOM__ || __JHERETIC__
-int Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuFocusEpisode(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    if(Widget::MNA_FOCUS != action) return 1;
+    if(Widget::MNA_FOCUS != action) return;
     mnEpisode = wi->data2;
     Hu_MenuDefaultFocusAction(wi, action);
-    return 0;
 }
 
 int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userValue*/, void * /*context*/)
@@ -4628,22 +4602,20 @@ int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userV
     return true;
 }
 
-int Hu_MenuActivateNotSharewareEpisode(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuActivateNotSharewareEpisode(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
-    return 0;
 }
 #endif
 
-int Hu_MenuFocusSkillMode(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuFocusSkillMode(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
 
-    if(Widget::MNA_FOCUS != action) return 1;
+    if(Widget::MNA_FOCUS != action) return;
     mnSkillmode = (skillmode_t)wi->data2;
     Hu_MenuDefaultFocusAction(wi, action);
-    return 0;
 }
 
 #if __JDOOM__
@@ -4686,14 +4658,13 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     G_SetGameActionNewSession(newMapUri, 0/*default*/, newRules);
 }
 
-int Hu_MenuActionInitNewGame(Widget * /*wi*/, Widget::mn_actionid_t action)
+void Hu_MenuActionInitNewGame(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
     Hu_MenuInitNewGame(false);
-    return 0;
 }
 
-int Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action)
+void Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action)
 {
 #define NUM_PANEL_NAMES         1
 
@@ -4703,7 +4674,7 @@ int Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action)
         //"panel input"
     };
 
-    if(Widget::MNA_ACTIVEOUT != action) return 1;
+    if(Widget::MNA_ACTIVEOUT != action) return;
 
     int idx = wi->data2;
     if(idx < 0 || idx > NUM_PANEL_NAMES - 1)
@@ -4712,7 +4683,6 @@ int Hu_MenuSelectControlPanelLink(Widget *wi, Widget::mn_actionid_t action)
     }
 
     DD_Execute(true, panelNames[idx]);
-    return 0;
 
 #undef NUM_PANEL_NAMES
 }

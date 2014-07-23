@@ -249,11 +249,10 @@ static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*na
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/)
+void Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
-    return 0;
 }
 
 void Hu_MenuInitControlsPage()

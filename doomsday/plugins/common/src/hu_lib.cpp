@@ -1652,6 +1652,17 @@ int Widget::color()
     return _pageColorIdx;
 }
 
+String const &Widget::helpInfo() const
+{
+    return d->helpInfo;
+}
+
+Widget &Widget::setHelpInfo(String newHelpInfo)
+{
+    d->helpInfo = newHelpInfo;
+    return *this;
+}
+
 int Widget_DefaultCommandResponder(Widget *ob, menucommand_e cmd)
 {
     DENG2_ASSERT(ob);
@@ -1689,26 +1700,14 @@ dd_bool Widget::hasAction(mn_actionid_t id)
     return (info && info->callback != 0);
 }
 
-int Widget::execAction(mn_actionid_t id)
+void Widget::execAction(mn_actionid_t id)
 {
     if(hasAction(id))
     {
-        return action(id)->callback(this, id);
+        action(id)->callback(this, id);
+        return;
     }
     DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
-    /// @todo Need an error handling mechanic.
-    return -1; // NOP
-}
-
-String const &Widget::helpInfo() const
-{
-    return d->helpInfo;
-}
-
-Widget &Widget::setHelpInfo(String newHelpInfo)
-{
-    d->helpInfo = newHelpInfo;
-    return *this;
 }
 
 RectWidget::RectWidget()
@@ -2148,13 +2147,13 @@ void LineEditWidget::updateGeometry(Page * /*page*/)
     Rect_SetWidthHeight(_geometry, 170, 14);
 }
 
-int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     LineEditWidget const &edit = wi->as<LineEditWidget>();
     cvartype_t varType = Con_GetVariableType((char const *)edit.data1);
 
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     switch(varType)
     {
@@ -2170,7 +2169,6 @@ int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 
     default: break;
     }
-    return 0;
 }
 
 mndata_listitem_t::mndata_listitem_t(char const *text, int data)
@@ -2383,16 +2381,16 @@ dd_bool ListWidget::selectItemByValue(int flags, int dataValue)
     return selectItem(flags, findItem(dataValue));
 }
 
-int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     ListWidget const *list = &wi->as<ListWidget>();
 
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
-    if(list->selection() < 0) return 0; // Hmm?
+    if(list->selection() < 0) return; // Hmm?
 
     cvartype_t varType = Con_GetVariableType((char const *)list->data);
-    if(CVT_NULL == varType) return 0;
+    if(CVT_NULL == varType) return;
 
     mndata_listitem_t const *item = list->items()[list->_selection];
     int value;
@@ -2414,11 +2412,9 @@ int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
     case CVT_BYTE:
         Con_SetInteger2((char const *)list->data, (byte) value, SVF_WRITE_OVERRIDE);
         break;
-    default:
-        Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
-        break;
+
+    default: Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
     }
-    return 0;
 }
 
 InlineListWidget::InlineListWidget()
@@ -2756,18 +2752,18 @@ int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
     cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
     cvartype_t varType = Con_GetVariableType(cb->cvarname);
     int value;
 
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     tog->setText(cb->active? cb->yes : cb->no);
 
-    if(CVT_NULL == varType) return 0;
+    if(CVT_NULL == varType) return;
 
     if(cb->mask)
     {
@@ -2787,22 +2783,21 @@ int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
     }
 
     Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
-    return 0;
 }
 
 ColorPreviewWidget::ColorPreviewWidget()
     : Widget()
-    , width   (0)
-    , height  (0)
+    , width    (0)
+    , height   (0)
     , _r       (0)
     , _g       (0)
     , _b       (0)
     , _a       (0)
     , _rgbaMode(false)
-    , data1   (0)
-    , data2   (0)
-    , data3   (0)
-    , data4   (0)
+    , data1    (0)
+    , data2    (0)
+    , data3    (0)
+    , data4    (0)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
@@ -3142,11 +3137,11 @@ dd_bool ColorPreviewWidget::copyColor(int flags, ColorPreviewWidget const &other
     return setColor4f(flags, other.redf(), other.greenf(), other.bluef(), other.alphaf());
 }
 
-int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     ColorPreviewWidget *cbox = &wi->as<ColorPreviewWidget>();
 
-    if(action != Widget::MNA_MODIFIED) return 1;
+    if(action != Widget::MNA_MODIFIED) return;
 
     // MNColorBox's current color has already been updated and we know
     // that at least one of the color components have changed.
@@ -3158,8 +3153,6 @@ int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
     {
         Con_SetFloat2((char const *)cbox->data4, cbox->alphaf(), SVF_WRITE_OVERRIDE);
     }
-
-    return 0;
 }
 
 SliderWidget::SliderWidget()
@@ -3312,13 +3305,13 @@ int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
     }
 }
 
-int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
-    if(Widget::MNA_MODIFIED != action) return 1;
+    if(Widget::MNA_MODIFIED != action) return;
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
-    if(CVT_NULL == varType) return 0;
+    if(CVT_NULL == varType) return;
 
     float value = sldr.value();
     switch(varType)
@@ -3344,8 +3337,6 @@ int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 
     default: break;
     }
-
-    return 0;
 }
 
 static inline dd_bool valueIsOne(float value, dd_bool floatMode)

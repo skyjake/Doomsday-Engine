@@ -160,9 +160,7 @@ public:
         ///
         /// @param ob      Object being referenced for this callback.
         /// @param action  Identifier of the Menu Action to be processed.
-        /// @return  Callback return value. Callback should return zero if the action
-        ///     was recognised and processed, regardless of outcome.
-        int (*callback) (Widget *wi, mn_actionid_t action);
+        void (*callback) (Widget *wi, mn_actionid_t action);
     };
 
 public:
@@ -281,6 +279,10 @@ public:
     /// @return  Index of the font used from the owning/active page.
     int font();
 
+    de::String const &helpInfo() const;
+    Widget &setHelpInfo(de::String newHelpInfo);
+    inline bool hasHelpInfo() const { return !helpInfo().isEmpty(); }
+
     /// @return  @c true if this object has a registered executeable action
     /// associated with the unique identifier @a action.
     dd_bool hasAction(mn_actionid_t action);
@@ -296,11 +298,7 @@ public:
      * @param action  Identifier of the action to be executed (if found).
      * @return  Return value of the executed action else @c -1 if NOP.
      */
-    int execAction(mn_actionid_t action);
-
-    de::String const &helpInfo() const;
-    Widget &setHelpInfo(de::String newHelpInfo);
-    inline bool hasHelpInfo() const { return !helpInfo().isEmpty(); }
+    void execAction(mn_actionid_t action);
 
 private:
     DENG2_PRIVATE(d)
@@ -569,7 +567,7 @@ private:
 };
 
 int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd);
-int CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct cvarbutton_t
 {
@@ -659,7 +657,7 @@ public:
 
 int LineEditWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 /**
  * List selection.
@@ -738,7 +736,7 @@ public:
 
 int ListWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct InlineListWidget : public ListWidget
 {
@@ -839,7 +837,7 @@ public:
 
 int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 /**
  * Graphical slider.
@@ -908,7 +906,7 @@ public:
 
 int SliderWidget_CommandResponder(Widget *wi, menucommand_e command);
 
-int CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 struct TextualSliderWidget : public SliderWidget
 {
