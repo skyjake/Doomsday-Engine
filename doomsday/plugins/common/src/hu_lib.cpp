@@ -1297,8 +1297,8 @@ void Page::initialize()
 
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            dd_bool const activate = (*(char *) wi->data1);
-            tog->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
+            //dd_bool const activate = (*(char *) wi->data1);
+            tog->setFlags((wi->data1? FO_SET:FO_CLEAR), MNF_ACTIVE);
         }
         if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
@@ -2519,6 +2519,7 @@ DENG2_PIMPL_NOREF(ButtonWidget)
     de::String text;  ///< Label text.
     patchid_t patch;  ///< Used when drawing this instead of text, if set.
     bool noAltText;
+    QVariant data;
 
     Instance() : patch(-1), noAltText(false) {}
 };
@@ -2681,6 +2682,16 @@ ButtonWidget &ButtonWidget::setNoAltText(bool yes)
 {
     d->noAltText = yes;
     return *this;
+}
+
+void ButtonWidget::setData(QVariant const &v)
+{
+    d->data = v;
+}
+
+QVariant const &ButtonWidget::data() const
+{
+    return d->data;
 }
 
 CVarToggleWidget::CVarToggleWidget(char const *cvarPath)

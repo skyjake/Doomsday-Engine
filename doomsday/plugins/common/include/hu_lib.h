@@ -548,6 +548,9 @@ public:
     bool noAltText() const;
     ButtonWidget &setNoAltText(bool yes = true);
 
+    void setData(QVariant const &d);
+    QVariant const &data() const;
+
 private:
     DENG2_PRIVATE(d)
 };

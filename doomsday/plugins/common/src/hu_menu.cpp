@@ -604,7 +604,7 @@ void Hu_MenuInitMainPage()
         btn->_origin.y    = y;
         btn->setShortcut('n');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"GameType";
+        btn->setData(String("GameType"));
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
         btn->setPatch(pNGame);
 #else
@@ -622,7 +622,7 @@ void Hu_MenuInitMainPage()
         btn->_origin.y    = y;
         btn->setShortcut('o');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"Options";
+        btn->setData(String("Options"));
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
         btn->setPatch(pOptions);
 #else
@@ -676,7 +676,7 @@ void Hu_MenuInitMainPage()
         btn->_origin.y    = y;
         btn->setShortcut('f');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"Files";
+        btn->setData(String("Files"));
         btn->setText("Game Files");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -874,7 +874,7 @@ void Hu_MenuInitMultiplayerPage()
         btn->setShortcut('p');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText("Player Setup");
-        btn->data1        = (void *)"PlayerSetup";
+        btn->setData(String("PlayerSetup"));
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
@@ -1219,7 +1219,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('c');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"ControlOptions";
+        btn->setData(String("ControlOptions"));
         btn->setText("Controls");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1230,7 +1230,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('g');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"GameplayOptions";
+        btn->setData(String("GameplayOptions"));
         btn->setText("Gameplay");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1241,7 +1241,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"SaveOptions";
+        btn->setData(String("SaveOptions"));
         btn->setText("Game saves");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1252,7 +1252,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('h');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"HUDOptions";
+        btn->setData(String("HUDOptions"));
         btn->setText("HUD");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1263,7 +1263,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('a');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"AutomapOptions";
+        btn->setData(String("AutomapOptions"));
         btn->setText("Automap");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1274,7 +1274,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('w');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"WeaponOptions";
+        btn->setData(String("WeaponOptions"));
         btn->setText("Weapons");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1286,7 +1286,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('i');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"InventoryOptions";
+        btn->setData(String("InventoryOptions"));
         btn->setText("Inventory");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -1298,7 +1298,7 @@ void Hu_MenuInitOptionsPage()
         ButtonWidget *btn = new ButtonWidget;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
-        btn->data1        = (void *)"SoundOptions";
+        btn->setData(String("SoundOptions"));
         btn->setText("Sound");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
@@ -3104,7 +3104,7 @@ void Hu_MenuInitEpisodePage()
         else
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActionSetActivePage;
-            btn->data1 = (void *)"Skill";
+            btn->setData(String("Skill"));
         }
 
         btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuFocusEpisode;
@@ -4247,7 +4247,7 @@ void Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     if(Widget::MNA_ACTIVEOUT != action) return;
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName((char *)wi->data1));
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName(wi->as<ButtonWidget>().data().toString()));
 }
 
 void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
