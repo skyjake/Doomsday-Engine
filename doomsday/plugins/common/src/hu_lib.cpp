@@ -1297,8 +1297,9 @@ void Page::initialize()
 
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            //dd_bool const activate = (*(char *) wi->data1);
-            tog->setFlags((wi->data1? FO_SET:FO_CLEAR), MNF_ACTIVE);
+            cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
+            bool const activate = (cvb && cvb->active);
+            tog->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
         }
         if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
