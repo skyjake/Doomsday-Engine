@@ -267,13 +267,38 @@ static void readMapInfoDefinitions()
     // Generate Episode definitions for the current game mode.
     /// @todo Move to an external definition once finalized.
 #if __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+    switch(gameMode)
     {
+    case doom_chex:
+    case doom2_hacx: {
         EpisodeInfo &info = hexDefs.episodeInfos["1"];
         info.set("startMap", "Maps:MAP01");
-    }
-    else
-    {
+        break; }
+
+    case doom2: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "Hell On Earth");
+        info.set("menuShortcut", "h");
+        break; }
+
+    case doom2_plut: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "The Plutonia Experiment");
+        info.set("menuShortcut", "p");
+        break; }
+
+    case doom2_tnt: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "TNT: Evilution");
+        info.set("menuShortcut", "t");
+        break; }
+
+    case doom:
+    case doom_shareware:
+    case doom_ultimate: {
         {
             EpisodeInfo &info = hexDefs.episodeInfos["1"];
             info.set("startMap",     "Maps:E1M1");
@@ -303,7 +328,10 @@ static void readMapInfoDefinitions()
             info.set("menuImage",    "Patches:M_EPI4");
             info.set("menuShortcut", "f");
         }
-    }
+        break; }
+
+    default: DENG2_ASSERT(!"readMapInfoDefinitions: Unknown game mode"); break;
+    };
 #elif __JHERETIC__
     {
         EpisodeInfo &info = hexDefs.episodeInfos["1"];

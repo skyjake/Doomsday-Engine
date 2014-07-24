@@ -796,22 +796,7 @@ void Hu_MenuInitSkillPage()
 
     Page *page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-#if __JHEXEN__
-    page->setPreviousPage(Hu_MenuFindPageByName("PlayerClass"));
-#elif __JHERETIC__
     page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
-#elif __JDOOM64__
-    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
-#else // __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-    {
-        page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
-    }
-    else
-    {
-        page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
-    }
-#endif
 
     int y = 0;
 
@@ -3037,18 +3022,15 @@ void Hu_MenuInitSoundOptionsPage()
  */
 void Hu_MenuInitEpisodePage()
 {
-#if !defined(__JDOOM__) && !defined(__JHERETIC__)
-    mnEpisode = "1";
-    return;
-#endif
-
-#if __JDOOM__
-    Point2Raw const origin(48, 63);
-#else
+#if __JHEXEN__
+    Point2Raw const origin(120, 44);
+#elif __JHERETIC__
     Point2Raw const origin(80, 50);
+#else
+    Point2Raw const origin(48, 63);
 #endif
 
-    Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage);
+    Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
@@ -3138,7 +3120,7 @@ void Hu_MenuInitPlayerClassPage()
 
     Page *page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
+    page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
 
     uint y = 0;
 
@@ -4066,6 +4048,17 @@ void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin)
                  Vector2i(origin->x + 7, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
+#elif !defined(__JHERETIC__)
+    DENG2_UNUSED(page);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+
+    FR_DrawTextXY3("Choose episode:", origin->x - 32, origin->y - 42, ALIGN_TOPLEFT,
+                   MN_MergeMenuEffectWithDrawTextFlags(0));
+
+    DGL_Disable(DGL_TEXTURE_2D);
 #else
     DENG2_UNUSED2(page, origin);
 #endif
@@ -4300,22 +4293,7 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         return;
     }
 
-#if __JHEXEN__
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
-#elif __JHERETIC__
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
-#elif __JDOOM64__
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
-#else // __JDOOM__
-    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-    {
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
-    }
-    else
-    {
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
-    }
-#endif
 }
 
 void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4586,7 +4564,11 @@ void Hu_MenuSelectEpisode(Widget *wi, Widget::mn_actionid_t /*action*/)
 {
     DENG2_ASSERT(wi != 0);
     mnEpisode = wi->as<ButtonWidget>().data().toString();
+#if __JHEXEN__
+    Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
+#else
     Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
+#endif
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -4597,7 +4579,8 @@ int Hu_MenuConfirmOrderCommericalVersion(msgresponse_t /*response*/, int /*userV
 }
 
 void Hu_MenuActivateNotSharewareEpisode(Widget * /*wi*/, Widget::mn_actionid_t action)
-{ if(Widget::MNA_ACTIVEOUT != action) return;
+{
+    if(Widget::MNA_ACTIVEOUT != action) return;
     Hu_MsgStart(MSG_ANYKEY, SWSTRING, Hu_MenuConfirmOrderCommericalVersion, 0, NULL);
 }
 #endif
