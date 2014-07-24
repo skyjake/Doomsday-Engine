@@ -1193,7 +1193,7 @@ static void printMapBanner()
     {
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
-        MapInfo const *mapInfo = P_MapInfo(0/*current map*/);
+        MapInfo const *mapInfo = hexDefs.getMapInfo(0/*current map*/);
         text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
@@ -1617,6 +1617,11 @@ static int rebornLoadConfirmed(msgresponse_t response, int, void *)
  */
 static void rebornPlayers()
 {
+    // Reborns are impossible if no game session is in progress.
+    if(!COMMON_GAMESESSION->hasBegun()) return;
+    // ...or if no map is currently loaded.
+    if(G_GameState() != GS_MAP) return;
+
     if(!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
     {
         if(Player_WaitingForReborn(&players[0]))
@@ -1791,7 +1796,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (P_MapInfo(0/*current map*/)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"));
+        newHub = (hexDefs.getMapInfo(0/*current map*/)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"));
     }
 #endif
 
@@ -2248,11 +2253,7 @@ void G_IntermissionBegin()
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
 #endif
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
-#else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, (int) G_MapNumberFor(nextMapUri), (int) nextMapEntrance);
-#endif
 
     S_PauseMusic(false);
 }
@@ -2411,7 +2412,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return P_TranslateMap(P_MapInfo(&gameMapUri)->geti("nextMap"));
+    return P_TranslateMap(hexDefs.getMapInfo(&gameMapUri)->geti("nextMap"));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
@@ -2576,7 +2577,7 @@ String G_MapTitle(de::Uri const *mapUri)
     // In Hexen we can also look in MAPINFO for the map title.
     if(title.isEmpty())
     {
-        if(MapInfo const *mapInfo = P_MapInfo(mapUri))
+        if(MapInfo const *mapInfo = hexDefs.getMapInfo(mapUri))
         {
             title = mapInfo->gets("title");
         }
@@ -2690,7 +2691,7 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        if(P_MapInfo(mapUri)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"))
+        if(hexDefs.getMapInfo(mapUri)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
         {
             return 0;
         }

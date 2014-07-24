@@ -20,16 +20,17 @@
 
 #ifndef LIBCOMMON_HU_MENU_H
 #define LIBCOMMON_HU_MENU_H
+#ifdef __cplusplus
 
 #include "dd_types.h"
 #include "hu_lib.h"
 
-DENG_EXTERN_C int menuTime;
-DENG_EXTERN_C dd_bool menuNominatingQuickSaveSlot;
+namespace common {
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern int menuTime;
+extern dd_bool menuNominatingQuickSaveSlot;
+
+extern menu::cvarbutton_t mnCVarButtons[];
 
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
@@ -81,7 +82,7 @@ extern "C" {
 #define MENU_CURSOR_TICSPERFRAME    8
 
 /// Register the console commands, variables, etc..., of this module.
-void Hu_MenuRegister(void);
+void Hu_MenuRegister();
 
 /**
  * Menu initialization.
@@ -90,17 +91,17 @@ void Hu_MenuRegister(void);
  * Initializes the various vars, fonts, adjust the menu structs and
  * anything else that needs to be done before the menu can be used.
  */
-void Hu_MenuInit(void);
+void Hu_MenuInit();
 
 /**
  * Menu shutdown, to be called when the game menu is no longer needed.
  */
-void Hu_MenuShutdown(void);
+void Hu_MenuShutdown();
 
 /**
  * Load any resources the menu needs.
  */
-void Hu_MenuLoadResources(void);
+void Hu_MenuLoadResources();
 
 /**
  * Updates on Game Tick.
@@ -108,9 +109,16 @@ void Hu_MenuLoadResources(void);
 void Hu_MenuTicker(timespan_t ticLength);
 
 /// @return  @c true if the menu is presently visible.
-dd_bool Hu_MenuIsVisible(void);
+dd_bool Hu_MenuIsVisible();
 
-mn_page_t *Hu_MenuFindPageByName(char const *name);
+menu::Page *Hu_MenuFindPageByName(de::String name);
+
+/**
+ * Lookup the unique page identifier/name for the given @a page.
+ *
+ * @return  Unique identifier/name of the page; otherwise an empty string.
+ */
+de::String Hu_MenuFindPageName(menu::Page const *page);
 
 /**
  * @param name  Symbolic name.
@@ -121,20 +129,20 @@ mn_page_t *Hu_MenuFindPageByName(char const *name);
  * @param cmdResponder  Menu-command responder routine.
  * @param userData  User data pointer to be associated with the page.
  */
-mn_page_t *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
-    void (*ticker) (mn_page_t *page),
-    void (*drawer) (mn_page_t *page, Point2Raw const *origin),
-    int (*cmdResponder) (mn_page_t *page, menucommand_e cmd),
-    void *userData);
+menu::Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
+    void (*ticker) (menu::Page *page),
+    void (*drawer) (menu::Page *page, Point2Raw const *origin) = 0,
+    int (*cmdResponder) (menu::Page *page, menucommand_e cmd) = 0,
+    void *userData = 0);
 
 /**
  * This is the main menu drawing routine (called every tic by the drawing
  * loop) Draws the current menu 'page' by calling the funcs attached to
  * each menu obj.
  */
-void Hu_MenuDrawer(void);
+void Hu_MenuDrawer();
 
-void Hu_MenuPageTicker(struct mn_page_s *page);
+void Hu_MenuPageTicker(menu::Page *page);
 
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
@@ -156,12 +164,12 @@ int Hu_MenuFallbackResponder(event_t *ev);
 /**
  * @return  @c true iff the menu is currently active (open).
  */
-dd_bool Hu_MenuIsActive(void);
+dd_bool Hu_MenuIsActive();
 
 /**
  * @return  Current alpha level of the menu.
  */
-float Hu_MenuAlpha(void);
+float Hu_MenuAlpha();
 
 /**
  * Set the alpha level of the entire menu.
@@ -173,13 +181,13 @@ void Hu_MenuSetAlpha(float alpha);
 /**
  * Retrieve the currently active page.
  */
-mn_page_t *Hu_MenuActivePage(void);
+menu::Page *Hu_MenuActivePage();
 
 /**
  * Change the current active page.
  */
-void Hu_MenuSetActivePage2(mn_page_t *page, dd_bool canReactivate);
-void Hu_MenuSetActivePage(mn_page_t *page);
+void Hu_MenuSetActivePage2(menu::Page *page, dd_bool canReactivate);
+void Hu_MenuSetActivePage(menu::Page *page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.
@@ -187,25 +195,11 @@ void Hu_MenuSetActivePage(mn_page_t *page);
  */
 void Hu_MenuInitNewGame(dd_bool confirmed);
 
-int Hu_MenuDefaultFocusAction(mn_object_t *obj, mn_actionid_t action, void *parameters);
+void Hu_MenuCommand(menucommand_e cmd);
 
-int Hu_MenuCvarButton(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarList(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarSlider(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuCvarColorBox(mn_object_t *ob, mn_actionid_t action, void *parameters);
+int Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action, void *parameters);
 
-int Hu_MenuSaveSlotEdit(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuBindings(mn_object_t *ob, mn_actionid_t action, void *parameters);
+} // namespace common
 
-int Hu_MenuActivateColorWidget(mn_object_t *ob, mn_actionid_t action, void *parameters);
-int Hu_MenuUpdateColorWidgetColor(mn_object_t *ob, mn_actionid_t action, void *parameters);
-
-D_CMD(MenuOpen);
-D_CMD(MenuCommand);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
+#endif // __cplusplus
 #endif // LIBCOMMON_HU_MENU_H

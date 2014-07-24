@@ -27,6 +27,7 @@
 #include "d_net.h"
 
 using namespace de;
+using namespace common;
 
 #define PAUSEF_PAUSED           0x1
 #define PAUSEF_FORCED_PERIOD    0x2
@@ -108,6 +109,8 @@ dd_bool Pause_IsUserPaused()
 
 D_CMD(Pause)
 {
+    DENG2_UNUSED3(src, argc, argv);
+
     if(G_QuitInProgress())
         return false;
 

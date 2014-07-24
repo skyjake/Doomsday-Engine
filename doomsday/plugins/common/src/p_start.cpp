@@ -1,4 +1,4 @@
-/** @file p_start.cpp Common player (re)spawning logic.
+/** @file p_start.cpp  Common player (re)spawning logic.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -20,34 +20,35 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_start.h"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-
-#include "common.h"
-
-#include "p_tick.h"
+#include <de/NativePath>
+#include "am_map.h"
+#include "d_net.h"
+#include "dmu_lib.h"
+#include "gamesession.h"
+#include "g_common.h"
+#include "g_defs.h"
+#include "hu_chat.h"
+#include "hu_stuff.h"
+#include "mapinfo.h"
+#include "p_actor.h"
+#include "p_inventory.h"
+#include "p_map.h"
 #include "p_mapsetup.h"
+#include "p_mapspec.h"
+#include "p_switch.h"
+#include "p_terraintype.h"
+#include "p_tick.h"
 #include "p_user.h"
 #include "player.h"
-#include "d_net.h"
-#include "p_map.h"
-#include "am_map.h"
-#include "p_terraintype.h"
-#include "g_common.h"
-#include "gamesession.h"
-#include "mapinfo.h"
-#include "p_start.h"
-#include "p_actor.h"
-#include "p_switch.h"
-#include "g_defs.h"
-#include "p_inventory.h"
-#include "p_mapspec.h"
-#include "dmu_lib.h"
-#include "hu_stuff.h"
-#include "hu_chat.h"
 #include "r_common.h"
 
+using namespace de;
 using namespace common;
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -185,15 +186,68 @@ void P_Init()
     P_Update();
 }
 
+/**
+ * Populate the MapInfo database by parsing the MAPINFO lump.
+ */
+#if __JHEXEN__
+static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffer, String sourceFile)
+{
+    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourceFile).pretty();
+    try
+    {
+        parser.parse(buffer, sourceFile);
+    }
+    catch(MapInfoParser::ParseError const &er)
+    {
+        LOG_RES_WARNING("Failed parsing \"%s\" as MAPINFO:\n%s")
+                << NativePath(sourceFile).pretty() << er.asText();
+    }
+}
+
+static void readMapInfoDefinitions()
+{
+    // Clear the database.
+    hexDefs.clear();
+
+    // Initialize a new parser.
+    MapInfoParser parser(hexDefs);
+
+    // Read the primary MAPINFO (from the IWAD).
+    AutoStr *sourceFile = sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
+                                        : AutoStr_FromText("Lumps:MAPINFO");
+    AutoStr *buffer = M_ReadFileIntoString(sourceFile, 0);
+    if(buffer && !Str_IsEmpty(buffer))
+    {
+        readOneMapInfoDefinition(parser, *buffer, Str_Text(sourceFile));
+    }
+    else
+    {
+        LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
+                << NativePath(Str_Text(sourceFile)).pretty();
+    }
+
+#ifdef DENG_DEBUG
+    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
+    {
+        MapInfo const &info = i->second;
+        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }")
+                << i->first.c_str() << info.gets("title")
+                << info.geti("hub") << info.gets("map") << info.geti("warpTrans");
+    }
+#endif
+}
+#endif
+
 void P_Update()
 {
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InitInventory();
 #endif
+
 #if __JHEXEN__
-    MapInfoParser(sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
-                                : AutoStr_FromText("Lumps:MAPINFO"));
+    readMapInfoDefinitions();
 #endif
+
     P_InitSwitchList();
     P_InitTerrainTypes();
 

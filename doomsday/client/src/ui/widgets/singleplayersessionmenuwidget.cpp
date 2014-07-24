@@ -203,7 +203,7 @@ Action *SingleplayerSessionMenuWidget::makeAction(ui::Item const &item)
     return new CommandAction("load " + item.as<Instance::GameItem>().gameIdentityKey());
 }
 
-GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &item, GuiWidget const *parent)
+GuiWidget *SingleplayerSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
     return new Instance::GameWidget;
 }

@@ -28,6 +28,7 @@
 #include <de/game/SavedSession>
 #include "d_netsv.h"
 #include "g_common.h"
+#include "hu_menu.h"
 #include "hu_inventory.h"
 #include "mapinfo.h"
 #include "mapstatewriter.h"
@@ -424,7 +425,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         /*
          * SavedSession deserialization begins.
          */
-        SavedSession const &saved     = App::rootFolder().locate<SavedSession>(internalSavePath);
+        SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
         SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
@@ -969,7 +970,7 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(P_MapInfo(0/*current map*/)->geti("hub") != P_MapInfo(&nextMapUri)->geti("hub"))
+        if(hexDefs.getMapInfo(0/*current map*/)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
 #endif
         {
             // Clear all saved map states in the old hub.

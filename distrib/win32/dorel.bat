@@ -35,6 +35,9 @@ IF %BUILDFAILURE% == 1 GOTO Failure
 REM -- Update readme (could also run Amethyst here).
 copy "C:\Users\Virtual\Dropbox\Doomsday\readme\readme.txt" ..\products\doc
 
+REM -- Ensure Qt deployment is complete.
+windeployqt ..\products\bin\doomsday.exe
+
 REM -- Run the Inno Setup Compiler.
 IF EXIST "c:\Program Files\Inno Setup 5\Compil32.exe" (
     "C:\Program Files\Inno Setup 5\Compil32.exe" /cc setup.iss

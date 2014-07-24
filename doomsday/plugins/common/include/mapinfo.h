@@ -27,6 +27,8 @@
 
 namespace common {
 
+struct HexDefs; // Forward
+
 class MapInfo : public de::Record
 {
 public:
@@ -37,17 +39,52 @@ public:
 };
 
 /**
- * Populate the MapInfo database by parsing the MAPINFO lump.
+ * Parser for Hexen's MAPINFO definition lumps.
  */
-void MapInfoParser(Str const *path);
+class MapInfoParser
+{
+public:
+    /// Base class for all parse-related errors. @ingroup errors
+    DENG2_ERROR(ParseError);
+
+public:
+    MapInfoParser(HexDefs &db);
+
+    void parse(AutoStr const &buffer, de::String sourceFile);
+
+    /**
+     * Clear any custom default MapInfo definition currently in use. MapInfos
+     * read after this is called will use the games' default definition as a
+     * basis (unless specified otherwise).
+     */
+    void clearDefaultMap();
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 /**
- * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
- *                case the info for the @em current map will be returned (if set).
+ * Central database of definitions read from Hexen-derived definition formats.
  *
- * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
+ * @note Ultimately the definitions this contains should instead have their sources
+ * translated into DED syntax and be made available from the main DED db instead.
  */
-MapInfo *P_MapInfo(de::Uri const *mapUri = 0);
+struct HexDefs
+{
+    typedef std::map<std::string, MapInfo> MapInfos;
+    MapInfos mapInfos;
+
+    void clear();
+
+    /**
+     * @param mapUri  Identifier of the map to lookup info for. Can be @c 0 in which
+     *                case the info for the @em current map will be returned (if set).
+     *
+     * @return  MAPINFO data for the specified @a mapUri; otherwise @c 0 (not found).
+     */
+    MapInfo *getMapInfo(de::Uri const *mapUri = 0);
+};
+extern HexDefs hexDefs;
 
 /**
  * Translates a warp map number to unique map identifier, if possible.

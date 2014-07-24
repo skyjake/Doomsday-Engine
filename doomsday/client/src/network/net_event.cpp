@@ -141,8 +141,9 @@ dd_bool N_NEGet(netevent_t *nev)
  */
 void N_NETicker(timespan_t time)
 {
-    masteraction_t act;
-    int i, num;
+#if !defined(__SERVER__)
+    DENG2_UNUSED(time);
+#endif
 
 #ifdef __SERVER__
     if(netGame)
@@ -160,6 +161,7 @@ void N_NETicker(timespan_t time)
 #endif
 
     // Is there a master action to worry about?
+    masteraction_t act;
     if(N_MAGet(&act))
     {
         switch(act)
@@ -179,9 +181,10 @@ void N_NETicker(timespan_t time)
             }
             break;
 
-        case MAC_LIST:
+        case MAC_LIST: {
             ServerInfo_Print(NULL, 0);
-            num = i = N_MasterGet(0, 0);
+            int num = N_MasterGet(0, 0);
+            int i = num;
             while(--i >= 0)
             {
                 serverinfo_t info;
@@ -190,7 +193,7 @@ void N_NETicker(timespan_t time)
             }
             LOG_NET_VERBOSE("%i server%s found") << num << (num != 1 ? "s were" : " was");
             N_MARemove();
-            break;
+            break; }
 
         default:
             DENG_ASSERT(!"N_NETicker: Invalid value for 'act'");
@@ -253,5 +256,7 @@ void N_TerminateClient(int console)
 
     // Update the master.
     masterHeartbeat = MASTER_UPDATETIME;
+#else
+    DENG2_UNUSED(console);
 #endif
 }

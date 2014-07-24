@@ -25,7 +25,7 @@
  * Server protocol version number.
  * @deprecated Will be replaced with the libcore serialization protocol version.
  */
-#define SV_VERSION          23
+#define SV_VERSION          24
 
 // Prefer adding new flags inside the deltas instead of adding new delta types.
 typedef enum {

@@ -23,6 +23,8 @@
 #include "hu_stuff.h"
 #include "p_inventory.h"
 
+using namespace common;
+
 D_CMD(Cheat);
 D_CMD(CheatGive);
 D_CMD(CheatGod);
@@ -58,6 +60,7 @@ static void updateEyeHeight()
 
 D_CMD(ScreenShot)
 {
+    DENG2_UNUSED3(src, argc, argv);
     G_SetGameAction(GA_SCREENSHOT);
     return true;
 }

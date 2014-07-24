@@ -28,6 +28,9 @@
 
 using namespace de;
 
+namespace common {
+namespace menu {
+
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
 #define CCF_INVERSE             0x2
@@ -54,102 +57,110 @@ struct bindingdrawerdata_t
     float alpha;
 };
 
-static mndata_bindings_t controlConfig[] =
+struct controlconfig_t
 {
-    { "Movement" },
+    char const *text;
+    char const *bindContext;
+    char const *controlName;
+    char const *command;
+    int flags;
+};
+static controlconfig_t controlConfig[] =
+{
+    { "Movement", 0, 0, 0, 0 },
     { "Forward", 0, "walk", 0, CCF_NON_INVERSE },
     { "Backward", 0, "walk", 0, CCF_INVERSE },
     { "Strafe Left", 0, "sidestep", 0, CCF_INVERSE },
     { "Strafe Right", 0, "sidestep", 0, CCF_NON_INVERSE },
     { "Turn Left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE | CCF_SIDESTEP_MODIFIER },
     { "Turn Right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE | CCF_SIDESTEP_MODIFIER },
-    { "Jump", 0, 0, "impulse jump" },
-    { "Use", 0, 0, "impulse use" },
+    { "Jump", 0, 0, "impulse jump", 0 },
+    { "Use", 0, 0, "impulse use", 0 },
     { "Fly Up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "Fly Down", 0, "zfly", 0, CCF_STAGED | CCF_INVERSE },
-    { "Fall To Ground", 0, 0, "impulse falldown" },
-    { "Speed", 0, "speed" },
-    { "Strafe", 0, "strafe" },
+    { "Fall To Ground", 0, 0, "impulse falldown", 0 },
+    { "Speed", 0, "speed", 0, 0 },
+    { "Strafe", 0, "strafe", 0, 0 },
 
-    { "Looking" },
+    { "Looking", 0, 0, 0, 0 },
     { "Look Up", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
     { "Look Down", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
-    { "Look Center", 0, 0, "impulse lookcenter" },
+    { "Look Center", 0, 0, "impulse lookcenter", 0 },
 
-    { "Weapons" },
-    { "Attack/Fire", 0, "attack" },
-    { "Next Weapon", 0, 0, "impulse nextweapon" },
-    { "Previous Weapon", 0, 0, "impulse prevweapon" },
+    { "Weapons", 0, 0, 0, 0 },
+    { "Attack/Fire", 0, "attack", 0, 0 },
+    { "Next Weapon", 0, 0, "impulse nextweapon", 0 },
+    { "Previous Weapon", 0, 0, "impulse prevweapon", 0 },
 
 #if __JDOOM__ || __JDOOM64__
-    { "Fist/Chainsaw", 0, 0, "impulse weapon1" },
-    { "Chainsaw/Fist", 0, 0, "impulse weapon8" },
-    { "Pistol", 0, 0, "impulse weapon2" },
-    { "Super SG/Shotgun", 0, 0, "impulse weapon3" },
-    { "Shotgun/Super SG", 0, 0, "impulse weapon9" },
-    { "Chaingun", 0, 0, "impulse weapon4" },
-    { "Rocket Launcher", 0, 0, "impulse weapon5" },
-    { "Plasma Rifle", 0, 0, "impulse weapon6" },
-    { "BFG 9000", 0, 0, "impulse weapon7" },
+    { "Fist/Chainsaw", 0, 0, "impulse weapon1", 0 },
+    { "Chainsaw/Fist", 0, 0, "impulse weapon8", 0 },
+    { "Pistol", 0, 0, "impulse weapon2", 0 },
+    { "Super SG/Shotgun", 0, 0, "impulse weapon3", 0 },
+    { "Shotgun/Super SG", 0, 0, "impulse weapon9", 0 },
+    { "Chaingun", 0, 0, "impulse weapon4", 0 },
+    { "Rocket Launcher", 0, 0, "impulse weapon5", 0 },
+    { "Plasma Rifle", 0, 0, "impulse weapon6", 0 },
+    { "BFG 9000", 0, 0, "impulse weapon7", 0 },
 #endif
 #if __JDOOM64__
-    { "Unmaker", 0, 0, "impulse weapon10" },
+    { "Unmaker", 0, 0, "impulse weapon10", 0 },
 #endif
 
 #if __JHERETIC__
-    { "Gauntlets/Staff", 0, 0, "impulse weapon1" },
-    { "Elvenwand", 0, 0, "impulse weapon2" },
-    { "Crossbow", 0, 0, "impulse weapon3" },
-    { "Dragon Claw", 0, 0, "impulse weapon4" },
-    { "Hellstaff", 0, 0, "impulse weapon5" },
-    { "Phoenix Rod", 0, 0, "impulse weapon6" },
-    { "Firemace", 0, 0, "impulse weapon7" },
+    { "Gauntlets/Staff", 0, 0, "impulse weapon1", 0 },
+    { "Elvenwand", 0, 0, "impulse weapon2", 0 },
+    { "Crossbow", 0, 0, "impulse weapon3", 0 },
+    { "Dragon Claw", 0, 0, "impulse weapon4", 0 },
+    { "Hellstaff", 0, 0, "impulse weapon5", 0 },
+    { "Phoenix Rod", 0, 0, "impulse weapon6", 0 },
+    { "Firemace", 0, 0, "impulse weapon7", 0 },
 #endif
 
 #if __JHEXEN__
-    { "Weapon 1", 0, 0, "impulse weapon1" },
-    { "Weapon 2", 0, 0, "impulse weapon2" },
-    { "Weapon 3", 0, 0, "impulse weapon3" },
-    { "Weapon 4", 0, 0, "impulse weapon4" },
+    { "Weapon 1", 0, 0, "impulse weapon1", 0 },
+    { "Weapon 2", 0, 0, "impulse weapon2", 0 },
+    { "Weapon 3", 0, 0, "impulse weapon3", 0 },
+    { "Weapon 4", 0, 0, "impulse weapon4", 0 },
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    { "Inventory" },
+    { "Inventory", 0, 0, 0, 0 },
     { "Move Left", 0, 0, "impulse previtem", CCF_REPEAT },
     { "Move Right", 0, 0, "impulse nextitem", CCF_REPEAT },
-    { "Use Item", 0, 0, "impulse useitem" },
-    { "Panic!", 0, 0, "impulse panic" },
+    { "Use Item", 0, 0, "impulse useitem", 0 },
+    { "Panic!", 0, 0, "impulse panic", 0 },
 #endif
 
 #ifdef __JHERETIC__
-    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility" },
-    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
-    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth" },
-    { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome" },
-    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
-    { (char const *) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb" },
-    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
-    { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly" },
-    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
+    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
+    { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility", 0 },
+    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
+    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth", 0 },
+    { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome", 0 },
+    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
+    { (char const *) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb", 0 },
+    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
+    { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly", 0 },
+    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
 #endif
 
 #ifdef __JHEXEN__
-    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch" },
-    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health" },
-    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn" },
-    { (char const *) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater" },
-    { (char const *) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots" },
-    { (char const *) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast" },
-    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport" },
-    { (char const *) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother" },
-    { (char const *) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag" },
-    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability" },
-    { (char const *) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant" },
-    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
+    { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
+    { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
+    { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse mysticurn", 0 },
+    { (char const *) TXT_TXT_INV_BOOSTMANA, 0, 0, "impulse krater", 0 },
+    { (char const *) TXT_TXT_INV_SPEED, 0, 0, "impulse speedboots", 0 },
+    { (char const *) TXT_TXT_INV_BLASTRADIUS, 0, 0, "impulse blast", 0 },
+    { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
+    { (char const *) TXT_TXT_INV_TELEPORTOTHER, 0, 0, "impulse teleportother", 0 },
+    { (char const *) TXT_TXT_INV_POISONBAG, 0, 0, "impulse poisonbag", 0 },
+    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
+    { (char const *) TXT_TXT_INV_SUMMON, 0, 0, "impulse darkservant", 0 },
+    { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
 #endif
 
-    { "Chat" },
+    { "Chat", 0, 0, 0, 0 },
     { "Open Chat", 0, 0, "beginchat", CCF_MULTIPLAYER },
 
 #if __JDOOM__ || __JDOOM64__
@@ -166,71 +177,71 @@ static mndata_bindings_t controlConfig[] =
     { "Blue Chat", 0, 0, "beginchat 3", CCF_MULTIPLAYER },
 #endif
 
-    { "Send Message", "chat", 0, "chatcomplete" },
-    { "Cancel Message", "chat", 0, "chatcancel" },
-    { "Macro 1", "chat", 0, "chatsendmacro 0" },
-    { "Macro 2", "chat", 0, "chatsendmacro 1" },
-    { "Macro 3", "chat", 0, "chatsendmacro 2" },
-    { "Macro 4", "chat", 0, "chatsendmacro 3" },
-    { "Macro 5", "chat", 0, "chatsendmacro 4" },
-    { "Macro 6", "chat", 0, "chatsendmacro 5" },
-    { "Macro 7", "chat", 0, "chatsendmacro 6" },
-    { "Macro 8", "chat", 0, "chatsendmacro 7" },
-    { "Macro 9", "chat", 0, "chatsendmacro 8" },
-    { "Macro 10", "chat", 0, "chatsendmacro 9" },
+    { "Send Message", "chat", 0, "chatcomplete", 0 },
+    { "Cancel Message", "chat", 0, "chatcancel", 0 },
+    { "Macro 1", "chat", 0, "chatsendmacro 0", 0 },
+    { "Macro 2", "chat", 0, "chatsendmacro 1", 0 },
+    { "Macro 3", "chat", 0, "chatsendmacro 2", 0 },
+    { "Macro 4", "chat", 0, "chatsendmacro 3", 0 },
+    { "Macro 5", "chat", 0, "chatsendmacro 4", 0 },
+    { "Macro 6", "chat", 0, "chatsendmacro 5", 0 },
+    { "Macro 7", "chat", 0, "chatsendmacro 6", 0 },
+    { "Macro 8", "chat", 0, "chatsendmacro 7", 0 },
+    { "Macro 9", "chat", 0, "chatsendmacro 8", 0 },
+    { "Macro 10", "chat", 0, "chatsendmacro 9", 0 },
     { "Backspace", "chat", 0, "chatdelete", CCF_REPEAT },
 
-    { "Map" },
-    { "Show/Hide Map", 0, 0, "impulse automap" },
+    { "Map", 0, 0, 0, 0 },
+    { "Show/Hide Map", 0, 0, "impulse automap", 0 },
     { "Zoom In", 0, "mapzoom", 0, CCF_NON_INVERSE },
     { "Zoom Out", 0, "mapzoom", 0, CCF_INVERSE },
-    { "Zoom Maximum", "map", 0, "impulse zoommax" },
+    { "Zoom Maximum", "map", 0, "impulse zoommax", 0 },
     { "Pan Left", 0, "mappanx", 0, CCF_INVERSE },
     { "Pan Right", 0, "mappanx", 0, CCF_NON_INVERSE },
     { "Pan Up", 0, "mappany", 0, CCF_NON_INVERSE },
     { "Pan Down", 0, "mappany", 0, CCF_INVERSE },
-    { "Toggle Follow", "map", 0, "impulse follow" },
-    { "Toggle Rotation", "map", 0, "impulse rotate" },
-    { "Add Mark", "map", 0, "impulse addmark" },
-    { "Clear Marks", "map", 0, "impulse clearmarks" },
+    { "Toggle Follow", "map", 0, "impulse follow", 0 },
+    { "Toggle Rotation", "map", 0, "impulse rotate", 0 },
+    { "Add Mark", "map", 0, "impulse addmark", 0 },
+    { "Clear Marks", "map", 0, "impulse clearmarks", 0 },
 
-    { "HUD" },
-    { "Show HUD", 0, 0, "impulse showhud" },
+    { "HUD", 0, 0, 0, 0 },
+    { "Show HUD", 0, 0, "impulse showhud", 0 },
     { "Show Score", 0, 0, "impulse showscore", CCF_REPEAT },
     { "Smaller View", 0, 0, "sub view-size 1", CCF_REPEAT },
     { "Larger View", 0, 0, "add view-size 1", CCF_REPEAT },
 
-    { "Message Refresh", 0, 0, "impulse msgrefresh" },
+    { "Message Refresh", 0, 0, "impulse msgrefresh", 0 },
 
-    { "Shortcuts" },
-    { "Pause Game", 0, 0, "pause" },
+    { "Shortcuts", 0, 0, 0, 0 },
+    { "Pause Game", 0, 0, "pause", 0 },
 #if !__JDOOM64__
-    { "Help Screen", "shortcut", 0, "helpscreen" },
+    { "Help Screen", "shortcut", 0, "helpscreen", 0 },
 #endif
-    { "End Game", "shortcut", 0, "endgame" },
-    { "Save Game", "shortcut", 0, "menu savegame" },
-    { "Load Game", "shortcut", 0, "menu loadgame" },
-    { "Quick Save", "shortcut", 0, "quicksave" },
-    { "Quick Load", "shortcut", 0, "quickload" },
-    { "Sound Options", "shortcut", 0, "menu soundoptions" },
-    { "Toggle Messages", "shortcut", 0, "toggle msg-show" },
-    { "Gamma Correction", "shortcut", 0, "togglegamma" },
-    { "Screenshot", "shortcut", 0, "screenshot" },
-    { "Quit", "shortcut", 0, "quit" },
+    { "End Game", "shortcut", 0, "endgame", 0 },
+    { "Save Game", "shortcut", 0, "menu savegame", 0 },
+    { "Load Game", "shortcut", 0, "menu loadgame", 0 },
+    { "Quick Save", "shortcut", 0, "quicksave", 0 },
+    { "Quick Load", "shortcut", 0, "quickload", 0 },
+    { "Sound Options", "shortcut", 0, "menu soundoptions", 0 },
+    { "Toggle Messages", "shortcut", 0, "toggle msg-show", 0 },
+    { "Gamma Correction", "shortcut", 0, "togglegamma", 0 },
+    { "Screenshot", "shortcut", 0, "screenshot", 0 },
+    { "Quit", "shortcut", 0, "quit", 0 },
 
-    { "Menu" },
-    { "Show/Hide Menu", "shortcut", 0, "menu" },
+    { "Menu", 0, 0, 0, 0 },
+    { "Show/Hide Menu", "shortcut", 0, "menu", 0 },
     { "Previous Menu", "menu", 0, "menuback", CCF_REPEAT },
     { "Move Up", "menu", 0, "menuup", CCF_REPEAT },
     { "Move Down", "menu", 0, "menudown", CCF_REPEAT },
     { "Move Left", "menu", 0, "menuleft", CCF_REPEAT },
     { "Move Right", "menu", 0, "menuright", CCF_REPEAT },
-    { "Select", "menu", 0, "menuselect" },
+    { "Select", "menu", 0, "menuselect", 0 },
 
-    { "On-Screen Questions" },
-    { "Answer Yes", "message", 0, "messageyes" },
-    { "Answer No", "message", 0, "messageno" },
-    { "Cancel", "message", 0, "messagecancel" },
+    { "On-Screen Questions", 0, 0, 0, 0 },
+    { "Answer Yes", "message", 0, "messageyes", 0 },
+    { "Answer No", "message", 0, "messageno", 0 },
+    { "Cancel", "message", 0, "messagecancel", 0 },
 };
 
 static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*name*/, dd_bool /*isInverse*/, void * /*data*/)
@@ -238,7 +249,7 @@ static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*na
     DD_Executef(true, "delbind %i", bid);
 }
 
-int Hu_MenuActivateBindingsGrab(mn_object_t * /*ob*/, mn_actionid_t /*action*/, void * /*parameters*/)
+int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/, void * /*parameters*/)
 {
      // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
@@ -262,7 +273,7 @@ void Hu_MenuInitControlsPage()
     int bindingsCount = 0;
     for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t *binds = &controlConfig[i];
+        controlconfig_t *binds = &controlConfig[i];
         if(!binds->command && !binds->controlName)
         {
             ++textCount;
@@ -274,72 +285,46 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    // Allocate the menu items array.
-    int totalItems = textCount + bindingsCount + 1/*terminator*/;
-    mn_object_t *objects =   (mn_object_t *)Z_Calloc(sizeof(*objects) * totalItems, PU_GAMESTATIC, 0);
-    mndata_text_t *texts = (mndata_text_t *)Z_Calloc(sizeof(*texts)   * textCount,  PU_GAMESTATIC, 0);
-    size_t objectIdx = 0;
-    size_t textIdx   = 0;
+    Page *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    page->setTitle("Controls");
+    page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
+    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     int group = 0;
     for(int i = 0; i < configCount; ++i)
     {
-        mndata_bindings_t *binds = &controlConfig[i];
+        controlconfig_t *binds = &controlConfig[i];
 
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            mn_object_t *ob    = &objects[objectIdx++];
-            mndata_text_t *txt = &texts[textIdx++];
-
-            ob->_type           = MN_TEXT;
-            txt->text           = binds->text;
-            ob->_typedata       = txt;
-            ob->_pageFontIdx    = MENU_FONT1;
-            ob->_pageColorIdx   = MENU_COLOR2;
-            ob->ticker          = MNText_Ticker;
-            ob->drawer          = MNText_Drawer;
-            ob->updateGeometry  = MNText_UpdateGeometry;
+            LabelWidget *txt = new LabelWidget;
+            txt->text          = binds->text;
+            txt->_pageColorIdx = MENU_COLOR2;
 
             // A new group begins;
-            ob->_group = ++group;
+            txt->setGroup(++group);
+
+            page->_widgets << txt;
         }
         else
         {
-            mn_object_t *labelOb    = &objects[objectIdx++];
-            mn_object_t *bindingsOb = &objects[objectIdx++];
-            mndata_text_t *txt = &texts[textIdx++];
 
-            txt->text = binds->text;
+            LabelWidget *labelOb = new LabelWidget;
+            labelOb->text = binds->text;
+            labelOb->setGroup(group);
 
-            labelOb->_type          = MN_TEXT;
-            labelOb->_typedata      = txt;
-            labelOb->ticker         = MNText_Ticker;
-            labelOb->drawer         = MNText_Drawer;
-            labelOb->updateGeometry = MNText_UpdateGeometry;
-            labelOb->_pageFontIdx   = MENU_FONT1;
-            labelOb->_pageColorIdx  = MENU_COLOR1;
-            labelOb->_group         = group;
+            page->_widgets << labelOb;
 
-            bindingsOb->_type               = MN_BINDINGS;
-            bindingsOb->ticker              = MNBindings_Ticker;
-            bindingsOb->drawer              = MNBindings_Drawer;
-            bindingsOb->cmdResponder        = MNBindings_CommandResponder;
-            bindingsOb->privilegedResponder = MNBindings_PrivilegedResponder;
-            bindingsOb->updateGeometry      = MNBindings_UpdateGeometry;
-            bindingsOb->actions[MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
-            bindingsOb->_typedata           = binds;
-            bindingsOb->_group              = group;
+            InputBindingWidget *bindingsOb = new InputBindingWidget;
+            bindingsOb->binds = binds;
+            bindingsOb->setGroup(group);
+            bindingsOb->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            bindingsOb->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+
+            page->_widgets << bindingsOb;
         }
     }
-    objects[objectIdx]._type = MN_NONE; // Terminate.
-
-    mn_page_t *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
-    page->objects = objects;
-    MNPage_SetTitle(page, "Controls");
-    MNPage_SetPredefinedFont(page, MENU_FONT1, FID(GF_FONTA));
-    MNPage_SetPreviousPage(page, Hu_MenuFindPageByName("Options"));
 }
 
 static void drawSmallText(char const *string, int x, int y, float alpha)
@@ -426,7 +411,7 @@ static char const *findInString(char const *str, char const *token, int n)
     return 0;
 }
 
-static void iterateBindings(mndata_bindings_t const *binds, char const *bindings, int flags, void *data,
+static void iterateBindings(controlconfig_t const *binds, char const *bindings, int flags, void *data,
     void (*callback)(bindingitertype_t type, int bid, char const *ev, dd_bool isInverse, void *data))
 {
     DENG2_ASSERT(binds != 0);
@@ -525,32 +510,17 @@ static void iterateBindings(mndata_bindings_t const *binds, char const *bindings
     }
 }
 
-mn_object_t *MNBindings_New()
+InputBindingWidget::InputBindingWidget()
+    : Widget()
+    , binds(0)
 {
-    mn_object_t *ob = (mn_object_t *)Z_Calloc(sizeof(*ob), PU_GAMESTATIC, 0);
-
-    ob->_typedata           = Z_Calloc(sizeof(mndata_bindings_t), PU_GAMESTATIC, 0);
-    ob->_type               = MN_BINDINGS;
-    ob->_pageFontIdx        = MENU_FONT1;
-    ob->_pageColorIdx       = MENU_COLOR1;
-    ob->updateGeometry      = MNBindings_UpdateGeometry;
-    ob->drawer              = MNBindings_Drawer;
-    ob->cmdResponder        = MNBindings_CommandResponder;
-    ob->privilegedResponder = MNBindings_PrivilegedResponder;
-
-    return ob;
+    Widget::_pageFontIdx  = MENU_FONT1;
+    Widget::_pageColorIdx = MENU_COLOR1;
+    Widget::cmdResponder  = InputBindingWidget_CommandResponder;
 }
 
-void MNBindings_Delete(mn_object_t *ob)
+void InputBindingWidget::draw(Point2Raw const *origin)
 {
-    DENG2_ASSERT(ob && ob->_type == MN_BINDINGS);
-    Z_Free(ob->_typedata);
-    Z_Free(ob);
-}
-
-void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
-{
-    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
     bindingdrawerdata_t draw;
     char buf[1024];
 
@@ -568,9 +538,9 @@ void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin)
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 
-int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
+int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
 {
-    mndata_bindings_t *binds = (mndata_bindings_t *)ob->_typedata;
+    controlconfig_t *binds = static_cast<InputBindingWidget *>(ob)->binds;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -599,9 +569,9 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
         ob->_flags |= MNF_ACTIVE;
-        if(MNObject_HasAction(ob, MNA_ACTIVE))
+        if(ob->hasAction(Widget::MNA_ACTIVE))
         {
-            MNObject_ExecAction(ob, MNA_ACTIVE, NULL);
+            ob->execAction(Widget::MNA_ACTIVE, NULL);
             return true;
         }
         break;
@@ -612,17 +582,16 @@ int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t * /*page*/)
+void InputBindingWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly!
-    DENG2_ASSERT(ob);
-    Rect_SetWidthHeight(ob->_geometry, 60, 10 * SMALL_SCALE);
+    Rect_SetWidthHeight(_geometry, 60, 10 * SMALL_SCALE);
 }
 
 /**
  * Hu_MenuDrawControlsPage
  */
-void Hu_MenuDrawControlsPage(mn_page_t * /*page*/, Point2Raw const * /*offset*/)
+void Hu_MenuDrawControlsPage(Page * /*page*/, Point2Raw const * /*offset*/)
 {
     Point2Raw origin;
     origin.x = SCREENWIDTH/2;
@@ -647,21 +616,13 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MNBindings_Ticker(mn_object_t * /*ob*/)
+int InputBindingWidget::handleEvent_Privileged(event_t *ev)
 {
-    //DENG2_ASSERT(ob != 0 && ob->_type == MN_BINDINGS);
-    //mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
-    // Stub.
-}
-
-int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
-{
-    DENG2_ASSERT(ob != 0 && ev != 0);
+    DENG2_ASSERT(ev != 0);
 
     // We're interested in key or button down events.
-    if((ob->_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if((Widget::_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
     {
-        mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
         char const *bindContext = "game";
         char const *symbol = 0;
         char cmd[512];
@@ -693,7 +654,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                App_Log(DE2_INPUT_ERROR, "The Delete key in the Menu context is reserved for deleting bindings");
+                throw Error("InputBindingWidget::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
@@ -773,7 +734,7 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
         DD_Execute(true, cmd);
 
         // We've finished the grab.
-        ob->_flags &= ~MNF_ACTIVE;
+        Widget::_flags &= ~MNF_ACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
@@ -782,17 +743,17 @@ int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev)
     return false;
 }
 
-char const *MNBindings_ControlName(mn_object_t *ob)
+char const *InputBindingWidget::controlName()
 {
-    DENG2_ASSERT(ob != 0);
-    mndata_bindings_t *binds = (mndata_bindings_t *) ob->_typedata;
     DENG2_ASSERT(binds != 0);
-
     // Map to a text definition?
     if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
     {
         return GET_TXT(PTR2INT(binds->text));
     }
-
     return binds->text;
 }
+
+} // namespace menu
+} // namespace common
+

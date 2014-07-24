@@ -88,6 +88,13 @@ public:
          */
         void bindSaveName(de::String newName);
 
+        /**
+         * Force a manual update of the save slot status and update any linked menu item.
+         * Calling this is usually unnecessary as the status is automatically updated when
+         * the associated saved session changes.
+         */
+        void updateStatus();
+
     private:
         friend class SaveSlots;
         void setSavedSession(de::game::SavedSession *newSession);
@@ -164,6 +171,13 @@ public:
      * @return  The referenced Slot otherwise @c 0.
      */
     Slot *slotByUserInput(de::String const &str) const;
+
+    /**
+     * Force a manual update of all save slot statuses and update any linked menu items.
+     * Calling this is usually unnecessary as the status of a slot is automatically updated
+     * when the associated saved session changes.
+     */
+    void updateAll();
 
     /**
      * Register the console commands and variables of this module.

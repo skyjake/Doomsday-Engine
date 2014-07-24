@@ -31,6 +31,8 @@
 #include "player.h"
 #include "r_common.h"
 
+using namespace common;
+
 int mapTime;
 int actualMapTime;
 int timerGame;

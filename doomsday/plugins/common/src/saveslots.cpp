@@ -36,6 +36,7 @@ static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
 
 using namespace de;
 using namespace common;
+using namespace menu;
 
 using de::game::SavedSession;
 
@@ -80,38 +81,38 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             }
         }
 
-        // Update the menu widget right away.
-        updateMenuWidget();
+        // Update the menu widget(s) right away.
+        updateMenuWidget("LoadGame");
+        updateMenuWidget("SaveGame");
     }
 
-    void updateMenuWidget()
+    void updateMenuWidget(String const pageName)
     {
         if(!menuWidgetId) return;
 
-        mn_page_t *page = Hu_MenuFindPageByName("LoadGame");
+        Page *page = Hu_MenuFindPageByName(pageName);
         if(!page) return; // Not initialized yet?
 
-        mn_object_t *ob = MNPage_FindObject(page, 0, menuWidgetId);
-        if(!ob)
+        Widget *wi = page->findObject(0, menuWidgetId);
+        if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
             return;
         }
-        DENG2_ASSERT(ob->_type == MN_EDIT);
+        LineEditWidget &edit = wi->as<LineEditWidget>();
 
-        MNObject_SetFlags(ob, FO_SET, MNF_DISABLED);
+        wi->setFlags(FO_SET, MNF_DISABLED);
         if(status == Loadable)
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
-            MNObject_SetFlags(ob, FO_CLEAR, MNF_DISABLED);
+            edit.setText(MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
+            wi->setFlags(FO_CLEAR, MNF_DISABLED);
         }
         else
         {
-            MNEdit_SetText(ob, MNEDIT_STF_NO_ACTION, "");
+            edit.setText(MNEDIT_STF_NO_ACTION, "");
         }
 
-        if(Hu_MenuIsActive() &&
-           (Hu_MenuActivePage() == page || Hu_MenuActivePage() == Hu_MenuFindPageByName("SaveGame")))
+        if(Hu_MenuIsActive() && Hu_MenuActivePage() == page)
         {
             // Re-open the active page to update focus if necessary.
             Hu_MenuSetActivePage2(page, true);
@@ -213,6 +214,11 @@ void SaveSlots::Slot::setSavedSession(SavedSession *newSession)
         }
         LOG_VERBOSE("Save slot '%s' now %s") << d->id << statusText;
     }
+}
+
+void SaveSlots::Slot::updateStatus()
+{
+    d->updateStatus();
 }
 
 DENG2_PIMPL(SaveSlots)
@@ -366,6 +372,14 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     }
 
     return d->slotById(id);
+}
+
+void SaveSlots::updateAll()
+{
+    DENG2_FOR_EACH(Instance::Slots, i, d->sslots)
+    {
+        i->second->updateStatus();
+    }
 }
 
 void SaveSlots::consoleRegister() // static

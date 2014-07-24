@@ -120,7 +120,7 @@ static void Con_EndTransition(void)
     transition.inProgress = false;
 }
 
-void Con_TransitionTicker(timespan_t ticLength)
+void Con_TransitionTicker(timespan_t /*ticLength*/)
 {
     if(isDedicated) return;
     if(!Con_TransitionInProgress()) return;

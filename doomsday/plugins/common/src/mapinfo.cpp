@@ -30,10 +30,9 @@
 
 using namespace de;
 
-typedef std::map<std::string, common::MapInfo> MapInfos;
-static MapInfos mapInfos;
-
 namespace common {
+
+HexDefs hexDefs;
 
 namespace internal {
 
@@ -44,6 +43,24 @@ static inline String defaultSkyMaterial()
         return "Textures:SKY2";
 #endif
     return "Textures:SKY1";
+}
+
+#define MUSIC_STARTUP      "startup"
+#define MUSIC_ENDING1      "hall"
+#define MUSIC_ENDING2      "orb"
+#define MUSIC_ENDING3      "chess"
+#define MUSIC_INTERMISSION "hub"
+#define MUSIC_TITLE        "hexen"
+
+/**
+ * Update the Music definition @a musicId with the specified CD @a track number.
+ */
+static void setMusicCDTrack(char const *musicId, int track)
+{
+    LOG_RES_VERBOSE("setMusicCDTrack: musicId=%s, track=%i") << musicId << track;
+
+    int cdTrack = track;
+    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
 }
 
 } // namespace internal
@@ -80,164 +97,42 @@ void MapInfo::resetToDefaults()
     addText   ("songLump", "DEFSONG");
 }
 
-namespace internal {
-
-#define MUSIC_STARTUP      "startup"
-#define MUSIC_ENDING1      "hall"
-#define MUSIC_ENDING2      "orb"
-#define MUSIC_ENDING3      "chess"
-#define MUSIC_INTERMISSION "hub"
-#define MUSIC_TITLE        "hexen"
-
-/**
- * Update the Music definition @a musicId with the specified CD @a track number.
- */
-static void setMusicCDTrack(char const *musicId, int track)
-{
-    LOG_RES_VERBOSE("setMusicCDTrack: musicId=%s, track=%i") << musicId << track;
-
-    int cdTrack = track;
-    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
-}
-
 /**
  * @note In the future it is likely that a MAPINFO parser will only be necessary in order to
  * translate such content into Doomsday-native DED file(s) in a plugin. As such it would be
  * preferable if this could be done in one pass without the need for extra temporary storage.
  */
-class MapInfoParser
+DENG2_PIMPL(MapInfoParser)
 {
-    AutoStr *source;
+    HexDefs &db;
     HexLex lexer;
     MapInfo *defaultMap;
 
-public:
-    /// Base class for all parse-related errors. @ingroup errors
-    DENG2_ERROR(ParseError);
-
-    MapInfoParser(AutoStr *source = 0)
-        : source(source), defaultMap(0)
+    Instance(Public *i, HexDefs &db)
+        : Base(i)
+        , db        (db)
+        , defaultMap(0)
     {}
 
-    ~MapInfoParser()
+    ~Instance() { clearDefaultMap(); }
+
+    void addDefaultMapIfNeeded(bool resetToDefaultsIfPresent = true)
     {
-        delete defaultMap;
-    }
-
-    void parse()
-    {
-        ::mapInfos.clear();
-
-        // Nothing to parse?
-        if(!source || Str_IsEmpty(source))
-            return;
-
-        delete defaultMap; defaultMap = 0;
-
-        lexer.parse(source);
-        while(lexer.readToken())
+        if(!defaultMap)
         {
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
-            {
-                setMusicCDTrack(MUSIC_STARTUP, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING1, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING2, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
-            {
-                setMusicCDTrack(MUSIC_ENDING3, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
-            {
-                setMusicCDTrack(MUSIC_INTERMISSION, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
-            {
-                setMusicCDTrack(MUSIC_TITLE, (int)lexer.readNumber());
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "clearepisodes")) // ZDoom
-            {
-                LOG_WARNING("MAPINFO ClearEpisodes directives are not supported.");
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "clearskills")) // ZDoom
-            {
-                LOG_WARNING("MAPINFO ClearSkills directives are not supported.");
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "clusterdef")) // ZDoom
-            {
-                parseCluster();
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "episode")) // ZDoom
-            {
-                parseEpisode();
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "map"))
-            {
-                parseMap();
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "defaultmap")) // ZDoom
-            {
-                // Custom default MapInfo definition to be used as the basis for subsequent defs.
-                if(!defaultMap)
-                {
-                    defaultMap = new MapInfo;
-                }
-                else
-                {
-                    defaultMap->resetToDefaults();
-                }
-
-                parseMap(defaultMap);
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "adddefaultmap")) // ZDoom
-            {
-                // As per 'defaultmap' but additive.
-                if(!defaultMap)
-                {
-                    defaultMap = new MapInfo;
-                }
-                parseMap(defaultMap);
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "gamedefaults")) // ZDoom
-            {
-                // Custom default MapInfo definition which is seemingly only used by ZDoom itself
-                // as a way to get around their changes to/repurposing of the MAPINFO mechanism.
-                // We probably don't need to support this. -ds
-                MapInfo tempMap;
-                parseMap(&tempMap);
-                continue;
-            }
-            if(!Str_CompareIgnoreCase(lexer.token(), "skill")) // ZDoom
-            {
-                parseSkill();
-                continue;
-            }
-
-            // Unexpected token encountered.
-            throw ParseError(String("Unexpected token '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
+            defaultMap = new MapInfo;
+        }
+        else if(resetToDefaultsIfPresent)
+        {
+            defaultMap->resetToDefaults();
         }
     }
 
-private:
+    void clearDefaultMap()
+    {
+        delete defaultMap; defaultMap = 0;
+    }
+
     void parseCluster() // ZDoom
     {
         LOG_WARNING("MAPINFO Cluster definitions are not supported.");
@@ -487,12 +382,12 @@ private:
             }
 
             // Lookup an existing map info from the database.
-            info = P_MapInfo(&mapUri);
+            info = db.getMapInfo(&mapUri);
 
             if(!info)
             {
                 // A new map info.
-                info = &::mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
+                info = &db.mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
 
                 // Initialize with custom default values?
                 if(defaultMap)
@@ -1044,42 +939,120 @@ private:
     }
 };
 
-} // namespace internal
+MapInfoParser::MapInfoParser(HexDefs &db) : d(new Instance(this, db))
+{}
 
-void MapInfoParser(ddstring_s const *path)
+void MapInfoParser::clearDefaultMap()
 {
-    AutoStr *source = M_ReadFileIntoString(path, 0);
-    if(!source || Str_IsEmpty(source))
-    {
-        LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
-                << NativePath(Str_Text(path)).pretty();
-        return;
-    }
-
-    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(Str_Text(path)).pretty();
-
-    try
-    {
-        internal::MapInfoParser(source).parse();
-    }
-    catch(internal::MapInfoParser::ParseError const &er)
-    {
-        LOG_RES_WARNING("Failed parsing \"%s\" as MAPINFO:\n%s")
-                << NativePath(Str_Text(path)).pretty() << er.asText();
-    }
-
-#ifdef DENG_DEBUG
-    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
-    {
-        MapInfo const &info = i->second;
-        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }")
-                << i->first.c_str() << info.gets("title")
-                << info.geti("hub") << info.gets("map") << info.geti("warpTrans");
-    }
-#endif
+    d->clearDefaultMap();
 }
 
-MapInfo *P_MapInfo(de::Uri const *mapUri)
+void MapInfoParser::parse(AutoStr const &buffer, String /*sourceFile*/)
+{
+    LOG_AS("MapInfoParser");
+
+    // Nothing to parse?
+    if(Str_IsEmpty(&buffer))
+        return;
+
+    d->lexer.parse(&buffer);
+    while(d->lexer.readToken())
+    {
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_start_track"))
+        {
+            setMusicCDTrack(MUSIC_STARTUP, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_end1_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING1, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_end2_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING2, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_end3_track"))
+        {
+            setMusicCDTrack(MUSIC_ENDING3, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_intermission_track"))
+        {
+            setMusicCDTrack(MUSIC_INTERMISSION, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "cd_title_track"))
+        {
+            setMusicCDTrack(MUSIC_TITLE, (int)d->lexer.readNumber());
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "clearepisodes")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO ClearEpisodes directives are not supported.");
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "clearskills")) // ZDoom
+        {
+            LOG_WARNING("MAPINFO ClearSkills directives are not supported.");
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "clusterdef")) // ZDoom
+        {
+            d->parseCluster();
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "episode")) // ZDoom
+        {
+            d->parseEpisode();
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "map"))
+        {
+            d->parseMap();
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "defaultmap")) // ZDoom
+        {
+            // Custom default MapInfo definition to be used as the basis for subsequent defs.
+            d->addDefaultMapIfNeeded();
+            d->parseMap(d->defaultMap);
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "adddefaultmap")) // ZDoom
+        {
+            // As per 'defaultmap' but additive.
+            d->addDefaultMapIfNeeded(false/*don't reset*/);
+            d->parseMap(d->defaultMap);
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "gamedefaults")) // ZDoom
+        {
+            // Custom default MapInfo definition which is seemingly only used by ZDoom itself
+            // as a way to get around their changes to/repurposing of the MAPINFO mechanism.
+            // We probably don't need to support this. -ds
+            MapInfo tempMap;
+            d->parseMap(&tempMap);
+            continue;
+        }
+        if(!Str_CompareIgnoreCase(d->lexer.token(), "skill")) // ZDoom
+        {
+            d->parseSkill();
+            continue;
+        }
+
+        // Unexpected token encountered.
+        throw ParseError(String("Unexpected token '%1' on line #%2").arg(Str_Text(d->lexer.token())).arg(d->lexer.lineNumber()));
+    }
+}
+
+void HexDefs::clear()
+{
+    mapInfos.clear();
+}
+
+MapInfo *HexDefs::getMapInfo(de::Uri const *mapUri)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
@@ -1090,7 +1063,7 @@ MapInfo *P_MapInfo(de::Uri const *mapUri)
     {
         return &found->second;
     }
-    //App_Log(DE2_DEV_MAP_NOTE, "Unknown MAPINFO definition '%s'", Str_Text(mapUriStr));
+    //LOGDEV_MAP_NOTE("Unknown MAPINFO definition '%s'") << Str_Text(mapUriStr);
     return 0;
 }
 
@@ -1098,11 +1071,11 @@ de::Uri P_TranslateMapIfExists(uint map)
 {
     de::Uri matchedWithoutHub("Maps:", RC_NULL);
 
-    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
+    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
 
-        if(info.geti("warpTrans") == map)
+        if((unsigned)info.geti("warpTrans") == map)
         {
             if(info.geti("hub"))
             {

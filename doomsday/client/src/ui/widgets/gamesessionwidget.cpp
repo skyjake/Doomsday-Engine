@@ -65,7 +65,7 @@ DENG2_PIMPL(GameSessionWidget)
         popup->close(0);
     }
 
-    void buttonPressed(ButtonWidget &bt)
+    void buttonPressed(ButtonWidget &)
     {
         /*
         // Show information about the game.

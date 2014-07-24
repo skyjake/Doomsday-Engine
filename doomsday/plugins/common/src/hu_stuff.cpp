@@ -44,6 +44,8 @@
 #include <cstring>
 #include <map>
 
+using namespace common;
+
 /**
  * @defgroup tableColumnFlags  Table Column flags
  */
@@ -1131,9 +1133,9 @@ static const char* patchReplacement(patchid_t patchId)
     return replacement;
 }
 
-const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
+char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
 {
-    const char* replacement = patchReplacement(patchId);
+    char const *replacement = patchReplacement(patchId);
     if(flags & (PRF_NO_IWAD|PRF_NO_PWAD))
     {
         patchinfo_t info;
@@ -1152,9 +1154,8 @@ const char* Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchId, const char* text)
+char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, char const *text)
 {
-    const char* replacement = NULL; // No replacement possible/wanted.
     if(mode != PRM_NONE)
     {
         // We might be able to replace the patch with a string replacement.
@@ -1164,26 +1165,22 @@ const char* Hu_ChoosePatchReplacement2(patchreplacemode_t mode, patchid_t patchI
             R_GetPatchInfo(patchId, &info);
             if(!info.flags.isCustom)
             {
-                if(NULL == text || !text[0])
+                if(!text || !text[0])
                 {
                     // Look for a user replacement.
                     text = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
                 }
 
-                replacement = text;
+                return text;
             }
         }
         else
         {
-            replacement = text;
+            return text;
         }
     }
-    return replacement;
-}
 
-const char* Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId)
-{
-    return Hu_ChoosePatchReplacement2(mode, patchId, NULL);
+    return 0; // No replacement available/wanted.
 }
 
 void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin,
@@ -1487,7 +1484,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = G_MapTitlePatch(); // current map
-    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement2(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
+    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
                  de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.

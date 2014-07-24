@@ -20,41 +20,43 @@
 
 #ifndef LIBCOMMON_MENU_CONTROLS
 #define LIBCOMMON_MENU_CONTROLS
+#ifdef __cplusplus
 
 #include "hu_lib.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace common {
+namespace menu {
 
 void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(mn_page_t *page, Point2Raw const *origin);
+void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+
+struct controlconfig_t;
 
 /**
  * Bindings visualizer widget.
  */
-typedef struct mndata_bindings_s {
-    char const *text;
-    char const *bindContext;
-    char const *controlName;
-    char const *command;
-    int flags;
-} mndata_bindings_t;
+struct InputBindingWidget : public Widget
+{
+public:
+    controlconfig_t *binds;
 
-mn_object_t *MNBindings_New(void);
-void MNBindings_Delete(mn_object_t *ob);
+public:
+    InputBindingWidget();
+    virtual ~InputBindingWidget() {}
 
-void MNBindings_Ticker(mn_object_t *ob);
-void MNBindings_Drawer(mn_object_t *ob, Point2Raw const *origin);
-int MNBindings_CommandResponder(mn_object_t *ob, menucommand_e command);
-int MNBindings_PrivilegedResponder(mn_object_t *ob, event_t *ev);
-void MNBindings_UpdateGeometry(mn_object_t *ob, mn_page_t *page);
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *page);
 
-char const *MNBindings_ControlName(mn_object_t *ob);
+    int handleEvent_Privileged(event_t *ev);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+    char const *controlName();
+};
 
+int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
+
+} // namespace menu
+} // namespace common
+
+#endif // __cplusplus
 #endif // LIBCOMMON_MENU_CONTROLS

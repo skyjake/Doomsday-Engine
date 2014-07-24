@@ -80,6 +80,7 @@ Type: files; Name: "{app}\data\jdoom\jDoom.pk3"
 Type: files; Name: "{app}\data\jheretic\jHeretic.pk3"
 Type: files; Name: "{app}\data\jhexen\jHexen.pk3"
 Type: filesandordirs; Name: "{app}\config"
+Type: filesandordirs; Name: "{app}\modules"
 
 [Files]
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
@@ -126,9 +127,11 @@ Source: "bin\Qt5Widgets.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Compon
 Source: "bin\icuin52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\icuuc52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\icudt52.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "bin\imageformats\qjpeg.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
-Source: "bin\imageformats\qico.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
-Source: "bin\imageformats\qgif.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\accessible\*.dll"; DestDir: "{app}\bin\accessible"; Flags: ignoreversion; Components: Engine
+Source: "bin\bearer\*.dll"; DestDir: "{app}\bin\bearer"; Flags: ignoreversion; Components: Engine
+Source: "bin\iconengines\*.dll"; DestDir: "{app}\bin\iconengines"; Flags: ignoreversion; Components: Engine
+Source: "bin\imageformats\*.dll"; DestDir: "{app}\bin\imageformats"; Flags: ignoreversion; Components: Engine
+Source: "bin\platforms\*.dll"; DestDir: "{app}\bin\platforms"; Flags: ignoreversion; Components: Engine
 
 Source: "bin\assimp.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "bin\OpenAL32.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
@@ -163,13 +166,10 @@ Source: "doc\LICENSE"; DestDir: "{app}\doc"; Components: Engine
 Source: "doc\readme.txt"; DestDir: "{app}\doc"; Components: Engine
 
 ; Resources
-Source: "modules\appconfig.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\bootstrap.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Config.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\gui.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Log.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\recutil.de"; DestDir: "{app}\modules"; Components: Engine
-Source: "modules\Updater.de"; DestDir: "{app}\modules"; Components: Engine
+Source: "data\net.dengine.base.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.client.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.stdlib.pack"; DestDir: "{app}\data"; Components: Engine
+Source: "data\net.dengine.stdlib.gui.pack"; DestDir: "{app}\data"; Components: Engine
 Source: "data\doomsday.pk3"; DestDir: "{app}\data"; Components: Engine
 Source: "data\graphics\doomsday.ico"; DestDir: "{app}\data\graphics"; Components: Engine
 Source: "data\fonts\console11.dfn"; DestDir: "{app}\data\fonts"; Components: Engine

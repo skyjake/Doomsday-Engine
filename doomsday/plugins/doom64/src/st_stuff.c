@@ -103,7 +103,7 @@ void ST_Register(void)
     C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
     C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
-    C_VAR_INT(    "hud-patch-replacement", &cfg.hudPatchReplaceMode, 0, PRM_FIRST, PRM_LAST )
+    C_VAR_INT(    "hud-patch-replacement", &cfg.hudPatchReplaceMode, 0, 0, 1 )
     C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
     C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
 
