@@ -4651,7 +4651,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     GameRuleset newRules(defaultGameRules);
     newRules.skill = mnSkillmode;
 
-    EpisodeInfo *info = hexDefs.getEpisodeInfo(mnEpisode);
+    EpisodeInfo *info = P_EpisodeInfo(mnEpisode);
     DENG2_ASSERT(info != 0);
     G_SetGameActionNewSession(de::Uri(info->gets("startMap"), RC_NULL), 0/*default*/, newRules);
 }

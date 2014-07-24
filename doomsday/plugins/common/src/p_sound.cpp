@@ -40,7 +40,7 @@ void S_MapMusic(de::Uri const *mapUri)
     if(!mapUri) mapUri = &gameMapUri;
 
 #ifdef __JHEXEN__
-    MapInfo const *mapInfo = hexDefs.getMapInfo(mapUri);
+    MapInfo const *mapInfo = P_MapInfo(*mapUri);
     int const cdTrack = mapInfo->geti("cdTrack");
     String const lump = mapInfo->gets("songLump").compareWithoutCase("DEFSONG")? mapInfo->gets("songLump") : "";
 
@@ -131,8 +131,7 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    de::Uri mapUri = G_ComposeMapUri(0, mapNumber - 1);
-                    if(MapInfo *mapInfo = hexDefs.getMapInfo(&mapUri))
+                    if(MapInfo *mapInfo = P_MapInfo(G_ComposeMapUri(0, mapNumber - 1)))
                     {
                         mapInfo->set("songLump", Str_Text(lumpName));
                     }

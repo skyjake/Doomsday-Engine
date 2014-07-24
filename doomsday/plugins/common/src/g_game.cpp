@@ -1193,7 +1193,7 @@ static void printMapBanner()
     {
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
-        MapInfo const *mapInfo = hexDefs.getMapInfo(0/*current map*/);
+        MapInfo const *mapInfo = P_CurrentMapInfo();
         text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
@@ -1796,7 +1796,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (hexDefs.getMapInfo(0/*current map*/)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"));
+        newHub = (P_CurrentMapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"));
     }
 #endif
 
@@ -2417,7 +2417,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return P_TranslateMap(hexDefs.getMapInfo(&gameMapUri)->geti("nextMap"));
+    return P_TranslateMap(P_MapInfo(gameMapUri)->geti("nextMap"));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
@@ -2582,7 +2582,7 @@ String G_MapTitle(de::Uri const *mapUri)
     // In Hexen we can also look in MAPINFO for the map title.
     if(title.isEmpty())
     {
-        if(MapInfo const *mapInfo = hexDefs.getMapInfo(mapUri))
+        if(MapInfo const *mapInfo = P_MapInfo(*mapUri))
         {
             title = mapInfo->gets("title");
         }
@@ -2696,7 +2696,7 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
     {
-        if(hexDefs.getMapInfo(mapUri)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
+        if(P_MapInfo(*mapUri)->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"))
         {
             return 0;
         }

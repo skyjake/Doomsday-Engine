@@ -88,12 +88,12 @@ static void initStateConditions(fi_state_t *s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(MapInfo *curMapInfo = hexDefs.getMapInfo(0/*current map*/))
+    if(MapInfo *curMapInfo = P_CurrentMapInfo())
     {
         s->conditions.leave_hub = true;
         if(!nextMapUri.path().isEmpty())
         {
-            if(curMapInfo->geti("hub") == hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
+            if(curMapInfo->geti("hub") == P_MapInfo(nextMapUri)->geti("hub"))
             {
                 s->conditions.leave_hub = false;
             }

@@ -661,7 +661,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
     }
 
 #if __JHEXEN__
-    if(MapInfo const *mapInfo = hexDefs.getMapInfo(0/*current map*/))
+    if(MapInfo const *mapInfo = P_CurrentMapInfo())
     {
         int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
         if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))

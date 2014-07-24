@@ -403,7 +403,7 @@ DENG2_PIMPL(MapInfoParser)
             }
 
             // Lookup an existing map info from the database.
-            info = db.getMapInfo(&mapUri);
+            info = db.getMapInfo(mapUri);
 
             if(!info)
             {
@@ -1087,19 +1087,32 @@ EpisodeInfo *HexDefs::getEpisodeInfo(String id)
     return 0; // Not found.
 }
 
-MapInfo *HexDefs::getMapInfo(de::Uri const *mapUri)
+MapInfo *HexDefs::getMapInfo(de::Uri const &mapUri)
 {
-    if(!mapUri) mapUri = &gameMapUri;
-
-    if(mapUri->scheme().compareWithoutCase("Maps")) return 0;
-
-    MapInfos::iterator found = mapInfos.find(mapUri->path().toString().toLower().toStdString());
-    if(found != mapInfos.end())
+    if(!mapUri.scheme().compareWithoutCase("Maps"))
     {
-        return &found->second;
+        MapInfos::iterator found = mapInfos.find(mapUri.path().toString().toLower().toStdString());
+        if(found != mapInfos.end())
+        {
+            return &found->second;
+        }
     }
-    //LOGDEV_MAP_NOTE("Unknown MAPINFO definition '%s'") << Str_Text(mapUriStr);
     return 0; // Not found.
+}
+
+EpisodeInfo *P_EpisodeInfo(String id)
+{
+    return hexDefs.getEpisodeInfo(id);
+}
+
+MapInfo *P_MapInfo(de::Uri const &mapUri)
+{
+    return hexDefs.getMapInfo(mapUri);
+}
+
+MapInfo *P_CurrentMapInfo()
+{
+    return hexDefs.getMapInfo(gameMapUri);
 }
 
 de::Uri P_TranslateMapIfExists(uint map)
