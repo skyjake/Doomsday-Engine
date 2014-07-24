@@ -2085,69 +2085,94 @@ int P_Massacre(void)
 }
 
 typedef struct {
-    mobjtype_t          type;
-    size_t              count;
+    mobjtype_t type;
+    size_t count;
 } countmobjoftypeparams_t;
 
-static int countMobjOfType(thinker_t* th, void* context)
+static int countMobjOfType(thinker_t *th, void *context)
 {
-    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    countmobjoftypeparams_t *params = (countmobjoftypeparams_t *) context;
+    mobj_t *mo = (mobj_t *) th;
 
     if(params->type == mo->type && mo->health > 0)
+    {
         params->count++;
+    }
 
     return false; // Continue iteration.
 }
 
+/// @todo Should be defined in MapInfo.
+typedef struct {
+    char const *mapPath;
+    mobjtype_t bossType;
+    dd_bool massacreOnDeath;
+} BossMap;
+
 /**
- * Trigger special effects if all bosses are dead.
+ * Trigger special effects on certain maps if all "bosses" are dead.
  */
 void C_DECL A_BossDeath(mobj_t *actor)
 {
-    static mobjtype_t bossType[6] = {
-        MT_HEAD,
-        MT_MINOTAUR,
-        MT_SORCERER2,
-        MT_HEAD,
-        MT_MINOTAUR,
-        -1
+    static BossMap const bossMaps[] =
+    {
+        { "E1M8", MT_HEAD,      false },
+        { "E2M8", MT_MINOTAUR,  true  },
+        { "E3M8", MT_SORCERER2, true  },
+        { "E4M8", MT_HEAD,      true  },
+        { "E5M8", MT_MINOTAUR,  true  },
+        { "",     MT_NONE,      false }
     };
+    static int const numBossMaps = sizeof(bossMaps) / sizeof(bossMaps[0]);
 
-    Line *dummyLine;
-    countmobjoftypeparams_t params;
-
-    // Not a boss level?
-    if(G_CurrentMapNumber() != 7)
-        return;
-
-    // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode])
-        return;
-
-    // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = actor->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(params.count)
-    {   // Other boss not dead.
-        return;
+    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
+    BossMap const *bossMap = 0;
+    int i;
+    for(i = 0; i < numBossMaps; ++i)
+    {
+        if(!Str_CompareIgnoreCase(currentMapPath, bossMaps[i].mapPath))
+        {
+            bossMap = &bossMaps[i];
+            break;
+        }
     }
 
-    // Kill any remaining monsters.
-    if(gameEpisode != 0)
-        P_Massacre();
+    // Not a boss map?
+    if(!bossMap) return;
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 666;
-    EV_DoFloor(dummyLine, FT_LOWER);
-    P_FreeDummyLine(dummyLine);
+    // Not a boss on this map?
+    if(actor->type != bossMap->bossType)
+        return;
+
+    // Scan the remaining thinkers to determine if this is indeed the last boss.
+    {
+        countmobjoftypeparams_t parm;
+        parm.type  = actor->type;
+        parm.count = 0;
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
+
+        // Anything left alive?
+        if(parm.count) return;
+    }
+
+    // Kill all remaining enemies?
+    if(bossMap->massacreOnDeath)
+    {
+        P_Massacre();
+    }
+
+    // Trigger the '666' line special.
+    {
+        Line *dummyLine = P_AllocDummyLine();
+        P_ToXLine(dummyLine)->tag = 666;
+        EV_DoFloor(dummyLine, FT_LOWER);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 void C_DECL A_ESound(mobj_t *mo)
 {
-    int     sound;
+    int sound;
 
     switch(mo->type)
     {
