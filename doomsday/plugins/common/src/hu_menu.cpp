@@ -3071,23 +3071,35 @@ void Hu_MenuInitEpisodePage()
             btn->setHelpInfo(helpInfo);
         }
 
-#if __JDOOM__ || __JHERETIC__
         de::Uri startMap(info.gets("startMap"), RC_NULL);
-        if(
-#if __JHERETIC__
-           gameMode == heretic_shareware
-#else // __JDOOM__
-           gameMode == doom_shareware
-#endif
-           && startMap.path() != "E1M1")
-        {
-            btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
-        }
-        else
-#endif
+        if(P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectEpisode;
             btn->setData(String::fromStdString(it->first));
+        }
+        else
+        {
+#if __JDOOM__ || __JHERETIC__
+            // In shareware display a prompt to buy the full game.
+            if(
+#if __JHERETIC__
+               gameMode == heretic_shareware
+#else // __JDOOM__
+               gameMode == doom_shareware
+#endif
+               && startMap.path() != "E1M1")
+            {
+                btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuActivateNotSharewareEpisode;
+            }
+            else
+#endif
+            {
+                // Disable this selection and log a warning for the mod author.
+                btn->setFlags(FO_SET, MNF_DISABLED);
+                LOG_RES_WARNING("Failed to locate the starting map \"%s\" for episode '%s'."
+                                " This episode will not be selectable from the menu")
+                        << startMap << String::fromStdString(it->first);
+            }
         }
 
         btn->actions[Widget::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
