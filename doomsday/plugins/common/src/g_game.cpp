@@ -1538,7 +1538,11 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(G_CurrentMapNumber() == 8 && (gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)))
+                if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) &&
+                   (::gameMapUri.path() == "E1M9" ||
+                    ::gameMapUri.path() == "E2M9" ||
+                    ::gameMapUri.path() == "E3M9" ||
+                    ::gameMapUri.path() == "E4M9"))
                 {
                     for(int i = 0; i < MAXPLAYERS; ++i)
                     {
@@ -2023,7 +2027,12 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(G_CurrentMapNumber() == 8 || secret)
+    if(secret ||
+       (::gameMapUri.path() == "E1M9" ||
+        ::gameMapUri.path() == "E2M9" ||
+        ::gameMapUri.path() == "E3M9" ||
+        ::gameMapUri.path() == "E4M9" ||
+        ::gameMapUri.path() == "E5M9"))
     {
         p->didSecret = true;
     }
@@ -2124,24 +2133,32 @@ byte G_Ruleset_RespawnMonsters()
 dd_bool G_IfVictory()
 {
 #if __JDOOM64__
-    if(G_CurrentMapNumber() == 27)
+    if(::gameMapUri.path() == "MAP28")
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(G_CurrentMapNumber() == 4)
+        if(::gameMapUri.path() == "MAP05")
         {
             return true;
         }
     }
-    else if((gameModeBits & GM_ANY_DOOM) && G_CurrentMapNumber() == 7)
+    else if((gameModeBits & GM_ANY_DOOM) &&
+            (::gameMapUri.path() == "E1M8" ||
+             ::gameMapUri.path() == "E2M8" ||
+             ::gameMapUri.path() == "E3M8" ||
+             ::gameMapUri.path() == "E4M8"))
     {
         return true;
     }
 #elif __JHERETIC__
-    if(G_CurrentMapNumber() == 7)
+    if(::gameMapUri.path() == "E1M8" ||
+       ::gameMapUri.path() == "E2M8" ||
+       ::gameMapUri.path() == "E3M8" ||
+       ::gameMapUri.path() == "E4M8" ||
+       ::gameMapUri.path() == "E5M8")
     {
         return true;
     }
