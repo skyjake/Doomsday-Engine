@@ -1883,19 +1883,17 @@ void C_DECL A_Scream(mobj_t* actor)
         actor->reactionTime += 30;  // jd64
     }
     else
+    {
         S_StartSound(sound, actor);
+    }
 }
 
-/**
- * d64tc
- */
-void C_DECL A_CyberDeath(mobj_t* actor)
+static void cyberKaboom(mobj_t *actor)
 {
-    countmobjoftypeparams_t params;
-    Line* dummyLine;
     coord_t pos[3];
-    mobj_t* mo;
-    int i;
+    mobj_t *mo;
+
+    DENG_ASSERT(actor != 0);
 
     memcpy(pos, actor->origin, sizeof(pos));
     pos[VX] += FIX2FLT((P_Random() - 128) << 11);
@@ -1917,40 +1915,108 @@ void C_DECL A_CyberDeath(mobj_t* actor)
     }
 
     S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
+}
 
-    if((G_CurrentMapNumber() != 31) && (G_CurrentMapNumber() != 32) && (G_CurrentMapNumber() != 34))
-        return;
+typedef enum {
+    ST_SPAWN_FLOOR,
+    ST_SPAWN_DOOR,
+    ST_LEAVEMAP
+} SpecialType;
 
-    // Make sure there is a player alive for victory.
+/// @todo Should be defined in MapInfo.
+typedef struct {
+    //int gameModeBits;
+    char const *mapPath;
+    //dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
+    mobjtype_t bossType;
+    //dd_bool massacreOnDeath;
+    SpecialType special;
+    int tag;
+    int type;
+} BossTrigger;
+
+/**
+ * d64tc
+ */
+void C_DECL A_CyberDeath(mobj_t *mo)
+{
+    static BossTrigger const bossTriggers[] =
+    {
+        { "MAP32", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
+        { "MAP33", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
+        { "MAP35", MT_NONE, ST_LEAVEMAP,   0,   0 }
+    };
+    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
+
+    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
+    int i;
+
+    // Cyber deaths cause a rather spectacular kaboom.
+    cyberKaboom(mo);
+
+    // Make sure there is a player alive.
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         if(players[i].plr->inGame && players[i].health > 0)
             break;
-
-    if(i == MAXPLAYERS)
-        return; // No one left alive, so do not end game.
-
-    // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(params.count)
-    {   // Other boss not dead.
-        return;
     }
+    if(i == MAXPLAYERS) return;
 
-    if(G_CurrentMapNumber() == 31 || G_CurrentMapNumber() == 32)
+    for(i = 0; i < numBossTriggers; ++i)
     {
-        dummyLine = P_AllocDummyLine();
-        P_ToXLine(dummyLine)->tag = 666;
-        EV_DoDoor(dummyLine, DT_BLAZERAISE);
+        BossTrigger const *trigger = &bossTriggers[i];
 
-        P_FreeDummyLine(dummyLine);
-        return;
-    }
-    else if(G_CurrentMapNumber() == 34)
-    {
-        G_SetGameActionMapCompletedAndSetNextMap();
+        //if(!(trigger->gameModeBits & gameModeBits)) continue;
+
+        // Mobj type requirement change in DOOM ver 1.9
+        //if(!(cfg.anyBossDeath && trigger->compatAnyBoss))
+        {
+            // Not a boss on this map?
+            if(mo->type != MT_NONE && mo->type != trigger->bossType) continue;
+        }
+
+        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
+
+        // Scan the remaining thinkers to determine if this is indeed the last boss.
+        {
+            countmobjoftypeparams_t parm;
+            parm.type  = mo->type;
+            parm.count = 0;
+            Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
+
+            // Anything left alive?
+            if(parm.count) continue;
+        }
+
+        // Kill all remaining enemies?
+        /*if(trigger->massacreOnDeath)
+        {
+            P_Massacre();
+        }*/
+
+        // Trigger the special.
+        switch(trigger->special)
+        {
+        case ST_SPAWN_FLOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
+
+        case ST_SPAWN_DOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
+
+        case ST_LEAVEMAP:
+            G_SetGameActionMapCompletedAndSetNextMap();
+            break;
+
+        default: DENG_ASSERT(!"A_CyberDeath: Unknown trigger special type");
+        }
     }
 }
 
@@ -1998,44 +2064,44 @@ void C_DECL A_Explode(mobj_t *mo)
     P_RadiusAttack(mo, mo->target, 128, 127);
 }
 
-void C_DECL A_BarrelExplode(mobj_t* actor)
+void C_DECL A_BarrelExplode(mobj_t *actor)
 {
-    int                 i;
-    Line*               dummyLine;
-    countmobjoftypeparams_t params;
+    int i;
 
     S_StartSound(actor->info->deathSound, actor);
     P_RadiusAttack(actor, actor->target, 128, 127);
 
-    if(G_CurrentMapNumber() != 0)
+    if(Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP01"))
         return;
 
     if(actor->type != MT_BARREL)
         return;
 
-    // Make sure there is a player alive for victory.
+    // Make sure there is a player alive.
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         if(players[i].plr->inGame && players[i].health > 0)
             break;
-
-    if(i == MAXPLAYERS)
-        return; // No one left alive, so do not end game.
+    }
+    if(i == MAXPLAYERS) return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = actor->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+    {
+        countmobjoftypeparams_t parm;
+        parm.type = actor->type;
+        parm.count = 0;
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
 
-    if(params.count)
-    {   // Other boss not dead.
-        return;
+        // Other boss not dead?
+        if(parm.count) return;
     }
 
-    dummyLine = P_AllocDummyLine();
-    P_ToXLine(dummyLine)->tag = 666;
-    EV_DoDoor(dummyLine, DT_BLAZERAISE);
-
-    P_FreeDummyLine(dummyLine);
+    {
+        Line *dummyLine = P_AllocDummyLine();
+        P_ToXLine(dummyLine)->tag = 666;
+        EV_DoDoor(dummyLine, DT_BLAZERAISE);
+        P_FreeDummyLine(dummyLine);
+    }
 }
 
 /**
@@ -2044,33 +2110,33 @@ void C_DECL A_BarrelExplode(mobj_t* actor)
  * kaiser - Removed exit special at end to allow MT_FATSO to properly
  *          work in Map33 for d64tc.
  */
-void C_DECL A_BossDeath(mobj_t* mo)
+void C_DECL A_BossDeath(mobj_t *mo)
 {
-    int                 i;
-    countmobjoftypeparams_t params;
-
-    if(G_CurrentMapNumber() != 29)
-        return;
+    int i;
 
     if(mo->type != MT_BITCH)
         return;
 
+    if(Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP30"))
+        return;
+
     // Make sure there is a player alive for victory.
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         if(players[i].plr->inGame && players[i].health > 0)
             break;
-
-    if(i == MAXPLAYERS)
-        return; // No one left alive, so do not end game.
+    }
+    if(i == MAXPLAYERS) return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
+    {
+        countmobjoftypeparams_t parm;
+        parm.type = mo->type;
+        parm.count = 0;
+        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
 
-    if(params.count)
-    {   // Other boss not dead.
-        return;
+        // Other boss not dead?
+        if(parm.count) return;
     }
 
     G_SetGameActionMapCompletedAndSetNextMap();
