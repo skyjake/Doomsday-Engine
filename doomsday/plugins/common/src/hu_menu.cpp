@@ -4293,7 +4293,20 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         return;
     }
 
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
+    // Skip episode selection if only one is defined.
+    if(hexDefs.episodeInfos.size() == 1)
+    {
+        mnEpisode = String::fromStdString(hexDefs.episodeInfos.begin()->first);
+#if __JHEXEN__
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
+#else
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
+#endif
+    }
+    else
+    {
+        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
+    }
 }
 
 void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
