@@ -169,10 +169,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     bool spawning = (mobj->state == 0);
 #endif
 
-#ifdef DENG_DEBUG
-    if(statenum < 0 || statenum >= defs.states.size())
-        App_Error("Mobj_SetState: statenum %i out of bounds.\n", statenum);
-#endif
+    DENG_ASSERT(statenum >= 0 && statenum < defs.states.size());
 
     mobj->state  = &runtimeDefs.states[statenum];
     mobj->tics   = mobj->state->tics;
