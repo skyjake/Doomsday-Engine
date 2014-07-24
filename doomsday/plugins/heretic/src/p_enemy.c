@@ -2102,71 +2102,90 @@ static int countMobjOfType(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
+typedef enum {
+    ST_SPAWN_FLOOR,
+    //ST_SPAWN_DOOR,
+    ST_LEAVEMAP
+} SpecialType;
+
 /// @todo Should be defined in MapInfo.
 typedef struct {
+    //int gameModeBits;
     char const *mapPath;
+    //dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
     mobjtype_t bossType;
     dd_bool massacreOnDeath;
-} BossMap;
+    SpecialType special;
+    int tag;
+    int type;
+} BossTrigger;
 
 /**
  * Trigger special effects on certain maps if all "bosses" are dead.
  */
 void C_DECL A_BossDeath(mobj_t *actor)
 {
-    static BossMap const bossMaps[] =
+    static BossTrigger const bossTriggers[] =
     {
-        { "E1M8", MT_HEAD,      false },
-        { "E2M8", MT_MINOTAUR,  true  },
-        { "E3M8", MT_SORCERER2, true  },
-        { "E4M8", MT_HEAD,      true  },
-        { "E5M8", MT_MINOTAUR,  true  },
-        { "",     MT_NONE,      false }
+        { "E1M8", MT_HEAD,      false, ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E2M8", MT_MINOTAUR,  true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E3M8", MT_SORCERER2, true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E4M8", MT_HEAD,      true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
+        { "E5M8", MT_MINOTAUR,  true,  ST_SPAWN_FLOOR, 666, FT_LOWER },
     };
-    static int const numBossMaps = sizeof(bossMaps) / sizeof(bossMaps[0]);
+    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
 
-    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
-    BossMap const *bossMap = 0;
     int i;
-    for(i = 0; i < numBossMaps; ++i)
+    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
+    for(i = 0; i < numBossTriggers; ++i)
     {
-        if(!Str_CompareIgnoreCase(currentMapPath, bossMaps[i].mapPath))
+        BossTrigger const *trigger = &bossTriggers[i];
+
+        // Not a boss on this map?
+        if(actor->type != trigger->bossType) continue;
+
+        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
+
+        // Scan the remaining thinkers to determine if this is indeed the last boss.
         {
-            bossMap = &bossMaps[i];
-            break;
+            countmobjoftypeparams_t parm;
+            parm.type  = actor->type;
+            parm.count = 0;
+            Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
+
+            // Anything left alive?
+            if(parm.count) continue;
         }
-    }
 
-    // Not a boss map?
-    if(!bossMap) return;
+        // Kill all remaining enemies?
+        if(trigger->massacreOnDeath)
+        {
+            P_Massacre();
+        }
 
-    // Not a boss on this map?
-    if(actor->type != bossMap->bossType)
-        return;
+        // Trigger the special.
+        switch(trigger->special)
+        {
+        case ST_SPAWN_FLOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
 
-    // Scan the remaining thinkers to determine if this is indeed the last boss.
-    {
-        countmobjoftypeparams_t parm;
-        parm.type  = actor->type;
-        parm.count = 0;
-        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
+        /*case ST_SPAWN_DOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }*/
 
-        // Anything left alive?
-        if(parm.count) return;
-    }
+        case ST_LEAVEMAP:
+            G_SetGameActionMapCompletedAndSetNextMap();
+            break;
 
-    // Kill all remaining enemies?
-    if(bossMap->massacreOnDeath)
-    {
-        P_Massacre();
-    }
-
-    // Trigger the '666' line special.
-    {
-        Line *dummyLine = P_AllocDummyLine();
-        P_ToXLine(dummyLine)->tag = 666;
-        EV_DoFloor(dummyLine, FT_LOWER);
-        P_FreeDummyLine(dummyLine);
+        default: DENG_ASSERT(!"A_BossDeath: Unknown trigger special type");
+        }
     }
 }
 
