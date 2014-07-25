@@ -199,6 +199,7 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 static de::Uri mapUriFromLogicalNumber(int number)
 {
     if(!number) return gameMapUri; // current map.
+    // Assume the referenced map is from the current episode.
     return G_ComposeMapUri(::gameEpisode, number - 1);
 }
 
@@ -477,6 +478,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Players must be alive to teleport
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
+                // Assume the referenced map is from the current episode.
                 G_SetGameActionMapCompleted(G_ComposeMapUri(::gameEpisode, args[0]!= 0? args[0]-1 : 0),
                                             args[1], false);
                 success = true;
@@ -493,8 +495,8 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 success = true;
                 if(G_Ruleset_Deathmatch())
                 {
-                    // Winning in deathmatch goes back to the first map of the episode.
-                    G_SetGameActionMapCompleted(G_ComposeMapUri(::gameEpisode, 0), 0, false);
+                    // Winning in deathmatch goes back to the first map of the current episode.
+                    G_SetGameActionMapCompleted(de::Uri(P_CurrentEpisodeInfo()->gets("startMap"), RC_NULL), 0, false);
                 }
                 else
                 {

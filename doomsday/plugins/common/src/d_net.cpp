@@ -115,10 +115,10 @@ int D_NetServerStarted(int before)
 #endif
     P_ResetPlayerRespawnClasses();
 
-#if __JHEXEN__ // Map numbers need to be translated.
+#if __JHEXEN__
+    // Map numbers need to be translated.
+    /// @todo fixme: What about cfg.netEpisode?
     de::Uri netMapUri = P_TranslateMap(::cfg.netMap);
-#elif __JDOOM64__
-    de::Uri netMapUri = G_ComposeMapUri(0, ::cfg.netMap);
 #else
     de::Uri netMapUri = G_ComposeMapUri(::cfg.netEpisode, ::cfg.netMap);
 #endif

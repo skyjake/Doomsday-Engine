@@ -349,7 +349,8 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
 #if __JHEXEN__
                     // In Hexen map numbers must be translated (urgh...).
-                    de::Uri mapUri = P_TranslateMapIfExists(map);
+                    /// @todo fixme: What about the episode?
+                    de::Uri mapUri = P_TranslateMap(map);
 #else
                     de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif

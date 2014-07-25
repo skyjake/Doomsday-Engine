@@ -110,6 +110,8 @@ extern HexDefs hexDefs;
  */
 EpisodeInfo *P_EpisodeInfo(de::String id);
 
+EpisodeInfo *P_CurrentEpisodeInfo();
+
 /**
  * @param mapUri  Identifier of the map to lookup info for.
  *
@@ -118,21 +120,6 @@ EpisodeInfo *P_EpisodeInfo(de::String id);
 MapInfo *P_MapInfo(de::Uri const &mapUri);
 
 MapInfo *P_CurrentMapInfo();
-
-/**
- * Translates a warp map number to unique map identifier, if possible.
- *
- * @note This should only be used where necessary for compatibility reasons as
- * the "warp translation" mechanic is redundant in the context of Doomsday's
- * altogether better handling of map resources and their references. Instead,
- * use the map URI mechanism.
- *
- * @param map  The warp map number to translate.
- *
- * @return The unique map identifier associated with the warp map number given;
- * otherwise an identifier with a empty path.
- */
-de::Uri P_TranslateMapIfExists(uint map);
 
 /**
  * Translates a warp map number to unique map identifier. Always returns a valid

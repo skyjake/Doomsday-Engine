@@ -128,6 +128,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SessionMetadata meta;
 
         meta.set("gameIdentityKey", Session::gameId());
+        meta.set("episode",         String::number(::gameEpisode + 1));
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          ::gameMapUri.compose());
         meta.set("mapTime",         ::mapTime);
@@ -460,6 +461,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         inProgress = true;
 
+        ::gameEpisode = metadata.gets("episode").toInt() - 1;
         setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
         //::gameMapEntrance = mapEntrance; // not saved??
 
@@ -477,14 +479,6 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         DENG2_ASSERT(inProgress);
 
         ::gameMapUri = mapUri;
-        // Check that the map truly exists.
-        if(!P_MapExists(::gameMapUri.compose().toUtf8().constData()))
-        {
-            ::gameMapUri = G_ComposeMapUri(0, 0); // Should exist always?
-        }
-
-        // Determine the episode for the map (should come from MapInfo).
-        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
 
         // Update game status cvars:
         Con_SetInteger2("map-episode", (unsigned)::gameEpisode, SVF_WRITE_OVERRIDE);
@@ -852,6 +846,12 @@ void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset con
 
     LOG_MSG("Game begins...");
 
+    // Check that the map truly exists.
+    if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+    {
+        throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
+    }
+
     // Perform necessary prep.
     d->cleanupInternalSave();
 
@@ -889,6 +889,9 @@ void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset con
     d->rules = newRules;
     d->applyCurrentRules();
     d->inProgress = true;
+
+    // Determine the episode for the map (should come from MapInfo).
+    ::gameEpisode = G_EpisodeNumberFor(mapUri);
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
 
@@ -944,7 +947,7 @@ void GameSession::leaveMap()
     // Check that the map truly exists.
     if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
     {
-        ::nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
+        ::nextMapUri = de::Uri(P_CurrentEpisodeInfo()->gets("startMap"), RC_NULL); // Should exist always?
     }
 
 #if __JHEXEN__

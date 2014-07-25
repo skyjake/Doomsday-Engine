@@ -1105,6 +1105,11 @@ EpisodeInfo *P_EpisodeInfo(String id)
     return hexDefs.getEpisodeInfo(id);
 }
 
+EpisodeInfo *P_CurrentEpisodeInfo()
+{
+    return hexDefs.getEpisodeInfo(String::number(::gameEpisode));
+}
+
 MapInfo *P_MapInfo(de::Uri const &mapUri)
 {
     return hexDefs.getMapInfo(mapUri);
@@ -1112,10 +1117,11 @@ MapInfo *P_MapInfo(de::Uri const &mapUri)
 
 MapInfo *P_CurrentMapInfo()
 {
-    return hexDefs.getMapInfo(gameMapUri);
+    return hexDefs.getMapInfo(::gameMapUri);
 }
 
-de::Uri P_TranslateMapIfExists(uint map)
+/// @todo fixme: What about the episode?
+de::Uri P_TranslateMap(uint map)
 {
     de::Uri matchedWithoutHub("Maps:", RC_NULL);
 
@@ -1142,17 +1148,6 @@ de::Uri P_TranslateMapIfExists(uint map)
             << map << matchedWithoutHub;
 
     return matchedWithoutHub;
-}
-
-de::Uri P_TranslateMap(uint map)
-{
-    de::Uri translated = P_TranslateMapIfExists(map);
-    if(translated.path().isEmpty())
-    {
-        // This function always returns a valid map.
-        return G_ComposeMapUri(0, 0); // Always available?
-    }
-    return translated;
 }
 
 } // namespace common

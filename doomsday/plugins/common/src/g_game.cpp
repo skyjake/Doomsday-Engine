@@ -2432,7 +2432,8 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
 de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
-    return P_TranslateMap(P_MapInfo(gameMapUri)->geti("nextMap"));
+    /// @todo fixme: What about the episode?
+    return P_TranslateMap(P_CurrentMapInfo()->geti("nextMap"));
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
@@ -2449,9 +2450,7 @@ de::Uri G_NextMap(dd_bool secretExit)
         case 17: map = 30; break;
         case 31: map =  0; break;
 
-        default:
-            App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map + 1);
-            break;
+        default: LOG_MAP_WARNING("No secret exit on map %u!") << (map + 1); break;
         }
     }
 
@@ -2484,9 +2483,7 @@ de::Uri G_NextMap(dd_bool secretExit)
             case 14: map = 30; break;
             case 30: map = 31; break;
 
-            default:
-               App_Log(DE2_MAP_WARNING, "No secret exit on map %u!", map+1);
-               break;
+            default: LOG_MAP_WARNING("No secret exit on map %u!") << (map + 1); break;
             }
         }
 
@@ -2522,9 +2519,7 @@ de::Uri G_NextMap(dd_bool secretExit)
             case 2: map = 6; break;
             case 3: map = 2; break;
 
-            default:
-                Con_Error("G_NextMap: Invalid episode num #%u!", episode);
-                exit(0); // Unreachable
+            default: DENG2_ASSERT(!"G_NextMap: Invalid episode number"); break;
             }
             break;
 
@@ -2555,9 +2550,7 @@ de::Uri G_NextMap(dd_bool secretExit)
         case 3: map = 4; break;
         case 4: map = 3; break;
 
-        default:
-            Con_Error("G_NextMap: Invalid episode num #%u!", episode);
-            exit(0); // Unreachable
+        default: DENG2_ASSERT(!"G_NextMap: Invalid episode number"); break;
         }
         break;
 
@@ -3262,7 +3255,8 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
         // Hexen map numbers require translation.
-        newMapUri = P_TranslateMapIfExists(map);
+        /// @todo fixme: What about the episode?
+        newMapUri = P_TranslateMap(map);
 #else
         // Compose a map URI for the given episode and map pair using the default
         // format specific to the game (and mode).
