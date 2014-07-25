@@ -123,11 +123,11 @@ void Line::Side::Segment::setFrontFacing(bool yes)
 struct Section
 {
     Surface surface;
-    SoundEmitter soundEmitter;
+    ThinkerT<SoundEmitter> soundEmitter;
 
     Section(Line::Side &side) : surface(dynamic_cast<MapElement &>(side))
     {
-        zap(soundEmitter);
+        //zap(soundEmitter);
     }
 };
 

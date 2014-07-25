@@ -391,7 +391,8 @@ void ClMobj_ReadDelta()
     }
 
     // Remember where the mobj used to be in case we need to cancel a move.
-    mobj_t oldState; zap(oldState);
+    //mobj_t oldState; zap(oldState);
+    MobjThinker oldState(*mo);
     bool onFloor = false;
 
     // Coordinates with three bytes.
@@ -551,9 +552,9 @@ void ClMobj_ReadDelta()
             {
                 // Oopsie, on second thought we shouldn't do this move.
                 ClMobj_Unlink(mo);
-                V3d_Copy(mo->origin, oldState.origin);
-                mo->floorZ = oldState.floorZ;
-                mo->ceilingZ = oldState.ceilingZ;
+                V3d_Copy(mo->origin, oldState->origin);
+                mo->floorZ = oldState->floorZ;
+                mo->ceilingZ = oldState->ceilingZ;
                 ClMobj_Link(mo);
             }
         }

@@ -32,7 +32,7 @@ using namespace de;
 
 DENG2_PIMPL(Plane)
 {
-    SoundEmitter soundEmitter;
+    ThinkerT<SoundEmitter> soundEmitter;
     int indexInSector;           ///< Index in the owning sector.
     coord_t height;              ///< Current @em sharp height.
     coord_t targetHeight;        ///< Target @em sharp height.
@@ -60,7 +60,7 @@ DENG2_PIMPL(Plane)
 #ifdef __CLIENT__
         oldHeight[0] = oldHeight[1] = height;
 #endif
-        zap(soundEmitter);
+        //zap(soundEmitter);
     }
 
     ~Instance()
@@ -220,9 +220,9 @@ void Plane::updateSoundEmitterOrigin()
 {
     LOG_AS("Plane::updateSoundEmitterOrigin");
 
-    d->soundEmitter.origin[VX] = sector().soundEmitter().origin[VX];
-    d->soundEmitter.origin[VY] = sector().soundEmitter().origin[VY];
-    d->soundEmitter.origin[VZ] = d->height;
+    d->soundEmitter->origin[VX] = sector().soundEmitter().origin[VX];
+    d->soundEmitter->origin[VY] = sector().soundEmitter().origin[VY];
+    d->soundEmitter->origin[VZ] = d->height;
 }
 
 coord_t Plane::height() const

@@ -125,6 +125,14 @@ struct ThinkerList
 
         return result;
     }
+
+    void releaseAll()
+    {
+        for(thinker_t *th = sentinel.next; th != &sentinel.base() && th; th = th->next)
+        {
+            Thinker::release(*th);
+        }
+    }
 };
 
 DENG2_PIMPL(Thinkers)
@@ -147,10 +155,21 @@ DENG2_PIMPL(Thinkers)
 
     ~Instance()
     {
-        /// @todo free all thinkers (note, they are allocated from the Zone
-        /// so there is no memory leak here as this memory will be purged
-        /// automatically when the map is "unloaded").
+        // Make sure the private instances of thinkers are released.
+        releaseAllThinkers();
+
+        // Note that most thinkers are allocated from the memory zone
+        // so there is no memory leak here as this memory will be purged
+        // automatically when the map is "unloaded".
         qDeleteAll(lists);
+    }
+
+    void releaseAllThinkers()
+    {
+        foreach(ThinkerList *list, lists)
+        {
+            list->releaseAll();
+        }
     }
 
     void clearMobjIds()
@@ -284,6 +303,8 @@ void Thinkers::remove(thinker_t &th)
     }
 
     th.function = (thinkfunc_t) -1;
+
+    Thinker::release(th);
 }
 
 void Thinkers::initLists(byte flags)
@@ -369,50 +390,108 @@ int Thinkers::count(int *numInStasis) const
     return total;
 }
 
-void unlinkThinkerFromList(thinker_t *th)
+static void unlinkThinkerFromList(thinker_t *th)
 {
     th->next->prev = th->prev;
     th->prev->next = th->next;
 }
 
+#ifdef DENG2_DEBUG
+struct DebugCounter : public Thinker::IData
+{
+    Id id;
+    static duint32 total;
+
+    DebugCounter()
+    {
+        qDebug() << "[+++] object" << id.asText() << "created";
+        total++;
+    }
+
+    ~DebugCounter()
+    {
+        qDebug() << "[---] object" << id.asText() << "deleted";
+        total--;
+    }
+
+    IData *duplicate() const
+    {
+        qDebug() << "[***] duplicating" << id.asText();
+        return new DebugCounter;
+    }
+};
+
+duint32 DebugCounter::total = 0;
+
+struct Validator
+{
+    Validator()
+    {
+        DENG2_ASSERT(DebugCounter::total == 0);
+    }
+
+    ~Validator()
+    {
+        DENG2_ASSERT(DebugCounter::total == 0);
+    }
+};
+
+Validator debugValidator;
+#endif
+
+static void initPrivateData(thinker_t *th)
+{
+    DENG2_ASSERT(th->d == 0);
+
+    // TODO: Instantiate the correct private data type using the factory.
+
+#ifdef DENG2_DEBUG
+    th->d = new DebugCounter;
+#endif
+}
+
 static int runThinker(thinker_t *th, void * /*context*/)
 {
-    // Thinker cannot think when in stasis.
-    if(!Thinker_InStasis(th))
-    {
-        // Time to remove it?
-        if(th->function == (thinkfunc_t) -1)
-        {
-            unlinkThinkerFromList(th);
+    if(Thinker_InStasis(th)) return false; // Skip and continue.
 
-            if(th->id)
-            {
-                mobj_t *mo = (mobj_t *) th;
+    // Time to remove it?
+    if(th->function == (thinkfunc_t) -1)
+    {
+        unlinkThinkerFromList(th);
+
+        if(th->id)
+        {
+            mobj_t *mo = (mobj_t *) th;
 #ifdef __CLIENT__
-                if(!Cl_IsClientMobj(mo))
-                {
-                    // It's a regular mobj: recycle for reduced allocation overhead.
-                    P_MobjRecycle(mo);
-                }
-                else
-                {
-                    // Delete the client mobj.
-                    Mobj_Map(*mo).deleteClMobj(mo);
-                }
-#else
+            if(!Cl_IsClientMobj(mo))
+            {
+                // It's a regular mobj: recycle for reduced allocation overhead.
                 P_MobjRecycle(mo);
-#endif
             }
             else
             {
-                // Non-mobjs are just deleted right away.
-                Z_Free(th);
+                // Delete the client mobj.
+                Mobj_Map(*mo).deleteClMobj(mo);
             }
+#else
+            P_MobjRecycle(mo);
+#endif
         }
-        else if(th->function)
+        else
         {
-            th->function(th);
+            // Non-mobjs are just deleted right away.
+            Thinker::destroy(th);
         }
+    }
+    else if(th->function)
+    {
+        // Create a private data instance of appropriate type.
+        if(!th->d)
+        {
+            initPrivateData(th);
+        }
+
+        th->function(th);
     }
 
     return false; // Continue iteration.

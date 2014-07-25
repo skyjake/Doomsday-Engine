@@ -2078,6 +2078,8 @@ void Map::deleteClMobj(mobj_t *mo)
     ClMobj_Unlink(mo); // from block/sector
 
     info->~ClMobjInfo();
+    MobjThinker::release(*mo); // delete private data
+
     // This will free the entire mobj + info.
     Z_Free(info);
 

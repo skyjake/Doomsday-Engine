@@ -98,12 +98,11 @@ mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle
     {
         mo = unusedMobjs;
         unusedMobjs = unusedMobjs->sNext;
-        std::memset(mo, 0, MOBJ_SIZE);
     }
     else
     {
         // No, we need to allocate another.
-        mo = (mobj_t *) Z_Calloc(MOBJ_SIZE, PU_MAP, NULL);
+        mo = MobjThinker(Thinker::AllocateMemoryZone).take();
     }
 
     V3d_Set(mo->origin, origin.x, origin.y, origin.z);
@@ -150,6 +149,9 @@ DENG_EXTERN_C void Mobj_Destroy(mobj_t *mo)
  */
 void P_MobjRecycle(mobj_t* mo)
 {
+    // Release the private data.
+    MobjThinker::zap(*mo);
+
     // The sector next link is used as the unused mobj list links.
     mo->sNext = unusedMobjs;
     unusedMobjs = mo;

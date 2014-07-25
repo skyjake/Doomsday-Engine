@@ -775,11 +775,11 @@ void R_SetupPlayerSprites()
         if(useModels)
         {
             // Is there a model for this frame?
-            mobj_t dummy;
+            MobjThinker dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
-            dummy.state = psp->statePtr;
-            dummy.tics = psp->tics;
+            dummy->state = psp->statePtr;
+            dummy->tics = psp->tics;
 
             mf = Mobj_ModelDef(dummy, &nextmf, &inter);
             if(mf) isModel = true;

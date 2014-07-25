@@ -81,6 +81,7 @@ static void notifyCollision(Polyobj &po, mobj_t *mobj, Line *line)
 }
 
 polyobj_s::polyobj_s(de::Vector2d const &origin_)
+    : thinker(thinker_s::InitializeToZero)
 {
     origin[VX] = origin_.x;
     origin[VY] = origin_.y;
