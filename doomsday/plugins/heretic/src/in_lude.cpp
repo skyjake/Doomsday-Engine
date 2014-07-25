@@ -658,7 +658,11 @@ void IN_DrawOldLevel()
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-    if(G_MapNumberFor(wbs->currentMap) == 8)
+    if(wbs->currentMap.path() == "E1M9" ||
+       wbs->currentMap.path() == "E2M9" ||
+       wbs->currentMap.path() == "E3M9" ||
+       wbs->currentMap.path() == "E4M9" ||
+       wbs->currentMap.path() == "E5M9")
     {
         DGL_Color4f(1, 1, 1, 1);
         uint const nextMap = G_MapNumberFor(wbs->nextMap);

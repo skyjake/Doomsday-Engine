@@ -1659,9 +1659,13 @@ void C_DECL A_Hoof(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
+    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
     S_StartSound(SFX_HOOF |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  (!Str_CompareIgnoreCase(currentMapPath, "E1M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E2M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E3M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E4M8"))? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1671,9 +1675,13 @@ void C_DECL A_Metal(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
+    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
     S_StartSound(SFX_METAL |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  (!Str_CompareIgnoreCase(currentMapPath, "E1M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E2M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E3M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E4M8"))? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

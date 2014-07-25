@@ -228,7 +228,6 @@ de::Uri G_ComposeMapUri(uint episode, uint map);
 extern "C" {
 #endif
 
-uint G_CurrentMapNumber(void);
 struct uri_s const *G_CurrentMapUri(void);
 
 int G_Ruleset_Skill();

@@ -470,7 +470,10 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance
 
 #if __JHEXEN__
     if((gameMode == hexen_betademo || gameMode == hexen_demo) &&
-       !nextMapUri.path().isEmpty() && G_MapNumberFor(nextMapUri) > 3)
+       !(::nextMapUri.path() == "MAP01" ||
+         ::nextMapUri.path() == "MAP02" ||
+         ::nextMapUri.path() == "MAP03" ||
+         ::nextMapUri.path() == "MAP04"))
     {
         // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
@@ -2401,11 +2404,6 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-uint G_CurrentMapNumber()
-{
-    return G_MapNumberFor(::gameMapUri);
-}
-
 uri_s const *G_CurrentMapUri()
 {
     return reinterpret_cast<uri_s *>(&::gameMapUri);
@@ -2439,7 +2437,7 @@ de::Uri G_NextMap(dd_bool secretExit)
 
 #elif __JDOOM64__
     uint episode = ::gameEpisode;
-    uint map     = G_CurrentMapNumber();
+    uint map     = G_MapNumberFor(::gameMapUri);
 
     if(secretExit)
     {
@@ -2475,7 +2473,7 @@ de::Uri G_NextMap(dd_bool secretExit)
 
 #elif __JDOOM__
     uint episode = ::gameEpisode;
-    uint map     = G_CurrentMapNumber();
+    uint map     = G_MapNumberFor(::gameMapUri);
 
     if(gameModeBits & GM_ANY_DOOM2)
     {
@@ -2538,7 +2536,7 @@ de::Uri G_NextMap(dd_bool secretExit)
 
 #elif __JHERETIC__
     uint episode = ::gameEpisode;
-    uint map     = G_CurrentMapNumber();
+    uint map     = G_MapNumberFor(::gameMapUri);
 
     // Going to the secret map?
     if(secretExit && map != 8)

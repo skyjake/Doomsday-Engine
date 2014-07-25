@@ -487,8 +487,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
 
         // Update game status cvars:
-        Con_SetInteger2("map-episode", (unsigned)::gameEpisode,        SVF_WRITE_OVERRIDE);
-        Con_SetInteger2("map-id",      (unsigned)G_CurrentMapNumber(), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", (unsigned)::gameEpisode, SVF_WRITE_OVERRIDE);
+        Con_SetUri2    ("map-id",      reinterpret_cast<uri_s *>(&::gameMapUri), SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -1167,7 +1167,7 @@ String GameSession::savedUserDescription(String const &saveName)
 namespace {
 int gsvRuleSkill;
 int gsvEpisode;
-int gsvMap;
+uri_s *gsvMap;
 #if __JHEXEN__
 int gsvHub;
 #endif
@@ -1182,7 +1182,7 @@ void GameSession::consoleRegister() //static
 #if __JHEXEN__
     C_VAR_INT("map-hub",     &gsvHub,       READONLYCVAR, 0, 0);
 #endif
-    C_VAR_INT("map-id",      &gsvMap,       READONLYCVAR, 0, 0);
+    C_VAR_URIPTR("map-id",   &gsvMap,       READONLYCVAR, 0, 0);
 
 #undef READONLYCVAR
 }

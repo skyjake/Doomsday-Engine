@@ -2148,7 +2148,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF | (G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (!Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2158,7 +2158,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL | (G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (!Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
