@@ -615,7 +615,7 @@ DENG2_PIMPL(MapStateReader)
             }
             else
             {
-                th = reinterpret_cast<thinker_t *>(Z_Calloc(thInfo->size, PU_MAP, 0));
+                th = Thinker(Thinker::AllocateMemoryZone, thInfo->size).take();
             }
 
             bool putThinkerInStasis = (formatHasStasisInfo? CPP_BOOL(Reader_ReadByte(reader)) : false);

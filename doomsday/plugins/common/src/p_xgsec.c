@@ -428,13 +428,13 @@ void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
         if((mover->flags & PMF_ACTIVATE_WHEN_DONE) && mover->origin)
         {
             XL_ActivateLine(true, &origin->xg->info, mover->origin, 0,
-                            &dummyThing, XLE_AUTO);
+                            XG_DummyThing(), XLE_AUTO);
         }
 
         if((mover->flags & PMF_DEACTIVATE_WHEN_DONE) && mover->origin)
         {
             XL_ActivateLine(false, &origin->xg->info, mover->origin, 0,
-                            &dummyThing, XLE_AUTO);
+                            XG_DummyThing(), XLE_AUTO);
         }
 
         // Remove this thinker.
@@ -446,13 +446,13 @@ void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
         if((mover->flags & PMF_ACTIVATE_ON_ABORT) && mover->origin)
         {
             XL_ActivateLine(true, &origin->xg->info, mover->origin, 0,
-                            &dummyThing, XLE_AUTO);
+                            XG_DummyThing(), XLE_AUTO);
         }
 
         if((mover->flags & PMF_DEACTIVATE_ON_ABORT) && mover->origin)
         {
             XL_ActivateLine(false, &origin->xg->info, mover->origin, 0,
-                            &dummyThing, XLE_AUTO);
+                            XG_DummyThing(), XLE_AUTO);
         }
 
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
@@ -2907,7 +2907,7 @@ void XS_Thinker(xsthinker_t* xs)
         {
             XS_DoChain(sector, XSCE_TICKER,
                        !(info->chainFlags[XSCE_TICKER] & SCEF_TICKER_D),
-                       &dummyThing);
+                       XG_DummyThing());
         }
 
         // Play ambient sounds.

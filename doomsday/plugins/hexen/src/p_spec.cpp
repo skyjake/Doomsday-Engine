@@ -54,7 +54,12 @@ using namespace common;
 static void P_LightningFlash(void);
 static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock);
 
-mobj_t lavaInflictor;
+ThinkerT<mobj_t> lavaInflictor;
+
+mobj_t *P_LavaInflictor()
+{
+    return lavaInflictor;
+}
 
 materialid_t sky1Material;
 materialid_t sky2Material;
@@ -71,10 +76,10 @@ static float *lightningLightLevels;
 
 void P_InitLava(void)
 {
-    memset(&lavaInflictor, 0, sizeof(mobj_t));
+    lavaInflictor = ThinkerT<mobj_t>();
 
-    lavaInflictor.type = MT_CIRCLEFLAME;
-    lavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
+    lavaInflictor->type = MT_CIRCLEFLAME;
+    lavaInflictor->flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
 void P_InitSky(de::Uri const &mapUri)
@@ -811,7 +816,7 @@ void P_PlayerOnSpecialFloor(player_t* player)
 
     if(!(mapTime & 31))
     {
-        P_DamageMobj(player->plr->mo, &lavaInflictor, NULL, 10, false);
+        P_DamageMobj(player->plr->mo, P_LavaInflictor(), NULL, 10, false);
         S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
     }
 }

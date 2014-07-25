@@ -363,7 +363,7 @@ typedef struct {
 DENG_EXTERN_C struct xgclass_s xgClasses[];
 
 // Used as the activator if there is no real activator.
-DENG_EXTERN_C struct mobj_s dummyThing;
+DENG_EXTERN_C struct mobj_s *XG_DummyThing();
 
 #ifdef __cplusplus
 extern "C" {

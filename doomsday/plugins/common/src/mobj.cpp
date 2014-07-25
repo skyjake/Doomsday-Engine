@@ -342,9 +342,9 @@ void mobj_s::write(MapStateWriter *msw) const
     Writer *writer = msw->writer();
 
     mobj_t const *original = (mobj_t *) this;
-    mobj_t temp, *mo = &temp;
+    ThinkerT<mobj_t> temp(*original);
+    mobj_t *mo = temp;
 
-    std::memcpy(mo, original, sizeof(*mo));
     // Mangle it!
     mo->state = (state_t *) (mo->state - STATES);
     if(mo->player)

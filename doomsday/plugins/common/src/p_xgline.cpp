@@ -133,7 +133,12 @@ int xgDev = 0; // Print dev messages.
 
 static linetype_t typebuffer;
 static char msgbuf[80];
-struct mobj_s dummyThing;
+ThinkerT<mobj_s> dummyThing;
+
+struct mobj_s *XG_DummyThing()
+{
+    return dummyThing;
+}
 
 /* ADD NEW XG CLASSES TO THE END - ORIGINAL INDICES MUST STAY THE SAME!!! */
 xgclass_t xgClasses[NUMXGCLASSES] =
@@ -935,7 +940,7 @@ void XL_SetLineType(Line *line, int id)
 
         // Initial active state.
         xline->xg->active = (typebuffer.flags & LTF_ACTIVE) != 0;
-        xline->xg->activator = &dummyThing;
+        xline->xg->activator = dummyThing;
 
         XG_Dev("XL_SetLineType: Line %i (%s), ID %i.", P_ToIndex(line),
                xgClasses[xline->xg->info.lineClass].className, id);
@@ -2992,7 +2997,7 @@ void XL_Thinker(void *xlThinkerPtr)
                     xg->active ? "INACTIVE" : "ACTIVE");
 
             // Swap line state without any checks.
-            XL_ActivateLine(!xg->active, info, line, 0, &dummyThing, XLE_AUTO);
+            XL_ActivateLine(!xg->active, info, line, 0, dummyThing, XLE_AUTO);
         }
     }
 

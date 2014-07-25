@@ -34,7 +34,7 @@
 
 #define MO_TELEPORTMAN          14
 
-DENG_EXTERN_C mobj_t lavaInflictor;
+DENG_EXTERN_C mobj_t *P_LavaInflictor();
 DENG_EXTERN_C mobjtype_t TranslateThingType[];
 
 #ifdef __cplusplus

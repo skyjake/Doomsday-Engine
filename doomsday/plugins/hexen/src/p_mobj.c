@@ -1355,7 +1355,7 @@ dd_bool P_HitFloor(mobj_t *thing)
         S_StartSound(SFX_LAVA_SIZZLE, mo);
         if(thing->player && mapTime & 31)
         {
-            P_DamageMobj(thing, &lavaInflictor, NULL, 5, false);
+            P_DamageMobj(thing, P_LavaInflictor(), NULL, 5, false);
         }
         return true;
     }
