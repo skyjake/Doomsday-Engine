@@ -2433,7 +2433,7 @@ de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
     /// @todo fixme: What about the episode?
-    return P_TranslateMap(P_CurrentMapInfo()->geti("nextMap"));
+    return de::Uri(P_CurrentMapInfo()->gets("nextMap"), RC_NULL);
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__

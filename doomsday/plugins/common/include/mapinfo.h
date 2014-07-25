@@ -100,6 +100,15 @@ struct HexDefs
      * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
      */
     MapInfo *getMapInfo(de::Uri const &mapUri);
+
+    /**
+     * To be called once all definitions have been parsed to translate Hexen's
+     * map "warp numbers" to URIs where they used as map definition references.
+     */
+    void translateMapWarpNumbers();
+
+//private:
+    de::Uri translateMapWarpNumber(uint map);
 };
 extern HexDefs hexDefs;
 

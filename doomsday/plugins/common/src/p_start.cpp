@@ -379,6 +379,9 @@ static void readMapInfoDefinitions()
     info.set("startMap", "Maps:MAP01");
 #endif
 
+    // Translate internal "warp trans" numbers to URIs.
+    hexDefs.translateMapWarpNumbers();
+
 #ifdef DENG_DEBUG
     for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {

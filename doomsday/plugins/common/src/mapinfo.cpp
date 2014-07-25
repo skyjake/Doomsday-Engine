@@ -84,7 +84,7 @@ void MapInfo::resetToDefaults()
     addText   ("map", "Maps:"); // URI. Unknown.
     addNumber ("hub", 0);
     addNumber ("warpTrans", 0);
-    addNumber ("nextMap", 0);   // Warp trans number. Always go to map 0 if not specified.
+    addText   ("nextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
     addNumber ("cdTrack", 1);
     addText   ("title", "Untitled");
     addText   ("sky1Material", defaultSkyMaterial());
@@ -359,6 +359,10 @@ DENG2_PIMPL(MapInfoParser)
         {
             mapUri = de::Uri(Str_Text(tok), RC_NULL);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+            if(!isSecret)
+            {
+                mapInfo.set("nextMap", mapUri.compose());
+            }
         }
         else
         {
@@ -366,12 +370,10 @@ DENG2_PIMPL(MapInfoParser)
             {
                 throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
             }
-            mapUri = G_ComposeMapUri(0, mapNumber - 1);
-        }
-
-        if(!isSecret)
-        {
-            mapInfo.set("nextMap", G_MapNumberFor(mapUri));
+            if(!isSecret)
+            {
+                mapInfo.set("nextMap", String("@wt:%1").arg(mapNumber - 1));
+            }
         }
     }
 
@@ -1100,6 +1102,48 @@ MapInfo *HexDefs::getMapInfo(de::Uri const &mapUri)
     return 0; // Not found.
 }
 
+de::Uri HexDefs::translateMapWarpNumber(uint map)
+{
+    de::Uri matchedWithoutHub("Maps:", RC_NULL);
+
+    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
+    {
+        MapInfo const &info = i->second;
+
+        if((unsigned)info.geti("warpTrans") == map)
+        {
+            if(info.geti("hub"))
+            {
+                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
+                        << map << info.gets("map") << info.geti("hub");
+                return de::Uri(info.gets("map"), RC_NULL);
+            }
+
+            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
+                    << map << info.gets("map");
+            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+        }
+    }
+
+    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
+            << map << matchedWithoutHub;
+
+    return matchedWithoutHub;
+}
+
+void HexDefs::translateMapWarpNumbers()
+{
+    for(HexDefs::MapInfos::iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
+    {
+        MapInfo &info = i->second;
+        de::Uri nextMap(info.gets("nextMap", ""), RC_NULL);
+        if(!nextMap.scheme().compareWithoutCase("@wt"))
+        {
+            info.set("nextMap", translateMapWarpNumber(nextMap.path().toStringRef().toInt()).compose());
+        }
+    }
+}
+
 EpisodeInfo *P_EpisodeInfo(String id)
 {
     return hexDefs.getEpisodeInfo(id);
@@ -1123,31 +1167,7 @@ MapInfo *P_CurrentMapInfo()
 /// @todo fixme: What about the episode?
 de::Uri P_TranslateMap(uint map)
 {
-    de::Uri matchedWithoutHub("Maps:", RC_NULL);
-
-    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
-    {
-        MapInfo const &info = i->second;
-
-        if((unsigned)info.geti("warpTrans") == map)
-        {
-            if(info.geti("hub"))
-            {
-                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
-                        << map << info.gets("map") << info.geti("hub");
-                return de::Uri(info.gets("map"), RC_NULL);
-            }
-
-            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
-                    << map << info.gets("map");
-            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
-        }
-    }
-
-    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
-            << map << matchedWithoutHub;
-
-    return matchedWithoutHub;
+    return hexDefs.translateMapWarpNumber(map);
 }
 
 } // namespace common
