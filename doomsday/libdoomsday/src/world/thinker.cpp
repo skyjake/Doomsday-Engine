@@ -43,7 +43,7 @@ DENG2_PIMPL_NOREF(Thinker)
         }
         else // using memory zone
         {
-            base = reinterpret_cast<thinker_s *>(Z_Calloc(size, PU_MAP, 0));
+            base = reinterpret_cast<thinker_s *>(Z_Calloc(size, PU_MAP, NULL));
         }
     }
 
@@ -57,17 +57,45 @@ DENG2_PIMPL_NOREF(Thinker)
         base->d = data;
     }
 
+    Instance(thinker_s *podThinkerToTake, dsize sizeInBytes)
+        : size(sizeInBytes)
+        , base(podThinkerToTake)
+        , data(reinterpret_cast<IData *>(podThinkerToTake->d)) // also take ownership of the private data
+    {}
+
     ~Instance()
     {
-        if(base->_flags & THINKF_STD_MALLOC)
+        release();
+    }
+
+    void release()
+    {
+        if(base)
         {
-            M_Free(base);
+            if(isStandardAllocated())
+            {
+                M_Free(base);
+            }
+            else
+            {
+                Z_Free(base);
+            }
         }
-        else
-        {
-            Z_Free(base);
-        }
+
+        // Get rid of the private data, too.
         delete data;
+    }
+
+    bool isStandardAllocated() const
+    {
+        return base && (base->_flags & THINKF_STD_MALLOC);
+    }
+
+    void relinquish()
+    {
+        base = 0;
+        data = 0;
+        size = 0;
     }
 };
 
@@ -96,12 +124,23 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
     : d(new Instance(alloc, sizeInBytes, 0))
     , STRUCT_MEMBER_ACCESSORS()
 {
+    DENG2_ASSERT(d->size == sizeInBytes);
     memcpy(d->base, &podThinker, sizeInBytes);
+
+    // Retain the original allocation flag, though.
+    d->base->_flags &= ~THINKF_STD_MALLOC;
+    if(alloc == AllocateStandard) d->base->_flags |= THINKF_STD_MALLOC;
+
     if(podThinker.d)
     {
         setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());
     }
 }
+
+Thinker::Thinker(thinker_s *podThinkerToTake, de::dsize sizeInBytes)
+    : d(new Instance(podThinkerToTake, sizeInBytes))
+    , STRUCT_MEMBER_ACCESSORS()
+{}
 
 Thinker &Thinker::operator = (Thinker const &other)
 {
@@ -112,6 +151,14 @@ Thinker &Thinker::operator = (Thinker const &other)
 void Thinker::enable(bool yes)
 {
     applyFlagOperation(d->base->_flags, duint32(THINKF_DISABLED), yes? SetFlags : UnsetFlags);
+}
+
+void Thinker::zap()
+{
+    delete d->data;
+    d->data = 0;
+
+    memset(d->base, 0, d->size);
 }
 
 bool Thinker::isDisabled() const
@@ -156,16 +203,45 @@ thinker_s *Thinker::take()
     DENG2_ASSERT(d->base->d == d->data);
 
     thinker_s *th = d->base;
-    d->base = 0;
-    d->data = 0;
-    d->size = 0;
+    d->relinquish();
     return th;
+}
+
+void Thinker::putInto(thinker_s &dest)
+{
+    delete reinterpret_cast<IData *>(dest.d);
+    memcpy(&dest, d->base, d->size);
+
+    // Not valid any more.
+    d->relinquish();
 }
 
 void Thinker::destroy(thinker_s *thinkerBase)
 {
-    delete reinterpret_cast<IData *>(thinkerBase->d);
-    M_Free(thinkerBase);
+    DENG2_ASSERT(thinkerBase != 0);
+
+    release(*thinkerBase);
+
+    if(thinkerBase->_flags & THINKF_STD_MALLOC)
+    {
+        M_Free(thinkerBase);
+    }
+    else
+    {
+        Z_Free(thinkerBase);
+    }
+}
+
+void Thinker::release(thinker_s &thinkerBase)
+{
+    delete reinterpret_cast<IData *>(thinkerBase.d);
+    thinkerBase.d = 0;
+}
+
+void Thinker::zap(thinker_s &thinkerBase, dsize sizeInBytes)
+{
+    delete reinterpret_cast<IData *>(thinkerBase.d);
+    memset(&thinkerBase, 0, sizeInBytes);
 }
 
 void Thinker::setData(Thinker::IData *data)

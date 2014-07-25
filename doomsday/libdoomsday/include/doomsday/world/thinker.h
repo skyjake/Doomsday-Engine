@@ -42,6 +42,12 @@ typedef struct thinker_s {
     uint32_t _flags;
     thid_t id;              ///< Only used for mobjs (zero is not an ID).
     void *d;                ///< Private data (owned).
+#ifdef __cplusplus
+    enum InitBehavior { InitializeToZero };
+    thinker_s(InitBehavior) { de::zap(*this); }
+    DENG2_NO_ASSIGN(thinker_s)
+    DENG2_NO_COPY(thinker_s)
+#endif
 } thinker_t;
 
 #ifdef __cplusplus
@@ -137,9 +143,18 @@ public:
      *
      * @param podThinker   Existing thinker.
      * @param sizeInBytes  Size of the thinker struct.
+     * @param alloc        Allocation method.
      */
     Thinker(thinker_s const &podThinker, de::dsize sizeInBytes,
             AllocMethod alloc = AllocateStandard);
+
+    /**
+     * Takes ownership of a previously allocated POD thinker.
+     *
+     * @param podThinkerToTake  Thinker.
+     * @param sizeInBytes       Size of the thinker.
+     */
+    Thinker(thinker_s *podThinkerToTake, de::dsize sizeInBytes);
 
     Thinker &operator = (Thinker const &other);
 
@@ -151,6 +166,12 @@ public:
 
     void enable(bool yes = true);
     inline void disable(bool yes = true) { enable(!yes); }
+
+    /**
+     * Clear everything to zero. The private data is destroyed, so that it will be
+     * recreated if needed.
+     */
+    void zap();
 
     bool isDisabled() const;
     bool hasData() const;
@@ -165,10 +186,23 @@ public:
      * gets ownership of the private data owned by the thinker (a C++ instance).
      * You should use destroy() to delete the returned memory.
      *
+     * After the operation, this Thinker becomes invalid.
+     *
      * @return POD thinker. The size of this struct is actually sizeInBytes(), not
      * sizeof(thinker_s).
      */
     struct thinker_s *take();
+
+    /**
+     * Transfers the contents of the Thinker into the designated existing POD thinker.
+     * Any memory owned by @a dest is released before the copy. The destination is
+     * assumed to have the same size as this Thinker.
+     *
+     * After the operation, this Thinker becomes invalid.
+     *
+     * @param dest  Destination thinker.
+     */
+    void putInto(struct thinker_s &dest);
 
     IData &data();
     IData const &data() const;
@@ -180,7 +214,11 @@ public:
      *
      * @param thinkerBase  POD thinker base.
      */
-    static void destroy(struct thinker_s *thinkerBase);
+    static void destroy(thinker_s *thinkerBase);
+
+    static void release(thinker_s &thinkerBase);
+
+    static void zap(thinker_s &thinkerBase, de::dsize sizeInBytes);
 
 protected:
     /**
@@ -199,6 +237,55 @@ public:
     MemberDelegate<thinker_s *> next;
     MemberDelegate<thinkfunc_t> function;
     MemberDelegate<thid_t> id;
+};
+
+/**
+ * Template that acts like a smart pointer to a specific type of thinker.
+ *
+ * Like the base class Thinker, the thinker instance is created in the constructor
+ * and destroyed in the destructor of ThinkerT.
+ */
+template <typename Type>
+class ThinkerT : public Thinker
+{
+public:
+    ThinkerT() : Thinker(sizeof(Type)) {}
+    ThinkerT(de::dsize sizeInBytes,
+             AllocMethod alloc     = AllocateStandard)
+        : Thinker(alloc, sizeInBytes) {}
+    ThinkerT(Type const &thinker,
+             de::dsize sizeInBytes = sizeof(Type),
+             AllocMethod alloc     = AllocateStandard)
+        : Thinker(reinterpret_cast<thinker_s const &>(thinker), sizeInBytes, alloc) {}
+    ThinkerT(Type *thinkerToTake, de::dsize sizeInBytes = sizeof(Type))
+        : Thinker(reinterpret_cast<thinker_s *>(thinkerToTake), sizeInBytes) {}
+
+    Type &base() { return *reinterpret_cast<Type *>(&Thinker::base()); }
+    Type const &base() const { return *reinterpret_cast<Type const *>(&Thinker::base()); }
+
+    Type *operator -> () { return &base(); }
+    Type const *operator -> () const { return &base(); }
+
+    operator Type * () { return &base(); }
+    operator Type const * () const { return &base(); }
+
+    operator void * () { return reinterpret_cast<void *>(&base()); }
+    operator void const * () const { return reinterpret_cast<void const *>(&base()); }
+
+    operator Type & () { return base(); }
+    operator Type const & () const { return base(); }
+
+    Type *take() { return reinterpret_cast<Type *>(Thinker::take()); }
+
+    void putInto(Type &dest) { Thinker::putInto(reinterpret_cast<thinker_s &>(dest)); }
+
+    static void zap(Type &thinker, de::dsize sizeInBytes = sizeof(Type)) {
+        Thinker::zap(reinterpret_cast<thinker_s &>(thinker), sizeInBytes);
+    }
+
+    static void release(Type &thinker) {
+        Thinker::release(reinterpret_cast<thinker_s &>(thinker));
+    }
 };
 
 #endif // __cplusplus
