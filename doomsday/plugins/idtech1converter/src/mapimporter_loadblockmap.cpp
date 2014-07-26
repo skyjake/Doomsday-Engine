@@ -1,6 +1,6 @@
-/** @file id1map_loadblockmap.cpp  id Tech 1 blockmap interpreter.
+/** @file mapconverter_loadblockmap.cpp  Blockmap data converter for id Tech 1 format maps.
  *
- * @ingroup wadmapconverter
+ * @ingroup idtech1converter
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "wadmapconverter.h"
+#include "idtech1converter.h"
 #include <de/Log>
 
 using namespace de;
@@ -123,7 +123,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
             if(SHORT(blockmapLump[offset]) != 0)
             {
-                throw de::Error("WadMapConverter::loadBlockmap",
+                throw de::Error("IdTech1Converter::loadBlockmap",
                                 QString("Offset (%1) for block %2 [%3, %4] does not index the beginning of a line list!")
                                     .arg(offset)
                                     .arg(blockIdx)
@@ -154,7 +154,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 #if _DEBUG
                     if(idx < 0 || idx >= (long) map->numLines)
                     {
-                        throw de::Error("WadMapConverter::loadBlockmap",
+                        throw de::Error("IdTech1Converter::loadBlockmap",
                                         QString("Invalid linedef index #%1.").arg(idx)));
                     }
 #endif

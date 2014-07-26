@@ -1,9 +1,9 @@
-/** @file version.h  Version information for the WadMapConverter plugin.
+/** @file version.h  Version information for the IdTech1Converter plugin.
  *
- * @ingroup wadmapconverter
+ * @ingroup idtech1converter
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -21,26 +21,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WADMAPCONVERTER_VERSION_H
-#define WADMAPCONVERTER_VERSION_H
+#ifndef IDTECH1CONVERTER_VERSION_H
+#define IDTECH1CONVERTER_VERSION_H
 
-#ifndef WADMAPCONVERTER_VER_ID
+#ifndef IDTECH1CONVERTER_VER_ID
 #  ifdef _DEBUG
-#    define WADMAPCONVERTER_VER_ID "+D Doomsday"
+#    define IDTECH1CONVERTER_VER_ID "+D Doomsday"
 #  else
-#    define WADMAPCONVERTER_VER_ID "Doomsday"
+#    define IDTECH1CONVERTER_VER_ID "Doomsday"
 #  endif
 #endif
 
 // Used to derive filepaths.
-#define PLUGIN_NAME         "dpwadmapconverter"
+#define PLUGIN_NAME         "dpidtech1converter"
 
 // Presented to the user in dialogs, messages etc.
-#define PLUGIN_NICENAME     "WAD Map Converter"
-#define PLUGIN_DETAILS      "Doomsday plugin for loading id tech 1 format maps."
+#define PLUGIN_NICENAME     "Id Tech 1 Converter"
+#define PLUGIN_DETAILS      "Doomsday plugin for loading id Tech 1 resources."
 
-#define PLUGIN_VERSION_TEXT "1.1.1"
-#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" WADMAPCONVERTER_VER_ID ")"
-#define PLUGIN_VERSION_NUMBER 1,1,1,0 // For WIN32 version info.
+#define PLUGIN_VERSION_TEXT "1.0.0"
+#define PLUGIN_VERSION_TEXTLONG "Version " PLUGIN_VERSION_TEXT " " __DATE__ " (" IDTECH1CONVERTER_VER_ID ")"
+#define PLUGIN_VERSION_NUMBER 1,0,0,0 // For WIN32 version info.
 
-#endif // WADMAPCONVERTER_VERSION_H
+#endif // IDTECH1CONVERTER_VERSION_H

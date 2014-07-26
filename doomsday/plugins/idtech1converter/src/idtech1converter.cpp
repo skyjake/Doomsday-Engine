@@ -1,6 +1,6 @@
-/** @file wadmapconverter.cpp  Map converter plugin for id tech 1 format maps.
+/** @file idtech1converter.cpp  Converter plugin for id Tech 1 resource formats.
  *
- * @ingroup wadmapconverter
+ * @ingroup idtech1converter
  *
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -19,12 +19,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "wadmapconverter.h"
+#include "idtech1converter.h"
 #include <de/Error>
 #include <de/Log>
 
 using namespace de;
-using namespace wadimp;
+using namespace idtech1;
 
 /**
  * This function will be called when Doomsday is asked to load a map that is not
@@ -52,18 +52,18 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         // Attempt a conversion...
         try
         {
-            QScopedPointer<Id1Map> map(new Id1Map(recognizer));
+            QScopedPointer<MapImporter> map(new MapImporter(recognizer));
 
             // The archived map data was read successfully.
             // Transfer to the engine via the runtime map editing interface.
             /// @todo Build it using native components directly...
-            LOG_AS("WadMapConverter");
+            LOG_AS("IdTech1Converter");
             map->transfer();
             return true; // success
         }
-        catch(Id1Map::LoadError const &er)
+        catch(MapImporter::LoadError const &er)
         {
-            LOG_AS("WadMapConverter");
+            LOG_AS("IdTech1Converter");
             LOG_MAP_ERROR("Load error: ") << er.asText();
         }
     }

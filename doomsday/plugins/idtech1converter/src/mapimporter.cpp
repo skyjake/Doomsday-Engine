@@ -1,4 +1,4 @@
-/** @file id1map.cpp  id Tech 1 map format reader.
+/** @file mapimporter.cpp  Resource importer for id Tech 1 format maps.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "id1map.h"
+#include "mapimporter.h"
 #include <vector>
 #include <list>
 #include <QVector>
@@ -29,27 +29,27 @@
 #include <de/Reader>
 #include <de/Time>
 #include <de/Vector>
-#include "wadmapconverter.h"
+#include "idtech1converter.h"
 
 using namespace de;
 
-namespace wadimp {
+namespace idtech1 {
 namespace internal {
 
 /// @todo kludge - remove me.
 class Id1MapElement
 {
 public:
-    Id1MapElement(Id1Map &map) : _map(&map) {}
+    Id1MapElement(MapImporter &map) : _map(&map) {}
     Id1MapElement(Id1MapElement const &other) : _map(other._map) {}
     virtual ~Id1MapElement() {}
 
-    Id1Map &map() const {
+    MapImporter &map() const {
         DENG2_ASSERT(_map != 0);
         return *_map;
     }
 
-    Id1Map *_map;
+    MapImporter *_map;
 };
 
 struct SideDef : public Id1MapElement
@@ -61,7 +61,7 @@ struct SideDef : public Id1MapElement
     MaterialId middleMaterial;
     dint sector;
 
-    SideDef(Id1Map &map) : Id1MapElement(map) {}
+    SideDef(MapImporter &map) : Id1MapElement(map) {}
 
     void operator << (de::Reader &from)
     {
@@ -98,7 +98,7 @@ struct SideDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT(!"wadimp::SideDef::read: unknown map format!");
+            DENG2_ASSERT(!"idtech1::SideDef::read: unknown map format!");
             break;
         };
 
@@ -152,7 +152,7 @@ struct LineDef : public Id1MapElement
     dint ddFlags;
     duint validCount; ///< Used for polyobj line collection.
 
-    LineDef(Id1Map &map) : Id1MapElement(map) {}
+    LineDef(MapImporter &map) : Id1MapElement(map) {}
 
     int sideIndex(Side which) const
     {
@@ -206,7 +206,7 @@ struct LineDef : public Id1MapElement
             break;
 
         default:
-            DENG2_ASSERT(!"wadimp::LineDef::read: unknown map format!");
+            DENG2_ASSERT(!"idtech1::LineDef::read: unknown map format!");
             break;
         };
 
@@ -293,7 +293,7 @@ struct SectorDef : public Id1MapElement
     duint16 d64wallTopColor;
     duint16 d64wallBottomColor;
 
-    SectorDef(Id1Map &map) : Id1MapElement(map) {}
+    SectorDef(MapImporter &map) : Id1MapElement(map) {}
 
     void operator << (de::Reader &from)
     {
@@ -334,7 +334,7 @@ struct SectorDef : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT(!"wadimp::SectorDef::read: unknown map format!");
+            DENG2_ASSERT(!"idtech1::SectorDef::read: unknown map format!");
             break;
         };
 
@@ -375,7 +375,7 @@ struct Thing : public Id1MapElement
     // DOOM64 format members:
     dint16 d64TID;
 
-    Thing(Id1Map &map) : Id1MapElement(map) {}
+    Thing(MapImporter &map) : Id1MapElement(map) {}
 
     void operator << (de::Reader &from)
     {
@@ -564,7 +564,7 @@ struct Thing : public Id1MapElement
             break; }
 
         default:
-            DENG2_ASSERT(!"wadimp::Thing::read: unknown map format!");
+            DENG2_ASSERT(!"idtech1::Thing::read: unknown map format!");
             break;
         };
     }
@@ -576,7 +576,7 @@ struct TintColor : public Id1MapElement
     dfloat rgb[3];
     dint8 xx[3];
 
-    TintColor(Id1Map &map) : Id1MapElement(map) {}
+    TintColor(MapImporter &map) : Id1MapElement(map) {}
 
     void operator << (de::Reader &from)
     {
@@ -609,7 +609,7 @@ using namespace internal;
 
 static uint validCount = 0; ///< Used with Polyobj LineDef collection.
 
-DENG2_PIMPL(Id1Map)
+DENG2_PIMPL(MapImporter)
 {
     Id1MapRecognizer::Format format;
 
@@ -1159,12 +1159,12 @@ DENG2_PIMPL(Id1Map)
     }
 };
 
-Id1Map::Id1Map(Id1MapRecognizer const &recognized)
+MapImporter::MapImporter(Id1MapRecognizer const &recognized)
     : d(new Instance(this))
 {
     d->format = recognized.format();
     if(d->format == Id1MapRecognizer::UnknownFormat)
-        throw LoadError("Id1Map", "Format unrecognized");
+        throw LoadError("MapImporter", "Format unrecognized");
 
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
@@ -1207,9 +1207,9 @@ Id1Map::Id1Map(Id1MapRecognizer const &recognized)
     d->analyze();
 }
 
-void Id1Map::transfer()
+void MapImporter::transfer()
 {
-    LOG_AS("Id1Map");
+    LOG_AS("MapImporter");
 
     Time begunAt;
 
@@ -1225,14 +1225,14 @@ void Id1Map::transfer()
     LOGDEV_MAP_VERBOSE("Transfer completed in %.2f seconds") << begunAt.since();
 }
 
-MaterialId Id1Map::toMaterialId(String name, MaterialGroup group)
+MaterialId MapImporter::toMaterialId(String name, MaterialGroup group)
 {
     return d->materials.toMaterialId(name, group);
 }
 
-MaterialId Id1Map::toMaterialId(int uniqueId, MaterialGroup group)
+MaterialId MapImporter::toMaterialId(int uniqueId, MaterialGroup group)
 {
     return d->materials.toMaterialId(uniqueId, group);
 }
 
-} // namespace wadimp
+} // namespace idtech1
