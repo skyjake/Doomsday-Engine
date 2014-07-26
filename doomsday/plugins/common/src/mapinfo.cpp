@@ -84,7 +84,8 @@ void MapInfo::resetToDefaults()
     addText   ("map", "Maps:"); // URI. Unknown.
     addNumber ("hub", 0);
     addNumber ("warpTrans", 0);
-    addText   ("nextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
+    addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
+    addText   ("secretNextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
     addNumber ("cdTrack", 1);
     addText   ("title", "Untitled");
     addText   ("sky1Material", defaultSkyMaterial());
@@ -321,7 +322,7 @@ DENG2_PIMPL(MapInfoParser)
     }
 
     /**
-     * @param isSecret  @c true= this is the secret next map (from ZDoom) and should be ignored.
+     * @param isSecret  @c true= this is the secret next map (from ZDoom).
      */
     void parseMapNext(MapInfo &mapInfo, bool isSecret = false)
     {
@@ -359,10 +360,7 @@ DENG2_PIMPL(MapInfoParser)
         {
             mapUri = de::Uri(Str_Text(tok), RC_NULL);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
-            if(!isSecret)
-            {
-                mapInfo.set("nextMap", mapUri.compose());
-            }
+            mapInfo.set((isSecret? "secretNextMap" : "nextMap"), mapUri.compose());
         }
         else
         {
@@ -370,10 +368,7 @@ DENG2_PIMPL(MapInfoParser)
             {
                 throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
             }
-            if(!isSecret)
-            {
-                mapInfo.set("nextMap", String("@wt:%1").arg(mapNumber - 1));
-            }
+            mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String("@wt:%1").arg(mapNumber - 1));
         }
     }
 
@@ -730,7 +725,6 @@ DENG2_PIMPL(MapInfoParser)
             }
             if(!Str_CompareIgnoreCase(lexer.token(), "secretnext")) // ZDoom
             {
-                LOG_WARNING("MAPINFO Map.secretNext is not supported.");
                 parseMapNext(*info, true/*is-secret*/);
                 continue;
             }
@@ -1147,6 +1141,11 @@ void HexDefs::translateMapWarpNumbers()
         if(!nextMap.scheme().compareWithoutCase("@wt"))
         {
             info.set("nextMap", translateMapWarpNumber(nextMap.path().toStringRef().toInt()).compose());
+        }
+        de::Uri secretNextMap(info.gets("secretNextMap", ""), RC_NULL);
+        if(!secretNextMap.scheme().compareWithoutCase("@wt"))
+        {
+            info.set("secretNextMap", translateMapWarpNumber(secretNextMap.path().toStringRef().toInt()).compose());
         }
     }
 }
