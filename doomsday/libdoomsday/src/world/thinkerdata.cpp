@@ -33,7 +33,19 @@ DENG2_PIMPL(ThinkerData)
         , think(other.think)
         , info(other.info)
     {}
+
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i)
+        {
+            i->thinkerBeingDeleted(*think);
+        }
+    }
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
 };
+
+DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 
 ThinkerData::ThinkerData(thinker_s *self) : d(new Instance(this))
 {
