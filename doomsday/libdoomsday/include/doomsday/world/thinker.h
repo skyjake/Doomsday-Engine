@@ -112,7 +112,9 @@ public:
         int _offset;
     };
 
-    /// Base class for the private data of a thinker.
+    /**
+     * Base class for the private data of a thinker.
+     */
     class LIBDOOMSDAY_PUBLIC IData
     {
     public:
@@ -207,6 +209,13 @@ public:
     IData &data();
     IData const &data() const;
 
+    /**
+     * Sets the private data for the thinker.
+     *
+     * @param data  Private data object. Ownership taken.
+     */
+    void setData(IData *data);
+
 public:
     /**
      * Destroys a POD thinker that has been acquired using take(). All the memory owned
@@ -219,14 +228,6 @@ public:
     static void release(thinker_s &thinkerBase);
 
     static void zap(thinker_s &thinkerBase, de::dsize sizeInBytes);
-
-protected:
-    /**
-     * Sets the private data for the thinker.
-     *
-     * @param data  Private data object. Ownership taken.
-     */
-    void setData(IData *data);
 
 private:
     DENG2_PRIVATE(d)
@@ -278,6 +279,8 @@ public:
     Type *take() { return reinterpret_cast<Type *>(Thinker::take()); }
 
     void putInto(Type &dest) { Thinker::putInto(reinterpret_cast<thinker_s &>(dest)); }
+
+    static void destroy(Type *thinker) { Thinker::destroy(reinterpret_cast<thinker_s *>(thinker)); }
 
     static void zap(Type &thinker, de::dsize sizeInBytes = sizeof(Type)) {
         Thinker::zap(reinterpret_cast<thinker_s &>(thinker), sizeInBytes);
