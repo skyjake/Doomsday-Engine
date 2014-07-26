@@ -252,10 +252,21 @@ static void readMapInfoDefinitions()
     // Read the primary MAPINFO (from the IWAD).
     AutoStr *sourceFile = sc_FileScripts? Str_Appendf(AutoStr_New(), "%sMAPINFO.txt", sc_ScriptsDir)
                                         : AutoStr_FromText("Lumps:MAPINFO");
-    AutoStr *buffer = M_ReadFileIntoString(sourceFile, 0);
+    dd_bool sourceIsCustom;
+    AutoStr *buffer = M_ReadFileIntoString(sourceFile, &sourceIsCustom);
     if(buffer && !Str_IsEmpty(buffer))
     {
         readOneMapInfoDefinition(parser, *buffer, Str_Text(sourceFile));
+
+        // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
+        // As later map definitions now replace earlier ones, these broken defs
+        // override the earlier "good" defs. For now we'll kludge around this
+        // issue by patching the effected defs with the expected values.
+        if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
+        {
+            MapInfo *info = hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
+            info->set("warpTrans", "@wt:6");
+        }
     }
     else
     {
@@ -386,9 +397,9 @@ static void readMapInfoDefinitions()
     for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
-        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i }")
+        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
                 << i->first.c_str() << info.gets("title")
-                << info.geti("hub") << info.gets("map") << info.geti("warpTrans");
+                << info.geti("hub") << info.gets("map") << info.geti("warpTrans") << info.gets("nextMap");
     }
 #endif
 }
