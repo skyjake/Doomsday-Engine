@@ -121,6 +121,7 @@ public:
      * Assignment with specific behavior. All existing members in this record
      * are cleared (unless ignored due to @a behavior).
      *
+     * @param other     Record to get variables from.
      * @param behavior  Which members to assign.
      *
      * @return This record.
