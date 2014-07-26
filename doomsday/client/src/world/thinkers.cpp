@@ -24,11 +24,13 @@
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
+#  include "world/clientmobjthinkerdata.h"
 #endif
 
 #ifdef __SERVER__
 #  include "def_main.h"
 #  include "server/sv_pool.h"
+#  include <doomsday/world/mobjthinkerdata.h>
 #endif
 
 #include "world/map.h"
@@ -135,6 +137,8 @@ struct ThinkerList
     }
 };
 
+typedef QHash<thid_t, mobj_t *> MobjHash;
+
 DENG2_PIMPL(Thinkers)
 {
     typedef QList<ThinkerList *> Lists;
@@ -144,6 +148,8 @@ DENG2_PIMPL(Thinkers)
 
     Lists lists;
     bool inited;
+
+    MobjHash mobjIdLookup; // public only
 
     Instance(Public *i)
         : Base(i),
@@ -176,6 +182,8 @@ DENG2_PIMPL(Thinkers)
     {
         zap(idtable);
         idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+
+        mobjIdLookup.clear();
     }
 
     thid_t newMobjId()
@@ -224,32 +232,14 @@ void Thinkers::setMobjId(thid_t id, bool inUse)
     else      d->idtable[c] &= ~bit;
 }
 
-struct mobjidlookup_t
-{
-    thid_t id;
-    mobj_t *result;
-};
-
-static int mobjIdLookup(thinker_t *thinker, void *context)
-{
-    mobjidlookup_t *lookup = (mobjidlookup_t *) context;
-    if(thinker->id == lookup->id)
-    {
-        lookup->result = (mobj_t *) thinker;
-        return true; // Stop iteration.
-    }
-    return false; // Continue iteration.
-}
-
 struct mobj_s *Thinkers::mobjById(int id)
 {
-    /// @todo  A hash table wouldn't hurt (see client's mobj id table).
-    mobjidlookup_t lookup;
-    lookup.id = id;
-    lookup.result = 0;
-    iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-            0x1/*mobjs are public*/, mobjIdLookup, &lookup);
-    return lookup.result;
+    MobjHash::const_iterator found = d->mobjIdLookup.constFind(id);
+    if(found != d->mobjIdLookup.constEnd())
+    {
+        return found.value();
+    }
+    return 0;
 }
 
 void Thinkers::add(thinker_t &th, bool makePublic)
@@ -268,11 +258,15 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         {
             th.id = d->newMobjId();
         }
+
+        if(makePublic && th.id)
+        {
+            d->mobjIdLookup.insert(th.id, reinterpret_cast<mobj_t *>(&th));
+        }
     }
     else
     {
-        // Zero is not a valid ID.
-        th.id = 0;
+        th.id = 0; // Zero is not a valid ID.
     }
 
     // Link the thinker to the thinker list.
@@ -287,6 +281,8 @@ void Thinkers::remove(thinker_t &th)
     {
         // Flag the identifier as free.
         setMobjId(th.id, false);
+
+        d->mobjIdLookup.remove(th.id);
 
 #ifdef __SERVER__
         // Then it must be a mobj.
@@ -396,58 +392,25 @@ static void unlinkThinkerFromList(thinker_t *th)
     th->prev->next = th->next;
 }
 
-#ifdef DENG2_DEBUG
-struct DebugCounter : public Thinker::IData
-{
-    Id id;
-    static duint32 total;
-
-    DebugCounter()
-    {
-        qDebug() << "[+++] object" << id.asText() << "created";
-        total++;
-    }
-
-    ~DebugCounter()
-    {
-        qDebug() << "[---] object" << id.asText() << "deleted";
-        total--;
-    }
-
-    IData *duplicate() const
-    {
-        qDebug() << "[***] duplicating" << id.asText();
-        return new DebugCounter;
-    }
-};
-
-duint32 DebugCounter::total = 0;
-
-struct Validator
-{
-    Validator()
-    {
-        DENG2_ASSERT(DebugCounter::total == 0);
-    }
-
-    ~Validator()
-    {
-        DENG2_ASSERT(DebugCounter::total == 0);
-    }
-};
-
-Validator debugValidator;
-#endif
-
 static void initPrivateData(thinker_t *th)
 {
     DENG2_ASSERT(th->d == 0);
 
-    // TODO: Instantiate the correct private data type using the factory.
+    /// @todo The game should be asked to create its own private data. -jk
 
-#ifdef DENG2_DEBUG
-    th->d = new DebugCounter;
+    if(Thinker_IsMobjFunc(th->function))
+    {
+#ifdef __CLIENT__
+        th->d = new ClientMobjThinkerData((mobj_t *)th);
+#else
+        th->d = new MobjThinkerData((mobj_t *)th);
 #endif
+    }
+    else
+    {
+        // Generic thinker data (Doomsday Script namespace, etc.).
+        th->d = new ThinkerData(th);
+    }
 }
 
 static int runThinker(thinker_t *th, void * /*context*/)

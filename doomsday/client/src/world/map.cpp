@@ -49,6 +49,7 @@
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
+#  include "client/cl_mobj.h"
 #endif
 #include "world/thinkers.h"
 
@@ -2027,31 +2028,39 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
 {
     LOG_AS("Map::clMobjFor");
 
-    if(mobj_t *clmo = d->clMobjHash.find(id))
+    ClMobjHash::const_iterator found = d->clMobjHash.constFind(id);
+    if(found != d->clMobjHash.constEnd())
     {
-        return clmo;
+        return found.value();
     }
 
     if(!canCreate) return 0;
 
-    // Create a new client mobj.
-    // Allocate enough memory for all the data.
+    // Create a new client mobj. This is a regular mobj that has network state
+    // associated with it.
+
+    /*
     void *data       = Z_Malloc(sizeof(ClMobjInfo) + MOBJ_SIZE, PU_MAP, 0);
     ClMobjInfo *info = new (data) ClMobjInfo;
     DENG2_UNUSED(info);
     mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
 
     std::memset(mo, 0, MOBJ_SIZE);
-    mo->ddFlags = DDMF_REMOTE;
+    mo->ddFlags = DDMF_REMOTE;*/
 
-    d->clMobjHash.insert(mo, id);
+    MobjThinker mo(Thinker::AllocateMemoryZone);
+    ClientMobjThinkerData *data = new ClientMobjThinkerData(mo);
+    data->networkState().flags = DDMF_REMOTE;
+    mo.setData(data);
+
+    d->clMobjHash.insert(id, mo);
     d->thinkers->setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
     mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    d->thinkers->add(reinterpret_cast<thinker_t &>(*mo));
+    d->thinkers->add(*(thinker_t *)mo);
 
-    return mo;
+    return mo.take();
 }
 
 void Map::deleteClMobj(mobj_t *mo)
@@ -2062,38 +2071,31 @@ void Map::deleteClMobj(mobj_t *mo)
 
     LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
 
-#ifdef DENG_DEBUG
-    d->clMobjHash.assertValid();
-#endif
-
     CL_ASSERT_CLMOBJ(mo);
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
 
     // Stop any sounds originating from this mobj.
     S_StopSound(0, mo);
 
     // The ID is free once again.
     d->thinkers->setMobjId(mo->thinker.id, false);
-    d->clMobjHash.remove(mo);
+    d->clMobjHash.remove(mo->thinker.id);
     ClMobj_Unlink(mo); // from block/sector
 
-    info->~ClMobjInfo();
-    MobjThinker::release(*mo); // delete private data
-
-    // This will free the entire mobj + info.
-    Z_Free(info);
-
-#ifdef DENG_DEBUG
-    d->clMobjHash.assertValid();
-#endif
+    MobjThinker::destroy(mo); // delete the mobj + private data
 }
 
-int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
+int Map::clMobjIterator(int (*callback)(mobj_t *, void *), void *context)
 {
-    return d->clMobjHash.iterate(callback, context);
+    DENG2_FOR_EACH_CONST(ClMobjHash, i, d->clMobjHash)
+    {
+        // Callback returns zero to continue.
+        if(int result = callback(i.value(), context))
+            return result;
+    }
+    return 0;
 }
 
-ClMobjHash const &Map::clMobjHash() const
+Map::ClMobjHash const &Map::clMobjHash() const
 {
     return d->clMobjHash;
 }
@@ -3335,7 +3337,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
     // Don't expire player mobjs.
     if(mo->dPlayer) return 0;
 
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     DENG2_ASSERT(info != 0);
 
     if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
@@ -3364,7 +3366,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
 void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
-    d->clMobjHash.iterate(expireClMobjsWorker, &nowTime);
+    clMobjIterator(expireClMobjsWorker, &nowTime);
 }
 
 void Map::clearClMovers()

@@ -200,7 +200,6 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
-    include/client/clmobjhash.h \
     include/client/clplanemover.h \
     include/client/clpolymover.h \
     include/clientapp.h \
@@ -426,6 +425,7 @@ DENG_HEADERS += \
     include/world/bsp/superblockmap.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
+    include/world/clientmobjthinkerdata.h \
     include/world/contact.h \
     include/world/contactspreader.h \
     include/world/dmuargs.h \
@@ -533,7 +533,6 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
-    src/client/clmobjhash.cpp \
     src/client/clplanemover.cpp \
     src/client/clpolymover.cpp \
     src/clientapp.cpp \
@@ -738,6 +737,7 @@ SOURCES += \
     src/world/bsp/superblockmap.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
+    src/world/clientmobjthinkerdata.cpp \
     src/world/contact.cpp \
     src/world/contactspreader.cpp \
     src/world/dmuargs.cpp \

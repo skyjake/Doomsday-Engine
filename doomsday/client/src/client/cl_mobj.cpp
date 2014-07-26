@@ -46,6 +46,7 @@ using namespace de;
 #define UNFIXED8_8(x)   (((x) << 16) / 256)
 #define UNFIXED10_6(x)  (((x) << 16) / 64)
 
+#if 0
 ClMobjInfo::ClMobjInfo()
     : startMagic(CLM_MAGIC1)
     , next      (0)
@@ -64,6 +65,7 @@ mobj_t *ClMobjInfo::mobj()
 
     return reinterpret_cast<mobj_t *>((char *)this + sizeof(ClMobjInfo));
 }
+#endif
 
 void ClMobj_Unlink(mobj_t *mo)
 {
@@ -72,7 +74,7 @@ void ClMobj_Unlink(mobj_t *mo)
 
 void ClMobj_Link(mobj_t *mo)
 {
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -96,7 +98,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 {
     LOG_AS("ClMobj_EnableLocalActions");
 
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return;
     if(enable)
     {
@@ -113,7 +115,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 #undef ClMobj_LocalActionsEnabled
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
@@ -212,17 +214,22 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-dd_bool Cl_IsClientMobj(mobj_t *mo)
+dd_bool Cl_IsClientMobj(mobj_t const *mo)
 {
-    return ClMobj_GetInfo(mo) != 0;
+    if(ClientMobjThinkerData *data = reinterpret_cast<Thinker::IData *>(mo->thinker.d)
+            ->maybeAs<ClientMobjThinkerData>())
+    {
+        return data->hasNetworkState();
+    }
+    return false;
 }
 
 #undef ClMobj_IsValid
 dd_bool ClMobj_IsValid(mobj_t *mo)
 {
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
-
     if(!Cl_IsClientMobj(mo)) return true;
+
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
     {
         // Should not use this for playsim.
@@ -236,24 +243,25 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
     return true;
 }
 
-ClMobjInfo *ClMobj_GetInfo(mobj_t *mo)
+ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo)
 {
     if(!mo) return 0;
 
-    ClMobjInfo *info = (ClMobjInfo *) ((char *)mo - sizeof(ClMobjInfo));
-    if(info->startMagic != CLM_MAGIC1 || info->endMagic != CLM_MAGIC2)
+    if(ClientMobjThinkerData *data = reinterpret_cast<Thinker::IData *>(mo->thinker.d)
+            ->maybeAs<ClientMobjThinkerData>())
     {
-        // There is no valid info block preceding the mobj.
-        return 0;
+        if(!data->hasNetworkState()) return 0;
+        return &data->networkState();
     }
-    return info;
+
+    return 0;
 }
 
 dd_bool ClMobj_Reveal(mobj_t *mo)
 {
     LOG_AS("ClMobj_Reveal");
 
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -282,7 +290,9 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
     }
 
     LOGDEV_MAP_XVERBOSE("Revealing id %i, state %p (%i)")
-            << mo->thinker.id << mo->state << runtimeDefs.states.indexOf(mo->state);
+            << mo->thinker.id
+            << mo->state
+            << runtimeDefs.states.indexOf(mo->state);
 
     return true;
 }
@@ -348,14 +358,14 @@ void ClMobj_ReadDelta()
 
     // Get the client mobj for this.
     mobj_t *mo = map.clMobjFor(id);
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     bool needsLinking = false, justCreated = false;
     if(!mo)
     {
         LOG_NET_XVERBOSE("Creating new clmobj %i (hidden)") << id;
 
         // This is a new ID, allocate a new mobj.
-        mo = map.clMobjFor(id, true/*create*/);
+        mo = map.clMobjFor(id, true /* create it now */);
         info = ClMobj_GetInfo(mo);
         justCreated = true;
         needsLinking = true;
@@ -591,7 +601,7 @@ void ClMobj_ReadNullDelta()
         return;
     }
 
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
 
     // Get rid of this mobj.
     if(!mo->dPlayer)
@@ -610,10 +620,6 @@ void ClMobj_ReadNullDelta()
     // The mobj will soon time out and be permanently removed.
     info->time = Timer_RealMilliseconds();
     info->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
-
-#ifdef DENG_DEBUG
-    map.clMobjHash().assertValid();
-#endif
 }
 
 #undef ClMobj_Find

@@ -870,7 +870,7 @@ D_CMD(InspectMobj)
 
     char const *moType = "Mobj";
 #ifdef __CLIENT__
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 
