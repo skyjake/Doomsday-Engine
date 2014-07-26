@@ -103,7 +103,7 @@ struct HexDefs
 
     /**
      * To be called once all definitions have been parsed to translate Hexen's
-     * map "warp numbers" to URIs where they used as map definition references.
+     * map "warp numbers" to URIs where used as map definition references.
      */
     void translateMapWarpNumbers();
 

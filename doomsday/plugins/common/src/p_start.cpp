@@ -261,7 +261,7 @@ static void readMapInfoDefinitions()
         // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
         // As later map definitions now replace earlier ones, these broken defs
         // override the earlier "good" defs. For now we'll kludge around this
-        // issue by patching the effected defs with the expected values.
+        // issue by patching the affected defs with the expected values.
         if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
         {
             MapInfo *info = hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
@@ -384,10 +384,14 @@ static void readMapInfoDefinitions()
             info.set("menuHelpInfo", composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER)));
         }
     }
-#else // __JHEXEN__ || __JDOOM64__
+#elif __JDOOM64__
     // A single implicit episode.
     EpisodeInfo &info = hexDefs.episodeInfos["1"];
     info.set("startMap", "Maps:MAP01");
+#elif __JHEXEN__
+    // A single implicit episode.
+    EpisodeInfo &info = hexDefs.episodeInfos["1"];
+    info.set("startMap", "@wt:0");
 #endif
 
     // Translate internal "warp trans" numbers to URIs.

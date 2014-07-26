@@ -1133,6 +1133,15 @@ de::Uri HexDefs::translateMapWarpNumber(uint map)
 
 void HexDefs::translateMapWarpNumbers()
 {
+    for(HexDefs::EpisodeInfos::iterator i = hexDefs.episodeInfos.begin(); i != hexDefs.episodeInfos.end(); ++i)
+    {
+        EpisodeInfo &info = i->second;
+        de::Uri startMap(info.gets("startMap", ""), RC_NULL);
+        if(!startMap.scheme().compareWithoutCase("@wt"))
+        {
+            info.set("startMap", translateMapWarpNumber(startMap.path().toStringRef().toInt()).compose());
+        }
+    }
     for(HexDefs::MapInfos::iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
     {
         MapInfo &info = i->second;
@@ -1151,7 +1160,7 @@ EpisodeInfo *P_EpisodeInfo(String id)
 
 EpisodeInfo *P_CurrentEpisodeInfo()
 {
-    return hexDefs.getEpisodeInfo(String::number(::gameEpisode));
+    return hexDefs.getEpisodeInfo(String::number(::gameEpisode + 1));
 }
 
 MapInfo *P_MapInfo(de::Uri const &mapUri)
