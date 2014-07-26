@@ -47,13 +47,16 @@ DENG2_PIMPL(ThinkerData)
 
 DENG2_AUDIENCE_METHOD(ThinkerData, Deletion)
 
-ThinkerData::ThinkerData(thinker_s *self) : d(new Instance(this))
-{
-    d->think = self;
-}
+ThinkerData::ThinkerData() : d(new Instance(this))
+{}
 
 ThinkerData::ThinkerData(ThinkerData const &other) : d(new Instance(this, *other.d))
 {}
+
+void ThinkerData::setThinker(thinker_s *thinker)
+{
+    d->think = thinker;
+}
 
 Thinker::IData *ThinkerData::duplicate() const
 {
@@ -62,11 +65,13 @@ Thinker::IData *ThinkerData::duplicate() const
 
 thinker_s &ThinkerData::thinker()
 {
+    DENG2_ASSERT(d->think != 0);
     return *d->think;
 }
 
 thinker_s const &ThinkerData::thinker() const
 {
+    DENG2_ASSERT(d->think != 0);
     return *d->think;
 }
 

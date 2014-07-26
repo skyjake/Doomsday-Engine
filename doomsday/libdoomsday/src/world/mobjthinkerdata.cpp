@@ -24,9 +24,8 @@ using namespace de;
 DENG2_PIMPL_NOREF(MobjThinkerData)
 {};
 
-MobjThinkerData::MobjThinkerData(mobj_t *mobj)
-    : ThinkerData(&mobj->thinker)
-    , d(new Instance)
+MobjThinkerData::MobjThinkerData()
+    : d(new Instance)
 {}
 
 MobjThinkerData::MobjThinkerData(MobjThinkerData const &other)

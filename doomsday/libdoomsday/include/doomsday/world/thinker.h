@@ -121,7 +121,8 @@ public:
     class LIBDOOMSDAY_PUBLIC IData
     {
     public:
-        virtual ~IData() {}
+        virtual ~IData() {}        
+        virtual void setThinker(thinker_s *thinker) = 0;
         virtual IData *duplicate() const = 0;
 
         DENG2_AS_IS_METHODS()

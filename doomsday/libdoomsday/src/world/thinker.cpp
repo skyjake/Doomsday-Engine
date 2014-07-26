@@ -45,6 +45,8 @@ DENG2_PIMPL_NOREF(Thinker)
         {
             base = reinterpret_cast<thinker_s *>(Z_Calloc(size, PU_MAP, NULL));
         }
+
+        if(data) data->setThinker(base);
     }
 
     Instance(Instance const &other)
@@ -55,6 +57,7 @@ DENG2_PIMPL_NOREF(Thinker)
         , data(other.data? other.data->duplicate() : 0)
     {
         base->d = data;
+        if(data) data->setThinker(base);
     }
 
     Instance(thinker_s *podThinkerToTake, dsize sizeInBytes)
@@ -133,7 +136,7 @@ Thinker::Thinker(thinker_s const &podThinker, dsize sizeInBytes, AllocMethod all
 
     if(podThinker.d)
     {
-        setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());
+        setData(reinterpret_cast<IData *>(podThinker.d)->duplicate());        
     }
 }
 
@@ -250,6 +253,11 @@ void Thinker::setData(Thinker::IData *data)
 
     d->data    = data;
     d->base->d = data;
+
+    if(data)
+    {
+        data->setThinker(*this);
+    }
 }
 
 dd_bool Thinker_InStasis(thinker_s const *thinker)

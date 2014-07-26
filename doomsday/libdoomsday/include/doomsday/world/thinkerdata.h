@@ -36,9 +36,10 @@ public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
 
 public:
-    ThinkerData(thinker_s *self);
+    ThinkerData();
     ThinkerData(ThinkerData const &other);
 
+    void setThinker(thinker_s *thinker);
     IData *duplicate() const;
 
     thinker_s &thinker();

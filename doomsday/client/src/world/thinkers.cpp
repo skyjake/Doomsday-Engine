@@ -401,16 +401,18 @@ static void initPrivateData(thinker_t *th)
     if(Thinker_IsMobjFunc(th->function))
     {
 #ifdef __CLIENT__
-        th->d = new ClientMobjThinkerData((mobj_t *)th);
+        th->d = new ClientMobjThinkerData;
 #else
-        th->d = new MobjThinkerData((mobj_t *)th);
+        th->d = new MobjThinkerData;
 #endif
     }
     else
     {
         // Generic thinker data (Doomsday Script namespace, etc.).
-        th->d = new ThinkerData(th);
+        th->d = new ThinkerData;
     }
+
+    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
 }
 
 static int runThinker(thinker_t *th, void * /*context*/)

@@ -32,7 +32,7 @@
 class MobjThinkerData : public ThinkerData
 {
 public:
-    MobjThinkerData(mobj_t *mobj);
+    MobjThinkerData();
     MobjThinkerData(MobjThinkerData const &other);
 
     IData *duplicate() const;
