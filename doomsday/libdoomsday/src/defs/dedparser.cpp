@@ -1628,27 +1628,70 @@ DENG2_PIMPL(DEDParser)
             }
 
             if(ISTOKEN("Map")) // Info
-            {   // A new map info.
-                uint sub;
-                ded_mapinfo_t* mi;
+            {
+                dd_bool bModify = false;
+                ded_mapinfo_t *mi;
+                Dummy<ded_mapinfo_t> dummyMi;
 
-                idx = DED_AddMapInfo(ded, NULL);
-                mi = &ded->mapInfo[idx];
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // A new map info.
+                    idx = DED_AddMapInfo(ded, NULL);
+                    mi = &ded->mapInfo[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    de::Uri *otherMap = 0;
 
-                // Should we copy the previous definition?
+                    READURI(&otherMap, "Maps");
+                    ReadToken();
+
+                    mi = ded->getMapInfo(otherMap);
+
+                    if(!mi)
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Map %s in %s on line #%i")
+                                << otherMap->asText()
+                                << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+
+                        // We'll read into a dummy definition.
+                        idx = -1;
+                        dummyMi.clear();
+                        mi = &dummyMi;
+                    }
+                    else
+                    {
+                        idx = ded->mapInfo.indexOf(mi);
+                        bModify = true;
+                    }
+                    delete otherMap;
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify.");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+
                 if(prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
+                    // Should we copy the previous definition?
                     ded->mapInfo.copyTo(mi, prevMapInfoDefIdx);
                 }
-                prevMapInfoDefIdx = idx;
-                sub = 0;
 
+                uint sub = 0;
                 FINDBEGIN;
                 for(;;)
                 {
                     READLABEL;
-                    RV_URI("ID", &mi->uri, "Maps")
-                    RV_STR("Name", mi->name)
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READURI(&mi->uri, "Maps");
+                    }
+                    else RV_STR("Name", mi->name)
                     RV_STR("Author", mi->author)
                     RV_FLAGS("Flags", mi->flags, "mif_")
                     RV_STR("Music", mi->music)
@@ -1685,8 +1728,10 @@ DENG2_PIMPL(DEDParser)
                     else if(ISLABEL("Sky Model"))
                     {
                         ded_skymodel_t *sm = &mi->sky.models[sub];
+
                         if(sub == NUM_SKY_MODELS)
-                        {   // Too many!
+                        {
+                            // Too many!
                             setError("Too many Sky models.");
                             retVal = false;
                             goto ded_end_read;
@@ -1712,6 +1757,12 @@ DENG2_PIMPL(DEDParser)
                     }
                     else RV_END
                     CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevMapInfoDefIdx = idx;
                 }
             }
 
