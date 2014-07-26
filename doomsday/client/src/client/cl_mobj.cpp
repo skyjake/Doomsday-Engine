@@ -67,11 +67,6 @@ mobj_t *ClMobjInfo::mobj()
 }
 #endif
 
-void ClMobj_Unlink(mobj_t *mo)
-{
-    Mobj_Unlink(mo);
-}
-
 void ClMobj_Link(mobj_t *mo)
 {
     ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
@@ -216,8 +211,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
 
 dd_bool Cl_IsClientMobj(mobj_t const *mo)
 {
-    if(ClientMobjThinkerData *data = reinterpret_cast<Thinker::IData *>(mo->thinker.d)
-            ->maybeAs<ClientMobjThinkerData>())
+    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
     {
         return data->hasNetworkState();
     }
@@ -247,8 +241,7 @@ ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo)
 {
     if(!mo) return 0;
 
-    if(ClientMobjThinkerData *data = reinterpret_cast<Thinker::IData *>(mo->thinker.d)
-            ->maybeAs<ClientMobjThinkerData>())
+    if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
     {
         if(!data->hasNetworkState()) return 0;
         return &data->networkState();
@@ -397,7 +390,7 @@ void ClMobj_ReadDelta()
        !justCreated && !d->dPlayer)
     {
         needsLinking = true;
-        ClMobj_Unlink(mo);
+        Mobj_Unlink(mo);
     }
 
     // Remember where the mobj used to be in case we need to cancel a move.
@@ -561,7 +554,7 @@ void ClMobj_ReadDelta()
             if(ClMobj_IsStuckInsideLocalPlayer(mo))
             {
                 // Oopsie, on second thought we shouldn't do this move.
-                ClMobj_Unlink(mo);
+                Mobj_Unlink(mo);
                 V3d_Copy(mo->origin, oldState->origin);
                 mo->floorZ = oldState->floorZ;
                 mo->ceilingZ = oldState->ceilingZ;
@@ -606,7 +599,7 @@ void ClMobj_ReadNullDelta()
     // Get rid of this mobj.
     if(!mo->dPlayer)
     {
-        ClMobj_Unlink(mo);
+        Mobj_Unlink(mo);
     }
     else
     {

@@ -873,12 +873,6 @@ public: /// @todo Make private:
     mobj_t *clMobjFor(thid_t id, bool canCreate = false) const;
 
     /**
-     * Destroys the client mobj. Before this is called, the client mobj should be
-     * unlinked from the thinker list by calling <code>thinkers().remove()</code>.
-     */
-    void deleteClMobj(mobj_t *mo);
-
-    /**
      * Iterate all client mobjs, making a callback for each. Iteration ends if a
      * callback returns a non-zero value.
      *

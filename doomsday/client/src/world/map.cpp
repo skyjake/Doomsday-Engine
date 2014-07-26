@@ -108,6 +108,9 @@ struct EditableElements
 
 DENG2_PIMPL(Map)
 , DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(ThinkerData, Deletion)
+#endif
 {
     bool editingEnabled;
     EditableElements editable;
@@ -329,6 +332,12 @@ DENG2_PIMPL(Map)
         while(!clPolyMovers.isEmpty())
         {
             Z_Free(clPolyMovers.takeFirst());
+        }
+
+        // Stop observing client mobjs.
+        foreach(mobj_t *mo, clMobjHash)
+        {
+            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
         }
 #endif
 
@@ -1588,6 +1597,11 @@ DENG2_PIMPL(Map)
             }
         }
     }
+
+    void thinkerBeingDeleted(thinker_s &th)
+    {
+        clMobjHash.remove(th.id);
+    }
 #endif // __CLIENT__
 };
 
@@ -2039,55 +2053,36 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     // Create a new client mobj. This is a regular mobj that has network state
     // associated with it.
 
-    /*
-    void *data       = Z_Malloc(sizeof(ClMobjInfo) + MOBJ_SIZE, PU_MAP, 0);
-    ClMobjInfo *info = new (data) ClMobjInfo;
-    DENG2_UNUSED(info);
-    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
-
-    std::memset(mo, 0, MOBJ_SIZE);
-    mo->ddFlags = DDMF_REMOTE;*/
-
     MobjThinker mo(Thinker::AllocateMemoryZone);
+    mo.id = id;
+    mo.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
+
     ClientMobjThinkerData *data = new ClientMobjThinkerData(mo);
     data->networkState().flags = DDMF_REMOTE;
     mo.setData(data);
 
     d->clMobjHash.insert(id, mo);
+    data->audienceForDeletion() += d; // for removing from the hash
+
     d->thinkers->setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
-    mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
     d->thinkers->add(*(thinker_t *)mo);
 
     return mo.take();
 }
 
-void Map::deleteClMobj(mobj_t *mo)
-{
-    LOG_AS("Map::deleteClMobj");
-
-    if(!mo) return;
-
-    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
-
-    CL_ASSERT_CLMOBJ(mo);
-
-    // Stop any sounds originating from this mobj.
-    S_StopSound(0, mo);
-
-    // The ID is free once again.
-    d->thinkers->setMobjId(mo->thinker.id, false);
-    d->clMobjHash.remove(mo->thinker.id);
-    ClMobj_Unlink(mo); // from block/sector
-
-    MobjThinker::destroy(mo); // delete the mobj + private data
-}
-
 int Map::clMobjIterator(int (*callback)(mobj_t *, void *), void *context)
 {
-    DENG2_FOR_EACH_CONST(ClMobjHash, i, d->clMobjHash)
+    ClMobjHash::const_iterator next;
+    for(ClMobjHash::const_iterator i = d->clMobjHash.constBegin();
+        i != d->clMobjHash.constEnd(); i = next)
     {
+        next = i;
+        next++;
+
+        DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasNetworkState());
+
         // Callback returns zero to continue.
         if(int result = callback(i.value(), context))
             return result;

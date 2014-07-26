@@ -424,21 +424,8 @@ static int runThinker(thinker_t *th, void * /*context*/)
 
         if(th->id)
         {
-            mobj_t *mo = (mobj_t *) th;
-#ifdef __CLIENT__
-            if(!Cl_IsClientMobj(mo))
-            {
-                // It's a regular mobj: recycle for reduced allocation overhead.
-                P_MobjRecycle(mo);
-            }
-            else
-            {
-                // Delete the client mobj.
-                Mobj_Map(*mo).deleteClMobj(mo);
-            }
-#else
-            P_MobjRecycle(mo);
-#endif
+            // Recycle for reduced allocation overhead.
+            P_MobjRecycle((mobj_t *) th);
         }
         else
         {

@@ -46,12 +46,6 @@ ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo);
 dd_bool ClMobj_Reveal(mobj_t *cmo);
 
 /**
- * Unlinks the mobj from sectorlinks and if the object is solid,
- * the blockmap.
- */
-void ClMobj_Unlink(mobj_t *cmo); // needed?
-
-/**
  * Links the mobj into sectorlinks and if the object is solid, the
  * blockmap. Linking to sectorlinks makes the mobj visible and linking
  * to the blockmap makes it possible to interact with it (collide).
