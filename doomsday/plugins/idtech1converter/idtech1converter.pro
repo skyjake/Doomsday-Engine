@@ -16,14 +16,14 @@ deng_debug: DEFINES += DENG_IDTECH1CONVERTER_DEBUG
 INCLUDEPATH += include
 
 HEADERS += \
-    include/id1map.h \
+    include/idtech1converter.h \
+    include/mapimporter.h \
     include/version.h \
-    include/idtech1converter.h
 
 SOURCES += \
-    src/id1map.cpp \
-    src/id1map_loadblockmap.cpp \
-    src/idtech1converter.cpp
+    src/idtech1converter.cpp \
+    src/mapimporter.cpp \
+    src/mapimporter_loadblockmap.cpp
 
 win32 {
     RC_FILE = res/idtech1converter.rc

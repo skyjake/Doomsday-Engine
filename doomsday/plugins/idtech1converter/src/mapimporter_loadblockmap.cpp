@@ -1,4 +1,4 @@
-/** @file id1map_loadblockmap.cpp  id Tech 1 blockmap interpreter.
+/** @file mapconverter_loadblockmap.cpp  Blockmap data converter for id Tech 1 format maps.
  *
  * @ingroup idtech1converter
  *

@@ -1,4 +1,4 @@
-/** @file id1map.h  id Tech 1 map format reader/interpreter.
+/** @file mapimporter.h  Resource importer for id Tech 1 format maps.
  *
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef IDTECH1CONVERTER_ID1MAP_H
-#define IDTECH1CONVERTER_ID1MAP_H
+#ifndef IDTECH1CONVERTER_MAPIMPORTER_H
+#define IDTECH1CONVERTER_MAPIMPORTER_H
 
 #include "dd_types.h"                   // lumpnum_t
 #include <doomsday/filesys/file.h>
@@ -43,11 +43,11 @@ enum MaterialGroup {
 typedef de::StringPool::Id MaterialId;
 
 /**
- * Map resource converter/interpreter for id Tech 1 map format(s).
+ * Resource importer for id Tech 1 format maps.
  *
  * @ingroup idtech1converter
  */
-class Id1Map
+class MapImporter
 {
 public:
     /// Base class for load-related errors. @ingroup errors
@@ -57,7 +57,7 @@ public:
     /**
      * Attempt to construct a new Id1Map from the @a recognized data specified.
      */
-    Id1Map(de::Id1MapRecognizer const &recognized);
+    MapImporter(de::Id1MapRecognizer const &recognized);
 
     /**
      * Transfer the map to Doomsday (i.e., rebuild in native map format via the
@@ -81,4 +81,4 @@ private:
 
 } // namespace idtech1
 
-#endif // IDTECH1CONVERTER_ID1MAP_H
+#endif // IDTECH1CONVERTER_MAPIMPORTER_H

@@ -27,7 +27,7 @@
 #define IDTECH1CONVERTER_H
 
 #include "doomsday.h"
-#include "id1map.h"
+#include "mapimporter.h"
 
 DENG_USING_API(Base);
 DENG_USING_API(F);

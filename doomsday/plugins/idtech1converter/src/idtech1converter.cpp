@@ -52,7 +52,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         // Attempt a conversion...
         try
         {
-            QScopedPointer<Id1Map> map(new Id1Map(recognizer));
+            QScopedPointer<MapImporter> map(new MapImporter(recognizer));
 
             // The archived map data was read successfully.
             // Transfer to the engine via the runtime map editing interface.
@@ -61,7 +61,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
             map->transfer();
             return true; // success
         }
-        catch(Id1Map::LoadError const &er)
+        catch(MapImporter::LoadError const &er)
         {
             LOG_AS("IdTech1Converter");
             LOG_MAP_ERROR("Load error: ") << er.asText();
