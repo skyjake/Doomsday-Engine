@@ -8,30 +8,30 @@ CONFIG += dengplugin_libcore_full
 include(../config_plugin.pri)
 
 TEMPLATE = lib
-TARGET   = wadmapconverter
-VERSION  = $$WADMAPCONVERTER_VERSION
+TARGET   = idtech1converter
+VERSION  = $$IDTECH1CONVERTER_VERSION
 
-deng_debug: DEFINES += DENG_WADMAPCONVERTER_DEBUG
+deng_debug: DEFINES += DENG_IDTECH1CONVERTER_DEBUG
 
 INCLUDEPATH += include
 
 HEADERS += \
     include/id1map.h \
     include/version.h \
-    include/wadmapconverter.h
+    include/idtech1converter.h
 
 SOURCES += \
     src/id1map.cpp \
     src/id1map_loadblockmap.cpp \
-    src/wadmapconverter.cpp
+    src/idtech1converter.cpp
 
 win32 {
-    RC_FILE = res/wadmapconverter.rc
+    RC_FILE = res/idtech1converter.rc
 
-    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpwadmapconverter.def\"
-    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpwadmapconverter.def\"
+    deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/dpidtech1converter.def\"
+    deng_mingw: QMAKE_LFLAGS += --def \"$$PWD/api/dpidtech1converter.def\"
 
-    OTHER_FILES += api/dpwadmapconverter.def
+    OTHER_FILES += api/dpidtech1converter.def
 }
 
 !macx {

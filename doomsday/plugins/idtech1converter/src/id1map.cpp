@@ -29,7 +29,7 @@
 #include <de/Reader>
 #include <de/Time>
 #include <de/Vector>
-#include "wadmapconverter.h"
+#include "idtech1converter.h"
 
 using namespace de;
 

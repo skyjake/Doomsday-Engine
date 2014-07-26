@@ -46,7 +46,7 @@ rm -rf $PLUGDIR
 mkdir -p $PLUGDIR
 $CP plugins/dehread/dehread.bundle                     $PLUGDIR/
 $CP plugins/savegameconverter/savegameconverter.bundle $PLUGDIR/
-$CP plugins/wadmapconverter/wadmapconverter.bundle     $PLUGDIR/
+$CP plugins/idtech1converter/idtech1converter.bundle   $PLUGDIR/
 $CP plugins/doom/doom.bundle                           $PLUGDIR/
 $CP plugins/heretic/heretic.bundle                     $PLUGDIR/
 $CP plugins/hexen/hexen.bundle                         $PLUGDIR/

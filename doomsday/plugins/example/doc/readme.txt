@@ -17,7 +17,7 @@ the possibility of providing extended functionality not present in the
 engine itself and/or access to the engine's public API for other means.
 
 Various plugins are developed alongside the Doomsday Engine itself (such
-as WadMapConverter and DehRead) and are distributed with it.
+as IdTech1Converter and DehRead) and are distributed with it.
 
 The Doomsday API and its plugin system are public interfaces, making it
 possible to either completely replace existing plugins (for example, a

@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef WADMAPCONVERTER_ID1MAP_H
-#define WADMAPCONVERTER_ID1MAP_H
+#ifndef IDTECH1CONVERTER_ID1MAP_H
+#define IDTECH1CONVERTER_ID1MAP_H
 
 #include "dd_types.h"                   // lumpnum_t
 #include <doomsday/filesys/file.h>
@@ -45,7 +45,7 @@ typedef de::StringPool::Id MaterialId;
 /**
  * Map resource converter/interpreter for id Tech 1 map format(s).
  *
- * @ingroup wadmapconverter
+ * @ingroup idtech1converter
  */
 class Id1Map
 {
@@ -81,4 +81,4 @@ private:
 
 } // namespace wadimp
 
-#endif // WADMAPCONVERTER_ID1MAP_H
+#endif // IDTECH1CONVERTER_ID1MAP_H
