@@ -51,6 +51,9 @@
 /**
  * Private client-side data for mobjs. This includes any per-object state for rendering
  * and client-side network state.
+ *
+ * @todo Lumobj objects (light source interfaces) should be moved into this class, so
+ * that they can exist across frames. -jk
  */
 class ClientMobjThinkerData : public MobjThinkerData
 {
@@ -71,7 +74,7 @@ public:
     };
 
 public:
-    ClientMobjThinkerData(mobj_t *mobj);
+    ClientMobjThinkerData();
     ClientMobjThinkerData(ClientMobjThinkerData const &other);
 
     IData *duplicate() const;

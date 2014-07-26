@@ -36,12 +36,11 @@ DENG2_PIMPL(ClientMobjThinkerData)
     }
 };
 
-ClientMobjThinkerData::ClientMobjThinkerData(mobj_t *mobj)
-    : MobjThinkerData(mobj)
-    , d(new Instance(this))
+ClientMobjThinkerData::ClientMobjThinkerData()
+    : d(new Instance(this))
 {}
 
-ClientMobjThinkerData::ClientMobjThinkerData(const ClientMobjThinkerData &other)
+ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
     : MobjThinkerData(other)
     , d(new Instance(this, *other.d))
 {}

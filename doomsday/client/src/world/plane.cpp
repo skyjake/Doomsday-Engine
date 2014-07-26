@@ -23,6 +23,7 @@
 
 #include "dd_loop.h" // frameTimePos
 #include "world/map.h"
+#include "world/thinkers.h"
 #include "world/worldsystem.h" /// ddMapSetup
 #include "Surface"
 #include "Sector"
@@ -43,6 +44,7 @@ DENG2_PIMPL(Plane)
     coord_t oldHeight[2];        ///< @em sharp height change tracking buffer (for smoothing).
     coord_t heightSmoothed;      ///< @ref height (smoothed).
     coord_t heightSmoothedDelta; ///< Delta between the current @em sharp height and the visual height.
+    ClPlaneMover *mover;         ///< The current mover.
 #endif
 
     Instance(Public *i, coord_t height)
@@ -55,6 +57,7 @@ DENG2_PIMPL(Plane)
 #ifdef __CLIENT__
         , heightSmoothed(height)
         , heightSmoothedDelta(0)
+        , mover(0)
 #endif
     {
 #ifdef __CLIENT__
@@ -359,6 +362,33 @@ void Plane::spawnParticleGen(ded_ptcgen_t const *def)
     // Is there a need to pre-simulate?
     gen->presimulate(def->preSim);
 }
+
+void Plane::addMover(ClPlaneMover &mover)
+{
+    // Forcibly remove the existing mover for this plane.
+    if(d->mover)
+    {
+        LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
+                << &d->mover->thinker()
+                << sector().indexInMap()
+                << indexInSector();
+
+        map().thinkers().remove(d->mover->thinker());
+
+        DENG2_ASSERT(!d->mover);
+    }
+
+    d->mover = &mover;
+}
+
+void Plane::removeMover(ClPlaneMover &mover)
+{
+    if(d->mover == &mover)
+    {
+        d->mover = 0;
+    }
+}
+
 #endif // __CLIENT__
 
 int Plane::property(DmuArgs &args) const

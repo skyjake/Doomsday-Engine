@@ -679,19 +679,6 @@ public:
      */
     void expireClMobjs();
 
-    void clearClMovers();
-
-    /**
-     * Allocate a new client-side plane mover.
-     *
-     * @return  The new mover or @c NULL if arguments are invalid.
-     */
-    ClPlaneMover *newClPlaneMover(Plane &plane, coord_t dest, float speed);
-
-    void deleteClPlaneMover(ClPlaneMover *mover);
-
-    ClPlaneMover *clPlaneMoverFor(Plane &plane);
-
     /**
      * Find/create a ClPolyMover for @a polyobj.
      *

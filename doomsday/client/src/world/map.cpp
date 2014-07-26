@@ -285,9 +285,6 @@ DENG2_PIMPL(Map)
 
     ClMobjHash clMobjHash;
 
-    typedef QList<ClPlaneMover *> ClPlaneMovers;
-    ClPlaneMovers clPlaneMovers;
-
     typedef QList<ClPolyMover *> ClPolyMovers;
     ClPolyMovers clPolyMovers;
 #endif
@@ -323,12 +320,7 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
 
-#ifdef __CLIENT__
-        while(!clPlaneMovers.isEmpty())
-        {
-            Z_Free(clPlaneMovers.takeFirst());
-        }
-
+#ifdef __CLIENT__        
         while(!clPolyMovers.isEmpty())
         {
             Z_Free(clPolyMovers.takeFirst());
@@ -342,9 +334,6 @@ DENG2_PIMPL(Map)
 #endif
 
         /// @todo fixme: Free all memory we have ownership of.
-        // Client only data:
-        // mobjHash/
-        // End client only data.
         // mobjNodes/lineNodes/lineLinks
     }
 
@@ -2057,7 +2046,7 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     mo.id = id;
     mo.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
 
-    ClientMobjThinkerData *data = new ClientMobjThinkerData(mo);
+    ClientMobjThinkerData *data = new ClientMobjThinkerData;
     data->networkState().flags = DDMF_REMOTE;
     mo.setData(data);
 
@@ -3362,107 +3351,6 @@ void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
     clMobjIterator(expireClMobjsWorker, &nowTime);
-}
-
-void Map::clearClMovers()
-{
-    while(!d->clPlaneMovers.isEmpty())
-    {
-        ClPlaneMover *mover = d->clPlaneMovers.takeFirst();
-        thinkers().remove(mover->thinker);
-        Z_Free(mover);
-    }
-
-    while(!d->clPolyMovers.isEmpty())
-    {
-        ClPolyMover *mover = d->clPolyMovers.takeFirst();
-        thinkers().remove(mover->thinker);
-        Z_Free(mover);
-    }
-}
-
-ClPlaneMover *Map::clPlaneMoverFor(Plane &plane)
-{
-    /// @todo optimize: O(n) lookup.
-    foreach(ClPlaneMover *mover, d->clPlaneMovers)
-    {
-        if(mover->plane == &plane)
-            return mover;
-    }
-    return 0; // Not found.
-}
-
-ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
-{
-    LOG_AS("Map::newClPlaneMover");
-
-    // Ignore planes not currently attributed to the map.
-    if(&plane.map() != this)
-    {
-        qDebug() << "Ignoring alien plane" << de::dintptr(&plane) << "in Map::newClPlane";
-        return 0;
-    }
-
-    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
-            << plane.sector().indexInMap() << plane.indexInSector()
-            << dest << speed;
-
-    // Remove any existing movers for the same plane.
-    for(int i = 0; i < d->clPlaneMovers.count(); ++i)
-    {
-        ClPlaneMover *mover = d->clPlaneMovers[i];
-        if(mover->plane == &plane)
-        {
-            LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
-                    << mover << plane.sector().indexInMap()
-                    << plane.indexInSector();
-
-            deleteClPlaneMover(mover);
-        }
-    }
-
-    // Add a new mover.
-    ClPlaneMover *mov = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, 0);
-    d->clPlaneMovers.append(mov);
-
-    mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
-    mov->plane       = &plane;
-    mov->destination = dest;
-    mov->speed       = speed;
-
-    // Set the right sign for speed.
-    if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
-    {
-        mov->speed = -mov->speed;
-    }
-
-    // Update speed and target height.
-    P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
-    P_SetFloatp(&plane, DMU_SPEED, speed);
-
-    thinkers().add(mov->thinker, false /*not public*/);
-
-    // Immediate move?
-    if(de::fequal(speed, 0))
-    {
-        // This will remove the thinker immediately if the move is ok.
-        ClPlaneMover_Thinker(mov);
-    }
-
-    LOGDEV_MAP_XVERBOSE("New mover %p") << mov;
-    return mov;
-}
-
-void Map::deleteClPlaneMover(ClPlaneMover *mover)
-{
-    LOG_AS("Map::deleteClPlaneMover");
-
-    if(!mover) return;
-
-    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
-            << mover << mover->plane->sector().indexInMap();
-    thinkers().remove(mover->thinker);
-    d->clPlaneMovers.removeOne(mover);
 }
 
 ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)

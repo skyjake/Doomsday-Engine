@@ -24,64 +24,111 @@
 #include "client/cl_player.h"
 
 #include "world/map.h"
+#include "world/thinkers.h"
 #include "world/p_players.h"
 #include "Sector"
 
 using namespace de;
 
-void ClPlaneMover_Thinker(ClPlaneMover *mover)
+thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // static
 {
-    LOG_AS("ClPlaneMover_Thinker");
+    Thinker th(Thinker::AllocateMemoryZone);
+    th.function = (thinkfunc_t) thinkerFunc;
+    th.setData(new ClPlaneMover(plane, dest, speed));
+
+    // Add to the map.
+    plane.map().thinkers().add(th.base(), false /* not public */);
+    LOGDEV_MAP_XVERBOSE("New mover %p") << &th.base();
+
+    // Immediate move?
+    if(fequal(speed, 0))
+    {
+        // This will remove the thinker immediately if the move is ok.
+        th.data().as<ClPlaneMover>().think();
+    }
+
+    return th.take();
+}
+
+void ClPlaneMover::thinkerFunc(thinker_s *mover) // static
+{
+    THINKER_DATA(*mover, ClPlaneMover).think();
+}
+
+ClPlaneMover::ClPlaneMover(Plane &plane, coord_t dest, float speed)
+    : _plane       (&plane)
+    , _destination ( dest )
+    , _speed       ( speed)
+{
+    // Set the right sign for speed.
+    if(_destination < P_GetDoublep(_plane, DMU_HEIGHT))
+    {
+        _speed = -_speed;
+    }
+
+    // Update speed and target height.
+    P_SetDoublep(_plane, DMU_TARGET_HEIGHT, _destination);
+    P_SetFloatp(_plane, DMU_SPEED, _speed);
+
+    _plane->addMover(*this);
+}
+
+ClPlaneMover::~ClPlaneMover()
+{
+    _plane->removeMover(*this);
+}
+
+void ClPlaneMover::think()
+{
+    LOG_AS("ClPlaneMover::think");
 
     // Can we think yet?
     if(!Cl_GameReady()) return;
 
-    DENG2_ASSERT(mover->plane != 0);
-    Plane *plane = mover->plane;
+    DENG2_ASSERT(_plane != 0);
 
     // The move is cancelled if the consolePlayer becomes obstructed.
     bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
-    float const fspeed = mover->speed;
 
     // How's the gap?
     bool remove = false;
-    coord_t const original = P_GetDoublep(plane, DMU_HEIGHT);
-    if(de::abs(fspeed) > 0 && de::abs(mover->destination - original) > de::abs(fspeed))
+    coord_t const original = P_GetDoublep(_plane, DMU_HEIGHT);
+    if(de::abs(_speed) > 0 && de::abs(_destination - original) > de::abs(_speed))
     {
         // Do the move.
-        P_SetDoublep(plane, DMU_HEIGHT, original + fspeed);
+        P_SetDoublep(_plane, DMU_HEIGHT, original + _speed);
     }
     else
     {
         // We have reached the destination.
-        P_SetDoublep(plane, DMU_HEIGHT, mover->destination);
+        P_SetDoublep(_plane, DMU_HEIGHT, _destination);
 
         // This thinker can now be removed.
         remove = true;
     }
 
     LOGDEV_MAP_XVERBOSE_DEBUGONLY("plane height %f in sector #%i",
-            P_GetDoublep(plane, DMU_HEIGHT)
-            << plane->sector().indexInMap());
+            P_GetDoublep(_plane, DMU_HEIGHT)
+            << _plane->sector().indexInMap());
 
     // Let the game know of this.
     if(gx.SectorHeightChangeNotification)
     {
-        gx.SectorHeightChangeNotification(plane->sector().indexInMap());
+        gx.SectorHeightChangeNotification(_plane->sector().indexInMap());
     }
 
     // Make sure the client didn't get stuck as a result of this move.
     if(freeMove != ClPlayer_IsFreeToMove(consolePlayer))
     {
         LOG_MAP_VERBOSE("move blocked in sector #%i, undoing move")
-                << plane->sector().indexInMap();
+                << _plane->sector().indexInMap();
 
         // Something was blocking the way! Go back to original height.
-        P_SetDoublep(plane, DMU_HEIGHT, original);
+        P_SetDoublep(_plane, DMU_HEIGHT, original);
 
         if(gx.SectorHeightChangeNotification)
         {
-            gx.SectorHeightChangeNotification(plane->sector().indexInMap());
+            gx.SectorHeightChangeNotification(_plane->sector().indexInMap());
         }
     }
     else
@@ -90,12 +137,12 @@ void ClPlaneMover_Thinker(ClPlaneMover *mover)
         if(remove)
         {
             LOG_MAP_VERBOSE("finished in sector #%i")
-                    << plane->sector().indexInMap();
+                    << _plane->sector().indexInMap();
 
             // It stops.
-            P_SetDoublep(plane, DMU_SPEED, 0);
+            P_SetDoublep(_plane, DMU_SPEED, 0);
 
-            plane->map().deleteClPlaneMover(mover);
+            _plane->map().thinkers().remove(thinker()); // this is deleted
         }
     }
 }
