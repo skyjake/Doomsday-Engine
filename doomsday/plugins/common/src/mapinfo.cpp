@@ -421,8 +421,6 @@ DENG2_PIMPL(MapInfoParser)
                 info->set("map", mapUri.compose());
 
                 // Attempt to extract the "warp translation" number.
-                /// @todo Define a sensible default should the map identifier not
-                /// follow the default MAPXX form (what does ZDoom do here?) -ds
                 info->set("warpTrans", G_MapNumberFor(mapUri));
             }
 
