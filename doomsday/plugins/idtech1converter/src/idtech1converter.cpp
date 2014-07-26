@@ -24,7 +24,7 @@
 #include <de/Log>
 
 using namespace de;
-using namespace wadimp;
+using namespace idtech1;
 
 /**
  * This function will be called when Doomsday is asked to load a map that is not

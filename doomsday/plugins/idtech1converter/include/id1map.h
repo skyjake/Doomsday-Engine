@@ -30,7 +30,7 @@
 #include <de/StringPool>
 #include <QMap>
 
-namespace wadimp {
+namespace idtech1 {
 
 class MaterialDict;
 
@@ -79,6 +79,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace wadimp
+} // namespace idtech1
 
 #endif // IDTECH1CONVERTER_ID1MAP_H
