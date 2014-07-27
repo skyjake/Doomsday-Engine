@@ -1,9 +1,9 @@
 /** @file gl_main.cpp GL-Graphics Subsystem
  * @ingroup gl
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -643,24 +643,27 @@ void GL_TotalRestore()
     //Con_Resize();
 
     /// @todo fixme: Should this use the default MapInfo def if none found? -ds
-    ded_mapinfo_t *mapInfo = 0;
+    defn::MapInfo mapInfo;
     if(App_WorldSystem().hasMap())
     {
         if(MapDef *mapDef = App_WorldSystem().map().def())
         {
             de::Uri const mapUri = mapDef->composeUri();
-            mapInfo = defs.getMapInfoNum(&mapUri);
+            int idx = defs.getMapInfoNum(&mapUri);
+            if(idx >= 0) mapInfo = &defs.mapInfos[idx];
         }
     }
 
     // Restore map's fog settings.
-    if(!mapInfo || !(mapInfo->flags & MIF_FOG))
+    if(!mapInfo || !(mapInfo.geti("flags") & MIF_FOG))
     {
         R_SetupFogDefaults();
     }
     else
     {
-        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
+        Vector3f colorVec(mapInfo.get("fogColor"));
+        float color[] = { colorVec.x, colorVec.y, colorVec.z };
+        R_SetupFog(mapInfo.getf("fogStart"), mapInfo.getf("fogEnd"), mapInfo.getf("fogDensity"), color);
     }
 
 #if _DEBUG

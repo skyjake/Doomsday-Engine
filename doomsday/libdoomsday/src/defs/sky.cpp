@@ -33,7 +33,7 @@ void Sky::resetToDefaults()
     // Add all expected fields with their default values.
     _def->addText  ("id", "");
     _def->addNumber("flags", 0);
-    _def->addNumber("height", .666667f);
+    _def->addNumber("height", DEFAULT_SKY_HEIGHT);
     _def->addNumber("horizonOffset", 0);
     _def->addArray ("color", new ArrayValue(Vector3f()));
     _def->addArray ("layer", new ArrayValue);
@@ -70,8 +70,8 @@ Record &Sky::addLayer()
 
     def->addNumber("flags", 0);
     def->addText  ("material", "");
-    def->addNumber("offset", 0);
-    def->addNumber("colorLimit", .3f);
+    def->addNumber("offset", DEFAULT_SKY_SPHERE_XOFFSET);
+    def->addNumber("colorLimit", DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
     (*_def)["layer"].value<ArrayValue>()
             .add(new RecordValue(def, RecordValue::OwnsRecord));

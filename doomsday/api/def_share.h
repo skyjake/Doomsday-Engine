@@ -2,8 +2,8 @@
  * @file def_share.h
  * Shared definition data structures and constants. @ingroup defs
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -119,9 +119,10 @@ typedef struct {
 #define MIF_NO_INTERMISSION 0x4 ///< Skip any intermission between maps.
 ///@}
 
+/// @todo Directly access the engine's DED database instead -ds
 typedef struct {
-    char*           name;
-    char*           author;
+    AutoStr        *name;
+    AutoStr        *author;
     int             music;
     int             flags; ///< MIF_* flags.
     float           ambient;

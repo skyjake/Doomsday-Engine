@@ -1,7 +1,7 @@
 /** @file def_main.cpp  Definitions Subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -44,6 +44,7 @@
 
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
+#include <doomsday/defs/sky.h>
 #include <de/App>
 #include <de/NativePath>
 #include <QTextStream>
@@ -273,6 +274,7 @@ ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
     return defs.getValueByUri(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
+#if 0
 ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
     return defs.getMapInfoNum(reinterpret_cast<de::Uri const *>(_uri));
@@ -282,6 +284,7 @@ ded_sky_t* Def_GetSky(char const* id)
 {
     return defs.getSky(id);
 }
+#endif
 
 ded_compositefont_t* Def_GetCompositeFont(const char* uri)
 {
@@ -1540,17 +1543,19 @@ void Def_Read()
     }
 
     // Map infos.
-    for(int i = 0; i < defs.mapInfo.size(); ++i)
+    for(int i = 0; i < defs.mapInfos.size(); ++i)
     {
-        ded_mapinfo_t *mi = &defs.mapInfo[i];
+        Record &mi = defs.mapInfos[i];
 
         /**
          * Historically, the map info flags field was used for sky flags,
          * here we copy those flags to the embedded sky definition for
          * backward-compatibility.
          */
-        if(mi->flags & MIF_DRAW_SPHERE)
-            mi->sky.flags |= SIF_DRAW_SPHERE;
+        if(mi.geti("flags") & MIF_DRAW_SPHERE)
+        {
+            mi.set("sky.flags", mi.geti("sky.flags") | SIF_DRAW_SPHERE);
+        }
     }
 
     // Log a summary of the definition database.
@@ -1931,10 +1936,8 @@ void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
     LOOPi(2) s->ceilInterval[i] = def->ceilInterval[i];
 }
 
-int Def_Get(int type, const char* id, void* out)
+int Def_Get(int type, char const *id, void *out)
 {
-    int i;
-
     switch(type)
     {
     case DD_DEF_MOBJ:
@@ -1958,12 +1961,12 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_SOUND_BY_NAME:
         return defs.getSoundNumForName(id);
 
-    case DD_DEF_SOUND_LUMPNAME:
-        i = *((long*) id);
+    case DD_DEF_SOUND_LUMPNAME: {
+        int i = *((long *) id);
         if(i < 0 || i >= runtimeDefs.sounds.size())
             return false;
         strcpy((char*)out, runtimeDefs.sounds[i].lumpName);
-        return true;
+        return true; }
 
     case DD_DEF_MUSIC:
         return Def_GetMusicNum(id);
@@ -1976,32 +1979,34 @@ int Def_Get(int type, const char* id, void* out)
         return false;
 
     case DD_DEF_MAP_INFO: {
-        ddmapinfo_t *mout;
-        struct uri_s *mapUri = Uri_NewWithPath2(id, RC_NULL);
-        ded_mapinfo_t *map   = Def_GetMapInfo(mapUri);
+        de::Uri mapUri(id, RC_NULL);
+        int idx = defs.getMapInfoNum(&mapUri);
+        if(idx < 0) return false;
 
-        Uri_Delete(mapUri);
-        if(!map) return false;
+        Record const &mapInfo = defs.mapInfos[idx];
+        ddmapinfo_t *mout = (ddmapinfo_t *) out;
+        mout->name       = AutoStr_FromTextStd(mapInfo.gets("title").toUtf8().constData());
+        mout->author     = AutoStr_FromTextStd(mapInfo.gets("author").toUtf8().constData());
+        mout->music      = Def_GetMusicNum(mapInfo.gets("music").toUtf8().constData());
+        mout->flags      = mapInfo.geti("flags");
+        mout->ambient    = mapInfo.getf("ambient");
+        mout->gravity    = mapInfo.getf("gravity");
+        mout->parTime    = mapInfo.getf("parTime");
+        mout->fogStart   = mapInfo.getf("fogStart");
+        mout->fogEnd     = mapInfo.getf("fogEnd");
+        mout->fogDensity = mapInfo.getf("fogDensity");
 
-        mout = (ddmapinfo_t *) out;
-        mout->name       = map->name;
-        mout->author     = map->author;
-        mout->music      = Def_GetMusicNum(map->music);
-        mout->flags      = map->flags;
-        mout->ambient    = map->ambient;
-        mout->gravity    = map->gravity;
-        mout->parTime    = map->parTime;
-        mout->fogStart   = map->fogStart;
-        mout->fogEnd     = map->fogEnd;
-        mout->fogDensity = map->fogDensity;
-        memcpy(mout->fogColor, map->fogColor, sizeof(mout->fogColor));
+        Vector3f fogColor(mapInfo.get("fogColor"));
+        mout->fogColor[0] = fogColor.x;
+        mout->fogColor[1] = fogColor.y;
+        mout->fogColor[2] = fogColor.z;
         return true; }
 
     case DD_DEF_TEXT:
         if(id && id[0])
         {
             // Read backwards to allow patching.
-            for(i = defs.text.size() - 1; i >= 0; i--)
+            for(int i = defs.text.size() - 1; i >= 0; i--)
             {
                 if(stricmp(defs.text[i].id, id)) continue;
                 if(out) *(char**) out = defs.text[i].text;
@@ -2035,8 +2040,8 @@ int Def_Get(int type, const char* id, void* out)
         return false; }
 
     case DD_DEF_FINALE: { // Find InFine script by ID.
-        finalescript_t* fin = (finalescript_t*) out;
-        for(i = defs.finales.size() - 1; i >= 0; i--)
+        finalescript_t *fin = (finalescript_t *) out;
+        for(int i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(stricmp(defs.finales[i].id, id)) continue;
 
@@ -2053,7 +2058,7 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_FINALE_BEFORE: {
         finalescript_t *fin = (finalescript_t *) out;
         de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.finales.size() - 1; i >= 0; i--)
+        for(int i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(!defs.finales[i].before || *defs.finales[i].before != *uri) continue;
 
@@ -2072,7 +2077,7 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_FINALE_AFTER: {
         finalescript_t *fin = (finalescript_t *) out;
         de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.finales.size() - 1; i >= 0; i--)
+        for(int i = defs.finales.size() - 1; i >= 0; i--)
         {
             if(!defs.finales[i].after || *defs.finales[i].after != *uri) continue;
 
@@ -2090,26 +2095,25 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.lineTypes.size() - 1; i >= 0; i--)
+        for(int i = defs.lineTypes.size() - 1; i >= 0; i--)
         {
             if(defs.lineTypes[i].id != typeId) continue;
             if(out) Def_CopyLineType((linetype_t*)out, &defs.lineTypes[i]);
             return true;
         }
-        return false;
-      }
+        return false; }
+
     case DD_DEF_SECTOR_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.sectorTypes.size() - 1; i >= 0; i--)
+        for(int i = defs.sectorTypes.size() - 1; i >= 0; i--)
         {
             if(defs.sectorTypes[i].id != typeId) continue;
             if(out) Def_CopySectorType((sectortype_t*)out, &defs.sectorTypes[i]);
             return true;
         }
-        return false;
-      }
-    default:
-        return false;
+        return false; }
+
+    default: return false;
     }
 }
 

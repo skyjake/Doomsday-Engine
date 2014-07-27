@@ -72,6 +72,8 @@
 #include <de/aabox.h>
 #include <de/vector1.h>
 #include <de/timer.h>
+#include <doomsday/defs/mapinfo.h>
+#include <doomsday/defs/sky.h>
 #include <QBitArray>
 #include <QVarLengthArray>
 
@@ -3216,25 +3218,27 @@ void Map::update()
 #endif // __CLIENT__
 
     // Reapply values defined in MapInfo (they may have changed).
-    ded_mapinfo_t *mapInfo = 0;
+    defn::MapInfo mapInfo;
 
     if(MapDef *mapDef = d->def)
     {
         Uri const mapUri = mapDef->composeUri();
-        mapInfo = defs.getMapInfoNum(&mapUri);
+        int idx = defs.getMapInfoNum(&mapUri);
+        if(idx >= 0) mapInfo = defs.mapInfos[idx];
     }
 
     if(!mapInfo)
     {
         // Use the default def instead.
         Uri const defaultDefUri("Maps", Path("*"));
-        mapInfo = defs.getMapInfoNum(&defaultDefUri);
+        int idx = defs.getMapInfoNum(&defaultDefUri);
+        if(idx >= 0) mapInfo = defs.mapInfos[idx];
     }
 
     if(mapInfo)
     {
-        _globalGravity     = mapInfo->gravity;
-        _ambientLightLevel = mapInfo->ambient * 255;
+        _globalGravity     = mapInfo.getf("gravity");
+        _ambientLightLevel = mapInfo.getf("ambient") * 255;
     }
     else
     {
@@ -3250,13 +3254,18 @@ void Map::update()
     /// @todo Sky needs breaking up into multiple components. There should be
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
-    ded_sky_t *skyDef = 0;
     if(mapInfo)
     {
-        skyDef = Def_GetSky(mapInfo->skyID);
-        if(!skyDef) skyDef = &mapInfo->sky;
+        defn::Sky skyDef;
+        int skyIdx = defs.getSkyNum(mapInfo.gets("skyId").toUtf8().constData());
+        if(skyIdx >= 0) skyDef = defs.skies[skyIdx];
+        else            skyDef = mapInfo.subrecord("sky");
+        theSky->configure(&skyDef);
     }
-    theSky->configure(skyDef);
+    else
+    {
+        theSky->configureDefault();
+    }
 #endif
 }
 

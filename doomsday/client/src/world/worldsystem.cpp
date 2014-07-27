@@ -460,25 +460,27 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        ded_mapinfo_t *mapInfo = 0;
+        defn::MapInfo mapInfo;
 
         if(MapDef *mapDef = map->def())
         {
             Uri const mapUri = mapDef->composeUri();
-            mapInfo = defs.getMapInfoNum(&mapUri);
+            int idx = defs.getMapInfoNum(&mapUri);
+            if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 
         if(!mapInfo)
         {
             // Use the default def instead.
             Uri const defaultMapUri("Maps", Path("*"));
-            mapInfo = defs.getMapInfoNum(&defaultMapUri);
+            int idx = defs.getMapInfoNum(&defaultMapUri);
+            if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 
         if(mapInfo)
         {
-            map->_globalGravity     = mapInfo->gravity;
-            map->_ambientLightLevel = mapInfo->ambient * 255;
+            map->_globalGravity     = mapInfo.getf("gravity");
+            map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
         }
         else
         {
@@ -491,13 +493,18 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         // Reconfigure the sky.
-        ded_sky_t *skyDef = 0;
         if(mapInfo)
         {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef) skyDef = &mapInfo->sky;
+            defn::Sky skyDef;
+            int skyIdx = defs.getSkyNum(mapInfo.gets("skyId").toUtf8().constData());
+            if(skyIdx >= 0) skyDef = defs.skies[skyIdx];
+            else            skyDef = mapInfo.subrecord("sky");
+            theSky->configure(&skyDef);
         }
-        theSky->configure(skyDef);
+        else
+        {
+            theSky->configureDefault();
+        }
 #endif
 
         // Init the thinker lists (public and private).
@@ -619,9 +626,13 @@ DENG2_PIMPL(WorldSystem)
          */
 
         // Run any commands specified in MapInfo.
-        if(mapInfo && mapInfo->execute)
+        if(mapInfo)
         {
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
+            String execute = mapInfo.gets("execute");
+            if(!execute.isEmpty())
+            {
+                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+            }
         }
 
         // Run the special map setup command, which the user may alias to do

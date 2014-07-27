@@ -1,7 +1,7 @@
 /** @file sky.cpp  Sky sphere and 3D models.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -196,7 +196,7 @@ DENG2_PIMPL(Sky)
 
     struct ModelInfo
     {
-        ded_skymodel_t const *def;
+        Record const *def; // Sky model def
         ModelDef *model;
         int frame;
         int timer;
@@ -328,7 +328,7 @@ DENG2_PIMPL(Sky)
         // The normal sphere is used if no models will be set up.
         haveModels = false;
 
-        for(int i = 0; i < def.modelCount(); ++i, minfo++)
+        for(int i = 0; i < def.modelCount(); ++i)
         {
             Record const &modef = def.model(i);
             ModelInfo *minfo = &models[i];
@@ -345,7 +345,7 @@ DENG2_PIMPL(Sky)
                 // There is a model here.
                 haveModels = true;
 
-                minfo->def      = &modef;
+                minfo->def      = modef.accessedRecordPtr();
                 minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
                 minfo->yaw      = modef.getf("yaw");
                 minfo->frame    = minfo->model->subModelDef(0).frame;
@@ -366,12 +366,12 @@ DENG2_PIMPL(Sky)
         // Setup basic translation.
         glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
 
-        for(int i = 0; i < NUM_SKY_MODELS; ++i)
+        for(int i = 0; i < MAX_SKY_MODELS; ++i)
         {
             ModelInfo &minfo = models[i];
             if(!minfo.def) continue;
 
-            if(!self.layer(minfo.def->layer + 1).isActive())
+            if(!self.layer(minfo.def->geti("layer") + 1).isActive())
             {
                 continue;
             }
@@ -381,23 +381,28 @@ DENG2_PIMPL(Sky)
             drawmodelparams_t parms; zap(parms);
 
             // Calculate the coordinates for the model.
-            parms.origin[VX]        = vOrigin.x * -minfo.def->coordFactor[VX];
-            parms.origin[VY]        = vOrigin.z * -minfo.def->coordFactor[VZ];
-            parms.origin[VZ]        = vOrigin.y * -minfo.def->coordFactor[VY];
+            Vector3f originOffset(minfo.def->get("originOffset"));
+            parms.origin[VX]        = vOrigin.x * -originOffset.x;
+            parms.origin[VY]        = vOrigin.z * -originOffset.z;
+            parms.origin[VZ]        = vOrigin.y * -originOffset.y;
             parms.gzt               = parms.origin[VZ];
             parms.distance          = 1;
 
-            parms.extraYawAngle     = parms.yawAngleOffset   = minfo.def->rotate[0];
-            parms.extraPitchAngle   = parms.pitchAngleOffset = minfo.def->rotate[1];
+            Vector2f rotate(minfo.def->get("rotate"));
+            parms.extraYawAngle     = parms.yawAngleOffset   = rotate.x;
+            parms.extraPitchAngle   = parms.pitchAngleOffset = rotate.y;
             parms.inter             = inter;
             parms.mf                = minfo.model;
             parms.alwaysInterpolate = true;
             App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
             parms.yaw               = minfo.yaw;
+
+            Vector3f ambientColor(minfo.def->get("color"));
             for(int c = 0; c < 4; ++c)
             {
-                parms.ambientColor[c] = minfo.def->color[c];
+                parms.ambientColor[c] = ambientColor[c];
             }
+
             parms.vLightListIdx     = 0;
             parms.shineTranslateWithViewerPos = true;
 
@@ -609,7 +614,7 @@ void Sky::runTick()
         if(!minfo.def) continue;
 
         // Rotate the model.
-        minfo.yaw += minfo.def->yawSpeed / TICSPERSEC;
+        minfo.yaw += minfo.def->getf("yawSpeed") / TICSPERSEC;
 
         // Is it time to advance to the next frame?
         if(minfo.maxTimer > 0 && ++minfo.timer >= minfo.maxTimer)
@@ -618,9 +623,10 @@ void Sky::runTick()
             minfo.timer = 0;
 
             // Execute a console command?
-            if(minfo.def->execute)
+            String const execute = minfo.def->gets("execute");
+            if(!execute.isEmpty())
             {
-                Con_Execute(CMDS_SCRIPT, minfo.def->execute, true, false);
+                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
             }
         }
     }

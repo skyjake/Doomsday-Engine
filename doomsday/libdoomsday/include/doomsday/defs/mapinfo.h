@@ -22,6 +22,14 @@
 #include "../libdoomsday.h"
 #include <de/RecordAccessor>
 
+/// @todo These values should be tweaked a bit.
+#define DEFAULT_FOG_START       0
+#define DEFAULT_FOG_END         2100
+#define DEFAULT_FOG_DENSITY     0.0001f
+#define DEFAULT_FOG_COLOR_RED   138.0f/255
+#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
+#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
+
 namespace defn {
 
 /**

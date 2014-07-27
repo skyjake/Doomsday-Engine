@@ -38,10 +38,10 @@ void MapInfo::resetToDefaults()
     _def->addNumber("flags", 0);
     _def->addText  ("music", "");
     _def->addNumber("parTime", -1); // unknown
-    _def->addArray ("fogColor", new ArrayValue(Vector3f(138.0f/255, 138.0f/255, 138.0f/255)));
-    _def->addNumber("fogStart", 0);
-    _def->addNumber("fogEnd", 2100);
-    _def->addNumber("fogDensity", .0001f);
+    _def->addArray ("fogColor", new ArrayValue(Vector3f(DEFAULT_FOG_COLOR_RED, DEFAULT_FOG_COLOR_GREEN, DEFAULT_FOG_COLOR_BLUE)));
+    _def->addNumber("fogStart", DEFAULT_FOG_START);
+    _def->addNumber("fogEnd", DEFAULT_FOG_END);
+    _def->addNumber("fogDensity", DEFAULT_FOG_DENSITY);
     _def->addNumber("ambient", 0);
     _def->addNumber("gravity", 1);
     _def->addText  ("skyId", "");

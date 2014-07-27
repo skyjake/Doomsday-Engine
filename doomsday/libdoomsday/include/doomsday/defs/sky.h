@@ -27,6 +27,10 @@ namespace defn {
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
 
+#define DEFAULT_SKY_HEIGHT               ( .666667f )
+#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
+#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
+
 /**
  * Utility for handling sky definitions.
  */
