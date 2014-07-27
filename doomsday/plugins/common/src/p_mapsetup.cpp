@@ -31,7 +31,6 @@
 #include "g_common.h"
 #include "gamesession.h"
 #include "r_common.h"
-#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"

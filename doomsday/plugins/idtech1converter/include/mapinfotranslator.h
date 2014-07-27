@@ -1,4 +1,4 @@
-/** @file mapinfo.h  Hexen-format MAPINFO definition parsing.
+/** @file mapinfotranslator.h  Hexen-format MAPINFO definition translator.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -19,13 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MAPINFO_H
-#define LIBCOMMON_MAPINFO_H
-#ifdef __cplusplus
+#ifndef IDTECH1CONVERTER_MAPINFOTRANSLATOR_H
+#define IDTECH1CONVERTER_MAPINFOTRANSLATOR_H
 
-#include "common.h"
+#include "idtech1converter.h"
+#include <map>
+#include <de/Error>
+#include <de/Record>
 
-namespace common {
+namespace idtech1 {
 
 struct HexDefs; // Forward
 
@@ -107,46 +109,10 @@ struct HexDefs
      */
     void translateMapWarpNumbers();
 
-//private:
+private:
     de::Uri translateMapWarpNumber(uint map);
 };
-extern HexDefs hexDefs;
 
-/**
- * @param id  Identifier of the episode to lookup info for.
- *
- * @return  EpisodeInfo for the specified @a id; otherwise @c 0 (not found).
- */
-EpisodeInfo *P_EpisodeInfo(de::String id);
+} // namespace idtech1
 
-EpisodeInfo *P_CurrentEpisodeInfo();
-
-/**
- * @param mapUri  Identifier of the map to lookup info for.
- *
- * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
- */
-MapInfo *P_MapInfo(de::Uri const &mapUri);
-
-MapInfo *P_CurrentMapInfo();
-
-/**
- * Translates a warp map number to unique map identifier. Always returns a valid
- * map identifier.
- *
- * @note This should only be used where necessary for compatibility reasons as
- * the "warp translation" mechanic is redundant in the context of Doomsday's
- * altogether better handling of map resources and their references. Instead,
- * use the map URI mechanism.
- *
- * @param map  The warp map number to translate.
- *
- * @return The unique identifier of the map given a warp map number. If the map
- * is not found a URI to the first available map is returned (i.e., Maps:MAP01)
- */
-de::Uri P_TranslateMap(uint map);
-
-} // namespace common
-
-#endif // __cplusplus
-#endif // LIBCOMMON_MAPINFO_H
+#endif // IDTECH1CONVERTER_MAPINFOTRANSLATOR_H

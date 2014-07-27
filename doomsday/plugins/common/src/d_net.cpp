@@ -25,7 +25,6 @@
 #include "gamesession.h"
 #include "player.h"
 #include "hu_menu.h"
-#include "mapinfo.h"
 #include "p_mapsetup.h"
 #include "p_start.h"
 #include "fi_lib.h"

@@ -27,7 +27,6 @@
 #include "player.h"
 #include "p_user.h"
 #include "p_map.h"
-#include "mapinfo.h"
 #include "mobj.h"
 #include "p_actor.h"
 #include "g_common.h"

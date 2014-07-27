@@ -19,13 +19,15 @@ HEADERS += \
     include/idtech1converter.h \
     include/hexlex.h \
     include/mapimporter.h \
+    include/mapinfotranslator.h \
     include/version.h \
 
 SOURCES += \
     src/idtech1converter.cpp \
     src/hexlex.cpp \
     src/mapimporter.cpp \
-    src/mapimporter_loadblockmap.cpp
+    src/mapimporter_loadblockmap.cpp \
+    src/mapinfotranslator.cpp
 
 win32 {
     RC_FILE = res/idtech1converter.rc

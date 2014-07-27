@@ -22,6 +22,8 @@
 #define LIBCOMMON_DEFINITION_UTILS_H
 
 #ifdef __cplusplus
+#include <doomsday/uri.h>
+
 extern "C" {
 #endif
 
@@ -34,6 +36,43 @@ void GetDefState(char const *def, int *returnVal);
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
 
-#endif /* LIBCOMMON_DEFINITION_UTILS_H */
+typedef void EpisodeInfo;
+typedef void MapInfo;
+
+/**
+ * @param id  Identifier of the episode to lookup info for.
+ *
+ * @return  EpisodeInfo for the specified @a id; otherwise @c 0 (not found).
+ */
+EpisodeInfo *P_EpisodeInfo(de::String id);
+
+EpisodeInfo *P_CurrentEpisodeInfo();
+
+/**
+ * @param mapUri  Identifier of the map to lookup info for.
+ *
+ * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
+ */
+MapInfo *P_MapInfo(de::Uri const &mapUri);
+
+MapInfo *P_CurrentMapInfo();
+
+/**
+ * Translates a warp map number to unique map identifier. Always returns a valid
+ * map identifier.
+ *
+ * @note This should only be used where necessary for compatibility reasons as
+ * the "warp translation" mechanic is redundant in the context of Doomsday's
+ * altogether better handling of map resources and their references. Instead,
+ * use the map URI mechanism.
+ *
+ * @param map  The warp map number to translate.
+ *
+ * @return The unique identifier of the map given a warp map number. If the map
+ * is not found a URI to the first available map is returned (i.e., Maps:MAP01)
+ */
+de::Uri P_TranslateMap(uint map);
+
+#endif // __cpplusplus
+#endif // LIBCOMMON_DEFINITION_UTILS_H

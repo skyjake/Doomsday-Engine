@@ -30,7 +30,6 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_inventory.h"
-#include "mapinfo.h"
 #include "mapstatewriter.h"
 #include "p_inventory.h"
 #include "p_map.h"

@@ -1,7 +1,7 @@
-/** @file g_defs.c Game definition lookup utilities.
+/** @file g_defs.cpp  Game definition lookup utilities.
  *
  * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,36 +19,58 @@
  */
 
 #include "common.h"
-
 #include "g_defs.h"
+
+using namespace de;
 
 int GetDefInt(char const *def, int *returnVal)
 {
-    char *data;
-    int val;
-
     // Get the value.
+    char *data;
     if(Def_Get(DD_DEF_VALUE, def, &data) < 0)
         return 0; // No such value...
 
     // Convert to integer.
-    val = strtol(data, 0, 0);
-    if(returnVal)
-        *returnVal = val;
+    int val = strtol(data, 0, 0);
+    if(returnVal) *returnVal = val;
 
     return val;
 }
 
 void GetDefState(char const *def, int *val)
 {
-    char *data;
-
     // Get the value.
+    char *data;
     if(Def_Get(DD_DEF_VALUE, def, &data) < 0)
         return;
 
     // Get the state number.
     *val = Def_Get(DD_DEF_STATE, data, 0);
-    if(*val < 0)
-        *val = 0;
+    if(*val < 0) *val = 0;
+}
+
+EpisodeInfo *P_EpisodeInfo(String id)
+{
+    return hexDefs.getEpisodeInfo(id);
+}
+
+EpisodeInfo *P_CurrentEpisodeInfo()
+{
+    return hexDefs.getEpisodeInfo(String::number(::gameEpisode + 1));
+}
+
+MapInfo *P_MapInfo(de::Uri const &mapUri)
+{
+    return hexDefs.getMapInfo(mapUri);
+}
+
+MapInfo *P_CurrentMapInfo()
+{
+    return hexDefs.getMapInfo(::gameMapUri);
+}
+
+/// @todo fixme: What about the episode?
+de::Uri P_TranslateMap(uint map)
+{
+    return hexDefs.translateMapWarpNumber(map);
 }

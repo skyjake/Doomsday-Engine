@@ -39,7 +39,6 @@
 #include "hu_stuff.h"
 #include "m_argv.h"
 #include "m_ctrl.h"
-#include "mapinfo.h"
 #include "p_savedef.h"
 #include "player.h"
 #include "r_common.h"

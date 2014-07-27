@@ -1,4 +1,4 @@
-/** @file mapinfo.h  Hexen-format MAPINFO definition parsing.
+/** @file mapinfotranslator.cpp  Hexen-format MAPINFO definition translator.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -19,18 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include "mapinfo.h"
+#include "mapinfotranslator.h"
 #include <cstdio>
 #include <sstream>
 #include <cstring>
-#include <map>
-#include <de/Error>
 #include "hexlex.h"
-#include "g_common.h"
 
 using namespace de;
 
-namespace common {
+namespace idtech1 {
 
 HexDefs hexDefs;
 
@@ -1150,30 +1147,4 @@ void HexDefs::translateMapWarpNumbers()
     }
 }
 
-EpisodeInfo *P_EpisodeInfo(String id)
-{
-    return hexDefs.getEpisodeInfo(id);
-}
-
-EpisodeInfo *P_CurrentEpisodeInfo()
-{
-    return hexDefs.getEpisodeInfo(String::number(::gameEpisode + 1));
-}
-
-MapInfo *P_MapInfo(de::Uri const &mapUri)
-{
-    return hexDefs.getMapInfo(mapUri);
-}
-
-MapInfo *P_CurrentMapInfo()
-{
-    return hexDefs.getMapInfo(::gameMapUri);
-}
-
-/// @todo fixme: What about the episode?
-de::Uri P_TranslateMap(uint map)
-{
-    return hexDefs.translateMapWarpNumber(map);
-}
-
-} // namespace common
+} // namespace idtech1

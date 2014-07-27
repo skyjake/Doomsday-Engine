@@ -35,7 +35,6 @@
 #include "g_defs.h"
 #include "hu_chat.h"
 #include "hu_stuff.h"
-#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_inventory.h"
 #include "p_map.h"

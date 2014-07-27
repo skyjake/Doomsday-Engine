@@ -37,7 +37,6 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
-    $$common_inc/mapinfo.h \
     $$common_inc/mapstatereader.h \
     $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
@@ -84,7 +83,7 @@ SOURCES += \
     $$common_src/dmu_lib.cpp \
     $$common_src/fi_lib.cpp \
     $$common_src/g_controls.c \
-    $$common_src/g_defs.c \
+    $$common_src/g_defs.cpp \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.cpp \
     $$common_src/g_update.cpp \
@@ -102,7 +101,6 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.cpp \
-    $$common_src/mapinfo.cpp \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.cpp \

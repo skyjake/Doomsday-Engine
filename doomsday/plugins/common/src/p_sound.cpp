@@ -25,7 +25,6 @@
 
 #include "dmu_lib.h"
 #include "hexlex.h"
-#include "mapinfo.h"
 #ifdef __JHEXEN__
 #  include "g_common.h"
 #endif

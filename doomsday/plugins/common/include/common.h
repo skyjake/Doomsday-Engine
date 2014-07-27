@@ -45,6 +45,7 @@
 #endif
 
 #include "gamerules.h"
+#include "g_defs.h"
 #include "pause.h"
 #ifdef __cplusplus
 #  include <doomsday/filesys/lumpindex.h>
