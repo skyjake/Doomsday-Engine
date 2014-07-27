@@ -345,6 +345,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
     }
 } ded_music_t;
 
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_skylayer_s {
     ded_flags_t     flags;
     de::Uri*        material;
@@ -378,16 +379,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_skymodel_s {
     }
 } ded_skymodel_t;
 
-#define NUM_SKY_LAYERS      2
-#define NUM_SKY_MODELS      32
-
-// Sky flags.
-#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
-
-#define DEFAULT_SKY_HEIGHT               ( .666667f )
-#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
     ded_stringid_t  id;
     ded_flags_t     flags; // Flags.
@@ -414,6 +405,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
         }
     }
 } ded_sky_t;
+#endif
 
 /// @todo These values should be tweaked a bit.
 #define DEFAULT_FOG_START       0

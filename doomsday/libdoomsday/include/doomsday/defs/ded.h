@@ -76,7 +76,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister models;
 
     // Skies.
-    DEDArray<ded_sky_t> skies;
+    //DEDArray<ded_sky_t> skies;
+    DEDRegister skies;
 
     // Sounds.
     DEDArray<ded_sound_t> sounds;
@@ -135,6 +136,8 @@ public:
 
     int addModel();
 
+    int addSky();
+
     //ded_flag_t *getFlag(char const *flag) const;
 
     int evalFlags2(char const *ptr) const;
@@ -157,6 +160,8 @@ public:
 
     int getModelNum(char const *id) const;
 
+    int getSkyNum(char const *id) const;
+
     int getSoundNum(char const *id) const;
 
     /**
@@ -175,8 +180,6 @@ public:
     ded_value_t* getValueByUri(de::Uri const &uri) const;
 
     ded_mapinfo_t *getMapInfo(de::Uri const *uri) const;
-
-    ded_sky_t* getSky(char const* id) const;
 
     ded_compositefont_t* findCompositeFontDef(de::Uri const& uri) const;
 
@@ -204,7 +207,7 @@ int             DED_AddLight(ded_t* ded, char const* stateID);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterial(ded_t* ded, char const* uri);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
-int             DED_AddSky(ded_t* ded, char const* id);
+//int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
 LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
 int             DED_AddMapInfo(ded_t* ded, char const* uri);

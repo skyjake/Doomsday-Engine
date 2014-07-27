@@ -19,6 +19,7 @@
 
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/model.h"
+#include "doomsday/defs/sky.h"
 
 #include <de/ArrayValue>
 #include <de/NumberValue>
@@ -49,10 +50,12 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags (names.addRecord("flags"))
     , models(names.addRecord("models"))
+    , skies (names.addRecord("skies"))
 {
     flags.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
     models.addLookupKey("state");
+    skies.addLookupKey("id");
 
     clear();
 }
@@ -79,6 +82,13 @@ int ded_s::addModel()
 {
     Record &def = models.append();
     defn::Model(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addSky()
+{
+    Record &def = skies.append();
+    defn::Sky(def).resetToDefaults();
     return def.geti("__order__");
 }
 
@@ -116,6 +126,7 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     return ded->mobjs.indexOf(mo);
 }
 
+#if 0
 int DED_AddSky(ded_t* ded, char const* id)
 {
     ded_sky_t *sky = ded->skies.append();
@@ -139,6 +150,7 @@ int DED_AddSky(ded_t* ded, char const* id)
 
     return ded->skies.indexOf(sky);
 }
+#endif
 
 int DED_AddState(ded_t* ded, char const* id)
 {
@@ -533,6 +545,24 @@ int ded_s::getModelNum(const char *id) const
     return idx;*/
 }
 
+int ded_s::getSkyNum(char const *id) const
+{
+    if(Record const *def = skies.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+    /*if(!id || !id[0]) return -1;
+
+    for(int i = skies.size() - 1; i >= 0; i--)
+    {
+        if(!qstricmp(skies[i].id, id))
+            return i;
+    }
+    return -1;*/
+}
+
 int ded_s::getSoundNum(const char *id) const
 {
     int idx = -1;
@@ -611,18 +641,6 @@ ded_mapinfo_t *ded_s::getMapInfo(de::Uri const *uri) const
     {
         if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
             return &mapInfo[i];
-    }
-    return 0;
-}
-
-ded_sky_t* ded_s::getSky(char const* id) const
-{
-    if(!id || !id[0]) return NULL;
-
-    for(int i = skies.size() - 1; i >= 0; i--)
-    {
-        if(!qstricmp(skies[i].id, id))
-            return &skies[i];
     }
     return 0;
 }

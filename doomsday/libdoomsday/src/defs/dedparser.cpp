@@ -1554,7 +1554,8 @@ DENG2_PIMPL(DEDParser)
             }
 
             if(ISTOKEN("Sky"))
-            {   // A new sky definition.
+            {
+                // A new sky definition.
                 ded_sky_t* sky;
                 uint sub = 0;
 
