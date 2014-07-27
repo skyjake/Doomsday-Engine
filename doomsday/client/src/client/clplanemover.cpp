@@ -50,11 +50,6 @@ thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // 
     return th.take();
 }
 
-void ClPlaneMover::thinkerFunc(thinker_s *mover) // static
-{
-    THINKER_DATA(*mover, ClPlaneMover).think();
-}
-
 ClPlaneMover::ClPlaneMover(Plane &plane, coord_t dest, float speed)
     : _plane       (&plane)
     , _destination ( dest )
@@ -142,7 +137,12 @@ void ClPlaneMover::think()
             // It stops.
             P_SetDoublep(_plane, DMU_SPEED, 0);
 
-            _plane->map().thinkers().remove(thinker()); // this is deleted
+            _plane->map().thinkers().remove(thinker()); // we get deleted
         }
     }
+}
+
+void ClPlaneMover::thinkerFunc(thinker_s *mover) // static
+{
+    THINKER_DATA(*mover, ClPlaneMover).think();
 }

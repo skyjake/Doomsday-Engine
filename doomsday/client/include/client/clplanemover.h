@@ -52,6 +52,7 @@ public:
      */
     static thinker_s *newThinker(Plane &plane, coord_t dest, float speed);
 
+protected:
     static void thinkerFunc(thinker_s *mover);
 };
 
