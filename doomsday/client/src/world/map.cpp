@@ -3221,14 +3221,14 @@ void Map::update()
     if(MapDef *mapDef = d->def)
     {
         Uri const mapUri = mapDef->composeUri();
-        mapInfo = defs.getMapInfo(&mapUri);
+        mapInfo = defs.getMapInfoNum(&mapUri);
     }
 
     if(!mapInfo)
     {
         // Use the default def instead.
         Uri const defaultDefUri("Maps", Path("*"));
-        mapInfo = defs.getMapInfo(&defaultDefUri);
+        mapInfo = defs.getMapInfoNum(&defaultDefUri);
     }
 
     if(mapInfo)

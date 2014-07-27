@@ -649,7 +649,7 @@ void GL_TotalRestore()
         if(MapDef *mapDef = App_WorldSystem().map().def())
         {
             de::Uri const mapUri = mapDef->composeUri();
-            mapInfo = defs.getMapInfo(&mapUri);
+            mapInfo = defs.getMapInfoNum(&mapUri);
         }
     }
 

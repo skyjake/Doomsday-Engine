@@ -1,4 +1,4 @@
-/** @file defs/sky.h  Sky definition accessor.
+/** @file defs/mapinfo.h  MapInfo definition accessor.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -16,50 +16,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFN_SKY_H
-#define LIBDOOMSDAY_DEFN_SKY_H
+#ifndef LIBDOOMSDAY_DEFN_MAPINFO_H
+#define LIBDOOMSDAY_DEFN_MAPINFO_H
 
 #include "../libdoomsday.h"
 #include <de/RecordAccessor>
 
 namespace defn {
 
-// Sky flags.
-#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
-
 /**
- * Utility for handling sky definitions.
+ * Utility for handling mapinfo definitions.
  */
-class LIBDOOMSDAY_PUBLIC Sky : public de::RecordAccessor
+class LIBDOOMSDAY_PUBLIC MapInfo : public de::RecordAccessor
 {
 public:
-    Sky() : RecordAccessor(0), _def(0) {}
-    Sky(Sky const &other)
+    MapInfo() : RecordAccessor(0), _def(0) {}
+    MapInfo(MapInfo const &other)
         : RecordAccessor(other)
         , _def(other._def) {}
-    Sky(de::Record &d) : RecordAccessor(d), _def(&d) {}
-    Sky(de::Record const &d) : RecordAccessor(d), _def(0) {}
+    MapInfo(de::Record &d) : RecordAccessor(d), _def(&d) {}
+    MapInfo(de::Record const &d) : RecordAccessor(d), _def(0) {}
 
     void resetToDefaults();
 
-    Sky &operator = (de::Record *d);
+    MapInfo &operator = (de::Record *d);
 
     operator bool() const;
     int order() const;
-
-    de::Record &addLayer();
-
-    int layerCount() const;
-    bool hasLayer(int index) const;
-    de::Record &layer(int index);
-    de::Record const &layer(int index) const;
-
-    de::Record &addModel();
-
-    int modelCount() const;
-    bool hasModel(int index) const;
-    de::Record &model(int index);
-    de::Record const &model(int index) const;
 
 private:
     de::Record *_def; ///< Modifiable access.
@@ -67,4 +50,4 @@ private:
 
 } // namespace defn
 
-#endif // LIBDOOMSDAY_DEFN_SKY_H
+#endif // LIBDOOMSDAY_DEFN_MAPINFO_H

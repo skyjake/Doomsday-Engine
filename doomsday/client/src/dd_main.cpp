@@ -2480,7 +2480,7 @@ int DD_GetInteger(int ddvalue)
             if(MapDef *mapDef = App_WorldSystem().map().def())
             {
                 de::Uri const mapUri = mapDef->composeUri();
-                if(ded_mapinfo_t *mapInfo = defs.getMapInfo(&mapUri))
+                if(ded_mapinfo_t *mapInfo = defs.getMapInfoNum(&mapUri))
                 {
                     return Def_GetMusicNum(mapInfo->music);
                 }

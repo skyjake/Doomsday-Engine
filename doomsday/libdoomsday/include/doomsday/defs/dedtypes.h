@@ -407,14 +407,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
 } ded_sky_t;
 #endif
 
-/// @todo These values should be tweaked a bit.
-#define DEFAULT_FOG_START       0
-#define DEFAULT_FOG_END         2100
-#define DEFAULT_FOG_DENSITY     0.0001f
-#define DEFAULT_FOG_COLOR_RED   138.0f/255
-#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
-#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
-
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
     de::Uri*        uri; // ID of the map (e.g. E2M3 or MAP21).
     ded_string_t    name; // Name of the map.
@@ -443,6 +436,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
         sky.reallocate();
     }
 } ded_mapinfo_t;
+#endif
 
 typedef struct {
     ded_stringid_t  id;
