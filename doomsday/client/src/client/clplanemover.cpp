@@ -33,7 +33,6 @@ using namespace de;
 thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // static
 {
     Thinker th(Thinker::AllocateMemoryZone);
-    th.function = (thinkfunc_t) thinkerFunc;
     th.setData(new ClPlaneMover(plane, dest, speed));
 
     // Add to the map.
@@ -141,9 +140,4 @@ void ClPlaneMover::think()
             _plane->map().thinkers().remove(thinker()); // we get deleted
         }
     }
-}
-
-void ClPlaneMover::thinkerFunc(thinker_s *mover) // static
-{
-    THINKER_DATA(*mover, ClPlaneMover).think();
 }

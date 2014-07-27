@@ -443,7 +443,11 @@ static int runThinker(thinker_t *th, void * /*context*/)
             initPrivateData(th);
         }
 
+        // Public thinker callback.
         th->function(th);
+
+        // Private thinking.
+        if(th->d) THINKER_DATA(*th, Thinker::IData).think();
     }
 
     return false; // Continue iteration.

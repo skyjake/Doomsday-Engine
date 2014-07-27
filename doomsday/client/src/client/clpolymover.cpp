@@ -41,7 +41,6 @@ thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating)
     }
 
     Thinker th(Thinker::AllocateMemoryZone);
-    th.function = (thinkfunc_t) thinkerFunc;
     th.setData(new ClPolyMover(polyobj, moving, rotating));
 
     thinker_s *ptr = th.take();
@@ -124,9 +123,4 @@ void ClPolyMover::think()
     {
         _polyobj->map().thinkers().remove(thinker()); // we get deleted
     }
-}
-
-void ClPolyMover::thinkerFunc(thinker_s *mover)
-{
-    THINKER_DATA(*mover, ClPolyMover).think();
 }

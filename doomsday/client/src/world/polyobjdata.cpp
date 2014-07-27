@@ -43,6 +43,11 @@ void PolyobjData::setThinker(thinker_s *thinker)
     _polyobj = (Polyobj *) thinker;
 }
 
+void PolyobjData::think()
+{
+    // nothing to do; public thinker does all
+}
+
 Thinker::IData *PolyobjData::duplicate() const
 {
     return new PolyobjData(*this);

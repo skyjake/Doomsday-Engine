@@ -51,9 +51,6 @@ public:
      * @return The mover thinker. Ownership retained by the Plane's Map.
      */
     static thinker_s *newThinker(Plane &plane, coord_t dest, float speed);
-
-protected:
-    static void thinkerFunc(thinker_s *mover);
 };
 
 #endif // DENG_CLIENT_PLANEMOVER_H

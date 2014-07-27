@@ -42,9 +42,6 @@ public:
     void think();
 
     static thinker_s *newThinker(Polyobj &polyobj, bool moving, bool rotating);
-
-protected:
-    static void thinkerFunc(thinker_s *mover);
 };
 
 #endif // DENG_CLIENT_POLYMOVER_H

@@ -40,6 +40,7 @@ public:
     ThinkerData(ThinkerData const &other);
 
     void setThinker(thinker_s *thinker);
+    void think();
     IData *duplicate() const;
 
     thinker_s &thinker();

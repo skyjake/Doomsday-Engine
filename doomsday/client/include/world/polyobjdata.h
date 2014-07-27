@@ -47,6 +47,7 @@ public:
     ~PolyobjData();
 
     void setThinker(thinker_s *thinker);
+    void think();
     IData *duplicate() const;
 
 #ifdef __CLIENT__

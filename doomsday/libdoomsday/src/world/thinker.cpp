@@ -111,12 +111,18 @@ DENG2_PIMPL_NOREF(Thinker)
 Thinker::Thinker(dsize sizeInBytes, IData *data)
     : d(new Instance(AllocateStandard, sizeInBytes, data))
     , STRUCT_MEMBER_ACCESSORS()
-{}
+{
+    // Default to no public thinker callback.
+    function = Thinker_NoOperation;
+}
 
 Thinker::Thinker(AllocMethod alloc, dsize sizeInBytes, Thinker::IData *data)
     : d(new Instance(alloc, sizeInBytes, data))
     , STRUCT_MEMBER_ACCESSORS()
-{}
+{
+    // Default to no public thinker callback.
+    function = Thinker_NoOperation;
+}
 
 Thinker::Thinker(Thinker const &other)
     : d(new Instance(*other.d))
@@ -275,3 +281,7 @@ void Thinker_SetStasis(thinker_t *thinker, dd_bool on)
     }
 }
 
+void Thinker_NoOperation(void *)
+{
+    // do nothing
+}

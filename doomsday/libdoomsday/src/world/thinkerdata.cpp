@@ -58,6 +58,11 @@ void ThinkerData::setThinker(thinker_s *thinker)
     d->think = thinker;
 }
 
+void ThinkerData::think()
+{
+    /// @todo If there is a think function in the Record, call it now. -jk
+}
+
 Thinker::IData *ThinkerData::duplicate() const
 {
     return new ThinkerData(*this);

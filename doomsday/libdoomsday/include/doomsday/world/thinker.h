@@ -67,6 +67,12 @@ LIBDOOMSDAY_PUBLIC dd_bool Thinker_InStasis(thinker_t const *thinker);
  */
 LIBDOOMSDAY_PUBLIC void Thinker_SetStasis(thinker_t *thinker, dd_bool on);
 
+/**
+ * Generic thinker function that does nothing. This can be used if the private
+ * data does all the thinking.
+ */
+LIBDOOMSDAY_PUBLIC void Thinker_NoOperation(void *thinker);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
@@ -123,6 +129,7 @@ public:
     public:
         virtual ~IData() {}        
         virtual void setThinker(thinker_s *thinker) = 0;
+        virtual void think() = 0;
         virtual IData *duplicate() const = 0;
 
         DENG2_AS_IS_METHODS()
