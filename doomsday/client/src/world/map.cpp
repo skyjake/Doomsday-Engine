@@ -118,7 +118,6 @@ DENG2_PIMPL(Map)
     MapDef *def;    ///< Definition for the map (not owned, may be @c NULL).
     AABoxd bounds;  ///< Boundary points which encompass the entire map
 
-    QScopedPointer<Thinkers> thinkers;
     Mesh mesh;      ///< All map geometries.
 
     /// Element LUTs:
@@ -134,6 +133,7 @@ DENG2_PIMPL(Map)
     SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
+    QScopedPointer<Thinkers> thinkers;
     EntityDatabase entityDatabase;
 
     /// Blockmaps:
@@ -308,6 +308,10 @@ DENG2_PIMPL(Map)
         self.removeAllLumobjs();
         self.removeAllBiasSources();
 #endif
+
+        // Delete thinkers before the map elements, because thinkers may reference them
+        // in their private data destructors.
+        thinkers.reset();
 
         qDeleteAll(clusters);
         qDeleteAll(sectors);
