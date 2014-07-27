@@ -17,11 +17,13 @@ INCLUDEPATH += include
 
 HEADERS += \
     include/idtech1converter.h \
+    include/hexlex.h \
     include/mapimporter.h \
     include/version.h \
 
 SOURCES += \
     src/idtech1converter.cpp \
+    src/hexlex.cpp \
     src/mapimporter.cpp \
     src/mapimporter_loadblockmap.cpp
 
