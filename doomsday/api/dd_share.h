@@ -611,7 +611,6 @@ enum { MX, MY, MZ };
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
 \
-    int             _indexInMap; \
     int             tag; /* Reference tag. */ \
     int             validCount; \
     AABoxd          aaBox; \
@@ -619,15 +618,9 @@ enum { MX, MY, MZ };
     angle_t         angle; \
     angle_t         destAngle; /* Destination angle. */ \
     angle_t         angleSpeed; /* Rotation speed. */ \
-    void           *_mesh; \
-    void           *_lines; \
-    void           *_uniqueVertexes; \
-    void           *_originalPts; /* Used as the base for the rotations. */ \
-    void           *_prevPts; /* Use to restore the old point values. */ \
     double          speed; /* Movement speed. */ \
     dd_bool         crush; /* Should the polyobj attempt to crush mobjs? */ \
     int             seqType; \
-    uint            _origIndex;
 
 //------------------------------------------------------------------------
 //

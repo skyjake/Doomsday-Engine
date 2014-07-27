@@ -22,20 +22,29 @@
 
 #include "api_thinker.h"
 #include "Polyobj"
+#include <doomsday/world/thinkerdata.h>
 
 /**
  * Polyobj movement thinker.
  *
  * @ingroup world
  */
-struct ClPolyMover
+class ClPolyMover : public ThinkerData
 {
-    thinker_t thinker;
-    Polyobj *polyobj;
-    bool move;
-    bool rotate;
-};
+    Polyobj *_polyobj;
+    bool _move;
+    bool _rotate;
 
-void ClPolyMover_Thinker(ClPolyMover *mover);
+public:
+    ClPolyMover(Polyobj &pobj, bool moving, bool rotating);
+    ~ClPolyMover();
+
+    void think();
+
+    static thinker_s *newThinker(Polyobj &polyobj, bool moving, bool rotating);
+
+protected:
+    static void thinkerFunc(thinker_s *mover);
+};
 
 #endif // DENG_CLIENT_POLYMOVER_H

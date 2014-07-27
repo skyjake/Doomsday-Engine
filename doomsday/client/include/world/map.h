@@ -680,15 +680,6 @@ public:
     void expireClMobjs();
 
     /**
-     * Find/create a ClPolyMover for @a polyobj.
-     *
-     * @param canCreate  @c true= create a new one if not found.
-     */
-    ClPolyMover *clPolyMoverFor(Polyobj &polyobj, bool canCreate = false);
-
-    void deleteClPolyMover(ClPolyMover *mover);
-
-    /**
      * Link the given @a surface in all material lists and surface sets which
      * the map maintains to improve performance. Only surfaces attributed to
      * the map will be linked (alien surfaces are ignored).

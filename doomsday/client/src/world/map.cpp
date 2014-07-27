@@ -46,6 +46,7 @@
 #include "world/entitydatabase.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
+#include "world/polyobjdata.h"
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
@@ -284,9 +285,6 @@ DENG2_PIMPL(Map)
     coord_t skyCeilingHeight;
 
     ClMobjHash clMobjHash;
-
-    typedef QList<ClPolyMover *> ClPolyMovers;
-    ClPolyMovers clPolyMovers;
 #endif
 
     Instance(Public *i)
@@ -325,11 +323,6 @@ DENG2_PIMPL(Map)
         qDeleteAll(lines);
 
 #ifdef __CLIENT__        
-        while(!clPolyMovers.isEmpty())
-        {
-            Z_Free(clPolyMovers.takeFirst());
-        }
-
         // Stop observing client mobjs.
         foreach(mobj_t *mo, clMobjHash)
         {
@@ -3355,45 +3348,6 @@ void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
     clMobjIterator(expireClMobjsWorker, &nowTime);
-}
-
-ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
-{
-    LOG_AS("Map::clPolyMoverFor");
-
-    /// @todo optimize: O(n) lookup.
-    foreach(ClPolyMover *mover, d->clPolyMovers)
-    {
-        if(mover->polyobj == &polyobj)
-            return mover;
-    }
-
-    if(!canCreate) return 0; // Not found.
-
-    // Create a new mover.
-    ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
-
-    d->clPolyMovers.append(mover);
-
-    mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
-    mover->polyobj = &polyobj;
-
-    thinkers().add(mover->thinker, false /*not public*/);
-
-    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
-            << mover << polyobj.indexInMap();
-    return mover;
-}
-
-void Map::deleteClPolyMover(ClPolyMover *mover)
-{
-    LOG_AS("Map::deleteClPolyMover");
-
-    if(!mover) return;
-
-    LOG_MAP_XVERBOSE("Removing mover %p") << mover;
-    thinkers().remove(mover->thinker);
-    d->clPolyMovers.removeOne(mover);
 }
 
 #endif // __CLIENT__

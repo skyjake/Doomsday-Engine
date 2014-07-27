@@ -37,17 +37,18 @@ thinker_s *ClPlaneMover::newThinker(Plane &plane, coord_t dest, float speed) // 
     th.setData(new ClPlaneMover(plane, dest, speed));
 
     // Add to the map.
-    plane.map().thinkers().add(th.base(), false /* not public */);
-    LOGDEV_MAP_XVERBOSE("New mover %p") << &th.base();
+    thinker_s *ptr = th.take();
+    plane.map().thinkers().add(*ptr, false /* not public */);
+    LOGDEV_MAP_XVERBOSE("New mover %p") << ptr;
 
     // Immediate move?
     if(fequal(speed, 0))
     {
         // This will remove the thinker immediately if the move is ok.
-        th.data().as<ClPlaneMover>().think();
+        THINKER_DATA(*ptr, ClPlaneMover).think();
     }
 
-    return th.take();
+    return ptr;
 }
 
 ClPlaneMover::ClPlaneMover(Plane &plane, coord_t dest, float speed)

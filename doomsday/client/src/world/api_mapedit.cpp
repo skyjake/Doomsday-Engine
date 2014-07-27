@@ -29,6 +29,7 @@
 
 #include "world/entitydatabase.h"
 #include "world/map.h"
+#include "world/polyobjdata.h"
 #include "Plane"
 #include "Sector"
 #include "Surface"
@@ -388,7 +389,7 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
 
         // This line belongs to a polyobj.
         line->setPolyobj(po);
-        static_cast<Polyobj::Lines *>(po->_lines)->append(line);
+        po->data().lines.append(line);
     }
 
     return po->indexInMap();

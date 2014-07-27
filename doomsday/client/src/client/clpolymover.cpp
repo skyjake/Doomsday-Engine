@@ -26,17 +26,53 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "world/thinkers.h"
+#include "world/polyobjdata.h"
 
 using namespace de;
 
-void ClPolyMover_Thinker(ClPolyMover *mover)
+thinker_s *ClPolyMover::newThinker(Polyobj &polyobj, bool moving, bool rotating) // static
 {
-    DENG2_ASSERT(mover != 0);
+    // If there is an existing mover, modify it.
+    if(ClPolyMover *mover = polyobj.data().mover())
+    {
+        mover->_move   = moving;
+        mover->_rotate = rotating;
+        return &mover->thinker();
+    }
 
-    LOG_AS("ClPolyMover_Thinker");
+    Thinker th(Thinker::AllocateMemoryZone);
+    th.function = (thinkfunc_t) thinkerFunc;
+    th.setData(new ClPolyMover(polyobj, moving, rotating));
 
-    Polyobj *po = mover->polyobj;
-    if(mover->move)
+    thinker_s *ptr = th.take();
+    polyobj.map().thinkers().add(*ptr, false /*not public*/);
+
+    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
+            << ptr
+            << polyobj.indexInMap();
+
+    return ptr;
+}
+
+ClPolyMover::ClPolyMover(Polyobj &pobj, bool moving, bool rotating)
+    : _polyobj (&pobj    )
+    , _move    ( moving  )
+    , _rotate  ( rotating)
+{
+    _polyobj->data().addMover(*this);
+}
+
+ClPolyMover::~ClPolyMover()
+{
+    _polyobj->data().removeMover(*this);
+}
+
+void ClPolyMover::think()
+{
+    LOG_AS("ClPolyMover::think");
+
+    Polyobj *po = _polyobj;
+    if(_move)
     {
         // How much to go?
         Vector2d delta = Vector2d(po->dest) - Vector2d(po->origin);
@@ -45,7 +81,7 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
         if(dist <= po->speed || de::fequal(po->speed, 0))
         {
             // We'll arrive at the destination.
-            mover->move = false;
+            _move = false;
         }
         else
         {
@@ -57,7 +93,7 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
         po->move(delta);
     }
 
-    if(mover->rotate)
+    if(_rotate)
     {
         // How much to go?
         int dist = po->destAngle - po->angle;
@@ -69,10 +105,10 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
         if(!po->angleSpeed || ABS(dist >> 2) <= ABS(speed >> 2))
         {
             LOGDEV_MAP_XVERBOSE("Mover %p reached end of turn, destAngle=%i")
-                    << mover << po->destAngle;
+                    << &thinker() << po->destAngle;
 
             // We'll arrive at the destination.
-            mover->rotate = false;
+            _rotate = false;
         }
         else
         {
@@ -84,8 +120,13 @@ void ClPolyMover_Thinker(ClPolyMover *mover)
     }
 
     // Can we get rid of this mover?
-    if(!mover->move && !mover->rotate)
+    if(!_move && !_rotate)
     {
-        Thinker_Map(mover->thinker).deleteClPolyMover(mover);
+        _polyobj->map().thinkers().remove(thinker()); // we get deleted
     }
+}
+
+void ClPolyMover::thinkerFunc(thinker_s *mover)
+{
+    THINKER_DATA(*mover, ClPolyMover).think();
 }
