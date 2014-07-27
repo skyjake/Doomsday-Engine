@@ -64,6 +64,8 @@ public:
     String gets(String const &name, String const &defaultValue) const;
     ArrayValue const &geta(String const &name) const;
 
+    Record const &subrecord(String const &name) const;
+
     template <typename ValueType>
     ValueType const &getAs(String const &name) const {
         ValueType const *v = get(name).maybeAs<ValueType>();
