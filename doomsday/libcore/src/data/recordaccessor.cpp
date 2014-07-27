@@ -119,6 +119,11 @@ ArrayValue const &RecordAccessor::geta(String const &name) const
     return getAs<ArrayValue>(name);
 }
 
+Record const &RecordAccessor::subrecord(String const &name) const
+{
+    return accessedRecord().subrecord(name);
+}
+
 void RecordAccessor::setAccessedRecord(Record const &rec)
 {
     _rec = &rec;
