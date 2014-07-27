@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by wadmapconverter.rc
+// Used by idtech1converter.rc
 //
 
 // Next default values for new objects
