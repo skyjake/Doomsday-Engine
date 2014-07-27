@@ -32,7 +32,8 @@ namespace idtech1 {
 
 void HexLex::checkOpen()
 {
-    if(!_script) Con_Error("HexLex: No script to parse!");
+    if(_script) return;
+    throw Error("HexLex::checkOpen", "No script to parse!");
 }
 
 bool HexLex::atEnd()
@@ -43,8 +44,7 @@ bool HexLex::atEnd()
 
 void HexLex::syntaxError(char const *message)
 {
-    Con_Error("HexLex: SyntaxError in \"%s\" on line #%i.\n%s",
-              F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber, message);
+    throw SyntaxError("HexLex", String("%1\nIn \"").arg(message) + NativePath(Str_Text(&_sourcePath)).pretty() + "\" on line #" + String::number(_lineNumber));
 }
 
 HexLex::HexLex(ddstring_s const *script, ddstring_s const *sourcePath)
@@ -219,8 +219,9 @@ ddouble HexLex::readNumber()
     ddouble number = strtod(Str_Text(&_token), &stopper);
     if(*stopper != 0)
     {
-        Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",
-                  Str_Text(&_token), F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber);
+        return 0;
+        //Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",
+        //          Str_Text(&_token), F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber);
     }
 
     return number;

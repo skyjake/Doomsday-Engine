@@ -34,6 +34,11 @@ namespace idtech1 {
 class HexLex
 {
 public:
+    /// Base error for syntax errors at the level of lexical analysis (e.g.,
+    /// a non-terminated string constant). @ingroup errors
+    DENG2_ERROR(SyntaxError);
+
+public:
     /**
      * Construct a new lexer and optionally prepare a script for parsing.
      *

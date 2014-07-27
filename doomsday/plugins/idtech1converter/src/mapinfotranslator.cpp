@@ -33,6 +33,50 @@ HexDefs hexDefs;
 
 namespace internal {
 
+static de::Uri composeMapUri(uint episode, uint map)
+{
+    de::String mapId;
+#if __JDOOM64__
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+    DENG2_UNUSED(episode);
+#elif __JDOOM__
+    if(gameModeBits & GM_ANY_DOOM2)
+        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+    else
+        mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+#elif  __JHERETIC__
+    mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+#else
+    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+    DENG2_UNUSED(episode);
+#endif
+    return de::Uri("Maps", mapId);
+}
+
+static uint mapNumberFor(de::Uri const &mapUri)
+{
+    String path = mapUri.path();
+    if(!path.isEmpty())
+    {
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__
+        if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
+# endif
+        {
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
+            {
+                return path.substr(3).toInt() - 1;
+            }
+        }
+#endif
+        if(path.beginsWith("map", Qt::CaseInsensitive))
+        {
+            return path.substr(3).toInt() - 1;
+        }
+    }
+    return 0;
+}
+
 static inline String defaultSkyMaterial()
 {
 #ifdef __JHEXEN__
@@ -56,8 +100,8 @@ static void setMusicCDTrack(char const *musicId, int track)
 {
     LOG_RES_VERBOSE("setMusicCDTrack: musicId=%s, track=%i") << musicId << track;
 
-    int cdTrack = track;
-    Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
+    //int cdTrack = track;
+    //Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
 }
 
 } // namespace internal
@@ -393,7 +437,7 @@ DENG2_PIMPL(MapInfoParser)
                 {
                     throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
                 }
-                mapUri = G_ComposeMapUri(0, mapNumber - 1);
+                mapUri = composeMapUri(0, mapNumber - 1);
             }
 
             // Lookup an existing map info from the database.
@@ -413,7 +457,7 @@ DENG2_PIMPL(MapInfoParser)
                 info->set("map", mapUri.compose());
 
                 // Attempt to extract the "warp translation" number.
-                info->set("warpTrans", G_MapNumberFor(mapUri));
+                info->set("warpTrans", mapNumberFor(mapUri));
             }
 
             // Map title must follow the number.
@@ -423,11 +467,11 @@ DENG2_PIMPL(MapInfoParser)
             if(!title.compareWithoutCase("lookup"))
             {
                 title = Str_Text(lexer.readString());
-                char *found = 0;
+                /*char *found = 0;
                 if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &found) >= 0)
                 {
                     title = String(found);
-                }
+                }*/
             }
             info->set("title", title);
         }
