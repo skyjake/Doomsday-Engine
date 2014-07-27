@@ -27,6 +27,7 @@
 #include <de/Observers>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
+#include <doomsday/defs/sky.h>
 #include <QFlags>
 
 #define MAX_SKY_LAYERS                   ( 2 )
@@ -167,7 +168,7 @@ public:
      * Reconfigure the sky according the specified @a definition if not @c NULL,
      * otherwise, setup using suitable defaults.
      */
-    void configure(ded_sky_t *sky);
+    void configure(defn::Sky *sky);
 
     /**
      * Animate the sky.

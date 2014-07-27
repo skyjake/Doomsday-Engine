@@ -318,24 +318,25 @@ DENG2_PIMPL(Sky)
     /**
      * Models are set up using the data in the definition.
      */
-    void setupModels(ded_sky_t const *def)
+    void setupModels(defn::Sky const &def)
     {
         zap(models);
 
         // Normally the sky sphere is not drawn if models are in use.
-        alwaysDrawSphere = (def->flags & SIF_DRAW_SPHERE) != 0;
+        alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
 
         // The normal sphere is used if no models will be set up.
         haveModels = false;
 
-        ded_skymodel_t const *modef = def->models;
-        ModelInfo *minfo = models;
-        for(int i = 0; i < MAX_SKY_MODELS; ++i, modef++, minfo++)
+        for(int i = 0; i < def.modelCount(); ++i, minfo++)
         {
+            Record const &modef = def.model(i);
+            ModelInfo *minfo = &models[i];
+
             // Is the model ID set?
             try
             {
-                minfo->model = &resSys().modelDef(modef->id);
+                minfo->model = &resSys().modelDef(modef.gets("id"));
                 if(!minfo->model->subCount())
                 {
                     continue;
@@ -344,9 +345,9 @@ DENG2_PIMPL(Sky)
                 // There is a model here.
                 haveModels = true;
 
-                minfo->def      = modef;
-                minfo->maxTimer = (int) (TICSPERSEC * modef->frameInterval);
-                minfo->yaw      = modef->yaw;
+                minfo->def      = &modef;
+                minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
+                minfo->yaw      = modef.getf("yaw");
                 minfo->frame    = minfo->model->subModelDef(0).frame;
             }
             catch(ResourceSystem::MissingModelDefError const &)
@@ -543,52 +544,55 @@ void Sky::setAmbientColor(Vector3f const &newColor)
     d->ambientColorDefined = true;
 }
 
-void Sky::configure(ded_sky_t *def)
+void Sky::configure(defn::Sky *_def)
 {
     LOG_AS("Sky");
 
     // The default configuration is used as a starting point.
     configureDefault();
 
-    if(!def) return; // Go with the defaults, then.
+    if(!_def) return; // Go with the defaults, then.
+    defn::Sky const &def = *_def;
 
-    setHeight(def->height);
-    setHorizonOffset(def->horizonOffset);
+    setHeight(def.getf("height"));
+    setHorizonOffset(def.getf("horizonOffset"));
 
     for(int i = 0; i < MAX_SKY_LAYERS; ++i)
     {
-        ded_skylayer_t const &lyrDef = def->layers[i];
+        Record const &lyrDef = def.layer(i);
         Layer &lyr = d->layers[i];
 
-        if(!(lyrDef.flags & Layer::Active))
+        if(!(lyrDef.geti("flags") & Layer::Active))
         {
             lyr.disable();
             continue;
         }
 
-        lyr.setMasked((lyrDef.flags & Layer::Masked) != 0)
-           .setOffset(lyrDef.offset)
-           .setFadeoutLimit(lyrDef.colorLimit)
+        lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
+           .setOffset(lyrDef.getf("offset"))
+           .setFadeoutLimit(lyrDef.getf("colorLimit"))
            .enable();
 
-        if(de::Uri *matUri = lyrDef.material)
+        de::Uri const matUri(lyrDef.gets("material"));
+        if(!matUri.isEmpty())
         {
             try
             {
-                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(*matUri));
+                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(matUri));
             }
             catch(ResourceSystem::MissingManifestError const &er)
             {
                 // Log but otherwise ignore this error.
                 LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
-                    << *matUri << i;
+                    << matUri << i;
             }
         }
     }
 
-    if(def->color[CR] > 0 || def->color[CG] > 0 || def->color[CB] > 0)
+    Vector3f ambientColor = Vector3f(def.get("color")).max(Vector3f(0, 0, 0));
+    if(ambientColor != Vector3f(0, 0, 0))
     {
-        setAmbientColor(def->color);
+        setAmbientColor(ambientColor);
     }
 
     // Any sky models to setup? Models will override the normal sphere by default.

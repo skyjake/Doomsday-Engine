@@ -38,6 +38,10 @@ void Sky::resetToDefaults()
     _def->addArray ("color", new ArrayValue(Vector3f()));
     _def->addArray ("layer", new ArrayValue);
     _def->addArray ("model", new ArrayValue);
+
+    // Skies have two layers by default.
+    addLayer();
+    addLayer();
 }
 
 Sky &Sky::operator = (Record *d)

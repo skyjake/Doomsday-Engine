@@ -39,7 +39,9 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
+#include "doomsday/defs/sky.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/sys_direc.h"
@@ -1555,91 +1557,108 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Sky"))
             {
-                // A new sky definition.
-                ded_sky_t* sky;
-                uint sub = 0;
+                Record *prevSky = 0;
+                int model = 0;
 
-                idx = DED_AddSky(ded, "");
-                sky = &ded->skies[idx];
+                // New skies are appended to the end of the list.
+                idx = ded->addSky();
+                Record &sky = ded->skies[idx];
 
-                // Should we copy the previous definition?
-                if(prevSkyDefIdx >= 0 && bCopyNext)
+                if(prevSkyDefIdx >= 0)
                 {
-                    ded->skies.copyTo(sky, prevSkyDefIdx);
+                    prevSky = &ded->skies[prevSkyDefIdx];
+
+                    // Private members are used for metadata (like __order__) that should
+                    // not be copied.
+                    if(bCopyNext) sky.assign(*prevSky, Record::IgnoreDoubleUnderscoreMembers);
                 }
-                prevSkyDefIdx = idx;
-                sub = 0;
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", sky->id)
-                    RV_FLAGS("Flags", sky->flags, "sif_")
-                    RV_FLT("Height", sky->height)
-                    RV_FLT("Horizon offset", sky->horizonOffset)
-                    RV_VEC("Light color", sky->color, 3)
+                    RV_STR("ID", sky["id"])
+                    RV_FLAGS("Flags", sky["flags"], "sif_")
+                    RV_FLT("Height", sky["height"])
+                    RV_FLT("Horizon offset", sky["horizonOffset"])
+                    RV_VEC_VAR("Light color", sky["color"], 3)
                     if(ISLABEL("Layer 1") || ISLABEL("Layer 2"))
                     {
-                        ded_skylayer_t *sl = sky->layers + atoi(label+6) - 1;
+                        defn::Sky mainDef(sky);
+                        Record &layerDef = mainDef.layer(atoi(label+6) - 1);
+
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("Material", &sl->material, 0)
-                            RV_URI("Texture", &sl->material, "Textures" )
-                            RV_FLAGS("Flags", sl->flags, "slf_")
-                            RV_FLT("Offset", sl->offset)
-                            RV_FLT("Color limit", sl->colorLimit)
+                            RV_URI("Material", layerDef["material"], 0)
+                            RV_URI("Texture", layerDef["material"], "Textures" )
+                            RV_FLAGS("Flags", layerDef["flags"], "slf_")
+                            RV_FLT("Offset", layerDef["offset"])
+                            RV_FLT("Color limit", layerDef["colorLimit"])
                             RV_END
                             CHECKSC;
                         }
                     }
                     else if(ISLABEL("Model"))
                     {
-                        ded_skymodel_t *sm = &sky->models[sub];
-                        if(sub == NUM_SKY_MODELS)
-                        {   // Too many!
+                        defn::Sky mainDef(sky);
+
+                        if(model == 32/*MAX_SKY_MODELS*/)
+                        {
+                            // Too many!
                             setError("Too many Sky models.");
                             retVal = false;
                             goto ded_end_read;
                         }
-                        sub++;
+
+                        // Add another model.
+                        if(model >= mainDef.modelCount())
+                        {
+                            mainDef.addModel();
+                        }
+                        DENG_ASSERT(model < mainDef.modelCount());
+
+                        Record &mdlDef = mainDef.model(model);
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_STR("ID", sm->id)
-                            RV_INT("Layer", sm->layer)
-                            RV_FLT("Frame interval", sm->frameInterval)
-                            RV_FLT("Yaw", sm->yaw)
-                            RV_FLT("Yaw speed", sm->yawSpeed)
-                            RV_VEC("Rotate", sm->rotate, 2)
-                            RV_VEC("Offset factor", sm->coordFactor, 3)
-                            RV_VEC("Color", sm->color, 4)
-                            RV_ANYSTR("Execute", sm->execute)
+                            RV_STR("ID", mdlDef["id"])
+                            RV_INT("Layer", mdlDef["layer"])
+                            RV_FLT("Frame interval", mdlDef["frameInterval"])
+                            RV_FLT("Yaw", mdlDef["yaw"])
+                            RV_FLT("Yaw speed", mdlDef["yawSpeed"])
+                            RV_VEC_VAR("Rotate", mdlDef["rotate"], 2)
+                            RV_VEC_VAR("Offset factor", mdlDef["originOffset"], 3)
+                            RV_VEC_VAR("Color", mdlDef["color"], 4)
+                            RV_STR("Execute", mdlDef["execute"])
                             RV_END
                             CHECKSC;
                         }
+                        model++;
                     }
                     else RV_END
                     CHECKSC;
                 }
+
+                prevSkyDefIdx = idx;
             }
 
             if(ISTOKEN("Map")) // Info
             {
-                dd_bool bModify = false;
-                ded_mapinfo_t *mi;
-                Dummy<ded_mapinfo_t> dummyMi;
+                bool bModify = false;
+                Record dummyMi;
+                Record *mi = 0;
+                int model = 0;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
-                    // A new map info.
-                    idx = DED_AddMapInfo(ded, NULL);
-                    mi = &ded->mapInfo[idx];
+                    // New mapinfos are appended to the end of the list.
+                    idx = ded->addMapInfo();
+                    mi = &ded->mapInfos[idx];
                 }
                 else if(!bCopyNext)
                 {
@@ -1648,9 +1667,13 @@ DENG2_PIMPL(DEDParser)
                     READURI(&otherMap, "Maps");
                     ReadToken();
 
-                    mi = ded->getMapInfo(otherMap);
-
-                    if(!mi)
+                    idx = ded->getMapInfoNum(otherMap);
+                    if(idx >= 0)
+                    {
+                        mi = &ded->mapInfos[idx];
+                        bModify = true;
+                    }
+                    else
                     {
                         LOG_RES_WARNING("Ignoring unknown Map %s in %s on line #%i")
                                 << otherMap->asText()
@@ -1658,14 +1681,7 @@ DENG2_PIMPL(DEDParser)
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
-                        idx = -1;
-                        dummyMi.clear();
                         mi = &dummyMi;
-                    }
-                    else
-                    {
-                        idx = ded->mapInfo.indexOf(mi);
-                        bModify = true;
                     }
                     delete otherMap;
                 }
@@ -1675,86 +1691,113 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
+                DENG2_ASSERT(mi != 0);
 
                 if(prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
-                    // Should we copy the previous definition?
-                    ded->mapInfo.copyTo(mi, prevMapInfoDefIdx);
+                    Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
+                    // Private members are used for metadata (like __order__) that should
+                    // not be copied.
+                    mi->assign(*prevMapInfo, Record::IgnoreDoubleUnderscoreMembers);
                 }
 
-                uint sub = 0;
+                Record &sky = mi->subrecord("sky");
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READURI(&mi->uri, "Maps");
+                        READURI((*mi)["id"], "Maps");
                     }
-                    else RV_STR("Name", mi->name)
-                    RV_STR("Author", mi->author)
-                    RV_FLAGS("Flags", mi->flags, "mif_")
-                    RV_STR("Music", mi->music)
-                    RV_FLT("Par time", mi->parTime)
-                    RV_FLT("Fog color R", mi->fogColor[0])
-                    RV_FLT("Fog color G", mi->fogColor[1])
-                    RV_FLT("Fog color B", mi->fogColor[2])
-                    RV_FLT("Fog start", mi->fogStart)
-                    RV_FLT("Fog end", mi->fogEnd)
-                    RV_FLT("Fog density", mi->fogDensity)
-                    RV_FLT("Ambient light", mi->ambient)
-                    RV_FLT("Gravity", mi->gravity)
-                    RV_ANYSTR("Execute", mi->execute)
-                    RV_STR("Sky", mi->skyID)
-                    RV_FLT("Sky height", mi->sky.height)
-                    RV_FLT("Horizon offset", mi->sky.horizonOffset)
-                    RV_VEC("Sky light color", mi->sky.color, 3)
+                    else RV_STR("Name", (*mi)["title"])
+                    RV_STR("Author", (*mi)["author"])
+                    RV_FLAGS("Flags", (*mi)["flags"], "mif_")
+                    RV_STR("Music", (*mi)["music"])
+                    RV_FLT("Par time", (*mi)["parTime"])
+                    if(ISLABEL("Fog color R"))
+                    {
+                        float red; READFLT(red);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(0, red);
+                    }
+                    else if(ISLABEL("Fog color G"))
+                    {
+                        float green; READFLT(green);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(1, green);
+                    }
+                    else if(ISLABEL("Fog color B"))
+                    {
+                        float blue; READFLT(blue);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(2, blue);
+                    }
+                    else
+                    RV_FLT("Fog start", (*mi)["fogStart"])
+                    RV_FLT("Fog end", (*mi)["fogEnd"])
+                    RV_FLT("Fog density", (*mi)["fogDensity"])
+                    RV_FLT("Ambient light", (*mi)["ambient"])
+                    RV_FLT("Gravity", (*mi)["gravity"])
+                    RV_STR("Execute", (*mi)["execute"])
+                    RV_STR("Sky", (*mi)["skyId"])
+                    RV_FLT("Sky height", sky["height"])
+                    RV_FLT("Horizon offset", sky["horizonOffset"])
+                    RV_VEC_VAR("Sky light color", sky["color"], 3)
                     if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                     {
-                        ded_skylayer_t *sl = mi->sky.layers + atoi(label+10) - 1;
+                        defn::Sky skyDef(sky);
+                        Record &layerDef = skyDef.layer(atoi(label+10) - 1);
+
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("Material", &sl->material, 0)
-                            RV_URI("Texture", &sl->material, "Textures")
-                            RV_FLAGS("Flags", sl->flags, "slf_")
-                            RV_FLT("Offset", sl->offset)
-                            RV_FLT("Color limit", sl->colorLimit)
+                            RV_URI("Material", layerDef["material"], 0)
+                            RV_URI("Texture", layerDef["material"], "Textures" )
+                            RV_FLAGS("Flags", layerDef["flags"], "slf_")
+                            RV_FLT("Offset", layerDef["offset"])
+                            RV_FLT("Color limit", layerDef["colorLimit"])
                             RV_END
                             CHECKSC;
                         }
                     }
                     else if(ISLABEL("Sky Model"))
                     {
-                        ded_skymodel_t *sm = &mi->sky.models[sub];
+                        defn::Sky skyDef(sky);
 
-                        if(sub == NUM_SKY_MODELS)
+                        if(model == 32/*MAX_SKY_MODELS*/)
                         {
                             // Too many!
                             setError("Too many Sky models.");
                             retVal = false;
                             goto ded_end_read;
                         }
-                        sub++;
+
+                        // Add another model.
+                        if(model >= skyDef.modelCount())
+                        {
+                            skyDef.addModel();
+                        }
+                        DENG_ASSERT(model < skyDef.modelCount());
+
+                        Record &mdlDef = skyDef.model(model);
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_STR("ID", sm->id)
-                            RV_INT("Layer", sm->layer)
-                            RV_FLT("Frame interval", sm->frameInterval)
-                            RV_FLT("Yaw", sm->yaw)
-                            RV_FLT("Yaw speed", sm->yawSpeed)
-                            RV_VEC("Rotate", sm->rotate, 2)
-                            RV_VEC("Offset factor", sm->coordFactor, 3)
-                            RV_VEC("Color", sm->color, 4)
-                            RV_ANYSTR("Execute", sm->execute)
+                            RV_STR("ID", mdlDef["id"])
+                            RV_INT("Layer", mdlDef["layer"])
+                            RV_FLT("Frame interval", mdlDef["frameInterval"])
+                            RV_FLT("Yaw", mdlDef["yaw"])
+                            RV_FLT("Yaw speed", mdlDef["yawSpeed"])
+                            RV_VEC_VAR("Rotate", mdlDef["rotate"], 2)
+                            RV_VEC_VAR("Offset factor", mdlDef["originOffset"], 3)
+                            RV_VEC_VAR("Color", mdlDef["color"], 4)
+                            RV_STR("Execute", mdlDef["execute"])
                             RV_END
                             CHECKSC;
                         }
+                        model++;
                     }
                     else RV_END
                     CHECKSC;

@@ -45,8 +45,11 @@ void MapInfo::resetToDefaults()
     _def->addNumber("ambient", 0);
     _def->addNumber("gravity", 1);
     _def->addText  ("skyId", "");
-    _def->add      ("sky", new Sky());
     _def->addText  ("execute", "");
+
+    QScopedPointer<Record> sky(new Record);
+    Sky(*sky).resetToDefaults();
+    _def->add      ("sky", sky.take());
 }
 
 MapInfo &MapInfo::operator = (Record *d)
