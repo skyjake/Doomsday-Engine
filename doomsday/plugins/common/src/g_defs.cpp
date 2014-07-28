@@ -19,9 +19,15 @@
  */
 
 #include "common.h"
+#include "g_common.h"
 #include "g_defs.h"
 
 using namespace de;
+
+ded_t &Defs()
+{
+    return *static_cast<ded_t *>(DD_GetVariable(DD_DEFS));
+}
 
 int GetDefInt(char const *def, int *returnVal)
 {

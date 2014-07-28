@@ -2596,6 +2596,9 @@ void *DD_GetVariable(int ddvalue)
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
 
+    case DD_DEFS:
+        return &defs;
+
     default: break;
     }
 

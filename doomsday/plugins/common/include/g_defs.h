@@ -22,23 +22,16 @@
 #define LIBCOMMON_DEFINITION_UTILS_H
 
 #ifdef __cplusplus
+#include <doomsday/defs/ded.h>
 #include <doomsday/uri.h>
-
-extern "C" {
-#endif
-
-/**
- * @return  The default for a value (retrieved from Doomsday).
- */
-int GetDefInt(char const *def, int *returnVal);
-
-void GetDefState(char const *def, int *returnVal);
-
-#ifdef __cplusplus
-} // extern "C"
 
 typedef void EpisodeInfo;
 typedef void MapInfo;
+
+/**
+ * Provides access to the engine's definition database (DED).
+ */
+ded_t &Defs();
 
 /**
  * @param id  Identifier of the episode to lookup info for.
@@ -74,5 +67,18 @@ MapInfo *P_CurrentMapInfo();
  */
 de::Uri P_TranslateMap(uint map);
 
-#endif // __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @return  The default for a value (retrieved from Doomsday).
+ */
+int GetDefInt(char const *def, int *returnVal);
+
+void GetDefState(char const *def, int *returnVal);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
+
 #endif // LIBCOMMON_DEFINITION_UTILS_H

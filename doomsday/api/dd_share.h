@@ -258,7 +258,8 @@ enum {
     DD_TM_CEILING_Z,            ///< output from P_CheckPosition
     DD_SHIFT_DOWN,
     DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
-    DD_NOTIFY_GAME_SAVED        ///< savegame was written
+    DD_NOTIFY_GAME_SAVED,       ///< savegame was written
+    DD_DEFS                     ///< engine definition database (DED)
 };
 
 //------------------------------------------------------------------------
