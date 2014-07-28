@@ -55,16 +55,6 @@ void GetDefState(char const *def, int *val)
     if(*val < 0) *val = 0;
 }
 
-Record *P_EpisodeInfo(String id)
-{
-    return hexDefs.getEpisodeInfo(id);
-}
-
-Record *P_MapInfo(de::Uri const &mapUri)
-{
-    return hexDefs.getMapInfo(mapUri);
-}
-
 /// @todo fixme: What about the episode?
 de::Uri P_TranslateMap(uint map)
 {

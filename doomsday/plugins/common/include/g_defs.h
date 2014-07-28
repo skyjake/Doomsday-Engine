@@ -31,20 +31,6 @@
 ded_t &Defs();
 
 /**
- * @param id  Identifier of the episode to lookup info for.
- *
- * @return  EpisodeInfo for the specified @a id; otherwise @c 0 (not found).
- */
-de::Record *P_EpisodeInfo(de::String id);
-
-/**
- * @param mapUri  Identifier of the map to lookup info for.
- *
- * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
- */
-de::Record *P_MapInfo(de::Uri const &mapUri);
-
-/**
  * Translates a warp map number to unique map identifier. Always returns a valid
  * map identifier.
  *

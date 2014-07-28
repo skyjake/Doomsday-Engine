@@ -1802,7 +1802,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (COMMON_GAMESESSION->mapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"));
+        newHub = (COMMON_GAMESESSION->mapInfo()->geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"));
     }
 #endif
 
@@ -2570,17 +2570,17 @@ String G_MapTitle(de::Uri const *mapUri)
     ddmapinfo_t mapInfo;
     if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
     {
-        if(mapInfo.name[0])
+        if(Str_Text(mapInfo.name))
         {
             // Perhaps the title string is a reference to a Text definition?
             void *ptr;
-            if(Def_Get(DD_DEF_TEXT, mapInfo.name, &ptr) != -1)
+            if(Def_Get(DD_DEF_TEXT, Str_Text(mapInfo.name), &ptr) != -1)
             {
                 title = (char const *) ptr; // Yes, use the resolved text string.
             }
             else
             {
-                title = mapInfo.name;
+                title = Str_Text(mapInfo.name);
             }
         }
     }
@@ -2589,7 +2589,7 @@ String G_MapTitle(de::Uri const *mapUri)
     // In Hexen we can also look in MAPINFO for the map title.
     if(title.isEmpty())
     {
-        if(MapInfo const *mapInfo = P_MapInfo(*mapUri))
+        if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
         {
             title = mapInfo->gets("title");
         }
@@ -2621,7 +2621,7 @@ String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
     String author;
     if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
     {
-        author = mapInfo.author;
+        author = Str_Text(mapInfo.author);
     }
 
     if(!author.isEmpty())
@@ -2695,15 +2695,15 @@ char const *G_InFineBriefing(de::Uri const *mapUri)
 
 char const *G_InFineDebriefing(de::Uri const *mapUri)
 {
-    if(!mapUri) mapUri = &gameMapUri;
+    if(!mapUri) mapUri = &::gameMapUri;
 
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !nextMapUri.path().isEmpty())
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !::nextMapUri.path().isEmpty())
     {
-        if(P_MapInfo(*mapUri)->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"))
+        if(Defs().mapInfos.find("id", mapUri->compose()).geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"))
         {
             return 0;
         }

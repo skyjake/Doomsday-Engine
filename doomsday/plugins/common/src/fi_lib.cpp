@@ -33,6 +33,7 @@
 
 #include <cstring>
 
+using namespace de;
 using namespace common;
 
 struct fi_state_conditions_t
@@ -92,7 +93,7 @@ static void initStateConditions(fi_state_t *s)
         s->conditions.leave_hub = true;
         if(!nextMapUri.path().isEmpty())
         {
-            if(curMapInfo->geti("hub") == P_MapInfo(nextMapUri)->geti("hub"))
+            if(curMapInfo->geti("hub") == Defs().mapInfos.find("id", nextMapUri.compose()).geti("hub"))
             {
                 s->conditions.leave_hub = false;
             }
@@ -177,7 +178,7 @@ static void NetSv_SendFinaleState(fi_state_t *s)
 {
     DENG2_ASSERT(s != 0);
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
 
     // First the flags.
     Writer_WriteByte(writer, s->mode);
@@ -192,7 +193,7 @@ static void NetSv_SendFinaleState(fi_state_t *s)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_FINALE_STATE, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetCl_UpdateFinaleState(Reader *msg)
+void NetCl_UpdateFinaleState(reader_s *msg)
 {
     DENG2_ASSERT(msg != 0);
 

@@ -782,7 +782,7 @@ bool GameSession::savingPossible()
     return true;
 }
 
-Record *GameSession::episode()
+Record *GameSession::episodeDef()
 {
     if(hasBegun())
     {
@@ -992,7 +992,7 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(mapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"))
+        if(mapInfo()->geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"))
 #endif
         {
             // Clear all saved map states in the old hub.

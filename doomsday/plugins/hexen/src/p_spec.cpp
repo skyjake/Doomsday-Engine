@@ -80,7 +80,7 @@ void P_InitLava(void)
 
 void P_InitSky(de::Uri const &mapUri)
 {
-    if(Record const *mapInfo = P_MapInfo(mapUri))
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
         sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());

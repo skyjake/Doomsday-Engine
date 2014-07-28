@@ -36,12 +36,12 @@ using namespace common;
 
 void S_MapMusic(de::Uri const *mapUri)
 {
-    if(!mapUri) mapUri = &gameMapUri;
+    if(!mapUri) mapUri = &::gameMapUri;
 
 #ifdef __JHEXEN__
-    MapInfo const *mapInfo = P_MapInfo(*mapUri);
-    int const cdTrack = mapInfo->geti("cdTrack");
-    String const lump = mapInfo->gets("songLump").compareWithoutCase("DEFSONG")? mapInfo->gets("songLump") : "";
+    Record const &mapInfo = Defs().mapInfos.find("id", mapUri->compose());
+    int const cdTrack = mapInfo.geti("cdTrack");
+    String const lump = mapInfo.gets("songLump").compareWithoutCase("DEFSONG")? mapInfo.gets("songLump") : "";
 
     LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri->compose() << lump;
 
@@ -130,7 +130,7 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    if(MapInfo *mapInfo = P_MapInfo(G_ComposeMapUri(0, mapNumber - 1)))
+                    if(Record *mapInfo = Defs().mapInfos.tryFind("id", G_ComposeMapUri(0, mapNumber - 1).compose()))
                     {
                         mapInfo->set("songLump", Str_Text(lumpName));
                     }
