@@ -277,7 +277,7 @@ ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
 #if 0
 ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
-    return defs.getMapInfoNum(reinterpret_cast<de::Uri const *>(_uri));
+    return defs.getMapInfoNum(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
 ded_sky_t* Def_GetSky(char const* id)
@@ -1979,8 +1979,7 @@ int Def_Get(int type, char const *id, void *out)
         return false;
 
     case DD_DEF_MAP_INFO: {
-        de::Uri mapUri(id, RC_NULL);
-        int idx = defs.getMapInfoNum(&mapUri);
+        int idx = defs.getMapInfoNum(de::Uri(id, RC_NULL));
         if(idx < 0) return false;
 
         Record const &mapInfo = defs.mapInfos[idx];

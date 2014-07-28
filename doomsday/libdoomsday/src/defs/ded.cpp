@@ -538,11 +538,9 @@ int ded_s::evalFlags2(char const *ptr) const
     return value;
 }
 
-int ded_s::getMapInfoNum(de::Uri const *uri) const
+int ded_s::getMapInfoNum(de::Uri const &uri) const
 {
-    if(!uri) return -1;
-
-    if(Record const *def = mapInfos.tryFind("id", uri->compose()))
+    if(Record const *def = mapInfos.tryFind("id", uri.compose()))
     {
         return def->geti("__order__");
     }

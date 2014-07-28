@@ -161,7 +161,7 @@ public:
 
     int getStateNum(char const *id) const;
 
-    int getMapInfoNum(de::Uri const *uri) const;
+    int getMapInfoNum(de::Uri const &uri) const;
 
     int getModelNum(char const *id) const;
 

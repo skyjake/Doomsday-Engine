@@ -464,16 +464,14 @@ DENG2_PIMPL(WorldSystem)
 
         if(MapDef *mapDef = map->def())
         {
-            Uri const mapUri = mapDef->composeUri();
-            int idx = defs.getMapInfoNum(&mapUri);
+            int idx = defs.getMapInfoNum(mapDef->composeUri());
             if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 
         if(!mapInfo)
         {
             // Use the default def instead.
-            Uri const defaultMapUri("Maps", Path("*"));
-            int idx = defs.getMapInfoNum(&defaultMapUri);
+            int idx = defs.getMapInfoNum(Uri("Maps", Path("*")));
             if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 

@@ -1667,7 +1667,7 @@ DENG2_PIMPL(DEDParser)
                     READURI(&otherMap, "Maps");
                     ReadToken();
 
-                    idx = ded->getMapInfoNum(otherMap);
+                    idx = ded->getMapInfoNum(*otherMap);
                     if(idx >= 0)
                     {
                         mi = &ded->mapInfos[idx];
