@@ -70,6 +70,7 @@ HEADERS += \
     include/doomsday/defs/dedparser.h \
     include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
+    include/doomsday/defs/episode.h \
     include/doomsday/defs/mapinfo.h \
     include/doomsday/defs/model.h \
     include/doomsday/defs/sky.h \
@@ -109,6 +110,7 @@ SOURCES += \
     src/defs/dedfile.cpp \
     src/defs/dedparser.cpp \
     src/defs/dedregister.cpp \
+    src/defs/episode.cpp \
     src/defs/mapinfo.cpp \
     src/defs/model.cpp \
     src/defs/sky.cpp \
