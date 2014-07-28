@@ -1449,13 +1449,12 @@ public:
 
                     // Apply.
                     de::Uri const uri = composeMapUri(episode, map);
-                    ded_mapinfo_t *def;
-                    int idx = mapInfoDefForUri(uri, &def);
+                    int idx = ded->getMapInfoNum(&uri);
                     if(idx >= 0)
                     {
-                        def->parTime = parTime;
+                        ded->mapInfos[idx].set("parTime", parTime);
                         LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d")
-                                << idx << uri << def->parTime;
+                                << idx << uri << parTime;
                     }
                     else
                     {
