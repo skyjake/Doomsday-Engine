@@ -20,6 +20,7 @@
  */
 
 #include "idtech1converter.h"
+#include "mapinfotranslator.h"
 #include <de/Error>
 #include <de/Log>
 
@@ -69,6 +70,221 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     }
 
     return false; // failure :(
+}
+
+#if __JHERETIC__
+static String composeNotDesignedForMessage(char const *gameModeName)
+{
+    DENG2_ASSERT(gameModeName != 0);
+
+    String msg;
+
+    char tmp[2];
+    tmp[1] = 0;
+
+    // Get the message template.
+    char const *in = GET_TXT(TXT_NOTDESIGNEDFOR);
+
+    for(; *in; in++)
+    {
+        if(in[0] == '%')
+        {
+            if(in[1] == '1')
+            {
+                msg += gameModeName;
+                in++;
+                continue;
+            }
+
+            if(in[1] == '%')
+                in++;
+        }
+        tmp[0] = *in;
+        msg += tmp;
+    }
+
+    return msg;
+}
+#endif
+
+static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffer, String sourceFile)
+{
+    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourceFile).pretty();
+    try
+    {
+        parser.parse(buffer, sourceFile);
+    }
+    catch(MapInfoParser::ParseError const &er)
+    {
+        LOG_RES_WARNING("Failed parsing \"%s\" as MAPINFO:\n%s")
+                << NativePath(sourceFile).pretty() << er.asText();
+    }
+}
+
+void ConvertMapInfo()
+{
+    HexDefs hexDefs;
+
+    // Initialize a new parser.
+    MapInfoParser parser(hexDefs);
+
+    // Read the primary MAPINFO (from the IWAD).
+    AutoStr *sourceFile = AutoStr_FromText("Lumps:MAPINFO");
+    dd_bool sourceIsCustom;
+    AutoStr *buffer = M_ReadFileIntoString(sourceFile, &sourceIsCustom);
+    if(buffer && !Str_IsEmpty(buffer))
+    {
+        readOneMapInfoDefinition(parser, *buffer, Str_Text(sourceFile));
+
+#ifdef __JHEXEN__
+        // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
+        // As later map definitions now replace earlier ones, these broken defs
+        // override the earlier "good" defs. For now we'll kludge around this
+        // issue by patching the affected defs with the expected values.
+        if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
+        {
+            MapInfo *info = hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
+            info->set("warpTrans", "@wt:6");
+        }
+#endif
+    }
+    else
+    {
+        LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
+                << NativePath(Str_Text(sourceFile)).pretty();
+    }
+
+    // Generate Episode definitions for the current game mode.
+    /// @todo Move to an external definition once finalized.
+#if __JDOOM__
+    switch(gameMode)
+    {
+    case doom_chex:
+    case doom2_hacx: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap", "Maps:MAP01");
+        break; }
+
+    case doom2: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "Hell On Earth");
+        info.set("menuShortcut", "h");
+        break; }
+
+    case doom2_plut: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "The Plutonia Experiment");
+        info.set("menuShortcut", "p");
+        break; }
+
+    case doom2_tnt: {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:MAP01");
+        info.set("title",        "TNT: Evilution");
+        info.set("menuShortcut", "t");
+        break; }
+
+    case doom:
+    case doom_shareware:
+    case doom_ultimate: {
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["1"];
+            info.set("startMap",     "Maps:E1M1");
+            info.set("title",        GET_TXT(TXT_EPISODE1));
+            info.set("menuImage",    "Patches:M_EPI1");
+            info.set("menuShortcut", "k");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["2"];
+            info.set("startMap",     "Maps:E2M1");
+            info.set("title",        GET_TXT(TXT_EPISODE2));
+            info.set("menuImage",    "Patches:M_EPI2");
+            info.set("menuShortcut", "s");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["3"];
+            info.set("startMap",     "Maps:E3M1");
+            info.set("title",        GET_TXT(TXT_EPISODE3));
+            info.set("menuImage",    "Patches:M_EPI3");
+            info.set("menuShortcut", "i");
+        }
+        if(gameMode == doom_ultimate)
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["4"];
+            info.set("startMap",     "Maps:E3M1");
+            info.set("title",        GET_TXT(TXT_EPISODE4));
+            info.set("menuImage",    "Patches:M_EPI4");
+            info.set("menuShortcut", "f");
+        }
+        break; }
+
+    default: DENG2_ASSERT(!"readMapInfoDefinitions: Unknown game mode"); break;
+    };
+#elif __JHERETIC__
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["1"];
+        info.set("startMap",     "Maps:E1M1");
+        info.set("title",        GET_TXT(TXT_EPISODE1));
+        info.set("menuShortcut", "c");
+    }
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["2"];
+        info.set("startMap",     "Maps:E2M1");
+        info.set("title",        GET_TXT(TXT_EPISODE2));
+        info.set("menuShortcut", "h");
+    }
+    {
+        EpisodeInfo &info = hexDefs.episodeInfos["3"];
+        info.set("startMap",     "Maps:E3M1");
+        info.set("title",        GET_TXT(TXT_EPISODE3));
+        info.set("menuShortcut", "d");
+    }
+    if(gameMode == heretic_extended)
+    {
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["4"];
+            info.set("startMap",     "Maps:E4M1");
+            info.set("title",        GET_TXT(TXT_EPISODE4));
+            info.set("menuShortcut", "o");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["5"];
+            info.set("startMap",     "Maps:E5M1");
+            info.set("title",        GET_TXT(TXT_EPISODE5));
+            info.set("menuShortcut", "s");
+        }
+        {
+            EpisodeInfo &info = hexDefs.episodeInfos["6"];
+            info.set("startMap",     "Maps:E6M1");
+            info.set("title",        GET_TXT(TXT_EPISODE6));
+            info.set("menuShortcut", "f");
+            info.set("menuHelpInfo", composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER)));
+        }
+    }
+#elif __JDOOM64__
+    // A single implicit episode.
+    EpisodeInfo &info = hexDefs.episodeInfos["1"];
+    info.set("startMap", "Maps:MAP01");
+#elif __JHEXEN__
+    // A single implicit episode.
+    EpisodeInfo &info = hexDefs.episodeInfos["1"];
+    info.set("startMap", "@wt:0");
+#endif
+
+    // Translate internal "warp trans" numbers to URIs.
+    hexDefs.translateMapWarpNumbers();
+
+#ifdef DENG_IDTECH1CONVERTER_DEBUG
+    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
+    {
+        MapInfo const &info = i->second;
+        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
+                << i->first.c_str() << info.gets("title")
+                << info.geti("hub") << info.gets("map") << info.geti("warpTrans") << info.gets("nextMap");
+    }
+#endif
 }
 
 /**

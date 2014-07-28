@@ -28,9 +28,6 @@
 using namespace de;
 
 namespace idtech1 {
-
-HexDefs hexDefs;
-
 namespace internal {
 
 static de::Uri composeMapUri(uint episode, uint map)
@@ -160,11 +157,6 @@ void EpisodeInfo::resetToDefaults()
     addText("menuShortcut", "");  // Key name. None.
 }
 
-/**
- * @note In the future it is likely that a MAPINFO parser will only be necessary in order to
- * translate such content into Doomsday-native DED file(s) in a plugin. As such it would be
- * preferable if this could be done in one pass without the need for extra temporary storage.
- */
 DENG2_PIMPL(MapInfoParser)
 {
     HexDefs &db;
@@ -1166,7 +1158,7 @@ de::Uri HexDefs::translateMapWarpNumber(uint map)
 
 void HexDefs::translateMapWarpNumbers()
 {
-    for(HexDefs::EpisodeInfos::iterator i = hexDefs.episodeInfos.begin(); i != hexDefs.episodeInfos.end(); ++i)
+    for(HexDefs::EpisodeInfos::iterator i = episodeInfos.begin(); i != episodeInfos.end(); ++i)
     {
         EpisodeInfo &info = i->second;
         de::Uri startMap(info.gets("startMap", ""), RC_NULL);
@@ -1175,7 +1167,7 @@ void HexDefs::translateMapWarpNumbers()
             info.set("startMap", translateMapWarpNumber(startMap.path().toStringRef().toInt()).compose());
         }
     }
-    for(HexDefs::MapInfos::iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
+    for(HexDefs::MapInfos::iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
     {
         MapInfo &info = i->second;
         de::Uri nextMap(info.gets("nextMap", ""), RC_NULL);

@@ -74,5 +74,5 @@ MapInfo *P_CurrentMapInfo();
  */
 de::Uri P_TranslateMap(uint map);
 
-#endif // __cpplusplus
+#endif // __cplusplus
 #endif // LIBCOMMON_DEFINITION_UTILS_H
