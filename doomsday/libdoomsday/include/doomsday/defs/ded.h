@@ -55,6 +55,9 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     //DEDArray<ded_flag_t> flags;
     DEDRegister flags;
 
+    // Episodes.
+    DEDRegister episodes;
+
     // Map object information.
     DEDArray<ded_mobj_t> mobjs;
 
@@ -135,6 +138,8 @@ public:
 
     int addFlag(char const *id, int value);
 
+    int addEpisode();
+
     int addMapInfo();
 
     int addModel();
@@ -160,6 +165,8 @@ public:
     int getStateNum(de::String const &id) const;
 
     int getStateNum(char const *id) const;
+
+    int getEpisodeNum(de::String const &id) const;
 
     int getMapInfoNum(de::Uri const &uri) const;
 

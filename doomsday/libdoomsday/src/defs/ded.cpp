@@ -18,6 +18,7 @@
  */
 
 #include "doomsday/defs/ded.h"
+#include "doomsday/defs/episode.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/sky.h"
@@ -50,11 +51,13 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 
 ded_s::ded_s()
     : flags   (names.addRecord("flags"))
+    , episodes(names.addRecord("episodes"))
     , mapInfos(names.addRecord("mapInfos"))
     , models  (names.addRecord("models"))
     , skies   (names.addRecord("skies"))
 {
     flags.addLookupKey("id");
+    episodes.addLookupKey("id");
     mapInfos.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
     models.addLookupKey("state");
@@ -78,6 +81,13 @@ int ded_s::addFlag(char const *id, int value)
     Record &def = flags.append();
     def.addText("id", id);
     def.addNumber("value", value);
+    return def.geti("__order__");
+}
+
+int ded_s::addEpisode()
+{
+    Record &def = episodes.append();
+    defn::Episode(def).resetToDefaults();
     return def.geti("__order__");
 }
 
@@ -105,6 +115,7 @@ int ded_s::addSky()
 void ded_s::release()
 {
     flags.clear();
+    episodes.clear();
     mobjs.clear();
     states.clear();
     sprites.clear();
@@ -536,6 +547,15 @@ int ded_s::evalFlags2(char const *ptr) const
         }
     }
     return value;
+}
+
+int ded_s::getEpisodeNum(String const &id) const
+{
+    if(Record const *def = episodes.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
 }
 
 int ded_s::getMapInfoNum(de::Uri const &uri) const

@@ -1562,6 +1562,7 @@ void Def_Read()
     LOG_RES_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
+    os << defCountMsg(defs.episodes.size(), "episodes");
     os << defCountMsg(defs.groups.size(), "animation groups");
     os << defCountMsg(defs.compositeFonts.size(), "composite fonts");
     os << defCountMsg(defs.details.size(), "detail textures");

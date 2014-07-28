@@ -31,6 +31,7 @@ void Episode::resetToDefaults()
     DENG2_ASSERT(_def);
 
     // Add all expected fields with their default values.
+    _def->addText("id", "");
     _def->addText("startMap", "Maps:"); // URI. Unknown.
     _def->addText("title", "Untitled");
     _def->addText("menuHelpInfo", "");  // None.
