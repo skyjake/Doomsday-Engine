@@ -29,7 +29,7 @@
  * @todo Game-side IData should be here; eventually the games don't need to add any
  * custom members to mobj_s, just to their own private data instance. -jk
  */
-class MobjThinkerData : public ThinkerData
+class LIBDOOMSDAY_PUBLIC MobjThinkerData : public ThinkerData
 {
 public:
     MobjThinkerData();
