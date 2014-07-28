@@ -63,13 +63,25 @@ public:
     bool loadingPossible();
 
     /**
+     * Returns the (current) Episode definition for the game session in progress. If the session
+     * has not yet begun then @c NULL is returned.
+     */
+    de::Record *episodeDef();
+
+    /**
+     * Returns the (current) MapInfo definition for the game session in progress. If the session
+     * has not yet begun, or no definition exists for the current map then @c NULL is returned.
+     */
+    de::Record *mapInfo();
+
+    /**
      * Returns the current ruleset for the game session.
      */
     GameRuleset const &rules() const;
 
     /**
-     * To be called when a new game begins to effect the game rules. Note that some
-     * of the rules may be overridden here (e.g., in a networked game).
+     * To be called when a new game begins to effect the game rules. Note that some of the rules
+     * may be overridden here (e.g., in a networked game).
      *
      * @todo Prevent this outright if the game session is already in progress!
      */

@@ -87,7 +87,7 @@ static void initStateConditions(fi_state_t *s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(MapInfo *curMapInfo = P_CurrentMapInfo())
+    if(Record const *curMapInfo = COMMON_GAMESESSION->mapInfo())
     {
         s->conditions.leave_hub = true;
         if(!nextMapUri.path().isEmpty())

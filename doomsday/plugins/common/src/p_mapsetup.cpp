@@ -660,7 +660,7 @@ static void initFog(ddmapinfo_t *ddMapInfo)
     }
 
 #if __JHEXEN__
-    if(MapInfo const *mapInfo = P_CurrentMapInfo())
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
     {
         int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
         if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))

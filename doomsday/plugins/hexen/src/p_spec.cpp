@@ -30,6 +30,7 @@
 
 #include "dmu_lib.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "p_inventory.h"
 #include "player.h"
 #include "p_map.h"
@@ -44,6 +45,7 @@
 #include "p_user.h"
 #include "polyobjs.h"
 
+using namespace de;
 using namespace common;
 
 #define LIGHTNING_SPECIAL       198
@@ -78,7 +80,7 @@ void P_InitLava(void)
 
 void P_InitSky(de::Uri const &mapUri)
 {
-    if(MapInfo const *mapInfo = P_MapInfo(mapUri))
+    if(Record const *mapInfo = P_MapInfo(mapUri))
     {
         sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
         sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());
@@ -495,7 +497,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch goes back to the first map of the current episode.
-                    G_SetGameActionMapCompleted(de::Uri(P_CurrentEpisodeInfo()->gets("startMap"), RC_NULL), 0, false);
+                    G_SetGameActionMapCompleted(de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL), 0, false);
                 }
                 else
                 {
@@ -1045,7 +1047,7 @@ void P_ForceLightning()
 void P_InitLightning()
 {
     int i, secCount;
-    MapInfo const *mapInfo = P_CurrentMapInfo();
+    Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
 
     if(!mapInfo || !mapInfo->getb("lightning"))
     {

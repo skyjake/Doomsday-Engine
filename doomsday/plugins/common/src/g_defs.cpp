@@ -55,24 +55,14 @@ void GetDefState(char const *def, int *val)
     if(*val < 0) *val = 0;
 }
 
-EpisodeInfo *P_EpisodeInfo(String id)
+Record *P_EpisodeInfo(String id)
 {
     return hexDefs.getEpisodeInfo(id);
 }
 
-EpisodeInfo *P_CurrentEpisodeInfo()
-{
-    return hexDefs.getEpisodeInfo(String::number(::gameEpisode + 1));
-}
-
-MapInfo *P_MapInfo(de::Uri const &mapUri)
+Record *P_MapInfo(de::Uri const &mapUri)
 {
     return hexDefs.getMapInfo(mapUri);
-}
-
-MapInfo *P_CurrentMapInfo()
-{
-    return hexDefs.getMapInfo(::gameMapUri);
 }
 
 /// @todo fixme: What about the episode?

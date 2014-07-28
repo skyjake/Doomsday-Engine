@@ -782,6 +782,26 @@ bool GameSession::savingPossible()
     return true;
 }
 
+Record *GameSession::episode()
+{
+    if(hasBegun())
+    {
+        /// @todo cache this result.
+        return Defs().episodes.tryFind("id", String::number(::gameEpisode + 1));
+    }
+    return 0;
+}
+
+Record *GameSession::mapInfo()
+{
+    if(hasBegun())
+    {
+        /// @todo cache this result.
+        return Defs().mapInfos.tryFind("id", ::gameMapUri.compose());
+    }
+    return 0;
+}
+
 GameRuleset const &GameSession::rules() const
 {
     return d->rules;
@@ -946,7 +966,7 @@ void GameSession::leaveMap()
     // Check that the map truly exists.
     if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
     {
-        ::nextMapUri = de::Uri(P_CurrentEpisodeInfo()->gets("startMap"), RC_NULL); // Should exist always?
+        ::nextMapUri = de::Uri(episodeDef()->gets("startMap"), RC_NULL); // Should exist always?
     }
 
 #if __JHEXEN__
@@ -972,7 +992,7 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(P_CurrentMapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"))
+        if(mapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"))
 #endif
         {
             // Clear all saved map states in the old hub.

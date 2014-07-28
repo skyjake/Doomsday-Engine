@@ -1195,7 +1195,7 @@ static void printMapBanner()
     {
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
-        MapInfo const *mapInfo = P_CurrentMapInfo();
+        Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
         text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
@@ -1802,7 +1802,7 @@ void G_PlayerLeaveMap(int player)
     dd_bool newHub = true;
     if(!nextMapUri.path().isEmpty())
     {
-        newHub = (P_CurrentMapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"));
+        newHub = (COMMON_GAMESESSION->mapInfo()->geti("hub") != P_MapInfo(nextMapUri)->geti("hub"));
     }
 #endif
 
@@ -2432,7 +2432,7 @@ de::Uri G_NextMap(dd_bool secretExit)
 {
 #if __JHEXEN__
     /// @todo fixme: What about the episode?
-    return de::Uri(P_CurrentMapInfo()->gets("nextMap"), RC_NULL);
+    return de::Uri(COMMON_GAMESESSION->mapInfo()->gets("nextMap"), RC_NULL);
     DENG2_UNUSED(secretExit);
 
 #elif __JDOOM64__
