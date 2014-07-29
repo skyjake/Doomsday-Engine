@@ -1,0 +1,11 @@
+# DOOM2: Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Title = "Hell On Earth";
+  Menu Shortcut = "h";
+  Start Map = "MAP01";
+}

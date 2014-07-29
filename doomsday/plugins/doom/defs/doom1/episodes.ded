@@ -1,0 +1,39 @@
+# DOOM: Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Title = "EPISODE1";
+  Menu Image = "M_EPI1";
+  Menu Shortcut = "k";
+  Start Map = "E1M1";
+}
+
+Episode {
+  Id = "2";
+  Title = "EPISODE2";
+  Menu Image = "M_EPI2";
+  Menu Shortcut = "s";
+  Start Map = "E2M1";
+}
+
+Episode {
+  Id = "3";
+  Title = "EPISODE3";
+  Menu Image = "M_EPI3";
+  Menu Shortcut = "i";
+  Start Map = "E3M1";
+}
+
+# The rest of this file is skipped if not DOOM - ultimate.
+SkipIf Not doom1-ultimate;
+
+Episode {
+  Id = "4";
+  Title = "EPISODE4";
+  Menu Image = "M_EPI4";
+  Menu Shortcut = "f";
+  Start Map = "E3M1";
+}

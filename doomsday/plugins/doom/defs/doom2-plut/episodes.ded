@@ -1,0 +1,11 @@
+# DOOM2 (Plutonia): Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Title = "The Plutonia Experiment";
+  Menu Shortcut = "p";
+  Start Map = "MAP01";
+}

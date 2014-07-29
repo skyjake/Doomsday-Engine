@@ -1,0 +1,51 @@
+# Heretic: Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Title = "EPISODE1";
+  Menu Shortcut = "c";
+  Start Map = "E1M1";
+}
+
+Episode {
+  Id = "2";
+  Title = "EPISODE2";
+  Menu Shortcut = "h";
+  Start Map = "E2M1";
+}
+
+Episode {
+  Id = "3";
+  Title = "EPISODE3";
+  Menu Shortcut = "d";
+  Start Map = "E3M1";
+}
+
+# The rest of the file is skipped if not Heretic Extended.
+SkipIf Not heretic-ext;
+
+Episode {
+  Id = "4";
+  Title = "EPISODE4";
+  Menu Shortcut = "o";
+  Start Map = "E4M1";
+}
+
+Episode {
+  Id = "5";
+  Title = "EPISODE5";
+  Menu Shortcut = "s";
+  Start Map = "E5M1";
+}
+
+Episode {
+  Id = "6";
+  Title = "EPISODE6";
+  Menu Shortcut = "f";
+  # todo: Composite this string from Text defs
+  Menu Help Info = "Not designed for singleplayer";
+  Start Map = "E6M1";
+}

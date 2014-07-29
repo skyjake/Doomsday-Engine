@@ -13,6 +13,7 @@ Header {
 }
 
 Include "flags.ded";
+Include "episodes.ded";
 Include "fonts.ded";
 Include "objects.ded";
 Include "sprites.ded";

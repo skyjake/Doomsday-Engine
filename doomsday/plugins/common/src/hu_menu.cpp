@@ -3043,8 +3043,13 @@ void Hu_MenuInitEpisodePage()
 
         ButtonWidget *btn = new ButtonWidget;
 
-        btn->setText(episodeDef.gets("title"))
-            .setFixedY(y);
+        btn->setFixedY(y);
+
+        String title = episodeDef.gets("title");
+        // Perhaps a Text definition?
+        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        if(textIdx >= 0) title = String(Defs().text[textIdx].text); // Yes, use the resolved text string.
+        btn->setText(title);
 
         // Has a menu image been specified?
         de::Uri image(episodeDef.gets("menuImage"), RC_NULL);
@@ -3073,6 +3078,7 @@ void Hu_MenuInitEpisodePage()
         }
 
         de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+        /// @todo Translate Hexen warp numbers.
         if(P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectEpisode;

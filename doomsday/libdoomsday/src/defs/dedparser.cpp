@@ -765,6 +765,7 @@ DENG2_PIMPL(DEDParser)
     {
         char  dummy[128], label[128], tmp[256];
         int   dummyInt, idx, retVal = true;
+        int   prevEpisodeDefIdx = -1; // For "Copy".
         int   prevMobjDefIdx = -1; // For "Copy".
         int   prevStateDefIdx = -1; // For "Copy"
         int   prevLightDefIdx = -1; // For "Copy".
@@ -919,6 +920,83 @@ DENG2_PIMPL(DEDParser)
 
                 // Sanity check.
                 DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
+            }
+
+            if(ISTOKEN("Episode"))
+            {
+                bool bModify = false;
+                Record dummyEpsd;
+                Record *epsd = 0;
+
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // New episodes are appended to the end of the list.
+                    idx = ded->addEpisode();
+                    epsd = &ded->episodes[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    ded_stringid_t otherEpisodeId;
+
+                    READSTR(otherEpisodeId);
+                    ReadToken();
+
+                    idx = ded->getEpisodeNum(otherEpisodeId);
+                    if(idx >= 0)
+                    {
+                        epsd = &ded->episodes[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Episode %s in %s on line #%i")
+                                << otherEpisodeId << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+
+                        // We'll read into a dummy definition.
+                        epsd = &dummyEpsd;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify.");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(epsd != 0);
+
+                if(prevEpisodeDefIdx >= 0 && bCopyNext)
+                {
+                    Record *prevEpisode = &ded->episodes[prevEpisodeDefIdx];
+                    // Private members are used for metadata (like __order__) that should
+                    // not be copied.
+                    epsd->assign(*prevEpisode, Record::IgnoreDoubleUnderscoreMembers);
+                }
+
+                FINDBEGIN;
+                forever
+                {
+                    READLABEL;
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READSTR((*epsd)["id"]);
+                    }
+                    else RV_URI("Start Map", (*epsd)["title"], "Maps")
+                    RV_STR("Title", (*epsd)["title"])
+                    RV_STR("Menu Help Info", (*epsd)["menuHelpInfo"])
+                    RV_URI("Menu Image", (*epsd)["menuImage"], "Patches")
+                    RV_STR("Menu Shortcut", (*epsd)["menuShortcut"])
+                    RV_END
+                    CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevEpisodeDefIdx = idx;
+                }
             }
 
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))

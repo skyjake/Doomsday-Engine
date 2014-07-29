@@ -1,0 +1,9 @@
+# Doom64: Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Start Map = "MAP01";
+}

@@ -1,0 +1,11 @@
+# DOOM2 (TNT): Episode definitions
+#
+
+Header { Version = 6; }
+
+Episode {
+  Id = "1";
+  Title = "TNT: Evilution";
+  Menu Shortcut = "t";
+  Start Map = "MAP01";
+}
