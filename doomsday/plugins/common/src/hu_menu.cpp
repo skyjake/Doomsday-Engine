@@ -29,6 +29,7 @@
 #include <QMap>
 #include <QtAlgorithms>
 #include <de/memory.h>
+#include <de/RecordValue>
 #include "am_map.h"
 #include "g_common.h"
 #include "g_controls.h"
@@ -3035,17 +3036,18 @@ void Hu_MenuInitEpisodePage()
 
     int y = 0;
     int n = 0;
-    DENG2_FOR_EACH_CONST(HexDefs::EpisodeInfos, it, hexDefs.episodeInfos)
+    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
     {
-        EpisodeInfo const &info = it->second;
+        Record const &episodeDef = *i->second->as<RecordValue>().record();
 
         ButtonWidget *btn = new ButtonWidget;
 
-        btn->setText(info.gets("title"))
+        btn->setText(episodeDef.gets("title"))
             .setFixedY(y);
 
         // Has a menu image been specified?
-        de::Uri image(info.gets("menuImage"), RC_NULL);
+        de::Uri image(episodeDef.gets("menuImage"), RC_NULL);
         if(!image.path().isEmpty())
         {
             // Presently only patches are supported.
@@ -3057,24 +3059,24 @@ void Hu_MenuInitEpisodePage()
 
         // Has a menu shortcut/hotkey been specified?
         /// @todo Validate symbolic dday key names.
-        String const shortcut = info.gets("menuShortcut");
+        String const shortcut = episodeDef.gets("menuShortcut");
         if(!shortcut.isEmpty() && shortcut.first().isLetterOrNumber())
         {
             btn->setShortcut(shortcut.first().toLower().toLatin1());
         }
 
         // Has a menu help/info text been specified?
-        String const helpInfo = info.gets("menuHelpInfo");
+        String const helpInfo = episodeDef.gets("menuHelpInfo");
         if(!helpInfo.isEmpty())
         {
             btn->setHelpInfo(helpInfo);
         }
 
-        de::Uri startMap(info.gets("startMap"), RC_NULL);
+        de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
         if(P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectEpisode;
-            btn->setData(String::fromStdString(it->first));
+            btn->setData(episodeDef.gets("id"));
         }
         else
         {
@@ -3097,7 +3099,7 @@ void Hu_MenuInitEpisodePage()
                 btn->setFlags(FO_SET, MNF_DISABLED);
                 LOG_RES_WARNING("Failed to locate the starting map \"%s\" for episode '%s'."
                                 " This episode will not be selectable from the menu")
-                        << startMap << String::fromStdString(it->first);
+                        << startMap << episodeDef.gets("id");
             }
         }
 
@@ -4305,9 +4307,10 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
     }
 
     // Skip episode selection if only one is defined.
-    if(hexDefs.episodeInfos.size() == 1)
+    if(Defs().episodes.size() == 1)
     {
-        mnEpisode = String::fromStdString(hexDefs.episodeInfos.begin()->first);
+        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+        mnEpisode = episodesById.begin()->second->as<RecordValue>().record()->gets("id");
 #if __JHEXEN__
         Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
 #else
@@ -4650,7 +4653,7 @@ void Hu_MenuInitNewGame(dd_bool confirmed)
     GameRuleset newRules(defaultGameRules);
     newRules.skill = mnSkillmode;
 
-    Record const episodeDef = Defs().episodes.find("id", mnEpisode);
+    Record const &episodeDef = Defs().episodes.find("id", mnEpisode);
     G_SetGameActionNewSession(de::Uri(episodeDef.gets("startMap"), RC_NULL), 0/*default*/, newRules);
 }
 

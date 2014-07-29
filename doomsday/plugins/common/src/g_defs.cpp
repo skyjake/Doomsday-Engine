@@ -19,8 +19,9 @@
  */
 
 #include "common.h"
-#include "g_common.h"
 #include "g_defs.h"
+#include <de/RecordValue>
+#include "g_common.h"
 
 using namespace de;
 
@@ -58,5 +59,30 @@ void GetDefState(char const *def, int *val)
 /// @todo fixme: What about the episode?
 de::Uri P_TranslateMap(uint map)
 {
-    return hexDefs.translateMapWarpNumber(map);
+    de::Uri matchedWithoutHub("Maps:", RC_NULL);
+
+    DictionaryValue::Elements const &mapInfosById = Defs().mapInfos.lookup("id").elements();
+    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, mapInfosById)
+    {
+        Record const &info = *i->second->as<RecordValue>().record();
+
+        if((unsigned)info.geti("warpTrans") == map)
+        {
+            if(info.geti("hub"))
+            {
+                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
+                        << map << info.gets("map") << info.geti("hub");
+                return de::Uri(info.gets("map"), RC_NULL);
+            }
+
+            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
+                    << map << info.gets("map");
+            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+        }
+    }
+
+    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
+            << map << matchedWithoutHub;
+
+    return matchedWithoutHub;
 }

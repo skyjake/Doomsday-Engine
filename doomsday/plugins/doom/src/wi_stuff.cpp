@@ -294,8 +294,10 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     ddmapinfo_t minfo;
     if(Def_Get(DD_DEF_MAP_INFO, wbs->nextMap.compose().toUtf8().constData(), &minfo) && minfo.name)
     {
-        if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
-            mapName = minfo.name;
+        if(Def_Get(DD_DEF_TEXT, Str_Text(minfo.name), &mapName) == -1)
+        {
+            mapName = Str_Text(minfo.name);
+        }
     }
 
     // Skip the E#M# or Map #.
