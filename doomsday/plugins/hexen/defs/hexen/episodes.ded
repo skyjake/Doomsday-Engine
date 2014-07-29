@@ -5,5 +5,5 @@ Header { Version = 6; }
 
 Episode {
   Id = "1";
-  Start Map = "@wt:0";
+  Start Map = "@wt:1";
 }

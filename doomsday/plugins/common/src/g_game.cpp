@@ -1196,7 +1196,7 @@ static void printMapBanner()
         String text = String("Map: ") + gameMapUri.path().asText();
 #if __JHEXEN__
         Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-        text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") + 1 : 0);
+        text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") : 0);
 #endif
         text += String(" - " DE2_ESC(b)) + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
@@ -3248,15 +3248,16 @@ D_CMD(WarpMap)
             map  = de::max(0, number % 10);
         }
 #endif
-        // Internally epsiode and map numbers are zero-based.
-        if(epsd != 0) epsd -= 1;
-        if(map != 0)  map  -= 1;
 
 #if __JHEXEN__
         // Hexen map numbers require translation.
         /// @todo fixme: What about the episode?
         newMapUri = P_TranslateMap(map);
 #else
+        // Internally epsiode and map numbers are zero-based.
+        if(epsd != 0) epsd -= 1;
+        if(map != 0)  map  -= 1;
+
         // Compose a map URI for the given episode and map pair using the default
         // format specific to the game (and mode).
         newMapUri = G_ComposeMapUri(epsd, map);

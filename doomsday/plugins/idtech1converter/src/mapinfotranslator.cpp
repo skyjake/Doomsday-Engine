@@ -397,11 +397,7 @@ DENG2_PIMPL(MapInfoParser)
         }
         else
         {
-            if(mapNumber < 1)
-            {
-                throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
-            }
-            mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String("@wt:%1").arg(mapNumber - 1));
+            mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String("@wt:%1").arg(mapNumber));
         }
     }
 
@@ -449,7 +445,8 @@ DENG2_PIMPL(MapInfoParser)
                 info->set("map", mapUri.compose());
 
                 // Attempt to extract the "warp translation" number.
-                info->set("warpTrans", mapNumberFor(mapUri));
+                uint mapWarpNumber = mapNumberFor(mapUri);
+                info->set("warpTrans", mapWarpNumber != 0? mapWarpNumber + 1 : 0);
             }
 
             // Map title must follow the number.
@@ -870,7 +867,7 @@ DENG2_PIMPL(MapInfoParser)
                 {
                     throw ParseError(String("Invalid map warp-number '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
                 }
-                info->set("warpTrans", mapWarpNum - 1);
+                info->set("warpTrans", mapWarpNum);
                 continue;
             }
 

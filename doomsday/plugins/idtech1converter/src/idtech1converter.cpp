@@ -109,7 +109,7 @@ void ConvertMapInfo()
         if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
         {
             MapInfo *info = hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
-            info->set("warpTrans", "@wt:6");
+            info->set("warpTrans", "@wt:7");
         }
 #endif
     }
