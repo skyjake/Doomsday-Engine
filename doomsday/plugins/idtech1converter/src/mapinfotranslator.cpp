@@ -862,12 +862,7 @@ DENG2_PIMPL(MapInfoParser)
             if(!Str_CompareIgnoreCase(lexer.token(), "warptrans") ||
                !Str_CompareIgnoreCase(lexer.token(), "levelnum") /* ZDoom */)
             {
-                int const mapWarpNum = (int)lexer.readNumber();
-                if(mapWarpNum < 1)
-                {
-                    throw ParseError(String("Invalid map warp-number '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
-                }
-                info->set("warpTrans", mapWarpNum);
+                info->set("warpTrans", (int)lexer.readNumber());
                 continue;
             }
 
