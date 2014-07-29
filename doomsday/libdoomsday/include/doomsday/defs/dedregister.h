@@ -20,6 +20,7 @@
 #define LIBDOOMSDAY_DEDREGISTER_H
 
 #include "../libdoomsday.h"
+#include <de/DictionaryValue>
 #include <de/Record>
 
 /**
@@ -91,6 +92,11 @@ public:
 
     de::Record &       find(de::String const &key, de::String const &value);
     de::Record const & find(de::String const &key, de::String const &value) const;
+
+    /**
+     * Provides immutable access to the register's dictionary, for efficient traversal.
+     */
+    de::DictionaryValue const &lookup(de::String const &key) const;
 
 private:
     DENG2_PRIVATE(d)
