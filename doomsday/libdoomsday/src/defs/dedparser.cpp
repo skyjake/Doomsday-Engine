@@ -983,7 +983,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         READSTR((*epsd)["id"]);
                     }
-                    else RV_URI("Start Map", (*epsd)["title"], "Maps")
+                    else RV_URI("Start Map", (*epsd)["startMap"], "Maps")
                     RV_STR("Title", (*epsd)["title"])
                     RV_STR("Menu Help Info", (*epsd)["menuHelpInfo"])
                     RV_URI("Menu Image", (*epsd)["menuImage"], "Patches")
