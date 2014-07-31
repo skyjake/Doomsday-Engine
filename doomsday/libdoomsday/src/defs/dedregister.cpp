@@ -117,10 +117,15 @@ DENG2_PIMPL(DEDRegister)
         return *sub;
     }
 
+    bool isEmptyKeyValue(Value const &value) const
+    {
+        return value.is<TextValue>() && value.asText().isEmpty();
+    }
+
     bool isValidKeyValue(Value const &value) const
     {
         // Empty strings are not indexable.
-        if(value.is<TextValue>() && value.asText().isEmpty()) return false;
+        if(isEmptyKeyValue(value)) return false;
         return true;
     }
 
@@ -198,7 +203,9 @@ DENG2_PIMPL(DEDRegister)
         if(keys.contains(key.name()))
         {
             // Index definition using its current value.
-            if(addToLookup(key.name(), key.value(), def))
+            // Observe empty keys so we'll get the key's value when it's set.
+            if(addToLookup(key.name(), key.value(), def) ||
+               isEmptyKeyValue(key.value()))
             {
                 parents.insert(&key, &def);
                 key.audienceForChangeFrom() += this;
@@ -210,16 +217,17 @@ DENG2_PIMPL(DEDRegister)
     {
         if(keys.contains(key.name()))
         {
-            if(removeFromLookup(key.name(), key.value(), def))
-            {
-                key.audienceForChangeFrom() -= this;
-                parents.remove(&key);
-            }
+            key.audienceForChangeFrom() -= this;
+            parents.remove(&key);
+            removeFromLookup(key.name(), key.value(), def);
         }
     }
 
     void variableValueChangedFrom(Variable &key, Value const &oldValue, Value const &newValue)
     {
+        //qDebug() << "changed" << key.name() << "from" << oldValue.asText() << "to"
+        //         << newValue.asText();
+
         DENG2_ASSERT(parents.contains(&key));
 
         // The value of a key has changed, so it needs to be reindexed.
