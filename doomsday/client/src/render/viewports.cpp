@@ -345,14 +345,19 @@ void R_UpdateViewPortGeometry(viewport_t *port, int col, int row)
 
 bool R_SetViewGrid(int numCols, int numRows)
 {
-    // LensFx needs to reallocate resources only for the consoles in use.
-    LensFx_GLRelease();
-
     if(numCols > 0 && numRows > 0)
     {
         if(numCols * numRows > DDMAXPLAYERS)
         {
             return false;
+        }
+
+        if(numCols != gridCols || numRows != gridRows)
+        {
+            // The number of consoles has changes; LensFx needs to reallocate resources
+            // only for the consoles in use.
+            /// @todo This could be done smarter, only for the affected viewports. -jk
+            LensFx_GLRelease();
         }
 
         if(numCols > DDMAXPLAYERS)
