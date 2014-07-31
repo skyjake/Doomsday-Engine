@@ -117,7 +117,7 @@ Variable &Variable::set(Value *v)
     d->value = val.take();
     
     // We'll only determine if actual change occurred if someone is interested.
-    if(!audienceForChange().isEmpty())
+    if(!audienceForChange().isEmpty() || !audienceForChangeFrom().isEmpty())
     {
         bool notify = true;
         try
