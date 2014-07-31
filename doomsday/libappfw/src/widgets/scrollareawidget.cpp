@@ -383,7 +383,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         if(mouse.wheelMotion() == MouseEvent::FineAngle)
         {
             d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                mouse.wheel().y / 2 * (d->origin == Top? -1 : 1),
+                                toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
                                 d->maxY->valuei()), .05f);
             d->restartScrollOpacityFade();
         }
