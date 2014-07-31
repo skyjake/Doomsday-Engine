@@ -125,6 +125,7 @@ DENG_GUI_PIMPL(PopupWidget)
     void updateStyle()
     {
         Style const &st = style();
+        bool const opaqueBackground = (self.levelOfNesting() > 0);
 
         if(useInfoStyle)
         {
@@ -133,12 +134,13 @@ DENG_GUI_PIMPL(PopupWidget)
         else
         {
             self.set(Background(st.colors().colorf("background"),
-                                Background::BlurredWithBorderGlow,
+                                !opaqueBackground && st.isBlurringAllowed()?
+                                    Background::BlurredWithBorderGlow : Background::BorderGlow,
                                 st.colors().colorf("glow"),
                                 st.rules().rule("glow").valuei()));
         }
 
-        if(self.levelOfNesting() > 0)
+        if(opaqueBackground)
         {
             // If nested, use an opaque background.
             self.set(self.background().withSolidFillOpacity(1));
