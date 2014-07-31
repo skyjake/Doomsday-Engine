@@ -26,12 +26,14 @@
 #endif
 
 #include "api_map.h"
+#include "dd_def.h"
 #ifdef __CLIENT__
 #  include "ModelDef"
 #  include "Sprite"
 #endif
 #include <de/Vector>
 #include <de/aabox.h>
+#include <doomsday/world/thinker.h>
 #include <doomsday/world/mobj.h>
 #include <doomsday/defs/ded.h>
 
@@ -40,6 +42,16 @@ class Plane;
 class SectorCluster;
 
 #define MOBJ_SIZE               gx.mobjSize
+
+class MobjThinker : public ThinkerT<mobj_t>
+{
+public:
+    MobjThinker(AllocMethod alloc = AllocateStandard) : ThinkerT(MOBJ_SIZE, alloc) {}
+    MobjThinker(mobj_t const &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
+    MobjThinker(mobj_t *existingToTake) : ThinkerT(existingToTake, MOBJ_SIZE) {}
+
+    static void zap(mobj_t &mobj) { ThinkerT::zap(mobj, MOBJ_SIZE); }
+};
 
 #define DEFAULT_FRICTION        FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.0001)

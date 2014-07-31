@@ -340,7 +340,7 @@ void ClPlayer_ReadDelta()
             {
                 // The client mobj is already known to us.
                 // Unlink it (not interactive or visible).
-                ClMobj_Unlink(clmo);
+                Mobj_Unlink(clmo);
             }
 
             clmo->dPlayer = ddpl;

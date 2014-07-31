@@ -22,20 +22,35 @@
 
 #include "api_thinker.h"
 #include "Plane"
+#include <doomsday/world/thinkerdata.h>
 
 /**
  * Plane movement thinker. Makes changes to planes using DMU.
  *
  * @ingroup world
  */
-struct ClPlaneMover
+class ClPlaneMover : public ThinkerData
 {
-    thinker_t thinker;
-    Plane *plane;
-    coord_t destination;
-    float speed;
-};
+    Plane *_plane;
+    coord_t _destination;
+    float _speed;
 
-void ClPlaneMover_Thinker(ClPlaneMover *mover);
+public:
+    ClPlaneMover(Plane &plane, coord_t dest, float speed);
+    ~ClPlaneMover();
+
+    void think();
+
+    /**
+     * Constructs a new plane mover and adds its thinker to the map.
+     *
+     * @param plane  Plane to move.
+     * @param dest   Destination height.
+     * @param speed  Speed of move.
+     *
+     * @return The mover thinker. Ownership retained by the Plane's Map.
+     */
+    static thinker_s *newThinker(Plane &plane, coord_t dest, float speed);
+};
 
 #endif // DENG_CLIENT_PLANEMOVER_H

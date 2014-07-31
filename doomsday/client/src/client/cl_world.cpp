@@ -238,20 +238,20 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     // Do we need to start any moving planes?
     if(df & SDF_FLOOR_HEIGHT)
     {
-        map.newClPlaneMover(sec->floor(), height[PLN_FLOOR], 0);
+        ClPlaneMover::newThinker(sec->floor(), height[PLN_FLOOR], 0);
     }
     else if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {
-        map.newClPlaneMover(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
+        ClPlaneMover::newThinker(sec->floor(), target[PLN_FLOOR], speed[PLN_FLOOR]);
     }
 
     if(df & SDF_CEILING_HEIGHT)
     {
-        map.newClPlaneMover(sec->ceiling(), height[PLN_CEILING], 0);
+        ClPlaneMover::newThinker(sec->ceiling(), height[PLN_CEILING], 0);
     }
     else if(df & (SDF_CEILING_TARGET | SDF_CEILING_SPEED))
     {
-        map.newClPlaneMover(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
+        ClPlaneMover::newThinker(sec->ceiling(), target[PLN_CEILING], speed[PLN_CEILING]);
     }
 
 #undef PLN_CEILING
@@ -390,7 +390,7 @@ void Cl_ReadPolyDelta()
     }
 
     // Update/create the polymover thinker.
-    ClPolyMover *mover = map.clPolyMoverFor(*po, true/*create if necessary*/);
-    mover->move   = CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED));
-    mover->rotate = CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE));
+    ClPolyMover::newThinker(*po,
+            /* move: */   CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED)),
+            /* rotate: */ CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE)));
 }

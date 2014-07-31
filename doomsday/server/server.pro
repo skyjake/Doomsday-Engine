@@ -233,6 +233,7 @@ DENG_HEADERS += \
     $$SRC/include/world/p_ticker.h \
     $$SRC/include/world/plane.h \
     $$SRC/include/world/polyobj.h \
+    $$SRC/include/world/polyobjdata.h \
     $$SRC/include/world/propertyvalue.h \
     $$SRC/include/world/reject.h \
     $$SRC/include/world/sector.h \
@@ -378,6 +379,7 @@ SOURCES += \
     $$SRC/src/world/p_ticker.cpp \
     $$SRC/src/world/plane.cpp \
     $$SRC/src/world/polyobj.cpp \
+    $$SRC/src/world/polyobjdata.cpp \
     $$SRC/src/world/propertyvalue.cpp \
     $$SRC/src/world/reject.cpp \
     $$SRC/src/world/sector.cpp \

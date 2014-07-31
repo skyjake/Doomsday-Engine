@@ -31,6 +31,7 @@
 class BspLeaf;
 class Line;
 class Vertex;
+class PolyobjData;
 
 /// Storage needed for a polyobj_s instance, plus the user data section (if any).
 #define POLYOBJ_SIZE        gx.polyobjSize
@@ -46,9 +47,6 @@ public:
     /// The polyobj is not presently linked in the BSP. @ingroup errors
     DENG2_ERROR(NotLinkedError);
 
-    /*
-     * Linked-element lists:
-     */
     typedef QList<Line *> Lines;
     typedef QList<Vertex *> Vertexes;
 
@@ -62,6 +60,9 @@ public:
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();
+
+    PolyobjData &data();
+    PolyobjData const &data() const;
 
     /**
      * Returns the map in which the polyobj exists.

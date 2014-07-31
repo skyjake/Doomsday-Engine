@@ -44,8 +44,4 @@
 #  define LIBDOOMSDAY_EXTERN_C extern
 #endif
 
-namespace de {
-
-} // namespace de
-
 #endif // LIBDOOMSDAY_MAIN_H

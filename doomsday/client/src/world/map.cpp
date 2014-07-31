@@ -46,9 +46,11 @@
 #include "world/entitydatabase.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
+#include "world/polyobjdata.h"
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
+#  include "client/cl_mobj.h"
 #endif
 #include "world/thinkers.h"
 
@@ -109,6 +111,9 @@ struct EditableElements
 
 DENG2_PIMPL(Map)
 , DENG2_OBSERVES(bsp::Partitioner, UnclosedSectorFound)
+#ifdef __CLIENT__
+, DENG2_OBSERVES(ThinkerData, Deletion)
+#endif
 {
     bool editingEnabled;
     EditableElements editable;
@@ -116,7 +121,6 @@ DENG2_PIMPL(Map)
     MapDef *def;    ///< Definition for the map (not owned, may be @c NULL).
     AABoxd bounds;  ///< Boundary points which encompass the entire map
 
-    QScopedPointer<Thinkers> thinkers;
     Mesh mesh;      ///< All map geometries.
 
     /// Element LUTs:
@@ -132,6 +136,7 @@ DENG2_PIMPL(Map)
     SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
+    QScopedPointer<Thinkers> thinkers;
     EntityDatabase entityDatabase;
 
     /// Blockmaps:
@@ -282,12 +287,6 @@ DENG2_PIMPL(Map)
     coord_t skyCeilingHeight;
 
     ClMobjHash clMobjHash;
-
-    typedef QList<ClPlaneMover *> ClPlaneMovers;
-    ClPlaneMovers clPlaneMovers;
-
-    typedef QList<ClPolyMover *> ClPolyMovers;
-    ClPolyMovers clPolyMovers;
 #endif
 
     Instance(Public *i)
@@ -310,6 +309,10 @@ DENG2_PIMPL(Map)
         self.removeAllBiasSources();
 #endif
 
+        // Delete thinkers before the map elements, because thinkers may reference them
+        // in their private data destructors.
+        thinkers.reset();
+
         qDeleteAll(clusters);
         qDeleteAll(sectors);
         qDeleteAll(bspNodes);
@@ -321,22 +324,15 @@ DENG2_PIMPL(Map)
         }
         qDeleteAll(lines);
 
-#ifdef __CLIENT__
-        while(!clPlaneMovers.isEmpty())
+#ifdef __CLIENT__        
+        // Stop observing client mobjs.
+        foreach(mobj_t *mo, clMobjHash)
         {
-            Z_Free(clPlaneMovers.takeFirst());
-        }
-
-        while(!clPolyMovers.isEmpty())
-        {
-            Z_Free(clPolyMovers.takeFirst());
+            THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
         }
 #endif
 
         /// @todo fixme: Free all memory we have ownership of.
-        // Client only data:
-        // mobjHash/
-        // End client only data.
         // mobjNodes/lineNodes/lineLinks
     }
 
@@ -1589,6 +1585,11 @@ DENG2_PIMPL(Map)
             }
         }
     }
+
+    void thinkerBeingDeleted(thinker_s &th)
+    {
+        clMobjHash.remove(th.id);
+    }
 #endif // __CLIENT__
 };
 
@@ -2029,71 +2030,55 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
 {
     LOG_AS("Map::clMobjFor");
 
-    if(mobj_t *clmo = d->clMobjHash.find(id))
+    ClMobjHash::const_iterator found = d->clMobjHash.constFind(id);
+    if(found != d->clMobjHash.constEnd())
     {
-        return clmo;
+        return found.value();
     }
 
     if(!canCreate) return 0;
 
-    // Create a new client mobj.
-    // Allocate enough memory for all the data.
-    void *data       = Z_Malloc(sizeof(ClMobjInfo) + MOBJ_SIZE, PU_MAP, 0);
-    ClMobjInfo *info = new (data) ClMobjInfo;
-    DENG2_UNUSED(info);
-    mobj_t *mo       = (mobj_t *) ((char *)data + sizeof(ClMobjInfo));
+    // Create a new client mobj. This is a regular mobj that has network state
+    // associated with it.
 
-    std::memset(mo, 0, MOBJ_SIZE);
-    mo->ddFlags = DDMF_REMOTE;
+    MobjThinker mo(Thinker::AllocateMemoryZone);
+    mo.id = id;
+    mo.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
 
-    d->clMobjHash.insert(mo, id);
+    ClientMobjThinkerData *data = new ClientMobjThinkerData;
+    data->networkState().flags = DDMF_REMOTE;
+    mo.setData(data);
+
+    d->clMobjHash.insert(id, mo);
+    data->audienceForDeletion() += d; // for removing from the hash
+
     d->thinkers->setMobjId(id); // Mark this ID as used.
 
     // Client mobjs are full-fludged game mobjs as well.
-    mo->thinker.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
-    d->thinkers->add(reinterpret_cast<thinker_t &>(*mo));
+    d->thinkers->add(*(thinker_t *)mo);
 
-    return mo;
+    return mo.take();
 }
 
-void Map::deleteClMobj(mobj_t *mo)
+int Map::clMobjIterator(int (*callback)(mobj_t *, void *), void *context)
 {
-    LOG_AS("Map::deleteClMobj");
+    ClMobjHash::const_iterator next;
+    for(ClMobjHash::const_iterator i = d->clMobjHash.constBegin();
+        i != d->clMobjHash.constEnd(); i = next)
+    {
+        next = i;
+        next++;
 
-    if(!mo) return;
+        DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasNetworkState());
 
-    LOG_NET_XVERBOSE("mobj %i being destroyed") << mo->thinker.id;
-
-#ifdef DENG_DEBUG
-    d->clMobjHash.assertValid();
-#endif
-
-    CL_ASSERT_CLMOBJ(mo);
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
-
-    // Stop any sounds originating from this mobj.
-    S_StopSound(0, mo);
-
-    // The ID is free once again.
-    d->thinkers->setMobjId(mo->thinker.id, false);
-    d->clMobjHash.remove(mo);
-    ClMobj_Unlink(mo); // from block/sector
-
-    info->~ClMobjInfo();
-    // This will free the entire mobj + info.
-    Z_Free(info);
-
-#ifdef DENG_DEBUG
-    d->clMobjHash.assertValid();
-#endif
+        // Callback returns zero to continue.
+        if(int result = callback(i.value(), context))
+            return result;
+    }
+    return 0;
 }
 
-int Map::clMobjIterator(int (*callback) (mobj_t *, void *), void *context)
-{
-    return d->clMobjHash.iterate(callback, context);
-}
-
-ClMobjHash const &Map::clMobjHash() const
+Map::ClMobjHash const &Map::clMobjHash() const
 {
     return d->clMobjHash;
 }
@@ -3340,7 +3325,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
     // Don't expire player mobjs.
     if(mo->dPlayer) return 0;
 
-    ClMobjInfo *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
     DENG2_ASSERT(info != 0);
 
     if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)
@@ -3369,147 +3354,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
 void Map::expireClMobjs()
 {
     uint nowTime = Timer_RealMilliseconds();
-    d->clMobjHash.iterate(expireClMobjsWorker, &nowTime);
-}
-
-void Map::clearClMovers()
-{
-    while(!d->clPlaneMovers.isEmpty())
-    {
-        ClPlaneMover *mover = d->clPlaneMovers.takeFirst();
-        thinkers().remove(mover->thinker);
-        Z_Free(mover);
-    }
-
-    while(!d->clPolyMovers.isEmpty())
-    {
-        ClPolyMover *mover = d->clPolyMovers.takeFirst();
-        thinkers().remove(mover->thinker);
-        Z_Free(mover);
-    }
-}
-
-ClPlaneMover *Map::clPlaneMoverFor(Plane &plane)
-{
-    /// @todo optimize: O(n) lookup.
-    foreach(ClPlaneMover *mover, d->clPlaneMovers)
-    {
-        if(mover->plane == &plane)
-            return mover;
-    }
-    return 0; // Not found.
-}
-
-ClPlaneMover *Map::newClPlaneMover(Plane &plane, coord_t dest, float speed)
-{
-    LOG_AS("Map::newClPlaneMover");
-
-    // Ignore planes not currently attributed to the map.
-    if(&plane.map() != this)
-    {
-        qDebug() << "Ignoring alien plane" << de::dintptr(&plane) << "in Map::newClPlane";
-        return 0;
-    }
-
-    LOG_MAP_XVERBOSE("Sector #%i, plane:%i, dest:%f, speed:%f")
-            << plane.sector().indexInMap() << plane.indexInSector()
-            << dest << speed;
-
-    // Remove any existing movers for the same plane.
-    for(int i = 0; i < d->clPlaneMovers.count(); ++i)
-    {
-        ClPlaneMover *mover = d->clPlaneMovers[i];
-        if(mover->plane == &plane)
-        {
-            LOG_MAP_XVERBOSE("Removing existing mover %p in sector #%i, plane %i")
-                    << mover << plane.sector().indexInMap()
-                    << plane.indexInSector();
-
-            deleteClPlaneMover(mover);
-        }
-    }
-
-    // Add a new mover.
-    ClPlaneMover *mov = (ClPlaneMover *) Z_Calloc(sizeof(ClPlaneMover), PU_MAP, 0);
-    d->clPlaneMovers.append(mov);
-
-    mov->thinker.function = reinterpret_cast<thinkfunc_t>(ClPlaneMover_Thinker);
-    mov->plane       = &plane;
-    mov->destination = dest;
-    mov->speed       = speed;
-
-    // Set the right sign for speed.
-    if(mov->destination < P_GetDoublep(&plane, DMU_HEIGHT))
-    {
-        mov->speed = -mov->speed;
-    }
-
-    // Update speed and target height.
-    P_SetDoublep(&plane, DMU_TARGET_HEIGHT, dest);
-    P_SetFloatp(&plane, DMU_SPEED, speed);
-
-    thinkers().add(mov->thinker, false /*not public*/);
-
-    // Immediate move?
-    if(de::fequal(speed, 0))
-    {
-        // This will remove the thinker immediately if the move is ok.
-        ClPlaneMover_Thinker(mov);
-    }
-
-    LOGDEV_MAP_XVERBOSE("New mover %p") << mov;
-    return mov;
-}
-
-void Map::deleteClPlaneMover(ClPlaneMover *mover)
-{
-    LOG_AS("Map::deleteClPlaneMover");
-
-    if(!mover) return;
-
-    LOGDEV_MAP_XVERBOSE("Removing mover %p (sector: #%i)")
-            << mover << mover->plane->sector().indexInMap();
-    thinkers().remove(mover->thinker);
-    d->clPlaneMovers.removeOne(mover);
-}
-
-ClPolyMover *Map::clPolyMoverFor(Polyobj &polyobj, bool canCreate)
-{
-    LOG_AS("Map::clPolyMoverFor");
-
-    /// @todo optimize: O(n) lookup.
-    foreach(ClPolyMover *mover, d->clPolyMovers)
-    {
-        if(mover->polyobj == &polyobj)
-            return mover;
-    }
-
-    if(!canCreate) return 0; // Not found.
-
-    // Create a new mover.
-    ClPolyMover *mover = (ClPolyMover *) Z_Calloc(sizeof(ClPolyMover), PU_MAP, 0);
-
-    d->clPolyMovers.append(mover);
-
-    mover->thinker.function = reinterpret_cast<thinkfunc_t>(ClPolyMover_Thinker);
-    mover->polyobj = &polyobj;
-
-    thinkers().add(mover->thinker, false /*not public*/);
-
-    LOGDEV_MAP_XVERBOSE("New polymover %p for polyobj #%i.")
-            << mover << polyobj.indexInMap();
-    return mover;
-}
-
-void Map::deleteClPolyMover(ClPolyMover *mover)
-{
-    LOG_AS("Map::deleteClPolyMover");
-
-    if(!mover) return;
-
-    LOG_MAP_XVERBOSE("Removing mover %p") << mover;
-    thinkers().remove(mover->thinker);
-    d->clPolyMovers.removeOne(mover);
+    clMobjIterator(expireClMobjsWorker, &nowTime);
 }
 
 #endif // __CLIENT__

@@ -1927,7 +1927,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
         if(parm.puffType == MT_FLAMEPUFF2)
         {
             // Cleric FlameStrike does fire damage.
-            inflictor = &lavaInflictor;
+            inflictor = P_LavaInflictor();
         }
 #endif
 
@@ -2926,7 +2926,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
      *
      * @todo Do this properly! Consolidate with how jDoom/jHeretic do on-mobj checks?
      */
-    mobj_t oldMo = *mo; // Save the old mobj before the fake z movement.
+    ThinkerT<mobj_t> oldMo(*mo); // Save the old mobj before the fake z movement.
 
     // Adjust Z-origin.
     mo->origin[VZ] += mo->mom[MZ];
@@ -3045,14 +3045,14 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
         if(Mobj_BoxIterator(&aaBox, PIT_CheckOnMobjZ, &parm))
         {
             // Restore the mobj back to its previous state.
-            *mo = oldMo;
+            oldMo.putInto(*mo);
 
             return parm.mountMobj;
         }
     }
 
     // Restore the mobj back to its previous state.
-    *mo = oldMo;
+    oldMo.putInto(*mo);
 
     return 0;
 }

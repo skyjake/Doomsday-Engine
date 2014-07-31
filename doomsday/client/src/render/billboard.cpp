@@ -36,8 +36,6 @@
 
 using namespace de;
 
-enum { CR, CG, CB, CA };
-
 int spriteLight = 4;
 float maxSpriteAngle = 60;
 

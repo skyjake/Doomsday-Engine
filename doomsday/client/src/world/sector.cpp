@@ -40,7 +40,7 @@ DENG2_PIMPL(Sector)
     AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
     bool needAABoxUpdate;
 
-    SoundEmitter emitter; ///< Head of the sound emitter chain.
+    ThinkerT<SoundEmitter> emitter; ///< Head of the sound emitter chain.
 
     Planes planes;        ///< All owned planes.
     Sides sides;          ///< All referencing line sides (not owned).
@@ -68,7 +68,7 @@ DENG2_PIMPL(Sector)
         , needRoughAreaUpdate(true)
 #endif
     {
-        de::zap(emitter);
+        //de::zap(emitter);
     }
 
     ~Instance()
@@ -125,12 +125,12 @@ DENG2_PIMPL(Sector)
         // point of the sector geometry is now known.
         if(haveGeometry)
         {
-            emitter.origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
-            emitter.origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
+            emitter->origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
+            emitter->origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
         }
         else
         {
-            emitter.origin[VX] = emitter.origin[VY] = 0;
+            emitter->origin[VX] = emitter->origin[VY] = 0;
         }
     }
 
@@ -167,7 +167,7 @@ DENG2_PIMPL(Sector)
     void planeHeightChanged(Plane & /*plane*/)
     {
         // Update the z-height origin of our sound emitter right away.
-        emitter.origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+        emitter->origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
 
 #ifdef __CLIENT__
         // A plane move means we must re-apply missing material fixes.
@@ -381,7 +381,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     /// @todo fixme: Assume planes are defined in order.
     if(planeCount() == 2)
     {
-        d->emitter.origin[VZ] = (floor().height() + ceiling().height()) / 2;
+        d->emitter->origin[VZ] = (floor().height() + ceiling().height()) / 2;
     }
 
     return plane;
@@ -472,7 +472,7 @@ int Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 0);
         break;
     case DMU_EMITTER: {
-        SoundEmitter const *emitterAdr = &d->emitter;
+        SoundEmitter const *emitterAdr = d->emitter;
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:

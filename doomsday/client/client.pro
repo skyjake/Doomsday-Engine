@@ -200,7 +200,6 @@ DENG_HEADERS += \
     include/client/cl_player.h \
     include/client/cl_sound.h \
     include/client/cl_world.h \
-    include/client/clmobjhash.h \
     include/client/clplanemover.h \
     include/client/clpolymover.h \
     include/clientapp.h \
@@ -284,6 +283,7 @@ DENG_HEADERS += \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
+    include/render/modelrenderer.h \
     include/render/projector.h \
     include/render/r_draw.h \
     include/render/r_main.h \
@@ -425,6 +425,7 @@ DENG_HEADERS += \
     include/world/bsp/superblockmap.h \
     include/world/bspleaf.h \
     include/world/bspnode.h \
+    include/world/clientmobjthinkerdata.h \
     include/world/contact.h \
     include/world/contactspreader.h \
     include/world/dmuargs.h \
@@ -448,6 +449,7 @@ DENG_HEADERS += \
     include/world/p_ticker.h \
     include/world/plane.h \
     include/world/polyobj.h \
+    include/world/polyobjdata.h \
     include/world/propertyvalue.h \
     include/world/reject.h \
     include/world/sector.h \
@@ -532,7 +534,6 @@ SOURCES += \
     src/client/cl_player.cpp \
     src/client/cl_sound.cpp \
     src/client/cl_world.cpp \
-    src/client/clmobjhash.cpp \
     src/client/clplanemover.cpp \
     src/client/clpolymover.cpp \
     src/clientapp.cpp \
@@ -598,6 +599,7 @@ SOURCES += \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
+    src/render/modelrenderer.cpp \
     src/render/projector.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
@@ -736,6 +738,7 @@ SOURCES += \
     src/world/bsp/superblockmap.cpp \
     src/world/bspleaf.cpp \
     src/world/bspnode.cpp \
+    src/world/clientmobjthinkerdata.cpp \
     src/world/contact.cpp \
     src/world/contactspreader.cpp \
     src/world/dmuargs.cpp \
@@ -758,6 +761,7 @@ SOURCES += \
     src/world/p_ticker.cpp \
     src/world/plane.cpp \
     src/world/polyobj.cpp \
+    src/world/polyobjdata.cpp \
     src/world/propertyvalue.cpp \
     src/world/reject.cpp \
     src/world/sector.cpp \

@@ -37,7 +37,7 @@ namespace de {
  * The logic that determines how and where new content is allocated is
  * completely handled by the IAllocator attached to the Atlas.
  *
- * @ingroup gui
+ * @ingroup gl
  */
 class LIBGUI_PUBLIC Atlas : public Lockable
 {

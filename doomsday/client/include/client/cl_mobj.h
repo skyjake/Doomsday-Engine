@@ -22,57 +22,10 @@
 #define DENG_CLIENT_WORLD_MOBJ_H
 
 #include "world/p_object.h"
-
-/**
- * @defgroup clMobjFlags Client Mobj Flags
- * @ingroup flags
- */
-///@{
-#define CLMF_HIDDEN         0x01 ///< Not officially created yet
-#define CLMF_UNPREDICTABLE  0x02 ///< Temporarily hidden (until next delta)
-#define CLMF_SOUND          0x04 ///< Sound is queued for playing on unhide.
-#define CLMF_NULLED         0x08 ///< Once nulled, it can't be updated.
-#define CLMF_STICK_FLOOR    0x10 ///< Mobj will stick to the floor.
-#define CLMF_STICK_CEILING  0x20 ///< Mobj will stick to the ceiling.
-#define CLMF_LOCAL_ACTIONS  0x40 ///< Allow local action execution.
-///@}
-
-// Clmobj knowledge flags. This keeps track of the information that has been
-// received.
-#define CLMF_KNOWN_X        0x10000
-#define CLMF_KNOWN_Y        0x20000
-#define CLMF_KNOWN_Z        0x40000
-#define CLMF_KNOWN_STATE    0x80000
-#define CLMF_KNOWN          0xf0000 ///< combination of all the KNOWN-flags
-
-// Magic number for client mobj information.
-#define CLM_MAGIC1          0xdecafed1
-#define CLM_MAGIC2          0xcafedeb8
+#include "world/clientmobjthinkerdata.h"
 
 /// Asserts that a given mobj is a client mobj.
-#define CL_ASSERT_CLMOBJ(mo)    assert(Cl_IsClientMobj(mo));
-
-/**
- * Information about a client mobj. This structure is attached to
- * gameside mobjs. The last 4 bytes must be CLM_MAGIC.
- */
-struct ClMobjInfo
-{
-    uint startMagic; // The client mobj magic number (CLM_MAGIC1).
-    ClMobjInfo *next, *prev;
-    int flags;
-    uint time; // Time of last update.
-    int sound; // Queued sound ID.
-    float volume; // Volume for queued sound.
-    uint endMagic; // The client mobj magic number (CLM_MAGIC2).
-
-    ClMobjInfo();
-
-    /**
-     * Returns the mobj_t instance associated with the client mobj.
-     */
-    mobj_t *mobj();
-};
+#define CL_ASSERT_CLMOBJ(mo)    DENG_ASSERT(Cl_IsClientMobj(mo));
 
 /**
  * Make the real player mobj identical with the client mobj.
@@ -82,7 +35,7 @@ struct ClMobjInfo
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags,
                              dd_bool onFloor);
 
-ClMobjInfo *ClMobj_GetInfo(mobj_t *mo);
+ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo);
 
 /**
  * Call for Hidden client mobjs to make then visible.
@@ -91,12 +44,6 @@ ClMobjInfo *ClMobj_GetInfo(mobj_t *mo);
  * @return  @c true, if the mobj was revealed.
  */
 dd_bool ClMobj_Reveal(mobj_t *cmo);
-
-/**
- * Unlinks the mobj from sectorlinks and if the object is solid,
- * the blockmap.
- */
-void ClMobj_Unlink(mobj_t *cmo); // needed?
 
 /**
  * Links the mobj into sectorlinks and if the object is solid, the
@@ -135,6 +82,6 @@ void ClMobj_ReadNullDelta();
  *
  * @return  @c true, if the mobj is a client mobj; otherwise @c false.
  */
-dd_bool Cl_IsClientMobj(mobj_t *mo);
+dd_bool Cl_IsClientMobj(mobj_t const *mo);
 
 #endif // DENG_CLIENT_WORLD_MOBJ_H

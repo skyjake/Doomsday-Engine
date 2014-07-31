@@ -27,7 +27,7 @@
 #include "Polyobj"
 
 #ifdef __CLIENT__
-#  include "client/clmobjhash.h"
+#  include "world/p_object.h"
 #  include "client/clplanemover.h"
 #  include "client/clpolymover.h"
 
@@ -45,6 +45,7 @@
 #include <QList>
 #include <QMultiMap>
 #include <QSet>
+#include <QHash>
 
 class MapDef;
 class BspLeaf;
@@ -144,6 +145,8 @@ public:
 
     typedef QList<BiasSource *> BiasSources;
     typedef QList<Lumobj *>  Lumobjs;
+
+    typedef QHash<thid_t, mobj_t *> ClMobjHash;
 #endif
 
 public: /// @todo make private:
@@ -676,28 +679,6 @@ public:
      */
     void expireClMobjs();
 
-    void clearClMovers();
-
-    /**
-     * Allocate a new client-side plane mover.
-     *
-     * @return  The new mover or @c NULL if arguments are invalid.
-     */
-    ClPlaneMover *newClPlaneMover(Plane &plane, coord_t dest, float speed);
-
-    void deleteClPlaneMover(ClPlaneMover *mover);
-
-    ClPlaneMover *clPlaneMoverFor(Plane &plane);
-
-    /**
-     * Find/create a ClPolyMover for @a polyobj.
-     *
-     * @param canCreate  @c true= create a new one if not found.
-     */
-    ClPolyMover *clPolyMoverFor(Polyobj &polyobj, bool canCreate = false);
-
-    void deleteClPolyMover(ClPolyMover *mover);
-
     /**
      * Link the given @a surface in all material lists and surface sets which
      * the map maintains to improve performance. Only surfaces attributed to
@@ -856,17 +837,11 @@ public: /// @todo Make private:
     void clearClMobjs();
 
     /**
-     * Find/create a client mobj with the unique identifier @a id.
+     * Find/create a client mobj with the unique identifier @a id. Client mobjs are
+     * just like normal mobjs, except they have additional network state.
      *
-     * Memory layout of a client mobj:
-     * - client mobj magic1 (4 bytes)
-     * - engineside clmobj info
-     * - client mobj magic2 (4 bytes)
-     * - gameside mobj (mobjSize bytes) <- this is returned from the function
-     *
-     * To check whether a given mobj_t is a clmobj_t, just check the presence of
-     * the client mobj magic number (by calling Cl_IsClientMobj()).
-     * The clmoinfo_s can then be accessed with ClMobj_GetInfo().
+     * To check whether a given mobj is a client mobj, use Cl_IsClientMobj(). The network
+     * state can then be accessed with ClMobj_GetInfo().
      *
      * @param id  Identifier of the client mobj. Every client mobj has a unique
      *            identifier.
@@ -874,12 +849,6 @@ public: /// @todo Make private:
      * @return  Pointer to the gameside mobj.
      */
     mobj_t *clMobjFor(thid_t id, bool canCreate = false) const;
-
-    /**
-     * Destroys the client mobj. Before this is called, the client mobj should be
-     * unlinked from the thinker list by calling @ref thinkers().remove()
-     */
-    void deleteClMobj(mobj_t *mo);
 
     /**
      * Iterate all client mobjs, making a callback for each. Iteration ends if a

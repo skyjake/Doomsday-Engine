@@ -61,7 +61,7 @@ public:
      */
     File const &target() const;
 
-    /// @copydoc target()
+    /// @copydoc target() const
     File &target();
 
     Folder const *targetFolder() const;

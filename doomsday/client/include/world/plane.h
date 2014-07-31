@@ -38,6 +38,7 @@ class Sector;
 class Surface;
 #ifdef __CLIENT__
 struct Generator;
+class ClPlaneMover;
 #endif
 
 /**
@@ -230,6 +231,9 @@ public:
      * generator is attached as the definition may override this.
      */
     void spawnParticleGen(ded_ptcgen_t const *def);
+
+    void addMover(ClPlaneMover &mover);
+    void removeMover(ClPlaneMover &mover);
 
 #endif // __CLIENT__
 

@@ -25,6 +25,8 @@
 #include <de/AtlasTexture>
 #include <de/Vector>
 
+#include <QVariant>
+
 namespace de {
 
 class GLBuffer;
@@ -42,6 +44,67 @@ class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
 public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
+
+    /**
+     * Animation state for a model. There can be any number of ongoing animations,
+     * targeting individual nodes of a model.
+     *
+     * @ingroup gl
+     */
+    class LIBGUI_PUBLIC AnimationState
+    {
+    public:
+        struct Animation {
+            int animId;         ///< Which animation to use.
+            ddouble time;       ///< Animation time.
+            String node;        ///< Target node.
+            QVariant data;      ///< Additional data for derived classes.
+        };
+
+        /// Referenced node or animation was not found in the model. @ingroup errors
+        DENG2_ERROR(InvalidError);
+
+    public:
+        AnimationState();
+        AnimationState(ModelDrawable const &model);
+
+        void setModel(ModelDrawable const &model);
+
+        /**
+         * Returns the model with which this animation is being used.
+         */
+        ModelDrawable const &model() const;
+
+        /**
+         * Returns the number of ongoing animations.
+         */
+        int count() const;
+
+        inline bool isEmpty() const { return !count(); }
+
+        Animation const &at(int index) const;
+
+        Animation &at(int index);
+
+        Animation &start(String const &animName, String const &rootNode = "");
+
+        Animation &start(int animId, String const &rootNode = "");
+
+        void stop(int index);
+
+        void clear();
+
+        /**
+         * Advances the animation state. Progresses ongoing animations and possibly
+         * triggers new ones.
+         *
+         * @param elapsed  Duration of elapsed time.
+         */
+        virtual void advanceTime(TimeDelta const &elapsed);
+
+    private:
+        DENG2_PRIVATE(d)
+    };
 
 public:
     ModelDrawable();
@@ -63,6 +126,20 @@ public:
     void clear();
 
     /**
+     * Finds the id of an animation that has the name @a name. Note that animation
+     * names are optional.
+     *
+     * @param name  Animation name.
+     *
+     * @return Animation id, or -1 if not found.
+     */
+    int animationIdForName(String const &name) const;
+
+    int animationCount() const;
+
+    bool nodeExists(String const &name) const;
+
+    /**
      * Prepares a loaded model for drawing by constructing all the required GL objects.
      *
      * This method will be called automatically when needed, however you can also call it
@@ -76,7 +153,7 @@ public:
     void glDeinit();
 
     /**
-     * Atlas to use for any textures needed by the model.
+     * Atlas to use for any textures needed by the model. This is needed for glInit().
      *
      * @param atlas  Atlas for model textures.
      */
@@ -97,11 +174,10 @@ public:
 
     void unsetProgram();
 
-    void setAnimationTime(TimeDelta const &time);
+    void draw(AnimationState const *animation = 0) const;
 
-    void draw() const;
-
-    void drawInstanced(GLBuffer const &instanceAttribs) const;
+    void drawInstanced(GLBuffer const &instanceAttribs,
+                       AnimationState const *animation = 0) const;
 
     /**
      * Dimensions of the default pose, in model space.

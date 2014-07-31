@@ -28,6 +28,9 @@
 // We'll use the base mobj template directly as our mobj.
 typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
+#ifdef __cplusplus
+    mobj_s(thinker_s::InitBehavior b) : thinker(b) {}
+#endif
 } mobj_t;
 
 #endif // LIBDOOMSDAY_MOBJ_H

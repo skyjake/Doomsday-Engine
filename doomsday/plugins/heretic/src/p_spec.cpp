@@ -53,7 +53,7 @@ enum afxcmd_t
 static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing);
 static void P_ShootSpecialLine(mobj_t *thing, Line *line);
 
-mobj_t LavaInflictor;
+ThinkerT<mobj_t> LavaInflictor;
 
 int *LevelAmbientSfx[MAX_AMBIENT_SFX];
 int *AmbSfxPtr;
@@ -638,7 +638,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // LAVA DAMAGE WEAK
         if(!(mapTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
+            P_DamageMobj(player->plr->mo, LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
         }
         break;
@@ -653,7 +653,7 @@ void P_PlayerInSpecialSector(player_t *player)
         // LAVA DAMAGE HEAVY
         if(!(mapTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 8, false);
+            P_DamageMobj(player->plr->mo, LavaInflictor, NULL, 8, false);
             P_HitFloor(player->plr->mo);
         }
         break;
@@ -663,7 +663,7 @@ void P_PlayerInSpecialSector(player_t *player)
         P_Thrust(player, 0, FIX2FLT(2048 * 28));
         if(!(mapTime & 15))
         {
-            P_DamageMobj(player->plr->mo, &LavaInflictor, NULL, 5, false);
+            P_DamageMobj(player->plr->mo, LavaInflictor, NULL, 5, false);
             P_HitFloor(player->plr->mo);
         }
         break;
@@ -786,9 +786,9 @@ void P_SpawnAllSpecialThinkers()
 
 void P_InitLava()
 {
-    std::memset(&LavaInflictor, 0, sizeof(mobj_t));
-    LavaInflictor.type   = MT_PHOENIXFX2;
-    LavaInflictor.flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
+    LavaInflictor = ThinkerT<mobj_t>();
+    LavaInflictor->type   = MT_PHOENIXFX2;
+    LavaInflictor->flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
 void P_PlayerInWindSector(player_t *player)

@@ -24,11 +24,13 @@
 
 #ifdef __CLIENT__
 #  include "client/cl_mobj.h"
+#  include "world/clientmobjthinkerdata.h"
 #endif
 
 #ifdef __SERVER__
 #  include "def_main.h"
 #  include "server/sv_pool.h"
+#  include <doomsday/world/mobjthinkerdata.h>
 #endif
 
 #include "world/map.h"
@@ -55,21 +57,19 @@ struct ThinkerList
 {
     bool isPublic; ///< All thinkers in this list are visible publically.
 
-    thinker_t sentinel;
+    Thinker sentinel;
 
     ThinkerList(thinkfunc_t func, bool isPublic) : isPublic(isPublic)
     {
-        zap(sentinel);
-
         sentinel.function = func;
-        sentinel.inStasis = true; // Safety measure.
+        sentinel.disable(); // Safety measure.
 
-        sentinel.prev = sentinel.next = &sentinel;
+        sentinel.prev = sentinel.next = sentinel;
     }
 
     void reinit()
     {
-        sentinel.prev = sentinel.next = &sentinel;
+        sentinel.prev = sentinel.next = sentinel;
     }
 
     thinkfunc_t function() const
@@ -81,7 +81,7 @@ struct ThinkerList
     void link(thinker_t &th)
     {
         sentinel.prev->next = &th;
-        th.next = &sentinel;
+        th.next = sentinel;
         th.prev = sentinel.prev;
         sentinel.prev = &th;
     }
@@ -90,14 +90,14 @@ struct ThinkerList
     {
         int num = 0;
         thinker_t *th = sentinel.next;
-        while(th != &sentinel && th)
+        while(th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG_ASSERT(th->next != 0);
             DENG_ASSERT(th->prev != 0);
 #endif
             num += 1;
-            if(numInStasis && th->inStasis)
+            if(numInStasis && Thinker_InStasis(th))
             {
                 (*numInStasis) += 1;
             }
@@ -111,7 +111,7 @@ struct ThinkerList
         int result = false;
 
         thinker_t *th = sentinel.next;
-        while(th != &sentinel && th)
+        while(th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
             DENG_ASSERT(th->next != 0);
@@ -127,7 +127,17 @@ struct ThinkerList
 
         return result;
     }
+
+    void releaseAll()
+    {
+        for(thinker_t *th = sentinel.next; th != &sentinel.base() && th; th = th->next)
+        {
+            Thinker::release(*th);
+        }
+    }
 };
+
+typedef QHash<thid_t, mobj_t *> MobjHash;
 
 DENG2_PIMPL(Thinkers)
 {
@@ -139,6 +149,8 @@ DENG2_PIMPL(Thinkers)
     Lists lists;
     bool inited;
 
+    MobjHash mobjIdLookup; // public only
+
     Instance(Public *i)
         : Base(i),
           iddealer(0),
@@ -149,16 +161,29 @@ DENG2_PIMPL(Thinkers)
 
     ~Instance()
     {
-        /// @todo free all thinkers (note, they are allocated from the Zone
-        /// so there is no memory leak here as this memory will be purged
-        /// automatically when the map is "unloaded").
+        // Make sure the private instances of thinkers are released.
+        releaseAllThinkers();
+
+        // Note that most thinkers are allocated from the memory zone
+        // so there is no memory leak here as this memory will be purged
+        // automatically when the map is "unloaded".
         qDeleteAll(lists);
+    }
+
+    void releaseAllThinkers()
+    {
+        foreach(ThinkerList *list, lists)
+        {
+            list->releaseAll();
+        }
     }
 
     void clearMobjIds()
     {
         zap(idtable);
         idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+
+        mobjIdLookup.clear();
     }
 
     thid_t newMobjId()
@@ -207,32 +232,14 @@ void Thinkers::setMobjId(thid_t id, bool inUse)
     else      d->idtable[c] &= ~bit;
 }
 
-struct mobjidlookup_t
-{
-    thid_t id;
-    mobj_t *result;
-};
-
-static int mobjIdLookup(thinker_t *thinker, void *context)
-{
-    mobjidlookup_t *lookup = (mobjidlookup_t *) context;
-    if(thinker->id == lookup->id)
-    {
-        lookup->result = (mobj_t *) thinker;
-        return true; // Stop iteration.
-    }
-    return false; // Continue iteration.
-}
-
 struct mobj_s *Thinkers::mobjById(int id)
 {
-    /// @todo  A hash table wouldn't hurt (see client's mobj id table).
-    mobjidlookup_t lookup;
-    lookup.id = id;
-    lookup.result = 0;
-    iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-            0x1/*mobjs are public*/, mobjIdLookup, &lookup);
-    return lookup.result;
+    MobjHash::const_iterator found = d->mobjIdLookup.constFind(id);
+    if(found != d->mobjIdLookup.constEnd())
+    {
+        return found.value();
+    }
+    return 0;
 }
 
 void Thinkers::add(thinker_t &th, bool makePublic)
@@ -251,11 +258,15 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         {
             th.id = d->newMobjId();
         }
+
+        if(makePublic && th.id)
+        {
+            d->mobjIdLookup.insert(th.id, reinterpret_cast<mobj_t *>(&th));
+        }
     }
     else
     {
-        // Zero is not a valid ID.
-        th.id = 0;
+        th.id = 0; // Zero is not a valid ID.
     }
 
     // Link the thinker to the thinker list.
@@ -270,6 +281,8 @@ void Thinkers::remove(thinker_t &th)
     {
         // Flag the identifier as free.
         setMobjId(th.id, false);
+
+        d->mobjIdLookup.remove(th.id);
 
 #ifdef __SERVER__
         // Then it must be a mobj.
@@ -286,6 +299,8 @@ void Thinkers::remove(thinker_t &th)
     }
 
     th.function = (thinkfunc_t) -1;
+
+    Thinker::release(th);
 }
 
 void Thinkers::initLists(byte flags)
@@ -371,50 +386,68 @@ int Thinkers::count(int *numInStasis) const
     return total;
 }
 
-void unlinkThinkerFromList(thinker_t *th)
+static void unlinkThinkerFromList(thinker_t *th)
 {
     th->next->prev = th->prev;
     th->prev->next = th->next;
 }
 
+static void initPrivateData(thinker_t *th)
+{
+    DENG2_ASSERT(th->d == 0);
+
+    /// @todo The game should be asked to create its own private data. -jk
+
+    if(Thinker_IsMobjFunc(th->function))
+    {
+#ifdef __CLIENT__
+        th->d = new ClientMobjThinkerData;
+#else
+        th->d = new MobjThinkerData;
+#endif
+    }
+    else
+    {
+        // Generic thinker data (Doomsday Script namespace, etc.).
+        th->d = new ThinkerData;
+    }
+
+    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
+}
+
 static int runThinker(thinker_t *th, void * /*context*/)
 {
-    // Thinker cannot think when in stasis.
-    if(!th->inStasis)
-    {
-        // Time to remove it?
-        if(th->function == (thinkfunc_t) -1)
-        {
-            unlinkThinkerFromList(th);
+    if(Thinker_InStasis(th)) return false; // Skip and continue.
 
-            if(th->id)
-            {
-                mobj_t *mo = (mobj_t *) th;
-#ifdef __CLIENT__
-                if(!Cl_IsClientMobj(mo))
-                {
-                    // It's a regular mobj: recycle for reduced allocation overhead.
-                    P_MobjRecycle(mo);
-                }
-                else
-                {
-                    // Delete the client mobj.
-                    Mobj_Map(*mo).deleteClMobj(mo);
-                }
-#else
-                P_MobjRecycle(mo);
-#endif
-            }
-            else
-            {
-                // Non-mobjs are just deleted right away.
-                Z_Free(th);
-            }
-        }
-        else if(th->function)
+    // Time to remove it?
+    if(th->function == (thinkfunc_t) -1)
+    {
+        unlinkThinkerFromList(th);
+
+        if(th->id)
         {
-            th->function(th);
+            // Recycle for reduced allocation overhead.
+            P_MobjRecycle((mobj_t *) th);
         }
+        else
+        {
+            // Non-mobjs are just deleted right away.
+            Thinker::destroy(th);
+        }
+    }
+    else if(th->function)
+    {
+        // Create a private data instance of appropriate type.
+        if(!th->d)
+        {
+            initPrivateData(th);
+        }
+
+        // Public thinker callback.
+        th->function(th);
+
+        // Private thinking.
+        if(th->d) THINKER_DATA(*th, Thinker::IData).think();
     }
 
     return false; // Continue iteration.
@@ -465,15 +498,6 @@ void Thinker_Remove(thinker_t *th)
     Thinker_Map(*th).thinkers().remove(*th);
 }
 
-#undef Thinker_SetStasis
-void Thinker_SetStasis(thinker_t *th, dd_bool on)
-{
-    if(th)
-    {
-        th->inStasis = on;
-    }
-}
-
 #undef Thinker_Iterate
 int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
 {
@@ -488,6 +512,5 @@ DENG_DECLARE_API(Thinker) =
     Thinker_Run,
     Thinker_Add,
     Thinker_Remove,
-    Thinker_SetStasis,
     Thinker_Iterate
 };

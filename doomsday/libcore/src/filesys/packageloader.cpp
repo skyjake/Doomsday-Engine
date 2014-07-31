@@ -41,7 +41,7 @@ DENG2_PIMPL(PackageLoader)
 
     /**
      * Determines if a specific package is currently loaded.
-     * @param pkg  Package.
+     * @param file  Package root.
      * @return @c true, if loaded.
      */
     bool isLoaded(File const &file) const

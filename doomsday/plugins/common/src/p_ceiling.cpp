@@ -557,7 +557,7 @@ static int activateCeiling(thinker_t *th, void *context)
     ceiling_t *ceiling = (ceiling_t *) th;
     activateceilingparams_t *params = (activateceilingparams_t *) context;
 
-    if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
+    if(ceiling->tag == (int) params->tag && Thinker_InStasis(&ceiling->thinker))
     {
         ceiling->state = ceiling->oldState;
         Thinker_SetStasis(&ceiling->thinker, false);
@@ -600,7 +600,7 @@ static int deactivateCeiling(thinker_t *th, void *context)
         return true; // Stop iteration.
     }
 #else
-    if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
+    if(!Thinker_InStasis(&ceiling->thinker) && ceiling->tag == (int) params->tag)
     {
         // Put it into stasis.
         ceiling->oldState = ceiling->state;

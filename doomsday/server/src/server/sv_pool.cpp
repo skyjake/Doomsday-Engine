@@ -101,7 +101,7 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 
 // Keep this zeroed out. Used if the register doesn't have data for
 // the mobj being compared.
-static dt_mobj_t dummyZeroMobj;
+static ThinkerT<dt_mobj_t> dummyZeroMobj;
 
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world
@@ -504,7 +504,7 @@ dd_bool Sv_RegisterCompareMobj(cregister_t *reg, mobj_t const *s, mobjdelta_t *d
 {
     int df;
     reg_mobj_t *regMo = 0;
-    dt_mobj_t const *r = &dummyZeroMobj;
+    dt_mobj_t const *r = dummyZeroMobj;
 
     if((regMo = Sv_RegisterFindMobj(reg, s->thinker.id)) != NULL)
     {
