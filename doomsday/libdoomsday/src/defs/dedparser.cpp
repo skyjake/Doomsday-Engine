@@ -1415,8 +1415,9 @@ DENG2_PIMPL(DEDParser)
                     prevModel = &ded->models[prevModelDefIdx];
 
                     // Private members are used for metadata (like __order__) that should
-                    // not be copied.
-                    if(bCopyNext) mdl.assign(*prevModel, Record::IgnoreDoubleUnderscoreMembers);
+                    // not be copied. Also don't copy the identifying keys, so that
+                    // the new ones are used for indexing.
+                    if(bCopyNext) mdl.assign(*prevModel, QRegExp("__.*|id|state"));
                 }
 
                 FINDBEGIN;
