@@ -55,6 +55,48 @@ DENG2_PIMPL(Record)
     Instance(Public &r) : Base(r), uniqueId(++recordIdCounter), oldUniqueId(0)
     {}
 
+    struct ExcludeBasedOnBehavior {
+        Behavior behavior;
+        ExcludeBasedOnBehavior(Behavior b) : behavior(b) {}
+        bool operator () (Variable const &member) {
+            return (behavior == IgnoreDoubleUnderscoreMembers &&
+                    member.name().startsWith("__"));
+        }
+    };
+
+    struct ExcludeBasedOnRegExp {
+        QRegExp omitted;
+        ExcludeBasedOnRegExp(QRegExp const &omit) : omitted(omit) {}
+        bool operator () (Variable const &member) {
+            return omitted.exactMatch(member.name());
+        }
+    };
+
+    template <typename Predicate>
+    void clear(Predicate excluded)
+    {
+        if(!members.empty())
+        {
+            Record::Members remaining; // Contains all members that are not removed.
+
+            DENG2_FOR_EACH(Members, i, members)
+            {
+                if(excluded(*i.value()))
+                {
+                    remaining.insert(i.key(), i.value());
+                    continue;
+                }
+
+                DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self, **i);
+
+                i.value()->audienceForDeletion() -= self;
+                delete i.value();
+            }
+
+            members = remaining;
+        }
+    }
+
     bool isSubrecord(Variable const &var) const
     {
         RecordValue const *value = var.value().maybeAs<RecordValue>();
@@ -180,6 +222,29 @@ DENG2_PIMPL(Record)
         }
     }
 
+    template <typename Predicate>
+    void copyMembersFrom(Record const &other, Predicate excluded)
+    {
+        DENG2_FOR_EACH_CONST(Members, i, other.d->members)
+        {
+            if(excluded(*i.value())) continue;
+
+            bool const alreadyExists = members.contains(i.key());
+
+            Variable *var = new Variable(*i.value());
+            var->audienceForDeletion() += self;
+            members[i.key()] = var;
+
+            if(!alreadyExists)
+            {
+                // Notify about newly added members.
+                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
+            }
+
+            /// @todo Should also notify if the value of an existing variable changes. -jk
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(Addition)
     DENG2_PIMPL_AUDIENCE(Removal)
@@ -210,40 +275,12 @@ Record::~Record()
 
 void Record::clear(Behavior behavior)
 {
-    if(!d->members.empty())
-    {
-        Record::Members remaining; // Contains all members that are not removed.
-
-        DENG2_FOR_EACH(Members, i, d->members)
-        {
-            if(behavior == IgnoreDoubleUnderscoreMembers &&
-               i.key().startsWith("__"))
-            {
-                remaining.insert(i.key(), i.value());
-                continue;
-            }
-
-            DENG2_FOR_AUDIENCE2(Removal, o) o->recordMemberRemoved(*this, **i);
-
-            i.value()->audienceForDeletion() -= this;
-            delete i.value();
-        }
-
-        d->members = remaining;
-    }
+    d->clear(Instance::ExcludeBasedOnBehavior(behavior));
 }
 
 void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
-    DENG2_FOR_EACH_CONST(Members, i, other.d->members)
-    {
-        if(behavior == IgnoreDoubleUnderscoreMembers &&
-           i.key().startsWith("__")) continue;
-
-        Variable *var = new Variable(*i.value());
-        var->audienceForDeletion() += this;
-        d->members[i.key()] = var;
-    }
+    d->copyMembersFrom(other, Instance::ExcludeBasedOnBehavior(behavior));
 }
 
 Record &Record::operator = (Record const &other)
@@ -255,6 +292,13 @@ Record &Record::assign(Record const &other, Behavior behavior)
 {
     clear(behavior);
     copyMembersFrom(other, behavior);
+    return *this;
+}
+
+Record &Record::assign(Record const &other, QRegExp const &excluded)
+{
+    d->clear(Instance::ExcludeBasedOnRegExp(excluded));
+    d->copyMembersFrom(other, Instance::ExcludeBasedOnRegExp(excluded));
     return *this;
 }
 
