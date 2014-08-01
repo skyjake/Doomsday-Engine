@@ -38,11 +38,6 @@ win32 {
     RC_FILE = res/dehread.rc
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     fixPluginInstallId($$TARGET, 2)
     linkToBundledLibcore    ($$TARGET)

@@ -415,12 +415,12 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
+deployTarget()
+
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data
-
-    target.path = $$DENG_BIN_DIR
-    data.path   = $$DENG_DATA_DIR
+    INSTALLS += data
+    data.path = $$DENG_DATA_DIR
 
     win32 {
         # Windows-specific installation.

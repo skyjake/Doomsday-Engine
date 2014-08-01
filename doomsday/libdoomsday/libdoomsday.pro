@@ -150,7 +150,5 @@ macx {
     doPostLink("mkdir -p ../client/Doomsday.app/Contents/Frameworks")
     doPostLink("cp -fRp libdeng_doomsday*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_LIB_DIR
-}
+
+deployLibrary()

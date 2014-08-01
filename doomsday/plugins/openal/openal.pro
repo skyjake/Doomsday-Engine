@@ -24,11 +24,6 @@ win32 {
     OTHER_FILES += api/dsopenal.def
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     linkToBundledLibcore(audio_openal)
     linkToBundledLiblegacy(audio_openal)

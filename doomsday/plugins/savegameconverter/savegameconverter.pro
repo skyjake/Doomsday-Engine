@@ -29,11 +29,6 @@ win32 {
     RC_FILE = res/savegameconverter.rc
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     fixPluginInstallId($$TARGET, 1)
     linkToBundledLibcore($$TARGET)

@@ -11,9 +11,16 @@ macx {
     CONFIG += lib_bundle
     QMAKE_BUNDLE_EXTENSION = .bundle
 }
+unix:!macx {
+    INSTALLS += target
+    target.path = $$DENG_PLUGIN_LIB_DIR
+}
 win32 {
     # Keep the version number out of the file name.
     TARGET_EXT = .dll
+
+    # Deploy plugin DLLs to the plugins folder.
+    DLLDESTDIR = $$DENG_PLUGIN_LIB_DIR
 }
 
 INCLUDEPATH += $$DENG_API_DIR

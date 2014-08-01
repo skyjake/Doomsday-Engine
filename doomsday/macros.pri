@@ -70,6 +70,37 @@ defineTest(doPostLink) {
     export(QMAKE_POST_LINK)
 }
 
+defineTest(deployTarget) {
+    unix:!macx {
+        INSTALLS += target
+        target.path = $$DENG_BIN_DIR
+        export(INSTALLS)
+        export(target.path)
+    }
+    else:win32 {
+        DESTDIR = $$DENG_BIN_DIR
+        export(DESTDIR)
+    }
+}
+
+defineTest(deployLibrary) {
+    win32 {
+        DLLDESTDIR = $$DENG_LIB_DIR
+        export(DLLDESTDIR)
+    }
+    unix:!macx {
+        INSTALLS += target
+        target.path = $$DENG_LIB_DIR
+        export(target.path)
+    }
+    deng_sdk {
+        INSTALLS *= target
+        target.path = $$DENG_SDK_LIB_DIR
+        export(target.path)
+    }
+    export(INSTALLS)
+}
+
 macx {
     defineTest(removeQtLibPrefix) {
         doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$2 $$2 $$1")

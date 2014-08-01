@@ -17,13 +17,10 @@ gamedata.files = $$OUT_PWD/../../libdoom64.pk3
 
 macx {
     gamedata.path = Contents/Resources
-
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {
-    INSTALLS += target gamedata
-
-    target.path = $$DENG_PLUGIN_LIB_DIR
+    INSTALLS += gamedata
     gamedata.path = $$DENG_DATA_DIR/jdoom64
 }
 

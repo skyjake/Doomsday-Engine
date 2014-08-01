@@ -38,17 +38,10 @@ win32 {
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsfmod.def\"
     OTHER_FILES += api/dsfmod.def
-
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 else:macx {
     fixPluginInstallId($$TARGET, 1)
     doPostLink("install_name_tool -change ./libfmodex.dylib @rpath/libfmodex.dylib audio_fmod.bundle/audio_fmod")
-}
-else {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 macx {

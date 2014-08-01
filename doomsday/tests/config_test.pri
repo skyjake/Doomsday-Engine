@@ -28,8 +28,7 @@ else:win32 {
 
     target.path = $$DENG_BIN_DIR
 
-    defineTest(deployTest) {
-        INSTALLS += target
+    defineTest(deployTest) {        
         deployPackages($$DENG_PACKAGES, $$OUT_PWD/../..)
         export(INSTALLS)
         export(dengPacks.files)
@@ -40,10 +39,11 @@ else {
     target.path = $$DENG_BIN_DIR
 
     defineTest(deployTest) {
-        INSTALLS += target
         deployPackages(DENG_PACKAGES, $$OUT_PWD/../..)
         export(INSTALLS)
         export(dengPacks.files)
         export(dengPacks.path)
     }
 }
+
+deployTarget()

@@ -82,9 +82,6 @@ macx {
     doPostLink("macdeployqt \"Doomsday Shell.app\"")
 }
 else {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-    
     unix {
         INSTALLS += icon
         icon.files = res/shell.png
@@ -102,3 +99,5 @@ else {
         OTHER_FILES += ../../../../distrib/linux/$$desktopFile
     }
 }
+
+deployTarget()
