@@ -28,11 +28,6 @@ win32 {
         $$RC_FILE
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     fixPluginInstallId($$TARGET, 1)
     linkToBundledLiblegacy($$TARGET)

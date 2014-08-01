@@ -27,7 +27,7 @@ win32: defineReplace(qtLibraryFile) {
 deng_debug: qtver = d$$QT_MAJOR_VERSION
 else:       qtver = $$QT_MAJOR_VERSION
 
-win32 {
+win32:!greaterThan(QT_MAJOR_VERSION, 4) {
     # Install the required Qt DLLs into the products dir.
     INSTALLS *= qtlibs qtplugins
     qtlibs.files += \

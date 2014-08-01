@@ -52,8 +52,76 @@ DENG2_PIMPL(Record)
 
     typedef QMap<duint32, Record *> RefMap;
 
-    Instance(Public &r) : Base(r), uniqueId(++recordIdCounter), oldUniqueId(0)
+    Instance(Public &r)
+        : Base(r)
+        , uniqueId(++recordIdCounter)
+        , oldUniqueId(0)
     {}
+
+    struct ExcludeByBehavior {
+        Behavior behavior;
+        ExcludeByBehavior(Behavior b) : behavior(b) {}
+        bool operator () (Variable const &member) {
+            return (behavior == IgnoreDoubleUnderscoreMembers &&
+                    member.name().startsWith("__"));
+        }
+    };
+
+    struct ExcludeByRegExp {
+        QRegExp omitted;
+        ExcludeByRegExp(QRegExp const &omit) : omitted(omit) {}
+        bool operator () (Variable const &member) {
+            return omitted.exactMatch(member.name());
+        }
+    };
+
+    template <typename Predicate>
+    void clear(Predicate excluded)
+    {
+        if(!members.empty())
+        {
+            Record::Members remaining; // Contains all members that are not removed.
+
+            DENG2_FOR_EACH(Members, i, members)
+            {
+                if(excluded(*i.value()))
+                {
+                    remaining.insert(i.key(), i.value());
+                    continue;
+                }
+
+                DENG2_FOR_PUBLIC_AUDIENCE2(Removal, o) o->recordMemberRemoved(self, **i);
+
+                i.value()->audienceForDeletion() -= self;
+                delete i.value();
+            }
+
+            members = remaining;
+        }
+    }
+
+    template <typename Predicate>
+    void copyMembersFrom(Record const &other, Predicate excluded)
+    {
+        DENG2_FOR_EACH_CONST(Members, i, other.d->members)
+        {
+            if(excluded(*i.value())) continue;
+
+            bool const alreadyExists = members.contains(i.key());
+
+            Variable *var = new Variable(*i.value());
+            var->audienceForDeletion() += self;
+            members[i.key()] = var;
+
+            if(!alreadyExists)
+            {
+                // Notify about newly added members.
+                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
+            }
+
+            /// @todo Should also notify if the value of an existing variable changes. -jk
+        }
+    }
 
     bool isSubrecord(Variable const &var) const
     {
@@ -210,40 +278,12 @@ Record::~Record()
 
 void Record::clear(Behavior behavior)
 {
-    if(!d->members.empty())
-    {
-        Record::Members remaining; // Contains all members that are not removed.
-
-        DENG2_FOR_EACH(Members, i, d->members)
-        {
-            if(behavior == IgnoreDoubleUnderscoreMembers &&
-               i.key().startsWith("__"))
-            {
-                remaining.insert(i.key(), i.value());
-                continue;
-            }
-
-            DENG2_FOR_AUDIENCE2(Removal, o) o->recordMemberRemoved(*this, **i);
-
-            i.value()->audienceForDeletion() -= this;
-            delete i.value();
-        }
-
-        d->members = remaining;
-    }
+    d->clear(Instance::ExcludeByBehavior(behavior));
 }
 
 void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
-    DENG2_FOR_EACH_CONST(Members, i, other.d->members)
-    {
-        if(behavior == IgnoreDoubleUnderscoreMembers &&
-           i.key().startsWith("__")) continue;
-
-        Variable *var = new Variable(*i.value());
-        var->audienceForDeletion() += this;
-        d->members[i.key()] = var;
-    }
+    d->copyMembersFrom(other, Instance::ExcludeByBehavior(behavior));
 }
 
 Record &Record::operator = (Record const &other)
@@ -255,6 +295,13 @@ Record &Record::assign(Record const &other, Behavior behavior)
 {
     clear(behavior);
     copyMembersFrom(other, behavior);
+    return *this;
+}
+
+Record &Record::assign(Record const &other, QRegExp const &excluded)
+{
+    d->clear(Instance::ExcludeByRegExp(excluded));
+    d->copyMembersFrom(other, Instance::ExcludeByRegExp(excluded));
     return *this;
 }
 

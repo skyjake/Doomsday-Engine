@@ -36,7 +36,6 @@ macx {
     linkBinaryToBundledLibcore($$TARGET)
     linkBinaryToBundledLiblegacy($$TARGET)
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
+
+deployTarget()
+

@@ -30,6 +30,7 @@
 
 #include <QMap>
 #include <QList>
+#include <QRegExp>
 
 namespace de {
 
@@ -127,6 +128,17 @@ public:
      * @return This record.
      */
     Record &assign(Record const &other, Behavior behavior = AllMembers);
+
+    /**
+     * Partial assignment. All members matching @a excluded are ignored both in the
+     * @a other record and this record.
+     *
+     * @param other     Record to get variables from.
+     * @param excluded  Which members to exclude.
+     *
+     * @return This record.
+     */
+    Record &assign(Record const &other, QRegExp const &excluded);
 
     /**
      * Determines if the record contains a variable or a subrecord named @a variableName.

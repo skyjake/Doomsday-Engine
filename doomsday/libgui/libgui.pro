@@ -228,13 +228,10 @@ macx {
     doPostLink("install_name_tool -id @rpath/libassimp.3.dylib libassimp.3.dylib")
     linkBinaryToBundledAssimp(libdeng_gui.1.dylib, ..)
 }
-else {
-    INSTALLS += target
-    target.path = $$DENG_LIB_DIR
-}
+
+deployLibrary()
 
 deng_sdk {
-    INSTALLS *= target scripts
-    target.path = $$DENG_SDK_LIB_DIR
+    INSTALLS *= scripts
     scripts.path = $$DENG_SDK_DIR/modules
 }

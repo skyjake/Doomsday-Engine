@@ -850,12 +850,12 @@ macx {
 DENG_PACKAGES += net.dengine.client.pack
 
 deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
+deployTarget()
 
 !macx {
     # Common (non-Mac) parts of the installation.
-    INSTALLS += target data startupfonts
+    INSTALLS += data startupfonts
 
-    target.path       = $$DENG_BIN_DIR
     data.path         = $$DENG_DATA_DIR
     startupfonts.path = $$DENG_DATA_DIR/fonts
 

@@ -22,18 +22,11 @@ win32 {
 
     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsfluidsynth.def\"
     OTHER_FILES += api/dsfluidsynth.def
-
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 macx {
     fixPluginInstallId($$TARGET, 1)
     linkToBundledLibcore($$TARGET)
     linkToBundledLiblegacy($$TARGET)
-}
-unix:!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
 }
 
 INCLUDEPATH += include

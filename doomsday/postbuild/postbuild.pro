@@ -19,4 +19,11 @@ macx {
         "cd \"$$OUT_PWD/..\" && sh \"$$PWD/bundleapp.sh\" \"$$PWD/..\""
 }
 
+win32 {
+    QMAKE_EXTRA_TARGETS += qtdeploy
+
+    qtdeploy.target = FORCE
+    qtdeploy.commands = "windeployqt \"$$DENG_BIN_DIR\Doomsday.exe\""
+}
+
 OTHER_FILES = bundleapp.sh

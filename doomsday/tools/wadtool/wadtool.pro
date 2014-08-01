@@ -19,7 +19,4 @@ SOURCES += wadtool.c
 HEADERS += wadtool.h
 
 # Installation.
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_BIN_DIR
-}
+deployTarget()

@@ -24,6 +24,14 @@ QMAKE_STRIP = true
     runPython2InDir($$PWD/scripts/, packres.py --quiet \"$$OUT_PWD/..\")
 }
 
+# Create the output directories on Windows.
+win32 {
+    mkpath($$DENG_WIN_PRODUCTS_DIR)
+    mkpath($$DENG_BIN_DIR)
+    mkpath($$DENG_LIB_DIR)
+    mkpath($$DENG_PLUGIN_LIB_DIR)
+}
+
 # Install the launcher.
 !deng_sdk:deng_snowberry {
     SB_ROOT = ../../snowberry

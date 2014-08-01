@@ -38,11 +38,6 @@ win32 {
     OTHER_FILES += api/dpidtech1converter.def
 }
 
-!macx {
-    INSTALLS += target
-    target.path = $$DENG_PLUGIN_LIB_DIR
-}
-
 macx {
     fixPluginInstallId($$TARGET, 1)
     linkToBundledLibcore($$TARGET)

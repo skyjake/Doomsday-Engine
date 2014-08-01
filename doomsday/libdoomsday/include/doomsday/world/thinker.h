@@ -244,12 +244,19 @@ private:
     DENG2_PRIVATE(d)
 
 public:
-    // Value accessors (POD thinker_s compatibility for old code):
+    // Value accessors (POD thinker_s compatibility for old code; TODO: remove in the future):
     MemberDelegate<thinker_s *> prev;
     MemberDelegate<thinker_s *> next;
     MemberDelegate<thinkfunc_t> function;
     MemberDelegate<thid_t> id;
 };
+
+#ifdef _MSC_VER
+// MSVC needs some hand-holding.
+template class LIBDOOMSDAY_PUBLIC Thinker::MemberDelegate<thinker_s *>;
+template class LIBDOOMSDAY_PUBLIC Thinker::MemberDelegate<thinkfunc_t>;
+template class LIBDOOMSDAY_PUBLIC Thinker::MemberDelegate<thid_t>;
+#endif
 
 /**
  * Template that acts like a smart pointer to a specific type of thinker.
