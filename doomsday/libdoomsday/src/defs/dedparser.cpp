@@ -968,10 +968,8 @@ DENG2_PIMPL(DEDParser)
 
                 if(prevEpisodeDefIdx >= 0 && bCopyNext)
                 {
-                    Record *prevEpisode = &ded->episodes[prevEpisodeDefIdx];
-                    // Private members are used for metadata (like __order__) that should
-                    // not be copied.
-                    epsd->assign(*prevEpisode, Record::IgnoreDoubleUnderscoreMembers);
+                    //Record *prevEpisode = &ded->episodes[prevEpisodeDefIdx];
+                    ded->episodes.copy(prevEpisodeDefIdx, *epsd);
                 }
 
                 FINDBEGIN;
@@ -1633,20 +1631,16 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Sky"))
             {
-                Record *prevSky = 0;
                 int model = 0;
 
                 // New skies are appended to the end of the list.
                 idx = ded->addSky();
                 Record &sky = ded->skies[idx];
 
-                if(prevSkyDefIdx >= 0)
+                if(prevSkyDefIdx >= 0 && bCopyNext)
                 {
-                    prevSky = &ded->skies[prevSkyDefIdx];
-
-                    // Private members are used for metadata (like __order__) that should
-                    // not be copied.
-                    if(bCopyNext) sky.assign(*prevSky, Record::IgnoreDoubleUnderscoreMembers);
+                    //Record *prevSky = &ded->skies[prevSkyDefIdx];
+                    ded->skies.copy(prevSkyDefIdx, sky);
                 }
 
                 FINDBEGIN;
@@ -1771,10 +1765,8 @@ DENG2_PIMPL(DEDParser)
 
                 if(prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
-                    Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
-                    // Private members are used for metadata (like __order__) that should
-                    // not be copied.
-                    mi->assign(*prevMapInfo, Record::IgnoreDoubleUnderscoreMembers);
+                    // Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
+                    ded->mapInfos.copy(prevMapInfoDefIdx, *mi);
                 }
 
                 Record &sky = mi->subrecord("sky");
