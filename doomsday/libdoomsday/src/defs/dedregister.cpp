@@ -279,7 +279,7 @@ Record &DEDRegister::copy(int fromIndex, Record &to)
         omitted << i.key();
     }
 
-    return to.assign((*this)[fromIndex], QRegExp(omitted.join('|')));
+    return to.assign((*this)[fromIndex], QRegExp(omitted.join("|")));
 }
 
 int DEDRegister::size() const
