@@ -38,7 +38,8 @@ DENG2_PIMPL(DEDRegister)
         LookupFlags flags;
         Key(LookupFlags const &f = DefaultLookup) : flags(f) {}
     };
-    QMap<String, Key> keys;
+    typedef QMap<String, Key> Keys;
+    Keys keys;
     QMap<Variable *, Record *> parents;
 
     Instance(Public *i, Record &rec) : Base(i), names(&rec)
@@ -258,6 +259,27 @@ void DEDRegister::clear()
 Record &DEDRegister::append()
 {
     return d->append();
+}
+
+Record &DEDRegister::appendCopy(int index)
+{
+    return copy(index, append());
+}
+
+Record &DEDRegister::copy(int fromIndex, Record &to)
+{
+    QStringList omitted;
+    omitted << "__.*"; // double-underscore
+
+    // By default lookup keys are not copied, as they are used as identifiers and
+    // therefore duplicates should not occur.
+    DENG2_FOR_EACH_CONST(Instance::Keys, i, d->keys)
+    {
+        if(i.value().flags.testFlag(AllowCopy)) continue;
+        omitted << i.key();
+    }
+
+    return to.assign((*this)[fromIndex], QRegExp(omitted.join('|')));
 }
 
 int DEDRegister::size() const

@@ -51,8 +51,9 @@ public:
     {
         CaseSensitive = 0x1,    ///< Looking up is done case sensitively.
         OnlyFirst     = 0x2,    ///< Only the first defined value is kept in lookup (otherwise last).
+        AllowCopy     = 0x4,    ///< When copying from an existing definition, include this lookup key.
 
-        DefaultLookup = 0       ///< Latest in order, case insensitive.
+        DefaultLookup = 0       ///< Latest in order, case insensitive, omitted from copies.
     };
     Q_DECLARE_FLAGS(LookupFlags, LookupFlag)
 
@@ -79,6 +80,21 @@ public:
      * @return Reference to the added definition. Same as operator[](size()-1).
      */
     de::Record &append();
+
+    /**
+     * Adds a new definition as the last one, and copies contents into it from an
+     * existing definition at @a index.
+     *
+     * Double-underscore members will not be copied to the new definition, and neither
+     * will lookup keys flagged as non-copyable.
+     *
+     * @param index  Index to copy from.
+     *
+     * @return Reference to the added definition.
+     */
+    de::Record &appendCopy(int index);
+
+    de::Record &copy(int fromIndex, de::Record &to);
 
     int size() const;
     bool has(de::String const &key, de::String const &value) const;
