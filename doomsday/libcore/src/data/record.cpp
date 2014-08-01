@@ -52,21 +52,24 @@ DENG2_PIMPL(Record)
 
     typedef QMap<duint32, Record *> RefMap;
 
-    Instance(Public &r) : Base(r), uniqueId(++recordIdCounter), oldUniqueId(0)
+    Instance(Public &r)
+        : Base(r)
+        , uniqueId(++recordIdCounter)
+        , oldUniqueId(0)
     {}
 
-    struct ExcludeBasedOnBehavior {
+    struct ExcludeByBehavior {
         Behavior behavior;
-        ExcludeBasedOnBehavior(Behavior b) : behavior(b) {}
+        ExcludeByBehavior(Behavior b) : behavior(b) {}
         bool operator () (Variable const &member) {
             return (behavior == IgnoreDoubleUnderscoreMembers &&
                     member.name().startsWith("__"));
         }
     };
 
-    struct ExcludeBasedOnRegExp {
+    struct ExcludeByRegExp {
         QRegExp omitted;
-        ExcludeBasedOnRegExp(QRegExp const &omit) : omitted(omit) {}
+        ExcludeByRegExp(QRegExp const &omit) : omitted(omit) {}
         bool operator () (Variable const &member) {
             return omitted.exactMatch(member.name());
         }
@@ -94,6 +97,29 @@ DENG2_PIMPL(Record)
             }
 
             members = remaining;
+        }
+    }
+
+    template <typename Predicate>
+    void copyMembersFrom(Record const &other, Predicate excluded)
+    {
+        DENG2_FOR_EACH_CONST(Members, i, other.d->members)
+        {
+            if(excluded(*i.value())) continue;
+
+            bool const alreadyExists = members.contains(i.key());
+
+            Variable *var = new Variable(*i.value());
+            var->audienceForDeletion() += self;
+            members[i.key()] = var;
+
+            if(!alreadyExists)
+            {
+                // Notify about newly added members.
+                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
+            }
+
+            /// @todo Should also notify if the value of an existing variable changes. -jk
         }
     }
 
@@ -222,29 +248,6 @@ DENG2_PIMPL(Record)
         }
     }
 
-    template <typename Predicate>
-    void copyMembersFrom(Record const &other, Predicate excluded)
-    {
-        DENG2_FOR_EACH_CONST(Members, i, other.d->members)
-        {
-            if(excluded(*i.value())) continue;
-
-            bool const alreadyExists = members.contains(i.key());
-
-            Variable *var = new Variable(*i.value());
-            var->audienceForDeletion() += self;
-            members[i.key()] = var;
-
-            if(!alreadyExists)
-            {
-                // Notify about newly added members.
-                DENG2_FOR_PUBLIC_AUDIENCE2(Addition, i) i->recordMemberAdded(self, *var);
-            }
-
-            /// @todo Should also notify if the value of an existing variable changes. -jk
-        }
-    }
-
     DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(Addition)
     DENG2_PIMPL_AUDIENCE(Removal)
@@ -275,12 +278,12 @@ Record::~Record()
 
 void Record::clear(Behavior behavior)
 {
-    d->clear(Instance::ExcludeBasedOnBehavior(behavior));
+    d->clear(Instance::ExcludeByBehavior(behavior));
 }
 
 void Record::copyMembersFrom(Record const &other, Behavior behavior)
 {
-    d->copyMembersFrom(other, Instance::ExcludeBasedOnBehavior(behavior));
+    d->copyMembersFrom(other, Instance::ExcludeByBehavior(behavior));
 }
 
 Record &Record::operator = (Record const &other)
@@ -297,8 +300,8 @@ Record &Record::assign(Record const &other, Behavior behavior)
 
 Record &Record::assign(Record const &other, QRegExp const &excluded)
 {
-    d->clear(Instance::ExcludeBasedOnRegExp(excluded));
-    d->copyMembersFrom(other, Instance::ExcludeBasedOnRegExp(excluded));
+    d->clear(Instance::ExcludeByRegExp(excluded));
+    d->copyMembersFrom(other, Instance::ExcludeByRegExp(excluded));
     return *this;
 }
 
