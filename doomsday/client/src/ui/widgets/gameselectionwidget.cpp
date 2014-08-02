@@ -150,7 +150,9 @@ DENG_GUI_PIMPL(GameSelectionWidget)
         String textForTitle(bool whenOpen) const
         {
             if(whenOpen) return titleText;
-            return QString("%1 (%2)").arg(titleText).arg(menu->count());
+            int count = menu->count();
+            if(!noGames->behavior().testFlag(Widget::Hidden)) count = 0;
+            return QString("%1 (%2)").arg(titleText).arg(count);
         }
 
         void preparePanelForOpening()
