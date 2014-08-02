@@ -120,8 +120,8 @@ public Font::RichFormat::IStyle
          * Updates the entry's visibility: which lines might be visible to the user
          * and thus need to be allocated on an atlas and ready to draw.
          *
-         * @param yBottom       Bottom coordinate for the entry.
-         * @param visibleRange  Full range of currently visible pixels in the widget.
+         * @param yBottom        Bottom coordinate for the entry.
+         * @param visiblePixels  Full range of currently visible pixels in the widget.
          *
          * @return Possible change in the height of the entry.
          */

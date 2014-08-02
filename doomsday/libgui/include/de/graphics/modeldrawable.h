@@ -116,7 +116,7 @@ public:
      * After loading, you must call glInit() before drawing it. glInit() will be
      * called automatically if needed.
      *
-     * @param path
+     * @param file  Model file to load.
      */
     void load(File const &file);
 
