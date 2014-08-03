@@ -64,7 +64,7 @@ DENG2_OBSERVES(Bank, Load)
     GLTexture frameTex;
     GLTexture testpic;
     ModelDrawable model;
-    ModelDrawable::AnimationState modelAnim;
+    ModelDrawable::Animator modelAnim;
     QScopedPointer<AtlasTexture> modelAtlas;
     GLUniform uModelTex;
     GLProgram modelProgram;

@@ -51,7 +51,7 @@ public:
      *
      * @ingroup gl
      */
-    class LIBGUI_PUBLIC AnimationState
+    class LIBGUI_PUBLIC Animator
     {
     public:
         struct Animation {
@@ -65,8 +65,9 @@ public:
         DENG2_ERROR(InvalidError);
 
     public:
-        AnimationState();
-        AnimationState(ModelDrawable const &model);
+        Animator();
+        Animator(ModelDrawable const &model);
+        virtual ~Animator() {}
 
         void setModel(ModelDrawable const &model);
 
@@ -174,10 +175,10 @@ public:
 
     void unsetProgram();
 
-    void draw(AnimationState const *animation = 0) const;
+    void draw(Animator const *animation = 0) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
-                       AnimationState const *animation = 0) const;
+                       Animator const *animation = 0) const;
 
     /**
      * Dimensions of the default pose, in model space.
