@@ -7,9 +7,8 @@ asset model.thing.possessed {
     path = "boblampclean.md5mesh"
 
     group animation {
-        sequence "#0" {
-            state = POSS_STND
-            timeline <0, 5, 10>
+        state POSS_STND {
+            sequence "#0" { timeline <0, 5, 10> }
         }
     }
 }
