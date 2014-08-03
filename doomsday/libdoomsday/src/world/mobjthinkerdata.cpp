@@ -47,3 +47,8 @@ mobj_t const *MobjThinkerData::mobj() const
 {
     return reinterpret_cast<mobj_t const *>(&thinker());
 }
+
+void MobjThinkerData::stateChanged(state_t const *)
+{
+    // overridden
+}
