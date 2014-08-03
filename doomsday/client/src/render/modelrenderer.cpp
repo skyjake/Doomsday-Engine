@@ -24,8 +24,11 @@
 
 using namespace de;
 
+static String const DEF_ANIMATION("animation");
+
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
+, DENG2_OBSERVES(Bank, Load)
 {
     filesys::AssetObserver observer;
     ModelBank bank;
@@ -35,11 +38,7 @@ DENG2_PIMPL(ModelRenderer)
         , observer("model\\..*") // all model assets
     {
         observer.audienceForAvailability() += this;
-    }
-
-    ~Instance()
-    {
-        observer.audienceForAvailability() -= this;
+        bank.audienceForLoad() += this;
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -58,6 +57,42 @@ DENG2_PIMPL(ModelRenderer)
             bank.remove(identifier);
         }
     }
+
+    /**
+     * When model assets have been loaded, we can parse their metadata to see if there
+     * are any animation sequences defined. If so, we'll set up a shared lookup table
+     * that determines which sequences to start in which mobj states.
+     *
+     * @param path  Model asset id.
+     */
+    void bankLoaded(DotPath const &path)
+    {
+        Package::Asset const asset = App::asset(path);
+
+        // Set up the animation sequences for states.
+        if(asset.has(DEF_ANIMATION))
+        {
+            // Prepare the animations for the model.
+            QScopedPointer<StateAnims> anims(new StateAnims);
+
+            Record const &animDef = asset.accessedRecord().subrecord(DEF_ANIMATION);
+            Record::Subrecords subs = animDef.subrecords();
+            DENG2_FOR_EACH_CONST(Record::Subrecords, i, subs)
+            {
+                // Is this an animation sequence?
+                Record const &def = *i.value();
+                if(def.gets("__type__", "") == "sequence" && def.has("state"))
+                {
+                    (*anims)[def.gets("state")] << AnimSequence(i.key(), def);
+                }
+            }
+
+            // TODO: Check for a possible timeline and calculate time factors accordingly.
+
+            // Store the animation sequence lookup in the bank.
+            bank.setAnimation(path, anims.take());
+        }
+    }
 };
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
@@ -66,4 +101,9 @@ ModelRenderer::ModelRenderer() : d(new Instance(this))
 ModelBank &ModelRenderer::bank()
 {
     return d->bank;
+}
+
+ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
+{
+    return d->bank.animation(modelId)->maybeAs<StateAnims>();
 }

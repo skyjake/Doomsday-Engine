@@ -22,6 +22,9 @@
 #include <de/ModelDrawable>
 #include <de/ModelBank>
 
+#include <QList>
+#include <QMap>
+
 /**
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
  * and keeps the set of needed ModelDrawable instances in memory.
@@ -31,12 +34,25 @@
 class ModelRenderer
 {
 public:
+    struct AnimSequence {
+        de::String name;
+        de::Record const *def;
+        AnimSequence(de::String const &n, de::Record const &d)
+            : name(n), def(&d) {}
+    };
+    typedef QList<AnimSequence> AnimSequences;
+    struct StateAnims : public QMap<de::String, AnimSequences>,
+                        public de::ModelBank::IAnimation {};
+
+public:
     ModelRenderer();
 
     /**
      * Provides access to the bank containing available drawable models.
      */
     de::ModelBank &bank();
+
+    StateAnims const *animations(de::DotPath const &modelId) const;
 
 private:
     DENG2_PRIVATE(d)
