@@ -18,13 +18,16 @@
 
 #include "world/clientmobjthinkerdata.h"
 #include "render/modelrenderer.h"
-#include "def_main.h"
+#include "world/generator.h"
 #include "clientapp.h"
-#include "render/modelrenderer.h"
-//#include <de/ModelBank>
+#include "dd_loop.h"
+#include "def_main.h"
 #include <QFlags>
 
 using namespace de;
+
+static String const DEF_PROBABILITY("prob");
+static String const DEF_ROOT_NODE  ("node");
 
 namespace internal
 {
@@ -40,9 +43,79 @@ using namespace ::internal;
 
 DENG2_PIMPL(ClientMobjThinkerData)
 {
+    /**
+     * Mobj-specific model animator.
+     */
+    struct Animator : public ModelDrawable::Animator
+    {
+        ClientMobjThinkerData::Instance &d;
+        ModelRenderer::StateAnims const *stateAnims;
+
+        Animator(ClientMobjThinkerData::Instance *inst, ModelDrawable const &model)
+            : ModelDrawable::Animator(model)
+            , d(*inst)
+            , stateAnims(ClientApp::renderSystem().modelRenderer().animations(inst->modelId()))
+        {}
+
+        void triggerByState(String const &stateName)
+        {
+            // No animations can be triggered if none are available.
+            if(!stateAnims) return;
+
+            ModelRenderer::StateAnims::const_iterator found = stateAnims->constFind(stateName);
+            if(found == stateAnims->constEnd()) return;
+
+            foreach(ModelRenderer::AnimSequence const &seq, found.value())
+            {
+                // Test for the probability of this animation.
+                float chance = seq.def->getf(DEF_PROBABILITY, 1.f);
+                if(frand() > chance) continue;
+
+                // Start the animation on the specified node (defaults to root),
+                // unless it is already running.
+                String const node = seq.def->gets(DEF_ROOT_NODE, "");
+                int animId;
+                if(seq.name.startsWith('#'))
+                {
+                    // Animation sequence specified by index.
+                    animId = seq.name.mid(1).toInt();
+                }
+                else
+                {
+                    animId = model().animationIdForName(seq.name);
+                }
+
+                // Do not restart running sequences.
+                if(isRunning(animId, node)) continue;
+
+                start(animId, node);
+
+                qDebug() << "starting" << seq.name;
+            }
+        }
+
+        /// Determines how fast each animation sequence is proceeding.
+        void advanceTime(TimeDelta const &elapsed)
+        {
+            ModelDrawable::Animator::advanceTime(elapsed);
+
+            for(int i = 0; i < count(); ++i)
+            {
+                Animation &anim = at(i);
+                ddouble factor = 1.0;
+                // TODO: Determine actual time factor.
+
+                // Advance the sequence.
+                anim.time += factor * elapsed;
+
+                qDebug() << "advancing" << anim.animId << "time" << anim.time;
+            }
+        }
+    };
+
     Flags flags;
     QScopedPointer<RemoteSync> sync;
-    QScopedPointer<ModelDrawable::Animator> animator;
+    QScopedPointer<Animator> animator;
 
     Instance(Public *i) : Base(i)
     {}
@@ -55,14 +128,19 @@ DENG2_PIMPL(ClientMobjThinkerData)
         }
     }
 
-    String thingType() const
+    String thingName() const
     {
         return Def_GetMobjName(self.mobj()->type);
     }
 
+    String stateName() const
+    {
+        return Def_GetStateName(self.mobj()->state);
+    }
+
     String modelId() const
     {
-        return String("model.thing.%1").arg(thingType().toLower());
+        return String("model.thing.%1").arg(thingName().toLower());
     }
 
     static ModelBank &modelBank()
@@ -70,11 +148,16 @@ DENG2_PIMPL(ClientMobjThinkerData)
         return ClientApp::renderSystem().modelRenderer().bank();
     }
 
+    void deinitModel()
+    {
+        animator.reset();
+    }
+
     /**
      * Initializes the client-specific mobj data. This is performed once, during the
      * first time the object thinks.
      */
-    void initIfNeeded()
+    void initOnce()
     {
         // Initialization is only done once.
         if(flags & Initialized) return;
@@ -85,10 +168,53 @@ DENG2_PIMPL(ClientMobjThinkerData)
         {
             // Prepare the animation state of the model.
             ModelDrawable const &model = modelBank().model(modelId());
-            animator.reset(new ModelDrawable::Animator(model));
+            animator.reset(new Animator(this, model));
+        }
+    }
 
-            // Set up the initial animation.
+    /**
+     * Checks if there are any animations defined to start in the current state. All
+     * animation sequences associated with the state are checked. A sequence may specify
+     * a less than 1.0 probability for starting. The sequence may be identified either by
+     * name ("walk") or index (for example, "#3").
+     */
+    void triggerStateAnimations()
+    {
+        if(animator.isNull()) return;
 
+        animator->triggerByState(stateName());
+    }
+
+    /**
+     * Checks the motion of the object and triggers suitable animations (for standing,
+     * walking, or running). These animations are defined separately from the state
+     * based animations.
+     */
+    void triggerMovementAnimations()
+    {
+        if(animator.isNull()) return;
+
+
+    }
+
+    void advanceAnimations(TimeDelta const &delta)
+    {
+        if(animator.isNull()) return;
+
+        animator->advanceTime(delta);
+    }
+
+    void triggerParticleGenerators(bool justSpawned)
+    {
+        // Check for a ptcgen trigger.
+        for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[self.stateIndex()].ptcGens;
+            pg; pg = pg->stateNext)
+        {
+            if(!(pg->flags & Generator::SpawnOnly) || justSpawned)
+            {
+                // We are allowed to spawn the generator.
+                Mobj_SpawnParticleGen(self.mobj(), pg);
+            }
         }
     }
 };
@@ -104,12 +230,19 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
 
 void ClientMobjThinkerData::think()
 {
-    d->initIfNeeded();
+    d->initOnce();
+    d->triggerMovementAnimations();
+    d->advanceAnimations(DD_CurrentTickDuration());
 }
 
 Thinker::IData *ClientMobjThinkerData::duplicate() const
 {
     return new ClientMobjThinkerData(*this);
+}
+
+int ClientMobjThinkerData::stateIndex() const
+{
+    return runtimeDefs.states.indexOf(mobj()->state);
 }
 
 bool ClientMobjThinkerData::hasRemoteSync() const
@@ -129,4 +262,15 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
 ModelDrawable::Animator *ClientMobjThinkerData::animator()
 {
     return d->animator.data();
+}
+
+void ClientMobjThinkerData::stateChanged(state_t const *previousState)
+{
+    MobjThinkerData::stateChanged(previousState);
+
+    bool const justSpawned = !previousState;
+
+    d->initOnce();
+    d->triggerStateAnimations();
+    d->triggerParticleGenerators(justSpawned);
 }

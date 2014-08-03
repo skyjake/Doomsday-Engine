@@ -50,6 +50,7 @@
 #endif
 
 #include <de/Error>
+#include <doomsday/world/mobjthinkerdata.h>
 #include <cmath>
 
 using namespace de;
@@ -167,9 +168,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 {
     if(!mobj) return;
 
-#ifdef __CLIENT__
-    bool spawning = (mobj->state == 0);
-#endif
+    state_t const *oldState = mobj->state;
 
     DENG_ASSERT(statenum >= 0 && statenum < defs.states.size());
 
@@ -178,22 +177,16 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     mobj->sprite = mobj->state->sprite;
     mobj->frame  = mobj->state->frame;
 
-#ifdef __CLIENT__
-    // Check for a ptcgen trigger.
-    for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[statenum].ptcGens; pg; pg = pg->stateNext)
-    {
-        if(!(pg->flags & Generator::SpawnOnly) || spawning)
-        {
-            // We are allowed to spawn the generator.
-            Mobj_SpawnParticleGen(mobj, pg);
-        }
-    }
-#endif
-
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
         if(defs.states[statenum].execute)
             Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
+    }
+
+    // Notify private data about the changed state.
+    if(MobjThinkerData *data = THINKER_DATA_MAYBE(mobj->thinker, MobjThinkerData))
+    {
+        data->stateChanged(oldState);
     }
 }
 

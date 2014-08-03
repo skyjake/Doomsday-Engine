@@ -81,6 +81,10 @@ public:
     void think();
     IData *duplicate() const;
 
+    void stateChanged(state_t const *previousState);
+
+    int stateIndex() const;
+
     bool hasRemoteSync() const;
 
     /**
