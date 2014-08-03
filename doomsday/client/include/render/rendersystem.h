@@ -26,6 +26,8 @@
 #include "DrawLists"
 #include "settingsregister.h"
 
+class ModelRenderer;
+
 /**
  * Geometry backing store (arrays).
  * @todo Replace with GLBuffer -ds
@@ -71,6 +73,8 @@ public:
 
     SettingsRegister &settings();
     SettingsRegister &appearanceSettings();
+
+    ModelRenderer &modelRenderer();
 
     /**
      * Provides access to the central map geometry buffer.

@@ -79,7 +79,7 @@ void P_InitUnusedMobjList()
  * All mobjs must be allocated through this routine. Part of the public API.
  */
 mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
-    coord_t radius, coord_t height, int ddflags)
+                     coord_t radius, coord_t height, int ddflags)
 {
     if(!function)
         App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
@@ -870,7 +870,7 @@ D_CMD(InspectMobj)
 
     char const *moType = "Mobj";
 #ifdef __CLIENT__
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 

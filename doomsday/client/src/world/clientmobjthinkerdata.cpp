@@ -17,21 +17,78 @@
  */
 
 #include "world/clientmobjthinkerdata.h"
+#include "render/modelrenderer.h"
+#include "def_main.h"
+#include "clientapp.h"
+#include "render/modelrenderer.h"
+//#include <de/ModelBank>
+#include <QFlags>
 
 using namespace de;
 
+namespace internal
+{
+    enum Flag
+    {
+        Initialized = 0x1       ///< Thinker data has been initialized.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Flags)
+}
+
+using namespace ::internal;
+
 DENG2_PIMPL(ClientMobjThinkerData)
 {
-    QScopedPointer<NetworkState> net;
+    Flags flags;
+    QScopedPointer<RemoteSync> sync;
+    QScopedPointer<ModelDrawable::Animator> animator;
 
     Instance(Public *i) : Base(i)
     {}
 
     Instance(Public *i, Instance const &other) : Base(i)
     {
-        if(!other.net.isNull())
+        if(!other.sync.isNull())
         {
-            net.reset(new NetworkState(*other.net));
+            sync.reset(new RemoteSync(*other.sync));
+        }
+    }
+
+    String thingType() const
+    {
+        return Def_GetMobjName(self.mobj()->type);
+    }
+
+    String modelId() const
+    {
+        return String("model.thing.%1").arg(thingType().toLower());
+    }
+
+    static ModelBank &modelBank()
+    {
+        return ClientApp::renderSystem().modelRenderer().bank();
+    }
+
+    /**
+     * Initializes the client-specific mobj data. This is performed once, during the
+     * first time the object thinks.
+     */
+    void initIfNeeded()
+    {
+        // Initialization is only done once.
+        if(flags & Initialized) return;
+        flags |= Initialized;
+
+        // Check for an available model asset.
+        if(modelBank().has(modelId()))
+        {
+            // Prepare the animation state of the model.
+            ModelDrawable const &model = modelBank().model(modelId());
+            animator.reset(new ModelDrawable::Animator(model));
+
+            // Set up the initial animation.
+
         }
     }
 };
@@ -45,21 +102,31 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
     , d(new Instance(this, *other.d))
 {}
 
+void ClientMobjThinkerData::think()
+{
+    d->initIfNeeded();
+}
+
 Thinker::IData *ClientMobjThinkerData::duplicate() const
 {
     return new ClientMobjThinkerData(*this);
 }
 
-bool ClientMobjThinkerData::hasNetworkState() const
+bool ClientMobjThinkerData::hasRemoteSync() const
 {
-    return !d->net.isNull();
+    return !d->sync.isNull();
 }
 
-ClientMobjThinkerData::NetworkState &ClientMobjThinkerData::networkState()
+ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
 {
-    if(!hasNetworkState())
+    if(!hasRemoteSync())
     {
-        d->net.reset(new NetworkState);
+        d->sync.reset(new RemoteSync);
     }
-    return *d->net;
+    return *d->sync;
+}
+
+ModelDrawable::Animator *ClientMobjThinkerData::animator()
+{
+    return d->animator.data();
 }

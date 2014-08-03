@@ -44,7 +44,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
     {
-        //qDebug() << "model:" << identifier << event;
+        //qDebug() << "loading model:" << identifier << event;
 
         if(event == filesys::AssetObserver::Added)
         {
@@ -62,3 +62,8 @@ DENG2_PIMPL(ModelRenderer)
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
 {}
+
+ModelBank &ModelRenderer::bank()
+{
+    return d->bank;
+}

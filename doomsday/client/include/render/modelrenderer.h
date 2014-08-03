@@ -20,6 +20,7 @@
 #define DENG_CLIENT_MODELRENDERER_H
 
 #include <de/ModelDrawable>
+#include <de/ModelBank>
 
 /**
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
@@ -31,6 +32,11 @@ class ModelRenderer
 {
 public:
     ModelRenderer();
+
+    /**
+     * Provides access to the bank containing available drawable models.
+     */
+    de::ModelBank &bank();
 
 private:
     DENG2_PRIVATE(d)

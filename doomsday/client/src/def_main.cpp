@@ -188,7 +188,7 @@ int Def_GetMobjNumForName(const char* name)
     return defs.getMobjNumForName(name);
 }
 
-const char* Def_GetMobjName(int num)
+char const *Def_GetMobjName(int num)
 {
     return defs.getMobjName(num);
 }
