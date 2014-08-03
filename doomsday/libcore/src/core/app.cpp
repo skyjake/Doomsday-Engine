@@ -129,6 +129,8 @@ DENG2_PIMPL(App)
         , currentGame(0)
         , terminateFunc(0)
     {
+        qsrand(Time().asDateTime().toTime_t());
+
         packagesToLoadAtInit << "net.dengine.stdlib";
 
         singletonApp = a;
