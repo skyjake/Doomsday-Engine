@@ -35,6 +35,7 @@ DENG2_PIMPL(ModelBank)
     struct Data : public IData
     {
         ModelDrawable model;
+        QScopedPointer<IAnimation> animation;
 
         Data(String const &path)
         {
@@ -57,6 +58,16 @@ void ModelBank::add(DotPath const &id, String const &sourcePath)
 ModelDrawable &ModelBank::model(DotPath const &id)
 {
     return data(id).as<Instance::Data>().model;
+}
+
+void ModelBank::setAnimation(DotPath const &id, IAnimation *anim)
+{
+    data(id).as<Instance::Data>().animation.reset(anim);
+}
+
+ModelBank::IAnimation const *ModelBank::animation(DotPath const &id) const
+{
+    return data(id).as<Instance::Data>().animation.data();
 }
 
 Bank::IData *ModelBank::loadFromSource(ISource &source)

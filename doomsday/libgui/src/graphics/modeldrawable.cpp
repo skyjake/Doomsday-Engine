@@ -926,7 +926,8 @@ Vector3f ModelDrawable::midPoint() const
 DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 {
     ModelDrawable const *model;
-    QList<Animation> anims;
+    typedef QList<Animation> Animations;
+    Animations anims;
 
     Instance(ModelDrawable const *mdl = 0) : model(mdl) {}
 
@@ -948,6 +949,29 @@ DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 
         anims.append(anim);
         return anims.last();
+    }
+
+    void stopByNode(String const &node)
+    {
+        QMutableListIterator<Animation> iter(anims);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value().node == node)
+            {
+                iter.remove();
+            }
+        }
+    }
+
+    bool isRunning(int animId, String const &rootNode) const
+    {
+        foreach(Animation const &anim, anims)
+        {
+            if(anim.animId == animId && anim.node == rootNode)
+                return true;
+        }
+        return false;
     }
 };
 
@@ -984,9 +1008,21 @@ ModelDrawable::Animator::Animation &ModelDrawable::Animator::at(int index)
     return d->anims[index];
 }
 
+bool ModelDrawable::Animator::isRunning(String const &animName, String const &rootNode) const
+{
+    return d->isRunning(model().animationIdForName(animName), rootNode);
+}
+
+bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) const
+{
+    return d->isRunning(animId, rootNode);
+}
+
 ModelDrawable::Animator::Animation &
 ModelDrawable::Animator::start(String const &animName, String const &rootNode)
 {
+    d->stopByNode(rootNode);
+
     Animation anim;
     anim.animId = model().animationIdForName(animName);
     anim.node   = rootNode;
@@ -997,6 +1033,8 @@ ModelDrawable::Animator::start(String const &animName, String const &rootNode)
 ModelDrawable::Animator::Animation &
 ModelDrawable::Animator::start(int animId, String const &rootNode)
 {
+    d->stopByNode(rootNode);
+
     Animation anim;
     anim.animId = animId;
     anim.node   = rootNode;

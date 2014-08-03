@@ -35,11 +35,26 @@ namespace de {
 class LIBGUI_PUBLIC ModelBank : public Bank
 {
 public:
+    /**
+     * Interface for animation-related data for a model. @ingroup gl
+     */
+    class LIBGUI_PUBLIC IAnimation
+    {
+    public:
+        virtual ~IAnimation() {}
+        DENG2_AS_IS_METHODS()
+    };
+
+public:
     ModelBank();
 
     void add(DotPath const &id, String const &sourcePath);
 
     ModelDrawable &model(DotPath const &id);
+
+    void setAnimation(DotPath const &id, IAnimation *anim);
+
+    IAnimation const *animation(DotPath const &id) const;
 
 protected:
     IData *loadFromSource(ISource &source);

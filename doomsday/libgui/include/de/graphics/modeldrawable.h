@@ -87,8 +87,29 @@ public:
 
         Animation &at(int index);
 
+        bool isRunning(String const &animName, String const &rootNode = "") const;
+        bool isRunning(int animId, String const &rootNode = "") const;
+
+        /**
+         * Starts an animation sequence. A previous sequence running on this node will
+         * be automatically stopped.
+         *
+         * @param animName  Animation sequence name.
+         * @param rootNode  Animation root.
+         *
+         * @return Animation.
+         */
         Animation &start(String const &animName, String const &rootNode = "");
 
+        /**
+         * Starts an animation sequence. A previous sequence running on this node will
+         * be automatically stopped.
+         *
+         * @param animId    Animation sequence number.
+         * @param rootNode  Animation root.
+         *
+         * @return Animation.
+         */
         Animation &start(int animId, String const &rootNode = "");
 
         void stop(int index);
