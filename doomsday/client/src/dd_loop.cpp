@@ -363,9 +363,16 @@ timespan_t DD_LatestRunTicsStartTime(void)
     return lastRunTicsTime;
 }
 
+static double ticLength;
+
+timespan_t DD_CurrentTickDuration()
+{
+    return ticLength;
+}
+
 void Loop_RunTics(void)
 {
-    double elapsedTime, ticLength, nowTime;
+    double elapsedTime, nowTime;
 
     // Do a network update first.
     N_Update();
