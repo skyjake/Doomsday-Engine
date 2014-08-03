@@ -68,7 +68,7 @@ public:
     /**
      * Prefixes a piece of shader source code to another shader source. This takes
      * into account that certain elements must remain at the beginning of the source
-     * (#version).
+     * (\#version).
      *
      * @param source  Main source where prefixing is done.
      * @param prefix  Source to prefix in the beginning of @a source.
