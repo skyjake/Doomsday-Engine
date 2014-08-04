@@ -76,10 +76,10 @@ DENG2_PIMPL(ModelRenderer)
             // Prepare the animations for the model.
             QScopedPointer<StateAnims> anims(new StateAnims);
 
-            Record::Subrecords states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
+            auto states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
-                Record::Subrecords seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
+                auto seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
                 DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
                 {
                     (*anims)[state.key()] << AnimSequence(seq.key(), *seq.value());
