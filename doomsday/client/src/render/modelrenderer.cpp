@@ -21,6 +21,7 @@
 #include <de/filesys/AssetObserver>
 #include <de/App>
 #include <de/ModelBank>
+#include <de/ScriptedInfo>
 
 using namespace de;
 
@@ -75,25 +76,13 @@ DENG2_PIMPL(ModelRenderer)
             // Prepare the animations for the model.
             QScopedPointer<StateAnims> anims(new StateAnims);
 
-            // TODO: Add a utility method for getting subrecords of particular type (ScriptedInfo).
-
-            Record::Subrecords subs = asset.accessedRecord().subrecord(DEF_ANIMATION).subrecords();
-
-            DENG2_FOR_EACH_CONST(Record::Subrecords, i, subs)
+            Record::Subrecords states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
+            DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
-                Record const &def = *i.value();
-                if(def.gets("__type__", "") == "state")
+                Record::Subrecords seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
+                DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
                 {
-                    Record::Subrecords seqs = def.accessedRecord().subrecords();
-
-                    DENG2_FOR_EACH_CONST(Record::Subrecords, s, seqs)
-                    {
-                        Record const &seqDef = *s.value();
-                        if(seqDef.gets("__type__", "") == "sequence")
-                        {
-                            (*anims)[i.key()] << AnimSequence(s.key(), seqDef);
-                        }
-                    }
+                    (*anims)[state.key()] << AnimSequence(seq.key(), *seq.value());
                 }
             }
 
