@@ -450,4 +450,11 @@ ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType, Recor
     return found;
 }
 
+Record::Subrecords ScriptedInfo::subrecordsOfType(String const &blockType, Record const &record) // static
+{
+    return record.subrecords([&] (Record const &sub) {
+        return sub.gets(VAR_BLOCK_TYPE, "") == blockType;
+    });
+}
+
 } // namespace de

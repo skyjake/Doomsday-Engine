@@ -185,6 +185,17 @@ public:
 public:
     static Paths allBlocksOfType(String const &blockType, Record const &root);
 
+    /**
+     * Finds all the subrecords with a given __type__. Only the subrecords immediately
+     * under @a record are checked.
+     *
+     * @param blockType  Type of Info block to locate.
+     * @param record     Namespace to look in.
+     *
+     * @return Subrecords whose __type__ matches @a blockType.
+     */
+    static Record::Subrecords subrecordsOfType(String const &blockType, Record const &record);
+
 private:
     DENG2_PRIVATE(d)
 };
