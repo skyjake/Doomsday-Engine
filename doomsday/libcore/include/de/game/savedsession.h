@@ -122,7 +122,7 @@ public:
          * @return  New MapStateReader appropriate for the serialized map state format
          * if recognized. Ownership is given to the caller.
          */
-        virtual std::auto_ptr<MapStateReader> makeMapStateReader(
+        virtual MapStateReader *makeMapStateReader(
                 SavedSession const &session, String const &mapUriStr) = 0;
     };
 
