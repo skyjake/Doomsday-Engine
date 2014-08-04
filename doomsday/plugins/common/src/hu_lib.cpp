@@ -2590,11 +2590,8 @@ int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 
     if(cmd == MCMD_SELECT)
     {
-        dd_bool justActivated = false;
         if(!(wi->_flags & MNF_ACTIVE))
         {
-            justActivated = true;
-
             wi->_flags |= MNF_ACTIVE;
             if(wi->hasAction(Widget::MNA_ACTIVE))
             {
