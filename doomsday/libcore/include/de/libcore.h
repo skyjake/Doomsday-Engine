@@ -73,7 +73,7 @@
 #if defined(__cplusplus) && !defined(DENG2_C_API_ONLY)
 #  define DENG2_USE_QT
 #  include <typeinfo>
-#  include <memory>  // auto_ptr
+#  include <memory>  // unique_ptr, shared_ptr
 #  include <cstring> // memset
 #endif
 

@@ -25,7 +25,7 @@ deng_debuginfo {
     QMAKE_CFLAGS_WARN_ON += -Wno-tautological-compare
 }
 
-deng_qt5 {
+c++11 {
     QMAKE_CXXFLAGS += -std=c++11
 }
 
