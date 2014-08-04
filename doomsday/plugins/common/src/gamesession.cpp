@@ -344,7 +344,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     /**
      * Constructs a MapStateReader for serialized map state format interpretation.
      */
-    std::auto_ptr<SavedSession::MapStateReader> makeMapStateReader(
+    SavedSession::MapStateReader *makeMapStateReader(
         SavedSession const &session, String const &mapUriAsText)
     {
         de::Uri const mapUri(mapUriAsText, RC_NULL);
@@ -355,7 +355,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             throw Error("GameSession::makeMapStateReader", "Failed to open \"" + mapStateFile.path() + "\" for read");
         }
 
-        std::auto_ptr<SavedSession::MapStateReader> p;
+        std::unique_ptr<SavedSession::MapStateReader> p;
         reader_s *reader = SV_NewReader();
         int const magic = Reader_ReadInt32(reader);
         if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.
@@ -377,7 +377,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SV_CloseFile();
         if(p.get())
         {
-            return p;
+            return p.release();
         }
 
         /// @throw Error The format of the serialized map state was not recognized.
@@ -554,7 +554,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
             String const gameMapUriAsText = ::gameMapUri.compose();
-            makeMapStateReader(saved, gameMapUriAsText)->read(gameMapUriAsText);
+            std::unique_ptr<SavedSession::MapStateReader> reader(
+                        makeMapStateReader(saved, gameMapUriAsText));
+            reader->read(gameMapUriAsText);
         }
 
         if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
