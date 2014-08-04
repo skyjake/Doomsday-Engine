@@ -33,6 +33,7 @@
 #include "de/String"
 
 #include <QTextStream>
+#include <functional>
 
 namespace de {
 
@@ -129,21 +130,21 @@ DENG2_PIMPL(Record)
         return value && value->record() && value->hasOwnership();
     }
 
-    /*
-    bool isOwnedSubrecord(Variable const &var) const
-    {
-        RecordValue const *value = var.value().maybeAs<RecordValue>();
-        return value && value->record() && value->hasOwnership();
-    }*/
-
-    Record::Subrecords listSubrecords() const
+    Record::Subrecords listSubrecords(std::function<bool (Record const &)> filter) const
     {
         Subrecords subs;
         DENG2_FOR_EACH_CONST(Members, i, members)
         {
-            if(isSubrecord(*i.value()))
+            Variable const &member = *i.value();
+            if(isSubrecord(member))
             {
-                subs.insert(i.key(), i.value()->value().as<RecordValue>().record());
+                Record *rec = member.value().as<RecordValue>().record();
+                DENG2_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
+
+                // Must pass the filter.
+                if(!filter(*rec)) continue;
+
+                subs.insert(i.key(), rec);
             }
         }
         return subs;
@@ -552,7 +553,12 @@ Record::Members const &Record::members() const
 
 Record::Subrecords Record::subrecords() const
 {
-    return d->listSubrecords();
+    return d->listSubrecords([] (Record const &) { return true; /* unfiltered */ });
+}
+
+Record::Subrecords Record::subrecords(std::function<bool (Record const &)> filter) const
+{
+    return d->listSubrecords([&] (Record const &rec) { return filter(rec); });
 }
 
 String Record::asText(String const &prefix, List *lines) const

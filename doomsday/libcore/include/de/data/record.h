@@ -31,6 +31,7 @@
 #include <QMap>
 #include <QList>
 #include <QRegExp>
+#include <functional>
 
 namespace de {
 
@@ -387,6 +388,16 @@ public:
      * Collects a map of all the subrecords present in the record.
      */
     Subrecords subrecords() const;
+
+    /**
+     * Collects a map of all subrecords that fulfill a given predicate.
+     *
+     * @param filter  Inclusion predicate: returns @c true, if the subrecord is to be
+     *                included in the collection.
+     *
+     * @return Map of subrecords.
+     */
+    Subrecords subrecords(std::function<bool (Record const &)> filter) const;
 
     /**
      * Creates a text representation of the record. Each variable name is
