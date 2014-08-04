@@ -42,15 +42,15 @@ using namespace ::internal;
 DENG2_PIMPL(ClientMobjThinkerData)
 {
     Flags flags;
-    QScopedPointer<RemoteSync> sync;
-    QScopedPointer<MobjAnimator> animator;
+    std::unique_ptr<RemoteSync> sync;
+    std::unique_ptr<MobjAnimator> animator;
 
     Instance(Public *i) : Base(i)
     {}
 
     Instance(Public *i, Instance const &other) : Base(i)
     {
-        if(!other.sync.isNull())
+        if(other.sync)
         {
             sync.reset(new RemoteSync(*other.sync));
         }
@@ -108,9 +108,10 @@ DENG2_PIMPL(ClientMobjThinkerData)
      */
     void triggerStateAnimations()
     {
-        if(animator.isNull()) return;
-
-        animator->triggerByState(stateName());
+        if(animator)
+        {
+            animator->triggerByState(stateName());
+        }
     }
 
     /**
@@ -120,16 +121,17 @@ DENG2_PIMPL(ClientMobjThinkerData)
      */
     void triggerMovementAnimations()
     {
-        if(animator.isNull()) return;
+        if(!animator) return;
 
 
     }
 
     void advanceAnimations(TimeDelta const &delta)
     {
-        if(animator.isNull()) return;
-
-        animator->advanceTime(delta);
+        if(animator)
+        {
+            animator->advanceTime(delta);
+        }
     }
 
     void triggerParticleGenerators(bool justSpawned)
@@ -175,7 +177,7 @@ int ClientMobjThinkerData::stateIndex() const
 
 bool ClientMobjThinkerData::hasRemoteSync() const
 {
-    return !d->sync.isNull();
+    return bool(d->sync);
 }
 
 ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
@@ -189,7 +191,7 @@ ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
 
 ModelDrawable::Animator *ClientMobjThinkerData::animator()
 {
-    return d->animator.data();
+    return d->animator.get();
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)
