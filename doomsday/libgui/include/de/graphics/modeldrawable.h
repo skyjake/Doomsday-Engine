@@ -124,6 +124,15 @@ public:
          */
         virtual void advanceTime(TimeDelta const &elapsed);
 
+        /**
+         * Returns the time to be used when drawing the model.
+         *
+         * @param index  Animation index.
+         *
+         * @return Time in the model's animation sequence.
+         */
+        virtual ddouble currentTime(int index) const;
+
     private:
         DENG2_PRIVATE(d)
     };

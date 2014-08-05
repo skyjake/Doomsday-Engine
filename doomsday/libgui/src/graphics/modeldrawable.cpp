@@ -776,7 +776,7 @@ DENG2_PIMPL(ModelDrawable)
             DENG2_ASSERT(duint(anim.animId) < scene->mNumAnimations);
             DENG2_ASSERT(nodeNameToPtr.contains(anim.node));
 
-            accumulateAnimationTransforms(anim.time,
+            accumulateAnimationTransforms(animation->currentTime(i),
                                           *scene->mAnimations[anim.animId],
                                           *nodeNameToPtr[anim.node]);
         }
@@ -1055,6 +1055,11 @@ void ModelDrawable::Animator::clear()
 void ModelDrawable::Animator::advanceTime(TimeDelta const &)
 {
     // overridden
+}
+
+ddouble ModelDrawable::Animator::currentTime(int index) const
+{
+    return at(index).time;
 }
 
 } // namespace de
