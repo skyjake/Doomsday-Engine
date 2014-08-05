@@ -68,7 +68,7 @@ DENG2_PIMPL(ModelRenderer)
      */
     void bankLoaded(DotPath const &path)
     {
-        Package::Asset const asset = App::asset(path);
+        auto const asset = App::asset(path);
 
         // Set up the animation sequences for states.
         if(asset.has(DEF_ANIMATION))
@@ -79,6 +79,7 @@ DENG2_PIMPL(ModelRenderer)
             auto states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
+                // Note that the sequences are added in alphabetical order.
                 auto seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
                 DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
                 {

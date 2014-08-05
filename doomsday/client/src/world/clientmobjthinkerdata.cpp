@@ -162,7 +162,7 @@ void ClientMobjThinkerData::think()
 {
     d->initOnce();
     d->triggerMovementAnimations();
-    d->advanceAnimations(DD_CurrentTickDuration());
+    d->advanceAnimations(SECONDSPERTIC); // mobjs think only on sharp ticks
 }
 
 Thinker::IData *ClientMobjThinkerData::duplicate() const

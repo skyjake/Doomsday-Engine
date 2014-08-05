@@ -36,6 +36,8 @@ public:
 
     void advanceTime(de::TimeDelta const &elapsed);
 
+    de::ddouble currentTime(int index) const;
+
 private:
     ModelRenderer::StateAnims const *_stateAnims;
 };

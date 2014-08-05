@@ -19,6 +19,7 @@
 #include "render/mobjanimator.h"
 #include "render/rendersystem.h"
 #include "clientapp.h"
+#include "dd_loop.h"
 
 using namespace de;
 
@@ -59,6 +60,7 @@ void MobjAnimator::triggerByState(String const &stateName)
         }
 
         // Do not restart running sequences.
+        // TODO: Only restart if the current state is not the expected one.
         if(isRunning(animId, node)) continue;
 
         start(animId, node);
@@ -82,4 +84,13 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
 
         qDebug() << "advancing" << anim.animId << "time" << anim.time;
     }
+}
+
+ddouble MobjAnimator::currentTime(int index) const
+{
+    // Mobjs think on sharp ticks only, however we need to ensure time advances on
+    // every frame for smooth animation.
+    return ModelDrawable::Animator::currentTime(index) + frameTimePos;
+
+    /// @todo Should prevent time from passing the end of the sequence?
 }
