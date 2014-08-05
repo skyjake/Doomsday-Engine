@@ -75,7 +75,7 @@ public:
     de::Record *mapInfo();
 
     /**
-     * Resolves a named exit from the default map progression.
+     * Resolves a named exit according to the map progression.
      */
     de::Uri mapUriForNamedExit(de::String const &name);
 
