@@ -2112,7 +2112,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_SetGameActionMapCompleted(G_NextMap(true), 0, true);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
         return false;
     }
 
@@ -2151,7 +2151,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     }
     else
     {
-        newMapUri = G_NextMap(false);
+        newMapUri = COMMON_GAMESESSION->mapUriForNamedExit("next");
     }
 
     G_SetGameActionMapCompleted(newMapUri, 0, false);

@@ -75,6 +75,11 @@ public:
     de::Record *mapInfo();
 
     /**
+     * Resolves a named exit from the default map progression.
+     */
+    de::Uri mapUriForNamedExit(de::String const &name);
+
+    /**
      * Returns the current ruleset for the game session.
      */
     GameRuleset const &rules() const;

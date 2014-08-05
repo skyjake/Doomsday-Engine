@@ -804,6 +804,146 @@ Record *GameSession::mapInfo()
     return 0;
 }
 
+de::Uri GameSession::mapUriForNamedExit(String const &name)
+{
+#if __JHEXEN__
+    String key;
+    if(!name.compareWithoutCase("next"))
+    {
+        key = "nextMap";
+    }
+    else
+    {
+        key = name + "NextMap";
+    }
+    /// @todo fixme: What about the episode?
+    return de::Uri(mapInfo()->gets(key, ""), RC_NULL);
+
+#elif __JDOOM64__
+    uint episode = ::gameEpisode;
+    uint map     = G_MapNumberFor(::gameMapUri);
+
+    if(!name.compareWithoutCase("secret"))
+    {
+        switch(map)
+        {
+        case 0:  map = 31; break;
+        case 3:  map = 28; break;
+        case 11: map = 29; break;
+        case 17: map = 30; break;
+        case 31: map =  0; break;
+
+        default: LOG_MAP_WARNING("No 'secret' exit on map %u!") << (map + 1); break;
+        }
+    }
+
+    switch(map)
+    {
+    case 23: map = 27; break;
+    case 31: map = 0;  break;
+    case 28: map = 4;  break;
+    case 29: map = 12; break;
+    case 30: map = 18; break;
+    case 24: map = 0;  break;
+    case 25: map = 0;  break;
+    case 26: map = 0;  break;
+
+    default: map += 1; break;
+    }
+
+    return G_ComposeMapUri(episode, map);
+
+#elif __JDOOM__
+    uint episode = ::gameEpisode;
+    uint map     = G_MapNumberFor(::gameMapUri);
+
+    if(gameModeBits & GM_ANY_DOOM2)
+    {
+        if(!name.compareWithoutCase("secret"))
+        {
+            switch(map)
+            {
+            case 14: map = 30; break;
+            case 30: map = 31; break;
+
+            default: LOG_MAP_WARNING("No 'secret' exit on map %u!") << (map + 1); break;
+            }
+        }
+
+        switch(map)
+        {
+        case 30:
+        case 31: map = 15; break;
+
+        default: map += 1; break;
+        }
+
+        return G_ComposeMapUri(episode, map);
+    }
+    else if(gameMode == doom_chex)
+    {
+        return G_ComposeMapUri(episode, map + 1); // Go to next map.
+    }
+    else
+    {
+        // Going to the secret map?
+        if(!name.compareWithoutCase("secret") && map != 8)
+        {
+            return G_ComposeMapUri(episode, 8);
+        }
+
+        switch(map)
+        {
+        case 8: // Returning from secret map.
+            switch(episode)
+            {
+            case 0: map = 3; break;
+            case 1: map = 5; break;
+            case 2: map = 6; break;
+            case 3: map = 2; break;
+
+            default: DENG2_ASSERT(!"GameSession::mapUriForNamedExit: Invalid episode number"); break;
+            }
+            break;
+
+        default: map += 1; break; // Go to next map.
+        }
+
+        return G_ComposeMapUri(episode, map);
+    }
+
+#elif __JHERETIC__
+    uint episode = ::gameEpisode;
+    uint map     = G_MapNumberFor(::gameMapUri);
+
+    // Going to the secret map?
+    if(!name.compareWithoutCase("secret") && map != 8)
+    {
+        return G_ComposeMapUri(episode, 8);
+    }
+
+    switch(map)
+    {
+    case 8: // Returning from secret map.
+        switch(episode)
+        {
+        case 0: map = 6; break;
+        case 1: map = 4; break;
+        case 2: map = 4; break;
+        case 3: map = 4; break;
+        case 4: map = 3; break;
+
+        default: DENG2_ASSERT(!"GameSession::mapUriForNamedExit: Invalid episode number"); break;
+        }
+        break;
+
+    default: map += 1; break; // Go to next map.
+    }
+
+    return G_ComposeMapUri(episode, map);
+#endif
+}
+
 GameRuleset const &GameSession::rules() const
 {
     return d->rules;

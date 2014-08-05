@@ -195,13 +195,6 @@ void G_IntermissionDone(void);
 uint G_EpisodeNumberFor(de::Uri const &mapUri);
 
 /**
- * Determines the next map according to the default map progression.
- *
- * @param secretExit  @c true= choose the map assigned to the secret exit.
- */
-de::Uri G_NextMap(dd_bool secretExit);
-
-/**
  * Returns the logical map number for the identified map.
  *
  * @param mapUri  Unique identifier of the map to lookup.

@@ -30,6 +30,7 @@
 
 #include "jdoom64.h"
 
+#include "gamesession.h"
 #include "d_net.h"
 #include "g_common.h"
 #include "player.h"
@@ -620,6 +621,6 @@ D_CMD(CheatLeaveMap)
         return true;
     }
 
-    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
+    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
     return true;
 }

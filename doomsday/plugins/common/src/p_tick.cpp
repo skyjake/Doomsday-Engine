@@ -21,6 +21,7 @@
 #include "common.h"
 #include "p_tick.h"
 
+#include "gamesession.h"
 #include "d_netsv.h"
 #include "g_common.h"
 #include "g_controls.h"
@@ -62,7 +63,7 @@ void P_DoTick()
     {
         if(!--timerGame)
         {
-            G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
+            G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
         }
     }
 

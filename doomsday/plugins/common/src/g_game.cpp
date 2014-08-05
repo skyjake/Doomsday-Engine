@@ -504,7 +504,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance
 
 void G_SetGameActionMapCompletedAndSetNextMap()
 {
-    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
+    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
 }
 
 static void initSaveSlots()
@@ -1553,7 +1553,7 @@ static void runGameAction()
                 }
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMapUri = G_NextMap(secretExit);
+                nextMapUri = COMMON_GAMESESSION->mapUriForNamedExit(secretExit? "secretNext" : "next");
 #endif
 
                 G_IntermissionBegin();
@@ -2426,138 +2426,6 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     DENG2_UNUSED(episode);
 #endif
     return de::Uri("Maps", mapId);
-}
-
-de::Uri G_NextMap(dd_bool secretExit)
-{
-#if __JHEXEN__
-    /// @todo fixme: What about the episode?
-    return de::Uri(COMMON_GAMESESSION->mapInfo()->gets("nextMap"), RC_NULL);
-    DENG2_UNUSED(secretExit);
-
-#elif __JDOOM64__
-    uint episode = ::gameEpisode;
-    uint map     = G_MapNumberFor(::gameMapUri);
-
-    if(secretExit)
-    {
-        switch(map)
-        {
-        case 0:  map = 31; break;
-        case 3:  map = 28; break;
-        case 11: map = 29; break;
-        case 17: map = 30; break;
-        case 31: map =  0; break;
-
-        default: LOG_MAP_WARNING("No secret exit on map %u!") << (map + 1); break;
-        }
-    }
-
-    switch(map)
-    {
-    case 23: map = 27; break;
-    case 31: map = 0;  break;
-    case 28: map = 4;  break;
-    case 29: map = 12; break;
-    case 30: map = 18; break;
-    case 24: map = 0;  break;
-    case 25: map = 0;  break;
-    case 26: map = 0;  break;
-
-    default: map += 1; break;
-    }
-
-    return G_ComposeMapUri(episode, map);
-
-#elif __JDOOM__
-    uint episode = ::gameEpisode;
-    uint map     = G_MapNumberFor(::gameMapUri);
-
-    if(gameModeBits & GM_ANY_DOOM2)
-    {
-        if(secretExit)
-        {
-            switch(map)
-            {
-            case 14: map = 30; break;
-            case 30: map = 31; break;
-
-            default: LOG_MAP_WARNING("No secret exit on map %u!") << (map + 1); break;
-            }
-        }
-
-        switch(map)
-        {
-        case 30:
-        case 31: map = 15; break;
-
-        default: map += 1; break;
-        }
-
-        return G_ComposeMapUri(episode, map);
-    }
-    else if(gameMode == doom_chex)
-    {
-        return G_ComposeMapUri(episode, map + 1); // Go to next map.
-    }
-    else
-    {
-        // Going to the secret map?
-        if(secretExit && map != 8)
-        {
-            return G_ComposeMapUri(episode, 8);
-        }
-
-        switch(map)
-        {
-        case 8: // Returning from secret map.
-            switch(episode)
-            {
-            case 0: map = 3; break;
-            case 1: map = 5; break;
-            case 2: map = 6; break;
-            case 3: map = 2; break;
-
-            default: DENG2_ASSERT(!"G_NextMap: Invalid episode number"); break;
-            }
-            break;
-
-        default: map += 1; break; // Go to next map.
-        }
-
-        return G_ComposeMapUri(episode, map);
-    }
-
-#elif __JHERETIC__
-    uint episode = ::gameEpisode;
-    uint map     = G_MapNumberFor(::gameMapUri);
-
-    // Going to the secret map?
-    if(secretExit && map != 8)
-    {
-        return G_ComposeMapUri(episode, 8);
-    }
-
-    switch(map)
-    {
-    case 8: // Returning from secret map.
-        switch(episode)
-        {
-        case 0: map = 6; break;
-        case 1: map = 4; break;
-        case 2: map = 4; break;
-        case 3: map = 4; break;
-        case 4: map = 3; break;
-
-        default: DENG2_ASSERT(!"G_NextMap: Invalid episode number"); break;
-        }
-        break;
-
-    default: map += 1; break; // Go to next map.
-    }
-
-    return G_ComposeMapUri(episode, map);
-#endif
 }
 
 String G_MapTitle(de::Uri const *mapUri)
