@@ -790,8 +790,8 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
 
-    vis->origin   = (rvertices[0] + rvertices[3]) / 2;
-    vis->distance = Rend_PointDist2D(vis->origin);
+    vis->pose.origin   = (rvertices[0] + rvertices[3]) / 2;
+    vis->pose.distance = Rend_PointDist2D(vis->pose.origin);
 
     VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
     VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
@@ -3498,11 +3498,11 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
         occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
-    return H_RenderHalo(spr->origin,
+    return H_RenderHalo(spr->pose.origin,
                         spr->data.flare.size,
                         spr->data.flare.tex,
                         spr->data.flare.color,
-                        spr->distance,
+                        spr->pose.distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN) == 0);
@@ -3543,11 +3543,15 @@ static void drawMasked()
 
             case VSPR_SPRITE:
                 // Render an old fashioned sprite, ah the nostalgia...
-                Rend_DrawSprite(spr->data.sprite);
+                Rend_DrawSprite(*spr);
                 break;
 
             case VSPR_MODEL:
-                Rend_DrawModel(spr->data.model);
+                Rend_DrawModel(*spr);
+                break;
+
+            case VSPR_MODEL_GL2:
+                Rend_DrawModel2(*spr);
                 break;
 
             case VSPR_FLARE:

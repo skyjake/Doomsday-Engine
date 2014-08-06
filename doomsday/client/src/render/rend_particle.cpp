@@ -43,6 +43,7 @@
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vlight.h"
+#include "render/vissprite.h"
 
 #include <de/vector1.h>
 #include <de/concurrency.h>
@@ -374,20 +375,20 @@ static int listVisibleParticles(Map &map)
     return true;
 }
 
-static void setupModelParamsForParticle(drawmodelparams_t &parm,
+static void setupModelParamsForParticle(vissprite_t &spr,
     ParticleInfo const *pinfo, GeneratorParticleStage const *st,
     ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
     float mark, float alpha)
 {
-    zap(parm);
+    drawmodelparams_t &parm = *VS_MODEL(&spr);
 
     // Render the particle as a model.
-    parm.origin[VX] = origin.x;
-    parm.origin[VY] = origin.z;
-    parm.origin[VZ] = parm.gzt = origin.y;
-    parm.distance = dist;
+    spr.pose.origin[VX] = origin.x;
+    spr.pose.origin[VY] = origin.z;
+    spr.pose.origin[VZ] = spr.pose.gzt = origin.y;
+    spr.pose.distance = dist;
 
-    parm.extraScale = size; // Extra scaling factor.
+    spr.pose.extraScale = size; // Extra scaling factor.
     parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
@@ -407,28 +408,28 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
     // Set the correct orientation for the particle.
     if(parm.mf->testSubFlag(0, MFF_MOVEMENT_YAW))
     {
-        parm.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
+        spr.pose.yaw = R_MovementXYYaw(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]));
     }
     else
     {
-        parm.yaw = pinfo->yaw / 32768.0f * 180;
+        spr.pose.yaw = pinfo->yaw / 32768.0f * 180;
     }
 
     if(parm.mf->testSubFlag(0, MFF_MOVEMENT_PITCH))
     {
-        parm.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
+        spr.pose.pitch = R_MovementXYZPitch(FIX2FLT(pinfo->mov[0]), FIX2FLT(pinfo->mov[1]), FIX2FLT(pinfo->mov[2]));
     }
     else
     {
-        parm.pitch = pinfo->pitch / 32768.0f * 180;
+        spr.pose.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    parm.ambientColor[CA] = alpha;
+    spr.light.ambientColor[CA] = alpha;
 
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        parm.ambientColor[CR] = parm.ambientColor[CG] = parm.ambientColor[CB] = 1;
-        parm.vLightListIdx = 0;
+        spr.light.ambientColor[CR] = spr.light.ambientColor[CG] = spr.light.ambientColor[CB] = 1;
+        spr.light.vLightListIdx = 0;
     }
     else
     {
@@ -436,13 +437,15 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
 
         if(useBias && map.hasLightGrid())
         {
-            Vector4f color = map.lightGrid().evaluate(parm.origin);
+            Vector4f color = map.lightGrid().evaluate(spr.pose.origin);
             // Apply light range compression.
             for(int i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
-            V3f_Set(parm.ambientColor, color.x, color.y, color.z);
+            spr.light.ambientColor.x = color.x;
+            spr.light.ambientColor.y = color.y;
+            spr.light.ambientColor.z = color.z;
         }
         else
         {
@@ -451,7 +454,7 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
             float lightLevel = color.w;
 
             // Apply distance attenuation.
-            lightLevel = Rend_AttenuateLightLevel(parm.distance, lightLevel);
+            lightLevel = Rend_AttenuateLightLevel(spr.pose.distance, lightLevel);
 
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
@@ -463,18 +466,18 @@ static void setupModelParamsForParticle(drawmodelparams_t &parm,
             // Determine the final ambientColor.
             for(int i = 0; i < 3; ++i)
             {
-                parm.ambientColor[i] = lightLevel * color[i];
+                spr.light.ambientColor[i] = lightLevel * color[i];
             }
         }
 
-        Rend_ApplyTorchLight(parm.ambientColor, parm.distance);
+        Rend_ApplyTorchLight(spr.light.ambientColor, spr.pose.distance);
 
         collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(parm.origin);
+        lparams.origin       = Vector3d(spr.pose.origin);
         lparams.bspLeaf      = &map.bspLeafAt(lparams.origin);
-        lparams.ambientColor = Vector3f(parm.ambientColor);
+        lparams.ambientColor = Vector3f(spr.light.ambientColor);
 
-        parm.vLightListIdx = R_CollectAffectingLights(&lparams);
+        spr.light.vLightListIdx = R_CollectAffectingLights(&lparams);
     }
 }
 
@@ -688,9 +691,9 @@ static void renderParticles(int rtype, bool withBlend)
         // Model particles are rendered using the normal model rendering routine.
         if(rtype == PTC_MODEL && stDef->model >= 0)
         {
-            drawmodelparams_t parms;
-            setupModelParamsForParticle(parms, pinfo, st, stDef, center, dist, size, inter, color.w);
-            Rend_DrawModel(parms);
+            vissprite_t temp; zap(temp);
+            setupModelParamsForParticle(temp, pinfo, st, stDef, center, dist, size, inter, color.w);
+            Rend_DrawModel(temp);
             continue;
         }
 

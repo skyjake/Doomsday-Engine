@@ -24,6 +24,9 @@
 #define DENG_CLIENT_RENDER_MODEL_H
 
 #include "ModelDef"
+#include "rend_main.h"
+#include <de/Vector>
+#include <de/ModelDrawable>
 
 class TextureVariantSpec;
 
@@ -33,38 +36,34 @@ class TextureVariantSpec;
 /// @todo Split this large inflexible structure into logical subcomponent pieces.
 struct drawmodelparams_t
 {
-// Animation, frame interpolation.
+    // Animation, frame interpolation:
     ModelDef *mf, *nextMF;
     float           inter;
     dd_bool         alwaysInterpolate;
     int             id; // For a unique skin offset.
     int             selector;
 
-// Position/Orientation/Scale
-    coord_t         origin[3], gzt; // The real center point and global top z for silhouette clipping.
-    coord_t         srvo[3]; // Short-range visual offset.
-    coord_t         distance; // Distance from viewer.
-    float           yaw, extraYawAngle, yawAngleOffset; ///< @todo We do not need three sets of angles...
-    float           pitch, extraPitchAngle, pitchAngleOffset;
+    // Position/Orientation/Scale:
+    //VisModelPose   pose;
 
-    float           extraScale;
-
-    dd_bool         viewAlign;
-    dd_bool         mirror; // If true the model will be mirrored about its Z axis (in model space).
-
-// Appearance
+    // Appearance:
     int             flags; // Mobj flags.
     int             tmap;
 
     // Lighting/color:
-    float           ambientColor[4];
-    uint            vLightListIdx;
+    //VisModelLighting light;
 
     // Shiney texture mapping:
     float           shineYawOffset;
     float           shinePitchOffset;
     dd_bool         shineTranslateWithViewerPos;
     dd_bool         shinepspriteCoordSpace; // Use the psprite coordinate space hack.
+};
+
+struct drawmodel2params_t
+{
+    de::ModelDrawable const *model;
+    de::ModelDrawable::Animator const *animator;
 };
 
 DENG_EXTERN_C byte useModels;
@@ -130,6 +129,13 @@ TextureVariantSpec const &Rend_ModelShinyTextureSpec();
 /**
  * Render all the submodels of a model.
  */
-void Rend_DrawModel(drawmodelparams_t const &parms);
+void Rend_DrawModel(struct vissprite_s const &spr);
+
+/**
+ * Render a GL2 model.
+ *
+ * @param parms  Parameters for the draw operation.
+ */
+void Rend_DrawModel2(struct vissprite_s const &spr);
 
 #endif // DENG_CLIENT_RENDER_MODEL_H
