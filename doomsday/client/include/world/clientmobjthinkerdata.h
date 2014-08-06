@@ -101,6 +101,8 @@ public:
      */
     de::ModelDrawable::Animator *animator();
 
+    de::ModelDrawable::Animator const *animator() const;
+
 private:
     DENG2_PRIVATE(d)
 };

@@ -194,6 +194,11 @@ ModelDrawable::Animator *ClientMobjThinkerData::animator()
     return d->animator.get();
 }
 
+ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
+{
+    return d->animator.get();
+}
+
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)
 {
     MobjThinkerData::stateChanged(previousState);

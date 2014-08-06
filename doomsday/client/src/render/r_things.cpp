@@ -34,16 +34,19 @@
 #include "network/net_main.h" // clients[]
 
 #include "render/vissprite.h"
+#include "render/mobjanimator.h"
 
 #include "MaterialSnapshot"
 
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/clientmobjthinkerdata.h"
 #include "BspLeaf"
 #include "SectorCluster"
 
 #include <de/vector1.h>
+#include <de/ModelDrawable>
 
 using namespace de;
 
@@ -172,6 +175,12 @@ static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 
 void R_ProjectSprite(mobj_t *mo)
 {
+    /**
+     * @todo Lots of stuff here! This needs to be broken down into multiple functions
+     * and/or classes that handle preprocessing of visible entities. Keep in mind that
+     * data/state can persist across frames in the mobjs' private data. -jk
+     */
+
     if(!mo) return;
 
     // Not all objects can/will be visualized. Skip this object if:
@@ -191,6 +200,9 @@ void R_ProjectSprite(mobj_t *mo)
     SectorCluster &cluster = Mobj_Cluster(*mo);
     if(!cluster.hasWorldVolume()) return;
 
+    if(!mo->thinker.d) return;
+    ClientMobjThinkerData const &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
+
     // Determine distance to object.
     Vector3d const moPos = mobjOriginSmoothed(mo);
     coord_t const distFromEye = Rend_PointDist2D(moPos);
@@ -198,6 +210,9 @@ void R_ProjectSprite(mobj_t *mo)
     // Should we use a 3D model?
     ModelDef *mf = 0, *nextmf = 0;
     float interp = 0;
+
+    ModelDrawable::Animator const *animator = 0; // GL2 model present?
+
     if(useModels)
     {
         mf = Mobj_ModelDef(*mo, &nextmf, &interp);
@@ -211,7 +226,11 @@ void R_ProjectSprite(mobj_t *mo)
                 interp = -1;
             }
         }
+
+        animator = mobjData.animator();
     }
+
+    bool const hasModel = (mf || animator);
 
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
@@ -271,7 +290,7 @@ void R_ProjectSprite(mobj_t *mo)
 #define MAX_OBJECT_RADIUS       128
 
         // Sprite visibility is absolute.
-        if(!mf) return;
+        if(!hasModel) return;
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
@@ -284,7 +303,9 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Store information in a vissprite.
-    vissprite_t *vis = R_NewVisSprite(mf? VSPR_MODEL : VSPR_SPRITE);
+    vissprite_t *vis = R_NewVisSprite(animator? VSPR_MODEL_GL2 :
+                                            mf? VSPR_MODEL :
+                                                VSPR_SPRITE);
 
     vis->pose.origin   = moPos;
     vis->pose.distance = distFromEye;
@@ -312,8 +333,18 @@ void R_ProjectSprite(mobj_t *mo)
         floorClip += Mobj_BobOffset(mo);
     }
 
+    // Determine angles.
+    /**
+     * @todo Surely this can be done in a subclass/function. -jk
+     */
     float yaw = 0, pitch = 0;
-    if(mf)
+    if(animator)
+    {
+        // TODO: More angle options with GL2 models.
+
+        yaw = Mobj_AngleSmoothed(mo) / float( ANGLE_MAX ) * -360;
+    }
+    else if(mf)
     {
         // Determine the rotation angles (in degrees).
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
@@ -363,7 +394,7 @@ void R_ProjectSprite(mobj_t *mo)
 
     // Determine possible short-range visual offset.
     Vector3d visOff;
-    if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
+    if((hasModel && useSRVO > 0) || (!hasModel && useSRVO > 1))
     {
         if(mo->tics >= 0)
         {
@@ -379,7 +410,8 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 
-    if(!mf)
+    // Will it be drawn as a 2D sprite?
+    if(!hasModel)
     {
         bool const brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
         bool const fitTop       = (mo->ddFlags & DDMF_FITTOP)       != 0;
@@ -433,7 +465,7 @@ void R_ProjectSprite(mobj_t *mo)
                               &Mobj_BspLeafAtOrigin(*mo),
                               floorAdjust, fitTop, fitBottom);
     }
-    else
+    else // It will be drawn as a 3D model.
     {
         Vector4f ambientColor;
         uint vLightListIdx = 0;
@@ -443,16 +475,31 @@ void R_ProjectSprite(mobj_t *mo)
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
-        VisSprite_SetupModel(vis,
-                             VisEntityPose(vis->pose.origin,
-                                           Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                                           viewAlign, gzt, yaw, 0, pitch, 0),
-                             VisEntityLighting(ambientColor, vLightListIdx),
-                             mf, nextmf, interp,
-                             mo->thinker.id, mo->selector,
-                             &Mobj_BspLeafAtOrigin(*mo),
-                             mo->ddFlags, mo->tmap,
-                             fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
+        if(animator)
+        {
+            // Set up a GL2 model for drawing.
+            vis->pose = VisEntityPose(vis->pose.origin,
+                                      Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                      viewAlign, gzt, yaw, 0, pitch, 0);
+            vis->light = VisEntityLighting(ambientColor, vLightListIdx);
+
+            vis->data.model2.animator = animator;
+            vis->data.model2.model = &animator->model();
+        }
+        else
+        {
+            DENG_ASSERT(mf);
+            VisSprite_SetupModel(vis,
+                                 VisEntityPose(vis->pose.origin,
+                                               Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                               viewAlign, gzt, yaw, 0, pitch, 0),
+                                 VisEntityLighting(ambientColor, vLightListIdx),
+                                 mf, nextmf, interp,
+                                 mo->thinker.id, mo->selector,
+                                 &Mobj_BspLeafAtOrigin(*mo),
+                                 mo->ddFlags, mo->tmap,
+                                 fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
+        }
     }
 
     // Do we need to project a flare source too?
