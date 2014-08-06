@@ -656,6 +656,10 @@ public:
         if(vecAbs.w > vecAbs[axis]) axis = 3;
         return axis;
     }
+    inline void decompose(Type *array) const {
+        for(int i = 0; i < 4; ++i) array[i] = (*this)[i];
+    }
+
     // Implements ISerializable.
     void operator >> (Writer &to) const {
         Vector3<Type>::operator >> (to);
