@@ -44,6 +44,13 @@ public:
     operator bool() const;
     int order() const;
 
+    de::Record &addHub();
+
+    int hubCount() const;
+    bool hasHub(int index) const;
+    de::Record &hub(int index);
+    de::Record const &hub(int index) const;
+
 private:
     de::Record *_def; ///< Modifiable access.
 };

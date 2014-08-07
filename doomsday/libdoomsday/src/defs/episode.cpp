@@ -37,6 +37,7 @@ void Episode::resetToDefaults()
     _def->addText("menuHelpInfo", "");  // None.
     _def->addText("menuImage", "");     // URI. None.
     _def->addText("menuShortcut", "");  // Key name. None.
+    _def->addArray("hub", new ArrayValue);
 }
 
 Episode &Episode::operator = (Record *d)
@@ -55,6 +56,42 @@ int Episode::order() const
 Episode::operator bool() const
 {
     return accessedRecordPtr() != 0;
+}
+
+Record &Episode::addHub()
+{
+    DENG2_ASSERT(_def);
+
+    Record *def = new Record;
+
+    def->addText ("id", 0);
+    def->addArray("map", new ArrayValue);
+
+    (*_def)["hub"].value<ArrayValue>()
+            .add(new RecordValue(def, RecordValue::OwnsRecord));
+
+    return *def;
+}
+
+int Episode::hubCount() const
+{
+    return int(geta("hub").size());
+}
+
+bool Episode::hasHub(int index) const
+{
+    return index >= 0 && index < hubCount();
+}
+
+Record &Episode::hub(int index)
+{
+    DENG2_ASSERT(_def);
+    return *_def->geta("hub")[index].as<RecordValue>().record();
+}
+
+Record const &Episode::hub(int index) const
+{
+    return *geta("hub")[index].as<RecordValue>().record();
 }
 
 } // namespace defn
