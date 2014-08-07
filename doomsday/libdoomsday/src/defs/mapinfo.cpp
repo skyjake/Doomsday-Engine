@@ -33,8 +33,8 @@ void MapInfo::resetToDefaults()
 
     // Add all expected fields with their default values.
     _def->addText  ("id", "");
-    _def->addText  ("title", "");
-    _def->addText  ("author", "");
+    _def->addText  ("title", "Untitled");
+    _def->addText  ("author", "Unknown");
     _def->addNumber("flags", 0);
     _def->addText  ("music", "");
     _def->addNumber("parTime", -1); // unknown

@@ -64,7 +64,7 @@ Record &Episode::addHub()
 
     Record *def = new Record;
 
-    def->addText ("id", 0);
+    def->addText ("id", "");
     def->addArray("map", new ArrayValue);
 
     (*_def)["hub"].value<ArrayValue>()
