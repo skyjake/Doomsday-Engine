@@ -23,84 +23,8 @@
 #define IDTECH1CONVERTER_MAPINFOTRANSLATOR_H
 
 #include "idtech1converter.h"
-#include <map>
-#include <de/Error>
-#include <de/Record>
 
 namespace idtech1 {
-
-class MapInfo : public de::Record
-{
-public:
-    MapInfo();
-    MapInfo &operator = (MapInfo const &other);
-
-    void resetToDefaults();
-};
-
-class EpisodeInfo : public de::Record
-{
-public:
-    EpisodeInfo();
-    EpisodeInfo &operator = (EpisodeInfo const &other);
-
-    void resetToDefaults();
-};
-
-/**
- * Central database of definitions read from Hexen-derived definition formats.
- *
- * @note Ultimately the definitions this contains should instead have their sources
- * translated into DED syntax and be made available from the main DED db instead.
- */
-struct HexDefs
-{
-    typedef std::map<std::string, EpisodeInfo> EpisodeInfos;
-    EpisodeInfos episodeInfos;
-    typedef std::map<std::string, MapInfo> MapInfos;
-    MapInfos mapInfos;
-
-    void clear();
-
-    /**
-     * @param id  Identifier of the episode to lookup info for.
-     *
-     * @return  EpisodeInfo for the specified @a id; otherwise @c 0 (not found).
-     */
-    EpisodeInfo *getEpisodeInfo(de::String id);
-
-    /**
-     * @param mapUri  Identifier of the map to lookup info for.
-     *
-     * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
-     */
-    MapInfo *getMapInfo(de::Uri const &mapUri);
-};
-
-/**
- * Parser for Hexen's MAPINFO definition lumps.
- */
-class MapInfoParser
-{
-public:
-    /// Base class for all parse-related errors. @ingroup errors
-    DENG2_ERROR(ParseError);
-
-public:
-    MapInfoParser(HexDefs &db);
-
-    void parse(AutoStr const &buffer, de::String sourceFile);
-
-    /**
-     * Clear any custom default MapInfo definition currently in use. MapInfos
-     * read after this is called will use the games' default definition as a
-     * basis (unless specified otherwise).
-     */
-    void clearDefaultMap();
-
-private:
-    DENG2_PRIVATE(d)
-};
 
 /**
  * Hexen MAPINFO => DED translator.
