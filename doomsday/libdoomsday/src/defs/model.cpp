@@ -28,78 +28,56 @@ namespace defn {
 
 void Model::resetToDefaults()
 {
-    DENG2_ASSERT(_def);
-
     // Add all expected fields with their default values.
-    _def->addText  ("id", "");
-    _def->addText  ("state", "");
-    _def->addNumber("off", 0);
-    _def->addText  ("sprite", "");
-    _def->addNumber("spriteFrame", 0);
-    _def->addNumber("group", 0);
-    _def->addNumber("selector", 0);
-    _def->addNumber("flags", 0);
-    _def->addNumber("interMark", 0);
-    _def->addArray ("interRange", new ArrayValue(Vector2i(0, 1)));
-    _def->addNumber("skinTics", 0);
-    _def->addArray ("scale", new ArrayValue(Vector3i(1, 1, 1)));
-    _def->addNumber("resize", 0);
-    _def->addArray ("offset", new ArrayValue(Vector3f()));
-    _def->addNumber("shadowRadius", 0);
-    _def->addArray ("sub", new ArrayValue);
-}
-
-Model &Model::operator = (Record *d)
-{
-    setAccessedRecord(*d);
-    _def = d;
-    return *this;
-}
-
-int Model::order() const
-{
-    if(!accessedRecordPtr()) return -1;
-    return geti("__order__");
-}
-
-Model::operator bool() const
-{
-    return accessedRecordPtr() != 0;
+    def().addText  ("id", "");
+    def().addText  ("state", "");
+    def().addNumber("off", 0);
+    def().addText  ("sprite", "");
+    def().addNumber("spriteFrame", 0);
+    def().addNumber("group", 0);
+    def().addNumber("selector", 0);
+    def().addNumber("flags", 0);
+    def().addNumber("interMark", 0);
+    def().addArray ("interRange", new ArrayValue(Vector2i(0, 1)));
+    def().addNumber("skinTics", 0);
+    def().addArray ("scale", new ArrayValue(Vector3i(1, 1, 1)));
+    def().addNumber("resize", 0);
+    def().addArray ("offset", new ArrayValue(Vector3f()));
+    def().addNumber("shadowRadius", 0);
+    def().addArray ("sub", new ArrayValue);
 }
 
 Record &Model::addSub()
 {
-    DENG2_ASSERT(_def);
+    Record *sub = new Record;
 
-    Record *def = new Record;
-
-    def->addText  ("filename", "");
-    def->addText  ("skinFilename", "");
-    def->addText  ("frame", "");
-    def->addNumber("frameRange", 0);
-    def->addNumber("flags", 0);
-    def->addNumber("skin", 0);
-    def->addNumber("skinRange", 0);
-    def->addArray ("offset", new ArrayValue(Vector3f()));
-    def->addNumber("alpha", 0);
-    def->addNumber("parm", 0);
-    def->addNumber("selSkinMask", 0);
-    def->addNumber("selSkinShift", 0);
+    sub->addText  ("filename", "");
+    sub->addText  ("skinFilename", "");
+    sub->addText  ("frame", "");
+    sub->addNumber("frameRange", 0);
+    sub->addNumber("flags", 0);
+    sub->addNumber("skin", 0);
+    sub->addNumber("skinRange", 0);
+    sub->addArray ("offset", new ArrayValue(Vector3f()));
+    sub->addNumber("alpha", 0);
+    sub->addNumber("parm", 0);
+    sub->addNumber("selSkinMask", 0);
+    sub->addNumber("selSkinShift", 0);
 
     ArrayValue *skins = new ArrayValue;
     for(int i = 0; i < 8; ++i) *skins << NumberValue(0);
-    def->addArray ("selSkins", skins);
+    sub->addArray ("selSkins", skins);
 
-    def->addText  ("shinySkin", "");
-    def->addNumber("shiny", 0);
-    def->addArray ("shinyColor", new ArrayValue(Vector3f(1, 1, 1)));
-    def->addNumber("shinyReact", 1);
-    def->addNumber("blendMode", BM_NORMAL);
+    sub->addText  ("shinySkin", "");
+    sub->addNumber("shiny", 0);
+    sub->addArray ("shinyColor", new ArrayValue(Vector3f(1, 1, 1)));
+    sub->addNumber("shinyReact", 1);
+    sub->addNumber("blendMode", BM_NORMAL);
 
-    (*_def)["sub"].value<ArrayValue>()
-            .add(new RecordValue(def, RecordValue::OwnsRecord));
+    def()["sub"].value<ArrayValue>()
+            .add(new RecordValue(sub, RecordValue::OwnsRecord));
 
-    return *def;
+    return *sub;
 }
 
 int Model::subCount() const
@@ -114,8 +92,7 @@ bool Model::hasSub(int index) const
 
 Record &Model::sub(int index)
 {
-    DENG2_ASSERT(_def);
-    return *_def->geta("sub")[index].as<RecordValue>().record();
+    return *def().geta("sub")[index].as<RecordValue>().record();
 }
 
 Record const &Model::sub(int index) const
@@ -125,15 +102,13 @@ Record const &Model::sub(int index) const
 
 void Model::cleanupAfterParsing(Record const &prev)
 {
-    DENG2_ASSERT(_def);
-
-    if(_def->gets("state") == "-")
+    if(gets("state") == "-")
     {
-        _def->set("state", prev.gets("state"));
+        def().set("state", prev.gets("state"));
     }
-    if(_def->gets("sprite") == "-")
+    if(gets("sprite") == "-")
     {
-        _def->set("sprite", prev.gets("sprite"));
+        def().set("sprite", prev.gets("sprite"));
     }
 
     for(int i = 0; i < subCount(); ++i)
