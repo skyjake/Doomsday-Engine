@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <sstream>
 #include <cstring>
+#include <QMultiMap>
 #include "hexlex.h"
 
 using namespace de;
@@ -1119,60 +1120,302 @@ MapInfo *HexDefs::getMapInfo(de::Uri const &mapUri)
     return 0; // Not found.
 }
 
-de::Uri HexDefs::translateMapWarpNumber(uint map)
+static inline String boolAsText(bool yes)
 {
-    de::Uri matchedWithoutHub("Maps:", RC_NULL);
+    return yes? "true" : "false";
+}
 
-    for(MapInfos::const_iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
+DENG2_PIMPL_NOREF(MapInfoTranslator)
+{
+    HexDefs defs;
+    StringList translatedFiles;
+
+    typedef QMultiMap<int, MapInfo *> MapInfos;
+    MapInfos buildHubMapInfoTable(String /*episodeId*/)
+    {
+        MapInfos set;
+        for(HexDefs::MapInfos::const_iterator it = defs.mapInfos.begin(); it != defs.mapInfos.end(); ++it)
+        {
+            MapInfo const &mapInfo = it->second;
+            set.insert(mapInfo.geti("hub"), const_cast<MapInfo *>(&mapInfo));
+        }
+        return set;
+    }
+
+    de::Uri xlatWarpNumber(uint map)
+    {
+        de::Uri matchedWithoutHub("Maps:", RC_NULL);
+
+        for(HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
+        {
+            MapInfo const &info = i->second;
+
+            if((unsigned)info.geti("warpTrans") == map)
+            {
+                if(info.geti("hub"))
+                {
+                    LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
+                            << map << info.gets("map") << info.geti("hub");
+                    return de::Uri(info.gets("map"), RC_NULL);
+                }
+
+                LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
+                        << map << info.gets("map");
+                matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+            }
+        }
+
+        LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
+                << map << matchedWithoutHub;
+
+        return matchedWithoutHub;
+    }
+
+    /**
+     * To be called once all definitions have been parsed to translate Hexen's
+     * map "warp numbers" to URIs where used as map definition references.
+     */
+    void translateWarpNumbers()
+    {
+        for(HexDefs::EpisodeInfos::iterator i = defs.episodeInfos.begin(); i != defs.episodeInfos.end(); ++i)
+        {
+            EpisodeInfo &info = i->second;
+            de::Uri startMap(info.gets("startMap", ""), RC_NULL);
+            if(!startMap.scheme().compareWithoutCase("@wt"))
+            {
+                info.set("startMap", xlatWarpNumber(startMap.path().toStringRef().toInt()).compose());
+            }
+        }
+        for(HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
+        {
+            MapInfo &info = i->second;
+            de::Uri nextMap(info.gets("nextMap", ""), RC_NULL);
+            if(!nextMap.scheme().compareWithoutCase("@wt"))
+            {
+                info.set("nextMap", xlatWarpNumber(nextMap.path().toStringRef().toInt()).compose());
+            }
+            de::Uri secretNextMap(info.gets("secretNextMap", ""), RC_NULL);
+            if(!secretNextMap.scheme().compareWithoutCase("@wt"))
+            {
+                info.set("secretNextMap", xlatWarpNumber(secretNextMap.path().toStringRef().toInt()).compose());
+            }
+        }
+    }
+
+    void preprocess()
+    {
+#if 1//def __JHEXEN__
+        // Ensure there is at least one episode.
+        if(defs.episodeInfos.empty())
+        {
+            EpisodeInfo &info = defs.episodeInfos["1"];
+            info.set("startMap", "@wt:1");
+        }
+#endif
+
+        // Warp numbers may be used as internal map references (doh!)
+        translateWarpNumbers();
+
+/*#ifdef DENG_IDTECH1CONVERTER_DEBUG
+        for(HexDefs::MapInfos::const_iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
+        {
+            MapInfo const &info = i->second;
+            LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
+                    << i->first.c_str() << info.gets("title")
+                    << info.geti("hub") << info.gets("map") << info.geti("warpTrans") << info.gets("nextMap");
+        }
+#endif*/
+    }
+};
+
+MapInfoTranslator::MapInfoTranslator() : d(new Instance)
+{}
+
+void MapInfoTranslator::reset()
+{
+    d->defs.clear();
+    d->translatedFiles.clear();
+}
+
+void MapInfoTranslator::mergeFromFile(String sourceFile)
+{
+    dd_bool sourceIsCustom;
+    AutoStr *buffer = M_ReadFileIntoString(AutoStr_FromTextStd(sourceFile.toUtf8().constData()), &sourceIsCustom);
+    if(!buffer || Str_IsEmpty(buffer)) return;
+
+    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourceFile).pretty();
+    d->translatedFiles << sourceFile;
+    MapInfoParser parser(d->defs);
+    parser.parse(*buffer, sourceFile);
+
+#ifdef __JHEXEN__
+    // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
+    // As later map definitions now replace earlier ones, these broken defs
+    // override the earlier "good" defs. For now we'll kludge around this
+    // issue by patching the affected defs with the expected values.
+    if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
+    {
+        MapInfo *info = d->hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
+        info->set("warpTrans", "@wt:7");
+    }
+#endif
+}
+
+String MapInfoTranslator::translate()
+{
+    // Perform necessary preprocessing (must be done before translation).
+    d->preprocess();
+
+    String text;
+    QTextStream os(&text);
+
+    os << "# Translated definitions from:";
+    // List the files we translated in input order (for debug).
+    for(int i = 0; i < d->translatedFiles.size(); ++i)
+    {
+        String sourceFile = d->translatedFiles[i];
+        os << "\n# " + QString("%1: %2").arg(i).arg(NativePath(sourceFile).pretty());
+    }
+
+    // Output the header block.
+    os << "\n\nHeader { Version = 6; }";
+
+    // Output episode defs.
+    int episodeIdx = 0;
+    for(HexDefs::EpisodeInfos::const_iterator i = d->defs.episodeInfos.begin(); i != d->defs.episodeInfos.end(); ++i)
+    {
+        EpisodeInfo const &info = i->second;
+
+        de::Uri startMapUri(info.gets("startMap"), RC_NULL);
+        if(startMapUri.path().isEmpty()) continue;
+
+        String episodeId = String::number(episodeIdx + 1);
+
+        os << "\n\nEpisode {"
+           << "\n  ID = \"" + episodeId + "\";"
+           << "\n  Title = \"" + info.gets("title") + "\""
+           << "\n  Start Map = \"" + startMapUri.compose() + "\";";
+        String menuHelpInfo = info.gets("menuHelpInfo");
+        if(!menuHelpInfo.isEmpty())
+        {
+            os << "\n  Menu Help Info = \"" + menuHelpInfo + "\";";
+        }
+        de::Uri menuImageUri(info.gets("menuImage"), RC_NULL);
+        if(!menuImageUri.path().isEmpty())
+        {
+            os << "\n  Menu Image = \"" + menuImageUri.compose() + "\";";
+        }
+        String menuShortcut = info.gets("menuShortcut");
+        if(!menuShortcut.isEmpty())
+        {
+            os << "\n  Menu Shortcut = \"" + menuShortcut + "\";";
+        }
+
+        // Find all the hubs for this episode.
+        Instance::MapInfos mapInfos = d->buildHubMapInfoTable(episodeId);
+        QList<int> hubs = mapInfos.uniqueKeys();
+        foreach(int hub, hubs)
+        {
+            QList<MapInfo *> const mapInfosForHub = mapInfos.values(hub);
+            if(mapInfosForHub.isEmpty()) continue;
+
+            // Extra whitespace between hubs, for neatness.
+            os << "\n";
+
+            // #0 is not actually a hub.
+            if(hub != 0)
+            {
+                // Begin the hub definition.
+                os << "\n  Hub {"
+                   << "\n    ID = \"" + String::number(hub) + "\";";
+            }
+
+            // Output each map for this hub (in reverse insertion order).
+            int n = mapInfosForHub.size();
+            while(n-- > 0)
+            {
+                MapInfo const *mapInfo = mapInfosForHub.at(n);
+                de::Uri mapUri(mapInfo->gets("map"), RC_NULL);
+                if(!mapUri.path().isEmpty())
+                {
+                    os << "\n    Map {"
+                       << "\n      ID = \"" + mapUri.compose() + "\";";
+                    de::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
+                    if(!nextMapUri.path().isEmpty())
+                    {
+                        os << "\n      Exit { ID = \"next\"; Target Map = \"" + nextMapUri.compose() + "\"; }";
+                    }
+                    de::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
+                    if(!secretNextMapUri.path().isEmpty())
+                    {
+                        os << "\n      Exit { ID = \"secret\"; Target Map = \"" + secretNextMapUri.compose() + "\"; }";
+                    }
+                    os << "\n      Warp Number = " + String::number(mapInfo->geti("warpTrans")) + ";";
+                    os << "\n    }";
+                }
+            }
+
+            // #0 is not actually a hub.
+            if(hub != 0)
+            {
+                // End the hub definition.
+                os << "\n  }";
+            }
+        }
+        os << "\n} # Episode '" << episodeId << "'";
+
+        episodeIdx += 1;
+    }
+
+    // Output mapinfo defs.
+    for(HexDefs::MapInfos::const_iterator i = d->defs.mapInfos.begin(); i != d->defs.mapInfos.end(); ++i)
     {
         MapInfo const &info = i->second;
 
-        if((unsigned)info.geti("warpTrans") == map)
+        de::Uri mapUri(info.gets("map"), RC_NULL);
+        if(mapUri.path().isEmpty()) continue;
+
+        os << "\n\nMap Info {"
+           << "\n  ID = \"" + mapUri.compose() + "\";"
+           << "\n  Name = \"" + info.gets("title") + "\";"
+           << "\n  Music = \"" + info.gets("songLump") + "\";"
+           << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
+           << "\n  Lightning = " + boolAsText(info.getb("lightning")) + ";"
+           << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+        de::Uri skyLayer1MaterialUri(info.gets("sky1Material"), RC_NULL);
+        if(!skyLayer1MaterialUri.path().isEmpty())
         {
-            if(info.geti("hub"))
+            os << "\n  Sky Layer 1 {"
+               << "\n    Flags = enable;"
+               << "\n    Material = \"" + skyLayer1MaterialUri.compose() + "\";";
+            dfloat scrollDelta = info.getf("sky1ScrollDelta");
+            if(!de::fequal(scrollDelta, 0))
             {
-                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
-                        << map << info.gets("map") << info.geti("hub");
-                return de::Uri(info.gets("map"), RC_NULL);
+                os << "\n    Scroll X = " + String::number(scrollDelta) + ";";
             }
-
-            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
-                    << map << info.gets("map");
-            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+            os << "\n  }";
         }
+        de::Uri skyLayer2MaterialUri(info.gets("sky2Material"), RC_NULL);
+        if(!skyLayer2MaterialUri.path().isEmpty())
+        {
+            QStringList flags = QStringList() << "enable";
+            if(info.getb("doubleSky"))
+                flags << "mask";
+
+            os << "\n  Sky Layer 2 {"
+               << "\n    Flags = " + flags.join(" | ") + ";"
+               << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
+            dfloat scrollDelta = info.getf("sky2ScrollDelta");
+            if(!de::fequal(scrollDelta, 0))
+            {
+                os << "\n    Scroll X = " + String::number(scrollDelta) + ";";
+            }
+            os << "\n  }";
+        }
+        os << "\n}";
     }
 
-    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
-            << map << matchedWithoutHub;
-
-    return matchedWithoutHub;
-}
-
-void HexDefs::translateMapWarpNumbers()
-{
-    for(HexDefs::EpisodeInfos::iterator i = episodeInfos.begin(); i != episodeInfos.end(); ++i)
-    {
-        EpisodeInfo &info = i->second;
-        de::Uri startMap(info.gets("startMap", ""), RC_NULL);
-        if(!startMap.scheme().compareWithoutCase("@wt"))
-        {
-            info.set("startMap", translateMapWarpNumber(startMap.path().toStringRef().toInt()).compose());
-        }
-    }
-    for(HexDefs::MapInfos::iterator i = mapInfos.begin(); i != mapInfos.end(); ++i)
-    {
-        MapInfo &info = i->second;
-        de::Uri nextMap(info.gets("nextMap", ""), RC_NULL);
-        if(!nextMap.scheme().compareWithoutCase("@wt"))
-        {
-            info.set("nextMap", translateMapWarpNumber(nextMap.path().toStringRef().toInt()).compose());
-        }
-        de::Uri secretNextMap(info.gets("secretNextMap", ""), RC_NULL);
-        if(!secretNextMap.scheme().compareWithoutCase("@wt"))
-        {
-            info.set("secretNextMap", translateMapWarpNumber(secretNextMap.path().toStringRef().toInt()).compose());
-        }
-    }
+    return text;
 }
 
 } // namespace idtech1

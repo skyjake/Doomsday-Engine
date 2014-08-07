@@ -3078,7 +3078,6 @@ void Hu_MenuInitEpisodePage()
         }
 
         de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-        /// @todo Translate Hexen warp numbers.
         if(P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectEpisode;

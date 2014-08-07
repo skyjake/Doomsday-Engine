@@ -29,8 +29,6 @@
 
 namespace idtech1 {
 
-struct HexDefs; // Forward
-
 class MapInfo : public de::Record
 {
 public:
@@ -47,31 +45,6 @@ public:
     EpisodeInfo &operator = (EpisodeInfo const &other);
 
     void resetToDefaults();
-};
-
-/**
- * Parser for Hexen's MAPINFO definition lumps.
- */
-class MapInfoParser
-{
-public:
-    /// Base class for all parse-related errors. @ingroup errors
-    DENG2_ERROR(ParseError);
-
-public:
-    MapInfoParser(HexDefs &db);
-
-    void parse(AutoStr const &buffer, de::String sourceFile);
-
-    /**
-     * Clear any custom default MapInfo definition currently in use. MapInfos
-     * read after this is called will use the games' default definition as a
-     * basis (unless specified otherwise).
-     */
-    void clearDefaultMap();
-
-private:
-    DENG2_PRIVATE(d)
 };
 
 /**
@@ -102,15 +75,53 @@ struct HexDefs
      * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
      */
     MapInfo *getMapInfo(de::Uri const &mapUri);
+};
+
+/**
+ * Parser for Hexen's MAPINFO definition lumps.
+ */
+class MapInfoParser
+{
+public:
+    /// Base class for all parse-related errors. @ingroup errors
+    DENG2_ERROR(ParseError);
+
+public:
+    MapInfoParser(HexDefs &db);
+
+    void parse(AutoStr const &buffer, de::String sourceFile);
 
     /**
-     * To be called once all definitions have been parsed to translate Hexen's
-     * map "warp numbers" to URIs where used as map definition references.
+     * Clear any custom default MapInfo definition currently in use. MapInfos
+     * read after this is called will use the games' default definition as a
+     * basis (unless specified otherwise).
      */
-    void translateMapWarpNumbers();
+    void clearDefaultMap();
 
 private:
-    de::Uri translateMapWarpNumber(uint map);
+    DENG2_PRIVATE(d)
+};
+
+/**
+ * Hexen MAPINFO => DED translator.
+ */
+class MapInfoTranslator
+{
+public:
+    MapInfoTranslator();
+
+    void reset();
+    void mergeFromFile(de::String sourceFile);
+
+    /**
+     * Translate the current MAPINFO data set into DED syntax. Note that the internal
+     * state of the definition database is modified in the process and will therefore
+     * be reset automatically once translation has completed.
+     */
+    de::String translate();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace idtech1

@@ -1553,7 +1553,7 @@ static void runGameAction()
                 }
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMapUri = COMMON_GAMESESSION->mapUriForNamedExit(secretExit? "secretNext" : "next");
+                nextMapUri = COMMON_GAMESESSION->mapUriForNamedExit(secretExit? "secret" : "next");
 #endif
 
                 G_IntermissionBegin();

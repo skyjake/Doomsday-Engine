@@ -21,7 +21,6 @@
 
 #include "idtech1converter.h"
 #include "mapinfotranslator.h"
-#include <de/Error>
 #include <de/Log>
 
 using namespace de;
@@ -72,65 +71,16 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
-static void readOneMapInfoDefinition(MapInfoParser &parser, AutoStr const &buffer, String sourceFile)
-{
-    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourceFile).pretty();
-    try
-    {
-        parser.parse(buffer, sourceFile);
-    }
-    catch(MapInfoParser::ParseError const &er)
-    {
-        LOG_RES_WARNING("Failed parsing \"%s\" as MAPINFO:\n%s")
-                << NativePath(sourceFile).pretty() << er.asText();
-    }
-}
-
 void ConvertMapInfo()
 {
-    HexDefs hexDefs;
-
-    // Initialize a new parser.
-    MapInfoParser parser(hexDefs);
+    // Initialize a new translator.
+    MapInfoTranslator xltr;
 
     // Read the primary MAPINFO (from the IWAD).
-    AutoStr *sourceFile = AutoStr_FromText("Lumps:MAPINFO");
-    dd_bool sourceIsCustom;
-    AutoStr *buffer = M_ReadFileIntoString(sourceFile, &sourceIsCustom);
-    if(buffer && !Str_IsEmpty(buffer))
-    {
-        readOneMapInfoDefinition(parser, *buffer, Str_Text(sourceFile));
+    xltr.mergeFromFile("Lumps:MAPINFO");
 
-#ifdef __JHEXEN__
-        // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
-        // As later map definitions now replace earlier ones, these broken defs
-        // override the earlier "good" defs. For now we'll kludge around this
-        // issue by patching the affected defs with the expected values.
-        if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
-        {
-            MapInfo *info = hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
-            info->set("warpTrans", "@wt:7");
-        }
-#endif
-    }
-    else
-    {
-        LOG_RES_WARNING("MapInfoParser: Failed to open definition/script file \"%s\" for reading")
-                << NativePath(Str_Text(sourceFile)).pretty();
-    }
-
-    // Translate internal "warp trans" numbers to URIs.
-    hexDefs.translateMapWarpNumbers();
-
-#ifdef DENG_IDTECH1CONVERTER_DEBUG
-    for(HexDefs::MapInfos::const_iterator i = hexDefs.mapInfos.begin(); i != hexDefs.mapInfos.end(); ++i)
-    {
-        MapInfo const &info = i->second;
-        LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
-                << i->first.c_str() << info.gets("title")
-                << info.geti("hub") << info.gets("map") << info.geti("warpTrans") << info.gets("nextMap");
-    }
-#endif
+    String text = xltr.translate() + "\n"; // End with a newline, for neatness sake.
+    qDebug() << text;
 }
 
 /**
