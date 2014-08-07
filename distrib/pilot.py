@@ -395,8 +395,6 @@ def handleCompletedTasks():
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            #newTask('source', forClient='ubuntu')
-            newTask('source', forClient='saucy')
             newTask('source', forClient='trusty')
 
         elif task == 'source':
