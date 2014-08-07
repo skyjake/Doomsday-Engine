@@ -97,9 +97,6 @@ namespace internal {
 
     /**
      * Central database of definitions read from Hexen-derived definition formats.
-     *
-     * @note Ultimately the definitions this contains should instead have their sources
-     * translated into DED syntax and be made available from the main DED db instead.
      */
     struct HexDefs
     {
@@ -160,17 +157,17 @@ namespace internal {
     {
         de::String mapId;
 #if __JDOOM64__
-        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
         DENG2_UNUSED(episode);
 #elif __JDOOM__
         if(gameModeBits & GM_ANY_DOOM2)
-            mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+            mapId = de::String("Map%1").arg(map+1, 2, 10, QChar('0'));
         else
-            mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+            mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
 #elif  __JHERETIC__
-        mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+        mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
 #else
-        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
         DENG2_UNUSED(episode);
 #endif
         return de::Uri("Maps", mapId);
@@ -1324,7 +1321,7 @@ String MapInfoTranslator::translate()
 
         os << "\n\nEpisode {"
            << "\n  ID = \"" + episodeId + "\";"
-           << "\n  Title = \"" + info.gets("title") + "\""
+           << "\n  Title = \"" + info.gets("title") + "\";"
            << "\n  Start Map = \"" + startMapUri.compose() + "\";";
         String menuHelpInfo = info.gets("menuHelpInfo");
         if(!menuHelpInfo.isEmpty())
@@ -1446,7 +1443,7 @@ String MapInfoTranslator::translate()
         os << "\n}";
     }
 
-    reset();
+    reset(); // The definition database was modified.
 
     return text;
 }
