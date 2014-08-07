@@ -71,6 +71,7 @@ HEADERS += \
     include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
     include/doomsday/defs/episode.h \
+    include/doomsday/defs/mapgraphnode.h \
     include/doomsday/defs/mapinfo.h \
     include/doomsday/defs/model.h \
     include/doomsday/defs/sky.h \
@@ -114,6 +115,7 @@ SOURCES += \
     src/defs/dedparser.cpp \
     src/defs/dedregister.cpp \
     src/defs/episode.cpp \
+    src/defs/mapgraphnode.cpp \
     src/defs/mapinfo.cpp \
     src/defs/model.cpp \
     src/defs/sky.cpp \
