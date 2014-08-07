@@ -25,7 +25,8 @@
 namespace defn {
 
 /**
- * Base class for definition records.
+ * Base class for definition record accessors.
+ * @ingroup data
  */
 class LIBDOOMSDAY_PUBLIC Definition : public de::RecordAccessor
 {
@@ -39,7 +40,7 @@ public:
     de::Record const &def() const;
 
     /**
-     * Determines if the definition point to a record.
+     * Determines if this definition accessor points to a record.
      */
     operator bool() const;
 
