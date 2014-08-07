@@ -34,22 +34,65 @@ using namespace de;
 namespace idtech1 {
 namespace internal {
 
+    static inline String defaultSkyMaterial()
+    {
+#ifdef __JHEXEN__
+        if(gameMode == hexen_demo || gameMode == hexen_betademo)
+            return "Textures:SKY2";
+#endif
+        return "Textures:SKY1";
+    }
+
     class MapInfo : public de::Record
     {
     public:
-        MapInfo();
-        MapInfo &operator = (MapInfo const &other);
+        MapInfo::MapInfo() : Record() {
+            resetToDefaults();
+        }
+        MapInfo &operator = (MapInfo const &other) {
+            static_cast<Record &>(*this) = other;
+            return *this;
+        }
 
-        void resetToDefaults();
+        void resetToDefaults() {
+            // Add all expected fields with their default values.
+            addText   ("map", "Maps:"); // URI. Unknown.
+            addNumber ("hub", 0);
+            addNumber ("warpTrans", 0);
+            addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
+            addText   ("secretNextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
+            addNumber ("cdTrack", 1);
+            addText   ("title", "Untitled");
+            addText   ("sky1Material", defaultSkyMaterial());
+            addText   ("sky2Material", defaultSkyMaterial());
+            addNumber ("sky1ScrollDelta", 0);
+            addNumber ("sky2ScrollDelta", 0);
+            addBoolean("doubleSky", false);
+            addBoolean("lightning", false);
+            addText   ("fadeTable", "COLORMAP");
+            addText   ("songLump", "DEFSONG");
+        }
     };
 
     class EpisodeInfo : public de::Record
     {
     public:
-        EpisodeInfo();
-        EpisodeInfo &operator = (EpisodeInfo const &other);
+        EpisodeInfo() : Record() {
+            resetToDefaults();
+        }
+        EpisodeInfo &operator = (EpisodeInfo const &other) {
+            static_cast<Record &>(*this) = other;
+            return *this;
+        }
 
-        void resetToDefaults();
+        void resetToDefaults() {
+            // Add all expected fields with their default values.
+            addText("startMap", "Maps:"); // URI. Unknown.
+            addText("title", "Untitled");
+            addText("menuHelpInfo", "");  // None.
+            addText("menuImage", "");     // URI. None.
+            addText("menuShortcut", "");  // Key name. None.
+        }
     };
 
     /**
@@ -155,15 +198,6 @@ namespace internal {
             }
         }
         return 0;
-    }
-
-    static inline String defaultSkyMaterial()
-    {
-#ifdef __JHEXEN__
-        if(gameMode == hexen_demo || gameMode == hexen_betademo)
-            return "Textures:SKY2";
-#endif
-        return "Textures:SKY1";
     }
 
 #define MUSIC_STARTUP      "startup"
@@ -1117,58 +1151,6 @@ namespace internal {
 } // namespace internal
 
 using namespace internal;
-
-MapInfo::MapInfo() : Record()
-{
-    resetToDefaults();
-}
-
-MapInfo &MapInfo::operator = (MapInfo const &other)
-{
-    static_cast<Record &>(*this) = other;
-    return *this;
-}
-
-void MapInfo::resetToDefaults()
-{
-    // Add all expected fields with their default values.
-    addText   ("map", "Maps:"); // URI. Unknown.
-    addNumber ("hub", 0);
-    addNumber ("warpTrans", 0);
-    addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
-    addText   ("secretNextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
-    addNumber ("cdTrack", 1);
-    addText   ("title", "Untitled");
-    addText   ("sky1Material", defaultSkyMaterial());
-    addText   ("sky2Material", defaultSkyMaterial());
-    addNumber ("sky1ScrollDelta", 0);
-    addNumber ("sky2ScrollDelta", 0);
-    addBoolean("doubleSky", false);
-    addBoolean("lightning", false);
-    addText   ("fadeTable", "COLORMAP");
-    addText   ("songLump", "DEFSONG");
-}
-
-EpisodeInfo::EpisodeInfo() : Record()
-{
-    resetToDefaults();
-}
-
-EpisodeInfo &EpisodeInfo::operator = (EpisodeInfo const &other)
-{
-    static_cast<Record &>(*this) = other;
-    return *this;
-}
-
-void EpisodeInfo::resetToDefaults()
-{
-    // Add all expected fields with their default values.
-    addText("startMap", "Maps:"); // URI. Unknown.
-    addText("title", "Untitled");
-    addText("menuHelpInfo", "");  // None.
-    addText("menuImage", "");     // URI. None.
-    addText("menuShortcut", "");  // Key name. None.
-}
 
 DENG2_PIMPL_NOREF(MapInfoTranslator)
 {
