@@ -51,6 +51,8 @@ public:
     de::Record &hub(int index);
     de::Record const &hub(int index) const;
 
+    de::Record *tryFindMapGraphNode(de::String const &mapId);
+
 private:
     de::Record *_def; ///< Modifiable access.
 };

@@ -26,6 +26,7 @@
 #include <de/Time>
 #include <de/ZipArchive>
 #include <de/game/SavedSession>
+#include <doomsday/defs/episode.h>
 #include "d_netsv.h"
 #include "g_common.h"
 #include "hu_menu.h"
@@ -788,8 +789,18 @@ Record *GameSession::episodeDef()
 {
     if(hasBegun())
     {
-        /// @todo cache this result.
+        /// @todo cache this result?
         return Defs().episodes.tryFind("id", String::number(::gameEpisode + 1));
+    }
+    return 0;
+}
+
+Record *GameSession::mapGraphNodeDef()
+{
+    if(Record const *episode = episodeDef())
+    {
+        /// @todo cache this result?
+        return defn::Episode(*episode).tryFindMapGraphNode(::gameMapUri.compose());
     }
     return 0;
 }
@@ -798,7 +809,7 @@ Record *GameSession::mapInfo()
 {
     if(hasBegun())
     {
-        /// @todo cache this result.
+        /// @todo cache this result?
         return Defs().mapInfos.tryFind("id", ::gameMapUri.compose());
     }
     return 0;
