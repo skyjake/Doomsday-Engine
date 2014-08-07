@@ -6,4 +6,169 @@ Header { Version = 6; }
 Episode {
   Id = "1";
   Start Map = "MAP01";
+  
+  Map {
+    Id = "MAP01";
+    Exit { Id = "next";   Target Map = "MAP02"; }
+    Exit { Id = "barrel"; Target Map = "MAP32"; }
+  }
+  
+  Map {
+    Id = "MAP02";
+    Exit { Id = "next";   Target Map = "MAP03"; }
+  }
+  
+  Map {
+    Id = "MAP03";
+    Exit { Id = "next";   Target Map = "MAP04"; }
+  }
+  
+  Map {
+    Id = "MAP04";
+    Exit { Id = "next";   Target Map = "MAP05"; }
+    Exit { Id = "secret"; Target Map = "MAP29"; }
+  }
+
+  Map {
+    Id = "MAP05";
+    Exit { Id = "next";   Target Map = "MAP06"; }
+  }
+  
+  Map {
+    Id = "MAP06";
+    Exit { Id = "next";   Target Map = "MAP07"; }
+  }
+  
+  Map {
+    Id = "MAP07";
+    Exit { Id = "next";   Target Map = "MAP08"; }
+  }
+  
+  Map {
+    Id = "MAP08";
+    Exit { Id = "next";   Target Map = "MAP09"; }
+  }
+  
+  Map {
+    Id = "MAP09";
+    Exit { Id = "next";   Target Map = "MAP10"; }
+  }
+  
+  Map {
+    Id = "MAP10";
+    Exit { Id = "next";   Target Map = "MAP11"; }
+  }
+  
+  Map {
+    Id = "MAP11";
+    Exit { Id = "next";   Target Map = "MAP12"; }
+  }
+
+  Map {
+    Id = "MAP12";
+    Exit { Id = "next";   Target Map = "MAP13"; }
+    Exit { Id = "secret"; Target Map = "MAP30"; }
+  }
+  
+  Map {
+    Id = "MAP13";
+    Exit { Id = "next";   Target Map = "MAP14"; }
+  }
+  
+  Map {
+    Id = "MAP14";
+    Exit { Id = "next";   Target Map = "MAP15"; }
+  }
+  
+  Map {
+    Id = "MAP15";
+    Exit { Id = "next";   Target Map = "MAP16"; }
+  }
+  
+  Map {
+    Id = "MAP16";
+    Exit { Id = "next";   Target Map = "MAP17"; }
+  }
+  
+  Map {
+    Id = "MAP17";
+    Exit { Id = "next";   Target Map = "MAP18"; }
+  }
+
+  Map {
+    Id = "MAP18";
+    Exit { Id = "next";   Target Map = "MAP19"; }
+    Exit { Id = "secret"; Target Map = "MAP31"; }
+  }
+  
+  Map {
+    Id = "MAP19";
+    Exit { Id = "next";   Target Map = "MAP20"; }
+  }
+  
+  Map {
+    Id = "MAP20";
+    Exit { Id = "next";   Target Map = "MAP21"; }
+  }
+  
+  Map {
+    Id = "MAP21";
+    Exit { Id = "next";   Target Map = "MAP22"; }
+  }
+  
+  Map {
+    Id = "MAP22";
+    Exit { Id = "next";   Target Map = "MAP23"; }
+  }
+  
+  Map {
+    Id = "MAP23";
+    Exit { Id = "next";   Target Map = "MAP24"; }
+  }
+  
+  Map {
+    Id = "MAP24";
+    Exit { Id = "next";   Target Map = "MAP25"; }
+  }
+  
+  Map {
+    Id = "MAP25";
+    Exit { Id = "next";   Target Map = "MAP26"; }
+  }
+  
+  Map {
+    Id = "MAP26";
+    Exit { Id = "next";   Target Map = "MAP27"; }
+  }
+  
+  Map {
+    Id = "MAP27";
+    Exit { Id = "next";   Target Map = "MAP28"; }
+  }
+  
+  Map {
+    Id = "MAP28";
+  }
+  
+  # Secret maps:
+
+  Map {
+    Id = "MAP29";
+    Exit { Id = "next";   Target Map = "MAP05"; }
+  }
+  
+  Map {
+    Id = "MAP30";
+    Exit { Id = "next";   Target Map = "MAP13"; }
+  }
+  
+  Map {
+    Id = "MAP31";
+    Exit { Id = "next";   Target Map = "MAP19"; }
+  }
+  
+  Map {
+    Id = "MAP32";
+    Exit { Id = "next";   Target Map = "MAP02"; }
+  }
 }
