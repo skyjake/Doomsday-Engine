@@ -67,6 +67,7 @@ HEADERS += \
     include/doomsday/defs/ded.h \
     include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
+    include/doomsday/defs/definition.h \
     include/doomsday/defs/dedparser.h \
     include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
@@ -112,6 +113,7 @@ SOURCES += \
     src/console/var.cpp \
     src/defs/ded.cpp \
     src/defs/dedfile.cpp \
+    src/defs/definition.cpp \
     src/defs/dedparser.cpp \
     src/defs/dedregister.cpp \
     src/defs/episode.cpp \

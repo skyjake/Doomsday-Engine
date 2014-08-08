@@ -1,4 +1,4 @@
-/** @file defs/model.h  Model definition accessor.
+/** @file defs/definition.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,36 +16,31 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDOOMSDAY_DEFN_MODEL_H
-#define LIBDOOMSDAY_DEFN_MODEL_H
+#include "doomsday/defs/definition.h"
 
-#include "definition.h"
-#include <de/RecordAccessor>
+using namespace de;
 
 namespace defn {
 
-/**
- * Utility for handling model definitions.
- */
-class LIBDOOMSDAY_PUBLIC Model : public Definition
+Record &Definition::def()
 {
-public:
-    Model()                    : Definition() {}
-    Model(Model const &other)  : Definition(other) {}
-    Model(de::Record &d)       : Definition(d) {}
-    Model(de::Record const &d) : Definition(d) {}
+    return const_cast<Record &>(accessedRecord());
+}
 
-    void resetToDefaults();
+Record const &Definition::def() const
+{
+    return accessedRecord();
+}
 
-    de::Record &addSub();
-    int subCount() const;
-    bool hasSub(int index) const;
-    de::Record &sub(int index);
-    de::Record const &sub(int index) const;
+int Definition::order() const
+{
+    if(!accessedRecordPtr()) return -1;
+    return geti("__order__");
+}
 
-    void cleanupAfterParsing(de::Record const &prev);
-};
+Definition::operator bool() const
+{
+    return accessedRecordPtr() != 0;
+}
 
 } // namespace defn
-
-#endif // LIBDOOMSDAY_DEFN_MODEL_H
