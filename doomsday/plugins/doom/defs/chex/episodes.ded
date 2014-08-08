@@ -6,4 +6,28 @@ Header { Version = 6; }
 Episode {
   Id = "1";
   Start Map = "MAP01";
+  
+  Map {
+    Id = "E1M1";
+    Exit { Id = "next";   Target Map = "E1M2"; }
+  }
+  
+  Map {
+    Id = "E1M2";
+    Exit { Id = "next";   Target Map = "E1M3"; }
+  }
+  
+  Map {
+    Id = "E1M3";
+    Exit { Id = "next";   Target Map = "E1M4"; }
+  }
+  
+  Map {
+    Id = "E1M4";
+    Exit { Id = "next";   Target Map = "E1M5"; }
+  }
+  
+  Map {
+    Id = "E1M5";
+  }
 }
