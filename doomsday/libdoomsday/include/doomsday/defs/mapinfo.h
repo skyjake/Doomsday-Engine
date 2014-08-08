@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_DEFN_MAPINFO_H
 #define LIBDOOMSDAY_DEFN_MAPINFO_H
 
-#include "../libdoomsday.h"
+#include "definition.h"
 #include <de/RecordAccessor>
 
 /// @todo These values should be tweaked a bit.
@@ -35,25 +35,15 @@ namespace defn {
 /**
  * Utility for handling mapinfo definitions.
  */
-class LIBDOOMSDAY_PUBLIC MapInfo : public de::RecordAccessor
+class LIBDOOMSDAY_PUBLIC MapInfo : public Definition
 {
 public:
-    MapInfo() : RecordAccessor(0), _def(0) {}
-    MapInfo(MapInfo const &other)
-        : RecordAccessor(other)
-        , _def(other._def) {}
-    MapInfo(de::Record &d) : RecordAccessor(d), _def(&d) {}
-    MapInfo(de::Record const &d) : RecordAccessor(d), _def(0) {}
+    MapInfo()                     : Definition() {}
+    MapInfo(MapInfo const &other) : Definition(other) {}
+    MapInfo(de::Record &d)        : Definition(d) {}
+    MapInfo(de::Record const &d)  : Definition(d) {}
 
     void resetToDefaults();
-
-    MapInfo &operator = (de::Record *d);
-
-    operator bool() const;
-    int order() const;
-
-private:
-    de::Record *_def; ///< Modifiable access.
 };
 
 } // namespace defn

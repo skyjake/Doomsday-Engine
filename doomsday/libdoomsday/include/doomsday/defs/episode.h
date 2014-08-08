@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_DEFN_EPISODE_H
 #define LIBDOOMSDAY_DEFN_EPISODE_H
 
-#include "../libdoomsday.h"
+#include "definition.h"
 #include <de/RecordAccessor>
 
 namespace defn {
@@ -27,34 +27,23 @@ namespace defn {
 /**
  * Utility for handling episode definitions.
  */
-class LIBDOOMSDAY_PUBLIC Episode : public de::RecordAccessor
+class LIBDOOMSDAY_PUBLIC Episode : public Definition
 {
 public:
-    Episode() : RecordAccessor(0), _def(0) {}
-    Episode(Episode const &other)
-        : RecordAccessor(other)
-        , _def(other._def) {}
-    Episode(de::Record &d) : RecordAccessor(d), _def(&d) {}
-    Episode(de::Record const &d) : RecordAccessor(d), _def(0) {}
+    Episode()                     : Definition() {}
+    Episode(Episode const &other) : Definition(other) {}
+    Episode(de::Record &d)        : Definition(d) {}
+    Episode(de::Record const &d)  : Definition(d) {}
 
     void resetToDefaults();
 
-    Episode &operator = (de::Record *d);
-
-    operator bool() const;
-    int order() const;
-
     de::Record &addHub();
-
     int hubCount() const;
     bool hasHub(int index) const;
     de::Record &hub(int index);
     de::Record const &hub(int index) const;
 
     de::Record *tryFindMapGraphNode(de::String const &mapId);
-
-private:
-    de::Record *_def; ///< Modifiable access.
 };
 
 } // namespace defn

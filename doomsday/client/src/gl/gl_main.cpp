@@ -649,7 +649,7 @@ void GL_TotalRestore()
         if(MapDef *mapDef = App_WorldSystem().map().def())
         {
             int idx = defs.getMapInfoNum(mapDef->composeUri());
-            if(idx >= 0) mapInfo = &defs.mapInfos[idx];
+            if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
     }
 

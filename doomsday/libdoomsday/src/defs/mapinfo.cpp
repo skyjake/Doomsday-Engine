@@ -29,45 +29,25 @@ namespace defn {
 
 void MapInfo::resetToDefaults()
 {
-    DENG2_ASSERT(_def);
-
     // Add all expected fields with their default values.
-    _def->addText  ("id", "");
-    _def->addText  ("title", "Untitled");
-    _def->addText  ("author", "Unknown");
-    _def->addNumber("flags", 0);
-    _def->addText  ("music", "");
-    _def->addNumber("parTime", -1); // unknown
-    _def->addArray ("fogColor", new ArrayValue(Vector3f(DEFAULT_FOG_COLOR_RED, DEFAULT_FOG_COLOR_GREEN, DEFAULT_FOG_COLOR_BLUE)));
-    _def->addNumber("fogStart", DEFAULT_FOG_START);
-    _def->addNumber("fogEnd", DEFAULT_FOG_END);
-    _def->addNumber("fogDensity", DEFAULT_FOG_DENSITY);
-    _def->addNumber("ambient", 0);
-    _def->addNumber("gravity", 1);
-    _def->addText  ("skyId", "");
-    _def->addText  ("execute", "");
+    def().addText  ("id", "");
+    def().addText  ("title", "Untitled");
+    def().addText  ("author", "Unknown");
+    def().addNumber("flags", 0);
+    def().addText  ("music", "");
+    def().addNumber("parTime", -1); // unknown
+    def().addArray ("fogColor", new ArrayValue(Vector3f(DEFAULT_FOG_COLOR_RED, DEFAULT_FOG_COLOR_GREEN, DEFAULT_FOG_COLOR_BLUE)));
+    def().addNumber("fogStart", DEFAULT_FOG_START);
+    def().addNumber("fogEnd", DEFAULT_FOG_END);
+    def().addNumber("fogDensity", DEFAULT_FOG_DENSITY);
+    def().addNumber("ambient", 0);
+    def().addNumber("gravity", 1);
+    def().addText  ("skyId", "");
+    def().addText  ("execute", "");
 
     QScopedPointer<Record> sky(new Record);
     Sky(*sky).resetToDefaults();
-    _def->add      ("sky", sky.take());
-}
-
-MapInfo &MapInfo::operator = (Record *d)
-{
-    setAccessedRecord(*d);
-    _def = d;
-    return *this;
-}
-
-int MapInfo::order() const
-{
-    if(!accessedRecordPtr()) return -1;
-    return geti("__order__");
-}
-
-MapInfo::operator bool() const
-{
-    return accessedRecordPtr() != 0;
+    def().add      ("sky", sky.take());
 }
 
 } // namespace defn

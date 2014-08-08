@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_DEFN_MAPGRAPHNODE_H
 #define LIBDOOMSDAY_DEFN_MAPGRAPHNODE_H
 
-#include "../libdoomsday.h"
+#include "definition.h"
 #include <de/RecordAccessor>
 
 namespace defn {
@@ -27,32 +27,21 @@ namespace defn {
 /**
  * Utility for handling "map-connectivity graph, node" definitions.
  */
-class LIBDOOMSDAY_PUBLIC MapGraphNode : public de::RecordAccessor
+class LIBDOOMSDAY_PUBLIC MapGraphNode : public Definition
 {
 public:
-    MapGraphNode() : RecordAccessor(0), _def(0) {}
-    MapGraphNode(MapGraphNode const &other)
-        : RecordAccessor(other)
-        , _def(other._def) {}
-    MapGraphNode(de::Record &d) : RecordAccessor(d), _def(&d) {}
-    MapGraphNode(de::Record const &d) : RecordAccessor(d), _def(0) {}
+    MapGraphNode()                          : Definition() {}
+    MapGraphNode(MapGraphNode const &other) : Definition(other) {}
+    MapGraphNode(de::Record &d)             : Definition(d) {}
+    MapGraphNode(de::Record const &d)       : Definition(d) {}
 
     void resetToDefaults();
 
-    MapGraphNode &operator = (de::Record *d);
-
-    operator bool() const;
-    int order() const;
-
     de::Record &addExit();
-
     int exitCount() const;
     bool hasExit(int index) const;
     de::Record &exit(int index);
     de::Record const &exit(int index) const;
-
-private:
-    de::Record *_def; ///< Modifiable access.
 };
 
 } // namespace defn

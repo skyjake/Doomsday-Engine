@@ -28,45 +28,23 @@ namespace defn {
 
 void MapGraphNode::resetToDefaults()
 {
-    DENG2_ASSERT(_def);
-
     // Add all expected fields with their default values.
-    _def->addText  ("id", "");
-    _def->addNumber("warpNumber", 0);
-    _def->addArray ("exit", new ArrayValue);
-}
-
-MapGraphNode &MapGraphNode::operator = (Record *d)
-{
-    setAccessedRecord(*d);
-    _def = d;
-    return *this;
-}
-
-int MapGraphNode::order() const
-{
-    if(!accessedRecordPtr()) return -1;
-    return geti("__order__");
-}
-
-MapGraphNode::operator bool() const
-{
-    return accessedRecordPtr() != 0;
+    def().addText  ("id", "");
+    def().addNumber("warpNumber", 0);
+    def().addArray ("exit", new ArrayValue);
 }
 
 Record &MapGraphNode::addExit()
 {
-    DENG2_ASSERT(_def);
+    Record *exit = new Record;
 
-    Record *def = new Record;
+    exit->addText("id", "");
+    exit->addText("targetMap", "");
 
-    def->addText("id", 0);
-    def->addText("targetMap", "");
+    def()["exit"].value<ArrayValue>()
+            .add(new RecordValue(exit, RecordValue::OwnsRecord));
 
-    (*_def)["exit"].value<ArrayValue>()
-            .add(new RecordValue(def, RecordValue::OwnsRecord));
-
-    return *def;
+    return *exit;
 }
 
 int MapGraphNode::exitCount() const
@@ -81,8 +59,7 @@ bool MapGraphNode::hasExit(int index) const
 
 Record &MapGraphNode::exit(int index)
 {
-    DENG2_ASSERT(_def);
-    return *_def->geta("exit")[index].as<RecordValue>().record();
+    return *def().geta("exit")[index].as<RecordValue>().record();
 }
 
 Record const &MapGraphNode::exit(int index) const

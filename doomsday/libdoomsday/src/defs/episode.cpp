@@ -28,49 +28,27 @@ namespace defn {
 
 void Episode::resetToDefaults()
 {
-    DENG2_ASSERT(_def);
-
     // Add all expected fields with their default values.
-    _def->addText("id", "");
-    _def->addText("startMap", "Maps:"); // URI. Unknown.
-    _def->addText("title", "Untitled");
-    _def->addText("menuHelpInfo", "");  // None.
-    _def->addText("menuImage", "");     // URI. None.
-    _def->addText("menuShortcut", "");  // Key name. None.
-    _def->addArray("hub", new ArrayValue);
-}
-
-Episode &Episode::operator = (Record *d)
-{
-    setAccessedRecord(*d);
-    _def = d;
-    return *this;
-}
-
-int Episode::order() const
-{
-    if(!accessedRecordPtr()) return -1;
-    return geti("__order__");
-}
-
-Episode::operator bool() const
-{
-    return accessedRecordPtr() != 0;
+    def().addText("id", "");
+    def().addText("startMap", "Maps:"); // URI. Unknown.
+    def().addText("title", "Untitled");
+    def().addText("menuHelpInfo", "");  // None.
+    def().addText("menuImage", "");     // URI. None.
+    def().addText("menuShortcut", "");  // Key name. None.
+    def().addArray("hub", new ArrayValue);
 }
 
 Record &Episode::addHub()
 {
-    DENG2_ASSERT(_def);
+    Record *hub = new Record;
 
-    Record *def = new Record;
+    hub->addText ("id", "");
+    hub->addArray("map", new ArrayValue);
 
-    def->addText ("id", "");
-    def->addArray("map", new ArrayValue);
+    def()["hub"].value<ArrayValue>()
+            .add(new RecordValue(hub, RecordValue::OwnsRecord));
 
-    (*_def)["hub"].value<ArrayValue>()
-            .add(new RecordValue(def, RecordValue::OwnsRecord));
-
-    return *def;
+    return *hub;
 }
 
 int Episode::hubCount() const
@@ -85,8 +63,7 @@ bool Episode::hasHub(int index) const
 
 Record &Episode::hub(int index)
 {
-    DENG2_ASSERT(_def);
-    return *_def->geta("hub")[index].as<RecordValue>().record();
+    return *def().geta("hub")[index].as<RecordValue>().record();
 }
 
 Record const &Episode::hub(int index) const
