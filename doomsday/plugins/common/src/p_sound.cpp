@@ -56,13 +56,13 @@ void S_MapMusic(de::Uri const *mapUri)
         Con_SetInteger2("map-music", defIndex, SVF_WRITE_OVERRIDE);
     }
 #else
-    ddmapinfo_t ddMapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &ddMapInfo))
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
     {
-        if(S_StartMusicNum(ddMapInfo.music, true))
+        int songNumber = Defs().getMusicNum(mapInfo->gets("music").toUtf8().constData());
+        if(S_StartMusicNum(songNumber, true))
         {
             // Set the game status cvar for the map music.
-            Con_SetInteger2("map-music", ddMapInfo.music, SVF_WRITE_OVERRIDE);
+            Con_SetInteger2("map-music", songNumber, SVF_WRITE_OVERRIDE);
         }
     }
 #endif

@@ -119,21 +119,6 @@ typedef struct {
 #define MIF_NO_INTERMISSION 0x4 ///< Skip any intermission between maps.
 ///@}
 
-/// @todo Directly access the engine's DED database instead -ds
-typedef struct {
-    AutoStr        *name;
-    AutoStr        *author;
-    int             music;
-    int             flags; ///< MIF_* flags.
-    float           ambient;
-    float           gravity;
-    float           parTime;
-    float           fogColor[3]; // Fog color (RGB).
-    float           fogStart;
-    float           fogEnd;
-    float           fogDensity;
-} ddmapinfo_t;
-
 typedef struct {
     const Uri*      after;
     const Uri*      before;

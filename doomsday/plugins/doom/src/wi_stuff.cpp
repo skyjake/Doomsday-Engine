@@ -290,25 +290,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     /// kludge end.
 
     // See if there is a map name...
-    char *mapName = 0;
-    ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, wbs->nextMap.compose().toUtf8().constData(), &minfo) && minfo.name)
-    {
-        if(Def_Get(DD_DEF_TEXT, Str_Text(minfo.name), &mapName) == -1)
-        {
-            mapName = Str_Text(minfo.name);
-        }
-    }
-
-    // Skip the E#M# or Map #.
-    if(mapName)
-    {
-        char *ptr = strchr(mapName, ':');
-        if(ptr)
-        {
-            mapName = M_SkipWhite(ptr + 1);
-        }
-    }
+    String mapTitle = G_MapTitle(&wbs->nextMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -327,7 +309,8 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
 
     // Draw map.
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapName), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()),
+                 origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

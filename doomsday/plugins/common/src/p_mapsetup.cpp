@@ -645,22 +645,24 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-/// @param mapInfo  Can be @c NULL.
-static void initFog(ddmapinfo_t *ddMapInfo)
+static void initFog()
 {
     if(IS_DEDICATED) return;
 
-    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
+    Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
+    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
     {
         R_SetupFogDefaults();
     }
     else
     {
-        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
+        Vector3f fogColor(mapInfo->get("fogColor"));
+        float fogColorV1[] = { fogColor.x, fogColor.y, fogColor.z };
+        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColorV1);
     }
 
 #if __JHEXEN__
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
+    if(mapInfo)
     {
         int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
         if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))
@@ -726,10 +728,7 @@ void P_SetupMap(de::Uri const &mapUri)
         exit(1); // Unreachable.
     }
 
-    // Is MapInfo data available for this map?
-    ddmapinfo_t mapInfo;
-    bool const haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUri.compose().toUtf8().constData(), &mapInfo);
-    initFog(haveMapInfo? &mapInfo : 0);
+    initFog();
 
     // Make sure the game is paused for the requested period.
     Pause_MapStarted();

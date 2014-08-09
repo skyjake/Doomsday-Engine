@@ -1979,29 +1979,6 @@ int Def_Get(int type, char const *id, void *out)
         }
         return false;
 
-    case DD_DEF_MAP_INFO: {
-        int idx = defs.getMapInfoNum(de::Uri(id, RC_NULL));
-        if(idx < 0) return false;
-
-        Record const &mapInfo = defs.mapInfos[idx];
-        ddmapinfo_t *mout = (ddmapinfo_t *) out;
-        mout->name       = AutoStr_FromTextStd(mapInfo.gets("title").toUtf8().constData());
-        mout->author     = AutoStr_FromTextStd(mapInfo.gets("author").toUtf8().constData());
-        mout->music      = Def_GetMusicNum(mapInfo.gets("music").toUtf8().constData());
-        mout->flags      = mapInfo.geti("flags");
-        mout->ambient    = mapInfo.getf("ambient");
-        mout->gravity    = mapInfo.getf("gravity");
-        mout->parTime    = mapInfo.getf("parTime");
-        mout->fogStart   = mapInfo.getf("fogStart");
-        mout->fogEnd     = mapInfo.getf("fogEnd");
-        mout->fogDensity = mapInfo.getf("fogDensity");
-
-        Vector3f fogColor(mapInfo.get("fogColor"));
-        mout->fogColor[0] = fogColor.x;
-        mout->fogColor[1] = fogColor.y;
-        mout->fogColor[2] = fogColor.z;
-        return true; }
-
     case DD_DEF_TEXT:
         if(id && id[0])
         {

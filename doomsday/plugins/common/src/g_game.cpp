@@ -2209,14 +2209,14 @@ void G_PrepareWIData()
     info->maxFrags = 0;
 
     // See if there is a par time definition.
-    ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, gameMapUri.compose().toUtf8().constData(), &minfo) && minfo.parTime > 0)
+    info->parTime = -1; // Unknown.
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
     {
-        info->parTime = TICRATE * (int) minfo.parTime;
-    }
-    else
-    {
-        info->parTime = -1; // Unknown.
+        float parTime = mapInfo->getf("parTime");
+        if(parTime > 0)
+        {
+            info->parTime = TICRATE * int(parTime);
+        }
     }
 
     info->pNum = CONSOLEPLAYER;
@@ -2238,11 +2238,12 @@ void G_PrepareWIData()
 dd_bool G_IntermissionActive()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    ddmapinfo_t minfo;
-    if(Def_Get(DD_DEF_MAP_INFO, gameMapUri.compose().toUtf8().constData(), &minfo) &&
-       (minfo.flags & MIF_NO_INTERMISSION))
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
     {
-        return false;
+        if(mapInfo->geti("flags") & MIF_NO_INTERMISSION)
+        {
+            return false;
+        }
     }
 #elif __JHEXEN__
     if(!COMMON_GAMESESSION->rules().deathmatch)
@@ -2435,34 +2436,16 @@ String G_MapTitle(de::Uri const *mapUri)
     String title;
 
     // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &mapInfo))
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
     {
-        if(Str_Text(mapInfo.name))
+        // Perhaps the title string is a reference to a Text definition?
+        title = mapInfo->gets("title");
+        void *ptr;
+        if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &ptr) != -1)
         {
-            // Perhaps the title string is a reference to a Text definition?
-            void *ptr;
-            if(Def_Get(DD_DEF_TEXT, Str_Text(mapInfo.name), &ptr) != -1)
-            {
-                title = (char const *) ptr; // Yes, use the resolved text string.
-            }
-            else
-            {
-                title = Str_Text(mapInfo.name);
-            }
+            title = (char const *) ptr; // Yes, use the resolved text string.
         }
     }
-
-#if __JHEXEN__
-    // In Hexen we can also look in MAPINFO for the map title.
-    if(title.isEmpty())
-    {
-        if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
-        {
-            title = mapInfo->gets("title");
-        }
-    }
-#endif
 
     // Skip the "ExMx" part, if present.
     int idSuffixAt = title.indexOf(':');
@@ -2481,15 +2464,13 @@ String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
 {
     if(!mapUri) mapUri = &gameMapUri;
 
-    String mapUriAsText = mapUri->resolved();
-    if(mapUriAsText.isEmpty()) return ""; // Huh??
+    String author;
 
     // Perhaps a MapInfo definition exists for the map?
-    ddmapinfo_t mapInfo;
-    String author;
-    if(Def_Get(DD_DEF_MAP_INFO, mapUriAsText.toUtf8().constData(), &mapInfo))
+    String mapUriAsText = mapUri->compose();
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUriAsText))
     {
-        author = Str_Text(mapInfo.author);
+        author = mapInfo->gets("author");
     }
 
     if(!author.isEmpty())

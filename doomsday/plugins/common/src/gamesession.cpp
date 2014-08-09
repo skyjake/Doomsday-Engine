@@ -821,7 +821,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
     LOG_AS("GameSession");
     if(Record const *mgNode = mapGraphNodeDef())
     {
-        // Build a looup table mapping exit ids to exit records.
+        // Build a lookup table mapping exit ids to exit records.
         QMap<String, Record const *> exits;
         foreach(Value *mapIt, mgNode->geta("exit").elements())
         {
@@ -844,7 +844,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
             }
             else
             {
-                LOG_SCR_WARNING("Episode %s, map %s defines no Exit for ID=%s")
+                LOG_SCR_WARNING("Episode '%s', map '%s' defines no Exit with ID '%s'")
                         << String::number(::gameEpisode + 1)
                         << ::gameMapUri
                         << name;
@@ -863,7 +863,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
 
         if(chosenExit)
         {
-            return de::Uri(chosenExit->gets("targetMap", ""), RC_NULL);
+            return de::Uri(chosenExit->gets("targetMap"), RC_NULL);
         }
     }
     return de::Uri();
