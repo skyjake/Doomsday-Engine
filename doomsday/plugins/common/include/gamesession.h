@@ -83,7 +83,7 @@ public:
     /**
      * Resolves a named exit according to the map progression.
      */
-    de::Uri mapUriForNamedExit(de::String const &name);
+    de::Uri mapUriForNamedExit(de::String name);
 
     /**
      * Returns the current ruleset for the game session.
