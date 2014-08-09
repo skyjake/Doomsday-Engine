@@ -39,6 +39,8 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/episode.h"
+#include "doomsday/defs/mapgraphnode.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/sky.h"
@@ -56,6 +58,7 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/ArrayValue>
+#include <de/RecordValue>
 #include <de/game/Game>
 #include <de/memory.h>
 #include <de/vector1.h>
@@ -968,10 +971,12 @@ DENG2_PIMPL(DEDParser)
 
                 if(prevEpisodeDefIdx >= 0 && bCopyNext)
                 {
-                    //Record *prevEpisode = &ded->episodes[prevEpisodeDefIdx];
                     ded->episodes.copy(prevEpisodeDefIdx, *epsd);
                 }
+                defn::Episode mainDef(*epsd);
 
+                int hub = 0;
+                int notHubMap = 0;
                 FINDBEGIN;
                 forever
                 {
@@ -986,7 +991,125 @@ DENG2_PIMPL(DEDParser)
                     RV_STR("Menu Help Info", (*epsd)["menuHelpInfo"])
                     RV_URI("Menu Image", (*epsd)["menuImage"], "Patches")
                     RV_STR("Menu Shortcut", (*epsd)["menuShortcut"])
-                    RV_END
+                    if(ISLABEL("Hub"))
+                    {
+                        Record *hubRec;
+                        // Add another hub.
+                        if(hub >= mainDef.hubCount())
+                        {
+                            mainDef.addHub();
+                        }
+                        DENG_ASSERT(hub < mainDef.hubCount());
+                        hubRec = &mainDef.hub(hub);
+
+                        int map = 0;
+                        FINDBEGIN;
+                        forever
+                        {
+                            READLABEL;
+                            RV_STR("ID", (*hubRec)["id"])
+                            if(ISLABEL("Map"))
+                            {
+                                // Add another map.
+                                if(map >= int(hubRec->geta("map").size()))
+                                {
+                                    QScopedPointer<Record> map(new Record);
+                                    defn::MapGraphNode(*map).resetToDefaults();
+                                    (*hubRec)["map"].value<ArrayValue>()
+                                            .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                                }
+                                DENG_ASSERT(map < int(hubRec->geta("map").size()));
+                                Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
+
+                                int exit = 0;
+                                FINDBEGIN;
+                                forever
+                                {
+                                    READLABEL;
+                                    RV_URI("ID", mapRec["id"], "Maps")
+                                    RV_INT("Warp Number", mapRec["warpNumber"])
+                                    if(ISLABEL("Exit"))
+                                    {
+                                        defn::MapGraphNode mgNodeDef(mapRec);
+
+                                        // Add another exit.
+                                        if(exit >= mgNodeDef.exitCount())
+                                        {
+                                            mgNodeDef.addExit();
+                                        }
+                                        DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                        Record &exitRec = mgNodeDef.exit(exit);
+
+                                        FINDBEGIN;
+                                        forever
+                                        {
+                                            READLABEL;
+                                            RV_STR("ID", exitRec["id"])
+                                            RV_URI("Target Map", exitRec["targetMap"], "Maps")
+                                            RV_END
+                                            CHECKSC;
+                                        }
+                                        exit++;
+                                    }
+                                    else RV_END
+                                    CHECKSC;
+                                }
+                                map++;
+                            }
+                            else RV_END
+                            CHECKSC;
+                        }
+                        hub++;
+                    }
+                    else if(ISLABEL("Map"))
+                    {
+                        // Add another none-hub map.
+                        if(notHubMap >= int(epsd->geta("map").size()))
+                        {
+                            QScopedPointer<Record> map(new Record);
+                            defn::MapGraphNode(*map).resetToDefaults();
+                            (*epsd)["map"].value<ArrayValue>()
+                                    .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                        }
+                        DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
+                        Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
+
+                        int exit = 0;
+                        FINDBEGIN;
+                        forever
+                        {
+                            READLABEL;
+                            RV_URI("ID", mapRec["id"], "Maps")
+                            RV_INT("Warp Number", mapRec["warpNumber"])
+                            if(ISLABEL("Exit"))
+                            {
+                                defn::MapGraphNode mgNodeDef(mapRec);
+
+                                // Add another exit.
+                                if(exit >= mgNodeDef.exitCount())
+                                {
+                                    mgNodeDef.addExit();
+                                }
+                                DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                Record &exitRec = mgNodeDef.exit(exit);
+
+                                FINDBEGIN;
+                                forever
+                                {
+                                    READLABEL;
+                                    RV_STR("ID", exitRec["id"])
+                                    RV_URI("Target Map", exitRec["targetMap"], "Maps")
+                                    RV_END
+                                    CHECKSC;
+                                }
+                                exit++;
+                            }
+                            else RV_END
+                            CHECKSC;
+                        }
+                        notHubMap++;
+                    }
+                    else RV_END
                     CHECKSC;
                 }
 

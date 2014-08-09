@@ -36,6 +36,7 @@ void Episode::resetToDefaults()
     def().addText("menuImage", "");     // URI. None.
     def().addText("menuShortcut", "");  // Key name. None.
     def().addArray("hub", new ArrayValue);
+    def().addArray("map", new ArrayValue);
 }
 
 Record &Episode::addHub()
@@ -76,6 +77,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
     de::Uri const mapUri(mapId, RC_NULL);
     if(!mapUri.path().isEmpty())
     {
+        // First, try the hub maps.
         for(int i = 0; i < hubCount(); ++i)
         {
             Record const &hubRec = hub(i);
@@ -86,6 +88,15 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
                 {
                     return &mapGraphNode;
                 }
+            }
+        }
+        // Try the non-hub maps.
+        foreach(Value *mapIt, geta("map").elements())
+        {
+            Record &mapGraphNode = mapIt->as<RecordValue>().dereference();
+            if(mapUri == de::Uri(mapGraphNode.gets("id"), RC_NULL))
+            {
+                return &mapGraphNode;
             }
         }
     }
