@@ -124,8 +124,8 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         typedef internal::Cache<Data> Cache;
 
         Bank *bank;                     ///< Bank that owns the data.
-        std::auto_ptr<IData> data;      ///< Non-NULL for in-memory items.
-        std::auto_ptr<ISource> source;  ///< Always required.
+        std::unique_ptr<IData> data;    ///< Non-NULL for in-memory items.
+        std::unique_ptr<ISource> source;///< Always required.
         IByteArray *serial;             ///< Serialized representation (if one is present; not owned).
         Cache *cache;                   ///< Current cache for the data (never NULL).
         Time accessedAt;
@@ -581,7 +581,7 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
 
     void beginJob(Job *job, Importance importance)
     {
-        if(!isThreaded())
+        if(!isThreaded() || importance == ImmediatelyInCurrentThread)
         {
             // Execute the job immediately.
             QScopedPointer<Job> j(job);
@@ -656,13 +656,13 @@ DENG2_OBSERVES(Loop, Iteration) // notifications from other threads sent via mai
         beginJob(new Job(self, Job::Load, path), importance);
     }
 
-    void unload(Path const &path, CacheLevel toLevel)
+    void unload(Path const &path, CacheLevel toLevel, Importance importance)
     {
         if(toLevel < InMemory)
         {
             Job::Task const task = (toLevel == InHotStorage && serialCache?
                                     Job::Serialize : Job::Unload);
-            beginJob(new Job(self, task, path), Immediately);
+            beginJob(new Job(self, task, path), importance);
         }
     }
 
@@ -812,13 +812,20 @@ bool Bank::has(DotPath const &path) const
 dint Bank::allItems(Names &names) const
 {
     names.clear();
-    PathTree::FoundPaths paths;
-    d->items.findAllPaths(paths, PathTree::NoBranch);
-    DENG2_FOR_EACH(PathTree::FoundPaths, i, paths)
-    {
-        names.insert(Path(*i).withSeparators('.'));
-    }
+    iterate([&names] (DotPath const &path) {
+        names.insert(path.toString());
+    });
     return dint(names.size());
+}
+
+void Bank::iterate(std::function<void (DotPath const &)> func) const
+{
+    PathTree::FoundPaths paths;
+    d->items.findAllPaths(paths, PathTree::NoBranch, '.');
+    foreach(String const &path, paths)
+    {
+        func(path);
+    }
 }
 
 PathTree const &Bank::index() const
@@ -865,7 +872,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     LOG_RES_XVERBOSE("Loading \"%s\"...") << path;
 
     Time requestedAt;
-    d->load(path, Immediately);
+    d->load(path, BeforeQueued);
     item.wait();
 
     TimeDelta const waitTime = requestedAt.since();
@@ -886,12 +893,24 @@ Bank::IData &Bank::data(DotPath const &path) const
     return *item.data;
 }
 
-void Bank::unload(DotPath const &path, CacheLevel toLevel)
+bool Bank::isLoaded(DotPath const &path) const
 {
-    d->unload(path, toLevel);
+    Instance::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
+    DENG2_GUARD(item);
+    return bool(item.data);
+}
+
+void Bank::unload(DotPath const &path, CacheLevel toLevel, Importance importance)
+{
+    d->unload(path, toLevel, importance);
 }
 
 void Bank::unloadAll(CacheLevel maxLevel)
+{
+    return unloadAll(AfterQueued, maxLevel);
+}
+
+void Bank::unloadAll(Importance importance, CacheLevel maxLevel)
 {
     if(maxLevel >= InMemory) return;
 
@@ -899,13 +918,13 @@ void Bank::unloadAll(CacheLevel maxLevel)
     allItems(names);
     DENG2_FOR_EACH(Names, i, names)
     {
-        unload(*i, maxLevel);
+        unload(*i, maxLevel, importance);
     }
 }
 
 void Bank::clearFromCache(DotPath const &path)
 {
-    d->unload(path, InColdStorage);
+    d->unload(path, InColdStorage, AfterQueued);
 }
 
 void Bank::purge()

@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <set>
+#include <functional>
 
 #include "../libcore.h"
 #include "../DotPath"
@@ -125,8 +126,9 @@ public:
 
     enum Importance
     {
-        Immediately,    ///< Request handled before any queued tasks.
-        AfterQueued     ///< Request handled after any queued tasks.
+        ImmediatelyInCurrentThread, ///< Request handled in this thread synchronously.
+        BeforeQueued,               ///< Request handled before any queued tasks.
+        AfterQueued                 ///< Request handled after any queued tasks.
     };
 
     enum { Unlimited = -1 };
@@ -260,6 +262,13 @@ public:
     bool has(DotPath const &path) const;
 
     /**
+     * Iterates through the entire contents of the bank.
+     *
+     * @param func  Function that gets called with the path of each item.
+     */
+    void iterate(std::function<void (DotPath const &)> func) const;
+
+    /**
      * Collects a list of the paths of all items in the bank.
      *
      * @param names  Names.
@@ -279,7 +288,7 @@ public:
      * @param path        Identifier of the data.
      * @param importance  When/how to carry out the load request (with BackgroundThread).
      */
-    void load(DotPath const &path, Importance importance = Immediately);
+    void load(DotPath const &path, Importance importance = BeforeQueued);
 
     void loadAll();
 
@@ -287,7 +296,7 @@ public:
      * Returns the data of an item.
      *
      * If the item is presently not in memory, it will first be loaded (using
-     * Immediately; blocks until complete). The data is automatically
+     * BeforeQueued; blocks until complete). The data is automatically
      * marked as used at the current time, so it will not leave the memory
      * cache level until sometime in the future.
      *
@@ -302,6 +311,15 @@ public:
     IData &data(DotPath const &path) const;
 
     /**
+     * Determines if an item is currently loaded (InMemory).
+     *
+     * @param path  Identifier of the item.
+     *
+     * @return @c true if the item is in memory, @c false otherwise.
+     */
+    bool isLoaded(DotPath const &path) const;
+
+    /**
      * Moves a data item to a lower cache level. When using BackgroundThread,
      * this is an asynchronous operation. audienceForLevelChanged is notified
      * when the data has been stored.
@@ -309,14 +327,18 @@ public:
      * @param path     Identifier of the data.
      * @param toLevel  Destination level for the data.
      */
-    void unload(DotPath const &path, CacheLevel toLevel = InHotStorage);
+    void unload(DotPath const &path, CacheLevel toLevel = InHotStorage,
+                Importance importance = AfterQueued);
 
     /**
-     * Moves all data items to a lower cache level.
+     * Moves all data items to a lower cache level. Jobs are done with AfterQueued
+     * importance.
      *
      * @param maxLevel  Maximum cache level for all items.
      */
     void unloadAll(CacheLevel maxLevel = InColdStorage);
+
+    void unloadAll(Importance importance, CacheLevel maxLevel = InColdStorage);
 
     /**
      * Removes an item's cached data from all cache levels.

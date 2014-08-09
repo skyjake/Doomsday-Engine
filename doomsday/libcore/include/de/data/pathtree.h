@@ -69,7 +69,7 @@ public:
     class Node; // forward declaration
 
     typedef QMultiHash<Path::hash_type, Node *> Nodes;
-    typedef QList<String> FoundPaths;
+    typedef StringList FoundPaths;
 
     /**
      * Leaves and branches are stored in separate hashes.
