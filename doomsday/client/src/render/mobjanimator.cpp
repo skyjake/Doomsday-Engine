@@ -82,7 +82,7 @@ void MobjAnimator::advanceTime(TimeDelta const &elapsed)
         // Advance the sequence.
         anim.time += factor * elapsed;
 
-        qDebug() << "advancing" << anim.animId << "time" << anim.time;
+        //qDebug() << "advancing" << anim.animId << "time" << anim.time;
     }
 }
 

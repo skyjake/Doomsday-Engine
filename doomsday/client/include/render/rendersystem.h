@@ -68,6 +68,9 @@ class RenderSystem : public de::System
 public:
     RenderSystem();
 
+    void glInit();
+    void glDeinit();
+
     de::GLShaderBank &shaders();
     de::ImageBank &images();
 

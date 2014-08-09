@@ -47,6 +47,10 @@ public:
 public:
     ModelRenderer();
 
+    void glInit();
+
+    void glDeinit();
+
     /**
      * Provides access to the bank containing available drawable models.
      */

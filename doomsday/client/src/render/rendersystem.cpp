@@ -252,6 +252,16 @@ DENG2_PIMPL(RenderSystem)
 RenderSystem::RenderSystem() : d(new Instance(this))
 {}
 
+void RenderSystem::glInit()
+{
+    d->models.glInit();
+}
+
+void RenderSystem::glDeinit()
+{
+    d->models.glDeinit();
+}
+
 GLShaderBank &RenderSystem::shaders()
 {
     return BaseGuiApp::shaders();

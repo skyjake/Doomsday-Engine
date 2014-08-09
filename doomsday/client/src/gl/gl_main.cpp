@@ -35,6 +35,7 @@
 #include "de_ui.h"
 #include "de_defs.h"
 
+#include "clientapp.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "gl/gl_texmanager.h"
@@ -311,6 +312,8 @@ dd_bool GL_EarlyInit()
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
+    ClientApp::renderSystem().glInit();
+
     gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
@@ -402,6 +405,7 @@ void GL_Shutdown()
             GL_DoUpdate();
         } while(++i < 3);
     }
+    ClientApp::renderSystem().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();

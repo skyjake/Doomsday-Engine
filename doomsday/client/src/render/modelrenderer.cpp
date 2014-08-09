@@ -33,6 +33,7 @@ DENG2_PIMPL(ModelRenderer)
 {
     filesys::AssetObserver observer;
     ModelBank bank;
+    std::unique_ptr<AtlasTexture> modelTextureAtlas;
 
     Instance(Public *i)
         : Base(i)
@@ -40,6 +41,30 @@ DENG2_PIMPL(ModelRenderer)
     {
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
+    }
+
+    void init()
+    {
+        modelTextureAtlas.reset(AtlasTexture::newWithKdTreeAllocator(
+                    Atlas::DefaultFlags,
+                    GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
+
+        // All loaded items should use this atlas.
+        bank.iterate([this] (DotPath const &path)
+        {
+            if(bank.isLoaded(path))
+            {
+                bank.model(path).setAtlas(*modelTextureAtlas);
+            }
+        });
+    }
+
+    void deinit()
+    {
+        // GL resources must be accessed from the main thread only.
+        bank.unloadAll(Bank::ImmediatelyInCurrentThread);
+
+        modelTextureAtlas.reset();
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -68,6 +93,12 @@ DENG2_PIMPL(ModelRenderer)
      */
     void bankLoaded(DotPath const &path)
     {
+        // Models use the shared atlas.
+        if(modelTextureAtlas)
+        {
+            bank.model(path).setAtlas(*modelTextureAtlas);
+        }
+
         auto const asset = App::asset(path);
 
         // Set up the animation sequences for states.
@@ -97,6 +128,16 @@ DENG2_PIMPL(ModelRenderer)
 
 ModelRenderer::ModelRenderer() : d(new Instance(this))
 {}
+
+void ModelRenderer::glInit()
+{
+    d->init();
+}
+
+void ModelRenderer::glDeinit()
+{
+    d->deinit();
+}
 
 ModelBank &ModelRenderer::bank()
 {
