@@ -5,7 +5,7 @@ Header { Version = 6; }
 
 Episode {
   Id = "1";
-  Start Map = "MAP01";
+  Start Map = "E1M1";
   
   Map {
     Id = "E1M1";
