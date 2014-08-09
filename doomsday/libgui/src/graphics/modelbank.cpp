@@ -35,7 +35,7 @@ DENG2_PIMPL(ModelBank)
     struct Data : public IData
     {
         ModelDrawable model;
-        QScopedPointer<IAnimation> animation;
+        std::unique_ptr<IUserData> userData;
 
         Data(String const &path)
         {
@@ -43,8 +43,7 @@ DENG2_PIMPL(ModelBank)
         }
     };
 
-    Instance(Public *i) : Base(i)
-    {}
+    Instance(Public *i) : Base(i) {}
 };
 
 ModelBank::ModelBank() : Bank("ModelBank", BackgroundThread)
@@ -60,14 +59,20 @@ ModelDrawable &ModelBank::model(DotPath const &id)
     return data(id).as<Instance::Data>().model;
 }
 
-void ModelBank::setAnimation(DotPath const &id, IAnimation *anim)
+void ModelBank::setUserData(DotPath const &id, IUserData *anim)
 {
-    data(id).as<Instance::Data>().animation.reset(anim);
+    data(id).as<Instance::Data>().userData.reset(anim);
 }
 
-ModelBank::IAnimation const *ModelBank::animation(DotPath const &id) const
+ModelBank::IUserData const *ModelBank::userData(DotPath const &id) const
 {
-    return data(id).as<Instance::Data>().animation.data();
+    return data(id).as<Instance::Data>().userData.get();
+}
+
+ModelBank::ModelWithData ModelBank::modelAndData(DotPath const &id)
+{
+    auto &item = data(id).as<Instance::Data>();
+    return ModelWithData(&item.model, item.userData.get());
 }
 
 Bank::IData *ModelBank::loadFromSource(ISource &source)

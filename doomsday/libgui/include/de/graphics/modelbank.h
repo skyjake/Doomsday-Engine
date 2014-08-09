@@ -36,14 +36,16 @@ class LIBGUI_PUBLIC ModelBank : public Bank
 {
 public:
     /**
-     * Interface for animation-related data for a model. @ingroup gl
+     * Interface for auxiliary data for a loaded model. @ingroup gl
      */
-    class LIBGUI_PUBLIC IAnimation
+    class LIBGUI_PUBLIC IUserData
     {
     public:
-        virtual ~IAnimation() {}
+        virtual ~IUserData() {}
         DENG2_AS_IS_METHODS()
     };
+
+    typedef std::pair<ModelDrawable *, IUserData *> ModelWithData;
 
 public:
     ModelBank();
@@ -52,9 +54,16 @@ public:
 
     ModelDrawable &model(DotPath const &id);
 
-    void setAnimation(DotPath const &id, IAnimation *anim);
+    /**
+     * Sets the user data of a loaded model.
+     * @param id        Model identifier.
+     * @param userData  User data object. Ownership taken.
+     */
+    void setUserData(DotPath const &id, IUserData *userData);
 
-    IAnimation const *animation(DotPath const &id) const;
+    IUserData const *userData(DotPath const &id) const;
+
+    ModelWithData modelAndData(DotPath const &id);
 
 protected:
     IData *loadFromSource(ISource &source);
