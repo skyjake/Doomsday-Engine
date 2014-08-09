@@ -420,8 +420,11 @@ public:
         return m;
     }
     static Matrix4 lookAt(Vec3 const &target, Vec3 const &eyePos, Vec3 const &up) {
+        return frame(target - eyePos, up) * translate(-eyePos);
+    }
+    static Matrix4 frame(Vec3 const &front, Vec3 const &up) {
         Matrix4 m(Zero);
-        Vec3 f = (target - eyePos).normalize();
+        Vec3 f = front.normalize();
         Vec3 s = f.cross(up.normalize());
         Vec3 u = s.cross(f);
         m[0]  =  s.x;
@@ -434,7 +437,7 @@ public:
         m[9]  =  u.z;
         m[10] = -f.z;
         m[15] = Type(1);
-        return m * translate(-eyePos);
+        return m;
     }
 
 private:
