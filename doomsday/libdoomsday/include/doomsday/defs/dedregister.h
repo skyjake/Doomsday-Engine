@@ -103,7 +103,7 @@ public:
     de::Record const & operator [] (int index) const;
 
     de::Record *       tryFind(de::String const &key, de::String const &value);
-    de::Record const * tryFind(de::String const &key, de::String const &value) const;
+    de::Record const * tryFind(de::String const &key, de::String value) const;
 
     de::Record &       find(de::String const &key, de::String const &value);
     de::Record const & find(de::String const &key, de::String const &value) const;

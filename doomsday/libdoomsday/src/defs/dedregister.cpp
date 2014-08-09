@@ -304,16 +304,21 @@ Record const &DEDRegister::operator [] (int index) const
 
 Record *DEDRegister::tryFind(String const &key, String const &value)
 {
-    if(!has(key, value)) return 0;
-    RecordValue &val = d->lookup(key).element(TextValue(value)).as<RecordValue>();
-    return val.record();
+    return const_cast<Record *>(const_cast<DEDRegister const *>(this)->tryFind(key, value));
 }
 
-Record const *DEDRegister::tryFind(String const &key, String const &value) const
+Record const *DEDRegister::tryFind(String const &key, String value) const
 {
-    if(!has(key, value)) return 0;
-    RecordValue const &val = d->lookup(key).element(TextValue(value)).as<RecordValue>();
-    return val.record();
+    auto foundKey = d->keys.constFind(key);
+    if(foundKey == d->keys.constEnd()) return 0;
+
+    if(!foundKey.value().flags.testFlag(CaseSensitive))
+    {
+        // Case insensitive lookup is done in lower case.
+        value = value.lower();
+    }
+
+    return d->lookup(key).element(TextValue(value)).as<RecordValue>().record();
 }
 
 Record &DEDRegister::find(String const &key, String const &value)
