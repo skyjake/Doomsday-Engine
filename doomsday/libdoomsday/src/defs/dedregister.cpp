@@ -102,6 +102,36 @@ DENG2_PIMPL(DEDRegister)
         return (*names)[keyName + "Lookup"].value<DictionaryValue>();
     }
 
+    template <typename Type>
+    Type lookupOperation(String const &key, String value,
+                         std::function<Type (DictionaryValue const &, String)> operation) const
+    {
+        auto foundKey = keys.constFind(key);
+        if(foundKey == keys.constEnd()) return 0;
+
+        if(!foundKey.value().flags.testFlag(CaseSensitive))
+        {
+            // Case insensitive lookup is done in lower case.
+            value = value.lower();
+        }
+
+        return operation(lookup(key), value);
+    }
+
+    Record const *tryFind(String const &key, String const &value) const
+    {
+        return lookupOperation<Record const *>(key, value, [] (DictionaryValue const &lut, String v) {
+            return lut.element(TextValue(v)).as<RecordValue>().record();
+        });
+    }
+
+    bool has(String const &key, String const &value) const
+    {
+        return lookupOperation<bool>(key, value, [] (DictionaryValue const &lut, String v) {
+            return lut.contains(TextValue(v));
+        });
+    }
+
     Record &append()
     {
         Record *sub = new Record;
@@ -235,12 +265,6 @@ DENG2_PIMPL(DEDRegister)
         removeFromLookup(key.name(), oldValue, *parents[&key]);
         addToLookup(key.name(), newValue, *parents[&key]);
     }
-
-    bool has(String const &key, String const &value) const
-    {
-        if(!keys.contains(key)) return false;
-        return lookup(key).contains(TextValue(value));
-    }
 };
 
 DEDRegister::DEDRegister(Record &names) : d(new Instance(this, names))
@@ -304,21 +328,12 @@ Record const &DEDRegister::operator [] (int index) const
 
 Record *DEDRegister::tryFind(String const &key, String const &value)
 {
-    return const_cast<Record *>(const_cast<DEDRegister const *>(this)->tryFind(key, value));
+    return const_cast<Record *>(d->tryFind(key, value));
 }
 
 Record const *DEDRegister::tryFind(String const &key, String value) const
 {
-    auto foundKey = d->keys.constFind(key);
-    if(foundKey == d->keys.constEnd()) return 0;
-
-    if(!foundKey.value().flags.testFlag(CaseSensitive))
-    {
-        // Case insensitive lookup is done in lower case.
-        value = value.lower();
-    }
-
-    return d->lookup(key).element(TextValue(value)).as<RecordValue>().record();
+    return d->tryFind(key, value);
 }
 
 Record &DEDRegister::find(String const &key, String const &value)
