@@ -41,8 +41,13 @@ public:
             : name(n), def(&d) {}
     };
     typedef QList<AnimSequence> AnimSequences;
-    struct StateAnims : public QMap<de::String, AnimSequences>,
-                        public de::ModelBank::IAnimation {};
+    struct StateAnims : public QMap<de::String, AnimSequences> {};
+
+    struct AuxiliaryData : public de::ModelBank::IUserData
+    {
+        StateAnims animations;
+        de::Matrix4f transformation;
+    };
 
 public:
     ModelRenderer();
@@ -57,6 +62,14 @@ public:
     de::ModelBank &bank();
 
     StateAnims const *animations(de::DotPath const &modelId) const;
+
+    /**
+     * Provides access to the common model-view-projection matrix used for rendering
+     * models.
+     *
+     * @return Matrix uniform.
+     */
+    de::GLUniform &uMvpMatrix();
 
 private:
     DENG2_PRIVATE(d)

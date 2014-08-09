@@ -90,7 +90,7 @@ ddouble MobjAnimator::currentTime(int index) const
 {
     // Mobjs think on sharp ticks only, however we need to ensure time advances on
     // every frame for smooth animation.
-    return ModelDrawable::Animator::currentTime(index) + frameTimePos;
+    return ModelDrawable::Animator::currentTime(index);// + frameTimePos;
 
     /// @todo Should prevent time from passing the end of the sequence?
 }

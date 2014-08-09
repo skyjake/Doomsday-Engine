@@ -103,6 +103,8 @@ public:
 
     de::ModelDrawable::Animator const *animator() const;
 
+    de::Matrix4f const &modelTransformation() const;
+
 private:
     DENG2_PRIVATE(d)
 };

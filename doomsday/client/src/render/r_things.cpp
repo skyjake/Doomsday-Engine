@@ -483,8 +483,9 @@ void R_ProjectSprite(mobj_t *mo)
                                       viewAlign, gzt, yaw, 0, pitch, 0);
             vis->light = VisEntityLighting(ambientColor, vLightListIdx);
 
+            vis->data.model2.object   = mo;
             vis->data.model2.animator = animator;
-            vis->data.model2.model = &animator->model();
+            vis->data.model2.model    = &animator->model();
         }
         else
         {

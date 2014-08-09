@@ -62,6 +62,7 @@ struct drawmodelparams_t
 
 struct drawmodel2params_t
 {
+    struct mobj_s const *object;
     de::ModelDrawable const *model;
     de::ModelDrawable::Animator const *animator;
 };

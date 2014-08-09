@@ -44,6 +44,7 @@ DENG2_PIMPL(ClientMobjThinkerData)
     Flags flags;
     std::unique_ptr<RemoteSync> sync;
     std::unique_ptr<MobjAnimator> animator;
+    Matrix4f modelMatrix;
 
     Instance(Public *i) : Base(i)
     {}
@@ -95,8 +96,18 @@ DENG2_PIMPL(ClientMobjThinkerData)
         if(modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            ModelDrawable const &model = modelBank().model(modelId());
+            ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
+            ModelDrawable &model = *loaded.first;
             animator.reset(new MobjAnimator(modelId(), model));
+
+            // The basic transformation of the model.
+            modelMatrix = loaded.second->as<ModelRenderer::AuxiliaryData>().transformation;
+
+            Vector3f dims = modelMatrix * model.dimensions();
+
+            // Scale to thing height.
+            // TODO: This should be optional (but the default behavior).
+            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y) * modelMatrix;
         }
     }
 
@@ -197,6 +208,11 @@ ModelDrawable::Animator *ClientMobjThinkerData::animator()
 ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
+}
+
+Matrix4f const &ClientMobjThinkerData::modelTransformation() const
+{
+    return d->modelMatrix;
 }
 
 void ClientMobjThinkerData::stateChanged(state_t const *previousState)

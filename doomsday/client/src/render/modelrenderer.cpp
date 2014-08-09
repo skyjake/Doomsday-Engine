@@ -17,6 +17,7 @@
  */
 
 #include "render/modelrenderer.h"
+#include "clientapp.h"
 
 #include <de/filesys/AssetObserver>
 #include <de/App>
@@ -26,6 +27,8 @@
 using namespace de;
 
 static String const DEF_ANIMATION("animation");
+static String const DEF_UP_VECTOR("up");
+static String const DEF_FRONT_VECTOR("front");
 
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -33,11 +36,16 @@ DENG2_PIMPL(ModelRenderer)
 {
     filesys::AssetObserver observer;
     ModelBank bank;
-    std::unique_ptr<AtlasTexture> modelTextureAtlas;
+    std::unique_ptr<AtlasTexture> atlas;
+    GLProgram program; /// @todo Specific models may want to use a custom program.
+    GLUniform uMvpMatrix;
+    GLUniform uTex;
 
     Instance(Public *i)
         : Base(i)
         , observer("model\\..*") // all model assets
+        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+        , uTex      ("uTex",       GLUniform::Sampler2D)
     {
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
@@ -45,16 +53,22 @@ DENG2_PIMPL(ModelRenderer)
 
     void init()
     {
-        modelTextureAtlas.reset(AtlasTexture::newWithKdTreeAllocator(
+        ClientApp::shaders().build(program, "model.skeletal.normal_emission")
+                << uMvpMatrix
+                << uTex;
+
+        atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                     Atlas::DefaultFlags,
                     GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
+
+        uTex = *atlas;
 
         // All loaded items should use this atlas.
         bank.iterate([this] (DotPath const &path)
         {
             if(bank.isLoaded(path))
             {
-                bank.model(path).setAtlas(*modelTextureAtlas);
+                setupModel(bank.model(path));
             }
         });
     }
@@ -64,7 +78,8 @@ DENG2_PIMPL(ModelRenderer)
         // GL resources must be accessed from the main thread only.
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
 
-        modelTextureAtlas.reset();
+        atlas.reset();
+        program.clear();
     }
 
     void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event)
@@ -85,6 +100,24 @@ DENG2_PIMPL(ModelRenderer)
     }
 
     /**
+     * Configures a ModelDrawable with the appropriate atlas and GL program.
+     *
+     * @param model  Model to configure.
+     */
+    void setupModel(ModelDrawable &model)
+    {
+        if(atlas)
+        {
+            model.setAtlas(*atlas);
+        }
+        else
+        {
+            model.unsetAtlas();
+        }
+        model.setProgram(program);
+    }
+
+    /**
      * When model assets have been loaded, we can parse their metadata to see if there
      * are any animation sequences defined. If so, we'll set up a shared lookup table
      * that determines which sequences to start in which mobj states.
@@ -94,19 +127,29 @@ DENG2_PIMPL(ModelRenderer)
     void bankLoaded(DotPath const &path)
     {
         // Models use the shared atlas.
-        if(modelTextureAtlas)
-        {
-            bank.model(path).setAtlas(*modelTextureAtlas);
-        }
+        setupModel(bank.model(path));
 
         auto const asset = App::asset(path);
+
+        // Prepare the animations for the model.
+        std::unique_ptr<AuxiliaryData> aux(new AuxiliaryData);
+
+        // Determine the coordinate system of the model.
+        Vector3f front(0, 0, 1);
+        Vector3f up   (0, 1, 0);
+        if(asset.has(DEF_FRONT_VECTOR))
+        {
+            front = Vector3f(asset.geta(DEF_FRONT_VECTOR));
+        }
+        if(asset.has(DEF_UP_VECTOR))
+        {
+            up = Vector3f(asset.geta(DEF_UP_VECTOR));
+        }
+        aux->transformation = Matrix4f::frame(front, up);
 
         // Set up the animation sequences for states.
         if(asset.has(DEF_ANIMATION))
         {
-            // Prepare the animations for the model.
-            QScopedPointer<StateAnims> anims(new StateAnims);
-
             auto states = ScriptedInfo::subrecordsOfType("state", asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, state, states)
             {
@@ -114,15 +157,15 @@ DENG2_PIMPL(ModelRenderer)
                 auto seqs = ScriptedInfo::subrecordsOfType("sequence", *state.value());
                 DENG2_FOR_EACH_CONST(Record::Subrecords, seq, seqs)
                 {
-                    (*anims)[state.key()] << AnimSequence(seq.key(), *seq.value());
+                    aux->animations[state.key()] << AnimSequence(seq.key(), *seq.value());
                 }
             }
 
             // TODO: Check for a possible timeline and calculate time factors accordingly.
-
-            // Store the animation sequence lookup in the bank.
-            bank.setAnimation(path, anims.take());
         }
+
+        // Store the animation sequence lookup in the bank.
+        bank.setUserData(path, aux.release());
     }
 };
 
@@ -146,5 +189,17 @@ ModelBank &ModelRenderer::bank()
 
 ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
 {
-    return d->bank.animation(modelId)->maybeAs<StateAnims>();
+    if(auto const *aux = d->bank.userData(modelId)->maybeAs<AuxiliaryData>())
+    {
+        if(!aux->animations.isEmpty())
+        {
+            return &aux->animations;
+        }
+    }
+    return 0;
+}
+
+GLUniform &ModelRenderer::uMvpMatrix()
+{
+    return d->uMvpMatrix;
 }

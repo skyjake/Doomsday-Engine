@@ -28,10 +28,13 @@
 #include "dd_def.h"
 #include "dd_main.h" // App_WorldSystem()
 
+#include "world/p_players.h"
+#include "world/clientmobjthinkerdata.h"
 #include "render/rend_model.h"
 #include "render/rend_main.h"
 #include "render/vlight.h"
 #include "render/vissprite.h"
+#include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "MaterialSnapshot"
@@ -1143,7 +1146,21 @@ void Rend_DrawModel2(vissprite_t const &spr)
 {
     drawmodel2params_t const &p = *VS_MODEL2(&spr);
 
+    ModelRenderer &rend = ClientApp::renderSystem().modelRenderer();
+
+    Matrix4f xf = GL_GetProjectionMatrix() *
+            Rend_GetModelViewMatrix(displayPlayer) *
+            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy()) *
+            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw, Vector3f(0, 1, 0));
+
+    if(p.object)
+    {
+        xf = xf * THINKER_DATA(p.object->thinker, ClientMobjThinkerData).modelTransformation();
+    }
+
     // Set up a suitable matrix for the pose.
+    /// @todo Parts of this matrix can be prepared beforehand.
+    rend.uMvpMatrix() = xf;
 
     // Lighting vectors and ambient color.
 
