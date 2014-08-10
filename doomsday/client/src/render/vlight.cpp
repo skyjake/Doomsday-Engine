@@ -332,16 +332,19 @@ uint R_CollectAffectingLights(collectaffectinglights_params_t const *p)
     return listIdx + 1;
 }
 
-int VL_ListIterator(uint listIdx, int (*callback) (VectorLight const *, void *),
+int VL_ListIterator(uint listIdx,
+                    std::function<int (VectorLight const *, void *)> callback,
                     void *context)
 {
-    if(callback && listIdx != 0 && listIdx <= listCount)
+    if(listIdx != 0 && listIdx <= listCount)
     {
         ListNode *node = lists[listIdx - 1].head;
         while(node)
         {
             if(int result = callback(&node->vlight, context))
+            {
                 return result;
+            }
             node = node->next;
         }
     }

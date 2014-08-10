@@ -22,6 +22,7 @@
 #define DENG_CLIENT_RENDER_VECTORLIGHT_H
 
 #include <de/Vector>
+#include <functional>
 
 #include "world/map.h"
 
@@ -72,7 +73,8 @@ uint R_CollectAffectingLights(collectaffectinglights_params_t const *params);
  *
  * @return  @c 0 iff iteration completed wholly.
  */
-int VL_ListIterator(uint listIdx, int (*callback) (VectorLight const *, void *),
+int VL_ListIterator(uint listIdx,
+                    std::function<int (VectorLight const *, void *)> callback,
                     void *context = 0);
 
 void Rend_DrawVectorLight(VectorLight const *vlight, float alpha);
