@@ -75,6 +75,7 @@ HEADERS += \
     include/doomsday/defs/mapgraphnode.h \
     include/doomsday/defs/mapinfo.h \
     include/doomsday/defs/model.h \
+    include/doomsday/defs/music.h \
     include/doomsday/defs/sky.h \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
@@ -120,6 +121,7 @@ SOURCES += \
     src/defs/mapgraphnode.cpp \
     src/defs/mapinfo.cpp \
     src/defs/model.cpp \
+    src/defs/music.cpp \
     src/defs/sky.cpp \
     src/dualstring.cpp \
     src/filesys/file.cpp \
