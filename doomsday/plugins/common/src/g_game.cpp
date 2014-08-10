@@ -1193,12 +1193,10 @@ static void printMapBanner()
     String const title = G_MapTitle(); // current map
     if(!title.isEmpty())
     {
-        String text = String("Map: ") + gameMapUri.path().asText();
-#if __JHEXEN__
-        Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-        text += String(" (%1)").arg(mapInfo? mapInfo->geti("warpTrans") : 0);
-#endif
-        text += String(" - " DE2_ESC(b)) + title;
+        String text = String("Map: %1 (%2) - " DE2_ESC(b))
+                               .arg(gameMapUri.path().asText())
+                               .arg(COMMON_GAMESESSION->mapGraphNodeDef()->geti("warpNumber"))
+                      + title;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
