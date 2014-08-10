@@ -69,7 +69,21 @@ public:
      *
      * @return Matrix uniform.
      */
-    de::GLUniform &uMvpMatrix();
+    //de::GLUniform &uMvpMatrix();
+
+    /**
+     * Sets up the transformation matrices.
+     *
+     * @param modelToLocal  Transformation from model space to the object's local space
+     *                      (object's local frame in world space).
+     * @param localToView   Transformation from local space to projected view space.
+     */
+    void setTransformation(de::Matrix4f const &modelToLocal,
+                           de::Matrix4f const &localToView);
+
+    void clearLights();
+
+    void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);
 
 private:
     DENG2_PRIVATE(d)

@@ -19,6 +19,7 @@ group model {
             varying highp vec3 vNormal;
 
             void main(void) {
+                // Bone transformation.
                 highp mat4 bone =
                     uBoneMatrices[int(aBoneIDs.x + 0.5)] * aBoneWeights.x +
                     uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y +
@@ -26,18 +27,33 @@ group model {
                     uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;
                 highp vec4 modelPos = bone * aVertex;
                 gl_Position = uMvpMatrix * modelPos;
+                
                 vUV = aBounds.xy + aUV * aBounds.zw;
                 vColor = aColor;
                 vNormal = (bone * vec4(aNormal, 0.0)).xyz;
             }"
         fragment = "
             uniform sampler2D uTex;
+            uniform highp vec4 uLightDirs[4];
+            uniform highp vec4 uLightIntensities[4];
             
             varying highp vec2 vUV;
             varying highp vec3 vNormal;
+            
+            highp vec4 colorFromLight(int index, highp vec3 normal) {
+                highp float d = dot(normal, uLightDirs[index].xyz);
+                return max(d * uLightIntensities[index],
+                           vec4(0.0, 0.0, 0.0, 0.0));
+            }
 
             void main(void) {
-                gl_FragColor = texture2D(uTex, vUV);
+                highp vec3 normal = normalize(vNormal);
+                gl_FragColor = //texture2D(uTex, vUV);
+                    colorFromLight(0, normal) + 
+                    colorFromLight(1, normal) + 
+                    colorFromLight(2, normal) + 
+                    colorFromLight(3, normal);
+                gl_FragColor.a = 1.0; 
             }"
     }
 }

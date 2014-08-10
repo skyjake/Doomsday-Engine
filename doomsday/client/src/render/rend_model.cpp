@@ -1144,25 +1144,33 @@ TextureVariantSpec const &Rend_ModelShinyTextureSpec()
 
 void Rend_DrawModel2(vissprite_t const &spr)
 {
-    drawmodel2params_t const &p = *VS_MODEL2(&spr);
-
     ModelRenderer &rend = ClientApp::renderSystem().modelRenderer();
+    drawmodel2params_t const &p = spr.data.model2;
 
-    Matrix4f xf = GL_GetProjectionMatrix() *
-            Rend_GetModelViewMatrix(displayPlayer) *
-            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy()) *
-            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw, Vector3f(0, 1, 0));
+    Matrix4f viewMat =
+            Viewer_Matrix() *
+            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
 
+    Matrix4f localMat =
+            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset :
+                                                   spr.pose.yaw,
+                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
     if(p.object)
     {
-        xf = xf * THINKER_DATA(p.object->thinker, ClientMobjThinkerData).modelTransformation();
+        localMat = localMat * THINKER_DATA(p.object->thinker, ClientMobjThinkerData)
+                .modelTransformation();
     }
 
     // Set up a suitable matrix for the pose.
-    /// @todo Parts of this matrix can be prepared beforehand.
-    rend.uMvpMatrix() = xf;
+    rend.setTransformation(localMat, viewMat);
 
     // Lighting vectors and ambient color.
+    rend.clearLights();
+    VL_ListIterator(spr.light.vLightListIdx, [&rend] (VectorLight const *light, void *) -> int {
+        // Use this when drawing the model.
+        rend.addLight(light->direction.xzy(), light->color);
+        return false;
+    }, nullptr);
 
     // Draw the model using the current animation state.
     p.model->draw(p.animator);

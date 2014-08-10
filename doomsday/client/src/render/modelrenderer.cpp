@@ -17,6 +17,9 @@
  */
 
 #include "render/modelrenderer.h"
+#include "gl/gl_main.h"
+#include "render/rend_main.h"
+#include "world/p_players.h"
 #include "clientapp.h"
 
 #include <de/filesys/AssetObserver>
@@ -34,18 +37,27 @@ DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 , DENG2_OBSERVES(Bank, Load)
 {
+#define MAX_LIGHTS  4
+
     filesys::AssetObserver observer;
     ModelBank bank;
     std::unique_ptr<AtlasTexture> atlas;
     GLProgram program; /// @todo Specific models may want to use a custom program.
     GLUniform uMvpMatrix;
     GLUniform uTex;
+    GLUniform uLightDirs;
+    GLUniform uLightIntensities;
+    Matrix4f inverseLocal;
+    int lightCount;
 
     Instance(Public *i)
         : Base(i)
         , observer("model\\..*") // all model assets
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         , uTex      ("uTex",       GLUniform::Sampler2D)
+        , uLightDirs("uLightDirs", GLUniform::Vec4Array, MAX_LIGHTS)
+        , uLightIntensities("uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS)
+        , lightCount(0)
     {
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
@@ -55,7 +67,9 @@ DENG2_PIMPL(ModelRenderer)
     {
         ClientApp::shaders().build(program, "model.skeletal.normal_emission")
                 << uMvpMatrix
-                << uTex;
+                << uTex
+                << uLightDirs
+                << uLightIntensities;
 
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                     Atlas::DefaultFlags,
@@ -199,7 +213,35 @@ ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return 0;
 }
 
-GLUniform &ModelRenderer::uMvpMatrix()
+void ModelRenderer::setTransformation(Matrix4f const &modelToLocal, Matrix4f const &localToView)
+{
+    d->uMvpMatrix   = localToView * modelToLocal;
+    d->inverseLocal = modelToLocal.inverse();
+}
+
+void ModelRenderer::clearLights()
+{
+    d->lightCount = 0;
+
+    for(int i = 0; i < MAX_LIGHTS; ++i)
+    {
+        d->uLightDirs       .set(i, Vector4f());
+        d->uLightIntensities.set(i, Vector4f());
+    }
+}
+
+void ModelRenderer::addLight(Vector3f const &direction, Vector3f const &intensity)
+{
+    if(d->lightCount == MAX_LIGHTS) return;
+
+    int idx = d->lightCount;
+    d->uLightDirs       .set(idx, Vector4f((d->inverseLocal * direction).normalize(), 1));
+    d->uLightIntensities.set(idx, Vector4f(intensity, 0));
+
+    d->lightCount++;
+}
+
+/*GLUniform &ModelRenderer::uMvpMatrix()
 {
     return d->uMvpMatrix;
-}
+}*/
