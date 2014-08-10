@@ -43,6 +43,7 @@
 #include "doomsday/defs/mapgraphnode.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
+#include "doomsday/defs/music.h"
 #include "doomsday/defs/sky.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
@@ -775,6 +776,7 @@ DENG2_PIMPL(DEDParser)
         int   prevMaterialDefIdx = -1; // For "Copy".
         int   prevModelDefIdx = -1; // For "Copy".
         int   prevMapInfoDefIdx = -1; // For "Copy".
+        int   prevMusicDefIdx = -1; // For "Copy".
         int   prevSkyDefIdx = -1; // For "Copy".
         int   prevDetailDefIdx = -1; // For "Copy".
         int   prevGenDefIdx = -1; // For "Copy".
@@ -1731,25 +1733,31 @@ DENG2_PIMPL(DEDParser)
             }
 
             if(ISTOKEN("Music"))
-            {   // A new music.
-                ded_music_t*        mus;
+            {
+                // New musics are appended to the end of the list.
+                idx = ded->addMusic();
+                Record &mus = ded->musics[idx];
 
-                idx = DED_AddMusic(ded, "");
-                mus = &ded->music[idx];
+                if(prevMusicDefIdx >= 0)
+                {
+                    if(bCopyNext) ded->musics.copy(prevMusicDefIdx, mus);
+                }
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", mus->id)
-                    RV_STR("Lump", mus->lumpName)
-                    RV_URI("File name", &mus->path, "Music")
-                    RV_URI("File", &mus->path, "Music")
-                    RV_URI("Ext", &mus->path, "Music") // Both work.
-                    RV_INT("CD track", mus->cdTrack)
+                    RV_STR("ID", mus["id"])
+                    RV_STR("Lump", mus["lumpName"])
+                    RV_URI("File name", mus["path"], "Music")
+                    RV_URI("File", mus["path"], "Music")
+                    RV_URI("Ext", mus["path"], "Music") // Both work.
+                    RV_INT("CD track", mus["cdTrack"])
                     RV_END
                     CHECKSC;
                 }
+
+                prevMusicDefIdx = idx;
             }
 
             if(ISTOKEN("Sky"))

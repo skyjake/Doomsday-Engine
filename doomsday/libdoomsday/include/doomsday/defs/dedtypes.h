@@ -46,7 +46,7 @@ typedef ded_stringid_t ded_string_t;
 typedef ded_stringid_t ded_mobjid_t;
 typedef ded_stringid_t ded_stateid_t;
 typedef ded_stringid_t ded_soundid_t;
-typedef ded_stringid_t ded_musicid_t;
+//typedef ded_stringid_t ded_musicid_t;
 typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
@@ -331,6 +331,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     }
 } ded_sound_t;
 
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
@@ -345,7 +346,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
     }
 } ded_music_t;
 
-#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_skylayer_s {
     ded_flags_t     flags;
     de::Uri*        material;
@@ -405,9 +405,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
         }
     }
 } ded_sky_t;
-#endif
 
-#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
     de::Uri*        uri; // ID of the map (e.g. E2M3 or MAP21).
     ded_string_t    name; // Name of the map.

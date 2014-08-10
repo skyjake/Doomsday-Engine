@@ -86,7 +86,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_sound_t> sounds;
 
     // Music.
-    DEDArray<ded_music_t> music;
+    //DEDArray<ded_music_t> music;
+    DEDRegister musics;
 
     // Map information.
     //DEDArray<ded_mapinfo_t> mapInfo;
@@ -144,6 +145,8 @@ public:
 
     int addModel();
 
+    int addMusic();
+
     int addSky();
 
     //ded_flag_t *getFlag(char const *flag) const;
@@ -181,19 +184,17 @@ public:
      * @param name  Sound name.
      * @return If the name is not found, returns the NULL sound index (zero).
      */
-    int getSoundNumForName(const char* name) const;
+    int getSoundNumForName(char const *name) const;
 
-    ded_music_t *getMusic(char const *id) const;
+    int getMusicNum(char const *id) const;
 
-    int getMusicNum(const char* id) const;
+    ded_value_t *getValueById(char const *id) const;
 
-    ded_value_t* getValueById(char const* id) const;
+    ded_value_t *getValueByUri(de::Uri const &uri) const;
 
-    ded_value_t* getValueByUri(de::Uri const &uri) const;
+    ded_compositefont_t *findCompositeFontDef(de::Uri const &uri) const;
 
-    ded_compositefont_t* findCompositeFontDef(de::Uri const& uri) const;
-
-    ded_compositefont_t* getCompositeFont(char const* uriCString) const;
+    ded_compositefont_t *getCompositeFont(char const *uriCString) const;
 
 protected:
     void release();
@@ -219,7 +220,7 @@ LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
 //int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
-LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
+//LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
 //int             DED_AddMapInfo(ded_t* ded, char const* uri);
 int             DED_AddText(ded_t* ded, char const* id);
 int             DED_AddTextureEnv(ded_t* ded, char const* id);
