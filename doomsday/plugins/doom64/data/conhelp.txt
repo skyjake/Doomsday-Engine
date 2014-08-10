@@ -88,9 +88,6 @@ desc = Pause the game.
 [god]
 desc = God mode.
 
-[notarget]
-desc = Enemies will not target the player (cheat).
-
 [noclip]
 desc = No movement clipping (walk through walls).
     
