@@ -43,10 +43,28 @@ namespace internal {
         return "Textures:SKY1";
     }
 
+    class Music : public de::Record
+    {
+    public:
+        Music() : Record() {
+            resetToDefaults();
+        }
+        Music &operator = (Music const &other) {
+            static_cast<Record &>(*this) = other;
+            return *this;
+        }
+
+        void resetToDefaults() {
+            // Add all expected fields with their default values.
+            addText   ("id", "");
+            addNumber ("cdTrack", 0);
+        }
+    };
+
     class MapInfo : public de::Record
     {
     public:
-        MapInfo::MapInfo() : Record() {
+        MapInfo() : Record() {
             resetToDefaults();
         }
         MapInfo &operator = (MapInfo const &other) {
@@ -100,6 +118,8 @@ namespace internal {
      */
     struct HexDefs
     {
+        typedef std::map<std::string, Music> Musics;
+        Musics musics;
         typedef std::map<std::string, EpisodeInfo> EpisodeInfos;
         EpisodeInfos episodeInfos;
         typedef std::map<std::string, MapInfo> MapInfos;
@@ -107,8 +127,27 @@ namespace internal {
 
         void clear()
         {
+            musics.clear();
             episodeInfos.clear();
             mapInfos.clear();
+        }
+
+        /**
+         * @param id  Identifier of the music to lookup info for.
+         *
+         * @return  Music for the specified @a id; otherwise @c 0 (not found).
+         */
+        Music *getMusic(String id)
+        {
+            if(!id.isEmpty())
+            {
+                Musics::iterator found = musics.find(id.toLower().toStdString());
+                if(found != musics.end())
+                {
+                    return &found->second;
+                }
+            }
+            return 0; // Not found.
         }
 
         /**
@@ -161,7 +200,7 @@ namespace internal {
         DENG2_UNUSED(episode);
 #elif __JDOOM__
         if(gameModeBits & GM_ANY_DOOM2)
-            mapId = de::String("Map%1").arg(map+1, 2, 10, QChar('0'));
+            mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
         else
             mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
 #elif  __JHERETIC__
@@ -197,24 +236,6 @@ namespace internal {
         return 0;
     }
 
-#define MUSIC_STARTUP      "startup"
-#define MUSIC_ENDING1      "hall"
-#define MUSIC_ENDING2      "orb"
-#define MUSIC_ENDING3      "chess"
-#define MUSIC_INTERMISSION "hub"
-#define MUSIC_TITLE        "hexen"
-
-    /**
-     * Update the Music definition @a musicId with the specified CD @a track number.
-     */
-    static void setMusicCDTrack(char const *musicId, int track)
-    {
-        LOG_RES_VERBOSE("setMusicCDTrack: musicId=%s, track=%i") << musicId << track;
-
-        //int cdTrack = track;
-        //Def_Set(DD_DEF_MUSIC, Def_Get(DD_DEF_MUSIC, musicId, 0), DD_CD_TRACK, &cdTrack);
-    }
-
     /**
      * Parser for Hexen's MAPINFO definition lumps.
      */
@@ -224,7 +245,20 @@ namespace internal {
         /// Base class for all parse-related errors. @ingroup errors
         DENG2_ERROR(ParseError);
 
-        MapInfoParser(HexDefs &db) : db(db), defaultMap(0) {}
+        /// Mappings from symbolic song name to music id.
+        typedef QMap<String, String> MusicMappings;
+        MusicMappings musicMap;
+
+        MapInfoParser(HexDefs &db) : db(db), defaultMap(0)
+        {
+            // Init the music id mappings.
+            musicMap.insert("end1",         "hall");
+            musicMap.insert("end2",         "orb");
+            musicMap.insert("end3",         "chess");
+            musicMap.insert("intermission", "hub");
+            musicMap.insert("title",        "title");
+            musicMap.insert("start",        "startup");
+        }
         ~MapInfoParser() { clearDefaultMap(); }
 
         /**
@@ -248,35 +282,25 @@ namespace internal {
             lexer.parse(&buffer);
             while(lexer.readToken())
             {
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_start_track"))
+                String tok = Str_Text(lexer.token());
+                if(tok.beginsWith("cd_") && tok.endsWith("_track"))
                 {
-                    setMusicCDTrack(MUSIC_STARTUP, (int)lexer.readNumber());
-                    continue;
-                }
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_end1_track"))
-                {
-                    setMusicCDTrack(MUSIC_ENDING1, (int)lexer.readNumber());
-                    continue;
-                }
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_end2_track"))
-                {
-                    setMusicCDTrack(MUSIC_ENDING2, (int)lexer.readNumber());
-                    continue;
-                }
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_end3_track"))
-                {
-                    setMusicCDTrack(MUSIC_ENDING3, (int)lexer.readNumber());
-                    continue;
-                }
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_intermission_track"))
-                {
-                    setMusicCDTrack(MUSIC_INTERMISSION, (int)lexer.readNumber());
-                    continue;
-                }
-                if(!Str_CompareIgnoreCase(lexer.token(), "cd_title_track"))
-                {
-                    setMusicCDTrack(MUSIC_TITLE, (int)lexer.readNumber());
-                    continue;
+                    String const pubName = tok.substr(3, tok.length() - 6 - 3);
+                    MusicMappings::const_iterator found = musicMap.constFind(pubName);
+                    if(found != musicMap.end())
+                    {
+                        // Lookup an existing music from the database.
+                        String const songId = found.value();
+                        Music *music = db.getMusic(songId);
+                        if(!music)
+                        {
+                            // A new music.
+                            music = &db.musics[songId.toUtf8().constData()];
+                            music->set("id", songId);
+                        }
+                        music->set("cdTrack", (int)lexer.readNumber());
+                        continue;
+                    }
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "clearepisodes")) // ZDoom
                 {
@@ -1441,6 +1465,16 @@ String MapInfoTranslator::translate()
             os << "\n  }";
         }
         os << "\n}";
+    }
+
+    // Output music defs.
+    for(HexDefs::Musics::const_iterator i = d->defs.musics.begin(); i != d->defs.musics.end(); ++i)
+    {
+        Music const &music = i->second;
+
+        os << "\n\nMusic Mods \"" + music.gets("id") + "\" {"
+           << "\n  CD Track = " + String::number(music.geti("cdTrack")) + ";"
+           << "\n}";
     }
 
     reset(); // The definition database was modified.
