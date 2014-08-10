@@ -31,8 +31,12 @@
 class BspLeaf;
 
 /**
- * Luminous object.
- * @ingroup render
+ * Luminous object. @ingroup render
+ *
+ * @todo This should implement ILightSource and be owned by ClientMobjThinkerData (or
+ * Plane or anything else that acts as a light source). There is no need to keep
+ * recreating light source information on each frame, when it can be kept in the
+ * thinker/map data for the lifetime of the owner. -jk
  */
 class Lumobj : public de::MapObject
 {
