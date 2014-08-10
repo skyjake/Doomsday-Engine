@@ -52,8 +52,8 @@ using namespace common;
 #define LIGHTNING_SPECIAL2      199
 #define SKYCHANGE_SPECIAL       200
 
-static void P_LightningFlash(void);
-static dd_bool CheckedLockedDoor(mobj_t* mo, byte lock);
+static void P_LightningFlash();
+static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock);
 
 ThinkerT<mobj_t> lavaInflictor;
 
@@ -75,7 +75,7 @@ static int nextLightningFlash;
 static int lightningFlash;
 static float *lightningLightLevels;
 
-void P_InitLava(void)
+void P_InitLava()
 {
     lavaInflictor = ThinkerT<mobj_t>();
 
@@ -83,9 +83,9 @@ void P_InitLava(void)
     lavaInflictor->flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
 }
 
-void P_InitSky(de::Uri const &mapUri)
+void P_InitSky()
 {
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
     {
         sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
         sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());
@@ -96,46 +96,42 @@ void P_InitSky(de::Uri const &mapUri)
 
     sky1ColumnOffset = sky2ColumnOffset = 0;
 
-    if(!IS_DEDICATED)
+    if(IS_DEDICATED) return;
+
+    // First disable all sky layers.
+    R_SkyParams(DD_SKY, DD_DISABLE, NULL);
+
+    // Sky2 is layer zero and Sky1 is layer one.
+    float fval = 0;
+    R_SkyParams(0, DD_OFFSET, &fval);
+    R_SkyParams(1, DD_OFFSET, &fval);
+    if(doubleSky && sky2Material)
     {
-        int ival;
-        float fval;
+        R_SkyParams(0, DD_ENABLE, NULL);
+        int ival = DD_NO;
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
 
-        // First disable all sky layers.
-        R_SkyParams(DD_SKY, DD_DISABLE, NULL);
+        R_SkyParams(1, DD_ENABLE, NULL);
+        ival = DD_YES;
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
+    }
+    else
+    {
+        R_SkyParams(0, DD_ENABLE, NULL);
+        int ival = DD_NO;
+        R_SkyParams(0, DD_MASK, &ival);
+        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
 
-        // Sky2 is layer zero and Sky1 is layer one.
-        fval = 0;
-        R_SkyParams(0, DD_OFFSET, &fval);
-        R_SkyParams(1, DD_OFFSET, &fval);
-        if(doubleSky && sky2Material)
-        {
-            R_SkyParams(0, DD_ENABLE, NULL);
-            ival = DD_NO;
-            R_SkyParams(0, DD_MASK, &ival);
-            R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
-
-            R_SkyParams(1, DD_ENABLE, NULL);
-            ival = DD_YES;
-            R_SkyParams(1, DD_MASK, &ival);
-            R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
-        }
-        else
-        {
-            R_SkyParams(0, DD_ENABLE, NULL);
-            ival = DD_NO;
-            R_SkyParams(0, DD_MASK, &ival);
-            R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
-
-            R_SkyParams(1, DD_DISABLE, NULL);
-            ival = DD_NO;
-            R_SkyParams(1, DD_MASK, &ival);
-            R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
-        }
+        R_SkyParams(1, DD_DISABLE, NULL);
+        ival = DD_NO;
+        R_SkyParams(1, DD_MASK, &ival);
+        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
     }
 }
 
-void P_AnimateSky(void)
+void P_AnimateSky()
 {
     // Update sky column offsets
     sky1ColumnOffset += sky1ScrollDelta;

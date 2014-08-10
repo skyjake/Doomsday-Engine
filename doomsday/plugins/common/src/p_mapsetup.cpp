@@ -961,7 +961,7 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
 #endif
 
 #if __JHEXEN__
-    P_InitSky(mapUri);
+    P_InitSky();
 #endif
 
     // Preload resources we'll likely need but which aren't present (usually) in the map.

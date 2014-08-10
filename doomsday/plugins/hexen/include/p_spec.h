@@ -95,7 +95,7 @@ dd_bool     EV_ThingDestroy(int tid);
 #ifdef __cplusplus
 } // extern "C"
 
-void P_InitSky(de::Uri const &mapUri);
+void P_InitSky(void);
 void P_AnimateSky(void);
 
 #endif
