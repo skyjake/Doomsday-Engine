@@ -25,6 +25,8 @@
 #include <cstring>
 #include <map>
 #include <QMultiMap>
+#include <de/game/game.h>
+#include <de/App>
 #include <de/Error>
 #include <de/Record>
 #include "hexlex.h"
@@ -36,10 +38,11 @@ namespace internal {
 
     static inline String defaultSkyMaterial()
     {
-#ifdef __JHEXEN__
-        if(gameMode == hexen_demo || gameMode == hexen_betademo)
+        String const gameIdKey = DENG2_APP->game().id();
+        if(gameIdKey == "hexen-demo" || gameIdKey == "hexen-betademo")
+        {
             return "Textures:SKY2";
-#endif
+        }
         return "Textures:SKY1";
     }
 
@@ -194,22 +197,12 @@ namespace internal {
 
     static de::Uri composeMapUri(uint episode, uint map)
     {
-        de::String mapId;
-#if __JDOOM64__
-        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
-        DENG2_UNUSED(episode);
-#elif __JDOOM__
-        if(gameModeBits & GM_ANY_DOOM2)
-            mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
-        else
-            mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
-#elif  __JHERETIC__
-        mapId = de::String("E%1M%2").arg(episode+1).arg(map+1);
-#else
-        mapId = de::String("MAP%1").arg(map+1, 2, 10, QChar('0'));
-        DENG2_UNUSED(episode);
-#endif
-        return de::Uri("Maps", mapId);
+        String const gameIdKey = DENG2_APP->game().id();
+        if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
+        {
+            return de::Uri(String("Maps:E%1M%2").arg(episode+1).arg(map+1), RC_NULL);
+        }
+        return de::Uri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')), RC_NULL);
     }
 
     static uint mapNumberFor(de::Uri const &mapUri)
@@ -217,17 +210,10 @@ namespace internal {
         String path = mapUri.path();
         if(!path.isEmpty())
         {
-#if __JDOOM__ || __JHERETIC__
-# if __JDOOM__
-            if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
-# endif
+            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
-                if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
-                {
-                    return path.substr(3).toInt() - 1;
-                }
+                return path.substr(3).toInt() - 1;
             }
-#endif
             if(path.beginsWith("map", Qt::CaseInsensitive))
             {
                 return path.substr(3).toInt() - 1;
@@ -639,18 +625,13 @@ namespace internal {
                     info->set("warpTrans", mapWarpNumber != 0? mapWarpNumber + 1 : 0);
                 }
 
-                // Map title must follow the number.
+                // Map title follows the number.
                 String title = Str_Text(lexer.readString());
 
                 // Lookup the title from a Text definition? (ZDoom)
                 if(!title.compareWithoutCase("lookup"))
                 {
                     title = Str_Text(lexer.readString());
-                    /*char *found = 0;
-                    if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &found) >= 0)
-                    {
-                        title = String(found);
-                    }*/
                 }
                 info->set("title", title);
             }
@@ -1298,17 +1279,16 @@ void MapInfoTranslator::mergeFromFile(String sourceFile)
     MapInfoParser parser(d->defs);
     parser.parse(*buffer, sourceFile);
 
-#ifdef __JHEXEN__
-    // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
-    // As later map definitions now replace earlier ones, these broken defs
-    // override the earlier "good" defs. For now we'll kludge around this
-    // issue by patching the affected defs with the expected values.
-    if(!sourceIsCustom && (gameModeBits & (GM_HEXEN|GM_HEXEN_V10)))
+    String const gameIdKey = DENG2_APP->game().id();
+    if(!sourceIsCustom && (gameIdKey == "hexen" || gameIdKey == "hexen-v10"))
     {
-        MapInfo *info = d->hexDefs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
+        // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
+        // As later map definitions now replace earlier ones, these broken defs
+        // override the earlier "good" defs. For now we'll kludge around this
+        // issue by patching the affected defs with the expected values.
+        MapInfo *info = d->defs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
         info->set("warpTrans", "@wt:7");
     }
-#endif
 }
 
 String MapInfoTranslator::translate()
