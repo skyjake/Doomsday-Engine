@@ -837,7 +837,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
         Record const *chosenExit = 0;
         if(exits.count() > 1)
         {
-            QMap<String, Record const *>::const_iterator found = exits.constFind(name.toLower());
+            auto found = exits.constFind(name.toLower());
             if(found != exits.constEnd())
             {
                 chosenExit = found.value();

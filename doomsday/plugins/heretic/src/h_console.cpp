@@ -28,7 +28,6 @@ using namespace common;
 D_CMD(Cheat);
 D_CMD(CheatGive);
 D_CMD(CheatGod);
-D_CMD(CheatLeaveMap);
 D_CMD(CheatMassacre);
 D_CMD(CheatMorph);
 D_CMD(CheatNoClip);
@@ -177,7 +176,6 @@ void G_ConsoleRegistration()
     C_CMD("reveal",      "i",    CheatReveal);
     C_CMD("give",        NULL,   CheatGive);
     C_CMD("kill",        "",     CheatMassacre);
-    C_CMD("leavemap",    "",     CheatLeaveMap);
     C_CMD("suicide",     NULL,   CheatSuicide);
     C_CMD("where",       "",     CheatWhere);
 

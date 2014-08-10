@@ -707,28 +707,6 @@ D_CMD(CheatWhere)
     return true;
 }
 
-/**
- * Exit the current map and go to the intermission.
- */
-D_CMD(CheatLeaveMap)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    // Only the server operator can end the map this way.
-    if(IS_NETGAME && !IS_NETWORK_SERVER)
-        return false;
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_CHAT, NULL);
-        App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Can only exit a map when in a game!");
-        return true;
-    }
-
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
-    return true;
-}
-
 D_CMD(CheatMorph)
 {
     DENG2_UNUSED(src);

@@ -603,24 +603,3 @@ D_CMD(CheatWhere)
     printDebugInfo(&players[CONSOLEPLAYER]);
     return true;
 }
-
-/**
- * Exit the current map and go to the intermission.
- */
-D_CMD(CheatLeaveMap)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    if(!cheatsEnabled())
-        return false;
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_OOF, NULL);
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!");
-        return true;
-    }
-
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
-    return true;
-}

@@ -83,6 +83,7 @@ D_CMD(EndSession);
 D_CMD(HelpScreen);
 
 D_CMD(ListMaps);
+D_CMD(LeaveMap);
 D_CMD(WarpMap);
 #if __JDOOM__ || __JHERETIC__
 D_CMD(WarpEpisodeMap);
@@ -369,15 +370,18 @@ void G_Register()
         Con_AddCommand(gameCmds + i);
     }
 
-    C_CMD("warp", "s", WarpMap);
-    C_CMD("setmap", "s", WarpMap); // alias
+    C_CMD("leavemap",   "",  LeaveMap);
+    C_CMD("leavemap",   "s", LeaveMap);
+
+    C_CMD("warp",       "s", WarpMap);
+    C_CMD("setmap",     "s", WarpMap); // alias
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
     if(!(gameModeBits & GM_ANY_DOOM2))
 # endif
     {
-        C_CMD("warp", "ii", WarpEpisodeMap);
-        C_CMD("setmap", "ii", WarpEpisodeMap); // alias
+        C_CMD("warp",       "ii", WarpEpisodeMap);
+        C_CMD("setmap",     "ii", WarpEpisodeMap); // alias
     }
 #endif
 }
@@ -481,8 +485,8 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance
     }
 #endif
 
-#if __JHEXEN__
     ::nextMapUri      = nextMapUri;
+#if __JHEXEN__
     ::nextMapEntrance = nextMapEntrance;
 #else
     ::secretExit      = secretExit;
@@ -1550,9 +1554,6 @@ static void runGameAction()
                         players[i].didSecret = true;
                     }
                 }
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                nextMapUri = COMMON_GAMESESSION->mapUriForNamedExit(secretExit? "secret" : "next");
 #endif
 
                 G_IntermissionBegin();
@@ -2985,6 +2986,34 @@ D_CMD(CycleTextureGamma)
     DENG2_UNUSED3(src, argc, argv);
 
     R_CycleGammaLevel();
+    return true;
+}
+
+D_CMD(LeaveMap)
+{
+    DENG2_UNUSED(src);
+
+    String exitName(argc > 1? argv[1] : "next");
+
+    // Only the server operator can end the map this way.
+    if(IS_NETGAME && !IS_NETWORK_SERVER)
+        return false;
+
+    if(G_GameState() != GS_MAP)
+    {
+#if __JHERETIC__ || __JHEXEN__
+        S_LocalSound(SFX_CHAT, NULL);
+#else
+        S_LocalSound(SFX_OOF, NULL);
+#endif
+        LOG_MAP_ERROR("Can only exit a map when in a game!");
+        return true;
+    }
+
+    de::Uri newMapUri = COMMON_GAMESESSION->mapUriForNamedExit(exitName);
+    if(newMapUri.path().isEmpty()) return false;
+
+    G_SetGameActionMapCompleted(newMapUri, 0, false);
     return true;
 }
 
