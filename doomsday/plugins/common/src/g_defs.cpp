@@ -21,7 +21,9 @@
 #include "common.h"
 #include "g_defs.h"
 #include <de/RecordValue>
+#include <doomsday/defs/episode.h>
 #include "g_common.h"
+#include "gamesession.h"
 
 using namespace de;
 
@@ -56,33 +58,15 @@ void GetDefState(char const *def, int *val)
     if(*val < 0) *val = 0;
 }
 
-/// @todo fixme: What about the episode?
 de::Uri P_TranslateMap(uint map)
 {
-    de::Uri matchedWithoutHub("Maps:", RC_NULL);
-
-    DictionaryValue::Elements const &mapInfosById = Defs().mapInfos.lookup("id").elements();
-    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, mapInfosById)
+    if(Record const *rec = COMMON_GAMESESSION->episodeDef())
     {
-        Record const &info = *i->second->as<RecordValue>().record();
-
-        if((unsigned)info.geti("warpTrans") == map)
+        defn::Episode episodeDef(*rec);
+        if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(map))
         {
-            if(info.geti("hub"))
-            {
-                LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
-                        << map << info.gets("map") << info.geti("hub");
-                return de::Uri(info.gets("map"), RC_NULL);
-            }
-
-            LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
-                    << map << info.gets("map");
-            matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+            return de::Uri(mgNodeRec->gets("id"), RC_NULL);
         }
     }
-
-    LOGDEV_MAP_NOTE("Could not find warp %i, translating to map %s (without hub)")
-            << map << matchedWithoutHub;
-
-    return matchedWithoutHub;
+    return de::Uri("Maps:", RC_NULL); // Not found.
 }
