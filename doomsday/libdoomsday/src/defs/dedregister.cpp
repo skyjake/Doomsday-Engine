@@ -120,9 +120,13 @@ DENG2_PIMPL(DEDRegister)
 
     Record const *tryFind(String const &key, String const &value) const
     {
-        return lookupOperation<Record const *>(key, value, [] (DictionaryValue const &lut, String v) {
-            return lut.element(TextValue(v)).as<RecordValue>().record();
-        });
+        return lookupOperation<Record const *>(key, value,
+            [] (DictionaryValue const &lut, String v) -> Record const * {
+                TextValue const val(v);
+                auto i = lut.elements().find(DictionaryValue::ValueRef(&val));
+                if(i == lut.elements().end()) return 0; // Value not in dictionary.
+                return i->second->as<RecordValue>().record();
+            });
     }
 
     bool has(String const &key, String const &value) const
