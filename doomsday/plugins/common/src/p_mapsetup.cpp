@@ -661,7 +661,6 @@ static void initFog()
         R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColorV1);
     }
 
-#if __JHEXEN__
     if(mapInfo)
     {
         int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
@@ -680,7 +679,6 @@ static void initFog()
             }
         }
     }
-#endif
 }
 
 void P_SetupMap(de::Uri const &mapUri)

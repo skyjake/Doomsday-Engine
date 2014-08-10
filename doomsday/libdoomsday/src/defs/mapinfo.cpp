@@ -40,6 +40,7 @@ void MapInfo::resetToDefaults()
     def().addNumber("fogStart", DEFAULT_FOG_START);
     def().addNumber("fogEnd", DEFAULT_FOG_END);
     def().addNumber("fogDensity", DEFAULT_FOG_DENSITY);
+    def().addText  ("fadeTable", "");
     def().addNumber("ambient", 0);
     def().addNumber("gravity", 1);
     def().addText  ("skyId", "");
