@@ -31,20 +31,19 @@
 ded_t &Defs();
 
 /**
- * Translates a warp map number to unique map identifier. Always returns a valid
- * map identifier.
+ * Translates a map warp number for the @em current episode to a unique map identifier.
  *
- * @note This should only be used where necessary for compatibility reasons as
- * the "warp translation" mechanic is redundant in the context of Doomsday's
- * altogether better handling of map resources and their references. Instead,
- * use the map URI mechanism.
+ * @note This should only be used where necessary for compatibility reasons as the
+ * "warp translation" mechanic is redundant in the context of Doomsday's altogether
+ * better handling of map resources and their references. Instead, use the map URI
+ * mechanism.
  *
- * @param map  The warp map number to translate.
+ * @param warpNumber  Warp number to translate.
  *
- * @return The unique identifier of the map given a warp map number. If the map
- * is not found a URI to the first available map is returned (i.e., Maps:MAP01)
+ * @return The unique identifier of the map. If no game session is in progress or the
+ * warp number is not found, the URI "Maps:" is returned.
  */
-de::Uri P_TranslateMap(uint map);
+de::Uri TranslateMapWarpNumber(uint warpNumber);
 
 extern "C" {
 #endif

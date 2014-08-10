@@ -415,13 +415,13 @@ void X_PostInit()
         }
         else
         {
-            startMapUri = P_TranslateMap(mapNumber);
+            startMapUri = TranslateMapWarpNumber(mapNumber);
         }
     }
 
     if(startMapUri.path().isEmpty())
     {
-        startMapUri = P_TranslateMap(1);
+        startMapUri = TranslateMapWarpNumber(1);
     }
 
     // Are we autostarting?

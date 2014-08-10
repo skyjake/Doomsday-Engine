@@ -117,7 +117,7 @@ int D_NetServerStarted(int before)
 #if __JHEXEN__
     // Map numbers need to be translated.
     /// @todo fixme: What about cfg.netEpisode?
-    de::Uri netMapUri = P_TranslateMap(::cfg.netMap);
+    de::Uri netMapUri = TranslateMapWarpNumber(::cfg.netMap);
 #elif __JDOOM64__
     de::Uri netMapUri = G_ComposeMapUri(0/*::cfg.netEpisode*/, ::cfg.netMap);
 #else

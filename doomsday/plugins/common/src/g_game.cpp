@@ -3098,8 +3098,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
         // Hexen map numbers require translation.
-        /// @todo fixme: What about the episode?
-        newMapUri = P_TranslateMap(map);
+        newMapUri = TranslateMapWarpNumber(map);
 #else
         // Internally epsiode and map numbers are zero-based.
         if(epsd != 0) epsd -= 1;

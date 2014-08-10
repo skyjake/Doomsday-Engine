@@ -58,12 +58,12 @@ void GetDefState(char const *def, int *val)
     if(*val < 0) *val = 0;
 }
 
-de::Uri P_TranslateMap(uint map)
+de::Uri TranslateMapWarpNumber(uint warpNumber)
 {
     if(Record const *rec = COMMON_GAMESESSION->episodeDef())
     {
         defn::Episode episodeDef(*rec);
-        if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(map))
+        if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(warpNumber))
         {
             return de::Uri(mgNodeRec->gets("id"), RC_NULL);
         }
