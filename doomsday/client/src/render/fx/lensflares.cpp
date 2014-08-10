@@ -20,6 +20,7 @@
 #include "render/ilightsource.h"
 #include "render/viewports.h"
 #include "render/rend_main.h"
+#include "world/p_players.h"
 #include "gl/gl_main.h"
 #include "clientapp.h"
 
@@ -496,6 +497,12 @@ void fx::LensFlares::beginFrame()
 
 void LensFlares::draw()
 {
+    if(!ClientApp::worldSystem().hasMap())
+    {
+        // Flares are not visbile unless a map is loaded.
+        return;
+    }
+
     viewdata_t const *viewData = R_ViewData(console());
     d->eyeFront = Vector3f(viewData->frontVec);
 
@@ -506,7 +513,10 @@ void LensFlares::draw()
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());
-    d->uMvpMatrix = GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+    d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+
+    DENG2_ASSERT(console() == displayPlayer);
+    DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
 
     // Depth information is required for occlusion.
     GLTarget &target = GLState::current().target();
