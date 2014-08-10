@@ -218,11 +218,6 @@ int Def_GetSoundNum(const char* id)
     return defs.getSoundNum(id);
 }
 
-ded_music_t* Def_GetMusic(char const *id)
-{
-    return defs.getMusic(id);
-}
-
 int Def_GetMusicNum(const char* id)
 {
     return defs.getMusicNum(id);
@@ -1432,28 +1427,24 @@ void Def_Read()
     }
 
     // Music.
-    for(int i = 0; i < defs.music.size(); ++i)
+    for(int i = 0; i < defs.musics.size(); ++i)
     {
-        ded_music_t *mus = &defs.music[i];
+        Record *mus = &defs.musics[i];
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t *earliest = &defs.music[Def_GetMusicNum(mus->id)];
+        Record *earliest = &defs.musics[Def_GetMusicNum(mus->gets("id").toUtf8().constData())];
 
         if(earliest == mus) continue;
 
-        strcpy(earliest->lumpName, mus->lumpName);
-        earliest->cdTrack = mus->cdTrack;
+        earliest->set("lumpName", mus->gets("lumpName"));
+        earliest->set("cdTrack",  mus->geti("cdTrack"));
 
-        if(mus->path)
+        if(!mus->gets("path").isEmpty())
         {
-            if(earliest->path)
-                *earliest->path = *mus->path;
-            else
-                earliest->path = new de::Uri(*mus->path);
+            earliest->set("path", mus->gets("path"));
         }
-        else if(earliest->path)
+        else if(!earliest->gets("path").isEmpty())
         {
-            delete earliest->path;
-            earliest->path = 0;
+            earliest->set("path", "");
         }
     }
 
@@ -1583,7 +1574,7 @@ void Def_Read()
     os << defCountMsg(defs.ptcGens.size(), "particle generators");
     os << defCountMsg(defs.skies.size(), "skies");
     os << defCountMsg(defs.sectorTypes.size(), "sector types");
-    os << defCountMsg(defs.music.size(), "songs");
+    os << defCountMsg(defs.musics.size(), "songs");
     os << defCountMsg(runtimeDefs.sounds.size(), "sound effects");
     os << defCountMsg(runtimeDefs.sprNames.size(), "sprite names");
     os << defCountMsg(runtimeDefs.states.size(), "states");
@@ -1969,16 +1960,6 @@ int Def_Get(int type, char const *id, void *out)
         strcpy((char*)out, runtimeDefs.sounds[i].lumpName);
         return true; }
 
-    case DD_DEF_MUSIC:
-        return Def_GetMusicNum(id);
-
-    case DD_DEF_MUSIC_CDTRACK:
-        if(ded_music_t *music = Def_GetMusic(id))
-        {
-            return music->cdTrack;
-        }
-        return false;
-
     case DD_DEF_TEXT:
         if(id && id[0])
         {
@@ -2094,11 +2075,8 @@ int Def_Get(int type, char const *id, void *out)
     }
 }
 
-int Def_Set(int type, int index, int value, const void* ptr)
+int Def_Set(int type, int index, int value, void const *ptr)
 {
-    ded_music_t* musdef = 0;
-    int i;
-
     LOG_AS("Def_Set");
 
     switch(type)
@@ -2170,57 +2148,13 @@ int Def_Set(int type, int index, int value, const void* ptr)
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
         break;
 
-    case DD_DEF_MUSIC:
-        if(index == DD_NEW)
-        {
-            // We should create a new music definition.
-            i = DED_AddMusic(&defs, "");    // No ID is known at this stage.
-            musdef = &defs.music[i];
-        }
-        else if(index >= 0 && index < defs.music.size())
-        {
-            musdef = &defs.music[index];
-        }
-        else
-        {
-            DENG_ASSERT(!"Def_Set: Music index is invalid");
-            return false;
-        }
-
-        // Which key to set?
-        switch(value)
-        {
-        case DD_ID:
-            if(ptr)
-                strcpy(musdef->id, (char const*) ptr);
-            break;
-
-        case DD_LUMP:
-            if(ptr)
-                strcpy(musdef->lumpName, (char const*) ptr);
-            break;
-
-        case DD_CD_TRACK:
-            musdef->cdTrack = *(int *) ptr;
-            break;
-
-        default:
-            break;
-        }
-
-        // If the def was just created, return its index.
-        if(index == DD_NEW)
-            return defs.music.indexOf(musdef);
-        break;
-
-    default:
-        return false;
+    default: return false;
     }
+
     return true;
 }
 

@@ -1713,21 +1713,21 @@ public:
         /// @todo Why the restriction?
         if(findMusicLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("D_%1").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("D_%1").arg(newName ).toUtf8();
+        String origNamePref = String("D_%1").arg(origName);
+        String newNamePref = String("D_%1").arg(newName);
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->music.size(); ++i)
+        for(int i = 0; i < ded->musics.size(); ++i)
         {
-            ded_music_t &music = ded->music[i];
-            if(qstricmp(music.lumpName, origNamePrefUtf8.constData())) continue;
+            Record &music = ded->musics[i];
+            if(music.gets("lumpName").compareWithoutCase(origNamePref)) continue;
 
-            qstrncpy(music.lumpName, newNamePrefUtf8.constData(), 9);
+            music.set("lumpName", newNamePref);
             numPatched++;
 
             LOG_DEBUG("Music #%i \"%s\" lumpName => \"%s\"")
-                    << i << music.id << music.lumpName;
+                    << i << music.gets("id") << music.gets("lumpName");
         }
         return (numPatched > 0);
     }

@@ -46,14 +46,14 @@ void S_MapMusic(de::Uri const *mapUri)
     LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri->compose() << lump;
 
     // Update the 'currentmap' music definition.
-    int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    Def_Set(DD_DEF_MUSIC, defIndex, DD_LUMP,     lump.toUtf8().constData());
-    Def_Set(DD_DEF_MUSIC, defIndex, DD_CD_TRACK, &cdTrack);
+    Record &music = Defs().musics.find("id", "currentmap");
+    music.set("lumpName", lump);
+    music.set("cdTrack", cdTrack);
 
     if(S_StartMusic("currentmap", true))
     {
         // Set the game status cvar for the map music.
-        Con_SetInteger2("map-music", defIndex, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-music", Defs().getMusicNum(music.gets("id").toUtf8().constData()), SVF_WRITE_OVERRIDE);
     }
 #else
     if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))

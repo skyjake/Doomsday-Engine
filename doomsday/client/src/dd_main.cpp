@@ -2423,7 +2423,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
     {&defs.sounds.count.num, 0},
-    {&defs.music.count.num, 0},
     {0, 0},
 #ifdef __CLIENT__
     {&clientPaused, &clientPaused},
