@@ -308,8 +308,42 @@ Id Atlas::alloc(Image const &image)
         else
         {
             // No backing, must commit immediately.
-            /// @todo Apply borders here, too. -jk
-            commit(image, noBorders.topLeft);
+            if(d->border > 0)
+            {
+                // Expand with borders (repeat edges).
+                QImage const srcImg = image.toQImage();
+                int const sw = srcImg.width();
+                int const sh = srcImg.height();
+
+                QImage bordered(QSize(rect.width(), rect.height()), srcImg.format());
+                int const w = bordered.width();
+                int const h = bordered.height();
+
+                QPainter painter(&bordered);
+                painter.setCompositionMode(QPainter::CompositionMode_Source);
+                painter.fillRect(bordered.rect(), QColor(0, 0, 0, 0));
+
+                /// @todo This really only works for a border of 1 pixels. Should
+                /// repeat the same outmost edge pixels for every border. -jk
+
+                painter.drawImage(d->border, d->border, srcImg);
+                painter.drawImage(d->border, 0,     srcImg, 0, 0, sw, 1); // top
+                painter.drawImage(d->border, h - 1, srcImg, 0, sh - 1, sw, 1); // bottom
+                painter.drawImage(0, d->border,     srcImg, 0, 0, 1, sh); // left
+                painter.drawImage(w - 1, d->border, srcImg, sw - 1, 0, 1, sh); // right
+
+                // Corners.
+                painter.drawImage(0, 0,         srcImg, 0, 0, 1, 1);
+                painter.drawImage(w - 1, 0,     srcImg, sw - 1, 0, 1, 1);
+                painter.drawImage(0, h - 1,     srcImg, 0, sh - 1, 1, 1);
+                painter.drawImage(w - 1, h - 1, srcImg, sw - 1, sh - 1, 1, 1);
+
+                commit(bordered, rect.topLeft);
+            }
+            else
+            {
+                commit(image, noBorders.topLeft);
+            }
         }
 
         // After a successful alloc we can attempt to defragment
