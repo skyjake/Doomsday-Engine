@@ -44,6 +44,7 @@ public:
     de::Record const &hub(int index) const;
 
     de::Record *tryFindMapGraphNode(de::String const &mapId);
+    de::Record *tryFindMapGraphNodeByWarpNumber(int warpNumber);
 };
 
 } // namespace defn

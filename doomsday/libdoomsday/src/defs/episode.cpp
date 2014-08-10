@@ -83,24 +83,54 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
             Record const &hubRec = hub(i);
             foreach(Value *mapIt, hubRec.geta("map").elements())
             {
-                Record &mapGraphNode = mapIt->as<RecordValue>().dereference();
-                if(mapUri == de::Uri(mapGraphNode.gets("id"), RC_NULL))
+                Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
+                if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
                 {
-                    return &mapGraphNode;
+                    return &mgNodeDef;
                 }
             }
         }
         // Try the non-hub maps.
         foreach(Value *mapIt, geta("map").elements())
         {
-            Record &mapGraphNode = mapIt->as<RecordValue>().dereference();
-            if(mapUri == de::Uri(mapGraphNode.gets("id"), RC_NULL))
+            Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
+            if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
             {
-                return &mapGraphNode;
+                return &mgNodeDef;
             }
         }
     }
-    return 0;
+    return 0; // Not found.
+}
+
+de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
+{
+    if(warpNumber > 0)
+    {
+        // First, try the hub maps.
+        for(int i = 0; i < hubCount(); ++i)
+        {
+            Record const &hubRec = hub(i);
+            foreach(Value *mapIt, hubRec.geta("map").elements())
+            {
+                Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
+                if(mgNodeDef.geti("warpNumber") == warpNumber)
+                {
+                    return &mgNodeDef;
+                }
+            }
+        }
+        // Try the non-hub maps.
+        foreach(Value *mapIt, geta("map").elements())
+        {
+            Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
+            if(mgNodeDef.geti("warpNumber") == warpNumber)
+            {
+                return &mgNodeDef;
+            }
+        }
+    }
+    return 0; // Not found.
 }
 
 } // namespace defn
