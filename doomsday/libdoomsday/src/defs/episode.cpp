@@ -72,6 +72,27 @@ Record const &Episode::hub(int index) const
     return *geta("hub")[index].as<RecordValue>().record();
 }
 
+Record *Episode::tryFindHubByMapId(String const &mapId)
+{
+    de::Uri const mapUri(mapId, RC_NULL);
+    if(!mapUri.path().isEmpty())
+    {
+        for(int i = 0; i < hubCount(); ++i)
+        {
+            Record &hubRec = hub(i);
+            foreach(Value *mapIt, hubRec.geta("map").elements())
+            {
+                Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
+                if(mapUri == de::Uri(mgNodeDef.gets("id"), RC_NULL))
+                {
+                    return &hubRec;
+                }
+            }
+        }
+    }
+    return 0; // Not found.
+}
+
 Record *Episode::tryFindMapGraphNode(String const &mapId)
 {
     de::Uri const mapUri(mapId, RC_NULL);

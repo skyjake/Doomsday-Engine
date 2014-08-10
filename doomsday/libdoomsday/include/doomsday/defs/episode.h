@@ -42,6 +42,7 @@ public:
     bool hasHub(int index) const;
     de::Record &hub(int index);
     de::Record const &hub(int index) const;
+    de::Record *tryFindHubByMapId(de::String const &mapId);
 
     de::Record *tryFindMapGraphNode(de::String const &mapId);
     de::Record *tryFindMapGraphNodeByWarpNumber(int warpNumber);
