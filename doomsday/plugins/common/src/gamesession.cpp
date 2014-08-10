@@ -1059,10 +1059,12 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(mapInfo()->geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"))
+        defn::Episode epsd(*episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
 #endif
         {
-            // Clear all saved map states in the old hub.
+            // Clear all saved map states in the current hub.
             Folder::Contents contents = mapsFolder.contents();
             DENG2_FOR_EACH_CONST(Folder::Contents, i, contents)
             {

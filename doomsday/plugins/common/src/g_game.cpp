@@ -64,6 +64,7 @@
 #include <cstdlib>
 #include <de/App>
 #include <de/NativePath>
+#include <doomsday/defs/episode.h>
 #include <doomsday/uri.h>
 
 using namespace de;
@@ -1797,10 +1798,13 @@ void G_PlayerLeaveMap(int player)
     if(!p->plr->inGame) return;
 
 #if __JHEXEN__
-    dd_bool newHub = true;
-    if(!nextMapUri.path().isEmpty())
+    // Leaving the current hub?
+    bool newHub = true;
+    if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
     {
-        newHub = (COMMON_GAMESESSION->mapInfo()->geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"));
+        defn::Episode epsd(*episodeDef);
+        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        newHub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
 #endif
 
@@ -2548,9 +2552,11 @@ char const *G_InFineDebriefing(de::Uri const *mapUri)
     if(briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP && !::nextMapUri.path().isEmpty())
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
-        if(Defs().mapInfos.find("id", mapUri->compose()).geti("hub") != Defs().mapInfos.find("id", ::nextMapUri.compose()).geti("hub"))
+        defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
         }

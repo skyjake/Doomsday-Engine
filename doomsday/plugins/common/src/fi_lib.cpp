@@ -21,6 +21,7 @@
 #include "common.h"
 #include "fi_lib.h"
 
+#include <doomsday/defs/episode.h>
 #include "p_sound.h"
 #include "p_tick.h"
 #include "hu_log.h"
@@ -88,16 +89,11 @@ static void initStateConditions(fi_state_t *s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(Record const *curMapInfo = COMMON_GAMESESSION->mapInfo())
+    if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
     {
-        s->conditions.leave_hub = true;
-        if(!nextMapUri.path().isEmpty())
-        {
-            if(curMapInfo->geti("hub") == Defs().mapInfos.find("id", nextMapUri.compose()).geti("hub"))
-            {
-                s->conditions.leave_hub = false;
-            }
-        }
+        defn::Episode epsd(*episodeDef);
+        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        s->conditions.leave_hub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
 #endif
