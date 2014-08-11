@@ -45,6 +45,13 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
+    enum TextureMap
+    {
+        Diffuse,
+        Normals,
+        Height
+    };
+
     /**
      * Animation state for a model. There can be any number of ongoing animations,
      * targeting individual nodes of a model.
@@ -195,6 +202,32 @@ public:
      * are freed.
      */
     void unsetAtlas();
+
+    /**
+     * Sets the normal map that is used if no other normals are provided.
+     *
+     * @param atlasId  Identifier in the atlas.
+     */
+    void setDefaultNormals(Id const &atlasId);
+
+    /**
+     * Locates a material specified in the model by its name.
+     *
+     * @param name  Name of the material
+     *
+     * @return Material id.
+     */
+    int materialId(String const &name) const;
+
+    /**
+     * Sets or changes one of the texture maps used by the model. This can be used to
+     * override the maps set up automatically by glInit().
+     *
+     * @param materialId  Which material to modify.
+     * @param textureMap  Texture to set.
+     * @param path        Path of the texture image.
+     */
+    void setTexturePath(int materialId, TextureMap textureMap, String const &path);
 
     /**
      * Sets the GL program used for shading the model.

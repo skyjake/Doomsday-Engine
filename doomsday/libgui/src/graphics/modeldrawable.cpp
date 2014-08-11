@@ -17,6 +17,7 @@
  */
 
 #include "de/ModelDrawable"
+#include "de/HeightMap"
 
 #include <de/App>
 #include <de/ByteArrayFile>
@@ -160,23 +161,25 @@ struct ModelVertex
     Vector3f bitangent;
     Vector2f texCoord;
     Vector4f texBounds;
+    Vector4f texBounds2;
     Vector4f boneIds;
     Vector4f boneWeights;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(8)
+    LIBGUI_DECLARE_VERTEX_FORMAT(9)
 };
 
-AttribSpec const ModelVertex::_spec[8] = {
+AttribSpec const ModelVertex::_spec[9] = {
     { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex), 0 },
     { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
     { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 6 * sizeof(float) },
     { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 9 * sizeof(float) },
     { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 12 * sizeof(float) },
     { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
-    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
-    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
+    { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
+    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
+    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 26 * sizeof(float))
+LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 30 * sizeof(float))
 
 static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
@@ -208,6 +211,15 @@ DENG2_PIMPL(ModelDrawable)
         Matrix4f offset;
     };
 
+    struct MaterialData
+    {
+        Id diffuse;
+        Id normals;
+        QHash<TextureMap, String> custom;
+
+        MaterialData() : diffuse(Id::None), normals(Id::None) {}
+    };
+
     Asset modelAsset;
     String sourcePath;
     Assimp::Importer importer;
@@ -217,14 +229,16 @@ DENG2_PIMPL(ModelDrawable)
     QHash<String, duint16> boneNameToIndex;
     QHash<String, aiNode const *> nodeNameToPtr;
     QVector<BoneData> bones; // indexed by bone index
-    QVector<Id> materialTexIds; // indexed by material index
+    QVector<MaterialData> materials; // indexed by material index
     AnimLookup animNameToIndex;
     Vector3f minPoint; ///< Bounds in default pose.
     Vector3f maxPoint;
     Matrix4f globalInverse;
+    Id defaultNormals = Id::None;
     //ddouble animTime;
     //Animator const *animation;
 
+    bool needMakeBuffer;
     AtlasTexture *atlas;
     VBuf *buffer;
     GLProgram *program;
@@ -233,6 +247,7 @@ DENG2_PIMPL(ModelDrawable)
     Instance(Public *i)
         : Base(i)
         , scene(0)
+        , needMakeBuffer(false)
         , atlas(0)
         , buffer(0)
         , program(0)
@@ -308,6 +323,13 @@ DENG2_PIMPL(ModelDrawable)
         nodeNameToPtr.clear();
         nodeNameToPtr.insert("", scene->mRootNode);
         buildNodeLookup(*scene->mRootNode);
+
+        // Prepare material information.
+        qDebug() << "materials:" << scene->mNumMaterials;
+        for(duint i = 0; i < scene->mNumMaterials; ++i)
+        {
+            materials << MaterialData();
+        }
     }
 
     void buildNodeLookup(aiNode const &node)
@@ -330,6 +352,7 @@ DENG2_PIMPL(ModelDrawable)
         glDeinit();
 
         sourcePath.clear();
+        materials.clear();
         importer.FreeScene();
         scene = 0;
     }
@@ -371,37 +394,72 @@ DENG2_PIMPL(ModelDrawable)
         modelAsset.setState(NotReady);
     }
 
-    void releaseTexturesFromAtlas()
-    {
-        if(!atlas) return;
-
-        foreach(Id const &id, materialTexIds)
-        {
-            qDebug() << "Releasing model texture" << id.asText();
-            atlas->release(id);
-        }
-        materialTexIds.clear();
-    }
-
     void addToBounds(Vector3f const &point)
     {
         minPoint = minPoint.min(point);
         maxPoint = maxPoint.max(point);
     }
 
+    void releaseTexture(Id const &id)
+    {
+        if(id == defaultNormals) return; // We don't own this.
+
+        qDebug() << "Releasing model texture" << id.asText();
+        atlas->release(id);
+    }
+
+    void releaseTexturesFromAtlas()
+    {
+        if(!atlas) return;
+
+        foreach(MaterialData const &tex, materials)
+        {
+            releaseTexture(tex.diffuse);
+            releaseTexture(tex.normals);
+        }
+        materials.clear();
+    }
+
+    int findMaterial(String const &name) const
+    {
+        if(!scene) return -1;
+        for(duint i = 0; i < scene->mNumMaterials; ++i)
+        {
+            aiMaterial const &material = *scene->mMaterials[i];
+            aiString matName;
+            if(material.Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
+            {
+                if(name == matName.C_Str()) return i;
+            }
+        }
+        return -1;
+    }
+
     void initTextures()
     {
         DENG2_ASSERT(atlas != 0);
 
-        materialTexIds.clear();
-
-        qDebug() << "materials:" << scene->mNumMaterials;
         for(duint i = 0; i < scene->mNumMaterials; ++i)
         {            
-            materialTexIds.append(Id::None);
+            qDebug() << "  material #" << i;
 
-            aiMaterial const &mat = *scene->mMaterials[i];
-            qDebug() << "  material #" << i
+            loadTextureImage(i, aiTextureType_DIFFUSE);
+            loadTextureImage(i, aiTextureType_NORMALS);
+
+            if(!materials[i].normals)
+            {
+                // Try a height field instead. This will be converted to a normal map.
+                loadTextureImage(i, aiTextureType_HEIGHT);
+            }
+
+            if(!materials[i].normals)
+            {
+                // Use the default normals.
+                materials[i].normals = defaultNormals;
+                //qDebug() << thisPublic << "uses defaults" << defaultNormals.asText();
+            }
+
+            /*qDebug() << "  material #" << i
                      << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
 
             aiString texPath;
@@ -420,15 +478,134 @@ DENG2_PIMPL(ModelDrawable)
 
                         qDebug() << "    from" << texFile.description().toLatin1().constData();
 
-                        materialTexIds[i] = atlas->alloc(Image::fromData(texFile, texFile.name().fileNameExtension()));
+                        materials[i].diffuse = atlas->alloc(
+                                Image::fromData(texFile, texFile.name().fileNameExtension()));
                     }
                     catch(Error const &er)
                     {
                         LOG_WARNING("Model material #%i not available: %s") << i << er.asText();
                     }
                 }
+            }*/
+        }
+    }
+
+    static TextureMap textureMapType(aiTextureType type)
+    {
+        switch(type)
+        {
+        case aiTextureType_DIFFUSE: return Diffuse;
+        case aiTextureType_NORMALS: return Normals;
+        case aiTextureType_HEIGHT:  return Height;
+        default:
+            DENG2_ASSERT(!"Unsupported texture type");
+            return Diffuse;
+        }
+    }
+
+    void loadTextureImage(duint materialId, aiTextureType type)
+    {
+        TextureMap map = textureMapType(type);
+        aiMaterial const &material = *scene->mMaterials[materialId];
+        MaterialData const &data = materials[materialId];
+
+        try
+        {
+            // Custom override path?
+            if(data.custom.contains(map))
+            {
+                qDebug() << "loading custom path" << data.custom[map];
+                return setTexture(materialId, map, loadImage(data.custom[map]));
             }
         }
+        catch(Error const &er)
+        {
+            LOG_RES_WARNING("Failed to load custom model texture (type %i): %s")
+                    << type << er.asText();
+        }
+
+        qDebug() << "    type:" << type
+                 << "count:" << material.GetTextureCount(type);
+
+        aiString texPath;
+        for(duint s = 0; s < material.GetTextureCount(type); ++s)
+        {
+            if(material.GetTexture(type, s, &texPath) == AI_SUCCESS)
+            {
+                qDebug() << "    texture #" << s << texPath.C_Str();
+
+                try
+                {
+                    Image const texImage = loadImage(sourcePath.fileNamePath() / String(texPath.C_Str()));
+                    setTexture(materialId, map, texImage);
+                    break;
+                }
+                catch(Error const &er)
+                {
+                    LOG_RES_WARNING("Failed to load model texture (type %i): %s")
+                            << type << er.asText();
+                }
+            }
+        }
+    }
+
+    Image loadImage(String const &path)
+    {
+        /// @todo Consult a resource finder object here. -jk
+
+        // Load the image file using FS2.
+        File const &texFile = App::rootFolder().locate<File>(path);
+
+        qDebug() << "loading image from" << texFile.description().toLatin1();
+
+        return Image::fromData(texFile, texFile.name().fileNameExtension());
+    }
+
+    /**
+     * Sets a custom texture that will be loaded when the model is glInited.
+     *
+     * @param materialId  Material id.
+     * @param tex         Texture map.
+     * @param path        Image file path.
+     */
+    void setCustomTexture(duint materialId, TextureMap map, String const &path)
+    {
+        DENG2_ASSERT(!atlas);
+        DENG2_ASSERT(materialId < duint(materials.size()));
+
+        materials[materialId].custom.insert(map, path);
+    }
+
+    void setTexture(duint materialId, TextureMap map, Image const &content)
+    {
+        if(!scene) return;
+        if(materialId >= scene->mNumMaterials) return;
+
+        DENG2_ASSERT(atlas != 0);
+
+        MaterialData &tex = materials[materialId];
+        Id &id = (map == Diffuse? tex.diffuse : tex.normals);
+
+        // Release a previously loaded texture.
+        if(id)
+        {
+            releaseTexture(id);
+            id = Id::None;
+        }
+
+        if(map == Height)
+        {
+            HeightMap heightMap;
+            heightMap.loadGrayscale(content);
+            id = atlas->alloc(heightMap.makeNormalMap());
+        }
+        else
+        {
+            id = atlas->alloc(content);
+        }
+
+        // The buffer needs to be updated with the new texture bounds.
+        needMakeBuffer = true;
     }
 
     // Bone & Mesh Setup ----------------------------------------------------------------
@@ -552,6 +729,8 @@ DENG2_PIMPL(ModelDrawable)
 
     VBuf *makeBuffer()
     {
+        needMakeBuffer = false;
+
         VBuf::Vertices verts;
         VBuf::Indices indx;
 
@@ -575,19 +754,27 @@ DENG2_PIMPL(ModelDrawable)
 
                 VBuf::Type v;
 
-                v.pos       = Vector3f(pos->x, pos->y, pos->z);
-                v.normal    = Vector3f(normal->x, normal->y, normal->z);
-                v.tangent   = Vector3f(tangent->x, tangent->y, tangent->z);
-                v.bitangent = Vector3f(bitang->x, bitang->y, bitang->z);
+                v.pos        = Vector3f(pos->x, pos->y, pos->z);
 
-                v.texCoord  = Vector2f(texCoord->x, texCoord->y);
+                v.normal     = Vector3f(normal ->x, normal ->y, normal ->z);
+                v.tangent    = Vector3f(tangent->x, tangent->y, tangent->z);
+                v.bitangent  = Vector3f(bitang ->x, bitang ->y, bitang ->z);
+
+                v.texCoord   = Vector2f(texCoord->x, texCoord->y);
+                v.texBounds  = Vector4f(0, 0, 1, 1);
+                v.texBounds2 = Vector4f(0, 0, 1, 1);
+
                 if(scene->HasMaterials())
                 {
-                    v.texBounds = atlas->imageRectf(materialTexIds[mesh.mMaterialIndex]).xywh();
-                }
-                else
-                {
-                    v.texBounds = Vector4f(0, 0, 1, 1);
+                    MaterialData const &tex = materials[mesh.mMaterialIndex];
+                    if(tex.diffuse)
+                    {
+                        v.texBounds = atlas->imageRectf(tex.diffuse).xywh();
+                    }
+                    if(tex.normals)
+                    {
+                        v.texBounds2 = atlas->imageRectf(tex.normals).xywh();
+                    }
                 }
 
                 for(int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
@@ -784,6 +971,8 @@ DENG2_PIMPL(ModelDrawable)
 
     void preDraw(Animator const *animation)
     {
+        if(needMakeBuffer) makeBuffer();
+
         DENG2_ASSERT(program != 0);
         DENG2_ASSERT(buffer != 0);
 
@@ -878,6 +1067,30 @@ void ModelDrawable::unsetAtlas()
 {
     d->releaseTexturesFromAtlas();
     d->atlas = 0;
+}
+
+void ModelDrawable::setDefaultNormals(Id const &atlasId)
+{
+    d->defaultNormals = atlasId;
+}
+
+int ModelDrawable::materialId(String const &name) const
+{
+    return d->findMaterial(name);
+}
+
+void ModelDrawable::setTexturePath(int materialId, TextureMap tex, String const &path)
+{
+    if(d->atlas)
+    {
+        // Load immediately.
+        d->setTexture(materialId, tex, d->loadImage(path));
+    }
+    else
+    {
+        // This will override what the model specifies.
+        d->setCustomTexture(materialId, tex, path);
+    }
 }
 
 void ModelDrawable::setProgram(GLProgram &program)
