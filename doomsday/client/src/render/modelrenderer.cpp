@@ -241,6 +241,23 @@ void ModelRenderer::addLight(Vector3f const &direction, Vector3f const &intensit
     d->lightCount++;
 }
 
+int ModelRenderer::identifierFromText(String const &text,
+                                      std::function<int (String const &)> resolver) // static
+{
+    /// @todo This might be useful on a more general level, outside ModelRenderer. -jk
+
+    int id = 0;
+    if(text.beginsWith('#'))
+    {
+        id = text.mid(1).toInt();
+    }
+    else
+    {
+        id = resolver(text);
+    }
+    return id;
+}
+
 /*GLUniform &ModelRenderer::uMvpMatrix()
 {
     return d->uMvpMatrix;

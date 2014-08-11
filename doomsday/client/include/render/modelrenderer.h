@@ -24,6 +24,7 @@
 
 #include <QList>
 #include <QMap>
+#include <functional>
 
 /**
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
@@ -84,6 +85,10 @@ public:
     void clearLights();
 
     void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);
+
+public:
+    static int identifierFromText(de::String const &text,
+                           std::function<int (de::String const &)> resolver);
 
 private:
     DENG2_PRIVATE(d)

@@ -48,16 +48,9 @@ void MobjAnimator::triggerByState(String const &stateName)
         // Start the animation on the specified node (defaults to root),
         // unless it is already running.
         String const node = seq.def->gets(DEF_ROOT_NODE, "");
-        int animId;
-        if(seq.name.startsWith('#'))
-        {
-            // Animation sequence specified by index.
-            animId = seq.name.mid(1).toInt();
-        }
-        else
-        {
-            animId = model().animationIdForName(seq.name);
-        }
+        int animId = ModelRenderer::identifierFromText(seq.name, [this] (String const &name) {
+            return model().animationIdForName(name);
+        });
 
         // Do not restart running sequences.
         // TODO: Only restart if the current state is not the expected one.
