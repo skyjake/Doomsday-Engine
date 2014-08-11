@@ -7,6 +7,15 @@ asset model.thing.possessed {
     path = "boblampclean.md5mesh"
     front <1, 0, 0>
     up    <0, 0, 1>
+    
+    group material {
+        texture "#0" {
+            heightMap = "bodyheights.png"
+        } 
+        texture "#5" {
+            heightMap = "bodyheights.png"
+        } 
+    }
 
     group animation {
         state POSS_STND {

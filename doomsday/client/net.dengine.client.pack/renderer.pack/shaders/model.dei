@@ -5,18 +5,25 @@ group model {
         vertex = "
             uniform highp mat4 uMvpMatrix;
             uniform highp mat4 uBoneMatrices[64];
+            uniform highp vec4 uLightDirs[4];
 
             attribute highp vec4 aVertex;
             attribute highp vec3 aNormal;
+            attribute highp vec3 aTangent;
+            attribute highp vec3 aBitangent;
             attribute highp vec2 aUV;
-            attribute highp vec4 aBounds;
-            attribute highp vec4 aColor;
+            attribute highp vec4 aBounds;   // diffuse map
+            attribute highp vec4 aBounds2;  // normal map
             attribute highp vec4 aBoneIDs;
             attribute highp vec4 aBoneWeights;
 
             varying highp vec2 vUV;
-            varying highp vec4 vColor;
-            varying highp vec3 vNormal;
+            varying highp vec2 vNormalUV;
+            varying highp vec3 vLightDirs[4]; // tangent space
+
+            highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) {
+                return (matrix * vec4(dir, 0.0)).xyz;
+            }
 
             void main(void) {
                 // Bone transformation.
@@ -25,35 +32,53 @@ group model {
                     uBoneMatrices[int(aBoneIDs.y + 0.5)] * aBoneWeights.y +
                     uBoneMatrices[int(aBoneIDs.z + 0.5)] * aBoneWeights.z +
                     uBoneMatrices[int(aBoneIDs.w + 0.5)] * aBoneWeights.w;
+                    
+                // Vertex position.
                 highp vec4 modelPos = bone * aVertex;
                 gl_Position = uMvpMatrix * modelPos;
                 
-                vUV = aBounds.xy + aUV * aBounds.zw;
-                vColor = aColor;
-                vNormal = (bone * vec4(aNormal, 0.0)).xyz;
+                // Tangent space.
+                highp vec3 normal    = transformVector(aNormal, bone);
+                highp vec3 tangent   = transformVector(aTangent, bone);
+                highp vec3 bitangent = transformVector(aBitangent, bone);
+                highp mat3 tangentSpace = mat3(tangent, bitangent, normal);
+                
+                // Light direction in tangent space.
+                vLightDirs[0] = uLightDirs[0].xyz * tangentSpace;
+                vLightDirs[1] = uLightDirs[1].xyz * tangentSpace;
+                vLightDirs[2] = uLightDirs[2].xyz * tangentSpace;
+                vLightDirs[3] = uLightDirs[3].xyz * tangentSpace;
+                
+                vUV       = aBounds.xy  + aUV * aBounds.zw;
+                vNormalUV = aBounds2.xy + aUV * aBounds2.zw;
             }"
         fragment = "
             uniform sampler2D uTex;
-            uniform highp vec4 uLightDirs[4];
             uniform highp vec4 uLightIntensities[4];
             
             varying highp vec2 vUV;
-            varying highp vec3 vNormal;
+            varying highp vec2 vNormalUV;
+            varying highp vec3 vLightDirs[4]; // tangent space
             
-            highp vec4 colorFromLight(int index, highp vec3 normal) {
-                highp float d = dot(normal, uLightDirs[index].xyz);
+            highp vec3 normalVector() {
+                return (texture2D(uTex, vNormalUV).xyz * 2.0) - 1.0;
+            }
+
+            highp vec4 diffuseLight(int index, highp vec3 normal) {
+                highp float d = dot(normal, normalize(vLightDirs[index]));
                 return max(d * uLightIntensities[index],
                            vec4(0.0, 0.0, 0.0, 0.0));
             }
-
-            void main(void) {
-                highp vec3 normal = normalize(vNormal);
+            
+            void main(void) {        
+                highp vec3 normal = normalVector();
+                        
                 gl_FragColor = //texture2D(uTex, vUV);
-                    colorFromLight(0, normal) + 
-                    colorFromLight(1, normal) + 
-                    colorFromLight(2, normal) + 
-                    colorFromLight(3, normal);
-                gl_FragColor.a = 1.0; 
+                    diffuseLight(0, normal) + 
+                    diffuseLight(1, normal) + 
+                    diffuseLight(2, normal) + 
+                    diffuseLight(3, normal);
+                gl_FragColor.a = 1.0;
             }"
     }
 }

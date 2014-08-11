@@ -29,8 +29,9 @@
 
 using namespace de;
 
-static String const DEF_ANIMATION("animation");
-static String const DEF_UP_VECTOR("up");
+static String const DEF_ANIMATION   ("animation");
+static String const DEF_MATERIAL    ("material");
+static String const DEF_UP_VECTOR   ("up");
 static String const DEF_FRONT_VECTOR("front");
 
 DENG2_PIMPL(ModelRenderer)
@@ -49,15 +50,17 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uLightIntensities;
     Matrix4f inverseLocal;
     int lightCount;
+    Id defaultNormals;
 
     Instance(Public *i)
         : Base(i)
         , observer("model\\..*") // all model assets
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uTex      ("uTex",       GLUniform::Sampler2D)
-        , uLightDirs("uLightDirs", GLUniform::Vec4Array, MAX_LIGHTS)
+        , uMvpMatrix       ("uMvpMatrix", GLUniform::Mat4)
+        , uTex             ("uTex",       GLUniform::Sampler2D)
+        , uLightDirs       ("uLightDirs", GLUniform::Vec4Array, MAX_LIGHTS)
         , uLightIntensities("uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS)
         , lightCount(0)
+        , defaultNormals(Id::None)
     {
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
@@ -74,6 +77,13 @@ DENG2_PIMPL(ModelRenderer)
         atlas.reset(AtlasTexture::newWithKdTreeAllocator(
                     Atlas::DefaultFlags,
                     GLTexture::maximumSize().min(GLTexture::Size(4096, 4096))));
+        atlas->setBorderSize(1);
+        atlas->setMarginSize(0);
+
+        // Fallback normal map for models who don't provide one.
+        QImage img(QSize(1, 1), QImage::Format_ARGB32);
+        img.fill(qRgba(127, 127, 255, 255)); // z+
+        defaultNormals = atlas->alloc(img);
 
         uTex = *atlas;
 
@@ -82,7 +92,7 @@ DENG2_PIMPL(ModelRenderer)
         {
             if(bank.isLoaded(path))
             {
-                setupModel(bank.model(path));
+                setupModel(bank.model(path), path);
             }
         });
     }
@@ -118,11 +128,12 @@ DENG2_PIMPL(ModelRenderer)
      *
      * @param model  Model to configure.
      */
-    void setupModel(ModelDrawable &model)
+    void setupModel(ModelDrawable &model, String const &path)
     {
         if(atlas)
         {
             model.setAtlas(*atlas);
+            model.setDefaultNormals(defaultNormals);
         }
         else
         {
@@ -141,7 +152,8 @@ DENG2_PIMPL(ModelRenderer)
     void bankLoaded(DotPath const &path)
     {
         // Models use the shared atlas.
-        setupModel(bank.model(path));
+        ModelDrawable &model = bank.model(path);
+        setupModel(model, path);
 
         auto const asset = App::asset(path);
 
@@ -160,6 +172,29 @@ DENG2_PIMPL(ModelRenderer)
             up = Vector3f(asset.geta(DEF_UP_VECTOR));
         }
         aux->transformation = Matrix4f::frame(front, up);
+
+        // Custom texture maps.
+        if(asset.has(DEF_MATERIAL))
+        {
+            auto textures = ScriptedInfo::subrecordsOfType("texture", asset.subrecord(DEF_MATERIAL));
+            DENG2_FOR_EACH_CONST(Record::Subrecords, tex, textures)
+            {
+                Record const &def = *tex.value();
+                if(def.has("heightMap"))
+                {
+                    String path = ScriptedInfo::absolutePathInContext(asset.accessedRecord(),
+                                                                      def.gets("heightMap"));
+
+                    int matId = identifierFromText(tex.key(), [&model] (String const &text) {
+                        return model.materialId(text);
+                    });
+
+                    qDebug() << "HeightMap:" << matId << path << atlas.get();
+
+                    model.setTexturePath(matId, ModelDrawable::Height, path);
+                }
+            }
+        }
 
         // Set up the animation sequences for states.
         if(asset.has(DEF_ANIMATION))
