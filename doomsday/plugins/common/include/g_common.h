@@ -1,7 +1,7 @@
 /** @file g_common.h  Top-level (common) game routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,7 +29,6 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
-DENG_EXTERN_C uint gameEpisode;
 DENG_EXTERN_C uint gameMapEntrance;
 
 #if __cplusplus
@@ -65,11 +64,13 @@ void G_SetGameAction(gameaction_t action);
 /**
  * Schedule a new game session (deferred).
  *
+ * @param rules        Game rules to apply.
+ * @param episodeId    Episode identifier.
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
- * @param rules        Game rules to apply.
  */
-void G_SetGameActionNewSession(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
+void G_SetGameActionNewSession(GameRuleset const &rules, de::String episodeId,
+                               de::Uri const &mapUri, uint mapEntrance = 0);
 
 /**
  * Schedule a game session save (deferred).
@@ -118,6 +119,12 @@ char const *G_InFineBriefing(de::Uri const *mapUri = 0);
  *                case the debriefing for the @em current map will be returned.
  */
 char const *G_InFineDebriefing(de::Uri const *mapUri = 0);
+
+/**
+ * @param mapUri  Identifier of the episode to lookup the title of. Can be @c 0 in which
+ *                case the title for the @em current episode will be returned (if set).
+ */
+de::String G_EpisodeTitle(de::String const *episodeId = 0);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
@@ -186,13 +193,6 @@ void G_IntermissionDone(void);
 
 #if __cplusplus
 } // extern "C"
-
-/**
- * Returns the logical episode number assigned to the identified map (in MapInfo).
- *
- * @param mapUri  Unique identifier of the map to lookup.
- */
-uint G_EpisodeNumberFor(de::Uri const &mapUri);
 
 /**
  * Returns the logical map number for the identified map.

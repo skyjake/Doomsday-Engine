@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
+#include "gamesession.h"
 #include "hu_stuff.h"
 #include "d_net.h"
 #include "p_mapsetup.h"
@@ -34,6 +35,12 @@ using namespace de;
 
 #define MAX_ANIM_FRAMES         (3)
 #define NUMMAPS                 (9)
+
+/// @todo fixme: Episodes are now identified with textual ids! -ds
+static inline int episodeNumber()
+{
+    return COMMON_GAMESESSION->episodeId().toInt() - 1;
+}
 
 struct wianimdef_t
 {
@@ -234,14 +241,14 @@ static void drawBackground()
 
     GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(!(gameModeBits & GM_ANY_DOOM2) && ::gameEpisode < 3)
+    if(!(gameModeBits & GM_ANY_DOOM2) && episodeNumber() < 3)
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        for(int i = 0; i < animCounts[::gameEpisode]; ++i)
+        for(int i = 0; i < animCounts[episodeNumber()]; ++i)
         {
-            wianimdef_t const *def = &animDefs[::gameEpisode][i];
+            wianimdef_t const *def = &animDefs[episodeNumber()][i];
             wianimstate_t *state   = &animStates[i];
 
             // Has the animation begun yet?
@@ -354,11 +361,11 @@ static void beginAnimations()
 {
     if(gameModeBits & GM_ANY_DOOM2) return;
 
-    if(::gameEpisode > 2) return;
+    if(episodeNumber() > 2) return;
 
-    for(int i = 0; i < animCounts[::gameEpisode]; ++i)
+    for(int i = 0; i < animCounts[episodeNumber()]; ++i)
     {
-        wianimdef_t const *def = &animDefs[::gameEpisode][i];
+        wianimdef_t const *def = &animDefs[episodeNumber()][i];
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
@@ -389,11 +396,11 @@ static void animateBackground()
 {
     if(gameModeBits & GM_ANY_DOOM2) return;
 
-    if(::gameEpisode > 2) return;
+    if(episodeNumber() > 2) return;
 
-    for(int i = 0; i < animCounts[::gameEpisode]; ++i)
+    for(int i = 0; i < animCounts[episodeNumber()]; ++i)
     {
-        wianimdef_t const *def = &animDefs[::gameEpisode][i];
+        wianimdef_t const *def = &animDefs[episodeNumber()][i];
         wianimstate_t *state   = &animStates[i];
 
         // Is the animation active for the current map?
@@ -521,7 +528,7 @@ static void tickShowNextMap()
 
 static void drawLocationMarks()
 {
-    if((gameModeBits & GM_ANY_DOOM) && ::gameEpisode < 3)
+    if((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, 1);
@@ -534,18 +541,18 @@ static void drawLocationMarks()
 
         for(int i = 0; i <= last; ++i)
         {
-            drawPatchIfFits(pSplat, locations[::gameEpisode][i]);
+            drawPatchIfFits(pSplat, locations[episodeNumber()][i]);
         }
 
         // Splat the secret map?
         if(wbs->didSecret)
         {
-            drawPatchIfFits(pSplat, locations[::gameEpisode][8]);
+            drawPatchIfFits(pSplat, locations[episodeNumber()][8]);
         }
 
         if(drawYouAreHere)
         {
-            Vector2i const &origin  = locations[::gameEpisode][G_MapNumberFor(wbs->nextMap)];
+            Vector2i const &origin  = locations[episodeNumber()][G_MapNumberFor(wbs->nextMap)];
             patchid_t const patchId = chooseYouAreHerePatch(origin);
             if(patchId)
             {
@@ -1254,28 +1261,28 @@ void WI_Ticker()
 
 static void loadData()
 {
-    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && ::gameEpisode > 2))
+    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && episodeNumber() > 2))
     {
         pBackground = R_DeclarePatch("INTERPIC");
     }
     else
     {
-        char name[9]; sprintf(name, "WIMAP%u", ::gameEpisode);
+        char name[9]; sprintf(name, "WIMAP%u", episodeNumber());
         pBackground = R_DeclarePatch(name);
     }
 
-    if((gameModeBits & GM_ANY_DOOM) && ::gameEpisode < 3)
+    if((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3)
     {
         pYouAreHereRight = R_DeclarePatch("WIURH0");
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
         pSplat           = R_DeclarePatch("WISPLAT");
 
-        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[::gameEpisode], PU_GAMESTATIC);
-        std::memset(animStates, 0, sizeof(*animStates) * animCounts[::gameEpisode]);
+        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[episodeNumber()], PU_GAMESTATIC);
+        std::memset(animStates, 0, sizeof(*animStates) * animCounts[episodeNumber()]);
 
-        for(int i = 0; i < animCounts[::gameEpisode]; ++i)
+        for(int i = 0; i < animCounts[episodeNumber()]; ++i)
         {
-            wianimdef_t const *def = &animDefs[::gameEpisode][i];
+            wianimdef_t const *def = &animDefs[episodeNumber()][i];
             wianimstate_t *state   = &animStates[i];
 
             state->frame = -1; // Not yet begun.

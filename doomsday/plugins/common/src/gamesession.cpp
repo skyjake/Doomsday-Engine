@@ -94,7 +94,8 @@ static String const internalSavePath = "/home/cache/internal.save";
 
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
-    GameRuleset rules; ///< current ruleset
+    String episodeId;
+    GameRuleset rules;
     bool inProgress;   ///< @c true= session is in progress / internal.save exists.
 
     Instance(Public *i) : Base(i), inProgress(false)
@@ -129,7 +130,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SessionMetadata meta;
 
         meta.set("gameIdentityKey", Session::gameId());
-        meta.set("episode",         String::number(::gameEpisode + 1));
+        meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          ::gameMapUri.compose());
         meta.set("mapTime",         ::mapTime);
@@ -462,7 +463,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         inProgress = true;
 
-        ::gameEpisode = metadata.gets("episode").toInt() - 1;
+        episodeId = metadata.gets("episode");
         setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
         //::gameMapEntrance = mapEntrance; // not saved??
 
@@ -482,7 +483,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::gameMapUri = mapUri;
 
         // Update game status cvars:
-        Con_SetInteger2("map-episode", (unsigned)::gameEpisode, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-episode", episodeId.toInt() - 1, SVF_WRITE_OVERRIDE);
         Con_SetUri2    ("map-id",      reinterpret_cast<uri_s *>(&::gameMapUri), SVF_WRITE_OVERRIDE);
     }
 
@@ -791,9 +792,14 @@ Record *GameSession::episodeDef()
     if(hasBegun())
     {
         /// @todo cache this result?
-        return Defs().episodes.tryFind("id", String::number(::gameEpisode + 1));
+        return Defs().episodes.tryFind("id", d->episodeId);
     }
     return 0;
+}
+
+String GameSession::episodeId()
+{
+    return hasBegun()? d->episodeId : "";
 }
 
 Record *GameSession::mapGraphNodeDef()
@@ -814,6 +820,11 @@ Record *GameSession::mapInfo()
         return Defs().mapInfos.tryFind("id", ::gameMapUri.compose());
     }
     return 0;
+}
+
+de::Uri GameSession::mapUri()
+{
+    return hasBegun()? ::gameMapUri : de::Uri();
 }
 
 de::Uri GameSession::mapUriForNamedExit(String name)
@@ -844,8 +855,8 @@ de::Uri GameSession::mapUriForNamedExit(String name)
             }
             else
             {
-                LOG_SCR_WARNING("Episode '%s', map '%s' defines no Exit with ID '%s'")
-                        << String::number(::gameEpisode + 1)
+                LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no Exit with ID '%s'")
+                        << d->episodeId
                         << ::gameMapUri
                         << name;
             }
@@ -859,6 +870,12 @@ de::Uri GameSession::mapUriForNamedExit(String name)
                 LOGDEV_SCR_NOTE("Exit ID:%s chosen instead of '%s'")
                         << chosenExitId << name;
             }
+        }
+        else
+        {
+            LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no exits")
+                    << d->episodeId
+                    << ::gameMapUri;
         }
 
         if(chosenExit)
@@ -922,7 +939,8 @@ void GameSession::endAndBeginTitle()
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &newRules)
+void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
+    de::Uri const &mapUri, uint mapEntrance)
 {
     if(hasBegun())
     {
@@ -932,7 +950,13 @@ void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset con
 
     LOG_MSG("Game begins...");
 
-    // Check that the map truly exists.
+    // Ensure the episode id is good.
+    if(!Defs().episodes.has("id", episodeId))
+    {
+        throw Error("GameSession::begin", "Episode '" + episodeId + "' is not known");
+    }
+
+    // Ensure the map truly exists.
     if(!P_MapExists(mapUri.compose().toUtf8().constData()))
     {
         throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
@@ -976,8 +1000,7 @@ void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset con
     d->applyCurrentRules();
     d->inProgress = true;
 
-    // Determine the episode for the map (should come from MapInfo).
-    ::gameEpisode = G_EpisodeNumberFor(mapUri);
+    d->episodeId = episodeId;
     d->setMap(mapUri);
     ::gameMapEntrance = mapEntrance;
 
@@ -1015,7 +1038,7 @@ void GameSession::reloadMap()
         // Restart the session entirely.
         briefDisabled = true; // We won't brief again.
         end();
-        begin(::gameMapUri, ::gameMapEntrance, d->rules);
+        begin(d->rules, d->episodeId, ::gameMapUri, ::gameMapEntrance);
     }
 }
 

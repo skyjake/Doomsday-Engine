@@ -1,7 +1,7 @@
 /** @file d_net.cpp  Common code related to net games.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -29,6 +29,7 @@
 #include "p_start.h"
 #include "fi_lib.h"
 
+using namespace de;
 using namespace common;
 
 D_CMD(SetColor);
@@ -41,8 +42,8 @@ static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
 
 float netJumpPower = 9;
 
-static Writer *netWriter;
-static Reader *netReader;
+static writer_s *netWriter;
+static reader_s *netReader;
 
 static void notifyAllowCheatsChange()
 {
@@ -70,7 +71,7 @@ void D_NetConsoleRegistration()
     C_CMD        ("message",    "s",    LocalMessage);
 }
 
-Writer *D_NetWrite()
+writer_s *D_NetWrite()
 {
     if(netWriter)
     {
@@ -80,7 +81,7 @@ Writer *D_NetWrite()
     return netWriter;
 }
 
-Reader *D_NetRead(byte const *buffer, size_t len)
+reader_s *D_NetRead(byte const *buffer, size_t len)
 {
     // Get rid of the old reader.
     if(netReader)
@@ -128,7 +129,7 @@ int D_NetServerStarted(int before)
     netRules.skill = skillmode_t(cfg.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(netMapUri, 0/*default*/, netRules);
+    COMMON_GAMESESSION->begin(netRules, netEpisode, netMapUri);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     return true;
@@ -357,7 +358,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
 void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
-    Reader *reader = D_NetRead((byte *)data, length);
+    reader_s *reader = D_NetRead((byte *)data, length);
 
     //
     // Server events.

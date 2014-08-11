@@ -29,6 +29,12 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
+/// @todo fixme: Episodes are now identified with textual ids! -ds
+static inline int episodeNumber()
+{
+    return COMMON_GAMESESSION->episodeId().toInt() - 1;
+}
+
 enum gametype_t
 {
     SINGLE,
@@ -362,9 +368,9 @@ void IN_InitStats()
 
 void IN_LoadPics()
 {
-    if(::gameEpisode < 3)
+    if(episodeNumber() < 3)
     {
-        dpInterPic = R_DeclarePatch(::gameEpisode == 0? "MAPE1" : ::gameEpisode == 1? "MAPE2" : "MAPE3");
+        dpInterPic = R_DeclarePatch(episodeNumber() == 0? "MAPE1" : episodeNumber() == 1? "MAPE2" : "MAPE3");
     }
 
     dpBeenThere  = R_DeclarePatch("IN_X");
@@ -423,7 +429,7 @@ void IN_Ticker()
     {
         nextIntermissionState();
 
-        if(::gameEpisode > 2 && interState >= 1)
+        if(episodeNumber() > 2 && interState >= 1)
         {
             // Extended Wad levels:  skip directly to the next level
             endIntermissionGoToNextLevel();
@@ -433,7 +439,7 @@ void IN_Ticker()
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(::gameEpisode > 2)
+            if(episodeNumber() > 2)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -465,7 +471,7 @@ void IN_Ticker()
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        if(interState < 2 && ::gameEpisode < 3)
+        if(interState < 2 && episodeNumber() < 3)
         {
             interState = 2;
             skipIntermission = false;
@@ -587,7 +593,7 @@ void IN_Drawer()
         break;
 
     case 1: // Leaving old level.
-        if(::gameEpisode < 3)
+        if(episodeNumber() < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -601,7 +607,7 @@ void IN_Drawer()
         break;
 
     case 2: // Going to the next level.
-        if(::gameEpisode < 3)
+        if(episodeNumber() < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -614,7 +620,7 @@ void IN_Drawer()
         break;
 
     case 3: // Waiting before going to the next level.
-        if(::gameEpisode < 3)
+        if(episodeNumber() < 3)
         {
             DGL_Enable(DGL_TEXTURE_2D);
 
@@ -668,12 +674,12 @@ void IN_DrawOldLevel()
         uint const nextMap = G_MapNumberFor(wbs->nextMap);
         for(uint i = 0; i < nextMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
         }
     }
     else
@@ -682,17 +688,17 @@ void IN_DrawOldLevel()
         uint const currentMap = G_MapNumberFor(wbs->currentMap);
         for(uint i = 0; i < currentMap; ++i)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][currentMap]);
+            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][currentMap]);
         }
     }
 
@@ -716,18 +722,18 @@ void IN_DrawYAH()
 
     for(uint i = 0; i < nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][i]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[::gameEpisode][8]);
+        GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
     }
 
     if(!(interTime & 16) || interState == 3)
     {
         // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, &YAHspot[::gameEpisode][nextMap]);
+        GL_DrawPatch(dpGoingThere, &YAHspot[episodeNumber()][nextMap]);
     }
 }
 
@@ -837,7 +843,7 @@ void IN_DrawSingleStats()
         sounds++;
     }
 
-    if(gameMode != heretic_extended || ::gameEpisode < 3)
+    if(gameMode != heretic_extended || episodeNumber() < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
