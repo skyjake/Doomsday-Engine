@@ -176,20 +176,18 @@ DENG2_PIMPL(ModelRenderer)
         // Custom texture maps.
         if(asset.has(DEF_MATERIAL))
         {
-            auto textures = ScriptedInfo::subrecordsOfType("texture", asset.subrecord(DEF_MATERIAL));
-            DENG2_FOR_EACH_CONST(Record::Subrecords, tex, textures)
+            auto mats = asset.subrecord(DEF_MATERIAL).subrecords();
+            DENG2_FOR_EACH_CONST(Record::Subrecords, mat, mats)
             {
-                Record const &def = *tex.value();
+                Record const &def = *mat.value();
                 if(def.has("heightMap"))
                 {
                     String path = ScriptedInfo::absolutePathInContext(asset.accessedRecord(),
                                                                       def.gets("heightMap"));
 
-                    int matId = identifierFromText(tex.key(), [&model] (String const &text) {
+                    int matId = identifierFromText(mat.key(), [&model] (String const &text) {
                         return model.materialId(text);
                     });
-
-                    qDebug() << "HeightMap:" << matId << path << atlas.get();
 
                     model.setTexturePath(matId, ModelDrawable::Height, path);
                 }
@@ -282,7 +280,7 @@ int ModelRenderer::identifierFromText(String const &text,
     /// @todo This might be useful on a more general level, outside ModelRenderer. -jk
 
     int id = 0;
-    if(text.beginsWith('#'))
+    if(text.beginsWith('@'))
     {
         id = text.mid(1).toInt();
     }

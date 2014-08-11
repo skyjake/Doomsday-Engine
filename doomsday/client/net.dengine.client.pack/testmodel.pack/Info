@@ -8,18 +8,16 @@ asset model.thing.possessed {
     front <1, 0, 0>
     up    <0, 0, 1>
     
-    group material {
-        texture "#0" {
-            heightMap = "bodyheights.png"
-        } 
-        texture "#5" {
-            heightMap = "bodyheights.png"
-        } 
+    group material.@0 {
+        heightMap = "bodyheights.png"
+    } 
+    group material.@5 {
+        heightMap = "bodyheights.png"
     }
 
     group animation {
         state POSS_STND {
-            sequence "#0" { timeline <0, 5, 10> }
+            sequence @0 { timeline <0, 5, 10> }
         }
     }
 }
