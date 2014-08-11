@@ -1200,10 +1200,11 @@ static void printMapBanner()
     String const title = G_MapTitle(); // current map
     if(!title.isEmpty())
     {
-        String text = String("Map: " DE2_ESC(i) DE2_ESC(b) "%1" DE2_ESC(.) " (%2, warp:%3)")
+        Record const *mgNodeDef = COMMON_GAMESESSION->mapGraphNodeDef();
+        String text = String("Map: " DE2_ESC(i) DE2_ESC(b) "%1" DE2_ESC(.) " (%2%3)")
                           .arg(title)
                           .arg(gameMapUri.asText())
-                          .arg(COMMON_GAMESESSION->mapGraphNodeDef()->geti("warpNumber"));
+                          .arg(mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
