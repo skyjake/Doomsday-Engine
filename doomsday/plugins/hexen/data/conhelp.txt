@@ -426,7 +426,7 @@ desc = 1=Show door colors in automap.
 desc = Door glow thickness in the automap (with map-door-colors).
 
 [map-episode]
-desc = Current episode.
+desc = Current episode id.
 
 [map-huddisplay]
 desc = 0=No HUD when in the automap 1=Current HUD display shown when in the automap 2=Always show Status Bar when in the automap

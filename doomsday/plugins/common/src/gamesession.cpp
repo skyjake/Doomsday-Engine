@@ -483,8 +483,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::gameMapUri = mapUri;
 
         // Update game status cvars:
-        Con_SetInteger2("map-episode", episodeId.toInt() - 1, SVF_WRITE_OVERRIDE);
-        Con_SetUri2    ("map-id",      reinterpret_cast<uri_s *>(&::gameMapUri), SVF_WRITE_OVERRIDE);
+        Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetUri2   ("map-id",      reinterpret_cast<uri_s *>(&::gameMapUri), SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -1280,8 +1280,8 @@ String GameSession::savedUserDescription(String const &saveName)
 
 namespace {
 int gsvRuleSkill;
-int gsvEpisode;
-uri_s *gsvMap;
+char *gsvEpisode = (char *)"";
+//uri_s *gsvMap;
 #if __JHEXEN__
 int gsvHub;
 #endif
@@ -1291,12 +1291,12 @@ void GameSession::consoleRegister() //static
 {
 #define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
 
-    C_VAR_INT("game-skill",  &gsvRuleSkill, READONLYCVAR, 0, 0);
-    C_VAR_INT("map-episode", &gsvEpisode,   READONLYCVAR, 0, 0);
+    C_VAR_INT    ("game-skill",     &gsvRuleSkill,  READONLYCVAR, 0, 0);
+    C_VAR_CHARPTR("map-episode",    &gsvEpisode,    READONLYCVAR, 0, 0);
 #if __JHEXEN__
-    C_VAR_INT("map-hub",     &gsvHub,       READONLYCVAR, 0, 0);
+    //C_VAR_INT    ("map-hub",        &gsvHub,        READONLYCVAR, 0, 0);
 #endif
-    C_VAR_URIPTR("map-id",   &gsvMap,       READONLYCVAR, 0, 0);
+    C_VAR_URIPTR ("map-id",         &gsvMap,        READONLYCVAR, 0, 0);
 
 #undef READONLYCVAR
 }
