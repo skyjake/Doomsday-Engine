@@ -205,18 +205,18 @@ namespace internal {
         return de::Uri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')), RC_NULL);
     }
 
-    static uint mapNumberFor(de::Uri const &mapUri)
+    static uint mapWarpNumberFor(de::Uri const &mapUri)
     {
         String path = mapUri.path();
         if(!path.isEmpty())
         {
             if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
-                return path.substr(3).toInt() - 1;
+                return de::max(path.substr(3).toInt(), 1);
             }
             if(path.beginsWith("map", Qt::CaseInsensitive))
             {
-                return path.substr(3).toInt() - 1;
+                return de::max(path.substr(3).toInt(), 1);
             }
         }
         return 0;
@@ -269,7 +269,8 @@ namespace internal {
             while(lexer.readToken())
             {
                 String tok = Str_Text(lexer.token());
-                if(tok.beginsWith("cd_") && tok.endsWith("_track"))
+                if(tok.beginsWith("cd_", Qt::CaseInsensitive) &&
+                   tok.endsWith("_track", Qt::CaseInsensitive))
                 {
                     String const pubName = tok.substr(3, tok.length() - 6 - 3);
                     MusicMappings::const_iterator found = musicMap.constFind(pubName);
@@ -620,9 +621,8 @@ namespace internal {
 
                     info->set("map", mapUri.compose());
 
-                    // Attempt to extract the "warp translation" number.
-                    uint mapWarpNumber = mapNumberFor(mapUri);
-                    info->set("warpTrans", mapWarpNumber != 0? mapWarpNumber + 1 : 0);
+                    // Attempt to extract the map "warp number".
+                    info->set("warpTrans", mapWarpNumberFor(mapUri));
                 }
 
                 // Map title follows the number.
