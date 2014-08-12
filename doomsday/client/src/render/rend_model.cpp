@@ -811,7 +811,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(spr.pose.origin[VX], spr.pose.origin[VY], (spr.pose.origin[VZ] + spr.pose.gzt) * 2)
+    modelCenter = Vector3f(spr.pose.origin[VX], spr.pose.origin[VY], spr.pose.midZ())
             + Vector3d(spr.pose.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.

@@ -801,7 +801,7 @@ static void setupPlayerSprites()
             spr->data.model.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.origin.z;
+            spr->data.model.topZ = viewData->current.origin.z;
             spr->data.model.secFloor = cluster.visFloor().heightSmoothed();
             spr->data.model.secCeil  = cluster.visCeiling().heightSmoothed();
             spr->data.model.pClass = 0;

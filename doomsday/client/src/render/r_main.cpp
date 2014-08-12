@@ -208,7 +208,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
     vis.pose.srvo[VX] = spr->data.model.visOff[VX];
     vis.pose.srvo[VY] = spr->data.model.visOff[VY];
     vis.pose.srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
-    vis.pose.gzt = spr->data.model.gzt;
+    vis.pose.topZ = spr->data.model.topZ;
     vis.pose.distance = -10;
     vis.pose.yaw = spr->data.model.yaw;
     vis.pose.extraYawAngle = 0;

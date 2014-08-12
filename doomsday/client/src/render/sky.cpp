@@ -384,7 +384,7 @@ DENG2_PIMPL(Sky)
             temp.pose.origin[VX]   = vOrigin.x * -minfo.def->coordFactor[VX];
             temp.pose.origin[VY]   = vOrigin.z * -minfo.def->coordFactor[VZ];
             temp.pose.origin[VZ]   = vOrigin.y * -minfo.def->coordFactor[VY];
-            temp.pose.gzt          = temp.pose.origin[VZ];
+            temp.pose.topZ         = temp.pose.origin[VZ];
             temp.pose.distance     = 1;
 
             temp.pose.extraYawAngle   = temp.pose.yawAngleOffset   = minfo.def->rotate[0];

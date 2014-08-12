@@ -43,9 +43,9 @@ typedef enum {
 struct VisEntityPose
 {
     de::Vector3d    origin;
-    float           gzt; // The real center point and global top z for silhouette clipping.
-    de::Vector3d    srvo; // Short-range visual offset.
-    coord_t         distance; // Distance from viewer.
+    float           topZ; ///< Global top Z coordinate (origin Z is the bottom).
+    de::Vector3d    srvo; ///< Short-range visual offset.
+    coord_t         distance; ///< Distance from viewer.
     float           yaw;
     float           extraYawAngle;
     float           yawAngleOffset; ///< @todo We do not need three sets of angles...
@@ -54,20 +54,20 @@ struct VisEntityPose
     float           pitchAngleOffset;
     float           extraScale;
     bool            viewAligned;
-    bool            mirrored; // If true the model will be mirrored about its Z axis (in model space).
+    bool            mirrored; ///< If true the model will be mirrored about its Z axis (in model space).
 
     VisEntityPose() { de::zap(*this); }
 
     VisEntityPose(de::Vector3d const &origin_,
                   de::Vector3d const &visOffset,
                   bool viewAlign_ = false,
-                  float gzt_ = 0,
+                  float topZ_ = 0,
                   float yaw_ = 0,
                   float yawAngleOffset_ = 0,
                   float pitch_ = 0,
                   float pitchAngleOffset_= 0)
         : origin(origin_)
-        , gzt(gzt_)
+        , topZ(topZ_)
         , srvo(visOffset)
         , distance(Rend_PointDist2D(origin_))
         , yaw(yaw_)
@@ -80,6 +80,10 @@ struct VisEntityPose
         , viewAligned(viewAlign_)
         , mirrored(false)
     {}
+
+    inline coord_t midZ() const { return (origin.z + topZ) / 2; }
+
+    de::Vector3d mid() const { return de::Vector3d(origin.x, origin.y, midZ()); }
 };
 
 struct VisEntityLighting
@@ -158,7 +162,7 @@ typedef struct vispsprite_s {
         } sprite;
         struct vispsprite_model_s {
             BspLeaf *bspLeaf;
-            coord_t gzt; // global top for silhouette clipping
+            coord_t topZ; // global top for silhouette clipping
             int flags; // for color translation and shadow draw
             uint id;
             int selector;

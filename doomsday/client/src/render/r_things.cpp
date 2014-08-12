@@ -323,7 +323,7 @@ void R_ProjectSprite(mobj_t *mo)
         findMobjZOrigin(mo, floorAdjust, vis);
     }
 
-    coord_t gzt = vis->pose.origin.z + -tex.origin().y;
+    coord_t topZ = vis->pose.origin.z + -tex.origin().y; // global z top
 
     // Determine floor clipping.
     coord_t floorClip = mo->floorClip;
@@ -378,7 +378,7 @@ void R_ProjectSprite(mobj_t *mo)
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta((vis->pose.origin.z + gzt) / 2 - viewData->current.origin.z, distFromEye);
+            Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }
@@ -438,16 +438,16 @@ void R_ProjectSprite(mobj_t *mo)
         if(ms.height() < ceiling.heightSmoothed() - floor.heightSmoothed())
         {
             // Sprite fits in, adjustment possible?
-            if(fitTop && gzt > ceiling.heightSmoothed())
-                gzt = ceiling.heightSmoothed();
+            if(fitTop && topZ > ceiling.heightSmoothed())
+                topZ = ceiling.heightSmoothed();
 
-            if(floorAdjust && fitBottom && gzt - ms.height() < floor.heightSmoothed())
-                gzt = floor.heightSmoothed() + ms.height();
+            if(floorAdjust && fitBottom && topZ - ms.height() < floor.heightSmoothed())
+                topZ = floor.heightSmoothed() + ms.height();
         }
         // Adjust by the floor clip.
-        gzt -= floorClip;
+        topZ -= floorClip;
 
-        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, gzt - ms.height() / 2.0f);
+        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
         evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->pose.distance, fullbright,
@@ -460,7 +460,7 @@ void R_ProjectSprite(mobj_t *mo)
                               VisEntityPose(origin, visOff, viewAlign),
                               VisEntityLighting(ambientColor, vLightListIdx),
                               floor.heightSmoothed(), ceiling.heightSmoothed(),
-                              floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,                              
+                              floorClip, topZ, *mat, matFlipS, matFlipT, blendMode,
                               mo->tclass, mo->tmap,
                               &Mobj_BspLeafAtOrigin(*mo),
                               floorAdjust, fitTop, fitBottom);
@@ -480,7 +480,7 @@ void R_ProjectSprite(mobj_t *mo)
             // Set up a GL2 model for drawing.
             vis->pose = VisEntityPose(vis->pose.origin,
                                       Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                                      viewAlign, gzt, yaw, 0, pitch, 0);
+                                      viewAlign, topZ, yaw, 0, pitch, 0);
             vis->light = VisEntityLighting(ambientColor, vLightListIdx);
 
             vis->data.model2.object   = mo;
@@ -493,7 +493,7 @@ void R_ProjectSprite(mobj_t *mo)
             VisSprite_SetupModel(vis,
                                  VisEntityPose(vis->pose.origin,
                                                Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                                               viewAlign, gzt, yaw, 0, pitch, 0),
+                                               viewAlign, topZ, yaw, 0, pitch, 0),
                                  VisEntityLighting(ambientColor, vLightListIdx),
                                  mf, nextmf, interp,
                                  mo->thinker.id, mo->selector,

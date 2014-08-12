@@ -385,7 +385,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
     // Render the particle as a model.
     spr.pose.origin[VX] = origin.x;
     spr.pose.origin[VY] = origin.z;
-    spr.pose.origin[VZ] = spr.pose.gzt = origin.y;
+    spr.pose.origin[VZ] = spr.pose.topZ = origin.y;
     spr.pose.distance = dist;
 
     spr.pose.extraScale = size; // Extra scaling factor.
