@@ -347,6 +347,9 @@ desc = Current map name.
 [map-episode]
 desc = Current episode id.
 
+[map-hub]
+desc = Current hub id.
+
 [game-music]
 desc = Currently playing music (id).
 

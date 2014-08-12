@@ -774,7 +774,7 @@ desc = Show mana when the status bar is hidden. 1=top, 2=bottom, 0=off
 desc = 1=Unhide the HUD when player collects an inventory item.
 
 [map-hub]
-desc = Current hub.
+desc = Current hub id.
 
 [msg-hub-override]
 desc = Override the transition hub message.
