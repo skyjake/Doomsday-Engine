@@ -444,6 +444,10 @@ public:
         if(vecAbs.z > vecAbs[axis]) axis = 2;
         return axis;
     }
+    inline void decompose(Type *array) const {
+        for(int i = 0; i < 3; ++i) array[i] = (*this)[i];
+    }
+
     Vector2<Type> xz() const {
         return Vector2<Type>(Vector2<Type>::x, z);
     }
