@@ -35,6 +35,7 @@ DENG2_PIMPL(GLUniform)
         dint     int32;
         duint    uint32;
         dfloat   float32;
+        Vector3f *vec3array;
         Vector4f *vector;
         Matrix3f *mat3;
         Matrix4f *mat4;
@@ -50,7 +51,9 @@ DENG2_PIMPL(GLUniform)
     {
         name.append('\0');
 
-        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == Mat4Array || type == Vec4Array)));
+        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == Mat4Array ||
+                                                          type == Vec4Array ||
+                                                          type == Vec3Array)));
 
         // Allocate the value type.
         zap(value);
@@ -60,6 +63,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             value.vector = new Vector4f;
+            break;
+
+        case Vec3Array:
+            value.vec3array = new Vector3f[elemCount];
             break;
 
         case Vec4Array:
@@ -93,6 +100,10 @@ DENG2_PIMPL(GLUniform)
         case Vec3:
         case Vec4:
             delete value.vector;
+            break;
+
+        case Vec3Array:
+            delete [] value.vec3array;
             break;
 
         case Vec4Array:
@@ -318,6 +329,19 @@ GLUniform &GLUniform::operator = (GLTexture const *texture)
     return *this;
 }
 
+GLUniform &GLUniform::set(duint elementIndex, Vector3f const &vec)
+{
+    DENG2_ASSERT(d->type == Vec3Array);
+    DENG2_ASSERT(elementIndex < d->elemCount);
+
+    if(d->value.vec3array[elementIndex] != vec)
+    {
+        d->value.vec3array[elementIndex] = vec;
+        d->markAsChanged();
+    }
+    return *this;
+}
+
 GLUniform &GLUniform::set(duint elementIndex, Vector4f const &vec)
 {
     DENG2_ASSERT(d->type == Vec4Array);
@@ -473,6 +497,11 @@ void GLUniform::applyInProgram(GLProgram &program) const
 
     case Vec3:
         glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
+        LIBGUI_ASSERT_GL_OK();
+        break;
+
+    case Vec3Array:
+        glUniform3fv(loc, d->elemCount, &d->value.vec3array->x); // sequentially laid out
         LIBGUI_ASSERT_GL_OK();
         break;
 
