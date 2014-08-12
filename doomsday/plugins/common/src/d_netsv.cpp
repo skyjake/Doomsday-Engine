@@ -230,6 +230,10 @@ static void NetSv_CycleToMapNum(de::Uri const &mapUri)
 /**
  * Reads through the MapCycle cvar and finds the map with the given index.
  * Rules that apply to the map are returned in 'rules'.
+ *
+ * @pre The game session has already begun. Necessary because the cycle rules
+ * for Hexen reference maps by "warp numbers", which, can only be resolved in
+ * the context of an episode.
  */
 static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 {
@@ -324,7 +328,6 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 #if !__JHEXEN__
                     uint episode = 0;
 #endif
-
 #if __JDOOM__
                     if(!(gameModeBits & GM_ANY_DOOM2))
                     {
@@ -349,7 +352,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
 #if __JHEXEN__
                     // In Hexen map numbers must be translated (urgh...).
-                    de::Uri mapUri = TranslateMapWarpNumber(map);
+                    de::Uri mapUri = TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), map);
 #else
                     de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
