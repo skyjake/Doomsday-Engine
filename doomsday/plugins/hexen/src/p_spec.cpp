@@ -198,11 +198,10 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-static de::Uri mapUriFromLogicalNumber(int number)
+static de::Uri getMapUriForWarpNumber(int warpNumber)
 {
-    if(!number) return gameMapUri; // current map.
-    // Assume the referenced map is from the current episode.
-    return G_ComposeMapUri(::gameEpisode, number - 1);
+    if(!warpNumber) return gameMapUri; // current map.
+    return TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), warpNumber - 1);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
@@ -230,7 +229,7 @@ dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
     }
     newArgs[4] = 0;
 
-    de::Uri mapUri = mapUriFromLogicalNumber(newArgs[1]);
+    de::Uri mapUri = getMapUriForWarpNumber(newArgs[1]);
     return Game_ACScriptInterpreter().startScript(newArgs[0], &mapUri, &newArgs[2], mo, line, side);
 }
 
@@ -481,8 +480,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 // Assume the referenced map is from the current episode.
-                G_SetGameActionMapCompleted(G_ComposeMapUri(::gameEpisode, args[0]!= 0? args[0]-1 : 0),
-                                            args[1], false);
+                G_SetGameActionMapCompleted(getMapUriForWarpNumber(args[0]), args[1], false);
                 success = true;
             }
         }
@@ -510,17 +508,17 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 80: /* ACS_Execute */ {
-        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
         success = Game_ACScriptInterpreter().startScript(args[0], &mapUri, &args[2], mo, line, side);
         break; }
 
     case 81: /* ACS_Suspend */ {
-        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
         success = Game_ACScriptInterpreter().suspendScript(args[0], &mapUri);
         break; }
 
     case 82: /* ACS_Terminate */ {
-        de::Uri mapUri = mapUriFromLogicalNumber(args[1]);
+        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
         success = Game_ACScriptInterpreter().terminateScript(args[0], &mapUri);
         break; }
 
