@@ -47,6 +47,8 @@
 #  include "Hand"
 #  include "HueCircle"
 
+#  include "gl/gl_main.h"
+
 #  include "Lumobj"
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/projector.h"
@@ -591,6 +593,8 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
 #ifdef __CLIENT__
+        GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
+
         map->initLightGrid();
         map->initSkyFix();
         map->buildMaterialLists();

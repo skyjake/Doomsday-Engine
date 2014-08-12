@@ -645,42 +645,6 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-static void initFog()
-{
-    if(IS_DEDICATED) return;
-
-    Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        Vector3f fogColor(mapInfo->get("fogColor"));
-        float fogColorV1[] = { fogColor.x, fogColor.y, fogColor.z };
-        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColorV1);
-    }
-
-    if(mapInfo)
-    {
-        int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
-        if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))
-        {
-            // We don't want fog in this case.
-            GL_UseFog(false);
-        }
-        else
-        {
-            // Probably fog ... don't use fullbright sprites
-            if(fadeTable == CentralLumpIndex().findLast("FOGMAP.lmp"))
-            {
-                // Tell the renderer to turn on the fog.
-                GL_UseFog(true);
-            }
-        }
-    }
-}
-
 void P_SetupMap(de::Uri const &mapUri)
 {
     if(IS_DEDICATED)
@@ -725,8 +689,6 @@ void P_SetupMap(de::Uri const &mapUri)
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
     }
-
-    initFog();
 
     // Make sure the game is paused for the requested period.
     Pause_MapStarted();

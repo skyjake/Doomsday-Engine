@@ -51,6 +51,7 @@
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/App>
+#include <doomsday/filesys/fs_main.h>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -582,6 +583,39 @@ void GL_ProjectionMatrix()
     glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
+void GL_SetupFogFromMapInfo(Record const *mapInfo)
+{
+    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        float fogColor[3];
+        Vector3f(mapInfo->get("fogColor")).decompose(fogColor);
+        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColor);
+    }
+
+    if(mapInfo)
+    {
+        LumpIndex const &lumps = App_FileSystem().nameIndex();
+        int fadeTable = lumps.findLast(mapInfo->gets("fadeTable") + ".lmp");
+        if(fadeTable == lumps.findLast("COLORMAP.lmp"))
+        {
+            // We don't want fog in this case.
+            GL_UseFog(false);
+        }
+        else
+        {
+            // Probably fog ... don't use fullbright sprites.
+            if(fadeTable == lumps.findLast("FOGMAP.lmp"))
+            {
+                GL_UseFog(true);
+            }
+        }
+    }
+}
+
 #undef GL_UseFog
 DENG_EXTERN_C void GL_UseFog(int yes)
 {
@@ -642,28 +676,19 @@ void GL_TotalRestore()
     UI_LoadFonts();
     //Con_Resize();
 
-    /// @todo fixme: Should this use the default MapInfo def if none found? -ds
-    defn::MapInfo mapInfo;
+    // Restore the fog settings.
+    Record const *mapInfo = 0;
     if(App_WorldSystem().hasMap())
     {
-        if(MapDef *mapDef = App_WorldSystem().map().def())
+        Map &map = App_WorldSystem().map();
+        mapInfo = defs.mapInfos.tryFind("id", map.def()->composeUri());
+        if(!mapInfo)
         {
-            int idx = defs.getMapInfoNum(mapDef->composeUri());
-            if(idx >= 0) mapInfo = defs.mapInfos[idx];
+            // Use the default def instead.
+            mapInfo = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")));
         }
     }
-
-    // Restore map's fog settings.
-    if(!mapInfo || !(mapInfo.geti("flags") & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        Vector3f colorVec(mapInfo.get("fogColor"));
-        float color[] = { colorVec.x, colorVec.y, colorVec.z };
-        R_SetupFog(mapInfo.getf("fogStart"), mapInfo.getf("fogEnd"), mapInfo.getf("fogDensity"), color);
-    }
+    GL_SetupFogFromMapInfo(mapInfo);
 
 #if _DEBUG
     Z_CheckHeap();
