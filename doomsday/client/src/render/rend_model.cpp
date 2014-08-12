@@ -1162,7 +1162,7 @@ void Rend_DrawModel2(vissprite_t const &spr)
     }
 
     // Set up a suitable matrix for the pose.
-    rend.setTransformation(localMat, viewMat);
+    rend.setTransformation(vOrigin - spr.pose.mid().xzy(), localMat, viewMat);
 
     // Lighting vectors and ambient color.
     rend.clearLights();

@@ -40,27 +40,20 @@ DENG2_PIMPL(ModelRenderer)
 {
 #define MAX_LIGHTS  4
 
-    filesys::AssetObserver observer;
+    filesys::AssetObserver observer { "model\\..*" };
     ModelBank bank;
     std::unique_ptr<AtlasTexture> atlas;
     GLProgram program; /// @todo Specific models may want to use a custom program.
-    GLUniform uMvpMatrix;
-    GLUniform uTex;
-    GLUniform uLightDirs;
-    GLUniform uLightIntensities;
+    GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
+    GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
+    GLUniform uEyeDir           { "uEyeDir",           GLUniform::Vec3 };
+    GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
+    GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
     Matrix4f inverseLocal;
-    int lightCount;
-    Id defaultNormals;
+    int lightCount = 0;
+    Id defaultNormals { Id::None };
 
-    Instance(Public *i)
-        : Base(i)
-        , observer("model\\..*") // all model assets
-        , uMvpMatrix       ("uMvpMatrix", GLUniform::Mat4)
-        , uTex             ("uTex",       GLUniform::Sampler2D)
-        , uLightDirs       ("uLightDirs", GLUniform::Vec4Array, MAX_LIGHTS)
-        , uLightIntensities("uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS)
-        , lightCount(0)
-        , defaultNormals(Id::None)
+    Instance(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
         bank.audienceForLoad() += this;
@@ -71,6 +64,7 @@ DENG2_PIMPL(ModelRenderer)
         ClientApp::shaders().build(program, "model.skeletal.normal_emission")
                 << uMvpMatrix
                 << uTex
+                << uEyeDir
                 << uLightDirs
                 << uLightIntensities;
 
@@ -157,7 +151,6 @@ DENG2_PIMPL(ModelRenderer)
 
         auto const asset = App::asset(path);
 
-        // Prepare the animations for the model.
         std::unique_ptr<AuxiliaryData> aux(new AuxiliaryData);
 
         // Determine the coordinate system of the model.
@@ -211,7 +204,7 @@ DENG2_PIMPL(ModelRenderer)
             // TODO: Check for a possible timeline and calculate time factors accordingly.
         }
 
-        // Store the animation sequence lookup in the bank.
+        // Store the additional information in the bank.
         bank.setUserData(path, aux.release());
     }
 };
@@ -246,10 +239,12 @@ ModelRenderer::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return 0;
 }
 
-void ModelRenderer::setTransformation(Matrix4f const &modelToLocal, Matrix4f const &localToView)
-{
+void ModelRenderer::setTransformation(Vector3f const &eyeDir, Matrix4f const &modelToLocal,
+                                      Matrix4f const &localToView)
+{   
     d->uMvpMatrix   = localToView * modelToLocal;
     d->inverseLocal = modelToLocal.inverse();
+    d->uEyeDir      = (d->inverseLocal * eyeDir).normalize();
 }
 
 void ModelRenderer::clearLights()
@@ -258,7 +253,7 @@ void ModelRenderer::clearLights()
 
     for(int i = 0; i < MAX_LIGHTS; ++i)
     {
-        d->uLightDirs       .set(i, Vector4f());
+        d->uLightDirs       .set(i, Vector3f());
         d->uLightIntensities.set(i, Vector4f());
     }
 }
@@ -268,7 +263,7 @@ void ModelRenderer::addLight(Vector3f const &direction, Vector3f const &intensit
     if(d->lightCount == MAX_LIGHTS) return;
 
     int idx = d->lightCount;
-    d->uLightDirs       .set(idx, Vector4f((d->inverseLocal * direction).normalize(), 1));
+    d->uLightDirs       .set(idx, (d->inverseLocal * direction).normalize());
     d->uLightIntensities.set(idx, Vector4f(intensity, 0));
 
     d->lightCount++;

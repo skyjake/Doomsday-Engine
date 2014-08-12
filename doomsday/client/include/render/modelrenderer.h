@@ -75,11 +75,13 @@ public:
     /**
      * Sets up the transformation matrices.
      *
+     * @param eyeDir        Direction of the eye in local space (relative to object).
      * @param modelToLocal  Transformation from model space to the object's local space
      *                      (object's local frame in world space).
      * @param localToView   Transformation from local space to projected view space.
      */
-    void setTransformation(de::Matrix4f const &modelToLocal,
+    void setTransformation(de::Vector3f const &eyeDir,
+                           de::Matrix4f const &modelToLocal,
                            de::Matrix4f const &localToView);
 
     void clearLights();

@@ -5,7 +5,8 @@ group model {
         vertex = "
             uniform highp mat4 uMvpMatrix;
             uniform highp mat4 uBoneMatrices[64];
-            uniform highp vec4 uLightDirs[4];
+            uniform highp vec3 uLightDirs[4];
+            uniform highp vec3 uEyeDir;
 
             attribute highp vec4 aVertex;
             attribute highp vec3 aNormal;
@@ -20,6 +21,7 @@ group model {
             varying highp vec2 vUV;
             varying highp vec2 vNormalUV;
             varying highp vec3 vLightDirs[4]; // tangent space
+            varying highp vec3 vEyeDir;       // tangent space
 
             highp vec3 transformVector(highp vec3 dir, highp mat4 matrix) {
                 return (matrix * vec4(dir, 0.0)).xyz;
@@ -38,16 +40,19 @@ group model {
                 gl_Position = uMvpMatrix * modelPos;
                 
                 // Tangent space.
-                highp vec3 normal    = transformVector(aNormal, bone);
-                highp vec3 tangent   = transformVector(aTangent, bone);
-                highp vec3 bitangent = transformVector(aBitangent, bone);
+                highp vec3 normal       = transformVector(aNormal, bone);
+                highp vec3 tangent      = transformVector(aTangent, bone);
+                highp vec3 bitangent    = transformVector(aBitangent, bone);
                 highp mat3 tangentSpace = mat3(tangent, bitangent, normal);
                 
                 // Light direction in tangent space.
-                vLightDirs[0] = uLightDirs[0].xyz * tangentSpace;
-                vLightDirs[1] = uLightDirs[1].xyz * tangentSpace;
-                vLightDirs[2] = uLightDirs[2].xyz * tangentSpace;
-                vLightDirs[3] = uLightDirs[3].xyz * tangentSpace;
+                vLightDirs[0] = uLightDirs[0] * tangentSpace;
+                vLightDirs[1] = uLightDirs[1] * tangentSpace;
+                vLightDirs[2] = uLightDirs[2] * tangentSpace;
+                vLightDirs[3] = uLightDirs[3] * tangentSpace;
+                
+                // Eye direction in tangent space.
+                vEyeDir = uEyeDir * tangentSpace;
                 
                 vUV       = aBounds.xy  + aUV * aBounds.zw;
                 vNormalUV = aBounds2.xy + aUV * aBounds2.zw;
@@ -59,6 +64,7 @@ group model {
             varying highp vec2 vUV;
             varying highp vec2 vNormalUV;
             varying highp vec3 vLightDirs[4]; // tangent space
+            varying highp vec3 vEyeDir;       // tangent space
             
             highp vec3 normalVector() {
                 return (texture2D(uTex, vNormalUV).xyz * 2.0) - 1.0;
@@ -79,6 +85,8 @@ group model {
                     diffuseLight(2, normal) + 
                     diffuseLight(3, normal);
                 gl_FragColor.a = 1.0;
+                
+                gl_FragColor.rgb = vec3(normalize(vEyeDir).z);
             }"
     }
 }
