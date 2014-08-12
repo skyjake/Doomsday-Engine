@@ -61,6 +61,13 @@ extern "C" {
 void G_Register(void);
 void G_CommonPreInit(void);
 void G_CommonPostInit(void);
+
+/**
+ * To be called post-game initialization, to examine the command line to determine if
+ * a new game session should be started automatically, or, begin the title loop.
+ */
+void G_AutoStartOrBeginTitleLoop(void);
+
 void G_CommonShutdown(void);
 
 void R_InitRefresh(void);

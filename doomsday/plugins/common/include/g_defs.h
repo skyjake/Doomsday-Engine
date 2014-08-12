@@ -38,12 +38,13 @@ ded_t &Defs();
  * better handling of map resources and their references. Instead, use the map URI
  * mechanism.
  *
+ * @param episode     Episode identifier.
  * @param warpNumber  Warp number to translate.
  *
  * @return The unique identifier of the map. If no game session is in progress or the
  * warp number is not found, the URI "Maps:" is returned.
  */
-de::Uri TranslateMapWarpNumber(uint warpNumber);
+de::Uri TranslateMapWarpNumber(de::String const &episodeId, uint warpNumber);
 
 extern "C" {
 #endif

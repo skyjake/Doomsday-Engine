@@ -23,6 +23,17 @@
 #include "common.h"
 #include "g_common.h"
 
+#include <cctype>
+#include <cstring>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <de/App>
+#include <de/NativePath>
+#include <de/RecordValue>
+#include <doomsday/defs/episode.h>
+#include <doomsday/uri.h>
+
 #include "am_map.h"
 #include "animdefs.h"
 #include "d_net.h"
@@ -56,16 +67,6 @@
 #include "r_common.h"
 #include "saveslots.h"
 #include "x_hair.h"
-
-#include <cctype>
-#include <cstring>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <de/App>
-#include <de/NativePath>
-#include <doomsday/defs/episode.h>
-#include <doomsday/uri.h>
 
 using namespace de;
 using namespace common;
@@ -1024,6 +1025,132 @@ void G_CommonPostInit()
 
     // Display a breakdown of the available maps.
     DD_Execute(true, "listmaps");
+}
+
+void G_AutoStartOrBeginTitleLoop()
+{
+    CommandLine &cmdLine = DENG2_APP->commandLine();
+
+    String startEpisodeId;
+    de::Uri startMapUri;
+
+    // A specific episode?
+    if(int arg = cmdLine.check("-episode", 1))
+    {
+        String episodeId = cmdLine.at(arg + 1);
+        if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+        {
+            // Ensure this is a playable episode.
+            de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+            if(P_MapExists(startMap.compose().toUtf8().constData()))
+            {
+                startEpisodeId = episodeId;
+            }
+        }
+    }
+
+    // A specific map?
+    if(int arg = cmdLine.check("-warp", 1))
+    {
+        bool haveEpisode = (arg + 2 < cmdLine.count() && !cmdLine.isOption(arg + 2));
+        if(haveEpisode)
+        {
+            if(Record const *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
+            {
+                // Ensure this is a playable episode.
+                de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+                if(P_MapExists(startMap.compose().toUtf8().constData()))
+                {
+                    startEpisodeId = episodeDef->gets("id");
+                }
+            }
+        }
+
+        // The map.
+        bool isNumber;
+        int oldMapNumber = cmdLine.at(arg + (haveEpisode? 2 : 1)).toInt(&isNumber);
+#if !__JHEXEN__
+        if(oldMapNumber > 0) oldMapNumber -= 1; // zero-based.
+#endif
+
+        if(!isNumber)
+        {
+            // It must be a URI, then.
+            Block rawMapUri = cmdLine.at(arg + (haveEpisode? 2 : 1)).toUtf8();
+            char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
+            startMapUri = de::Uri::fromUserInput(args, 1);
+            if(startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
+        }
+        else if(!startEpisodeId.isEmpty())
+        {
+#if __JHEXEN__
+            // Map numbers must be translated in the context of an episode.
+            startMapUri = TranslateMapWarpNumber(startEpisodeId, oldMapNumber);
+#else
+            int oldEpisodeNumber = startEpisodeId.toInt(&isNumber);
+            if(oldEpisodeNumber > 0) oldEpisodeNumber -= 1; // zero-based.
+            if(isNumber)
+            {
+                startMapUri = G_ComposeMapUri(oldEpisodeNumber, oldMapNumber);
+            }
+#endif
+        }
+        else
+        {
+            startMapUri = G_ComposeMapUri(0, oldMapNumber);
+        }
+    }
+
+    // Are we attempting an auto-start?
+    bool autoStart = (IS_NETGAME || !startEpisodeId.isEmpty() || !startMapUri.isEmpty());
+    if(autoStart)
+    {
+        if(startEpisodeId.isEmpty())
+        {
+            // Pick the first playable episode.
+            auto const &episodesById = Defs().episodes.lookup("id").elements();
+            DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
+            {
+                Record const &episodeDef = *i->second->as<RecordValue>().record();
+                de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+                if(P_MapExists(startMap.compose().toUtf8().constData()))
+                {
+                    startEpisodeId = episodeDef.gets("id");
+                    break;
+                }
+            }
+        }
+
+        // Ensure that the map exists.
+        if(!P_MapExists(startMapUri.compose().toUtf8().constData()))
+        {
+            startMapUri.clear();
+
+            // Pick the start map from the episode, if specified and playable.
+            if(Record const *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
+            {
+                de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+                if(P_MapExists(startMap.compose().toUtf8().constData()))
+                {
+                    startMapUri = startMap;
+                }
+            }
+        }
+    }
+
+    // Are we auto-starting?
+    if(!startEpisodeId.isEmpty() && !startMapUri.isEmpty())
+    {
+        LOG_NOTE("Auto-starting episode '%s', map \"%s\", skill %i")
+                << startEpisodeId
+                << startMapUri
+                << ::defaultGameRules.skill;
+        G_SetGameActionNewSession(::defaultGameRules, startEpisodeId, startMapUri);
+    }
+    else
+    {
+        COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
+    }
 }
 
 /**

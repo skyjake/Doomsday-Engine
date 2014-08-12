@@ -121,8 +121,9 @@ char const *G_InFineBriefing(de::Uri const *mapUri = 0);
 char const *G_InFineDebriefing(de::Uri const *mapUri = 0);
 
 /**
- * @param mapUri  Identifier of the episode to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current episode will be returned (if set).
+ * @param episodeId  Identifier of the episode to lookup the title of. Can be @c 0 in
+ *                   which case the title for the @em current episode will be returned
+ *                   (if set).
  */
 de::String G_EpisodeTitle(de::String const *episodeId = 0);
 

@@ -61,6 +61,12 @@ void G_QuitGame(void);
 void G_CommonPreInit(void);
 void G_CommonPostInit(void);
 
+/**
+ * To be called post-game initialization, to examine the command line to determine if
+ * a new game session should be started automatically, or, begin the title loop.
+ */
+void G_AutoStartOrBeginTitleLoop(void);
+
 int G_GetInteger(int id);
 void *G_GetVariable(int id);
 
