@@ -144,10 +144,17 @@ deng_nosdl {
     DEFINES += DENG_NO_SDL
 }
 
+unix:deng_distcc {
+    macx:*-clang* {
+        QMAKE_CC  = distcc $$QMAKE_CC  --target=x86_64-apple-darwin -Qunused-arguments
+        QMAKE_CXX = distcc $$QMAKE_CXX --target=x86_64-apple-darwin -Qunused-arguments
+    }
+}
+
 unix:deng_ccache {
     # ccache can be used to speed up recompilation.
     *-clang* {
-        QMAKE_CC  = ccache $$QMAKE_CC -Qunused-arguments
+        QMAKE_CC  = ccache $$QMAKE_CC  -Qunused-arguments
         QMAKE_CXX = ccache $$QMAKE_CXX -Qunused-arguments
         QMAKE_CXXFLAGS_WARN_ON += -Wno-self-assign
     }

@@ -100,9 +100,6 @@ desc = Move a sector's both planes.
 [noclip]
 desc = Toggle movement clipping on/off, to walk through walls (cheat).
 
-[notarget]
-desc = Enemies will not target the player (cheat).
-
 [pause]
 desc = Pause the game (same as pressing the pause key).
 
