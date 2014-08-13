@@ -84,6 +84,8 @@ public:
                            de::Matrix4f const &modelToLocal,
                            de::Matrix4f const &localToView);
 
+    void setAmbientLight(de::Vector3f const &ambientIntensity);
+
     void clearLights();
 
     void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);

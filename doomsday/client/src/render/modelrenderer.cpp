@@ -47,6 +47,7 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
     GLUniform uEyeDir           { "uEyeDir",           GLUniform::Vec3 };
+    GLUniform uAmbientLight     { "uAmbientLight",     GLUniform::Vec4 };
     GLUniform uLightDirs        { "uLightDirs",        GLUniform::Vec3Array, MAX_LIGHTS };
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
     Matrix4f inverseLocal;
@@ -65,6 +66,7 @@ DENG2_PIMPL(ModelRenderer)
                 << uMvpMatrix
                 << uTex
                 << uEyeDir
+                << uAmbientLight
                 << uLightDirs
                 << uLightIntensities;
 
@@ -245,6 +247,11 @@ void ModelRenderer::setTransformation(Vector3f const &eyeDir, Matrix4f const &mo
     d->uMvpMatrix   = localToView * modelToLocal;
     d->inverseLocal = modelToLocal.inverse();
     d->uEyeDir      = (d->inverseLocal * eyeDir).normalize();
+}
+
+void ModelRenderer::setAmbientLight(Vector3f const &ambientIntensity)
+{
+    d->uAmbientLight = Vector4f(ambientIntensity, 1.f);
 }
 
 void ModelRenderer::clearLights()
