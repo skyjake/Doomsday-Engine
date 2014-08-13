@@ -402,7 +402,7 @@ DENG2_PIMPL(ModelDrawable)
 
     void releaseTexture(Id const &id)
     {
-        if(id == defaultNormals) return; // We don't own this.
+        if(id == defaultNormals || !id) return; // We don't own this.
 
         qDebug() << "Releasing model texture" << id.asText();
         atlas->release(id);

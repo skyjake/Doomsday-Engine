@@ -146,8 +146,8 @@ deng_nosdl {
 
 unix:deng_distcc {
     macx:*-clang* {
-        QMAKE_CC  = distcc $$QMAKE_CC  --target=x86_64-apple-darwin -Qunused-arguments
-        QMAKE_CXX = distcc $$QMAKE_CXX --target=x86_64-apple-darwin -Qunused-arguments
+        QMAKE_CC  = distcc $$QMAKE_CC  -Qunused-arguments
+        QMAKE_CXX = distcc $$QMAKE_CXX -Qunused-arguments
     }
 }
 

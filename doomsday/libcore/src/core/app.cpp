@@ -129,8 +129,6 @@ DENG2_PIMPL(App)
         , currentGame(0)
         , terminateFunc(0)
     {
-        qsrand(Time().asDateTime().toTime_t());
-
         packagesToLoadAtInit << "net.dengine.stdlib";
 
         singletonApp = a;
@@ -140,10 +138,10 @@ DENG2_PIMPL(App)
 
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
+        qsrand(Time().asDateTime().toTime_t());
 
         // Built-in systems.
-        systems.append(&fs);
-        systems.append(&scriptSys);
+        systems << &fs << &scriptSys;
 
         // Native App module.
         appModule.addArray("audienceForGameChange"); // game change observers
