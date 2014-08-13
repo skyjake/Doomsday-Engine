@@ -86,17 +86,13 @@
 #  include <QScopedPointer>
 #  include <QDebug>
 
-// Qt versioning helper. Qt 4.7 is the oldest we support.
-#  if (QT_VERSION <= QT_VERSION_CHECK(4, 6, 0))
+// Qt versioning helper. Qt 4.8 is the oldest we support.
+#  if (QT_VERSION < QT_VERSION_CHECK(4, 8, 0))
 #    error "Unsupported version of Qt"
 #  endif
 #  define DENG2_QT_4_6_OR_NEWER
-#  if (QT_VERSION >= QT_VERSION_CHECK(4, 7, 0))
-#    define DENG2_QT_4_7_OR_NEWER
-#  endif
-#  if (QT_VERSION >= QT_VERSION_CHECK(4, 8, 0))
-#    define DENG2_QT_4_8_OR_NEWER
-#  endif
+#  define DENG2_QT_4_7_OR_NEWER
+#  define DENG2_QT_4_8_OR_NEWER
 #  if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
 #    define DENG2_QT_5_0_OR_NEWER
 #  endif
