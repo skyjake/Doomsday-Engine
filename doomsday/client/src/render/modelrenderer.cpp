@@ -264,7 +264,7 @@ void ModelRenderer::addLight(Vector3f const &direction, Vector3f const &intensit
 
     int idx = d->lightCount;
     d->uLightDirs       .set(idx, (d->inverseLocal * direction).normalize());
-    d->uLightIntensities.set(idx, Vector4f(intensity, 0));
+    d->uLightIntensities.set(idx, Vector4f(intensity, intensity.max()));
 
     d->lightCount++;
 }

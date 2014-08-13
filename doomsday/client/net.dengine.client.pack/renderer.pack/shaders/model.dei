@@ -71,22 +71,41 @@ group model {
             }
 
             highp vec4 diffuseLight(int index, highp vec3 normal) {
+                if(uLightIntensities[index].a <= 0.001) {
+                    return vec4(0.0); // too dim
+                }
                 highp float d = dot(normal, normalize(vLightDirs[index]));
-                return max(d * uLightIntensities[index],
-                           vec4(0.0, 0.0, 0.0, 0.0));
+                return max(d * uLightIntensities[index], vec4(0.0));
+            }
+            
+            highp vec4 specularLight(int index, highp vec3 normal) {
+                if(uLightIntensities[index].a <= 0.001) {
+                    return vec4(0.0); // too dim
+                }
+                highp vec3 reflected = reflect(-vLightDirs[index], normal);
+                highp float d = dot(vEyeDir, reflected) * 5.0 - 4.0;
+                return max(d * uLightIntensities[index], vec4(0.0));
             }
             
             void main(void) {        
                 highp vec3 normal = normalVector();
+                highp vec4 diffuse = texture2D(uTex, vUV);
                         
-                gl_FragColor = //texture2D(uTex, vUV);
-                    diffuseLight(0, normal) + 
-                    diffuseLight(1, normal) + 
-                    diffuseLight(2, normal) + 
-                    diffuseLight(3, normal);
-                gl_FragColor.a = 1.0;
-                
-                gl_FragColor.rgb = vec3(normalize(vEyeDir).z);
+                gl_FragColor = diffuse *
+                    (diffuseLight(0, normal) + 
+                     diffuseLight(1, normal) + 
+                     diffuseLight(2, normal) + 
+                     diffuseLight(3, normal));
+
+                highp vec4 specular =
+                    specularLight(0, normal) +
+                    specularLight(1, normal) +
+                    specularLight(2, normal) +
+                    specularLight(3, normal);
+                    
+                gl_FragColor.rgb += specular.rgb;
+
+                gl_FragColor.a = diffuse.a + specular.a;
             }"
     }
 }
