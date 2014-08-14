@@ -46,6 +46,7 @@ namespace internal
             TexBounds0,
             TexBounds1,
             TexBounds2,
+            TexBounds3,
             Color,
             Normal,
             Tangent,

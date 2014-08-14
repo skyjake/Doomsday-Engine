@@ -180,6 +180,7 @@ DENG2_PIMPL(GLProgram)
             { AttribSpec::TexBounds0,     "aBounds"      },
             { AttribSpec::TexBounds1,     "aBounds2"     },
             { AttribSpec::TexBounds2,     "aBounds3"     },
+            { AttribSpec::TexBounds3,     "aBounds4"     },
             { AttribSpec::Color,          "aColor"       },
             { AttribSpec::Normal,         "aNormal"      },
             { AttribSpec::Tangent,        "aTangent"     },
