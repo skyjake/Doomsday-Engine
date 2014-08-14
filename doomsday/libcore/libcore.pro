@@ -197,7 +197,7 @@ macx {
     doPostLink("cp -fRp libdeng_core*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 
-buildPackage(net.dengine.stdlib, $$OUT_PWD)
+buildPackage(net.dengine.stdlib, $$OUT_PWD/..)
 deployLibrary()
 
 deng_sdk {

@@ -131,9 +131,6 @@ else:macx: include(config_macx.pri)
 
 # Apply deng_* Configuration -------------------------------------------------
 
-# Location for deploying packages.
-!deng_sdk: builtpacks.path = $$DENG_DATA_DIR
-
 deng_nofixedasm {
     DEFINES += DENG_NO_FIXED_ASM
 }

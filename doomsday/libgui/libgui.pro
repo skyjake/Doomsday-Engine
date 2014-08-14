@@ -231,5 +231,5 @@ macx {
     linkBinaryToBundledAssimp(libdeng_gui.1.dylib, ..)
 }
 
-buildPackage(net.dengine.stdlib.gui, $$OUT_PWD)
+buildPackage(net.dengine.stdlib.gui, $$OUT_PWD/..)
 deployLibrary()
