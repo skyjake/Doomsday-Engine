@@ -49,7 +49,9 @@ public:
     {
         Diffuse,
         Normals,
-        Height
+        Height,
+        Specular,
+        Emission
     };
 
     /**
@@ -209,6 +211,10 @@ public:
      * @param atlasId  Identifier in the atlas.
      */
     void setDefaultNormals(Id const &atlasId);
+
+    void setDefaultEmission(Id const &atlasId);
+
+    void setDefaultSpecular(Id const &atlasId);
 
     /**
      * Locates a material specified in the model by its name.

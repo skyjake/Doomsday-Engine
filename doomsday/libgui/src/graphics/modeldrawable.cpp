@@ -162,13 +162,15 @@ struct ModelVertex
     Vector2f texCoord;
     Vector4f texBounds;
     Vector4f texBounds2;
+    Vector4f texBounds3;
+    Vector4f texBounds4;
     Vector4f boneIds;
     Vector4f boneWeights;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(9)
+    LIBGUI_DECLARE_VERTEX_FORMAT(11)
 };
 
-AttribSpec const ModelVertex::_spec[9] = {
+AttribSpec const ModelVertex::_spec[11] = {
     { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex), 0 },
     { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
     { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 6 * sizeof(float) },
@@ -176,10 +178,12 @@ AttribSpec const ModelVertex::_spec[9] = {
     { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 12 * sizeof(float) },
     { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
     { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
-    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
-    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
+    { AttribSpec::TexBounds2,  4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
+    { AttribSpec::TexBounds3,  4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
+    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 30 * sizeof(float) },
+    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 34 * sizeof(float) },
 };
-LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 30 * sizeof(float))
+LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 38 * sizeof(float))
 
 static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
@@ -213,11 +217,11 @@ DENG2_PIMPL(ModelDrawable)
 
     struct MaterialData
     {
-        Id diffuse;
-        Id normals;
+        Id diffuse  = Id::None;
+        Id normals  = Id::None;
+        Id specular = Id::None;
+        Id emission = Id::None;
         QHash<TextureMap, String> custom;
-
-        MaterialData() : diffuse(Id::None), normals(Id::None) {}
     };
 
     Asset modelAsset;
@@ -234,9 +238,9 @@ DENG2_PIMPL(ModelDrawable)
     Vector3f minPoint; ///< Bounds in default pose.
     Vector3f maxPoint;
     Matrix4f globalInverse;
-    Id defaultNormals = Id::None;
-    //ddouble animTime;
-    //Animator const *animation;
+    Id defaultNormals  = Id::None;
+    Id defaultEmission = Id::None;
+    Id defaultSpecular = Id::None;
 
     bool needMakeBuffer;
     AtlasTexture *atlas;
@@ -400,9 +404,16 @@ DENG2_PIMPL(ModelDrawable)
         maxPoint = maxPoint.max(point);
     }
 
+    bool isDefaultTexture(Id const &id) const
+    {
+        return id == defaultNormals  ||
+               id == defaultEmission ||
+               id == defaultSpecular;
+    }
+
     void releaseTexture(Id const &id)
     {
-        if(id == defaultNormals || !id) return; // We don't own this.
+        if(isDefaultTexture(id) || !id) return; // We don't own this.
 
         qDebug() << "Releasing model texture" << id.asText();
         atlas->release(id);
@@ -416,6 +427,8 @@ DENG2_PIMPL(ModelDrawable)
         {
             releaseTexture(tex.diffuse);
             releaseTexture(tex.normals);
+            releaseTexture(tex.specular);
+            releaseTexture(tex.emission);
         }
         materials.clear();
     }
@@ -456,37 +469,21 @@ DENG2_PIMPL(ModelDrawable)
             {
                 // Use the default normals.
                 materials[i].normals = defaultNormals;
-                //qDebug() << thisPublic << "uses defaults" << defaultNormals.asText();
             }
 
-            /*qDebug() << "  material #" << i
-                     << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
+            loadTextureImage(i, aiTextureType_SPECULAR);
 
-            aiString texPath;
-            for(duint s = 0; s < mat.GetTextureCount(aiTextureType_DIFFUSE); ++s)
+            if(!materials[i].specular)
             {
-                if(mat.GetTexture(aiTextureType_DIFFUSE, s, &texPath) == AI_SUCCESS)
-                {
-                    qDebug() << "    texture #" << s << texPath.C_Str();
+                materials[i].specular = defaultSpecular;
+            }
 
-                    try
-                    {
-                        /// @todo Consult a resource finder object here. -jk
+            loadTextureImage(i, aiTextureType_EMISSIVE);
 
-                        File const &texFile = App::rootFolder()
-                                .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
-
-                        qDebug() << "    from" << texFile.description().toLatin1().constData();
-
-                        materials[i].diffuse = atlas->alloc(
-                                Image::fromData(texFile, texFile.name().fileNameExtension()));
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_WARNING("Model material #%i not available: %s") << i << er.asText();
-                    }
-                }
-            }*/
+            if(!materials[i].emission)
+            {
+                materials[i].emission = defaultEmission;
+            }
         }
     }
 
@@ -494,9 +491,11 @@ DENG2_PIMPL(ModelDrawable)
     {
         switch(type)
         {
-        case aiTextureType_DIFFUSE: return Diffuse;
-        case aiTextureType_NORMALS: return Normals;
-        case aiTextureType_HEIGHT:  return Height;
+        case aiTextureType_DIFFUSE:  return Diffuse;
+        case aiTextureType_NORMALS:  return Normals;
+        case aiTextureType_HEIGHT:   return Height;
+        case aiTextureType_SPECULAR: return Specular;
+        case aiTextureType_EMISSIVE: return Emission;
         default:
             DENG2_ASSERT(!"Unsupported texture type");
             return Diffuse;
@@ -584,7 +583,10 @@ DENG2_PIMPL(ModelDrawable)
         DENG2_ASSERT(atlas != 0);
 
         MaterialData &tex = materials[materialId];
-        Id &id = (map == Diffuse? tex.diffuse : tex.normals);
+        Id &id = (map == Diffuse?  tex.diffuse  :
+                  map == Emission? tex.emission :
+                  map == Specular? tex.specular :
+                                   tex.normals);
 
         // Release a previously loaded texture.
         if(id)
@@ -763,6 +765,8 @@ DENG2_PIMPL(ModelDrawable)
                 v.texCoord   = Vector2f(texCoord->x, texCoord->y);
                 v.texBounds  = Vector4f(0, 0, 1, 1);
                 v.texBounds2 = Vector4f(0, 0, 1, 1);
+                v.texBounds3 = Vector4f(0, 0, 1, 1);
+                v.texBounds4 = Vector4f(0, 0, 1, 1);
 
                 if(scene->HasMaterials())
                 {
@@ -774,6 +778,14 @@ DENG2_PIMPL(ModelDrawable)
                     if(tex.normals)
                     {
                         v.texBounds2 = atlas->imageRectf(tex.normals).xywh();
+                    }
+                    if(tex.specular)
+                    {
+                        v.texBounds3 = atlas->imageRectf(tex.specular).xywh();
+                    }
+                    if(tex.emission)
+                    {
+                        v.texBounds4 = atlas->imageRectf(tex.emission).xywh();
                     }
                 }
 
@@ -1072,6 +1084,16 @@ void ModelDrawable::unsetAtlas()
 void ModelDrawable::setDefaultNormals(Id const &atlasId)
 {
     d->defaultNormals = atlasId;
+}
+
+void ModelDrawable::setDefaultEmission(Id const &atlasId)
+{
+    d->defaultEmission = atlasId;
+}
+
+void ModelDrawable::setDefaultSpecular(Id const &atlasId)
+{
+    d->defaultSpecular = atlasId;
 }
 
 int ModelDrawable::materialId(String const &name) const
