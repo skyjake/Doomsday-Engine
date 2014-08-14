@@ -70,6 +70,16 @@ defineTest(doPostLink) {
     export(QMAKE_POST_LINK)
 }
 
+defineTest(buildPackage) {
+    # 1: path of a .pack source directory
+    # 2: target directory where the zipped .pack is written
+    runPython2($$PWD/../build/scripts/buildpackage.py \"$${1}.pack\" \"$$2\")
+
+    # Automatically deploy the package.
+    builtpacks.files += $$2/$${1}.pack
+    export(builtpacks.files)
+}
+
 defineTest(deployTarget) {
     unix:!macx {
         INSTALLS += target
@@ -94,7 +104,7 @@ defineTest(deployLibrary) {
         export(target.path)
     }
     deng_sdk {
-        INSTALLS *= target
+        INSTALLS *= target builtpacks
         target.path = $$DENG_SDK_LIB_DIR
         export(target.path)
     }
