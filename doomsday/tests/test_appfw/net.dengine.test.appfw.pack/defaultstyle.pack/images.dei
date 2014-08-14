@@ -1,0 +1,20 @@
+# Images for the default UI style
+
+script { import gui }
+
+group window {
+    image borderglow { path = "graphics/borderglow.png" }
+    image cursor     { path = "graphics/mouse.png" }
+}
+
+image fold { path = "graphics/fold.png" }
+
+image toggle.onoff { 
+    path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
+}
+
+group progress {
+    image wheel { path = "graphics/progress-wheel.png" }
+    image gear  { path = "graphics/progress-gear.png" }
+    image mini  { path = "graphics/progress-mini.png" }
+}
