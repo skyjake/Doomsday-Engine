@@ -65,14 +65,6 @@ public:
     StateAnims const *animations(de::DotPath const &modelId) const;
 
     /**
-     * Provides access to the common model-view-projection matrix used for rendering
-     * models.
-     *
-     * @return Matrix uniform.
-     */
-    //de::GLUniform &uMvpMatrix();
-
-    /**
      * Sets up the transformation matrices.
      *
      * @param eyeDir        Direction of the eye in local space (relative to object).

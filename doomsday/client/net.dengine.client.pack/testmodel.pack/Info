@@ -5,15 +5,18 @@ tags: dev
 
 asset model.thing.possessed {
     path = "boblampclean.md5mesh"
+    
     front <1, 0, 0>
     up    <0, 0, 1>
     
     group material.@0 {
-        heightMap = "bodyheights.png"
+        heightMap   = "bodyheights.png"
+        #emissionMap = "bodyemission.png"
     } 
-    group material.@5 {
-        heightMap = "bodyheights.png"
-    }
+    #group material.@5 {
+    #    heightMap = "bodyheights.png"
+    #    emissionMap = "bodyemission.png"
+    #}
 
     group animation {
         state POSS_STND {

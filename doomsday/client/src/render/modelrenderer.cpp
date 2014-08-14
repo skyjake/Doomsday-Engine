@@ -52,7 +52,9 @@ DENG2_PIMPL(ModelRenderer)
     GLUniform uLightIntensities { "uLightIntensities", GLUniform::Vec4Array, MAX_LIGHTS };
     Matrix4f inverseLocal;
     int lightCount = 0;
-    Id defaultNormals { Id::None };
+    Id defaultNormals  { Id::None };
+    Id defaultEmission { Id::None };
+    Id defaultSpecular { Id::None };
 
     Instance(Public *i) : Base(i)
     {
@@ -62,7 +64,7 @@ DENG2_PIMPL(ModelRenderer)
 
     void init()
     {
-        ClientApp::shaders().build(program, "model.skeletal.normal_emission")
+        ClientApp::shaders().build(program, "model.skeletal.normal_specular_emission")
                 << uMvpMatrix
                 << uTex
                 << uEyeDir
@@ -80,6 +82,14 @@ DENG2_PIMPL(ModelRenderer)
         QImage img(QSize(1, 1), QImage::Format_ARGB32);
         img.fill(qRgba(127, 127, 255, 255)); // z+
         defaultNormals = atlas->alloc(img);
+
+        // Fallback emission map for models who don't have one.
+        img.fill(qRgba(0, 0, 0, 0));
+        defaultEmission = atlas->alloc(img);
+
+        // Fallback specular map.
+        img.fill(qRgba(128, 128, 128, 180));
+        defaultSpecular = atlas->alloc(img);
 
         uTex = *atlas;
 
@@ -130,6 +140,8 @@ DENG2_PIMPL(ModelRenderer)
         {
             model.setAtlas(*atlas);
             model.setDefaultNormals(defaultNormals);
+            model.setDefaultEmission(defaultEmission);
+            model.setDefaultSpecular(defaultSpecular);
         }
         else
         {
@@ -174,18 +186,10 @@ DENG2_PIMPL(ModelRenderer)
             auto mats = asset.subrecord(DEF_MATERIAL).subrecords();
             DENG2_FOR_EACH_CONST(Record::Subrecords, mat, mats)
             {
-                Record const &def = *mat.value();
-                if(def.has("heightMap"))
-                {
-                    String path = ScriptedInfo::absolutePathInContext(asset.accessedRecord(),
-                                                                      def.gets("heightMap"));
-
-                    int matId = identifierFromText(mat.key(), [&model] (String const &text) {
-                        return model.materialId(text);
-                    });
-
-                    model.setTexturePath(matId, ModelDrawable::Height, path);
-                }
+                handleMaterialTexture(model, mat.key(), *mat.value(), "normalMap",   ModelDrawable::Normals);
+                handleMaterialTexture(model, mat.key(), *mat.value(), "heightMap",   ModelDrawable::Height);
+                handleMaterialTexture(model, mat.key(), *mat.value(), "specularMap", ModelDrawable::Specular);
+                handleMaterialTexture(model, mat.key(), *mat.value(), "emissionMap", ModelDrawable::Emission);
             }
         }
 
@@ -208,6 +212,24 @@ DENG2_PIMPL(ModelRenderer)
 
         // Store the additional information in the bank.
         bank.setUserData(path, aux.release());
+    }
+
+    void handleMaterialTexture(ModelDrawable &model,
+                               String const &matName,
+                               Record const &matDef,
+                               String const &textureName,
+                               ModelDrawable::TextureMap map)
+    {
+        if(matDef.has(textureName))
+        {
+            String path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
+
+            int matId = identifierFromText(matName, [&model] (String const &text) {
+                return model.materialId(text);
+            });
+
+            model.setTexturePath(matId, map, path);
+        }
     }
 };
 
@@ -292,8 +314,3 @@ int ModelRenderer::identifierFromText(String const &text,
     }
     return id;
 }
-
-/*GLUniform &ModelRenderer::uMvpMatrix()
-{
-    return d->uMvpMatrix;
-}*/
