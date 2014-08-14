@@ -596,22 +596,20 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
         R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColor);
     }
 
-    if(mapInfo)
+    String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");
+    if(!fadeTable.isEmpty())
     {
         LumpIndex const &lumps = App_FileSystem().nameIndex();
-        int fadeTable = lumps.findLast(mapInfo->gets("fadeTable") + ".lmp");
-        if(fadeTable == lumps.findLast("COLORMAP.lmp"))
+        int lumpNum = lumps.findLast(fadeTable + ".lmp");
+        if(lumpNum == lumps.findLast("COLORMAP.lmp"))
         {
             // We don't want fog in this case.
             GL_UseFog(false);
         }
-        else
+        // Probably fog ... don't use fullbright sprites.
+        else if(lumpNum == lumps.findLast("FOGMAP.lmp"))
         {
-            // Probably fog ... don't use fullbright sprites.
-            if(fadeTable == lumps.findLast("FOGMAP.lmp"))
-            {
-                GL_UseFog(true);
-            }
+            GL_UseFog(true);
         }
     }
 }
