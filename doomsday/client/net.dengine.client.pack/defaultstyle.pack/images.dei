@@ -1,6 +1,6 @@
 # Images for the default UI style
 
-script { import DisplayMode }
+script { import gui, DisplayMode }
 
 group window {
     image background { path = "graphics/background.jpg" }
@@ -39,12 +39,8 @@ image input    { path = "graphics/input.png" }
 image audio    { path = "graphics/audio.png" }
 image updater  { path = "graphics/updater.png" }
 
-group toggle {
-    image onoff { path = "graphics/toggle-onoff.png" }
-    group {    
-        condition: DisplayMode.DPI_FACTOR == 2
-        image onoff { path = "graphics/toggle-onoff@2x.png"}
-    }
+image toggle.onoff {
+    path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
 }
 
 group progress {
