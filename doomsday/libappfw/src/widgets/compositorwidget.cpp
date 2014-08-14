@@ -63,6 +63,7 @@ DENG_GUI_PIMPL(CompositorWidget)
         Buffer *buf = buffers[nextBufIndex];
         Vector2ui const size = GLState::current().target().rectInUse().size();
         //qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
+        //qDebug() << buf->texture.size().asText() << size.asText();
         if(buf->texture.size() != size)
         {
             //qDebug() << "buffer texture defined" << size.asText();
@@ -103,7 +104,8 @@ DENG_GUI_PIMPL(CompositorWidget)
 
     bool shouldBeDrawn() const
     {
-        return self.isInitialized() && !self.isHidden() && self.visibleOpacity() > 0;
+        return self.isInitialized() && !self.isHidden() && self.visibleOpacity() > 0 &&
+               GLState::current().target().rectInUse().size() != Vector2ui();
     }
 };
 

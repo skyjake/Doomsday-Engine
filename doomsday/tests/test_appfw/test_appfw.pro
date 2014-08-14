@@ -26,4 +26,4 @@ HEADERS += \
 !macx: dengDynamicLinkPath($$denglibs.path)
 dengDynamicLinkPath($$[QT_INSTALL_LIBS])
 
-dengDeploy(test.appfw, $$PREFIX)
+dengDeploy(test_appfw, $$PREFIX)

@@ -19,6 +19,12 @@ class Package:
         self.sourcePath = sourcePath
         
     def build(self, outputPath):
+        # Ensure the output path exists.
+        try:
+            os.makedirs(outputPath)
+        except:
+            pass
+    
         outputName = os.path.join(outputPath, os.path.basename(self.sourcePath))
         pack = zipfile.ZipFile(outputName, 'w', zipfile.ZIP_DEFLATED)        
         contents = []

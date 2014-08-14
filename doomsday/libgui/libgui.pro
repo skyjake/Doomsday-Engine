@@ -12,6 +12,7 @@ TARGET   = deng_gui
 VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
+QT += x11extras
 
 include(../dep_core.pri)
 include(../dep_opengl.pri)

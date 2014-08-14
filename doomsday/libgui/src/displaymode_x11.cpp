@@ -21,6 +21,8 @@
 
 #include <QDebug>
 #include <QX11Info>
+#include <QApplication>
+#include <QScreen>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xrandr.h>
 #include <X11/extensions/xf86vmode.h>
@@ -171,7 +173,11 @@ using namespace de::internal;
 void DisplayMode_Native_Init(void)
 {
     // We will not be changing the depth at runtime.
+#ifdef DENG2_QT_5_0_OR_NEWER
+    displayDepth = qApp->screens().at(0)->depth();
+#else
     displayDepth = QX11Info::appDepth();
+#endif
 
     RRInfo info;
     availableModes = info.modes();

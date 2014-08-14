@@ -18,7 +18,7 @@
 
 #include "de/graphics/glentrypoints.h"
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
 
 #include "de/CanvasWindow"
 
@@ -51,4 +51,4 @@ void setXSwapInterval(int interval)
     }
 }
 
-#endif // Q_WS_X11
+#endif // DENG_X11

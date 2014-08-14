@@ -212,7 +212,14 @@ DENG2_PIMPL(App)
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
 
 #else // UNIX
-            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            if((self.nativeBasePath() / "data").exists())
+            {
+                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            }
+            else
+            {
+                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            }
 #endif
             if(defaultNativeModulePath().exists())
             {

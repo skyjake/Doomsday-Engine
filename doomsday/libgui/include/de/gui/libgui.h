@@ -43,7 +43,7 @@
 #endif
 
 // Assertion specific to GL errors.
-#if 1 || defined(Q_WS_X11) || defined(WIN32)
+#if 1 || defined(DENG_X11) || defined(WIN32)
 #  define LIBGUI_ASSERT_GL(cond) // just logged, no abort
 #else
 #  define LIBGUI_ASSERT_GL(cond) DENG2_ASSERT(cond)
