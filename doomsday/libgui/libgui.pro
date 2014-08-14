@@ -229,9 +229,5 @@ macx {
     linkBinaryToBundledAssimp(libdeng_gui.1.dylib, ..)
 }
 
+buildPackage(net.dengine.stdlib.gui, $$OUT_PWD)
 deployLibrary()
-
-deng_sdk {
-    INSTALLS *= scripts
-    scripts.path = $$DENG_SDK_DIR/modules
-}

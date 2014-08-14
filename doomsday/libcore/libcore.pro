@@ -197,9 +197,11 @@ macx {
     doPostLink("cp -fRp libdeng_core*dylib ../client/Doomsday.app/Contents/Frameworks")
 }
 
+buildPackage(net.dengine.stdlib, $$OUT_PWD)
 deployLibrary()
 
 deng_sdk {
-    INSTALLS *= scripts
-    scripts.path = $$DENG_SDK_DIR/modules
+    INSTALLS *= utils
+    utils.files = ../build/scripts/buildpackage.py
+    utils.path = $$DENG_SDK_DIR
 }
