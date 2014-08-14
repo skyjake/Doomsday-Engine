@@ -104,10 +104,11 @@ defineTest(deployLibrary) {
         export(target.path)
     }
     deng_sdk {
-        INSTALLS *= target builtpacks
+        INSTALLS *= target
         target.path = $$DENG_SDK_LIB_DIR
         export(target.path)
     }
+    !macx: INSTALLS *= builtpacks
     export(INSTALLS)
 }
 
