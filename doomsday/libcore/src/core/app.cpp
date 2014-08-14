@@ -728,6 +728,11 @@ PackageLoader &App::packageLoader()
     return DENG2_APP->d->packageLoader;
 }
 
+int App::findInPackages(String const &partialPath, FS::FoundFiles &files)
+{
+    return App::fileSystem().nameIndex().findPartialPathInPackageOrder(partialPath, files);
+}
+
 bool App::assetExists(String const &identifier)
 {
     return DENG2_APP->d->findAsset(identifier) != 0;
