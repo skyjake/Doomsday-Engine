@@ -71,26 +71,6 @@ p.add_files(
     [ ('client/data', 'data') ] )
 p.create('doomsday.pk3')
 
-# net.dengine.base.pack
-p = Pack()
-p.add_files( [ ('net.dengine.base.pack', '') ] )
-p.create('net.dengine.base.pack')
-
-# net.dengine.stdlib.pack
-p = Pack()
-p.add_files( [ ('libcore/net.dengine.stdlib.pack', '') ] )
-p.create('net.dengine.stdlib.pack')
-
-# net.dengine.stdlib.gui.pack
-p = Pack()
-p.add_files( [ ('libgui/net.dengine.stdlib.gui.pack', '') ] )
-p.create('net.dengine.stdlib.gui.pack')
-
-# net.dengine.client.pack
-p = Pack()
-p.add_files( [ ('client/net.dengine.client.pack', '') ] )
-p.create('net.dengine.client.pack')
-
 # libdoom.pk3
 p = Pack()
 p.add_files(

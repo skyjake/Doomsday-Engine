@@ -42,7 +42,7 @@
 
 namespace de {
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
 #  define LIBGUI_CANVAS_USE_DEFERRED_RESIZE
 #endif
 

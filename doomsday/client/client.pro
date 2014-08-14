@@ -786,6 +786,8 @@ OTHER_FILES += \
 
 # Resources ------------------------------------------------------------------
 
+buildPackage(net.dengine.client, $$OUT_PWD/..)
+
 data.files = $$OUT_PWD/../doomsday.pk3
 
 # These fonts may be needed during the initial startup busy mode.

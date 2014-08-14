@@ -282,6 +282,17 @@ public:
     static PackageLoader &packageLoader();
 
     /**
+     * Convenience method for finding all files matching a certain name or partial path
+     * from all loaded packages.
+     *
+     * @param partialPath  File name or partial path.
+     * @param files        Resulting list of found files.
+     *
+     * @return Number of files found.
+     */
+    static int findInPackages(String const &partialPath, FS::FoundFiles &files);
+
+    /**
      * Checks if an asset exists.
      *
      * @param identifier  Identifier.

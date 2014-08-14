@@ -112,7 +112,7 @@ DENG2_PIMPL(CanvasWindow)
 
         DENG2_GUI_APP->notifyGLContextChanged();
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
         canvas->update();
 #else
         canvas->updateGL();
@@ -236,7 +236,7 @@ void CanvasWindow::canvasGLReady(Canvas &canvas)
 
     if(d->recreated == &canvas)
     {
-#ifndef Q_WS_X11
+#ifndef DENG_X11
         d->finishCanvasRecreation();
 #else
         // Need to defer the finalization.

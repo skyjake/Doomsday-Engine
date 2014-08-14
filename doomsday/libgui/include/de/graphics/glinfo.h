@@ -55,7 +55,7 @@ public:
         duint32 Windows_EXT_swap_control : 1;
 #endif
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
         duint32 X11_EXT_swap_control : 1;
 #endif
     };

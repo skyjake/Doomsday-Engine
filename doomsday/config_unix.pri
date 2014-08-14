@@ -8,6 +8,8 @@ include(config_unix_any.pri)
 
 CONFIG += deng_nofixedasm
 
+DEFINES += DENG_X11
+
 !deng_nosnowberry: CONFIG += deng_snowberry
 
 exists(/etc/apt) {

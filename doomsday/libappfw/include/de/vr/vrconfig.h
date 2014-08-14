@@ -206,6 +206,16 @@ public:
     de::OculusRift const &oculusRift() const;
 
 public:
+    /**
+     * Determines if the VR mode will be applying a transformation to window contents
+     * that displaces the content from its "actual" location.
+     *
+     * @param mode  Mode.
+     *
+     * @return @c true, if contents will change position on screen.
+     */
+    static bool modeAppliesDisplacement(StereoMode mode);
+
     static bool modeNeedsStereoGLFormat(StereoMode mode);
 
 private:

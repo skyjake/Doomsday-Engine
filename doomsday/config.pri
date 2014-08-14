@@ -50,7 +50,6 @@ DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
 DENG_MAC_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/macx
 DENG_WIN_INCLUDE_DIR  = $$DENG_INCLUDE_DIR/windows
-DENG_MODULES_DIR      = $$PWD/libcore/modules
 
 # Macros ---------------------------------------------------------------------
 
@@ -121,8 +120,12 @@ deng_sdk {
         DENG_SDK_HEADER_DIR = $$DENG_SDK_DIR/include/de
         DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
+    DENG_SDK_PACKS_DIR = $$DENG_SDK_DIR/packs
+    builtpacks.path = $$DENG_SDK_PACKS_DIR
+
     echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
     echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+    echo(SDK packages directory: $$DENG_SDK_PACKS_DIR)
 }
 
     win32: include(config_win32.pri)
