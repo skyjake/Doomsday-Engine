@@ -246,4 +246,22 @@ OculusRift const &VRConfig::oculusRift() const
     return d->ovr;
 }
 
+bool VRConfig::modeAppliesDisplacement(StereoMode mode)
+{
+    switch(mode)
+    {
+    case Mono:
+    case GreenMagenta:
+    case RedCyan:
+    case LeftOnly:
+    case RightOnly:
+    case QuadBuffered:
+        return false;
+
+    default:
+        break;
+    }
+    return true;
+}
+
 } // namespace de
