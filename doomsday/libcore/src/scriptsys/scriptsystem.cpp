@@ -42,6 +42,21 @@ Value *Function_String_FileNamePath(Context &ctx, Function::ArgumentValues const
     return new TextValue(ctx.instanceScope().asText().fileNamePath());
 }
 
+Value *Function_String_FileNameExtension(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().fileNameExtension());
+}
+
+Value *Function_String_FileNameWithoutExtension(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().fileNameWithoutExtension());
+}
+
+Value *Function_String_FileNameAndPathWithoutExtension(Context &ctx, Function::ArgumentValues const &)
+{
+    return new TextValue(ctx.instanceScope().asText().fileNameAndPathWithoutExtension());
+}
+
 Value *Function_String_Upper(Context &ctx, Function::ArgumentValues const &)
 {
     return new TextValue(ctx.instanceScope().asText().upper());
@@ -179,7 +194,10 @@ DENG2_PIMPL(ScriptSystem)
             binder.init(dict)
                     << DENG2_FUNC_NOARG(String_Upper, "upper")
                     << DENG2_FUNC_NOARG(String_Lower, "lower")
-                    << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath");
+                    << DENG2_FUNC_NOARG(String_FileNamePath, "fileNamePath")
+                    << DENG2_FUNC_NOARG(String_FileNameExtension, "fileNameExtension")
+                    << DENG2_FUNC_NOARG(String_FileNameWithoutExtension, "fileNameWithoutExtension")
+                    << DENG2_FUNC_NOARG(String_FileNameAndPathWithoutExtension, "fileNameAndPathWithoutExtension");
         }
 
         // File
