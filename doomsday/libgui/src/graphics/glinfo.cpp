@@ -94,7 +94,7 @@ DENG2_PIMPL_NOREF(GLInfo)
             return true;
 #endif
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
         // Check GLX specific extensions.
         if(checkExtensionString(ext, (GLubyte const *) getGLXExtensionsString()))
             return true;
@@ -132,7 +132,7 @@ DENG2_PIMPL_NOREF(GLInfo)
         ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
 #endif
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
         ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
 #endif
 

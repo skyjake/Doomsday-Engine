@@ -23,8 +23,6 @@ SUBDIRS = \
 SUBDIRS += \
     tests
 
-#SUBDIRS += postbuild
-
 OTHER_FILES += doomsday_sdk.pri
 
 # Install the main .pri file of the SDK.

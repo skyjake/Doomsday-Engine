@@ -141,7 +141,7 @@ LIBGUI_EXTERN_C PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC   glRenderbuff
 
 void getAllOpenGLEntryPoints();
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
 LIBGUI_PUBLIC char const *getGLXExtensionsString();
 LIBGUI_PUBLIC void setXSwapInterval(int interval);
 void getGLXEntryPoints();

@@ -21,7 +21,7 @@
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
 #  include <GL/glx.h>
 #endif
 
@@ -224,7 +224,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC_EXT(glRenderbufferStorageMultisampleCoverageNV);
 #endif
 
-#ifdef Q_WS_X11
+#ifdef DENG_X11
     getGLXEntryPoints();
 #endif
 

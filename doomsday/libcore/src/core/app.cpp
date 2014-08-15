@@ -212,7 +212,14 @@ DENG2_PIMPL(App)
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
 
 #else // UNIX
-            fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            if((self.nativeBasePath() / "data").exists())
+            {
+                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath() / "data"));
+            }
+            else
+            {
+                fs.makeFolder("/data").attach(new DirectoryFeed(self.nativeBasePath()));
+            }
 #endif
             if(defaultNativeModulePath().exists())
             {
@@ -726,6 +733,11 @@ FileSystem &App::fileSystem()
 PackageLoader &App::packageLoader()
 {
     return DENG2_APP->d->packageLoader;
+}
+
+int App::findInPackages(String const &partialPath, FS::FoundFiles &files)
+{
+    return App::fileSystem().nameIndex().findPartialPathInPackageOrder(partialPath, files);
 }
 
 bool App::assetExists(String const &identifier)

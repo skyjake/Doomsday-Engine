@@ -8,11 +8,21 @@ deng_extassimp {
 }
 
 !isEmpty(ASSIMP_DIR) {
-    !win32 {
+    macx {
         aiIncDir = $$ASSIMP_DIR/include
         aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
 
-        deng_extassimp:!macx {
+        deng_sdk {
+            INSTALLS += assimplib
+            assimplib.files = $$ASSIMP_DIR/lib/libassimp.3.dylib
+            assimplib.path  = $$DENG_SDK_LIB_DIR
+        }
+    }
+    else:unix {
+        aiIncDir = $$ASSIMP_DIR/include
+        aiLibs   = -L$$ASSIMP_DIR/lib -lassimp
+
+        deng_extassimp {
             *-g*|*-clang* {
                 # Inform the dynamic linker about a custom location.
                 QMAKE_LFLAGS += -Wl,-rpath,$$DENG_PLUGIN_LIB_DIR
@@ -23,12 +33,14 @@ deng_extassimp {
             assimplib.files = $$ASSIMP_DIR/lib/libassimp.so.3
             assimplib.path  = $$DENG_PLUGIN_LIB_DIR
         }
-        else:!macx {
+        else {
             *-g*|*-clang* {
                 # Inform the dynamic linker about a custom location.
                 QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
             }
         }
+
+
     }
     else {
         # On Windows we assume that cmake has been run in the root of

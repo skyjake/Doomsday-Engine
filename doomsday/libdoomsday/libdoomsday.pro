@@ -149,6 +149,10 @@ SOURCES += \
 win32: SOURCES += \
     src/filesys/fs_windows.cpp
 
+# Resources ------------------------------------------------------------------
+
+buildPackage(../net.dengine.base, $$OUT_PWD/..)
+
 # Installation ---------------------------------------------------------------
 
 macx {
