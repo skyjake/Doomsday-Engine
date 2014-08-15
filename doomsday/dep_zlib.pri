@@ -7,6 +7,8 @@ win32 {
     INSTALLS += zlibs
     zlibs.files = $$PWD/external/zlib/win32/zlib1.dll
     zlibs.path = $$DENG_LIB_DIR
+
+    deng_sdk: zlibs.path = $$DENG_SDK_LIB_DIR
 }
 else:macx {
     # Mac OS X.
