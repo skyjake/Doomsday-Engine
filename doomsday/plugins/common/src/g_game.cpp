@@ -3195,36 +3195,59 @@ D_CMD(WarpMap)
         return true;
     }
 
-    // Default episode is the current (if any).
+    // If a session is already in progress, the default episode is the current.
     String episodeId = COMMON_GAMESESSION->episodeId();
-    de::Uri mapUri;
 
-    bool haveEpisode = (argc >= 3);
-    if(haveEpisode)
+    // Otherwise if only one playable episode is defined - select it.
+    if(episodeId.isEmpty())
     {
-        if(Record const *episodeDef = Defs().episodes.tryFind("id", String(argv[1])))
+        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+        DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
         {
-            // Ensure this is a playable episode.
-            de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-            if(P_MapExists(startMap.compose().toUtf8().constData()))
+            Record const &episodeDef = *i->second->as<RecordValue>().record();
+
+            de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+            if(!P_MapExists(startMap.compose().toUtf8().constData()))
             {
-                episodeId = episodeDef->gets("id");
+                continue;
+            }
+
+            if(episodeId.isEmpty())
+            {
+                episodeId = episodeDef.gets("id");
             }
             else
             {
-                LOG_SCR_NOTE("Failed to locate the start map for episode '%s'."
-                             " This episode is not playable.") << String(argv[1]);
-                return false;
+                episodeId.clear();
+                break;
             }
-        }
-        else
-        {
-            LOG_SCR_NOTE("Unknown episode '%s'") << String(argv[1]);
-            return false;
         }
     }
 
+    // Has an episode been specified?
+    bool const haveEpisode = (argc >= 3);
+    if(haveEpisode) episodeId = argv[1];
+
+    // Catch invalid episodes.
+    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    {
+        // Ensure that the episode is playable.
+        de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+        if(!P_MapExists(startMap.compose().toUtf8().constData()))
+        {
+            LOG_SCR_NOTE("Failed to locate the start map for episode '%s'."
+                         " This episode is not playable") << episodeId;
+            return false;
+        }
+    }
+    else
+    {
+        LOG_SCR_NOTE("Unknown episode '%s'") << episodeId;
+        return false;
+    }
+
     // The map.
+    de::Uri mapUri;
     bool isNumber;
     int oldMapNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
 #if !__JHEXEN__
@@ -3258,15 +3281,6 @@ D_CMD(WarpMap)
         mapUri = G_ComposeMapUri(0, oldMapNumber);
     }
 
-    bool forceNewSession = (IS_NETGAME != 0);
-    if(COMMON_GAMESESSION->hasBegun())
-    {
-        if(COMMON_GAMESESSION->episodeId().compareWithoutCase(episodeId))
-        {
-            forceNewSession = true;
-        }
-    }
-
     // Catch invalid maps.
     if(!P_MapExists(mapUri.compose().toUtf8().constData()))
     {
@@ -3276,6 +3290,15 @@ D_CMD(WarpMap)
 
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
         return false;
+    }
+
+    bool forceNewSession = (IS_NETGAME != 0);
+    if(COMMON_GAMESESSION->hasBegun())
+    {
+        if(COMMON_GAMESESSION->episodeId().compareWithoutCase(episodeId))
+        {
+            forceNewSession = true;
+        }
     }
 
 #if __JHEXEN__
