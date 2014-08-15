@@ -37,6 +37,12 @@ class GLBuffer;
  * 3D model data is loaded using the Open Asset Import Library from multiple different
  * source formats.
  *
+ * Lifetime.
+ *
+ * Texture maps.
+ *
+ * Animation.
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
@@ -45,13 +51,20 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
-    enum TextureMap
+    enum TextureMap // note: used as indices internally
     {
-        Diffuse,
-        Normals,
-        Height,
-        Specular,
-        Emission
+        Diffuse = 0,    ///< Surface color and opacity.
+        Normals = 1,    /**< Normal map where RGB values are directly interpreted as vectors.
+                             Blue 255 is Z+1 meaning straight up. Color value 128 means zero.
+                             The default normal vector pointing straight away from the
+                             surface is therefore (128, 128, 255) => (0, 0, 1). */
+        Specular = 2,   ///< Specular color (RGB) and reflection sharpness (A).
+        Emission = 3,   /**< Additional light emitted by the surface that is not affected by
+                             external factors. */
+        Height = 4,     /**< Height values are converted to a normal map. Lighter regions
+                             are higher than dark regions. */
+
+        Unknown
     };
 
     /**
@@ -146,8 +159,48 @@ public:
         DENG2_PRIVATE(d)
     };
 
+    /**
+     * Interface for image loaders that provide the content for texture images when
+     * given a path. The default loader just checks if there is an image file in the
+     * file system at the given path.
+     */
+    class LIBGUI_PUBLIC IImageLoader
+    {
+    public:
+        virtual ~IImageLoader() {}
+
+        /**
+         * Loads an image. If the image can't be loaded, the loader must throw an
+         * exception explaining the reason for the failure.
+         *
+         * @param path  Path of the image. This is an absolute de::FS path inferred from
+         *              the location of the source model file and the material metadata
+         *              it contains.
+         *
+         * @return Loaded image.
+         */
+        virtual Image loadImage(String const &path) = 0;
+    };
+
 public:
     ModelDrawable();
+
+    /**
+     * Sets the object responsible for loading texture images.
+     *
+     * By default, ModelDrawable uses a simple loader that tries to load image files
+     * directly from the file system.
+     *
+     * @param loader  Image loader.
+     */
+    void setImageLoader(IImageLoader &loader);
+
+    void useDefaultImageLoader();
+
+    /**
+     * Releases all the data: the loaded model and any GL resources.
+     */
+    void clear();
 
     /**
      * Loads a model from a file. This is a synchronous operation and may take a while,
@@ -161,11 +214,6 @@ public:
     void load(File const &file);
 
     /**
-     * Releases all the data: the loaded model and any GL resources.
-     */
-    void clear();
-
-    /**
      * Finds the id of an animation that has the name @a name. Note that animation
      * names are optional.
      *
@@ -177,20 +225,16 @@ public:
 
     int animationCount() const;
 
-    bool nodeExists(String const &name) const;
-
     /**
-     * Prepares a loaded model for drawing by constructing all the required GL objects.
+     * Locates a material specified in the model by its name.
      *
-     * This method will be called automatically when needed, however you can also call it
-     * manually at a suitable time. Only call this from the main (UI) thread.
+     * @param name  Name of the material
+     *
+     * @return Material id.
      */
-    void glInit();
+    int materialId(String const &name) const;
 
-    /**
-     * Releases all the GL resources of the model.
-     */
-    void glDeinit();
+    bool nodeExists(String const &name) const;
 
     /**
      * Atlas to use for any textures needed by the model. This is needed for glInit().
@@ -205,25 +249,43 @@ public:
      */
     void unsetAtlas();
 
-    /**
-     * Sets the normal map that is used if no other normals are provided.
-     *
-     * @param atlasId  Identifier in the atlas.
-     */
-    void setDefaultNormals(Id const &atlasId);
-
-    void setDefaultEmission(Id const &atlasId);
-
-    void setDefaultSpecular(Id const &atlasId);
+    typedef QList<TextureMap> Mapping;
 
     /**
-     * Locates a material specified in the model by its name.
+     * Sets which textures are to be passed to the model shader via the GL buffer.
      *
-     * @param name  Name of the material
+     * By default, the model only has a diffuse map. The user of ModelDrawable must
+     * specify the indices for the other texture maps depending on how the shader expects
+     * to receive them.
      *
-     * @return Material id.
+     * @param mapsToUse  Up to four map types. The map at index zero will be specified
+     *                   as the first texture bounds (@c aBounds in the shader), index
+     *                   one will become the second texture bounds (@c aBounds2), etc.
      */
-    int materialId(String const &name) const;
+    void setTextureMapping(Mapping mapsToUse);
+
+    static Mapping diffuseNormalsSpecularEmission();
+
+    /**
+     * Sets the texture map that is used if no other map is provided.
+     *
+     * @param textureType  Type of the texture.
+     * @param atlasId      Identifier in the atlas.
+     */
+    void setDefaultTexture(TextureMap textureType, Id const &atlasId);
+
+    /**
+     * Prepares a loaded model for drawing by constructing all the required GL objects.
+     *
+     * This method will be called automatically when needed, however you can also call it
+     * manually at a suitable time. Only call this from the main (UI) thread.
+     */
+    void glInit();
+
+    /**
+     * Releases all the GL resources of the model.
+     */
+    void glDeinit();
 
     /**
      * Sets or changes one of the texture maps used by the model. This can be used to

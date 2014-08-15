@@ -139,9 +139,10 @@ DENG2_PIMPL(ModelRenderer)
         if(atlas)
         {
             model.setAtlas(*atlas);
-            model.setDefaultNormals(defaultNormals);
-            model.setDefaultEmission(defaultEmission);
-            model.setDefaultSpecular(defaultSpecular);
+            model.setTextureMapping(ModelDrawable::diffuseNormalsSpecularEmission());
+            model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
+            model.setDefaultTexture(ModelDrawable::Emission, defaultEmission);
+            model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
         }
         else
         {
