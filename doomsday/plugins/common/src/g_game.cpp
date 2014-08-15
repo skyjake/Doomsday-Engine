@@ -86,10 +86,6 @@ D_CMD(HelpScreen);
 D_CMD(ListMaps);
 D_CMD(LeaveMap);
 D_CMD(WarpMap);
-#if __JDOOM__ || __JHERETIC__
-D_CMD(WarpEpisodeMap);
-#endif
-
 D_CMD(LoadSession);
 D_CMD(SaveSession);
 D_CMD(QuickLoadSession);
@@ -374,17 +370,8 @@ void G_Register()
     C_CMD("leavemap",   "",  LeaveMap);
     C_CMD("leavemap",   "s", LeaveMap);
 
-    C_CMD("warp",       "s", WarpMap);
-    C_CMD("setmap",     "s", WarpMap); // alias
-#if __JDOOM__ || __JHERETIC__
-# if __JDOOM__
-    if(!(gameModeBits & GM_ANY_DOOM2))
-# endif
-    {
-        C_CMD("warp",       "ii", WarpEpisodeMap);
-        C_CMD("setmap",     "ii", WarpEpisodeMap); // alias
-    }
-#endif
+    C_CMD("warp",       nullptr, WarpMap);
+    C_CMD("setmap",     nullptr, WarpMap); // alias
 }
 
 dd_bool G_QuitInProgress()
@@ -3180,14 +3167,12 @@ D_CMD(LeaveMap)
 /**
  * Warp behavior is as follows:
  *
- * warp (map):      if a game session is in progress
- *                      continue the session and change map
- *                      if Hexen and the targt map is in another hub
- *                          force a new session.
- *                  else
- *                      begin a new game session and warp to the specified map.
- *
- * warp (ep) (map): same as warp (map) but force new session if episode differs.
+ * if a game session is in progress and episode id matches current
+ *     continue the session and change map
+ *     if Hexen and the targt map is in another hub
+ *         force a new session.
+ * else
+ *     begin a new game session and warp to the specified map.
  *
  * @note In a networked game we must presently force a new game session when a
  * map change outside the normal progression occurs to allow session-level state
@@ -3195,18 +3180,8 @@ D_CMD(LeaveMap)
  *
  * @note "setmap" is an alias of "warp"
  */
-static bool G_WarpMap(String newEpisodeId, de::Uri const &newMapUri)
+D_CMD(WarpMap)
 {
-    bool forceNewSession = (IS_NETGAME != 0);
-
-    if(COMMON_GAMESESSION->hasBegun())
-    {
-        if(COMMON_GAMESESSION->episodeId().compareWithoutCase(newEpisodeId))
-        {
-            forceNewSession = true;
-        }
-    }
-
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
     if(IS_NETGAME && !IS_NETWORK_SERVER)
@@ -3214,15 +3189,98 @@ static bool G_WarpMap(String newEpisodeId, de::Uri const &newMapUri)
         return false;
     }
 
-    // Catch invalid maps.
-    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
+    if(argc == 1)
     {
+        LOG_SCR_NOTE("Usage: %s (episode) (map)") << argv[0];
+        return true;
+    }
+
+    // Default episode is the current (if any).
+    String episodeId = COMMON_GAMESESSION->episodeId();
+    de::Uri mapUri;
+
+    bool haveEpisode = (argc >= 3);
+    if(haveEpisode)
+    {
+        if(Record const *episodeDef = Defs().episodes.tryFind("id", String(argv[1])))
+        {
+            // Ensure this is a playable episode.
+            de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+            if(P_MapExists(startMap.compose().toUtf8().constData()))
+            {
+                episodeId = episodeDef->gets("id");
+            }
+            else
+            {
+                LOG_SCR_NOTE("Failed to locate the start map for episode '%s'."
+                             " This episode is not playable.") << String(argv[1]);
+                return false;
+            }
+        }
+        else
+        {
+            LOG_SCR_NOTE("Unknown episode '%s'") << String(argv[1]);
+            return false;
+        }
+    }
+
+    // The map.
+    bool isNumber;
+    int oldMapNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
+#if !__JHEXEN__
+    if(oldMapNumber > 0) oldMapNumber -= 1; // zero-based.
+#endif
+
+    if(!isNumber)
+    {
+        // It must be a URI, then.
+        Block rawMapUri = String(argv[haveEpisode? 2 : 1]).toUtf8();
+        char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
+        mapUri = de::Uri::fromUserInput(args, 1);
+        if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+    }
+    else if(!episodeId.isEmpty())
+    {
+#if __JHEXEN__
+        // Map numbers must be translated in the context of an episode.
+        mapUri = TranslateMapWarpNumber(episodeId, oldMapNumber);
+#else
+        int oldEpisodeNumber = episodeId.toInt(&isNumber);
+        if(oldEpisodeNumber > 0) oldEpisodeNumber -= 1; // zero-based.
+        if(isNumber)
+        {
+            mapUri = G_ComposeMapUri(oldEpisodeNumber, oldMapNumber);
+        }
+#endif
+    }
+    else
+    {
+        mapUri = G_ComposeMapUri(0, oldMapNumber);
+    }
+
+    bool forceNewSession = (IS_NETGAME != 0);
+    if(COMMON_GAMESESSION->hasBegun())
+    {
+        if(COMMON_GAMESESSION->episodeId().compareWithoutCase(episodeId))
+        {
+            forceNewSession = true;
+        }
+    }
+
+    // Catch invalid maps.
+    if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+    {
+        String msg("Unknown map");
+        if(argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
+        else          msg += String(" \"%1\"").arg(argv[1]);
+
+        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
         return false;
     }
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewSession && COMMON_GAMESESSION->hasBegun() && ::gameMapUri == newMapUri)
+    if(!forceNewSession && COMMON_GAMESESSION->hasBegun() && ::gameMapUri == mapUri)
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;
@@ -3237,94 +3295,29 @@ static bool G_WarpMap(String newEpisodeId, de::Uri const &newMapUri)
     }
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
-    // So be it.
-    briefDisabled = true;
+    // Don't brief the player.
+    ::briefDisabled = true;
 
+    // So be it.
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        ::nextMapUri      = newMapUri;
+        ::nextMapUri      = mapUri;
         ::nextMapEntrance = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(),
-                                  newMapUri);
+                                  mapUri);
 #endif
     }
     else
     {
-        G_SetGameActionNewSession(defaultGameRules, newEpisodeId, newMapUri);
-    }
-
-    return true;
-}
-
-D_CMD(WarpMap)
-{
-    DENG2_UNUSED(argc);
-
-    bool isNumber;
-    int number = de::String(argv[1]).toInt(&isNumber);
-
-    de::Uri newMapUri;
-    if(!isNumber)
-    {
-        // It must be a URI, then.
-        newMapUri = de::Uri::fromUserInput(argv + 1, 1);
-        if(newMapUri.scheme().isEmpty())
-            newMapUri.setScheme("Maps");
-    }
-    else
-    {
-        uint epsd = 0, map = 0;
-
-#if __JDOOM__ || __JDOOM64__ || __JHEXEN__
-# if __JDOOM__
-        if(gameModeBits & GM_ANY_DOOM2)
-# endif
-        {
-            // "warp M":
-            epsd = 0;
-            map = de::max(0, number);
-        }
-#endif
-#if __JDOOM__
-        else
-#endif
-#if __JDOOM__ || __JHERETIC__
-            if(argc == 2)
-        {
-            // "warp EM" or "warp M":
-            epsd = de::max(0, number / 10);
-            map  = de::max(0, number % 10);
-        }
-#endif
-
-#if __JHEXEN__
-        // Hexen map numbers require translation.
-        newMapUri = TranslateMapWarpNumber(map);
-#else
-        // Internally epsiode and map numbers are zero-based.
-        if(epsd != 0) epsd -= 1;
-        if(map != 0)  map  -= 1;
-
-        // Compose a map URI for the given episode and map pair using the default
-        // format specific to the game (and mode).
-        newMapUri = G_ComposeMapUri(epsd, map);
-#endif
-    }
-
-    if(!G_WarpMap(newEpisodeId, newMapUri))
-    {
-        String msg = String("Unknown map \"%1\"").arg(argv[1]);
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
-        return false;
+        G_SetGameActionNewSession(defaultGameRules, episodeId, mapUri);
     }
 
     // If the command source was "us" the game library then it was probably in
     // response to the local player entering a cheat event sequence, so set the
-    // "CHANGING MAP" message.
-    // Somewhat of a kludge...
+    // "CHANGING MAP" message. Somewhat of a kludge...
     if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
     {
 #if __JHEXEN__
@@ -3343,46 +3336,3 @@ D_CMD(WarpMap)
 
     return true;
 }
-
-#if __JDOOM__ || __JHERETIC__
-D_CMD(WarpEpisodeMap)
-{
-    DENG2_UNUSED(argc);
-
-    uint epsd = de::max(0, de::String(argv[1]).toInt());
-    uint map  = de::max(0, de::String(argv[2]).toInt());
-
-    // Internally epsiode and map numbers are zero-based.
-    if(epsd != 0) epsd -= 1;
-    if(map != 0)  map  -= 1;
-
-    if(!G_WarpMap(episodeId, G_ComposeMapUri(epsd, map)))
-    {
-        String msg = String("Unknown map \"%1 %2\"").arg(argv[1]).arg(argv[2]);
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
-        return false;
-    }
-
-    // If the command source was "us" the game library then it was probably in
-    // response to the local player entering a cheat event sequence, so set the
-    // "CHANGING MAP" message.
-    // Somewhat of a kludge...
-    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
-    {
-#if __JHEXEN__
-        char const *msg = TXT_CHEATWARP;
-        int soundId     = SFX_PLATFORM_STOP;
-#elif __JHERETIC__
-        char const *msg = TXT_CHEATWARP;
-        int soundId     = SFX_DORCLS;
-#else //__JDOOM__ || __JDOOM64__
-        char const *msg = STSTR_CLEV;
-        int soundId     = SFX_NONE;
-#endif
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
-        S_LocalSound(soundId, NULL);
-    }
-
-    return true;
-}
-#endif // __JDOOM__ || __JHERETIC__
