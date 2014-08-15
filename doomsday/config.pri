@@ -118,10 +118,10 @@ deng_sdk {
         DENG_SDK_LIB_DIR    = $$DENG_SDK_DIR/lib
     }
     DENG_SDK_PACKS_DIR = $$DENG_SDK_DIR/packs
-    builtpacks.path = $$DENG_SDK_PACKS_DIR
+    builtpacks.path    = $$DENG_SDK_PACKS_DIR
 
-    echo(SDK header directory: $$DENG_SDK_HEADER_DIR)
-    echo(SDK library directory: $$DENG_SDK_LIB_DIR)
+    echo(SDK header directory:   $$DENG_SDK_HEADER_DIR)
+    echo(SDK library directory:  $$DENG_SDK_LIB_DIR)
     echo(SDK packages directory: $$DENG_SDK_PACKS_DIR)
 }
 

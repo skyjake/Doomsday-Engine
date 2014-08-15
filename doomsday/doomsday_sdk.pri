@@ -45,6 +45,9 @@ defineTest(dengDynamicLinkPath) {
         QMAKE_LFLAGS += -Wl,-rpath,$$1
         export(QMAKE_LFLAGS)
     }
+    win32 {
+        LIBS += -L$$1
+    }
 }
 
 # Instruct the dynamic linker to load the libs from the SDK lib dir.
@@ -138,7 +141,17 @@ defineTest(dengDeploy) {
     contains(DENG_CONFIG, shell): denglibs.files += $$dengSdkLib(deng_shell)
 
     win32 {
-        # todo
+        denglibs.files += $$DENG_SDK_DIR/lib/zlib1.dll
+        contains(DENG_CONFIG, gui) {
+            denglibs.files += \
+                $$DENG_SDK_DIR/lib/assimpd.dll \
+                $$DENG_SDK_DIR/lib/assimp.dll
+        }
+
+        target.path      = $$prefix/bin
+        denglibs.path    = $$target.path
+        appPackages.path = $$prefix/data
+        sdkPackages.path = $$prefix/data
     }
     else:macx {
         QMAKE_BUNDLE_DATA += $$INSTALLS
@@ -149,9 +162,9 @@ defineTest(dengDeploy) {
     }
     else {
         target.path      = $$prefix/bin
+        denglibs.path    = $$dengFindLibDir($$prefix)
         appPackages.path = $$prefix/share/$$1
         sdkPackages.path = $$prefix/share/$$1
-        denglibs.path    = $$dengFindLibDir($$prefix)
     }
 
     contains(DENG_CONFIG, symlink):unix {
@@ -167,6 +180,12 @@ defineTest(dengDeploy) {
         for(fn, denglibs.files) {
             dengPostLink(mkdir -p \"$$fwDir\" && ln -sf \"$$fn\" \"$$fwDir\")
         }
+    }
+
+    win32 {
+        contains(DENG_CONFIG, gui): deployOpts += -opengl
+        denglibs.extra = windeployqt \"$$target.path\" -network $$deployOpts
+        export(denglibs.extra)
     }
 
     macx: export(QMAKE_BUNDLE_DATA)

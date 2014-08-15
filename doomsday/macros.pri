@@ -94,7 +94,7 @@ defineTest(deployTarget) {
 }
 
 defineTest(deployLibrary) {
-    win32 {
+    win32:!deng_sdk {
         DLLDESTDIR = $$DENG_LIB_DIR
         export(DLLDESTDIR)
     }
@@ -107,6 +107,15 @@ defineTest(deployLibrary) {
         INSTALLS *= target
         target.path = $$DENG_SDK_LIB_DIR
         export(target.path)
+        win32 {
+            INSTALLS *= targetlib
+            deng_debug: targetlib.files = $$OUT_PWD/Debug/$${TARGET}.lib
+                  else: targetlib.files = $$OUT_PWD/Release/$${TARGET}.lib
+            targetlib.path = $$DENG_SDK_LIB_DIR
+            export(targetlib.files)
+            export(targetlib.path)
+        }
+        !macx: INSTALLS *= builtpacks
     }
     export(INSTALLS)
 }

@@ -56,6 +56,7 @@ deng_extassimp {
 
         INSTALLS += assimplib
         assimplib.path = $$DENG_BIN_DIR
+        deng_sdk: assimplib.path = $$DENG_SDK_LIB_DIR
         deng_debug: assimplib.files = $$ASSIMP_DIR/bin/debug/assimpd.dll
               else: assimplib.files = $$ASSIMP_DIR/bin/release/assimp.dll
     }
