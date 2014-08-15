@@ -1093,16 +1093,6 @@ bool ModelDrawable::nodeExists(String const &name) const
     return d->nodeNameToPtr.contains(name);
 }
 
-void ModelDrawable::glInit()
-{
-    d->glInit();
-}
-
-void ModelDrawable::glDeinit()
-{
-    d->glDeinit();
-}
-
 void ModelDrawable::setAtlas(AtlasTexture &atlas)
 {
     d->atlas = &atlas;
@@ -1137,6 +1127,16 @@ void ModelDrawable::setDefaultTexture(TextureMap textureType, Id const &atlasId)
     if(textureType < 0 || textureType >= MAX_TEXTURES) return;
 
     d->defaultTexIds[textureType] = atlasId;
+}
+
+void ModelDrawable::glInit()
+{
+    d->glInit();
+}
+
+void ModelDrawable::glDeinit()
+{
+    d->glDeinit();
 }
 
 int ModelDrawable::materialId(String const &name) const
