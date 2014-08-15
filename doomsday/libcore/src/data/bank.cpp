@@ -888,7 +888,7 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.lock();
     if(!item.data.get())
     {
-        throw LoadError("Bank::data", "Failed to load \"" + path + "\"");
+        throw LoadError(QLatin1String(d->nameForLog) + "::data", "Failed to load \"" + path + "\"");
     }
     return *item.data;
 }
