@@ -230,7 +230,7 @@ DENG2_PIMPL(RenderSystem)
     {
         // Load all the shader program definitions.
         FS::FoundFiles found;
-        App::fileSystem().nameIndex().findPartialPathInPackageOrder("shaders.dei", found);
+        App::findInPackages("shaders.dei", found);
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
