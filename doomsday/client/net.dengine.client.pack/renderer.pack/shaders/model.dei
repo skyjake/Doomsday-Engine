@@ -2,6 +2,8 @@ group model {
     # Shader for skeletal animation and generic per-pixel lighting:
     # diffuse color, normal map, emission map, specular intensity.
     shader skeletal.normal_specular_emission {
+        # Mapping when used with ModelDrawable.
+        textureMapping <diffuse, normals, specular, emission>
         vertex = "
             uniform highp mat4 uMvpMatrix;
             uniform highp mat4 uBoneMatrices[64];

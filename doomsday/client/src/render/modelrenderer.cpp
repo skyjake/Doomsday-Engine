@@ -37,6 +37,7 @@ static String const DEF_FRONT_VECTOR("front");
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
 , DENG2_OBSERVES(Bank, Load)
+, DENG2_OBSERVES(ModelDrawable, AboutToGLInit)
 {
 #define MAX_LIGHTS  4
 
@@ -59,7 +60,7 @@ DENG2_PIMPL(ModelRenderer)
     Instance(Public *i) : Base(i)
     {
         observer.audienceForAvailability() += this;
-        bank.audienceForLoad() += this;
+        bank.audienceForLoad() += this;        
     }
 
     void init()
@@ -93,14 +94,15 @@ DENG2_PIMPL(ModelRenderer)
 
         uTex = *atlas;
 
+        /*
         // All loaded items should use this atlas.
         bank.iterate([this] (DotPath const &path)
         {
             if(bank.isLoaded(path))
             {
-                setupModel(bank.model(path), path);
+                setupModel(bank.model(path));
             }
-        });
+        });*/
     }
 
     void deinit()
@@ -134,21 +136,40 @@ DENG2_PIMPL(ModelRenderer)
      *
      * @param model  Model to configure.
      */
-    void setupModel(ModelDrawable &model, String const &path)
+    void setupModel(ModelDrawable &model)
     {
         if(atlas)
         {
             model.setAtlas(*atlas);
-            model.setTextureMapping(ModelDrawable::diffuseNormalsSpecularEmission());
+
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
             model.setDefaultTexture(ModelDrawable::Emission, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
+
+            // Use the texture mapping specified in the shader. This has to be done
+            // only now because earlier we may not have the shader available yet.
+            Record const &def = ClientApp::shaders().names().subrecord("model.skeletal.normal_specular_emission");
+            if(def.has("textureMapping"))
+            {
+                ModelDrawable::Mapping mapping;
+                for(Value const *value : def.geta("textureMapping").elements())
+                {
+                    mapping << ModelDrawable::textToTextureMap(value->asText());
+                }
+                //qDebug() << "using mapping" << mapping;
+                model.setTextureMapping(mapping);
+            }
         }
         else
         {
             model.unsetAtlas();
         }
         model.setProgram(program);
+    }
+
+    void modelAboutToGLInit(ModelDrawable &model)
+    {
+        setupModel(model);
     }
 
     /**
@@ -162,7 +183,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         // Models use the shared atlas.
         ModelDrawable &model = bank.model(path);
-        setupModel(model, path);
+        model.audienceForAboutToGLInit() += this;
 
         auto const asset = App::asset(path);
 
