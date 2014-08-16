@@ -704,7 +704,7 @@ Record const &Record::parentRecordForMember(String const &name) const
     if(lastOmitted.isEmpty()) return *this;
 
     // Omit the final segment of the dotted path to find out the parent record.
-    return (*this)[lastOmitted].valueAsRecord();
+    return (*this)[lastOmitted];
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

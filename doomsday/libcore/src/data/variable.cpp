@@ -167,9 +167,19 @@ Value const *Variable::valuePtr() const
     return d->value;
 }
 
+Record &Variable::valueAsRecord()
+{
+    return value<RecordValue>().dereference();
+}
+
 Record const &Variable::valueAsRecord() const
 {
     return value<RecordValue>().dereference();
+}
+
+Variable::operator Record & ()
+{
+    return valueAsRecord();
 }
 
 Variable::operator Record const & () const

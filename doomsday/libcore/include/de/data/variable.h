@@ -177,21 +177,6 @@ public:
     }
 
     /**
-     * Returns the Record that the variable references. If the variable does
-     * not have a RecordValue, an exception is thrown.
-     *
-     * @return Referenced Record.
-     */
-    Record const &valueAsRecord() const;
-
-    operator Record const & () const;
-
-    // Automatic conversion to native primitive types.
-    operator String () const;
-    operator QString () const;
-    operator ddouble () const;
-
-    /**
      * Returns the value of the variable.
      */
     template <typename Type>
@@ -204,6 +189,25 @@ public:
         }
         return *v;
     }
+
+    /**
+     * Returns the Record that the variable references. If the variable does
+     * not have a RecordValue, an exception is thrown.
+     *
+     * @return Referenced Record.
+     */
+    Record const &valueAsRecord() const;
+
+    Record &valueAsRecord();
+
+    operator Record & ();
+
+    operator Record const & () const;
+
+    // Automatic conversion to native primitive types.
+    operator String () const;
+    operator QString () const;
+    operator ddouble () const;
 
     /**
      * Returns the current mode flags of the variable.
