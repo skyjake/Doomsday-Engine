@@ -100,6 +100,13 @@ DENG2_PIMPL_NOREF(Thinker)
         data = 0;
         size = 0;
     }
+
+    static void clearBaseToZero(thinker_s *base, dsize size)
+    {
+        bool const stdAlloc = CPP_BOOL(base->_flags & THINKF_STD_MALLOC);
+        memset(base, 0, size);
+        if(stdAlloc) base->_flags |= THINKF_STD_MALLOC;
+    }
 };
 
 #define STRUCT_MEMBER_ACCESSORS() \
@@ -167,7 +174,7 @@ void Thinker::zap()
     delete d->data;
     d->data = 0;
 
-    memset(d->base, 0, d->size);
+    Instance::clearBaseToZero(d->base, d->size);
 }
 
 bool Thinker::isDisabled() const
@@ -250,7 +257,7 @@ void Thinker::release(thinker_s &thinkerBase)
 void Thinker::zap(thinker_s &thinkerBase, dsize sizeInBytes)
 {
     delete reinterpret_cast<IData *>(thinkerBase.d);
-    memset(&thinkerBase, 0, sizeInBytes);
+    Instance::clearBaseToZero(&thinkerBase, sizeInBytes);
 }
 
 void Thinker::setData(Thinker::IData *data)
