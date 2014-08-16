@@ -148,7 +148,7 @@ DENG2_PIMPL(ModelRenderer)
 
             // Use the texture mapping specified in the shader. This has to be done
             // only now because earlier we may not have the shader available yet.
-            Record const &def = ClientApp::shaders().names().subrecord("model.skeletal.normal_specular_emission");
+            Record const &def = ClientApp::shaders()["model.skeletal.normal_specular_emission"];
             if(def.has("textureMapping"))
             {
                 ModelDrawable::Mapping mapping;
