@@ -63,7 +63,6 @@ DENG2_PIMPL(Plane)
 #ifdef __CLIENT__
         oldHeight[0] = oldHeight[1] = height;
 #endif
-        //zap(soundEmitter);
     }
 
     ~Instance()
@@ -396,7 +395,7 @@ int Plane::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_EMITTER:
-        args.setValue(DMT_PLANE_EMITTER, &d->soundEmitter, 0);
+        args.setValue(DMT_PLANE_EMITTER, d->soundEmitter, 0);
         break;
     case DMU_SECTOR: {
         Sector const *secPtr = &sector();
