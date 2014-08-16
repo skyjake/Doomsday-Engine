@@ -37,7 +37,9 @@
 #include <de/ToggleWidget>
 #include <de/LogWidget>
 #include <de/PersistentState>
+#include <de/NativeFile>
 #include <QCursor>
+#include <QClipboard>
 
 using namespace de;
 
@@ -257,6 +259,25 @@ static PopupWidget *consoleShortcutPopup()
     return pop;
 }
 
+static PopupWidget *advancedFeaturesPopup()
+{
+    auto *menu = new PopupMenuWidget;
+    menu->items()
+            << new ui::ActionItem(QObject::tr("Copy Log Path to Clipboard"),
+                                  new SignalAction(&ClientWindow::main().console(),
+                                                   SLOT(copyLogPathToClipboard())))
+            << new ui::Item(ui::Item::Annotation,
+                            QObject::tr("The location of the log output file is copied to "
+                                        "the OS clipboard."))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::VariableToggleItem(QObject::tr("Doomsday Script"),
+                                          App::config()["console.script"])
+            << new ui::Item(ui::Item::Annotation,
+                            QObject::tr("The command prompt becomes an interactive script "
+                                        "process with access to all the runtime modules."));
+    return menu;
+}
+
 ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 {
     d->button = new ButtonWidget;
@@ -311,10 +332,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Behavior"))
             << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>)
-            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
+            << new ui::SubwidgetItem(tr("Shortcut Key..."), ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
-            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config()["console.script"])
-            << new ui::Item(ui::Item::Annotation, tr("The command prompt becomes an interactive script process with access to all the runtime modules."));
+            << new ui::SubwidgetItem(tr("Advanced..."), ui::Right, advancedFeaturesPopup);
 
     add(d->menu);
 
@@ -554,5 +574,13 @@ void ConsoleWidget::commandWasEntered(String const &)
     if(App::config().getb("console.snap") && !d->log->isAtBottom())
     {
         d->log->scrollToBottom();
+    }
+}
+
+void ConsoleWidget::copyLogPathToClipboard()
+{
+    if(NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
+    {
+        qApp->clipboard()->setText(native->nativePath());
     }
 }

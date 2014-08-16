@@ -84,6 +84,7 @@ public slots:
     void openMenu();
     void closeMenu();
     void commandWasEntered(de::String const &);
+    void copyLogPathToClipboard();
 
 protected slots:
     void logContentHeightIncreased(int delta);
