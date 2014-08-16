@@ -371,7 +371,9 @@ DENG2_PIMPL(ModelDrawable)
     void glInit()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_ASSERT(atlas != 0);
+
+        // Has a scene been imported successfully?
+        if(!scene) return;
 
         if(modelAsset.isReady())
         {
@@ -379,8 +381,11 @@ DENG2_PIMPL(ModelDrawable)
             return;
         }
 
-        // Has a scene been imported successfully?
-        if(!scene) return;
+        // Last minute notification in case some additional setup is needed.
+        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
+        {
+            i->modelAboutToGLInit(self);
+        }
 
         // Materials.
         initTextures();
@@ -1039,7 +1044,29 @@ DENG2_PIMPL(ModelDrawable)
         program->endUse();
         program->unbind(uBoneMatrices);
     }
+
+    DENG2_PIMPL_AUDIENCE(AboutToGLInit)
 };
+
+DENG2_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
+
+ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
+{
+    struct { char const *text; TextureMap map; } const mappings[] {
+        { "diffuse",  Diffuse  },
+        { "normals",  Normals  },
+        { "specular", Specular },
+        { "emission", Emission },
+        { "height",   Height   }
+    };
+
+    for(auto const &mapping : mappings)
+    {
+        if(!text.compareWithoutCase(mapping.text))
+            return mapping.map;
+    }
+    return Unknown;
+}
 
 ModelDrawable::ModelDrawable() : d(new Instance(this))
 {
@@ -1109,7 +1136,7 @@ ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
     return Mapping() << Diffuse << Normals << Specular << Emission;
 }
 
-void ModelDrawable::setTextureMapping(QList<TextureMap> mapsToUse)
+void ModelDrawable::setTextureMapping(Mapping mapsToUse)
 {
     for(int i = 0; i < MAX_TEXTURES; ++i)
     {

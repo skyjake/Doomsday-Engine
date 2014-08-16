@@ -51,6 +51,8 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
+    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+
     enum TextureMap // note: used as indices internally
     {
         Diffuse = 0,    ///< Surface color and opacity.
@@ -66,6 +68,8 @@ public:
 
         Unknown
     };
+
+    static TextureMap textToTextureMap(String const &text);
 
     /**
      * Animation state for a model. There can be any number of ongoing animations,
