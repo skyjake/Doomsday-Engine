@@ -789,6 +789,14 @@ void Bank::add(DotPath const &path, ISource *source)
     LOG_AS(d->nameForLog);
 
     QScopedPointer<ISource> src(source);
+
+    // Paths are unique.
+    if(d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
+    {
+        throw AlreadyExistsError(QLatin1String(d->nameForLog) + "::add",
+                                 "Item '" + path.toString() + "' already exists");
+    }
+
     Instance::Data &item = d->items.insert(path);
 
     DENG2_GUARD(item);

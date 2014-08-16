@@ -77,6 +77,9 @@ public:
     /// Failed to load data from the source. @ingroup errors
     DENG2_ERROR(LoadError);
 
+    /// Attempted to add an item that already exists in the bank. @ingroup errors
+    DENG2_ERROR(AlreadyExistsError);
+
     enum Flag
     {
         /**

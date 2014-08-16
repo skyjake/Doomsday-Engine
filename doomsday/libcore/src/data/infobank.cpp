@@ -23,11 +23,28 @@
 
 namespace de {
 
+static String const VAR_NOT_IN_BANK("__notInBank__");
+
 DENG2_PIMPL_NOREF(InfoBank)
+, DENG2_OBSERVES(ScriptedInfo, NamedBlock)
 {
-    ScriptedInfo info;
+    Record names; ///< All parsed sources will be stored here.
+    ScriptedInfo info { &names };
     Time modTime;
     String relativeToPath;
+
+    Instance()
+    {
+        info.audienceForNamedBlock() += this;
+    }
+
+    void parsedNamedBlock(String const &, Record &block)
+    {
+        if(block.gets("__type__") != "group")
+        {
+            block.addBoolean(VAR_NOT_IN_BANK, true);
+        }
+    }
 };
 
 InfoBank::InfoBank(char const *nameForLog, Bank::Flags const &flags, String const &hotStorageLocation)
@@ -74,19 +91,28 @@ ScriptedInfo const &InfoBank::info() const
 
 Record &InfoBank::names()
 {
-    return d->info.names();
+    return d->names;
 }
 
 Record const &InfoBank::names() const
 {
-    return d->info.names();
+    return d->names;
 }
 
 void InfoBank::addFromInfoBlocks(String const &blockType)
 {
     foreach(String id, d->info.allBlocksOfType(blockType))
     {
+        Record &rec = names()[id];
+        if(!rec.has(VAR_NOT_IN_BANK))
+        {
+            // Already added, from the looks of it.
+            continue;
+        }
+
         add(id, newSourceFromInfo(id));
+
+        delete &rec[VAR_NOT_IN_BANK];
     }
 }
 
