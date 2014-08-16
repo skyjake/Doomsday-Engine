@@ -874,6 +874,7 @@ dd_bool Z_Contains(void *ptr)
 {
     memvolume_t *volume;
     memblock_t *block = Z_GetBlock(ptr);
+    DENG_ASSERT(Z_IsInited());
     if(block->id != LIBDENG_ZONEID)
     {
         // Could be in the zone, but does not look like an allocated block.
@@ -1040,7 +1041,7 @@ size_t Z_FreeMemory(void)
 void Z_PrintStatus(void)
 {
     size_t allocated = Z_AllocatedMemory();
-    size_t wasted = Z_FreeMemory();
+    size_t wasted    = Z_FreeMemory();
 
     App_Log(DE2_LOG_DEBUG,
             "Memory zone status: %u volumes, %u bytes allocated, %u bytes free (%f%% in use)",
