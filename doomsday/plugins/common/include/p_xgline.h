@@ -403,7 +403,7 @@ typedef int (*LineTraverserFunc)(Line *line, dd_bool ceiling/*unused*/, void *co
  *          @c true. Stops checking when false is returned.
  */
 int XL_TraverseLines(Line *line, int reftype, int ref, void *context, void *context2,
-    struct mobj_s *activator, int (C_DECL *func)());
+                     struct mobj_s *activator, LineTraverserFunc func);
 
 /// Function pointer to an XG plane traversal function.
 typedef int (*PlaneTraverserFunc)(Sector *sector, dd_bool ceiling, void *context, void *context2, mobj_t *activator);
@@ -415,7 +415,7 @@ typedef int (*PlaneTraverserFunc)(Sector *sector, dd_bool ceiling, void *context
  * @return  @c true iff all callbacks return @c true.
  */
 int XL_TraversePlanes(Line *line, int reftype, int ref, void *context, void *context2,
-    dd_bool travSectors, struct mobj_s *activator, int (C_DECL *func)());
+    dd_bool travSectors, struct mobj_s *activator, PlaneTraverserFunc func);
 
 // Return false if the event was processed.
 int XL_CrossLine(Line *line, int sideNum, struct mobj_s *thing);

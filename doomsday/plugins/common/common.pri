@@ -130,7 +130,7 @@ SOURCES += \
     $$common_src/p_xgfile.cpp \
     $$common_src/p_xgline.cpp \
     $$common_src/p_xgsave.cpp \
-    $$common_src/p_xgsec.c \
+    $$common_src/p_xgsec.cpp \
     $$common_src/player.cpp \
     $$common_src/polyobjs.cpp \
     $$common_src/r_common.c \
