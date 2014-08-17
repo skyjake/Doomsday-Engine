@@ -33,33 +33,31 @@ namespace de {
 DENG2_PIMPL(VRWindowTransform)
 {
     VRConfig &vrCfg;
-    Drawable oculusRift;
+    /*Drawable oculusRift;
     GLUniform uOculusRiftFB;
     GLUniform uOculusDistortionScale;
     GLUniform uOculusScreenSize;
     GLUniform uOculusLensSeparation;
     GLUniform uOculusHmdWarpParam;
     GLUniform uOculusChromAbParam;
+    typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;*/
 
-    typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
     GLFramebuffer unwarpedFB;
 
     Instance(Public *i)
         : Base(i)
         , vrCfg(DENG2_BASE_GUI_APP->vr())
-        , uOculusRiftFB         ("texture",                GLUniform::Sampler2D)
+        /*, uOculusRiftFB         ("texture",                GLUniform::Sampler2D)
         , uOculusDistortionScale("distortionScale",        GLUniform::Float)
         , uOculusScreenSize     ("screenSize",             GLUniform::Vec2)
         , uOculusLensSeparation ("lensSeparationDistance", GLUniform::Float)
         , uOculusHmdWarpParam   ("hmdWarpParam",           GLUniform::Vec4)
-        , uOculusChromAbParam   ("chromAbParam",           GLUniform::Vec4)
+        , uOculusChromAbParam   ("chromAbParam",           GLUniform::Vec4)*/
     {}
 
     void init()
     {
-        /// @todo Only do this when Oculus Rift mode is enabled. Free the allocated
-        /// resources when non-Rift mode in use.
-
+/*
         OculusRiftVBuf *buf = new OculusRiftVBuf;
         oculusRift.addBuffer(buf);
 
@@ -79,16 +77,16 @@ DENG2_PIMPL(VRWindowTransform)
                     << uOculusScreenSize
                     << uOculusLensSeparation
                     << uOculusHmdWarpParam
-                    << uOculusChromAbParam;
+                    << uOculusChromAbParam;*/
 
-        unwarpedFB.glInit();
-        uOculusRiftFB = unwarpedFB.colorTexture();
+        //unwarpedFB.glInit();
+        //uOculusRiftFB = unwarpedFB.colorTexture();
     }
 
     void deinit()
     {
-        oculusRift.clear();
-        unwarpedFB.glDeinit();
+        //oculusRift.clear();
+        //unwarpedFB.glDeinit();
     }
 
     Canvas &canvas() const
@@ -127,22 +125,24 @@ DENG2_PIMPL(VRWindowTransform)
      */
     void vrDrawOculusRift()
     {
+        OculusRift &ovr = vrCfg.oculusRift();
+
         vrCfg.enableFrustumShift(false);
 
-        /// @todo shrunken hud
         // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
         // For some reason, 1.5X looks best, even though objects are ~2.3X unwarped size at center.
-        float unwarpFactor = 1.5f;
+        /*float unwarpFactor = 1.5f;
         Canvas::Size textureSize = Canvas::Size(1280, 800) * unwarpFactor;
         // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
         // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
         unwarpedFB.resize(textureSize);
 
+        unwarpedFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);*/
+
         // Use a little bit of multisampling to smooth out the magnified jagged edges.
         // Note: Independent of the vid-fsaa setting because this is beneficial even when
         // vid-fsaa is disabled.
         unwarpedFB.setSampleCount(vrCfg.riftFramebufferSampleCount());
-        unwarpedFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
 
         // Set render target to offscreen temporarily.
         GLState::push()
@@ -152,21 +152,30 @@ DENG2_PIMPL(VRWindowTransform)
         unwarpedFB.target().unsetActiveRect(true);
         unwarpedFB.target().clear(GLTarget::ColorDepth);
 
-        // Left eye view on left side of screen.
-        vrCfg.setCurrentEye(VRConfig::LeftEye);
-        unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
-        drawContent();
+        GLFramebuffer::Size const fbSize = unwarpedFB.size();
 
-        // Right eye view on right side of screen.
-        vrCfg.setCurrentEye(VRConfig::RightEye);
-        unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
-        drawContent();
+        // Left eye view on left side of screen.
+        for(int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
+        {
+            ovr.setCurrentEye(eyeIdx);
+            if(ovr.currentEye() == OculusRift::LeftEye)
+            {
+                // Left eye on the left side of the screen.
+                unwarpedFB.target().setActiveRect(Rectangleui(0, 0, fbSize.x/2, fbSize.y), true);
+            }
+            else
+            {
+                // Right eye on the right side of screen.
+                unwarpedFB.target().setActiveRect(Rectangleui(fbSize.x/2, 0, fbSize.x/2, fbSize.y), true);
+            }
+            drawContent();
+        }
 
         unwarpedFB.target().unsetActiveRect(true);
 
         GLState::pop().apply();
 
-        // Necessary until the legacy code uses GLState, too:
+/*        // Necessary until the legacy code uses GLState, too:
         glEnable(GL_TEXTURE_2D);
 
         target().clear(GLTarget::Color);
@@ -185,7 +194,7 @@ DENG2_PIMPL(VRWindowTransform)
         glBindTexture(GL_TEXTURE_2D, 0);
         glDepthMask(GL_TRUE);
 
-        GLState::pop().apply();
+        GLState::pop().apply();*/
 
         vrCfg.enableFrustumShift(); // restore default
     }
@@ -194,7 +203,7 @@ DENG2_PIMPL(VRWindowTransform)
     {
         // Allow Oculus Rift to use the latest head tracking position for the upcoming
         // draw operations.
-        vrCfg.oculusRift().allowUpdate();
+        //vrCfg.oculusRift().allowUpdate();
 
         switch(vrCfg.mode())
         {
@@ -373,7 +382,6 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
         break;
 
     case VRConfig::OculusRift:
-        /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * d->vrCfg.oculusRift().aspect();
         size *= 1.0f; // Use a large font in taskbar
@@ -441,6 +449,11 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 void VRWindowTransform::drawTransformed()
 {
     d->draw();
+}
+
+GLFramebuffer &VRWindowTransform::unwarpedFramebuffer()
+{
+    return d->unwarpedFB;
 }
 
 } // namespace de

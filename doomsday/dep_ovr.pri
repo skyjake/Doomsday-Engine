@@ -1,16 +1,15 @@
-# Build configuration for Oculus Rift SDK
+# Build configuration for LibOVR 0.4 (Oculus Rift SDK)
 
 exists($${LIBOVR_DIR}/Include/OVR.h) {
     INCLUDEPATH += $${LIBOVR_DIR}/Include
-    # TODO - LIBS statement for Linux
     win32 {
         LIBS += $${LIBOVR_DIR}/Lib/Win32/libovr.lib
         # Additional windows libraries needed to avoid link errors when using Rift
         LIBS += shell32.lib winmm.lib
     }
     macx {
-        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Debug/libovr.a
-              else: LIBS += $${LIBOVR_DIR}/Lib/MacOS/Release/libovr.a
+        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Mac/Debug/libovr.a
+              else: LIBS += $${LIBOVR_DIR}/Lib/Mac/Release/libovr.a
         useFramework(Cocoa)
         useFramework(IOKit)
     }

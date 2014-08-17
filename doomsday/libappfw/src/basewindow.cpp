@@ -148,12 +148,27 @@ void BaseWindow::canvasGLDraw(Canvas &cv)
 
 void BaseWindow::swapBuffers()
 {
+    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
+
     PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
                                             gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 }
 
 void BaseWindow::preDraw()
-{}
+{
+#ifdef DENG_HAVE_OCULUS_API
+    // Make sure Oculus Rift rendering is (de)initialized as needed.
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        vr.oculusRift().init();
+    }
+    else
+    {
+        vr.oculusRift().deinit();
+    }
+#endif
+}
 
 void BaseWindow::postDraw()
 {

@@ -51,11 +51,11 @@ DENG2_PIMPL(VRConfig)
         , eyeShift(0)
         , playerPhysicalHeight(1.75f)
         , swapEyes(false)
-        , riftFramebufferSamples(2)
+        , riftFramebufferSamples(1)
         , frustumShift(true)
         , dominantEye(0.0f)
     {
-        ovr.init();
+        //ovr.init();
     }
 };
 
@@ -182,11 +182,11 @@ int VRConfig::riftFramebufferSampleCount() const
 
 float VRConfig::viewAspect(Vector2f const &viewPortSize) const
 {
-    if(mode() == OculusRift)
+    /*if(mode() == OculusRift)
     {
         // Override with the Oculus Rift's aspect ratio.
         return oculusRift().aspect();
-    }
+    }*/
 
     // We're assuming pixels are squares.
     return viewPortSize.x / viewPortSize.y;
@@ -211,6 +211,12 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
                                     Vector2f const &viewPortSize,
                                     float nearClip, float farClip) const
 {
+    if(mode() == OculusRift)
+    {
+        // OVR will calculate our projection matrix.
+        return oculusRift().projection(nearClip, farClip);
+    }
+
     float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
     float const fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
     float const fW   = fH * viewAspect(viewPortSize);

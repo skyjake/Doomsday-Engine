@@ -18,160 +18,167 @@
  */
 
 #include "de/OculusRift"
+#include "de/BaseWindow"
+#include "de/VRWindowTransform"
 
+#include <de/GLFramebuffer>
 #include <de/Lockable>
 #include <de/Guard>
 #include <de/App>
+#include <de/Log>
 
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
+#  include <../Src/OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
+using namespace OVR;
 #endif
 
 namespace de {
 
 #ifdef DENG_HAVE_OCULUS_API
-class OculusTracker
+Vector3f quaternionToPRYAngles(Quatf const &q)
 {
-public:
-    OculusTracker()
-        : pitch(0)
-        , roll(0)
-        , yaw(0)
-        , _latency(0)
-    {
-#ifdef DENG2_DEBUG
-        OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_All));
-#else
-        OVR::System::Init();
-#endif
-        _fusionResult = new OVR::SensorFusion();
-        _manager = *OVR::DeviceManager::Create();
-        _hmd = *_manager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
-        if(_hmd)
-        {
-            _infoLoaded = _hmd->GetDeviceInfo(&_info);
-            _sensor = *_hmd->GetSensor();
-        }
-        else
-        {
-            _sensor = *_manager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
-        }
-
-        if (_sensor)
-        {
-            _fusionResult->AttachToSensor(_sensor);
-        }
-    }
-
-    ~OculusTracker()
-    {
-        _sensor.Clear();
-        _hmd.Clear();
-        _manager.Clear();
-        delete _fusionResult;
-        OVR::System::Destroy();
-    }
-
-    OVR::HMDInfo const &getInfo() const
-    {
-        return _info;
-    }
-
-    bool isGood() const
-    {
-        return _sensor.GetPtr() != NULL;
-    }
-
-    void update()
-    {
-        OVR::Quatf quaternion;
-        if(_latency == 0)
-        {
-            quaternion = _fusionResult->GetOrientation();
-        }
-        else
-        {
-            quaternion = _fusionResult->GetPredictedOrientation();
-        }
-        quaternion.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&yaw, &pitch, &roll);
-    }
-
-    void setLatency(float lat)
-    {
-        if (_latency == lat)
-            return; // no change
-
-        _latency = lat;
-        if (_latency == 0)
-        {
-            _fusionResult->SetPredictionEnabled(false);
-            _fusionResult->SetPrediction(_latency);
-        }
-        else
-        {
-            _fusionResult->SetPredictionEnabled(true);
-            _fusionResult->SetPrediction(_latency);
-        }
-    }
-
-    float latency() const
-    {
-        return _latency;
-    }
-
-    // Head orientation state, refreshed by call to update();
-    float pitch, roll, yaw;
-
-private:
-    OVR::Ptr<OVR::DeviceManager> _manager;
-    OVR::Ptr<OVR::HMDDevice> _hmd;
-    OVR::Ptr<OVR::SensorDevice> _sensor;
-    OVR::SensorFusion* _fusionResult;
-    OVR::HMDInfo _info;
-    bool _infoLoaded;
-    float _latency;
-};
+    Vector3f pry;
+    q.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&pry.z, &pry.x, &pry.y);
+    return pry;
+}
 #endif
 
-DENG2_PIMPL(OculusRift), public Lockable
+DENG2_PIMPL(OculusRift)
+, DENG2_OBSERVES(Canvas, KeyEvent)
+, public Lockable
 {
-    bool inited;
-    Vector2f screenSize;
-    float lensSeparationDistance;
-    Vector4f hmdWarpParam;
-    Vector4f chromAbParam;
-    float eyeToScreenDistance;
-    float latency;
-    float ipd;
-    bool headOrientationUpdateIsAllowed;
-    float yawOffset;
-
 #ifdef DENG_HAVE_OCULUS_API
-    OculusTracker *oculusTracker;
+    ovrHmd hmd;
+    ovrEyeType currentEye;
+    ovrPosef headPose[2];
+    bool needPose[2] { true, true };
+    ovrEyeRenderDesc render[2];
+    ovrGLTexture textures[2];
+    ovrFovPort fov[2];
+    float fovXDegrees;
+    ovrFrameTiming timing;
 #endif
+    Matrix4f eyeMatrix;
+    Vector3f pitchRollYaw;
+    Vector3f headPosition;
+    float aspect = 1.f;
+
+    BaseWindow *window = nullptr;
+
+    bool inited = false;
+    bool frameOngoing = false;
+    //Vector2f screenSize;
+    //float lensSeparationDistance;
+    //Vector4f hmdWarpParam;
+    //Vector4f chromAbParam;
+    float eyeToScreenDistance;
+    //float latency;
+    //float ipd;
+    float yawOffset;
 
     Instance(Public *i)
         : Base(i)
-        , inited(false)
-        , screenSize(0.14976f, 0.09360f)
-        , lensSeparationDistance(0.0635f)
-        , hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
-        , chromAbParam(0.996f, -0.004f, 1.014f, 0.0f)
+        //, screenSize(0.14976f, 0.09360f)
+        //, lensSeparationDistance(0.0635f)
+        //, hmdWarpParam(1.0f, 0.220f, 0.240f, 0.000f)
+        //, chromAbParam(0.996f, -0.004f, 1.014f, 0.0f)
         , eyeToScreenDistance(0.041f)
-        , latency(.030f)
-        , ipd(.064f)
-        , headOrientationUpdateIsAllowed(true)
+        //, latency(.030f)
+        //,ipd(.064f)
         , yawOffset(0)
+    {
 #ifdef DENG_HAVE_OCULUS_API
-        , oculusTracker(0)
+        ovr_Initialize();
+        hmd = ovrHmd_Create(0);
+        if(hmd)
+        {
+            LOG_INPUT_NOTE("HMD: %s (%s) %i.%i @ %ix%i pixels")
+                    << hmd->ProductName   << hmd->Manufacturer
+                    << hmd->FirmwareMajor << hmd->FirmwareMinor
+                    << hmd->Resolution.w  << hmd->Resolution.h;
+
+            // Configure for orientation and position tracking.
+            ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation |
+                                          ovrTrackingCap_MagYawCorrection |
+                                          ovrTrackingCap_Position, 0);
+        }
 #endif
-    {}
+    }
 
     ~Instance()
     {
         DENG2_GUARD(this);
         deinit();
+
+#ifdef DENG_HAVE_OCULUS_API
+        if(hmd)
+        {
+            ovrHmd_Destroy(hmd);
+        }
+        ovr_Shutdown();
+#endif
     }
+
+#ifdef DENG_HAVE_OCULUS_API
+    /// Returns the offscreen framebuffer where the Oculus Rift raw frame is drawn.
+    /// This is passed to LibOVR as a texture.
+    GLFramebuffer &framebuffer()
+    {
+        DENG2_ASSERT(window);
+        return window->transform().as<VRWindowTransform>().unwarpedFramebuffer();
+    }
+
+    void resizeFramebuffer()
+    {
+        Sizei size[2];
+        ovrFovPort fovMax;
+        for(int eye = 0; eye < 2; ++eye)
+        {
+            // Use the default FOV.
+            fov[eye] = hmd->DefaultEyeFov[eye];
+
+            size[eye] = ovrHmd_GetFovTextureSize(hmd, ovrEyeType(eye),
+                                                 hmd->DefaultEyeFov[eye],
+                                                 1.0f /*density*/);
+        }
+
+        fovMax.LeftTan  = max(fov[0].LeftTan,  fov[1].LeftTan);
+        fovMax.RightTan = max(fov[0].RightTan, fov[1].RightTan);
+        fovMax.UpTan    = max(fov[0].UpTan,    fov[1].UpTan);
+        fovMax.DownTan  = max(fov[0].DownTan,  fov[1].DownTan);
+
+        float comboXTan = max(fovMax.LeftTan, fovMax.RightTan);
+        float comboYTan = max(fovMax.UpTan,   fovMax.DownTan);
+
+        aspect = comboXTan / comboYTan;
+
+        // Calculate the horizontal total FOV in degrees that the renderer will use
+        // for clipping.
+        fovXDegrees = 2 * atanf(comboXTan);
+
+        LOGDEV_GL_MSG("Using clip FOV of %.2f degrees") << fovXDegrees;
+
+        /// @todo Apply chosen pixel density here.
+
+        framebuffer().resize(GLFramebuffer::Size(size[0].w + size[1].w,
+                                                 max(size[0].h, size[1].h)));
+        uint const w = framebuffer().size().x;
+        uint const h = framebuffer().size().y;
+
+        LOG_GL_VERBOSE("Framebuffer size is ") << framebuffer().size().asText();
+
+        for(int eye = 0; eye < 2; ++eye)
+        {
+            ovrGLTexture &tex = textures[eye];
+
+            tex.OGL.Header.API            = ovrRenderAPI_OpenGL;
+            tex.OGL.Header.TextureSize    = Sizei(w, h);
+            tex.OGL.Header.RenderViewport = Recti(eye == 0? 0 : w/2, 0, w/2, h);
+            tex.OGL.TexId                 = framebuffer().colorTexture().glName();
+        }
+    }
+#endif
 
     void init()
     {
@@ -181,32 +188,42 @@ DENG2_PIMPL(OculusRift), public Lockable
 #ifdef DENG_HAVE_OCULUS_API
         DENG2_GUARD(this);
 
-        DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_ASSERT(!oculusTracker);
+        LOG_GL_MSG("Initializing Oculus Rift for rendering");
 
-        oculusTracker = new OculusTracker;
+        // We will be rendering into the main window.
+        window = &CanvasWindow::main().as<BaseWindow>();
+        DENG2_ASSERT(window->isVisible());
 
-        if(oculusTracker->isGood() /*&& autoLoadRiftParams*/)
+        // Observe key events for dismissing the Health and Safety warning.
+        window->canvas().audienceForKeyEvent() += this;
+
+        // Set up the rendering target according to the OVR parameters.
+        auto &buf = framebuffer();
+        buf.glInit();
+
+        // Set up the framebuffer and eye viewports.
+        resizeFramebuffer();
+
+        uint distortionCaps = ovrDistortionCap_Chromatic // TODO: make configurable?
+                            | ovrDistortionCap_TimeWarp
+                            | ovrDistortionCap_Overdrive;
+
+        // Configure OpenGL.
+        ovrGLConfig cfg;
+        cfg.OGL.Header.API         = ovrRenderAPI_OpenGL;
+        cfg.OGL.Header.RTSize      = Sizei(buf.size().x, buf.size().y);
+        cfg.OGL.Header.Multisample = buf.sampleCount();
+#ifdef WIN32
+        cfg.OGL.Window             = window->nativeHandle();
+        //cfg.OGL.DC               = dc;
+#endif
+        if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {
-            OVR::HMDInfo const &info = oculusTracker->getInfo();
-            ipd = info.InterpupillaryDistance;
-            screenSize = Vector2f(info.HScreenSize, info.VScreenSize);
-            lensSeparationDistance = info.LensSeparationDistance;
-            hmdWarpParam = Vector4f(
-                        info.DistortionK[0],
-                        info.DistortionK[1],
-                        info.DistortionK[2],
-                        info.DistortionK[3]);
-            chromAbParam = Vector4f(
-                        info.ChromaAbCorrection[0],
-                        info.ChromaAbCorrection[1],
-                        info.ChromaAbCorrection[2],
-                        info.ChromaAbCorrection[3]);
-            eyeToScreenDistance = info.EyeToScreenDistance;
-
-            // Update the initial latency prediction.
-            oculusTracker->setLatency(latency);
+            LOG_GL_ERROR("Failed to configure Oculus Rift for rendering");
+            return;
         }
+
+        ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
 #endif
     }
 
@@ -214,36 +231,204 @@ DENG2_PIMPL(OculusRift), public Lockable
     {
         if(!inited) return;
         inited = false;
+        frameOngoing = false;
 
 #ifdef DENG_HAVE_OCULUS_API
         DENG2_GUARD(this);
 
-        delete oculusTracker;
-        oculusTracker = 0;
+        LOG_GL_MSG("Stopping Oculus Rift rendering");
+
+        ovrHmd_ConfigureRendering(hmd, NULL, 0, NULL, NULL);
+
+        framebuffer().glDeinit();
+
+        window->canvas().audienceForKeyEvent() -= this;
+        window = 0;
 #endif
     }
+
+    /**
+     * Observe key events (any key) to dismiss the OVR Health and Safety warning.
+     */
+    void keyEvent(KeyEvent const &)
+    {
+        if(!window) return;
+
+#ifdef DENG_HAVE_OCULUS_API
+        if(isHealthAndSafetyWarningDisplayed())
+        {
+            dismissHealthAndSafetyWarning();
+            window->canvas().audienceForKeyEvent() -= this;
+        }
+#endif
+    }
+
+#ifdef DENG_HAVE_OCULUS_API
+    bool isReady() const
+    {
+        return hmd != 0;
+    }
+
+    bool isHealthAndSafetyWarningDisplayed() const
+    {
+        if(!isReady()) return false;
+
+        ovrHSWDisplayState hswDisplayState;
+        ovrHmd_GetHSWDisplayState(hmd, &hswDisplayState);
+        return hswDisplayState.Displayed;
+    }
+
+    void dismissHealthAndSafetyWarning()
+    {
+        if(isHealthAndSafetyWarningDisplayed())
+        {
+            ovrHmd_DismissHSWDisplay(hmd);
+        }
+    }
+
+    void dismissHealthAndSafetyWarningOnTap()
+    {
+        if(!isHealthAndSafetyWarningDisplayed()) return;
+
+        ovrTrackingState ts = ovrHmd_GetTrackingState(hmd, ovr_GetTimeInSeconds());
+        if(ts.StatusFlags & ovrStatus_OrientationTracked)
+        {
+            OVR::Vector3f rawAccel(ts.RawSensorData.Accelerometer.x,
+                                   ts.RawSensorData.Accelerometer.y,
+                                   ts.RawSensorData.Accelerometer.z);
+
+            // Arbitrary value and representing moderate tap on the side of the DK2 Rift.
+            if(rawAccel.LengthSq() > 250.f)
+            {
+                ovrHmd_DismissHSWDisplay(hmd);
+            }
+        }
+    }
+
+    void updateEyePose()
+    {
+        DENG2_ASSERT(frameOngoing);
+
+        if(!needPose[currentEye]) return;
+        needPose[currentEye] = false;
+
+        ovrPosef &pose = headPose[currentEye];
+
+        // Pose for the current eye.
+        pose = ovrHmd_GetEyePose(hmd, currentEye);
+
+        pitchRollYaw = quaternionToPRYAngles(pose.Orientation);
+
+        headPosition = Vector3f(pose.Position.x,
+                                pose.Position.y,
+                                pose.Position.z);
+
+        // TODO: Rotation directly from quaternion?
+
+        eyeMatrix = Matrix4f::translate(headPosition)
+                    *
+                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[1]), Vector3f(0, 0, 1)) *
+                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[0]), Vector3f(1, 0, 0)) *
+                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[2]), Vector3f(0, 1, 0))
+                    *
+                    Matrix4f::translate(Vector3f(render[currentEye].ViewAdjust.x,
+                                                 render[currentEye].ViewAdjust.y,
+                                                 render[currentEye].ViewAdjust.z));
+    }
+
+    void beginFrame()
+    {
+        DENG2_ASSERT(isReady());
+
+        timing = ovrHmd_BeginFrame(hmd, 0);
+    }
+
+    void endFrame()
+    {
+        ovrHmd_EndFrame(hmd, headPose, (ovrTexture const *) textures);
+
+        dismissHealthAndSafetyWarningOnTap();
+    }
+#endif
 };
 
 OculusRift::OculusRift() : d(new Instance(this))
 {}
 
-bool OculusRift::init()
+void OculusRift::init()
 {
+    LOG_AS("OculusRift");
     d->init();
-    return isReady();
 }
 
 void OculusRift::deinit()
 {
+    LOG_AS("OculusRift");
     d->deinit();
 }
 
+void OculusRift::beginFrame()
+{
+#ifdef DENG_HAVE_OCULUS_API    
+    if(!isReady() || d->frameOngoing) return;
+    d->frameOngoing = true;
+
+    // Begin the frame and acquire timing information.
+    d->beginFrame();
+#endif
+}
+
+void OculusRift::endFrame()
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(!isReady() || !d->frameOngoing) return;
+    d->frameOngoing = false;
+
+    // End the frame and let the Oculus SDK handle displaying it with the
+    // appropriate transformation.
+    d->endFrame();
+#endif
+}
+
+void OculusRift::setCurrentEye(int index)
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->hmd)
+    {
+        d->currentEye = d->hmd->EyeRenderOrder[index];
+        d->needPose[d->currentEye] = true;
+    }
+#else
+    DENG2_UNUSED(index);
+#endif
+}
+
+OculusRift::Eye OculusRift::currentEye() const
+{
+#ifdef DENG_HAVE_OCULUS_API
+    return (d->currentEye == ovrEye_Left? LeftEye : RightEye);
+#else
+    return LeftEye;
+#endif
+}
+
+/*
 float OculusRift::interpupillaryDistance() const
 {
     return d->ipd;
+}*/
+
+Vector2ui OculusRift::resolution() const
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(!d->hmd) return Vector2ui();
+    return Vector2ui(d->hmd->Resolution.w, d->hmd->Resolution.h);
+#else
+    return Vector2ui();
+#endif
 }
 
-float OculusRift::aspect() const
+/*float OculusRift::aspect() const
 {
     return 0.5f * d->screenSize.x / d->screenSize.y;
 }
@@ -266,20 +451,7 @@ Vector4f OculusRift::hmdWarpParam() const
 float OculusRift::lensSeparationDistance() const
 {
     return d->lensSeparationDistance;
-}
-
-void OculusRift::setPredictionLatency(float latency)
-{
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
-    if(isReady())
-    {
-        d->oculusTracker->setLatency(latency);
-    }
-#else
-    DENG2_UNUSED(latency);
-#endif
-}
+}*/
 
 void OculusRift::setYawOffset(float yawRadians)
 {
@@ -288,43 +460,37 @@ void OculusRift::setYawOffset(float yawRadians)
 
 void OculusRift::resetYaw()
 {
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
-    if(isReady())
-    {
-        d->yawOffset = -d->oculusTracker->yaw;
-    }
-#endif
-}
+    d->yawOffset = -d->pitchRollYaw.z;
 
-float OculusRift::predictionLatency() const
-{
+    /*
 #ifdef DENG_HAVE_OCULUS_API
     DENG2_GUARD(d);
     if(isReady())
     {
-        return d->oculusTracker->latency();
+        d->yawOffset = -d->oculusDevice->yaw;
     }
 #endif
-    return 0;
+    */
 }
 
 // True if Oculus Rift is enabled and can report head orientation.
 bool OculusRift::isReady() const
 {
 #ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
-    return d->inited && d->oculusTracker->isGood();
+    return d->isReady();
+    /*DENG2_GUARD(d);
+    return d->inited && d->oculusDevice->isGood();*/
 #else
     return false;
 #endif
 }
 
-void OculusRift::allowUpdate()
+/*void OculusRift::allowUpdate()
 {
-    d->headOrientationUpdateIsAllowed = true;
-}
+    //d->headOrientationUpdateIsAllowed = true;
+}*/
 
+/*
 void OculusRift::update()
 {
 #ifdef DENG_HAVE_OCULUS_API
@@ -332,25 +498,57 @@ void OculusRift::update()
 
     if(d->headOrientationUpdateIsAllowed && isReady())
     {
-        d->oculusTracker->update();
+        d->oculusDevice->update();
         d->headOrientationUpdateIsAllowed = false;
     }
 #endif
-}
+}*/
 
 Vector3f OculusRift::headOrientation() const
 {
-    Vector3f result;
+    if(d->frameOngoing) d->updateEyePose();
+
+    Vector3f pry = d->pitchRollYaw;
+    pry.z = wrap(pry.z + d->yawOffset, -PIf, PIf);
+    return pry;
+
+/*    Vector3f result;
 #ifdef DENG_HAVE_OCULUS_API
     DENG2_GUARD(d);
     if(isReady())
     {
-        result[0] = d->oculusTracker->pitch;
-        result[1] = d->oculusTracker->roll;
-        result[2] = wrap(d->oculusTracker->yaw + d->yawOffset, -PIf, PIf);
+        result[0] = d->oculusDevice->pitch;
+        result[1] = d->oculusDevice->roll;
+        result[2] = wrap(d->oculusDevice->yaw + d->yawOffset, -PIf, PIf);
     }
 #endif
-    return result;
+    return result;*/
+}
+
+Matrix4f OculusRift::eyePose() const
+{
+    DENG2_ASSERT(isReady());
+#ifdef DENG_HAVE_OCULUS_API
+    d->updateEyePose();
+#endif
+    return d->eyeMatrix;
+}
+
+Vector3f OculusRift::headPosition() const
+{
+    return d->headPosition;
+}
+
+Matrix4f OculusRift::projection(float nearDist, float farDist) const
+{
+    DENG2_ASSERT(isReady());
+#ifdef DENG_HAVE_OCULUS_API
+    return ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
+                                  true /* right-handed */).M[0];
+#else
+    DENG2_UNUSED2(nearDist, farDist);
+    return Matrix4f();
+#endif
 }
 
 float OculusRift::yawOffset() const
@@ -358,14 +556,23 @@ float OculusRift::yawOffset() const
     return d->yawOffset;
 }
 
+float OculusRift::aspect() const
+{
+    return d->aspect;
+}
+
+/*
 Matrix4f OculusRift::headModelViewMatrix() const
 {
+    return d->eyeMatrix;
     Vector3f const pry = headOrientation();
     return Matrix4f::rotate(-radianToDegree(pry[1]), Vector3f(0, 0, 1)) *
            Matrix4f::rotate(-radianToDegree(pry[0]), Vector3f(1, 0, 0)) *
            Matrix4f::rotate(-radianToDegree(pry[2]), Vector3f(0, 1, 0));
 }
+*/
 
+/*
 float OculusRift::distortionScale() const
 {
     float lensShift = d->screenSize.x * 0.25f - lensSeparationDistance() * 0.5f;
@@ -375,18 +582,27 @@ float OculusRift::distortionScale() const
     Vector4f k = hmdWarpParam();
     float scale = (k[0] + k[1] * rsq + k[2] * rsq * rsq + k[3] * rsq * rsq * rsq);
     return scale;
-}
+}*/
 
 float OculusRift::fovX() const
 {
-    float const w = 0.25 * d->screenSize.x * distortionScale();
-    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));
+#ifdef DENG_HAVE_OCULUS_API
+    return d->fovXDegrees;
+#endif
+    return 0;
+    /*float const w = 0.25 * d->screenSize.x * distortionScale();
+    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));*/
 }
 
+#if 0
 float OculusRift::fovY() const
 {
-    float const w = 0.5 * d->screenSize.y * distortionScale();
-    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));
+#ifdef DENG_HAVE_OCULUS_API
+#endif
+    return 0;
+    /*float const w = 0.5 * d->screenSize.y * distortionScale();
+    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));*/
 }
+#endif
 
 } // namespace de

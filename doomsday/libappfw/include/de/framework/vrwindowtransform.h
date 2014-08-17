@@ -25,6 +25,8 @@
 
 namespace de {
 
+class GLFramebuffer;
+
 /**
  * Window content transformation for virtual reality.
  */
@@ -40,6 +42,8 @@ public:
     Vector2f windowToLogicalCoords(Vector2i const &pos) const;
 
     void drawTransformed();
+
+    GLFramebuffer &unwarpedFramebuffer();
 
 private:
     DENG2_PRIVATE(d)
