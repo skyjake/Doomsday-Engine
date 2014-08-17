@@ -64,6 +64,8 @@ DENG2_PIMPL(GLFramebuffer)
     {
         pDefaultSampleCount.audienceForChange() -= this;
         //DENG2_GUI_APP->audienceForGLContextChange -= this;
+
+        release();
     }
 
     void appGLContextChanged()
@@ -355,6 +357,11 @@ GLTexture &GLFramebuffer::colorTexture() const
 GLTexture &GLFramebuffer::depthStencilTexture() const
 {
     return d->depthStencil;
+}
+
+int GLFramebuffer::sampleCount() const
+{
+    return d->sampleCount();
 }
 
 void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
