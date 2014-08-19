@@ -889,10 +889,6 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     vrCfg().setEyeHeightInMapUnits(Con_GetInteger("player-eyeheight"));
 
-    // Latest possible time to check the real head angles. After this we'll be
-    // using the provided values.
-    vrCfg().oculusRift().update();
-
     setupViewMatrix();
     setupPlayerSprites();
 

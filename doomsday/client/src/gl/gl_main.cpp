@@ -181,6 +181,8 @@ void GL_AssertContextActive()
 
 void GL_DoUpdate()
 {
+    if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
+
     // Check for color adjustment changes.
     if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
     {
@@ -197,10 +199,6 @@ void GL_DoUpdate()
 
     // Blit screen to video.
     ClientWindow::main().swapBuffers();
-
-    // We will arrive here always at the same time in relation to the displayed
-    // frame: it is a good time to update the mouse state.
-    Mouse_Poll();
 }
 
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)

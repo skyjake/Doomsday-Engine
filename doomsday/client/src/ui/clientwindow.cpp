@@ -637,7 +637,11 @@ DENG2_PIMPL(ClientWindow)
 
         if(vrCfg().mode() == VRConfig::OculusRift)
         {
-            compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
+            /// @todo Adjustable compositor depth?
+            compositor->setCompositeProjection(
+                        GL_GetProjectionMatrix()
+                        * Matrix4f::scale(Vector3f(1.f, -1.f / vrCfg().oculusRift().aspect(), 1.f))
+                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
         }
         else
         {
@@ -797,9 +801,6 @@ void ClientWindow::canvasGLInit(Canvas &)
 
 void ClientWindow::preDraw()
 {
-    // NOTE: This occurs during the Canvas paintGL event.
-    BaseWindow::preDraw();
-
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -813,6 +814,9 @@ void ClientWindow::preDraw()
         d->updateRootSize();
     }
     d->updateCompositor();
+
+    // NOTE: This occurs during the Canvas paintGL event.
+    BaseWindow::preDraw();
 }
 
 void ClientWindow::drawWindowContent()
@@ -823,17 +827,20 @@ void ClientWindow::drawWindowContent()
 
 void ClientWindow::postDraw()
 {
-    // NOTE: This occurs during the Canvas paintGL event.
+    /// @note This method is called during the Canvas paintGL event.
 
-    // Finish GL drawing and swap it on to the screen. Blocks until buffers
-    // swapped.
-    GL_DoUpdate();
-
-    ClientApp::app().postFrame(); /// @todo what about multiwindow?
-
-    d->updateFpsNotification(frameRate());
+    // OVR will handle presentation in Oculus Rift mode.
+    if(ClientApp::vr().mode() != VRConfig::OculusRift)
+    {
+        // Finish GL drawing and swap it on to the screen. Blocks until buffers
+        // swapped.
+        GL_DoUpdate();
+    }
 
     BaseWindow::postDraw();
+
+    ClientApp::app().postFrame(); /// @todo what about multiwindow?
+    d->updateFpsNotification(frameRate());
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)

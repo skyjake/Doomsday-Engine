@@ -31,16 +31,16 @@ namespace VR {
 }
 
 static int   vrMode             = VRConfig::Mono;
-static float vrRiftFovX         = 114.8f;
-static float vrNonRiftFovX      = 95.f;
+//static float vrRiftFovX         = 114.8f;
+//static float vrNonRiftFovX      = 95.f;
+//static float vrRiftLatency;
+//static byte  autoLoadRiftParams = 1;
+static int   vrRiftFBSamples;
 static float vrHudDistance;
-static float vrRiftLatency;
 static float vrPlayerHeight;
 static float vrIpd;
-static int   vrRiftFBSamples;
 static byte  vrSwapEyes;
 static float vrDominantEye;
-static byte  autoLoadRiftParams = 1;
 
 VRConfig &vrCfg()
 {
@@ -48,10 +48,12 @@ VRConfig &vrCfg()
     return DENG2_BASE_GUI_APP->vr();
 }
 
+/*
 float VR_RiftFovX()
 {
     return vrRiftFovX;
 }
+*/
 
 static void vrConfigVariableChanged()
 {
@@ -59,7 +61,7 @@ static void vrConfigVariableChanged()
     vrCfg().setScreenDistance(vrHudDistance);
     vrCfg().setInterpupillaryDistance(vrIpd);
     vrCfg().setPhysicalPlayerHeight(vrPlayerHeight);
-    vrCfg().oculusRift().setPredictionLatency(vrRiftLatency);
+    //vrCfg().oculusRift().setPredictionLatency(vrRiftLatency);
     vrCfg().setRiftFramebufferSampleCount(vrRiftFBSamples);
     vrCfg().setSwapEyes(vrSwapEyes);
 }
@@ -68,6 +70,14 @@ static void vrConfigVariableChanged()
 // see also rend_main.cpp
 static void vrModeChanged()
 {
+    if(vrMode == VRConfig::OculusRift && !vrCfg().oculusRift().isReady())
+    {
+        // Can't activate Oculus Rift mode unless the device is connected.
+        vrMode = VRConfig::Mono;
+
+        LOG_WARNING("Oculus Rift not connected, reverting to normal 3D mode");
+    }
+
     vrCfg().setMode(VRConfig::StereoMode(vrMode));
 
     if(ClientWindow::mainExists())
@@ -78,6 +88,17 @@ static void vrModeChanged()
         win.updateCanvasFormat(); // possibly changes pixel format
     }
 
+    // Make sure Oculus Rift rendering is (de)initialized as needed.
+    if(vrCfg().mode() == VRConfig::OculusRift)
+    {
+        vrCfg().oculusRift().init();
+    }
+    else
+    {
+        vrCfg().oculusRift().deinit();
+    }
+
+    /*
     // Update FOV cvar accordingly.
     if(vrMode == VRConfig::OculusRift)
     {
@@ -91,9 +112,10 @@ static void vrModeChanged()
     {
         if(Con_GetFloat("rend-camera-fov") != vrNonRiftFovX)
             Con_SetFloat("rend-camera-fov", vrNonRiftFovX);
-    }
+    }*/
 }
 
+/*
 static void vrRiftFovXChanged()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
@@ -116,7 +138,7 @@ D_CMD(LoadRiftParams)
 {
     DENG2_UNUSED3(src, argc, argv);
     return VR_LoadRiftParameters();
-}
+}*/
 
 void VR_ConsoleRegister()
 {
@@ -125,7 +147,7 @@ void VR_ConsoleRegister()
     vrHudDistance   = vrCfg().screenDistance();
     vrIpd           = vrCfg().interpupillaryDistance();
     vrPlayerHeight  = vrCfg().physicalPlayerHeight();
-    vrRiftLatency   = vrCfg().oculusRift().predictionLatency();
+    //vrRiftLatency   = vrCfg().oculusRift().predictionLatency();
     vrRiftFBSamples = vrCfg().riftFramebufferSampleCount();
     vrSwapEyes      = vrCfg().swapEyes();
 
@@ -135,25 +157,22 @@ void VR_ConsoleRegister()
      */
 
     C_VAR_INT2  ("rend-vr-mode",                 &vrMode,             0, 0, VRConfig::NUM_STEREO_MODES - 1, vrModeChanged);
-    C_VAR_BYTE  ("rend-vr-autoload-rift-params", &autoLoadRiftParams, 0, 0, 1);
-    C_VAR_FLOAT2("rend-vr-nonrift-fovx",         &vrNonRiftFovX,      0, 5.0f, 270.0f, vrNonRiftFovXChanged);
-    C_VAR_FLOAT2("rend-vr-rift-fovx",            &vrRiftFovX,         0, 5.0f, 270.0f, vrRiftFovXChanged);
+    //C_VAR_BYTE  ("rend-vr-autoload-rift-params", &autoLoadRiftParams, 0, 0, 1);
+    //C_VAR_FLOAT2("rend-vr-nonrift-fovx",         &vrNonRiftFovX,      0, 5.0f, 270.0f, vrNonRiftFovXChanged);
+    //C_VAR_FLOAT2("rend-vr-rift-fovx",            &vrRiftFovX,         0, 5.0f, 270.0f, vrRiftFovXChanged);
+    //C_VAR_FLOAT2("rend-vr-rift-latency",  &vrRiftLatency,   0, 0.0f,  0.100f, vrConfigVariableChanged);
 
     C_VAR_FLOAT2("rend-vr-dominant-eye",  &vrDominantEye,   0, -1.0f, 1.0f,   vrConfigVariableChanged);
     C_VAR_FLOAT2("rend-vr-hud-distance",  &vrHudDistance,   0, 0.01f, 40.0f,  vrConfigVariableChanged);
     C_VAR_FLOAT2("rend-vr-ipd",           &vrIpd,           0, 0.02f, 0.1f,   vrConfigVariableChanged);
     C_VAR_FLOAT2("rend-vr-player-height", &vrPlayerHeight,  0, 1.0f,  2.4f,   vrConfigVariableChanged);
-    C_VAR_FLOAT2("rend-vr-rift-latency",  &vrRiftLatency,   0, 0.0f,  0.100f, vrConfigVariableChanged);
     C_VAR_INT2  ("rend-vr-rift-samples",  &vrRiftFBSamples, 0, 1, 4,          vrConfigVariableChanged);
     C_VAR_BYTE2 ("rend-vr-swap-eyes",     &vrSwapEyes,      0, 0, 1,          vrConfigVariableChanged);
 
-    C_CMD("loadriftparams", NULL, LoadRiftParams);
+    //C_CMD("loadriftparams", NULL, LoadRiftParams);
 }
 
-// Warping
-
-/// @todo warping
-
+#if 0
 bool VR_LoadRiftParameters()
 {
     de::OculusRift &ovr = vrCfg().oculusRift();
@@ -173,3 +192,4 @@ bool VR_LoadRiftParameters()
     }
     return false;
 }
+#endif

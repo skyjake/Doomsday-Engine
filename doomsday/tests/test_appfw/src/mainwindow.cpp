@@ -64,6 +64,8 @@ DENG2_PIMPL(MainWindow)
 
     ~Instance()
     {
+        TestApp::vr().oculusRift().deinit();
+
         releaseRef(cursorX);
         releaseRef(cursorY);
     }
@@ -110,6 +112,11 @@ DENG2_PIMPL(MainWindow)
                 .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
 
         contentXf.glInit();
+
+        if(TestApp::vr().mode() == VRConfig::OculusRift)
+        {            
+            TestApp::vr().oculusRift().init();
+        }
 
         self.raise();
         self.activateWindow();
@@ -182,7 +189,6 @@ MainWindow::MainWindow(String const &id)
         vr.setMode(VRConfig::OculusRift);
         vr.setRiftFramebufferSampleCount(App::commandLine().has("--nofsaa")? 1 : 2);
         vr.setPhysicalPlayerHeight(1.8f);
-        vr.oculusRift().setPredictionLatency(.04f);
         vr.setScreenDistance(.5f);
         vr.setEyeHeightInMapUnits(vr.physicalPlayerHeight() * .925f);
         setCursor(Qt::BlankCursor);
@@ -242,7 +248,10 @@ void MainWindow::preDraw()
 
 void MainWindow::postDraw()
 {
-    swapBuffers();
+    if(TestApp::vr().mode() != VRConfig::OculusRift)
+    {
+        swapBuffers();
+    }
     BaseWindow::postDraw();
 
     Garbage_Recycle();

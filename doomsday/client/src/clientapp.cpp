@@ -34,6 +34,7 @@
 #include <de/ByteArrayFile>
 #include <de/ArrayValue>
 #include <de/DictionaryValue>
+#include <de/VRConfig>
 #include <de/c_wrapper.h>
 #include <de/Garbage>
 
@@ -49,6 +50,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
+#include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -198,6 +200,8 @@ DENG2_PIMPL(ClientApp)
     ~Instance()
     {
         LogBuffer::get().removeSink(logAlarm);
+
+        self.vr().oculusRift().deinit();
 
         Sys_Shutdown();
         DD_Shutdown();
@@ -411,6 +415,10 @@ void ClientApp::postFrame()
 {
     /// @todo Should these be here? Consider multiple windows, each having a postFrame?
     /// Or maybe the frames need to be synced? Or only one of them has a postFrame?
+
+    // We will arrive here always at the same time in relation to the displayed
+    // frame: it is a good time to update the mouse state.
+    Mouse_Poll();
 
     if(gx.EndFrame)
     {

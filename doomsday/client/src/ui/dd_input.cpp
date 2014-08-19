@@ -1485,8 +1485,8 @@ void DD_ReadHeadTracker(void)
     I_GetDevice(IDEV_HEAD_TRACKER)->flags |= ID_ACTIVE;
 
     // Get the latest values.
-    vrCfg().oculusRift().allowUpdate();
-    vrCfg().oculusRift().update();
+    //vrCfg().oculusRift().allowUpdate();
+    //vrCfg().oculusRift().update();
 
     ddevent_t ev;
 
