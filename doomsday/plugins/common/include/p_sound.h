@@ -31,7 +31,7 @@
 /**
  * Start the song for the specified map.
  */
-void S_MapMusic(de::Uri const *mapUri);
+void S_MapMusic(de::Uri const &mapUri);
 
 extern "C" {
 #endif

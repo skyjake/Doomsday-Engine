@@ -34,16 +34,14 @@
 using namespace de;
 using namespace common;
 
-void S_MapMusic(de::Uri const *mapUri)
+void S_MapMusic(de::Uri const &mapUri)
 {
-    if(!mapUri) mapUri = &::gameMapUri;
-
 #ifdef __JHEXEN__
-    Record const &mapInfo = Defs().mapInfos.find("id", mapUri->compose());
+    Record const &mapInfo = Defs().mapInfos.find("id", mapUri.compose());
     int const cdTrack = mapInfo.geti("cdTrack");
     String const lump = mapInfo.gets("songLump").compareWithoutCase("DEFSONG")? mapInfo.gets("songLump") : "";
 
-    LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri->compose() << lump;
+    LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri.compose() << lump;
 
     // Update the 'currentmap' music definition.
     Record &music = Defs().musics.find("id", "currentmap");
@@ -56,7 +54,7 @@ void S_MapMusic(de::Uri const *mapUri)
         Con_SetInteger2("map-music", Defs().getMusicNum(music.gets("id").toUtf8().constData()), SVF_WRITE_OVERRIDE);
     }
 #else
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         int songNumber = Defs().getMusicNum(mapInfo->gets("music").toUtf8().constData());
         if(S_StartMusicNum(songNumber, true))

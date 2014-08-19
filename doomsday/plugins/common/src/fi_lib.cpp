@@ -386,7 +386,6 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
     {
         App_Log(DE2_DEV_SCR_MSG, "Hook_FinaleScriptStop: Clientside script stopped, clearing remote state");
         de::zap(remoteFinaleState);
-
         return true;
     }
 
@@ -395,9 +394,9 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
         // Finale was not initiated by us...
         return true;
     }
-    gamestate_t initialGamestate = s->initialGamestate;
 
-    finale_mode_t mode = s->mode;
+    finale_mode_t mode           = s->mode;
+    gamestate_t initialGamestate = s->initialGamestate;
 
     // Should we go back to NULL?
     if(finaleStackSize > 1)
@@ -431,7 +430,7 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
         // Its time to start the map; que music and begin!
-        S_MapMusic(0/*current map*/);
+        S_MapMusic(COMMON_GAMESESSION->mapUri());
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
         Pause_End(); // skip forced period

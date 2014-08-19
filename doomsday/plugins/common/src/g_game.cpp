@@ -110,7 +110,6 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-de::Uri gameMapUri;
 uint gameMapEntrance;  ///< Entry point, for reborn.
 
 de::Uri nextMapUri;
@@ -516,7 +515,6 @@ void G_CommonPreInit()
 {
     quitInProgress = false;
     verbose = CommandLine_Exists("-verbose");
-    ::gameMapUri.clear();
 
     // Apply the default game rules.
     COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());

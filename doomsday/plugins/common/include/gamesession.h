@@ -36,8 +36,8 @@ namespace common {
  * preferences. Additionally, the user may configure the game so that the internal backing store
  * is periodically (e.g., when the map changes) copied to a new "autosave" automatically.
  *
- * The "scope" of a continous game session progression depends on the configuration of the World
- * and the Maps within it. Upon leaving one map and entering another, if both are attributed to
+ * The "scope" of a continous game session progression depends on the configuration of the Episode
+ * and the maps within it. Upon leaving one map and entering another, if both are attributed to
  * the same logical "hub" then the current state of the map is written to the backing store so
  * that it may be reloaded later if the player(s) decide to revisit. However, if the new map is
  * in another hub, or no hub is defined, then all saved map progress for current hub is discarded.

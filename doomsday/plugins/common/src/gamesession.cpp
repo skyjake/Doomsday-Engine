@@ -86,9 +86,9 @@ namespace internal
     }
 
     /**
-     * Lookup the briefing Finale for the current episode and map (if any).
+     * Lookup the briefing Finale for the current episode, map (if any).
      */
-    static Record const *finaleBriefing()
+    static Record const *finaleBriefing(de::Uri const &mapUri)
     {
         if(::briefDisabled) return 0;
 
@@ -99,7 +99,7 @@ namespace internal
         if(G_GameState() == GS_INFINE) return 0;
 
         // Is there such a finale definition?
-        return Defs().finales.tryFind("before", ::gameMapUri.compose());
+        return Defs().finales.tryFind("before", mapUri.compose());
     }
 }
 
@@ -112,10 +112,11 @@ static String const internalSavePath = "/home/cache/internal.save";
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
     String episodeId;
+    de::Uri mapUri;
     GameRuleset rules;
-    bool inProgress;   ///< @c true= session is in progress / internal.save exists.
+    bool inProgress = false;  ///< @c true= session is in progress / internal.save exists.
 
-    Instance(Public *i) : Base(i), inProgress(false)
+    Instance(Public *i) : Base(i)
     {
         DENG2_ASSERT(singleton == 0);
         singleton = thisPublic;
@@ -149,7 +150,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         meta.set("gameIdentityKey", Session::gameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
-        meta.set("mapUri",          ::gameMapUri.compose());
+        meta.set("mapUri",          mapUri.compose());
         meta.set("mapTime",         ::mapTime);
 
         meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
@@ -208,7 +209,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(::gameMapUri.path() + "State")
+        mapsFolder.replaceFile(mapUri.path() + "State")
                 << serializeCurrentMapState();
 
         saved->flush(); // No need to populate; FS2 Files already in sync with source data.
@@ -489,22 +490,22 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String const gameMapUriAsText = ::gameMapUri.compose();
-        makeMapStateReader(saved, gameMapUriAsText)->read(gameMapUriAsText);
+        String const mapUriAsText = mapUri.compose();
+        makeMapStateReader(saved, mapUriAsText)->read(mapUriAsText);
     }
 
-    void setMap(de::Uri const &mapUri)
+    void setMap(de::Uri const &newMapUri)
     {
         DENG2_ASSERT(inProgress);
 
-        ::gameMapUri = mapUri;
+        mapUri = newMapUri;
 
         // Update game status cvars:
         Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
-        Con_SetUri2   ("map-id",      reinterpret_cast<uri_s *>(&::gameMapUri), SVF_WRITE_OVERRIDE);
+        Con_SetUri2   ("map-id",      reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
 
         String hubId;
-        if(Record const *hubRec = defn::Episode(*self.episodeDef()).tryFindHubByMapId(::gameMapUri.compose()))
+        if(Record const *hubRec = defn::Episode(*self.episodeDef()).tryFindHubByMapId(mapUri.compose()))
         {
             hubId = hubRec->gets("id");
         }
@@ -537,7 +538,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             ::briefDisabled = true;
         }
-        Record const *briefing = finaleBriefing();
+        Record const *briefing = finaleBriefing(mapUri);
 
         // Restart the map music?
         if(!briefing)
@@ -559,11 +560,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-            S_MapMusic(&::gameMapUri);
+            S_MapMusic(mapUri);
             S_PauseMusic(true);
         }
 
-        P_SetupMap(::gameMapUri);
+        P_SetupMap(mapUri);
 
         if(revisit)
         {
@@ -573,10 +574,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif
 
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
-            String const gameMapUriAsText = ::gameMapUri.compose();
+            String const mapUriAsText = mapUri.compose();
             std::unique_ptr<SavedSession::MapStateReader> reader(
-                        makeMapStateReader(saved, gameMapUriAsText));
-            reader->read(gameMapUriAsText);
+                        makeMapStateReader(saved, mapUriAsText));
+            reader->read(mapUriAsText);
         }
 
         if(!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
@@ -831,24 +832,20 @@ Record *GameSession::mapGraphNodeDef()
     if(Record const *episode = episodeDef())
     {
         /// @todo cache this result?
-        return defn::Episode(*episode).tryFindMapGraphNode(::gameMapUri.compose());
+        return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
     }
     return 0;
 }
 
 Record *GameSession::mapInfo()
 {
-    if(hasBegun())
-    {
-        /// @todo cache this result?
-        return Defs().mapInfos.tryFind("id", ::gameMapUri.compose());
-    }
-    return 0;
+    /// @todo cache this result?
+    return Defs().mapInfos.tryFind("id", mapUri().compose());
 }
 
 de::Uri GameSession::mapUri()
 {
-    return hasBegun()? ::gameMapUri : de::Uri();
+    return hasBegun()? d->mapUri : de::Uri();
 }
 
 de::Uri GameSession::mapUriForNamedExit(String name)
@@ -882,7 +879,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
             {
                 LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no Exit with ID '%s'")
                         << d->episodeId
-                        << ::gameMapUri
+                        << d->mapUri
                         << name;
             }
         }
@@ -900,7 +897,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
         {
             LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no exits")
                     << d->episodeId
-                    << ::gameMapUri;
+                    << d->mapUri;
         }
 
         if(chosenExit)
@@ -1063,7 +1060,7 @@ void GameSession::reloadMap()
         // Restart the session entirely.
         briefDisabled = true; // We won't brief again.
         end();
-        begin(d->rules, d->episodeId, ::gameMapUri, ::gameMapEntrance);
+        begin(d->rules, d->episodeId, mapUri(), ::gameMapEntrance);
     }
 }
 
@@ -1108,7 +1105,7 @@ void GameSession::leaveMap()
         // Are we entering a new hub?
 #if __JHEXEN__
         defn::Episode epsd(*episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(d->mapUri.compose());
         if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
 #endif
         {
@@ -1122,7 +1119,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(::gameMapUri.path() + "State");
+            File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
@@ -1158,7 +1155,7 @@ void GameSession::leaveMap()
     ::gameMapEntrance = ::nextMapEntrance;
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / ::gameMapUri.path());
+    bool const revisit = saved && saved->hasState(String("maps") / d->mapUri.path());
 
     d->reloadMap(revisit);
 
@@ -1183,7 +1180,7 @@ void GameSession::leaveMap()
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter().runDeferredTasks(::gameMapUri);
+    Game_ACScriptInterpreter().runDeferredTasks(d->mapUri);
 #endif
 
     if(saved)
@@ -1206,7 +1203,7 @@ void GameSession::leaveMap()
         Folder &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(::gameMapUri.path() + "State");
+        File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
         outFile << serializeCurrentMapState();
 
         // Write all changes to the package.
