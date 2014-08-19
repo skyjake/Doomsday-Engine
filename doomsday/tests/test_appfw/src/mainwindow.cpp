@@ -64,8 +64,6 @@ DENG2_PIMPL(MainWindow)
 
     ~Instance()
     {
-        TestApp::vr().oculusRift().deinit();
-
         releaseRef(cursorX);
         releaseRef(cursorY);
     }
@@ -113,11 +111,6 @@ DENG2_PIMPL(MainWindow)
 
         contentXf.glInit();
 
-        if(TestApp::vr().mode() == VRConfig::OculusRift)
-        {            
-            TestApp::vr().oculusRift().init();
-        }
-
         self.raise();
         self.activateWindow();
         self.canvas().setFocus();
@@ -155,7 +148,7 @@ DENG2_PIMPL(MainWindow)
             compositor->setCompositeProjection(
                         vr.projectionMatrix(OVR_FOV, root.viewRule().size(),
                                             OVR_NEAR_CLIP, OVR_FAR_CLIP)
-                        * Matrix4f::scale(Vector3f(1, -1 / vr.oculusRift().aspect(), 1))
+                        * Matrix4f::scale(Vector3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
                         * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
         }
         else

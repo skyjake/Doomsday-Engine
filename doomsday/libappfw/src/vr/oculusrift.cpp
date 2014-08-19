@@ -169,7 +169,8 @@ DENG2_PIMPL(OculusRift)
         uint const w = framebuffer().size().x;
         uint const h = framebuffer().size().y;
 
-        //framebuffer().colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        framebuffer().colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        framebuffer().colorTexture().glApplyParameters();
 
         LOG_GL_VERBOSE("Framebuffer size: ") << framebuffer().size().asText();
 
@@ -258,8 +259,10 @@ DENG2_PIMPL(OculusRift)
 
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
 
+        /*
         float clearColor[4] = { 0.0f, 0.5f, 1.0f, 0.0f };
         ovrHmd_SetFloatArray(hmd, "DistortionClearColor", clearColor, 4);
+        */
 #endif
     }
 
@@ -343,16 +346,7 @@ DENG2_PIMPL(OculusRift)
 
     void updateEyePose()
     {
-        if(!frameOngoing)
-        {
-            //qDebug() << "Tried to updateEyePose without frame ongoing";
-            //DENG2_PRINT_BACKTRACE();
-            return;
-        }
-        //DENG2_ASSERT(frameOngoing);
-
-        //if(!needPose[currentEye]) return;
-        //needPose[currentEye] = false;
+        if(!frameOngoing) return;
 
         ovrPosef &pose = headPose[currentEye];
 
@@ -391,19 +385,9 @@ DENG2_PIMPL(OculusRift)
     {
         DENG2_ASSERT(frameOngoing);
 
-        /*GLTarget defaultTarget;
-        GLState::push()
-                .setTarget(defaultTarget)
-                .setViewport(Rectangleui::fromSize(defaultTarget.size()))
-                .apply();*/
-
         ovrHmd_EndFrame(hmd, headPose, textures);
 
         dismissHealthAndSafetyWarningOnTap();
-
-        //GLState::considerNativeStateUndefined();
-        //GLState::pop().apply();
-
         frameOngoing = false;
     }
 #endif
@@ -451,7 +435,6 @@ void OculusRift::setCurrentEye(int index)
     if(d->hmd)
     {
         d->currentEye = d->hmd->EyeRenderOrder[index];
-        //d->needPose[d->currentEye] = true;
         d->updateEyePose();
     }
 #else
