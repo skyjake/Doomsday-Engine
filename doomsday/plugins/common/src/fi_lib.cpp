@@ -604,18 +604,21 @@ D_CMD(StartFinale)
 {
     DENG2_UNUSED2(src, argc);
 
-    // Only one active overlay allowed.
+    String scriptId = argv[1];
+
+    // Only one active overlay is allowed.
     if(FI_StackActive()) return false;
 
-    ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE, argv[1], &fin))
+    if(Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
-        App_Log(DE2_SCR_ERROR, "Script '%s' is not defined.", argv[1]);
-        return false;
+        G_SetGameAction(GA_NONE);
+        FI_StackExecute(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_OVERLAY);
+        return true;
     }
-    G_SetGameAction(GA_NONE);
-    FI_StackExecute(fin.script, FF_LOCAL, FIMODE_OVERLAY);
-    return true;
+
+    LOG_SCR_ERROR("Script '%s' is not defined") << scriptId;
+    return false;
+
 }
 
 D_CMD(StopFinale)

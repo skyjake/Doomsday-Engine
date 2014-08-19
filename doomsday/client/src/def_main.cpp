@@ -1997,60 +1997,6 @@ int Def_Get(int type, char const *id, void *out)
         if(out) *(char**) out = 0;
         return false; }
 
-    case DD_DEF_FINALE: { // Find InFine script by ID.
-        finalescript_t *fin = (finalescript_t *) out;
-        for(int i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(stricmp(defs.finales[i].id, id)) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            return true;
-        }
-        return false; }
-
-    case DD_DEF_FINALE_BEFORE: {
-        finalescript_t *fin = (finalescript_t *) out;
-        de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(int i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(!defs.finales[i].before || *defs.finales[i].before != *uri) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            delete uri;
-            return true;
-        }
-        delete uri;
-        return false; }
-
-    case DD_DEF_FINALE_AFTER: {
-        finalescript_t *fin = (finalescript_t *) out;
-        de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(int i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(!defs.finales[i].after || *defs.finales[i].after != *uri) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            delete uri;
-            return true;
-        }
-        delete uri;
-        return false; }
-
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
         for(int i = defs.lineTypes.size() - 1; i >= 0; i--)

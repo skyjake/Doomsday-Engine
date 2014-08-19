@@ -105,22 +105,6 @@ bool G_SetGameActionLoadSession(de::String slotId);
 void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit);
 
 /**
- * Returns the InFine @em briefing script for the specified @a mapUri; otherwise @c 0.
- *
- * @param mapUri  Identifier of the map to lookup the briefing for. Can be @c 0 in which
- *                case the briefing for the @em current map will be returned.
- */
-char const *G_InFineBriefing(de::Uri const *mapUri = 0);
-
-/**
- * Returns the InFine @em debriefing script for the specified @a mapUri; otherwise @c 0.
- *
- * @param mapUri  Identifier of the map to lookup the debriefing for. Can be @c 0 in which
- *                case the debriefing for the @em current map will be returned.
- */
-char const *G_InFineDebriefing(de::Uri const *mapUri = 0);
-
-/**
  * @param episodeId  Identifier of the episode to lookup the title of. Can be @c 0 in
  *                   which case the title for the @em current episode will be returned
  *                   (if set).
@@ -147,11 +131,6 @@ patchid_t G_MapTitlePatch(de::Uri const *mapUri = 0);
 
 extern "C" {
 #endif
-
-/**
- * Returns the InFine script with the specified @a scriptId; otherwise @c 0.
- */
-char const *G_InFine(char const *scriptId);
 
 /**
  * Reveal the game @em help display.

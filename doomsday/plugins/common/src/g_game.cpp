@@ -1279,14 +1279,14 @@ void G_StartHelp()
         return;
     }
 
-    ddfinale_t fin;
-    if(Def_Get(DD_DEF_FINALE, "help", &fin))
+    char const *scriptId = "help";
+    if(Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL, "help");
+        G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, scriptId);
         return;
     }
-    App_Log(DE2_SCR_WARNING, "InFine script 'help' not defined");
+    LOG_SCR_WARNING("InFine script '%s' not defined") << scriptId;
 }
 
 /**
@@ -2392,13 +2392,46 @@ void G_IntermissionBegin()
     S_PauseMusic(false);
 }
 
+/**
+ * Lookup the debriefing Finale for the current episode and map (if any).
+ */
+static Record const *finaleDebriefing()
+{
+    if(::briefDisabled) return 0;
+
+#if __JHEXEN__
+    if(cfg.overrideHubMsg && G_GameState() == GS_MAP)
+    {
+        defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
+        {
+            return 0;
+        }
+    }
+#endif
+
+    // In a networked game the server will schedule the debrief.
+    if(IS_CLIENT || Get(DD_PLAYBACK)) return 0;
+
+    // If we're already in the INFINE state, don't start a finale.
+    if(G_GameState() == GS_INFINE) return 0;
+
+    // Is there such a finale definition?
+    return Defs().finales.tryFind("after", ::gameMapUri.compose());
+}
+
+/// @todo common::GameSession should handle this -ds
 void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
-    if(G_StartFinale(G_InFineDebriefing()/*current map*/, 0, FIMODE_AFTER, 0))
+    if(Record const *finale = finaleDebriefing())
     {
-        // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
-        return;
+        if(G_StartFinale(finale->gets("script").toUtf8().constData(), 0, FIMODE_AFTER, 0))
+        {
+            // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
+            return;
+        }
     }
 
     // We have either just returned from a debriefing or there wasn't one.
@@ -2646,68 +2679,6 @@ patchid_t G_MapTitlePatch(de::Uri const *mapUri)
     DENG2_UNUSED(mapUri);
 #endif
 
-    return 0;
-}
-
-char const *G_InFine(char const *scriptId)
-{
-    ddfinale_t fin;
-    if(Def_Get(DD_DEF_FINALE, scriptId, &fin))
-    {
-        return fin.script;
-    }
-    return 0;
-}
-
-char const *G_InFineBriefing(de::Uri const *mapUri)
-{
-    if(!mapUri) mapUri = &gameMapUri;
-
-    // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled) return 0;
-
-    if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
-        return 0;
-
-    // Is there such a finale definition?
-    ddfinale_t fin;
-    if(Def_Get(DD_DEF_FINALE_BEFORE, mapUri->compose().toUtf8().constData(), &fin))
-    {
-        return fin.script;
-    }
-    return 0;
-}
-
-char const *G_InFineDebriefing(de::Uri const *mapUri)
-{
-    if(!mapUri) mapUri = &::gameMapUri;
-
-    // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled) return 0;
-
-#if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP)
-    {
-        defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
-        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
-        {
-            return 0;
-        }
-    }
-#endif
-
-    if(G_GameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
-    {
-        return 0;
-    }
-
-    // Is there such a finale definition?
-    ddfinale_t fin;
-    if(Def_Get(DD_DEF_FINALE_AFTER, mapUri->compose().toUtf8().constData(), &fin))
-    {
-        return fin.script;
-    }
     return 0;
 }
 

@@ -84,6 +84,23 @@ namespace internal
         SV_CloseFile();
         return data;
     }
+
+    /**
+     * Lookup the briefing Finale for the current episode and map (if any).
+     */
+    static Record const *finaleBriefing()
+    {
+        if(::briefDisabled) return 0;
+
+        // In a networked game the server will schedule the brief.
+        if(IS_CLIENT || Get(DD_PLAYBACK)) return 0;
+
+        // If we're already in the INFINE state, don't start a finale.
+        if(G_GameState() == GS_INFINE) return 0;
+
+        // Is there such a finale definition?
+        return Defs().finales.tryFind("before", ::gameMapUri.compose());
+    }
 }
 
 using namespace internal;
@@ -518,9 +535,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Are we playing a briefing? (No, if we've already visited this map).
         if(revisit)
         {
-            briefDisabled = true;
+            ::briefDisabled = true;
         }
-        char const *briefing = G_InFineBriefing(); // current map
+        Record const *briefing = finaleBriefing();
 
         // Restart the map music?
         if(!briefing)
@@ -562,7 +579,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             reader->read(gameMapUriAsText);
         }
 
-        if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
+        if(!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
         {
             // No briefing; begin the map.
             HU_WakeWidgets(-1/* all players */);
@@ -938,9 +955,9 @@ void GameSession::endAndBeginTitle()
 {
     end();
 
-    if(char const *script = G_InFine("title"))
+    if(Record const *finale = Defs().finales.tryFind("id", "title"))
     {
-        G_StartFinale(script, FF_LOCAL, FIMODE_NORMAL, "title");
+        G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, "title");
         return;
     }
     /// @throw Error A title script must always be defined.

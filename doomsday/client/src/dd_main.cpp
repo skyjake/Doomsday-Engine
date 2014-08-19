@@ -720,11 +720,8 @@ D_CMD(Tutorial)
 void DD_StartTitle()
 {
 #ifdef __CLIENT__
-    ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE, "background", &fin))
-    {
-        return;
-    }
+    Record const *finale = defs.finales.tryFind("id", "background");
+    if(!finale) return;
 
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
@@ -743,7 +740,7 @@ void DD_StartTitle()
         Str_Appendf(&setupCmds, "precolor %i %f %f %f\n", i, color->red, color->green, color->blue);
     }
 
-    titleFinale = FI_Execute2(fin.script, FF_LOCAL, Str_Text(&setupCmds));
+    titleFinale = FI_Execute2(finale->gets("script").toUtf8().constData(), FF_LOCAL, Str_Text(&setupCmds));
     Str_Free(&setupCmds);
 #endif
 }
