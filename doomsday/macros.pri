@@ -115,7 +115,7 @@ defineTest(deployLibrary) {
             export(targetlib.files)
             export(targetlib.path)
         }
-        !macx: INSTALLS *= builtpacks
+        INSTALLS *= builtpacks
     }
     export(INSTALLS)
 }
