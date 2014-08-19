@@ -2136,7 +2136,7 @@ void C_DECL A_BossDeath(mobj_t *actor)
     static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
 
     int i;
-    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
     for(i = 0; i < numBossTriggers; ++i)
     {
         BossTrigger const *trigger = &bossTriggers[i];

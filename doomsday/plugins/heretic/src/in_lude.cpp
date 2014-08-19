@@ -658,7 +658,7 @@ void IN_DrawOldLevel()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -714,7 +714,7 @@ void IN_DrawYAH()
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Color4f(1, 1, 1, 1);
 
@@ -752,7 +752,7 @@ void IN_DrawSingleStats()
     FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -865,7 +865,7 @@ void IN_DrawSingleStats()
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(G_MapTitle(&wbs->nextMap).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -890,7 +890,7 @@ void IN_DrawCoopStats()
     FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(&wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);

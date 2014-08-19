@@ -878,7 +878,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     }
 
     // Do we need to change the map?
-    if(gameMapUri != *reinterpret_cast<de::Uri *>(mapUri))
+    if(COMMON_GAMESESSION->mapUri() != *reinterpret_cast<de::Uri *>(mapUri))
     {
         COMMON_GAMESESSION->begin(*mapUri, 0/*default*/, *rules);
     }

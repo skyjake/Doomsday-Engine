@@ -105,29 +105,24 @@ bool G_SetGameActionLoadSession(de::String slotId);
 void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit);
 
 /**
- * @param episodeId  Identifier of the episode to lookup the title of. Can be @c 0 in
- *                   which case the title for the @em current episode will be returned
- *                   (if set).
+ * @param episodeId  Identifier of the episode to lookup the title of.
  */
-de::String G_EpisodeTitle(de::String const *episodeId = 0);
+de::String G_EpisodeTitle(de::String episodeId);
 
 /**
- * @param mapUri  Identifier of the map to lookup the author of. Can be @c 0 in which
- *                case the author for the @em current map will be returned (if set).
+ * @param mapUri  Identifier of the map to lookup the author of.
  */
-de::String G_MapAuthor(de::Uri const *mapUri = 0, bool supressGameAuthor = false);
+de::String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor = false);
 
 /**
- * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current map will be returned (if set).
+ * @param mapUri  Identifier of the map to lookup the title of.
  */
-de::String G_MapTitle(de::Uri const *mapUri = 0);
+de::String G_MapTitle(de::Uri const &mapUri);
 
 /**
- * @param mapUri  Identifier of the map to lookup the title of. Can be @c 0 in which
- *                case the title for the @em current map will be returned (if set).
+ * @param mapUri  Identifier of the map to lookup the title of.
  */
-patchid_t G_MapTitlePatch(de::Uri const *mapUri = 0);
+patchid_t G_MapTitlePatch(de::Uri const &mapUri);
 
 extern "C" {
 #endif
@@ -201,7 +196,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map);
 extern "C" {
 #endif
 
-struct uri_s const *G_CurrentMapUri(void);
+AutoStr *G_CurrentMapUriPath(void);
 
 int G_Ruleset_Skill();
 #if !__JHEXEN__

@@ -272,8 +272,8 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
     // Draw <MapName>
-    patchid_t const patchId   = G_MapTitlePatch(&wbs->currentMap);
-    de::String const mapTitle = G_MapTitle(&wbs->currentMap);
+    patchid_t const patchId   = G_MapTitlePatch(wbs->currentMap);
+    de::String const mapTitle = G_MapTitle(wbs->currentMap);
     WI_DrawPatch(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(patchId, &info))
@@ -297,7 +297,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     /// kludge end.
 
     // See if there is a map name...
-    String mapTitle = G_MapTitle(&wbs->nextMap);
+    String mapTitle = G_MapTitle(wbs->nextMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -310,7 +310,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     WI_DrawPatch(pEntering, patchReplacementText(pEntering), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     patchinfo_t info;
-    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->nextMap);
+    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->nextMap);
     if(R_GetPatchInfo(mapTitlePatch, &info))
         origin.y += (5 * info.geometry.size.height) / 4;
 

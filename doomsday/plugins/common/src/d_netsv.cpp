@@ -662,12 +662,13 @@ void NetSv_SendGameState(int flags, int to)
 
     AutoStr *gameId    = AutoStr_FromTextStd(COMMON_GAMESESSION->gameId().toLatin1().constData());
     AutoStr *episodeId = AutoStr_FromTextStd(COMMON_GAMESESSION->episodeId().toLatin1().constData());
+    de::Uri mapUri     = COMMON_GAMESESSION->mapUri();
 
     // Print a short message that describes the game state.
     LOG_NET_NOTE("Sending game setup: %s %s %s %s")
             << gameId
             << episodeId
-            << ::gameMapUri.resolved()
+            << mapUri.resolved()
             << gameConfigString;
 
     // Send an update to all the players in the game.
@@ -683,7 +684,7 @@ void NetSv_SendGameState(int flags, int to)
         Str_Write(gameId, writer);
 
         // Current map.
-        Uri_Write(reinterpret_cast<uri_s *>(&::gameMapUri), writer);
+        Uri_Write(reinterpret_cast<uri_s *>(&mapUri), writer);
 
         // Current episode.
         Str_Write(episodeId, writer);

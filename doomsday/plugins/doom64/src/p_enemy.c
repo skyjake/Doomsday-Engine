@@ -1948,7 +1948,7 @@ void C_DECL A_CyberDeath(mobj_t *mo)
     };
     static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
 
-    Str const *currentMapPath = Uri_Path(G_CurrentMapUri());
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
     int i;
 
     // Cyber deaths cause a rather spectacular kaboom.
@@ -2071,7 +2071,7 @@ void C_DECL A_BarrelExplode(mobj_t *actor)
     S_StartSound(actor->info->deathSound, actor);
     P_RadiusAttack(actor, actor->target, 128, 127);
 
-    if(Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP01"))
+    if(Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP01"))
         return;
 
     if(actor->type != MT_BARREL)
@@ -2117,7 +2117,7 @@ void C_DECL A_BossDeath(mobj_t *mo)
     if(mo->type != MT_BITCH)
         return;
 
-    if(Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP30"))
+    if(Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP30"))
         return;
 
     // Make sure there is a player alive for victory.
@@ -2148,7 +2148,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_HOOF | (!Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_HOOF | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -2158,7 +2158,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
-    S_StartSound(SFX_MEAL | (!Str_CompareIgnoreCase(Uri_Path(G_CurrentMapUri()), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
+    S_StartSound(SFX_MEAL | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

@@ -122,7 +122,7 @@ void NetCl_UpdateGameState(reader_s *msg)
         /// @todo Breaks session management logic; rules cannot change once the session has
         /// begun and setting the current map and/or entrance is illogical at this point.
         DENG2_ASSERT(!Str_Compare(gsEpisodeId, COMMON_GAMESESSION->episodeId().toLatin1().constData()));
-        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == ::gameMapUri);
+        DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == COMMON_GAMESESSION->mapUri());
 
         COMMON_GAMESESSION->applyNewRules(gsRules);
         //COMMON_GAMESESSION->setMap(*gsMapUri);

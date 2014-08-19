@@ -208,7 +208,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(gameMapUri.path() + "State")
+        mapsFolder.replaceFile(::gameMapUri.path() + "State")
                 << serializeCurrentMapState();
 
         saved->flush(); // No need to populate; FS2 Files already in sync with source data.
@@ -559,11 +559,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-            S_MapMusic(&gameMapUri);
+            S_MapMusic(&::gameMapUri);
             S_PauseMusic(true);
         }
 
-        P_SetupMap(gameMapUri);
+        P_SetupMap(::gameMapUri);
 
         if(revisit)
         {
@@ -1122,7 +1122,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
+            File &outFile = mapsFolder.replaceFile(::gameMapUri.path() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
@@ -1158,7 +1158,7 @@ void GameSession::leaveMap()
     ::gameMapEntrance = ::nextMapEntrance;
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / gameMapUri.path());
+    bool const revisit = saved && saved->hasState(String("maps") / ::gameMapUri.path());
 
     d->reloadMap(revisit);
 
@@ -1183,7 +1183,7 @@ void GameSession::leaveMap()
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter().runDeferredTasks(gameMapUri);
+    Game_ACScriptInterpreter().runDeferredTasks(::gameMapUri);
 #endif
 
     if(saved)
@@ -1206,7 +1206,7 @@ void GameSession::leaveMap()
         Folder &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
+        File &outFile = mapsFolder.replaceFile(::gameMapUri.path() + "State");
         outFile << serializeCurrentMapState();
 
         // Write all changes to the package.

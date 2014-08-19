@@ -92,7 +92,7 @@ static void initStateConditions(fi_state_t *s)
     if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
     {
         defn::Episode epsd(*episodeDef);
-        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
         s->conditions.leave_hub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
     App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);

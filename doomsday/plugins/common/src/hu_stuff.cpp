@@ -756,7 +756,7 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    de::String title = G_MapTitle(); // current map
+    de::String title = G_MapTitle(COMMON_GAMESESSION->mapUri());
     if(title.isEmpty()) title = "Unnamed";
 
     char buf[256];
@@ -1441,7 +1441,7 @@ int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
     patchinfo_t patchInfo;
-    if(R_GetPatchInfo(G_MapTitlePatch()/*current map*/, &patchInfo))
+    if(R_GetPatchInfo(G_MapTitlePatch(COMMON_GAMESESSION->mapUri()), &patchInfo))
     {
         y = patchInfo.geometry.size.height + 2;
     }
@@ -1451,7 +1451,7 @@ int Hu_MapTitleFirstLineHeight()
 
 dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
+    de::String const author = G_MapAuthor(COMMON_GAMESESSION->mapUri(), CPP_BOOL(cfg.hideIWADAuthor));
     return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1470,8 +1470,9 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    de::String const title  = G_MapTitle(); // current map
-    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
+    de::Uri const mapUri    = COMMON_GAMESESSION->mapUri();
+    de::String const title  = G_MapTitle(mapUri);
+    de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.hideIWADAuthor));
 
     float y = 0;
 
@@ -1483,7 +1484,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = G_MapTitlePatch(); // current map
+    patchid_t patchId = G_MapTitlePatch(mapUri);
     WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
                  de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
@@ -1506,7 +1507,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(gameMapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(mapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
     else if(!author.isEmpty())
     {

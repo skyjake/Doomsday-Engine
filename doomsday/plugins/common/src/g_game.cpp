@@ -514,12 +514,12 @@ static void initSaveSlots()
  */
 void G_CommonPreInit()
 {
-    // Apply the default game rules.
-    COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
-
-    gameMapUri.clear();
     quitInProgress = false;
     verbose = CommandLine_Exists("-verbose");
+    ::gameMapUri.clear();
+
+    // Apply the default game rules.
+    COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
 
     // Register hooks.
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
@@ -1290,32 +1290,37 @@ void G_StartHelp()
 }
 
 /**
- * Prints a banner to the console containing information pertinent to the current map
- * (e.g., map title, author...).
+ * Prints a banner to the console containing information pertinent to the referenced map
+ * (e.g., title, author...).
  */
-static void printMapBanner()
+static void printMapBanner(String episodeId, de::Uri const &mapUri)
 {
     App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
 
-    String const title = G_MapTitle(); // current map
+    String const title = G_MapTitle(mapUri);
     if(!title.isEmpty())
     {
-        Record const *mgNodeDef = COMMON_GAMESESSION->mapGraphNodeDef();
+        Record const *mgNodeDef = 0;
+        if(Record const *episode = Defs().episodes.tryFind("id", episodeId))
+        {
+            mgNodeDef = defn::Episode(*episode).tryFindMapGraphNode(mapUri.compose());
+        }
+
         String text = String("Map: " DE2_ESC(i) DE2_ESC(b) "%1" DE2_ESC(.) " (%2%3)")
                           .arg(title)
-                          .arg(gameMapUri.asText())
+                          .arg(mapUri.asText())
                           .arg(mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
-    String const author = G_MapAuthor(0/*current map*/, P_MapIsCustom(gameMapUri.compose().toUtf8().constData()));
+    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose().toUtf8().constData()));
     if(!author.isEmpty())
     {
         String text = String("Author: " DE2_ESC(i)) + author;
         App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
     }
 
-    String const episodeTitle = G_EpisodeTitle();
+    String const episodeTitle = G_EpisodeTitle(episodeId);
     if(!episodeTitle.isEmpty())
     {
         String text = String("Episode: " DE2_ESC(i)) + episodeTitle;
@@ -1337,19 +1342,22 @@ void G_BeginMap()
 
     G_ControlReset(-1); // Clear all controls for all local players.
 
-    // Update the game status cvars for the current map.
-    String mapAuthor = G_MapAuthor(); // current map
+    // Update the game status cvars for the current map:
+    String const episodeId = COMMON_GAMESESSION->episodeId();
+    de::Uri const mapUri   = COMMON_GAMESESSION->mapUri();
+
+    String mapAuthor = G_MapAuthor(mapUri);
     if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
     Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
-    String mapTitle = G_MapTitle(); // current map
+    String mapTitle = G_MapTitle(mapUri);
     if(mapTitle.isEmpty()) mapTitle = "Unknown";
     Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
 
-    printMapBanner();
+    printMapBanner(episodeId, mapUri);
 
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);
@@ -1654,15 +1662,18 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) &&
-                   (::gameMapUri.path() == "E1M9" ||
-                    ::gameMapUri.path() == "E2M9" ||
-                    ::gameMapUri.path() == "E3M9" ||
-                    ::gameMapUri.path() == "E4M9"))
+                if(gameModeBits & (GM_DOOM | GM_DOOM_SHAREWARE | GM_DOOM_ULTIMATE))
                 {
-                    for(int i = 0; i < MAXPLAYERS; ++i)
+                    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
+                    if(mapUri.path() == "E1M9" ||
+                       mapUri.path() == "E2M9" ||
+                       mapUri.path() == "E3M9" ||
+                       mapUri.path() == "E4M9")
                     {
-                        players[i].didSecret = true;
+                        for(int i = 0; i < MAXPLAYERS; ++i)
+                        {
+                            players[i].didSecret = true;
+                        }
                     }
                 }
 #endif
@@ -1915,7 +1926,7 @@ void G_PlayerLeaveMap(int player)
     if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
     {
         defn::Episode epsd(*episodeDef);
-        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
         newHub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
 #endif
@@ -2143,12 +2154,13 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
+    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
     if(secret ||
-       (::gameMapUri.path() == "E1M9" ||
-        ::gameMapUri.path() == "E2M9" ||
-        ::gameMapUri.path() == "E3M9" ||
-        ::gameMapUri.path() == "E4M9" ||
-        ::gameMapUri.path() == "E5M9"))
+       (mapUri.path() == "E1M9" ||
+        mapUri.path() == "E2M9" ||
+        mapUri.path() == "E3M9" ||
+        mapUri.path() == "E4M9" ||
+        mapUri.path() == "E5M9"))
     {
         p->didSecret = true;
     }
@@ -2248,37 +2260,39 @@ byte G_Ruleset_RespawnMonsters()
  */
 dd_bool G_IfVictory()
 {
+    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
 #if __JDOOM64__
-    if(::gameMapUri.path() == "MAP28")
+    if(mapUri.path() == "MAP28")
     {
         return true;
     }
 #elif __JDOOM__
     if(gameMode == doom_chex)
     {
-        if(::gameMapUri.path() == "MAP05")
+        if(mapUri.path() == "MAP05")
         {
             return true;
         }
     }
     else if((gameModeBits & GM_ANY_DOOM) &&
-            (::gameMapUri.path() == "E1M8" ||
-             ::gameMapUri.path() == "E2M8" ||
-             ::gameMapUri.path() == "E3M8" ||
-             ::gameMapUri.path() == "E4M8"))
+            (mapUri.path() == "E1M8" ||
+             mapUri.path() == "E2M8" ||
+             mapUri.path() == "E3M8" ||
+             mapUri.path() == "E4M8"))
     {
         return true;
     }
 #elif __JHERETIC__
-    if(::gameMapUri.path() == "E1M8" ||
-       ::gameMapUri.path() == "E2M8" ||
-       ::gameMapUri.path() == "E3M8" ||
-       ::gameMapUri.path() == "E4M8" ||
-       ::gameMapUri.path() == "E5M8")
+    if(mapUri.path() == "E1M8" ||
+       mapUri.path() == "E2M8" ||
+       mapUri.path() == "E3M8" ||
+       mapUri.path() == "E4M8" ||
+       mapUri.path() == "E5M8")
     {
         return true;
     }
 #elif __JHEXEN__
+    DENG2_UNUSED(mapUri);
     if(nextMapUri.path().isEmpty())
     {
         return true;
@@ -2290,7 +2304,7 @@ dd_bool G_IfVictory()
 static int prepareIntermission(void * /*context*/)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.currentMap = gameMapUri;
+    wmInfo.currentMap = COMMON_GAMESESSION->mapUri();
     wmInfo.nextMap    = nextMapUri;
     wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
 
@@ -2403,7 +2417,7 @@ static Record const *finaleDebriefing()
     if(cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
         defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(::gameMapUri.compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
         if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
@@ -2418,7 +2432,7 @@ static Record const *finaleDebriefing()
     if(G_GameState() == GS_INFINE) return 0;
 
     // Is there such a finale definition?
-    return Defs().finales.tryFind("after", ::gameMapUri.compose());
+    return Defs().finales.tryFind("after", COMMON_GAMESESSION->mapUri().compose());
 }
 
 /// @todo common::GameSession should handle this -ds
@@ -2458,35 +2472,36 @@ void G_IntermissionDone()
     G_SetGameAction(GA_LEAVEMAP);
 }
 
-de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate)
+String G_DefaultSavedSessionUserDescription(String const &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
     if(!saveName.isEmpty())
     {
-        de::String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
+        String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
         if(!existing.isEmpty()) return existing;
     }
 
     if(!autogenerate) return "";
 
     // Autogenerate a suitable description.
-    de::String description;
+    String description;
 
     // Include the source file name, for custom maps.
-    de::String mapUriAsText = gameMapUri.compose();
+    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
+    String mapUriAsText  = mapUri.compose();
     if(P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
-        de::String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
+        String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
     // Include the map title.
-    de::String mapTitle = G_MapTitle(); // current map
+    String mapTitle = G_MapTitle(mapUri);
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
     if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
     {
-        mapTitle = gameMapUri.path();
+        mapTitle = mapUri.path();
     }
     description += mapTitle;
 
@@ -2495,10 +2510,10 @@ de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool
     int const hours   = time / 3600; time -= hours * 3600;
     int const minutes = time / 60;   time -= minutes * 60;
     int const seconds = time;
-    description += de::String(" %1:%2:%3")
-                         .arg(hours,   2, 10, QChar('0'))
-                         .arg(minutes, 2, 10, QChar('0'))
-                         .arg(seconds, 2, 10, QChar('0'));
+    description += String(" %1:%2:%3")
+                       .arg(hours,   2, 10, QChar('0'))
+                       .arg(minutes, 2, 10, QChar('0'))
+                       .arg(seconds, 2, 10, QChar('0'));
 
     return description;
 }
@@ -2528,9 +2543,9 @@ uint G_MapNumberFor(de::Uri const &mapUri)
     return 0;
 }
 
-uri_s const *G_CurrentMapUri()
+AutoStr *G_CurrentMapUriPath()
 {
-    return reinterpret_cast<uri_s *>(&::gameMapUri);
+    return AutoStr_FromTextStd(COMMON_GAMESESSION->mapUri().path().toStringRef().toUtf8().constData());
 }
 
 de::Uri G_ComposeMapUri(uint episode, uint map)
@@ -2553,21 +2568,10 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-String G_EpisodeTitle(String const *episodeId)
+String G_EpisodeTitle(String episodeId)
 {
-    Record const *episodeDef = 0;
-    if(!episodeId)
-    {
-        // The current episode.
-        episodeDef = COMMON_GAMESESSION->episodeDef();
-    }
-    else
-    {
-        episodeDef = Defs().episodes.tryFind("id", *episodeId);
-    }
-
     String title;
-    if(episodeDef)
+    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         title = episodeDef->gets("title");
         // Perhaps the title string is a reference to a Text definition?
@@ -2580,14 +2584,12 @@ String G_EpisodeTitle(String const *episodeId)
     return title;
 }
 
-String G_MapTitle(de::Uri const *mapUri)
+String G_MapTitle(de::Uri const &mapUri)
 {
-    if(!mapUri) mapUri = &::gameMapUri;
-
     String title;
 
     // Perhaps a MapInfo definition exists for the map?
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri->compose()))
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         title = mapInfo->gets("title");
         // Perhaps the title string is a reference to a Text definition?
@@ -2611,14 +2613,12 @@ String G_MapTitle(de::Uri const *mapUri)
     return title;
 }
 
-String G_MapAuthor(de::Uri const *mapUri, bool supressGameAuthor)
+String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 {
-    if(!mapUri) mapUri = &gameMapUri;
-
     String author;
 
     // Perhaps a MapInfo definition exists for the map?
-    String mapUriAsText = mapUri->compose();
+    String mapUriAsText = mapUri.compose();
     if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUriAsText))
     {
         author = mapInfo->gets("author");
@@ -2658,16 +2658,14 @@ static uint episodeNumberFor(de::Uri const &mapUri)
 }
 #endif // __JDOOM__
 
-patchid_t G_MapTitlePatch(de::Uri const *mapUri)
+patchid_t G_MapTitlePatch(de::Uri const &mapUri)
 {
-    if(!mapUri) mapUri = &gameMapUri;
-
 #if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(*mapUri);
+    uint map = G_MapNumberFor(mapUri);
 #  if __JDOOM__
     if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
     {
-        uint episode = episodeNumberFor(*mapUri);
+        uint episode = episodeNumberFor(mapUri);
         map = (episode * 9) + map;
     }
 #  endif
@@ -2678,7 +2676,6 @@ patchid_t G_MapTitlePatch(de::Uri const *mapUri)
 #else
     DENG2_UNUSED(mapUri);
 #endif
-
     return 0;
 }
 
@@ -3258,7 +3255,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewSession && COMMON_GAMESESSION->hasBegun() && ::gameMapUri == mapUri)
+    if(!forceNewSession && COMMON_GAMESESSION->mapUri() == mapUri)
     {
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
         return false;

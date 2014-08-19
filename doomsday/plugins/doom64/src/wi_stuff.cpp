@@ -124,20 +124,21 @@ static void drawBackground()
 
 static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
-    String const mapTitle = G_MapTitle(); // current map
-
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->currentMap);
+    String const mapTitle         = G_MapTitle(wbs->currentMap);
+    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->currentMap);
     WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(mapTitlePatch, &info))
+    {
         origin.y += (5 * info.geometry.size.height) / 4;
+    }
 
     // Draw "Finished!"
     WI_DrawPatch(pFinished, patchReplacementText(pFinished), origin, ALIGN_TOP);
@@ -148,7 +149,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
 static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
     // See if there is a map name...
-    String mapTitle = G_MapTitle(&wbs->nextMap);
+    String mapTitle = G_MapTitle(wbs->nextMap);
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -159,7 +160,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     WI_DrawPatch(pEntering, patchReplacementText(pEntering), origin, ALIGN_TOP);
 
     patchinfo_t info;
-    patchid_t const mapTitlePatch = G_MapTitlePatch(&wbs->nextMap);
+    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->nextMap);
     if(R_GetPatchInfo(mapTitlePatch, &info))
         origin.y += (5 * info.geometry.size.height) / 4;
 
