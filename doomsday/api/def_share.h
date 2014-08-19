@@ -119,15 +119,6 @@ typedef struct {
 #define MIF_NO_INTERMISSION 0x4 ///< Skip any intermission between maps.
 ///@}
 
-typedef struct {
-    const Uri*      after;
-    const Uri*      before;
-    int             game;
-    char*           script;
-} ddfinale_t;
-
-typedef ddfinale_t finalescript_t;
-
 #define DDLT_MAX_APARAMS    10
 #define DDLT_MAX_PARAMS     20
 #define DDLT_MAX_SPARAMS    5
