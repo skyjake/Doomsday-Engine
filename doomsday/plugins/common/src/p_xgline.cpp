@@ -2087,26 +2087,10 @@ int XLTrav_LineTeleport(Line *newLine, dd_bool /*ceiling*/, void *context,
 #undef FUDGEFACTOR
 }
 
-dd_bool XL_ValidateMap(uint *map, int /*type*/)
-{
-    // Check that the map truly exists.
-    if(P_MapExists(G_ComposeMapUri(::gameEpisode, *map).compose().toUtf8().constData()))
-        return true;
-
-    XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %u, next will be map 1", *map);
-    *map = 0; // Should exist always?
-
-    return false;
-}
-
-int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
-    void *context2, mobj_t * /*activator*/)
+int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *context2,
+                    mobj_t * /*activator*/)
 {
     linetype_t *info = static_cast<linetype_t *>(context2);
-
-    uint map = 0;
-    int temp = 0;
-    dd_bool mapSpecified = false;
 
     // Is this a secret exit?
     if(info->iparm[0] > 0)
@@ -2115,42 +2099,38 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
         return false;
     }
 
+    de::Uri newMapUri;
     if(info->iparm[1] == LREF_NONE)
     {
-        // (ip3) will be used to determine next map.
+        // (ip3) will be used to determine next map (1-based).
         if(info->iparm[3])
         {
-            map = info->iparm[3]-1;
-            mapSpecified = XL_ValidateMap(&map, 0);
+            newMapUri = G_ComposeMapUri(COMMON_GAMESESSION->episodeId().toInt() - 1, info->iparm[3] - 1);
+            XG_Dev("XLTrav_LeaveMap: Next map set to \"%s\"", newMapUri.compose().toUtf8().constData());
         }
     }
-    else
-    {    // We might possibly have a data reference to evaluate.
-        if(line)
-        {
-            temp = XL_ValidateLineRef(line,info->iparm[3], context2,
-                                      "Map Number");
-            if(temp > 0)
-            {
-                map = temp - 1;
-                mapSpecified = XL_ValidateMap(&map, info->iparm[3]);
-            }
-        }
-
-        if(!mapSpecified)
-            XG_Dev("XLTrav_LeaveMap: Reference data not valid. "
-                   "Next map as normal");
-    }
-
-    de::Uri newMapUri;
-    if(mapSpecified)
+    // We might possibly have a data reference to evaluate.
+    else if(line)
     {
-        XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
-        newMapUri = G_ComposeMapUri(::gameEpisode, map);
+        int const oldMapNumber = XL_ValidateLineRef(line, info->iparm[3], context2, "Map Number");
+        if(oldMapNumber > 0)
+        {
+            newMapUri = G_ComposeMapUri(COMMON_GAMESESSION->episodeId().toInt() - 1, oldMapNumber - 1);
+        }
     }
-    else
+
+    if(newMapUri.isEmpty())
     {
         newMapUri = COMMON_GAMESESSION->mapUriForNamedExit("next");
+        XG_Dev("XLTrav_LeaveMap: Next map set to default for the 'next' exit");
+    }
+
+    // Check that the map truly exists.
+    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
+    {
+        // Backward compatibility dictates that invalid refs be interpreted to mean the start map
+        // of the current episode (which is known to always exist).
+        newMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
     }
 
     G_SetGameActionMapCompleted(newMapUri, 0, false);
