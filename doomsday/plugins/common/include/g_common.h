@@ -39,7 +39,7 @@ extern GameRuleset defaultGameRules;
 extern "C" {
 #endif
 
-void G_Register(void);
+void G_ConsoleRegister(void);
 
 dd_bool G_QuitInProgress(void);
 
