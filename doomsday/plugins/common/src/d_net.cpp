@@ -67,6 +67,13 @@ void D_NetConsoleRegister()
     C_CMD        ("endcycle",   "",     MapCycle);
     C_CMD        ("message",    "s",    LocalMessage);
 
+    if(IS_DEDICATED)
+    {
+        C_VAR_CHARPTR("server-game-episode",                    &cfg.netEpisode,                        0, 0, 0);
+        C_VAR_URIPTR ("server-game-map",                        &cfg.netMap,                            0, 0, 0);
+    }
+
+    /// @todo "server-*" cvars should only be registered by dedicated servers.
     //if(IS_DEDICATED) return;
 
 #if !__JHEXEN__
@@ -81,11 +88,7 @@ void D_NetConsoleRegister()
 #else
     C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 1);
 #endif
-#if __JDOOM__ || __JHERETIC__
-    C_VAR_BYTE   ("server-game-episode",                    &cfg.netEpisode,                        CVF_NO_MAX, 0, 0);
-#endif
     C_VAR_BYTE   ("server-game-jump",                       &cfg.netJumping,                        0, 0, 1);
-    C_VAR_BYTE   ("server-game-map",                        &cfg.netMap,                            CVF_NO_MAX, 0, 0);
     C_VAR_CHARPTR("server-game-mapcycle",                   &mapCycle,                              0, 0, 0);
     C_VAR_BYTE   ("server-game-mapcycle-noexit",            &mapCycleNoExit,                        0, 0, 1);
 #if __JHERETIC__
@@ -179,21 +182,14 @@ int D_NetServerStarted(int before)
 #endif
     P_ResetPlayerRespawnClasses();
 
-#if __JHEXEN__
-    // Map numbers need to be translated.
-    /// @todo fixme: What about cfg.netEpisode?
-    de::Uri netMapUri = TranslateMapWarpNumber(::cfg.netMap);
-#elif __JDOOM64__
-    de::Uri netMapUri = G_ComposeMapUri(0/*::cfg.netEpisode*/, ::cfg.netMap);
-#else
-    de::Uri netMapUri = G_ComposeMapUri(::cfg.netEpisode, ::cfg.netMap);
-#endif
+    String const episodeId = Con_GetString("server-game-episode");
+    de::Uri const mapUri   = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
 
-    GameRuleset netRules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
-    netRules.skill = skillmode_t(cfg.netSkill);
+    GameRuleset rules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
+    rules.skill = skillmode_t(cfg.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(netRules, netEpisode, netMapUri);
+    COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     return true;

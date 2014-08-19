@@ -34,6 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "api_uri.h"
 #include "doomdef.h"
 #include "hu_lib.h"
 
@@ -225,6 +226,9 @@ typedef struct jdoom_config_s {
     float           xhairColor[4];
 
     // Network.
+    char *          netEpisode;
+    Uri *           netMap;
+
     byte            netDeathmatch;
     byte            netBFGFreeLook; // Allow free-aim with BFG.
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
@@ -235,8 +239,6 @@ typedef struct jdoom_config_s {
     byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
-    byte            netEpisode;
-    byte            netMap;
     byte            netSkill;
     byte            netSlot;
     byte            netColor;

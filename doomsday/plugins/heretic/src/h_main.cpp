@@ -186,7 +186,7 @@ void H_PreInit()
     //cfg.fastMonsters = false;
     cfg.secretMsg = true;
     cfg.netJumping = true;
-    cfg.netEpisode = 0;
+    cfg.netEpisode = "";
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4; // Use the default color by default.
