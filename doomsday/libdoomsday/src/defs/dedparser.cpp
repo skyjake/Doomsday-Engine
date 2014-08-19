@@ -40,6 +40,7 @@
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
 #include "doomsday/defs/episode.h"
+#include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapgraphnode.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
@@ -2426,16 +2427,17 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Finale") || ISTOKEN("InFine"))
             {
-                idx = DED_AddFinale(ded);
-                ded_finale_t *fin = &ded->finales[idx];
+                // New finales are appended to the end of the list.
+                idx = ded->addFinale();
+                Record &fin = ded->finales[idx];
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", fin->id)
-                    RV_URI("Before", &fin->before, "Maps")
-                    RV_URI("After", &fin->after, "Maps")
+                    RV_STR("ID", fin["id"])
+                    RV_URI("Before", fin["before"], "Maps")
+                    RV_URI("After", fin["after"], "Maps")
                     RV_INT("Game", dummyInt)
                     if(ISLABEL("Script"))
                     {
@@ -2456,9 +2458,8 @@ DENG2_PIMPL(DEDParser)
                             }
                             ReadToken();
                         }
-                        QByteArray bufferUtf8 = buffer.toUtf8();
-                        fin->script = (char *) M_Realloc(fin->script, bufferUtf8.length() + 1);
-                        qstrcpy(fin->script, bufferUtf8.constData());
+                        buffer.squeeze();
+                        fin.set("script", buffer);
                     }
                     else RV_END
                     CHECKSC;

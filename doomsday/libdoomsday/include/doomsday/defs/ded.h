@@ -109,7 +109,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_ptcgen_t> ptcGens;
 
     // Finales.
-    DEDArray<ded_finale_t> finales;
+    //DEDArray<ded_finale_t> finales;
+    DEDRegister finales;
 
     // Decorations.
     DEDArray<ded_decor_t> decorations;
@@ -140,6 +141,8 @@ public:
     int addFlag(char const *id, int value);
 
     int addEpisode();
+
+    int addFinale();
 
     int addMapInfo();
 
@@ -228,7 +231,7 @@ int             DED_AddValue(ded_t *ded, char const* id);
 int             DED_AddDetail(ded_t* ded, char const* lumpname);
 int             DED_AddPtcGen(ded_t* ded, char const* state);
 int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
-int             DED_AddFinale(ded_t* ded);
+//int             DED_AddFinale(ded_t* ded);
 int             DED_AddDecoration(ded_t* ded);
 int             DED_AddReflection(ded_t* ded);
 int             DED_AddGroup(ded_t* ded);

@@ -464,6 +464,7 @@ typedef struct {
     }
 } ded_value_t;
 
+#if 0
 typedef struct {
     ded_stringid_t  id;
     de::Uri*        before;
@@ -476,6 +477,7 @@ typedef struct {
         M_Free(script);
     }
 } ded_finale_t;
+#endif
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     int             id;

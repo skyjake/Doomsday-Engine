@@ -19,6 +19,7 @@
 
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/episode.h"
+#include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/music.h"
@@ -53,6 +54,7 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags   (names.addRecord("flags"))
     , episodes(names.addRecord("episodes"))
+    , finales (names.addRecord("finales"))
     , mapInfos(names.addRecord("mapInfos"))
     , models  (names.addRecord("models"))
     , musics  (names.addRecord("musics"))
@@ -60,6 +62,9 @@ ded_s::ded_s()
 {
     flags.addLookupKey("id");
     episodes.addLookupKey("id");
+    finales.addLookupKey("id");
+    finales.addLookupKey("before");
+    finales.addLookupKey("after");
     mapInfos.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
     models.addLookupKey("state");
@@ -91,6 +96,13 @@ int ded_s::addEpisode()
 {
     Record &def = episodes.append();
     defn::Episode(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addFinale()
+{
+    Record &def = finales.append();
+    defn::Finale(def).resetToDefaults();
     return def.geti("__order__");
 }
 
@@ -279,12 +291,6 @@ int DED_AddPtcGenStage(ded_ptcgen_t* gen)
     stage->hitSound.volume = 1;
 
     return gen->stages.indexOf(stage);
-}
-
-int DED_AddFinale(ded_t* ded)
-{
-    ded_finale_t* fin = ded->finales.append();
-    return ded->finales.indexOf(fin);
 }
 
 int DED_AddDecoration(ded_t* ded)
