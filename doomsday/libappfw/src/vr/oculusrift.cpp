@@ -22,6 +22,7 @@
 #include "de/VRWindowTransform"
 
 #include <de/GLFramebuffer>
+#include <de/GLState>
 #include <de/Lockable>
 #include <de/Guard>
 #include <de/App>
@@ -91,17 +92,18 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
         ovr_Initialize();
         hmd = ovrHmd_Create(0);
+
+        if(!hmd && App::commandLine().has("-ovrdebug"))
+        {
+            hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
+        }
+
         if(hmd)
         {
-            LOG_INPUT_NOTE("HMD: %s (%s) %i.%i @ %ix%i pixels")
-                    << hmd->ProductName   << hmd->Manufacturer
+            LOG_INPUT_NOTE("HMD: %s (%s) %i.%i %ix%i pixels")
+                    << String(hmd->ProductName) << String(hmd->Manufacturer)
                     << hmd->FirmwareMajor << hmd->FirmwareMinor
-                    << hmd->Resolution.w  << hmd->Resolution.h;
-
-            // Configure for orientation and position tracking.
-            ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation |
-                                          ovrTrackingCap_MagYawCorrection |
-                                          ovrTrackingCap_Position, 0);
+                    << hmd->Resolution.w << hmd->Resolution.h;
         }
 #endif
     }
@@ -153,11 +155,13 @@ DENG2_PIMPL(OculusRift)
 
         aspect = comboXTan / comboYTan;
 
+        LOGDEV_GL_MSG("Aspect ratio: %f") << aspect;
+
         // Calculate the horizontal total FOV in degrees that the renderer will use
         // for clipping.
-        fovXDegrees = 2 * atanf(comboXTan);
+        fovXDegrees = radianToDegree(2 * atanf(comboXTan));
 
-        LOGDEV_GL_MSG("Using clip FOV of %.2f degrees") << fovXDegrees;
+        LOGDEV_GL_MSG("Clip FOV: %.2f degrees") << fovXDegrees;
 
         /// @todo Apply chosen pixel density here.
 
@@ -166,7 +170,9 @@ DENG2_PIMPL(OculusRift)
         uint const w = framebuffer().size().x;
         uint const h = framebuffer().size().y;
 
-        LOG_GL_VERBOSE("Framebuffer size is ") << framebuffer().size().asText();
+        //framebuffer().colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+
+        LOG_GL_VERBOSE("Framebuffer size: ") << framebuffer().size().asText();
 
         for(int eye = 0; eye < 2; ++eye)
         {
@@ -185,8 +191,16 @@ DENG2_PIMPL(OculusRift)
         if(inited) return;
         inited = true;
 
+        // If there is no Oculus Rift connected, do nothing.
+        if(!hmd) return;
+
 #ifdef DENG_HAVE_OCULUS_API
         DENG2_GUARD(this);
+
+        // Configure for orientation and position tracking.
+        ovrHmd_ConfigureTracking(hmd, ovrTrackingCap_Orientation |
+                                      ovrTrackingCap_MagYawCorrection |
+                                      ovrTrackingCap_Position, 0);
 
         LOG_GL_MSG("Initializing Oculus Rift for rendering");
 
@@ -223,6 +237,22 @@ DENG2_PIMPL(OculusRift)
             return;
         }
 
+        for(int i = 0; i < 2; ++i)
+        {
+            qDebug() << "Eye:" << render[i].Eye
+                     << "Fov:" << render[i].Fov.LeftTan << render[i].Fov.RightTan
+                     << render[i].Fov.UpTan << render[i].Fov.DownTan
+                     << "DistortedViewport:" << render[i].DistortedViewport.Pos.x
+                     << render[i].DistortedViewport.Pos.y
+                     << render[i].DistortedViewport.Size.w
+                     << render[i].DistortedViewport.Size.h
+                     << "PixelsPerTanAngleAtCenter:" << render[i].PixelsPerTanAngleAtCenter.x
+                     << render[i].PixelsPerTanAngleAtCenter.y
+                     << "ViewAdjust:" << render[i].ViewAdjust.x
+                     << render[i].ViewAdjust.y
+                     << render[i].ViewAdjust.z;
+        }
+
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
 #endif
     }
@@ -250,9 +280,9 @@ DENG2_PIMPL(OculusRift)
     /**
      * Observe key events (any key) to dismiss the OVR Health and Safety warning.
      */
-    void keyEvent(KeyEvent const &)
+    void keyEvent(KeyEvent const &ev)
     {
-        if(!window) return;
+        if(!window || ev.type() == Event::KeyRelease) return;
 
 #ifdef DENG_HAVE_OCULUS_API
         if(isHealthAndSafetyWarningDisplayed())
@@ -345,9 +375,19 @@ DENG2_PIMPL(OculusRift)
 
     void endFrame()
     {
-        ovrHmd_EndFrame(hmd, headPose, (ovrTexture const *) textures);
+        /*
+        GLTarget defaultTarget;
+        GLState::push()
+                .setTarget(defaultTarget)
+                .setViewport(Rectangleui::fromSize(defaultTarget.size()))
+                .apply();*/
+
+        ovrHmd_EndFrame(hmd, headPose, &textures[0].Texture);
 
         dismissHealthAndSafetyWarningOnTap();
+
+        GLState::considerNativeStateUndefined();
+        //GLState::pop().apply();
     }
 #endif
 };
@@ -370,7 +410,7 @@ void OculusRift::deinit()
 void OculusRift::beginFrame()
 {
 #ifdef DENG_HAVE_OCULUS_API    
-    if(!isReady() || d->frameOngoing) return;
+    if(!isReady() || !d->inited || d->frameOngoing) return;
     d->frameOngoing = true;
 
     // Begin the frame and acquire timing information.
@@ -544,7 +584,7 @@ Matrix4f OculusRift::projection(float nearDist, float farDist) const
     DENG2_ASSERT(isReady());
 #ifdef DENG_HAVE_OCULUS_API
     return ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
-                                  true /* right-handed */).M[0];
+                                  false /* right-handed */).M[0];
 #else
     DENG2_UNUSED2(nearDist, farDist);
     return Matrix4f();

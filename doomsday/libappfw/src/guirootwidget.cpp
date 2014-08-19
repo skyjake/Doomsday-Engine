@@ -20,6 +20,7 @@
 #include "de/GuiWidget"
 #include "de/BaseGuiApp"
 #include "de/Style"
+#include "de/BaseWindow"
 
 #include <de/CanvasWindow>
 #include <de/TextureBank>
@@ -320,6 +321,9 @@ void GuiRootWidget::update()
         window().canvas().makeCurrent();
 
         RootWidget::update();
+
+        // Request a window draw so that the updated content becomes visible.
+        window().as<BaseWindow>().draw();
     }
 }
 

@@ -156,22 +156,21 @@ void BaseWindow::swapBuffers()
 
 void BaseWindow::preDraw()
 {
-#ifdef DENG_HAVE_OCULUS_API
-    // Make sure Oculus Rift rendering is (de)initialized as needed.
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if(vr.mode() == VRConfig::OculusRift)
     {
-        vr.oculusRift().init();
+        vr.oculusRift().beginFrame();
     }
-    else
-    {
-        vr.oculusRift().deinit();
-    }
-#endif
 }
 
 void BaseWindow::postDraw()
 {
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        vr.oculusRift().endFrame();
+    }
+
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
 }
