@@ -22,6 +22,8 @@
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
+#include <de/GLState>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
@@ -169,6 +171,18 @@ void BaseWindow::postDraw()
     if(vr.mode() == VRConfig::OculusRift)
     {
         vr.oculusRift().endFrame();
+
+        /*
+        GLTarget defaultTarget;
+        GLState::push()
+                .setTarget(defaultTarget)
+                .setViewport(Rectangleui::fromSize(defaultTarget.size()))
+                .apply();
+        glClearColor(1, 0, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        canvas().QGLWidget::swapBuffers();
+        GLState::pop().apply();
+        */
     }
 
     // The timer loop was paused when the frame was requested to be drawn.

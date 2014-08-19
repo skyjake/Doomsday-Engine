@@ -53,9 +53,9 @@ DENG2_PIMPL(OculusRift)
     ovrHmd hmd;
     ovrEyeType currentEye;
     ovrPosef headPose[2];
-    bool needPose[2] { true, true };
+    //bool needPose[2] { true, true };
     ovrEyeRenderDesc render[2];
-    ovrGLTexture textures[2];
+    ovrTexture textures[2];
     ovrFovPort fov[2];
     float fovXDegrees;
     ovrFrameTiming timing;
@@ -140,8 +140,7 @@ DENG2_PIMPL(OculusRift)
             // Use the default FOV.
             fov[eye] = hmd->DefaultEyeFov[eye];
 
-            size[eye] = ovrHmd_GetFovTextureSize(hmd, ovrEyeType(eye),
-                                                 hmd->DefaultEyeFov[eye],
+            size[eye] = ovrHmd_GetFovTextureSize(hmd, ovrEyeType(eye), fov[eye],
                                                  1.0f /*density*/);
         }
 
@@ -176,12 +175,14 @@ DENG2_PIMPL(OculusRift)
 
         for(int eye = 0; eye < 2; ++eye)
         {
-            ovrGLTexture &tex = textures[eye];
+            ovrGLTexture tex;
 
             tex.OGL.Header.API            = ovrRenderAPI_OpenGL;
             tex.OGL.Header.TextureSize    = Sizei(w, h);
-            tex.OGL.Header.RenderViewport = Recti(eye == 0? 0 : w/2, 0, w/2, h);
+            tex.OGL.Header.RenderViewport = Recti(eye == 0? 0 : ((w + 1) / 2), 0, w/2, h);
             tex.OGL.TexId                 = framebuffer().colorTexture().glName();
+
+            textures[eye] = tex.Texture;
         }
     }
 #endif
@@ -207,6 +208,8 @@ DENG2_PIMPL(OculusRift)
         // We will be rendering into the main window.
         window = &CanvasWindow::main().as<BaseWindow>();
         DENG2_ASSERT(window->isVisible());
+
+        DENG2_ASSERT(QGLContext::currentContext() != 0);
 
         // Observe key events for dismissing the Health and Safety warning.
         window->canvas().audienceForKeyEvent() += this;
@@ -254,6 +257,9 @@ DENG2_PIMPL(OculusRift)
         }
 
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
+
+        float clearColor[4] = { 0.0f, 0.5f, 1.0f, 0.0f };
+        ovrHmd_SetFloatArray(hmd, "DistortionClearColor", clearColor, 4);
 #endif
     }
 
@@ -337,10 +343,16 @@ DENG2_PIMPL(OculusRift)
 
     void updateEyePose()
     {
-        DENG2_ASSERT(frameOngoing);
+        if(!frameOngoing)
+        {
+            //qDebug() << "Tried to updateEyePose without frame ongoing";
+            //DENG2_PRINT_BACKTRACE();
+            return;
+        }
+        //DENG2_ASSERT(frameOngoing);
 
-        if(!needPose[currentEye]) return;
-        needPose[currentEye] = false;
+        //if(!needPose[currentEye]) return;
+        //needPose[currentEye] = false;
 
         ovrPosef &pose = headPose[currentEye];
 
@@ -369,25 +381,30 @@ DENG2_PIMPL(OculusRift)
     void beginFrame()
     {
         DENG2_ASSERT(isReady());
+        DENG2_ASSERT(!frameOngoing);
 
+        frameOngoing = true;
         timing = ovrHmd_BeginFrame(hmd, 0);
     }
 
     void endFrame()
     {
-        /*
-        GLTarget defaultTarget;
+        DENG2_ASSERT(frameOngoing);
+
+        /*GLTarget defaultTarget;
         GLState::push()
                 .setTarget(defaultTarget)
                 .setViewport(Rectangleui::fromSize(defaultTarget.size()))
                 .apply();*/
 
-        ovrHmd_EndFrame(hmd, headPose, &textures[0].Texture);
+        ovrHmd_EndFrame(hmd, headPose, textures);
 
         dismissHealthAndSafetyWarningOnTap();
 
-        GLState::considerNativeStateUndefined();
+        //GLState::considerNativeStateUndefined();
         //GLState::pop().apply();
+
+        frameOngoing = false;
     }
 #endif
 };
@@ -411,7 +428,6 @@ void OculusRift::beginFrame()
 {
 #ifdef DENG_HAVE_OCULUS_API    
     if(!isReady() || !d->inited || d->frameOngoing) return;
-    d->frameOngoing = true;
 
     // Begin the frame and acquire timing information.
     d->beginFrame();
@@ -422,7 +438,6 @@ void OculusRift::endFrame()
 {
 #ifdef DENG_HAVE_OCULUS_API
     if(!isReady() || !d->frameOngoing) return;
-    d->frameOngoing = false;
 
     // End the frame and let the Oculus SDK handle displaying it with the
     // appropriate transformation.
@@ -436,7 +451,8 @@ void OculusRift::setCurrentEye(int index)
     if(d->hmd)
     {
         d->currentEye = d->hmd->EyeRenderOrder[index];
-        d->needPose[d->currentEye] = true;
+        //d->needPose[d->currentEye] = true;
+        d->updateEyePose();
     }
 #else
     DENG2_UNUSED(index);
