@@ -831,7 +831,6 @@ Record *GameSession::mapGraphNodeDef()
 {
     if(Record const *episode = episodeDef())
     {
-        /// @todo cache this result?
         return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
     }
     return 0;
@@ -839,7 +838,6 @@ Record *GameSession::mapGraphNodeDef()
 
 Record *GameSession::mapInfo()
 {
-    /// @todo cache this result?
     return Defs().mapInfos.tryFind("id", mapUri().compose());
 }
 
@@ -1060,7 +1058,7 @@ void GameSession::reloadMap()
         // Restart the session entirely.
         briefDisabled = true; // We won't brief again.
         end();
-        begin(d->rules, d->episodeId, mapUri(), ::gameMapEntrance);
+        begin(d->rules, d->episodeId, d->mapUri, ::gameMapEntrance);
     }
 }
 
