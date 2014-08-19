@@ -567,7 +567,7 @@ void G_CommonPreInit()
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();     // Main command list.
-    D_NetConsoleRegistration();  // For network.
+    D_NetConsoleRegister();      // For network.
     G_Register();                // Top level game cvars and commands.
     Pause_Register();
     G_ControlRegister();         // For controls/input.

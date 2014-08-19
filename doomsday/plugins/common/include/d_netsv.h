@@ -34,8 +34,6 @@ DENG_EXTERN_C char gameConfigString[];
 extern "C" {
 #endif
 
-void P_Telefrag(mobj_t *thing);
-
 /**
  * Server calls this when new players enter the game.
  */

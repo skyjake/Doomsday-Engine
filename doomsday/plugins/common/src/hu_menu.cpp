@@ -242,35 +242,6 @@ cvarbutton_t mnCVarButtons[] = {
 #if __JDOOM64__
     cvarbutton_t(0, "player-weapon-recoil"),
 #endif
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "server-game-bfg-freeaim"),
-#endif
-    cvarbutton_t(0, "server-game-coop-nodamage"),
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "server-game-coop-nothing"),
-    cvarbutton_t(0, "server-game-coop-noweapons"),
-    cvarbutton_t(0, "server-game-coop-respawn-items"),
-#endif
-#if __JHEXEN__
-    cvarbutton_t(0, "server-game-deathmatch"),
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "server-game-jump"),
-#endif
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "server-game-nobfg"),
-#endif
-    cvarbutton_t(0, "server-game-nomonsters"),
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "server-game-noteamdamage"),
-#endif
-    cvarbutton_t(0, "server-game-radiusattack-nomaxz"),
-#if __JHEXEN__
-    cvarbutton_t(0, "server-game-randclass"),
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "server-game-respawn"),
-#endif
     cvarbutton_t(0, "view-cross-vitality"),
     cvarbutton_t()
 };
