@@ -241,7 +241,7 @@ void *D_NetReadCommands(size_t pktLength, void *data);
 /**
  * Register the console commands and variables of the common netcode.
  */
-void D_NetConsoleRegistration(void);
+void D_NetConsoleRegister(void);
 
 /**
  * Show message on screen and play chat sound.

@@ -268,9 +268,9 @@ template <typename Type>
 class ThinkerT : public Thinker
 {
 public:
-    ThinkerT() : Thinker(sizeof(Type)) {}
-    ThinkerT(de::dsize sizeInBytes,
-             AllocMethod alloc     = AllocateStandard)
+    ThinkerT(AllocMethod alloc = AllocateStandard)
+        : Thinker(alloc, sizeof(Type)) {}
+    ThinkerT(de::dsize sizeInBytes, AllocMethod alloc = AllocateStandard)
         : Thinker(alloc, sizeInBytes) {}
     ThinkerT(Type const &thinker,
              de::dsize sizeInBytes = sizeof(Type),

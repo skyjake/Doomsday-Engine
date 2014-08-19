@@ -949,12 +949,15 @@ void XL_SetLineType(Line *line, int id)
         if(!Thinker_Iterate(XL_Thinker, findXLThinker, line))
         {
             // Not created one yet.
-            xlthinker_t *xl = (xlthinker_t *)Z_Calloc(sizeof(*xl), PU_MAP, 0);
+            /*xlthinker_t *xl = (xlthinker_t *)Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
-            xl->thinker.function = XL_Thinker;
-            Thinker_Add(&xl->thinker);
+            xl->thinker.function = XL_Thinker;*/
 
+            ThinkerT<xlthinker_t> xl(Thinker::AllocateMemoryZone);
+            xl.function = XL_Thinker;
             xl->line = line;
+
+            Thinker_Add(xl.Thinker::take());
         }
     }
     else if(id)
@@ -966,7 +969,7 @@ void XL_SetLineType(Line *line, int id)
 
 void XL_Init()
 {
-    de::zap(dummyThing);
+    dummyThing.Thinker::zap();
 
     // Clients rely on the server, they don't do XG themselves.
     if(IS_CLIENT) return;
@@ -981,10 +984,8 @@ void XL_Init()
 }
 
 int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *context,
-    dd_bool travsectors, mobj_t *activator, int (*func_)())
+    dd_bool travsectors, mobj_t *activator, PlaneTraverserFunc func)
 {
-    PlaneTraverserFunc func = de::function_cast<PlaneTraverserFunc>(func_);
-
     int tag;
     mobj_t *mo;
     dd_bool ok, findSecTagged;
@@ -1183,10 +1184,8 @@ int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *contex
 }
 
 int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
-                     void* context, mobj_t* activator, int (*func_)())
+                     void* context, mobj_t* activator, LineTraverserFunc func)
 {
-    LineTraverserFunc func = de::function_cast<LineTraverserFunc>(func_);
-
     int i;
     int tag;
     int reftype = rtype;
@@ -1479,14 +1478,14 @@ void XL_DoFunction(linetype_t *info, Line *line, int sideNum, mobj_t *actThing, 
             case TRAV_LINES: // Traverse lines, executing doFunc for each
                 XL_TraverseLines(line, info->iparm[xgClass->travRef],
                                  info->iparm[xgClass->travData], line,
-                                 info, actThing, xgClass->doFunc);
+                                 info, actThing, de::function_cast<LineTraverserFunc>(xgClass->doFunc));
                 break;
             case TRAV_PLANES: // Traverse planes, executing doFunc for each
             case TRAV_SECTORS:
                 XL_TraversePlanes(line, info->iparm[xgClass->travRef],
                                   info->iparm[xgClass->travData], line,
                                   info, xgClass->traverse == TRAV_SECTORS? true : false,
-                                  actThing, xgClass->doFunc);
+                                  actThing, de::function_cast<PlaneTraverserFunc>(xgClass->doFunc));
                 break;
         }
     }
@@ -2201,8 +2200,7 @@ int XLTrav_EnableLine(Line *line, dd_bool /*ceiling*/, void *context,
 dd_bool XL_CheckLineStatus(Line *line, int reftype, int ref, int active,
                            mobj_t *activator)
 {
-    return XL_TraverseLines(line, reftype, ref, &active, 0, activator,
-                            de::function_cast<int (*)()>(XLTrav_CheckLine));
+    return XL_TraverseLines(line, reftype, ref, &active, 0, activator, XLTrav_CheckLine);
 }
 
 int XL_CheckMobjGone(thinker_t *th, void *context)
@@ -2391,7 +2389,7 @@ void XL_ActivateLine(dd_bool activating, linetype_t* info, Line* line,
        (!activating && (info->flags2 & LTF2_GROUP_DEACT)))
     {
         XL_TraverseLines(line, LREF_LINE_TAGGED, true, &activating, 0, activator_thing,
-                         de::function_cast<int (*)()>(XLTrav_SmartActivate));
+                         XLTrav_SmartActivate);
     }
 
     // For lines flagged Multiple, quick-(de)activate other lines that have
@@ -2399,7 +2397,7 @@ void XL_ActivateLine(dd_bool activating, linetype_t* info, Line* line,
     if(info->flags2 & LTF2_MULTIPLE)
     {
         XL_TraverseLines(line, LREF_LINE_TAGGED, true, &activating, 0, activator_thing,
-                         de::function_cast<int (*)()>(XLTrav_QuickActivate));
+                         XLTrav_QuickActivate);
     }
 
     // Should we apply the function of the line? Functions are defined by
@@ -2921,7 +2919,7 @@ void XL_Thinker(void *xlThinkerPtr)
         if(info->flags & LTF_TICKER)
         {
             xg->tickerTimer = 0;
-            XL_LineEvent(XLE_TICKER, 0, line, 0, &dummyThing);
+            XL_LineEvent(XLE_TICKER, 0, line, 0, XG_DummyThing());
         }
 
         // How about some forced functions?

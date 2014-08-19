@@ -231,6 +231,9 @@ void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
 int C_DECL XLTrav_LineAngle(Line* line, dd_bool dummy, void* context,
     void* context2, mobj_t* activator)
 {
+    DENG_UNUSED(dummy);
+    DENG_UNUSED(activator);
+
     Sector* sec = (Sector *) context;
     coord_t d1[2];
 
@@ -283,7 +286,7 @@ void XS_SetSectorType(Sector* sec, int special)
 
         // All right, do the init.
         if(!xsec->xg)
-            xsec->xg = Z_Malloc(sizeof(xgsector_t), PU_MAP, 0);
+            xsec->xg = (xgsector_t *) Z_Malloc(sizeof(xgsector_t), PU_MAP, 0);
         memset(xsec->xg, 0, sizeof(*xsec->xg));
 
         // Get the type info.
@@ -344,13 +347,12 @@ void XS_SetSectorType(Sector* sec, int special)
 
         // If there is not already an xsthinker for this sector, create one.
         if(!Thinker_Iterate((thinkfunc_t) XS_Thinker, findXSThinker, sec))
-        {   // Not created one yet.
-            xsthinker_t*    xs = Z_Calloc(sizeof(*xs), PU_MAP, 0);
-
-            xs->thinker.function = (thinkfunc_t) XS_Thinker;
-            Thinker_Add(&xs->thinker);
-
+        {
+            // Not created one yet.
+            ThinkerT<xsthinker_t> xs(Thinker::AllocateMemoryZone);
+            xs.function = XS_Thinker;
             xs->sector = sec;
+            Thinker_Add(xs.Thinker::take());
         }
     }
     else
@@ -387,7 +389,7 @@ void XS_Init(void)
 
         for(i = 0; i < numsectors; ++i)
         {
-            sec = P_ToPtr(DMU_SECTOR, i);
+            sec = (Sector *) P_ToPtr(DMU_SECTOR, i);
             xsec = P_ToXSector(sec);
 
             P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
@@ -484,12 +486,12 @@ void XS_PlaneMover(xgplanemover_t* mover)
         {
             mover->flags &= ~PMF_WAIT;
             // Play a sound.
-            XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+            XS_PlaneSound((Plane *) P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                           mover->startSound);
         }
 
         mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
-        XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+        XS_PlaneSound((Plane *) P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       mover->moveSound);
     }
 
@@ -552,7 +554,7 @@ void XS_PlaneMover(xgplanemover_t* mover)
         }
 
         // Play sound?
-        XS_PlaneSound(P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+        XS_PlaneSound((Plane *) P_GetPtrp(mover->sector, mover->ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       mover->endSound);
     }
     else if(res == crushed)
@@ -608,7 +610,6 @@ static int stopPlaneMover(thinker_t* th, void* context)
  */
 xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
 {
-    xgplanemover_t*     mover;
     stopplanemoverparams_t params;
 
     params.sec = sec;
@@ -616,14 +617,16 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
     Thinker_Iterate((thinkfunc_t) XS_PlaneMover, stopPlaneMover, &params);
 
     // Allocate a new thinker.
-    mover = Z_Calloc(sizeof(*mover), PU_MAP, 0);
-    mover->thinker.function = (thinkfunc_t) XS_PlaneMover;
-    Thinker_Add(&mover->thinker);
+    ThinkerT<xgplanemover_t> mover(Thinker::AllocateMemoryZone);
+    mover.function = (thinkfunc_t) XS_PlaneMover;
 
-    mover->sector = sec;
-    mover->ceiling = ceiling;
+    xgplanemover_t *th = mover.take();
+    th->sector = sec;
+    th->ceiling = ceiling;
 
-    return mover;
+    Thinker_Add(&th->thinker);
+
+    return th;
 }
 
 void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling,
@@ -736,8 +739,8 @@ int XS_TextureHeight(Line* line, int part)
     Side* side;
     int snum = 0;
     int minfloor = 0, maxfloor = 0, maxceil = 0;
-    Sector* front = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    Sector* back = P_GetPtrp(line, DMU_BACK_SECTOR);
+    Sector* front = (Sector *) P_GetPtrp(line, DMU_FRONT_SECTOR);
+    Sector* back  = (Sector *) P_GetPtrp(line, DMU_BACK_SECTOR);
     dd_bool twosided = front && back;
     Material* mat;
 
@@ -782,25 +785,25 @@ int XS_TextureHeight(Line* line, int part)
 
     // Which side are we working with?
     if(snum == 0)
-        side = P_GetPtrp(line, DMU_FRONT);
+        side = (Side *) P_GetPtrp(line, DMU_FRONT);
     else
-        side = P_GetPtrp(line, DMU_BACK);
+        side = (Side *) P_GetPtrp(line, DMU_BACK);
 
     // Which section of the wall?
     switch(part)
     {
     case LWS_UPPER:
-        if((mat = P_GetPtrp(side, DMU_TOP_MATERIAL)))
+        if((mat = (Material *) P_GetPtrp(side, DMU_TOP_MATERIAL)))
             return maxceil - P_GetIntp(mat, DMU_HEIGHT);
         break;
 
     case LWS_MID:
-        if((mat = P_GetPtrp(side, DMU_MIDDLE_MATERIAL)))
+        if((mat = (Material *) P_GetPtrp(side, DMU_MIDDLE_MATERIAL)))
             return maxfloor + P_GetIntp(mat, DMU_HEIGHT);
         break;
 
     case LWS_LOWER:
-        if((mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL)))
+        if((mat = (Material *) P_GetPtrp(side, DMU_BOTTOM_MATERIAL)))
             return minfloor + P_GetIntp(mat, DMU_HEIGHT);
         break;
 
@@ -831,7 +834,7 @@ Sector *XS_FindTagged(int tag)
 
     for(k = 0; k < numsectors; ++k)
     {
-        sec = P_ToPtr(DMU_SECTOR, k);
+        sec = (Sector *) P_ToPtr(DMU_SECTOR, k);
         if(P_ToXSector(sec)->tag == tag)
         {
             if(xgDev)
@@ -879,7 +882,7 @@ Sector *XS_FindActTagged(int tag)
 
     for(k = 0; k < numsectors; ++k)
     {
-        sec = P_ToPtr(DMU_SECTOR, k);
+        sec = (Sector *) P_ToPtr(DMU_SECTOR, k);
         xsec = P_ToXSector(sec);
         if(xsec->xg)
         {
@@ -1057,7 +1060,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     case SPREF_INDEX_CEILING:
         if(!refdata || *refdata >= numsectors)
             return false;
-        iter = P_ToPtr(DMU_SECTOR, *refdata);
+        iter = (Sector *) P_ToPtr(DMU_SECTOR, *refdata);
         break;
 
     default:
@@ -1096,7 +1099,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
         if(!actline)
             return false;
 
-        frontsector = P_GetPtrp(actline, DMU_FRONT_SECTOR);
+        frontsector = (Sector *) P_GetPtrp(actline, DMU_FRONT_SECTOR);
 
         if(!frontsector)
             return false;
@@ -1118,7 +1121,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
         if(!actline)
             return false;
 
-        backsector = P_GetPtrp(actline, DMU_BACK_SECTOR);
+        backsector = (Sector *) P_GetPtrp(actline, DMU_BACK_SECTOR);
 
         if(!backsector)
             return false;
@@ -1141,7 +1144,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
         if(!actline)
             return false;
 
-        frontsector = P_GetPtrp(actline, DMU_FRONT_SECTOR);
+        frontsector = (Sector *) P_GetPtrp(actline, DMU_FRONT_SECTOR);
 
         if(!frontsector)
             return false;
@@ -1163,7 +1166,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
         if(!actline)
             return false;
 
-        backsector = P_GetPtrp(actline, DMU_BACK_SECTOR);
+        backsector = (Sector *) P_GetPtrp(actline, DMU_BACK_SECTOR);
 
         if(!backsector)
             return false;
@@ -1250,53 +1253,53 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     {
         otherSec = P_FindSectorSurroundingHighestCeiling(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_HIGHEST_FLOOR)
     {
         otherSec = P_FindSectorSurroundingHighestFloor(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_CEILING)
     {
         otherSec = P_FindSectorSurroundingLowestCeiling(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_FLOOR)
     {
         otherSec = P_FindSectorSurroundingLowestFloor(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
     else if(ref == SPREF_NEXT_HIGHEST_CEILING)
     {
         otherSec = P_FindSectorSurroundingNextHighestCeiling(sector,
                         P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_NEXT_HIGHEST_FLOOR)
     {
         otherSec = P_FindSectorSurroundingNextHighestFloor(sector,
                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
     else if(ref == SPREF_NEXT_LOWEST_CEILING)
     {
         otherSec = P_FindSectorSurroundingNextLowestCeiling(sector,
                         P_GetDoublep(sector, DMU_CEILING_HEIGHT), &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_NEXT_LOWEST_FLOOR)
     {
         otherSec = P_FindSectorSurroundingNextLowestFloor(sector,
                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), &otherHeight);
         if(otherSec)
-            otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+            otherMat = (Material *) P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }
 
     // The requested plane was not found.
@@ -1324,7 +1327,11 @@ int C_DECL XSTrav_HighestSectorType(Sector *sec, dd_bool ceiling,
                                     void *context, void *context2,
                                     mobj_t *activator)
 {
-    int        *type = context2;
+    DENG_UNUSED(ceiling);
+    DENG_UNUSED(context);
+    DENG_UNUSED(activator);
+
+    int        *type = (int *) context2;
     xsector_t  *xsec = P_ToXSector(sec);
 
     if(xsec->special > *type)
@@ -1345,6 +1352,8 @@ void XS_InitMovePlane(Line *line)
 int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
                             void *context2, mobj_t *activator)
 {
+    DENG_UNUSED(activator);
+
     Line*           line = (Line *) context;
     linetype_t*     info = (linetype_t *) context2;
     xgplanemover_t* mover;
@@ -1399,7 +1408,9 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
 
     // Change texture at end?
     if(info->iparm[9] == SPREF_NONE || info->iparm[9] == SPREF_SPECIAL)
-        mover->setMaterial = P_ToPtr(DMU_MATERIAL, info->iparm[10]);
+    {
+        mover->setMaterial = (Material *) P_ToPtr(DMU_MATERIAL, info->iparm[10]);
+    }
     else
     {
         if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setMaterial, 0))
@@ -1421,12 +1432,14 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
 
     // Do start stuff. Play sound?
     if(playsound)
-        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+        XS_PlaneSound((Plane *) P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       info->iparm[4]);
 
     // Change texture at start?
     if(info->iparm[7] == SPREF_NONE || info->iparm[7] == SPREF_SPECIAL)
-        mat = P_ToPtr(DMU_MATERIAL, info->iparm[8]);
+    {
+        mat = (Material *) P_ToPtr(DMU_MATERIAL, info->iparm[8]);
+    }
     else
     {
         if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &mat, 0))
@@ -1478,7 +1491,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
     return true; // Keep looking...
 }
 
-void XS_InitStairBuilder(Line *line)
+void XS_InitStairBuilder(Line *)
 {
     int i;
     for(i = 0; i < numsectors; ++i)
@@ -1545,7 +1558,7 @@ dd_bool XS_DoBuild(Sector* sector, dd_bool ceiling, Line* origin,
     {
         mover->timer = XG_RandomInt(mover->minInterval, mover->maxInterval);
         // Play step start sound immediately.
-        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+        XS_PlaneSound((Plane *) P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       info->iparm[5]);
     }
 
@@ -1553,7 +1566,7 @@ dd_bool XS_DoBuild(Sector* sector, dd_bool ceiling, Line* origin,
     if(stepcount != 0)
     {
         // Start building start sound.
-        XS_PlaneSound(P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
+        XS_PlaneSound((Plane *) P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       info->iparm[4]);
     }
 
@@ -1579,11 +1592,11 @@ int spreadBuild(void *ptr, void *context)
     spreadbuildparams_t *params = (spreadbuildparams_t*) context;
     Sector              *frontSec, *backSec;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    frontSec = (Sector *) P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
         return false;
 
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    backSec = (Sector *) P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
         return false;
 
@@ -1661,7 +1674,7 @@ static dd_bool spreadBuildToNeighborAll(Line *origin, linetype_t *info,
         xsec->blFlags |= BL_SPREADED;
 
         // Any 2-sided lines facing the right way?
-        sec = P_ToPtr(DMU_SECTOR, i);
+        sec = (Sector *) P_ToPtr(DMU_SECTOR, i);
 
         params.baseSec = sec;
         params.spreaded = 0;
@@ -1696,11 +1709,11 @@ int findBuildNeighbor(void* ptr, void* context)
     Sector*             frontSec, *backSec;
     int                 idx;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    frontSec = (Sector *) P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec || frontSec != params->baseSec)
         return false;
 
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    backSec = (Sector *) P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
         return false;
 
@@ -1765,7 +1778,7 @@ dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
         xsec->blFlags |= BL_SPREADED;
 
         // Any 2-sided lines facing the right way?
-        sec = P_ToPtr(DMU_SECTOR, i);
+        sec = (Sector *) P_ToPtr(DMU_SECTOR, i);
 
         params.baseSec = sec;
         params.foundIDX = numlines;
@@ -1784,11 +1797,11 @@ dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
 }
 
 int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
-    void *context2, mobj_t *activator)
+                              void *context2, mobj_t *activator)
 {
     uint stepCount   = 0;
     Line *origin     = (Line *) context;
-    linetype_t *info = context2;
+    linetype_t *info = (linetype_t *) context2;
     Sector *foundSec = 0;
     dd_bool picstop  = info->iparm[2] != 0;
     dd_bool spread   = info->iparm[3] != 0;
@@ -1802,8 +1815,8 @@ int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
     // i2: (true/false) stop when texture changes
     // i3: (true/false) spread build?
 
-    myMat = ceiling ? P_GetPtrp(sector, DMU_CEILING_MATERIAL) :
-                      P_GetPtrp(sector, DMU_FLOOR_MATERIAL);
+    myMat = (Material *) (ceiling ? P_GetPtrp(sector, DMU_CEILING_MATERIAL) :
+                                    P_GetPtrp(sector, DMU_FLOOR_MATERIAL));
 
     // Apply to first step.
     XS_DoBuild(sector, ceiling, origin, info, 0);
@@ -1849,9 +1862,13 @@ int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
 }
 
 int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
-    void* context2, mobj_t* activator)
+                              void* context2, mobj_t* activator)
 {
-    linetype_t* info = context2;
+    DENG_UNUSED(activator);
+    DENG_UNUSED(context);
+    DENG_UNUSED(ceiling);
+
+    linetype_t* info = (linetype_t *) context2;
 
     /// @c 0= sector
     /// @c 1= floor plane
@@ -1862,7 +1879,7 @@ int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
     }
     else
     {
-        Plane* plane = P_GetPtrp(sec, info->iparm[3] == 2? DMU_CEILING_PLANE : DMU_FLOOR_PLANE);
+        Plane* plane = (Plane *) P_GetPtrp(sec, info->iparm[3] == 2? DMU_CEILING_PLANE : DMU_FLOOR_PLANE);
         XS_PlaneSound(plane, info->iparm[2]);
     }
 
@@ -1873,8 +1890,10 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
                                 void *context, void *context2,
                                 mobj_t *activator)
 {
+    DENG_UNUSED(activator);
+
     Line*           line = (Line *) context;
-    linetype_t*     info = context2;
+    linetype_t*     info = (linetype_t *) context2;
     Material*       mat;
     float           rgb[3];
 
@@ -1885,7 +1904,7 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
     // i6: blue
     if(info->iparm[2] == SPREF_NONE)
     {
-        mat = P_ToPtr(DMU_MATERIAL, info->iparm[3]);
+        mat = (Material *) P_ToPtr(DMU_MATERIAL, info->iparm[3]);
     }
     else
     {
@@ -1904,25 +1923,25 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
     return true;
 }
 
-int C_DECL XSTrav_SectorType(Sector* sec, dd_bool ceiling,
-                             void* context, void* context2,
-                             mobj_t* activator)
+int C_DECL XSTrav_SectorType(Sector* sec, dd_bool /*ceiling*/,
+                             void* /*context*/, void* context2,
+                             mobj_t* /*activator*/)
 {
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t *) context2;
 
     XS_SetSectorType(sec, info->iparm[2]);
     return true;
 }
 
-int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
+int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool /*ceiling*/,
                               void* context, void* context2,
-                              mobj_t* activator)
+                              mobj_t* /*activator*/)
 {
     Line*               line = (Line *) context;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t *) context2;
     int                 num;
     float               usergb[3];
-    float               lightLevel;
+    float               lightLevel = 0;
 
     // i2: (true/false) set level
     // i3: (true/false) set RGB
@@ -1937,21 +1956,21 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
     {
         switch(info->iparm[4])
         {
+        default:
         case LIGHTREF_NONE:
             lightLevel = 0;
             break;
 
         case LIGHTREF_MY:
             {
-            Sector             *frontSec =
-                P_GetPtrp(line, DMU_FRONT_SECTOR);
+            Sector *frontSec = (Sector *) P_GetPtrp(line, DMU_FRONT_SECTOR);
             lightLevel = P_GetFloatp(frontSec, DMU_LIGHT_LEVEL);
             }
             break;
 
         case LIGHTREF_BACK:
             {
-            Sector             *backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
+            Sector *backSec = (Sector *) P_GetPtrp(line, DMU_BACK_SECTOR);
             if(backSec)
                 lightLevel = P_GetFloatp(backSec, DMU_LIGHT_LEVEL);
             }
@@ -1975,8 +1994,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
 
         case LIGHTREF_NEXT_HIGHEST:
             {
-            float               currentLevel =
-                P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+            float currentLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
             P_FindSectorSurroundingNextHighestLight(sector, currentLevel, &lightLevel);
             if(lightLevel < currentLevel)
                 lightLevel = currentLevel;
@@ -1985,15 +2003,11 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
 
         case LIGHTREF_NEXT_LOWEST:
             {
-            float               currentLevel =
-                P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+            float currentLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
             P_FindSectorSurroundingNextLowestLight(sector, currentLevel, &lightLevel);
             if(lightLevel > currentLevel)
                 lightLevel = currentLevel;
             }
-            break;
-
-        default:
             break;
         }
 
@@ -2016,14 +2030,14 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
         {
         case LIGHTREF_MY:
             {
-            Sector* sector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+            Sector *sector = (Sector *) P_GetPtrp(line, DMU_FRONT_SECTOR);
 
             P_GetFloatpv(sector, DMU_COLOR, usergb);
             break;
             }
         case LIGHTREF_BACK:
             {
-            Sector* sector = P_GetPtrp(line, DMU_BACK_SECTOR);
+            Sector *sector = (Sector *) P_GetPtrp(line, DMU_BACK_SECTOR);
 
             if(sector)
                 P_GetFloatpv(sector, DMU_COLOR, usergb);
@@ -2057,12 +2071,12 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool ceiling,
     return true;
 }
 
-int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool ceiling,
+int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
                               void *context, void *context2,
-                              mobj_t *activator)
+                              mobj_t * /*activator*/)
 {
     Line *line = (Line *) context;
-    linetype_t *info = context2;
+    linetype_t *info = (linetype_t *) context2;
     Sector *from = NULL;
     int refdata;
 
@@ -2119,12 +2133,12 @@ int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool ceiling,
     return true;
 }
 
-int C_DECL XSTrav_Teleport(Sector* sector, dd_bool ceiling, void* context,
+int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*/,
                            void* context2, mobj_t* thing)
 {
     mobj_t*         mo = NULL;
     dd_bool         ok = false;
-    linetype_t*     info = context2;
+    linetype_t*     info = (linetype_t *) context2;
 
     // Don't teleport things marked noteleport!
     if(thing->flags2 & MF2_NOTELEPORT)
@@ -2134,7 +2148,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool ceiling, void* context,
         return false;
     }
 
-    for(mo = P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->sNext)
+    for(mo = (mobj_t *) P_GetPtrp(sector, DMT_MOBJS); mo; mo = mo->sNext)
     {
         thinker_t *th = (thinker_t*) mo;
 
@@ -2614,7 +2628,7 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
     // Prepare the dummies to use for the event.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
+    xdummyLine->xg = (xgline_t *) Z_Calloc(sizeof(xgline_t), PU_MAP, 0);
 
     P_SetPtrp(dummyLine, DMU_FRONT_SECTOR, sec);
 
@@ -2822,8 +2836,9 @@ void XS_ConstrainPlaneOffset(float *offset)
 /**
  * XG sectors get to think.
  */
-void XS_Thinker(xsthinker_t* xs)
+void XS_Thinker(void *xsThinker)
 {
+    xsthinker_t* xs = (xsthinker_t *) xsThinker;
     Sector* sector = xs->sector;
     xsector_t* xsector = P_ToXSector(sector);
     xgsector_t* xg;
@@ -3021,7 +3036,7 @@ void XS_Update(void)
     // It's all PU_MAP memory, so we can just lose it.
     for(i = 0; i < numsectors; ++i)
     {
-        xsec = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        xsec = P_ToXSector((Sector *) P_ToPtr(DMU_SECTOR, i));
         if(xsec->xg)
         {
             xsec->xg = 0;
@@ -3035,6 +3050,8 @@ void XS_Update(void)
  */
 D_CMD(MovePlane)
 {
+    DENG_UNUSED(src);
+
     dd_bool isCeiling = !stricmp(argv[0], "moveceil");
     dd_bool isBoth = !stricmp(argv[0], "movesec");
     dd_bool isOffset = false, isCrusher = false;
@@ -3090,7 +3107,7 @@ D_CMD(MovePlane)
         {   // Find the first sector with the tag.
             IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
             IterList_RewindIterator(list);
-            while((sec = IterList_MoveIterator(list)) != NULL)
+            while((sec = (Sector *) IterList_MoveIterator(list)) != NULL)
             {
                 sector = sec;
                 break;

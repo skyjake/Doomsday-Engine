@@ -1499,12 +1499,6 @@ void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOCAL_MOBJ_STATE, Writer_Data(msg), Writer_Size(msg));
 }
 
-void P_Telefrag(mobj_t *thing)
-{
-    DENG2_ASSERT(thing != 0);
-    P_TeleportMove(thing, thing->origin[VX], thing->origin[VY], false);
-}
-
 /**
  * Handles the console commands "startcycle" and "endcycle".
  */

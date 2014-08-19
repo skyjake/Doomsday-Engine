@@ -224,6 +224,12 @@ dd_bool P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, dd_bool alwaysStomp)
     return true; // Success.
 }
 
+void P_Telefrag(mobj_t *thing)
+{
+    DENG2_ASSERT(thing != 0);
+    P_TeleportMove(thing, thing->origin[VX], thing->origin[VY], false);
+}
+
 void P_TelefragMobjsTouchingPlayers()
 {
     for(uint i = 0; i < MAXPLAYERS; ++i)

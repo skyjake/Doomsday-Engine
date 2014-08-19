@@ -70,41 +70,6 @@ void G_ConsoleRegistration()
     C_VAR_BYTE ("view-bob-weapon-switch-lower",         &cfg.bobWeaponLower,                0, 0, 1);
     C_VAR_FLOAT("view-filter-strength",                 &cfg.filterStrength,                0, 0, 1);
 
-    // Server-side options
-    // Game state
-    C_VAR_BYTE ("server-game-skill",                    &cfg.netSkill,                      0, 0, 4);
-    C_VAR_BYTE ("server-game-map",                      &cfg.netMap,                        CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE ("server-game-deathmatch",               &cfg.netDeathmatch,                 0, 0, 2);
-
-    // Modifiers
-    C_VAR_BYTE ("server-game-mod-damage",               &cfg.netMobDamageModifier,          0, 1, 100);
-    C_VAR_BYTE ("server-game-mod-health",               &cfg.netMobHealthModifier,          0, 1, 20);
-
-    C_VAR_INT  ("server-game-mod-gravity",              &cfg.netGravity,                    0, -1, 100);
-
-    // Items
-    C_VAR_BYTE ("server-game-nobfg",                    &cfg.noNetBFG,                      0, 0, 1);
-#if 0
-    C_VAR_BYTE ("server-game-coop-nothing",             &cfg.noCoopAnything,                0, 0, 1); // not implemented atm, see P_SpawnMobjXYZ
-#endif
-    C_VAR_BYTE ("server-game-coop-respawn-items",       &cfg.coopRespawnItems,              0, 0, 1);
-    C_VAR_BYTE ("server-game-coop-noweapons",           &cfg.noCoopWeapons,                 0, 0, 1);
-
-    // Gameplay options
-    C_VAR_BYTE ("server-game-jump",                     &cfg.netJumping,                    0, 0, 1);
-    C_VAR_BYTE ("server-game-bfg-freeaim",              &cfg.netBFGFreeLook,                0, 0, 1);
-    C_VAR_BYTE ("server-game-nomonsters",               &cfg.netNoMonsters,                 0, 0, 1);
-    C_VAR_BYTE ("server-game-respawn",                  &cfg.netRespawn,                    0, 0, 1);
-    C_VAR_BYTE ("server-game-radiusattack-nomaxz",      &cfg.netNoMaxZRadiusAttack,         0, 0, 1);
-    C_VAR_BYTE ("server-game-monster-meleeattack-nomaxz", &cfg.netNoMaxZMonsterMeleeAttack, 0, 0, 1);
-
-    C_VAR_BYTE ("server-game-coop-nodamage",            &cfg.noCoopDamage,                  0, 0, 1);
-    C_VAR_BYTE ("server-game-noteamdamage",             &cfg.noTeamDamage,                  0, 0, 1);
-
-    // Misc
-    C_VAR_BYTE ("server-game-deathmatch-killmsg",       &cfg.killMessages,                  0, 0, 1);
-    C_VAR_BYTE ("server-game-announce-secret",          &cfg.secretMsg,                     0, 0, 1);
-
     // Player
     // Player data
     C_VAR_BYTE ("player-color",                         &cfg.netColor,                      0, 0, 4);

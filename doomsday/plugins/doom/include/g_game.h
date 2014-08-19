@@ -61,7 +61,7 @@ extern wbstartstruct_t wmInfo;
 extern "C" {
 #endif
 
-void G_Register(void);
+void G_ConsoleRegister(void);
 
 void G_CommonPreInit(void);
 

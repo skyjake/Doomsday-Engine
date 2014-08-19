@@ -157,7 +157,7 @@ extern "C" {
 void XS_Init(void);
 void XS_Update(void);
 
-void XS_Thinker(xsthinker_t* xs);
+void XS_Thinker(void *xsThinker);
 
 coord_t XS_Gravity(Sector *sector);
 coord_t XS_Friction(Sector *sector);
