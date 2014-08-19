@@ -1082,10 +1082,9 @@ void G_AutoStartOrBeginTitleLoop()
         if(startEpisodeId.isEmpty())
         {
             // Pick the first playable episode.
-            auto const &episodesById = Defs().episodes.lookup("id").elements();
-            DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
+            for(auto const &pair : Defs().episodes.lookup("id").elements())
             {
-                Record const &episodeDef = *i->second->as<RecordValue>().record();
+                Record const &episodeDef = *pair.second->as<RecordValue>().record();
                 de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
                 if(P_MapExists(startMap.compose().toUtf8().constData()))
                 {
@@ -3188,11 +3187,9 @@ D_CMD(WarpMap)
     // Otherwise if only one playable episode is defined - select it.
     if(episodeId.isEmpty())
     {
-        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-        DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
+        for(auto const &pair : Defs().episodes.lookup("id").elements())
         {
-            Record const &episodeDef = *i->second->as<RecordValue>().record();
-
+            Record const &episodeDef = *pair.second->as<RecordValue>().record();
             de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
             if(!P_MapExists(startMap.compose().toUtf8().constData()))
             {

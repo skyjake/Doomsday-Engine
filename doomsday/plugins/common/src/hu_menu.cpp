@@ -3007,10 +3007,9 @@ void Hu_MenuInitEpisodePage()
 
     int y = 0;
     int n = 0;
-    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-    DENG2_FOR_EACH_CONST(DictionaryValue::Elements, i, episodesById)
+    for(auto const &pair : Defs().episodes.lookup("id").elements())
     {
-        Record const &episodeDef = *i->second->as<RecordValue>().record();
+        Record const &episodeDef = *pair.second->as<RecordValue>().record();
 
         ButtonWidget *btn = new ButtonWidget;
 

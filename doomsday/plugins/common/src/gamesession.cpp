@@ -841,15 +841,16 @@ de::Uri GameSession::mapUriForNamedExit(String name)
     {
         // Build a lookup table mapping exit ids to exit records.
         QMap<String, Record const *> exits;
-        foreach(Value *mapIt, mgNode->geta("exit").elements())
+        for(Value const *value : mgNode->geta("exit").elements())
         {
-            Record const &exit = mapIt->as<RecordValue>().dereference();
+            Record const &exit = value->as<RecordValue>().dereference();
             String id = exit.gets("id");
             if(!id.isEmpty())
             {
                 exits.insert(id, &exit);
             }
         }
+        //qDebug() << "map exits" << exits;
 
         // Locate the named exit record.
         Record const *chosenExit = 0;
