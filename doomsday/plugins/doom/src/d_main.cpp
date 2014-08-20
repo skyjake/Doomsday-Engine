@@ -394,14 +394,11 @@ void D_PostInit()
     /// @todo Do this properly!
     ::borderGraphics[0] = (::gameModeBits & GM_ANY_DOOM2)? "Flats:GRNROCK" : "Flats:FLOOR7_2";
 
-    // Common post init routine
     G_CommonPostInit();
 
-    // Initialize ammo info.
     P_InitAmmoInfo();
-
-    // Initialize weapon info.
     P_InitWeaponInfo();
+    WI_Init();
 
     // Game parameters.
     ::monsterInfight = GetDefInt("AI|Infight", 0);

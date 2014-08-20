@@ -64,7 +64,7 @@ struct wbstartstruct_t
 };
 
 /// To be called to register the console commands and variables of this module.
-void WI_Register();
+void WI_ConsoleRegister();
 
 /**
  * Begin the intermission using the given game session and player configuration.

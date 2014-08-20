@@ -134,7 +134,7 @@ static Point2Raw YAHspot[3][9] = {
      }
 };
 
-void WI_Register()
+void WI_ConsoleRegister()
 {
     C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
     C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);

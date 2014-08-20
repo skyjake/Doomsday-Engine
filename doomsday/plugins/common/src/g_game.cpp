@@ -556,7 +556,7 @@ void G_CommonPreInit()
     GUI_Register();              // For the UI library.
     Hu_MsgRegister();            // For the game messages.
     ST_Register();               // For the hud/statusbar.
-    WI_Register();               // For the interlude/intermission.
+    WI_ConsoleRegister();               // For the interlude/intermission.
     X_Register();                // For the crosshair.
     FI_StackRegister();          // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -2314,7 +2314,7 @@ static int prepareIntermission(void * /*context*/)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    WI_Init(wmInfo);
+    WI_Begin(wmInfo);
 #elif __JHERETIC__
     IN_Init(wmInfo);
 #else /* __JHEXEN__ */

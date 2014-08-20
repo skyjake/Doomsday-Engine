@@ -31,7 +31,7 @@ extern dd_bool intermission;
 extern int interState;
 
 /// To be called to register the console commands and variables of this module.
-void WI_Register();
+void WI_ConsoleRegister();
 
 void IN_Init();
 void IN_Stop();

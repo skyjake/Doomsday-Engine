@@ -106,7 +106,7 @@ struct wbstartstruct_t
 };
 
 /// To be called to register the console commands and variables of this module.
-void WI_Register();
+void WI_ConsoleRegister();
 
 /**
  * Begin the intermission using the given game session and player configuration.
@@ -116,7 +116,7 @@ void WI_Register();
  *                       this structure is @em not modified while the intermission
  *                       is in progress.
  */
-void WI_Init(wbstartstruct_t const &wbstartstruct);
+void WI_Begin(wbstartstruct_t const &wbstartstruct);
 
 /**
  * Process game tic for the intermission.

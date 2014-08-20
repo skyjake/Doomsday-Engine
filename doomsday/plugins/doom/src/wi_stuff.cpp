@@ -25,146 +25,249 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
+#include <QList>
+#include "d_net.h"
 #include "gamesession.h"
 #include "hu_stuff.h"
-#include "d_net.h"
 #include "p_mapsetup.h"
 #include "p_start.h"
 
 using namespace de;
 
-#define MAX_ANIM_FRAMES         (3)
-#define NUMMAPS                 (9)
-
-/// @todo fixme: Episodes are now identified with textual ids! -ds
-static inline int episodeNumber()
+namespace internal
 {
-    return COMMON_GAMESESSION->episodeId().toInt() - 1;
+    struct TeamInfo
+    {
+        int playerCount;      ///< @c 0= team not present.
+        int frags[NUMTEAMS];
+        int totalFrags;       ///< Kills minus suicides.
+        int items;
+        int kills;
+        int secret;
+    };
+    static TeamInfo teamInfo[NUMTEAMS];
+
+    struct Animation
+    {
+        Vector2i origin;              ///< Location origin of the animation on the map.
+        int tics;                     ///< Number of tics each frame of the animation lasts for.
+        StringList patchNames;        ///< For each frame of the animation.
+        de::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
+        interludestate_t beginState;  ///< State at which this animation begins/becomes visible.
+
+        Animation(Vector2i const &origin, int tics, StringList patchNames,
+                  de::Uri const &mapUri       = de::Uri("Maps:", RC_NULL),
+                  interludestate_t beginState = ILS_SHOW_STATS)
+            : mapUri    (mapUri)
+            , tics      (tics)
+            , origin    (origin)
+            , patchNames(patchNames)
+            , beginState(beginState)
+        {}
+    };
+    typedef QList<Animation> Animations;
+    static Animations episode1Anims;
+    static Animations episode2Anims;
+    static Animations episode3Anims;
+
+    typedef Vector2i Location;
+    typedef QList<Location> Locations;
+    static Locations episode1Locations;
+    static Locations episode2Locations;
+    static Locations episode3Locations;
+
+    struct wianimstate_t
+    {
+        int nextTic;  ///< Next tic on which to progress the animation.
+        int frame;    ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
+
+        /// Graphics for each frame of the animation.
+        typedef QList<patchid_t> Patches;
+        Patches patches;
+    };
+    static wianimstate_t *animStates;
+
+    static patchid_t pBackground;
+    static patchid_t pYouAreHereRight;
+    static patchid_t pYouAreHereLeft;
+    static patchid_t pSplat;
+    static patchid_t pFinished;
+    static patchid_t pEntering;
+    static patchid_t pSecret;
+    static patchid_t pSecretSP;
+    static patchid_t pKills;
+    static patchid_t pItems;
+    static patchid_t pFrags;
+    static patchid_t pTime;
+    static patchid_t pPar;
+    static patchid_t pSucks;
+    static patchid_t pKillers;
+    static patchid_t pVictims;
+    static patchid_t pTotal;
+    static patchid_t pFaceAlive;
+    static patchid_t pFaceDead;
+    static patchid_t pTeamBackgrounds[NUMTEAMS];
+    static patchid_t pTeamIcons[NUMTEAMS];
+
+    /// @todo fixme: Episodes are now identified with textual ids! -ds
+    static inline int episodeNumber()
+    {
+        return COMMON_GAMESESSION->episodeId().toInt() - 1;
+    }
+
+    /// @todo Revise API to select a replacement mode according to the usage context
+    /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
+    static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
+    {
+        return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
+                                         patchId, text);
+    }
+
+    static void drawPercent(int x, int y, int p)
+    {
+        if(p < 0) return;
+
+        Point2Raw origin(x, y);
+        char buf[20]; dd_snprintf(buf, 20, "%i", p);
+        FR_DrawChar3('%', &origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+        FR_DrawText3(buf, &origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+    }
+
+    /**
+     * Display map completion time and par, or "sucks" message if overflow.
+     */
+    static void drawTime(Vector2i origin, int t)
+    {
+        if(t < 0) return;
+
+        if(t <= 61 * 59)
+        {
+            origin.x -= 22;
+
+            int const seconds = t % 60;
+            int const minutes = t / 60 % 60;
+
+            char buf[20];
+            FR_DrawCharXY3(':', origin.x, origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+            if(minutes > 0)
+            {
+                dd_snprintf(buf, 20, "%d", minutes);
+                FR_DrawTextXY3(buf, origin.x, origin.y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+            }
+
+            dd_snprintf(buf, 20, "%02d", seconds);
+            FR_DrawTextXY3(buf, origin.x + FR_CharWidth(':'), origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+
+            return;
+        }
+
+        // "sucks"
+        patchinfo_t info;
+        if(!R_GetPatchInfo(pSucks, &info)) return;
+
+        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vector2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    }
 }
 
-struct wianimdef_t
+using namespace internal;
+
+void WI_Init()
 {
-    de::Uri mapUri;   ///< If path is not zero-length the animation should only be displayed on this map.
-    int tics;         ///< Number of tics each frame of the animation lasts for.
-    Vector2i origin;  ///< Location origin of the animation on the map.
-    int numFrames;    ///< Number of used frames in the animation.
+    // Already been here?
+    if(!episode1Anims.isEmpty()) return;
 
-    /// Names of the patches for each frame of the animation.
-    char const *patchNames[MAX_ANIM_FRAMES];
+    if(gameModeBits & GM_ANY_DOOM2) return;
 
-    /// State at which this animation begins/becomes visible.
-    interludestate_t beginState;
-};
+    episode1Anims
+        << Animation( Vector2i( 224, 104 ), 11, StringList() << String("wia00000") << String("wia00001") << String("wia00002") )
+        << Animation( Vector2i( 184, 160 ), 11, StringList() << String("wia00100") << String("wia00101") << String("wia00102") )
+        << Animation( Vector2i( 112, 136 ), 11, StringList() << String("wia00200") << String("wia00201") << String("wia00202") )
+        << Animation( Vector2i(  72, 112 ), 11, StringList() << String("wia00300") << String("wia00301") << String("wia00302") )
+        << Animation( Vector2i(  88,  96 ), 11, StringList() << String("wia00400") << String("wia00401") << String("wia00402") )
+        << Animation( Vector2i(  64,  48 ), 11, StringList() << String("wia00500") << String("wia00501") << String("wia00502") )
+        << Animation( Vector2i( 192,  40 ), 11, StringList() << String("wia00600") << String("wia00601") << String("wia00602") )
+        << Animation( Vector2i( 136,  16 ), 11, StringList() << String("wia00700") << String("wia00701") << String("wia00702") )
+        << Animation( Vector2i(  80,  16 ), 11, StringList() << String("wia00800") << String("wia00801") << String("wia00802") )
+        << Animation( Vector2i(  64,  24 ), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
-struct wianimstate_t
+    episode1Locations
+        << Vector2i( 185, 164 )
+        << Vector2i( 148, 143 )
+        << Vector2i(  69, 122 )
+        << Vector2i( 209, 102 )
+        << Vector2i( 116,  89 )
+        << Vector2i( 166,  55 )
+        << Vector2i(  71,  56 )
+        << Vector2i( 135,  29 )
+        << Vector2i(  71,  24 );
+
+    episode2Anims
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M1", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M2", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M3", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M4", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M5", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M6", RC_NULL) )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M7", RC_NULL) )
+        << Animation( Vector2i( 192, 144 ), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M8", RC_NULL), ILS_SHOW_NEXTMAP )
+        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M8", RC_NULL) );
+
+    episode2Locations
+        << Vector2i( 254,  25 )
+        << Vector2i(  97,  50 )
+        << Vector2i( 188,  64 )
+        << Vector2i( 128,  78 )
+        << Vector2i( 214,  92 )
+        << Vector2i( 133, 130 )
+        << Vector2i( 208, 136 )
+        << Vector2i( 148, 140 )
+        << Vector2i( 235, 158 );
+
+    episode3Anims
+        << Animation( Vector2i( 104, 168 ), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
+        << Animation( Vector2i(  40, 136 ), 11, StringList() << String("wia20100") << String("wia20101") << String("wia20102") )
+        << Animation( Vector2i( 160,  96 ), 11, StringList() << String("wia20200") << String("wia20201") << String("wia20202") )
+        << Animation( Vector2i( 104,  80 ), 11, StringList() << String("wia20300") << String("wia20301") << String("wia20302") )
+        << Animation( Vector2i( 120,  32 ), 11, StringList() << String("wia20400") << String("wia20401") << String("wia20402") )
+        << Animation( Vector2i(  40,   0 ),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
+
+    episode3Locations
+        << Vector2i( 156, 168 )
+        << Vector2i(  48, 154 )
+        << Vector2i( 174,  95 )
+        << Vector2i( 265,  75 )
+        << Vector2i( 130,  48 )
+        << Vector2i( 279,  23 )
+        << Vector2i( 198,  48 )
+        << Vector2i( 140,  25 )
+        << Vector2i( 281, 136 );
+}
+
+void WI_Shutdown()
 {
-    int nextTic;  ///< Next tic on which to progress the animation.
-    int frame;    ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
+    Z_Free(animStates); animStates = 0;
+}
 
-    /// Graphics for each frame of the animation.
-    patchid_t patches[MAX_ANIM_FRAMES];
-};
-
-struct teaminfo_t
+static Animations const *animationsForEpisode(String const &episodeId)
 {
-    int playerCount;      ///< @c 0= team not present.
-    int frags[NUMTEAMS];
-    int totalFrags;       ///< Kills minus suicides.
-    int items;
-    int kills;
-    int secret;
-};
+    if(episodeId == "1") return &episode1Anims;
+    if(episodeId == "2") return &episode2Anims;
+    if(episodeId == "3") return &episode3Anims;
+    return nullptr; // Not found
+}
 
-static Vector2i const locations[][NUMMAPS] = {
-    {   // Episode 0
-        Vector2i( 185, 164 ),
-        Vector2i( 148, 143 ),
-        Vector2i(  69, 122 ),
-        Vector2i( 209, 102 ),
-        Vector2i( 116,  89 ),
-        Vector2i( 166,  55 ),
-        Vector2i(  71,  56 ),
-        Vector2i( 135,  29 ),
-        Vector2i(  71,  24 )
-    },
-    {   // Episode 1
-        Vector2i( 254,  25 ),
-        Vector2i(  97,  50 ),
-        Vector2i( 188,  64 ),
-        Vector2i( 128,  78 ),
-        Vector2i( 214,  92 ),
-        Vector2i( 133, 130 ),
-        Vector2i( 208, 136 ),
-        Vector2i( 148, 140 ),
-        Vector2i( 235, 158 )
-    },
-    {   // Episode 2
-        Vector2i( 156, 168 ),
-        Vector2i(  48, 154 ),
-        Vector2i( 174,  95 ),
-        Vector2i( 265,  75 ),
-        Vector2i( 130,  48 ),
-        Vector2i( 279,  23 ),
-        Vector2i( 198,  48 ),
-        Vector2i( 140,  25 ),
-        Vector2i( 281, 136 )
-    }
-};
-
-static wianimdef_t const episode0AnimDefs[] = {
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 224, 104 ), 3, { "wia00000", "wia00001", "wia00002" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 184, 160 ), 3, { "wia00100", "wia00101", "wia00102" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 112, 136 ), 3, { "wia00200", "wia00201", "wia00202" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  72, 112 ), 3, { "wia00300", "wia00301", "wia00302" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  88,  96 ), 3, { "wia00400", "wia00401", "wia00402" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  64,  48 ), 3, { "wia00500", "wia00501", "wia00502" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 192,  40 ), 3, { "wia00600", "wia00601", "wia00602" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 136,  16 ), 3, { "wia00700", "wia00701", "wia00702" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  80,  16 ), 3, { "wia00800", "wia00801", "wia00802" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  64,  24 ), 3, { "wia00900", "wia00901", "wia00902" }, ILS_SHOW_STATS }
-};
-
-static wianimdef_t const episode1AnimDefs[] = {
-    { de::Uri("Maps:E2M1", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10000" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M2", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10100" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M3", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10200" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M4", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10300" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M5", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M6", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10500" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M7", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10600" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:E2M8", RC_NULL), 11, Vector2i( 192, 144 ), 3, { "wia10700", "wia10701", "wia10702" }, ILS_SHOW_NEXTMAP },
-    { de::Uri("Maps:E2M8", RC_NULL),  0, Vector2i( 128, 136 ), 1, { "wia10400" }, ILS_SHOW_STATS }
-};
-
-static wianimdef_t const episode2AnimDefs[] = {
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 104, 168 ), 3, { "wia20000", "wia20001", "wia20002" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i(  40, 136 ), 3, { "wia20100", "wia20101", "wia20102" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 160,  96 ), 3, { "wia20200", "wia20201", "wia20202" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 104,  80 ), 3, { "wia20300", "wia20301", "wia20302" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL), 11, Vector2i( 120,  32 ), 3, { "wia20400", "wia20401", "wia20402" }, ILS_SHOW_STATS },
-    { de::Uri("Maps:", RC_NULL),  8, Vector2i(  40,   0 ), 3, { "wia20500", "wia20501", "wia20502" }, ILS_SHOW_STATS }
-};
-
-static int const animCounts[] = {
-    sizeof(episode0AnimDefs) / sizeof(wianimdef_t),
-    sizeof(episode1AnimDefs) / sizeof(wianimdef_t),
-    sizeof(episode2AnimDefs) / sizeof(wianimdef_t)
-};
-
-static wianimdef_t const *animDefs[] = {
-    episode0AnimDefs,
-    episode1AnimDefs,
-    episode2AnimDefs
-};
-
-static wianimstate_t *animStates;
-
-static teaminfo_t teamInfo[NUMTEAMS];
+static Locations const *locationsForEpisode(String const &episodeId)
+{
+    if(episodeId == "1") return &episode1Locations;
+    if(episodeId == "2") return &episode2Locations;
+    if(episodeId == "3") return &episode3Locations;
+    return nullptr; // Not found
+}
 
 // Used to accelerate or skip a stage.
-static dd_bool advanceState;
+static bool advanceState;
 
-static dd_bool drawYouAreHere;
+static bool drawYouAreHere;
 
 static int spState, dmState, ngState;
 
@@ -193,47 +296,6 @@ static int cntPause;
 static wbstartstruct_t const *wbs;
 static wbplayerstruct_t const *inPlayerInfo;
 
-static patchid_t pBackground;
-static patchid_t pYouAreHereRight;
-static patchid_t pYouAreHereLeft;
-static patchid_t pSplat;
-static patchid_t pFinished;
-static patchid_t pEntering;
-static patchid_t pSecret;
-static patchid_t pSecretSP;
-static patchid_t pKills;
-static patchid_t pItems;
-static patchid_t pFrags;
-static patchid_t pTime;
-static patchid_t pPar;
-static patchid_t pSucks;
-static patchid_t pKillers;
-static patchid_t pVictims;
-static patchid_t pTotal;
-static patchid_t pFaceAlive;
-static patchid_t pFaceDead;
-static patchid_t pTeamBackgrounds[NUMTEAMS];
-static patchid_t pTeamIcons[NUMTEAMS];
-
-/// @todo Revise API to select a replacement mode according to the usage context
-/// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
-static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
-{
-    return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
-                                     patchId, text);
-}
-
-void WI_Register()
-{
-    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
-}
-
-void IN_SkipToNext()
-{
-    advanceState = true;
-}
-
 static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
@@ -246,16 +308,17 @@ static void drawBackground()
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        for(int i = 0; i < animCounts[episodeNumber()]; ++i)
+        Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+        for(int i = 0; i < anims->count(); ++i)
         {
-            wianimdef_t const *def = &animDefs[episodeNumber()][i];
-            wianimstate_t *state   = &animStates[i];
+            Animation const &def = (*anims)[i];
+            wianimstate_t *state = &animStates[i];
 
             // Has the animation begun yet?
             if(state->frame < 0) continue;
 
             patchid_t patchId = state->patches[state->frame];
-            WI_DrawPatch(patchId, patchReplacementText(patchId), def->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, patchReplacementText(patchId), def.origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
 
@@ -264,6 +327,8 @@ static void drawBackground()
 
 static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
+    DENG2_ASSERT(!wbs->currentMap.isEmpty());
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
@@ -271,13 +336,15 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-    // Draw <MapName>
-    patchid_t const patchId   = G_MapTitlePatch(wbs->currentMap);
-    de::String const mapTitle = G_MapTitle(wbs->currentMap);
-    WI_DrawPatch(patchId, patchReplacementText(patchId, mapTitle.toUtf8().constData()), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    // Draw map title.
+    String const title         = G_MapTitle(wbs->currentMap);
+    patchid_t const titlePatch = G_MapTitlePatch(wbs->currentMap);
+    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title.toUtf8().constData()), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
-    if(R_GetPatchInfo(patchId, &info))
+    if(R_GetPatchInfo(titlePatch, &info))
+    {
         origin.y += (5 * info.geometry.size.height) / 4;
+    }
 
     // Draw "Finished!"
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
@@ -288,6 +355,8 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
 
 static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
+    if(wbs->nextMap.isEmpty()) return;
+
     /// @kludge We need to properly externalize the map progression.
     if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) &&
        wbs->nextMap.path() == "MAP31")
@@ -296,9 +365,6 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     }
     /// kludge end.
 
-    // See if there is a map name...
-    String mapTitle = G_MapTitle(wbs->nextMap);
-
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
@@ -306,17 +372,19 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    // Draw "Entering"
+    // Draw "Entering".
     WI_DrawPatch(pEntering, patchReplacementText(pEntering), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
+    // Draw map title.
+    String const title         = G_MapTitle(wbs->nextMap);
+    patchid_t const titlePatch = G_MapTitlePatch(wbs->nextMap);
     patchinfo_t info;
-    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->nextMap);
-    if(R_GetPatchInfo(mapTitlePatch, &info))
+    if(R_GetPatchInfo(titlePatch, &info))
+    {
         origin.y += (5 * info.geometry.size.height) / 4;
-
-    // Draw map.
+    }
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()),
+    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title.toUtf8().constData()),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -363,31 +431,32 @@ static void beginAnimations()
 
     if(episodeNumber() > 2) return;
 
-    for(int i = 0; i < animCounts[episodeNumber()]; ++i)
+    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    for(int i = 0; i < anims->count(); ++i)
     {
-        wianimdef_t const *def = &animDefs[episodeNumber()][i];
-        wianimstate_t *state   = &animStates[i];
+        Animation const &def = (*anims)[i];
+        wianimstate_t *state = &animStates[i];
 
         // Is the animation active for the current map?
-        if(!def->mapUri.path().isEmpty() && wbs->nextMap != def->mapUri)
+        if(!def.mapUri.path().isEmpty() && wbs->nextMap != def.mapUri)
             continue;
 
         // Already begun?
         if(state->frame >= 0) continue;
 
         // Is it time to begin the animation?
-        if(def->beginState != inState) continue;
+        if(def.beginState != inState) continue;
 
         state->frame = 0;
 
         // Determine when to animate the first frame.
-        if(!def->mapUri.path().isEmpty())
+        if(!def.mapUri.path().isEmpty())
         {
-            state->nextTic = backgroundAnimCounter + 1 + def->tics;
+            state->nextTic = backgroundAnimCounter + 1 + def.tics;
         }
         else
         {
-            state->nextTic = backgroundAnimCounter + 1 + (M_Random() % def->tics);
+            state->nextTic = backgroundAnimCounter + 1 + (M_Random() % def.tics);
         }
     }
 }
@@ -398,83 +467,39 @@ static void animateBackground()
 
     if(episodeNumber() > 2) return;
 
-    for(int i = 0; i < animCounts[episodeNumber()]; ++i)
+    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    for(int i = 0; i < anims->count(); ++i)
     {
-        wianimdef_t const *def = &animDefs[episodeNumber()][i];
-        wianimstate_t *state   = &animStates[i];
+        Animation const &def = (*anims)[i];
+        wianimstate_t &state = animStates[i];
 
         // Is the animation active for the current map?
-        if(!def->mapUri.path().isEmpty() && wbs->nextMap != def->mapUri)
+        if(!def.mapUri.path().isEmpty() && wbs->nextMap != def.mapUri)
             continue;
 
         // Has the animation begun yet
-        if(state->frame < 0) continue;
+        if(state.frame < 0) continue;
 
         // Time to progress the animation?
-        if(backgroundAnimCounter != state->nextTic) continue;
+        if(backgroundAnimCounter != state.nextTic) continue;
 
-        ++state->frame;
-        if(state->frame >= def->numFrames)
+        ++state.frame;
+        if(state.frame >= def.patchNames.count())
         {
-            if(!def->mapUri.path().isEmpty())
+            if(!def.mapUri.path().isEmpty())
             {
                 // Loop.
-                state->frame = def->numFrames - 1;
+                state.frame = def.patchNames.count() - 1;
             }
             else
             {
                 // Restart.
-                state->frame = 0;
+                state.frame = 0;
             }
         }
 
-        state->nextTic = backgroundAnimCounter + de::max(def->tics, 1);
+        state.nextTic = backgroundAnimCounter + de::max(def.tics, 1);
     }
-}
-
-static void drawPercent(int x, int y, int p)
-{
-    if(p < 0) return;
-
-    Point2Raw origin(x, y);
-    char buf[20]; dd_snprintf(buf, 20, "%i", p);
-    FR_DrawChar3('%', &origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-    FR_DrawText3(buf, &origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
-}
-
-/**
- * Display map completion time and par, or "sucks" message if overflow.
- */
-static void drawTime(Vector2i origin, int t)
-{
-    if(t < 0) return;
-
-    if(t <= 61 * 59)
-    {
-        origin.x -= 22;
-
-        int const seconds = t % 60;
-        int const minutes = t / 60 % 60;
-
-        char buf[20];
-        FR_DrawCharXY3(':', origin.x, origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-        if(minutes > 0)
-        {
-            dd_snprintf(buf, 20, "%d", minutes);
-            FR_DrawTextXY3(buf, origin.x, origin.y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
-        }
-
-        dd_snprintf(buf, 20, "%02d", seconds);
-        FR_DrawTextXY3(buf, origin.x + FR_CharWidth(':'), origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-
-        return;
-    }
-
-    // "sucks"
-    patchinfo_t info;
-    if(!R_GetPatchInfo(pSucks, &info)) return;
-
-    WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vector2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
 }
 
 void WI_End()
@@ -528,40 +553,42 @@ static void tickShowNextMap()
 
 static void drawLocationMarks()
 {
-    if((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3)
+    if(!((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3))
+        return;
+
+    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+    FR_SetFont(FID(GF_FONTB));
+    FR_LoadDefaultAttrib();
+
+    // Draw a splat on taken cities.
+    int last = G_MapNumberFor(wbs->currentMap);
+    if(last == 8) last = G_MapNumberFor(wbs->nextMap) - 1;
+
+    for(int i = 0; i <= last; ++i)
     {
-        DGL_Enable(DGL_TEXTURE_2D);
-        DGL_Color4f(1, 1, 1, 1);
-        FR_SetFont(FID(GF_FONTB));
-        FR_LoadDefaultAttrib();
-
-        // Draw a splat on taken cities.
-        int last = G_MapNumberFor(wbs->currentMap);
-        if(last == 8) last = G_MapNumberFor(wbs->nextMap) - 1;
-
-        for(int i = 0; i <= last; ++i)
-        {
-            drawPatchIfFits(pSplat, locations[episodeNumber()][i]);
-        }
-
-        // Splat the secret map?
-        if(wbs->didSecret)
-        {
-            drawPatchIfFits(pSplat, locations[episodeNumber()][8]);
-        }
-
-        if(drawYouAreHere)
-        {
-            Vector2i const &origin  = locations[episodeNumber()][G_MapNumberFor(wbs->nextMap)];
-            patchid_t const patchId = chooseYouAreHerePatch(origin);
-            if(patchId)
-            {
-                WI_DrawPatch(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-            }
-        }
-
-        DGL_Disable(DGL_TEXTURE_2D);
+        drawPatchIfFits(pSplat, (*locations)[i]);
     }
+
+    // Splat the secret map?
+    if(wbs->didSecret)
+    {
+        drawPatchIfFits(pSplat, (*locations)[8]);
+    }
+
+    if(drawYouAreHere)
+    {
+        Vector2i const &origin  = (*locations)[G_MapNumberFor(wbs->nextMap)];
+        patchid_t const patchId = chooseYouAreHerePatch(origin);
+        if(patchId)
+        {
+            WI_DrawPatch(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+        }
+    }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void initDeathmatchStats()
@@ -1277,19 +1304,20 @@ static void loadData()
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
         pSplat           = R_DeclarePatch("WISPLAT");
 
-        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * animCounts[episodeNumber()], PU_GAMESTATIC);
-        std::memset(animStates, 0, sizeof(*animStates) * animCounts[episodeNumber()]);
+        Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * anims->count(), PU_GAMESTATIC);
+        std::memset(animStates, 0, sizeof(*animStates) * anims->count());
 
-        for(int i = 0; i < animCounts[episodeNumber()]; ++i)
+        for(int i = 0; i < anims->count(); ++i)
         {
-            wianimdef_t const *def = &animDefs[episodeNumber()][i];
-            wianimstate_t *state   = &animStates[i];
+            Animation const &def = (*anims)[i];
+            wianimstate_t &state = animStates[i];
 
-            state->frame = -1; // Not yet begun.
+            state.frame = -1; // Not yet begun.
 
-            for(int k = 0; k < def->numFrames; ++k)
+            for(String const &patchName : def.patchNames)
             {
-                state->patches[k] = R_DeclarePatch(def->patchNames[k]);
+                state.patches << R_DeclarePatch(patchName.toUtf8().constData());
             }
         }
     }
@@ -1362,7 +1390,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     inPlayerInfo = wbs->plyr;
 }
 
-void WI_Init(wbstartstruct_t const &wbstartstruct)
+void WI_Begin(wbstartstruct_t const &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();
@@ -1371,7 +1399,7 @@ void WI_Init(wbstartstruct_t const &wbstartstruct)
     std::memset(teamInfo, 0, sizeof(teamInfo));
     for(int i = 0; i < NUMTEAMS; ++i)
     {
-        teaminfo_t *tin = &teamInfo[i];
+        TeamInfo *tin = &teamInfo[i];
 
         for(int k = 0; k < MAXPLAYERS; ++k)
         {
@@ -1422,11 +1450,6 @@ void WI_Init(wbstartstruct_t const &wbstartstruct)
     }
 }
 
-void WI_Shutdown()
-{
-    Z_Free(animStates); animStates = 0;
-}
-
 void WI_SetState(interludestate_t st)
 {
     switch(st)
@@ -1439,4 +1462,15 @@ void WI_SetState(interludestate_t st)
         DENG2_ASSERT(!"WI_SetState: Unknown intermission state");
         break;
     }
+}
+
+void IN_SkipToNext()
+{
+    advanceState = true;
+}
+
+void WI_ConsoleRegister()
+{
+    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
 }

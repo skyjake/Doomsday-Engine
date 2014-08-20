@@ -103,8 +103,8 @@ struct wbstartstruct_t
     wbplayerstruct_t plyr[MAXPLAYERS];
 };
 
-/// To be called to register the console commands and variables of this module.
-void WI_Register();
+void WI_Init();
+void WI_Shutdown();
 
 /**
  * Begin the intermission using the given game session and player configuration.
@@ -114,9 +114,12 @@ void WI_Register();
  *                       this structure is @em not modified while the intermission
  *                       is in progress.
  */
-void WI_Init(wbstartstruct_t const &wbstartstruct);
+void WI_Begin(wbstartstruct_t const &wbstartstruct);
 
-void WI_Shutdown();
+/**
+ * End the current intermission.
+ */
+void WI_End();
 
 /**
  * Process game tic for the intermission.
@@ -136,14 +139,14 @@ void WI_Drawer();
 void WI_SetState(interludestate_t st);
 
 /**
- * End the current intermission.
- */
-void WI_End();
-
-/**
  * Skip to the next state in the intermission.
  */
 void IN_SkipToNext();
+
+/**
+ * To be called to register the console commands and variables of this module.
+ */
+void WI_ConsoleRegister();
 
 #endif // __cplusplus
 #endif // LIBDOOM_WI_STUFF_H

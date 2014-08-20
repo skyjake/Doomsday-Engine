@@ -82,7 +82,7 @@ static int hubCount;
 static patchid_t dpTallyTop;
 static patchid_t dpTallyLeft;
 
-void WI_Register()
+void WI_ConsoleRegister()
 {
     C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
     C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);

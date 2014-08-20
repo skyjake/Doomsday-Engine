@@ -108,7 +108,7 @@ static inline char const *patchReplacementText(patchid_t patchId, char const *te
                                      patchId, text);
 }
 
-void WI_Register()
+void WI_ConsoleRegister()
 {
     C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
     C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
@@ -990,7 +990,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     inPlayerInfo = wbs->plyr;
 }
 
-void WI_Init(wbstartstruct_t const &wbstartstruct)
+void WI_Begin(wbstartstruct_t const &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();

@@ -675,7 +675,7 @@ void NetCl_Intermission(reader_s *msg)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-        WI_Init(wmInfo);
+        WI_Begin(wmInfo);
 #elif __JHERETIC__
         IN_Init(wmInfo);
 #elif __JHEXEN__
