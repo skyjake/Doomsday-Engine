@@ -58,10 +58,10 @@ namespace internal
         Animation(Vector2i const &origin, int tics, StringList patchNames,
                   de::Uri const &mapUri       = de::Uri("Maps:", RC_NULL),
                   interludestate_t beginState = ILS_SHOW_STATS)
-            : mapUri    (mapUri)
+            : origin    (origin)
             , tics      (tics)
-            , origin    (origin)
             , patchNames(patchNames)
+            , mapUri    (mapUri)
             , beginState(beginState)
         {}
     };
@@ -75,9 +75,9 @@ namespace internal
         Vector2i origin;
         de::Uri mapUri;
 
-        Location(de::Uri const &mapUri, Vector2i const &origin)
-            : mapUri(mapUri)
-            , origin(origin)
+        Location(Vector2i const &origin, de::Uri const &mapUri)
+            : origin(origin)
+            , mapUri(mapUri)
         {}
     };
     typedef QList<Location> Locations;
@@ -182,68 +182,68 @@ void WI_Init()
     if(gameModeBits & GM_ANY_DOOM2) return;
 
     episode1Anims
-        << Animation( Vector2i( 224, 104 ), 11, StringList() << String("wia00000") << String("wia00001") << String("wia00002") )
-        << Animation( Vector2i( 184, 160 ), 11, StringList() << String("wia00100") << String("wia00101") << String("wia00102") )
-        << Animation( Vector2i( 112, 136 ), 11, StringList() << String("wia00200") << String("wia00201") << String("wia00202") )
-        << Animation( Vector2i(  72, 112 ), 11, StringList() << String("wia00300") << String("wia00301") << String("wia00302") )
-        << Animation( Vector2i(  88,  96 ), 11, StringList() << String("wia00400") << String("wia00401") << String("wia00402") )
-        << Animation( Vector2i(  64,  48 ), 11, StringList() << String("wia00500") << String("wia00501") << String("wia00502") )
-        << Animation( Vector2i( 192,  40 ), 11, StringList() << String("wia00600") << String("wia00601") << String("wia00602") )
-        << Animation( Vector2i( 136,  16 ), 11, StringList() << String("wia00700") << String("wia00701") << String("wia00702") )
-        << Animation( Vector2i(  80,  16 ), 11, StringList() << String("wia00800") << String("wia00801") << String("wia00802") )
-        << Animation( Vector2i(  64,  24 ), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
+        << Animation( Vector2i(224, 104), 11, StringList() << String("wia00000") << String("wia00001") << String("wia00002") )
+        << Animation( Vector2i(184, 160), 11, StringList() << String("wia00100") << String("wia00101") << String("wia00102") )
+        << Animation( Vector2i(112, 136), 11, StringList() << String("wia00200") << String("wia00201") << String("wia00202") )
+        << Animation( Vector2i( 72, 112), 11, StringList() << String("wia00300") << String("wia00301") << String("wia00302") )
+        << Animation( Vector2i( 88,  96), 11, StringList() << String("wia00400") << String("wia00401") << String("wia00402") )
+        << Animation( Vector2i( 64,  48), 11, StringList() << String("wia00500") << String("wia00501") << String("wia00502") )
+        << Animation( Vector2i(192,  40), 11, StringList() << String("wia00600") << String("wia00601") << String("wia00602") )
+        << Animation( Vector2i(136,  16), 11, StringList() << String("wia00700") << String("wia00701") << String("wia00702") )
+        << Animation( Vector2i( 80,  16), 11, StringList() << String("wia00800") << String("wia00801") << String("wia00802") )
+        << Animation( Vector2i( 64,  24), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
     episode1Locations
-        << Location( de::Uri("Maps:E1M1"), Vector2i(185, 164) )
-        << Location( de::Uri("Maps:E1M2"), Vector2i(148, 143) )
-        << Location( de::Uri("Maps:E1M3"), Vector2i( 69, 122) )
-        << Location( de::Uri("Maps:E1M4"), Vector2i(209, 102) )
-        << Location( de::Uri("Maps:E1M5"), Vector2i(116,  89) )
-        << Location( de::Uri("Maps:E1M6"), Vector2i(166,  55) )
-        << Location( de::Uri("Maps:E1M7"), Vector2i( 71,  56) )
-        << Location( de::Uri("Maps:E1M8"), Vector2i(135,  29) )
-        << Location( de::Uri("Maps:E1M9"), Vector2i( 71,  24) );
+        << Location( Vector2i(185, 164), de::Uri("Maps:E1M1", RC_NULL) )
+        << Location( Vector2i(148, 143), de::Uri("Maps:E1M2", RC_NULL) )
+        << Location( Vector2i( 69, 122), de::Uri("Maps:E1M3", RC_NULL) )
+        << Location( Vector2i(209, 102), de::Uri("Maps:E1M4", RC_NULL) )
+        << Location( Vector2i(116,  89), de::Uri("Maps:E1M5", RC_NULL) )
+        << Location( Vector2i(166,  55), de::Uri("Maps:E1M6", RC_NULL) )
+        << Location( Vector2i( 71,  56), de::Uri("Maps:E1M7", RC_NULL) )
+        << Location( Vector2i(135,  29), de::Uri("Maps:E1M8", RC_NULL) )
+        << Location( Vector2i( 71,  24), de::Uri("Maps:E1M9", RC_NULL) );
 
     episode2Anims
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M1", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M2", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M3", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M4", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M5", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M6", RC_NULL) )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M7", RC_NULL) )
-        << Animation( Vector2i( 192, 144 ), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M8", RC_NULL), ILS_SHOW_NEXTMAP )
-        << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M8", RC_NULL) );
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M1", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M2", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M3", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M4", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M5", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M6", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M7", RC_NULL) )
+        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M8", RC_NULL), ILS_SHOW_NEXTMAP )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M8", RC_NULL) );
 
     episode2Locations
-        << Location( de::Uri("Maps:E2M1"), Vector2i(254,  25) )
-        << Location( de::Uri("Maps:E2M2"), Vector2i( 97,  50) )
-        << Location( de::Uri("Maps:E2M3"), Vector2i(188,  64) )
-        << Location( de::Uri("Maps:E2M4"), Vector2i(128,  78) )
-        << Location( de::Uri("Maps:E2M5"), Vector2i(214,  92) )
-        << Location( de::Uri("Maps:E2M6"), Vector2i(133, 130) )
-        << Location( de::Uri("Maps:E2M7"), Vector2i(208, 136) )
-        << Location( de::Uri("Maps:E2M8"), Vector2i(148, 140) )
-        << Location( de::Uri("Maps:E2M9"), Vector2i(235, 158) );
+        << Location( Vector2i(254,  25), de::Uri("Maps:E2M1", RC_NULL) )
+        << Location( Vector2i( 97,  50), de::Uri("Maps:E2M2", RC_NULL) )
+        << Location( Vector2i(188,  64), de::Uri("Maps:E2M3", RC_NULL) )
+        << Location( Vector2i(128,  78), de::Uri("Maps:E2M4", RC_NULL) )
+        << Location( Vector2i(214,  92), de::Uri("Maps:E2M5", RC_NULL) )
+        << Location( Vector2i(133, 130), de::Uri("Maps:E2M6", RC_NULL) )
+        << Location( Vector2i(208, 136), de::Uri("Maps:E2M7", RC_NULL) )
+        << Location( Vector2i(148, 140), de::Uri("Maps:E2M8", RC_NULL) )
+        << Location( Vector2i(235, 158), de::Uri("Maps:E2M9", RC_NULL) );
 
     episode3Anims
-        << Animation( Vector2i( 104, 168 ), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
-        << Animation( Vector2i(  40, 136 ), 11, StringList() << String("wia20100") << String("wia20101") << String("wia20102") )
-        << Animation( Vector2i( 160,  96 ), 11, StringList() << String("wia20200") << String("wia20201") << String("wia20202") )
-        << Animation( Vector2i( 104,  80 ), 11, StringList() << String("wia20300") << String("wia20301") << String("wia20302") )
-        << Animation( Vector2i( 120,  32 ), 11, StringList() << String("wia20400") << String("wia20401") << String("wia20402") )
-        << Animation( Vector2i(  40,   0 ),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
+        << Animation( Vector2i(104, 168), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
+        << Animation( Vector2i( 40, 136), 11, StringList() << String("wia20100") << String("wia20101") << String("wia20102") )
+        << Animation( Vector2i(160,  96), 11, StringList() << String("wia20200") << String("wia20201") << String("wia20202") )
+        << Animation( Vector2i(104,  80), 11, StringList() << String("wia20300") << String("wia20301") << String("wia20302") )
+        << Animation( Vector2i(120,  32), 11, StringList() << String("wia20400") << String("wia20401") << String("wia20402") )
+        << Animation( Vector2i( 40,   0),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
 
     episode3Locations
-        << Location( de::Uri("Maps:E3M1"), Vector2i( 156, 168) )
-        << Location( de::Uri("Maps:E3M2"), Vector2i(  48, 154) )
-        << Location( de::Uri("Maps:E3M3"), Vector2i( 174,  95) )
-        << Location( de::Uri("Maps:E3M4"), Vector2i( 265,  75) )
-        << Location( de::Uri("Maps:E3M5"), Vector2i( 130,  48) )
-        << Location( de::Uri("Maps:E3M6"), Vector2i( 279,  23) )
-        << Location( de::Uri("Maps:E3M7"), Vector2i( 198,  48) )
-        << Location( de::Uri("Maps:E3M8"), Vector2i( 140,  25) )
-        << Location( de::Uri("Maps:E3M9"), Vector2i( 281, 136) );
+        << Location( Vector2i(156, 168), de::Uri("Maps:E3M1", RC_NULL) )
+        << Location( Vector2i( 48, 154), de::Uri("Maps:E3M2", RC_NULL) )
+        << Location( Vector2i(174,  95), de::Uri("Maps:E3M3", RC_NULL) )
+        << Location( Vector2i(265,  75), de::Uri("Maps:E3M4", RC_NULL) )
+        << Location( Vector2i(130,  48), de::Uri("Maps:E3M5", RC_NULL) )
+        << Location( Vector2i(279,  23), de::Uri("Maps:E3M6", RC_NULL) )
+        << Location( Vector2i(198,  48), de::Uri("Maps:E3M7", RC_NULL) )
+        << Location( Vector2i(140,  25), de::Uri("Maps:E3M8", RC_NULL) )
+        << Location( Vector2i(281, 136), de::Uri("Maps:E3M9", RC_NULL) );
 }
 
 void WI_Shutdown()
@@ -599,11 +599,11 @@ static void drawLocationMarks()
 
     if(drawYouAreHere)
     {
-        Location const &loc     = (*locations)[G_MapNumberFor(wbs->nextMap)];
-        patchid_t const patchId = chooseYouAreHerePatch(loc.origin);
-        if(patchId)
+        if(Location const *loc = tryFindLocationForMap(locations, wbs->nextMap))
         {
-            WI_DrawPatch(patchId, patchReplacementText(patchId), loc.origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            patchid_t const yahPatchId = chooseYouAreHerePatch(loc->origin);
+            WI_DrawPatch(yahPatchId, patchReplacementText(yahPatchId),
+                         loc->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
 

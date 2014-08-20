@@ -546,19 +546,19 @@ void G_CommonPreInit()
     P_InitPicAnims();
 
     // Add our cvars and ccmds to the console databases.
-    G_ConsoleRegistration();     // Main command list.
-    D_NetConsoleRegister();      // For network.
-    G_ConsoleRegister();         // Top level game cvars and commands.
+    G_ConsoleRegistration();      // Main command list.
+    D_NetConsoleRegister();       // For network.
+    G_ConsoleRegister();          // Top level game cvars and commands.
     Pause_Register();
-    G_ControlRegister();         // For controls/input.
+    G_ControlRegister();          // For controls/input.
     SaveSlots::consoleRegister(); // Game-save system.
-    Hu_MenuRegister();           // For the menu.
-    GUI_Register();              // For the UI library.
-    Hu_MsgRegister();            // For the game messages.
-    ST_Register();               // For the hud/statusbar.
-    WI_ConsoleRegister();               // For the interlude/intermission.
-    X_Register();                // For the crosshair.
-    FI_StackRegister();          // For the InFine lib.
+    Hu_MenuRegister();            // For the menu.
+    GUI_Register();               // For the UI library.
+    Hu_MsgRegister();             // For the game messages.
+    ST_Register();                // For the hud/statusbar.
+    WI_ConsoleRegister();         // For the interlude/intermission.
+    X_Register();                 // For the crosshair.
+    FI_StackRegister();           // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
