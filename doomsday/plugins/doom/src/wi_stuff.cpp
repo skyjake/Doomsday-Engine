@@ -49,7 +49,7 @@ namespace internal
 
     struct Animation
     {
-        Vector2i origin;              ///< Location origin of the animation on the map.
+        Vector2i origin;
         int tics;                     ///< Number of tics each frame of the animation lasts for.
         StringList patchNames;        ///< For each frame of the animation.
         de::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
@@ -70,7 +70,16 @@ namespace internal
     static Animations episode2Anims;
     static Animations episode3Anims;
 
-    typedef Vector2i Location;
+    struct Location
+    {
+        Vector2i origin;
+        de::Uri mapUri;
+
+        Location(de::Uri const &mapUri, Vector2i const &origin)
+            : mapUri(mapUri)
+            , origin(origin)
+        {}
+    };
     typedef QList<Location> Locations;
     static Locations episode1Locations;
     static Locations episode2Locations;
@@ -108,12 +117,6 @@ namespace internal
     static patchid_t pFaceDead;
     static patchid_t pTeamBackgrounds[NUMTEAMS];
     static patchid_t pTeamIcons[NUMTEAMS];
-
-    /// @todo fixme: Episodes are now identified with textual ids! -ds
-    static inline int episodeNumber()
-    {
-        return COMMON_GAMESESSION->episodeId().toInt() - 1;
-    }
 
     /// @todo Revise API to select a replacement mode according to the usage context
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
@@ -191,15 +194,15 @@ void WI_Init()
         << Animation( Vector2i(  64,  24 ), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
     episode1Locations
-        << Vector2i( 185, 164 )
-        << Vector2i( 148, 143 )
-        << Vector2i(  69, 122 )
-        << Vector2i( 209, 102 )
-        << Vector2i( 116,  89 )
-        << Vector2i( 166,  55 )
-        << Vector2i(  71,  56 )
-        << Vector2i( 135,  29 )
-        << Vector2i(  71,  24 );
+        << Location( de::Uri("Maps:E1M1"), Vector2i(185, 164) )
+        << Location( de::Uri("Maps:E1M2"), Vector2i(148, 143) )
+        << Location( de::Uri("Maps:E1M3"), Vector2i( 69, 122) )
+        << Location( de::Uri("Maps:E1M4"), Vector2i(209, 102) )
+        << Location( de::Uri("Maps:E1M5"), Vector2i(116,  89) )
+        << Location( de::Uri("Maps:E1M6"), Vector2i(166,  55) )
+        << Location( de::Uri("Maps:E1M7"), Vector2i( 71,  56) )
+        << Location( de::Uri("Maps:E1M8"), Vector2i(135,  29) )
+        << Location( de::Uri("Maps:E1M9"), Vector2i( 71,  24) );
 
     episode2Anims
         << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M1", RC_NULL) )
@@ -213,15 +216,15 @@ void WI_Init()
         << Animation( Vector2i( 128, 136 ),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M8", RC_NULL) );
 
     episode2Locations
-        << Vector2i( 254,  25 )
-        << Vector2i(  97,  50 )
-        << Vector2i( 188,  64 )
-        << Vector2i( 128,  78 )
-        << Vector2i( 214,  92 )
-        << Vector2i( 133, 130 )
-        << Vector2i( 208, 136 )
-        << Vector2i( 148, 140 )
-        << Vector2i( 235, 158 );
+        << Location( de::Uri("Maps:E2M1"), Vector2i(254,  25) )
+        << Location( de::Uri("Maps:E2M2"), Vector2i( 97,  50) )
+        << Location( de::Uri("Maps:E2M3"), Vector2i(188,  64) )
+        << Location( de::Uri("Maps:E2M4"), Vector2i(128,  78) )
+        << Location( de::Uri("Maps:E2M5"), Vector2i(214,  92) )
+        << Location( de::Uri("Maps:E2M6"), Vector2i(133, 130) )
+        << Location( de::Uri("Maps:E2M7"), Vector2i(208, 136) )
+        << Location( de::Uri("Maps:E2M8"), Vector2i(148, 140) )
+        << Location( de::Uri("Maps:E2M9"), Vector2i(235, 158) );
 
     episode3Anims
         << Animation( Vector2i( 104, 168 ), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
@@ -232,15 +235,15 @@ void WI_Init()
         << Animation( Vector2i(  40,   0 ),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
 
     episode3Locations
-        << Vector2i( 156, 168 )
-        << Vector2i(  48, 154 )
-        << Vector2i( 174,  95 )
-        << Vector2i( 265,  75 )
-        << Vector2i( 130,  48 )
-        << Vector2i( 279,  23 )
-        << Vector2i( 198,  48 )
-        << Vector2i( 140,  25 )
-        << Vector2i( 281, 136 );
+        << Location( de::Uri("Maps:E3M1"), Vector2i( 156, 168) )
+        << Location( de::Uri("Maps:E3M2"), Vector2i(  48, 154) )
+        << Location( de::Uri("Maps:E3M3"), Vector2i( 174,  95) )
+        << Location( de::Uri("Maps:E3M4"), Vector2i( 265,  75) )
+        << Location( de::Uri("Maps:E3M5"), Vector2i( 130,  48) )
+        << Location( de::Uri("Maps:E3M6"), Vector2i( 279,  23) )
+        << Location( de::Uri("Maps:E3M7"), Vector2i( 198,  48) )
+        << Location( de::Uri("Maps:E3M8"), Vector2i( 140,  25) )
+        << Location( de::Uri("Maps:E3M9"), Vector2i( 281, 136) );
 }
 
 void WI_Shutdown()
@@ -248,12 +251,22 @@ void WI_Shutdown()
     Z_Free(animStates); animStates = 0;
 }
 
+static String backgroundPatchForEpisode(String const &episodeId)
+{
+    int const oldEpisodeNum = episodeId.toInt();
+    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && oldEpisodeNum > 2))
+    {
+        return "INTERPIC";
+    }
+    return String("WIMAP%1").arg(oldEpisodeNum);
+}
+
 static Animations const *animationsForEpisode(String const &episodeId)
 {
     if(episodeId == "1") return &episode1Anims;
     if(episodeId == "2") return &episode2Anims;
     if(episodeId == "3") return &episode3Anims;
-    return nullptr; // Not found
+    return nullptr; // Not found.
 }
 
 static Locations const *locationsForEpisode(String const &episodeId)
@@ -261,7 +274,19 @@ static Locations const *locationsForEpisode(String const &episodeId)
     if(episodeId == "1") return &episode1Locations;
     if(episodeId == "2") return &episode2Locations;
     if(episodeId == "3") return &episode3Locations;
-    return nullptr; // Not found
+    return nullptr; // Not found.
+}
+
+static Location const *tryFindLocationForMap(Locations const *locations, de::Uri const &mapUri)
+{
+    if(locations)
+    {
+        for(Location const &loc : *locations)
+        {
+            if(loc.mapUri == mapUri) return &loc;
+        }
+    }
+    return nullptr; // Not found.
 }
 
 // Used to accelerate or skip a stage.
@@ -303,12 +328,11 @@ static void drawBackground()
 
     GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(!(gameModeBits & GM_ANY_DOOM2) && episodeNumber() < 3)
+    if(Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId()))
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
 
-        Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
         for(int i = 0; i < anims->count(); ++i)
         {
             Animation const &def = (*anims)[i];
@@ -427,11 +451,9 @@ static void drawPatchIfFits(patchid_t patchId, Vector2i const &origin)
  */
 static void beginAnimations()
 {
-    if(gameModeBits & GM_ANY_DOOM2) return;
-
-    if(episodeNumber() > 2) return;
-
     Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    if(!anims) return;
+
     for(int i = 0; i < anims->count(); ++i)
     {
         Animation const &def = (*anims)[i];
@@ -463,11 +485,9 @@ static void beginAnimations()
 
 static void animateBackground()
 {
-    if(gameModeBits & GM_ANY_DOOM2) return;
-
-    if(episodeNumber() > 2) return;
-
     Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    if(!anims) return;
+
     for(int i = 0; i < anims->count(); ++i)
     {
         Animation const &def = (*anims)[i];
@@ -553,10 +573,8 @@ static void tickShowNextMap()
 
 static void drawLocationMarks()
 {
-    if(!((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3))
-        return;
-
     Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -569,22 +587,23 @@ static void drawLocationMarks()
 
     for(int i = 0; i <= last; ++i)
     {
-        drawPatchIfFits(pSplat, (*locations)[i]);
+        Location const &loc = (*locations)[i];
+        drawPatchIfFits(pSplat, loc.origin);
     }
 
     // Splat the secret map?
     if(wbs->didSecret)
     {
-        drawPatchIfFits(pSplat, (*locations)[8]);
+        drawPatchIfFits(pSplat, (*locations)[8].origin);
     }
 
     if(drawYouAreHere)
     {
-        Vector2i const &origin  = (*locations)[G_MapNumberFor(wbs->nextMap)];
-        patchid_t const patchId = chooseYouAreHerePatch(origin);
+        Location const &loc     = (*locations)[G_MapNumberFor(wbs->nextMap)];
+        patchid_t const patchId = chooseYouAreHerePatch(loc.origin);
         if(patchId)
         {
-            WI_DrawPatch(patchId, patchReplacementText(patchId), origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+            WI_DrawPatch(patchId, patchReplacementText(patchId), loc.origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
 
@@ -1288,23 +1307,18 @@ void WI_Ticker()
 
 static void loadData()
 {
-    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && episodeNumber() > 2))
-    {
-        pBackground = R_DeclarePatch("INTERPIC");
-    }
-    else
-    {
-        char name[9]; sprintf(name, "WIMAP%u", episodeNumber());
-        pBackground = R_DeclarePatch(name);
-    }
+    String const episodeId = COMMON_GAMESESSION->episodeId();
 
-    if((gameModeBits & GM_ANY_DOOM) && episodeNumber() < 3)
+    // Determine which patch to use for the background.
+    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
+
+    // Are there any animations to initialize?
+    if(Animations const *anims = animationsForEpisode(episodeId))
     {
         pYouAreHereRight = R_DeclarePatch("WIURH0");
         pYouAreHereLeft  = R_DeclarePatch("WIURH1");
         pSplat           = R_DeclarePatch("WISPLAT");
 
-        Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
         animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * anims->count(), PU_GAMESTATIC);
         std::memset(animStates, 0, sizeof(*animStates) * anims->count());
 
