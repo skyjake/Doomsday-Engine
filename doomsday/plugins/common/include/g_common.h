@@ -29,8 +29,6 @@
 
 DENG_EXTERN_C dd_bool singledemo;
 
-DENG_EXTERN_C uint gameMapEntrance;
-
 #if __cplusplus
 extern GameRuleset defaultGameRules;
 

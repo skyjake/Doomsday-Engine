@@ -64,7 +64,7 @@ public:
 
     /**
      * Returns the current Episode definition for the game session in progress. If the session
-     * has not yet begun then @c NULL is returned.
+     * has not yet begun then @c nullptr is returned.
      */
     de::Record *episodeDef();
 
@@ -76,13 +76,13 @@ public:
 
     /**
      * Returns the current MapGraphNode definition for the game session in progress. If the
-     * session has not yet begun then @c NULL is returned.
+     * session has not yet begun then @c nullptr is returned.
      */
     de::Record *mapGraphNodeDef();
 
     /**
      * Returns the current MapInfo definition for the game session in progress. If the session
-     * has not yet begun, or no definition exists for the current map then @c NULL is returned.
+     * has not yet begun, or no definition exists for the current map then @c nullptr is returned.
      */
     de::Record *mapInfo();
 
@@ -91,6 +91,12 @@ public:
      * yet begun then an empty URI is returned.
      */
     de::Uri mapUri();
+
+    /**
+     * Returns the player entry point for the current map, for the game session in progress.
+     * The entry point determines where players will be reborn.
+     */
+    uint mapEntryPoint();
 
     /**
      * Resolves a named exit according to the map progression.
@@ -132,15 +138,15 @@ public:
      * Configure and begin a new game session. Note that a @em new session cannot @em begin if
      * one already @ref hasBegun() (if so, the session must be ended first).
      *
-     * @param rules        Game rules to apply.
-     * @param episodeId    Episode identifier.
-     * @param mapUri       Map identifier.
-     * @param mapEntrance  Logical map entry point number.
+     * @param rules          Game rules to apply.
+     * @param episodeId      Episode identifier.
+     * @param mapUri         Map identifier.
+     * @param mapEntryPoint  Map entry point number, for player reborn.
      *
      * @throws InProgressError if the session has already begun.
      */
     void begin(GameRuleset const &rules, de::String const &episodeId, de::Uri const &mapUri,
-               uint mapEntrance = 0);
+               uint mapEntryPoint = 0);
 
     /**
      * Reload the @em current map, automatically loading any saved progress from the backing

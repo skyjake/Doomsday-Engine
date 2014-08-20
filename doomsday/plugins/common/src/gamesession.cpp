@@ -112,9 +112,11 @@ static String const internalSavePath = "/home/cache/internal.save";
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
     String episodeId;
-    de::Uri mapUri;
     GameRuleset rules;
     bool inProgress = false;  ///< @c true= session is in progress / internal.save exists.
+
+    de::Uri mapUri;
+    uint mapEntryPoint = 0;   ///< Player entry point, for reborn.
 
     Instance(Public *i) : Base(i)
     {
@@ -136,6 +138,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         /// @todo It may be possible to recover this session if it was written successfully
         /// before the fatal error occurred.
         Session::removeSaved(internalSavePath);
+    }
+
+    void setEpisode(String const &newEpisodeId)
+    {
+        DENG2_ASSERT(!inProgress);
+
+        episodeId = newEpisodeId;
+
+        // Update the game status cvar.
+        Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -227,7 +239,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         if(fast == oldFast) return;
         oldFast = fast;
 
-        /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+        /// @fixme Kludge: Assumes the original speed values haven't been modified!
         for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
         {
             STATES[i].tics = fast? 1 : 2;
@@ -450,10 +462,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
-        GameRuleset *newRules;
+        std::unique_ptr<GameRuleset> newRules;
         try
         {
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules")));
         }
         catch(Record::NotFoundError const &)
         {
@@ -465,11 +477,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     << saved.path();
 
             // Use the current rules as our basis.
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
+            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules));
         }
-        rules = *newRules;
+        rules = *newRules; // make a copy
         applyCurrentRules();
-        delete newRules; newRules = 0;
+        setEpisode(metadata.gets("episode"));
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
@@ -481,9 +493,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         inProgress = true;
 
-        episodeId = metadata.gets("episode");
         setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
-        //::gameMapEntrance = mapEntrance; // not saved??
+        //mapEntryPoint = ??; // not saved??
 
         reloadMap();
 #if !__JHEXEN__
@@ -501,8 +512,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         mapUri = newMapUri;
 
         // Update game status cvars:
-        Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
-        Con_SetUri2   ("map-id",      reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
+        Con_SetUri2("map-id", reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
 
         String hubId;
         if(Record const *hubRec = defn::Episode(*self.episodeDef()).tryFindHubByMapId(mapUri.compose()))
@@ -510,6 +520,12 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             hubId = hubRec->gets("id");
         }
         Con_SetString2("map-hub", hubId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+    }
+
+    inline void setMapAndEntryPoint(de::Uri const &newMapUri, uint newMapEntryPoint)
+    {
+        setMap(newMapUri);
+        mapEntryPoint = newMapEntryPoint;
     }
 
     /**
@@ -525,7 +541,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Pause_End();
 
         // Close open HUDs.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
             ST_CloseAll(i, true/*fast*/);
         }
@@ -573,10 +589,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             targetPlayerAddrs = 0; // player mobj redirection...
 #endif
 
-            SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
             String const mapUriAsText = mapUri.compose();
-            std::unique_ptr<SavedSession::MapStateReader> reader(
-                        makeMapStateReader(saved, mapUriAsText));
+            SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
+            std::unique_ptr<SavedSession::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             reader->read(mapUriAsText);
         }
 
@@ -620,9 +635,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
     /**
      * @param playerBackup  Player state backup.
-     * @param mapEntrance   Logical entry point number used to enter the map.
      */
-    void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
+    void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
         DENG2_ASSERT(playerBackup != 0);
 
@@ -691,7 +705,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             }
             else
             {
-                if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
+                if(playerstart_t const *start = P_GetPlayerStart(mapEntryPoint, i, false))
                 {
                     mapspot_t const *spot = &mapSpots[start->spot];
                     P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
@@ -722,7 +736,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     }
                 }
 
-                plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
+                plr->ammo[AT_BLUEMANA].owned  = 25; /// @todo values.ded
                 plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
 
                 // Bring up the best weapon.
@@ -771,8 +785,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif // __JHEXEN__
 };
 
-GameSession::GameSession()
-    : d(new Instance(this))
+GameSession::GameSession() : d(new Instance(this))
 {}
 
 GameSession::~GameSession()
@@ -846,6 +859,11 @@ de::Uri GameSession::mapUri()
     return hasBegun()? d->mapUri : de::Uri();
 }
 
+uint GameSession::mapEntryPoint()
+{
+    return d->mapEntryPoint;
+}
+
 de::Uri GameSession::mapUriForNamedExit(String name)
 {
     LOG_AS("GameSession");
@@ -876,9 +894,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
             else
             {
                 LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no Exit with ID '%s'")
-                        << d->episodeId
-                        << d->mapUri
-                        << name;
+                        << d->episodeId << d->mapUri << name;
             }
         }
         else if(exits.count() == 1)
@@ -894,8 +910,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
         else
         {
             LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no exits")
-                    << d->episodeId
-                    << d->mapUri;
+                    << d->episodeId << d->mapUri;
         }
 
         if(chosenExit)
@@ -960,7 +975,7 @@ void GameSession::endAndBeginTitle()
 }
 
 void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
-    de::Uri const &mapUri, uint mapEntrance)
+    de::Uri const &mapUri, uint mapEntryPoint)
 {
     if(hasBegun())
     {
@@ -998,9 +1013,9 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
 
     if(!IS_CLIENT)
     {
-        for(uint i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            player_t *plr = players + i;
+            player_t *plr = &players[i];
             if(plr->plr->inGame)
             {
                 // Force players to be initialized upon first map load.
@@ -1016,14 +1031,13 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
 
     M_ResetRandom();
 
-    d->rules = newRules;
+    d->rules = newRules; // make a copy
     d->applyCurrentRules();
+    d->setEpisode(episodeId);
+
     d->inProgress = true;
 
-    d->episodeId = episodeId;
-    d->setMap(mapUri);
-    ::gameMapEntrance = mapEntrance;
-
+    d->setMapAndEntryPoint(mapUri, mapEntryPoint);
     d->reloadMap();
 
     // Create the internal .save session package.
@@ -1056,9 +1070,9 @@ void GameSession::reloadMap()
     else
     {
         // Restart the session entirely.
-        briefDisabled = true; // We won't brief again.
+        ::briefDisabled = true; // We won't brief again.
         end();
-        begin(d->rules, d->episodeId, d->mapUri, ::gameMapEntrance);
+        begin(d->rules, d->episodeId, d->mapUri, d->mapEntryPoint);
     }
 }
 
@@ -1076,7 +1090,7 @@ void GameSession::leaveMap()
     // Check that the map truly exists.
     if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
     {
-        ::nextMapUri = de::Uri(episodeDef()->gets("startMap"), RC_NULL); // Should exist always?
+        ::nextMapUri = de::Uri(episodeDef()->gets("startMap"), RC_NULL);
     }
 
 #if __JHEXEN__
@@ -1132,9 +1146,9 @@ void GameSession::leaveMap()
     if(!IS_CLIENT)
     {
         // Force players to be initialized upon first map load.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            player_t *plr = players + i;
+            player_t *plr = &players[i];
             if(plr->plr->inGame)
             {
                 plr->playerState = PST_REBORN;
@@ -1149,8 +1163,7 @@ void GameSession::leaveMap()
 #endif
 
     // Change the current map.
-    d->setMap(nextMapUri);
-    ::gameMapEntrance = ::nextMapEntrance;
+    d->setMapAndEntryPoint(nextMapUri, ::nextMapEntryPoint);
 
     // Are we revisiting a previous map?
     bool const revisit = saved && saved->hasState(String("maps") / d->mapUri.path());
@@ -1164,15 +1177,15 @@ void GameSession::leaveMap()
         // First visit; destroy all freshly spawned players (??).
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            ddplayer_t *ddplr = players[i].plr;
-            if(ddplr->inGame)
+            player_t *plr = &players[i];
+            if(plr->plr->inGame)
             {
-                P_MobjRemove(ddplr->mo, true);
+                P_MobjRemove(plr->plr->mo, true);
             }
         }
     }
 
-    d->restorePlayersInHub(playerBackup, nextMapEntrance);
+    d->restorePlayersInHub(playerBackup);
 
     // Restore the random class rule.
     d->rules.randomClasses = oldRandomClassesRule;
@@ -1204,9 +1217,7 @@ void GameSession::leaveMap()
         File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
         outFile << serializeCurrentMapState();
 
-        // Write all changes to the package.
-        saved->flush();
-
+        saved->flush(); // Write all changes to the package.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
 }
@@ -1259,7 +1270,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         // Notify the engine that the game was saved.
         /// @todo After the engine has the primary responsibility of saving the game,
         /// this notification is unnecessary.
-        Plug_Notify(DD_NOTIFY_GAME_SAVED, NULL);
+        Plug_Notify(DD_NOTIFY_GAME_SAVED, nullptr);
     }
     catch(Error const &er)
     {

@@ -110,10 +110,8 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-uint gameMapEntrance;  ///< Entry point, for reborn.
-
 de::Uri nextMapUri;
-uint nextMapEntrance;
+uint nextMapEntryPoint;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 dd_bool secretExit;
@@ -437,12 +435,12 @@ bool G_SetGameActionLoadSession(de::String slotId)
     return false;
 }
 
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance, dd_bool secretExit)
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit)
 {
 #if __JHEXEN__
     DENG2_UNUSED(secretExit);
 #else
-    DENG2_UNUSED(nextMapEntrance);
+    DENG2_UNUSED(nextMapEntryPoint);
 #endif
 
     if(IS_CLIENT) return;
@@ -461,11 +459,11 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntrance
     }
 #endif
 
-    ::nextMapUri      = nextMapUri;
+    ::nextMapUri        = nextMapUri;
 #if __JHEXEN__
-    ::nextMapEntrance = nextMapEntrance;
+    ::nextMapEntryPoint = nextMapEntryPoint;
 #else
-    ::secretExit      = secretExit;
+    ::secretExit        = secretExit;
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
@@ -1588,7 +1586,7 @@ static void runGameAction()
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch(de::Error const &er)
+            catch(Error const &er)
             {
                 LOG_RES_WARNING("Error loading from save slot #%s:\n")
                         << gaLoadSessionSlot << er.asText();
@@ -1610,7 +1608,7 @@ static void runGameAction()
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch(de::Error const &er)
+            catch(Error const &er)
             {
                 LOG_RES_WARNING("Error saving to save slot #%s:\n")
                         << gaSaveSessionSlot << er.asText();
@@ -1691,11 +1689,11 @@ static void runGameAction()
 
         case GA_SCREENSHOT: {
             // Find an unused screenshot file name.
-            de::String fileName = COMMON_GAMESESSION->gameId() + "-";
+            String fileName = COMMON_GAMESESSION->gameId() + "-";
             int const numPos = fileName.length();
             for(int i = 0; i < 1e6; ++i) // Stop eventually...
             {
-                fileName += de::String("%1.png").arg(i, 3, 10, QChar('0'));
+                fileName += String("%1.png").arg(i, 3, 10, QChar('0'));
                 if(!F_FileExists(fileName.toUtf8().constData())) break;
                 fileName.truncate(numPos);
             }
@@ -1705,13 +1703,13 @@ static void runGameAction()
                 /// @todo Do not use the console player's message log for this notification.
                 ///       The engine should implement it's own notification UI system for
                 ///       this sort of thing.
-                de::String msg = "Saved screenshot: " + de::NativePath(fileName).pretty();
+                String msg = "Saved screenshot: " + NativePath(fileName).pretty();
                 P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toLatin1().constData());
             }
             else
             {
                 LOG_RES_WARNING("Failed taking screenshot \"%s\"")
-                        << de::NativePath(fileName).pretty();
+                        << NativePath(fileName).pretty();
             }
             break; }
 
@@ -3275,8 +3273,8 @@ D_CMD(WarpMap)
     if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
     {
 #if __JHEXEN__
-        ::nextMapUri      = mapUri;
-        ::nextMapEntrance = 0;
+        ::nextMapUri        = mapUri;
+        ::nextMapEntryPoint = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
         G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(),

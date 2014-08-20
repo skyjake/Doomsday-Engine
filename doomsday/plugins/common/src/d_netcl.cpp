@@ -115,7 +115,7 @@ void NetCl_UpdateGameState(reader_s *msg)
         COMMON_GAMESESSION->end();
         COMMON_GAMESESSION->begin(gsRules, Str_Text(gsEpisodeId),
                                   *reinterpret_cast<de::Uri *>(gsMapUri),
-                                  gameMapEntrance /*gsMapEntrance*/);
+                                  COMMON_GAMESESSION->mapEntryPoint() /*gsMapEntrance*/);
     }
     else
     {
@@ -125,8 +125,6 @@ void NetCl_UpdateGameState(reader_s *msg)
         DENG2_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == COMMON_GAMESESSION->mapUri());
 
         COMMON_GAMESESSION->applyNewRules(gsRules);
-        //COMMON_GAMESESSION->setMap(*gsMapUri);
-        //gameMapEntrance = gsMapEntrance;
     }
 
     // Set gravity.
@@ -664,7 +662,7 @@ void NetCl_Intermission(reader_s *msg)
 #  endif
 #  if __JHEXEN__
         Uri_Read(reinterpret_cast<uri_s *>(&::nextMapUri), msg);
-        ::nextMapEntrance = Reader_ReadByte(msg);
+        ::nextMapEntryPoint = Reader_ReadByte(msg);
 #  else
         Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.nextMap), msg);
         Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.currentMap), msg);

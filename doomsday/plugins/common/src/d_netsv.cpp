@@ -570,7 +570,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         playerstart_t const *start;
 
-        if((start = P_GetPlayerStart(gameMapEntrance, plrNum, false)))
+        if((start = P_GetPlayerStart(COMMON_GAMESESSION->mapEntryPoint(), plrNum, false)))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -617,7 +617,7 @@ void NetSv_Intermission(int flags, int state, int time)
         Uri_Write(reinterpret_cast<uri_s *>(&::wmInfo.currentMap), msg);
 #elif __JHEXEN__
         Uri_Write(reinterpret_cast<uri_s *>(&::nextMapUri), msg);
-        Writer_WriteByte(msg, ::nextMapEntrance);
+        Writer_WriteByte(msg, ::nextMapEntryPoint);
 #endif
 #if __JDOOM__ || __JDOOM64__
         Writer_WriteByte(msg, wmInfo.didSecret);
