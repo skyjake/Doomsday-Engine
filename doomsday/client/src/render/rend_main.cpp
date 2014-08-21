@@ -548,8 +548,9 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
-                    Matrix4f::translate(Matrix4f::rotate(radianToDegree(bodyAngle), Vector3f(0, 1, 0)) *
-                                        (ovr.headPosition() * vrCfg().mapUnitsPerMeter()));
+                    Matrix4f::translate(swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
+                                                (ovr.headPosition() * vrCfg().mapUnitsPerMeter()),
+                                                AxisNegX, AxisNegY, AxisZ));
     }
 
     return (modelView *

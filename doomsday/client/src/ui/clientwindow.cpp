@@ -648,7 +648,8 @@ DENG2_PIMPL(ClientWindow)
                         * Matrix4f::rotate(radianToDegree(pry[1]), Vector3f(0, 0, -1))
                         * Matrix4f::rotate(radianToDegree(pry[0]), Vector3f(1, 0, 0))
                         * Matrix4f::rotate(radianToDegree(pry[2]), Vector3f(0, 1, 0))
-                        * Matrix4f::translate(swizzle(vrCfg().oculusRift().headOrientation(),
+                        * Matrix4f::translate(swizzle(vrCfg().oculusRift().headPosition() *
+                                                      vrCfg().mapUnitsPerMeter(),
                                                       AxisNegX, AxisNegY, AxisZ))
                         * Matrix4f::scale(Vector3f(uiSize, -uiSize / vrCfg().oculusRift().aspect(), 1.f))
                         * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
