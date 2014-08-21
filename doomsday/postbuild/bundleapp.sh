@@ -59,12 +59,6 @@ $CP plugins/example/example.bundle                     $PLUGDIR/
 $CP tools/texc/texc $APPDIR/Resources
 $CP tools/md2tool/md2tool $APPDIR/Resources
 
-# Tests
-GLTEST=tests/test_glsandbox/test_glsandbox.app
-if [ -e $GLTEST ]; then
-    $CP libgui/libdeng_gui*dylib $GLTEST/Contents/Frameworks
-fi
-
 if [ -e plugins/fluidsynth/audio_fluidsynth.bundle ]; then
     $CP plugins/fluidsynth/audio_fluidsynth.bundle $PLUGDIR/
 
