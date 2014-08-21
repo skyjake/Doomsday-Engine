@@ -103,7 +103,7 @@ DENG2_OBSERVES(Bank, Load)
         atlas->setBorderSize(2);
         atlas->setMagFilter(gl::Nearest);
 
-        imageBank.add("rtt.cube", "/data/graphics/testpic.png");
+        imageBank.add("rtt.cube", "/packs/net.dengine.test.glsandbox/testpic.png");
         //imageBank.loadAll();
         imageBank.audienceForLoad() += this;
 
@@ -565,12 +565,12 @@ void TestWindow::testModel()
 
 void TestWindow::loadMD2Model()
 {
-    d->model.load(App::rootFolder().locate<File>("/data/models/marine.md2"));
+    d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/marine.md2"));
     d->initModelAnimation();
 }
 
 void TestWindow::loadMD5Model()
 {
-    d->model.load(App::rootFolder().locate<File>("/data/models/boblampclean.md5mesh"));
+    d->model.load(App::rootFolder().locate<File>("/packs/net.dengine.test.glsandbox/models/boblampclean.md5mesh"));
     d->initModelAnimation();
 }
