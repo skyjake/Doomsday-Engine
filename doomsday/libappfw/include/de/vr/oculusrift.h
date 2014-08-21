@@ -72,6 +72,8 @@ public:
      */
     void setYawOffset(float yawRadians);
 
+    void resetTracking();
+
     /**
      * Sets a yaw offset that makes the current actual Oculus Rift yaw come out as zero.
      */
@@ -93,6 +95,8 @@ public:
      * Returns the current real-world head position.
      */
     Vector3f headPosition() const;
+
+    Vector3f eyeOffset() const;
 
     /**
      * Returns the eye pose for the current eye, including the head orientation and

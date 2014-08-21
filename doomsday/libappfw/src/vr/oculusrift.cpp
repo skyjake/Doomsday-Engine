@@ -53,7 +53,6 @@ DENG2_PIMPL(OculusRift)
     ovrHmd hmd;
     ovrEyeType currentEye;
     ovrPosef headPose[2];
-    //bool needPose[2] { true, true };
     ovrEyeRenderDesc render[2];
     ovrTexture textures[2];
     ovrFovPort fov[2];
@@ -63,6 +62,7 @@ DENG2_PIMPL(OculusRift)
     Matrix4f eyeMatrix;
     Vector3f pitchRollYaw;
     Vector3f headPosition;
+    Vector3f eyeOffset;
     float aspect = 1.f;
 
     BaseWindow *window = nullptr;
@@ -135,13 +135,13 @@ DENG2_PIMPL(OculusRift)
     {
         Sizei size[2];
         ovrFovPort fovMax;
+        float density = 0.75f;
         for(int eye = 0; eye < 2; ++eye)
         {
             // Use the default FOV.
             fov[eye] = hmd->DefaultEyeFov[eye];
 
-            size[eye] = ovrHmd_GetFovTextureSize(hmd, ovrEyeType(eye), fov[eye],
-                                                 1.0f /*density*/);
+            size[eye] = ovrHmd_GetFovTextureSize(hmd, ovrEyeType(eye), fov[eye], density);
         }
 
         fovMax.LeftTan  = max(fov[0].LeftTan,  fov[1].LeftTan);
@@ -229,7 +229,7 @@ DENG2_PIMPL(OculusRift)
         // Configure OpenGL.
         ovrGLConfig cfg;
         cfg.OGL.Header.API         = ovrRenderAPI_OpenGL;
-        cfg.OGL.Header.RTSize      = Sizei(buf.size().x, buf.size().y);
+        cfg.OGL.Header.RTSize      = hmd->Resolution;
         cfg.OGL.Header.Multisample = buf.sampleCount();
 #ifdef WIN32
         cfg.OGL.Window             = window->nativeHandle();
@@ -241,6 +241,7 @@ DENG2_PIMPL(OculusRift)
             return;
         }
 
+        /*
         for(int i = 0; i < 2; ++i)
         {
             qDebug() << "Eye:" << render[i].Eye
@@ -255,7 +256,7 @@ DENG2_PIMPL(OculusRift)
                      << "ViewAdjust:" << render[i].ViewAdjust.x
                      << render[i].ViewAdjust.y
                      << render[i].ViewAdjust.z;
-        }
+        }*/
 
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
 
@@ -359,6 +360,10 @@ DENG2_PIMPL(OculusRift)
                                 pose.Position.y,
                                 pose.Position.z);
 
+        eyeOffset = Vector3f(render[currentEye].ViewAdjust.x,
+                             render[currentEye].ViewAdjust.y,
+                             render[currentEye].ViewAdjust.z);
+
         // TODO: Rotation directly from quaternion?
 
         eyeMatrix = Matrix4f::translate(headPosition)
@@ -367,9 +372,7 @@ DENG2_PIMPL(OculusRift)
                     Matrix4f::rotate(-radianToDegree(pitchRollYaw[0]), Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(-radianToDegree(pitchRollYaw[2]), Vector3f(0, 1, 0))
                     *
-                    Matrix4f::translate(Vector3f(render[currentEye].ViewAdjust.x,
-                                                 render[currentEye].ViewAdjust.y,
-                                                 render[currentEye].ViewAdjust.z));
+                    Matrix4f::translate(-eyeOffset);
     }
 
     void beginFrame()
@@ -497,6 +500,16 @@ void OculusRift::setYawOffset(float yawRadians)
     d->yawOffset = yawRadians;
 }
 
+void OculusRift::resetTracking()
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->isReady())
+    {
+        ovrHmd_RecenterPose(d->hmd);
+    }
+#endif
+}
+
 void OculusRift::resetYaw()
 {
     d->yawOffset = -d->pitchRollYaw.z;
@@ -545,7 +558,7 @@ void OculusRift::update()
 
 Vector3f OculusRift::headOrientation() const
 {
-    if(d->frameOngoing) d->updateEyePose();
+    //if(d->frameOngoing) d->updateEyePose();
 
     Vector3f pry = d->pitchRollYaw;
     pry.z = wrap(pry.z + d->yawOffset, -PIf, PIf);
@@ -567,9 +580,6 @@ Vector3f OculusRift::headOrientation() const
 Matrix4f OculusRift::eyePose() const
 {
     DENG2_ASSERT(isReady());
-#ifdef DENG_HAVE_OCULUS_API
-    d->updateEyePose();
-#endif
     return d->eyeMatrix;
 }
 
@@ -578,12 +588,17 @@ Vector3f OculusRift::headPosition() const
     return d->headPosition;
 }
 
+Vector3f OculusRift::eyeOffset() const
+{
+    return d->eyeOffset;
+}
+
 Matrix4f OculusRift::projection(float nearDist, float farDist) const
 {
     DENG2_ASSERT(isReady());
 #ifdef DENG_HAVE_OCULUS_API
-    return ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
-                                  false /* right-handed */).M[0];
+    return Matrix4f(ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
+                    true /* right-handed */).M[0]).transpose();
 #else
     DENG2_UNUSED2(nearDist, farDist);
     return Matrix4f();

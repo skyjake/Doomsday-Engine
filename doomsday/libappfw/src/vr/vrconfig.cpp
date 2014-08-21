@@ -54,8 +54,12 @@ DENG2_PIMPL(VRConfig)
         , riftFramebufferSamples(1)
         , frustumShift(true)
         , dominantEye(0.0f)
+    {}
+
+    float mapUnitsPerMeter() const
     {
-        //ovr.init();
+        // 0.925 because eyes are not at top of head
+        return eyeHeightInMapUnits / (0.925 * playerPhysicalHeight);
     }
 };
 
@@ -91,9 +95,7 @@ void VRConfig::setCurrentEye(Eye eye)
 {
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
-    // 0.925 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.925 * d->playerPhysicalHeight);
-    d->eyeShift = mapUnitsPerMeter * (eyePos - d->dominantEye) * 0.5 * d->ipd;
+    d->eyeShift = d->mapUnitsPerMeter() * (eyePos - d->dominantEye) * 0.5 * d->ipd;
     if(d->swapEyes)
     {
         d->eyeShift *= -1;
@@ -214,7 +216,9 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
     if(mode() == OculusRift)
     {
         // OVR will calculate our projection matrix.
-        return oculusRift().projection(nearClip, farClip);
+        float const mapUnits = d->mapUnitsPerMeter();
+        return oculusRift().projection(nearClip / mapUnits, farClip / mapUnits) *
+               Matrix4f::translate(oculusRift().eyeOffset() * mapUnits);
     }
 
     float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
