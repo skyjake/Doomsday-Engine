@@ -88,16 +88,6 @@ static void vrModeChanged()
         win.updateCanvasFormat(); // possibly changes pixel format
     }
 
-    // Make sure Oculus Rift rendering is (de)initialized as needed.
-    if(vrCfg().mode() == VRConfig::OculusRift)
-    {
-        vrCfg().oculusRift().init();
-    }
-    else
-    {
-        vrCfg().oculusRift().deinit();
-    }
-
     /*
     // Update FOV cvar accordingly.
     if(vrMode == VRConfig::OculusRift)
@@ -140,6 +130,14 @@ D_CMD(LoadRiftParams)
     return VR_LoadRiftParameters();
 }*/
 
+D_CMD(ResetRiftPose)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    vrCfg().oculusRift().resetTracking();
+    LOG_INPUT_MSG("Reset Oculus Rift position tracking");
+    return true;
+}
+
 void VR_ConsoleRegister()
 {
     // Get the built-in defaults.
@@ -170,6 +168,7 @@ void VR_ConsoleRegister()
     C_VAR_BYTE2 ("rend-vr-swap-eyes",     &vrSwapEyes,      0, 0, 1,          vrConfigVariableChanged);
 
     //C_CMD("loadriftparams", NULL, LoadRiftParams);
+    C_CMD("resetriftpose", NULL, ResetRiftPose);
 }
 
 #if 0

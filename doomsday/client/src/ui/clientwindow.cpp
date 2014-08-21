@@ -642,14 +642,16 @@ DENG2_PIMPL(ClientWindow)
 
             Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
-
             /// @todo Adjustable compositor depth?
             compositor->setCompositeProjection(
                         GL_GetProjectionMatrix()
+                        * Matrix4f::rotate(radianToDegree(pry[1]), Vector3f(0, 0, -1))
+                        * Matrix4f::rotate(radianToDegree(pry[0]), Vector3f(1, 0, 0))
+                        * Matrix4f::rotate(radianToDegree(pry[2]), Vector3f(0, 1, 0))
                         * Matrix4f::translate(swizzle(vrCfg().oculusRift().headOrientation(),
                                                       AxisNegX, AxisNegY, AxisZ))
-                        * Matrix4f::scale(Vector3f(1.f, -1.f / vrCfg().oculusRift().aspect(), 1.f))
-                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -uiDistance)));
+                        * Matrix4f::scale(Vector3f(uiSize, -uiSize / vrCfg().oculusRift().aspect(), 1.f))
+                        * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
         }
         else
         {
@@ -809,6 +811,8 @@ void ClientWindow::canvasGLInit(Canvas &)
 
 void ClientWindow::preDraw()
 {
+    // NOTE: This occurs during the Canvas paintGL event.
+
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
     DENG_ASSERT_IN_MAIN_THREAD();
@@ -821,14 +825,13 @@ void ClientWindow::preDraw()
     {
         d->updateRootSize();
     }
-    d->updateCompositor();
 
-    // NOTE: This occurs during the Canvas paintGL event.
     BaseWindow::preDraw();
 }
 
 void ClientWindow::drawWindowContent()
 {
+    d->updateCompositor();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }

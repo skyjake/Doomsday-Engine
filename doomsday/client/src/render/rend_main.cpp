@@ -512,6 +512,8 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
+    float bodyAngle = viewData->current.angleWithoutHeadTracking() / (float) ANGLE_MAX * 360 - 90;
+
     vOrigin = viewData->current.origin.xzy();
     vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
     vpitch  = viewData->current.pitch * 85.0 / 110.0;
@@ -532,19 +534,22 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
          * these values and is syncing with them independently (however, game has more
          * latency).
          */
-        if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
+        OculusRift &ovr = vrCfg().oculusRift();
+
+        if((vrCfg().mode() == VRConfig::OculusRift) && ovr.isReady())
         {
-            Vector3f const pry = vrCfg().oculusRift().headOrientation();
+            Vector3f const pry = ovr.headOrientation();
 
             // Use angles directly from the Rift for best response.
             roll  = -radianToDegree(pry[1]);
             pitch =  radianToDegree(pry[0]);
-
         }
 
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
+                    Matrix4f::translate(Matrix4f::rotate(radianToDegree(bodyAngle), Vector3f(0, 1, 0)) *
+                                        (ovr.headPosition() * vrCfg().mapUnitsPerMeter()));
     }
 
     return (modelView *
