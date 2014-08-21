@@ -21,6 +21,7 @@
 #include "de/VRConfig"
 #include "de/BaseGuiApp"
 #include "de/BaseWindow"
+#include "de/GuiWidget"
 
 #include <de/Drawable>
 #include <de/GLFramebuffer>
@@ -301,7 +302,8 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
     case VRConfig::OculusRift:
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * d->vrCfg.oculusRift().aspect();
-        size *= 1.0f; // Use a large font in taskbar
+        //size.y *= d->vrCfg.oculusRift().aspect();
+        size *= GuiWidget::toDevicePixels(1) * .75f;
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them

@@ -637,8 +637,8 @@ DENG2_PIMPL(ClientWindow)
 
         if(vrCfg().mode() == VRConfig::OculusRift)
         {
-            float uiDistance = 50;
-            float uiSize = 75;
+            float uiDistance = 45;
+            float uiSize = 67.5f;
 
             Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
@@ -651,7 +651,7 @@ DENG2_PIMPL(ClientWindow)
                         * Matrix4f::translate(swizzle(vrCfg().oculusRift().headPosition() *
                                                       vrCfg().mapUnitsPerMeter(),
                                                       AxisNegX, AxisNegY, AxisZ))
-                        * Matrix4f::scale(Vector3f(uiSize, -uiSize / vrCfg().oculusRift().aspect(), 1.f))
+                        * Matrix4f::scale(Vector3f(uiSize, -uiSize, 1.f))
                         * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
         }
         else
