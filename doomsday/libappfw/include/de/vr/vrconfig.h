@@ -157,6 +157,8 @@ public:
 
     float eyeHeightInMapUnits() const;
 
+    float mapUnitsPerMeter() const;
+
     float physicalPlayerHeight() const;
 
     /**

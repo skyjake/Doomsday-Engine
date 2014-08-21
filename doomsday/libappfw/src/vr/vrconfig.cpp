@@ -152,6 +152,11 @@ float VRConfig::eyeHeightInMapUnits() const
     return d->eyeHeightInMapUnits;
 }
 
+float VRConfig::mapUnitsPerMeter() const
+{
+    return d->mapUnitsPerMeter();
+}
+
 float VRConfig::physicalPlayerHeight() const
 {
     return d->playerPhysicalHeight;
@@ -217,7 +222,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
     {
         // OVR will calculate our projection matrix.
         float const mapUnits = d->mapUnitsPerMeter();
-        return oculusRift().projection(nearClip / mapUnits, farClip / mapUnits) *
+        return oculusRift().projection(nearClip, farClip) *
                Matrix4f::translate(oculusRift().eyeOffset() * mapUnits);
     }
 
