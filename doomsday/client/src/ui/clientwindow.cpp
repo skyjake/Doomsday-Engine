@@ -637,11 +637,19 @@ DENG2_PIMPL(ClientWindow)
 
         if(vrCfg().mode() == VRConfig::OculusRift)
         {
+            float uiDistance = 50;
+            float uiSize = 75;
+
+            Vector3f const pry = vrCfg().oculusRift().headOrientation();
+
+
             /// @todo Adjustable compositor depth?
             compositor->setCompositeProjection(
                         GL_GetProjectionMatrix()
+                        * Matrix4f::translate(swizzle(vrCfg().oculusRift().headOrientation(),
+                                                      AxisNegX, AxisNegY, AxisZ))
                         * Matrix4f::scale(Vector3f(1.f, -1.f / vrCfg().oculusRift().aspect(), 1.f))
-                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
+                        * Matrix4f::translate(Vector3f(-.5f, -.5f, -uiDistance)));
         }
         else
         {
