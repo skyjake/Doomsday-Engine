@@ -13,7 +13,9 @@ VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
 
-unix:!macx: QT += x11extras
+deng_qt5:greaterThan(QT_MINOR_VERSION, 2) {
+    unix:!macx: QT += x11extras
+}
 
 include(../dep_core.pri)
 include(../dep_opengl.pri)
