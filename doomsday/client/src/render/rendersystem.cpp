@@ -104,7 +104,7 @@ DENG2_PIMPL(RenderSystem)
         App::packageLoader().load("net.dengine.client.renderer.lensflares");
 
         // -=- DEVEL -=-
-        App::packageLoader().load("net.dengine.client.testmodel");
+        //App::packageLoader().load("net.dengine.client.testmodel");
 
         /*Package::Asset asset = App::asset("model.thing.possessed");
         qDebug() << asset.accessedRecord().asText();
