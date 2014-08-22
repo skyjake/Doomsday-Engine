@@ -88,32 +88,6 @@ void G_ConsoleRegistration()
     C_VAR_FLOAT("view-filter-strength",                 &cfg.filterStrength,                0, 0, 1);
     C_VAR_INT  ("view-ringfilter",                      &cfg.ringFilter,                    0, 1, 2);
 
-    // Server-side options
-    // Game state
-    C_VAR_BYTE ("server-game-skill",                    &cfg.netSkill,                      0, 0, 4);
-    C_VAR_BYTE ("server-game-map",                      &cfg.netMap,                        CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE ("server-game-episode",                  &cfg.netEpisode,                    CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE ("server-game-deathmatch",               &cfg.netDeathmatch,                 0, 0, 1); /* jHeretic only has one deathmatch mode */
-
-    // Modifiers
-    C_VAR_BYTE ("server-game-mod-damage",               &cfg.netMobDamageModifier,          0, 1, 100);
-    C_VAR_BYTE ("server-game-mod-health",               &cfg.netMobHealthModifier,          0, 1, 20);
-    C_VAR_INT  ("server-game-mod-gravity",              &cfg.netGravity,                    0, -1, 100);
-
-    // Gameplay options
-    C_VAR_BYTE ("server-game-jump",                     &cfg.netJumping,                    0, 0, 1);
-    C_VAR_BYTE ("server-game-nomonsters",               &cfg.netNoMonsters,                 0, 0, 1);
-    C_VAR_BYTE ("server-game-respawn",                  &cfg.netRespawn,                    0, 0, 1);
-    C_VAR_BYTE ("server-game-respawn-monsters-nightmare", &cfg.respawnMonstersNightmare,    0, 0, 1);
-    C_VAR_BYTE ("server-game-radiusattack-nomaxz",      &cfg.netNoMaxZRadiusAttack,         0, 0, 1);
-    C_VAR_BYTE ("server-game-monster-meleeattack-nomaxz", &cfg.netNoMaxZMonsterMeleeAttack, 0, 0, 1);
-
-    C_VAR_BYTE ("server-game-coop-nodamage",            &cfg.noCoopDamage,                  0, 0, 1);
-    C_VAR_BYTE ("server-game-noteamdamage",             &cfg.noTeamDamage,                  0, 0, 1);
-
-    // Misc
-    C_VAR_BYTE ("server-game-announce-secret",          &cfg.secretMsg,                     0, 0, 1);
-
     // Player
     // Player data
     C_VAR_BYTE ("player-color",                         &cfg.netColor,                      0, 0, 4);
@@ -155,11 +129,6 @@ void G_ConsoleRegistration()
     C_VAR_BYTE ("game-zclip",                           &cfg.moveCheckZ,                    0, 0, 1);
     C_VAR_BYTE ("game-monsters-floatoverblocking",      &cfg.allowMonsterFloatOverBlocking, 0, 0, 1);
     C_VAR_BYTE ("game-corpse-sliding",                  &cfg.slidingCorpses,                0, 0, 1);
-    C_VAR_BYTE ("server-game-maulotaur-fixfloorfire",   &cfg.fixFloorFire,                  0, 0, 1);
-    C_VAR_BYTE ("server-game-plane-fixmaterialscroll",  &cfg.fixPlaneScrollMaterialsEastOnly, 0, 0, 1);
-
-    // Game state
-    //C_VAR_BYTE ("game-fastmonsters",                    &cfg.fastMonsters,                  0, 0, 1);
 
     // Gameplay
     C_VAR_INT  ("game-corpse-time",                     &cfg.corpseTime,                    CVF_NO_MAX, 0, 0);

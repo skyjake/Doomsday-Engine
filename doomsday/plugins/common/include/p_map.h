@@ -115,6 +115,8 @@ dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y);
  */
 dd_bool P_TeleportMove(mobj_t *thing, coord_t x, coord_t y, dd_bool alwaysStomp);
 
+void P_Telefrag(mobj_t *thing);
+
 void P_TelefragMobjsTouchingPlayers(void);
 
 /**

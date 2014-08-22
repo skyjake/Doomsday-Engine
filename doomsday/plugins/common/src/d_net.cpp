@@ -55,12 +55,9 @@ static void notifyAllowCheatsChange()
     }
 }
 
-void D_NetConsoleRegistration()
+void D_NetConsoleRegister()
 {
     C_VAR_CHARPTR("mapcycle",                       &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
-    C_VAR_CHARPTR("server-game-mapcycle",           &mapCycle,          0, 0, 0);
-    C_VAR_BYTE   ("server-game-mapcycle-noexit",    &mapCycleNoExit,    0, 0, 1);
-    C_VAR_INT2   ("server-game-cheat",              &netSvAllowCheats,  0, 0, 1, notifyAllowCheatsChange);
 
     C_CMD        ("setcolor",   "i",    SetColor);
 #if __JHEXEN__
@@ -69,6 +66,73 @@ void D_NetConsoleRegistration()
     C_CMD        ("startcycle", "",     MapCycle);
     C_CMD        ("endcycle",   "",     MapCycle);
     C_CMD        ("message",    "s",    LocalMessage);
+
+    //if(IS_DEDICATED) return;
+
+#if !__JHEXEN__
+    C_VAR_BYTE   ("server-game-announce-secret",            &cfg.secretMsg,                         0, 0, 1);
+#endif
+#if __JDOOM__ || __JDOOM64__
+    C_VAR_BYTE   ("server-game-bfg-freeaim",                &cfg.netBFGFreeLook,                    0, 0, 1);
+#endif
+    C_VAR_INT2   ("server-game-cheat",                      &netSvAllowCheats,                      0, 0, 1, notifyAllowCheatsChange);
+#if __JDOOM__ || __JDOOM64__
+    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 2);
+#else
+    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 1);
+#endif
+#if __JDOOM__ || __JHERETIC__
+    C_VAR_BYTE   ("server-game-episode",                    &cfg.netEpisode,                        CVF_NO_MAX, 0, 0);
+#endif
+    C_VAR_BYTE   ("server-game-jump",                       &cfg.netJumping,                        0, 0, 1);
+    C_VAR_BYTE   ("server-game-map",                        &cfg.netMap,                            CVF_NO_MAX, 0, 0);
+    C_VAR_CHARPTR("server-game-mapcycle",                   &mapCycle,                              0, 0, 0);
+    C_VAR_BYTE   ("server-game-mapcycle-noexit",            &mapCycleNoExit,                        0, 0, 1);
+#if __JHERETIC__
+    C_VAR_BYTE   ("server-game-maulotaur-fixfloorfire",     &cfg.fixFloorFire,                      0, 0, 1);
+#endif
+    C_VAR_BYTE   ("server-game-monster-meleeattack-nomaxz", &cfg.netNoMaxZMonsterMeleeAttack,       0, 0, 1);
+#if __JDOOM__ || __JDOOM64__
+    C_VAR_BYTE   ("server-game-nobfg",                      &cfg.noNetBFG,                          0, 0, 1);
+#endif
+    C_VAR_BYTE   ("server-game-nomonsters",                 &cfg.netNoMonsters,                     0, 0, 1);
+#if !__JHEXEN__
+    C_VAR_BYTE   ("server-game-noteamdamage",               &cfg.noTeamDamage,                      0, 0, 1);
+#endif
+#if __JHERETIC__
+    C_VAR_BYTE   ("server-game-plane-fixmaterialscroll",    &cfg.fixPlaneScrollMaterialsEastOnly,   0, 0, 1);
+#endif
+    C_VAR_BYTE   ("server-game-radiusattack-nomaxz",        &cfg.netNoMaxZRadiusAttack,             0, 0, 1);
+#if __JHEXEN__
+    C_VAR_BYTE   ("server-game-randclass",                  &cfg.netRandomClass,                    0, 0, 1);
+#endif
+#if !__JHEXEN__
+    C_VAR_BYTE   ("server-game-respawn",                    &cfg.netRespawn,                        0, 0, 1);
+#endif
+#if __JDOOM__ || __JHERETIC__
+    C_VAR_BYTE   ("server-game-respawn-monsters-nightmare", &cfg.respawnMonstersNightmare,          0, 0, 1);
+#endif
+    C_VAR_BYTE   ("server-game-skill",                      &cfg.netSkill,                          0, 0, 4);
+
+    // Modifiers:
+    C_VAR_BYTE   ("server-game-mod-damage",                 &cfg.netMobDamageModifier,              0, 1, 100);
+    C_VAR_INT    ("server-game-mod-gravity",                &cfg.netGravity,                        0, -1, 100);
+    C_VAR_BYTE   ("server-game-mod-health",                 &cfg.netMobHealthModifier,              0, 1, 20);
+
+    // Coop:
+#if !__JHEXEN__
+    C_VAR_BYTE   ("server-game-coop-nodamage",              &cfg.noCoopDamage,                      0, 0, 1);
+#endif
+#if __JDOOM__ || __JDOOM64__
+    //C_VAR_BYTE   ("server-game-coop-nothing",               &cfg.noCoopAnything,                    0, 0, 1); // not implemented atm, see P_SpawnMobjXYZ
+    C_VAR_BYTE   ("server-game-coop-noweapons",             &cfg.noCoopWeapons,                     0, 0, 1);
+    C_VAR_BYTE   ("server-game-coop-respawn-items",         &cfg.coopRespawnItems,                  0, 0, 1);
+#endif
+
+    // Deathmatch:
+#if __JDOOM__ || __JDOOM64__
+    C_VAR_BYTE   ("server-game-deathmatch-killmsg",         &cfg.killMessages,                      0, 0, 1);
+#endif
 }
 
 Writer *D_NetWrite()

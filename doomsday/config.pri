@@ -64,6 +64,9 @@ include(versions.pri)
 
 # Build Options --------------------------------------------------------------
 
+# C++11 is the C++ standard used in this codebase.
+CONFIG += deng_c++11
+
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
     !win32: echo(Debug build.)

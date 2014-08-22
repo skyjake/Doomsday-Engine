@@ -6,8 +6,6 @@
 p, h1, h2, h3, h4, h5, h6, h7, h8, h9 { margin-top: 0; }
 dl, ol, ul { padding: 0; margin: 0; }
 
-p { clear: both; }
-
 /* fixes */
 .clearfix  { height: 1%; overflow: hidden; }
 
@@ -976,10 +974,11 @@ div.clear {
 }
 
 .ohloh-button {
-    margin-top: .4em;
     /* The button is visually smaller than the defined dimensions of the iframe... */
-    margin-bottom: -14px;
-    margin-right: -14px;
+    height: 32px;
+    width: 148px;
+    position: relative;
+    top: 14px;
 }
 
 .google-plusone {

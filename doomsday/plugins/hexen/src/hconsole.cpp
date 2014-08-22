@@ -88,24 +88,6 @@ void G_ConsoleRegistration()
     C_VAR_FLOAT("view-bob-weapon",                  &cfg.bobWeapon,                     0, 0, 1);
     C_VAR_FLOAT("view-filter-strength",             &cfg.filterStrength,                0, 0, 1);
 
-    // Server-side options
-    // Game state
-    C_VAR_BYTE ("server-game-skill",                &cfg.netSkill,                      0, 0, 4);
-    C_VAR_BYTE ("server-game-map",                  &cfg.netMap,                        CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE ("server-game-deathmatch",           &cfg.netDeathmatch,                 0, 0, 1); /* jHexen only has one deathmatch mode */
-
-    // Modifiers
-    C_VAR_BYTE ("server-game-mod-damage",           &cfg.netMobDamageModifier,          0, 1, 100);
-    C_VAR_BYTE ("server-game-mod-health",           &cfg.netMobHealthModifier,          0, 1, 20);
-    C_VAR_INT  ("server-game-mod-gravity",          &cfg.netGravity,                    0, -1, 100);
-
-    // Gameplay options
-    C_VAR_BYTE ("server-game-jump",                 &cfg.netJumping,                    0, 0, 1);
-    C_VAR_BYTE ("server-game-nomonsters",           &cfg.netNoMonsters,                 0, 0, 1);
-    C_VAR_BYTE ("server-game-randclass",            &cfg.netRandomClass,                0, 0, 1);
-    C_VAR_BYTE ("server-game-radiusattack-nomaxz",  &cfg.netNoMaxZRadiusAttack,         0, 0, 1);
-    C_VAR_BYTE ("server-game-monster-meleeattack-nomaxz", &cfg.netNoMaxZMonsterMeleeAttack, 0, 0, 1);
-
     // Misc
     C_VAR_BYTE ("msg-hub-override",                 &cfg.overrideHubMsg,                0, 0, 2);
 

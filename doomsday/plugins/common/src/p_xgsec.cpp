@@ -2073,7 +2073,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool /*ceiling*/,
 
 int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
                               void *context, void *context2,
-                              mobj_t */*activator*/)
+                              mobj_t * /*activator*/)
 {
     Line *line = (Line *) context;
     linetype_t *info = (linetype_t *) context2;
