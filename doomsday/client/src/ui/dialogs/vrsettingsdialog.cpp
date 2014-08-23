@@ -70,6 +70,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
+        ipd->setPrecision(1);
 
         if(vrCfg().oculusRift().isReady())
         {
