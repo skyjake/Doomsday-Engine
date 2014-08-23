@@ -87,14 +87,15 @@ namespace internal
 
     struct wianimstate_t
     {
-        int nextTic;  ///< Next tic on which to progress the animation.
-        int frame;    ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
+        int nextTic = 0;  ///< Next tic on which to progress the animation.
+        int frame = -1;   ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
 
         /// Graphics for each frame of the animation.
         typedef QList<patchid_t> Patches;
         Patches patches;
     };
-    static wianimstate_t *animStates;
+    typedef QList<wianimstate_t> AnimationStates;
+    static AnimationStates animStates;
 
     static patchid_t pBackground;
     static patchid_t pYouAreHereRight;
@@ -248,32 +249,42 @@ void WI_Init()
 
 void WI_Shutdown()
 {
-    Z_Free(animStates); animStates = 0;
+    animStates.clear();
 }
 
 static String backgroundPatchForEpisode(String const &episodeId)
 {
-    int const oldEpisodeNum = episodeId.toInt();
-    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && oldEpisodeNum > 2))
+    if(!(gameModeBits & GM_ANY_DOOM2))
     {
-        return "INTERPIC";
+        bool isNumber;
+        int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
+        if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
+        {
+            return String("WIMAP%1").arg(oldEpisodeNum);
+        }
     }
-    return String("WIMAP%1").arg(oldEpisodeNum);
+    return "INTERPIC";
 }
 
 static Animations const *animationsForEpisode(String const &episodeId)
 {
-    if(episodeId == "1") return &episode1Anims;
-    if(episodeId == "2") return &episode2Anims;
-    if(episodeId == "3") return &episode3Anims;
+    if(!(gameModeBits & GM_ANY_DOOM2))
+    {
+        if(episodeId == "1") return &episode1Anims;
+        if(episodeId == "2") return &episode2Anims;
+        if(episodeId == "3") return &episode3Anims;
+    }
     return nullptr; // Not found.
 }
 
 static Locations const *locationsForEpisode(String const &episodeId)
 {
-    if(episodeId == "1") return &episode1Locations;
-    if(episodeId == "2") return &episode2Locations;
-    if(episodeId == "3") return &episode3Locations;
+    if(!(gameModeBits & GM_ANY_DOOM2))
+    {
+        if(episodeId == "1") return &episode1Locations;
+        if(episodeId == "2") return &episode2Locations;
+        if(episodeId == "3") return &episode3Locations;
+    }
     return nullptr; // Not found.
 }
 
@@ -321,6 +332,40 @@ static int cntPause;
 static wbstartstruct_t const *wbs;
 static wbplayerstruct_t const *inPlayerInfo;
 
+static common::GameSession::VisitedMaps visitedMaps()
+{
+    // Newer versions of the savegame format include a breakdown of the maps previously visited
+    // during the current game session.
+    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    {
+        // For backward compatible intermission behavior we'll have to use a specially prepared
+        // version of this information, using the original map progression assumptions.
+        if(!(gameModeBits & GM_ANY_DOOM2))
+        {
+            bool isNumber;
+            int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+            DENG2_ASSERT(isNumber);
+            DENG2_UNUSED(isNumber);
+
+            DENG2_ASSERT(wbs);
+            int lastMapNum = G_MapNumberFor(::wbs->currentMap);
+            if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
+
+            QSet<de::Uri> visited;
+            for(int i = 0; i <= lastMapNum; ++i)
+            {
+                visited << G_ComposeMapUri(oldEpisodeNum, i);
+            }
+            if(::wbs->didSecret)
+            {
+                visited << G_ComposeMapUri(oldEpisodeNum, 8);
+            }
+            return visited.toList();
+        }
+    }
+    return COMMON_GAMESESSION->allVisitedMaps();
+}
+
 static void drawBackground()
 {
     DGL_Enable(DGL_TEXTURE_2D);
@@ -336,12 +381,12 @@ static void drawBackground()
         for(int i = 0; i < anims->count(); ++i)
         {
             Animation const &def = (*anims)[i];
-            wianimstate_t *state = &animStates[i];
+            wianimstate_t &state = animStates[i];
 
             // Has the animation begun yet?
-            if(state->frame < 0) continue;
+            if(state.frame < 0) continue;
 
-            patchid_t patchId = state->patches[state->frame];
+            patchid_t patchId = state.patches[state.frame];
             WI_DrawPatch(patchId, patchReplacementText(patchId), def.origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
     }
@@ -457,28 +502,28 @@ static void beginAnimations()
     for(int i = 0; i < anims->count(); ++i)
     {
         Animation const &def = (*anims)[i];
-        wianimstate_t *state = &animStates[i];
+        wianimstate_t &state = animStates[i];
 
         // Is the animation active for the current map?
         if(!def.mapUri.path().isEmpty() && wbs->nextMap != def.mapUri)
             continue;
 
         // Already begun?
-        if(state->frame >= 0) continue;
+        if(state.frame >= 0) continue;
 
         // Is it time to begin the animation?
         if(def.beginState != inState) continue;
 
-        state->frame = 0;
+        state.frame = 0;
 
         // Determine when to animate the first frame.
         if(!def.mapUri.path().isEmpty())
         {
-            state->nextTic = backgroundAnimCounter + 1 + def.tics;
+            state.nextTic = backgroundAnimCounter + 1 + def.tics;
         }
         else
         {
-            state->nextTic = backgroundAnimCounter + 1 + (M_Random() % def.tics);
+            state.nextTic = backgroundAnimCounter + 1 + (M_Random() % def.tics);
         }
     }
 }
@@ -571,6 +616,9 @@ static void tickShowNextMap()
     drawYouAreHere = (stateCounter & 31) < 20;
 }
 
+/**
+ * Draw a mark on each map location visited during the current game session.
+ */
 static void drawLocationMarks()
 {
     Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
@@ -581,20 +629,13 @@ static void drawLocationMarks()
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
 
-    // Draw a splat on taken cities.
-    int last = G_MapNumberFor(wbs->currentMap);
-    if(last == 8) last = G_MapNumberFor(wbs->nextMap) - 1;
-
-    for(int i = 0; i <= last; ++i)
+    common::GameSession::VisitedMaps const visited = visitedMaps();
+    foreach(de::Uri const &visitedMap, visited)
     {
-        Location const &loc = (*locations)[i];
-        drawPatchIfFits(pSplat, loc.origin);
-    }
-
-    // Splat the secret map?
-    if(wbs->didSecret)
-    {
-        drawPatchIfFits(pSplat, (*locations)[8].origin);
+        if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
+        {
+            drawPatchIfFits(pSplat, loc->origin);
+        }
     }
 
     if(drawYouAreHere)
@@ -1312,23 +1353,15 @@ static void loadData()
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
 
-    // Are there any animations to initialize?
+    // Are there any animation states to initialize?
+    animStates.clear();
     if(Animations const *anims = animationsForEpisode(episodeId))
     {
-        pYouAreHereRight = R_DeclarePatch("WIURH0");
-        pYouAreHereLeft  = R_DeclarePatch("WIURH1");
-        pSplat           = R_DeclarePatch("WISPLAT");
-
-        animStates = (wianimstate_t *)Z_Realloc(animStates, sizeof(*animStates) * anims->count(), PU_GAMESTATIC);
-        std::memset(animStates, 0, sizeof(*animStates) * anims->count());
-
-        for(int i = 0; i < anims->count(); ++i)
+        animStates.reserve(anims->count());
+        for(Animation const &def : *anims)
         {
-            Animation const &def = (*anims)[i];
-            wianimstate_t &state = animStates[i];
-
-            state.frame = -1; // Not yet begun.
-
+            animStates.append(wianimstate_t());
+            wianimstate_t &state = animStates.last();
             for(String const &patchName : def.patchNames)
             {
                 state.patches << R_DeclarePatch(patchName.toUtf8().constData());
@@ -1336,21 +1369,28 @@ static void loadData()
         }
     }
 
-    pFinished   = R_DeclarePatch("WIF");
-    pEntering   = R_DeclarePatch("WIENTER");
-    pKills      = R_DeclarePatch("WIOSTK");
-    pSecret     = R_DeclarePatch("WIOSTS");
-    pSecretSP   = R_DeclarePatch("WISCRT2");
-    pItems      = R_DeclarePatch("WIOSTI");
-    pFrags      = R_DeclarePatch("WIFRGS");
-    pTime       = R_DeclarePatch("WITIME");
-    pSucks      = R_DeclarePatch("WISUCKS");
-    pPar        = R_DeclarePatch("WIPAR");
-    pKillers    = R_DeclarePatch("WIKILRS");
-    pVictims    = R_DeclarePatch("WIVCTMS");
-    pTotal      = R_DeclarePatch("WIMSTT");
-    pFaceAlive  = R_DeclarePatch("STFST01");
-    pFaceDead   = R_DeclarePatch("STFDEAD0");
+    pFinished  = R_DeclarePatch("WIF");
+    pEntering  = R_DeclarePatch("WIENTER");
+    pKills     = R_DeclarePatch("WIOSTK");
+    pSecret    = R_DeclarePatch("WIOSTS");
+    pSecretSP  = R_DeclarePatch("WISCRT2");
+    pItems     = R_DeclarePatch("WIOSTI");
+    pFrags     = R_DeclarePatch("WIFRGS");
+    pTime      = R_DeclarePatch("WITIME");
+    pSucks     = R_DeclarePatch("WISUCKS");
+    pPar       = R_DeclarePatch("WIPAR");
+    pKillers   = R_DeclarePatch("WIKILRS");
+    pVictims   = R_DeclarePatch("WIVCTMS");
+    pTotal     = R_DeclarePatch("WIMSTT");
+    pFaceAlive = R_DeclarePatch("STFST01");
+    pFaceDead  = R_DeclarePatch("STFDEAD0");
+
+    if(!(gameModeBits & GM_ANY_DOOM2))
+    {
+        pYouAreHereRight = R_DeclarePatch("WIURH0");
+        pYouAreHereLeft  = R_DeclarePatch("WIURH1");
+        pSplat           = R_DeclarePatch("WISPLAT");
+    }
 
     char name[9];
     for(int i = 0; i < NUMTEAMS; ++i)
