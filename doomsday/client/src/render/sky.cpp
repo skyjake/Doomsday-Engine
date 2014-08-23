@@ -401,7 +401,7 @@ DENG2_PIMPL(Sky)
             temp.pose.yaw             = minfo.yaw;
 
             Vector3f ambientColor(minfo.def->get("color"));
-            for(int c = 0; c < 4; ++c)
+            for(int c = 0; c < 3; ++c)
             {
                 temp.light.ambientColor[c] = ambientColor[c];
             }
