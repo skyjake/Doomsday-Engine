@@ -200,8 +200,7 @@ void R_ProjectSprite(mobj_t *mo)
     SectorCluster &cluster = Mobj_Cluster(*mo);
     if(!cluster.hasWorldVolume()) return;
 
-    if(!mo->thinker.d) return;
-    ClientMobjThinkerData const &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
+    ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData);
 
     // Determine distance to object.
     Vector3d const moPos = mobjOriginSmoothed(mo);
@@ -227,7 +226,10 @@ void R_ProjectSprite(mobj_t *mo)
             }
         }
 
-        animator = mobjData.animator();
+        if(mobjData)
+        {
+            animator = mobjData->animator();
+        }
     }
 
     bool const hasModel = (mf || animator);
