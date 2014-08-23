@@ -230,13 +230,24 @@ DENG2_PIMPL(ScriptedInfo)
             }
             else if(!block.name().isEmpty())
             {
+                // Create the block record if it doesn't exist.
+                String varName = variableName(block);
+                if(!ns.has(varName))
+                {
+                    ns.addRecord(varName);
+                }
+                Record &blockRecord = ns[varName];
+
                 // Block type placed into a special variable (only with named blocks, though).
-                ns.add(variableName(block).concatenateMember(VAR_BLOCK_TYPE)) =
-                        new TextValue(block.blockType());
+                blockRecord.addText(VAR_BLOCK_TYPE, block.blockType());
 
                 // Also store source location in a special variable.
-                ns.add(variableName(block).concatenateMember(VAR_SOURCE)) =
-                        new TextValue(block.sourceLocation());
+                blockRecord.addText(VAR_SOURCE, block.sourceLocation());
+
+                DENG2_FOR_PUBLIC_AUDIENCE2(NamedBlock, i)
+                {
+                    i->parsedNamedBlock(varName, blockRecord);
+                }
             }
 
             foreach(Info::Element const *sub, block.contentsInOrder())
@@ -380,7 +391,11 @@ DENG2_PIMPL(ScriptedInfo)
             findBlocks(blockType, paths, *i.value(), prefix.concatenateMember(i.key()));
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(NamedBlock)
 };
+
+DENG2_AUDIENCE_METHOD(ScriptedInfo, NamedBlock)
 
 ScriptedInfo::ScriptedInfo(Record *globalNamespace)
     : d(new Instance(this, globalNamespace))
@@ -432,9 +447,9 @@ ScriptedInfo::Paths ScriptedInfo::allBlocksOfType(String const &blockType) const
 
 String ScriptedInfo::absolutePathInContext(Record const &context, String const &relativePath) // static
 {
-    if(context.has("__source__"))
+    if(context.has(VAR_SOURCE))
     {
-        String src = context["__source__"].value<TextValue>();
+        String src = context[VAR_SOURCE].value<TextValue>();
         int pos = src.lastIndexOf(':');
         if(pos < 0) return src / relativePath;
         src.truncate(pos);

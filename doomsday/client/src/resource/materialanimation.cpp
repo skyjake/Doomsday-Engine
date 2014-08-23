@@ -223,7 +223,7 @@ Material::Animation::LayerState const &Material::Animation::layer(int layerNum) 
         return d->layers[layerNum];
     }
     /// @throw Material::UnknownLayerError Invalid layer reference.
-    throw Material::UnknownLayerError("Material::AnimationState::layer", QString("Invalid material layer #%1").arg(layerNum));
+    throw Material::UnknownLayerError("Material::Animator::layer", QString("Invalid material layer #%1").arg(layerNum));
 }
 
 Material::Animation::LayerState const &Material::Animation::detailLayer() const
@@ -233,7 +233,7 @@ Material::Animation::LayerState const &Material::Animation::detailLayer() const
         return d->detailLayer;
     }
     /// @throw Material::UnknownLayerError The material has no details layer.
-    throw Material::UnknownLayerError("Material::AnimationState::detailLayer", "Material has no details layer");
+    throw Material::UnknownLayerError("Material::Animator::detailLayer", "Material has no details layer");
 }
 
 Material::Animation::LayerState const &Material::Animation::shineLayer() const
@@ -243,7 +243,7 @@ Material::Animation::LayerState const &Material::Animation::shineLayer() const
         return d->shineLayer;
     }
     /// @throw Material::UnknownLayerError The material has no shine layer.
-    throw Material::UnknownLayerError("Material::AnimationState::shineLayer", "Material has no shine layer");
+    throw Material::UnknownLayerError("Material::Animator::shineLayer", "Material has no shine layer");
 }
 
 Material::Animation::DecorationState const &Material::Animation::decoration(int decorNum) const
@@ -253,5 +253,5 @@ Material::Animation::DecorationState const &Material::Animation::decoration(int 
         return d->decorations[decorNum];
     }
     /// @throw Material::UnknownDecorationError Invalid decoration reference.
-    throw Material::UnknownDecorationError("Material::AnimationState::decoration", QString("Invalid material decoration #%1").arg(decorNum));
+    throw Material::UnknownDecorationError("Material::Animator::decoration", QString("Invalid material decoration #%1").arg(decorNum));
 }

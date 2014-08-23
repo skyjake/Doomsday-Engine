@@ -2046,7 +2046,7 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
     mo.function = reinterpret_cast<thinkfunc_t>(gx.MobjThinker);
 
     ClientMobjThinkerData *data = new ClientMobjThinkerData;
-    data->networkState().flags = DDMF_REMOTE;
+    data->remoteSync().flags = DDMF_REMOTE;
     mo.setData(data);
 
     d->clMobjHash.insert(id, mo);
@@ -2069,7 +2069,7 @@ int Map::clMobjIterator(int (*callback)(mobj_t *, void *), void *context)
         next = i;
         next++;
 
-        DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasNetworkState());
+        DENG2_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasRemoteSync());
 
         // Callback returns zero to continue.
         if(int result = callback(i.value(), context))
@@ -3325,7 +3325,7 @@ static int expireClMobjsWorker(mobj_t *mo, void *context)
     // Don't expire player mobjs.
     if(mo->dPlayer) return 0;
 
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     DENG2_ASSERT(info != 0);
 
     if((info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN | CLMF_NULLED)) || !mo->info)

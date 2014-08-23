@@ -25,7 +25,7 @@
 #endif
 
 #include <de/Rectangle>
-#include <de/Vector>
+#include <de/Matrix>
 #include <de/rect.h>
 
 class BspLeaf;
@@ -210,5 +210,13 @@ void R_SetupDefaultViewWindow(int consoleNum);
  * Animates the view window towards the target values.
  */
 void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
+
+/**
+ * Returns the model-view-projection matrix for the camera position and orientation
+ * in the current frame. Remains the same thoughtout rendering of the frame.
+ *
+ * @return MVP matrix.
+ */
+de::Matrix4f const &Viewer_Matrix();
 
 #endif // DENG_CLIENT_VIEWPORTS_H

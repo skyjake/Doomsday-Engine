@@ -40,6 +40,13 @@ public:
     mobj_t *mobj();
     mobj_t const *mobj() const;
 
+    /**
+     * Called whenever the current state of the mobj has changed.
+     *
+     * @param previousState  Previous state of the object.
+     */
+    virtual void stateChanged(state_t const *previousState);
+
 private:
     DENG2_PRIVATE(d)
 };

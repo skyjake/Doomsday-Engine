@@ -36,6 +36,9 @@ class File;
  * InfoBank handles the common plumbing of parsing an Info file and iterating
  * through it for creating bank sources.
  *
+ * InfoBank has its own namespace where ScriptedInfo will store all variables from
+ * all parsed sources.
+ *
  * @ingroup data
  */
 class DENG2_PUBLIC InfoBank : public Bank

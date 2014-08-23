@@ -227,6 +227,12 @@ public:
     void glBindToUnit(int unit) const;
 
     /**
+     * Applies any cached parameter changes to the GL texture object. The texture is
+     * bound temporarily while this is done (so any previously bound texture is unbound).
+     */
+    void glApplyParameters();
+
+    /**
      * Returns the image format that was specified when image content was put
      * into the texture (with setImage() or setSubImage()).
      */

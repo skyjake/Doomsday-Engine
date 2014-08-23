@@ -13,7 +13,7 @@ VERSION  = $$DENG_VERSION
 
 CONFIG += deng_qtgui deng_qtopengl
 
-unix:!macx: QT += x11extras
+deng_qt5:unix:!macx: QT += x11extras
 
 include(../dep_core.pri)
 include(../dep_opengl.pri)
@@ -74,6 +74,7 @@ publicHeaders(root, \
     include/de/GLTexture \
     include/de/GLUniform \
     include/de/GuiApp \
+    include/de/HeightMap \
     include/de/Image \
     include/de/ImageBank \
     include/de/KdTreeAtlasAllocator \
@@ -126,6 +127,7 @@ publicHeaders(graphics, \
     include/de/graphics/gltarget.h \
     include/de/graphics/gltexture.h \
     include/de/graphics/gluniform.h \
+    include/de/graphics/heightmap.h \
     include/de/graphics/image.h \
     include/de/graphics/imagebank.h \
     include/de/graphics/kdtreeatlasallocator.h \
@@ -176,6 +178,7 @@ SOURCES +=  \
     src/graphics/gltarget.cpp \
     src/graphics/gltexture.cpp \
     src/graphics/gluniform.cpp \
+    src/graphics/heightmap.cpp \
     src/graphics/imagebank.cpp \
     src/graphics/image.cpp \
     src/graphics/kdtreeatlasallocator.cpp \

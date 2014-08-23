@@ -501,6 +501,16 @@ void GLTexture::glBindToUnit(int unit) const
     }
 }
 
+void GLTexture::glApplyParameters()
+{
+    if(d->flags.testFlag(ParamsChanged))
+    {
+        d->glBind();
+        d->glUpdateParamsOfBoundTexture();
+        d->glUnbind();
+    }
+}
+
 Image::Format GLTexture::imageFormat() const
 {
     return d->format;

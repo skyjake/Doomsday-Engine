@@ -153,10 +153,7 @@ void GameWidget::update()
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
     // Request update of window contents.
-    root().as<ClientRootWidget>().window().draw();
-
-    // After the first frame, start timedemo.
-    //DD_CheckTimeDemo();
+    //root().as<ClientRootWidget>().window().draw();
 }
 
 void GameWidget::drawContent()

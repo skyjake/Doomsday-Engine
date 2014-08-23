@@ -49,6 +49,7 @@ public:
     Record const &accessedRecord() const;
     Record const *accessedRecordPtr() const;
 
+    bool has(String const &name) const;
     Value const &get(String const &name) const;
     dint geti(String const &name) const;
     dint geti(String const &name, dint defaultValue) const;

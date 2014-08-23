@@ -68,13 +68,13 @@ public:
          * Retrieves the value of a variable and resolves it to an absolute path in
          * relation to the asset.
          *
-         * @param name  Variable name in the package asset metadata.
+         * @param varName  Variable name in the package asset metadata.
          *
          * @return Absolute path.
          *
          * @see ScriptedInfo::absolutePathInContext()
          */
-        String absolutePath(String const &name) const;
+        String absolutePath(String const &varName) const;
     };
 
 public:

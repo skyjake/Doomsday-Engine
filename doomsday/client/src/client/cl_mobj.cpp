@@ -69,7 +69,7 @@ mobj_t *ClMobjInfo::mobj()
 
 void ClMobj_Link(mobj_t *mo)
 {
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -93,7 +93,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 {
     LOG_AS("ClMobj_EnableLocalActions");
 
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return;
     if(enable)
     {
@@ -110,7 +110,7 @@ void ClMobj_EnableLocalActions(mobj_t *mo, dd_bool enable)
 #undef ClMobj_LocalActionsEnabled
 dd_bool ClMobj_LocalActionsEnabled(mobj_t *mo)
 {
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(!isClient || !info) return true;
     return (info->flags & CLMF_LOCAL_ACTIONS) != 0;
 }
@@ -213,7 +213,7 @@ dd_bool Cl_IsClientMobj(mobj_t const *mo)
 {
     if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
     {
-        return data->hasNetworkState();
+        return data->hasRemoteSync();
     }
     return false;
 }
@@ -223,7 +223,7 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
 {
     if(!Cl_IsClientMobj(mo)) return true;
 
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(info->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE))
     {
         // Should not use this for playsim.
@@ -237,14 +237,14 @@ dd_bool ClMobj_IsValid(mobj_t *mo)
     return true;
 }
 
-ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo)
+ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mo)
 {
     if(!mo) return 0;
 
     if(ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
     {
-        if(!data->hasNetworkState()) return 0;
-        return &data->networkState();
+        if(!data->hasRemoteSync()) return 0;
+        return &data->remoteSync();
     }
 
     return 0;
@@ -254,7 +254,7 @@ dd_bool ClMobj_Reveal(mobj_t *mo)
 {
     LOG_AS("ClMobj_Reveal");
 
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
 
     CL_ASSERT_CLMOBJ(mo);
 
@@ -351,7 +351,7 @@ void ClMobj_ReadDelta()
 
     // Get the client mobj for this.
     mobj_t *mo = map.clMobjFor(id);
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     bool needsLinking = false, justCreated = false;
     if(!mo)
     {
@@ -594,7 +594,7 @@ void ClMobj_ReadNullDelta()
         return;
     }
 
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
 
     // Get rid of this mobj.
     if(!mo->dPlayer)

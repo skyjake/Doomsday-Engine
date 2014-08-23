@@ -76,6 +76,19 @@ VecType vectorFromValue(Value const &value) {
     return converted;
 }
 
+enum SwizzleAxis
+{
+    AxisX = 0,
+    AxisY = 1,
+    AxisZ = 2,
+    AxisW = 3,
+
+    AxisNegX = -1,
+    AxisNegY = -2,
+    AxisNegZ = -3,
+    AxisNegW = -4
+};
+
 /**
  * Template class for 2D vectors (points). The members are public for
  * convenient access. The used value type must be serializable.
@@ -447,13 +460,9 @@ public:
     inline void decompose(Type *array) const {
         for(int i = 0; i < 3; ++i) array[i] = (*this)[i];
     }
-
-    Vector2<Type> xz() const {
-        return Vector2<Type>(Vector2<Type>::x, z);
-    }
-    Vector3<Type> xzy() const {
-        return Vector3<Type>(Vector2<Type>::x, z, Vector2<Type>::y);
-    }
+    Vector2<Type> xz() const { return swizzle(*this, AxisX, AxisZ); }
+    Vector3<Type> xzy() const { return swizzle(*this, AxisX, AxisZ, AxisY); }
+    Vector3<Type> zyx() const { return swizzle(*this, AxisZ, AxisY, AxisX); }
 
 public:
     Type z;
@@ -660,6 +669,10 @@ public:
         if(vecAbs.w > vecAbs[axis]) axis = 3;
         return axis;
     }
+    inline void decompose(Type *array) const {
+        for(int i = 0; i < 4; ++i) array[i] = (*this)[i];
+    }
+
     // Implements ISerializable.
     void operator >> (Writer &to) const {
         Vector3<Type>::operator >> (to);
@@ -681,13 +694,40 @@ public:
         return Vector3<Type>();
     }
     Vector2<Type> xy() const { return *this; }
-    Vector2<Type> zw() const { return Vector2<Type>(Vector3<Type>::z, w); }
-    Vector4<Type> zyxw() const {
-        return Vector4<Type>(Vector3<Type>::z, Vector3<Type>::y, Vector3<Type>::x, w);
-    }
+    Vector2<Type> zw() const { return swizzle(*this, AxisZ, AxisW); }
+    Vector4<Type> zyxw() const { return swizzle(*this, AxisZ, AxisY, AxisX, AxisW); }
+
 public:
     Type w;
 };
+
+// Swizzling.
+template <typename Type>
+typename Type::ValueType swizzledComponent(Type const &vec, SwizzleAxis axis) {
+    if(axis >= 0) return vec[axis];
+    return -vec[-axis - 1];
+}
+
+template <typename Type>
+Vector2<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b) {
+    return Vector2<typename Type::ValueType>(swizzledComponent(vec, a),
+                                             swizzledComponent(vec, b));
+}
+
+template <typename Type>
+Vector3<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c) {
+    return Vector3<typename Type::ValueType>(swizzledComponent(vec, a),
+                                             swizzledComponent(vec, b),
+                                             swizzledComponent(vec, c));
+}
+
+template <typename Type>
+Vector4<typename Type::ValueType> swizzle(Type const &vec, SwizzleAxis a, SwizzleAxis b, SwizzleAxis c, SwizzleAxis d) {
+    return Vector4<typename Type::ValueType>(swizzledComponent(vec, a),
+                                             swizzledComponent(vec, b),
+                                             swizzledComponent(vec, c),
+                                             swizzledComponent(vec, d));
+}
 
 // Serialization of Vector4.
 template <typename Type>

@@ -292,6 +292,7 @@ static void unlinkMobjLumobjs()
     }
 }
 
+/*
 static void fieldOfViewChanged()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
@@ -304,7 +305,7 @@ static void fieldOfViewChanged()
         if(Con_GetFloat("rend-vr-nonrift-fovx") != fieldOfView)
             Con_SetFloat("rend-vr-nonrift-fovx", fieldOfView);
     }
-}
+}*/
 
 static void detailFactorChanged()
 {
@@ -341,7 +342,7 @@ static void texQualityChanged()
 void Rend_Register()
 {
     C_VAR_INT   ("rend-bias",                       &useBias,                       0, 0, 1);
-    C_VAR_FLOAT2("rend-camera-fov",                 &fieldOfView,                   0, 1, 179, fieldOfViewChanged);
+    C_VAR_FLOAT ("rend-camera-fov",                 &fieldOfView,                   0, 1, 179);
 
     C_VAR_FLOAT ("rend-glow",                       &glowFactor,                    0, 0, 2);
     C_VAR_INT   ("rend-glow-height",                &glowHeightMax,                 0, 0, 1024);
@@ -495,7 +496,9 @@ float Rend_FieldOfView()
     {
         // fieldOfView = VR::riftFovX(); // Update for culling
         // return VR::riftFovX();
-        return fieldOfView;
+
+        // OVR tells us which FOV to use.
+        return vrCfg().oculusRift().fovX();
     }
     else
     {
@@ -508,6 +511,8 @@ float Rend_FieldOfView()
 Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
+
+    float bodyAngle = viewData->current.angleWithoutHeadTracking() / (float) ANGLE_MAX * 360 - 90;
 
     vOrigin = viewData->current.origin.xzy();
     vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
@@ -529,19 +534,23 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
          * these values and is syncing with them independently (however, game has more
          * latency).
          */
-        if((vrCfg().mode() == VRConfig::OculusRift) && vrCfg().oculusRift().isReady())
+        OculusRift &ovr = vrCfg().oculusRift();
+
+        if((vrCfg().mode() == VRConfig::OculusRift) && ovr.isReady())
         {
-            Vector3f const pry = vrCfg().oculusRift().headOrientation();
+            Vector3f const pry = ovr.headOrientation();
 
             // Use angles directly from the Rift for best response.
             roll  = -radianToDegree(pry[1]);
             pitch =  radianToDegree(pry[0]);
-
         }
 
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
+                    Matrix4f::translate(swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
+                                                (ovr.headPosition() * vrCfg().mapUnitsPerMeter()),
+                                                AxisNegX, AxisNegY, AxisZ));
     }
 
     return (modelView *
@@ -790,8 +799,8 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
 
-    vis->origin   = (rvertices[0] + rvertices[3]) / 2;
-    vis->distance = Rend_PointDist2D(vis->origin);
+    vis->pose.origin   = (rvertices[0] + rvertices[3]) / 2;
+    vis->pose.distance = Rend_PointDist2D(vis->pose.origin);
 
     VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
     VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
@@ -3498,11 +3507,11 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
         occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
-    return H_RenderHalo(spr->origin,
+    return H_RenderHalo(spr->pose.origin,
                         spr->data.flare.size,
                         spr->data.flare.tex,
                         spr->data.flare.color,
-                        spr->distance,
+                        spr->pose.distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
                         (spr->data.flare.flags & RFF_NO_TURN) == 0);
@@ -3543,11 +3552,15 @@ static void drawMasked()
 
             case VSPR_SPRITE:
                 // Render an old fashioned sprite, ah the nostalgia...
-                Rend_DrawSprite(spr->data.sprite);
+                Rend_DrawSprite(*spr);
                 break;
 
             case VSPR_MODEL:
-                Rend_DrawModel(spr->data.model);
+                Rend_DrawModel(*spr);
+                break;
+
+            case VSPR_MODEL_GL2:
+                Rend_DrawModel2(*spr);
                 break;
 
             case VSPR_FLARE:

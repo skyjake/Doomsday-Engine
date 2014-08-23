@@ -249,8 +249,8 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_VERBOSE("swap interval: ") << format().swapInterval();
-    LOGDEV_GL_VERBOSE("multisample: %b") << (GLFramebuffer::defaultMultisampling() > 1);
+    LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
+    LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);

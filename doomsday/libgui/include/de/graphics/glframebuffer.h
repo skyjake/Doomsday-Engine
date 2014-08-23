@@ -79,6 +79,7 @@ public:
     GLTarget &target() const;
     GLTexture &colorTexture() const;
     GLTexture &depthStencilTexture() const;
+    int sampleCount() const;
 
     /**
      * Swaps buffers.

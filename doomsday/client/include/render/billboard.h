@@ -79,10 +79,10 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms);
 struct drawspriteparams_t
 {
 // Position/Orientation/Scale
-    coord_t center[3]; // The real center point.
-    coord_t srvo[3]; // Short-range visual offset.
-    coord_t distance; // Distance from viewer.
-    dd_bool viewAligned;
+    //coord_t center[3]; // The real center point.
+    //coord_t srvo[3]; // Short-range visual offset.
+    //coord_t distance; // Distance from viewer.
+    //dd_bool viewAligned;
 
 // Appearance
     dd_bool noZWrite;
@@ -93,14 +93,14 @@ struct drawspriteparams_t
     dd_bool matFlip[2]; // [S, T] Flip along the specified axis.
 
     // Lighting/color:
-    float ambientColor[4];
-    uint vLightListIdx;
+    //float ambientColor[4];
+    //uint vLightListIdx;
 
 // Misc
     BspLeaf *bspLeaf;
 };
 
-void Rend_DrawSprite(drawspriteparams_t const &parms);
+void Rend_DrawSprite(struct vissprite_s const &spr);
 
 de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap = 0);
 

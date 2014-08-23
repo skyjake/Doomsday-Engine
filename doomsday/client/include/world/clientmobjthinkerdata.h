@@ -21,6 +21,7 @@
 
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/timer.h>
+#include <de/ModelDrawable>
 
 /**
  * @defgroup clMobjFlags Client Mobj Flags
@@ -58,14 +59,14 @@
 class ClientMobjThinkerData : public MobjThinkerData
 {
 public:
-    struct NetworkState
+    struct RemoteSync
     {
         int flags;
         uint time; ///< Time of last update.
         int sound; ///< Queued sound ID.
         float volume; ///< Volume for queued sound.
 
-        NetworkState()
+        RemoteSync()
             : flags(0)
             , time(Timer_RealMilliseconds())
             , sound(0)
@@ -77,15 +78,32 @@ public:
     ClientMobjThinkerData();
     ClientMobjThinkerData(ClientMobjThinkerData const &other);
 
+    void think();
     IData *duplicate() const;
 
-    bool hasNetworkState() const;
+    void stateChanged(state_t const *previousState);
+
+    int stateIndex() const;
+
+    bool hasRemoteSync() const;
 
     /**
      * Returns the network state of the mobj. This state is not allocated until this is
      * called for the first time.
      */
-    NetworkState &networkState();
+    RemoteSync &remoteSync();
+
+    /**
+     * If the object is represented by a model, returns the current state of the
+     * object's animation.
+     *
+     * @return Animation state, or @c NULL if not drawn as a model.
+     */
+    de::ModelDrawable::Animator *animator();
+
+    de::ModelDrawable::Animator const *animator() const;
+
+    de::Matrix4f const &modelTransformation() const;
 
 private:
     DENG2_PRIVATE(d)

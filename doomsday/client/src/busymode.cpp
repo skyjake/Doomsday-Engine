@@ -499,7 +499,7 @@ void BusyMode_Loop(void)
        !Con_IsProgressAnimationCompleted())
     {
         // Let's keep running the busy loop.
-        ClientWindowSystem::main().draw();
+        //ClientWindowSystem::main().draw();
         return;
     }
 

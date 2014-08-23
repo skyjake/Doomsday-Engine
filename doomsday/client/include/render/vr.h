@@ -39,11 +39,11 @@ void VR_ConsoleRegister();
 /**
  * Returns the horizontal field of view in Oculus Rift in degrees.
  */
-float VR_RiftFovX();
+//float VR_RiftFovX();
 
 /**
  * Load Oculus Rift parameters via Rift SDK.
  */
-bool VR_LoadRiftParameters();
+//bool VR_LoadRiftParameters();
 
 #endif // CLIENT_RENDER_VR_H

@@ -204,6 +204,11 @@ inline Type lerp(Type const &start, Type const &end, float pos) {
     return end * pos + (start * (1.f - pos));
 }
 
+/**
+ * @return Random floating-point value in the range [0, 1].
+ */
+inline float frand() { return float(qrand()) / float(RAND_MAX); }
+
 } // namespace de
 
 #endif /* LIBDENG2_MATH_H */

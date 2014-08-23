@@ -30,6 +30,7 @@ int main(int argc, char **argv)
     try
     {
         GuiApp app(argc, argv);
+        app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems(App::DisablePlugins);
 
         TestWindow win;

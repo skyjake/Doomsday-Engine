@@ -35,6 +35,7 @@
 #include "de_ui.h"
 #include "de_defs.h"
 
+#include "clientapp.h"
 #include "world/map.h"
 #include "world/p_object.h"
 #include "gl/gl_texmanager.h"
@@ -181,6 +182,8 @@ void GL_AssertContextActive()
 
 void GL_DoUpdate()
 {
+    if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
+
     // Check for color adjustment changes.
     if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
     {
@@ -197,10 +200,6 @@ void GL_DoUpdate()
 
     // Blit screen to video.
     ClientWindow::main().swapBuffers();
-
-    // We will arrive here always at the same time in relation to the displayed
-    // frame: it is a good time to update the mouse state.
-    Mouse_Poll();
 }
 
 void GL_GetGammaRamp(DisplayColorTransfer *ramp)
@@ -312,6 +311,8 @@ dd_bool GL_EarlyInit()
 
     LOG_GL_VERBOSE("Initializing Render subsystem...");
 
+    ClientApp::renderSystem().glInit();
+
     gamma_support = !CommandLine_Check("-noramp");
 
     // We are simple people; two texture units is enough.
@@ -403,6 +404,7 @@ void GL_Shutdown()
             GL_DoUpdate();
         } while(++i < 3);
     }
+    ClientApp::renderSystem().glDeinit();
     GL_ShutdownDeferredTask();
     FR_Shutdown();
     Rend_ModelShutdown();

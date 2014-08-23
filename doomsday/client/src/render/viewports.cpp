@@ -729,7 +729,7 @@ void R_RenderBlankView()
     UI_DrawDDBackground(Point2Raw(0, 0), Size2Raw(320, 200), 1);
 }
 
-void R_SetupPlayerSprites()
+static void setupPlayerSprites()
 {
     psp3d = false;
 
@@ -801,7 +801,7 @@ void R_SetupPlayerSprites()
             spr->data.model.bspLeaf = &Mobj_BspLeafAtOrigin(*mo);
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewData->current.origin.z;
+            spr->data.model.topZ = viewData->current.origin.z;
             spr->data.model.secFloor = cluster.visFloor().heightSmoothed();
             spr->data.model.secCeil  = cluster.visCeiling().heightSmoothed();
             spr->data.model.pClass = 0;
@@ -848,6 +848,20 @@ void R_SetupPlayerSprites()
     }
 }
 
+static Matrix4f frameViewMatrix;
+
+static void setupViewMatrix()
+{
+    // This will be the view matrix for the current frame.
+    frameViewMatrix = GL_GetProjectionMatrix() *
+                      Rend_GetModelViewMatrix(viewPlayer - ddPlayers);
+}
+
+Matrix4f const &Viewer_Matrix()
+{
+    return frameViewMatrix;
+}
+
 #undef R_RenderPlayerView
 DENG_EXTERN_C void R_RenderPlayerView(int num)
 {
@@ -875,11 +889,8 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
 
     vrCfg().setEyeHeightInMapUnits(Con_GetInteger("player-eyeheight"));
 
-    // Latest possible time to check the real head angles. After this we'll be
-    // using the provided values.
-    vrCfg().oculusRift().update();
-
-    R_SetupPlayerSprites();
+    setupViewMatrix();
+    setupPlayerSprites();
 
     // Hide the viewPlayer's mobj?
     int oldFlags = 0;

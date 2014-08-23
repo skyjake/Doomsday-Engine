@@ -38,6 +38,11 @@ Record const *RecordAccessor::accessedRecordPtr() const
     return _rec;
 }
 
+bool RecordAccessor::has(String const &name) const
+{
+    return accessedRecord().has(name);
+}
+
 Value const &RecordAccessor::get(String const &name) const
 {
     return accessedRecord()[name].value();

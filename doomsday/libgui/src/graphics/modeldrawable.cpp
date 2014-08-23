@@ -17,6 +17,7 @@
  */
 
 #include "de/ModelDrawable"
+#include "de/HeightMap"
 
 #include <de/App>
 #include <de/ByteArrayFile>
@@ -33,6 +34,8 @@
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+
+#include <array>
 
 namespace de {
 namespace internal {
@@ -146,6 +149,18 @@ struct ImpLogger : public Assimp::LogStream
 
 bool ImpLogger::registered = false;
 
+struct DefaultImageLoader : public ModelDrawable::IImageLoader
+{
+    Image loadImage(String const &path)
+    {
+        File const &texFile = App::rootFolder().locate<File>(path);
+        qDebug() << "loading image from" << texFile.description().toLatin1();
+        return Image::fromData(texFile, texFile.name().fileNameExtension());
+    }
+};
+
+static DefaultImageLoader defaultImageLoader;
+
 } // namespace internal
 using namespace internal;
 
@@ -155,28 +170,34 @@ using namespace internal;
 struct ModelVertex
 {
     Vector3f pos;
+    Vector4f boneIds;
+    Vector4f boneWeights;
     Vector3f normal;
     Vector3f tangent;
     Vector3f bitangent;
     Vector2f texCoord;
     Vector4f texBounds;
-    Vector4f boneIds;
-    Vector4f boneWeights;
+    Vector4f texBounds2;
+    Vector4f texBounds3;
+    Vector4f texBounds4;
 
-    LIBGUI_DECLARE_VERTEX_FORMAT(8)
+    LIBGUI_DECLARE_VERTEX_FORMAT(11)
 };
 
-AttribSpec const ModelVertex::_spec[8] = {
+AttribSpec const ModelVertex::_spec[11] = {
     { AttribSpec::Position,    3, GL_FLOAT, false, sizeof(ModelVertex), 0 },
-    { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
-    { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 6 * sizeof(float) },
-    { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 9 * sizeof(float) },
-    { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 12 * sizeof(float) },
-    { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
-    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 18 * sizeof(float) },
-    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
+    { AttribSpec::BoneIDs,     4, GL_FLOAT, false, sizeof(ModelVertex), 3 * sizeof(float) },
+    { AttribSpec::BoneWeights, 4, GL_FLOAT, false, sizeof(ModelVertex), 7 * sizeof(float) },
+    { AttribSpec::Normal,      3, GL_FLOAT, false, sizeof(ModelVertex), 11 * sizeof(float) },
+    { AttribSpec::Tangent,     3, GL_FLOAT, false, sizeof(ModelVertex), 14 * sizeof(float) },
+    { AttribSpec::Bitangent,   3, GL_FLOAT, false, sizeof(ModelVertex), 17 * sizeof(float) },
+    { AttribSpec::TexCoord0,   2, GL_FLOAT, false, sizeof(ModelVertex), 20 * sizeof(float) },
+    { AttribSpec::TexBounds0,  4, GL_FLOAT, false, sizeof(ModelVertex), 22 * sizeof(float) },
+    { AttribSpec::TexBounds1,  4, GL_FLOAT, false, sizeof(ModelVertex), 26 * sizeof(float) },
+    { AttribSpec::TexBounds2,  4, GL_FLOAT, false, sizeof(ModelVertex), 30 * sizeof(float) },
+    { AttribSpec::TexBounds3,  4, GL_FLOAT, false, sizeof(ModelVertex), 34 * sizeof(float) }
 };
-LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 26 * sizeof(float))
+LIBGUI_VERTEX_FORMAT_SPEC(ModelVertex, 38 * sizeof(float))
 
 static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 {
@@ -185,6 +206,8 @@ static Matrix4f convertMatrix(aiMatrix4x4 const &aiMat)
 
 /// Bone used for vertices that have no bones.
 static String const DUMMY_BONE_NAME = "__deng_dummy-bone__";
+
+static int const MAX_TEXTURES = 4;
 
 DENG2_PIMPL(ModelDrawable)
 {
@@ -208,35 +231,39 @@ DENG2_PIMPL(ModelDrawable)
         Matrix4f offset;
     };
 
+    struct MaterialData
+    {
+        std::array<Id, MAX_TEXTURES> texIds {{ Id::None, Id::None, Id::None, Id::None }};
+        QHash<TextureMap, String> custom;
+    };
+
     Asset modelAsset;
     String sourcePath;
     Assimp::Importer importer;
-    aiScene const *scene;
+    IImageLoader *imageLoader { &defaultImageLoader };
+    aiScene const *scene { nullptr };
+
+    Vector3f minPoint; ///< Bounds in default pose.
+    Vector3f maxPoint;
+    Matrix4f globalInverse;
 
     QVector<VertexBone> vertexBones; // indexed by vertex
     QHash<String, duint16> boneNameToIndex;
     QHash<String, aiNode const *> nodeNameToPtr;
     QVector<BoneData> bones; // indexed by bone index
-    QVector<Id> materialTexIds; // indexed by material index
     AnimLookup animNameToIndex;
-    Vector3f minPoint; ///< Bounds in default pose.
-    Vector3f maxPoint;
-    Matrix4f globalInverse;
-    //ddouble animTime;
-    //AnimationState const *animation;
 
-    AtlasTexture *atlas;
-    VBuf *buffer;
-    GLProgram *program;
-    mutable GLUniform uBoneMatrices;
+    std::array<TextureMap, MAX_TEXTURES> textureOrder {{ Diffuse, Unknown, Unknown, Unknown }};
+    std::array<Id, MAX_TEXTURES> defaultTexIds {{ Id::None, Id::None, Id::None, Id::None }};
+    QVector<MaterialData> materials; // indexed by material index
 
-    Instance(Public *i)
-        : Base(i)
-        , scene(0)
-        , atlas(0)
-        , buffer(0)
-        , program(0)
-        , uBoneMatrices("uBoneMatrices", GLUniform::Mat4Array, MAX_BONES)
+    bool needMakeBuffer { false };
+    AtlasTexture *atlas { nullptr };
+    VBuf *buffer        { nullptr };
+    GLProgram *program  { nullptr };
+    mutable GLUniform uBoneMatrices { "uBoneMatrices", GLUniform::Mat4Array, MAX_BONES };
+
+    Instance(Public *i) : Base(i)
     {
         // Use FS2 for file access.
         importer.SetIOHandler(new ImpIOSystem);
@@ -257,6 +284,7 @@ DENG2_PIMPL(ModelDrawable)
         scene = 0;
         sourcePath = file.path();
 
+        // Read the model file and apply suitable postprocessing to clean up the data.
         if(!importer.ReadFile(sourcePath.toLatin1(),
                               aiProcess_CalcTangentSpace |
                               aiProcess_GenSmoothNormals |
@@ -308,6 +336,13 @@ DENG2_PIMPL(ModelDrawable)
         nodeNameToPtr.clear();
         nodeNameToPtr.insert("", scene->mRootNode);
         buildNodeLookup(*scene->mRootNode);
+
+        // Prepare material information.
+        qDebug() << "materials:" << scene->mNumMaterials;
+        for(duint i = 0; i < scene->mNumMaterials; ++i)
+        {
+            materials << MaterialData();
+        }
     }
 
     void buildNodeLookup(aiNode const &node)
@@ -330,6 +365,7 @@ DENG2_PIMPL(ModelDrawable)
         glDeinit();
 
         sourcePath.clear();
+        materials.clear();
         importer.FreeScene();
         scene = 0;
     }
@@ -337,7 +373,9 @@ DENG2_PIMPL(ModelDrawable)
     void glInit()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_ASSERT(atlas != 0);
+
+        // Has a scene been imported successfully?
+        if(!scene) return;
 
         if(modelAsset.isReady())
         {
@@ -345,8 +383,11 @@ DENG2_PIMPL(ModelDrawable)
             return;
         }
 
-        // Has a scene been imported successfully?
-        if(!scene) return;
+        // Last minute notification in case some additional setup is needed.
+        DENG2_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
+        {
+            i->modelAboutToGLInit(self);
+        }
 
         // Materials.
         initTextures();
@@ -371,64 +412,227 @@ DENG2_PIMPL(ModelDrawable)
         modelAsset.setState(NotReady);
     }
 
-    void releaseTexturesFromAtlas()
-    {
-        if(!atlas) return;
-
-        foreach(Id const &id, materialTexIds)
-        {
-            qDebug() << "Releasing model texture" << id.asText();
-            atlas->release(id);
-        }
-        materialTexIds.clear();
-    }
-
     void addToBounds(Vector3f const &point)
     {
         minPoint = minPoint.min(point);
         maxPoint = maxPoint.max(point);
     }
 
+    bool isDefaultTexture(Id const &id) const
+    {
+        for(Id const &defTex : defaultTexIds)
+        {
+            if(id == defTex) return true;
+        }
+        return false;
+    }
+
+    void releaseTexture(Id const &id)
+    {
+        if(!id || isDefaultTexture(id)) return; // We don't own this, don't release.
+
+        qDebug() << "Releasing model texture" << id.asText();
+        atlas->release(id);
+    }
+
+    void releaseTexturesFromAtlas()
+    {
+        if(!atlas) return;
+
+        foreach(MaterialData const &tex, materials)
+        {
+            for(Id const &id : tex.texIds) releaseTexture(id);
+        }
+        materials.clear();
+    }
+
+    int findMaterial(String const &name) const
+    {
+        if(!scene) return -1;
+        for(duint i = 0; i < scene->mNumMaterials; ++i)
+        {
+            aiMaterial const &material = *scene->mMaterials[i];
+            aiString matName;
+            if(material.Get(AI_MATKEY_NAME, matName) == AI_SUCCESS)
+            {
+                if(name == matName.C_Str()) return i;
+            }
+        }
+        return -1;
+    }
+
+    static TextureMap textureMapType(aiTextureType type)
+    {
+        switch(type)
+        {
+        case aiTextureType_DIFFUSE:  return Diffuse;
+        case aiTextureType_NORMALS:  return Normals;
+        case aiTextureType_HEIGHT:   return Height;
+        case aiTextureType_SPECULAR: return Specular;
+        case aiTextureType_EMISSIVE: return Emission;
+        default:
+            DENG2_ASSERT(!"Unsupported texture type");
+            return Diffuse;
+        }
+    }
+
+    static aiTextureType impTextureType(TextureMap map)
+    {
+        switch(map)
+        {
+        case Diffuse:  return aiTextureType_DIFFUSE;
+        case Normals:  return aiTextureType_NORMALS;
+        case Height:   return aiTextureType_HEIGHT;
+        case Specular: return aiTextureType_SPECULAR;
+        case Emission: return aiTextureType_EMISSIVE;
+        default:
+            break;
+        }
+        return aiTextureType_UNKNOWN;
+    }
+
+    void fallBackToDefaultTexture(MaterialData &mat, TextureMap map)
+    {
+        if(!mat.texIds[map]) mat.texIds[map] = defaultTexIds[map];
+    }
+
+    /**
+     * Load all the textures of the model. The textures are allocated into the
+     * atlas provided to the model.
+     */
     void initTextures()
     {
         DENG2_ASSERT(atlas != 0);
 
-        materialTexIds.clear();
-
-        qDebug() << "materials:" << scene->mNumMaterials;
         for(duint i = 0; i < scene->mNumMaterials; ++i)
         {            
-            materialTexIds.append(Id::None);
+            qDebug() << "  material #" << i;
 
-            aiMaterial const &mat = *scene->mMaterials[i];
-            qDebug() << "  material #" << i
-                     << "texcount (diffuse):" << mat.GetTextureCount(aiTextureType_DIFFUSE);
+            auto &mat = materials[i];
 
-            aiString texPath;
-            for(duint s = 0; s < mat.GetTextureCount(aiTextureType_DIFFUSE); ++s)
+            // Load all known types of textures, falling back to defaults.
+            loadTextureImage(i, aiTextureType_DIFFUSE);
+            fallBackToDefaultTexture(mat, Diffuse);
+
+            loadTextureImage(i, aiTextureType_NORMALS);
+            if(!mat.texIds[Normals])
             {
-                if(mat.GetTexture(aiTextureType_DIFFUSE, s, &texPath) == AI_SUCCESS)
+                // Try a height field instead. This will be converted to a normal map.
+                loadTextureImage(i, aiTextureType_HEIGHT);
+            }
+            fallBackToDefaultTexture(mat, Normals);
+
+            loadTextureImage(i, aiTextureType_SPECULAR);
+            fallBackToDefaultTexture(mat, Specular);
+
+            loadTextureImage(i, aiTextureType_EMISSIVE);
+            fallBackToDefaultTexture(mat, Emission);
+        }
+    }
+
+    /**
+     * Attempts to load a texture image specified in the material. Also checks if
+     * an overridden custom path is provided, though.
+     *
+     * @param materialId  Material index.
+     * @param type        AssImp texture type.
+     */
+    void loadTextureImage(duint materialId, aiTextureType type)
+    {
+        DENG2_ASSERT(imageLoader != 0);
+
+        TextureMap map = textureMapType(type);
+        aiMaterial const &material = *scene->mMaterials[materialId];
+        MaterialData const &data = materials[materialId];
+
+        try
+        {
+            // Custom override path?
+            if(data.custom.contains(map))
+            {
+                qDebug() << "loading custom path" << data.custom[map];
+                return setTexture(materialId, map, imageLoader->loadImage(data.custom[map]));
+            }
+        }
+        catch(Error const &er)
+        {
+            LOG_RES_WARNING("Failed to load custom model texture (type %i): %s")
+                    << type << er.asText();
+        }
+
+        qDebug() << "    type:" << type
+                 << "count:" << material.GetTextureCount(type);
+
+        // Load the texture based on the information specified in the model's materials.
+        aiString texPath;
+        for(duint s = 0; s < material.GetTextureCount(type); ++s)
+        {
+            if(material.GetTexture(type, s, &texPath) == AI_SUCCESS)
+            {
+                qDebug() << "    texture #" << s << texPath.C_Str();
+
+                try
                 {
-                    qDebug() << "    texture #" << s << texPath.C_Str();
-
-                    try
-                    {
-                        /// @todo Consult a resource finder object here. -jk
-
-                        File const &texFile = App::rootFolder()
-                                .locate<File>(sourcePath.fileNamePath() / String(texPath.C_Str()));
-
-                        qDebug() << "    from" << texFile.description().toLatin1().constData();
-
-                        materialTexIds[i] = atlas->alloc(Image::fromData(texFile, texFile.name().fileNameExtension()));
-                    }
-                    catch(Error const &er)
-                    {
-                        LOG_WARNING("Model material #%i not available: %s") << i << er.asText();
-                    }
+                    setTexture(materialId, map, imageLoader->loadImage(sourcePath.fileNamePath() /
+                                                                       String(texPath.C_Str())));
+                    break;
+                }
+                catch(Error const &er)
+                {
+                    LOG_RES_WARNING("Failed to load model texture (type %i): %s")
+                            << type << er.asText();
                 }
             }
         }
+    }
+
+    /**
+     * Sets a custom texture that will be loaded when the model is glInited.
+     *
+     * @param materialId  Material id.
+     * @param tex         Texture map.
+     * @param path        Image file path.
+     */
+    void setCustomTexture(duint materialId, TextureMap map, String const &path)
+    {
+        DENG2_ASSERT(!atlas);
+        DENG2_ASSERT(materialId < duint(materials.size()));
+
+        materials[materialId].custom.insert(map, path);
+    }
+
+    void setTexture(duint materialId, TextureMap map, Image const &content)
+    {
+        if(!scene) return;
+        if(materialId >= scene->mNumMaterials) return;
+        if(map == Unknown) return;
+
+        DENG2_ASSERT(atlas != 0);
+
+        MaterialData &tex = materials[materialId];
+        Id &id = (map == Height? tex.texIds[Normals] : tex.texIds[map]);
+
+        // Release a previously loaded texture.
+        if(id)
+        {
+            releaseTexture(id);
+            id = Id::None;
+        }
+
+        if(map == Height)
+        {
+            // Convert the height map into a normal map.
+            HeightMap heightMap;
+            heightMap.loadGrayscale(content);
+            id = atlas->alloc(heightMap.makeNormalMap());
+        }
+        else
+        {
+            id = atlas->alloc(content);
+        }
+
+        // The buffer needs to be updated with the new texture bounds.
+        needMakeBuffer = true;
     }
 
     // Bone & Mesh Setup ----------------------------------------------------------------
@@ -550,8 +754,13 @@ DENG2_PIMPL(ModelDrawable)
         }
     }
 
-    VBuf *makeBuffer()
+    /**
+     * Allocates and fills in the GL buffer containing vertex information.
+     */
+    void makeBuffer()
     {
+        needMakeBuffer = false;
+
         VBuf::Vertices verts;
         VBuf::Indices indx;
 
@@ -575,19 +784,39 @@ DENG2_PIMPL(ModelDrawable)
 
                 VBuf::Type v;
 
-                v.pos       = Vector3f(pos->x, pos->y, pos->z);
-                v.normal    = Vector3f(normal->x, normal->y, normal->z);
-                v.tangent   = Vector3f(tangent->x, tangent->y, tangent->z);
-                v.bitangent = Vector3f(bitang->x, bitang->y, bitang->z);
+                v.pos        = Vector3f(pos->x, pos->y, pos->z);
 
-                v.texCoord  = Vector2f(texCoord->x, texCoord->y);
+                v.normal     = Vector3f(normal ->x, normal ->y, normal ->z);
+                v.tangent    = Vector3f(tangent->x, tangent->y, tangent->z);
+                v.bitangent  = Vector3f(bitang ->x, bitang ->y, bitang ->z);
+
+                v.texCoord   = Vector2f(texCoord->x, texCoord->y);
+                v.texBounds  = Vector4f(0, 0, 1, 1);
+                v.texBounds2 = Vector4f(0, 0, 1, 1);
+                v.texBounds3 = Vector4f(0, 0, 1, 1);
+                v.texBounds4 = Vector4f(0, 0, 1, 1);
+
+                /// @todo Add support for multiple UVs, not just mapping the same ones to
+                /// different bounds. -jk
+
                 if(scene->HasMaterials())
                 {
-                    v.texBounds = atlas->imageRectf(materialTexIds[mesh.mMaterialIndex]).xywh();
-                }
-                else
-                {
-                    v.texBounds = Vector4f(0, 0, 1, 1);
+                    Vector4f *texBounds[MAX_TEXTURES] {
+                        &v.texBounds, &v.texBounds2, &v.texBounds3, &v.texBounds4
+                    };
+
+                    MaterialData const &material = materials[mesh.mMaterialIndex];
+                    for(int t = 0; t < MAX_TEXTURES; ++t)
+                    {
+                        // Apply the specified order for the textures.
+                        TextureMap map = textureOrder[t];
+                        if(map < 0 || map >= MAX_TEXTURES) continue;
+
+                        if(material.texIds[map])
+                        {
+                            *texBounds[t] = atlas->imageRectf(material.texIds[map]).xywh();
+                        }
+                    }
                 }
 
                 for(int b = 0; b < MAX_BONES_PER_VERTEX; ++b)
@@ -612,12 +841,12 @@ DENG2_PIMPL(ModelDrawable)
             base += mesh.mNumVertices;
         }
 
+        // Get rid of an earlier buffer.
+        delete buffer;
+
         buffer = new VBuf;
         buffer->setVertices(verts, gl::Static);
         buffer->setIndices(gl::Triangles, indx, gl::Static);
-
-        //qDebug() << "new GLbuf" << buffer << "verts:" << verts.size();
-        return buffer;
     }
 
     // Animation ------------------------------------------------------------------------
@@ -763,27 +992,29 @@ DENG2_PIMPL(ModelDrawable)
 
     // Drawing --------------------------------------------------------------------------
 
-    void updateMatricesFromAnimation(AnimationState const *animation) const
+    void updateMatricesFromAnimation(Animator const *animation) const
     {
         if(!scene->HasAnimations() || !animation) return;
 
         // Apply all current animations.
         for(int i = 0; i < animation->count(); ++i)
         {
-            AnimationState::Animation const &anim = animation->at(i);
+            Animator::Animation const &anim = animation->at(i);
 
             // The animation has been validated earlier.
             DENG2_ASSERT(duint(anim.animId) < scene->mNumAnimations);
             DENG2_ASSERT(nodeNameToPtr.contains(anim.node));
 
-            accumulateAnimationTransforms(anim.time,
+            accumulateAnimationTransforms(animation->currentTime(i),
                                           *scene->mAnimations[anim.animId],
                                           *nodeNameToPtr[anim.node]);
         }
     }
 
-    void preDraw(AnimationState const *animation)
+    void preDraw(Animator const *animation)
     {
+        if(needMakeBuffer) makeBuffer();
+
         DENG2_ASSERT(program != 0);
         DENG2_ASSERT(buffer != 0);
 
@@ -796,14 +1027,14 @@ DENG2_PIMPL(ModelDrawable)
         program->beginUse();
     }
 
-    void draw(AnimationState const *animation)
+    void draw(Animator const *animation)
     {
         preDraw(animation);
         buffer->draw();
         postDraw();
     }
 
-    void drawInstanced(GLBuffer const &attribs, AnimationState const *animation)
+    void drawInstanced(GLBuffer const &attribs, Animator const *animation)
     {
         preDraw(animation);
         buffer->drawInstanced(attribs);
@@ -815,11 +1046,43 @@ DENG2_PIMPL(ModelDrawable)
         program->endUse();
         program->unbind(uBoneMatrices);
     }
+
+    DENG2_PIMPL_AUDIENCE(AboutToGLInit)
 };
+
+DENG2_AUDIENCE_METHOD(ModelDrawable, AboutToGLInit)
+
+ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
+{
+    struct { char const *text; TextureMap map; } const mappings[] {
+        { "diffuse",  Diffuse  },
+        { "normals",  Normals  },
+        { "specular", Specular },
+        { "emission", Emission },
+        { "height",   Height   }
+    };
+
+    for(auto const &mapping : mappings)
+    {
+        if(!text.compareWithoutCase(mapping.text))
+            return mapping.map;
+    }
+    return Unknown;
+}
 
 ModelDrawable::ModelDrawable() : d(new Instance(this))
 {
     *this += d->modelAsset;
+}
+
+void ModelDrawable::setImageLoader(IImageLoader &loader)
+{
+    d->imageLoader = &loader;
+}
+
+void ModelDrawable::useDefaultImageLoader()
+{
+    d->imageLoader = &defaultImageLoader;
 }
 
 void ModelDrawable::load(File const &file)
@@ -859,6 +1122,42 @@ bool ModelDrawable::nodeExists(String const &name) const
     return d->nodeNameToPtr.contains(name);
 }
 
+void ModelDrawable::setAtlas(AtlasTexture &atlas)
+{
+    d->atlas = &atlas;
+}
+
+void ModelDrawable::unsetAtlas()
+{
+    d->releaseTexturesFromAtlas();
+    d->atlas = 0;
+}
+
+ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
+{
+    return Mapping() << Diffuse << Normals << Specular << Emission;
+}
+
+void ModelDrawable::setTextureMapping(Mapping mapsToUse)
+{
+    for(int i = 0; i < MAX_TEXTURES; ++i)
+    {
+        d->textureOrder[i] = (i < mapsToUse.size()? mapsToUse.at(i) : Unknown);
+
+        // Height is an alias for normals.
+        if(d->textureOrder[i] == Height) d->textureOrder[i] = Normals;
+    }
+    d->needMakeBuffer = true;
+}
+
+void ModelDrawable::setDefaultTexture(TextureMap textureType, Id const &atlasId)
+{
+    DENG2_ASSERT(textureType >= 0 && textureType < MAX_TEXTURES);
+    if(textureType < 0 || textureType >= MAX_TEXTURES) return;
+
+    d->defaultTexIds[textureType] = atlasId;
+}
+
 void ModelDrawable::glInit()
 {
     d->glInit();
@@ -869,15 +1168,23 @@ void ModelDrawable::glDeinit()
     d->glDeinit();
 }
 
-void ModelDrawable::setAtlas(AtlasTexture &atlas)
+int ModelDrawable::materialId(String const &name) const
 {
-    d->atlas = &atlas;
+    return d->findMaterial(name);
 }
 
-void ModelDrawable::unsetAtlas()
+void ModelDrawable::setTexturePath(int materialId, TextureMap tex, String const &path)
 {
-    d->releaseTexturesFromAtlas();
-    d->atlas = 0;
+    if(d->atlas)
+    {
+        // Load immediately.
+        d->setTexture(materialId, tex, d->imageLoader->loadImage(path));
+    }
+    else
+    {
+        // This will override what the model specifies.
+        d->setCustomTexture(materialId, tex, path);
+    }
 }
 
 void ModelDrawable::setProgram(GLProgram &program)
@@ -890,7 +1197,7 @@ void ModelDrawable::unsetProgram()
     d->program = 0;
 }
 
-void ModelDrawable::draw(AnimationState const *animation) const
+void ModelDrawable::draw(Animator const *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
@@ -901,7 +1208,7 @@ void ModelDrawable::draw(AnimationState const *animation) const
 }
 
 void ModelDrawable::drawInstanced(GLBuffer const &instanceAttribs,
-                                  AnimationState const *animation) const
+                                  Animator const *animation) const
 {
     const_cast<ModelDrawable *>(this)->glInit();
 
@@ -923,10 +1230,11 @@ Vector3f ModelDrawable::midPoint() const
 
 //---------------------------------------------------------------------------------------
 
-DENG2_PIMPL_NOREF(ModelDrawable::AnimationState)
+DENG2_PIMPL_NOREF(ModelDrawable::Animator)
 {
     ModelDrawable const *model;
-    QList<Animation> anims;
+    typedef QList<Animation> Animations;
+    Animations anims;
 
     Instance(ModelDrawable const *mdl = 0) : model(mdl) {}
 
@@ -937,56 +1245,91 @@ DENG2_PIMPL_NOREF(ModelDrawable::AnimationState)
         // Verify first.
         if(anim.animId < 0 || anim.animId >= model->animationCount())
         {
-            throw InvalidError("ModelDrawable::AnimationState::add",
+            throw InvalidError("ModelDrawable::Animator::add",
                                "Specified animation does not exist");
         }
         if(!model->nodeExists(anim.node))
         {
-            throw InvalidError("ModelDrawable::AnimationState::add",
+            throw InvalidError("ModelDrawable::Animator::add",
                                "Node '" + anim.node + "' does not exist");
         }
 
         anims.append(anim);
         return anims.last();
     }
+
+    void stopByNode(String const &node)
+    {
+        QMutableListIterator<Animation> iter(anims);
+        while(iter.hasNext())
+        {
+            iter.next();
+            if(iter.value().node == node)
+            {
+                iter.remove();
+            }
+        }
+    }
+
+    bool isRunning(int animId, String const &rootNode) const
+    {
+        foreach(Animation const &anim, anims)
+        {
+            if(anim.animId == animId && anim.node == rootNode)
+                return true;
+        }
+        return false;
+    }
 };
 
-ModelDrawable::AnimationState::AnimationState() : d(new Instance)
+ModelDrawable::Animator::Animator() : d(new Instance)
 {}
 
-ModelDrawable::AnimationState::AnimationState(ModelDrawable const &model)
+ModelDrawable::Animator::Animator(ModelDrawable const &model)
     : d(new Instance(&model))
 {}
 
-void ModelDrawable::AnimationState::setModel(ModelDrawable const &model)
+void ModelDrawable::Animator::setModel(ModelDrawable const &model)
 {
     d->model = &model;
 }
 
-ModelDrawable const &ModelDrawable::AnimationState::model() const
+ModelDrawable const &ModelDrawable::Animator::model() const
 {
     DENG2_ASSERT(d->model != 0);
     return *d->model;
 }
 
-int ModelDrawable::AnimationState::count() const
+int ModelDrawable::Animator::count() const
 {
     return d->anims.size();
 }
 
-ModelDrawable::AnimationState::Animation const &ModelDrawable::AnimationState::at(int index) const
+ModelDrawable::Animator::Animation const &ModelDrawable::Animator::at(int index) const
 {
     return d->anims.at(index);
 }
 
-ModelDrawable::AnimationState::Animation &ModelDrawable::AnimationState::at(int index)
+ModelDrawable::Animator::Animation &ModelDrawable::Animator::at(int index)
 {
     return d->anims[index];
 }
 
-ModelDrawable::AnimationState::Animation &
-ModelDrawable::AnimationState::start(String const &animName, String const &rootNode)
+bool ModelDrawable::Animator::isRunning(String const &animName, String const &rootNode) const
 {
+    return d->isRunning(model().animationIdForName(animName), rootNode);
+}
+
+bool ModelDrawable::Animator::isRunning(int animId, String const &rootNode) const
+{
+    return d->isRunning(animId, rootNode);
+}
+
+ModelDrawable::Animator::Animation &
+ModelDrawable::Animator::start(String const &animName, String const &rootNode)
+{
+    d->stopByNode(rootNode);
+
     Animation anim;
     anim.animId = model().animationIdForName(animName);
     anim.node   = rootNode;
@@ -994,9 +1337,11 @@ ModelDrawable::AnimationState::start(String const &animName, String const &rootN
     return d->add(anim);
 }
 
-ModelDrawable::AnimationState::Animation &
-ModelDrawable::AnimationState::start(int animId, String const &rootNode)
+ModelDrawable::Animator::Animation &
+ModelDrawable::Animator::start(int animId, String const &rootNode)
 {
+    d->stopByNode(rootNode);
+
     Animation anim;
     anim.animId = animId;
     anim.node   = rootNode;
@@ -1004,19 +1349,24 @@ ModelDrawable::AnimationState::start(int animId, String const &rootNode)
     return d->add(anim);
 }
 
-void ModelDrawable::AnimationState::stop(int index)
+void ModelDrawable::Animator::stop(int index)
 {
     d->anims.removeAt(index);
 }
 
-void ModelDrawable::AnimationState::clear()
+void ModelDrawable::Animator::clear()
 {
     d->anims.clear();
 }
 
-void ModelDrawable::AnimationState::advanceTime(TimeDelta const &)
+void ModelDrawable::Animator::advanceTime(TimeDelta const &)
 {
     // overridden
+}
+
+ddouble ModelDrawable::Animator::currentTime(int index) const
+{
+    return at(index).time;
 }
 
 } // namespace de

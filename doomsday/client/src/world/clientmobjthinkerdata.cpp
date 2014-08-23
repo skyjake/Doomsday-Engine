@@ -17,21 +17,145 @@
  */
 
 #include "world/clientmobjthinkerdata.h"
+#include "render/modelrenderer.h"
+#include "render/mobjanimator.h"
+#include "world/generator.h"
+#include "clientapp.h"
+#include "dd_loop.h"
+#include "def_main.h"
+#include <QFlags>
 
 using namespace de;
 
+namespace internal
+{
+    enum Flag
+    {
+        Initialized = 0x1       ///< Thinker data has been initialized.
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(Flags)
+}
+
+using namespace ::internal;
+
 DENG2_PIMPL(ClientMobjThinkerData)
 {
-    QScopedPointer<NetworkState> net;
+    Flags flags;
+    std::unique_ptr<RemoteSync> sync;
+    std::unique_ptr<MobjAnimator> animator;
+    Matrix4f modelMatrix;
 
     Instance(Public *i) : Base(i)
     {}
 
     Instance(Public *i, Instance const &other) : Base(i)
     {
-        if(!other.net.isNull())
+        if(other.sync)
         {
-            net.reset(new NetworkState(*other.net));
+            sync.reset(new RemoteSync(*other.sync));
+        }
+    }
+
+    String thingName() const
+    {
+        return Def_GetMobjName(self.mobj()->type);
+    }
+
+    String stateName() const
+    {
+        return Def_GetStateName(self.mobj()->state);
+    }
+
+    String modelId() const
+    {
+        return String("model.thing.%1").arg(thingName().toLower());
+    }
+
+    static ModelBank &modelBank()
+    {
+        return ClientApp::renderSystem().modelRenderer().bank();
+    }
+
+    void deinitModel()
+    {
+        animator.reset();
+    }
+
+    /**
+     * Initializes the client-specific mobj data. This is performed once, during the
+     * first time the object thinks.
+     */
+    void initOnce()
+    {
+        // Initialization is only done once.
+        if(flags & Initialized) return;
+        flags |= Initialized;
+
+        // Check for an available model asset.
+        if(modelBank().has(modelId()))
+        {
+            // Prepare the animation state of the model.
+            ModelBank::ModelWithData loaded = modelBank().modelAndData(modelId());
+            ModelDrawable &model = *loaded.first;
+            animator.reset(new MobjAnimator(modelId(), model));
+
+            // The basic transformation of the model.
+            modelMatrix = loaded.second->as<ModelRenderer::AuxiliaryData>().transformation;
+
+            Vector3f dims = modelMatrix * model.dimensions();
+
+            // Scale to thing height.
+            // TODO: This should be optional (but the default behavior).
+            modelMatrix = Matrix4f::scale(self.mobj()->height / dims.y) * modelMatrix;
+        }
+    }
+
+    /**
+     * Checks if there are any animations defined to start in the current state. All
+     * animation sequences associated with the state are checked. A sequence may specify
+     * a less than 1.0 probability for starting. The sequence may be identified either by
+     * name ("walk") or index (for example, "#3").
+     */
+    void triggerStateAnimations()
+    {
+        if(animator)
+        {
+            animator->triggerByState(stateName());
+        }
+    }
+
+    /**
+     * Checks the motion of the object and triggers suitable animations (for standing,
+     * walking, or running). These animations are defined separately from the state
+     * based animations.
+     */
+    void triggerMovementAnimations()
+    {
+        if(!animator) return;
+
+
+    }
+
+    void advanceAnimations(TimeDelta const &delta)
+    {
+        if(animator)
+        {
+            animator->advanceTime(delta);
+        }
+    }
+
+    void triggerParticleGenerators(bool justSpawned)
+    {
+        // Check for a ptcgen trigger.
+        for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[self.stateIndex()].ptcGens;
+            pg; pg = pg->stateNext)
+        {
+            if(!(pg->flags & Generator::SpawnOnly) || justSpawned)
+            {
+                // We are allowed to spawn the generator.
+                Mobj_SpawnParticleGen(self.mobj(), pg);
+            }
         }
     }
 };
@@ -45,21 +169,59 @@ ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
     , d(new Instance(this, *other.d))
 {}
 
+void ClientMobjThinkerData::think()
+{
+    d->initOnce();
+    d->triggerMovementAnimations();
+    d->advanceAnimations(SECONDSPERTIC); // mobjs think only on sharp ticks
+}
+
 Thinker::IData *ClientMobjThinkerData::duplicate() const
 {
     return new ClientMobjThinkerData(*this);
 }
 
-bool ClientMobjThinkerData::hasNetworkState() const
+int ClientMobjThinkerData::stateIndex() const
 {
-    return !d->net.isNull();
+    return runtimeDefs.states.indexOf(mobj()->state);
 }
 
-ClientMobjThinkerData::NetworkState &ClientMobjThinkerData::networkState()
+bool ClientMobjThinkerData::hasRemoteSync() const
 {
-    if(!hasNetworkState())
+    return bool(d->sync);
+}
+
+ClientMobjThinkerData::RemoteSync &ClientMobjThinkerData::remoteSync()
+{
+    if(!hasRemoteSync())
     {
-        d->net.reset(new NetworkState);
+        d->sync.reset(new RemoteSync);
     }
-    return *d->net;
+    return *d->sync;
+}
+
+ModelDrawable::Animator *ClientMobjThinkerData::animator()
+{
+    return d->animator.get();
+}
+
+ModelDrawable::Animator const *ClientMobjThinkerData::animator() const
+{
+    return d->animator.get();
+}
+
+Matrix4f const &ClientMobjThinkerData::modelTransformation() const
+{
+    return d->modelMatrix;
+}
+
+void ClientMobjThinkerData::stateChanged(state_t const *previousState)
+{
+    MobjThinkerData::stateChanged(previousState);
+
+    bool const justSpawned = !previousState;
+
+    d->initOnce();
+    d->triggerStateAnimations();
+    d->triggerParticleGenerators(justSpawned);
 }

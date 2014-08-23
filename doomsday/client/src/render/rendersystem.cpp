@@ -230,7 +230,7 @@ DENG2_PIMPL(RenderSystem)
     {
         // Load all the shader program definitions.
         FS::FoundFiles found;
-        App::fileSystem().nameIndex().findPartialPathInPackageOrder("shaders.dei", found);
+        App::findInPackages("shaders.dei", found);
         DENG2_FOR_EACH(FS::FoundFiles, i, found)
         {
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
@@ -252,6 +252,16 @@ DENG2_PIMPL(RenderSystem)
 RenderSystem::RenderSystem() : d(new Instance(this))
 {}
 
+void RenderSystem::glInit()
+{
+    d->models.glInit();
+}
+
+void RenderSystem::glDeinit()
+{
+    d->models.glDeinit();
+}
+
 GLShaderBank &RenderSystem::shaders()
 {
     return BaseGuiApp::shaders();
@@ -260,6 +270,11 @@ GLShaderBank &RenderSystem::shaders()
 ImageBank &RenderSystem::images()
 {
     return d->images;
+}
+
+ModelRenderer &RenderSystem::modelRenderer()
+{
+    return d->models;
 }
 
 void RenderSystem::timeChanged(Clock const &)

@@ -54,6 +54,13 @@ public:
         NUM_STEREO_MODES
     };
 
+    enum Eye
+    {
+        NeitherEye,
+        LeftEye,
+        RightEye
+    };
+
 public:
     VRConfig();
 
@@ -97,12 +104,6 @@ public:
      * @param heightInMeters  Height of the player in meters.
      */
     void setPhysicalPlayerHeight(float heightInMeters);
-
-    enum Eye {
-        NeitherEye,
-        LeftEye,
-        RightEye
-    };
 
     /**
      * Sets the eye currently used for rendering a frame. In stereoscopic modes,
@@ -155,6 +156,8 @@ public:
     float interpupillaryDistance() const;
 
     float eyeHeightInMapUnits() const;
+
+    float mapUnitsPerMeter() const;
 
     float physicalPlayerHeight() const;
 

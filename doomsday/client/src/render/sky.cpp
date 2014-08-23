@@ -33,6 +33,7 @@
 
 #include "render/rend_main.h"
 #include "render/rend_model.h"
+#include "render/vissprite.h"
 
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
@@ -378,35 +379,36 @@ DENG2_PIMPL(Sky)
 
             float inter = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
 
-            drawmodelparams_t parms; zap(parms);
+            vissprite_t temp; zap(temp);
 
             // Calculate the coordinates for the model.
             Vector3f originOffset(minfo.def->get("originOffset"));
-            parms.origin[VX]        = vOrigin.x * -originOffset.x;
-            parms.origin[VY]        = vOrigin.z * -originOffset.z;
-            parms.origin[VZ]        = vOrigin.y * -originOffset.y;
-            parms.gzt               = parms.origin[VZ];
-            parms.distance          = 1;
+            temp.pose.origin[VX]      = vOrigin.x * -originOffset.x;
+            temp.pose.origin[VY]      = vOrigin.z * -originOffset.z;
+            temp.pose.origin[VZ]      = vOrigin.y * -originOffset.y;
+            temp.pose.topZ            = temp.pose.origin[VZ];
+            temp.pose.distance        = 1;
 
             Vector2f rotate(minfo.def->get("rotate"));
-            parms.extraYawAngle     = parms.yawAngleOffset   = rotate.x;
-            parms.extraPitchAngle   = parms.pitchAngleOffset = rotate.y;
+            temp.pose.extraYawAngle   = temp.pose.yawAngleOffset   = rotate.x;
+            temp.pose.extraPitchAngle = temp.pose.pitchAngleOffset = rotate.y;
+
+            drawmodelparams_t &parms = *VS_MODEL(&temp);
             parms.inter             = inter;
             parms.mf                = minfo.model;
             parms.alwaysInterpolate = true;
             App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
-            parms.yaw               = minfo.yaw;
+            temp.pose.yaw             = minfo.yaw;
 
             Vector3f ambientColor(minfo.def->get("color"));
             for(int c = 0; c < 4; ++c)
             {
-                parms.ambientColor[c] = ambientColor[c];
+                temp.light.ambientColor[c] = ambientColor[c];
             }
-
-            parms.vLightListIdx     = 0;
+            temp.light.vLightListIdx = 0;
             parms.shineTranslateWithViewerPos = true;
 
-            Rend_DrawModel(parms);
+            Rend_DrawModel(temp);
         }
 
         // We don't want that anything interferes with what was drawn.

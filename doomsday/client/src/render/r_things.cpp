@@ -34,16 +34,19 @@
 #include "network/net_main.h" // clients[]
 
 #include "render/vissprite.h"
+#include "render/mobjanimator.h"
 
 #include "MaterialSnapshot"
 
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/clientmobjthinkerdata.h"
 #include "BspLeaf"
 #include "SectorCluster"
 
 #include <de/vector1.h>
+#include <de/ModelDrawable>
 
 using namespace de;
 
@@ -138,12 +141,12 @@ static int findMobjZOriginWorker(Sector *sector, void *parameters)
 
     if(p->floorAdjust && p->mo->origin[VZ] == sector->floor().height())
     {
-        p->vis->origin.z = sector->floor().heightSmoothed();
+        p->vis->pose.origin.z = sector->floor().heightSmoothed();
     }
 
     if(p->mo->origin[VZ] + p->mo->height == sector->ceiling().height())
     {
-        p->vis->origin.z = sector->ceiling().heightSmoothed() - p->mo->height;
+        p->vis->pose.origin.z = sector->ceiling().heightSmoothed() - p->mo->height;
     }
 
     return false; // Continue iteration.
@@ -172,6 +175,12 @@ static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 
 void R_ProjectSprite(mobj_t *mo)
 {
+    /**
+     * @todo Lots of stuff here! This needs to be broken down into multiple functions
+     * and/or classes that handle preprocessing of visible entities. Keep in mind that
+     * data/state can persist across frames in the mobjs' private data. -jk
+     */
+
     if(!mo) return;
 
     // Not all objects can/will be visualized. Skip this object if:
@@ -191,6 +200,8 @@ void R_ProjectSprite(mobj_t *mo)
     SectorCluster &cluster = Mobj_Cluster(*mo);
     if(!cluster.hasWorldVolume()) return;
 
+    ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData);
+
     // Determine distance to object.
     Vector3d const moPos = mobjOriginSmoothed(mo);
     coord_t const distFromEye = Rend_PointDist2D(moPos);
@@ -198,6 +209,9 @@ void R_ProjectSprite(mobj_t *mo)
     // Should we use a 3D model?
     ModelDef *mf = 0, *nextmf = 0;
     float interp = 0;
+
+    ModelDrawable::Animator const *animator = 0; // GL2 model present?
+
     if(useModels)
     {
         mf = Mobj_ModelDef(*mo, &nextmf, &interp);
@@ -211,7 +225,14 @@ void R_ProjectSprite(mobj_t *mo)
                 interp = -1;
             }
         }
+
+        if(mobjData)
+        {
+            animator = mobjData->animator();
+        }
     }
+
+    bool const hasModel = (mf || animator);
 
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
@@ -271,7 +292,7 @@ void R_ProjectSprite(mobj_t *mo)
 #define MAX_OBJECT_RADIUS       128
 
         // Sprite visibility is absolute.
-        if(!mf) return;
+        if(!hasModel) return;
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
@@ -284,10 +305,12 @@ void R_ProjectSprite(mobj_t *mo)
     }
 
     // Store information in a vissprite.
-    vissprite_t *vis = R_NewVisSprite(mf? VSPR_MODEL : VSPR_SPRITE);
+    vissprite_t *vis = R_NewVisSprite(animator? VSPR_MODEL_GL2 :
+                                            mf? VSPR_MODEL :
+                                                VSPR_SPRITE);
 
-    vis->origin   = moPos;
-    vis->distance = distFromEye;
+    vis->pose.origin   = moPos;
+    vis->pose.distance = distFromEye;
 
     /*
      * The Z origin of the visual should match that of the mobj. When smoothing
@@ -302,7 +325,7 @@ void R_ProjectSprite(mobj_t *mo)
         findMobjZOrigin(mo, floorAdjust, vis);
     }
 
-    coord_t gzt = vis->origin.z + -tex.origin().y;
+    coord_t topZ = vis->pose.origin.z + -tex.origin().y; // global z top
 
     // Determine floor clipping.
     coord_t floorClip = mo->floorClip;
@@ -312,8 +335,18 @@ void R_ProjectSprite(mobj_t *mo)
         floorClip += Mobj_BobOffset(mo);
     }
 
+    // Determine angles.
+    /**
+     * @todo Surely this can be done in a subclass/function. -jk
+     */
     float yaw = 0, pitch = 0;
-    if(mf)
+    if(animator)
+    {
+        // TODO: More angle options with GL2 models.
+
+        yaw = Mobj_AngleSmoothed(mo) / float( ANGLE_MAX ) * -360;
+    }
+    else if(mf)
     {
         // Determine the rotation angles (in degrees).
         if(mf->testSubFlag(0, MFF_ALIGN_YAW))
@@ -347,7 +380,7 @@ void R_ProjectSprite(mobj_t *mo)
         if(mf->testSubFlag(0, MFF_ALIGN_PITCH))
         {
             viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-            Vector2d delta((vis->origin.z + gzt) / 2 - viewData->current.origin.z, distFromEye);
+            Vector2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
             pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
         }
@@ -363,7 +396,7 @@ void R_ProjectSprite(mobj_t *mo)
 
     // Determine possible short-range visual offset.
     Vector3d visOff;
-    if((mf && useSRVO > 0) || (!mf && useSRVO > 1))
+    if((hasModel && useSRVO > 0) || (!hasModel && useSRVO > 1))
     {
         if(mo->tics >= 0)
         {
@@ -379,7 +412,8 @@ void R_ProjectSprite(mobj_t *mo)
         }
     }
 
-    if(!mf)
+    // Will it be drawn as a 2D sprite?
+    if(!hasModel)
     {
         bool const brightShadow = (mo->ddFlags & DDMF_BRIGHTSHADOW) != 0;
         bool const fitTop       = (mo->ddFlags & DDMF_FITTOP)       != 0;
@@ -406,50 +440,69 @@ void R_ProjectSprite(mobj_t *mo)
         if(ms.height() < ceiling.heightSmoothed() - floor.heightSmoothed())
         {
             // Sprite fits in, adjustment possible?
-            if(fitTop && gzt > ceiling.heightSmoothed())
-                gzt = ceiling.heightSmoothed();
+            if(fitTop && topZ > ceiling.heightSmoothed())
+                topZ = ceiling.heightSmoothed();
 
-            if(floorAdjust && fitBottom && gzt - ms.height() < floor.heightSmoothed())
-                gzt = floor.heightSmoothed() + ms.height();
+            if(floorAdjust && fitBottom && topZ - ms.height() < floor.heightSmoothed())
+                topZ = floor.heightSmoothed() + ms.height();
         }
         // Adjust by the floor clip.
-        gzt -= floorClip;
+        topZ -= floorClip;
 
-        Vector3d const origin(vis->origin.x, vis->origin.y, gzt - ms.height() / 2.0f);
+        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - ms.height() / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance, fullbright,
+        evaluateLighting(origin, &Mobj_BspLeafAtOrigin(*mo), vis->pose.distance, fullbright,
                          ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
-        VisSprite_SetupSprite(vis->data.sprite, origin, vis->distance, visOff,
+        VisSprite_SetupSprite(vis,
+                              VisEntityPose(origin, visOff, viewAlign),
+                              VisEntityLighting(ambientColor, vLightListIdx),
                               floor.heightSmoothed(), ceiling.heightSmoothed(),
-                              floorClip, gzt, *mat, matFlipS, matFlipT, blendMode,
-                              ambientColor, vLightListIdx,
+                              floorClip, topZ, *mat, matFlipS, matFlipT, blendMode,
                               mo->tclass, mo->tmap,
                               &Mobj_BspLeafAtOrigin(*mo),
-                              floorAdjust, fitTop, fitBottom, viewAlign);
+                              floorAdjust, fitTop, fitBottom);
     }
-    else
+    else // It will be drawn as a 3D model.
     {
         Vector4f ambientColor;
         uint vLightListIdx = 0;
-        evaluateLighting(vis->origin, &Mobj_BspLeafAtOrigin(*mo), vis->distance,
+        evaluateLighting(vis->pose.origin, &Mobj_BspLeafAtOrigin(*mo), vis->pose.distance,
                          fullbright, ambientColor, &vLightListIdx);
 
         // Apply uniform alpha (overwritting intensity factor).
         ambientColor.w = alpha;
 
-        VisSprite_SetupModel(vis->data.model, vis->origin, vis->distance,
-                             Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
-                             gzt, yaw, 0, pitch, 0,
-                             mf, nextmf, interp,
-                             ambientColor, vLightListIdx, mo->thinker.id, mo->selector,
-                             &Mobj_BspLeafAtOrigin(*mo),
-                             mo->ddFlags, mo->tmap, viewAlign,
-                             fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
+        if(animator)
+        {
+            // Set up a GL2 model for drawing.
+            vis->pose = VisEntityPose(vis->pose.origin,
+                                      Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                      viewAlign, topZ, yaw, 0, pitch, 0);
+            vis->light = VisEntityLighting(ambientColor, vLightListIdx);
+
+            vis->data.model2.object   = mo;
+            vis->data.model2.animator = animator;
+            vis->data.model2.model    = &animator->model();
+        }
+        else
+        {
+            DENG_ASSERT(mf);
+            VisSprite_SetupModel(vis,
+                                 VisEntityPose(vis->pose.origin,
+                                               Vector3d(visOff.x, visOff.y, visOff.z - floorClip),
+                                               viewAlign, topZ, yaw, 0, pitch, 0),
+                                 VisEntityLighting(ambientColor, vLightListIdx),
+                                 mf, nextmf, interp,
+                                 mo->thinker.id, mo->selector,
+                                 &Mobj_BspLeafAtOrigin(*mo),
+                                 mo->ddFlags, mo->tmap,
+                                 fullbright && !(mf && mf->testSubFlag(0, MFF_DIM)), false);
+        }
     }
 
     // Do we need to project a flare source too?
@@ -479,11 +532,11 @@ void R_ProjectSprite(mobj_t *mo)
 
             vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
 
-            vis->distance = distFromEye;
+            vis->pose.distance = distFromEye;
 
             // Determine the exact center of the flare.
-            vis->origin = moPos + visOff;
-            vis->origin.z += lum->zOffset();
+            vis->pose.origin = moPos + visOff;
+            vis->pose.origin.z += lum->zOffset();
 
             float flareSize = pl->brightMul;
             // X offset to the flare position.

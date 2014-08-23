@@ -32,10 +32,10 @@ class Map;
 /**
  * Base class for all map objects.
  *
- * While logically relatted to MapElement, a map object is considered a dynamic
+ * While logically related to MapElement, a map object is considered a dynamic
  * and volatile entity (whereas a map element can be largely considered static).
  *
- * The lifetime of a map object may varry massively between instances and range
+ * The lifetime of a map object may vary massively between instances and range
  * from only a few milliseconds to a few hours or longer.
  *
  * @ingroup world

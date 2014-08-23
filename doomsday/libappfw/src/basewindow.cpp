@@ -22,6 +22,8 @@
 #include "de/BaseGuiApp"
 #include "de/VRConfig"
 
+#include <de/GLState>
+
 namespace de {
 
 DENG2_PIMPL(BaseWindow)
@@ -148,15 +150,37 @@ void BaseWindow::canvasGLDraw(Canvas &cv)
 
 void BaseWindow::swapBuffers()
 {
+    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
+
     PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
                                             gl::SwapStereoBuffers : gl::SwapMonoBuffer);
 }
 
 void BaseWindow::preDraw()
-{}
+{
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        if(canvas().isGLReady())
+        {
+            vr.oculusRift().init();
+            vr.oculusRift().beginFrame();
+        }
+    }
+    else
+    {
+        vr.oculusRift().deinit();
+    }
+}
 
 void BaseWindow::postDraw()
 {
+    auto &vr = DENG2_BASE_GUI_APP->vr();
+    if(vr.mode() == VRConfig::OculusRift)
+    {
+        vr.oculusRift().endFrame();
+    }
+
     // The timer loop was paused when the frame was requested to be drawn.
     DENG2_GUI_APP->loop().resume();
 }

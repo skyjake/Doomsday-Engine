@@ -35,7 +35,7 @@
 void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj, int flags,
                              dd_bool onFloor);
 
-ClientMobjThinkerData::NetworkState *ClMobj_GetInfo(mobj_t *mo);
+ClientMobjThinkerData::RemoteSync *ClMobj_GetInfo(mobj_t *mo);
 
 /**
  * Call for Hidden client mobjs to make then visible.

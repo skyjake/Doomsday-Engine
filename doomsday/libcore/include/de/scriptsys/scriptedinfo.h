@@ -125,6 +125,8 @@ class DENG2_PUBLIC ScriptedInfo
 public:
     typedef QSet<String> Paths;
 
+    DENG2_DEFINE_AUDIENCE2(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
+
 public:
     /**
      * Creates a new ScriptedInfo parser.

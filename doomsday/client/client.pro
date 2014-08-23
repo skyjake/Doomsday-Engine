@@ -283,6 +283,7 @@ DENG_HEADERS += \
     include/render/lightgrid.h \
     include/render/lumobj.h \
     include/render/materialcontext.h \
+    include/render/mobjanimator.h \
     include/render/modelrenderer.h \
     include/render/projector.h \
     include/render/r_draw.h \
@@ -599,6 +600,7 @@ SOURCES += \
     src/render/lightdecoration.cpp \
     src/render/lightgrid.cpp \
     src/render/lumobj.cpp \
+    src/render/mobjanimator.cpp \
     src/render/modelrenderer.cpp \
     src/render/projector.cpp \
     src/render/r_draw.cpp \

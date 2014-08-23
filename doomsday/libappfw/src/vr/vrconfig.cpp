@@ -51,11 +51,15 @@ DENG2_PIMPL(VRConfig)
         , eyeShift(0)
         , playerPhysicalHeight(1.75f)
         , swapEyes(false)
-        , riftFramebufferSamples(2)
+        , riftFramebufferSamples(1)
         , frustumShift(true)
         , dominantEye(0.0f)
+    {}
+
+    float mapUnitsPerMeter() const
     {
-        ovr.init();
+        // 0.925 because eyes are not at top of head
+        return eyeHeightInMapUnits / (0.925 * playerPhysicalHeight);
     }
 };
 
@@ -91,9 +95,7 @@ void VRConfig::setCurrentEye(Eye eye)
 {
     float eyePos = (eye == NeitherEye? 0 : eye == LeftEye? -1 : 1);
 
-    // 0.925 because eyes are not at top of head
-    float mapUnitsPerMeter = d->eyeHeightInMapUnits / (0.925 * d->playerPhysicalHeight);
-    d->eyeShift = mapUnitsPerMeter * (eyePos - d->dominantEye) * 0.5 * d->ipd;
+    d->eyeShift = d->mapUnitsPerMeter() * (eyePos - d->dominantEye) * 0.5 * d->ipd;
     if(d->swapEyes)
     {
         d->eyeShift *= -1;
@@ -150,6 +152,11 @@ float VRConfig::eyeHeightInMapUnits() const
     return d->eyeHeightInMapUnits;
 }
 
+float VRConfig::mapUnitsPerMeter() const
+{
+    return d->mapUnitsPerMeter();
+}
+
 float VRConfig::physicalPlayerHeight() const
 {
     return d->playerPhysicalHeight;
@@ -182,11 +189,11 @@ int VRConfig::riftFramebufferSampleCount() const
 
 float VRConfig::viewAspect(Vector2f const &viewPortSize) const
 {
-    if(mode() == OculusRift)
+    /*if(mode() == OculusRift)
     {
         // Override with the Oculus Rift's aspect ratio.
         return oculusRift().aspect();
-    }
+    }*/
 
     // We're assuming pixels are squares.
     return viewPortSize.x / viewPortSize.y;
@@ -211,6 +218,14 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
                                     Vector2f const &viewPortSize,
                                     float nearClip, float farClip) const
 {
+    if(mode() == OculusRift)
+    {
+        // OVR will calculate our projection matrix.
+        float const mapUnits = d->mapUnitsPerMeter();
+        return oculusRift().projection(nearClip, farClip) *
+               Matrix4f::translate(oculusRift().eyeOffset() * mapUnits);
+    }
+
     float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
     float const fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
     float const fW   = fH * viewAspect(viewPortSize);

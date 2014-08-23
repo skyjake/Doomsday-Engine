@@ -637,7 +637,22 @@ DENG2_PIMPL(ClientWindow)
 
         if(vrCfg().mode() == VRConfig::OculusRift)
         {
-            compositor->setCompositeProjection(Matrix4f::ortho(-1.1f, 2.2f, -1.1f, 2.2f));
+            float uiDistance = 45;
+            float uiSize = 67.5f;
+
+            Vector3f const pry = vrCfg().oculusRift().headOrientation();
+
+            /// @todo Adjustable compositor depth?
+            compositor->setCompositeProjection(
+                        GL_GetProjectionMatrix()
+                        * Matrix4f::rotate(radianToDegree(pry[1]), Vector3f(0, 0, -1))
+                        * Matrix4f::rotate(radianToDegree(pry[0]), Vector3f(1, 0, 0))
+                        * Matrix4f::rotate(radianToDegree(pry[2]), Vector3f(0, 1, 0))
+                        * Matrix4f::translate(swizzle(vrCfg().oculusRift().headPosition() *
+                                                      vrCfg().mapUnitsPerMeter(),
+                                                      AxisNegX, AxisNegY, AxisZ))
+                        * Matrix4f::scale(Vector3f(uiSize, -uiSize, 1.f))
+                        * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
         }
         else
         {
@@ -798,7 +813,6 @@ void ClientWindow::canvasGLInit(Canvas &)
 void ClientWindow::preDraw()
 {
     // NOTE: This occurs during the Canvas paintGL event.
-    BaseWindow::preDraw();
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
@@ -812,28 +826,33 @@ void ClientWindow::preDraw()
     {
         d->updateRootSize();
     }
-    d->updateCompositor();
+
+    BaseWindow::preDraw();
 }
 
 void ClientWindow::drawWindowContent()
 {
+    d->updateCompositor();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
 
 void ClientWindow::postDraw()
 {
-    // NOTE: This occurs during the Canvas paintGL event.
+    /// @note This method is called during the Canvas paintGL event.
 
-    // Finish GL drawing and swap it on to the screen. Blocks until buffers
-    // swapped.
-    GL_DoUpdate();
-
-    ClientApp::app().postFrame(); /// @todo what about multiwindow?
-
-    d->updateFpsNotification(frameRate());
+    // OVR will handle presentation in Oculus Rift mode.
+    if(ClientApp::vr().mode() != VRConfig::OculusRift)
+    {
+        // Finish GL drawing and swap it on to the screen. Blocks until buffers
+        // swapped.
+        GL_DoUpdate();
+    }
 
     BaseWindow::postDraw();
+
+    ClientApp::app().postFrame(); /// @todo what about multiwindow?
+    d->updateFpsNotification(frameRate());
 }
 
 void ClientWindow::canvasGLResized(Canvas &canvas)

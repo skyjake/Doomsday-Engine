@@ -446,8 +446,10 @@ static int drawVectorLightWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawSprite(drawspriteparams_t const &parms)
+void Rend_DrawSprite(vissprite_t const &spr)
 {
+    drawspriteparams_t const &parms = *VS_SPRITE(&spr);
+
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -495,12 +497,12 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // Coordinates to the center of the sprite (game coords).
-    coord_t spriteCenter[3] = { parms.center[VX] + parms.srvo[VX],
-                                parms.center[VY] + parms.srvo[VY],
-                                parms.center[VZ] + parms.srvo[VZ] };
+    coord_t spriteCenter[3] = { spr.pose.origin[VX] + spr.pose.srvo[VX],
+                                spr.pose.origin[VY] + spr.pose.srvo[VY],
+                                spr.pose.origin[VZ] + spr.pose.srvo[VZ] };
 
     coord_t v1[3], v2[3], v3[3], v4[3];
-    R_ProjectViewRelativeLine2D(spriteCenter, parms.viewAligned,
+    R_ProjectViewRelativeLine2D(spriteCenter, spr.pose.viewAligned,
                                 size.width, viewOffset.x, v1, v4);
 
     v2[VX] = v1[VX];
@@ -537,20 +539,20 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         V3f_Copyd(quadNormals[i].xyz, surfaceNormal);
     }
 
-    if(!parms.vLightListIdx)
+    if(!spr.light.vLightListIdx)
     {
         // Lit uniformly.
-        applyUniformColor(4, quadColors, parms.ambientColor);
+        applyUniformColor(4, quadColors, &spr.light.ambientColor[0]);
     }
     else
     {
         // Lit normally.
-        Spr_VertexColors(4, quadColors, quadNormals, parms.vLightListIdx,
-                         spriteLight + 1, parms.ambientColor);
+        Spr_VertexColors(4, quadColors, quadNormals, spr.light.vLightListIdx,
+                         spriteLight + 1, &spr.light.ambientColor[0]);
     }
 
     // Do we need to do some aligning?
-    if(parms.viewAligned || alwaysAlign >= 2)
+    if(spr.pose.viewAligned || alwaysAlign >= 2)
     {
         // We must set up a modelview transformation matrix.
         restoreMatrix = true;
@@ -559,7 +561,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
 
         // Rotate around the center of the sprite.
         glTranslatef(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
-        if(!parms.viewAligned)
+        if(!spr.pose.viewAligned)
         {
             float s_dx = v1[VX] - v2[VX];
             float s_dy = v1[VY] - v2[VY];
@@ -605,7 +607,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
     }
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(parms.noZWrite || parms.ambientColor[CA] < .98f ||
+    if(parms.noZWrite || spr.light.ambientColor[CA] < .98f ||
        !(parms.blendMode == BM_NORMAL || parms.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
@@ -651,7 +653,7 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         glDisable(GL_TEXTURE_2D);
     }
 
-    if(devMobjVLights && parms.vLightListIdx)
+    if(devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -660,10 +662,10 @@ void Rend_DrawSprite(drawspriteparams_t const &parms)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parms.center[VX], parms.center[VZ], parms.center[VY]);
+        glTranslatef(spr.pose.origin[VX], spr.pose.origin[VZ], spr.pose.origin[VY]);
 
-        coord_t distFromViewer = de::abs(parms.distance);
-        VL_ListIterator(parms.vLightListIdx, drawVectorLightWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(spr.pose.distance);
+        VL_ListIterator(spr.light.vLightListIdx, drawVectorLightWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

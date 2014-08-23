@@ -54,7 +54,7 @@ class LightGrid;
 
 #define SHADOW_SURFACE_LUMINOSITY_ATTRIBUTION_MIN (.05f)
 
-DENG_EXTERN_C de::Vector3d vOrigin;
+DENG_EXTERN_C de::Vector3d vOrigin; // Y/Z swizzled for drawing
 DENG_EXTERN_C float vang, vpitch, yfov;
 DENG_EXTERN_C float viewsidex, viewsidey;
 DENG_EXTERN_C float fogColor[4];

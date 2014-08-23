@@ -538,7 +538,7 @@ int Generator::newParticle()
 static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 {
     Generator *gen = (Generator *) context;
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(cmo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(cmo);
 
     // If the clmobj is not valid at the moment, don't do anything.
     if(info->flags & (CLMF_UNPREDICTABLE | CLMF_HIDDEN))

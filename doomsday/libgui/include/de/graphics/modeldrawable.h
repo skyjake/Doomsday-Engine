@@ -37,6 +37,12 @@ class GLBuffer;
  * 3D model data is loaded using the Open Asset Import Library from multiple different
  * source formats.
  *
+ * Lifetime.
+ *
+ * Texture maps.
+ *
+ * Animation.
+ *
  * @ingroup gl
  */
 class LIBGUI_PUBLIC ModelDrawable : public AssetGroup
@@ -45,13 +51,33 @@ public:
     /// An error occurred during the loading of the model data. @ingroup errors
     DENG2_ERROR(LoadError);
 
+    DENG2_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+
+    enum TextureMap // note: used as indices internally
+    {
+        Diffuse = 0,    ///< Surface color and opacity.
+        Normals = 1,    /**< Normal map where RGB values are directly interpreted as vectors.
+                             Blue 255 is Z+1 meaning straight up. Color value 128 means zero.
+                             The default normal vector pointing straight away from the
+                             surface is therefore (128, 128, 255) => (0, 0, 1). */
+        Specular = 2,   ///< Specular color (RGB) and reflection sharpness (A).
+        Emission = 3,   /**< Additional light emitted by the surface that is not affected by
+                             external factors. */
+        Height = 4,     /**< Height values are converted to a normal map. Lighter regions
+                             are higher than dark regions. */
+
+        Unknown
+    };
+
+    static TextureMap textToTextureMap(String const &text);
+
     /**
      * Animation state for a model. There can be any number of ongoing animations,
      * targeting individual nodes of a model.
      *
      * @ingroup gl
      */
-    class LIBGUI_PUBLIC AnimationState
+    class LIBGUI_PUBLIC Animator
     {
     public:
         struct Animation {
@@ -65,8 +91,9 @@ public:
         DENG2_ERROR(InvalidError);
 
     public:
-        AnimationState();
-        AnimationState(ModelDrawable const &model);
+        Animator();
+        Animator(ModelDrawable const &model);
+        virtual ~Animator() {}
 
         void setModel(ModelDrawable const &model);
 
@@ -86,8 +113,29 @@ public:
 
         Animation &at(int index);
 
+        bool isRunning(String const &animName, String const &rootNode = "") const;
+        bool isRunning(int animId, String const &rootNode = "") const;
+
+        /**
+         * Starts an animation sequence. A previous sequence running on this node will
+         * be automatically stopped.
+         *
+         * @param animName  Animation sequence name.
+         * @param rootNode  Animation root.
+         *
+         * @return Animation.
+         */
         Animation &start(String const &animName, String const &rootNode = "");
 
+        /**
+         * Starts an animation sequence. A previous sequence running on this node will
+         * be automatically stopped.
+         *
+         * @param animId    Animation sequence number.
+         * @param rootNode  Animation root.
+         *
+         * @return Animation.
+         */
         Animation &start(int animId, String const &rootNode = "");
 
         void stop(int index);
@@ -102,12 +150,61 @@ public:
          */
         virtual void advanceTime(TimeDelta const &elapsed);
 
+        /**
+         * Returns the time to be used when drawing the model.
+         *
+         * @param index  Animation index.
+         *
+         * @return Time in the model's animation sequence.
+         */
+        virtual ddouble currentTime(int index) const;
+
     private:
         DENG2_PRIVATE(d)
     };
 
+    /**
+     * Interface for image loaders that provide the content for texture images when
+     * given a path. The default loader just checks if there is an image file in the
+     * file system at the given path.
+     */
+    class LIBGUI_PUBLIC IImageLoader
+    {
+    public:
+        virtual ~IImageLoader() {}
+
+        /**
+         * Loads an image. If the image can't be loaded, the loader must throw an
+         * exception explaining the reason for the failure.
+         *
+         * @param path  Path of the image. This is an absolute de::FS path inferred from
+         *              the location of the source model file and the material metadata
+         *              it contains.
+         *
+         * @return Loaded image.
+         */
+        virtual Image loadImage(String const &path) = 0;
+    };
+
 public:
     ModelDrawable();
+
+    /**
+     * Sets the object responsible for loading texture images.
+     *
+     * By default, ModelDrawable uses a simple loader that tries to load image files
+     * directly from the file system.
+     *
+     * @param loader  Image loader.
+     */
+    void setImageLoader(IImageLoader &loader);
+
+    void useDefaultImageLoader();
+
+    /**
+     * Releases all the data: the loaded model and any GL resources.
+     */
+    void clear();
 
     /**
      * Loads a model from a file. This is a synchronous operation and may take a while,
@@ -121,11 +218,6 @@ public:
     void load(File const &file);
 
     /**
-     * Releases all the data: the loaded model and any GL resources.
-     */
-    void clear();
-
-    /**
      * Finds the id of an animation that has the name @a name. Note that animation
      * names are optional.
      *
@@ -137,7 +229,54 @@ public:
 
     int animationCount() const;
 
+    /**
+     * Locates a material specified in the model by its name.
+     *
+     * @param name  Name of the material
+     *
+     * @return Material id.
+     */
+    int materialId(String const &name) const;
+
     bool nodeExists(String const &name) const;
+
+    /**
+     * Atlas to use for any textures needed by the model. This is needed for glInit().
+     *
+     * @param atlas  Atlas for model textures.
+     */
+    void setAtlas(AtlasTexture &atlas);
+
+    /**
+     * Removes the model's atlas. All allocations this model has made from the atlas
+     * are freed.
+     */
+    void unsetAtlas();
+
+    typedef QList<TextureMap> Mapping;
+
+    /**
+     * Sets which textures are to be passed to the model shader via the GL buffer.
+     *
+     * By default, the model only has a diffuse map. The user of ModelDrawable must
+     * specify the indices for the other texture maps depending on how the shader expects
+     * to receive them.
+     *
+     * @param mapsToUse  Up to four map types. The map at index zero will be specified
+     *                   as the first texture bounds (@c aBounds in the shader), index
+     *                   one will become the second texture bounds (@c aBounds2), etc.
+     */
+    void setTextureMapping(Mapping mapsToUse);
+
+    static Mapping diffuseNormalsSpecularEmission();
+
+    /**
+     * Sets the texture map that is used if no other map is provided.
+     *
+     * @param textureType  Type of the texture.
+     * @param atlasId      Identifier in the atlas.
+     */
+    void setDefaultTexture(TextureMap textureType, Id const &atlasId);
 
     /**
      * Prepares a loaded model for drawing by constructing all the required GL objects.
@@ -153,17 +292,14 @@ public:
     void glDeinit();
 
     /**
-     * Atlas to use for any textures needed by the model. This is needed for glInit().
+     * Sets or changes one of the texture maps used by the model. This can be used to
+     * override the maps set up automatically by glInit().
      *
-     * @param atlas  Atlas for model textures.
+     * @param materialId  Which material to modify.
+     * @param textureMap  Texture to set.
+     * @param path        Path of the texture image.
      */
-    void setAtlas(AtlasTexture &atlas);
-
-    /**
-     * Removes the model's atlas. All allocations this model has made from the atlas
-     * are freed.
-     */
-    void unsetAtlas();
+    void setTexturePath(int materialId, TextureMap textureMap, String const &path);
 
     /**
      * Sets the GL program used for shading the model.
@@ -174,10 +310,10 @@ public:
 
     void unsetProgram();
 
-    void draw(AnimationState const *animation = 0) const;
+    void draw(Animator const *animation = 0) const;
 
     void drawInstanced(GLBuffer const &instanceAttribs,
-                       AnimationState const *animation = 0) const;
+                       Animator const *animation = 0) const;
 
     /**
      * Dimensions of the default pose, in model space.

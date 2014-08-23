@@ -50,6 +50,7 @@
 #endif
 
 #include <de/Error>
+#include <doomsday/world/mobjthinkerdata.h>
 #include <cmath>
 
 using namespace de;
@@ -79,7 +80,7 @@ void P_InitUnusedMobjList()
  * All mobjs must be allocated through this routine. Part of the public API.
  */
 mobj_t *P_MobjCreate(thinkfunc_t function, Vector3d const &origin, angle_t angle,
-    coord_t radius, coord_t height, int ddflags)
+                     coord_t radius, coord_t height, int ddflags)
 {
     if(!function)
         App_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
@@ -167,9 +168,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
 {
     if(!mobj) return;
 
-#ifdef __CLIENT__
-    bool spawning = (mobj->state == 0);
-#endif
+    state_t const *oldState = mobj->state;
 
     DENG_ASSERT(statenum >= 0 && statenum < defs.states.size());
 
@@ -178,22 +177,16 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     mobj->sprite = mobj->state->sprite;
     mobj->frame  = mobj->state->frame;
 
-#ifdef __CLIENT__
-    // Check for a ptcgen trigger.
-    for(ded_ptcgen_t *pg = runtimeDefs.stateInfo[statenum].ptcGens; pg; pg = pg->stateNext)
-    {
-        if(!(pg->flags & Generator::SpawnOnly) || spawning)
-        {
-            // We are allowed to spawn the generator.
-            Mobj_SpawnParticleGen(mobj, pg);
-        }
-    }
-#endif
-
     if(!(mobj->ddFlags & DDMF_REMOTE))
     {
         if(defs.states[statenum].execute)
             Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
+    }
+
+    // Notify private data about the changed state.
+    if(MobjThinkerData *data = THINKER_DATA_MAYBE(mobj->thinker, MobjThinkerData))
+    {
+        data->stateChanged(oldState);
     }
 }
 
@@ -870,7 +863,7 @@ D_CMD(InspectMobj)
 
     char const *moType = "Mobj";
 #ifdef __CLIENT__
-    ClientMobjThinkerData::NetworkState *info = ClMobj_GetInfo(mo);
+    ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mo);
     if(info) moType = "CLMOBJ";
 #endif
 

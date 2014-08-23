@@ -25,6 +25,7 @@
 #include <doomsday/console/exec.h>
 
 #include <de/SignalAction>
+#include "CommandAction"
 
 using namespace de;
 using namespace ui;
@@ -37,13 +38,13 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
     CVarSliderWidget *riftSamples;
-    CVarSliderWidget *riftPredictionLatency;
+    ButtonWidget *riftReset;
     ButtonWidget *riftSetup;
     ButtonWidget *desktopSetup;
 
     Instance(Public *i)
         : Base(i)
-        , riftPredictionLatency(0)
+        , riftReset(0)
         , riftSetup(0)
     {
         ScrollAreaWidget &area = self.area();
@@ -69,11 +70,13 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         area.add(ipd = new CVarSliderWidget("rend-vr-ipd"));
         ipd->setDisplayFactor(1000);
+        ipd->setPrecision(1);
 
         if(vrCfg().oculusRift().isReady())
         {
-            area.add(riftPredictionLatency = new CVarSliderWidget("rend-vr-rift-latency"));
-            riftPredictionLatency->setDisplayFactor(1000);
+            area.add(riftReset = new ButtonWidget);
+            riftReset->setText(tr("Recenter Tracking"));
+            riftReset->setAction(new CommandAction("resetriftpose"));
 
             area.add(riftSetup = new ButtonWidget);
             riftSetup->setText(tr("Apply Rift Settings"));
@@ -127,14 +130,16 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
     layout.append(*ovrLabel, 2) << *sampleLabel << *d->riftSamples;
 
+    LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());
     if(vrCfg().oculusRift().isReady())
     {
-        LabelWidget *latencyLabel = LabelWidget::newWithText(tr("Prediction Latency:"), &area());
-        LabelWidget *utilLabel    = LabelWidget::newWithText(tr("Utilities:"), &area());
-
-        layout << *latencyLabel << *d->riftPredictionLatency
-               << *utilLabel    << *d->riftSetup
-               << Const(0)      << *d->desktopSetup;
+        layout << *utilLabel << *d->riftReset
+               << Const(0)   << *d->riftSetup
+               << Const(0)   << *d->desktopSetup;
+    }
+    else
+    {
+        layout << *utilLabel << *d->desktopSetup;
     }
 
     area().setContentSize(layout.width(), layout.height());

@@ -28,6 +28,7 @@
 
 using namespace de;
 
+/// @todo This should not be a fixed-size array. -jk
 vissprite_t visSprites[MAXVISSPRITES], *visSpriteP;
 vispsprite_t visPSprites[DDMAXPSPRITES];
 
@@ -60,29 +61,24 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
     return spr;
 }
 
-void VisSprite_SetupSprite(drawspriteparams_t &p,
-    Vector3d const &center, coord_t distToEye, Vector3d const &visOffset,
+void VisSprite_SetupSprite(vissprite_t *spr,
+                           VisEntityPose const &pose,
+                           VisEntityLighting const &light,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    Vector4f const &ambientColor,
-    uint vLightListIdx, int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
-    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/, bool viewAligned)
+    int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
+    bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/)
 {
+    drawspriteparams_t &p = *VS_SPRITE(spr);
+
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialVariant *variant = material.chooseVariant(spec, true);
 
     DENG2_ASSERT((tClass == 0 && tMap == 0) ||
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
-    p.center[VX]      = center.x;
-    p.center[VY]      = center.y;
-    p.center[VZ]      = center.z;
-    p.srvo[VX]        = visOffset.x;
-    p.srvo[VY]        = visOffset.y;
-    p.srvo[VZ]        = visOffset.z;
-    p.distance        = distToEye;
+    spr->pose = pose;
     p.bspLeaf         = bspLeafAtOrigin;
-    p.viewAligned     = viewAligned;
     p.noZWrite        = noSpriteZWrite;
 
     p.material        = variant;
@@ -90,59 +86,33 @@ void VisSprite_SetupSprite(drawspriteparams_t &p,
     p.matFlip[1]      = matFlipT;
     p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
 
-    p.ambientColor[0] = ambientColor.x;
-    p.ambientColor[1] = ambientColor.y;
-    p.ambientColor[2] = ambientColor.z;
-    p.ambientColor[3] = (useSpriteAlpha? ambientColor.w : 1);
-
-    p.vLightListIdx   = vLightListIdx;
+    spr->light = light;
+    spr->light.ambientColor[3] = (useSpriteAlpha? light.ambientColor.w : 1);
 }
 
-void VisSprite_SetupModel(drawmodelparams_t &p,
-    Vector3d const &origin, coord_t distToEye, Vector3d const &visOffset,
-    float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
+void VisSprite_SetupModel(vissprite_t *spr,
+                          VisEntityPose const &pose,
+                          VisEntityLighting const &light,
     ModelDef *mf, ModelDef *nextMF, float inter,
-    Vector4f const &ambientColor,
-    uint vLightListIdx,
     int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
-    bool viewAlign, bool /*fullBright*/, bool alwaysInterpolate)
+    bool /*fullBright*/, bool alwaysInterpolate)
 {
-    p.mf                = mf;
-    p.nextMF            = nextMF;
-    p.inter             = inter;
-    p.alwaysInterpolate = alwaysInterpolate;
-    p.id                = id;
-    p.selector          = selector;
-    p.flags             = mobjDDFlags;
-    p.tmap              = tmap;
-    p.origin[VX]        = origin.x;
-    p.origin[VY]        = origin.y;
-    p.origin[VZ]        = origin.z;
-    p.srvo[VX]          = visOffset.x;
-    p.srvo[VY]          = visOffset.y;
-    p.srvo[VZ]          = visOffset.z;
-    p.gzt               = gzt;
-    p.distance          = distToEye;
-    p.yaw               = yaw;
-    p.extraYawAngle     = 0;
-    p.yawAngleOffset    = yawAngleOffset;
-    p.pitch             = pitch;
-    p.extraPitchAngle   = 0;
-    p.pitchAngleOffset  = pitchAngleOffset;
-    p.extraScale        = 0;
-    p.viewAlign         = viewAlign;
-    p.mirror            = 0;
-    p.shineYawOffset    = 0;
-    p.shinePitchOffset  = 0;
+    drawmodelparams_t &p = *VS_MODEL(spr);
 
+    p.mf                    = mf;
+    p.nextMF                = nextMF;
+    p.inter                 = inter;
+    p.alwaysInterpolate     = alwaysInterpolate;
+    p.id                    = id;
+    p.selector              = selector;
+    p.flags                 = mobjDDFlags;
+    p.tmap                  = tmap;
+    spr->pose               = pose;
+    spr->light              = light;
+
+    p.shineYawOffset        = 0;
+    p.shinePitchOffset      = 0;
     p.shineTranslateWithViewerPos = p.shinepspriteCoordSpace = false;
-
-    p.ambientColor[0]   = ambientColor.x;
-    p.ambientColor[1]   = ambientColor.y;
-    p.ambientColor[2]   = ambientColor.z;
-    p.ambientColor[3]   = ambientColor.w;
-
-    p.vLightListIdx     = vLightListIdx;
 }
 
 void R_SortVisSprites()
@@ -183,9 +153,9 @@ void R_SortVisSprites()
         coord_t bestdist = 0;
         for(vissprite_t *ds = unsorted.next; ds != &unsorted; ds = ds->next)
         {
-            if(ds->distance >= bestdist)
+            if(ds->pose.distance >= bestdist)
             {
-                bestdist = ds->distance;
+                bestdist = ds->pose.distance;
                 best = ds;
             }
         }

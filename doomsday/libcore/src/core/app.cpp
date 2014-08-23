@@ -138,10 +138,10 @@ DENG2_PIMPL(App)
 
         Clock::setAppClock(&clock);
         Animation::setClock(&clock);
+        qsrand(Time().asDateTime().toTime_t());
 
         // Built-in systems.
-        systems.append(&fs);
-        systems.append(&scriptSys);
+        systems << &fs << &scriptSys;
 
         // Native App module.
         appModule.addArray("audienceForGameChange"); // game change observers

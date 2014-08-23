@@ -20,6 +20,11 @@
 #define DENG_CLIENT_MODELRENDERER_H
 
 #include <de/ModelDrawable>
+#include <de/ModelBank>
+
+#include <QList>
+#include <QMap>
+#include <functional>
 
 /**
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
@@ -30,7 +35,56 @@
 class ModelRenderer
 {
 public:
+    struct AnimSequence {
+        de::String name;
+        de::Record const *def;
+        AnimSequence(de::String const &n, de::Record const &d)
+            : name(n), def(&d) {}
+    };
+    typedef QList<AnimSequence> AnimSequences;
+    struct StateAnims : public QMap<de::String, AnimSequences> {};
+
+    struct AuxiliaryData : public de::ModelBank::IUserData
+    {
+        StateAnims animations;
+        de::Matrix4f transformation;
+    };
+
+public:
     ModelRenderer();
+
+    void glInit();
+
+    void glDeinit();
+
+    /**
+     * Provides access to the bank containing available drawable models.
+     */
+    de::ModelBank &bank();
+
+    StateAnims const *animations(de::DotPath const &modelId) const;
+
+    /**
+     * Sets up the transformation matrices.
+     *
+     * @param eyeDir        Direction of the eye in local space (relative to object).
+     * @param modelToLocal  Transformation from model space to the object's local space
+     *                      (object's local frame in world space).
+     * @param localToView   Transformation from local space to projected view space.
+     */
+    void setTransformation(de::Vector3f const &eyeDir,
+                           de::Matrix4f const &modelToLocal,
+                           de::Matrix4f const &localToView);
+
+    void setAmbientLight(de::Vector3f const &ambientIntensity);
+
+    void clearLights();
+
+    void addLight(de::Vector3f const &direction, de::Vector3f const &intensity);
+
+public:
+    static int identifierFromText(de::String const &text,
+                           std::function<int (de::String const &)> resolver);
 
 private:
     DENG2_PRIVATE(d)

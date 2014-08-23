@@ -148,7 +148,7 @@ DENG2_PIMPL(MainWindow)
             compositor->setCompositeProjection(
                         vr.projectionMatrix(OVR_FOV, root.viewRule().size(),
                                             OVR_NEAR_CLIP, OVR_FAR_CLIP)
-                        * Matrix4f::scale(Vector3f(1, -1 / vr.oculusRift().aspect(), 1))
+                        * Matrix4f::scale(Vector3f(.5f, -.5f / vr.oculusRift().aspect(), 1))
                         * Matrix4f::translate(Vector3f(-.5f, -.5f, -1)));
         }
         else
@@ -182,7 +182,6 @@ MainWindow::MainWindow(String const &id)
         vr.setMode(VRConfig::OculusRift);
         vr.setRiftFramebufferSampleCount(App::commandLine().has("--nofsaa")? 1 : 2);
         vr.setPhysicalPlayerHeight(1.8f);
-        vr.oculusRift().setPredictionLatency(.04f);
         vr.setScreenDistance(.5f);
         vr.setEyeHeightInMapUnits(vr.physicalPlayerHeight() * .925f);
         setCursor(Qt::BlankCursor);
@@ -242,7 +241,10 @@ void MainWindow::preDraw()
 
 void MainWindow::postDraw()
 {
-    swapBuffers();
+    if(TestApp::vr().mode() != VRConfig::OculusRift)
+    {
+        swapBuffers();
+    }
     BaseWindow::postDraw();
 
     Garbage_Recycle();

@@ -32,18 +32,37 @@ namespace de {
 class LIBAPPFW_PUBLIC OculusRift
 {
 public:
+    enum Eye { LeftEye, RightEye };
+
+public:
     OculusRift();
 
-    bool init();
+    /**
+     * Initialize Oculus Rift rendering. The main window must exist and be visible.
+     * This should be called whenever the Oculus Rift rendering mode is enabled.
+     */
+    void init();
 
     void deinit();
 
+    void beginFrame();
+
+    void endFrame();
+
     /**
-     * Checks if Oculus Rift is enabled and can report head orientation.
+     * Sets the currently rendered eye. LibOVR will decide which eye is left and which
+     * is right.
+     *
+     * @param index  Eye index (0 or 1).
+     */
+    void setCurrentEye(int index);
+
+    Eye currentEye() const;
+
+    /**
+     * Checks if Oculus Rift is connected and can report head orientation.
      */
     bool isReady() const;
-
-    void setPredictionLatency(float latency);
 
     /**
      * Applies an offset to the yaw angle returned from Oculus Rift. This can be used to
@@ -53,15 +72,17 @@ public:
      */
     void setYawOffset(float yawRadians);
 
+    void resetTracking();
+
     /**
      * Sets a yaw offset that makes the current actual Oculus Rift yaw come out as zero.
      */
     void resetYaw();
 
     // Called to allow head orientation to change again.
-    void allowUpdate();
+    //void allowUpdate();
 
-    void update();
+    //void update();
 
     /**
      * Returns the current head orientation as a vector containing the pitch, roll and
@@ -70,30 +91,48 @@ public:
      */
     Vector3f headOrientation() const;      
 
+    /**
+     * Returns the current real-world head position.
+     */
+    Vector3f headPosition() const;
+
+    Vector3f eyeOffset() const;
+
+    /**
+     * Returns the eye pose for the current eye, including the head orientation and
+     * position in relation to the tracking origin.
+     *
+     * @return Eye pose matrix.
+     */
+    Matrix4f eyePose() const;
+
+    Matrix4f projection(float nearDist, float farDist) const;
+
     float yawOffset() const;
 
     /**
      * Returns a model-view matrix that applies the head's orientation.
      */
-    Matrix4f headModelViewMatrix() const;
+    //Matrix4f headModelViewMatrix() const;
 
-    float predictionLatency() const;
+    //float predictionLatency() const;
 
     /**
      * Returns the IPD configured in the Oculus Rift preferences.
      */
-    float interpupillaryDistance() const;
+    //float interpupillaryDistance() const;
 
-    // Use screen size instead of resolution in case non-square pixels?
     float aspect() const;
 
-    Vector2f screenSize() const;
+    Vector2ui resolution() const;
+
+    /*Vector2f screenSize() const;
     Vector4f chromAbParam() const;
-    float distortionScale() const;
+    float distortionScale() const;*/
     float fovX() const; // in degrees
-    float fovY() const; // in degrees
-    Vector4f hmdWarpParam() const;
-    float lensSeparationDistance() const;
+    //float fovY() const; // in degrees
+    //Vector4f hmdWarpParam() const;
+    //float lensSeparationDistance() const;
 
 private:
     DENG2_PRIVATE(d)

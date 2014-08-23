@@ -64,6 +64,9 @@ include(versions.pri)
 
 # Build Options --------------------------------------------------------------
 
+# C++11 is the C++ standard used in this codebase.
+CONFIG += deng_c++11
+
 # Configure for Debug/Release build.
 CONFIG(debug, debug|release) {
     !win32: echo(Debug build.)
@@ -149,8 +152,8 @@ deng_nosdl {
 
 unix:deng_distcc {
     macx:*-clang* {
-        QMAKE_CC  = distcc $$QMAKE_CC  --target=x86_64-apple-darwin -Qunused-arguments
-        QMAKE_CXX = distcc $$QMAKE_CXX --target=x86_64-apple-darwin -Qunused-arguments
+        QMAKE_CC  = distcc $$QMAKE_CC  -Qunused-arguments
+        QMAKE_CXX = distcc $$QMAKE_CXX -Qunused-arguments
     }
 }
 

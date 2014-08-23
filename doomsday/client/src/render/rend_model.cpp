@@ -28,9 +28,13 @@
 #include "dd_def.h"
 #include "dd_main.h" // App_WorldSystem()
 
+#include "world/p_players.h"
+#include "world/clientmobjthinkerdata.h"
 #include "render/rend_model.h"
 #include "render/rend_main.h"
 #include "render/vlight.h"
+#include "render/vissprite.h"
+#include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "MaterialSnapshot"
@@ -652,9 +656,10 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
-static void drawSubmodel(uint number, drawmodelparams_t const &parm)
+static void drawSubmodel(uint number, vissprite_t const &spr)
 {
-    int const zSign = (parm.mirror? -1 : 1);
+    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+    int const zSign = (spr.pose.mirrored? -1 : 1);
     ModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     SubmodelDef const &smf = mf->subModelDef(number);
 
@@ -664,7 +669,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     if(mf->scale == Vector3f(0, 0, 0))
         return;
 
-    float alpha = parm.ambientColor[CA];
+    float alpha = spr.light.ambientColor[CA];
 
     // Is the submodel-defined alpha multiplier in effect?
     // With df_brightshadow2, the alpha multiplier will be applied anyway.
@@ -745,36 +750,36 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     glPushMatrix();
 
     // Model space => World space
-    glTranslatef(parm.origin[VX] + parm.srvo[VX] +
+    glTranslatef(spr.pose.origin[VX] + spr.pose.srvo[VX] +
                    de::lerp(mf->offset.x, mfNext->offset.x, inter),
-                 parm.origin[VZ] + parm.srvo[VZ] +
+                 spr.pose.origin[VZ] + spr.pose.srvo[VZ] +
                    de::lerp(mf->offset.y, mfNext->offset.y, inter),
-                 parm.origin[VY] + parm.srvo[VY] + zSign *
+                 spr.pose.origin[VY] + spr.pose.srvo[VY] + zSign *
                    de::lerp(mf->offset.z, mfNext->offset.z, inter));
 
-    if(parm.extraYawAngle || parm.extraPitchAngle)
+    if(spr.pose.extraYawAngle || spr.pose.extraPitchAngle)
     {
         // Sky models have an extra rotation.
         glScalef(1, 200 / 240.0f, 1);
-        glRotatef(parm.extraYawAngle, 1, 0, 0);
-        glRotatef(parm.extraPitchAngle, 0, 0, 1);
+        glRotatef(spr.pose.extraYawAngle, 1, 0, 0);
+        glRotatef(spr.pose.extraPitchAngle, 0, 0, 1);
         glScalef(1, 240 / 200.0f, 1);
     }
 
     // Model rotation.
-    glRotatef(parm.viewAlign ? parm.yawAngleOffset : parm.yaw,
+    glRotatef(spr.pose.viewAligned? spr.pose.yawAngleOffset : spr.pose.yaw,
               0, 1, 0);
-    glRotatef(parm.viewAlign ? parm.pitchAngleOffset : parm.pitch,
+    glRotatef(spr.pose.viewAligned? spr.pose.pitchAngleOffset : spr.pose.pitch,
               0, 0, 1);
 
     // Scaling and model space offset.
     glScalef(de::lerp(mf->scale.x, mfNext->scale.x, inter),
              de::lerp(mf->scale.y, mfNext->scale.y, inter),
              de::lerp(mf->scale.z, mfNext->scale.z, inter));
-    if(parm.extraScale)
+    if(spr.pose.extraScale)
     {
         // Particle models have an extra scale.
-        glScalef(parm.extraScale, parm.extraScale, parm.extraScale);
+        glScalef(spr.pose.extraScale, spr.pose.extraScale, spr.pose.extraScale);
     }
     glTranslatef(smf.offset.x, smf.offset.y, smf.offset.z);
 
@@ -788,7 +793,7 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         }
 
         // Determine the LOD we will be using.
-        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * parm.distance, mdl.lodCount() - 1));
+        activeLod = &mdl.lod(de::clamp<int>(0, lodFactor * spr.pose.distance, mdl.lodCount() - 1));
     }
     else
     {
@@ -806,8 +811,8 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
     }
 
     // Coordinates to the center of the model (game coords).
-    modelCenter = Vector3f(parm.origin[VX], parm.origin[VY], (parm.origin[VZ] + parm.gzt) * 2)
-            + Vector3d(parm.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
+    modelCenter = Vector3f(spr.pose.origin[VX], spr.pose.origin[VY], spr.pose.midZ())
+            + Vector3d(spr.pose.srvo) + Vector3f(mf->offset.x, mf->offset.z, mf->offset.y);
 
     // Calculate lighting.
     Vector4f ambient;
@@ -817,21 +822,21 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         ambient = Vector4f(1, 1, 1, 1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
-    else if(!parm.vLightListIdx)
+    else if(!spr.light.vLightListIdx)
     {
         // Lit uniformly.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(spr.light.ambientColor, alpha);
         Mod_FixedVertexColors(numVerts, modelColorCoords,
                               (ambient * 255).toVector4ub());
     }
     else
     {
         // Lit normally.
-        ambient = Vector4f(parm.ambientColor, alpha);
+        ambient = Vector4f(spr.light.ambientColor, alpha);
 
         Mod_VertexColors(modelColorCoords, numVerts,
-                         modelNormCoords, parm.vLightListIdx, modelLight + 1,
-                         ambient, (mf->scale[VY] < 0), -parm.yaw, -parm.pitch);
+                         modelNormCoords, spr.light.vLightListIdx, modelLight + 1,
+                         ambient, (mf->scale[VY] < 0), -spr.pose.yaw, -spr.pose.pitch);
     }
 
     TextureVariant *shinyTexture = 0;
@@ -863,13 +868,13 @@ static void drawSubmodel(uint number, drawmodelparams_t const &parm)
         float offset = parm.shineYawOffset;
 
         // Calculate normalized (0,1) model yaw and pitch.
-        float normYaw = M_CycleIntoRange(((parm.viewAlign ? parm.yawAngleOffset
-                                                           : parm.yaw) + offset) / 360, 1);
+        float normYaw = M_CycleIntoRange(((spr.pose.viewAligned? spr.pose.yawAngleOffset
+                                                               : spr.pose.yaw) + offset) / 360, 1);
 
         offset = parm.shinePitchOffset;
 
-        float normPitch = M_CycleIntoRange(((parm.viewAlign ? parm.pitchAngleOffset
-                                                             : parm.pitch) + offset) / 360, 1);
+        float normPitch = M_CycleIntoRange(((spr.pose.viewAligned? spr.pose.pitchAngleOffset
+                                                                 : spr.pose.pitch) + offset) / 360, 1);
 
         float shinyAng = 0;
         float shinyPnt = 0;
@@ -1062,8 +1067,10 @@ static int drawLightVectorWorker(VectorLight const *vlight, void *context)
     return false; // Continue iteration.
 }
 
-void Rend_DrawModel(drawmodelparams_t const &parm)
+void Rend_DrawModel(vissprite_t const &spr)
 {
+    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+
     DENG2_ASSERT(inited);
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1083,7 +1090,7 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
                 glDepthMask(GL_FALSE);
             }
 
-            drawSubmodel(i, parm);
+            drawSubmodel(i, spr);
 
             if(disableZ)
             {
@@ -1092,7 +1099,7 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         }
     }
 
-    if(devMobjVLights && parm.vLightListIdx)
+    if(devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
@@ -1101,10 +1108,10 @@ void Rend_DrawModel(drawmodelparams_t const &parm)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(parm.origin[VX], parm.origin[VZ], parm.origin[VY]);
+        glTranslatef(spr.pose.origin[VX], spr.pose.origin[VZ], spr.pose.origin[VY]);
 
-        coord_t distFromViewer = de::abs(parm.distance);
-        VL_ListIterator(parm.vLightListIdx, drawLightVectorWorker, &distFromViewer);
+        coord_t distFromViewer = de::abs(spr.pose.distance);
+        VL_ListIterator(spr.light.vLightListIdx, drawLightVectorWorker, &distFromViewer);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -1126,4 +1133,46 @@ TextureVariantSpec const &Rend_ModelShinyTextureSpec()
     return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
         false, false, false);
+}
+
+//---------------------------------------------------------------------------------------
+// Work in progress:
+//      Here is the contact point between the old renderer and the new GL2 model renderer.
+//      In the future, vissprites should form a class hierarchy, and the entire drawing
+//      operation should be encapsulated within. This will allow drawing a model (or a
+//      sprite, etc.) by creating a VisSprite instance and telling it to draw itself.
+
+void Rend_DrawModel2(vissprite_t const &spr)
+{
+    ModelRenderer &rend = ClientApp::renderSystem().modelRenderer();
+    drawmodel2params_t const &p = spr.data.model2;
+
+    Matrix4f viewMat =
+            Viewer_Matrix() *
+            Matrix4f::translate((spr.pose.origin + spr.pose.srvo).xzy());
+
+    Matrix4f localMat =
+            Matrix4f::rotate(spr.pose.viewAligned? spr.pose.yawAngleOffset :
+                                                   spr.pose.yaw,
+                             Vector3f(0, 1, 0) /* vertical axis for yaw */);
+    if(p.object)
+    {
+        localMat = localMat * THINKER_DATA(p.object->thinker, ClientMobjThinkerData)
+                .modelTransformation();
+    }
+
+    // Set up a suitable matrix for the pose.
+    rend.setTransformation(vOrigin - spr.pose.mid().xzy(), localMat, viewMat);
+
+    // Ambient color and lighting vectors.
+    rend.setAmbientLight(spr.light.ambientColor * .8f);
+    rend.clearLights();
+    VL_ListIterator(spr.light.vLightListIdx, [&rend] (VectorLight const *light, void *) -> int {
+        // Use this when drawing the model.
+        rend.addLight(light->direction.xzy(), light->color);
+        return false;
+    }, nullptr);
+
+    // Draw the model using the current animation state.
+    p.model->draw(p.animator);
 }

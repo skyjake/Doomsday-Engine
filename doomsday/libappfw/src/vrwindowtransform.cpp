@@ -21,9 +21,7 @@
 #include "de/VRConfig"
 #include "de/BaseGuiApp"
 #include "de/BaseWindow"
-//#include "de_platform.h"
-//#include "con_main.h"
-//#include "render/vr.h"
+#include "de/GuiWidget"
 
 #include <de/Drawable>
 #include <de/GLFramebuffer>
@@ -33,62 +31,17 @@ namespace de {
 DENG2_PIMPL(VRWindowTransform)
 {
     VRConfig &vrCfg;
-    Drawable oculusRift;
-    GLUniform uOculusRiftFB;
-    GLUniform uOculusDistortionScale;
-    GLUniform uOculusScreenSize;
-    GLUniform uOculusLensSeparation;
-    GLUniform uOculusHmdWarpParam;
-    GLUniform uOculusChromAbParam;
 
-    typedef GLBufferT<Vertex3Tex> OculusRiftVBuf;
     GLFramebuffer unwarpedFB;
 
     Instance(Public *i)
         : Base(i)
         , vrCfg(DENG2_BASE_GUI_APP->vr())
-        , uOculusRiftFB         ("texture",                GLUniform::Sampler2D)
-        , uOculusDistortionScale("distortionScale",        GLUniform::Float)
-        , uOculusScreenSize     ("screenSize",             GLUniform::Vec2)
-        , uOculusLensSeparation ("lensSeparationDistance", GLUniform::Float)
-        , uOculusHmdWarpParam   ("hmdWarpParam",           GLUniform::Vec4)
-        , uOculusChromAbParam   ("chromAbParam",           GLUniform::Vec4)
     {}
 
-    void init()
+    ~Instance()
     {
-        /// @todo Only do this when Oculus Rift mode is enabled. Free the allocated
-        /// resources when non-Rift mode in use.
-
-        OculusRiftVBuf *buf = new OculusRiftVBuf;
-        oculusRift.addBuffer(buf);
-
-        // Set up a simple static quad.
-        OculusRiftVBuf::Type const verts[4] = {
-            { Vector3f(-1,  1, 0.5f), Vector2f(0, 1), },
-            { Vector3f( 1,  1, 0.5f), Vector2f(1, 1), },
-            { Vector3f(-1, -1, 0.5f), Vector2f(0, 0), },
-            { Vector3f( 1, -1, 0.5f), Vector2f(1, 0), }
-        };
-        buf->setVertices(gl::TriangleStrip, verts, 4, gl::Static);
-
-        DENG2_BASE_GUI_APP->shaders()
-                .build(oculusRift.program(), "vr.oculusrift.barrel")
-                    << uOculusRiftFB
-                    << uOculusDistortionScale
-                    << uOculusScreenSize
-                    << uOculusLensSeparation
-                    << uOculusHmdWarpParam
-                    << uOculusChromAbParam;
-
-        unwarpedFB.glInit();
-        uOculusRiftFB = unwarpedFB.colorTexture();
-    }
-
-    void deinit()
-    {
-        oculusRift.clear();
-        unwarpedFB.glDeinit();
+        vrCfg.oculusRift().deinit();
     }
 
     Canvas &canvas() const
@@ -127,22 +80,14 @@ DENG2_PIMPL(VRWindowTransform)
      */
     void vrDrawOculusRift()
     {
-        vrCfg.enableFrustumShift(false);
+        OculusRift &ovr = vrCfg.oculusRift();
 
-        /// @todo shrunken hud
-        // Allocate offscreen buffers - larger than Oculus Rift size, to get adequate resolution at center after warp
-        // For some reason, 1.5X looks best, even though objects are ~2.3X unwarped size at center.
-        float unwarpFactor = 1.5f;
-        Canvas::Size textureSize = Canvas::Size(1280, 800) * unwarpFactor;
-        // Canvas::Size textureSize(2560, 1600); // 2 * 1280x800 // Undesirable relative softness at very center of image
-        // Canvas::Size textureSize(3200, 2000); // 2.5 * 1280x800 // Softness here too
-        unwarpedFB.resize(textureSize);
+        vrCfg.enableFrustumShift(false);
 
         // Use a little bit of multisampling to smooth out the magnified jagged edges.
         // Note: Independent of the vid-fsaa setting because this is beneficial even when
         // vid-fsaa is disabled.
-        unwarpedFB.setSampleCount(vrCfg.riftFramebufferSampleCount());
-        unwarpedFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        unwarpedFB.setSampleCount(1); //vrCfg.riftFramebufferSampleCount());
 
         // Set render target to offscreen temporarily.
         GLState::push()
@@ -150,41 +95,27 @@ DENG2_PIMPL(VRWindowTransform)
                 .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
                 .apply();
         unwarpedFB.target().unsetActiveRect(true);
-        unwarpedFB.target().clear(GLTarget::ColorDepth);
+
+        GLFramebuffer::Size const fbSize = unwarpedFB.size();
 
         // Left eye view on left side of screen.
-        vrCfg.setCurrentEye(VRConfig::LeftEye);
-        unwarpedFB.target().setActiveRect(Rectangleui(0, 0, textureSize.x/2, textureSize.y), true);
-        drawContent();
-
-        // Right eye view on right side of screen.
-        vrCfg.setCurrentEye(VRConfig::RightEye);
-        unwarpedFB.target().setActiveRect(Rectangleui(textureSize.x/2, 0, textureSize.x/2, textureSize.y), true);
-        drawContent();
+        for(int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
+        {
+            ovr.setCurrentEye(eyeIdx);
+            if(ovr.currentEye() == OculusRift::LeftEye)
+            {
+                // Left eye on the left side of the screen.
+                unwarpedFB.target().setActiveRect(Rectangleui(0, 0, fbSize.x/2, fbSize.y), true);
+            }
+            else
+            {
+                // Right eye on the right side of screen.
+                unwarpedFB.target().setActiveRect(Rectangleui(fbSize.x/2, 0, fbSize.x/2, fbSize.y), true);
+            }
+            drawContent();
+        }
 
         unwarpedFB.target().unsetActiveRect(true);
-
-        GLState::pop().apply();
-
-        // Necessary until the legacy code uses GLState, too:
-        glEnable(GL_TEXTURE_2D);
-
-        target().clear(GLTarget::Color);
-        GLState::push()
-                .setDepthTest(false);
-
-        // Copy contents of offscreen buffer to normal screen.
-        uOculusDistortionScale = vrCfg.oculusRift().distortionScale();
-        uOculusScreenSize      = vrCfg.oculusRift().screenSize();
-        uOculusLensSeparation  = vrCfg.oculusRift().lensSeparationDistance();
-        uOculusHmdWarpParam    = vrCfg.oculusRift().hmdWarpParam();
-        uOculusChromAbParam    = vrCfg.oculusRift().chromAbParam();
-        //
-        oculusRift.draw();
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glDepthMask(GL_TRUE);
-
         GLState::pop().apply();
 
         vrCfg.enableFrustumShift(); // restore default
@@ -192,10 +123,6 @@ DENG2_PIMPL(VRWindowTransform)
 
     void draw()
     {
-        // Allow Oculus Rift to use the latest head tracking position for the upcoming
-        // draw operations.
-        vrCfg.oculusRift().allowUpdate();
-
         switch(vrCfg.mode())
         {
         // A) Single view type stereo 3D modes here:
@@ -350,12 +277,12 @@ VRWindowTransform::VRWindowTransform(BaseWindow &window)
 
 void VRWindowTransform::glInit()
 {
-    d->init();
+    //d->init();
 }
 
 void VRWindowTransform::glDeinit()
 {
-    d->deinit();
+    //d->deinit();
 }
 
 Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize) const
@@ -373,10 +300,10 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
         break;
 
     case VRConfig::OculusRift:
-        /// @todo - taskbar needs to elevate above bottom of screen in Rift mode
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * d->vrCfg.oculusRift().aspect();
-        size *= 1.0f; // Use a large font in taskbar
+        //size.y *= d->vrCfg.oculusRift().aspect();
+        size *= GuiWidget::toDevicePixels(1) * .75f;
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them
@@ -441,6 +368,11 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 void VRWindowTransform::drawTransformed()
 {
     d->draw();
+}
+
+GLFramebuffer &VRWindowTransform::unwarpedFramebuffer()
+{
+    return d->unwarpedFB;
 }
 
 } // namespace de

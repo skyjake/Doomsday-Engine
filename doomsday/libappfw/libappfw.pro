@@ -17,7 +17,7 @@ include(../dep_core.pri)
 include(../dep_shell.pri)
 include(../dep_gui.pri)
 include(../dep_opengl.pri)
-include(../dep_rift.pri)
+include(../dep_ovr.pri)
 
 DEFINES += __LIBAPPFW__
 INCLUDEPATH += include

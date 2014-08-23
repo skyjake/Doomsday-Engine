@@ -82,8 +82,6 @@ ServerFinder::ServerFinder() : d(new Instance)
 {
     try
     {
-        qsrand(Time().asDateTime().toTime_t());
-
         connect(&d->beacon, SIGNAL(found(de::Address, de::Block)), this, SLOT(found(de::Address, de::Block)));
         QTimer::singleShot(1000, this, SLOT(expire()));
 

@@ -35,11 +35,35 @@ namespace de {
 class LIBGUI_PUBLIC ModelBank : public Bank
 {
 public:
+    /**
+     * Interface for auxiliary data for a loaded model. @ingroup gl
+     */
+    class LIBGUI_PUBLIC IUserData
+    {
+    public:
+        virtual ~IUserData() {}
+        DENG2_AS_IS_METHODS()
+    };
+
+    typedef std::pair<ModelDrawable *, IUserData *> ModelWithData;
+
+public:
     ModelBank();
 
     void add(DotPath const &id, String const &sourcePath);
 
     ModelDrawable &model(DotPath const &id);
+
+    /**
+     * Sets the user data of a loaded model.
+     * @param id        Model identifier.
+     * @param userData  User data object. Ownership taken.
+     */
+    void setUserData(DotPath const &id, IUserData *userData);
+
+    IUserData const *userData(DotPath const &id) const;
+
+    ModelWithData modelAndData(DotPath const &id);
 
 protected:
     IData *loadFromSource(ISource &source);
