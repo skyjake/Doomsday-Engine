@@ -35,6 +35,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <array>
+
 namespace de {
 namespace internal {
 
@@ -231,7 +233,7 @@ DENG2_PIMPL(ModelDrawable)
 
     struct MaterialData
     {
-        Id texIds[MAX_TEXTURES] { Id::None, Id::None, Id::None, Id::None };
+        std::array<Id, MAX_TEXTURES> texIds {{ Id::None, Id::None, Id::None, Id::None }};
         QHash<TextureMap, String> custom;
     };
 
@@ -251,8 +253,8 @@ DENG2_PIMPL(ModelDrawable)
     QVector<BoneData> bones; // indexed by bone index
     AnimLookup animNameToIndex;
 
-    TextureMap textureOrder[MAX_TEXTURES] { Diffuse, Unknown, Unknown, Unknown };
-    Id defaultTexIds[MAX_TEXTURES] { Id::None, Id::None, Id::None, Id::None };
+    std::array<TextureMap, MAX_TEXTURES> textureOrder {{ Diffuse, Unknown, Unknown, Unknown }};
+    std::array<Id, MAX_TEXTURES> defaultTexIds {{ Id::None, Id::None, Id::None, Id::None }};
     QVector<MaterialData> materials; // indexed by material index
 
     bool needMakeBuffer { false };
