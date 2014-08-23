@@ -1320,7 +1320,7 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface(Vector2d(vOrigin.x, vOrigin.z) - bspLeaf.poly().center());
+    Vector3f const eyeToSurface(Vector2d(Rend_EyeOrigin().x, Rend_EyeOrigin().z) - bspLeaf.poly().center());
 
     // We need to check all the shadow lines linked to this BspLeaf for
     // the purpose of fakeradio shadowing.
@@ -1336,7 +1336,7 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
                 Plane const &plane = cluster.visPlane(pln);
-                if(Vector3f(eyeToSurface, vOrigin.y - plane.heightSmoothed())
+                if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
                     writeShadowSection(pln, *side, shadowDark);
@@ -1354,7 +1354,7 @@ static void drawPoint(Vector3d const &point, int radius, float const color[4])
     Vector3d const leftOff      = viewData->upVec + viewData->sideVec;
     Vector3d const rightOff     = viewData->upVec - viewData->sideVec;
 
-    //Vector3d const viewToCenter = point - vOrigin;
+    //Vector3d const viewToCenter = point - Rend_EyeOrigin();
     //float scale = float(viewToCenter.dot(viewData->frontVec)) /
     //                viewData->frontVec.dot(viewData->frontVec);
 

@@ -148,6 +148,8 @@ void Rend_ModelViewMatrix(bool useAngles = true);
 
 de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
 
+de::Vector3d Rend_EyeOrigin();
+
 #define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
 /**

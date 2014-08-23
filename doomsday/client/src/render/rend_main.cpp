@@ -508,17 +508,39 @@ float Rend_FieldOfView()
     }
 }
 
+static Vector3d vEyeOrigin;
+
+Vector3d Rend_EyeOrigin()
+{
+    return vEyeOrigin;
+}
+
 Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
     float bodyAngle = viewData->current.angleWithoutHeadTracking() / (float) ANGLE_MAX * 360 - 90;
 
+    /// @todo vOrigin et al. shouldn't be changed in a getter function. -jk
+
     vOrigin = viewData->current.origin.xzy();
     vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
     vpitch  = viewData->current.pitch * 85.0 / 110.0;
 
+    vEyeOrigin = vOrigin;
+
+    OculusRift &ovr = vrCfg().oculusRift();
     Matrix4f modelView;
+    Matrix4f headOffset;
+    Vector3f headPos;
+    if(vrCfg().mode() == VRConfig::OculusRift && ovr.isReady())
+    {
+        headPos = ovr.headPosition() * vrCfg().mapUnitsPerMeter();
+        headOffset = Matrix4f::translate(swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
+                                                 headPos, AxisNegX, AxisNegY, AxisZ));
+
+        vEyeOrigin = headOffset.inverse() * vEyeOrigin;
+    }
 
     if(useAngles)
     {
@@ -534,8 +556,6 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
          * these values and is syncing with them independently (however, game has more
          * latency).
          */
-        OculusRift &ovr = vrCfg().oculusRift();
-
         if((vrCfg().mode() == VRConfig::OculusRift) && ovr.isReady())
         {
             Vector3f const pry = ovr.headOrientation();
@@ -548,9 +568,7 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
         modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
                     Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
                     Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
-                    Matrix4f::translate(swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
-                                                (ovr.headPosition() * vrCfg().mapUnitsPerMeter()),
-                                                AxisNegX, AxisNegY, AxisZ));
+                    headOffset;
     }
 
     return (modelView *
@@ -570,7 +588,7 @@ void Rend_ModelViewMatrix(bool useAngles)
 static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
 {
     // The dot product.
-    return (v1.y - v2.y) * (v1.x - vOrigin.x) + (v2.x - v1.x) * (v1.y - vOrigin.z);
+    return (v1.y - v2.y) * (v1.x - Rend_EyeOrigin().x) + (v2.x - v1.x) * (v1.y - Rend_EyeOrigin().z);
 }
 
 float Rend_ExtraLightDelta()
@@ -929,8 +947,8 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
     for(i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, vOrigin.x - (i == 0? topLeft->x : bottomRight->x),
-                      vOrigin.z - (i == 0? topLeft->y : bottomRight->y));
+        V2f_Set(view, Rend_EyeOrigin().x - (i == 0? topLeft->x : bottomRight->x),
+                      Rend_EyeOrigin().z - (i == 0? topLeft->y : bottomRight->y));
 
         distance = V2f_Normalize(view);
 
@@ -960,8 +978,8 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
             tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
 
         // Vertical coordinates.
-        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(vOrigin.y - bottomRight->z, distance);
-        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(vOrigin.y - topLeft->z, distance);
+        tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(Rend_EyeOrigin().y - bottomRight->z, distance);
+        tc[ (i == 0 ? 1 : 3) ].y = shinyVertical(Rend_EyeOrigin().y - topLeft->z, distance);
     }
 }
 
@@ -970,7 +988,7 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     DENG_ASSERT(tc);
 
     // Determine distance to viewer.
-    float distToEye = Vector2f(vOrigin.x - point.x, vOrigin.z - point.y)
+    float distToEye = Vector2f(Rend_EyeOrigin().x - point.x, Rend_EyeOrigin().z - point.y)
                           .normalize().length();
     if(distToEye < 10)
     {
@@ -980,13 +998,13 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     }
 
     // Offset from the normal view plane.
-    Vector2f start(vOrigin.x, vOrigin.z);
+    Vector2f start(Rend_EyeOrigin().x, Rend_EyeOrigin().z);
 
     float offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[VX]*/ -
                     (start.x - point.x) * cos(.4f)/*viewFrontVec[VZ]*/);
 
     tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
-    tc->y = shinyVertical(vOrigin.y - point.z, distToEye);
+    tc->y = shinyVertical(Rend_EyeOrigin().y - point.z, distToEye);
 }
 
 struct rendworldpoly_params_t
@@ -1740,7 +1758,7 @@ static void projectDynamics(Surface const &surface, float glowStrength,
 static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
                             float &opacity)
 {
-    if(vOrigin.y < leftEdge.bottom().z() || vOrigin.y > rightEdge.top().z())
+    if(Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
 
     mobj_t const *mo         = viewPlayer->shared.mo;
@@ -2704,16 +2722,16 @@ static void occludeLeaf(bool frontFacing)
         Vertex const &to   = frontFacing? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
-        if(((openBottom > cluster.visFloor().heightSmoothed() && vOrigin.y <= openBottom)
-            || (openBottom >  backCluster.visFloor().heightSmoothed() && vOrigin.y >= openBottom))
+        if(((openBottom > cluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
+            || (openBottom >  backCluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
            && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
-        if(((openTop < cluster.visCeiling().heightSmoothed() && vOrigin.y >= openTop)
-            || (openTop <  backCluster.visCeiling().heightSmoothed() && vOrigin.y <= openTop))
+        if(((openTop < cluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y >= openTop)
+            || (openTop <  backCluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
            && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
         {
             C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
@@ -2975,7 +2993,7 @@ static void traverseBspAndDrawLeafs(MapElement *bspElement)
  */
 static void generateDecorationFlares(Map &map)
 {
-    Vector3d const viewPos = vOrigin.xzy();
+    Vector3d const viewPos = Rend_EyeOrigin().xzy();
 
     foreach(Lumobj *lum, map.lumobjs())
     {
@@ -3934,7 +3952,7 @@ static void drawLabel(Vector3d const &origin, String const &label, float scale, 
 
 static void drawLabel(Vector3d const &origin, String const &label)
 {
-    ddouble distToEye = (vOrigin.xzy() - origin).length();
+    ddouble distToEye = (Rend_EyeOrigin().xzy() - origin).length();
     drawLabel(origin, label, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / 2000);
 }
 
@@ -4010,11 +4028,11 @@ static void drawBiasEditingVisuals(Map &map)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
+        glTranslatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
         glScalef(1, 1.0f/1.2f, 1);
-        glTranslatef(-vOrigin.x, -vOrigin.y, -vOrigin.z);
+        glTranslatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
 
-        HueCircleVisual::draw(*hueCircle, vOrigin, viewData->frontVec);
+        HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

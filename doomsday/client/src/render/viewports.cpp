@@ -1291,7 +1291,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         luminousClipped[lumIdx] = 1;
 
-        Vector3d const eye = vOrigin.xzy();
+        Vector3d const eye = Rend_EyeOrigin().xzy();
 
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspRoot()))
@@ -1312,7 +1312,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
-    Vector3d const eye = vOrigin.xzy();
+    Vector3d const eye = Rend_EyeOrigin().xzy();
 
     foreach(Polyobj *po, bspLeaf->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
