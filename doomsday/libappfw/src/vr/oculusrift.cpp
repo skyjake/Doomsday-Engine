@@ -193,10 +193,10 @@ DENG2_PIMPL(OculusRift)
         if(inited) return;
         inited = true;
 
+#ifdef DENG_HAVE_OCULUS_API
         // If there is no Oculus Rift connected, do nothing.
         if(!hmd) return;
 
-#ifdef DENG_HAVE_OCULUS_API
         DENG2_GUARD(this);
 
         // Configure for orientation and position tracking.
