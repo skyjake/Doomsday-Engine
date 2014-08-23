@@ -143,6 +143,43 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Session::removeSaved(internalSavePath);
     }
 
+    void resetStateForNewSession()
+    {
+        // Perform necessary prep.
+        cleanupInternalSave();
+
+        G_StopDemo();
+
+        // Close the menu if open.
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+
+        // If there are any InFine scripts running, they must be stopped.
+        FI_StackClear();
+
+        // Ignore a game action possibly set by script stop hooks; this is a completely new session.
+        G_SetGameAction(GA_NONE);
+
+        if(!IS_CLIENT)
+        {
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = &players[i];
+                if(plr->plr->inGame)
+                {
+                    // Force players to be initialized upon first map load.
+                    plr->playerState = PST_REBORN;
+#if __JHEXEN__
+                    plr->worldTimer  = 0;
+#else
+                    plr->didSecret   = false;
+#endif
+                }
+            }
+        }
+
+        M_ResetRandom();
+    }
+
     void setEpisode(String const &newEpisodeId)
     {
         DENG2_ASSERT(!inProgress);
@@ -1034,40 +1071,9 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
         throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
     }
 
-    // Perform necessary prep.
-    d->cleanupInternalSave();
+    d->resetStateForNewSession();
 
-    G_StopDemo();
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    // Ignore a game action possibly set by script stop hooks; this is a completely new session.
-    G_SetGameAction(GA_NONE);
-
-    if(!IS_CLIENT)
-    {
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = &players[i];
-            if(plr->plr->inGame)
-            {
-                // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
-#if __JHEXEN__
-                plr->worldTimer  = 0;
-#else
-                plr->didSecret   = false;
-#endif
-            }
-        }
-    }
-
-    M_ResetRandom();
-
+    // Configure the new session.
     d->rules = newRules; // make a copy
     d->applyCurrentRules();
     d->setEpisode(episodeId);
@@ -1075,8 +1081,8 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     d->visitedMaps.clear();
     d->rememberVisitedMaps = true;
 
+    // Begin the session.
     d->inProgress = true;
-
     d->setMapAndEntryPoint(mapUri, mapEntryPoint);
     d->reloadMap();
 
@@ -1110,18 +1116,21 @@ void GameSession::reloadMap()
     else
     {
         // Restart the session entirely.
-        bool oldBriefDisabled        = ::briefDisabled;
-        bool oldRememberVisitedMaps  = d->rememberVisitedMaps;
-        QSet<de::Uri> oldVisitedMaps = d->visitedMaps;
+        bool oldBriefDisabled = ::briefDisabled;
 
         ::briefDisabled = true; // We won't brief again.
 
         end();
-        begin(d->rules, d->episodeId, d->mapUri, d->mapEntryPoint);
+        d->resetStateForNewSession();
 
-        d->visitedMaps         = oldVisitedMaps;
-        d->rememberVisitedMaps = oldRememberVisitedMaps;
-        ::briefDisabled        = oldBriefDisabled;
+        // Begin the session.
+        d->inProgress = true;
+        d->reloadMap();
+
+        // Create the internal .save session package.
+        d->updateSavedSession(internalSavePath, d->metadata());
+
+        ::briefDisabled = oldBriefDisabled;
     }
 }
 
