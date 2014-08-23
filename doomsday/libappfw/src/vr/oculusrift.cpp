@@ -47,6 +47,7 @@ Vector3f quaternionToPRYAngles(Quatf const &q)
 
 DENG2_PIMPL(OculusRift)
 , DENG2_OBSERVES(Canvas, KeyEvent)
+, DENG2_OBSERVES(Variable, Change)
 , public Lockable
 {
 #ifdef DENG_HAVE_OCULUS_API
@@ -69,6 +70,7 @@ DENG2_PIMPL(OculusRift)
 
     bool inited = false;
     bool frameOngoing = false;
+    bool densityChanged = false;
     //Vector2f screenSize;
     //float lensSeparationDistance;
     //Vector4f hmdWarpParam;
@@ -131,11 +133,16 @@ DENG2_PIMPL(OculusRift)
         return window->transform().as<VRWindowTransform>().unwarpedFramebuffer();
     }
 
+    void variableValueChanged(Variable &, Value const &)
+    {
+        densityChanged = true;
+    }
+
     void resizeFramebuffer()
     {
         Sizei size[2];
         ovrFovPort fovMax;
-        float density = 0.75f;
+        float density = App::config().getf("vr.oculusRift.pixelDensity", 1.f);
         for(int eye = 0; eye < 2; ++eye)
         {
             // Use the default FOV.
@@ -161,8 +168,6 @@ DENG2_PIMPL(OculusRift)
         fovXDegrees = radianToDegree(2 * atanf(comboXTan));
 
         LOGDEV_GL_MSG("Clip FOV: %.2f degrees") << fovXDegrees;
-
-        /// @todo Apply chosen pixel density here.
 
         framebuffer().resize(GLFramebuffer::Size(size[0].w + size[1].w,
                                                  max(size[0].h, size[1].h)));
@@ -196,6 +201,8 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
         // If there is no Oculus Rift connected, do nothing.
         if(!hmd) return;
+
+        App::config()["vr.oculusRift.pixelDensity"].audienceForChange() += this;
 
         DENG2_GUARD(this);
 
@@ -277,6 +284,8 @@ DENG2_PIMPL(OculusRift)
         DENG2_GUARD(this);
 
         LOG_GL_MSG("Stopping Oculus Rift rendering");
+
+        App::config()["vr.oculusRift.pixelDensity"].audienceForChange() -= this;
 
         ovrHmd_ConfigureRendering(hmd, NULL, 0, NULL, NULL);
 
@@ -379,6 +388,12 @@ DENG2_PIMPL(OculusRift)
     {
         DENG2_ASSERT(isReady());
         DENG2_ASSERT(!frameOngoing);
+
+        if(densityChanged)
+        {
+            densityChanged = false;
+            resizeFramebuffer();
+        }
 
         frameOngoing = true;
         timing = ovrHmd_BeginFrame(hmd, 0);

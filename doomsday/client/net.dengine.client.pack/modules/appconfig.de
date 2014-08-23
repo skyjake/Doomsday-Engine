@@ -78,5 +78,10 @@ def setDefaults(d)
     # Master server settings.
     record d.masterServer
     d.masterServer.apiUrl = "www.dengine.net/master.php"
+    
+    # VR/3D settings.
+    record d.vr
+    record d.vr.oculusRift
+    d.vr.oculusRift.pixelDensity = 1.0
 end
 
