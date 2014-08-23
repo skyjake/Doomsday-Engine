@@ -118,6 +118,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     de::Uri mapUri;
     uint mapEntryPoint = 0;   ///< Player entry point, for reborn.
 
+    bool rememberVisitedMaps = false;
+    QSet<de::Uri> visitedMaps;
+
     Instance(Public *i) : Base(i)
     {
         DENG2_ASSERT(singleton == 0);
@@ -159,6 +162,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         SessionMetadata meta;
 
+        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
         meta.set("gameIdentityKey", Session::gameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
@@ -167,15 +171,23 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
 
-        ArrayValue *array = new ArrayValue;
+        ArrayValue *playersArray = new ArrayValue;
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
             bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
-            *array << NumberValue(playerIsPresent, NumberValue::Boolean);
+            *playersArray << NumberValue(playerIsPresent, NumberValue::Boolean);
         }
-        meta.set("players", array); // Takes ownership.
+        meta.set("players", playersArray); // Takes ownership.
 
-        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
+        if(rememberVisitedMaps)
+        {
+            ArrayValue *visitedMapsArray = new ArrayValue;
+            foreach(de::Uri const &visitedMap, visitedMaps)
+            {
+                *visitedMapsArray << TextValue(visitedMap.compose());
+            }
+            meta.set("visitedMaps", visitedMapsArray); // Takes ownership.
+        }
 
         return meta;
     }
@@ -483,6 +495,18 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         applyCurrentRules();
         setEpisode(metadata.gets("episode"));
 
+        // Does the metadata include a visited maps breakdown?
+        visitedMaps.clear();
+        rememberVisitedMaps = metadata.has("visitedMaps");
+        if(rememberVisitedMaps)
+        {
+            ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
+            foreach(Value const *value, vistedMapsArray.elements())
+            {
+                visitedMaps << de::Uri(value->as<TextValue>(), RC_NULL);
+            }
+        }
+
 #if __JHEXEN__
         // Deserialize the world ACS state.
         if(File const *state = saved.tryLocateStateFile("ACScript"))
@@ -510,6 +534,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         DENG2_ASSERT(inProgress);
 
         mapUri = newMapUri;
+        if(rememberVisitedMaps)
+        {
+            visitedMaps << mapUri;
+        }
 
         // Update game status cvars:
         Con_SetUri2("map-id", reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
@@ -864,6 +892,15 @@ uint GameSession::mapEntryPoint()
     return d->mapEntryPoint;
 }
 
+GameSession::VisitedMaps GameSession::allVisitedMaps()
+{
+    if(hasBegun() && d->rememberVisitedMaps)
+    {
+        return d->visitedMaps.toList();
+    }
+    return VisitedMaps();
+}
+
 de::Uri GameSession::mapUriForNamedExit(String name)
 {
     LOG_AS("GameSession");
@@ -1035,6 +1072,9 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     d->applyCurrentRules();
     d->setEpisode(episodeId);
 
+    d->visitedMaps.clear();
+    d->rememberVisitedMaps = true;
+
     d->inProgress = true;
 
     d->setMapAndEntryPoint(mapUri, mapEntryPoint);
@@ -1070,9 +1110,18 @@ void GameSession::reloadMap()
     else
     {
         // Restart the session entirely.
+        bool oldBriefDisabled        = ::briefDisabled;
+        bool oldRememberVisitedMaps  = d->rememberVisitedMaps;
+        QSet<de::Uri> oldVisitedMaps = d->visitedMaps;
+
         ::briefDisabled = true; // We won't brief again.
+
         end();
         begin(d->rules, d->episodeId, d->mapUri, d->mapEntryPoint);
+
+        d->visitedMaps         = oldVisitedMaps;
+        d->rememberVisitedMaps = oldRememberVisitedMaps;
+        ::briefDisabled        = oldBriefDisabled;
     }
 }
 

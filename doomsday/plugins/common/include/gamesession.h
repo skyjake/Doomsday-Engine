@@ -99,6 +99,14 @@ public:
     uint mapEntryPoint();
 
     /**
+     * Returns a list of all the maps that have been visited, for the game session in progress.
+     * @note Older versions of the saved session format did not record this information (it may
+     * be empty).
+     */
+    typedef QList<de::Uri> VisitedMaps;
+    VisitedMaps allVisitedMaps();
+
+    /**
      * Resolves a named exit according to the map progression.
      */
     de::Uri mapUriForNamedExit(de::String name);

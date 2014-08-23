@@ -201,13 +201,25 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     if(has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
     if(has("players"))
     {
-        ArrayValue const &array = geta("players");
         os << "\nplayers <";
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, array.elements())
+        ArrayValue const &playersArray = geta("players");
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
         {
             Value const *value = *i;
-            if(i != array.elements().begin()) os << ", ";
+            if(i != playersArray.elements().begin()) os << ", ";
             os << (value->as<NumberValue>().isTrue()? "True" : "False");
+        }
+        os << ">";
+    }
+    if(has("visitedMaps"))
+    {
+        os << "\nvisitedMaps <";
+        ArrayValue const &visitedMapsArray = geta("visitedMaps");
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, visitedMapsArray.elements())
+        {
+            Value const *value = *i;
+            if(i != visitedMapsArray.elements().begin()) os << ", ";
+            os << "\"" << String(value->as<TextValue>()) << "\"";
         }
         os << ">";
     }
