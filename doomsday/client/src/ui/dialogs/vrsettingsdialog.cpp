@@ -81,11 +81,11 @@ DENG_GUI_PIMPL(VRSettingsDialog)
             area.add(riftSetup = new ButtonWidget);
             riftSetup->setText(tr("Apply Rift Settings"));
             riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
-
-            area.add(desktopSetup = new ButtonWidget);
-            desktopSetup->setText(tr("Apply Desktop Settings"));
-            desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
         }
+
+        area.add(desktopSetup = new ButtonWidget);
+        desktopSetup->setText(tr("Apply Desktop Settings"));
+        desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
     }
 
     void fetch()
