@@ -41,6 +41,21 @@ namespace internal
     };
     static TeamInfo teamInfo[NUMTEAMS];
 
+    struct Location
+    {
+        Vector2i origin;
+        de::Uri mapUri;
+
+        Location(Vector2i const &origin, de::Uri const &mapUri)
+            : origin(origin)
+            , mapUri(mapUri)
+        {}
+    };
+    typedef QList<Location> Locations;
+    static Locations episode1Locations;
+    static Locations episode2Locations;
+    static Locations episode3Locations;
+
     static patchid_t pBackground;
     static patchid_t pBeenThere;
     static patchid_t pGoingThere;
@@ -79,15 +94,84 @@ namespace internal
         COOPERATIVE,
         DEATHMATCH
     };
-
-    /// @todo fixme: Episodes are now identified with textual ids! -ds
-    static inline int episodeNumber()
-    {
-        return COMMON_GAMESESSION->episodeId().toInt() - 1;
-    }
 }
 
 using namespace internal;
+
+void IN_Init()
+{
+    // Already been here?
+    if(!episode1Locations.isEmpty()) return;
+
+    episode1Locations
+        << Location( Vector2i(172,  78), de::Uri("Maps:E1M1", RC_NULL) )
+        << Location( Vector2i( 86,  90), de::Uri("Maps:E1M2", RC_NULL) )
+        << Location( Vector2i( 73,  66), de::Uri("Maps:E1M3", RC_NULL) )
+        << Location( Vector2i(159,  95), de::Uri("Maps:E1M4", RC_NULL) )
+        << Location( Vector2i(148, 126), de::Uri("Maps:E1M5", RC_NULL) )
+        << Location( Vector2i(132,  54), de::Uri("Maps:E1M6", RC_NULL) )
+        << Location( Vector2i(131,  74), de::Uri("Maps:E1M7", RC_NULL) )
+        << Location( Vector2i(208, 138), de::Uri("Maps:E1M8", RC_NULL) )
+        << Location( Vector2i( 52,  10), de::Uri("Maps:E1M9", RC_NULL) );
+
+    episode2Locations
+        << Location( Vector2i(218,  57), de::Uri("Maps:E2M1", RC_NULL) )
+        << Location( Vector2i(137,  81), de::Uri("Maps:E2M2", RC_NULL) )
+        << Location( Vector2i(155, 124), de::Uri("Maps:E2M3", RC_NULL) )
+        << Location( Vector2i(171,  68), de::Uri("Maps:E2M4", RC_NULL) )
+        << Location( Vector2i(250,  86), de::Uri("Maps:E2M5", RC_NULL) )
+        << Location( Vector2i(136,  98), de::Uri("Maps:E2M6", RC_NULL) )
+        << Location( Vector2i(203,  90), de::Uri("Maps:E2M7", RC_NULL) )
+        << Location( Vector2i(220, 140), de::Uri("Maps:E2M8", RC_NULL) )
+        << Location( Vector2i(279, 106), de::Uri("Maps:E2M9", RC_NULL) );
+
+    episode3Locations
+        << Location( Vector2i( 86,  99), de::Uri("Maps:E3M1", RC_NULL) )
+        << Location( Vector2i(124, 103), de::Uri("Maps:E3M2", RC_NULL) )
+        << Location( Vector2i(154,  79), de::Uri("Maps:E3M3", RC_NULL) )
+        << Location( Vector2i(202,  83), de::Uri("Maps:E3M4", RC_NULL) )
+        << Location( Vector2i(178,  59), de::Uri("Maps:E3M5", RC_NULL) )
+        << Location( Vector2i(142,  58), de::Uri("Maps:E3M6", RC_NULL) )
+        << Location( Vector2i(219,  66), de::Uri("Maps:E3M7", RC_NULL) )
+        << Location( Vector2i(247,  57), de::Uri("Maps:E3M8", RC_NULL) )
+        << Location( Vector2i(107,  80), de::Uri("Maps:E3M9", RC_NULL) );
+}
+
+void IN_Shutdown()
+{
+    // Nothing to do.
+}
+
+static String backgroundPatchForEpisode(String const &episodeId)
+{
+    bool isNumber;
+    int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
+    if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
+    {
+        return String("MAPE%1").arg(oldEpisodeNum + 1);
+    }
+    return ""; // None.
+}
+
+static Locations const *locationsForEpisode(String const &episodeId)
+{
+    if(episodeId == "1") return &episode1Locations;
+    if(episodeId == "2") return &episode2Locations;
+    if(episodeId == "3") return &episode3Locations;
+    return nullptr; // Not found.
+}
+
+static Location const *tryFindLocationForMap(Locations const *locations, de::Uri const &mapUri)
+{
+    if(locations)
+    {
+        for(Location const &loc : *locations)
+        {
+            if(loc.mapUri == mapUri) return &loc;
+        }
+    }
+    return nullptr; // Not found.
+}
 
 static bool active;
 
@@ -98,6 +182,7 @@ static int inState;
 
 static int interTime = -1;
 static int oldInterTime;
+static bool haveLocationMap;
 
 static gametype_t gameType;
 
@@ -120,50 +205,35 @@ static fixed_t dSlideY[NUMTEAMS];
 // Passed into intermission.
 static wbstartstruct_t const *wbs;
 
-static Point2Raw YAHspot[3][9] = {
-    {   // Episode 0
-        Point2Raw(172, 78),
-        Point2Raw(86, 90),
-        Point2Raw(73, 66),
-        Point2Raw(159, 95),
-        Point2Raw(148, 126),
-        Point2Raw(132, 54),
-        Point2Raw(131, 74),
-        Point2Raw(208, 138),
-        Point2Raw(52, 10)
-    },
-    {   // Episode 1
-        Point2Raw(218, 57),
-        Point2Raw(137, 81),
-        Point2Raw(155, 124),
-        Point2Raw(171, 68),
-        Point2Raw(250, 86),
-        Point2Raw(136, 98),
-        Point2Raw(203, 90),
-        Point2Raw(220, 140),
-        Point2Raw(279, 106)
-    },
-    {   // Episode 2
-        Point2Raw(86, 99),
-        Point2Raw(124, 103),
-        Point2Raw(154, 79),
-        Point2Raw(202, 83),
-        Point2Raw(178, 59),
-        Point2Raw(142, 58),
-        Point2Raw(219, 66),
-        Point2Raw(247, 57),
-        Point2Raw(107, 80)
-     }
-};
-
-void IN_Init()
+static common::GameSession::VisitedMaps visitedMaps()
 {
-    // Nothing to do.
-}
+    // Newer versions of the savegame format include a breakdown of the maps previously visited
+    // during the current game session.
+    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    {
+        // For backward compatible intermission behavior we'll have to use a specially prepared
+        // version of this information, using the original map progression assumptions.
+        bool isNumber;
+        int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+        DENG2_ASSERT(isNumber);
+        DENG2_UNUSED(isNumber);
 
-void IN_Shutdown()
-{
-    // Nothing to do.
+        DENG2_ASSERT(wbs);
+        int lastMapNum = G_MapNumberFor(::wbs->currentMap);
+        if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
+
+        QSet<de::Uri> visited;
+        for(int i = 0; i <= lastMapNum; ++i)
+        {
+            visited << G_ComposeMapUri(oldEpisodeNum, i);
+        }
+        if(::wbs->didSecret)
+        {
+            visited << G_ComposeMapUri(oldEpisodeNum, 8);
+        }
+        return visited.toList();
+    }
+    return COMMON_GAMESESSION->allVisitedMaps();
 }
 
 void IN_End()
@@ -184,7 +254,7 @@ static void tickNoState()
 
 static void drawBackground()
 {
-    if(episodeNumber() > 2) return;
+    if(!haveLocationMap) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -196,7 +266,7 @@ static void drawBackground()
 
 static void drawFinishedTitle()
 {
-    if(episodeNumber() > 2) return;
+    if(!haveLocationMap) return;
 
     DENG2_ASSERT(!wbs->currentMap.isEmpty());
 
@@ -217,7 +287,7 @@ static void drawFinishedTitle()
 
 static void drawEnteringTitle()
 {
-    if(episodeNumber() > 2) return;
+    if(!haveLocationMap) return;
 
     if(wbs->nextMap.isEmpty()) return;
 
@@ -235,74 +305,39 @@ static void drawEnteringTitle()
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawLocationMarks()
+/**
+ * Draw a mark on each map location visited during the current game session.
+ */
+static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = true)
 {
-    if(episodeNumber() > 2) return;
+    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    if(wbs->currentMap.path() == "E1M9" ||
-       wbs->currentMap.path() == "E2M9" ||
-       wbs->currentMap.path() == "E3M9" ||
-       wbs->currentMap.path() == "E4M9" ||
-       wbs->currentMap.path() == "E5M9")
+    common::GameSession::VisitedMaps const visited = visitedMaps();
+    foreach(de::Uri const &visitedMap, visited)
     {
-        uint const nextMap = G_MapNumberFor(wbs->nextMap);
-        for(uint i = 0; i < nextMap; ++i)
+        if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
         {
-            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
-        }
+            if(flashCurrent && visitedMap == wbs->currentMap && (interTime & 16))
+            {
+                continue;
+            }
 
-        if(!(interTime & 16))
-        {
-            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
-        }
-    }
-    else
-    {
-        uint const currentMap = G_MapNumberFor(wbs->currentMap);
-        for(uint i = 0; i < currentMap; ++i)
-        {
-            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
-        }
-
-        if(players[CONSOLEPLAYER].didSecret)
-        {
-            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
-        }
-
-        if(!(interTime & 16))
-        {
-            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][currentMap]);
+            Point2Raw origin(loc->origin.x, loc->origin.y);
+            GL_DrawPatch(pBeenThere, &origin);
         }
     }
 
-    DGL_Disable(DGL_TEXTURE_2D);
-}
-
-static void drawLocationMarks2()
-{
-    if(episodeNumber() > 2) return;
-
-    DGL_Enable(DGL_TEXTURE_2D);
-    DGL_Color4f(1, 1, 1, 1);
-
-    uint const nextMap = G_MapNumberFor(wbs->nextMap);
-    for(uint i = 0; i < nextMap; ++i)
+    if(drawYouAreHere)
     {
-        GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
-    }
-
-    if(players[CONSOLEPLAYER].didSecret)
-    {
-        GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
-    }
-
-    // Draw the destination 'X' ?
-    if(!(interTime & 16) || inState == 3)
-    {
-        GL_DrawPatch(pGoingThere, &YAHspot[episodeNumber()][nextMap]);
+        if(Location const *loc = tryFindLocationForMap(locations, wbs->nextMap))
+        {
+            Point2Raw origin(loc->origin.x, loc->origin.y);
+            GL_DrawPatch(pGoingThere, &origin);
+        }
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -695,7 +730,7 @@ static void drawSinglePlayerStats()
         sounds++;
     }
 
-    if(gameMode != heretic_extended || episodeNumber() < 3)
+    if(gameMode != heretic_extended || haveLocationMap)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -829,7 +864,6 @@ void IN_Ticker()
     }
     maybeAdvanceState();
 
-    // Counter for general background animation.
     backgroundAnimCounter++;
 
     interTime++;
@@ -837,9 +871,9 @@ void IN_Ticker()
     {
         nextIntermissionState();
 
-        if(episodeNumber() > 2 && inState >= 1)
+        if(!haveLocationMap && inState >= 1)
         {
-            // Extended Wad levels:  skip directly to the next level
+            // Skip directly to the next level.
             endIntermissionGoToNextLevel();
         }
 
@@ -847,7 +881,7 @@ void IN_Ticker()
         {
         case 0:
             oldInterTime = interTime + 300;
-            if(episodeNumber() > 2)
+            if(!haveLocationMap)
             {
                 oldInterTime = interTime + 1200;
             }
@@ -879,7 +913,7 @@ void IN_Ticker()
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        if(inState < 2 && episodeNumber() < 3)
+        if(inState < 2 && haveLocationMap)
         {
             inState      = 2;
             advanceState = false;
@@ -898,21 +932,22 @@ void IN_Ticker()
 
 static void loadData()
 {
-    if(episodeNumber() < 3)
-    {
-        pBackground = R_DeclarePatch(episodeNumber() == 0? "MAPE1" : episodeNumber() == 1? "MAPE2" : "MAPE3");
-    }
+    String const episodeId = COMMON_GAMESESSION->episodeId();
+
+    // Determine which patch to use for the background.
+    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
 
     pBeenThere  = R_DeclarePatch("IN_X");
     pGoingThere = R_DeclarePatch("IN_YAH");
 
-    char buf[9];
+    char name[9];
     for(int i = 0; i < NUMTEAMS; ++i)
     {
-        dd_snprintf(buf, 9, "FACEA%i", i);
-        pFaceAlive[i] = R_DeclarePatch(buf);
-        dd_snprintf(buf, 9, "FACEB%i", i);
-        pFaceDead[i] = R_DeclarePatch(buf);
+        dd_snprintf(name, 9, "FACEA%i", i);
+        pFaceAlive[i] = R_DeclarePatch(name);
+
+        dd_snprintf(name, 9, "FACEB%i", i);
+        pFaceDead[i] = R_DeclarePatch(name);
     }
 }
 
@@ -959,7 +994,7 @@ void IN_Drawer()
 
     case 2: // Going to the next level.
         drawBackground();
-        drawLocationMarks2();
+        drawLocationMarks(!(interTime & 16) || inState == 3, false /*don't flash current location mark*/);
         drawEnteringTitle();
         break;
 
@@ -997,7 +1032,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
 #endif
 
     accelerateStage = 0;
-    cnt =*/ backgroundAnimCounter = 0; /*
+    */ backgroundAnimCounter = 0; /*
     firstRefresh = 1;
     me = wbs->pNum;
     myTeam = cfg.playerColor[wbs->pNum];
@@ -1014,11 +1049,12 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
         if(wbs->epsd > 2)
             wbs->epsd -= 3;*/
 
-    active     = true;
-    inState       = -1;
-    advanceState = false;
-    interTime        = 0;
-    oldInterTime     = 0;
+    active          = true;
+    inState         = -1;
+    advanceState    = false;
+    interTime       = 0;
+    oldInterTime    = 0;
+    haveLocationMap = locationsForEpisode(COMMON_GAMESESSION->episodeId()) != 0;
 }
 
 void IN_Begin(wbstartstruct_t const &wbstartstruct)
