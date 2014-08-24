@@ -988,16 +988,16 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    nextMapUri.clear();
+    ::nextMapUri.clear();
 
 #if __JDOOM__ || __JDOOM64__
-    wmInfo.maxFrags = 0;
-    wmInfo.parTime = -1;
+    ::wmInfo.maxFrags = 0;
+    ::wmInfo.parTime = -1;
 #endif
 
 #if __JDOOM__
-    delete theBossBrain;
-    theBossBrain = new BossBrain;
+    delete ::theBossBrain;
+    ::theBossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__
@@ -1005,10 +1005,10 @@ void P_ResetWorldState()
 #endif
 
 #if __JHERETIC__
-    maceSpotCount = 0;
-    maceSpots     = 0;
-    bossSpotCount = 0;
-    bossSpots     = 0;
+    ::maceSpotCount = 0;
+    ::maceSpots     = 0;
+    ::bossSpotCount = 0;
+    ::bossSpots     = 0;
 #endif
 
     P_PurgeDeferredSpawns();
@@ -1016,13 +1016,13 @@ void P_ResetWorldState()
     if(!IS_CLIENT)
     {
 #if !__JHEXEN__
-        totalKills = totalItems = totalSecret = 0;
+        ::totalKills = ::totalItems = ::totalSecret = 0;
 #endif
     }
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = &players[i];
+        player_t *plr = &::players[i];
         ddplayer_t *ddplr = plr->plr;
 
         ddplr->mo = NULL;
@@ -1046,7 +1046,7 @@ void P_ResetWorldState()
     }
 
 #if __JDOOM__ || __JDOOM64__
-    bodyQueueSlot = 0;
+    ::bodyQueueSlot = 0;
 #endif
 
     P_DestroyPlayerStarts();

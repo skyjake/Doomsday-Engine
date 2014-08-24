@@ -63,7 +63,7 @@ void P_DoTick()
     {
         if(!--timerGame)
         {
-            G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
+            G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
         }
     }
 

@@ -390,7 +390,7 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
         break;
 
     case 53:
@@ -996,7 +996,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int /*side*/)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;

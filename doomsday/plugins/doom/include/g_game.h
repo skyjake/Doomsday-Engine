@@ -35,14 +35,12 @@
 #endif
 
 #include "doomdef.h"
-#include "d_event.h"
 #include "d_player.h"
 #include "gamerules.h"
 #include "intermission.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
 DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
@@ -50,26 +48,19 @@ DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
-DENG_EXTERN_C int gsvMapMusic;
-
 #ifdef __cplusplus
 
 extern de::Uri nextMapUri;
 extern uint nextMapEntryPoint;
+extern bool secretExit;
+
 extern wbstartstruct_t wmInfo;
 
 extern "C" {
 #endif
 
 void G_ConsoleRegister(void);
-
 void G_CommonPreInit(void);
-
-/**
- * Common Post Game Initialization routine.
- * Game-specific post init actions should be placed in eg D_PostInit()
- * (for jDoom) and NOT here.
- */
 void G_CommonPostInit(void);
 
 /**

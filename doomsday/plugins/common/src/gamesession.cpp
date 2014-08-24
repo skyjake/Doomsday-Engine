@@ -1057,8 +1057,6 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
         throw InProgressError("GameSession::begin", "The game session has already begun");
     }
 
-    LOG_MSG("Game begins...");
-
     // Ensure the episode id is good.
     if(!Defs().episodes.has("id", episodeId))
     {
@@ -1070,6 +1068,8 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     {
         throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
     }
+
+    LOG_MSG("Game begins...");
 
     d->resetStateForNewSession();
 
@@ -1134,7 +1134,7 @@ void GameSession::reloadMap()
     }
 }
 
-void GameSession::leaveMap()
+void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 {
     if(!hasBegun())
     {
@@ -1142,14 +1142,14 @@ void GameSession::leaveMap()
         throw InProgressError("GameSession::leaveMap", "No game session is in progress");
     }
 
+    // Ensure the map truly exists.
+    if(!P_MapExists(nextMapUri.compose().toUtf8().constData()))
+    {
+        throw Error("GameSession::leaveMap", "Map \"" + nextMapUri.asText() + "\" does not exist");
+    }
+
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
-
-    // Check that the map truly exists.
-    if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
-    {
-        ::nextMapUri = de::Uri(episodeDef()->gets("startMap"), RC_NULL);
-    }
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
@@ -1176,7 +1176,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         defn::Episode epsd(*episodeDef());
         Record const *currentHub = epsd.tryFindHubByMapId(d->mapUri.compose());
-        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
+        if(currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
 #endif
         {
             // Clear all saved map states in the current hub.
@@ -1221,7 +1221,7 @@ void GameSession::leaveMap()
 #endif
 
     // Change the current map.
-    d->setMapAndEntryPoint(nextMapUri, ::nextMapEntryPoint);
+    d->setMapAndEntryPoint(nextMapUri, nextMapEntryPoint);
 
     // Are we revisiting a previous map?
     bool const revisit = saved && saved->hasState(String("maps") / d->mapUri.path());

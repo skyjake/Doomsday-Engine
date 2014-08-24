@@ -2133,7 +2133,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
         newMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
     }
 
-    G_SetGameActionMapCompleted(newMapUri, 0, false);
+    G_SetGameActionMapCompleted(newMapUri);
     return false; // Only do this once!
 }
 

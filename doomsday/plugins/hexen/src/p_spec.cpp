@@ -486,7 +486,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 // Assume the referenced map is from the current episode.
-                G_SetGameActionMapCompleted(getMapUriForWarpNumber(args[0]), args[1], false);
+                G_SetGameActionMapCompleted(getMapUriForWarpNumber(args[0]), args[1]);
                 success = true;
             }
         }
@@ -502,12 +502,12 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 if(G_Ruleset_Deathmatch())
                 {
                     // Winning in deathmatch goes back to the first map of the current episode.
-                    G_SetGameActionMapCompleted(de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL), 0, false);
+                    G_SetGameActionMapCompleted(de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL));
                 }
                 else
                 {
                     // Passing a URI with an empty path starts the Finale
-                    G_SetGameActionMapCompleted(de::Uri("Maps:", RC_NULL), 0, false);
+                    G_SetGameActionMapCompleted(de::Uri("Maps:", RC_NULL));
                 }
             }
         }

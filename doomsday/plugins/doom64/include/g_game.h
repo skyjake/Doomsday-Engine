@@ -41,7 +41,6 @@
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C dd_bool secretExit;
 DENG_EXTERN_C int totalKills, totalItems, totalSecret;
 DENG_EXTERN_C int bodyQueueSlot;
 DENG_EXTERN_C dd_bool paused;
@@ -50,8 +49,11 @@ DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
+
 extern de::Uri nextMapUri;
 extern uint nextMapEntryPoint;
+extern bool secretExit;
+
 extern wbstartstruct_t wmInfo;
 
 extern "C" {

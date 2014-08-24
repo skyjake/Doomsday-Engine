@@ -49,14 +49,11 @@ namespace common {
 class GameSession : public de::game::Session
 {
 public:
+    typedef QList<de::Uri> VisitedMaps;
+
+public:
     GameSession();
     virtual ~GameSession();
-
-    /// Returns the singleton instance.
-    static GameSession &gameSession();
-
-    /// Register the commands and variables of this module.
-    static void consoleRegister();
 
     bool hasBegun();
     bool savingPossible();
@@ -103,7 +100,6 @@ public:
      * @note Older versions of the saved session format did not record this information (it may
      * be empty).
      */
-    typedef QList<de::Uri> VisitedMaps;
     VisitedMaps allVisitedMaps();
 
     /**
@@ -165,9 +161,12 @@ public:
 
     /**
      * Leave the @em current map (automatically saving progress to the backing store) and then
-     * load up the next map according to the defined game progression.
+     * load up the next map specified.
+     *
+     * @param nextMapUri         Map identifier.
+     * @param nextMapEntryPoint  Map entry point number, for player reborn.
      */
-    void leaveMap();
+    void leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPpoint = 0);
 
     /**
      * Convenient method of looking up the user description of the game session in progress.
@@ -215,6 +214,13 @@ public: // Saved session management --------------------------------------------
      * @return  User description of the named session or a zero-length string if not found.
      */
     de::String savedUserDescription(de::String const &saveName);
+
+public:
+    /// Returns the singleton instance.
+    static GameSession &gameSession();
+
+    /// Register the commands and variables of this module.
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

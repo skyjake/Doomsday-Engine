@@ -35,8 +35,6 @@ extern GameRuleset defaultGameRules;
 extern "C" {
 #endif
 
-void G_ConsoleRegister(void);
-
 dd_bool G_QuitInProgress(void);
 
 /**
@@ -99,7 +97,8 @@ bool G_SetGameActionLoadSession(de::String slotId);
  * @param nextMapEntryPoint  Logical map entry point on the new map.
  * @param secretExit         @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit);
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0,
+                                 bool secretExit = false);
 
 /**
  * @param episodeId  Identifier of the episode to lookup the title of.

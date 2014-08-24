@@ -114,7 +114,7 @@ de::Uri nextMapUri;
 uint nextMapEntryPoint;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-dd_bool secretExit;
+bool secretExit;
 #endif
 
 dd_bool monsterInfight;
@@ -426,8 +426,7 @@ bool G_SetGameActionLoadSession(de::String slotId)
             return true;
         }
 
-        App_Log(DE2_RES_ERROR, "Cannot load from save slot '%s': not in use",
-                slotId.toLatin1().constData());
+        LOG_RES_ERROR("Cannot load from save slot '%s': not in use") << slotId;
     }
     catch(SaveSlots::MissingSlotError const &)
     {}
@@ -435,7 +434,7 @@ bool G_SetGameActionLoadSession(de::String slotId)
     return false;
 }
 
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, dd_bool secretExit)
+void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)
 {
 #if __JHEXEN__
     DENG2_UNUSED(secretExit);
@@ -467,7 +466,6 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
-    /// @todo Don't do this here - move to G_NextMapNumber()
     if(::secretExit && (gameModeBits & GM_ANY_DOOM2))
     {
         if(!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
@@ -483,7 +481,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 void G_SetGameActionMapCompletedAndSetNextMap()
 {
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"), 0, false);
+    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
 }
 
 static void initSaveSlots()
@@ -967,6 +965,10 @@ SaveSlots &G_SaveSlots()
     return *sslots;
 }
 
+/**
+ * @attention Game-specific post init actions should be placed in the game-appropriate
+ * post init routine (e.g., D_PostInit() for libdoom) and NOT here.
+ */
 void G_CommonPostInit()
 {
     R_InitRefresh();
@@ -1542,7 +1544,7 @@ static void runGameAction()
     static uint quitTime = 0;
 
     // Run the quit countdown?
-    if(quitInProgress)
+    if(::quitInProgress)
     {
         if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
         {
@@ -1550,7 +1552,7 @@ static void runGameAction()
         }
         else
         {
-            quitDarkenOpacity = de::cubed((Timer_RealMilliseconds() - quitTime) / (float) QUITWAIT_MILLISECONDS);
+            ::quitDarkenOpacity = de::cubed((Timer_RealMilliseconds() - quitTime) / (float) QUITWAIT_MILLISECONDS);
         }
 
         // No further game state changes occur once we have begun to quit.
@@ -1559,7 +1561,7 @@ static void runGameAction()
 
     // Do things to change the game state.
     gameaction_t currentAction;
-    while((currentAction = gameAction) != GA_NONE)
+    while((currentAction = ::gameAction) != GA_NONE)
     {
         BusyMode_FreezeGameForBusyMode();
 
@@ -1570,8 +1572,8 @@ static void runGameAction()
         {
         case GA_NEWSESSION:
             COMMON_GAMESESSION->end();
-            COMMON_GAMESESSION->begin(gaNewSessionRules, gaNewSessionEpisodeId,
-                                      gaNewSessionMapUri, gaNewSessionMapEntrance);
+            COMMON_GAMESESSION->begin(::gaNewSessionRules, ::gaNewSessionEpisodeId,
+                                      ::gaNewSessionMapUri, ::gaNewSessionMapEntrance);
             break;
 
         case GA_LOADSESSION:
@@ -1580,7 +1582,7 @@ static void runGameAction()
             // Attempt to load the saved game session.
             try
             {
-                SaveSlot const &sslot = G_SaveSlots()[gaLoadSessionSlot];
+                SaveSlot const &sslot = G_SaveSlots()[::gaLoadSessionSlot];
                 COMMON_GAMESESSION->load(sslot.saveName());
 
                 // Make note of the last used save slot.
@@ -1589,7 +1591,7 @@ static void runGameAction()
             catch(Error const &er)
             {
                 LOG_RES_WARNING("Error loading from save slot #%s:\n")
-                        << gaLoadSessionSlot << er.asText();
+                        << ::gaLoadSessionSlot << er.asText();
             }
 
             // Return to the title loop if loading did not succeed.
@@ -1602,8 +1604,8 @@ static void runGameAction()
         case GA_SAVESESSION:
             try
             {
-                SaveSlot const &sslot = G_SaveSlots()[gaSaveSessionSlot];
-                COMMON_GAMESESSION->save(sslot.saveName(), gaSaveSessionUserDescription);
+                SaveSlot const &sslot = G_SaveSlots()[::gaSaveSessionSlot];
+                COMMON_GAMESESSION->save(sslot.saveName(), ::gaSaveSessionUserDescription);
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
@@ -1611,13 +1613,13 @@ static void runGameAction()
             catch(Error const &er)
             {
                 LOG_RES_WARNING("Error saving to save slot #%s:\n")
-                        << gaSaveSessionSlot << er.asText();
+                        << ::gaSaveSessionSlot << er.asText();
             }
             break;
 
         case GA_QUIT:
-            quitInProgress = true;
-            quitTime       = Timer_RealMilliseconds();
+            quitTime = Timer_RealMilliseconds();
+            ::quitInProgress = true;
 
             Hu_MenuCommand(MCMD_CLOSEFAST);
 
@@ -1630,7 +1632,12 @@ static void runGameAction()
             break;
 
         case GA_LEAVEMAP:
-            COMMON_GAMESESSION->leaveMap();
+            // Check that the map truly exists.
+            if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
+            {
+                ::nextMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
+            }
+            COMMON_GAMESESSION->leaveMap(::nextMapUri, ::nextMapEntryPoint);
             break;
 
         case GA_RESTARTMAP:
@@ -1658,7 +1665,7 @@ static void runGameAction()
             {
 #if __JDOOM__
                 // Has the secret map been completed?
-                if(gameModeBits & (GM_DOOM | GM_DOOM_SHAREWARE | GM_DOOM_ULTIMATE))
+                if(::gameModeBits & (GM_DOOM | GM_DOOM_SHAREWARE | GM_DOOM_ULTIMATE))
                 {
                     de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
                     if(mapUri.path() == "E1M9" ||
@@ -1668,7 +1675,7 @@ static void runGameAction()
                     {
                         for(int i = 0; i < MAXPLAYERS; ++i)
                         {
-                            players[i].didSecret = true;
+                            ::players[i].didSecret = true;
                         }
                     }
                 }
@@ -1683,7 +1690,7 @@ static void runGameAction()
             break;
 
         case GA_ENDDEBRIEFING:
-            briefDisabled = true;
+            ::briefDisabled = true;
             G_IntermissionDone();
             break;
 
@@ -1704,7 +1711,7 @@ static void runGameAction()
                 ///       The engine should implement it's own notification UI system for
                 ///       this sort of thing.
                 String msg = "Saved screenshot: " + NativePath(fileName).pretty();
-                P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toLatin1().constData());
+                P_SetMessage(&::players[CONSOLEPLAYER], LMF_NO_HIDE, msg.toLatin1().constData());
             }
             else
             {
@@ -2439,12 +2446,12 @@ void G_IntermissionDone()
     }
 
     // We have either just returned from a debriefing or there wasn't one.
-    briefDisabled = false;
+    ::briefDisabled = false;
 
 #if __JDOOM__ || __JDOOM64__
-    if(secretExit)
+    if(::secretExit)
     {
-        players[CONSOLEPLAYER].didSecret = true;
+        ::players[CONSOLEPLAYER].didSecret = true;
     }
 #endif
 
@@ -3098,13 +3105,13 @@ D_CMD(LeaveMap)
         S_LocalSound(SFX_OOF, NULL);
 #endif
         LOG_MAP_ERROR("Can only exit a map when in a game!");
-        return true;
+        return false;
     }
 
     de::Uri newMapUri = COMMON_GAMESESSION->mapUriForNamedExit(exitName);
     if(newMapUri.path().isEmpty()) return false;
 
-    G_SetGameActionMapCompleted(newMapUri, 0, false);
+    G_SetGameActionMapCompleted(newMapUri);
     return true;
 }
 
