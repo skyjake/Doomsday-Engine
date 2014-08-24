@@ -2316,9 +2316,9 @@ static int prepareIntermission(void * /*context*/)
 #if __JDOOM__ || __JDOOM64__
     WI_Begin(wmInfo);
 #elif __JHERETIC__
-    IN_Init(wmInfo);
+    IN_Begin(wmInfo);
 #else /* __JHEXEN__ */
-    IN_Init();
+    IN_Begin();
 #endif
     G_ChangeGameState(GS_INTERMISSION);
 

@@ -330,11 +330,10 @@ void H_PostInit()
     /// @todo Do this properly!
     ::borderGraphics[0] = (::gameMode == heretic_shareware)? "Flats:FLOOR04" : "Flats:FLAT513";
 
-    // Common post init routine.
     G_CommonPostInit();
 
-    // Initialize weapon info using definitions.
     P_InitWeaponInfo();
+    IN_Init();
 
     // Game parameters.
     ::monsterInfight = GetDefInt("AI|Infight", 0);
@@ -392,5 +391,6 @@ void H_PostInit()
 void H_Shutdown()
 {
     P_ShutdownInventory();
+    IN_Shutdown();
     G_CommonShutdown();
 }

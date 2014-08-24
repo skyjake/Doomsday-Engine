@@ -29,74 +29,96 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 
-/// @todo fixme: Episodes are now identified with textual ids! -ds
-static inline int episodeNumber()
+using namespace de;
+
+namespace internal
 {
-    return COMMON_GAMESESSION->episodeId().toInt() - 1;
+    struct TeamInfo
+    {
+        int members;
+        int frags[NUMTEAMS];
+        int totalFrags;
+    };
+    static TeamInfo teamInfo[NUMTEAMS];
+
+    static patchid_t pBackground;
+    static patchid_t pBeenThere;
+    static patchid_t pGoingThere;
+    static patchid_t pFaceAlive[NUMTEAMS];
+    static patchid_t pFaceDead[NUMTEAMS];
+
+    static void drawTime(Vector2i origin, int hours, int minutes, int seconds, Vector4f rgba)
+    {
+        char buf[20];
+
+        dd_snprintf(buf, 20, "%02d", seconds);
+        M_DrawTextFragmentShadowed(buf, origin.x, origin.y, ALIGN_TOPRIGHT, 0, rgba.x, rgba.y, rgba.z, rgba.w);
+        origin.x -= FR_TextWidth(buf) + FR_Tracking() * 3;
+        M_DrawTextFragmentShadowed(":", origin.x, origin.y, ALIGN_TOPRIGHT, 0, rgba.x, rgba.y, rgba.z, rgba.w);
+        origin.x -= FR_CharWidth(':') + 3;
+
+        if(minutes || hours)
+        {
+            dd_snprintf(buf, 20, "%02d", minutes);
+            M_DrawTextFragmentShadowed(buf, origin.x, origin.y, ALIGN_TOPRIGHT, 0, rgba.x, rgba.y, rgba.z, rgba.w);
+            origin.x -= FR_TextWidth(buf) + FR_Tracking() * 3;
+        }
+
+        if(hours)
+        {
+            dd_snprintf(buf, 20, "%02d", hours);
+            M_DrawTextFragmentShadowed(":", origin.x, origin.y, ALIGN_TOPRIGHT, 0, rgba.x, rgba.y, rgba.z, rgba.w);
+            origin.x -= FR_CharWidth(':') + FR_Tracking() * 3;
+            M_DrawTextFragmentShadowed(buf, origin.x, origin.y, ALIGN_TOPRIGHT, 0, rgba.x, rgba.y, rgba.z, rgba.w);
+        }
+    }
+
+    enum gametype_t
+    {
+        SINGLE,
+        COOPERATIVE,
+        DEATHMATCH
+    };
+
+    /// @todo fixme: Episodes are now identified with textual ids! -ds
+    static inline int episodeNumber()
+    {
+        return COMMON_GAMESESSION->episodeId().toInt() - 1;
+    }
 }
 
-enum gametype_t
-{
-    SINGLE,
-    COOPERATIVE,
-    DEATHMATCH
-};
+using namespace internal;
 
-struct teaminfo_t
-{
-    int members;
-    int frags[NUMTEAMS];
-    int totalFrags;
-};
+static bool active;
 
-void IN_DrawOldLevel();
-void IN_DrawYAH();
-void IN_DrawStatBack();
-void IN_DrawSingleStats();
-void IN_DrawCoopStats();
-void IN_DrawDMStats();
+// Used to accelerate or skip a stage.
+static bool advanceState;
 
-dd_bool intermission;
+static int inState;
 
-int interState;
-int interTime = -1;
-
-// Used for timing of background animation.
-static int bcnt;
-
-// Contains information passed into intermission.
-static wbstartstruct_t const *wbs;
-
-static dd_bool skipIntermission;
-
+static int interTime = -1;
 static int oldInterTime;
-static gametype_t gameType;
 
-static int cnt;
+static gametype_t gameType;
 
 static int hours;
 static int minutes;
 static int seconds;
 
+static int stateCounter;
+static int backgroundAnimCounter;
+
+static int cntKills[NUMTEAMS];
+static int cntItems[NUMTEAMS];
+static int cntSecret[NUMTEAMS];
+
 static int slaughterBoy; // In DM, the player with the most kills.
-
-static int killPercent[NUMTEAMS];
-static int bonusPercent[NUMTEAMS];
-static int secretPercent[NUMTEAMS];
-
 static int playerTeam[MAXPLAYERS];
-static teaminfo_t teamInfo[NUMTEAMS];
-
-static patchid_t dpInterPic;
-static patchid_t dpBeenThere;
-static patchid_t dpGoingThere;
-static patchid_t dpFaceAlive[NUMTEAMS];
-static patchid_t dpFaceDead[NUMTEAMS];
-
 static fixed_t dSlideX[NUMTEAMS];
 static fixed_t dSlideY[NUMTEAMS];
 
-static char const *killersText = "KILLERS";
+// Passed into intermission.
+static wbstartstruct_t const *wbs;
 
 static Point2Raw YAHspot[3][9] = {
     {   // Episode 0
@@ -134,524 +156,50 @@ static Point2Raw YAHspot[3][9] = {
      }
 };
 
-void WI_ConsoleRegister()
-{
-    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
-}
-
-void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)
-{
-    char buf[20];
-
-    dd_snprintf(buf, 20, "%02d", s);
-    M_DrawTextFragmentShadowed(buf, x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
-    x -= FR_TextWidth(buf) + FR_Tracking() * 3;
-    M_DrawTextFragmentShadowed(":", x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
-    x -= FR_CharWidth(':') + 3;
-
-    if(m || h)
-    {
-        dd_snprintf(buf, 20, "%02d", m);
-        M_DrawTextFragmentShadowed(buf, x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
-        x -= FR_TextWidth(buf) + FR_Tracking() * 3;
-    }
-
-    if(h)
-    {
-        dd_snprintf(buf, 20, "%02d", h);
-        M_DrawTextFragmentShadowed(":", x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
-        x -= FR_CharWidth(':') + FR_Tracking() * 3;
-        M_DrawTextFragmentShadowed(buf, x, y, ALIGN_TOPRIGHT, 0, r, g, b, a);
-    }
-}
-
-void WI_initVariables(wbstartstruct_t const &wbstartstruct)
-{
-    wbs = &wbstartstruct;
-
-/*#ifdef RANGECHECK
-    if(gameMode != commercial)
-    {
-        if(gameMode == retail)
-            RNGCHECK(wbs->epsd, 0, 3);
-        else
-            RNGCHECK(wbs->epsd, 0, 2);
-    }
-    else
-    {
-        RNGCHECK(wbs->last, 0, 8);
-        RNGCHECK(wbs->next, 0, 8);
-    }
-    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
-    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
-#endif
-
-    accelerateStage = 0;
-    cnt =*/ bcnt = 0; /*
-    firstRefresh = 1;
-    me = wbs->pNum;
-    myTeam = cfg.playerColor[wbs->pNum];
-    plrs = wbs->plyr;
-
-    if(!wbs->maxKills)
-        wbs->maxKills = 1;
-    if(!wbs->maxItems)
-        wbs->maxItems = 1;
-    if(!wbs->maxSecret)
-        wbs->maxSecret = 1;
-
-    if(gameMode != retail)
-        if(wbs->epsd > 2)
-            wbs->epsd -= 3;*/
-
-    intermission     = true;
-    interState       = -1;
-    skipIntermission = false;
-    interTime        = 0;
-    oldInterTime     = 0;
-}
-
-void IN_Init(wbstartstruct_t const &wbstartstruct)
-{
-    WI_initVariables(wbstartstruct);
-    IN_LoadPics();
-
-    IN_InitStats();
-}
-
-void IN_WaitStop()
-{
-    if(!--cnt)
-    {
-        IN_Stop();
-        G_IntermissionDone();
-    }
-}
-
-void IN_Stop()
-{
-    NetSv_Intermission(IMF_END, 0, 0);
-
-    intermission = false;
-    IN_UnloadPics();
-}
-
-/**
- * Initializes the stats for single player mode
- */
-void IN_InitStats()
-{
-    // Init team info.
-    if(IS_NETGAME)
-    {
-        std::memset(teamInfo,   0, sizeof(teamInfo));
-        std::memset(playerTeam, 0, sizeof(playerTeam));
-
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(!players[i].plr->inGame)
-                continue;
-
-            playerTeam[i] = cfg.playerColor[i];
-            teamInfo[playerTeam[i]].members++;
-        }
-    }
-
-    int time = mapTime / 35;
-    int const hours   = time / 3600; time -= hours * 3600;
-    int const minutes = time / 60;   time -= minutes * 60;
-    //int const seconds = time;
-
-    if(!IS_NETGAME)
-    {
-        gameType = SINGLE;
-    }
-    else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
-    {
-        gameType = COOPERATIVE;
-
-        std::memset(killPercent,   0, sizeof(killPercent));
-        std::memset(bonusPercent,  0, sizeof(bonusPercent));
-        std::memset(secretPercent, 0, sizeof(secretPercent));
-
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                if(totalKills)
-                {
-                    int const percent = players[i].killCount * 100 / totalKills;
-                    if(percent > killPercent[playerTeam[i]])
-                        killPercent[playerTeam[i]] = percent;
-                }
-
-                if(totalItems)
-                {
-                    int const percent = players[i].itemCount * 100 / totalItems;
-                    if(percent > bonusPercent[playerTeam[i]])
-                        bonusPercent[playerTeam[i]] = percent;
-                }
-
-                if(totalSecret)
-                {
-                    int const percent = players[i].secretCount * 100 / totalSecret;
-                    if(percent > secretPercent[playerTeam[i]])
-                        secretPercent[playerTeam[i]] = percent;
-                }
-            }
-        }
-    }
-    else
-    {
-        gameType = DEATHMATCH;
-        slaughterBoy = 0;
-
-        int slaughterfrags = -9999;
-        int posNum         = 0;
-        int teamCount      = 0;
-        int slaughterCount = 0;
-
-        for(int i = 0; i < MAXPLAYERS; ++i)
-        {
-            int const team = playerTeam[i];
-
-            if(players[i].plr->inGame)
-            {
-                for(int percent = 0; percent < MAXPLAYERS; ++percent)
-                {
-                    if(players[percent].plr->inGame)
-                    {
-                        teamInfo[team].frags[playerTeam[percent]] += players[i].frags[percent];
-                        teamInfo[team].totalFrags                 += players[i].frags[percent];
-                    }
-                }
-
-                // Find out the largest number of frags.
-                if(teamInfo[team].totalFrags > slaughterfrags)
-                    slaughterfrags = teamInfo[team].totalFrags;
-            }
-        }
-
-        for(int i = 0; i < NUMTEAMS; ++i)
-        {
-            //posNum++;
-            /*if(teamInfo[i].totalFrags > slaughterfrags)
-            {
-               slaughterBoy = 1<<i;
-               slaughterfrags = teamInfo[i].totalFrags;
-               slaughterCount = 1;
-            }
-            else */ if(!teamInfo[i].members)
-            {
-                continue;
-            }
-
-            dSlideX[i] = (43 * posNum * FRACUNIT) / 20;
-            dSlideY[i] = (36 * posNum * FRACUNIT) / 20;
-            posNum++;
-
-            teamCount++;
-            if(teamInfo[i].totalFrags == slaughterfrags)
-            {
-                slaughterBoy |= 1 << i;
-                slaughterCount++;
-            }
-        }
-
-        if(teamCount == slaughterCount)
-        {   // Don't do the slaughter stuff if everyone is equal.
-            slaughterBoy = 0;
-        }
-    }
-}
-
-void IN_LoadPics()
-{
-    if(episodeNumber() < 3)
-    {
-        dpInterPic = R_DeclarePatch(episodeNumber() == 0? "MAPE1" : episodeNumber() == 1? "MAPE2" : "MAPE3");
-    }
-
-    dpBeenThere  = R_DeclarePatch("IN_X");
-    dpGoingThere = R_DeclarePatch("IN_YAH");
-
-    char buf[9];
-    for(int i = 0; i < NUMTEAMS; ++i)
-    {
-        dd_snprintf(buf, 9, "FACEA%i", i);
-        dpFaceAlive[i] = R_DeclarePatch(buf);
-        dd_snprintf(buf, 9, "FACEB%i", i);
-        dpFaceDead[i] = R_DeclarePatch(buf);
-    }
-}
-
-void IN_UnloadPics()
+void IN_Init()
 {
     // Nothing to do.
 }
 
-static void nextIntermissionState()
+void IN_Shutdown()
 {
-    if(interState == 2)
-    {
-        // Prepare for busy mode.
-        BusyMode_FreezeGameForBusyMode();
-    }
-    interState++;
+    // Nothing to do.
 }
 
-static void endIntermissionGoToNextLevel()
+void IN_End()
 {
-    BusyMode_FreezeGameForBusyMode();
-    interState = 3;
+    NetSv_Intermission(IMF_END, 0, 0);
+
+    active = false;
 }
 
-void IN_Ticker()
+static void tickNoState()
 {
-    if(!intermission) return;
-
-    if(!IS_CLIENT)
+    if(!--stateCounter)
     {
-        if(interState == 3)
-        {
-            IN_WaitStop();
-            return;
-        }
-    }
-    IN_CheckForSkip();
-
-    // Counter for general background animation.
-    bcnt++;
-
-    interTime++;
-    if(oldInterTime < interTime)
-    {
-        nextIntermissionState();
-
-        if(episodeNumber() > 2 && interState >= 1)
-        {
-            // Extended Wad levels:  skip directly to the next level
-            endIntermissionGoToNextLevel();
-        }
-
-        switch(interState)
-        {
-        case 0:
-            oldInterTime = interTime + 300;
-            if(episodeNumber() > 2)
-            {
-                oldInterTime = interTime + 1200;
-            }
-            break;
-
-        case 1:
-            oldInterTime = interTime + 200;
-            break;
-
-        case 2:
-            oldInterTime = MAXINT;
-            break;
-
-        case 3:
-            cnt = 10;
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    if(skipIntermission)
-    {
-        if(interState == 0 && interTime < 150)
-        {
-            interTime = 150;
-            skipIntermission = false;
-            NetSv_Intermission(IMF_TIME, 0, interTime);
-            return;
-        }
-        if(interState < 2 && episodeNumber() < 3)
-        {
-            interState = 2;
-            skipIntermission = false;
-            S_StartSound(SFX_DORCLS, NULL);
-            NetSv_Intermission(IMF_STATE, interState, 0);
-            return;
-        }
-
-        endIntermissionGoToNextLevel();
-        cnt = 10;
-        skipIntermission = false;
-        S_StartSound(SFX_DORCLS, NULL);
-        NetSv_Intermission(IMF_STATE, interState, 0);
+        IN_End();
+        G_IntermissionDone();
     }
 }
 
-void IN_SkipToNext()
+static void drawBackground()
 {
-    skipIntermission = 1;
-}
+    if(episodeNumber() > 2) return;
 
-/**
- * Check to see if any player hit a key.
- */
-void IN_CheckForSkip()
-{
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t *player = &players[i];
-
-        if(player->plr->inGame)
-        {
-            if(player->brain.attack)
-            {
-                if(!player->attackDown)
-                {
-                    if(IS_CLIENT)
-                    {
-                        NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
-                    }
-                    else
-                    {
-                        IN_SkipToNext();
-                    }
-                }
-                player->attackDown = true;
-            }
-            else
-            {
-                player->attackDown = false;
-            }
-
-            if(player->brain.use)
-            {
-                if(!player->useDown)
-                {
-                    if(IS_CLIENT)
-                    {
-                        NetCl_PlayerActionRequest(player, GPA_USE, 0);
-                    }
-                    else
-                    {
-                        IN_SkipToNext();
-                    }
-                }
-                player->useDown = true;
-            }
-            else
-            {
-                player->useDown = false;
-            }
-        }
-    }
-}
-
-void IN_Drawer()
-{
-    static int oldInterState;
-
-    if(!intermission || interState > 3)
-    {
-        return;
-    }
-    /*if(interState == 3)
-    {
-        return;
-    }*/
-
-    if(oldInterState != 2 && interState == 2)
-    {
-        S_LocalSound(SFX_PSTOP, NULL);
-    }
-
-    if(interState != -1)
-        oldInterState = interState;
-
-    dgl_borderedprojectionstate_t bp;
-    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
-                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
-    GL_BeginBorderedProjection(&bp);
-
-    switch(interState)
-    {
-    case -1:
-    case 0: // Draw stats.
-        IN_DrawStatBack();
-        switch(gameType)
-        {
-        case SINGLE:
-            IN_DrawSingleStats();
-            break;
-        case COOPERATIVE:
-            IN_DrawCoopStats();
-            break;
-        case DEATHMATCH:
-            IN_DrawDMStats();
-            break;
-        }
-        break;
-
-    case 1: // Leaving old level.
-        if(episodeNumber() < 3)
-        {
-            DGL_Enable(DGL_TEXTURE_2D);
-
-            DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatchXY(dpInterPic, 0, 0);
-
-            DGL_Disable(DGL_TEXTURE_2D);
-
-            IN_DrawOldLevel();
-        }
-        break;
-
-    case 2: // Going to the next level.
-        if(episodeNumber() < 3)
-        {
-            DGL_Enable(DGL_TEXTURE_2D);
-
-            DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatchXY(dpInterPic, 0, 0);
-            IN_DrawYAH();
-
-            DGL_Disable(DGL_TEXTURE_2D);
-        }
-        break;
-
-    case 3: // Waiting before going to the next level.
-        if(episodeNumber() < 3)
-        {
-            DGL_Enable(DGL_TEXTURE_2D);
-
-            DGL_Color4f(1, 1, 1, 1);
-            GL_DrawPatchXY(dpInterPic, 0, 0);
-
-            DGL_Disable(DGL_TEXTURE_2D);
-        }
-        break;
-
-    default:
-        DENG2_ASSERT(!"IN_Drawer: Unknown intermission state");
-        break;
-    }
-
-    GL_EndBorderedProjection(&bp);
-}
-
-void IN_DrawStatBack()
-{
-    DGL_SetMaterialUI((Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
-
     DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+
+    GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void IN_DrawOldLevel()
+static void drawFinishedTitle()
 {
+    if(episodeNumber() > 2) return;
+
+    DENG2_ASSERT(!wbs->currentMap.isEmpty());
+
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(FID(GF_FONTB));
@@ -664,49 +212,17 @@ void IN_DrawOldLevel()
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
     FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-    if(wbs->currentMap.path() == "E1M9" ||
-       wbs->currentMap.path() == "E2M9" ||
-       wbs->currentMap.path() == "E3M9" ||
-       wbs->currentMap.path() == "E4M9" ||
-       wbs->currentMap.path() == "E5M9")
-    {
-        DGL_Color4f(1, 1, 1, 1);
-        uint const nextMap = G_MapNumberFor(wbs->nextMap);
-        for(uint i = 0; i < nextMap; ++i)
-        {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
-        }
-
-        if(!(interTime & 16))
-        {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
-        }
-    }
-    else
-    {
-        DGL_Color4f(1, 1, 1, 1);
-        uint const currentMap = G_MapNumberFor(wbs->currentMap);
-        for(uint i = 0; i < currentMap; ++i)
-        {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
-        }
-
-        if(players[CONSOLEPLAYER].didSecret)
-        {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
-        }
-
-        if(!(interTime & 16))
-        {
-            GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][currentMap]);
-        }
-    }
-
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void IN_DrawYAH()
+static void drawEnteringTitle()
 {
+    if(episodeNumber() > 2) return;
+
+    if(wbs->nextMap.isEmpty()) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
@@ -716,28 +232,364 @@ void IN_DrawYAH()
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
     FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
+    DGL_Disable(DGL_TEXTURE_2D);
+}
+
+static void drawLocationMarks()
+{
+    if(episodeNumber() > 2) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+
+    if(wbs->currentMap.path() == "E1M9" ||
+       wbs->currentMap.path() == "E2M9" ||
+       wbs->currentMap.path() == "E3M9" ||
+       wbs->currentMap.path() == "E4M9" ||
+       wbs->currentMap.path() == "E5M9")
+    {
+        uint const nextMap = G_MapNumberFor(wbs->nextMap);
+        for(uint i = 0; i < nextMap; ++i)
+        {
+            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
+        }
+
+        if(!(interTime & 16))
+        {
+            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
+        }
+    }
+    else
+    {
+        uint const currentMap = G_MapNumberFor(wbs->currentMap);
+        for(uint i = 0; i < currentMap; ++i)
+        {
+            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
+        }
+
+        if(players[CONSOLEPLAYER].didSecret)
+        {
+            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
+        }
+
+        if(!(interTime & 16))
+        {
+            GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][currentMap]);
+        }
+    }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+}
+
+static void drawLocationMarks2()
+{
+    if(episodeNumber() > 2) return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
     uint const nextMap = G_MapNumberFor(wbs->nextMap);
-
     for(uint i = 0; i < nextMap; ++i)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][i]);
+        GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][i]);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(dpBeenThere, &YAHspot[episodeNumber()][8]);
+        GL_DrawPatch(pBeenThere, &YAHspot[episodeNumber()][8]);
     }
 
-    if(!(interTime & 16) || interState == 3)
+    // Draw the destination 'X' ?
+    if(!(interTime & 16) || inState == 3)
     {
-        // Draw the destination 'X'
-        GL_DrawPatch(dpGoingThere, &YAHspot[episodeNumber()][nextMap]);
+        GL_DrawPatch(pGoingThere, &YAHspot[episodeNumber()][nextMap]);
+    }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+}
+
+static void initDeathmatchStats()
+{
+    gameType = DEATHMATCH;
+    slaughterBoy = 0;
+
+    int slaughterfrags = -9999;
+    int posNum         = 0;
+    int teamCount      = 0;
+    int slaughterCount = 0;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        int const team = playerTeam[i];
+
+        if(players[i].plr->inGame)
+        {
+            for(int percent = 0; percent < MAXPLAYERS; ++percent)
+            {
+                if(players[percent].plr->inGame)
+                {
+                    teamInfo[team].frags[playerTeam[percent]] += players[i].frags[percent];
+                    teamInfo[team].totalFrags                 += players[i].frags[percent];
+                }
+            }
+
+            // Find out the largest number of frags.
+            if(teamInfo[team].totalFrags > slaughterfrags)
+                slaughterfrags = teamInfo[team].totalFrags;
+        }
+    }
+
+    for(int i = 0; i < NUMTEAMS; ++i)
+    {
+        //posNum++;
+        /*if(teamInfo[i].totalFrags > slaughterfrags)
+        {
+           slaughterBoy = 1<<i;
+           slaughterfrags = teamInfo[i].totalFrags;
+           slaughterCount = 1;
+        }
+        else */ if(!teamInfo[i].members)
+        {
+            continue;
+        }
+
+        dSlideX[i] = (43 * posNum * FRACUNIT) / 20;
+        dSlideY[i] = (36 * posNum * FRACUNIT) / 20;
+        posNum++;
+
+        teamCount++;
+        if(teamInfo[i].totalFrags == slaughterfrags)
+        {
+            slaughterBoy |= 1 << i;
+            slaughterCount++;
+        }
+    }
+
+    if(teamCount == slaughterCount)
+    {
+        // Don't do the slaughter stuff if everyone is equal.
+        slaughterBoy = 0;
     }
 }
 
-void IN_DrawSingleStats()
+static void drawDeathmatchStats()
+{
+#define TRACKING                (1)
+
+    static int sounds;
+    static char const *killersText = "KILLERS";
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    FR_DrawTextXY3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
+    FR_DrawTextXY3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+
+    for(int i = 0; i < 7; ++i)
+    {
+        FR_DrawCharXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    int ypos = 55, xpos = 90;
+    if(interTime < 20)
+    {
+        DGL_Enable(DGL_TEXTURE_2D);
+
+        for(int i = 0; i < NUMTEAMS; ++i)
+        {
+            if(teamInfo[i].members)
+            {
+                M_DrawShadowedPatch(pFaceAlive[i], 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
+                M_DrawShadowedPatch(pFaceDead[i], ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
+            }
+        }
+
+        DGL_Disable(DGL_TEXTURE_2D);
+
+        sounds = 0;
+        return;
+    }
+
+    if(interTime >= 20 && sounds < 1)
+    {
+        S_LocalSound(SFX_DORCLS, NULL);
+        sounds++;
+    }
+
+    if(interTime >= 100 && slaughterBoy && sounds < 2)
+    {
+        S_LocalSound(SFX_WPNUP, NULL);
+        sounds++;
+    }
+
+    for(int i = 0; i < NUMTEAMS; ++i)
+    {
+        if(teamInfo[i].members)
+        {
+            char buf[20];
+
+            DGL_Enable(DGL_TEXTURE_2D);
+
+            if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
+            {
+                M_DrawShadowedPatch(pFaceAlive[i], 40, ypos);
+                M_DrawShadowedPatch(pFaceDead[i], xpos, 18);
+            }
+            else
+            {
+                DGL_Color4f(1, 1, 1, .333f);
+                GL_DrawPatchXY(pFaceAlive[i], 40, ypos);
+                GL_DrawPatchXY(pFaceDead[i], xpos, 18);
+            }
+
+            FR_SetFont(FID(GF_FONTB));
+            FR_SetTracking(TRACKING);
+            int kpos = 122;
+            for(int k = 0; k < NUMTEAMS; ++k)
+            {
+                if(teamInfo[k].members)
+                {
+                    dd_snprintf(buf, 20, "%i", teamInfo[i].frags[k]);
+                    M_DrawTextFragmentShadowed(buf, kpos, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                    kpos += 43;
+                }
+            }
+
+            if(slaughterBoy & (1 << i))
+            {
+                if(!(interTime & 16))
+                {
+                    dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
+                    M_DrawTextFragmentShadowed(buf, 263, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                }
+            }
+            else
+            {
+                dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
+                M_DrawTextFragmentShadowed(buf, 263, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            }
+
+            DGL_Disable(DGL_TEXTURE_2D);
+
+            ypos += 36;
+            xpos += 43;
+        }
+    }
+
+#undef TRACKING
+}
+
+static void initNetgameStats()
+{
+    gameType = COOPERATIVE;
+
+    std::memset(cntKills,  0, sizeof(cntKills));
+    std::memset(cntItems,  0, sizeof(cntItems));
+    std::memset(cntSecret, 0, sizeof(cntSecret));
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(!players[i].plr->inGame) continue;
+
+        if(totalKills)
+        {
+            int const percent = players[i].killCount * 100 / totalKills;
+            if(percent > cntKills[playerTeam[i]])
+                cntKills[playerTeam[i]] = percent;
+        }
+
+        if(totalItems)
+        {
+            int const percent = players[i].itemCount * 100 / totalItems;
+            if(percent > cntItems[playerTeam[i]])
+                cntItems[playerTeam[i]] = percent;
+        }
+
+        if(totalSecret)
+        {
+            int const percent = players[i].secretCount * 100 / totalSecret;
+            if(percent > cntSecret[playerTeam[i]])
+                cntSecret[playerTeam[i]] = percent;
+        }
+    }
+}
+
+static void drawNetgameStats()
+{
+#define TRACKING                    (1)
+
+    static int sounds;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_LoadDefaultAttrib();
+    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+
+    FR_SetFont(FID(GF_FONTA));
+    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
+    FR_DrawTextXY3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+
+    FR_SetFont(FID(GF_FONTB));
+    FR_SetTracking(TRACKING);
+
+    int ypos = 50;
+    for(int i = 0; i < NUMTEAMS; ++i)
+    {
+        if(teamInfo[i].members)
+        {
+            DGL_Color4f(0, 0, 0, .4f);
+            GL_DrawPatchXY(pFaceAlive[i], 27, ypos+2);
+
+            DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            GL_DrawPatchXY(pFaceAlive[i], 25, ypos);
+
+            if(interTime < 40)
+            {
+                sounds = 0;
+                ypos += 37;
+                continue;
+            }
+            else if(interTime >= 40 && sounds < 1)
+            {
+                S_LocalSound(SFX_DORCLS, NULL);
+                sounds++;
+            }
+
+            char buf[20];
+            dd_snprintf(buf, 20, "%i", cntKills[i]);
+            M_DrawTextFragmentShadowed(buf, 121, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 121, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+            dd_snprintf(buf, 20, "%i", cntItems[i]);
+            M_DrawTextFragmentShadowed(buf, 196, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 196, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+            dd_snprintf(buf, 20, "%i", cntSecret[i]);
+            M_DrawTextFragmentShadowed(buf, 273, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 273, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            ypos += 37;
+        }
+    }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+#undef TRACKING
+}
+
+static void drawSinglePlayerStats()
 {
 #define TRACKING                (1)
 
@@ -851,7 +703,7 @@ void IN_DrawSingleStats()
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         FR_DrawTextXY3("TIME", 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
-        IN_DrawTime(284, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        drawTime(Vector2i(284, 160), hours, minutes, seconds, Vector4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -869,189 +721,363 @@ void IN_DrawSingleStats()
 
         DGL_Disable(DGL_TEXTURE_2D);
 
-        skipIntermission = false;
+        advanceState = false;
     }
 
 #undef TRACKING
 }
 
-void IN_DrawCoopStats()
+static void initShowStats()
 {
-#define TRACKING                    (1)
+    gameType = SINGLE;
+}
 
-    static int sounds;
-
+static void drawStats()
+{
+    // Draw the background.
+    DGL_SetMaterialUI((Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
+    DGL_Color4f(1, 1, 1, 1);
+    DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+    DGL_Disable(DGL_TEXTURE_2D);
 
-    FR_SetFont(FID(GF_FONTB));
-    FR_LoadDefaultAttrib();
-    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    switch(gameType)
+    {
+    case SINGLE:      drawSinglePlayerStats(); break;
+    case COOPERATIVE: drawNetgameStats();      break;
+    case DEATHMATCH:  drawDeathmatchStats();   break;
+    }
+}
 
-    FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+static void maybeAdvanceState()
+{
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t *player = &players[i];
 
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawTextXY3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+        if(!players[i].plr->inGame) continue;
 
-    FR_SetFont(FID(GF_FONTB));
-    FR_SetTracking(TRACKING);
+        if(player->brain.attack)
+        {
+            if(!player->attackDown)
+            {
+                if(IS_CLIENT)
+                {
+                    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+                }
+                else
+                {
+                    IN_SkipToNext();
+                }
+            }
+            player->attackDown = true;
+        }
+        else
+        {
+            player->attackDown = false;
+        }
 
-    int ypos = 50;
+        if(player->brain.use)
+        {
+            if(!player->useDown)
+            {
+                if(IS_CLIENT)
+                {
+                    NetCl_PlayerActionRequest(player, GPA_USE, 0);
+                }
+                else
+                {
+                    IN_SkipToNext();
+                }
+            }
+            player->useDown = true;
+        }
+        else
+        {
+            player->useDown = false;
+        }
+    }
+}
+
+static void nextIntermissionState()
+{
+    if(inState == 2)
+    {
+        // Prepare for busy mode.
+        BusyMode_FreezeGameForBusyMode();
+    }
+    inState++;
+}
+
+static void endIntermissionGoToNextLevel()
+{
+    BusyMode_FreezeGameForBusyMode();
+    inState = 3;
+}
+
+void IN_Ticker()
+{
+    if(!active) return;
+
+    if(!IS_CLIENT)
+    {
+        if(inState == 3)
+        {
+            tickNoState();
+            return;
+        }
+    }
+    maybeAdvanceState();
+
+    // Counter for general background animation.
+    backgroundAnimCounter++;
+
+    interTime++;
+    if(oldInterTime < interTime)
+    {
+        nextIntermissionState();
+
+        if(episodeNumber() > 2 && inState >= 1)
+        {
+            // Extended Wad levels:  skip directly to the next level
+            endIntermissionGoToNextLevel();
+        }
+
+        switch(inState)
+        {
+        case 0:
+            oldInterTime = interTime + 300;
+            if(episodeNumber() > 2)
+            {
+                oldInterTime = interTime + 1200;
+            }
+            break;
+
+        case 1:
+            oldInterTime = interTime + 200;
+            break;
+
+        case 2:
+            oldInterTime = MAXINT;
+            break;
+
+        case 3:
+            stateCounter = 10;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    if(advanceState)
+    {
+        if(inState == 0 && interTime < 150)
+        {
+            interTime    = 150;
+            advanceState = false;
+            NetSv_Intermission(IMF_TIME, 0, interTime);
+            return;
+        }
+        if(inState < 2 && episodeNumber() < 3)
+        {
+            inState      = 2;
+            advanceState = false;
+            S_StartSound(SFX_DORCLS, NULL);
+            NetSv_Intermission(IMF_STATE, inState, 0);
+            return;
+        }
+
+        endIntermissionGoToNextLevel();
+        stateCounter = 10;
+        advanceState = false;
+        S_StartSound(SFX_DORCLS, NULL);
+        NetSv_Intermission(IMF_STATE, inState, 0);
+    }
+}
+
+static void loadData()
+{
+    if(episodeNumber() < 3)
+    {
+        pBackground = R_DeclarePatch(episodeNumber() == 0? "MAPE1" : episodeNumber() == 1? "MAPE2" : "MAPE3");
+    }
+
+    pBeenThere  = R_DeclarePatch("IN_X");
+    pGoingThere = R_DeclarePatch("IN_YAH");
+
+    char buf[9];
     for(int i = 0; i < NUMTEAMS; ++i)
     {
-        if(teamInfo[i].members)
-        {
-            DGL_Color4f(0, 0, 0, .4f);
-            GL_DrawPatchXY(dpFaceAlive[i], 27, ypos+2);
-
-            DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatchXY(dpFaceAlive[i], 25, ypos);
-
-            if(interTime < 40)
-            {
-                sounds = 0;
-                ypos += 37;
-                continue;
-            }
-            else if(interTime >= 40 && sounds < 1)
-            {
-                S_LocalSound(SFX_DORCLS, NULL);
-                sounds++;
-            }
-
-            char buf[20];
-            dd_snprintf(buf, 20, "%i", killPercent[i]);
-            M_DrawTextFragmentShadowed(buf, 121, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawTextFragmentShadowed("%", 121, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-
-            dd_snprintf(buf, 20, "%i", bonusPercent[i]);
-            M_DrawTextFragmentShadowed(buf, 196, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawTextFragmentShadowed("%", 196, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-
-            dd_snprintf(buf, 20, "%i", secretPercent[i]);
-            M_DrawTextFragmentShadowed(buf, 273, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawTextFragmentShadowed("%", 273, ypos + 10, ALIGN_TOPLEFT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            ypos += 37;
-        }
+        dd_snprintf(buf, 9, "FACEA%i", i);
+        pFaceAlive[i] = R_DeclarePatch(buf);
+        dd_snprintf(buf, 9, "FACEB%i", i);
+        pFaceDead[i] = R_DeclarePatch(buf);
     }
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-#undef TRACKING
 }
 
-void IN_DrawDMStats()
+void IN_Drawer()
 {
-#define TRACKING                (1)
+    static int oldInterState;
 
-    static int sounds;
-
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    FR_SetFont(FID(GF_FONTB));
-    FR_LoadDefaultAttrib();
-    FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    FR_DrawTextXY3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-
-    FR_SetFont(FID(GF_FONTA));
-    FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawTextXY3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-
-    for(int i = 0; i < 7; ++i)
+    if(!active || inState > 3)
     {
-        FR_DrawCharXY3(killersText[i], 10, 80 + 9 * i, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    }
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    int ypos = 55, xpos = 90;
-    if(interTime < 20)
-    {
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        for(int i = 0; i < NUMTEAMS; ++i)
-        {
-            if(teamInfo[i].members)
-            {
-                M_DrawShadowedPatch(dpFaceAlive[i], 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
-                M_DrawShadowedPatch(dpFaceDead[i], ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
-            }
-        }
-
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        sounds = 0;
         return;
     }
-
-    if(interTime >= 20 && sounds < 1)
+    /*if(interState == 3)
     {
-        S_LocalSound(SFX_DORCLS, NULL);
-        sounds++;
+        return;
+    }*/
+
+    if(oldInterState != 2 && inState == 2)
+    {
+        S_LocalSound(SFX_PSTOP, NULL);
     }
 
-    if(interTime >= 100 && slaughterBoy && sounds < 2)
+    if(inState != -1)
     {
-        S_LocalSound(SFX_WPNUP, NULL);
-        sounds++;
+        oldInterState = inState;
     }
 
-    for(int i = 0; i < NUMTEAMS; ++i)
+    dgl_borderedprojectionstate_t bp;
+    GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
+                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
+    GL_BeginBorderedProjection(&bp);
+
+    switch(inState)
     {
-        if(teamInfo[i].members)
+    case -1:
+    case 0:
+        drawStats();
+        break;
+
+    case 1: // Leaving old level.
+        drawBackground();
+        drawLocationMarks();
+        drawFinishedTitle();
+        break;
+
+    case 2: // Going to the next level.
+        drawBackground();
+        drawLocationMarks2();
+        drawEnteringTitle();
+        break;
+
+    case 3: // Waiting before going to the next level.
+        drawBackground();
+        break;
+
+    default:
+        DENG2_ASSERT(!"IN_Drawer: Unknown intermission state");
+        break;
+    }
+
+    GL_EndBorderedProjection(&bp);
+}
+
+static void initVariables(wbstartstruct_t const &wbstartstruct)
+{
+    wbs = &wbstartstruct;
+
+/*#ifdef RANGECHECK
+    if(gameMode != commercial)
+    {
+        if(gameMode == retail)
+            RNGCHECK(wbs->epsd, 0, 3);
+        else
+            RNGCHECK(wbs->epsd, 0, 2);
+    }
+    else
+    {
+        RNGCHECK(wbs->last, 0, 8);
+        RNGCHECK(wbs->next, 0, 8);
+    }
+    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
+    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
+#endif
+
+    accelerateStage = 0;
+    cnt =*/ backgroundAnimCounter = 0; /*
+    firstRefresh = 1;
+    me = wbs->pNum;
+    myTeam = cfg.playerColor[wbs->pNum];
+    plrs = wbs->plyr;
+
+    if(!wbs->maxKills)
+        wbs->maxKills = 1;
+    if(!wbs->maxItems)
+        wbs->maxItems = 1;
+    if(!wbs->maxSecret)
+        wbs->maxSecret = 1;
+
+    if(gameMode != retail)
+        if(wbs->epsd > 2)
+            wbs->epsd -= 3;*/
+
+    active     = true;
+    inState       = -1;
+    advanceState = false;
+    interTime        = 0;
+    oldInterTime     = 0;
+}
+
+void IN_Begin(wbstartstruct_t const &wbstartstruct)
+{
+    initVariables(wbstartstruct);
+    loadData();
+
+    // Init team info.
+    if(IS_NETGAME)
+    {
+        std::memset(teamInfo,   0, sizeof(teamInfo));
+        std::memset(playerTeam, 0, sizeof(playerTeam));
+
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            char buf[20];
+            if(!players[i].plr->inGame)
+                continue;
 
-            DGL_Enable(DGL_TEXTURE_2D);
-
-            if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
-            {
-                M_DrawShadowedPatch(dpFaceAlive[i], 40, ypos);
-                M_DrawShadowedPatch(dpFaceDead[i], xpos, 18);
-            }
-            else
-            {
-                DGL_Color4f(1, 1, 1, .333f);
-                GL_DrawPatchXY(dpFaceAlive[i], 40, ypos);
-                GL_DrawPatchXY(dpFaceDead[i], xpos, 18);
-            }
-
-            FR_SetFont(FID(GF_FONTB));
-            FR_SetTracking(TRACKING);
-            int kpos = 122;
-            for(int k = 0; k < NUMTEAMS; ++k)
-            {
-                if(teamInfo[k].members)
-                {
-                    dd_snprintf(buf, 20, "%i", teamInfo[i].frags[k]);
-                    M_DrawTextFragmentShadowed(buf, kpos, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-                    kpos += 43;
-                }
-            }
-
-            if(slaughterBoy & (1 << i))
-            {
-                if(!(interTime & 16))
-                {
-                    dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
-                    M_DrawTextFragmentShadowed(buf, 263, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-                }
-            }
-            else
-            {
-                dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
-                M_DrawTextFragmentShadowed(buf, 263, ypos + 10, ALIGN_TOPRIGHT, 0, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            }
-
-            DGL_Disable(DGL_TEXTURE_2D);
-
-            ypos += 36;
-            xpos += 43;
+            playerTeam[i] = cfg.playerColor[i];
+            teamInfo[playerTeam[i]].members++;
         }
     }
 
-#undef TRACKING
+    int time = mapTime / 35;
+    ::hours   = time / 3600; time -= hours * 3600;
+    ::minutes = time / 60;   time -= minutes * 60;
+    ::seconds = time;
+
+    if(!IS_NETGAME)
+    {
+        initShowStats();
+    }
+    else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
+    {
+        initNetgameStats();
+    }
+    else
+    {
+        initDeathmatchStats();
+    }
+}
+
+void IN_SetState(int stateNum)
+{
+    inState = stateNum;
+}
+
+void IN_SetTime(int time)
+{
+    interTime = time;
+}
+
+void IN_SkipToNext()
+{
+    advanceState = 1;
+}
+
+void WI_ConsoleRegister()
+{
+    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
 }

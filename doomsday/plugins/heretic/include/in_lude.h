@@ -28,12 +28,8 @@
 #include "h_player.h"
 #include <doomsday/uri.h>
 
-extern dd_bool intermission;
-extern int interState;
-extern int interTime;
-
 /**
- * Structure passed to IN_Init(), etc...
+ * Structure passed to IN_Begin(), etc...
  */
 /*struct wbplayerstruct_t
 {
@@ -63,8 +59,8 @@ struct wbstartstruct_t
 */
 };
 
-/// To be called to register the console commands and variables of this module.
-void WI_ConsoleRegister();
+void IN_Init();
+void IN_Shutdown();
 
 /**
  * Begin the intermission using the given game session and player configuration.
@@ -74,21 +70,39 @@ void WI_ConsoleRegister();
  *                       this structure is @em not modified while the intermission
  *                       is in progress.
  */
-void IN_Init(wbstartstruct_t const &wbstartstruct);
+void IN_Begin(wbstartstruct_t const &wbstartstruct);
 
-void IN_SkipToNext();
-void IN_Stop();
+/**
+ * End the current intermission.
+ */
+void IN_End();
 
+/**
+ * Process game tic for the intermission.
+ *
+ * @note Handles user input due to timing issues in netgames.
+ */
 void IN_Ticker();
+
+/**
+ * Draw the intermission.
+ */
 void IN_Drawer();
 
-void IN_WaitStop();
-void IN_LoadPics();
-void IN_UnloadPics();
-void IN_CheckForSkip();
-void IN_InitStats();
-void IN_InitDeathmatchStats();
-void IN_InitNetgameStats();
+/**
+ * Change the current intermission state.
+ */
+void IN_SetState(int stateNum /*interludestate_t st*/);
+
+void IN_SetTime(int time);
+
+/**
+ * Skip to the next state in the intermission.
+ */
+void IN_SkipToNext();
+
+/// To be called to register the console commands and variables of this module.
+void WI_ConsoleRegister();
 
 #endif // __cplusplus
 #endif // LIBHERETIC_IN_LUDE_H
