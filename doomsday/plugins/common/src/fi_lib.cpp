@@ -208,7 +208,7 @@ void NetCl_UpdateFinaleState(reader_s *msg)
         if(i == 1) s->conditions.leave_hub = cond;
     }
 
-    LOGDEV_SCR_MSG("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i")
+    LOGDEV_SCR_MSG("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hub=%i")
             << s->finaleId << s->mode << s->conditions.secret << s->conditions.leave_hub;
 }
 

@@ -166,7 +166,7 @@ public:
      * @param nextMapUri         Map identifier.
      * @param nextMapEntryPoint  Map entry point number, for player reborn.
      */
-    void leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPpoint = 0);
+    void leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0);
 
     /**
      * Convenient method of looking up the user description of the game session in progress.
