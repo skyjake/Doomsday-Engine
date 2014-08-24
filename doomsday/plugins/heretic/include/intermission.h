@@ -1,4 +1,4 @@
-/** @file in_lude.h  Heretic specific intermission screens.
+/** @file intermission.h  Heretic specific intermission screens.
  *
  * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHERETIC_IN_LUDE_H
-#define LIBHERETIC_IN_LUDE_H
+#ifndef LIBHERETIC_INTERMISSION_H
+#define LIBHERETIC_INTERMISSION_H
 #ifdef __cplusplus
 
 #ifndef __JHERETIC__
@@ -105,4 +105,4 @@ void IN_SkipToNext();
 void IN_ConsoleRegister();
 
 #endif // __cplusplus
-#endif // LIBHERETIC_IN_LUDE_H
+#endif // LIBHERETIC_INTERMISSION_H

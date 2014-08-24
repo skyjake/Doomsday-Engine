@@ -46,6 +46,7 @@ HEADERS += \
     include/dstrings.h \
     include/g_game.h \
     include/info.h \
+    include/intermission.h \
     include/jdoom.h \
     include/m_cheat.h \
     include/m_random.h \
@@ -63,8 +64,7 @@ HEADERS += \
     include/r_defs.h \
     include/st_stuff.h \
     include/tables.h \
-    include/version.h \
-    include/wi_stuff.h
+    include/version.h
 
 SOURCES += \
     src/acfnlink.c \
@@ -75,6 +75,7 @@ SOURCES += \
     src/d_main.cpp \
     src/d_refresh.cpp \
     src/doomv9mapstatereader.cpp \
+    src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
@@ -87,8 +88,7 @@ SOURCES += \
     src/p_spec.cpp \
     src/p_telept.c \
     src/st_stuff.cpp \
-    src/tables.c \
-    src/wi_stuff.cpp
+    src/tables.c
 
 win32 {
     deng_msvc:  QMAKE_LFLAGS += /DEF:\"$$PWD/api/doom.def\"

@@ -1,4 +1,4 @@
-/** @file in_lude.cpp  Hexen specific intermission screens.
+/** @file intermission.cpp  Hexen specific intermission screens.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -20,7 +20,7 @@
  */
 
 #include "jhexen.h"
-#include "in_lude.h"
+#include "intermission.h"
 
 #include <cstdio>
 #include "d_net.h"

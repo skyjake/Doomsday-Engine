@@ -37,8 +37,8 @@
 #include "doomdef.h"
 #include "d_event.h"
 #include "d_player.h"
-#include "wi_stuff.h"
 #include "gamerules.h"
+#include "intermission.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 

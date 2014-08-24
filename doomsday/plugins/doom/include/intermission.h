@@ -1,4 +1,4 @@
-/** @file wi_stuff.h  DOOM specific intermission screens.
+/** @file intermission.h  DOOM specific intermission screens.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_WI_STUFF_H
-#define LIBDOOM_WI_STUFF_H
+#ifndef LIBDOOM_INTERMISSION_H
+#define LIBDOOM_INTERMISSION_H
 #ifdef __cplusplus
 
 #ifndef __JDOOM__
@@ -149,4 +149,4 @@ void IN_SkipToNext();
 void IN_ConsoleRegister();
 
 #endif // __cplusplus
-#endif // LIBDOOM_WI_STUFF_H
+#endif // LIBDOOM_INTERMISSION_H

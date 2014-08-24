@@ -38,7 +38,7 @@
 #include "gamerules.h"
 #include "h_event.h"
 #include "h_player.h"
-#include "in_lude.h"
+#include "intermission.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 

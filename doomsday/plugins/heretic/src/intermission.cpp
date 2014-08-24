@@ -1,4 +1,4 @@
-/** @file in_lude.cpp  Heretic specific intermission screens.
+/** @file intermission.cpp  Heretic specific intermission screens.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "jheretic.h"
-#include "in_lude.h"
+#include "intermission.h"
 
 #include <cstring>
 #include "am_map.h"

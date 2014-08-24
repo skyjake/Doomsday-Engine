@@ -1,4 +1,4 @@
-/** @file in_lude.h  Hexen specific intermission screens.
+/** @file intermission.h  Hexen specific intermission screens.
  *
  * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBHEXEN_IN_LUDE_H
-#define LIBHEXEN_IN_LUDE_H
+#ifndef LIBHEXEN_INTERMISSION_H
+#define LIBHEXEN_INTERMISSION_H
 #ifdef __cplusplus
 
 #ifndef __JHEXEN__
@@ -65,4 +65,4 @@ void IN_SkipToNext();
 void IN_ConsoleRegister();
 
 #endif // __cplusplus
-#endif // LIBHEXEN_IN_LUDE_H
+#endif // LIBHEXEN_INTERMISSION_H

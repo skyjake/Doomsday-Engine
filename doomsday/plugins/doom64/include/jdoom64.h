@@ -41,6 +41,7 @@
 #include "../../doom64/include/g_game.h"
 #include "../../doom64/include/doomtype.h"
 #include "../../doom64/include/info.h"
+#include "../../doom64/include/intermission.h"
 #include "../../doom64/include/m_cheat.h"
 #include "../../doom64/include/m_random.h"
 #include "../../doom64/include/p_enemy.h"
@@ -54,6 +55,5 @@
 #include "../../doom64/include/r_defs.h"
 #include "../../doom64/include/st_stuff.h"
 #include "../../doom64/include/tables.h"
-#include "../../doom64/include/wi_stuff.h"
 
 #endif // __JDOOM64_CONVENIENCE_H__
