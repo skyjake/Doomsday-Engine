@@ -892,6 +892,14 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     setupViewMatrix();
     setupPlayerSprites();
 
+    if(ClientApp::vr().mode() == VRConfig::OculusRift &&
+       ClientApp::worldSystem().isPointInVoid(Rend_EyeOrigin().xzy()))
+    {
+        // Putting one's head in the wall will cause a blank screen.
+        GLState::current().target().clear(GLTarget::Color);
+        return;
+    }
+
     // Hide the viewPlayer's mobj?
     int oldFlags = 0;
     if(!(player->shared.flags & DDPF_CHASECAM))
@@ -1023,7 +1031,7 @@ static void clearViewPorts()
             if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
                 continue;
 
-            if(P_IsInVoid(plr))
+            if(P_IsInVoid(plr) || !ClientApp::worldSystem().hasMap())
             {
                 bits |= GL_COLOR_BUFFER_BIT;
                 break;

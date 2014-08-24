@@ -2799,7 +2799,7 @@ BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
-        // Decend to the child subspace on "this" side.
+        // Descend to the child subspace on "this" side.
         bspElement = bspNode.childPtr(side);
     }
 
