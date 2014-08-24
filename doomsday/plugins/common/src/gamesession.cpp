@@ -164,16 +164,15 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             for(int i = 0; i < MAXPLAYERS; ++i)
             {
                 player_t *plr = &players[i];
-                if(plr->plr->inGame)
-                {
-                    // Force players to be initialized upon first map load.
-                    plr->playerState = PST_REBORN;
+                if(!plr->plr->inGame) continue;
+
+                // Force players to be initialized upon first map load.
+                plr->playerState = PST_REBORN;
 #if __JHEXEN__
-                    plr->worldTimer  = 0;
+                plr->worldTimer  = 0;
 #else
-                    plr->didSecret   = false;
+                plr->didSecret   = false;
 #endif
-                }
             }
         }
 
@@ -479,17 +478,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             for(int i = 0; i < MAXPLAYERS; ++i)
             {
-                player_t *plr = players + i;
-                if(plr->plr->inGame)
-                {
-                    // Force players to be initialized upon first map load.
-                    plr->playerState = PST_REBORN;
+                player_t *plr = &players[i];
+                if(!plr->plr->inGame) continue;
+
+                // Force players to be initialized upon first map load.
+                plr->playerState = PST_REBORN;
 #if __JHEXEN__
-                    plr->worldTimer = 0;
+                plr->worldTimer  = 0;
 #else
-                    plr->didSecret = false;
+                plr->didSecret   = false;
 #endif
-                }
             }
         }
 

@@ -1535,6 +1535,88 @@ static sfxenum_t randomQuitSound()
     return SFX_NONE;
 }
 
+/**
+ * Determines whether an intermission is enabled and will be scheduled when the players
+ * leave the  @em current map.
+ */
+static bool intermissionEnabled()
+{
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
+    {
+        if(mapInfo->geti("flags") & MIF_NO_INTERMISSION)
+        {
+            return false;
+        }
+    }
+#elif __JHEXEN__
+    if(!COMMON_GAMESESSION->rules().deathmatch)
+    {
+        return false;
+    }
+#endif
+    return true;
+}
+
+#if __JDOOM__ || __JDOOM64__
+void G_PrepareWIData()
+{
+    wbstartstruct_t *info = &::wmInfo;
+
+    info->maxFrags = 0;
+
+    // See if there is a par time definition.
+    info->parTime = -1; // Unknown.
+    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
+    {
+        float parTime = mapInfo->getf("parTime");
+        if(parTime > 0)
+        {
+            info->parTime = TICRATE * int(parTime);
+        }
+    }
+
+    info->pNum = CONSOLEPLAYER;
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        player_t const *p        = &players[i];
+        wbplayerstruct_t *pStats = &info->plyr[i];
+
+        pStats->inGame = p->plr->inGame;
+        pStats->kills  = p->killCount;
+        pStats->items  = p->itemCount;
+        pStats->secret = p->secretCount;
+        pStats->time   = mapTime;
+        std::memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
+    }
+}
+#endif
+
+static int prepareIntermission(void * /*context*/)
+{
+    ::wmInfo.nextMap           = ::nextMapUri;
+#if __JHEXEN__
+    ::wmInfo.nextMapEntryPoint = ::nextMapEntryPoint;
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    ::wmInfo.currentMap        = COMMON_GAMESESSION->mapUri();
+    ::wmInfo.didSecret         = ::players[CONSOLEPLAYER].didSecret;
+# if __JDOOM__ || __JDOOM64__
+    ::wmInfo.maxKills          = de::max(1, ::totalKills);
+    ::wmInfo.maxItems          = de::max(1, ::totalItems);
+    ::wmInfo.maxSecret         = de::max(1, ::totalSecret);
+
+    G_PrepareWIData();
+# endif
+#endif
+
+    IN_Begin(::wmInfo);
+    G_ChangeGameState(GS_INTERMISSION);
+
+    BusyMode_WorkerEnd();
+    return 0;
+}
+
 static void runGameAction()
 {
 #define QUITWAIT_MILLISECONDS 1500
@@ -1669,7 +1751,7 @@ static void runGameAction()
             }
 
             // Go to an intermission?
-            if(G_IntermissionActive())
+            if(intermissionEnabled())
             {
 #if __JDOOM__
                 // Has the secret map been completed?
@@ -1689,7 +1771,25 @@ static void runGameAction()
                 }
 #endif
 
-                G_IntermissionBegin();
+#if __JDOOM64__
+                S_StartMusic("dm2int", true);
+#elif __JDOOM__
+                S_StartMusic((::gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
+#elif __JHERETIC__
+                S_StartMusic("intr", true);
+#elif __JHEXEN__
+                S_StartMusic("hub", true);
+#endif
+                S_PauseMusic(true);
+
+                BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
+#if __JHERETIC__
+                // @todo is this necessary at this time?
+                NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
+#endif
+                NetSv_Intermission(IMF_BEGIN, 0, 0);
+
+                S_PauseMusic(false);
             }
             else
             {
@@ -2144,109 +2244,6 @@ byte G_Ruleset_RespawnMonsters()
 }
 #endif
 
-static int prepareIntermission(void * /*context*/)
-{
-    ::wmInfo.nextMap           = ::nextMapUri;
-#if __JHEXEN__
-    ::wmInfo.nextMapEntryPoint = ::nextMapEntryPoint;
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    ::wmInfo.currentMap        = COMMON_GAMESESSION->mapUri();
-    ::wmInfo.didSecret         = ::players[CONSOLEPLAYER].didSecret;
-
-# if __JDOOM__ || __JDOOM64__
-    ::wmInfo.maxKills          = de::max(1, ::totalKills);
-    ::wmInfo.maxItems          = de::max(1, ::totalItems);
-    ::wmInfo.maxSecret         = de::max(1, ::totalSecret);
-
-    G_PrepareWIData();
-# endif
-#endif
-
-    IN_Begin(::wmInfo);
-    G_ChangeGameState(GS_INTERMISSION);
-
-    BusyMode_WorkerEnd();
-    return 0;
-}
-
-#if __JDOOM__ || __JDOOM64__
-void G_PrepareWIData()
-{
-    wbstartstruct_t *info = &::wmInfo;
-
-    info->maxFrags = 0;
-
-    // See if there is a par time definition.
-    info->parTime = -1; // Unknown.
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
-    {
-        float parTime = mapInfo->getf("parTime");
-        if(parTime > 0)
-        {
-            info->parTime = TICRATE * int(parTime);
-        }
-    }
-
-    info->pNum = CONSOLEPLAYER;
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        player_t const *p        = &players[i];
-        wbplayerstruct_t *pStats = &info->plyr[i];
-
-        pStats->inGame = p->plr->inGame;
-        pStats->kills  = p->killCount;
-        pStats->items  = p->itemCount;
-        pStats->secret = p->secretCount;
-        pStats->time   = mapTime;
-        std::memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
-    }
-}
-#endif
-
-dd_bool G_IntermissionActive()
-{
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
-    {
-        if(mapInfo->geti("flags") & MIF_NO_INTERMISSION)
-        {
-            return false;
-        }
-    }
-#elif __JHEXEN__
-    if(!COMMON_GAMESESSION->rules().deathmatch)
-    {
-        return false;
-    }
-#endif
-    return true;
-}
-
-void G_IntermissionBegin()
-{
-#if __JDOOM64__
-    S_StartMusic("dm2int", true);
-#elif __JDOOM__
-    S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
-#elif __JHERETIC__
-    S_StartMusic("intr", true);
-#elif __JHEXEN__
-    S_StartMusic("hub", true);
-#endif
-    S_PauseMusic(true);
-    BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
-
-#if __JHERETIC__
-    // @todo is this necessary at this time?
-    NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
-#endif
-
-    NetSv_Intermission(IMF_BEGIN, 0, 0);
-
-    S_PauseMusic(false);
-}
-
 /**
  * Lookup the debriefing Finale for the current episode and map (if any).
  */
@@ -2359,7 +2356,6 @@ String G_DefaultSavedSessionUserDescription(String const &saveName, bool autogen
     return description;
 }
 
-/// @todo Get this from MAPINFO
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
     String path = mapUri.path();

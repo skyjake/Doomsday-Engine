@@ -27,34 +27,10 @@
 #include "player.h"
 #include <doomsday/uri.h>
 
-DENG_EXTERN_C dd_bool singledemo;
-
 #if __cplusplus
+class SaveSlots;
+
 extern GameRuleset defaultGameRules;
-
-extern "C" {
-#endif
-
-dd_bool G_QuitInProgress(void);
-
-/**
- * Returns the current logical game state.
- */
-gamestate_t G_GameState(void);
-
-/**
- * Change the game's state.
- *
- * @param state  The state to change to.
- */
-void G_ChangeGameState(gamestate_t state);
-
-gameaction_t G_GameAction(void);
-
-void G_SetGameAction(gameaction_t action);
-
-#if __cplusplus
-} // extern "C"
 
 /**
  * Schedule a new game session (deferred).
@@ -120,45 +96,13 @@ de::String G_MapTitle(de::Uri const &mapUri);
  */
 patchid_t G_MapTitlePatch(de::Uri const &mapUri);
 
-extern "C" {
-#endif
-
 /**
- * Reveal the game @em help display.
- */
-void G_StartHelp(void);
-
-/// @todo Should not be a global function; mode breaks game session separation.
-dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId);
-
-/**
- * Signal that play on the current map may now begin.
- */
-void G_BeginMap(void);
-
-/**
- * Determines whether an intermission should be scheduled (if any) when the players leave the
- * @em current map.
- */
-dd_bool G_IntermissionActive(void);
-
-/**
- * To be called to initiate the intermission.
- */
-void G_IntermissionBegin(void);
-
-/**
- * To be called when the intermission ends.
- */
-void G_IntermissionDone(void);
-
-#if __cplusplus
-} // extern "C"
-
-/**
- * Returns the logical map number for the identified map.
+ * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
+ * form for the current game mode (i.e., MAPXX or EXMY).
  *
- * @param mapUri  Unique identifier of the map to lookup.
+ * @param mapUri  Unique identifier of the map.
+ *
+ * @return  Extracted/decoded map number, otherwise @c 0.
  *
  * @deprecated  Should use map URIs instead.
  */
@@ -179,8 +123,66 @@ uint G_MapNumberFor(de::Uri const &mapUri);
  */
 de::Uri G_ComposeMapUri(uint episode, uint map);
 
+/**
+ * Chooses a default user description for a saved session.
+ *
+ * @param saveName      Name of the saved session from which the existing description should
+ *                      be re-used. Use a zero-length string to disable.
+ * @param autogenerate  @c true to generate a useful description (map name, map time, etc...)
+ *                      if none exists for the @a saveName referenced.
+ */
+de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
+
+/**
+ * Returns the game's SaveSlots.
+ */
+SaveSlots &G_SaveSlots();
+
 extern "C" {
 #endif
+
+/**
+ * Returns @c true, if the game is currently quiting.
+ */
+dd_bool G_QuitInProgress(void);
+
+/**
+ * Returns the current logical game state.
+ */
+gamestate_t G_GameState(void);
+
+/**
+ * Change the current logical game state to @a newState.
+ */
+void G_ChangeGameState(gamestate_t newState);
+
+/**
+ * Returns the current game action.
+ */
+gameaction_t G_GameAction(void);
+
+/**
+ * Change the current game action to @a newAction.
+ */
+void G_SetGameAction(gameaction_t newAction);
+
+/**
+ * Reveal the game @em help display.
+ */
+void G_StartHelp(void);
+
+/// @todo Should not be a global function; mode breaks game session separation.
+dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId);
+
+/**
+ * Signal that play on the current map may now begin.
+ */
+void G_BeginMap(void);
+
+/**
+ * To be called when the intermission ends.
+ */
+void G_IntermissionDone(void);
 
 AutoStr *G_CurrentMapUriPath(void);
 
@@ -207,25 +209,8 @@ D_CMD( CCmdExitLevel );
 
 #if __cplusplus
 } // extern "C"
+#endif
 
-#include <de/String>
+DENG_EXTERN_C dd_bool singledemo;
 
-class SaveSlots;
-
-/**
- * Chooses a default user description for a saved session.
- *
- * @param saveName      Name of the saved session from which the existing description should be
- *                      re-used. Use a zero-length string to disable.
- * @param autogenerate  @c true= generate a useful description (map name, map time, etc...) if none
- *                      exists for the referenced save @a slotId.
- */
-de::String G_DefaultSavedSessionUserDescription(de::String const &saveName, bool autogenerate = true);
-
-/**
- * Returns the game's SaveSlots.
- */
-SaveSlots &G_SaveSlots();
-
-#endif // __cplusplus
 #endif // LIBCOMMON_GAME_H
