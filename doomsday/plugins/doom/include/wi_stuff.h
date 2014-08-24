@@ -75,7 +75,7 @@ enum interludestate_t
 };
 
 /**
- * Structure passed to WI_Init(), etc...
+ * Structure passed to IN_Begin(), etc...
  */
 struct wbplayerstruct_t
 {
@@ -103,40 +103,40 @@ struct wbstartstruct_t
     wbplayerstruct_t plyr[MAXPLAYERS];
 };
 
-void WI_Init();
-void WI_Shutdown();
+void IN_Init();
+void IN_Shutdown();
 
 /**
  * Begin the intermission using the given game session and player configuration.
  *
  * @param wbstartstruct  Configuration to use for the intermission. Ownership is
- *                       @em not given to WI_Init() however it is assumed that
+ *                       @em not given to IN_Begin() however it is assumed that
  *                       this structure is @em not modified while the intermission
  *                       is in progress.
  */
-void WI_Begin(wbstartstruct_t const &wbstartstruct);
+void IN_Begin(wbstartstruct_t const &wbstartstruct);
 
 /**
  * End the current intermission.
  */
-void WI_End();
+void IN_End();
 
 /**
  * Process game tic for the intermission.
  *
  * @note Handles user input due to timing issues in netgames.
  */
-void WI_Ticker();
+void IN_Ticker();
 
 /**
  * Draw the intermission.
  */
-void WI_Drawer();
+void IN_Drawer();
 
 /**
  * Change the current intermission state.
  */
-void WI_SetState(interludestate_t st);
+void IN_SetState(interludestate_t st);
 
 /**
  * Skip to the next state in the intermission.
@@ -146,7 +146,7 @@ void IN_SkipToNext();
 /**
  * To be called to register the console commands and variables of this module.
  */
-void WI_ConsoleRegister();
+void IN_ConsoleRegister();
 
 #endif // __cplusplus
 #endif // LIBDOOM_WI_STUFF_H

@@ -62,7 +62,7 @@ void IN_SetState(int stateNum /*interludestate_t st*/);
 void IN_SkipToNext();
 
 /// To be called to register the console commands and variables of this module.
-void WI_ConsoleRegister();
+void IN_ConsoleRegister();
 
 #endif // __cplusplus
 #endif // LIBHEXEN_IN_LUDE_H

@@ -175,7 +175,7 @@ namespace internal
 
 using namespace internal;
 
-void WI_Init()
+void IN_Init()
 {
     // Already been here?
     if(!episode1Anims.isEmpty()) return;
@@ -247,7 +247,7 @@ void WI_Init()
         << Location( Vector2i(281, 136), de::Uri("Maps:E3M9", RC_NULL) );
 }
 
-void WI_Shutdown()
+void IN_Shutdown()
 {
     animStates.clear();
 }
@@ -567,7 +567,7 @@ static void animateBackground()
     }
 }
 
-void WI_End()
+void IN_End()
 {
     NetSv_Intermission(IMF_END, 0, 0);
 }
@@ -588,7 +588,7 @@ static void tickNoState()
     {
         if(IS_CLIENT) return;
 
-        WI_End();
+        IN_End();
         G_IntermissionDone();
     }
 }
@@ -1328,7 +1328,7 @@ static void maybeAdvanceState()
     }
 }
 
-void WI_Ticker()
+void IN_Ticker()
 {
     ++backgroundAnimCounter;
     animateBackground();
@@ -1341,7 +1341,7 @@ void WI_Ticker()
     case ILS_NONE:          tickNoState();     break;
 
     default:
-        DENG2_ASSERT(!"WI_Ticker: Unknown intermission state");
+        DENG2_ASSERT(!"IN_Ticker: Unknown intermission state");
         break;
     }
 }
@@ -1403,7 +1403,7 @@ static void loadData()
     }
 }
 
-void WI_Drawer()
+void IN_Drawer()
 {
     /// @todo Kludge: dj: Clearly a kludge but why?
     if(ILS_NONE == inState)
@@ -1444,7 +1444,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     inPlayerInfo = wbs->plyr;
 }
 
-void WI_Begin(wbstartstruct_t const &wbstartstruct)
+void IN_Begin(wbstartstruct_t const &wbstartstruct)
 {
     initVariables(wbstartstruct);
     loadData();
@@ -1504,7 +1504,7 @@ void WI_Begin(wbstartstruct_t const &wbstartstruct)
     }
 }
 
-void WI_SetState(interludestate_t st)
+void IN_SetState(interludestate_t st)
 {
     switch(st)
     {
@@ -1513,7 +1513,7 @@ void WI_SetState(interludestate_t st)
     case ILS_NONE:          initNoState();     break;
 
     default:
-        DENG2_ASSERT(!"WI_SetState: Unknown intermission state");
+        DENG2_ASSERT(!"IN_SetState: Unknown intermission state");
         break;
     }
 }
@@ -1523,7 +1523,7 @@ void IN_SkipToNext()
     advanceState = true;
 }
 
-void WI_ConsoleRegister()
+void IN_ConsoleRegister()
 {
     C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
     C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);

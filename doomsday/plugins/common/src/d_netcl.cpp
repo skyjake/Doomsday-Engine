@@ -674,12 +674,10 @@ void NetCl_Intermission(reader_s *msg)
 #  endif
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-        WI_Begin(wmInfo);
-#elif __JHERETIC__
-        IN_Begin(wmInfo);
-#elif __JHEXEN__
+#if __JHEXEN__
         IN_Begin();
+#else
+        IN_Begin(wmInfo);
 #endif
 #if __JDOOM64__
         S_StartMusic("dm2int", true);
@@ -695,17 +693,13 @@ void NetCl_Intermission(reader_s *msg)
 
     if(flags & IMF_END)
     {
-#if __JDOOM__ || __JDOOM64__
-        WI_End();
-#elif __JHERETIC__ || __JHEXEN__
         IN_End();
-#endif
     }
 
     if(flags & IMF_STATE)
     {
 #if __JDOOM__ || __JDOOM64__
-        WI_SetState(interludestate_t(Reader_ReadInt16(msg)));
+        IN_SetState(interludestate_t(Reader_ReadInt16(msg)));
 #elif __JHERETIC__ || __JHEXEN__
         IN_SetState(Reader_ReadInt16(msg));
 #endif

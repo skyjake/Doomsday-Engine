@@ -556,7 +556,7 @@ void G_CommonPreInit()
     GUI_Register();               // For the UI library.
     Hu_MsgRegister();             // For the game messages.
     ST_Register();                // For the hud/statusbar.
-    WI_ConsoleRegister();         // For the interlude/intermission.
+    IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
     FI_StackRegister();           // For the InFine lib.
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1880,11 +1880,7 @@ void G_Ticker(timespan_t ticLength)
             break;
 
         case GS_INTERMISSION:
-#if __JDOOM__ || __JDOOM64__
-            WI_Ticker();
-#else
             IN_Ticker();
-#endif
             break;
 
         default:
@@ -2313,12 +2309,10 @@ static int prepareIntermission(void * /*context*/)
 # endif
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    WI_Begin(wmInfo);
-#elif __JHERETIC__
-    IN_Begin(wmInfo);
-#else /* __JHEXEN__ */
+#if __JHEXEN__
     IN_Begin();
+#else
+    IN_Begin(wmInfo);
 #endif
     G_ChangeGameState(GS_INTERMISSION);
 

@@ -398,7 +398,7 @@ void D_PostInit()
 
     P_InitAmmoInfo();
     P_InitWeaponInfo();
-    WI_Init();
+    IN_Init();
 
     // Game parameters.
     ::monsterInfight = GetDefInt("AI|Infight", 0);
@@ -474,6 +474,6 @@ void D_PostInit()
 
 void D_Shutdown()
 {
-    WI_Shutdown();
+    IN_Shutdown();
     G_CommonShutdown();
 }
