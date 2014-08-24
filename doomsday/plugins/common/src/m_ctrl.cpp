@@ -242,6 +242,9 @@ static controlconfig_t controlConfig[] =
     { "Answer Yes", "message", 0, "messageyes", 0 },
     { "Answer No", "message", 0, "messageno", 0 },
     { "Cancel", "message", 0, "messagecancel", 0 },
+
+    { "Virtual Reality", 0, 0, 0, 0 },
+    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
 static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*name*/, dd_bool /*isInverse*/, void * /*data*/)
