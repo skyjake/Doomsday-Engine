@@ -515,7 +515,7 @@ Vector3d Rend_EyeOrigin()
     return vEyeOrigin;
 }
 
-Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
+Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
@@ -530,19 +530,23 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
     vEyeOrigin = vOrigin;
 
     OculusRift &ovr = vrCfg().oculusRift();
-    Matrix4f modelView;
-    Matrix4f headOffset;
-    Vector3f headPos;
-    if(vrCfg().mode() == VRConfig::OculusRift && ovr.isReady())
-    {
-        headPos = ovr.headPosition() * vrCfg().mapUnitsPerMeter();
-        headOffset = Matrix4f::translate(swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
-                                                 headPos, AxisNegX, AxisNegY, AxisZ));
+    bool const applyHead = (vrCfg().mode() == VRConfig::OculusRift && ovr.isReady());
 
-        vEyeOrigin = headOffset.inverse() * vEyeOrigin;
+    Matrix4f modelView;
+    Matrix4f headOrientation;
+    Matrix4f headOffset;
+
+    if(applyHead)
+    {
+        Vector3f headPos = swizzle(Matrix4f::rotate(bodyAngle, Vector3f(0, 1, 0)) *
+                                   ovr.headPosition() * vrCfg().mapUnitsPerMeter(),
+                                   AxisNegX, AxisNegY, AxisZ);
+        headOffset = Matrix4f::translate(headPos);
+
+        vEyeOrigin -= headPos;
     }
 
-    if(useAngles)
+    if(inWorldSpace)
     {
         float yaw   = vang;
         float pitch = vpitch;
@@ -556,19 +560,25 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
          * these values and is syncing with them independently (however, game has more
          * latency).
          */
-        if((vrCfg().mode() == VRConfig::OculusRift) && ovr.isReady())
+        if(applyHead)
         {
-            Vector3f const pry = ovr.headOrientation();
-
             // Use angles directly from the Rift for best response.
+            Vector3f const pry = ovr.headOrientation();
             roll  = -radianToDegree(pry[1]);
             pitch =  radianToDegree(pry[0]);
         }
 
-        modelView = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
-                    Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(yaw,   Vector3f(0, 1, 0)) *
-                    headOffset;
+        headOrientation = Matrix4f::rotate(roll,  Vector3f(0, 0, 1)) *
+                          Matrix4f::rotate(pitch, Vector3f(1, 0, 0)) *
+                          Matrix4f::rotate(yaw,   Vector3f(0, 1, 0));
+
+        modelView = headOrientation * headOffset;
+    }
+
+    if(applyHead)
+    {
+        // Apply the current eye offset to the eye origin.
+        vEyeOrigin -= headOrientation.inverse() * (ovr.eyeOffset() * vrCfg().mapUnitsPerMeter());
     }
 
     return (modelView *
@@ -576,13 +586,13 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles)
             Matrix4f::translate(-vOrigin));
 }
 
-void Rend_ModelViewMatrix(bool useAngles)
+void Rend_ModelViewMatrix(bool inWorldSpace)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, useAngles).values());
+    glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, inWorldSpace).values());
 }
 
 static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)

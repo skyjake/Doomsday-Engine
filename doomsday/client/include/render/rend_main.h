@@ -142,11 +142,12 @@ void Rend_RenderMap(de::Map &map);
 float Rend_FieldOfView();
 
 /**
- * @param useAngles  @c true= Apply viewer angle rotation.
+ * @param inWorldSpace  Apply viewer angles and head position to produce a transformation
+ *                      from world space to view space.
  */
-void Rend_ModelViewMatrix(bool useAngles = true);
+void Rend_ModelViewMatrix(bool inWorldSpace = true);
 
-de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool useAngles = true);
+de::Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace = true);
 
 de::Vector3d Rend_EyeOrigin();
 
