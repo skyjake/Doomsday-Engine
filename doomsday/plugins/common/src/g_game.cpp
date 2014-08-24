@@ -2952,10 +2952,7 @@ D_CMD(LeaveMap)
         return false;
     }
 
-    de::Uri newMapUri = COMMON_GAMESESSION->mapUriForNamedExit(exitName);
-    if(newMapUri.path().isEmpty()) return false;
-
-    G_SetGameActionMapCompleted(newMapUri);
+    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit(exitName));
     return true;
 }
 
