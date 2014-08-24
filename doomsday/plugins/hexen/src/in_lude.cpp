@@ -82,12 +82,6 @@ static int hubCount;
 static patchid_t dpTallyTop;
 static patchid_t dpTallyLeft;
 
-void WI_ConsoleRegister()
-{
-    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
-}
-
 void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
 {
 /*    wbs = wbstartstruct;
@@ -133,7 +127,7 @@ void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
     interTime        = 0;
 }
 
-void IN_Init()
+void IN_Begin()
 {
     DENG2_ASSERT(G_Ruleset_Deathmatch());
 
@@ -146,12 +140,12 @@ void IN_WaitStop()
 {
     if(!--cnt)
     {
-        IN_Stop();
+        IN_End();
         G_IntermissionDone();
     }
 }
 
-void IN_Stop()
+void IN_End()
 {
     NetSv_Intermission(IMF_END, 0, 0);
     unloadPics();
@@ -247,14 +241,6 @@ void IN_Ticker()
     }
 }
 
-void IN_SkipToNext()
-{
-    skipIntermission = 1;
-}
-
-/**
- * Check to see if any player hit a key.
- */
 static void CheckForSkip()
 {
     static bool triedToSkip;
@@ -462,4 +448,20 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
 
     FR_SetColorAndAlpha(1, 0.7f, 0.3f, 1);
     FR_DrawTextXY3(buf, x, y, ALIGN_TOP, DTF_NO_EFFECTS);
+}
+
+void IN_SetState(int stateNum)
+{
+    interState = stateNum;
+}
+
+void IN_SkipToNext()
+{
+    skipIntermission = 1;
+}
+
+void WI_ConsoleRegister()
+{
+    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
 }

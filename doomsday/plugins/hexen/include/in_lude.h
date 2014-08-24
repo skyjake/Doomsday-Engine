@@ -27,17 +27,42 @@
 
 #include "h2def.h"
 
-extern dd_bool intermission;
-extern int interState;
+/**
+ * Begin the intermission.
+ */
+void IN_Begin();
+
+/**
+ * End the current intermission.
+ */
+void IN_End();
+
+/**
+ * Process game tic for the intermission.
+ *
+ * @note Handles user input due to timing issues in netgames.
+ */
+void IN_Ticker();
+
+/**
+ * Draw the intermission.
+ */
+void IN_Drawer();
+
+/**
+ * Change the current intermission state.
+ */
+void IN_SetState(int stateNum /*interludestate_t st*/);
+
+//void IN_SetTime(int time);
+
+/**
+ * Skip to the next state in the intermission.
+ */
+void IN_SkipToNext();
 
 /// To be called to register the console commands and variables of this module.
 void WI_ConsoleRegister();
-
-void IN_Init();
-void IN_Stop();
-void IN_Ticker();
-void IN_Drawer();
-void IN_SkipToNext();
 
 #endif // __cplusplus
 #endif // LIBHEXEN_IN_LUDE_H
