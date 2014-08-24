@@ -607,23 +607,22 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteUInt16(msg, wmInfo.maxKills);
-        Writer_WriteUInt16(msg, wmInfo.maxItems);
-        Writer_WriteUInt16(msg, wmInfo.maxSecret);
-#endif
-#if __JDOOM__ || __JDOOM64__
+#  if __JDOOM__ || __JDOOM64__
+        Writer_WriteUInt16(msg, ::wmInfo.maxKills);
+        Writer_WriteUInt16(msg, ::wmInfo.maxItems);
+        Writer_WriteUInt16(msg, ::wmInfo.maxSecret);
+#  endif
         Uri_Write(reinterpret_cast<uri_s *>(&::wmInfo.nextMap), msg);
+#  if __JHEXEN__
+        Writer_WriteByte(msg, ::wmInfo.nextMapEntryPoint);
+#  else
         Uri_Write(reinterpret_cast<uri_s *>(&::wmInfo.currentMap), msg);
-#elif __JHEXEN__
-        Uri_Write(reinterpret_cast<uri_s *>(&::nextMapUri), msg);
-        Writer_WriteByte(msg, ::nextMapEntryPoint);
-#endif
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteByte(msg, wmInfo.didSecret);
-#endif
+#  endif
+#  if __JDOOM__ || __JDOOM64__
+        Writer_WriteByte(msg, ::wmInfo.didSecret);
+#  endif
     }
-#endif
+#  endif
 
     if(flags & IMF_STATE)
     {

@@ -207,7 +207,7 @@ static de::Uri getMapUriForWarpNumber(int warpNumber)
         DENG2_ASSERT(!"getMapUriForWarpNumber() called with warpNumber:0");
         return COMMON_GAMESESSION->mapUri(); // Current map URI.
     }
-    return TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), warpNumber - 1);
+    return TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), warpNumber);
 }
 
 dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)

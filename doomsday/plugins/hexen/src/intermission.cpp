@@ -127,7 +127,7 @@ void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
     interTime        = 0;
 }
 
-void IN_Begin()
+void IN_Begin(wbstartstruct_t const & /*wbstartstruct*/)
 {
     DENG2_ASSERT(G_Ruleset_Deathmatch());
 

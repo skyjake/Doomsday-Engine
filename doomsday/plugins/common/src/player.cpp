@@ -1209,6 +1209,117 @@ D_CMD(SpawnMobj)
     return true;
 }
 
+void Player_LeaveMap(player_t *player, dd_bool newHub)
+{
+    DENG2_ASSERT(player);
+    int const plrNum = player - players;
+#if !__JHEXEN__
+    DENG2_UNUSED(newHub);
+#endif
+
+    if(!player->plr->inGame) return;
+
+#if __JHEXEN__
+    // Remember if flying.
+    int const flightPower = player->powers[PT_FLIGHT];
+#endif
+
+#if __JHERETIC__
+    // Empty the inventory of excess items
+    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    {
+        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
+        uint count = P_InventoryCount(plrNum, type);
+
+        if(count)
+        {
+            if(type != IIT_FLY)
+            {
+                count--;
+            }
+
+            for(uint k = 0; k < count; ++k)
+            {
+                P_InventoryTake(plrNum, type, true);
+            }
+        }
+    }
+#endif
+
+#if __JHEXEN__
+    if(newHub)
+    {
+        uint count = P_InventoryCount(plrNum, IIT_FLY);
+        for(uint i = 0; i < count; ++i)
+        {
+            P_InventoryTake(plrNum, IIT_FLY, true);
+        }
+    }
+#endif
+
+    // Remove their powers.
+    player->update |= PSF_POWERS;
+    de::zap(player->powers);
+
+#if __JDOOM__
+    G_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
+#endif
+
+#if __JHEXEN__
+    if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
+    {
+        player->powers[PT_FLIGHT] = flightPower; // Restore flight.
+    }
+#endif
+
+    // Remove their keys.
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    player->update |= PSF_KEYS;
+    de::zap(player->keys);
+#else
+    if(!COMMON_GAMESESSION->rules().deathmatch && newHub)
+    {
+        player->keys = 0;
+    }
+#endif
+
+    // Misc
+#if __JHERETIC__
+    player->rain1 = nullptr;
+    player->rain2 = nullptr;
+#endif
+
+    // Un-morph?
+#if __JHERETIC__ || __JHEXEN__
+    player->update |= PSF_MORPH_TIME;
+    if(player->morphTics)
+    {
+        player->readyWeapon = weapontype_t(player->plr->mo->special1); // Restore weapon.
+        player->morphTics = 0;
+    }
+#endif
+
+    player->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
+
+    player->plr->lookDir       = 0;
+    player->plr->extraLight    = 0; // Cancel gun flashes.
+    player->plr->fixedColorMap = 0; // Cancel IR goggles.
+
+    // Clear filter.
+    player->plr->flags &= ~DDPF_VIEW_FILTER;
+    player->damageCount = 0; // No palette changes.
+    player->bonusCount  = 0;
+
+#if __JHEXEN__
+    player->poisonCount = 0;
+#endif
+
+    ST_LogEmpty(plrNum);
+
+    // Update this client's stats.
+    NetSv_SendPlayerState(plrNum, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
+}
+
 dd_bool Player_WaitingForReborn(player_t const *plr)
 {
     DENG2_ASSERT(plr != 0);

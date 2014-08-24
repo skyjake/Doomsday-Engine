@@ -656,29 +656,25 @@ void NetCl_Intermission(reader_s *msg)
         /// @todo jHeretic does not transmit the intermission info!
 #if !defined(__JHERETIC__)
 #  if __JDOOM__ || __JDOOM64__
-        wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
-        wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
+        ::wmInfo.maxKills   = de::max<int>(1, Reader_ReadUInt16(msg));
+        ::wmInfo.maxItems   = de::max<int>(1, Reader_ReadUInt16(msg));
+        ::wmInfo.maxSecret  = de::max<int>(1, Reader_ReadUInt16(msg));
 #  endif
+        Uri_Read(reinterpret_cast<uri_s *>(&::wmInfo.nextMap), msg);
 #  if __JHEXEN__
-        Uri_Read(reinterpret_cast<uri_s *>(&::nextMapUri), msg);
-        ::nextMapEntryPoint = Reader_ReadByte(msg);
+        ::wmInfo.nextMapEntryPoint = Reader_ReadByte(msg);
 #  else
-        Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.nextMap), msg);
-        Uri_Read(reinterpret_cast<uri_s *>(&wmInfo.currentMap), msg);
+        Uri_Read(reinterpret_cast<uri_s *>(&::wmInfo.currentMap), msg);
 #  endif
 #  if __JDOOM__ || __JDOOM64__
-        wmInfo.didSecret  = Reader_ReadByte(msg);
+        ::wmInfo.didSecret  = Reader_ReadByte(msg);
 
         G_PrepareWIData();
 #  endif
 #endif
 
-#if __JHEXEN__
-        IN_Begin();
-#else
-        IN_Begin(wmInfo);
-#endif
+        IN_Begin(::wmInfo);
+
 #if __JDOOM64__
         S_StartMusic("dm2int", true);
 #elif __JDOOM__

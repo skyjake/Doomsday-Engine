@@ -110,8 +110,8 @@ int Hook_DemoStop(int hookType, int val, void *parm);
 
 game_config_t cfg; // The global cfg.
 
-de::Uri nextMapUri;
-uint nextMapEntryPoint;
+static de::Uri nextMapUri;
+static uint nextMapEntryPoint;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 bool secretExit;
@@ -129,9 +129,7 @@ dd_bool briefDisabled;
 dd_bool precache = true; // If @c true, load all graphics at start.
 dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-wbstartstruct_t wmInfo; // Params for world map / intermission.
-#endif
+wbstartstruct_t wmInfo; // Intermission parameters.
 
 // Game Action Variables:
 static GameRuleset gaNewSessionRules;
@@ -443,14 +441,14 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 #endif
 
     if(IS_CLIENT) return;
-    if(cyclingMaps && mapCycleNoExit) return;
+    if(::cyclingMaps && ::mapCycleNoExit) return;
 
 #if __JHEXEN__
-    if((gameMode == hexen_betademo || gameMode == hexen_demo) &&
-       !(::nextMapUri.path() == "MAP01" ||
-         ::nextMapUri.path() == "MAP02" ||
-         ::nextMapUri.path() == "MAP03" ||
-         ::nextMapUri.path() == "MAP04"))
+    if((::gameMode == hexen_betademo || ::gameMode == hexen_demo) &&
+       !(nextMapUri.path() == "MAP01" ||
+         nextMapUri.path() == "MAP02" ||
+         nextMapUri.path() == "MAP03" ||
+         nextMapUri.path() == "MAP04"))
     {
         // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
@@ -466,7 +464,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
-    if(::secretExit && (gameModeBits & GM_ANY_DOOM2))
+    if(::secretExit && (::gameModeBits & GM_ANY_DOOM2))
     {
         if(!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
         {
@@ -1579,7 +1577,6 @@ static void runGameAction()
         case GA_LOADSESSION:
             COMMON_GAMESESSION->end();
 
-            // Attempt to load the saved game session.
             try
             {
                 SaveSlot const &sslot = G_SaveSlots()[::gaLoadSessionSlot];
@@ -1644,11 +1641,22 @@ static void runGameAction()
             COMMON_GAMESESSION->reloadMap();
             break;
 
-        case GA_MAPCOMPLETED:
+        case GA_MAPCOMPLETED: {
+            // Leaving the current hub?
+            dd_bool newHub = true;
+#if __JHEXEN__
+            if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
+            {
+                defn::Episode epsd(*episodeDef);
+                Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+                newHub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
+            }
+#endif
+
             for(int i = 0; i < MAXPLAYERS; ++i)
             {
-                ST_CloseAll(i, true/*fast*/); // hide any HUDs left open
-                G_PlayerLeaveMap(i);          // take away cards and stuff
+                ST_CloseAll(i, true/*fast*/);         // hide any HUDs left open
+                Player_LeaveMap(&players[i], newHub); // take away cards and stuff
             }
 
 #if __JHEXEN__
@@ -1687,7 +1695,7 @@ static void runGameAction()
             {
                 G_IntermissionDone();
             }
-            break;
+            break; }
 
         case GA_ENDDEBRIEFING:
             ::briefDisabled = true;
@@ -1913,124 +1921,6 @@ void G_Ticker(timespan_t ticLength)
     oldGameState = gameState;
 }
 
-void G_PlayerLeaveMap(int player)
-{
-    player_t *p = &players[player];
-
-    if(!p->plr->inGame) return;
-
-#if __JHEXEN__
-    // Leaving the current hub?
-    bool newHub = true;
-    if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
-    {
-        defn::Episode epsd(*episodeDef);
-        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
-        newHub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
-    }
-#endif
-
-#if __JHEXEN__
-    // Remember if flying.
-    int flightPower = p->powers[PT_FLIGHT];
-#endif
-
-#if __JHERETIC__
-    // Empty the inventory of excess items
-    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
-    {
-        inventoryitemtype_t type = inventoryitemtype_t(IIT_FIRST + i);
-        uint count = P_InventoryCount(player, type);
-
-        if(count)
-        {
-            if(type != IIT_FLY)
-            {
-                count--;
-            }
-
-            for(uint j = 0; j < count; ++j)
-            {
-                P_InventoryTake(player, type, true);
-            }
-        }
-    }
-#endif
-
-#if __JHEXEN__
-    if(newHub)
-    {
-        uint count = P_InventoryCount(player, IIT_FLY);
-        for(uint i = 0; i < count; ++i)
-        {
-            P_InventoryTake(player, IIT_FLY, true);
-        }
-    }
-#endif
-
-    // Remove their powers.
-    p->update |= PSF_POWERS;
-    de::zap(p->powers);
-
-#if __JDOOM__
-    G_UpdateSpecialFilterWithTimeDelta(player, 0 /* instantly */);
-#endif
-
-#if __JHEXEN__
-    if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
-    {
-        p->powers[PT_FLIGHT] = flightPower; // Restore flight.
-    }
-#endif
-
-    // Remove their keys.
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    p->update |= PSF_KEYS;
-    de::zap(p->keys);
-#else
-    if(!COMMON_GAMESESSION->rules().deathmatch && newHub)
-    {
-        p->keys = 0;
-    }
-#endif
-
-    // Misc
-#if __JHERETIC__
-    p->rain1 = NULL;
-    p->rain2 = NULL;
-#endif
-
-    // Un-morph?
-#if __JHERETIC__ || __JHEXEN__
-    p->update |= PSF_MORPH_TIME;
-    if(p->morphTics)
-    {
-        p->readyWeapon = weapontype_t(p->plr->mo->special1); // Restore weapon.
-        p->morphTics = 0;
-    }
-#endif
-
-    p->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
-
-    p->plr->lookDir       = 0;
-    p->plr->extraLight    = 0; // Cancel gun flashes.
-    p->plr->fixedColorMap = 0; // Cancel IR goggles.
-
-    // Clear filter.
-    p->plr->flags &= ~DDPF_VIEW_FILTER;
-    p->damageCount = 0; // No palette changes.
-    p->bonusCount  = 0;
-
-#if __JHEXEN__
-    p->poisonCount = 0;
-#endif
-
-    ST_LogEmpty(p - players);
-
-    // Update this client's stats.
-    NetSv_SendPlayerState(player, DDSP_ALL_PLAYERS, PSF_FRAGS | PSF_COUNTERS, true);
-}
-
 /**
  * Safely clears the player data structures.
  */
@@ -2254,73 +2144,26 @@ byte G_Ruleset_RespawnMonsters()
 }
 #endif
 
-/**
- * @return  @c true iff the game has been completed.
- */
-dd_bool G_IfVictory()
-{
-    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
-#if __JDOOM64__
-    if(mapUri.path() == "MAP28")
-    {
-        return true;
-    }
-#elif __JDOOM__
-    if(gameMode == doom_chex)
-    {
-        if(mapUri.path() == "MAP05")
-        {
-            return true;
-        }
-    }
-    else if((gameModeBits & GM_ANY_DOOM) &&
-            (mapUri.path() == "E1M8" ||
-             mapUri.path() == "E2M8" ||
-             mapUri.path() == "E3M8" ||
-             mapUri.path() == "E4M8"))
-    {
-        return true;
-    }
-#elif __JHERETIC__
-    if(mapUri.path() == "E1M8" ||
-       mapUri.path() == "E2M8" ||
-       mapUri.path() == "E3M8" ||
-       mapUri.path() == "E4M8" ||
-       mapUri.path() == "E5M8")
-    {
-        return true;
-    }
-#elif __JHEXEN__
-    DENG2_UNUSED(mapUri);
-    if(nextMapUri.path().isEmpty())
-    {
-        return true;
-    }
-#endif
-    return false;
-}
-
 static int prepareIntermission(void * /*context*/)
 {
+    ::wmInfo.nextMap           = ::nextMapUri;
+#if __JHEXEN__
+    ::wmInfo.nextMapEntryPoint = ::nextMapEntryPoint;
+#endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    wmInfo.currentMap = COMMON_GAMESESSION->mapUri();
-    wmInfo.nextMap    = nextMapUri;
-    wmInfo.didSecret  = players[CONSOLEPLAYER].didSecret;
+    ::wmInfo.currentMap        = COMMON_GAMESESSION->mapUri();
+    ::wmInfo.didSecret         = ::players[CONSOLEPLAYER].didSecret;
 
 # if __JDOOM__ || __JDOOM64__
-    wmInfo.maxKills   = de::max(1, totalKills);
-    wmInfo.maxItems   = de::max(1, totalItems);
-    wmInfo.maxSecret  = de::max(1, totalSecret);
+    ::wmInfo.maxKills          = de::max(1, ::totalKills);
+    ::wmInfo.maxItems          = de::max(1, ::totalItems);
+    ::wmInfo.maxSecret         = de::max(1, ::totalSecret);
 
     G_PrepareWIData();
 # endif
 #endif
 
-#if __JHEXEN__
-    IN_Begin();
-#else
-    IN_Begin(wmInfo);
-#endif
+    IN_Begin(::wmInfo);
     G_ChangeGameState(GS_INTERMISSION);
 
     BusyMode_WorkerEnd();
@@ -2330,7 +2173,8 @@ static int prepareIntermission(void * /*context*/)
 #if __JDOOM__ || __JDOOM64__
 void G_PrepareWIData()
 {
-    wbstartstruct_t *info = &wmInfo;
+    wbstartstruct_t *info = &::wmInfo;
+
     info->maxFrags = 0;
 
     // See if there is a par time definition.
@@ -2347,7 +2191,7 @@ void G_PrepareWIData()
     info->pNum = CONSOLEPLAYER;
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *p              = &players[i];
+        player_t const *p        = &players[i];
         wbplayerstruct_t *pStats = &info->plyr[i];
 
         pStats->inGame = p->plr->inGame;
@@ -2355,7 +2199,7 @@ void G_PrepareWIData()
         pStats->items  = p->itemCount;
         pStats->secret = p->secretCount;
         pStats->time   = mapTime;
-        memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
+        std::memcpy(pStats->frags, p->frags, sizeof(pStats->frags));
     }
 }
 #endif
@@ -2411,11 +2255,11 @@ static Record const *finaleDebriefing()
     if(::briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GameState() == GS_MAP)
+    if(::cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
         defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
         Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
-        if(currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
+        if(!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
         }
@@ -2459,7 +2303,7 @@ void G_IntermissionDone()
     FI_StackClear();
 
     // Has the player completed the game?
-    if(G_IfVictory())
+    if(::nextMapUri.isEmpty())
     {
         // Victorious!
         G_SetGameAction(GA_VICTORY);

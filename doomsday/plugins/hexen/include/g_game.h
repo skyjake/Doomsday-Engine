@@ -34,7 +34,7 @@
 
 #include "h2def.h"
 #include "gamerules.h"
-#include "p_mobj.h"
+#include "intermission.h"
 #include "x_player.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
@@ -46,8 +46,7 @@ DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
 
-extern de::Uri nextMapUri;
-extern uint nextMapEntryPoint;
+extern wbstartstruct_t wmInfo;
 
 extern "C" {
 #endif

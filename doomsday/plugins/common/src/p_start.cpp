@@ -316,7 +316,7 @@ playerstart_t const *P_GetPlayerStart(uint entryPoint, int pnum, dd_bool deathma
     {
         playerstart_t const *start = &playerStarts[i];
 
-        if(start->entryPoint == ::nextMapEntryPoint && start->plrNum - 1 == pnum)
+        if(start->entryPoint == COMMON_GAMESESSION->mapEntryPoint() && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;

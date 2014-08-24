@@ -988,11 +988,20 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    ::nextMapUri.clear();
-
+    ::wmInfo.nextMap.clear();
+#if __JHEXEN__
+    ::wmInfo.nextMapEntryPoint = 0;
+#endif
 #if __JDOOM__ || __JDOOM64__
     ::wmInfo.maxFrags = 0;
     ::wmInfo.parTime = -1;
+#endif
+
+#if !__JHEXEN__
+    if(!IS_CLIENT)
+    {
+        ::totalKills = ::totalItems = ::totalSecret = 0;
+    }
 #endif
 
 #if __JDOOM__
@@ -1012,13 +1021,6 @@ void P_ResetWorldState()
 #endif
 
     P_PurgeDeferredSpawns();
-
-    if(!IS_CLIENT)
-    {
-#if !__JHEXEN__
-        ::totalKills = ::totalItems = ::totalSecret = 0;
-#endif
-    }
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {

@@ -50,8 +50,6 @@ DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
 
-extern de::Uri nextMapUri;
-extern uint nextMapEntryPoint;
 extern bool secretExit;
 
 extern wbstartstruct_t wmInfo;

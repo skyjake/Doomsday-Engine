@@ -981,11 +981,6 @@ de::Uri GameSession::mapUriForNamedExit(String name)
                         << chosenExitId << name;
             }
         }
-        else
-        {
-            LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no exits")
-                    << d->episodeId << d->mapUri;
-        }
 
         if(chosenExit)
         {

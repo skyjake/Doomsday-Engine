@@ -53,7 +53,6 @@ Episode {
   
   Map {
     Id = "E1M8";
-    Exit { Id = "secret"; Target Map = "E1M9"; }
   }
   
   Map {
@@ -112,7 +111,6 @@ Episode {
 
   Map {
     Id = "E2M8";
-    Exit { Id = "secret"; Target Map = "E2M9"; }
   }
 
   Map {
@@ -171,7 +169,6 @@ Episode {
 
   Map {
     Id = "E3M8";
-    Exit { Id = "secret"; Target Map = "E3M9"; }
   }
 
   Map {
@@ -233,7 +230,6 @@ Episode {
 
   Map {
     Id = "E4M8";
-    Exit { Id = "secret"; Target Map = "E4M9"; }
   }
 
   Map {
@@ -292,7 +288,6 @@ Episode {
 
   Map {
     Id = "E5M8";
-    Exit { Id = "secret"; Target Map = "E5M9"; }
   }
 
   Map {
@@ -321,6 +316,5 @@ Episode {
 
   Map {
     Id = "E6M3";
-    Exit { Id = "next"; Target Map = "E6M1"; }
   }
 }

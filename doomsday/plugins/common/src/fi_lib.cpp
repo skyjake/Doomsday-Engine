@@ -84,7 +84,7 @@ static void initStateConditions(fi_state_t &s)
 #if __JHEXEN__
     s.conditions.secret = false;
 #else
-    s.conditions.secret = secretExit;
+    s.conditions.secret = ::secretExit;
 #endif
 
 #if __JHEXEN__
@@ -93,7 +93,7 @@ static void initStateConditions(fi_state_t &s)
     {
         defn::Episode epsd(*episodeDef);
         Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
-        s.conditions.leave_hub = (currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
+        s.conditions.leave_hub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::wmInfo.nextMap.compose()));
     }
     LOGDEV_SCR_VERBOSE("Infine state condition: leave_hub=%i") << s.conditions.leave_hub;
 #endif

@@ -137,16 +137,6 @@ dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char co
 void G_BeginMap(void);
 
 /**
- * Called when a player leaves a map.
- *
- * Jobs include; striping keys, inventory and powers from the player and configuring other
- * player-specific properties ready for the next map.
- *
- * @param player  Id of the player to configure.
- */
-void G_PlayerLeaveMap(int player);
-
-/**
  * Determines whether an intermission should be scheduled (if any) when the players leave the
  * @em current map.
  */
