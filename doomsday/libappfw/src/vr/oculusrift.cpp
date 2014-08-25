@@ -267,7 +267,11 @@ DENG2_PIMPL(OculusRift)
                      << render[i].ViewAdjust.z;
         }*/
 
+#ifdef WIN32
+        ovrHmd_AttachToWindow(hmd, (HWND) window->nativeHandle(), NULL, NULL);
+#else
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
+#endif
 
         /*
         float clearColor[4] = { 0.0f, 0.5f, 1.0f, 0.0f };
