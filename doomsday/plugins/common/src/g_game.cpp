@@ -382,7 +382,7 @@ void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
     G_SetGameAction(GA_NEWSESSION);
 }
 
-bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription)
+bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 {
     if(!COMMON_GAMESESSION->savingPossible()) return false;
     if(!G_SaveSlots().has(slotId)) return false;
@@ -406,7 +406,7 @@ bool G_SetGameActionSaveSession(de::String slotId, de::String *userDescription)
     return true;
 }
 
-bool G_SetGameActionLoadSession(de::String slotId)
+bool G_SetGameActionLoadSession(String slotId)
 {
     if(!COMMON_GAMESESSION->loadingPossible()) return false;
 
@@ -496,7 +496,7 @@ static void initSaveSlots()
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->add(de::String::number(i), true, de::String(SAVEGAMENAME"%1").arg(i),
+        sslots->add(String::number(i), true, String(SAVEGAMENAME"%1").arg(i),
                     gameMenuSaveSlotWidgetIds[i]);
     }
 }
@@ -519,17 +519,17 @@ void G_CommonPreInit()
     // Setup the players.
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *pl = players + i;
+        player_t *pl = &players[i];
 
         pl->plr = DD_GetPlayer(i);
-        pl->plr->extraData = (void*) &players[i];
+        pl->plr->extraData = (void *) pl;
 
         /// @todo Only necessary because the engine does not yet unload game plugins when they
         /// are not in use; thus a game change may leave these pointers dangling.
         for(int k = 0; k < NUMPSPRITES; ++k)
         {
-            pl->pSprites[k].state = NULL;
-            pl->plr->pSprites[k].statePtr = NULL;
+            pl->pSprites[k].state = nullptr;
+            pl->plr->pSprites[k].statePtr = nullptr;
         }
     }
 
@@ -565,10 +565,10 @@ void G_CommonPreInit()
 
 #if __JHEXEN__
 /**
- * \todo all this swapping colors around is rather silly, why not simply
+ * @todo all this swapping colors around is rather silly, why not simply
  * reorder the translation tables at load time?
  */
-void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
+void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
 {
     int mapped;
 
@@ -581,20 +581,24 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
 
     if(gameMode == hexen_v10)
     {
-        const int mapping[3][4] = {
+        int const mapping[3][4] = {
             /* Fighter */ { 1, 2, 0, 3 },
             /* Cleric */  { 1, 0, 2, 3 },
             /* Mage */    { 1, 0, 2, 3 }
         };
+        DENG2_ASSERT(plrClass >= 0 && plrClass < 3);
+        DENG2_ASSERT(plrColor >= 0 && plrColor < 4);
         mapped = mapping[plrClass][plrColor];
     }
     else
     {
-        const int mapping[3][8] = {
+        int const mapping[3][8] = {
             /* Fighter */ { 1, 2, 0, 3, 4, 5, 6, 7 },
             /* Cleric */  { 1, 0, 2, 3, 4, 5, 6, 7 },
             /* Mage */    { 1, 0, 2, 3, 4, 5, 6, 7 }
         };
+        DENG2_ASSERT(plrClass >= 0 && plrClass < 3);
+        DENG2_ASSERT(plrColor >= 0 && plrColor < 8);
         mapped = mapping[plrClass][plrColor];
     }
 
@@ -602,8 +606,9 @@ void R_GetTranslation(int plrClass, int plrColor, int* tclass, int* tmap)
     *tmap   = mapped;
 }
 
-void Mobj_UpdateTranslationClassAndMap(mobj_t* mo)
+void Mobj_UpdateTranslationClassAndMap(mobj_t *mo)
 {
+    DENG2_ASSERT(mo);
     if(mo->player)
     {
         int plrColor = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
@@ -612,7 +617,7 @@ void Mobj_UpdateTranslationClassAndMap(mobj_t* mo)
     else if(mo->flags & MF_TRANSLATION)
     {
         mo->tclass = mo->special1;
-        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+        mo->tmap   = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
     }
     else
     {
@@ -664,8 +669,8 @@ void R_LoadColorPalettes()
             }
             xlatNum++;
 
-            App_Log(DE2_DEV_RES_MSG, "Reading translation table '%s' as tclass=%i tmap=%i",
-                    lumpName.toUtf8().constData(), cl, i);
+            LOGDEV_RES_MSG("Reading translation table '%s' as tclass=%i tmap=%i")
+                    << lumpName << cl << i;
 
             lumpName += ".lmp";
             if(CentralLumpIndex().contains(lumpName))
@@ -898,7 +903,7 @@ void R_InitRefresh()
 {
     if(IS_DEDICATED) return;
 
-    App_Log(DE2_RES_VERBOSE, "Loading data for refresh...");
+    LOG_RES_VERBOSE("Loading data for refresh...");
 
     // Setup the view border.
     cfg.screenBlocks = cfg.setBlocks;
@@ -943,17 +948,17 @@ void R_InitHud()
     Hu_LoadData();
 
 #if __JHERETIC__ || __JHEXEN__
-    App_Log(DE2_LOG_VERBOSE, "Initializing inventory...");
+    LOG_VERBOSE("Initializing inventory...");
     Hu_InventoryInit();
 #endif
 
-    App_Log(DE2_LOG_VERBOSE, "Initializing statusbar...");
+    LOG_VERBOSE("Initializing statusbar...");
     ST_Init();
 
-    App_Log(DE2_LOG_VERBOSE, "Initializing menu...");
+    LOG_VERBOSE("Initializing menu...");
     Hu_MenuInit();
 
-    App_Log(DE2_LOG_VERBOSE, "Initializing status-message/question system...");
+    LOG_VERBOSE("Initializing status-message/question system...");
     Hu_MsgInit();
 }
 
@@ -977,10 +982,10 @@ void G_CommonPostInit()
     XG_ReadTypes();
 #endif
 
-    App_Log(DE2_LOG_VERBOSE, "Initializing playsim...");
+    LOG_VERBOSE("Initializing playsim...");
     P_Init();
 
-    App_Log(DE2_LOG_VERBOSE, "Initializing head-up displays...");
+    LOG_VERBOSE("Initializing head-up displays...");
     R_InitHud();
 
     initSaveSlots();
@@ -1205,25 +1210,23 @@ int G_UIResponder(event_t *ev)
 
 void G_ChangeGameState(gamestate_t state)
 {
-    dd_bool gameUIActive = false;
-    dd_bool gameActive = true;
-
     if(G_QuitInProgress()) return;
 
     if(state < 0 || state >= NUM_GAME_STATES)
     {
-        DENG_ASSERT(!"G_ChangeGameState: Invalid state");
+        DENG2_ASSERT(!"G_ChangeGameState: Invalid state");
         return;
     }
 
     if(gameState != state)
     {
-        App_Log(DE2_DEV_NOTE, "Game state changed to %s", getGameStateStr(state));
-
         gameState = state;
+        LOGDEV_NOTE("Game state changed to %s") << getGameStateStr(state);
     }
 
     // Update the state of the gameui binding context.
+    bool gameUIActive = false;
+    bool gameActive   = true;
     switch(gameState)
     {
     case GS_FINALE:
@@ -1231,11 +1234,13 @@ void G_ChangeGameState(gamestate_t state)
     case GS_WAITING:
     case GS_INFINE:
         gameActive = false;
+        // Fall through.
+
     case GS_INTERMISSION:
         gameUIActive = true;
         break;
-    default:
-        break;
+
+    default: break;
     }
 
     if(!IS_DEDICATED)
@@ -1291,7 +1296,7 @@ void G_StartHelp()
  */
 static void printMapBanner(String episodeId, de::Uri const &mapUri)
 {
-    App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
+    LOG_MSG(DE2_ESC(R));
 
     String const title = G_MapTitle(mapUri);
     if(!title.isEmpty())
@@ -1302,28 +1307,24 @@ static void printMapBanner(String episodeId, de::Uri const &mapUri)
             mgNodeDef = defn::Episode(*episode).tryFindMapGraphNode(mapUri.compose());
         }
 
-        String text = String("Map: " DE2_ESC(i) DE2_ESC(b) "%1" DE2_ESC(.) " (%2%3)")
-                          .arg(title)
-                          .arg(mapUri.asText())
-                          .arg(mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
-        App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
+        LOG_NOTE("Map: " DE2_ESC(i) DE2_ESC(b) "%s" DE2_ESC(.) " (%s%s)")
+                << title << mapUri
+                << (mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
     }
 
     String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose().toUtf8().constData()));
     if(!author.isEmpty())
     {
-        String text = String("Author: " DE2_ESC(i)) + author;
-        App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
+        LOG_NOTE("Author: " DE2_ESC(i)) << author;
     }
 
     String const episodeTitle = G_EpisodeTitle(episodeId);
     if(!episodeTitle.isEmpty())
     {
-        String text = String("Episode: " DE2_ESC(i)) + episodeTitle;
-        App_Log(DE2_LOG_NOTE, "%s", text.toUtf8().constData());
+        LOG_NOTE("Episode: " DE2_ESC(i)) << episodeTitle;
     }
 
-    App_Log(DE2_LOG_MESSAGE, DE2_ESC(R));
+    LOG_MSG(DE2_ESC(R));
 }
 
 void G_BeginMap()
@@ -1386,6 +1387,8 @@ int G_Responder(event_t *ev)
 
 int G_PrivilegedResponder(event_t *ev)
 {
+    DENG2_ASSERT(ev);
+
     // Ignore all events once shutdown has begun.
     if(G_QuitInProgress()) return false;
 
@@ -1556,6 +1559,22 @@ static bool intermissionEnabled()
     }
 #endif
     return true;
+}
+
+/**
+ * Returns the unique identifier of the music to play during the intermission.
+ */
+static String intermissionMusic()
+{
+#if __JDOOM64__
+    return "dm2int";
+#elif __JDOOM__
+    return (::gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter";
+#elif __JHERETIC__
+    return "intr";
+#elif __JHEXEN__
+    return "hub";
+#endif
 }
 
 #if __JDOOM__ || __JDOOM64__
@@ -1771,21 +1790,12 @@ static void runGameAction()
                 }
 #endif
 
-#if __JDOOM64__
-                S_StartMusic("dm2int", true);
-#elif __JDOOM__
-                S_StartMusic((::gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
-#elif __JHERETIC__
-                S_StartMusic("intr", true);
-#elif __JHEXEN__
-                S_StartMusic("hub", true);
-#endif
+                S_StartMusic(intermissionMusic().toUtf8().constData(), true);
                 S_PauseMusic(true);
 
-                BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, NULL);
+                BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, nullptr);
 #if __JHERETIC__
-                // @todo is this necessary at this time?
-                NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
+                NetSv_SendGameState(0, DDSP_ALL_PLAYERS); // @todo necessary at this time?
 #endif
                 NetSv_Intermission(IMF_BEGIN, 0, 0);
 
@@ -1905,7 +1915,7 @@ static void rebornPlayers()
                 }
 
                 // Let's get rid of the mobj.
-                App_Log(DE2_DEV_MAP_MSG, "rebornPlayers: Removing player %i's mobj", i);
+                LOGDEV_MAP_MSG("rebornPlayers: Removing player %i's mobj") << i;
 
                 P_MobjRemove(plmo, true);
                 ddplr->mo = 0;
@@ -2015,7 +2025,9 @@ void G_Ticker(timespan_t ticLength)
 
         // Servers will have to update player information and do such stuff.
         if(!IS_CLIENT)
+        {
             NetSv_Ticker();
+        }
     }
 
     oldGameState = gameState;
@@ -2026,18 +2038,18 @@ void G_Ticker(timespan_t ticLength)
  */
 static void clearPlayer(player_t *p)
 {
-    DENG2_ASSERT(p != 0);
+    DENG2_ASSERT(p);
 
     player_t playerCopy;
     ddplayer_t ddPlayerCopy;
 
     // Take a backup of the old data.
-    memcpy(&playerCopy, p, sizeof(*p));
-    memcpy(&ddPlayerCopy, p->plr, sizeof(*p->plr));
+    std::memcpy(&playerCopy, p, sizeof(*p));
+    std::memcpy(&ddPlayerCopy, p->plr, sizeof(*p->plr));
 
     // Clear everything.
-    memset(p->plr, 0, sizeof(*p->plr));
-    memset(p, 0, sizeof(*p));
+    de::zapPtr(p->plr);
+    de::zapPtr(p);
 
     // Restore important data:
 
@@ -2054,14 +2066,14 @@ static void clearPlayer(player_t *p)
 
     // Restore the inGame status.
     p->plr->inGame = ddPlayerCopy.inGame;
-    p->plr->flags = ddPlayerCopy.flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
+    p->plr->flags  = ddPlayerCopy.flags & ~(DDPF_INTERYAW | DDPF_INTERPITCH);
 
     // Don't clear the start spot.
     p->startSpot = playerCopy.startSpot;
 
     // Restore counters.
-    memcpy(&p->plr->fixCounter, &ddPlayerCopy.fixCounter, sizeof(ddPlayerCopy.fixCounter));
-    memcpy(&p->plr->fixAcked,   &ddPlayerCopy.fixAcked,   sizeof(ddPlayerCopy.fixAcked));
+    std::memcpy(&p->plr->fixCounter, &ddPlayerCopy.fixCounter, sizeof(ddPlayerCopy.fixCounter));
+    std::memcpy(&p->plr->fixAcked,   &ddPlayerCopy.fixAcked,   sizeof(ddPlayerCopy.fixAcked));
 
     p->plr->fixCounter.angles++;
     p->plr->fixCounter.origin++;
@@ -2077,14 +2089,14 @@ void G_PlayerReborn(int player)
     if(player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
-    App_Log(DE2_DEV_MAP_NOTE, "G_PlayerReborn: reseting player %i", player);
+    LOGDEV_MAP_NOTE("G_PlayerReborn: reseting player %i") << player;
 
     player_t *p = &players[player];
 
     int frags[MAXPLAYERS];
-    DENG_ASSERT(sizeof(p->frags) == sizeof(frags));
+    DENG2_ASSERT(sizeof(p->frags) == sizeof(frags));
+    std::memcpy(frags, p->frags, sizeof(frags));
 
-    memcpy(frags, p->frags, sizeof(frags));
     int killcount    = p->killCount;
     int itemcount    = p->itemCount;
     int secretcount  = p->secretCount;
@@ -2104,7 +2116,7 @@ void G_PlayerReborn(int player)
     p->startSpot = spot;
 #endif
 
-    memcpy(p->frags, frags, sizeof(p->frags));
+    std::memcpy(p->frags, frags, sizeof(p->frags));
     p->killCount   = killcount;
     p->itemCount   = itemcount;
     p->secretCount = secretcount;
@@ -2154,10 +2166,10 @@ void G_PlayerReborn(int player)
         p->didSecret = true;
     }
 
-#ifdef _DEBUG
-    for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
+#ifdef DENG2_DEBUG
+    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        App_Log(DE2_DEV_MAP_MSG, "Player %i owns wpn %i: %i", player, k, p->weapons[k].owned);
+        LOGDEV_MAP_MSG("Player %i owns wpn %i: %i") << player << i << p->weapons[i].owned;
     }
 #endif
 
@@ -2387,19 +2399,19 @@ AutoStr *G_CurrentMapUriPath()
 
 de::Uri G_ComposeMapUri(uint episode, uint map)
 {
-    de::String mapId;
+    String mapId;
 #if __JDOOM64__
-    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #elif __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
-        mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     else
-        mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+        mapId = String("e%1m%2").arg(episode+1).arg(map+1);
 #elif  __JHERETIC__
-    mapId = de::String("e%1m%2").arg(episode+1).arg(map+1);
+    mapId = String("e%1m%2").arg(episode+1).arg(map+1);
 #else
-    mapId = de::String("map%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #endif
     return de::Uri("Maps", mapId);
@@ -2592,7 +2604,7 @@ void G_QuitGame()
 #endif
 
     Con_Open(false);
-    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, NULL);
+    Hu_MsgStart(MSG_YESNO, endString, quitGameConfirmed, 0, nullptr);
 }
 
 D_CMD(OpenLoadMenu)
@@ -2630,7 +2642,7 @@ D_CMD(EndSession)
 
     if(IS_NETGAME && IS_SERVER)
     {
-        App_Log(DE2_NET_ERROR, "Cannot end a networked game session. Stop the server instead");
+        LOG_NET_ERROR("Cannot end a networked game session. Stop the server instead");
         return false;
     }
 
@@ -2638,17 +2650,17 @@ D_CMD(EndSession)
     {
         if(IS_NETGAME && IS_CLIENT)
         {
-            App_Log(DE2_NET_ERROR, "%s", ENDNOGAME);
+            LOG_NET_ERROR("%s") << ENDNOGAME;
         }
         else
         {
-            Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, NULL, 0, NULL);
+            Hu_MsgStart(MSG_ANYKEY, ENDNOGAME, nullptr, 0, nullptr);
         }
         return true;
     }
 
     // Is user confirmation required? (Never if this is a network server).
-    bool const confirmed = (argc >= 2 && !stricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 2 && !qstricmp(argv[argc-1], "confirm"));
     if(confirmed || (IS_NETGAME && IS_SERVER))
     {
         if(IS_NETGAME && IS_CLIENT)
@@ -2662,7 +2674,7 @@ D_CMD(EndSession)
     }
     else
     {
-        Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, endSessionConfirmed, 0, NULL);
+        Hu_MsgStart(MSG_YESNO, IS_CLIENT? GET_TXT(TXT_DISCONNECT) : ENDGAME, endSessionConfirmed, 0, nullptr);
     }
 
     return true;
@@ -2670,7 +2682,7 @@ D_CMD(EndSession)
 
 static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
-    de::String *slotId = static_cast<de::String *>(context);
+    String *slotId = static_cast<String *>(context);
     DENG2_ASSERT(slotId != 0);
     if(response == MSG_YES)
     {
@@ -2684,15 +2696,15 @@ D_CMD(LoadSession)
 {
     DENG2_UNUSED(src);
 
-    bool const confirmed = (argc == 3 && !stricmp(argv[2], "confirm"));
+    bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
 
     if(G_QuitInProgress()) return false;
     if(!COMMON_GAMESESSION->loadingPossible()) return false;
 
     if(IS_NETGAME)
     {
-        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QLOADNET, NULL, 0, NULL);
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
+        Hu_MsgStart(MSG_ANYKEY, QLOADNET, nullptr, 0, nullptr);
         return false;
     }
 
@@ -2704,29 +2716,29 @@ D_CMD(LoadSession)
             if(confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
-                S_LocalSound(SFX_MENU_ACCEPT, NULL);
+                S_LocalSound(SFX_MENU_ACCEPT, nullptr);
                 return G_SetGameActionLoadSession(sslot->id());
             }
 
-            S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+            S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
             // Compose the confirmation message.
-            de::String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, existingDescription.toUtf8().constData());
-            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new de::String(sslot->id()));
+            Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new String(sslot->id()));
             return true;
         }
     }
 
-    if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
+    if(!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
     {
-        S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, NULL, 0, NULL);
+        S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
+        Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, nullptr, 0, nullptr);
         return true;
     }
 
     if(!G_SaveSlots().has(argv[1]))
     {
-        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+        LOG_SCR_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
 
     // Clearly the caller needs some assistance...
@@ -2736,7 +2748,7 @@ D_CMD(LoadSession)
     // the user to see the names of the known game-saves.
     if(src == CMDS_CONSOLE)
     {
-        App_Log(DE2_SCR_MSG, "Opening Load Game menu...");
+        LOG_SCR_MSG("Opening Load Game menu...");
         DD_Execute(true, "menu loadgame");
         return true;
     }
@@ -2753,8 +2765,8 @@ D_CMD(QuickLoadSession)
 
 struct savesessionconfirmed_params_t
 {
-    de::String slotId;
-    de::String userDescription;
+    String slotId;
+    String userDescription;
 };
 
 static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
@@ -2773,28 +2785,28 @@ D_CMD(SaveSession)
 {
     DENG2_UNUSED(src);
 
-    bool const confirmed = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
 
     if(G_QuitInProgress()) return false;
 
     if(IS_CLIENT || IS_NETWORK_SERVER)
     {
-        App_Log(DE2_LOG_ERROR, "Network savegames are not supported at the moment");
+        LOG_ERROR("Network savegames are not supported at the moment");
         return false;
     }
 
     player_t *player = &players[CONSOLEPLAYER];
     if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, 0, NULL);
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, nullptr, 0, nullptr);
         return true;
     }
 
     if(G_GameState() != GS_MAP)
     {
-        S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
-        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, 0, NULL);
+        S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
+        Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, nullptr, 0, nullptr);
         return true;
     }
 
@@ -2802,8 +2814,8 @@ D_CMD(SaveSession)
     {
         if(sslot->isUserWritable())
         {
-            de::String userDescription;
-            if(argc >= 3 && stricmp(argv[2], "confirm"))
+            String userDescription;
+            if(argc >= 3 && qstricmp(argv[2], "confirm"))
             {
                 userDescription = argv[2];
             }
@@ -2811,14 +2823,14 @@ D_CMD(SaveSession)
             if(sslot->isUnused() || confirmed || !cfg.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
-                S_LocalSound(SFX_MENU_ACCEPT, NULL);
+                S_LocalSound(SFX_MENU_ACCEPT, nullptr);
                 return G_SetGameActionSaveSession(sslot->id(), &userDescription);
             }
 
-            S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+            S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, existingDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
@@ -2829,11 +2841,10 @@ D_CMD(SaveSession)
             return true;
         }
 
-        App_Log(DE2_SCR_ERROR, "Save slot '%s' is non-user-writable",
-                sslot->id().toLatin1().constData());
+        LOG_SCR_ERROR("Save slot '%s' is non-user-writable") << sslot->id();
     }
 
-    if(!stricmp(argv[1], "quick") || !stricmp(argv[1], "<quick>"))
+    if(!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
     {
         // No quick-save slot has been nominated - allow doing so now.
         Hu_MenuCommand(MCMD_OPEN);
@@ -2844,7 +2855,7 @@ D_CMD(SaveSession)
 
     if(!G_SaveSlots().has(argv[1]))
     {
-        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from \"%s\"", argv[1]);
+        LOG_SCR_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
 
     // No action means the command failed.
@@ -2859,7 +2870,7 @@ D_CMD(QuickSaveSession)
 
 static int deleteSavedSessionConfirmed(msgresponse_t response, int /*userValue*/, void *context)
 {
-    de::String const *saveName = static_cast<de::String const *>(context);
+    String const *saveName = static_cast<de::String const *>(context);
     DENG2_ASSERT(saveName != 0);
     if(response == MSG_YES)
     {
@@ -2875,7 +2886,7 @@ D_CMD(DeleteSavedSession)
 
     if(G_QuitInProgress()) return false;
 
-    bool const confirmed = (argc >= 3 && !stricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
     if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
         if(sslot->isUserWritable())
@@ -2889,22 +2900,22 @@ D_CMD(DeleteSavedSession)
             }
             else
             {
-                S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
+                S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
-                de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+                String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
-                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new de::String(sslot->saveName()));
+                Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteSavedSessionConfirmed, 0, new String(sslot->saveName()));
             }
 
             return true;
         }
 
-        App_Log(DE2_SCR_ERROR, "Save slot '%s' is non-user-writable", sslot->id().toLatin1().constData());
+        LOG_SCR_ERROR("Save slot '%s' is non-user-writable") << sslot->id();
     }
     else
     {
-        App_Log(DE2_SCR_WARNING, "Failed to determine save slot from '%s'", argv[1]);
+        LOG_SCR_WARNING("Failed to determine save slot from '%s'") << argv[1];
     }
 
     // No action means the command failed.
@@ -2914,7 +2925,6 @@ D_CMD(DeleteSavedSession)
 D_CMD(HelpScreen)
 {
     DENG2_UNUSED3(src, argc, argv);
-
     G_StartHelp();
     return true;
 }
@@ -2922,7 +2932,6 @@ D_CMD(HelpScreen)
 D_CMD(CycleTextureGamma)
 {
     DENG2_UNUSED3(src, argc, argv);
-
     R_CycleGammaLevel();
     return true;
 }
@@ -2940,9 +2949,9 @@ D_CMD(LeaveMap)
     if(G_GameState() != GS_MAP)
     {
 #if __JHERETIC__ || __JHEXEN__
-        S_LocalSound(SFX_CHAT, NULL);
+        S_LocalSound(SFX_CHAT, nullptr);
 #else
-        S_LocalSound(SFX_OOF, NULL);
+        S_LocalSound(SFX_OOF, nullptr);
 #endif
         LOG_MAP_ERROR("Can only exit a map when in a game!");
         return false;
@@ -3115,8 +3124,7 @@ D_CMD(WarpMap)
         ::nextMapEntryPoint = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(),
-                                  mapUri);
+        G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(), mapUri);
 #endif
     }
     else
@@ -3140,7 +3148,7 @@ D_CMD(WarpMap)
         int soundId     = SFX_NONE;
 #endif
         P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
-        S_LocalSound(soundId, NULL);
+        S_LocalSound(soundId, nullptr);
     }
 
     return true;
