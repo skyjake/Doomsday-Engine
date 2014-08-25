@@ -71,47 +71,18 @@
 using namespace de;
 using namespace common;
 
-static GameSession session;
+void R_LoadVectorGraphics();
+int Hook_DemoStop(int hookType, int val, void *parm);
 
 GameRuleset defaultGameRules;
 
-#define BODYQUEUESIZE       (32)
-
-#define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
-
-D_CMD(CycleTextureGamma);
-D_CMD(EndSession);
-D_CMD(HelpScreen);
-
-D_CMD(ListMaps);
-D_CMD(LeaveMap);
-D_CMD(WarpMap);
-D_CMD(LoadSession);
-D_CMD(SaveSession);
-D_CMD(QuickLoadSession);
-D_CMD(QuickSaveSession);
-D_CMD(DeleteSavedSession);
-
-D_CMD(OpenLoadMenu);
-D_CMD(OpenSaveMenu);
-
-void G_PlayerReborn(int player);
-
-void G_StopDemo();
-
-/**
- * Updates game status cvars for the specified player.
- */
-void G_UpdateGSVarsForPlayer(player_t *pl);
-
-void R_LoadVectorGraphics();
-
-int Hook_DemoStop(int hookType, int val, void *parm);
-
 game_config_t cfg; // The global cfg.
 
-static de::Uri nextMapUri;
-static uint nextMapEntryPoint;
+#if __JDOOM__ || __JDOOM64__
+#define BODYQUEUESIZE       (32)
+mobj_t *bodyQueue[BODYQUEUESIZE];
+int bodyQueueSlot;
+#endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 bool secretExit;
@@ -131,7 +102,20 @@ dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
 wbstartstruct_t wmInfo; // Intermission parameters.
 
-// Game Action Variables:
+static GameSession session;
+
+static bool quitInProgress;
+static gamestate_t gameState = GS_STARTUP;
+
+static SaveSlots *sslots;
+
+static de::Uri nextMapUri;
+static uint nextMapEntryPoint;
+
+// Game actions.
+static gameaction_t gameAction;
+
+// Game action parameters:
 static GameRuleset gaNewSessionRules;
 static String gaNewSessionEpisodeId;
 static de::Uri gaNewSessionMapUri;
@@ -142,220 +126,6 @@ static bool gaSaveSessionGenerateDescription = true;
 static String gaSaveSessionUserDescription;
 static String gaLoadSessionSlot;
 
-#if __JDOOM__ || __JDOOM64__
-mobj_t *bodyQueue[BODYQUEUESIZE];
-int bodyQueueSlot;
-#endif
-
-static SaveSlots *sslots;
-
-// vars used with game status cvars
-
-char *gsvMapAuthor;// = "Unknown";
-int gsvMapMusic = -1;
-char *gsvMapTitle;// = "Unknown";
-
-int gsvInMap;
-int gsvCurrentMusic;
-
-int gsvArmor;
-int gsvHealth;
-
-#if !__JHEXEN__
-int gsvKills;
-int gsvItems;
-int gsvSecrets;
-#endif
-
-int gsvCurrentWeapon;
-int gsvWeapons[NUM_WEAPON_TYPES];
-int gsvKeys[NUM_KEY_TYPES];
-int gsvAmmo[NUM_AMMO_TYPES];
-
-#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-int gsvInvItems[NUM_INVENTORYITEM_TYPES];
-#endif
-
-#if __JHEXEN__
-int gsvWPieces[4];
-#endif
-
-static gameaction_t gameAction;
-static gamestate_t gameState = GS_STARTUP;
-static bool quitInProgress;
-
-static void registerGameStatusCVars()
-{
-    cvartemplate_t cvars[] = {
-        {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0, 0},
-        {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0, 0},
-        {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0, 0},
-#if !__JHEXEN__
-        {"game-stats-kills", READONLYCVAR, CVT_INT, &gsvKills, 0, 0, 0},
-        {"game-stats-items", READONLYCVAR, CVT_INT, &gsvItems, 0, 0, 0},
-        {"game-stats-secrets", READONLYCVAR, CVT_INT, &gsvSecrets, 0, 0, 0},
-#endif
-
-        {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
-        {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
-        {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0, 0},
-
-        {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0, 0},
-        {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0, 0},
-        {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0, 0},
-
-#if __JDOOM__ || __JDOOM64__
-        // Ammo
-        {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0, 0},
-        {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0, 0},
-        {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CELL], 0, 0, 0},
-        {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MISSILE], 0, 0, 0},
-        // Weapons
-        {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
-        {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
-        {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
-        {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
-        {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
-        {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
-        {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
-        {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
-        {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0, 0},
-        // Keys
-        {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0, 0},
-        {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0, 0},
-        {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDCARD], 0, 0, 0},
-        {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUESKULL], 0, 0, 0},
-        {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWSKULL], 0, 0, 0},
-        {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDSKULL], 0, 0, 0},
-#elif __JHERETIC__
-        // Ammo
-        {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CRYSTAL], 0, 0, 0},
-        {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ARROW], 0, 0, 0},
-        {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ORB], 0, 0, 0},
-        {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[AT_RUNE], 0, 0, 0},
-        {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[AT_FIREORB], 0, 0, 0},
-        {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MSPHERE], 0, 0, 0},
-         // Weapons
-        {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
-        {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
-        {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
-        {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
-        {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
-        {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
-        {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
-        {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
-        // Keys
-        {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0, 0},
-        {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0, 0},
-        {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0, 0},
-        // Inventory items
-        {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
-        {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVISIBILITY], 0, 0, 0},
-        {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
-        {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
-        {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TOMBOFPOWER], 0, 0, 0},
-        {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
-        {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FIREBOMB], 0, 0, 0},
-        {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
-        {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
-        {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
-#elif __JHEXEN__
-        // Mana
-        {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0, 0},
-        {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[AT_GREENMANA], 0, 0, 0},
-        // Keys
-        {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY1], 0, 0, 0},
-        {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY2], 0, 0, 0},
-        {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY3], 0, 0, 0},
-        {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY4], 0, 0, 0},
-        {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY5], 0, 0, 0},
-        {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY6], 0, 0, 0},
-        {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY7], 0, 0, 0},
-        {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY8], 0, 0, 0},
-        {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY9], 0, 0, 0},
-        {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYA], 0, 0, 0},
-        {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYB], 0, 0, 0},
-        // Weapons
-        {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
-        {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
-        {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
-        {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
-        // Weapon Pieces
-        {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0, 0},
-        {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0, 0},
-        {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0, 0},
-        {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0, 0},
-        // Inventory items
-        {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
-        {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
-        {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
-        {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALINGRADIUS], 0, 0, 0},
-        {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUMMON], 0, 0, 0},
-        {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
-        {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
-        {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
-        {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BLASTRADIUS], 0, 0, 0},
-        {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_POISONBAG], 0, 0, 0},
-        {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORTOTHER], 0, 0, 0},
-        {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SPEED], 0, 0, 0},
-        {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTMANA], 0, 0, 0},
-        {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTARMOR], 0, 0, 0},
-        {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
-        {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL], 0, 0, 0},
-        {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBIG], 0, 0, 0},
-        {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMRED], 0, 0, 0},
-        {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN1], 0, 0, 0},
-        {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN2], 0, 0, 0},
-        {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE1], 0, 0, 0},
-        {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE2], 0, 0, 0},
-        {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK1], 0, 0, 0},
-        {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK2], 0, 0, 0},
-        {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL2], 0, 0, 0},
-        {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZFWEAPON], 0, 0, 0},
-        {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZCWEAPON], 0, 0, 0},
-        {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZMWEAPON], 0, 0, 0},
-        {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR1], 0, 0, 0},
-        {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR2], 0, 0, 0},
-        {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0, 0},
-        {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0, 0},
-#endif
-        {NULL, 0, CVT_NULL, 0, 0, 0, 0}
-    };
-    Con_AddVariableList(cvars);
-}
-
-void G_ConsoleRegister()
-{
-    GameSession::consoleRegister();
-
-    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
-    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
-
-    C_CMD("deletegamesave",     "ss",       DeleteSavedSession);
-    C_CMD("deletegamesave",     "s",        DeleteSavedSession);
-    C_CMD("endgame",            "s",        EndSession);
-    C_CMD("endgame",            "",         EndSession);
-    C_CMD("helpscreen",         "",         HelpScreen);
-    C_CMD("leavemap",           "",         LeaveMap);
-    C_CMD("leavemap",           "s",        LeaveMap);
-    C_CMD("loadgame",           "ss",       LoadSession);
-    C_CMD("loadgame",           "s",        LoadSession);
-    C_CMD("loadgame",           "",         OpenLoadMenu);
-    C_CMD("quickload",          "",         QuickLoadSession);
-    C_CMD("quicksave",          "",         QuickSaveSession);
-    C_CMD("savegame",           "sss",      SaveSession);
-    C_CMD("savegame",           "ss",       SaveSession);
-    C_CMD("savegame",           "s",        SaveSession);
-    C_CMD("savegame",           "",         OpenSaveMenu);
-    C_CMD("togglegamma",        "",         CycleTextureGamma);
-    C_CMD("warp",               nullptr,    WarpMap);
-    /* Alias */ C_CMD("setmap", nullptr,    WarpMap);
-
-    registerGameStatusCVars();
-}
-
 dd_bool G_QuitInProgress()
 {
     return ::quitInProgress;
@@ -365,19 +135,19 @@ void G_SetGameAction(gameaction_t newAction)
 {
     if(G_QuitInProgress()) return;
 
-    if(gameAction != newAction)
+    if(::gameAction != newAction)
     {
-        gameAction = newAction;
+        ::gameAction = newAction;
     }
 }
 
 void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
     de::Uri const &mapUri, uint mapEntrance)
 {
-    gaNewSessionRules       = rules; // make a copy.
-    gaNewSessionEpisodeId   = episodeId;
-    gaNewSessionMapUri      = mapUri;
-    gaNewSessionMapEntrance = mapEntrance;
+    ::gaNewSessionRules       = rules; // make a copy.
+    ::gaNewSessionEpisodeId   = episodeId;
+    ::gaNewSessionMapUri      = mapUri;
+    ::gaNewSessionMapEntrance = mapEntrance;
 
     G_SetGameAction(GA_NEWSESSION);
 }
@@ -387,19 +157,19 @@ bool G_SetGameActionSaveSession(String slotId, String *userDescription)
     if(!COMMON_GAMESESSION->savingPossible()) return false;
     if(!G_SaveSlots().has(slotId)) return false;
 
-    gaSaveSessionSlot = slotId;
+    ::gaSaveSessionSlot = slotId;
 
     if(userDescription && !userDescription->isEmpty())
     {
         // A new description.
-        gaSaveSessionGenerateDescription = false;
-        gaSaveSessionUserDescription = *userDescription;
+        ::gaSaveSessionGenerateDescription = false;
+        ::gaSaveSessionUserDescription = *userDescription;
     }
     else
     {
         // Reusing the current name or generating a new one.
-        gaSaveSessionGenerateDescription = (userDescription && userDescription->isEmpty());
-        gaSaveSessionUserDescription.clear();
+        ::gaSaveSessionGenerateDescription = (userDescription && userDescription->isEmpty());
+        ::gaSaveSessionUserDescription.clear();
     }
 
     G_SetGameAction(GA_SAVESESSION);
@@ -1403,70 +1173,6 @@ int G_PrivilegedResponder(event_t *ev)
     return false; // Not eaten.
 }
 
-void G_UpdateGSVarsForPlayer(player_t *pl)
-{
-    if(!pl) return;
-
-    gsvHealth  = pl->health;
-#if !__JHEXEN__
-    // Map stats
-    gsvKills   = pl->killCount;
-    gsvItems   = pl->itemCount;
-    gsvSecrets = pl->secretCount;
-#endif
-        // armor
-#if __JHEXEN__
-    gsvArmor   = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
-                          pl->armorPoints[ARMOR_ARMOR] +
-                          pl->armorPoints[ARMOR_SHIELD] +
-                          pl->armorPoints[ARMOR_HELMET] +
-                          pl->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
-#else
-    gsvArmor   = pl->armorPoints;
-#endif
-    // Owned keys
-    for(int i = 0; i < NUM_KEY_TYPES; ++i)
-    {
-#if __JHEXEN__
-        gsvKeys[i] = (pl->keys & (1 << i))? 1 : 0;
-#else
-        gsvKeys[i] = pl->keys[i];
-#endif
-    }
-    // current weapon
-    gsvCurrentWeapon = pl->readyWeapon;
-
-    // owned weapons
-    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        gsvWeapons[i] = pl->weapons[i].owned;
-    }
-
-#if __JHEXEN__
-    // weapon pieces
-    gsvWPieces[0] = (pl->pieces & WPIECE1)? 1 : 0;
-    gsvWPieces[1] = (pl->pieces & WPIECE2)? 1 : 0;
-    gsvWPieces[2] = (pl->pieces & WPIECE3)? 1 : 0;
-    gsvWPieces[3] = (pl->pieces == 7)? 1 : 0;
-#endif
-    // Current ammo amounts.
-    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
-    {
-        gsvAmmo[i] = pl->ammo[i].owned;
-    }
-
-#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
-    // Inventory items.
-    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
-    {
-        if(pl->plr->inGame && G_GameState() == GS_MAP)
-            gsvInvItems[i] = P_InventoryCount(pl - players, inventoryitemtype_t(IIT_FIRST + i));
-        else
-            gsvInvItems[i] = 0;
-    }
-#endif
-}
-
 static sfxenum_t randomQuitSound()
 {
 #if __JDOOM__ || __JDOOM64__
@@ -1981,7 +1687,9 @@ void G_Ticker(timespan_t ticLength)
         case GS_MAP:
             // Update in-map game status cvar.
             if(oldGameState != GS_MAP)
-                gsvInMap = 1;
+            {
+                Con_SetInteger2("game-state-map", 1, SVF_WRITE_OVERRIDE);
+            }
 
             P_DoTick();
             HU_UpdatePsprites();
@@ -2003,16 +1711,16 @@ void G_Ticker(timespan_t ticLength)
             if(oldGameState != G_GameState())
             {
                 // Update game status cvars.
-                gsvInMap = 0;
-                Con_SetString2("map-author", "Unknown", SVF_WRITE_OVERRIDE);
-                Con_SetString2("map-name",   "Unknown", SVF_WRITE_OVERRIDE);
-                gsvMapMusic = -1;
+                Con_SetInteger2("game-state-map", 0,         SVF_WRITE_OVERRIDE);
+                Con_SetString2 ("map-author",     "Unknown", SVF_WRITE_OVERRIDE);
+                Con_SetString2 ("map-name",       "Unknown", SVF_WRITE_OVERRIDE);
+                Con_SetInteger2("map-music",      -1,        SVF_WRITE_OVERRIDE);
             }
             break;
         }
 
         // Update the game status cvars for player data.
-        G_UpdateGSVarsForPlayer(&players[CONSOLEPLAYER]);
+        Player_UpdateStatusCVars(&players[CONSOLEPLAYER]);
 
         // Servers will have to update player information and do such stuff.
         if(!IS_CLIENT)
@@ -3143,4 +2851,215 @@ D_CMD(WarpMap)
     }
 
     return true;
+}
+
+namespace {
+char *gsvMapAuthor;// = "Unknown";
+int gsvMapMusic = -1;
+char *gsvMapTitle;// = "Unknown";
+
+int gsvInMap;
+int gsvCurrentMusic;
+
+int gsvArmor;
+int gsvHealth;
+
+#if !__JHEXEN__
+int gsvKills;
+int gsvItems;
+int gsvSecrets;
+#endif
+
+int gsvCurrentWeapon;
+int gsvWeapons[NUM_WEAPON_TYPES];
+int gsvKeys[NUM_KEY_TYPES];
+int gsvAmmo[NUM_AMMO_TYPES];
+
+#if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
+int gsvInvItems[NUM_INVENTORYITEM_TYPES];
+#endif
+
+#if __JHEXEN__
+int gsvWPieces[4];
+#endif
+}
+
+#define READONLYCVAR        CVF_READ_ONLY|CVF_NO_MAX|CVF_NO_MIN|CVF_NO_ARCHIVE
+
+static void registerGameStatusCVars()
+{
+    cvartemplate_t cvars[] = {
+        {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0, 0},
+        {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0, 0},
+        {"game-state-map", READONLYCVAR, CVT_INT, &gsvInMap, 0, 0, 0},
+#if !__JHEXEN__
+        {"game-stats-kills", READONLYCVAR, CVT_INT, &gsvKills, 0, 0, 0},
+        {"game-stats-items", READONLYCVAR, CVT_INT, &gsvItems, 0, 0, 0},
+        {"game-stats-secrets", READONLYCVAR, CVT_INT, &gsvSecrets, 0, 0, 0},
+#endif
+
+        {"map-author", READONLYCVAR, CVT_CHARPTR, &gsvMapAuthor, 0, 0, 0},
+        {"map-music", READONLYCVAR, CVT_INT, &gsvMapMusic, 0, 0, 0},
+        {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapTitle, 0, 0, 0},
+
+        {"player-health", READONLYCVAR, CVT_INT, &gsvHealth, 0, 0, 0},
+        {"player-armor", READONLYCVAR, CVT_INT, &gsvArmor, 0, 0, 0},
+        {"player-weapon-current", READONLYCVAR, CVT_INT, &gsvCurrentWeapon, 0, 0, 0},
+
+#if __JDOOM__ || __JDOOM64__
+        // Ammo
+        {"player-ammo-bullets", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CLIP], 0, 0, 0},
+        {"player-ammo-shells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_SHELL], 0, 0, 0},
+        {"player-ammo-cells", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CELL], 0, 0, 0},
+        {"player-ammo-missiles", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MISSILE], 0, 0, 0},
+        // Weapons
+        {"player-weapon-fist", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+        {"player-weapon-pistol", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+        {"player-weapon-shotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+        {"player-weapon-chaingun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
+        {"player-weapon-mlauncher", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
+        {"player-weapon-plasmarifle", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
+        {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
+        {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
+        {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0, 0},
+        // Keys
+        {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0, 0},
+        {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0, 0},
+        {"player-key-red", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDCARD], 0, 0, 0},
+        {"player-key-blueskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUESKULL], 0, 0, 0},
+        {"player-key-yellowskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWSKULL], 0, 0, 0},
+        {"player-key-redskull", READONLYCVAR, CVT_INT, &gsvKeys[KT_REDSKULL], 0, 0, 0},
+#  if __JDOOM64__
+        // Inventory items
+        {"player-artifact-bluedemonkey", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_DEMONKEY1], 0, 0, 0},
+        {"player-artifact-yellowdemonkey", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_DEMONKEY2], 0, 0, 0},
+        {"player-artifact-reddemonkey", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_DEMONKEY3], 0, 0, 0},
+#  endif
+#elif __JHERETIC__
+        // Ammo
+        {"player-ammo-goldwand", READONLYCVAR, CVT_INT, &gsvAmmo[AT_CRYSTAL], 0, 0, 0},
+        {"player-ammo-crossbow", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ARROW], 0, 0, 0},
+        {"player-ammo-dragonclaw", READONLYCVAR, CVT_INT, &gsvAmmo[AT_ORB], 0, 0, 0},
+        {"player-ammo-hellstaff", READONLYCVAR, CVT_INT, &gsvAmmo[AT_RUNE], 0, 0, 0},
+        {"player-ammo-phoenixrod", READONLYCVAR, CVT_INT, &gsvAmmo[AT_FIREORB], 0, 0, 0},
+        {"player-ammo-mace", READONLYCVAR, CVT_INT, &gsvAmmo[AT_MSPHERE], 0, 0, 0},
+         // Weapons
+        {"player-weapon-staff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+        {"player-weapon-goldwand", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+        {"player-weapon-crossbow", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+        {"player-weapon-dragonclaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
+        {"player-weapon-hellstaff", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIFTH], 0, 0, 0},
+        {"player-weapon-phoenixrod", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SIXTH], 0, 0, 0},
+        {"player-weapon-mace", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
+        {"player-weapon-gauntlets", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
+        // Keys
+        {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOW], 0, 0, 0},
+        {"player-key-green", READONLYCVAR, CVT_INT, &gsvKeys[KT_GREEN], 0, 0, 0},
+        {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUE], 0, 0, 0},
+        // Inventory items
+        {"player-artifact-ring", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
+        {"player-artifact-shadowsphere", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVISIBILITY], 0, 0, 0},
+        {"player-artifact-crystalvial", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
+        {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
+        {"player-artifact-tomeofpower", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TOMBOFPOWER], 0, 0, 0},
+        {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
+        {"player-artifact-firebomb", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FIREBOMB], 0, 0, 0},
+        {"player-artifact-egg", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
+        {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
+        {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
+#elif __JHEXEN__
+        // Mana
+        {"player-mana-blue", READONLYCVAR, CVT_INT, &gsvAmmo[AT_BLUEMANA], 0, 0, 0},
+        {"player-mana-green", READONLYCVAR, CVT_INT, &gsvAmmo[AT_GREENMANA], 0, 0, 0},
+        // Keys
+        {"player-key-steel", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY1], 0, 0, 0},
+        {"player-key-cave", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY2], 0, 0, 0},
+        {"player-key-axe", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY3], 0, 0, 0},
+        {"player-key-fire", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY4], 0, 0, 0},
+        {"player-key-emerald", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY5], 0, 0, 0},
+        {"player-key-dungeon", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY6], 0, 0, 0},
+        {"player-key-silver", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY7], 0, 0, 0},
+        {"player-key-rusted", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY8], 0, 0, 0},
+        {"player-key-horn", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEY9], 0, 0, 0},
+        {"player-key-swamp", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYA], 0, 0, 0},
+        {"player-key-castle", READONLYCVAR, CVT_INT, &gsvKeys[KT_KEYB], 0, 0, 0},
+        // Weapons
+        {"player-weapon-first", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FIRST], 0, 0, 0},
+        {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
+        {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
+        {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
+        // Weapon Pieces
+        {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0, 0},
+        {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0, 0},
+        {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0, 0},
+        {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0, 0},
+        // Inventory items
+        {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
+        {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
+        {"player-artifact-mysticurn", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUPERHEALTH], 0, 0, 0},
+        {"player-artifact-mysticambit", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALINGRADIUS], 0, 0, 0},
+        {"player-artifact-darkservant", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SUMMON], 0, 0, 0},
+        {"player-artifact-torch", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TORCH], 0, 0, 0},
+        {"player-artifact-porkalator", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_EGG], 0, 0, 0},
+        {"player-artifact-wings", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_FLY], 0, 0, 0},
+        {"player-artifact-repulsion", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BLASTRADIUS], 0, 0, 0},
+        {"player-artifact-flechette", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_POISONBAG], 0, 0, 0},
+        {"player-artifact-banishment", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORTOTHER], 0, 0, 0},
+        {"player-artifact-speed", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_SPEED], 0, 0, 0},
+        {"player-artifact-might", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTMANA], 0, 0, 0},
+        {"player-artifact-bracers", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_BOOSTARMOR], 0, 0, 0},
+        {"player-artifact-chaosdevice", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_TELEPORT], 0, 0, 0},
+        {"player-artifact-skull", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL], 0, 0, 0},
+        {"player-artifact-heart", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBIG], 0, 0, 0},
+        {"player-artifact-ruby", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMRED], 0, 0, 0},
+        {"player-artifact-emerald1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN1], 0, 0, 0},
+        {"player-artifact-emerald2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMGREEN2], 0, 0, 0},
+        {"player-artifact-sapphire1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE1], 0, 0, 0},
+        {"player-artifact-sapphire2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEMBLUE2], 0, 0, 0},
+        {"player-artifact-daemoncodex", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK1], 0, 0, 0},
+        {"player-artifact-liberoscura", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZBOOK2], 0, 0, 0},
+        {"player-artifact-flamemask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZSKULL2], 0, 0, 0},
+        {"player-artifact-glaiveseal", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZFWEAPON], 0, 0, 0},
+        {"player-artifact-holyrelic", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZCWEAPON], 0, 0, 0},
+        {"player-artifact-sigilmagus", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZMWEAPON], 0, 0, 0},
+        {"player-artifact-gear1", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR1], 0, 0, 0},
+        {"player-artifact-gear2", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR2], 0, 0, 0},
+        {"player-artifact-gear3", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR3], 0, 0, 0},
+        {"player-artifact-gear4", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_PUZZGEAR4], 0, 0, 0},
+#endif
+        {NULL, 0, CVT_NULL, 0, 0, 0, 0}
+    };
+    Con_AddVariableList(cvars);
+}
+
+void G_ConsoleRegister()
+{
+    GameSession::consoleRegister();
+
+    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
+    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+
+    C_CMD("deletegamesave",     "ss",       DeleteSavedSession);
+    C_CMD("deletegamesave",     "s",        DeleteSavedSession);
+    C_CMD("endgame",            "s",        EndSession);
+    C_CMD("endgame",            "",         EndSession);
+    C_CMD("helpscreen",         "",         HelpScreen);
+    C_CMD("leavemap",           "",         LeaveMap);
+    C_CMD("leavemap",           "s",        LeaveMap);
+    C_CMD("loadgame",           "ss",       LoadSession);
+    C_CMD("loadgame",           "s",        LoadSession);
+    C_CMD("loadgame",           "",         OpenLoadMenu);
+    C_CMD("quickload",          "",         QuickLoadSession);
+    C_CMD("quicksave",          "",         QuickSaveSession);
+    C_CMD("savegame",           "sss",      SaveSession);
+    C_CMD("savegame",           "ss",       SaveSession);
+    C_CMD("savegame",           "s",        SaveSession);
+    C_CMD("savegame",           "",         OpenSaveMenu);
+    C_CMD("togglegamma",        "",         CycleTextureGamma);
+    C_CMD("warp",               nullptr,    WarpMap);
+    /* Alias */ C_CMD("setmap", nullptr,    WarpMap);
+
+    registerGameStatusCVars();
 }

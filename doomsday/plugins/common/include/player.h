@@ -243,6 +243,11 @@ dd_bool Player_WaitingForReborn(player_t const *player);
  */
 angle_t Player_ViewYawAngle(int playerNum);
 
+/**
+ * Updates game status cvars for the player.
+ */
+void Player_UpdateStatusCVars(player_t const *player);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
