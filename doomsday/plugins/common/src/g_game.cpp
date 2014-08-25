@@ -1470,24 +1470,6 @@ static void runGameAction()
             // Go to an intermission?
             if(intermissionEnabled())
             {
-#if __JDOOM__
-                // Has the secret map been completed?
-                if(::gameModeBits & (GM_DOOM | GM_DOOM_SHAREWARE | GM_DOOM_ULTIMATE))
-                {
-                    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
-                    if(mapUri.path() == "E1M9" ||
-                       mapUri.path() == "E2M9" ||
-                       mapUri.path() == "E3M9" ||
-                       mapUri.path() == "E4M9")
-                    {
-                        for(int i = 0; i < MAXPLAYERS; ++i)
-                        {
-                            ::players[i].didSecret = true;
-                        }
-                    }
-                }
-#endif
-
                 S_StartMusic(intermissionMusic().toUtf8().constData(), true);
                 S_PauseMusic(true);
 
@@ -1999,13 +1981,6 @@ void G_IntermissionDone()
 
     // We have either just returned from a debriefing or there wasn't one.
     ::briefDisabled = false;
-
-#if __JDOOM__ || __JDOOM64__
-    if(::secretExit)
-    {
-        ::players[CONSOLEPLAYER].didSecret = true;
-    }
-#endif
 
     // Clear the currently playing script, if any.
     FI_StackClear();

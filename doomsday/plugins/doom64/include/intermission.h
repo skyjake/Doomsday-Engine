@@ -93,9 +93,11 @@ struct wbplayerstruct_t
 
 struct wbstartstruct_t
 {
-    dd_bool didSecret;  ///< If true, splash the secret level.
     de::Uri currentMap;
     de::Uri nextMap;
+    bool didSecret;      /**< @c true= the secret map has been visited during the
+                              game session. Used to generate the visited maps info
+                              for backward compatibility purposes. */
     int maxKills;
     int maxItems;
     int maxSecret;
