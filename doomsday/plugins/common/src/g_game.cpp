@@ -1339,22 +1339,10 @@ void G_BeginMap()
 
     G_ControlReset(-1); // Clear all controls for all local players.
 
-    // Update the game status cvars for the current map:
-    String const episodeId = COMMON_GAMESESSION->episodeId();
-    de::Uri const mapUri   = COMMON_GAMESESSION->mapUri();
-
-    String mapAuthor = G_MapAuthor(mapUri);
-    if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
-    Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
-
-    String mapTitle = G_MapTitle(mapUri);
-    if(mapTitle.isEmpty()) mapTitle = "Unknown";
-    Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
-
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
 
-    printMapBanner(episodeId, mapUri);
+    printMapBanner(COMMON_GAMESESSION->episodeId(), COMMON_GAMESESSION->mapUri());
 
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);

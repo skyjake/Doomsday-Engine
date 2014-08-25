@@ -583,6 +583,14 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             hubId = hubRec->gets("id");
         }
         Con_SetString2("map-hub", hubId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+        String mapAuthor = G_MapAuthor(mapUri);
+        if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
+        Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+        String mapTitle = G_MapTitle(mapUri);
+        if(mapTitle.isEmpty()) mapTitle = "Unknown";
+        Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
     }
 
     inline void setMapAndEntryPoint(de::Uri const &newMapUri, uint newMapEntryPoint)
