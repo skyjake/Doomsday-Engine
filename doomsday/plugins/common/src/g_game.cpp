@@ -1119,6 +1119,10 @@ void G_AutoStartOrBeginTitleLoop()
                 << startEpisodeId
                 << startMapUri
                 << ::defaultGameRules.skill;
+
+        // Don't brief when autostarting.
+        ::briefDisabled = true;
+
         G_SetGameActionNewSession(::defaultGameRules, startEpisodeId, startMapUri);
     }
     else
@@ -1337,15 +1341,16 @@ void G_BeginMap()
         R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
     }
 
-    G_ControlReset(-1); // Clear all controls for all local players.
+    // Clear all controls for all local players.
+    G_ControlReset(-1);
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
 
-    printMapBanner(COMMON_GAMESESSION->episodeId(), COMMON_GAMESESSION->mapUri());
-
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);
+
+    printMapBanner(COMMON_GAMESESSION->episodeId(), COMMON_GAMESESSION->mapUri());
 }
 
 int G_Responder(event_t *ev)
@@ -1982,8 +1987,7 @@ void G_Ticker(timespan_t ticLength)
             P_DoTick();
             HU_UpdatePsprites();
 
-            // Active briefings once again (they were disabled when loading
-            // a saved game).
+            // Activate briefings once again (disabled for autostart or loading a saved game).
             briefDisabled = false;
 
             if(IS_DEDICATED)
