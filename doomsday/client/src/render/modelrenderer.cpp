@@ -208,6 +208,7 @@ DENG2_PIMPL(ModelRenderer)
             auto mats = asset.subrecord(DEF_MATERIAL).subrecords();
             DENG2_FOR_EACH_CONST(Record::Subrecords, mat, mats)
             {
+                handleMaterialTexture(model, mat.key(), *mat.value(), "diffuseMap",  ModelDrawable::Diffuse);
                 handleMaterialTexture(model, mat.key(), *mat.value(), "normalMap",   ModelDrawable::Normals);
                 handleMaterialTexture(model, mat.key(), *mat.value(), "heightMap",   ModelDrawable::Height);
                 handleMaterialTexture(model, mat.key(), *mat.value(), "specularMap", ModelDrawable::Specular);

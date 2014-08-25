@@ -34,6 +34,7 @@
 #include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
+#include <de/Vector>
 #include <de/System>
 
 #ifdef __CLIENT__
@@ -151,6 +152,15 @@ public:
      *                  written here if not @c 0.
      */
     Hand &hand(coord_t *distance = 0) const;
+
+    /**
+     * Determines if a point is in the void.
+     *
+     * @param pos  Point.
+     *
+     * @return @c true, if the point is outside any of the world's maps.
+     */
+    bool isPointInVoid(de::Vector3d const &pos) const;
 
 #endif // __CLIENT__
 

@@ -889,7 +889,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
             if(!parm.shineTranslateWithViewerPos)
             {
-                delta -= vOrigin.xzy();
+                delta -= Rend_EyeOrigin().xzy();
             }
 
             shinyAng = QATAN2(delta.z, M_ApproxDistancef(delta.x, delta.y)) / PI + 0.5f; // shinyAng is [0,1]
@@ -1162,7 +1162,7 @@ void Rend_DrawModel2(vissprite_t const &spr)
     }
 
     // Set up a suitable matrix for the pose.
-    rend.setTransformation(vOrigin - spr.pose.mid().xzy(), localMat, viewMat);
+    rend.setTransformation(Rend_EyeOrigin() - spr.pose.mid().xzy(), localMat, viewMat);
 
     // Ambient color and lighting vectors.
     rend.setAmbientLight(spr.light.ambientColor * .8f);

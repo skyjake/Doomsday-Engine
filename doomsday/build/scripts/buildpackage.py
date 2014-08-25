@@ -50,7 +50,7 @@ class Package:
         # Check for the required metadata file.
         foundInfo = False
         for full, internal in contents:
-            if internal.lower() == 'info':
+            if internal.lower() == 'info' or internal.lower() == 'info.dei':
                 foundInfo = True
                 break            
         if not foundInfo:

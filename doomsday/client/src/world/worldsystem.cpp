@@ -920,6 +920,40 @@ void WorldSystem::endFrame()
     DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldSystemFrameEnds();
 }
 
+bool WorldSystem::isPointInVoid(Vector3d const &pos) const
+{
+    // Everything is void if there is no map.
+    if(!hasMap()) return true;
+
+    SectorCluster const *cluster = map().clusterAt(pos);
+    if(!cluster) return true;
+
+    // Check the planes of the cluster.
+    if(cluster->visCeiling().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyCeil = cluster->sector().map().skyFixCeiling();
+        if(skyCeil < DDMAXFLOAT && pos.z > skyCeil)
+            return true;
+    }
+    else if(pos.z > cluster->visCeiling().heightSmoothed())
+    {
+        return true;
+    }
+
+    if(cluster->visFloor().surface().hasSkyMaskedMaterial())
+    {
+        coord_t const skyFloor = cluster->sector().map().skyFixFloor();
+        if(skyFloor > DDMINFLOAT && pos.z < skyFloor)
+            return true;
+    }
+    else if(pos.z < cluster->visFloor().heightSmoothed())
+    {
+        return true;
+    }
+
+    return false; // Not in the void.
+}
+
 #endif // __CLIENT__
 
 void WorldSystem::consoleRegister() // static

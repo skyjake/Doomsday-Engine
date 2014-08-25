@@ -200,8 +200,9 @@ void Package::parseMetadata(File &packageFile) // static
         }
 
         Record &metadata        = packageFile.info().subrecord(PACKAGE);
-        File *metadataInfo      = folder->tryLocateFile("Info");
         File *initializerScript = folder->tryLocateFile("__init__.de");
+        File *metadataInfo      = folder->tryLocateFile("Info.dei");
+        if(!metadataInfo) metadataInfo = folder->tryLocateFile("Info"); // alternate name
         Time parsedAt           = Time::invalidTime();
         bool needParse          = true;
 

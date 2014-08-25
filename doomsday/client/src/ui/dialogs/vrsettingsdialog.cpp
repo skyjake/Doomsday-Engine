@@ -24,6 +24,8 @@
 #include "api_console.h"
 #include <doomsday/console/exec.h>
 
+#include <de/App>
+#include <de/VariableSliderWidget>
 #include <de/SignalAction>
 #include "CommandAction"
 
@@ -37,6 +39,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
     CVarSliderWidget *dominantEye;
     CVarSliderWidget *humanHeight;
     CVarSliderWidget *ipd;
+    VariableSliderWidget *riftDensity;
     CVarSliderWidget *riftSamples;
     ButtonWidget *riftReset;
     ButtonWidget *riftSetup;
@@ -74,6 +77,10 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         if(vrCfg().oculusRift().isReady())
         {
+            area.add(riftDensity = new VariableSliderWidget(App::config()["vr.oculusRift.pixelDensity"],
+                     Ranged(0.5, 1.0), .01));
+            riftDensity->setPrecision(2);
+
             area.add(riftReset = new ButtonWidget);
             riftReset->setText(tr("Recenter Tracking"));
             riftReset->setAction(new CommandAction("resetriftpose"));
@@ -81,11 +88,11 @@ DENG_GUI_PIMPL(VRSettingsDialog)
             area.add(riftSetup = new ButtonWidget);
             riftSetup->setText(tr("Apply Rift Settings"));
             riftSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForOculusRift())));
-
-            area.add(desktopSetup = new ButtonWidget);
-            desktopSetup->setText(tr("Apply Desktop Settings"));
-            desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
         }
+
+        area.add(desktopSetup = new ButtonWidget);
+        desktopSetup->setText(tr("Apply Desktop Settings"));
+        desktopSetup->setAction(new SignalAction(thisPublic, SLOT(autoConfigForDesktop())));
     }
 
     void fetch()
@@ -128,11 +135,15 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     sampleLabel->setTextLineAlignment(ui::AlignRight);
 
     layout.setCellAlignment(Vector2i(0, 5), ui::AlignLeft);
-    layout.append(*ovrLabel, 2) << *sampleLabel << *d->riftSamples;
+    layout.append(*ovrLabel, 2);
 
     LabelWidget *utilLabel = LabelWidget::newWithText(tr("Utilities:"), &area());
     if(vrCfg().oculusRift().isReady())
     {
+        layout << *sampleLabel << *d->riftSamples
+               << *LabelWidget::newWithText(tr("Pixel Density:"), &area())
+               << *d->riftDensity;
+
         layout << *utilLabel << *d->riftReset
                << Const(0)   << *d->riftSetup
                << Const(0)   << *d->desktopSetup;
