@@ -37,12 +37,6 @@
 // We need the playr data structure as well.
 #include "x_player.h"
 
-// ------------------------
-// Command line parameters.
-//
-extern int     verbose;
-
-
 // -------------------------
 // Status flags for refresh.
 //

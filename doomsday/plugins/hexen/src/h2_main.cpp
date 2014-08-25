@@ -40,8 +40,6 @@
 using namespace de;
 using namespace common;
 
-int verbose;
-
 float turboMul; // Multiplier for turbo.
 
 gamemode_t gameMode;

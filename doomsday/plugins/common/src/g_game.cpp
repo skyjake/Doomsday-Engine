@@ -182,7 +182,7 @@ int gsvWPieces[4];
 
 static gameaction_t gameAction;
 static gamestate_t gameState = GS_STARTUP;
-static dd_bool quitInProgress;
+static bool quitInProgress;
 
 static void registerGameStatusCVars()
 {
@@ -358,7 +358,7 @@ void G_ConsoleRegister()
 
 dd_bool G_QuitInProgress()
 {
-    return quitInProgress;
+    return ::quitInProgress;
 }
 
 void G_SetGameAction(gameaction_t newAction)
@@ -507,8 +507,7 @@ static void initSaveSlots()
  */
 void G_CommonPreInit()
 {
-    quitInProgress = false;
-    verbose = CommandLine_Exists("-verbose");
+    ::quitInProgress = false;
 
     // Apply the default game rules.
     COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
