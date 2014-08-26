@@ -3,9 +3,13 @@
 exists($${LIBOVR_DIR}/Include/OVR.h) {
     INCLUDEPATH += $${LIBOVR_DIR}/Include
     win32 {
-        LIBS += $${LIBOVR_DIR}/Lib/Win32/libovr.lib
+        include(dep_atl.pri)
+
+        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovrd.lib
+              else: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovr.lib
+
         # Additional windows libraries needed to avoid link errors when using Rift
-        LIBS += shell32.lib winmm.lib
+        LIBS += shell32.lib winmm.lib ws2_32.lib
     }
     macx {
         deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Mac/Debug/libovr.a
@@ -25,7 +29,6 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
         LIBS += -lX11 -ludev -lXinerama
     }
     DEFINES += DENG_HAVE_OCULUS_API
-    # message("Found Oculus Rift SDK")
 } else {
     # message("Oculus Rift SDK not found")
 }
