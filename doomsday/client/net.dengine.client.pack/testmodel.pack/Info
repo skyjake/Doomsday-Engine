@@ -11,11 +11,11 @@ asset model.thing.possessed {
     
     group material.@0 {
         heightMap   = "bodyheights.png"
-        #emissionMap = "bodyemission.png"
+        #emissiveMap = "bodyemission.png"
     } 
     #group material.@5 {
     #    heightMap = "bodyheights.png"
-    #    emissionMap = "bodyemission.png"
+    #    emissiveMap = "bodyemission.png"
     #}
 
     group animation {

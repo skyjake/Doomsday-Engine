@@ -75,8 +75,8 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         PID_MAC10_8_X86_64     => array('id'=>PID_MAC10_8_X86_64,     'name'=>'mac10_8-x86_64',     'nicename'=>'OS X 10.8+'),
         PID_MAC10_6_X86_X86_64 => array('id'=>PID_MAC10_6_X86_X86_64, 'name'=>'mac10_6-x86-x86_64', 'nicename'=>'OS X 10.6+'),
         PID_MAC10_4_X86_PPC    => array('id'=>PID_MAC10_4_X86_PPC,    'name'=>'mac10_4-x86-ppc',    'nicename'=>'OS X 10.4+'),
-        PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu 12.04 (64bit)'),
-        PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu 12.04 (32bit)'),
+        PID_LINUX_X86_64       => array('id'=>PID_LINUX_X86_64,       'name'=>'linux-x86_64',       'nicename'=>'Ubuntu 14.04 (64bit)'),
+        PID_LINUX_X86          => array('id'=>PID_LINUX_X86,          'name'=>'linux-x86',          'nicename'=>'Ubuntu 14.04 (32bit)'),
         PID_SOURCE             => array('id'=>PID_SOURCE,             'name'=>'source',             'nicename'=>'Source code')
     );
     private static $unknownPlatform = array(

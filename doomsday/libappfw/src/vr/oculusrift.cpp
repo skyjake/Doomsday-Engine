@@ -241,8 +241,8 @@ DENG2_PIMPL(OculusRift)
         cfg.OGL.Header.RTSize      = hmd->Resolution;
         cfg.OGL.Header.Multisample = buf.sampleCount();
 #ifdef WIN32
-        cfg.OGL.Window             = window->nativeHandle();
-        //cfg.OGL.DC               = dc;
+        cfg.OGL.Window             = (HWND) window->nativeHandle();
+        cfg.OGL.DC                 = NULL;
 #endif
         if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {
@@ -267,11 +267,7 @@ DENG2_PIMPL(OculusRift)
                      << render[i].ViewAdjust.z;
         }*/
 
-#ifdef WIN32
-        ovrHmd_AttachToWindow(hmd, (HWND) window->nativeHandle(), NULL, NULL);
-#else
         ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
-#endif
 
         /*
         float clearColor[4] = { 0.0f, 0.5f, 1.0f, 0.0f };
