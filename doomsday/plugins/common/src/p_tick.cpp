@@ -79,7 +79,6 @@ void P_DoTick()
 #endif
 
 #if __JHEXEN__
-    P_AnimateSky();
     P_AnimateLightning();
 #endif
 

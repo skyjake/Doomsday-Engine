@@ -1,26 +1,22 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_spec.cpp  Special map actions.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #include <cstring>
@@ -50,10 +46,233 @@ using namespace common;
 
 #define LIGHTNING_SPECIAL       198
 #define LIGHTNING_SPECIAL2      199
-#define SKYCHANGE_SPECIAL       200
 
-static void P_LightningFlash();
-static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock);
+/**
+ * Animator for the map-wide lightning effects.
+ */
+class LightningAnimator
+{
+    int flash = 0;
+    int nextFlash = 0;
+    float *sectorLightLevels = 0;  ///< Ambient light levels for each sector (if enabled).
+
+public:
+    /**
+     * Determines whether lighting is enabled for the current map.
+     */
+    bool enabled() const
+    {
+        return sectorLightLevels != 0;
+    }
+
+    /**
+     * Manually trigger a lightning flash which will begin animating on the next game tic.
+     * Can be used to trigger a flash at specific times.
+     */
+    void triggerFlash()
+    {
+        if(!enabled()) return;
+        nextFlash = 0;
+    }
+
+    /**
+     * Animate lighting for the current map. To be called once per GAMETIC.
+     */
+    void advanceTime()
+    {
+        if(!enabled()) return;
+
+        // Is it time for a lightning state change?
+        if((!nextFlash || flash))
+        {
+            nextFlash--;
+            return;
+        }
+
+        if(flash)
+        {
+            flash--;
+            float *tempLight = sectorLightLevels;
+
+            if(flash)
+            {
+                for(int i = 0; i < numsectors; ++i)
+                {
+                    Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
+                    if(!isLightningSector(sec)) continue;
+
+                    float lightLevel = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
+                    if(*tempLight < lightLevel - (4.f / 255))
+                    {
+                        P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL, lightLevel - (1.f / 255) * 4);
+                    }
+                    tempLight++;
+                }
+            }
+            else
+            {
+                // Remove the alternate lightning flash special.
+                for(int i = 0; i < numsectors; ++i)
+                {
+                    Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
+                    if(!isLightningSector(sec)) continue;
+
+                    P_SetFloatp(sec, DMU_LIGHT_LEVEL, *tempLight);
+                    tempLight++;
+                }
+
+                if(!IS_DEDICATED)
+                {
+                    R_SkyParams(1, DD_DISABLE, NULL);
+                    R_SkyParams(0, DD_ENABLE, NULL);
+                }
+            }
+
+            return;
+        }
+
+        flash = (P_Random() & 7) + 8;
+
+        float const flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
+        float *tempLight = sectorLightLevels;
+        bool foundSec = false;
+        for(int i = 0; i < numsectors; ++i)
+        {
+            Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
+            if(!isLightningSector(sec)) continue;
+
+            xsector_t *xsec = P_ToXSector(sec);
+            float newLevel  = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
+
+            *tempLight = newLevel;
+
+            if(xsec->special == LIGHTNING_SPECIAL)
+            {
+                newLevel += .25f;
+                if(newLevel > flashLight)
+                    newLevel = flashLight;
+            }
+            else if(xsec->special == LIGHTNING_SPECIAL2)
+            {
+                newLevel += .125f;
+                if(newLevel > flashLight)
+                    newLevel = flashLight;
+            }
+            else
+            {
+                newLevel = flashLight;
+            }
+
+            if(newLevel < *tempLight)
+                newLevel = *tempLight;
+
+            P_SetFloatp(sec, DMU_LIGHT_LEVEL, newLevel);
+            tempLight++;
+            foundSec = true;
+        }
+
+        if(foundSec)
+        {
+            mobj_t *plrmo = ::players[DISPLAYPLAYER].plr->mo;
+            mobj_t *crashOrigin = 0;
+
+            if(!IS_DEDICATED)
+            {
+                // Set the alternate (lightning) sky.
+                R_SkyParams(0, DD_DISABLE, NULL);
+                R_SkyParams(1, DD_ENABLE, NULL);
+            }
+
+            // If 3D sounds are active, position the clap somewhere above the player.
+            if(::cfg.snd3D && plrmo && !IS_NETGAME)
+            {
+                if((crashOrigin =
+                    P_SpawnMobjXYZ(MT_CAMERA,
+                                   plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
+                                   plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
+                                   plrmo->origin[VZ] + (4000 << FRACBITS),
+                                   0, 0)) != NULL)
+                {
+                    crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
+                }
+            }
+
+            // Make it loud!
+            S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashOrigin);
+        }
+
+        // Calculate the next lighting flash.
+        if(!nextFlash)
+        {
+            if(P_Random() < 50) // Immediate, quick flash.
+            {
+                nextFlash = (P_Random() & 15) + 16;
+            }
+            else if(P_Random() < 128 && !(mapTime & 32))
+            {
+                nextFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
+            }
+            else
+            {
+                nextFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
+            }
+        }
+    }
+
+    /**
+     * Initialize the lightning animator for the current map.
+     *
+     * @return  @c true, if lightning is enabled for the current map, for caller convenience.
+     */
+    bool initForMap()
+    {
+        flash     = 0;
+        nextFlash = 0;
+        Z_Free(sectorLightLevels); sectorLightLevels = 0;
+
+        Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
+        if(mapInfo && !mapInfo->getb("lightning"))
+        {
+            int numLightningSectors = 0;
+            for(int i = 0; i < numsectors; ++i)
+            {
+                if(isLightningSector((Sector *)P_ToPtr(DMU_SECTOR, i)))
+                {
+                    numLightningSectors++;
+                }
+            }
+            if(numLightningSectors > 0)
+            {
+                sectorLightLevels = (float *)Z_Malloc(numLightningSectors * sizeof(float), PU_MAP, nullptr);
+
+                // Don't flash immediately on entering the map.
+                nextFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
+            }
+        }
+
+        return enabled();
+    }
+
+private:
+    static bool isLightningSector(Sector *sec)
+    {
+        xsector_t *xsec = P_ToXSector(sec);
+
+        if(xsec->special == LIGHTNING_SPECIAL || xsec->special == LIGHTNING_SPECIAL2)
+            return true;
+
+        if(P_GetIntp(P_GetPtrp(sec, DMU_CEILING_MATERIAL),
+                     DMU_FLAGS) & MATF_SKYMASK)
+            return true;
+
+        if(P_GetIntp(P_GetPtrp(sec, DMU_FLOOR_MATERIAL),
+                     DMU_FLAGS) & MATF_SKYMASK)
+            return true;
+
+        return false;
+    }
+};
+LightningAnimator lightningAnimator;
 
 ThinkerT<mobj_t> lavaInflictor;
 
@@ -62,86 +281,12 @@ mobj_t *P_LavaInflictor()
     return lavaInflictor;
 }
 
-materialid_t sky1Material;
-materialid_t sky2Material;
-float sky1ColumnOffset;
-float sky2ColumnOffset;
-float sky1ScrollDelta;
-float sky2ScrollDelta;
-bool doubleSky;
-
-static bool mapHasLightning;
-static int nextLightningFlash;
-static int lightningFlash;
-static float *lightningLightLevels;
-
 void P_InitLava()
 {
     lavaInflictor = ThinkerT<mobj_t>();
 
     lavaInflictor->type = MT_CIRCLEFLAME;
     lavaInflictor->flags2 = MF2_FIREDAMAGE | MF2_NODMGTHRUST;
-}
-
-void P_InitSky()
-{
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
-    {
-        sky1Material     = Materials_ResolveUriCString(mapInfo->gets("sky1Material").toUtf8().constData());
-        sky2Material     = Materials_ResolveUriCString(mapInfo->gets("sky2Material").toUtf8().constData());
-        sky1ScrollDelta  = mapInfo->getd("sky1ScrollDelta");
-        sky2ScrollDelta  = mapInfo->getd("sky2ScrollDelta");
-        doubleSky        = mapInfo->getb("doubleSky");
-    }
-
-    sky1ColumnOffset = sky2ColumnOffset = 0;
-
-    if(IS_DEDICATED) return;
-
-    // First disable all sky layers.
-    R_SkyParams(DD_SKY, DD_DISABLE, NULL);
-
-    // Sky2 is layer zero and Sky1 is layer one.
-    float fval = 0;
-    R_SkyParams(0, DD_OFFSET, &fval);
-    R_SkyParams(1, DD_OFFSET, &fval);
-    if(doubleSky && sky2Material)
-    {
-        R_SkyParams(0, DD_ENABLE, NULL);
-        int ival = DD_NO;
-        R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
-
-        R_SkyParams(1, DD_ENABLE, NULL);
-        ival = DD_YES;
-        R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
-    }
-    else
-    {
-        R_SkyParams(0, DD_ENABLE, NULL);
-        int ival = DD_NO;
-        R_SkyParams(0, DD_MASK, &ival);
-        R_SkyParams(0, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky1Material));
-
-        R_SkyParams(1, DD_DISABLE, NULL);
-        ival = DD_NO;
-        R_SkyParams(1, DD_MASK, &ival);
-        R_SkyParams(1, DD_MATERIAL, P_ToPtr(DMU_MATERIAL, sky2Material));
-    }
-}
-
-void P_AnimateSky()
-{
-    // Update sky column offsets
-    sky1ColumnOffset += sky1ScrollDelta;
-    sky2ColumnOffset += sky2ScrollDelta;
-
-    if(!IS_DEDICATED)
-    {
-        R_SkyParams(1, DD_OFFSET, &sky1ColumnOffset);
-        R_SkyParams(0, DD_OFFSET, &sky2ColumnOffset);
-    }
 }
 
 dd_bool EV_SectorSoundChange(byte *args)
@@ -562,7 +707,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
 
     case 109: // Force Lightning
         success = true;
-        P_ForceLightning();
+        ::lightningAnimator.triggerFlash();
         break;
 
     case 110: // Light Raise by Value
@@ -634,8 +779,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 138: // Floor_Waggle
-        success =
-            EV_StartFloorWaggle(args[0], args[1], args[2], args[3], args[4]);
+        success = EV_StartFloorWaggle(args[0], args[1], args[2], args[3], args[4]);
         break;
 
     case 140: // Sector_SoundChange
@@ -651,39 +795,29 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
 
 dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 {
-    int             lineActivation;
-    dd_bool         repeat;
-    dd_bool         buttonSuccess;
-    xline_t        *xline = P_ToXLine(line);
+    // Clients do not activate lines.
+    if(IS_CLIENT) return false;
 
-    if(IS_CLIENT)
-    {
-        // Clients do not activate lines.
-        return false;
-    }
-
-    lineActivation = GET_SPAC(xline->flags);
+    xline_t *xline           = P_ToXLine(line);
+    int const lineActivation = GET_SPAC(xline->flags);
     if(lineActivation != activationType)
         return false;
 
     if(!mo->player && !(mo->flags & MF_MISSILE))
     {
-        if(lineActivation != SPAC_MCROSS)
-        {   // currently, monsters can only activate the MCROSS activation type
-            return false;
-        }
+        // Currently, monsters can only activate the MCROSS activation type.
+        if(lineActivation != SPAC_MCROSS) return false;
 
-        if(xline->flags & ML_SECRET)
-            return false; // never DT_OPEN secret doors
+        // Never DT_OPEN secret doors
+        if(xline->flags & ML_SECRET) return false;
     }
 
-    repeat = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
+    bool const repeat        = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
+    bool const buttonSuccess = P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);
 
-    buttonSuccess =
-        P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);
     if(!repeat && buttonSuccess)
     {
-        // clear the special on non-retriggerable lines
+        // Clear the special on non-retriggerable lines.
         xline->special = 0;
     }
 
@@ -698,79 +832,79 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
 }
 
 /**
- * Called every tic frame that the player origin is in a special sector.
+ * @note Called every tic frame that the player origin is in a special sector.
  */
 void P_PlayerInSpecialSector(player_t *player)
 {
+    DENG2_ASSERT(player);
     static coord_t const pushTab[3] = {
         1.0 / 32 * 5,
         1.0 / 32 * 10,
         1.0 / 32 * 25
     };
-    Sector *sector = Mobj_Sector(player->plr->mo);
-    xsector_t *xsector;
 
-    if(!FEQUAL(player->plr->mo->origin[VZ], P_GetDoublep(sector, DMU_FLOOR_HEIGHT)))
+    Sector *sec = Mobj_Sector(player->plr->mo);
+    if(!de::fequal(player->plr->mo->origin[VZ], P_GetDoublep(sec, DMU_FLOOR_HEIGHT)))
         return; // Player is not touching the floor
 
-    xsector = P_ToXSector(sector);
-    switch(xsector->special)
+    xsector_t *xsec = P_ToXSector(sec);
+    switch(xsec->special)
     {
     case 9: // SecretArea
         if(!IS_CLIENT)
         {
             player->secretCount++;
             player->update |= PSF_COUNTERS;
-            xsector->special = 0;
+            xsec->special = 0;
         }
         break;
 
     case 201:
     case 202:
     case 203: // Scroll_North_xxx
-        P_Thrust(player, ANG90, pushTab[xsector->special - 201]);
+        P_Thrust(player, ANG90, pushTab[xsec->special - 201]);
         break;
 
     case 204:
     case 205:
     case 206: // Scroll_East_xxx
-        P_Thrust(player, 0, pushTab[xsector->special - 204]);
+        P_Thrust(player, 0, pushTab[xsec->special - 204]);
         break;
 
     case 207:
     case 208:
     case 209: // Scroll_South_xxx
-        P_Thrust(player, ANG270, pushTab[xsector->special - 207]);
+        P_Thrust(player, ANG270, pushTab[xsec->special - 207]);
         break;
 
     case 210:
     case 211:
     case 212: // Scroll_West_xxx
-        P_Thrust(player, ANG180, pushTab[xsector->special - 210]);
+        P_Thrust(player, ANG180, pushTab[xsec->special - 210]);
         break;
 
     case 213:
     case 214:
     case 215: // Scroll_NorthWest_xxx
-        P_Thrust(player, ANG90 + ANG45, pushTab[xsector->special - 213]);
+        P_Thrust(player, ANG90 + ANG45, pushTab[xsec->special - 213]);
         break;
 
     case 216:
     case 217:
     case 218: // Scroll_NorthEast_xxx
-        P_Thrust(player, ANG45, pushTab[xsector->special - 216]);
+        P_Thrust(player, ANG45, pushTab[xsec->special - 216]);
         break;
 
     case 219:
     case 220:
     case 221: // Scroll_SouthEast_xxx
-        P_Thrust(player, ANG270 + ANG45, pushTab[xsector->special - 219]);
+        P_Thrust(player, ANG270 + ANG45, pushTab[xsec->special - 219]);
         break;
 
     case 222:
     case 223:
     case 224: // Scroll_SouthWest_xxx
-        P_Thrust(player, ANG180 + ANG45, pushTab[xsector->special - 222]);
+        P_Thrust(player, ANG180 + ANG45, pushTab[xsec->special - 222]);
         break;
 
     case 40:
@@ -804,23 +938,25 @@ void P_PlayerInSpecialSector(player_t *player)
     }
 }
 
-void P_PlayerOnSpecialFloor(player_t* player)
+void P_PlayerOnSpecialFloor(player_t *player)
 {
-    const terraintype_t* tt = P_MobjFloorTerrain(player->plr->mo);
+    DENG2_ASSERT(player);
+    mobj_t *plrMo           = player->plr->mo;
+    terraintype_t const *tt = P_MobjFloorTerrain(plrMo);
+    DENG2_ASSERT(tt);
 
     if(!(tt->flags & TTF_DAMAGING))
         return;
 
-    if(player->plr->mo->origin[VZ] >
-       P_GetDoublep(Mobj_Sector(player->plr->mo), DMU_FLOOR_HEIGHT))
+    if(plrMo->origin[VZ] > P_GetDoublep(Mobj_Sector(plrMo), DMU_FLOOR_HEIGHT))
     {
         return; // Player is not touching the floor
     }
 
     if(!(mapTime & 31))
     {
-        P_DamageMobj(player->plr->mo, P_LavaInflictor(), NULL, 10, false);
-        S_StartSound(SFX_LAVA_SIZZLE, player->plr->mo);
+        P_DamageMobj(plrMo, P_LavaInflictor(), nullptr, 10, false);
+        S_StartSound(SFX_LAVA_SIZZLE, plrMo);
     }
 }
 
@@ -850,12 +986,12 @@ void P_SpawnSectorSpecialThinkers()
     }
 }
 
-void P_SpawnLineSpecialThinkers(void)
+void P_SpawnLineSpecialThinkers()
 {
     // Stub.
 }
 
-void P_SpawnAllSpecialThinkers(void)
+void P_SpawnAllSpecialThinkers()
 {
     P_SpawnSectorSpecialThinkers();
     P_SpawnLineSpecialThinkers();
@@ -865,12 +1001,9 @@ dd_bool P_SectorTagIsBusy(int tag)
 {
     /// @note The sector tag lists cannot be used here as an iteration at a higher
     /// level may already be in progress.
-    int i;
-    for(i = 0; i < numsectors; ++i)
+    for(int i = 0; i < numsectors; ++i)
     {
-        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
-        xsector_t *xsec = P_ToXSector(sec);
-
+        xsector_t *xsec = P_ToXSector((Sector *) P_ToPtr(DMU_SECTOR, i));
         if(xsec->tag == tag && xsec->specialData)
         {
             return true;
@@ -879,225 +1012,12 @@ dd_bool P_SectorTagIsBusy(int tag)
     return false;
 }
 
-static dd_bool isLightningSector(Sector* sec)
-{
-    xsector_t*              xsec = P_ToXSector(sec);
-
-    if(xsec->special == LIGHTNING_SPECIAL ||
-       xsec->special == LIGHTNING_SPECIAL2)
-        return true;
-
-    if(P_GetIntp(P_GetPtrp(sec, DMU_CEILING_MATERIAL),
-                   DMU_FLAGS) & MATF_SKYMASK)
-        return true;
-
-    if(P_GetIntp(P_GetPtrp(sec, DMU_FLOOR_MATERIAL),
-                   DMU_FLAGS) & MATF_SKYMASK)
-        return true;
-
-    return false;
-}
-
-static void P_LightningFlash(void)
-{
-    int i;
-    float *tempLight;
-    dd_bool foundSec;
-    float flashLight;
-
-    if(lightningFlash)
-    {
-        lightningFlash--;
-        tempLight = lightningLightLevels;
-
-        if(lightningFlash)
-        {
-            for(i = 0; i < numsectors; ++i)
-            {
-                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
-
-                if(isLightningSector(sec))
-                {
-                    float lightLevel = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
-
-                    if(*tempLight < lightLevel - (4.f / 255))
-                        P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL,
-                                   lightLevel - (1.f / 255) * 4);
-
-                    tempLight++;
-                }
-            }
-        }
-        else
-        {
-            // Remove the alternate lightning flash special.
-            for(i = 0; i < numsectors; ++i)
-            {
-                Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
-
-                if(isLightningSector(sec))
-                {
-                    P_SetFloatp(sec, DMU_LIGHT_LEVEL, *tempLight);
-                    tempLight++;
-                }
-            }
-
-            if(!IS_DEDICATED)
-            {
-                R_SkyParams(1, DD_DISABLE, NULL);
-                R_SkyParams(0, DD_ENABLE, NULL);
-            }
-        }
-
-        return;
-    }
-
-    lightningFlash = (P_Random() & 7) + 8;
-    flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
-    tempLight = lightningLightLevels;
-    foundSec = false;
-    for(i = 0; i < numsectors; ++i)
-    {
-        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
-
-        if(isLightningSector(sec))
-        {
-            xsector_t *xsec = P_ToXSector(sec);
-            float newLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-
-            *tempLight = newLevel;
-
-            if(xsec->special == LIGHTNING_SPECIAL)
-            {
-                newLevel += .25f;
-                if(newLevel > flashLight)
-                    newLevel = flashLight;
-            }
-            else if(xsec->special == LIGHTNING_SPECIAL2)
-            {
-                newLevel += .125f;
-                if(newLevel > flashLight)
-                    newLevel = flashLight;
-            }
-            else
-            {
-                newLevel = flashLight;
-            }
-
-            if(newLevel < *tempLight)
-                newLevel = *tempLight;
-
-            P_SetFloatp(sec, DMU_LIGHT_LEVEL, newLevel);
-            tempLight++;
-            foundSec = true;
-        }
-    }
-
-    if(foundSec)
-    {
-        mobj_t *plrmo = players[DISPLAYPLAYER].plr->mo;
-        mobj_t *crashOrigin = 0;
-
-        if(!IS_DEDICATED)
-        {
-            // Set the alternate (lightning) sky.
-            R_SkyParams(0, DD_DISABLE, NULL);
-            R_SkyParams(1, DD_ENABLE, NULL);
-        }
-
-        // If 3D sounds are active, position the clap somewhere above the player.
-        if(cfg.snd3D && plrmo && !IS_NETGAME)
-        {
-            if((crashOrigin =
-                P_SpawnMobjXYZ(MT_CAMERA,
-                               plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
-                               plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
-                               plrmo->origin[VZ] + (4000 << FRACBITS),
-                               0, 0)) != NULL)
-            {
-                crashOrigin->tics = 5 * TICSPERSEC; // Five seconds will do.
-            }
-        }
-
-        // Make it loud!
-        S_StartSound(SFX_THUNDER_CRASH | DDSF_NO_ATTENUATION, crashOrigin);
-    }
-
-    // Calculate the next lighting flash
-    if(!nextLightningFlash)
-    {
-        if(P_Random() < 50)
-        {   // Immediate Quick flash
-            nextLightningFlash = (P_Random() & 15) + 16;
-        }
-        else
-        {
-            if(P_Random() < 128 && !(mapTime & 32))
-            {
-                nextLightningFlash = ((P_Random() & 7) + 2) * TICSPERSEC;
-            }
-            else
-            {
-                nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
-            }
-        }
-    }
-}
-
-void P_ForceLightning()
-{
-    nextLightningFlash = 0;
-}
-
 void P_InitLightning()
 {
-    int i, secCount;
-    Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-
-    if(!mapInfo || !mapInfo->getb("lightning"))
-    {
-        mapHasLightning = false;
-        lightningFlash = 0;
-        return;
-    }
-
-    lightningFlash = 0;
-    secCount = 0;
-    for(i = 0; i < numsectors; ++i)
-    {
-        Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
-
-        if(isLightningSector(sec))
-        {
-            secCount++;
-        }
-    }
-
-    if(secCount > 0)
-    {
-        mapHasLightning = true;
-
-        lightningLightLevels = (float *)Z_Malloc(secCount * sizeof(float), PU_MAP, NULL);
-
-        // Don't flash immediately on entering the map.
-        nextLightningFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
-    }
-    else
-    {
-        mapHasLightning = false;
-    }
+    ::lightningAnimator.initForMap();
 }
 
-void P_AnimateLightning(void)
+void P_AnimateLightning()
 {
-    if(!mapHasLightning) return;
-
-    if(!nextLightningFlash || lightningFlash)
-    {
-        P_LightningFlash();
-    }
-    else
-    {
-        nextLightningFlash--;
-    }
+    ::lightningAnimator.advanceTime();
 }

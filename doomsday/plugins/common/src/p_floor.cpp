@@ -78,9 +78,6 @@ static int stairQueueHead;
 static int stairQueueTail;
 #endif
 
-/**
- * Move a plane (floor or ceiling) and check for crushing.
- */
 result_e T_MovePlane(Sector *sector, float speed, coord_t dest, int crush,
     int isCeiling, int direction)
 {
