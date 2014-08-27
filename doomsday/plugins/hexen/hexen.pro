@@ -36,6 +36,7 @@ HEADERS += \
     include/intermission.h \
     include/info.h \
     include/jhexen.h \
+    include/lightninganimator.h \
     include/m_cheat.h \
     include/m_random.h \
     include/p_enemy.h \
@@ -77,6 +78,7 @@ SOURCES += \
     src/hconsole.cpp \
     src/hrefresh.cpp \
     src/intermission.cpp \
+    src/lightninganimator.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \
