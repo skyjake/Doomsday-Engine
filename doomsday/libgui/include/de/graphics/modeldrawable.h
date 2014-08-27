@@ -61,7 +61,7 @@ public:
                              The default normal vector pointing straight away from the
                              surface is therefore (128, 128, 255) => (0, 0, 1). */
         Specular = 2,   ///< Specular color (RGB) and reflection sharpness (A).
-        Emission = 3,   /**< Additional light emitted by the surface that is not affected by
+        Emissive = 3,   /**< Additional light emitted by the surface that is not affected by
                              external factors. */
         Height = 4,     /**< Height values are converted to a normal map. Lighter regions
                              are higher than dark regions. */

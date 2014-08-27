@@ -143,7 +143,7 @@ DENG2_PIMPL(ModelRenderer)
             model.setAtlas(*atlas);
 
             model.setDefaultTexture(ModelDrawable::Normals,  defaultNormals);
-            model.setDefaultTexture(ModelDrawable::Emission, defaultEmission);
+            model.setDefaultTexture(ModelDrawable::Emissive, defaultEmission);
             model.setDefaultTexture(ModelDrawable::Specular, defaultSpecular);
 
             // Use the texture mapping specified in the shader. This has to be done
@@ -212,7 +212,7 @@ DENG2_PIMPL(ModelRenderer)
                 handleMaterialTexture(model, mat.key(), *mat.value(), "normalMap",   ModelDrawable::Normals);
                 handleMaterialTexture(model, mat.key(), *mat.value(), "heightMap",   ModelDrawable::Height);
                 handleMaterialTexture(model, mat.key(), *mat.value(), "specularMap", ModelDrawable::Specular);
-                handleMaterialTexture(model, mat.key(), *mat.value(), "emissionMap", ModelDrawable::Emission);
+                handleMaterialTexture(model, mat.key(), *mat.value(), "emissiveMap", ModelDrawable::Emissive);
             }
         }
 

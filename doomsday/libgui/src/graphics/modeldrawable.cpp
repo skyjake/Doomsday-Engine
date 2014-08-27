@@ -469,7 +469,7 @@ DENG2_PIMPL(ModelDrawable)
         case aiTextureType_NORMALS:  return Normals;
         case aiTextureType_HEIGHT:   return Height;
         case aiTextureType_SPECULAR: return Specular;
-        case aiTextureType_EMISSIVE: return Emission;
+        case aiTextureType_EMISSIVE: return Emissive;
         default:
             DENG2_ASSERT(!"Unsupported texture type");
             return Diffuse;
@@ -484,7 +484,7 @@ DENG2_PIMPL(ModelDrawable)
         case Normals:  return aiTextureType_NORMALS;
         case Height:   return aiTextureType_HEIGHT;
         case Specular: return aiTextureType_SPECULAR;
-        case Emission: return aiTextureType_EMISSIVE;
+        case Emissive: return aiTextureType_EMISSIVE;
         default:
             break;
         }
@@ -526,7 +526,7 @@ DENG2_PIMPL(ModelDrawable)
             fallBackToDefaultTexture(mat, Specular);
 
             loadTextureImage(i, aiTextureType_EMISSIVE);
-            fallBackToDefaultTexture(mat, Emission);
+            fallBackToDefaultTexture(mat, Emissive);
         }
     }
 
@@ -1058,7 +1058,7 @@ ModelDrawable::TextureMap ModelDrawable::textToTextureMap(String const &text)
         { "diffuse",  Diffuse  },
         { "normals",  Normals  },
         { "specular", Specular },
-        { "emission", Emission },
+        { "emission", Emissive },
         { "height",   Height   }
     };
 
@@ -1135,7 +1135,7 @@ void ModelDrawable::unsetAtlas()
 
 ModelDrawable::Mapping ModelDrawable::diffuseNormalsSpecularEmission() // static
 {
-    return Mapping() << Diffuse << Normals << Specular << Emission;
+    return Mapping() << Diffuse << Normals << Specular << Emissive;
 }
 
 void ModelDrawable::setTextureMapping(Mapping mapsToUse)
