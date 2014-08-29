@@ -28,55 +28,33 @@ namespace defn {
 
 void Sky::resetToDefaults()
 {
-    DENG2_ASSERT(_def);
-
     // Add all expected fields with their default values.
-    _def->addText  ("id", "");
-    _def->addNumber("flags", 0);
-    _def->addNumber("height", DEFAULT_SKY_HEIGHT);
-    _def->addNumber("horizonOffset", 0);
-    _def->addArray ("color", new ArrayValue(Vector3f()));
-    _def->addArray ("layer", new ArrayValue);
-    _def->addArray ("model", new ArrayValue);
+    def().addText  ("id", "");
+    def().addNumber("flags", 0);
+    def().addNumber("height", DEFAULT_SKY_HEIGHT);
+    def().addNumber("horizonOffset", 0);
+    def().addArray ("color", new ArrayValue(Vector3f()));
+    def().addArray ("layer", new ArrayValue);
+    def().addArray ("model", new ArrayValue);
 
     // Skies have two layers by default.
     addLayer();
     addLayer();
 }
 
-Sky &Sky::operator = (Record *d)
-{
-    setAccessedRecord(*d);
-    _def = d;
-    return *this;
-}
-
-int Sky::order() const
-{
-    if(!accessedRecordPtr()) return -1;
-    return geti("__order__");
-}
-
-Sky::operator bool() const
-{
-    return accessedRecordPtr() != 0;
-}
-
 Record &Sky::addLayer()
 {
-    DENG2_ASSERT(_def);
+    Record *layer = new Record;
 
-    Record *def = new Record;
+    layer->addNumber("flags", 0);
+    layer->addText  ("material", "");
+    layer->addNumber("offset", DEFAULT_SKY_SPHERE_XOFFSET);
+    layer->addNumber("colorLimit", DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
-    def->addNumber("flags", 0);
-    def->addText  ("material", "");
-    def->addNumber("offset", DEFAULT_SKY_SPHERE_XOFFSET);
-    def->addNumber("colorLimit", DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
+    def()["layer"].value<ArrayValue>()
+            .add(new RecordValue(layer, RecordValue::OwnsRecord));
 
-    (*_def)["layer"].value<ArrayValue>()
-            .add(new RecordValue(def, RecordValue::OwnsRecord));
-
-    return *def;
+    return *layer;
 }
 
 int Sky::layerCount() const
@@ -91,8 +69,7 @@ bool Sky::hasLayer(int index) const
 
 Record &Sky::layer(int index)
 {
-    DENG2_ASSERT(_def);
-    return *_def->geta("layer")[index].as<RecordValue>().record();
+    return *def().geta("layer")[index].as<RecordValue>().record();
 }
 
 Record const &Sky::layer(int index) const
@@ -102,24 +79,22 @@ Record const &Sky::layer(int index) const
 
 Record &Sky::addModel()
 {
-    DENG2_ASSERT(_def);
+    Record *model = new Record;
 
-    Record *def = new Record;
+    model->addText  ("id", "");
+    model->addNumber("layer", -1);
+    model->addNumber("frameInterval", 1);
+    model->addNumber("yaw", 0);
+    model->addNumber("yawSpeed", 0);
+    model->addArray ("originOffset", new ArrayValue(Vector3f()));
+    model->addArray ("rotate", new ArrayValue(Vector2f()));
+    model->addText  ("exectute", "");
+    model->addArray ("color", new ArrayValue(Vector4f(1, 1, 1, 1)));
 
-    def->addText  ("id", "");
-    def->addNumber("layer", -1);
-    def->addNumber("frameInterval", 1);
-    def->addNumber("yaw", 0);
-    def->addNumber("yawSpeed", 0);
-    def->addArray ("originOffset", new ArrayValue(Vector3f()));
-    def->addArray ("rotate", new ArrayValue(Vector2f()));
-    def->addText  ("exectute", "");
-    def->addArray ("color", new ArrayValue(Vector4f(1, 1, 1, 1)));
+    def()["model"].value<ArrayValue>()
+            .add(new RecordValue(model, RecordValue::OwnsRecord));
 
-    (*_def)["model"].value<ArrayValue>()
-            .add(new RecordValue(def, RecordValue::OwnsRecord));
-
-    return *def;
+    return *model;
 }
 
 int Sky::modelCount() const
@@ -134,8 +109,7 @@ bool Sky::hasModel(int index) const
 
 Record &Sky::model(int index)
 {
-    DENG2_ASSERT(_def);
-    return *_def->geta("model")[index].as<RecordValue>().record();
+    return *def().geta("model")[index].as<RecordValue>().record();
 }
 
 Record const &Sky::model(int index) const

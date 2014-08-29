@@ -19,7 +19,7 @@
 #ifndef LIBDOOMSDAY_DEFN_SKY_H
 #define LIBDOOMSDAY_DEFN_SKY_H
 
-#include "../libdoomsday.h"
+#include "definition.h"
 #include <de/RecordAccessor>
 
 namespace defn {
@@ -34,39 +34,27 @@ namespace defn {
 /**
  * Utility for handling sky definitions.
  */
-class LIBDOOMSDAY_PUBLIC Sky : public de::RecordAccessor
+class LIBDOOMSDAY_PUBLIC Sky : public Definition
 {
 public:
-    Sky() : RecordAccessor(0), _def(0) {}
-    Sky(Sky const &other)
-        : RecordAccessor(other)
-        , _def(other._def) {}
-    Sky(de::Record &d) : RecordAccessor(d), _def(&d) {}
-    Sky(de::Record const &d) : RecordAccessor(d), _def(0) {}
+    Sky()                    : Definition() {}
+    Sky(Sky const &other)    : Definition(other) {}
+    Sky(de::Record &d)       : Definition(d) {}
+    Sky(de::Record const &d) : Definition(d) {}
 
     void resetToDefaults();
 
-    Sky &operator = (de::Record *d);
-
-    operator bool() const;
-    int order() const;
-
     de::Record &addLayer();
-
     int layerCount() const;
     bool hasLayer(int index) const;
     de::Record &layer(int index);
     de::Record const &layer(int index) const;
 
     de::Record &addModel();
-
     int modelCount() const;
     bool hasModel(int index) const;
     de::Record &model(int index);
     de::Record const &model(int index) const;
-
-private:
-    de::Record *_def; ///< Modifiable access.
 };
 
 } // namespace defn
