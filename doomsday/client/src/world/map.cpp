@@ -3237,18 +3237,19 @@ void Map::update()
     /// @todo Sky needs breaking up into multiple components. There should be
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
+    defn::Sky skyDef;
     if(mapInfo)
     {
-        defn::Sky skyDef;
-        int skyIdx = defs.getSkyNum(mapInfo.gets("skyId").toUtf8().constData());
-        if(skyIdx >= 0) skyDef = defs.skies[skyIdx];
-        else            skyDef = mapInfo.subrecord("sky");
-        theSky->configure(&skyDef);
+        if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
+        {
+            skyDef = *def;
+        }
+        else
+        {
+            skyDef = mapInfo.subrecord("sky");
+        }
     }
-    else
-    {
-        theSky->configureDefault();
-    }
+    theSky->animator().configure(&skyDef);
 #endif
 }
 

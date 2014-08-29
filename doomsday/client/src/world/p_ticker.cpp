@@ -120,19 +120,19 @@ void P_Ticker(timespan_t elapsed)
     materialsTicker(elapsed);
 #endif
 
-    if(!App_WorldSystem().hasMap()) return;
-
-    Map &map = App_WorldSystem().map();
-    if(!map.thinkers().isInited()) return; // Not initialized yet.
-
-    if(DD_IsSharpTick())
+    if(App_WorldSystem().hasMap())
     {
+        Map &map = App_WorldSystem().map();
+
 #ifdef __CLIENT__
-        theSky->runTick();
+        theSky->animator().advanceTime(elapsed);
 #endif
 
-        // Check all mobjs (always public).
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               P_MobjTicker);
+        if(DD_IsSharpTick())
+        {
+            // Check all mobjs (always public).
+            map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                                   P_MobjTicker);
+        }
     }
 }

@@ -283,13 +283,28 @@ namespace de {
 
 DENG2_PIMPL(WorldSystem)
 {
-    Map *map;                   ///< Current map.
-    timespan_t time;            ///< World-wide time.
+    Map *map = nullptr;          ///< Current map.
+    timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
-    QScopedPointer<Hand> hand;  ///< For map editing/manipulation.
+    std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
+    std::unique_ptr<Sky::Animator> skyAnimator;
 #endif
 
-    Instance(Public *i) : Base(i), map(0), time(0) {}
+    Instance(Public *i) : Base(i)
+    {
+#ifdef __CLIENT__
+        // Initialize an animator for the sky.
+        skyAnimator.reset(new Sky::Animator(*::theSky));
+        ::theSky->setAnimator(skyAnimator.get());
+#endif
+    }
+
+    ~Instance()
+    {
+#ifdef __CLIENT__
+        ::theSky->setAnimator(nullptr);
+#endif
+    }
 
     void notifyMapChange()
     {
@@ -493,18 +508,19 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         // Reconfigure the sky.
+        defn::Sky skyDef;
         if(mapInfo)
         {
-            defn::Sky skyDef;
-            int skyIdx = defs.getSkyNum(mapInfo.gets("skyId").toUtf8().constData());
-            if(skyIdx >= 0) skyDef = defs.skies[skyIdx];
-            else            skyDef = mapInfo.subrecord("sky");
-            theSky->configure(&skyDef);
+            if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
+            {
+                skyDef = *def;
+            }
+            else
+            {
+                skyDef = mapInfo.subrecord("sky");
+            }
         }
-        else
-        {
-            theSky->configureDefault();
-        }
+        theSky->animator().configure(&skyDef);
 #endif
 
         // Init the thinker lists (public and private).
@@ -880,7 +896,7 @@ timespan_t WorldSystem::time() const
 Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?
-    if(d->hand.isNull())
+    if(!d->hand)
     {
         d->hand.reset(new Hand());
         audienceForFrameEnd += *d->hand;
@@ -904,7 +920,7 @@ void WorldSystem::beginFrame(bool resetNextViewer)
 
 void WorldSystem::endFrame()
 {
-    if(d->map && !d->hand.isNull())
+    if(d->map && d->hand)
     {
         d->updateHandOrigin();
 

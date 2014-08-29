@@ -21,6 +21,13 @@
 #include "de_base.h"
 #include "render/sky.h"
 
+#include <cmath>
+#include <doomsday/console/var.h>
+#include <doomsday/console/exec.h>
+#include <de/Log>
+#include <de/timer.h>
+#include <de/concurrency.h>
+
 #include "clientapp.h"
 #include "client/cl_def.h"
 
@@ -35,14 +42,128 @@
 #include "render/rend_model.h"
 #include "render/vissprite.h"
 
-#include <doomsday/console/var.h>
-#include <doomsday/console/exec.h>
-#include <de/Log>
-#include <de/timer.h>
-#include <de/concurrency.h>
-#include <cmath>
-
 using namespace de;
+
+DENG2_PIMPL_NOREF(Sky::Animator)
+{
+    Sky *sky;
+    Instance(Sky *sky = 0) : sky(sky) {}
+};
+
+Sky::Animator::Animator() : d(new Instance)
+{}
+
+Sky::Animator::Animator(Sky &sky) : d(new Instance(&sky))
+{}
+
+Sky::Animator::~Animator()
+{}
+
+void Sky::Animator::setSky(Sky &sky)
+{
+    d->sky = &sky;
+}
+
+Sky &Sky::Animator::sky() const
+{
+    DENG2_ASSERT(d->sky != 0);
+    return *d->sky;
+}
+
+void Sky::Animator::configure(defn::Sky *_def)
+{
+    LOG_AS("Sky::Animator");
+
+    // The default configuration is used as a starting point.
+    sky().configureDefault();
+
+    if(!_def) return; // Go with the defaults, then.
+    defn::Sky const &def = *_def;
+
+    sky().setHeight(def.getf("height"));
+    sky().setHorizonOffset(def.getf("horizonOffset"));
+
+    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    {
+        Record const &lyrDef = def.layer(i);
+        Layer &lyr = sky().layer(i);
+
+        if(!(lyrDef.geti("flags") & Layer::Active))
+        {
+            lyr.disable();
+            continue;
+        }
+
+        lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
+           .setOffset(lyrDef.getf("offset"))
+           .setFadeoutLimit(lyrDef.getf("colorLimit"))
+           .enable();
+
+        de::Uri const matUri(lyrDef.gets("material"));
+        if(!matUri.isEmpty())
+        {
+            try
+            {
+                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(matUri));
+            }
+            catch(ResourceSystem::MissingManifestError const &er)
+            {
+                // Log but otherwise ignore this error.
+                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
+                    << matUri << i;
+            }
+        }
+    }
+
+    Vector3f ambientColor = Vector3f(def.get("color")).max(Vector3f(0, 0, 0));
+    if(ambientColor != Vector3f(0, 0, 0))
+    {
+        sky().setAmbientColor(ambientColor);
+    }
+
+    // Models are set up using the data in the definition (will override the sphere by default).
+    sky().setupModels(def);
+}
+
+void Sky::Animator::advanceTime(timespan_t /*elapsed*/)
+{
+    LOG_AS("Sky::Animator");
+
+    if(!d->sky) return;
+
+    if(clientPaused) return;
+    if(!DD_IsSharpTick()) return;
+
+    // Animate layers.
+    /*for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    {
+        Sky::Layer &lyr = sky().layer(i);
+    }*/
+
+    // Animate models.
+    for(int i = 0; i < MAX_SKY_MODELS; ++i)
+    {
+        Sky::ModelInfo &minfo = sky().model(i);
+        if(!minfo.def) continue;
+
+        // Rotate the model.
+        minfo.yaw += minfo.def->getf("yawSpeed") / TICSPERSEC;
+
+        // Is it time to advance to the next frame?
+        if(minfo.maxTimer > 0 && ++minfo.timer >= minfo.maxTimer)
+        {
+            minfo.frame++;
+            minfo.timer = 0;
+
+            // Execute a console command?
+            String const execute = minfo.def->gets("execute");
+            if(!execute.isEmpty())
+            {
+                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+            }
+        }
+    }
+}
 
 enum SphereComponentFlag {
     UpperHemisphere = 0x1,
@@ -183,40 +304,24 @@ DENG2_PIMPL(Sky)
 , DENG2_OBSERVES(Layer, ActiveChange)
 , DENG2_OBSERVES(Layer, MaskedChange)
 {
-    Layer layers[MAX_SKY_LAYERS];
-    int firstActiveLayer;
-    bool needUpdateFirstActiveLayer;
+    Animator *animator = nullptr;
 
-    float horizonOffset;
-    float height;
-    bool ambientColorDefined;    /// @c true= pre-defined in a MapInfo def.
-    bool needUpdateAmbientColor; /// @c true= update if not pre-defined.
+    Layer layers[MAX_SKY_LAYERS];
+    int firstActiveLayer = -1; /// @c -1= 'no active layers'.
+    bool needUpdateFirstActiveLayer = true;
+
+    float horizonOffset = 0;
+    float height = 0;
+    bool ambientColorDefined = false;   /// @c true= pre-defined in a MapInfo def.
+    bool needUpdateAmbientColor = true; /// @c true= update if not pre-defined.
     Vector3f ambientColor;
 
-    bool alwaysDrawSphere;
+    bool alwaysDrawSphere = false;
 
-    struct ModelInfo
-    {
-        Record const *def; // Sky model def
-        ModelDef *model;
-        int frame;
-        int timer;
-        int maxTimer;
-        float yaw;
-    };
     ModelInfo models[MAX_SKY_MODELS];
-    bool haveModels;
+    bool haveModels = false;
 
-    Instance(Public *i)
-        : Base(i)
-        , firstActiveLayer(-1) /// @c -1 denotes 'no active layers'.
-        , needUpdateFirstActiveLayer(true)
-        , horizonOffset(0)
-        , height(0)
-        , ambientColorDefined(false)
-        , needUpdateAmbientColor(true)
-        , alwaysDrawSphere(false)
-        , haveModels(false)
+    Instance(Public *i) : Base(i)
     {
         for(int i = 0; i < MAX_SKY_LAYERS; ++i)
         {
@@ -225,11 +330,10 @@ DENG2_PIMPL(Sky)
             layers[i].audienceForMaskedChange   += this;
         }
 
-        zap(models);
+        de::zap(models);
     }
 
-    inline ResourceSystem &resSys()
-    {
+    inline ResourceSystem &resSys() {
         return App_ResourceSystem();
     }
 
@@ -313,46 +417,6 @@ DENG2_PIMPL(Sky)
             // Each cap is another unit.
             ambientColor =
                 (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
-        }
-    }
-
-    /**
-     * Models are set up using the data in the definition.
-     */
-    void setupModels(defn::Sky const &def)
-    {
-        zap(models);
-
-        // Normally the sky sphere is not drawn if models are in use.
-        alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
-
-        // The normal sphere is used if no models will be set up.
-        haveModels = false;
-
-        for(int i = 0; i < def.modelCount(); ++i)
-        {
-            Record const &modef = def.model(i);
-            ModelInfo *minfo = &models[i];
-
-            // Is the model ID set?
-            try
-            {
-                minfo->model = &resSys().modelDef(modef.gets("id"));
-                if(!minfo->model->subCount())
-                {
-                    continue;
-                }
-
-                // There is a model here.
-                haveModels = true;
-
-                minfo->def      = modef.accessedRecordPtr();
-                minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
-                minfo->yaw      = modef.getf("yaw");
-                minfo->frame    = minfo->model->subModelDef(0).frame;
-            }
-            catch(ResourceSystem::MissingModelDefError const &)
-            {} // Ignore this error.
         }
     }
 
@@ -461,7 +525,7 @@ Sky::Layer &Sky::layer(int index)
         return d->layers[index - 1]; // 1-based index.
     }
     /// @throw MissingLayerError An invalid layer index was specified.
-    throw MissingLayerError("Sky::Layer", "Invalid layer index #" + String::number(index) + ".");
+    throw MissingLayerError("Sky::layer", "Invalid layer index #" + String::number(index) + ".");
 }
 
 Sky::Layer const &Sky::layer(int index) const
@@ -477,6 +541,26 @@ int Sky::firstActiveLayer() const
         d->updateFirstActiveLayer();
     }
     return d->firstActiveLayer + 1; // 1-based index.
+}
+
+bool Sky::hasModel(int index) const
+{
+    return (index > 0 && index <= MAX_SKY_MODELS);
+}
+
+Sky::ModelInfo &Sky::model(int index)
+{
+    if(hasModel(index))
+    {
+        return d->models[index - 1]; // 1-based index.
+    }
+    /// @throw MissingModelError An invalid model index was specified.
+    throw MissingModelError("Sky::model", "Invalid model index #" + String::number(index) + ".");
+}
+
+Sky::ModelInfo const &Sky::model(int index) const
+{
+    return const_cast<ModelInfo const &>(const_cast<Sky *>(this)->model(index));
 }
 
 void Sky::configureDefault()
@@ -502,6 +586,45 @@ void Sky::configureDefault()
             lyr.setMaterial(ClientApp::resourceSystem().materialPtr(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)));
         }
         catch(MaterialManifest::MissingMaterialError const &)
+        {} // Ignore this error.
+    }
+
+    d->haveModels = false;
+    de::zap(d->models);
+}
+
+void Sky::setupModels(defn::Sky const &def)
+{
+    // Normally the sky sphere is not drawn if models are in use.
+    d->alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
+
+    // The normal sphere is used if no models will be set up.
+    d->haveModels = false;
+    de::zap(d->models);
+
+    for(int i = 0; i < def.modelCount(); ++i)
+    {
+        Record const &modef = def.model(i);
+        ModelInfo *minfo = &d->models[i];
+
+        // Is the model ID set?
+        try
+        {
+            minfo->model = &App_ResourceSystem().modelDef(modef.gets("id"));
+            if(!minfo->model->subCount())
+            {
+                continue;
+            }
+
+            // There is a model here.
+            d->haveModels = true;
+
+            minfo->def      = modef.accessedRecordPtr();
+            minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
+            minfo->yaw      = modef.getf("yaw");
+            minfo->frame    = minfo->model->subModelDef(0).frame;
+        }
+        catch(ResourceSystem::MissingModelDefError const &)
         {} // Ignore this error.
     }
 }
@@ -549,89 +672,6 @@ void Sky::setAmbientColor(Vector3f const &newColor)
 {
     d->ambientColor = newColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
     d->ambientColorDefined = true;
-}
-
-void Sky::configure(defn::Sky *_def)
-{
-    LOG_AS("Sky");
-
-    // The default configuration is used as a starting point.
-    configureDefault();
-
-    if(!_def) return; // Go with the defaults, then.
-    defn::Sky const &def = *_def;
-
-    setHeight(def.getf("height"));
-    setHorizonOffset(def.getf("horizonOffset"));
-
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-    {
-        Record const &lyrDef = def.layer(i);
-        Layer &lyr = d->layers[i];
-
-        if(!(lyrDef.geti("flags") & Layer::Active))
-        {
-            lyr.disable();
-            continue;
-        }
-
-        lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
-           .setOffset(lyrDef.getf("offset"))
-           .setFadeoutLimit(lyrDef.getf("colorLimit"))
-           .enable();
-
-        de::Uri const matUri(lyrDef.gets("material"));
-        if(!matUri.isEmpty())
-        {
-            try
-            {
-                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(matUri));
-            }
-            catch(ResourceSystem::MissingManifestError const &er)
-            {
-                // Log but otherwise ignore this error.
-                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
-                    << matUri << i;
-            }
-        }
-    }
-
-    Vector3f ambientColor = Vector3f(def.get("color")).max(Vector3f(0, 0, 0));
-    if(ambientColor != Vector3f(0, 0, 0))
-    {
-        setAmbientColor(ambientColor);
-    }
-
-    // Any sky models to setup? Models will override the normal sphere by default.
-    d->setupModels(def);
-}
-
-void Sky::runTick()
-{
-    if(clientPaused || !d->haveModels) return;
-
-    for(int i = 0; i < MAX_SKY_MODELS; ++i)
-    {
-        Instance::ModelInfo &minfo = d->models[i];
-        if(!minfo.def) continue;
-
-        // Rotate the model.
-        minfo.yaw += minfo.def->getf("yawSpeed") / TICSPERSEC;
-
-        // Is it time to advance to the next frame?
-        if(minfo.maxTimer > 0 && ++minfo.timer >= minfo.maxTimer)
-        {
-            minfo.frame++;
-            minfo.timer = 0;
-
-            // Execute a console command?
-            String const execute = minfo.def->gets("execute");
-            if(!execute.isEmpty())
-            {
-                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
-            }
-        }
-    }
 }
 
 // Look up the precalculated vertex.
@@ -921,7 +961,7 @@ void Sky::cacheDrawableAssets()
     {
         for(int i = 0; i < MAX_SKY_MODELS; ++i)
         {
-            Instance::ModelInfo &minfo = d->models[i];
+            ModelInfo &minfo = d->models[i];
             if(!minfo.def) continue;
 
             d->resSys().cache(minfo.model);
@@ -981,6 +1021,23 @@ void Sky::draw()
     }
 
     if(usingFog) glDisable(GL_FOG);
+}
+
+bool Sky::hasAnimator() const
+{
+    return d->animator != 0;
+}
+
+void Sky::setAnimator(Animator *newAnimator)
+{
+    d->animator = newAnimator;
+}
+
+Sky::Animator &Sky::animator()
+{
+    if(d->animator) return *d->animator;
+    /// @throw MissingAnimatorError  No animator is presently configured.
+    throw MissingAnimatorError("Sky::animator", "Missing animator");
 }
 
 static Sky sky;

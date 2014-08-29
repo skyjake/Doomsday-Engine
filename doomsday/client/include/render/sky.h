@@ -22,13 +22,14 @@
 #define DENG_CLIENT_RENDER_SKY_H
 
 #include "Material"
+#include <QFlags>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
-#include <QFlags>
+#include "ModelDef"
 
 #define MAX_SKY_LAYERS                   ( 2 )
 #define MAX_SKY_MODELS                   ( 32 )
@@ -46,8 +47,14 @@
 class Sky
 {
 public:
+    /// No animator is presently configured. @ingroup errors
+    DENG2_ERROR(MissingAnimatorError);
+
     /// Required layer is missing. @ingroup errors
     DENG2_ERROR(MissingLayerError);
+
+    /// Required model is missing. @ingroup errors
+    DENG2_ERROR(MissingModelError);
 
     /**
      * Multiple layers can be used for parallax effects.
@@ -156,6 +163,48 @@ public:
         float _fadeoutLimit;
     };
 
+    struct ModelInfo
+    {
+        de::Record const *def; // Sky model def
+        ModelDef *model;
+        int frame;
+        int timer;
+        int maxTimer;
+        float yaw;
+    };
+
+    /**
+     * Sky sphere and model animator.
+     *
+     * Animates a sky according to the configured definition.
+     */
+    class Animator
+    {
+    public:
+        Animator();
+        Animator(Sky &sky);
+        virtual ~Animator();
+
+        void setSky(Sky &sky);
+        Sky &sky() const;
+
+        /**
+         * Reconfigure according to the specified @a definition if not @c NULL,
+         * otherwise, reconfigure using the default values.
+         */
+        void configure(defn::Sky *definition);
+
+        /**
+         * Advances the animation state.
+         *
+         * @param elapsed  Duration of elapsed time.
+         */
+        void advanceTime(timespan_t elapsed);
+
+    public:
+        DENG2_PRIVATE(d)
+    };
+
 public:
     Sky();
 
@@ -164,16 +213,14 @@ public:
      */
     void configureDefault();
 
-    /**
-     * Reconfigure the sky according the specified @a definition if not @c NULL,
-     * otherwise, setup using suitable defaults.
-     */
-    void configure(defn::Sky *sky);
+    bool hasAnimator() const;
+    void setAnimator(Animator *newAnimator);
+    Animator &animator();
 
     /**
-     * Animate the sky.
+     * Models are set up according to the given @a skyDef.
      */
-    void runTick();
+    void setupModels(defn::Sky const &skyDef);
 
 #ifdef __CLIENT__
 
@@ -219,6 +266,30 @@ public:
      * @see Layer::isActive()
      */
     int firstActiveLayer() const;
+
+    /**
+     * Determines whether the specified sky model @a index is valid.
+     *
+     * @see model(), modelPtr()
+     */
+    bool hasModel(int index) const;
+
+    /**
+     * Lookup a sky model by it's unique @a index.
+     *
+     * @see hasModel()
+     */
+    ModelInfo &model(int index);
+
+    /// @copydoc model()
+    ModelInfo const &model(int index) const;
+
+    /**
+     * Returns a pointer to the referenced sky model; otherwise @c 0.
+     *
+     * @see hasModel(), model()
+     */
+    inline ModelInfo *modelPtr(int index) { return hasModel(index)? &model(index) : 0; }
 
     /**
      * Returns the horizon offset for the sky.
