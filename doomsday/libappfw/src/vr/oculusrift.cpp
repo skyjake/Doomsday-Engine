@@ -30,7 +30,7 @@
 
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
-#  include <../Src/OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
+#  include <OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
 using namespace OVR;
 #endif
 
@@ -184,6 +184,7 @@ DENG2_PIMPL(OculusRift)
         for(int eye = 0; eye < 2; ++eye)
         {
             ovrGLTexture tex;
+            zap(tex);
 
             tex.OGL.Header.API            = ovrRenderAPI_OpenGL;
             tex.OGL.Header.TextureSize    = Sizei(w, h);
@@ -237,12 +238,13 @@ DENG2_PIMPL(OculusRift)
 
         // Configure OpenGL.
         ovrGLConfig cfg;
+        zap(cfg);
         cfg.OGL.Header.API         = ovrRenderAPI_OpenGL;
         cfg.OGL.Header.RTSize      = hmd->Resolution;
         cfg.OGL.Header.Multisample = buf.sampleCount();
 #ifdef WIN32
-        cfg.OGL.Window             = (HWND) window->nativeHandle();
-        cfg.OGL.DC                 = NULL;
+        cfg.OGL.Window             = (HWND) window->nativeHandle(); //canvas().context()->contextHandle()->surface()->surfaceHandle();
+        cfg.OGL.DC                 = wglGetCurrentDC();
 #endif
         if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {
