@@ -29,6 +29,7 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
         LIBS += shell32.lib winmm.lib ws2_32.lib
     }
     macx {
+        INCLUDEPATH += $${LIBOVR_DIR}/Src
         deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Mac/Debug/libovr.a
               else: LIBS += $${LIBOVR_DIR}/Lib/Mac/Release/libovr.a
         useFramework(Cocoa)
