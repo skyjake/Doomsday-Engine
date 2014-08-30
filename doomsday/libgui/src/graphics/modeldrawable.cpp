@@ -233,8 +233,10 @@ DENG2_PIMPL(ModelDrawable)
 
     struct MaterialData
     {
-        std::array<Id, MAX_TEXTURES> texIds {{ Id::None, Id::None, Id::None, Id::None }};
+        Id::Type texIds[MAX_TEXTURES];
         QHash<TextureMap, String> custom;
+
+        MaterialData() { zap(texIds); }
     };
 
     Asset modelAsset;
@@ -253,8 +255,8 @@ DENG2_PIMPL(ModelDrawable)
     QVector<BoneData> bones; // indexed by bone index
     AnimLookup animNameToIndex;
 
-    std::array<TextureMap, MAX_TEXTURES> textureOrder {{ Diffuse, Unknown, Unknown, Unknown }};
-    std::array<Id, MAX_TEXTURES> defaultTexIds {{ Id::None, Id::None, Id::None, Id::None }};
+    TextureMap textureOrder[MAX_TEXTURES];
+    Id::Type defaultTexIds[MAX_TEXTURES];
     QVector<MaterialData> materials; // indexed by material index
 
     bool needMakeBuffer { false };
@@ -265,6 +267,10 @@ DENG2_PIMPL(ModelDrawable)
 
     Instance(Public *i) : Base(i)
     {
+        textureOrder[0] = Diffuse;
+        textureOrder[1] = textureOrder[2] = textureOrder[3] = Unknown;
+        zap(defaultTexIds);
+
         // Use FS2 for file access.
         importer.SetIOHandler(new ImpIOSystem);
 
@@ -610,7 +616,7 @@ DENG2_PIMPL(ModelDrawable)
         DENG2_ASSERT(atlas != 0);
 
         MaterialData &tex = materials[materialId];
-        Id &id = (map == Height? tex.texIds[Normals] : tex.texIds[map]);
+        Id::Type &id = (map == Height? tex.texIds[Normals] : tex.texIds[map]);
 
         // Release a previously loaded texture.
         if(id)
