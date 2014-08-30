@@ -20,7 +20,7 @@ For [compilation instructions](http://dengine.net/dew/index.php?title=Compilatio
 
 ### Qt
 
-The minimum required version of Qt is 4.7. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
+Using Qt 5 is recommended. The minimum required version of Qt is 4.8. See [Supported platforms](http://dengine.net/dew/index.php?title=Supported_platforms) in the wiki for details about which version is being used on which platform.
 
 ### Open Asset Import Library
 
@@ -32,9 +32,9 @@ libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/li
 4. Compile the generated project.
 5. Add `ASSIMP_DIR` to your *config_user.pri*.
 
-### SDL
+### SDL 2
 
-[SDL 1.2](http://libsdl.org) is needed for game controller input (e.g., joysticks and gamepads). Additionally, SDL_mixer can be used for audio output (not required).
+[SDL 2](http://libsdl.org) is needed for game controller input (e.g., joysticks and gamepads). Additionally, SDL2_mixer can be used for audio output (not required).
 
 ### FMOD Ex
 
