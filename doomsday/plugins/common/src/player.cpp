@@ -1908,8 +1908,8 @@ void Player_UpdateStatusCVars(player_t const *player)
         /* AT_FIREORB */   "phoenixrod",
         /* AT_MSPHERE */   "mace"
 #elif __JHEXEN__
-        /* AT_BLUEMANA */  "blue",
-        /* AT_GREENMANA */ "green"
+        /* AT_BLUEMANA */  "bluemana",
+        /* AT_GREENMANA */ "greenmana"
 #endif
     };
     for(int i = 0; i < NUM_AMMO_TYPES; ++i)
@@ -1972,13 +1972,13 @@ void Player_UpdateStatusCVars(player_t const *player)
 #  endif
     };
     int const plrNum = player - players;
-    for(int i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
+    for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
-        String cvarName = String("player-artifact-%1").arg(invItemIds[i]);
+        String cvarName = String("player-artifact-%1").arg(invItemIds[i - 1]);
         int numItems = 0;
         if(player->plr->inGame && G_GameState() == GS_MAP)
         {
-            numItems = P_InventoryCount(plrNum, inventoryitemtype_t(IIT_FIRST + i));
+            numItems = P_InventoryCount(plrNum, inventoryitemtype_t(i));
         }
         Con_SetInteger2(cvarName.toUtf8().constData(), numItems, SVF_WRITE_OVERRIDE);
     }
