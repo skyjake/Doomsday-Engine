@@ -88,16 +88,9 @@ void Sky::Animator::configure(defn::Sky *_def)
         Record const &lyrDef = def.layer(i);
         Layer &lyr = sky().layer(i);
 
-        if(!(lyrDef.geti("flags") & Layer::Active))
-        {
-            lyr.disable();
-            continue;
-        }
-
         lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
            .setOffset(lyrDef.getf("offset"))
-           .setFadeoutLimit(lyrDef.getf("colorLimit"))
-           .enable();
+           .setFadeoutLimit(lyrDef.getf("colorLimit"));
 
         de::Uri const matUri(lyrDef.gets("material"));
         if(!matUri.isEmpty())
@@ -113,6 +106,8 @@ void Sky::Animator::configure(defn::Sky *_def)
                     << matUri << i;
             }
         }
+
+        lyr.setActive(lyrDef.geti("flags") & Layer::Active);
     }
 
     Vector3f ambientColor = Vector3f(def.get("color")).max(Vector3f(0, 0, 0));
@@ -377,9 +372,9 @@ DENG2_PIMPL(Sky)
          * and use that to obtain the lighting characteristics.
          */
         int avgCount = 0;
-        for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+        for(int i = firstActiveLayer; i < MAX_SKY_LAYERS; ++i)
         {
-            Layer &layer = layers[firstActiveLayer + i];
+            Layer &layer = layers[i];
 
             if(!layer.isActive()) continue;
             if(!layer.material()) continue;
@@ -436,7 +431,7 @@ DENG2_PIMPL(Sky)
             ModelInfo &minfo = models[i];
             if(!minfo.def) continue;
 
-            if(!self.layer(minfo.def->geti("layer") + 1).isActive())
+            if(!self.layer(minfo.def->geti("layer")).isActive())
             {
                 continue;
             }
@@ -515,14 +510,14 @@ Sky::Sky() : d(new Instance(this))
 
 bool Sky::hasLayer(int index) const
 {
-    return (index > 0 && index <= MAX_SKY_LAYERS);
+    return (index >= 0 && index < MAX_SKY_LAYERS);
 }
 
 Sky::Layer &Sky::layer(int index)
 {
     if(hasLayer(index))
     {
-        return d->layers[index - 1]; // 1-based index.
+        return d->layers[index];
     }
     /// @throw MissingLayerError An invalid layer index was specified.
     throw MissingLayerError("Sky::layer", "Invalid layer index #" + String::number(index) + ".");
@@ -540,19 +535,19 @@ int Sky::firstActiveLayer() const
     {
         d->updateFirstActiveLayer();
     }
-    return d->firstActiveLayer + 1; // 1-based index.
+    return d->firstActiveLayer;
 }
 
 bool Sky::hasModel(int index) const
 {
-    return (index > 0 && index <= MAX_SKY_MODELS);
+    return (index >= 0 && index < MAX_SKY_MODELS);
 }
 
 Sky::ModelInfo &Sky::model(int index)
 {
     if(hasModel(index))
     {
-        return d->models[index - 1]; // 1-based index.
+        return d->models[index];
     }
     /// @throw MissingModelError An invalid model index was specified.
     throw MissingModelError("Sky::model", "Invalid model index #" + String::number(index) + ".");
@@ -855,7 +850,7 @@ static void configureSphereDrawState(Sky &sky, int layerIndex, hemispherecap_t s
 static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
 {
     int const firstLayer = sky.firstActiveLayer();
-    DENG2_ASSERT(firstLayer > 0); // 1-based
+    DENG2_ASSERT(firstLayer >= 0);
 
     bool const yflip    = flags.testFlag(LowerHemisphere);
     hemispherecap_t cap = flags.testFlag(LowerHemisphere)? HC_BOTTOM : HC_TOP;
@@ -877,7 +872,7 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
 
     if(flags.testFlag(UpperHemisphere) || flags.testFlag(LowerHemisphere))
     {
-        for(int i = firstLayer; i <= MAX_SKY_LAYERS; ++i)
+        for(int i = firstLayer; i < MAX_SKY_LAYERS; ++i)
         {
             if(!sky.layer(i).isActive()) continue;
 
@@ -972,7 +967,7 @@ void Sky::cacheDrawableAssets()
 void Sky::draw()
 {
     // Is there a sky to be rendered?
-    if(!firstActiveLayer()) return;
+    if(firstActiveLayer() < 0) return;
 
     if(usingFog) glEnable(GL_FOG);
 
@@ -1056,60 +1051,23 @@ void Sky::consoleRegister() //static
     C_VAR_FLOAT("rend-sky-distance", &skyDistance, CVF_NO_MAX, 1, 0);
 }
 
-static void setSkyLayerParams(Sky &sky, int layerIndex, int param, void *data)
-{
-    try
-    {
-        Sky::Layer &layer = sky.layer(layerIndex);
-
-        switch(param)
-        {
-        case DD_ENABLE:      layer.enable(); break;
-        case DD_DISABLE:     layer.disable(); break;
-        case DD_MASK:        layer.setMasked(*((int *)data) == DD_YES); break;
-        case DD_MATERIAL:    layer.setMaterial((Material *)data); break;
-        case DD_OFFSET:      layer.setOffset(*((float *)data)); break;
-        case DD_COLOR_LIMIT: layer.setFadeoutLimit(*((float *)data)); break;
-
-        default:
-            // Log but otherwise ignore this error.
-            LOG_GL_WARNING("Failed configuring sky layer #%i: bad parameter %i")
-                    << layerIndex << param;
-        }
-    }
-    catch(Sky::MissingLayerError const &er)
-    {
-        // Log but otherwise ignore this error.
-        LOG_GL_WARNING("Failed configuring sky layer #%i: %s")
-                << layerIndex << er.asText();
-    }
-}
-
 #undef R_SkyParams
-DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void *data)
+DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
-
-    // The whole sky?
-    if(layerIndex == DD_SKY)
+    if(sky.hasLayer(layerIndex))
     {
+        Sky::Layer &layer = sky.layer(layerIndex);
         switch(param)
         {
-        case DD_HEIGHT:  sky.setHeight(*((float *)data)); break;
-        case DD_HORIZON: sky.setHorizonOffset(*((float *)data)); break;
-
-        default: // Operate on all layers.
-            for(int i = 1; i <= MAX_SKY_LAYERS; ++i)
-            {
-                setSkyLayerParams(sky, i, param, data);
-            }
+        case DD_ENABLE:  layer.enable();  break;
+        case DD_DISABLE: layer.disable(); break;
+        default:
+            // Log but otherwise ignore this error.
+            LOG_GL_WARNING("Failed configuring layer #%i: bad parameter %i")
+                    << layerIndex << param;
         }
         return;
     }
-
-    // A specific layer?
-    if(layerIndex >= 0 && layerIndex < MAX_SKY_LAYERS)
-    {
-        setSkyLayerParams(sky, layerIndex + 1, param, data);
-    }
+    LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
