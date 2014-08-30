@@ -22,6 +22,7 @@
 #include "jhexen.h"
 #include "lightninganimator.h"
 
+#include <QVector>
 #include "dmu_lib.h"
 #include "gamesession.h"
 
@@ -52,7 +53,8 @@ DENG2_PIMPL_NOREF(LightningAnimator)
 {
     int flash = 0;
     int nextFlash = 0;
-    float *sectorLightLevels = 0;  ///< Ambient light levels for each sector (if enabled).
+    typedef QVector<float> AmbientLightLevels;
+    AmbientLightLevels sectorLightLevels;  ///< For each sector (if enabled).
 };
 
 LightningAnimator::LightningAnimator() : d(new Instance)
@@ -60,7 +62,7 @@ LightningAnimator::LightningAnimator() : d(new Instance)
 
 bool LightningAnimator::enabled() const
 {
-    return d->sectorLightLevels != 0;
+    return !d->sectorLightLevels.isEmpty();
 }
 
 void LightningAnimator::triggerFlash()
@@ -83,33 +85,32 @@ void LightningAnimator::advanceTime()
     if(d->flash)
     {
         d->flash--;
-        float *tempLight = d->sectorLightLevels;
 
         if(d->flash)
         {
+            int lightLevelsIdx = 0;
             for(int i = 0; i < numsectors; ++i)
             {
                 Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
                 if(!isLightningSector(sec)) continue;
 
-                float lightLevel = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
-                if(*tempLight < lightLevel - (4.f / 255))
+                float const ll = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
+                if(d->sectorLightLevels.at(lightLevelsIdx++) < ll - (4.f / 255))
                 {
-                    P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL, lightLevel - (1.f / 255) * 4);
+                    P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL, ll - (1.f / 255) * 4);
                 }
-                tempLight++;
             }
         }
         else
         {
             // Remove the alternate lightning flash special.
+            int lightLevelsIdx = 0;
             for(int i = 0; i < numsectors; ++i)
             {
                 Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
                 if(!isLightningSector(sec)) continue;
 
-                P_SetFloatp(sec, DMU_LIGHT_LEVEL, *tempLight);
-                tempLight++;
+                P_SetFloatp(sec, DMU_LIGHT_LEVEL, d->sectorLightLevels.at(lightLevelsIdx++));
             }
 
             if(!IS_DEDICATED)
@@ -125,7 +126,7 @@ void LightningAnimator::advanceTime()
     d->flash = (P_Random() & 7) + 8;
 
     float const flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
-    float *tempLight = d->sectorLightLevels;
+    int lightLevelsIdx = 0;
     bool foundSec = false;
     for(int i = 0; i < numsectors; ++i)
     {
@@ -135,7 +136,7 @@ void LightningAnimator::advanceTime()
         xsector_t *xsec = P_ToXSector(sec);
         float newLevel  = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
-        *tempLight = newLevel;
+        d->sectorLightLevels[lightLevelsIdx] = newLevel;
 
         if(xsec->special == LIGHTNING_SPECIAL)
         {
@@ -154,11 +155,11 @@ void LightningAnimator::advanceTime()
             newLevel = flashLight;
         }
 
-        if(newLevel < *tempLight)
-            newLevel = *tempLight;
+        if(newLevel < d->sectorLightLevels[lightLevelsIdx])
+            newLevel = d->sectorLightLevels[lightLevelsIdx];
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, newLevel);
-        tempLight++;
+        lightLevelsIdx++;
         foundSec = true;
     }
 
@@ -215,10 +216,10 @@ bool LightningAnimator::initForMap()
 {
     d->flash     = 0;
     d->nextFlash = 0;
-    Z_Free(d->sectorLightLevels); d->sectorLightLevels = 0;
+    d->sectorLightLevels.clear();
 
     Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-    if(mapInfo && !mapInfo->getb("lightning"))
+    if(mapInfo && mapInfo->getb("lightning"))
     {
         int numLightningSectors = 0;
         for(int i = 0; i < numsectors; ++i)
@@ -230,7 +231,7 @@ bool LightningAnimator::initForMap()
         }
         if(numLightningSectors > 0)
         {
-            d->sectorLightLevels = (float *)Z_Malloc(numLightningSectors * sizeof(*d->sectorLightLevels), PU_MAP, nullptr);
+            d->sectorLightLevels.resize(numLightningSectors);
 
             // Don't flash immediately on entering the map.
             d->nextFlash = ((P_Random() & 15) + 5) * TICSPERSEC;
