@@ -1412,8 +1412,11 @@ String MapInfoTranslator::translate()
            << "\n  Name = \"" + info.gets("title") + "\";"
            << "\n  Music = \"" + info.gets("songLump") + "\";"
            << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
-           << "\n  Lightning = " + boolAsText(info.getb("lightning")) + ";"
            << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+        if(info.getb("lightning"))
+        {
+            os << "\n  Flags = lightning;";
+        }
         de::Uri skyLayer1MaterialUri(info.gets("sky1Material"), RC_NULL);
         if(!skyLayer1MaterialUri.path().isEmpty())
         {
@@ -1430,13 +1433,12 @@ String MapInfoTranslator::translate()
         de::Uri skyLayer2MaterialUri(info.gets("sky2Material"), RC_NULL);
         if(!skyLayer2MaterialUri.path().isEmpty())
         {
-            QStringList flags = QStringList() << "enable";
+            os << "\n  Sky Layer 2 {";
             if(info.getb("doubleSky"))
-                flags << "mask";
-
-            os << "\n  Sky Layer 2 {"
-               << "\n    Flags = " + flags.join(" | ") + ";"
-               << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
+            {
+                os << "\n    Flags = enable | mask;";
+            }
+            os << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
             dfloat scrollDelta = info.getf("sky2ScrollDelta");
             if(!de::fequal(scrollDelta, 0))
             {
