@@ -70,22 +70,21 @@ Sky &Sky::Animator::sky() const
     return *d->sky;
 }
 
-void Sky::Animator::configure(defn::Sky *_def)
+void Sky::Animator::configure(defn::Sky *def)
 {
     LOG_AS("Sky::Animator");
 
     // The default configuration is used as a starting point.
     sky().configureDefault();
 
-    if(!_def) return; // Go with the defaults, then.
-    defn::Sky const &def = *_def;
+    if(!def) return; // Go with the defaults, then.
 
-    sky().setHeight(def.getf("height"));
-    sky().setHorizonOffset(def.getf("horizonOffset"));
+    sky().setHeight(def->getf("height"));
+    sky().setHorizonOffset(def->getf("horizonOffset"));
 
     for(int i = 0; i < MAX_SKY_LAYERS; ++i)
     {
-        Record const &lyrDef = def.layer(i);
+        Record const &lyrDef = def->layer(i);
         Layer &lyr = sky().layer(i);
 
         lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
@@ -102,7 +101,7 @@ void Sky::Animator::configure(defn::Sky *_def)
             catch(ResourceSystem::MissingManifestError const &er)
             {
                 // Log but otherwise ignore this error.
-                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default.")
+                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default")
                     << matUri << i;
             }
         }
@@ -110,14 +109,14 @@ void Sky::Animator::configure(defn::Sky *_def)
         lyr.setActive(lyrDef.geti("flags") & Layer::Active);
     }
 
-    Vector3f ambientColor = Vector3f(def.get("color")).max(Vector3f(0, 0, 0));
+    Vector3f ambientColor = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
     if(ambientColor != Vector3f(0, 0, 0))
     {
         sky().setAmbientColor(ambientColor);
     }
 
     // Models are set up using the data in the definition (will override the sphere by default).
-    sky().setupModels(def);
+    sky().setupModels(*def);
 }
 
 void Sky::Animator::advanceTime(timespan_t /*elapsed*/)
@@ -332,13 +331,13 @@ DENG2_PIMPL(Sky)
         return App_ResourceSystem();
     }
 
-    void updateFirstActiveLayer()
+    void updateFirstActiveLayerIfNeeded()
     {
+        if(!needUpdateFirstActiveLayer) return;
+
         needUpdateFirstActiveLayer = false;
 
-        // -1 denotes 'no active layers'.
-        firstActiveLayer = -1;
-
+        firstActiveLayer = -1; // -1 denotes 'no active layers'.
         for(int i = 0; i < MAX_SKY_LAYERS; ++i)
         {
             if(layers[i].isActive())
@@ -349,39 +348,43 @@ DENG2_PIMPL(Sky)
         }
     }
 
-    void calculateAmbientColor()
+    /**
+     * @todo Re-implement me by rendering the sky to a low-quality cubemap and use that
+     * to obtain the lighting characteristics.
+     */
+    void updateAmbientColorIfNeeded()
     {
+        if(!needUpdateAmbientColor) return;
+
         needUpdateAmbientColor = false;
 
+        // By default the ambient color is pure white.
         ambientColor = Vector3f(1, 1, 1);
 
+        // Presently we can only calculate this color if the sky sphere is in use.
         if(haveModels && !alwaysDrawSphere) return;
+
+        updateFirstActiveLayerIfNeeded();
+        if(firstActiveLayer < 0) return;
 
         Vector3f avgMaterialColor;
         Vector3f bottomCapColor;
         Vector3f topCapColor;
 
-        if(needUpdateFirstActiveLayer)
-        {
-            updateFirstActiveLayer();
-        }
-        if(firstActiveLayer < 0) return;
-
-        /**
-         * @todo Re-implement me by rendering the sky to a low-quality cubemap
-         * and use that to obtain the lighting characteristics.
-         */
         int avgCount = 0;
         for(int i = firstActiveLayer; i < MAX_SKY_LAYERS; ++i)
         {
             Layer &layer = layers[i];
 
+            // Inactive layers won't be drawn.
             if(!layer.isActive()) continue;
+
+            // A material is required for drawing.
             if(!layer.material()) continue;
+            Material *mat = layer.material();
 
-            MaterialSnapshot const &ms = layer.material()
-                    ->prepare(sphereMaterialSpec(layer.isMasked()));
-
+            // Prepare and ensure the material has at least a primary texture.
+            MaterialSnapshot const &ms = mat->prepare(sphereMaterialSpec(layer.isMasked()));
             if(ms.hasTexture(MTU_PRIMARY))
             {
                 Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
@@ -410,8 +413,7 @@ DENG2_PIMPL(Sky)
         {
             // The caps cover a large amount of the sky sphere, so factor it in too.
             // Each cap is another unit.
-            ambientColor =
-                (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
+            ambientColor = (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
         }
     }
 
@@ -428,46 +430,38 @@ DENG2_PIMPL(Sky)
 
         for(int i = 0; i < MAX_SKY_MODELS; ++i)
         {
-            ModelInfo &minfo = models[i];
-            if(!minfo.def) continue;
+            ModelInfo &minfo          = models[i];
+            Record const *skyModelDef = minfo.def;
 
-            if(!self.layer(minfo.def->geti("layer")).isActive())
+            if(!skyModelDef) continue;
+
+            // If the associated sky layer is not active then the model won't be drawn.
+            if(!self.layer(skyModelDef->geti("layer")).isActive())
             {
                 continue;
             }
 
-            float inter = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
+            vissprite_t vis; de::zap(vis);
 
-            vissprite_t temp; zap(temp);
+            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef->get("originOffset")).xzy();
+            vis.pose.topZ            = vis.pose.origin.z;
+            vis.pose.distance        = 1;
 
-            // Calculate the coordinates for the model.
-            Vector3f originOffset(minfo.def->get("originOffset"));
-            temp.pose.origin[VX]      = vOrigin.x * -originOffset.x;
-            temp.pose.origin[VY]      = vOrigin.z * -originOffset.z;
-            temp.pose.origin[VZ]      = vOrigin.y * -originOffset.y;
-            temp.pose.topZ            = temp.pose.origin[VZ];
-            temp.pose.distance        = 1;
+            Vector2f rotate(skyModelDef->get("rotate"));
+            vis.pose.yaw             = minfo.yaw;
+            vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
+            vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
 
-            Vector2f rotate(minfo.def->get("rotate"));
-            temp.pose.extraYawAngle   = temp.pose.yawAngleOffset   = rotate.x;
-            temp.pose.extraPitchAngle = temp.pose.pitchAngleOffset = rotate.y;
-
-            drawmodelparams_t &parms = *VS_MODEL(&temp);
-            parms.inter             = inter;
-            parms.mf                = minfo.model;
-            parms.alwaysInterpolate = true;
+            drawmodelparams_t &visModel = *VS_MODEL(&vis);
+            visModel.inter                       = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
+            visModel.mf                          = minfo.model;
+            visModel.alwaysInterpolate           = true;
+            visModel.shineTranslateWithViewerPos = true;
             App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
-            temp.pose.yaw             = minfo.yaw;
 
-            Vector3f ambientColor(minfo.def->get("color"));
-            for(int c = 0; c < 3; ++c)
-            {
-                temp.light.ambientColor[c] = ambientColor[c];
-            }
-            temp.light.vLightListIdx = 0;
-            parms.shineTranslateWithViewerPos = true;
+            vis.light.ambientColor = Vector4f(skyModelDef->get("color"), 1);
 
-            Rend_DrawModel(temp);
+            Rend_DrawModel(vis);
         }
 
         // We don't want that anything interferes with what was drawn.
@@ -530,11 +524,7 @@ Sky::Layer const &Sky::layer(int index) const
 
 int Sky::firstActiveLayer() const
 {
-    // Do we need to redetermine the first active layer?
-    if(d->needUpdateFirstActiveLayer)
-    {
-        d->updateFirstActiveLayer();
-    }
+    d->updateFirstActiveLayerIfNeeded();
     return d->firstActiveLayer;
 }
 
@@ -652,11 +642,7 @@ Vector3f const &Sky::ambientColor() const
     {
         if(!d->ambientColorDefined)
         {
-            // Do we need to recalculate the ambient color?
-            if(d->needUpdateAmbientColor)
-            {
-                d->calculateAmbientColor();
-            }
+            d->updateAmbientColorIfNeeded();
         }
         return d->ambientColor;
     }
