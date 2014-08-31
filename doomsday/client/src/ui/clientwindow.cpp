@@ -301,6 +301,26 @@ DENG2_PIMPL(ClientWindow)
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
+
+        activateOculusRiftModeIfConnected();
+    }
+
+    void activateOculusRiftModeIfConnected()
+    {
+        if(vrCfg().oculusRift().isHMDConnected() && vrCfg().mode() != VRConfig::OculusRift)
+        {
+            LOG_NOTE("HMD connected, automatically switching to Oculus Rift mode");
+
+            Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
+            vrCfg().oculusRift().moveWindowToScreen(OculusRift::HMDScreen);
+        }
+        else if(!vrCfg().oculusRift().isHMDConnected() && vrCfg().mode() == VRConfig::OculusRift)
+        {
+            LOG_NOTE("HMD not connected, disabling VR mode");
+
+            Con_SetInteger("rend-vr-mode", VRConfig::Mono);
+            vrCfg().oculusRift().moveWindowToScreen(OculusRift::DefaultScreen);
+        }
     }
 
     void setMode(Mode const &newMode)
@@ -380,7 +400,7 @@ DENG2_PIMPL(ClientWindow)
 
         DD_FinishInitializationAfterWindowReady();
 
-        /// @todo This should be called when a VR mode is actually used.
+        vrCfg().oculusRift().glPreInit();
         contentXf.glInit();
     }
 

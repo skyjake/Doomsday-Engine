@@ -196,7 +196,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
 
     d->fetch();
 
-    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::OculusRiftScreen);
+    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::HMDScreen);
 }
 
 void VRSettingsDialog::autoConfigForDesktop()

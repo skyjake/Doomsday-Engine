@@ -33,10 +33,17 @@ class LIBAPPFW_PUBLIC OculusRift
 {
 public:
     enum Eye { LeftEye, RightEye };
-    enum Screen { DefaultScreen, PreviousScreen, OculusRiftScreen };
+    enum Screen { DefaultScreen, PreviousScreen, HMDScreen };
 
 public:
     OculusRift();
+
+    void glPreInit();
+
+    /**
+     * Checks if a HMD is connected at the moment.
+     */
+    bool isHMDConnected() const;
 
     /**
      * Initialize Oculus Rift rendering. The main window must exist and be visible.
