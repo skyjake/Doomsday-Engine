@@ -22,6 +22,7 @@
 #include "render/modelrenderer.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
+#include "render/skydrawable.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -89,6 +90,10 @@ uint Store::allocateVertices(uint count)
 DENG2_PIMPL(RenderSystem)
 {
     ModelRenderer models;
+
+    SkyDrawable sky;
+    SkyDrawable::Animator skyAnimator;
+
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
@@ -217,6 +222,9 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::IntCVar,   "rend-particle-visible-near", 0)
 
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
+
+        skyAnimator.setSky(&sky);
+        sky.setAnimator(&skyAnimator);
     }
 
     /**
@@ -275,6 +283,11 @@ ImageBank &RenderSystem::images()
 ModelRenderer &RenderSystem::modelRenderer()
 {
     return d->models;
+}
+
+SkyDrawable &RenderSystem::sky()
+{
+    return d->sky;
 }
 
 void RenderSystem::timeChanged(Clock const &)

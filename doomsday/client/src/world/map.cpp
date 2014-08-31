@@ -26,6 +26,9 @@
 
 #include "de_console.h" // Con_GetInteger
 #include "de_defs.h"
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 #include "m_nodepile.h"
 
 #include "Face"
@@ -47,12 +50,13 @@
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/polyobjdata.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
 #ifdef __CLIENT__
 #  include "Contact"
 #  include "ContactSpreader"
 #  include "client/cl_mobj.h"
 #endif
-#include "world/thinkers.h"
 
 #ifdef __CLIENT__
 #  include "api_sound.h"
@@ -67,7 +71,7 @@
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_particle.h"
-#  include "render/sky.h"
+#  include "render/skydrawable.h"
 #endif
 
 #include <de/Rectangle>
@@ -137,6 +141,8 @@ DENG2_PIMPL(Map)
 
     /// Map entities and element properties (things, line specials, etc...).
     QScopedPointer<Thinkers> thinkers;
+    Sky sky;
+
     EntityDatabase entityDatabase;
 
     /// Blockmaps:
@@ -298,7 +304,10 @@ DENG2_PIMPL(Map)
         , skyFloorHeight  (DDMAXFLOAT)
         , skyCeilingHeight(DDMINFLOAT)
 #endif
-    {}
+    {
+        sky.setMap(thisPublic);
+        sky.setIndexInMap(0);
+    }
 
     ~Instance()
     {
@@ -2115,6 +2124,11 @@ Thinkers &Map::thinkers() const
     throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }
 
+Sky &Map::sky() const
+{
+    return d->sky;
+}
+
 Map::Vertexes const &Map::vertexes() const
 {
     return d->mesh.vertexes();
@@ -3249,7 +3263,7 @@ void Map::update()
             skyDef = mapInfo.subrecord("sky");
         }
     }
-    theSky->animator().configure(&skyDef);
+    sky().configure(&skyDef);
 #endif
 }
 

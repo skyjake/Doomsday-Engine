@@ -1,4 +1,4 @@
-/** @file sky.cpp  Sky sphere and 3D models.
+/** @file skydrawble.cpp  Drawable specialized for the sky.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "de_base.h"
-#include "render/sky.h"
+#include "render/skydrawable.h"
 
 #include <cmath>
 #include <doomsday/console/var.h>
@@ -36,128 +36,15 @@
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
-#include "Texture"
 
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/vissprite.h"
 
+#include "Texture"
+#include "world/sky.h"
+
 using namespace de;
-
-DENG2_PIMPL_NOREF(Sky::Animator)
-{
-    Sky *sky;
-    Instance(Sky *sky = 0) : sky(sky) {}
-};
-
-Sky::Animator::Animator() : d(new Instance)
-{}
-
-Sky::Animator::Animator(Sky &sky) : d(new Instance(&sky))
-{}
-
-Sky::Animator::~Animator()
-{}
-
-void Sky::Animator::setSky(Sky &sky)
-{
-    d->sky = &sky;
-}
-
-Sky &Sky::Animator::sky() const
-{
-    DENG2_ASSERT(d->sky != 0);
-    return *d->sky;
-}
-
-void Sky::Animator::configure(defn::Sky *def)
-{
-    LOG_AS("Sky::Animator");
-
-    // The default configuration is used as a starting point.
-    sky().configureDefault();
-
-    if(!def) return; // Go with the defaults, then.
-
-    sky().setHeight(def->getf("height"));
-    sky().setHorizonOffset(def->getf("horizonOffset"));
-
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-    {
-        Record const &lyrDef = def->layer(i);
-        Layer &lyr = sky().layer(i);
-
-        lyr.setMasked((lyrDef.geti("flags") & Layer::Masked) != 0)
-           .setOffset(lyrDef.getf("offset"))
-           .setFadeoutLimit(lyrDef.getf("colorLimit"));
-
-        de::Uri const matUri(lyrDef.gets("material"));
-        if(!matUri.isEmpty())
-        {
-            try
-            {
-                lyr.setMaterial(ClientApp::resourceSystem().materialPtr(matUri));
-            }
-            catch(ResourceSystem::MissingManifestError const &er)
-            {
-                // Log but otherwise ignore this error.
-                LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default")
-                    << matUri << i;
-            }
-        }
-
-        lyr.setActive(lyrDef.geti("flags") & Layer::Active);
-    }
-
-    Vector3f ambientColor = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
-    if(ambientColor != Vector3f(0, 0, 0))
-    {
-        sky().setAmbientColor(ambientColor);
-    }
-
-    // Models are set up using the data in the definition (will override the sphere by default).
-    sky().setupModels(*def);
-}
-
-void Sky::Animator::advanceTime(timespan_t /*elapsed*/)
-{
-    LOG_AS("Sky::Animator");
-
-    if(!d->sky) return;
-
-    if(clientPaused) return;
-    if(!DD_IsSharpTick()) return;
-
-    // Animate layers.
-    /*for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-    {
-        Sky::Layer &lyr = sky().layer(i);
-    }*/
-
-    // Animate models.
-    for(int i = 0; i < MAX_SKY_MODELS; ++i)
-    {
-        Sky::ModelInfo &minfo = sky().model(i);
-        if(!minfo.def) continue;
-
-        // Rotate the model.
-        minfo.yaw += minfo.def->getf("yawSpeed") / TICSPERSEC;
-
-        // Is it time to advance to the next frame?
-        if(minfo.maxTimer > 0 && ++minfo.timer >= minfo.maxTimer)
-        {
-            minfo.frame++;
-            minfo.timer = 0;
-
-            // Execute a console command?
-            String const execute = minfo.def->gets("execute");
-            if(!execute.isEmpty())
-            {
-                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
-            }
-        }
-    }
-}
 
 enum SphereComponentFlag {
     UpperHemisphere = 0x1,
@@ -194,227 +81,23 @@ struct drawhemispherestate_t
 };
 static drawhemispherestate_t ds;
 
-static MaterialVariantSpec const &sphereMaterialSpec(bool masked)
-{
-    return ClientApp::resourceSystem()
-                .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-                              0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
-                              0, -1, -1, false, true, false, false);
-}
-
-Sky::Layer::Layer(Material *material)
-    : _flags(DefaultFlags)
-    , _material(material)
-    , _offset(0)
-    , _fadeoutLimit(0)
-{}
-
-Sky::Layer &Sky::Layer::setFlags(Flags flags, FlagOp operation)
-{
-    Flags const oldFlags = _flags;
-
-    applyFlagOperation(_flags, flags, operation);
-
-    if(_flags.testFlag(Active) != oldFlags.testFlag(Active))
-    {
-        DENG2_FOR_AUDIENCE(ActiveChange, i)
-        {
-            i->skyLayerActiveChanged(*this);
-        }
-    }
-    if(_flags.testFlag(Masked) != oldFlags.testFlag(Masked))
-    {
-        DENG2_FOR_AUDIENCE(MaskedChange, i)
-        {
-            i->skyLayerMaskedChanged(*this);
-        }
-    }
-
-    return *this;
-}
-
-bool Sky::Layer::isActive() const
-{
-    return _flags.testFlag(Active);
-}
-
-Sky::Layer &Sky::Layer::setActive(bool yes)
-{
-    return setFlags(Active, yes? SetFlags : UnsetFlags);
-}
-
-bool Sky::Layer::isMasked() const
-{
-    return _flags.testFlag(Masked);
-}
-
-Sky::Layer &Sky::Layer::setMasked(bool yes)
-{
-    return setFlags(Masked, yes? SetFlags : UnsetFlags);
-}
-
-Material *Sky::Layer::material() const
-{
-    return _material;
-}
-
-Sky::Layer &Sky::Layer::setMaterial(Material *newMaterial)
-{
-    if(_material != newMaterial)
-    {
-        _material = newMaterial;
-        DENG2_FOR_AUDIENCE(MaterialChange, i)
-        {
-            i->skyLayerMaterialChanged(*this);
-        }
-    }
-    return *this;
-}
-
-float Sky::Layer::offset() const
-{
-    return _offset;
-}
-
-Sky::Layer &Sky::Layer::setOffset(float newOffset)
-{
-    _offset = newOffset;
-    return *this;
-}
-
-float Sky::Layer::fadeoutLimit() const
-{
-    return _fadeoutLimit;
-}
-
-Sky::Layer &Sky::Layer::setFadeoutLimit(float newLimit)
-{
-    _fadeoutLimit = newLimit;
-    return *this;
-}
-
-DENG2_PIMPL(Sky)
-, DENG2_OBSERVES(Layer, MaterialChange)
-, DENG2_OBSERVES(Layer, ActiveChange)
-, DENG2_OBSERVES(Layer, MaskedChange)
+DENG2_PIMPL(SkyDrawable)
 {
     Animator *animator = nullptr;
 
-    Layer layers[MAX_SKY_LAYERS];
-    int firstActiveLayer = -1; /// @c -1= 'no active layers'.
-    bool needUpdateFirstActiveLayer = true;
-
-    float horizonOffset = 0;
-    float height = 0;
-    bool ambientColorDefined = false;   /// @c true= pre-defined in a MapInfo def.
-    bool needUpdateAmbientColor = true; /// @c true= update if not pre-defined.
-    Vector3f ambientColor;
-
+    ModelInfo models[MAX_SKY_MODELS];
+    bool haveModels       = false;
     bool alwaysDrawSphere = false;
 
-    ModelInfo models[MAX_SKY_MODELS];
-    bool haveModels = false;
+    Sky *sky = 0;
 
     Instance(Public *i) : Base(i)
     {
-        for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-        {
-            layers[i].audienceForMaterialChange += this;
-            layers[i].audienceForActiveChange   += this;
-            layers[i].audienceForMaskedChange   += this;
-        }
-
         de::zap(models);
     }
 
     inline ResourceSystem &resSys() {
-        return App_ResourceSystem();
-    }
-
-    void updateFirstActiveLayerIfNeeded()
-    {
-        if(!needUpdateFirstActiveLayer) return;
-
-        needUpdateFirstActiveLayer = false;
-
-        firstActiveLayer = -1; // -1 denotes 'no active layers'.
-        for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-        {
-            if(layers[i].isActive())
-            {
-                firstActiveLayer = i;
-                break;
-            }
-        }
-    }
-
-    /**
-     * @todo Re-implement me by rendering the sky to a low-quality cubemap and use that
-     * to obtain the lighting characteristics.
-     */
-    void updateAmbientColorIfNeeded()
-    {
-        if(!needUpdateAmbientColor) return;
-
-        needUpdateAmbientColor = false;
-
-        // By default the ambient color is pure white.
-        ambientColor = Vector3f(1, 1, 1);
-
-        // Presently we can only calculate this color if the sky sphere is in use.
-        if(haveModels && !alwaysDrawSphere) return;
-
-        updateFirstActiveLayerIfNeeded();
-        if(firstActiveLayer < 0) return;
-
-        Vector3f avgMaterialColor;
-        Vector3f bottomCapColor;
-        Vector3f topCapColor;
-
-        int avgCount = 0;
-        for(int i = firstActiveLayer; i < MAX_SKY_LAYERS; ++i)
-        {
-            Layer &layer = layers[i];
-
-            // Inactive layers won't be drawn.
-            if(!layer.isActive()) continue;
-
-            // A material is required for drawing.
-            if(!layer.material()) continue;
-            Material *mat = layer.material();
-
-            // Prepare and ensure the material has at least a primary texture.
-            MaterialSnapshot const &ms = mat->prepare(sphereMaterialSpec(layer.isMasked()));
-            if(ms.hasTexture(MTU_PRIMARY))
-            {
-                Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-                averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
-                if(!avgColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageColorAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
-
-                if(i == firstActiveLayer)
-                {
-                    averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageTopColorAnalysis").arg(tex.manifest().composeUri()));
-
-                    topCapColor = Vector3f(avgLineColor->color.rgb);
-
-                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageBottomColorAnalysis").arg(tex.manifest().composeUri()));
-
-                    bottomCapColor = Vector3f(avgLineColor->color.rgb);
-                }
-
-                avgMaterialColor += Vector3f(avgColor->color.rgb);
-                ++avgCount;
-            }
-        }
-
-        if(avgCount)
-        {
-            // The caps cover a large amount of the sky sphere, so factor it in too.
-            // Each cap is another unit.
-            ambientColor = (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
-        }
+        return ClientApp::resourceSystem();
     }
 
     void drawModels()
@@ -436,7 +119,7 @@ DENG2_PIMPL(Sky)
             if(!skyModelDef) continue;
 
             // If the associated sky layer is not active then the model won't be drawn.
-            if(!self.layer(skyModelDef->geti("layer")).isActive())
+            if(!sky->layer(skyModelDef->geti("layer")).isActive())
             {
                 continue;
             }
@@ -470,115 +153,12 @@ DENG2_PIMPL(Sky)
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
     }
-
-    /// Observes Layer MaterialChange
-    void skyLayerMaterialChanged(Layer &layer)
-    {
-        // We may need to recalculate the ambient color of the sky.
-        if(!layer.isActive()) return;
-        //if(ambientColorDefined) return;
-
-        needUpdateAmbientColor = true;
-    }
-
-    /// Observes Layer ActiveChange
-    void skyLayerActiveChanged(Layer & /*layer*/)
-    {
-        needUpdateFirstActiveLayer = true;
-        needUpdateAmbientColor     = true;
-    }
-
-    /// Observes Layer MaskedChange
-    void skyLayerMaskedChanged(Layer &layer)
-    {
-        // We may need to recalculate the ambient color of the sky.
-        if(!layer.isActive()) return;
-        //if(ambientColorDefined) return;
-
-        needUpdateAmbientColor = true;
-    }
 };
 
-Sky::Sky() : d(new Instance(this))
+SkyDrawable::SkyDrawable() : d(new Instance(this))
 {}
 
-bool Sky::hasLayer(int index) const
-{
-    return (index >= 0 && index < MAX_SKY_LAYERS);
-}
-
-Sky::Layer &Sky::layer(int index)
-{
-    if(hasLayer(index))
-    {
-        return d->layers[index];
-    }
-    /// @throw MissingLayerError An invalid layer index was specified.
-    throw MissingLayerError("Sky::layer", "Invalid layer index #" + String::number(index) + ".");
-}
-
-Sky::Layer const &Sky::layer(int index) const
-{
-    return const_cast<Layer const &>(const_cast<Sky *>(this)->layer(index));
-}
-
-int Sky::firstActiveLayer() const
-{
-    d->updateFirstActiveLayerIfNeeded();
-    return d->firstActiveLayer;
-}
-
-bool Sky::hasModel(int index) const
-{
-    return (index >= 0 && index < MAX_SKY_MODELS);
-}
-
-Sky::ModelInfo &Sky::model(int index)
-{
-    if(hasModel(index))
-    {
-        return d->models[index];
-    }
-    /// @throw MissingModelError An invalid model index was specified.
-    throw MissingModelError("Sky::model", "Invalid model index #" + String::number(index) + ".");
-}
-
-Sky::ModelInfo const &Sky::model(int index) const
-{
-    return const_cast<ModelInfo const &>(const_cast<Sky *>(this)->model(index));
-}
-
-void Sky::configureDefault()
-{
-    d->height                 = DEFAULT_SKY_HEIGHT;
-    d->horizonOffset          = DEFAULT_SKY_HORIZON_OFFSET;
-    d->ambientColorDefined    = false;
-    d->needUpdateAmbientColor = true;
-    d->ambientColor           = Vector3f(1, 1, 1);
-
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
-    {
-        Layer &lyr = d->layers[i];
-
-        lyr.setMasked(false)
-           .setOffset(DEFAULT_SKY_SPHERE_XOFFSET)
-           .setFadeoutLimit(DEFAULT_SKY_SPHERE_FADEOUT_LIMIT)
-           .setActive(i == 0);
-
-        lyr.setMaterial(0);
-        try
-        {
-            lyr.setMaterial(ClientApp::resourceSystem().materialPtr(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)));
-        }
-        catch(MaterialManifest::MissingMaterialError const &)
-        {} // Ignore this error.
-    }
-
-    d->haveModels = false;
-    de::zap(d->models);
-}
-
-void Sky::setupModels(defn::Sky const &def)
+void SkyDrawable::setupModels(defn::Sky const &def)
 {
     // Normally the sky sphere is not drawn if models are in use.
     d->alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
@@ -614,45 +194,24 @@ void Sky::setupModels(defn::Sky const &def)
     }
 }
 
-float Sky::horizonOffset() const
+bool SkyDrawable::hasModel(int index) const
 {
-    return d->horizonOffset;
+    return (index >= 0 && index < MAX_SKY_MODELS);
 }
 
-void Sky::setHorizonOffset(float newOffset)
+SkyDrawable::ModelInfo &SkyDrawable::model(int index)
 {
-    d->horizonOffset = newOffset;
-}
-
-float Sky::height() const
-{
-    return d->height;
-}
-
-void Sky::setHeight(float newHeight)
-{
-    d->height = de::clamp(0.f, newHeight, 1.f);
-}
-
-Vector3f const &Sky::ambientColor() const
-{
-    static Vector3f const white(1, 1, 1);
-
-    if(d->ambientColorDefined || rendSkyLightAuto)
+    if(hasModel(index))
     {
-        if(!d->ambientColorDefined)
-        {
-            d->updateAmbientColorIfNeeded();
-        }
-        return d->ambientColor;
+        return d->models[index];
     }
-    return white;
+    /// @throw MissingModelError An invalid model index was specified.
+    throw MissingModelError("SkyDrawable::model", "Invalid model index #" + String::number(index) + ".");
 }
 
-void Sky::setAmbientColor(Vector3f const &newColor)
+SkyDrawable::ModelInfo const &SkyDrawable::model(int index) const
 {
-    d->ambientColor = newColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
-    d->ambientColorDefined = true;
+    return const_cast<ModelInfo const &>(const_cast<SkyDrawable *>(this)->model(index));
 }
 
 // Look up the precalculated vertex.
@@ -791,7 +350,7 @@ static void configureSphereDrawState(Sky &sky, int layerIndex, hemispherecap_t s
         DENG2_ASSERT(mat != 0);
 
         MaterialSnapshot const &ms =
-            mat->prepare(sphereMaterialSpec(sky.layer(layerIndex).isMasked()));
+            mat->prepare(SkyDrawable::layerMaterialSpec(sky.layer(layerIndex).isMasked()));
 
         ds.texSize = ms.texture(MTU_PRIMARY).generalCase().dimensions();
         if(ds.texSize != Vector2i(0, 0))
@@ -927,14 +486,14 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
     }
 }
 
-void Sky::cacheDrawableAssets()
+void SkyDrawable::cacheDrawableAssets()
 {
     for(int i = 0; i < MAX_SKY_LAYERS; ++i)
     {
-        Layer &lyr = d->layers[i];
+        Sky::Layer const &lyr = sky().layer(i);
         if(Material *mat = lyr.material())
         {
-            d->resSys().cache(*mat, sphereMaterialSpec(lyr.isMasked()));
+            d->resSys().cache(*mat, layerMaterialSpec(lyr.isMasked()));
         }
     }
 
@@ -950,10 +509,10 @@ void Sky::cacheDrawableAssets()
     }
 }
 
-void Sky::draw()
+void SkyDrawable::draw()
 {
     // Is there a sky to be rendered?
-    if(firstActiveLayer() < 0) return;
+    if(sky().firstActiveLayer() < 0) return;
 
     if(usingFog) glEnable(GL_FOG);
 
@@ -974,8 +533,8 @@ void Sky::draw()
         glScalef(skyDistance, skyDistance, skyDistance);
 
         // Always draw both hemispheres.
-        drawHemisphere(*this, LowerHemisphere);
-        drawHemisphere(*this, UpperHemisphere);
+        drawHemisphere(sky(), LowerHemisphere);
+        drawHemisphere(sky(), UpperHemisphere);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -1004,56 +563,121 @@ void Sky::draw()
     if(usingFog) glDisable(GL_FOG);
 }
 
-bool Sky::hasAnimator() const
+bool SkyDrawable::hasAnimator() const
 {
     return d->animator != 0;
 }
 
-void Sky::setAnimator(Animator *newAnimator)
+void SkyDrawable::setAnimator(Animator *newAnimator)
 {
     d->animator = newAnimator;
 }
 
-Sky::Animator &Sky::animator()
+SkyDrawable::Animator &SkyDrawable::animator()
 {
     if(d->animator) return *d->animator;
     /// @throw MissingAnimatorError  No animator is presently configured.
-    throw MissingAnimatorError("Sky::animator", "Missing animator");
+    throw MissingAnimatorError("SkyDrawable::animator", "Missing animator");
 }
 
-static Sky sky;
-Sky *theSky = &sky;
+void SkyDrawable::setSky(Sky *sky)
+{
+    d->sky = sky;
+}
 
-static void markSkySphereForRebuild()
+Sky &SkyDrawable::sky()
+{
+    DENG2_ASSERT(d->sky);
+    return *d->sky;
+}
+
+MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
+{
+    return ClientApp::resourceSystem()
+                .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                              0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
+                              0, -1, -1, false, true, false, false);
+}
+
+namespace {
+void markSkySphereForRebuild()
 {
     // Defer this task until render time, when we can be sure we are in correct thread.
     needMakeHemisphere = true;
 }
-
-void Sky::consoleRegister() //static
-{
-    C_VAR_INT2 ("rend-sky-detail",   &skySphereDetail,   0,          3, 7, markSkySphereForRebuild);
-    C_VAR_INT2 ("rend-sky-rows",     &skySphereRows,     0,          1, 8, markSkySphereForRebuild);
-    C_VAR_FLOAT("rend-sky-distance", &skyDistance, CVF_NO_MAX, 1, 0);
 }
 
-#undef R_SkyParams
-DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
+void SkyDrawable::consoleRegister() // static
 {
-    LOG_AS("R_SkyParams");
-    if(sky.hasLayer(layerIndex))
+    C_VAR_INT2 ("rend-sky-detail",   &skySphereDetail,  0,          3, 7, markSkySphereForRebuild);
+    C_VAR_INT2 ("rend-sky-rows",     &skySphereRows,    0,          1, 8, markSkySphereForRebuild);
+    C_VAR_FLOAT("rend-sky-distance", &skyDistance,      CVF_NO_MAX, 1, 0);
+}
+
+//---------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(SkyDrawable::Animator)
+{
+    SkyDrawable *sky;
+    Instance(SkyDrawable *sky = 0) : sky(sky) {}
+};
+
+SkyDrawable::Animator::Animator() : d(new Instance)
+{}
+
+SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance(&sky))
+{}
+
+SkyDrawable::Animator::~Animator()
+{}
+
+void SkyDrawable::Animator::setSky(SkyDrawable *sky)
+{
+    d->sky = sky;
+}
+
+SkyDrawable &SkyDrawable::Animator::sky() const
+{
+    DENG2_ASSERT(d->sky != 0);
+    return *d->sky;
+}
+
+void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
+{
+    LOG_AS("SkyDrawable::Animator");
+
+    if(!d->sky) return;
+
+    if(clientPaused) return;
+    if(!DD_IsSharpTick()) return;
+
+    // Animate layers.
+    /*for(int i = 0; i < MAX_SKY_LAYERS; ++i)
     {
-        Sky::Layer &layer = sky.layer(layerIndex);
-        switch(param)
+        Sky::Layer &lyr = sky().layer(i);
+    }*/
+
+    // Animate models.
+    for(int i = 0; i < MAX_SKY_MODELS; ++i)
+    {
+        ModelInfo &minfo = sky().model(i);
+        if(!minfo.def) continue;
+
+        // Rotate the model.
+        minfo.yaw += minfo.def->getf("yawSpeed") / TICSPERSEC;
+
+        // Is it time to advance to the next frame?
+        if(minfo.maxTimer > 0 && ++minfo.timer >= minfo.maxTimer)
         {
-        case DD_ENABLE:  layer.enable();  break;
-        case DD_DISABLE: layer.disable(); break;
-        default:
-            // Log but otherwise ignore this error.
-            LOG_GL_WARNING("Failed configuring layer #%i: bad parameter %i")
-                    << layerIndex << param;
+            minfo.frame++;
+            minfo.timer = 0;
+
+            // Execute a console command?
+            String const execute = minfo.def->gets("execute");
+            if(!execute.isEmpty())
+            {
+                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+            }
         }
-        return;
     }
-    LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }

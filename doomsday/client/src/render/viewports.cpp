@@ -29,13 +29,15 @@
 #include "edit_bias.h"
 #include "api_render.h"
 
-#include "render/vr.h"
 #include "render/fx/bloom.h"
+#include "render/skydrawable.h"
+#include "render/vr.h"
 #include "network/net_demo.h"
 #include "world/linesighttest.h"
 #include "world/thinkers.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/sky.h"
 #include "BspLeaf"
 #include "SectorCluster"
 #include "Surface"
@@ -1137,6 +1139,40 @@ void R_ClearViewData()
     M_Free(luminousDist); luminousDist = 0;
     M_Free(luminousClipped); luminousClipped = 0;
     M_Free(luminousOrder); luminousOrder = 0;
+}
+
+/**
+ * Viewer specific override controlling whether a given sky layer is enabled.
+ *
+ * @todo The override should be applied at SkyDrawable level. We have Raven to
+ * thank for this nonsense (Hexen's sector special 200)... -ds
+ */
+#undef R_SkyParams
+DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
+{
+    LOG_AS("R_SkyParams");
+    if(!ClientApp::worldSystem().hasMap())
+    {
+        LOG_GL_WARNING("No map currently loaded, ignoring");
+        return;
+    }
+
+    Sky &sky = ClientApp::renderSystem().sky().sky();
+    if(sky.hasLayer(layerIndex))
+    {
+        Sky::Layer &layer = sky.layer(layerIndex);
+        switch(param)
+        {
+        case DD_ENABLE:  layer.enable();  break;
+        case DD_DISABLE: layer.disable(); break;
+        default:
+            // Log but otherwise ignore this error.
+            LOG_GL_WARNING("Failed configuring layer #%i: bad parameter %i")
+                    << layerIndex << param;
+        }
+        return;
+    }
+    LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
 
 bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf)

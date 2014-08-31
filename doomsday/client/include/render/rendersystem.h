@@ -27,6 +27,7 @@
 #include "settingsregister.h"
 
 class ModelRenderer;
+class SkyDrawable;
 
 /**
  * Geometry backing store (arrays).
@@ -78,6 +79,8 @@ public:
     SettingsRegister &appearanceSettings();
 
     ModelRenderer &modelRenderer();
+
+    SkyDrawable &sky();
 
     /**
      * Provides access to the central map geometry buffer.

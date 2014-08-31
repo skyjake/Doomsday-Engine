@@ -342,7 +342,8 @@ enum {
     DMU_PLANE,
     DMU_SURFACE,
     DMU_MATERIAL,
-    DMU_LAST_ELEMENT_TYPE_ID = DMU_MATERIAL,
+    DMU_SKY,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_SKY,
 
     /*
      * Selection methods:
@@ -447,6 +448,18 @@ enum {
 /// Suppress the relative back sector and consider this as one-sided for the
 /// purposes of rendering and line of sight tests.
 #define SDF_SUPPRESS_BACK_SECTOR    0x0020
+///@}
+
+/**
+ * @defgroup skyLayerFlags Sky Flags
+ * @ingroup dmu apiFlags
+ * For use with P_Set/Get(DMU_SKY, n, DMU_FLAGS).
+ */
+
+/// @addtogroup skyFlags
+///@{
+#define SKYF_LAYER0_ENABLED     0x00000100  ///< Layer 0 is enabled.
+#define SKYF_LAYER1_ENABLED     0x00010000  ///< Layer 1 is enabled.
 ///@}
 
 /**

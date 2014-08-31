@@ -22,11 +22,14 @@
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
-
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#  include "render/rendersystem.h"
+#  include "render/skydrawable.h"
+#endif
 #include "world/map.h"
 #include "world/thinkers.h"
-
-#include "render/sky.h"
+#include "world/sky.h"
 
 using namespace de;
 
@@ -118,21 +121,20 @@ void P_Ticker(timespan_t elapsed)
 
 #ifdef __CLIENT__
     materialsTicker(elapsed);
+
+    SkyDrawable &sky = ClientApp::renderSystem().sky();
+    if(sky.hasAnimator())
+    {
+        sky.animator().advanceTime(elapsed);
+    }
 #endif
 
-    if(App_WorldSystem().hasMap())
+    if(App_WorldSystem().hasMap() && DD_IsSharpTick())
     {
         Map &map = App_WorldSystem().map();
 
-#ifdef __CLIENT__
-        theSky->animator().advanceTime(elapsed);
-#endif
-
-        if(DD_IsSharpTick())
-        {
-            // Check all mobjs (always public).
-            map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                                   P_MobjTicker);
-        }
+        // Check all mobjs (always public).
+        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                               P_MobjTicker);
     }
 }

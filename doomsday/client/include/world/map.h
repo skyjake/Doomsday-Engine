@@ -53,6 +53,7 @@ class BspNode;
 class Plane;
 class Sector;
 class SectorCluster;
+class Sky;
 class Surface;
 class Vertex;
 
@@ -217,6 +218,11 @@ public:
      * Provides access to the thinker lists for the map.
      */
     Thinkers /*const*/ &thinkers() const;
+
+    /**
+     * Returns the logical sky for the map.
+     */
+    Sky &sky() const;
 
     /**
      * Provides access to the primary @ref Mesh geometry owned by the map.

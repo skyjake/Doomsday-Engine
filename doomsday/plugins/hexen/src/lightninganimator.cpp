@@ -113,11 +113,10 @@ void LightningAnimator::advanceTime()
                 P_SetFloatp(sec, DMU_LIGHT_LEVEL, d->sectorLightLevels.at(lightLevelsIdx++));
             }
 
-            if(!IS_DEDICATED)
-            {
-                R_SkyParams(1, DD_DISABLE, nullptr);
-                R_SkyParams(0, DD_ENABLE, nullptr);
-            }
+            int skyFlags = P_GetInt(DMU_SKY, 0, DMU_FLAGS);
+            skyFlags |= SKYF_LAYER0_ENABLED;
+            skyFlags &= ~SKYF_LAYER1_ENABLED;
+            P_SetInt(DMU_SKY, 0, DMU_FLAGS, skyFlags);
         }
 
         return;
@@ -168,12 +167,11 @@ void LightningAnimator::advanceTime()
         mobj_t *plrmo = ::players[DISPLAYPLAYER].plr->mo;
         mobj_t *clapSource = 0;
 
-        if(!IS_DEDICATED)
-        {
-            // Set the alternate (lightning) sky.
-            R_SkyParams(0, DD_DISABLE, nullptr);
-            R_SkyParams(1, DD_ENABLE, nullptr);
-        }
+        // Set the alternate (lightning) sky.
+        int skyFlags = P_GetInt(DMU_SKY, 0, DMU_FLAGS);
+        skyFlags &= ~SKYF_LAYER0_ENABLED;
+        skyFlags |= SKYF_LAYER1_ENABLED;
+        P_SetInt(DMU_SKY, 0, DMU_FLAGS, skyFlags);
 
         // If 3D sounds are active, position the clap somewhere above the player.
         if(::cfg.snd3D && plrmo && !IS_NETGAME)

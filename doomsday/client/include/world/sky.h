@@ -1,4 +1,4 @@
-/** @file sky.h  Sky sphere and 3D models.
+/** @file sky.h  Sky behavior logic for the world system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SKY_H
-#define DENG_CLIENT_RENDER_SKY_H
+#ifndef DENG_WORLD_SKY_H
+#define DENG_WORLD_SKY_H
 
-#include "Material"
-#include <QFlags>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
+#include "MapElement"
+#include "Material"
 #include "ModelDef"
 
 #define MAX_SKY_LAYERS                   ( 2 )
-#define MAX_SKY_MODELS                   ( 32 )
 
 #define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_MATERIAL      ( "Textures:SKY1" )
@@ -44,17 +43,11 @@
  *
  * @ingroup render
  */
-class Sky
+class Sky : public de::MapElement
 {
 public:
-    /// No animator is presently configured. @ingroup errors
-    DENG2_ERROR(MissingAnimatorError);
-
     /// Required layer is missing. @ingroup errors
     DENG2_ERROR(MissingLayerError);
-
-    /// Required model is missing. @ingroup errors
-    DENG2_ERROR(MissingModelError);
 
     /**
      * Multiple layers can be used for parallax effects.
@@ -70,15 +63,6 @@ public:
 
         /// Notified whenever the masked-state changes.
         DENG2_DEFINE_AUDIENCE(MaskedChange, void skyLayerMaskedChanged(Layer &layer))
-
-        /// @todo make private:
-        enum Flag {
-            Active = 0x1, ///< Layer is active and will be rendered.
-            Masked = 0x2, ///< Mask the layer's texture.
-
-            DefaultFlags = 0
-        };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
     public:
         /**
@@ -99,9 +83,9 @@ public:
          *
          * @see isActive()
          */
-        Layer &setActive(bool yes);
+        void setActive(bool yes);
 
-        inline void enable() { setActive(true); }
+        inline void enable()  { setActive(true); }
         inline void disable() { setActive(false); }
 
         /**
@@ -117,7 +101,7 @@ public:
          *
          * @see isMasked()
          */
-        Layer &setMasked(bool yes);
+        void setMasked(bool yes);
 
         /**
          * Returns the material currently assigned to the layer (if any).
@@ -128,7 +112,7 @@ public:
          * Change the material of the layer. The MaterialChange audience is notified
          * whenever the material changes.
          */
-        Layer &setMaterial(Material *newMaterial);
+        void setMaterial(Material *newMaterial);
 
         /**
          * Returns the horizontal offset for the layer.
@@ -140,7 +124,7 @@ public:
          *
          * @param newOffset  New offset to apply.
          */
-        Layer &setOffset(float newOffset);
+        void setOffset(float newOffset);
 
         /**
          * Returns the fadeout limit for the layer.
@@ -152,56 +136,9 @@ public:
          *
          * @param newLimit  New fadeout limit to apply.
          */
-        Layer &setFadeoutLimit(float newLimit);
+        void setFadeoutLimit(float newLimit);
 
     private:
-        Layer &setFlags(Flags flags, de::FlagOp operation);
-
-        Flags _flags;
-        Material *_material;
-        float _offset;
-        float _fadeoutLimit;
-    };
-
-    struct ModelInfo
-    {
-        de::Record const *def; // Sky model def
-        ModelDef *model;
-        int frame;
-        int timer;
-        int maxTimer;
-        float yaw;
-    };
-
-    /**
-     * Sky sphere and model animator.
-     *
-     * Animates a sky according to the configured definition.
-     */
-    class Animator
-    {
-    public:
-        Animator();
-        Animator(Sky &sky);
-        virtual ~Animator();
-
-        void setSky(Sky &sky);
-        Sky &sky() const;
-
-        /**
-         * Reconfigure according to the specified @a definition if not @c NULL,
-         * otherwise, reconfigure using the default values.
-         */
-        void configure(defn::Sky *definition);
-
-        /**
-         * Advances the animation state.
-         *
-         * @param elapsed  Duration of elapsed time.
-         */
-        void advanceTime(timespan_t elapsed);
-
-    public:
         DENG2_PRIVATE(d)
     };
 
@@ -209,32 +146,19 @@ public:
     Sky();
 
     /**
+     * Reconfigure according to the specified @a definition if not @c NULL,
+     * otherwise, reconfigure using the default values.
+     *
+     * @see configureDefault()
+     */
+    void configure(defn::Sky const *definition);
+
+    /**
      * Reconfigure the sky, returning all values to their defaults.
+     *
+     * @see configure()
      */
     void configureDefault();
-
-    bool hasAnimator() const;
-    void setAnimator(Animator *newAnimator);
-    Animator &animator();
-
-    /**
-     * Models are set up according to the given @a skyDef.
-     */
-    void setupModels(defn::Sky const &skyDef);
-
-#ifdef __CLIENT__
-
-    /**
-     * Cache all assets needed for visualizing the sky.
-     */
-    void cacheDrawableAssets();
-
-    /**
-     * Render the sky.
-     */
-    void draw();
-
-#endif // __CLIENT__
 
     /**
      * Determines whether the specified sky layer @a index is valid.
@@ -268,30 +192,6 @@ public:
     int firstActiveLayer() const;
 
     /**
-     * Determines whether the specified sky model @a index is valid.
-     *
-     * @see model(), modelPtr()
-     */
-    bool hasModel(int index) const;
-
-    /**
-     * Lookup a sky model by it's unique @a index.
-     *
-     * @see hasModel()
-     */
-    ModelInfo &model(int index);
-
-    /// @copydoc model()
-    ModelInfo const &model(int index) const;
-
-    /**
-     * Returns a pointer to the referenced sky model; otherwise @c 0.
-     *
-     * @see hasModel(), model()
-     */
-    inline ModelInfo *modelPtr(int index) { return hasModel(index)? &model(index) : 0; }
-
-    /**
      * Returns the horizon offset for the sky.
      *
      * @see setHorizonOffset()
@@ -323,6 +223,8 @@ public:
      */
     void setHeight(float newHeight);
 
+#ifdef __CLIENT__
+
     /**
      * Returns the ambient color of the sky. The ambient color is automatically
      * calculated by averaging the color information in the configured layer
@@ -340,18 +242,16 @@ public:
      */
     void setAmbientColor(de::Vector3f const &newColor);
 
-public:
-    /// Register the console commands, variables, etc..., of this module.
-    static void consoleRegister();
+#endif // __CLIENT__
+
+protected:
+    int property(DmuArgs &args) const;
+    int setProperty(DmuArgs const &args);
 
 private:
     DENG2_PRIVATE(d)
 };
-Q_DECLARE_OPERATORS_FOR_FLAGS(Sky::Layer::Flags)
 
 typedef Sky::Layer SkyLayer;
 
-/// The One sky (never @c NULL).
-extern Sky *theSky;
-
-#endif // DENG_CLIENT_RENDER_SKY_H
+#endif // DENG_WORLD_SKY_H

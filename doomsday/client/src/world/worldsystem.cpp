@@ -54,7 +54,7 @@
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
-#  include "render/sky.h"
+#  include "render/skydrawable.h"
 #  include "render/vlight.h"
 #endif
 
@@ -62,6 +62,7 @@
 #  include "server/sv_pool.h"
 #endif
 
+#include "world/sky.h"
 #include "world/thinkers.h"
 
 #include <doomsday/console/cmd.h>
@@ -287,24 +288,10 @@ DENG2_PIMPL(WorldSystem)
     timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
-    std::unique_ptr<Sky::Animator> skyAnimator;
 #endif
 
     Instance(Public *i) : Base(i)
-    {
-#ifdef __CLIENT__
-        // Initialize an animator for the sky.
-        skyAnimator.reset(new Sky::Animator(*::theSky));
-        ::theSky->setAnimator(skyAnimator.get());
-#endif
-    }
-
-    ~Instance()
-    {
-#ifdef __CLIENT__
-        ::theSky->setAnimator(nullptr);
-#endif
-    }
+    {}
 
     void notifyMapChange()
     {
@@ -507,6 +494,9 @@ DENG2_PIMPL(WorldSystem)
         map->_effectiveGravity = map->_globalGravity;
 
 #ifdef __CLIENT__
+        // Set up the SkyDrawable to get its config from the map's Sky.
+        ClientApp::renderSystem().sky().setSky(&map->sky());
+
         // Reconfigure the sky.
         defn::Sky skyDef;
         if(mapInfo)
@@ -520,7 +510,7 @@ DENG2_PIMPL(WorldSystem)
                 skyDef = mapInfo.subrecord("sky");
             }
         }
-        theSky->animator().configure(&skyDef);
+        map->sky().configure(&skyDef);
 #endif
 
         // Init the thinker lists (public and private).
