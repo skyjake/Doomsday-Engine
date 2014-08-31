@@ -1033,6 +1033,7 @@ void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
 bool ClientWindow::hasSidebar(SidebarLocation location) const
 {
     DENG2_ASSERT(location == RightEdge);
+    DENG2_UNUSED(location);
 
     return d->sidebar != 0;
 }

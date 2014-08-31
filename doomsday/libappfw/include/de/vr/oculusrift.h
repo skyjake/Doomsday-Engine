@@ -33,6 +33,7 @@ class LIBAPPFW_PUBLIC OculusRift
 {
 public:
     enum Eye { LeftEye, RightEye };
+    enum Screen { DefaultScreen, PreviousScreen, OculusRiftScreen };
 
 public:
     OculusRift();
@@ -133,6 +134,8 @@ public:
     //float fovY() const; // in degrees
     //Vector4f hmdWarpParam() const;
     //float lensSeparationDistance() const;
+
+    void moveWindowToScreen(Screen screen);
 
 private:
     DENG2_PRIVATE(d)

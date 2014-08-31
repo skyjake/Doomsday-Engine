@@ -70,13 +70,14 @@ static void vrConfigVariableChanged()
 // see also rend_main.cpp
 static void vrModeChanged()
 {
+    /*
     if(vrMode == VRConfig::OculusRift && !vrCfg().oculusRift().isReady())
     {
         // Can't activate Oculus Rift mode unless the device is connected.
         vrMode = VRConfig::Mono;
 
         LOG_WARNING("Oculus Rift not connected, reverting to normal 3D mode");
-    }
+    }*/
 
     vrCfg().setMode(VRConfig::StereoMode(vrMode));
 

@@ -124,6 +124,7 @@ void BaseWindow::draw()
         return;
     }
 
+    // Initialize Oculus Rift if needed.
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if(vr.mode() == VRConfig::OculusRift)
     {
@@ -176,15 +177,7 @@ void BaseWindow::preDraw()
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if(vr.mode() == VRConfig::OculusRift)
     {
-        //if(canvas().isGLReady())
-        {
-           // vr.oculusRift().init();
-            vr.oculusRift().beginFrame();
-        }
-    }
-    else
-    {
-        //vr.oculusRift().deinit();
+        vr.oculusRift().beginFrame();
     }
 }
 
