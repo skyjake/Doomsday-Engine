@@ -312,6 +312,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
+#ifdef DENG_HAVE_OCULUS_API
     QRect screenGeometry(Screen which) const
     {
         foreach(QScreen *scr, qApp->screens())
@@ -335,6 +336,7 @@ DENG2_PIMPL(OculusRift)
         // Fall back the first screen.
         return qApp->screens().at(0)->geometry();
     }
+#endif
 
     void deinit()
     {
@@ -363,6 +365,7 @@ DENG2_PIMPL(OculusRift)
 #endif
     }
 
+#ifdef DENG_HAVE_OCULUS_API
     bool isWindowOnHMD() const
     {
         if(!window) return false;
@@ -400,6 +403,7 @@ DENG2_PIMPL(OculusRift)
 #endif
         }
     }
+#endif
 
     /**
      * Observe key events (any key) to dismiss the OVR Health and Safety warning.
@@ -796,7 +800,11 @@ float OculusRift::fovX() const
 
 void OculusRift::moveWindowToScreen(Screen screen)
 {
+#ifdef DENG_HAVE_OCULUS_API
     d->moveWindow(screen);
+#else
+    DENG2_UNUSED(screen);
+#endif
 }
 
 #if 0
