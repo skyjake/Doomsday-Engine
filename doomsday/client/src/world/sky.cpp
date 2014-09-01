@@ -28,7 +28,7 @@
 #  include "clientapp.h"
 #  include "gl/gl_main.h"
 #  include "gl/gl_tex.h"
-#  include "render/rend_main.h"          // rendSkyLightAuto
+#  include "render/rend_main.h"    // rendSkyLightAuto
 #  include "render/skydrawable.h"  // SkyDrawable::layerMaterialSpec
 
 #  include "MaterialSnapshot"
@@ -183,8 +183,8 @@ DENG2_PIMPL(Sky)
      * @todo Move to SkyDrawable and have it simply update this component once the
      * ambient color has been calculated.
      *
-     * @todo Re-implement me by rendering the sky to a low-quality cubemap and use that
-     * to obtain the lighting characteristics.
+     * @todo Re-implement me by rendering the sky to a low-quality cubemap and use
+     * that to obtain the lighting characteristics.
      */
     void updateAmbientColorIfNeeded()
     {
@@ -445,7 +445,7 @@ int Sky::setProperty(DmuArgs const &args)
         args.value(DDVT_FLOAT, &d->height, 0);
         break;
 
-        /*case DMU_HORIZONOFFSET:
+    /*case DMU_HORIZONOFFSET:
         args.value(DDVT_FLOAT, &d->horizonOffset, 0);
         break;*/
 

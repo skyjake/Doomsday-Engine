@@ -46,6 +46,8 @@
 
 using namespace de;
 
+namespace internal {
+
 enum SphereComponentFlag {
     UpperHemisphere = 0x1,
     LowerHemisphere = 0x2
@@ -80,139 +82,6 @@ struct drawhemispherestate_t
     Vector3f capColor;
 };
 static drawhemispherestate_t ds;
-
-DENG2_PIMPL(SkyDrawable)
-{
-    Animator *animator = nullptr;
-
-    ModelInfo models[MAX_SKY_MODELS];
-    bool haveModels       = false;
-    bool alwaysDrawSphere = false;
-
-    Sky *sky = 0;
-
-    Instance(Public *i) : Base(i)
-    {
-        de::zap(models);
-    }
-
-    inline ResourceSystem &resSys() {
-        return ClientApp::resourceSystem();
-    }
-
-    void drawModels()
-    {
-        DENG_ASSERT_IN_MAIN_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-
-        // Setup basic translation.
-        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
-
-        for(int i = 0; i < MAX_SKY_MODELS; ++i)
-        {
-            ModelInfo &minfo          = models[i];
-            Record const *skyModelDef = minfo.def;
-
-            if(!skyModelDef) continue;
-
-            // If the associated sky layer is not active then the model won't be drawn.
-            if(!sky->layer(skyModelDef->geti("layer")).isActive())
-            {
-                continue;
-            }
-
-            vissprite_t vis; de::zap(vis);
-
-            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef->get("originOffset")).xzy();
-            vis.pose.topZ            = vis.pose.origin.z;
-            vis.pose.distance        = 1;
-
-            Vector2f rotate(skyModelDef->get("rotate"));
-            vis.pose.yaw             = minfo.yaw;
-            vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
-            vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
-
-            drawmodelparams_t &visModel = *VS_MODEL(&vis);
-            visModel.inter                       = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
-            visModel.mf                          = minfo.model;
-            visModel.alwaysInterpolate           = true;
-            visModel.shineTranslateWithViewerPos = true;
-            App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
-
-            vis.light.ambientColor = Vector4f(skyModelDef->get("color"), 1);
-
-            Rend_DrawModel(vis);
-        }
-
-        // We don't want that anything interferes with what was drawn.
-        //glClear(GL_DEPTH_BUFFER_BIT);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-    }
-};
-
-SkyDrawable::SkyDrawable() : d(new Instance(this))
-{}
-
-void SkyDrawable::setupModels(defn::Sky const &def)
-{
-    // Normally the sky sphere is not drawn if models are in use.
-    d->alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
-
-    // The normal sphere is used if no models will be set up.
-    d->haveModels = false;
-    de::zap(d->models);
-
-    for(int i = 0; i < def.modelCount(); ++i)
-    {
-        Record const &modef = def.model(i);
-        ModelInfo *minfo = &d->models[i];
-
-        // Is the model ID set?
-        try
-        {
-            minfo->model = &App_ResourceSystem().modelDef(modef.gets("id"));
-            if(!minfo->model->subCount())
-            {
-                continue;
-            }
-
-            // There is a model here.
-            d->haveModels = true;
-
-            minfo->def      = modef.accessedRecordPtr();
-            minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
-            minfo->yaw      = modef.getf("yaw");
-            minfo->frame    = minfo->model->subModelDef(0).frame;
-        }
-        catch(ResourceSystem::MissingModelDefError const &)
-        {} // Ignore this error.
-    }
-}
-
-bool SkyDrawable::hasModel(int index) const
-{
-    return (index >= 0 && index < MAX_SKY_MODELS);
-}
-
-SkyDrawable::ModelInfo &SkyDrawable::model(int index)
-{
-    if(hasModel(index))
-    {
-        return d->models[index];
-    }
-    /// @throw MissingModelError An invalid model index was specified.
-    throw MissingModelError("SkyDrawable::model", "Invalid model index #" + String::number(index) + ".");
-}
-
-SkyDrawable::ModelInfo const &SkyDrawable::model(int index) const
-{
-    return const_cast<ModelInfo const &>(const_cast<SkyDrawable *>(this)->model(index));
-}
 
 // Look up the precalculated vertex.
 static inline Vector3f &skyVertex(int r, int c)
@@ -486,6 +355,180 @@ static void drawHemisphere(Sky &sky, SphereComponentFlags flags)
     }
 }
 
+} // namespace internal
+using namespace ::internal;
+
+DENG2_PIMPL(SkyDrawable)
+{
+    Animator *animator = nullptr;
+
+    ModelInfo models[MAX_SKY_MODELS];
+    bool haveModels       = false;
+    bool alwaysDrawSphere = false;
+
+    Sky *sky = 0;
+
+    Instance(Public *i) : Base(i)
+    {
+        de::zap(models);
+    }
+
+    inline ResourceSystem &resSys() {
+        return ClientApp::resourceSystem();
+    }
+
+    void drawSphere()
+    {
+        if(haveModels && !alwaysDrawSphere) return;
+
+        // We don't want anything written in the depth buffer.
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
+        // Disable culling, all triangles face the viewer.
+        glDisable(GL_CULL_FACE);
+
+        // Setup a proper matrix.
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
+        glScalef(skyDistance, skyDistance, skyDistance);
+
+        // Always draw both hemispheres.
+        drawHemisphere(self.sky(), LowerHemisphere);
+        drawHemisphere(self.sky(), UpperHemisphere);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        // Restore assumed default GL state.
+        glEnable(GL_CULL_FACE);
+
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+    }
+
+    void drawModels()
+    {
+        if(!haveModels) return;
+
+        // We don't want anything written in the depth buffer.
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        // Setup basic translation.
+        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
+
+        for(int i = 0; i < MAX_SKY_MODELS; ++i)
+        {
+            ModelInfo &minfo          = models[i];
+            Record const *skyModelDef = minfo.def;
+
+            if(!skyModelDef) continue;
+
+            // If the associated sky layer is not active then the model won't be drawn.
+            if(!sky->layer(skyModelDef->geti("layer")).isActive())
+            {
+                continue;
+            }
+
+            vissprite_t vis; de::zap(vis);
+
+            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef->get("originOffset")).xzy();
+            vis.pose.topZ            = vis.pose.origin.z;
+            vis.pose.distance        = 1;
+
+            Vector2f rotate(skyModelDef->get("rotate"));
+            vis.pose.yaw             = minfo.yaw;
+            vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
+            vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
+
+            drawmodelparams_t &visModel = *VS_MODEL(&vis);
+            visModel.inter                       = (minfo.maxTimer > 0 ? minfo.timer / float(minfo.maxTimer) : 0);
+            visModel.mf                          = minfo.model;
+            visModel.alwaysInterpolate           = true;
+            visModel.shineTranslateWithViewerPos = true;
+            App_ResourceSystem().setModelDefFrame(*minfo.model, minfo.frame);
+
+            vis.light.ambientColor = Vector4f(skyModelDef->get("color"), 1);
+
+            Rend_DrawModel(vis);
+        }
+
+        // We don't want that anything interferes with what was drawn.
+        //glClear(GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        // Restore assumed default GL state.
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+    }
+};
+
+SkyDrawable::SkyDrawable() : d(new Instance(this))
+{}
+
+void SkyDrawable::setupModels(defn::Sky const &def)
+{
+    // Normally the sky sphere is not drawn if models are in use.
+    d->alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
+
+    // The normal sphere is used if no models will be set up.
+    d->haveModels = false;
+    de::zap(d->models);
+
+    for(int i = 0; i < def.modelCount(); ++i)
+    {
+        Record const &modef = def.model(i);
+        ModelInfo *minfo = &d->models[i];
+
+        // Is the model ID set?
+        try
+        {
+            minfo->model = &App_ResourceSystem().modelDef(modef.gets("id"));
+            if(!minfo->model->subCount())
+            {
+                continue;
+            }
+
+            // There is a model here.
+            d->haveModels = true;
+
+            minfo->def      = modef.accessedRecordPtr();
+            minfo->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
+            minfo->yaw      = modef.getf("yaw");
+            minfo->frame    = minfo->model->subModelDef(0).frame;
+        }
+        catch(ResourceSystem::MissingModelDefError const &)
+        {} // Ignore this error.
+    }
+}
+
+bool SkyDrawable::hasModel(int index) const
+{
+    return (index >= 0 && index < MAX_SKY_MODELS);
+}
+
+SkyDrawable::ModelInfo &SkyDrawable::model(int index)
+{
+    if(hasModel(index))
+    {
+        return d->models[index];
+    }
+    /// @throw MissingModelError An invalid model index was specified.
+    throw MissingModelError("SkyDrawable::model", "Invalid model index #" + String::number(index) + ".");
+}
+
+SkyDrawable::ModelInfo const &SkyDrawable::model(int index) const
+{
+    return const_cast<ModelInfo const &>(const_cast<SkyDrawable *>(this)->model(index));
+}
+
 void SkyDrawable::cacheDrawableAssets()
 {
     for(int i = 0; i < MAX_SKY_LAYERS; ++i)
@@ -511,54 +554,16 @@ void SkyDrawable::cacheDrawableAssets()
 
 void SkyDrawable::draw()
 {
-    // Is there a sky to be rendered?
+    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    // The sky is only drawn when at least one layer is active.
     if(sky().firstActiveLayer() < 0) return;
 
     if(usingFog) glEnable(GL_FOG);
 
-    // If sky models have been inited, they will be used.
-    if(!d->haveModels || d->alwaysDrawSphere)
-    {
-        // We don't want anything written in the depth buffer.
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-
-        // Disable culling, all triangles face the viewer.
-        glDisable(GL_CULL_FACE);
-
-        // Setup a proper matrix.
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
-        glScalef(skyDistance, skyDistance, skyDistance);
-
-        // Always draw both hemispheres.
-        drawHemisphere(sky(), LowerHemisphere);
-        drawHemisphere(sky(), UpperHemisphere);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-
-        // Restore assumed default GL state.
-        glEnable(GL_CULL_FACE);
-
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-    }
-
-    // How about some 3D models?
-    if(d->haveModels)
-    {
-        // We don't want anything written in the depth buffer.
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
-
-        d->drawModels();
-
-        // Restore assumed default GL state.
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
-    }
+    d->drawSphere();
+    d->drawModels();
 
     if(usingFog) glDisable(GL_FOG);
 }

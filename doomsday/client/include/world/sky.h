@@ -41,7 +41,7 @@
  *
  * This version supports only two sky layers. (More would be a waste of resources?)
  *
- * @ingroup render
+ * @ingroup world
  */
 class Sky : public de::MapElement
 {
