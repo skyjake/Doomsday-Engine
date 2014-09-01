@@ -23,6 +23,7 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
             include(dep_atl.pri)
             deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovrd.lib
                   else: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovr.lib
+            INCLUDEPATH += $${LIBOVR_DIR}/Src
         }
 
         # Additional windows libraries needed to avoid link errors when using Rift
