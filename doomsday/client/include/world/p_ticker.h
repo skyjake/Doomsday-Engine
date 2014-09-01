@@ -20,6 +20,10 @@
 #ifndef DENG_WORLD_P_TICKER_H
 #define DENG_WORLD_P_TICKER_H
 
+#include "world/thinkers.h"
+
+int P_MobjTicker(thinker_t *th, void *context);
+
 /**
  * Doomsday's own play-ticker.
  */

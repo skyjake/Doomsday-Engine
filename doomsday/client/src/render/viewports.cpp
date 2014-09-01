@@ -1157,7 +1157,7 @@ DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
         return;
     }
 
-    Sky &sky = ClientApp::renderSystem().sky().sky();
+    Sky &sky = ClientApp::worldSystem().map().sky();
     if(sky.hasLayer(layerIndex))
     {
         Sky::Layer &layer = sky.layer(layerIndex);

@@ -3465,7 +3465,7 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     popGLStateForPass(mode);
 }
 
-static void drawSky()
+static void drawSky(Sky const &sky)
 {
     DrawLists::FoundLists lists;
     ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
@@ -3503,7 +3503,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    ClientApp::renderSystem().sky().draw();
+    ClientApp::renderSystem().sky().draw(&sky);
 
     if(!devRendSkyAlways)
     {
@@ -3634,7 +3634,7 @@ static void drawAllLists(Map &map)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    drawSky();
+    drawSky(map.sky());
 
     // Render the real surfaces of the visible world.
 

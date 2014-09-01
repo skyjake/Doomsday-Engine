@@ -62,6 +62,7 @@
 #  include "server/sv_pool.h"
 #endif
 
+#include "world/p_ticker.h"
 #include "world/sky.h"
 #include "world/thinkers.h"
 
@@ -288,6 +289,7 @@ DENG2_PIMPL(WorldSystem)
     timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
+    SkyDrawable::Animator skyAnimator;
 #endif
 
     Instance(Public *i) : Base(i)
@@ -495,7 +497,7 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         // Set up the SkyDrawable to get its config from the map's Sky.
-        ClientApp::renderSystem().sky().setSky(&map->sky());
+        skyAnimator.setSky(&ClientApp::renderSystem().sky());
 
         // Reconfigure the sky.
         defn::Sky skyDef;
@@ -880,6 +882,22 @@ void WorldSystem::advanceTime(timespan_t delta)
 timespan_t WorldSystem::time() const
 {
     return d->time;
+}
+
+void WorldSystem::tick(timespan_t elapsed)
+{
+#ifdef __CLIENT__
+    d->skyAnimator.advanceTime(elapsed);
+#else
+    DENG2_UNUSED(elapsed);
+#endif
+
+    if(DD_IsSharpTick() && d->map)
+    {
+        // Check all mobjs (always public).
+        d->map->thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                                   P_MobjTicker);
+    }
 }
 
 #ifdef __CLIENT__

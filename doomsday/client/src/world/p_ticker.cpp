@@ -18,6 +18,8 @@
  */
 
 #include "de_base.h"
+#include "world/p_ticker.h"
+
 #include "de_network.h"
 #include "de_render.h"
 #include "de_play.h"
@@ -28,7 +30,6 @@
 #  include "render/skydrawable.h"
 #endif
 #include "world/map.h"
-#include "world/thinkers.h"
 #include "world/sky.h"
 
 using namespace de;
@@ -118,23 +119,8 @@ static void materialsTicker(timespan_t elapsed)
 void P_Ticker(timespan_t elapsed)
 {
     P_ControlTicker(elapsed);
-
 #ifdef __CLIENT__
     materialsTicker(elapsed);
-
-    SkyDrawable &sky = ClientApp::renderSystem().sky();
-    if(sky.hasAnimator())
-    {
-        sky.animator().advanceTime(elapsed);
-    }
 #endif
-
-    if(App_WorldSystem().hasMap() && DD_IsSharpTick())
-    {
-        Map &map = App_WorldSystem().map();
-
-        // Check all mobjs (always public).
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               P_MobjTicker);
-    }
+    App_WorldSystem().tick(elapsed);
 }

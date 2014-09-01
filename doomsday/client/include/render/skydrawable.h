@@ -43,13 +43,10 @@ class Sky;
 class SkyDrawable
 {
 public:
-    /// No animator is presently configured. @ingroup errors
-    DENG2_ERROR(MissingAnimatorError);
-
     /// Required model is missing. @ingroup errors
     DENG2_ERROR(MissingModelError);
 
-    struct ModelInfo
+    struct ModelData
     {
         de::Record const *def; // Sky model def
         ModelDef *model;
@@ -88,10 +85,6 @@ public:
 public:
     SkyDrawable();
 
-    bool hasAnimator() const;
-    void setAnimator(Animator *newAnimator);
-    Animator &animator();
-
     /**
      * Models are set up according to the given @a skyDef.
      */
@@ -100,12 +93,12 @@ public:
     /**
      * Cache all assets needed for visualizing the sky.
      */
-    void cacheDrawableAssets();
+    void cacheDrawableAssets(Sky const *sky = 0);
 
     /**
      * Render the sky.
      */
-    void draw();
+    void draw(Sky const *sky = 0) const;
 
     /**
      * Determines whether the specified sky model @a index is valid.
@@ -119,21 +112,17 @@ public:
      *
      * @see hasModel()
      */
-    ModelInfo &model(int index);
+    ModelData &model(int index);
 
     /// @copydoc model()
-    ModelInfo const &model(int index) const;
+    ModelData const &model(int index) const;
 
     /**
      * Returns a pointer to the referenced sky model; otherwise @c 0.
      *
      * @see hasModel(), model()
      */
-    inline ModelInfo *modelPtr(int index) { return hasModel(index)? &model(index) : 0; }
-
-    /// @todo RenderSystem should own a sky-masked-material => SkyDrawable map.
-    void setSky(Sky *sky);
-    Sky &sky();
+    inline ModelData *modelPtr(int index) { return hasModel(index)? &model(index) : 0; }
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);

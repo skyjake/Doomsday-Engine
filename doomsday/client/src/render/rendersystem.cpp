@@ -90,10 +90,7 @@ uint Store::allocateVertices(uint count)
 DENG2_PIMPL(RenderSystem)
 {
     ModelRenderer models;
-
     SkyDrawable sky;
-    SkyDrawable::Animator skyAnimator;
-
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
@@ -222,9 +219,6 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::IntCVar,   "rend-particle-visible-near", 0)
 
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
-
-        skyAnimator.setSky(&sky);
-        sky.setAnimator(&skyAnimator);
     }
 
     /**
