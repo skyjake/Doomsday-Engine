@@ -308,9 +308,9 @@ void Sky::configureDefault()
     d->horizonOffset          = DEFAULT_SKY_HORIZON_OFFSET;
 
 #ifdef __CLIENT__
+    d->ambientColor           = Vector3f(1, 1, 1);
     d->ambientColorDefined    = false;
     d->needUpdateAmbientColor = true;
-    d->ambientColor           = Vector3f(1, 1, 1);
 #endif
 
     for(int i = 0; i < MAX_SKY_LAYERS; ++i)
