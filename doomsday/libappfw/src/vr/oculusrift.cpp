@@ -30,7 +30,7 @@
 
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
-#  include <../Src/OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
+#  include <OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
 using namespace OVR;
 #endif
 
@@ -69,6 +69,7 @@ DENG2_PIMPL(OculusRift)
     float aspect = 1.f;
 
     BaseWindow *window = nullptr;
+    QRect oldGeometry;
 
     bool inited = false;
     bool frameOngoing = false;
@@ -94,6 +95,8 @@ DENG2_PIMPL(OculusRift)
         , yawOffset(0)
     {
 #ifdef DENG_HAVE_OCULUS_API
+        hmd = 0;
+        /*
         ovr_Initialize();
         hmd = ovrHmd_Create(0);
 
@@ -109,6 +112,7 @@ DENG2_PIMPL(OculusRift)
                     << hmd->FirmwareMajor << hmd->FirmwareMinor
                     << hmd->Resolution.w << hmd->Resolution.h;
         }
+        */
 #endif
     }
 
@@ -118,10 +122,11 @@ DENG2_PIMPL(OculusRift)
         deinit();
 
 #ifdef DENG_HAVE_OCULUS_API
+        /*
         if(hmd)
         {
             ovrHmd_Destroy(hmd);
-        }
+        }*/
         ovr_Shutdown();
 #endif
     }
@@ -184,6 +189,7 @@ DENG2_PIMPL(OculusRift)
         for(int eye = 0; eye < 2; ++eye)
         {
             ovrGLTexture tex;
+            zap(tex);
 
             tex.OGL.Header.API            = ovrRenderAPI_OpenGL;
             tex.OGL.Header.TextureSize    = Sizei(w, h);
@@ -201,6 +207,22 @@ DENG2_PIMPL(OculusRift)
         inited = true;
 
 #ifdef DENG_HAVE_OCULUS_API
+        //ovr_Initialize();
+        hmd = ovrHmd_Create(0);
+
+        if(!hmd && App::commandLine().has("-ovrdebug"))
+        {
+            hmd = ovrHmd_CreateDebug(ovrHmd_DK2);
+        }
+
+        if(hmd)
+        {
+            LOG_INPUT_NOTE("HMD: %s (%s) %i.%i %ix%i pixels")
+                    << String(hmd->ProductName) << String(hmd->Manufacturer)
+                    << hmd->FirmwareMajor << hmd->FirmwareMinor
+                    << hmd->Resolution.w << hmd->Resolution.h;
+        }
+
         // If there is no Oculus Rift connected, do nothing.
         if(!hmd) return;
 
@@ -231,6 +253,8 @@ DENG2_PIMPL(OculusRift)
         // Set up the framebuffer and eye viewports.
         resizeFramebuffer();
 
+        ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
+
         uint distortionCaps = ovrDistortionCap_Chromatic // TODO: make configurable?
                             | ovrDistortionCap_TimeWarp
                             | ovrDistortionCap_Overdrive;
@@ -242,7 +266,7 @@ DENG2_PIMPL(OculusRift)
         cfg.OGL.Header.Multisample = buf.sampleCount();
 #ifdef WIN32
         cfg.OGL.Window             = (HWND) window->nativeHandle();
-        cfg.OGL.DC                 = NULL;
+        cfg.OGL.DC                 = wglGetCurrentDC();
 #endif
         if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {
@@ -267,14 +291,52 @@ DENG2_PIMPL(OculusRift)
                      << render[i].ViewAdjust.z;
         }*/
 
-        ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
-
         /*
         float clearColor[4] = { 0.0f, 0.5f, 1.0f, 0.0f };
         ovrHmd_SetFloatArray(hmd, "DistortionClearColor", clearColor, 4);
         */
+
+        // Move the window to the correct display.
+        //if(ovrHmd_GetEnabledCaps(hmd) & ovrHmdCap_ExtendDesktop)
+        {
+            //LOG_GL_MSG("Using extended desktop mode");
+
+        }
+        /*
+        else
+        {
+            LOG_GL_MSG("Using direct-to-HMD rendering mode");
+        }*/
+
+        moveWindow(HMDScreen);
 #endif
     }
+
+#ifdef DENG_HAVE_OCULUS_API
+    QRect screenGeometry(Screen which) const
+    {
+        foreach(QScreen *scr, qApp->screens())
+        {
+#ifdef WIN32
+            bool isRift = String(hmd->DisplayDeviceName).startsWith(scr->name());
+            if((which == HMDScreen && isRift) || (which == DefaultScreen && !isRift))
+            {
+                LOG_GL_MSG("HMD display: \"%s\" Screen: \"%s\" Geometry: %i,%i %ix%i")
+                        << String(hmd->DisplayDeviceName)
+                        << scr->name()
+                        << scr->geometry().left() << scr->geometry().top()
+                        << scr->geometry().width() << scr->geometry().height();
+                return scr->geometry();
+            }
+#else
+            DENG2_UNUSED(scr);
+            DENG2_UNUSED(which);
+#endif
+        }
+        // Fall back the first screen.
+        return qApp->screens().at(0)->geometry();
+    }
+#endif
 
     void deinit()
     {
@@ -289,14 +351,59 @@ DENG2_PIMPL(OculusRift)
 
         App::config()["vr.oculusRift.pixelDensity"].audienceForChange() -= this;
 
-        ovrHmd_ConfigureRendering(hmd, NULL, 0, NULL, NULL);
+        if(hmd)
+        {
+            ovrHmd_ConfigureRendering(hmd, NULL, 0, NULL, NULL);
+            framebuffer().glDeinit();
 
-        framebuffer().glDeinit();
+            moveWindow(PreviousScreen);
+            window->canvas().audienceForKeyEvent() -= this;
+            window = 0;
 
-        window->canvas().audienceForKeyEvent() -= this;
-        window = 0;
+            ovrHmd_Destroy(hmd);
+        }
 #endif
     }
+
+#ifdef DENG_HAVE_OCULUS_API
+    bool isWindowOnHMD() const
+    {
+        if(!window) return false;
+        QRect const hmdRect = screenGeometry(HMDScreen);
+        return hmdRect.contains(window->geometry());
+    }
+
+    void moveWindow(Screen screen)
+    {
+        if(!window) return;
+
+        if(screen == HMDScreen)
+        {
+            if(isWindowOnHMD()) return; // Nothing further to do.
+#ifdef WIN32            
+            oldGeometry = window->geometry();
+            window->setGeometry(screenGeometry(HMDScreen));
+            window->showFullScreen();
+#endif
+        }
+        else if(screen == PreviousScreen)
+        {
+            if(!isWindowOnHMD()) return;
+#ifdef WIN32
+            window->showMaximized();
+            window->setGeometry(oldGeometry);
+#endif
+        }
+        else
+        {
+            if(!isWindowOnHMD()) return;
+#ifdef WIN32
+            window->showMaximized();
+            window->setGeometry(screenGeometry(DefaultScreen));
+#endif
+        }
+    }
+#endif
 
     /**
      * Observe key events (any key) to dismiss the OVR Health and Safety warning.
@@ -308,8 +415,10 @@ DENG2_PIMPL(OculusRift)
 #ifdef DENG_HAVE_OCULUS_API
         if(isHealthAndSafetyWarningDisplayed())
         {
-            dismissHealthAndSafetyWarning();
-            window->canvas().audienceForKeyEvent() -= this;
+            if(dismissHealthAndSafetyWarning())
+            {
+                window->canvas().audienceForKeyEvent() -= this;
+            }
         }
 #endif
     }
@@ -329,12 +438,13 @@ DENG2_PIMPL(OculusRift)
         return hswDisplayState.Displayed;
     }
 
-    void dismissHealthAndSafetyWarning()
+    bool dismissHealthAndSafetyWarning()
     {
         if(isHealthAndSafetyWarningDisplayed())
         {
-            ovrHmd_DismissHSWDisplay(hmd);
+            return ovrHmd_DismissHSWDisplay(hmd);
         }
+        return true;
     }
 
     void dismissHealthAndSafetyWarningOnTap()
@@ -415,6 +525,29 @@ DENG2_PIMPL(OculusRift)
 
 OculusRift::OculusRift() : d(new Instance(this))
 {}
+
+void OculusRift::glPreInit()
+{
+#ifdef DENG_HAVE_OCULUS_API
+    LOG_AS("OculusRift");
+    LOG_VERBOSE("Initializing LibOVR");
+    ovr_Initialize();
+#endif
+}
+
+bool OculusRift::isHMDConnected() const
+{
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->isReady()) return true;
+    ovrHmd dev = ovrHmd_Create(0);
+    if(dev)
+    {
+        ovrHmd_Destroy(dev);
+        return true;
+    }
+#endif
+    return false;
+}
 
 void OculusRift::init()
 {
@@ -663,6 +796,15 @@ float OculusRift::fovX() const
     return 0;
     /*float const w = 0.25 * d->screenSize.x * distortionScale();
     return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));*/
+}
+
+void OculusRift::moveWindowToScreen(Screen screen)
+{
+#ifdef DENG_HAVE_OCULUS_API
+    d->moveWindow(screen);
+#else
+    DENG2_UNUSED(screen);
+#endif
 }
 
 #if 0

@@ -386,7 +386,7 @@ def handleCompletedTasks():
             newTask('tag_build', forClient='master')
         
         elif task == 'tag_build':
-            newTask('deb_changes', forClient='ubuntu')
+            newTask('deb_changes', forClient='ubuntu-32bit')
             newTask('mac_meta', forClient='master')
             newTask('generate_readme', forClient='clikits')
         
@@ -395,14 +395,14 @@ def handleCompletedTasks():
             newTask('generate_wiki', forClient='master')
         
         elif task == 'build':
-            newTask('source', forClient='trusty')
+            newTask('source', forClient='ubuntu-64bit')
 
         elif task == 'source':
             newTask('sign', forClient='master')
 
         elif task == 'sign':
             newTask('publish', forClient='master')
-            newTask('apt_refresh', forClient='ubuntu')
+            newTask('apt_refresh', forClient='ubuntu-32bit')
             # After the build we can switch to the master again.
             newTask('branch_master', allClients=True)
             

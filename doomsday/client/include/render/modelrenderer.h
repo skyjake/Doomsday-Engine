@@ -30,6 +30,11 @@
  * The model renderer prepares available model assets for drawing (using ModelDrawable),
  * and keeps the set of needed ModelDrawable instances in memory.
  *
+ * @todo Consider renaming the class: the term "renderer" has the connotation of actually
+ * performing rendering, while in practice the ModelDrawables will be drawing themselves.
+ * This is the top-level class responsible for model assets and all their associated
+ * data. Perhaps the class should be instead portrayed more as a specialized Bank. -jk
+ *
  * @ingroup render
  */
 class ModelRenderer

@@ -301,6 +301,26 @@ DENG2_PIMPL(ClientWindow)
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
+
+        activateOculusRiftModeIfConnected();
+    }
+
+    void activateOculusRiftModeIfConnected()
+    {
+        if(vrCfg().oculusRift().isHMDConnected() && vrCfg().mode() != VRConfig::OculusRift)
+        {
+            LOG_NOTE("HMD connected, automatically switching to Oculus Rift mode");
+
+            Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
+            vrCfg().oculusRift().moveWindowToScreen(OculusRift::HMDScreen);
+        }
+        else if(!vrCfg().oculusRift().isHMDConnected() && vrCfg().mode() == VRConfig::OculusRift)
+        {
+            LOG_NOTE("HMD not connected, disabling VR mode");
+
+            Con_SetInteger("rend-vr-mode", VRConfig::Mono);
+            vrCfg().oculusRift().moveWindowToScreen(OculusRift::DefaultScreen);
+        }
     }
 
     void setMode(Mode const &newMode)
@@ -380,7 +400,7 @@ DENG2_PIMPL(ClientWindow)
 
         DD_FinishInitializationAfterWindowReady();
 
-        /// @todo This should be called when a VR mode is actually used.
+        vrCfg().oculusRift().glPreInit();
         contentXf.glInit();
     }
 
@@ -637,21 +657,22 @@ DENG2_PIMPL(ClientWindow)
 
         if(vrCfg().mode() == VRConfig::OculusRift)
         {
-            float uiDistance = 45;
-            float uiSize = 67.5f;
+            /// @todo Adjustable compositor depth/size.
+            float uiDistance = 40;
+            float uiSize = 50;
 
-            Vector3f const pry = vrCfg().oculusRift().headOrientation();
+            auto const &ovr = vrCfg().oculusRift();
+            Vector3f const pry = ovr.headOrientation();
 
-            /// @todo Adjustable compositor depth?
             compositor->setCompositeProjection(
                         GL_GetProjectionMatrix()
                         * Matrix4f::rotate(radianToDegree(pry[1]), Vector3f(0, 0, -1))
                         * Matrix4f::rotate(radianToDegree(pry[0]), Vector3f(1, 0, 0))
                         * Matrix4f::rotate(radianToDegree(pry[2]), Vector3f(0, 1, 0))
-                        * Matrix4f::translate(swizzle(vrCfg().oculusRift().headPosition() *
+                        * Matrix4f::translate(swizzle(ovr.headPosition() *
                                                       vrCfg().mapUnitsPerMeter(),
                                                       AxisNegX, AxisNegY, AxisZ))
-                        * Matrix4f::scale(Vector3f(uiSize, -uiSize, 1.f))
+                        * Matrix4f::scale(Vector3f(uiSize, -uiSize/ovr.aspect(), 1.f))
                         * Matrix4f::translate(Vector3f(-.5f, -.5f, uiDistance)));
         }
         else
@@ -1032,6 +1053,7 @@ void ClientWindow::setSidebar(SidebarLocation location, GuiWidget *sidebar)
 bool ClientWindow::hasSidebar(SidebarLocation location) const
 {
     DENG2_ASSERT(location == RightEdge);
+    DENG2_UNUSED(location);
 
     return d->sidebar != 0;
 }

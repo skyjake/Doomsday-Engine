@@ -3,15 +3,34 @@
 exists($${LIBOVR_DIR}/Include/OVR.h) {
     INCLUDEPATH += $${LIBOVR_DIR}/Include
     win32 {
-        include(dep_atl.pri)
-
-        deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovrd.lib
-              else: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovr.lib
+        exists($${LIBOVR_DIR}/../output) {
+            # This is a community build of LibOVR.
+            INCLUDEPATH += $${LIBOVR_DIR}/../Bindings/C/Include
+            libs = $${LIBOVR_DIR}/../output
+            INSTALLS += ovrcbind
+            ovrcbind.path = $$DENG_BIN_DIR
+            deng_sdk: ovrcbind.path = $$DENG_SDK_LIB_DIR
+            deng_debug {
+                LIBS += $$libs/OculusVRd.lib $$libs/OVR_Cd.lib
+                ovrcbind.files = $$libs/OVR_Cd.dll
+            }
+            else {
+                LIBS += $$libs/OculusVR.lib $$libs/OVR_C.lib
+                ovrcbind.files = $$libs/OVR_C.dll
+            }
+        }
+        else {
+            include(dep_atl.pri)
+            deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovrd.lib
+                  else: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovr.lib
+            INCLUDEPATH += $${LIBOVR_DIR}/Src
+        }
 
         # Additional windows libraries needed to avoid link errors when using Rift
         LIBS += shell32.lib winmm.lib ws2_32.lib
     }
     macx {
+        INCLUDEPATH += $${LIBOVR_DIR}/Src
         deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Mac/Debug/libovr.a
               else: LIBS += $${LIBOVR_DIR}/Lib/Mac/Release/libovr.a
         useFramework(Cocoa)

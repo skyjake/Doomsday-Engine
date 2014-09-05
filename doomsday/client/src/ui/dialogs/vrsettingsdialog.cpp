@@ -21,10 +21,10 @@
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/cvarchoicewidget.h"
 #include "render/vr.h"
+#include "clientapp.h"
 #include "api_console.h"
 #include <doomsday/console/exec.h>
 
-#include <de/App>
 #include <de/VariableSliderWidget>
 #include <de/SignalAction>
 #include "CommandAction"
@@ -178,7 +178,8 @@ void VRSettingsDialog::resetToDefaults()
 
 void VRSettingsDialog::autoConfigForOculusRift()
 {
-    Con_Execute(CMDS_DDAY, "setfullres 1280 800", false, false);
+    //Con_Execute(CMDS_DDAY, "setfullres 1280 800", false, false);
+
     Con_Execute(CMDS_DDAY, "bindcontrol lookpitch head-pitch", false, false);
     Con_Execute(CMDS_DDAY, "bindcontrol yawbody head-yaw", false, false);
 
@@ -194,6 +195,8 @@ void VRSettingsDialog::autoConfigForOculusRift()
     Con_SetFloat  ("hud-scale", 1);
 
     d->fetch();
+
+    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::HMDScreen);
 }
 
 void VRSettingsDialog::autoConfigForDesktop()
@@ -207,4 +210,6 @@ void VRSettingsDialog::autoConfigForDesktop()
     Con_SetFloat  ("hud-scale", .6f);
 
     d->fetch();
+
+    ClientApp::vr().oculusRift().moveWindowToScreen(OculusRift::DefaultScreen);
 }
