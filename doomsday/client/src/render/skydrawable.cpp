@@ -48,15 +48,13 @@ using namespace de;
 
 namespace internal {
 
-static int skySphereColumns = 4 * 6;
-
 /// Console variables:
 static float skyDistance   = 1600; ///< Map units.
 static int skySphereDetail = 6;
 static int skySphereRows   = 3;
 
 /**
- * Geometry used with the sky sphere.
+ * Geometry used with the sky sphere. The crest of the hemisphere is up (i.e., y+)
  */
 struct Hemisphere
 {
@@ -65,117 +63,90 @@ struct Hemisphere
         LowerHemisphere
     };
 
-    enum hemispherecap_t
-    {
-        HC_NONE = 0,
-        HC_TOP,
-        HC_BOTTOM
-    };
+    float height        = 0.49f;
+    float horizonOffset = -0.105f;
 
-    bool needRebuild    = true;
-    float height        = 0;
-    float horizonOffset = 0;
+    int rows    = 3;
+    int columns = 4 * 6;
 
     typedef QVector<Vector3f> VBuf;
-    VBuf verts; // Crest is up.
+    VBuf verts;
+    bool needRebuild = true;
 
-    /**
-     * Parameters for drawing.
-     * @todo SkyDrawable should pass these.
-     */
-    struct DrawArgs
-    {
-        bool fadeout    = false;
-        bool texXFlip   = false;
-        float texOffset = 0;
-        Vector2i texSize;
-        Vector3f capColor;
-    };
-    DrawArgs ds;
+    static inline ResourceSystem &resSys() {
+        return ClientApp::resourceSystem();
+    }
 
     // Look up the precalculated vertex.
-    Vector3f &vertex(int r, int c)
-    {
-        return verts[r * skySphereColumns + c % skySphereColumns];
+    inline Vector3f const &vertex(int r, int c) const {
+        return verts[r * columns + c % columns];
     }
 
-    void configureDrawState(Sky const &sky, int layerIndex, hemispherecap_t setupCap)
+    /**
+     * Determine the material to use for the given @a sky, @a layerIndex.
+     */
+    static Material *chooseMaterialForSkyLayer(Sky const &sky, int layerIndex)
     {
-        // Default state is no texture and no fadeout.
-        ds.texSize = Vector2i();
-        if(setupCap != HC_NONE)
-            ds.fadeout = false;
-        ds.texXFlip = true;
-
-        if(renderTextures != 0)
+        if(renderTextures == 0)
         {
-            Material *mat;
-
-            if(renderTextures == 2)
-            {
-                mat = ClientApp::resourceSystem().materialPtr(de::Uri("System", Path("gray")));
-            }
-            else
-            {
-                mat = sky.layer(layerIndex).material();
-                if(!mat)
-                {
-                    mat = ClientApp::resourceSystem().materialPtr(de::Uri("System", Path("missing")));
-                    ds.texXFlip = false;
-                }
-            }
-            DENG2_ASSERT(mat != 0);
-
-            MaterialSnapshot const &ms =
-                mat->prepare(SkyDrawable::layerMaterialSpec(sky.layer(layerIndex).isMasked()));
-
-            ds.texSize = ms.texture(MTU_PRIMARY).generalCase().dimensions();
-            if(ds.texSize != Vector2i(0, 0))
-            {
-                ds.texOffset = sky.layer(layerIndex).offset();
-                GL_BindTexture(&ms.texture(MTU_PRIMARY));
-            }
-            else
-            {
-                // Disable texturing.
-                ds.texSize = Vector2i();
-                GL_SetNoTexture();
-            }
-
-            if(setupCap != HC_NONE)
-            {
-                averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>
-                        (ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer((setupCap == HC_TOP? Texture::AverageTopColorAnalysis : Texture::AverageBottomColorAnalysis)));
-                float const fadeoutLimit = sky.layer(layerIndex).fadeoutLimit();
-                if(!avgLineColor) throw Error("configureDrawHemisphereState", QString("Texture \"%1\" has no %2").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()).arg(setupCap == HC_TOP? "AverageTopColorAnalysis" : "AverageBottomColorAnalysis"));
-
-                ds.capColor = Vector3f(avgLineColor->color.rgb);
-                // Is the colored fadeout in use?
-                ds.fadeout = (ds.capColor.x >= fadeoutLimit ||
-                              ds.capColor.y >= fadeoutLimit ||
-                              ds.capColor.z >= fadeoutLimit);;
-            }
+            return 0;
         }
-        else
+        if(renderTextures == 2)
         {
-            GL_SetNoTexture();
+            return resSys().materialPtr(de::Uri("System", Path("gray")));
         }
-
-        if(setupCap != HC_NONE && !ds.fadeout)
+        if(Material *mat = sky.layer(layerIndex).material())
         {
-            // Default color is black.
-            ds.capColor = Vector3f();
+            return mat;
         }
+        return resSys().materialPtr(de::Uri("System", Path("missing")));
     }
 
-    void drawCap()
+    /**
+     * Determine the cap/fadeout color to use for the given @a sky, @a layerIndex.
+     */
+    static Vector3f chooseCapColor(SphereComponent hemisphere, Sky const &sky, int layerIndex,
+                                   bool *needFadeOut = 0)
     {
-        // Use the appropriate color.
-        glColor3f(ds.capColor.x, ds.capColor.y, ds.capColor.z);
+        if(Material *mat = chooseMaterialForSkyLayer(sky, layerIndex))
+        {
+            SkyLayer const &skyLayer   = sky.layer(layerIndex);
+            float const fadeoutLimit   = skyLayer.fadeoutLimit();
+            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer.isMasked()));
+
+            Texture &pTex = ms.texture(MTU_PRIMARY).generalCase();
+            averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
+                    (pTex.analysisDataPointer((hemisphere == UpperHemisphere? Texture::AverageTopColorAnalysis
+                                                                            : Texture::AverageBottomColorAnalysis)));
+            if(!avgColor)
+            {
+                de::Uri const pTexUri = pTex.manifest().composeUri();
+                throw Error("Hemisphere::capColor", QString("Texture \"%1\" has no Average%2ColorAnalysis")
+                                                        .arg(pTexUri)
+                                                        .arg(hemisphere == UpperHemisphere? "Top" : "Bottom"));
+            }
+
+            // Is the colored fadeout in use?
+            Vector3f color(avgColor->color.rgb);
+            if(color >= Vector3f(fadeoutLimit, fadeoutLimit, fadeoutLimit))
+            {
+                if(needFadeOut) *needFadeOut = true;
+                return color;
+            }
+        }
+
+        return Vector3f(); // Default color is black.
+    }
+
+    void drawCap(Vector3f const &color, bool drawFadeOut) const
+    {
+        GL_SetNoTexture();
+
+        glColor3f(color.x, color.y, color.z);
 
         // Draw the cap.
         glBegin(GL_TRIANGLE_FAN);
-        for(int c = 0; c < skySphereColumns; ++c)
+        for(int c = 0; c < columns; ++c)
         {
             Vector3f const &vtx = vertex(0, c);
             glVertex3f(vtx.x, vtx.y, vtx.z);
@@ -183,14 +154,14 @@ struct Hemisphere
         glEnd();
 
         // Are we doing a colored fadeout?
-        if(!ds.fadeout) return;
+        if(!drawFadeOut) return;
 
         // We must fill the background for the top row since it'll be translucent.
         glBegin(GL_TRIANGLE_STRIP);
         Vector3f const *vtx = &vertex(0, 0);
         glVertex3f(vtx->x, vtx->y, vtx->z);
         int c = 0;
-        for(; c < skySphereColumns; ++c)
+        for(; c < columns; ++c)
         {
             // One step down.
             vtx = &vertex(1, c);
@@ -204,17 +175,14 @@ struct Hemisphere
         glEnd();
     }
 
-    void draw(SphereComponent hemisphere, Sky const &sky)
+    void draw(SphereComponent hemisphere, Sky const &sky) const
     {
+        if(verts.isEmpty()) return;
+
         int const firstLayer = sky.firstActiveLayer();
-        DENG2_ASSERT(firstLayer >= 0);
+        if(firstLayer < 0) return;
 
-        bool const yflip    = (hemisphere == LowerHemisphere);
-        hemispherecap_t cap = (hemisphere == LowerHemisphere? HC_BOTTOM : HC_TOP);
-
-        // Rebuild the geometry if necessary.
-        rebuildIfNeeded(sky);
-
+        bool const yflip = (hemisphere == LowerHemisphere);
         if(yflip)
         {
             // The lower hemisphere must be flipped.
@@ -223,35 +191,54 @@ struct Hemisphere
             glScalef(1.0f, -1.0f, 1.0f);
         }
 
-        // First render the cap and the background for fadeouts, if needed.
-        configureDrawState(sky, firstLayer, cap);
-        drawCap();
+        // First draw the cap and the background for fadeouts, if needed.
+        bool drawFadeOut = true;
+        drawCap(chooseCapColor(hemisphere, sky, firstLayer, &drawFadeOut), drawFadeOut);
 
         for(int i = firstLayer; i < MAX_SKY_LAYERS; ++i)
         {
             if(!sky.layer(i).isActive()) continue;
 
-            if(i != firstLayer)
-            {
-                configureDrawState(sky, i, HC_NONE);
-            }
+            // The fade out is only drawn for the first layer.
+            drawFadeOut = (i == firstLayer);
 
-            if(ds.texSize.x != 0)
+            TextureVariant *layerTex = 0;
+            if(Material *mat = chooseMaterialForSkyLayer(sky, i))
             {
+                SkyLayer const &skyLayer   = sky.layer(i);
+                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer.isMasked()));
+
+                layerTex = &ms.texture(MTU_PRIMARY);
+                GL_BindTexture(layerTex);
+
                 glEnable(GL_TEXTURE_2D);
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                glTranslatef(ds.texOffset / ds.texSize.x, 0, 0);
-                glScalef(1024.f / ds.texSize.x * (ds.texXFlip? 1 : -1), yflip? -1 : 1, 1);
-                if(yflip) glTranslatef(0, -1, 0);
+                Vector2i const &texSize = layerTex->generalCase().dimensions();
+                if(texSize.x > 0)
+                {
+                    glTranslatef(skyLayer.offset() / texSize.x, 0, 0);
+                    glScalef(1024.f / texSize.x, 1, 1);
+                }
+                if(yflip)
+                {
+                    glScalef(1, -1, 1);
+                    glTranslatef(0, -1, 0);
+                }
+            }
+            else
+            {
+                GL_SetNoTexture();
             }
 
 #define WRITESKYVERTEX(r_, c_) { \
     svtx = &vertex(r_, c_); \
-    if(ds.texSize.x != 0) \
-       glTexCoord2f((c_) / float(skySphereColumns), (r_) / float(skySphereRows)); \
-    if(ds.fadeout) \
+    if(layerTex) \
+    { \
+       glTexCoord2f((c_) / float(columns), (r_) / float(rows)); \
+    } \
+    if(drawFadeOut) \
     { \
         if((r_) == 0) glColor4f(1, 1, 1, 0); \
         else          glColor3f(1, 1, 1); \
@@ -265,12 +252,12 @@ struct Hemisphere
 }
 
             Vector3f const *svtx;
-            for(int r = 0; r < skySphereRows; ++r)
+            for(int r = 0; r < rows; ++r)
             {
                 glBegin(GL_TRIANGLE_STRIP);
                 WRITESKYVERTEX(r, 0);
                 WRITESKYVERTEX(r + 1, 0);
-                for(int c = 1; c <= skySphereColumns; ++c)
+                for(int c = 1; c <= columns; ++c)
                 {
                     WRITESKYVERTEX(r, c);
                     WRITESKYVERTEX(r + 1, c);
@@ -278,7 +265,7 @@ struct Hemisphere
                 glEnd();
             }
 
-            if(ds.texSize.x != 0)
+            if(layerTex)
             {
                 glMatrixMode(GL_TEXTURE);
                 glPopMatrix();
@@ -307,28 +294,27 @@ struct Hemisphere
      *      rows * 2 + (fadeout)
      *      rows - 2 (cap)
      */
-    void makeVertices(float height, float horizonOffset)
+    void makeVertices()
     {
         float const maxSideAngle = float(de::PI / 2 * height);
-
-        horizonOffset = float(de::PI / 2 * horizonOffset);
+        float const sideOffset   = float(de::PI / 2 * horizonOffset);
 
         if(skySphereDetail < 1) skySphereDetail = 1;
-        if(skySphereRows < 1) skySphereRows = 1;
 
-        skySphereColumns = 4 * skySphereDetail;
+        rows    = de::max(skySphereRows, 1);
+        columns = 4 * skySphereDetail;
 
-        verts.resize(skySphereColumns * (skySphereRows + 1));
+        verts.resize(columns * (rows + 1));
 
         // Calculate the vertices.
-        for(int r = 0; r < skySphereRows + 1; ++r)
-        for(int c = 0; c < skySphereColumns; ++c)
+        for(int r = 0; r < rows + 1; ++r)
+        for(int c = 0; c < columns; ++c)
         {
-            Vector3f &svtx = vertex(r, c);
+            Vector3f &svtx = verts[r * columns + c % columns];
 
-            float topAngle = ((c / float(skySphereColumns)) *2) * PI;
-            float sideAngle = horizonOffset + maxSideAngle * (skySphereRows - r) / float(skySphereRows);
-            float realRadius = cos(sideAngle);
+            float const topAngle   = ((c / float(columns)) * 2) * PI;
+            float const sideAngle  = sideOffset + maxSideAngle * (rows - r) / float(rows);
+            float const realRadius = cos(sideAngle);
 
             svtx = Vector3f(realRadius * cos(topAngle),
                             sin(sideAngle), // The height.
@@ -351,10 +337,11 @@ struct Hemisphere
         }
 
         // Any work to do?
-        if(!needRebuild) return;
-        needRebuild = false;
-
-        makeVertices(sky.height(), sky.horizonOffset());
+        if(needRebuild)
+        {
+            needRebuild = false;
+            makeVertices();
+        }
     }
 };
 
@@ -394,6 +381,8 @@ DENG2_PIMPL(SkyDrawable)
         glPushMatrix();
         glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
         glScalef(skyDistance, skyDistance, skyDistance);
+
+        hemisphere.rebuildIfNeeded(sky);
 
         // Always draw both hemispheres.
         hemisphere.draw(Hemisphere::LowerHemisphere, sky);
