@@ -1859,7 +1859,7 @@ void Player_UpdateStatusCVars(player_t const *player)
         /* WT_THIRD */   "shotgun",
         /* WT_FOURTH */  "chaingun",
         /* WT_FIFTH */   "mlauncher",
-        /* WT_SIXTH */   "plasmarifle"
+        /* WT_SIXTH */   "plasmarifle",
         /* WT_SEVENTH */ "bfg",
         /* WT_EIGHTH */  "chainsaw",
         /* WT_NINETH */  "sshotgun"
