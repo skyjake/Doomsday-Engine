@@ -22,11 +22,11 @@
 #include "render/skydrawable.h"
 
 #include <cmath>
-#include <doomsday/console/var.h>
-#include <doomsday/console/exec.h>
-#include <de/Log>
 #include <de/timer.h>
 #include <de/concurrency.h>
+#include <de/Log>
+#include <doomsday/console/var.h>
+#include <doomsday/console/exec.h>
 
 #include "clientapp.h"
 #include "client/cl_def.h"
@@ -49,9 +49,9 @@ using namespace de;
 namespace internal {
 
 /// Console variables:
-static float skyDistance   = 1600; ///< Map units.
-static int skySphereDetail = 6;
-static int skySphereRows   = 3;
+static int sphereDetail     = 6;
+static float sphereDistance = 1600; ///< Map units.
+static int sphereRows       = 3;
 
 /**
  * Geometry used with the sky sphere. The crest of the hemisphere is up (i.e., y+)
@@ -296,29 +296,26 @@ struct Hemisphere
      */
     void makeVertices()
     {
-        float const maxSideAngle = float(de::PI / 2 * height);
-        float const sideOffset   = float(de::PI / 2 * horizonOffset);
-
-        if(skySphereDetail < 1) skySphereDetail = 1;
-
-        rows    = de::max(skySphereRows, 1);
-        columns = 4 * skySphereDetail;
+        rows    = de::max(sphereRows,   1);
+        columns = de::max(sphereDetail, 1) * 4;
 
         verts.resize(columns * (rows + 1));
 
-        // Calculate the vertices.
+        float const maxSideAngle = float(de::PI / 2 * height);
+        float const sideOffset   = float(de::PI / 2 * horizonOffset);
+
         for(int r = 0; r < rows + 1; ++r)
         for(int c = 0; c < columns; ++c)
         {
             Vector3f &svtx = verts[r * columns + c % columns];
 
-            float const topAngle   = ((c / float(columns)) * 2) * PI;
-            float const sideAngle  = sideOffset + maxSideAngle * (rows - r) / float(rows);
-            float const realRadius = cos(sideAngle);
+            float const topAngle  = ((c / float(columns)) * 2) * PI;
+            float const sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
+            float const radius    = cos(sideAngle);
 
-            svtx = Vector3f(realRadius * cos(topAngle),
+            svtx = Vector3f(radius * cos(topAngle),
                             sin(sideAngle), // The height.
-                            realRadius * sin(topAngle));
+                            radius * sin(topAngle));
         }
     }
 
@@ -380,7 +377,7 @@ DENG2_PIMPL(SkyDrawable)
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
         glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
-        glScalef(skyDistance, skyDistance, skyDistance);
+        glScalef(sphereDistance, sphereDistance, sphereDistance);
 
         hemisphere.rebuildIfNeeded(sky);
 
@@ -570,7 +567,7 @@ MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
 }
 
 namespace {
-void markSkySphereForRebuild()
+void markSphereForRebuild()
 {
     // Defer this task until render time, when we can be sure we are in correct thread.
     hemisphere.needRebuild = true;
@@ -579,9 +576,9 @@ void markSkySphereForRebuild()
 
 void SkyDrawable::consoleRegister() // static
 {
-    C_VAR_INT2 ("rend-sky-detail",   &skySphereDetail,  0,          3, 7, markSkySphereForRebuild);
-    C_VAR_INT2 ("rend-sky-rows",     &skySphereRows,    0,          1, 8, markSkySphereForRebuild);
-    C_VAR_FLOAT("rend-sky-distance", &skyDistance,      CVF_NO_MAX, 1, 0);
+    C_VAR_INT2 ("rend-sky-detail",   &sphereDetail,     0,          3, 7, markSphereForRebuild);
+    C_VAR_INT2 ("rend-sky-rows",     &sphereRows,       0,          1, 8, markSphereForRebuild);
+    C_VAR_FLOAT("rend-sky-distance", &sphereDistance,   CVF_NO_MAX, 1, 0);
 }
 
 //---------------------------------------------------------------------------------------
