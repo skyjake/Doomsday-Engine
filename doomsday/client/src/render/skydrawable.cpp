@@ -87,7 +87,7 @@ struct Hemisphere
     /**
      * Determine the material to use for the given sky @a layer.
      */
-    static Material *chooseMaterialForSkyLayer(SkyDrawable::Animator::LayerData const &layer)
+    static Material *chooseMaterialForSkyLayer(SkyDrawable::Animator::LayerState const &layer)
     {
         if(renderTextures == 0)
         {
@@ -108,7 +108,7 @@ struct Hemisphere
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
     static Vector3f chooseCapColor(SphereComponent hemisphere,
-                                   SkyDrawable::Animator::LayerData const &layer,
+                                   SkyDrawable::Animator::LayerState const &layer,
                                    bool *needFadeOut = 0)
     {
         if(Material *mat = chooseMaterialForSkyLayer(layer))
@@ -201,7 +201,7 @@ struct Hemisphere
 
         for(int i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            SkyDrawable::Animator::LayerData const &layer = animator->layer(i);
+            SkyDrawable::Animator::LayerState const &layer = animator->layer(i);
 
             if(!layer.active) continue;
 
@@ -358,7 +358,7 @@ using namespace ::internal;
 
 DENG2_PIMPL(SkyDrawable)
 {
-    ModelData models[MAX_MODELS];
+    ModelConfig models[MAX_MODELS];
     bool haveModels       = false;
     bool alwaysDrawSphere = false;
 
@@ -420,8 +420,10 @@ DENG2_PIMPL(SkyDrawable)
 
         for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData const &mdata    = self.model(i);
-            Record const *skyModelDef = mdata.def;
+            ModelConfig const &mcfg  = self.model(i);
+            Record const *skyModelDef = mcfg.def;
+            ModelDef *modef           = mcfg.model;
+            Animator::ModelState const &mstate = animator->model(i);
 
             if(!skyModelDef) continue;
 
@@ -438,16 +440,16 @@ DENG2_PIMPL(SkyDrawable)
             vis.pose.distance        = 1;
 
             Vector2f rotate(skyModelDef->get("rotate"));
-            vis.pose.yaw             = mdata.yaw;
+            vis.pose.yaw             = mstate.yaw;
             vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
             vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
 
             drawmodelparams_t &visModel = *VS_MODEL(&vis);
-            visModel.inter                       = (mdata.maxTimer > 0 ? mdata.timer / float(mdata.maxTimer) : 0);
-            visModel.mf                          = mdata.model;
+            visModel.inter                       = (mstate.maxTimer > 0 ? mstate.timer / float(mstate.maxTimer) : 0);
+            visModel.mf                          = modef;
             visModel.alwaysInterpolate           = true;
             visModel.shineTranslateWithViewerPos = true;
-            resSys().setModelDefFrame(*mdata.model, mdata.frame);
+            resSys().setModelDefFrame(*modef, mstate.frame);
 
             vis.light.ambientColor = Vector4f(skyModelDef->get("color"), 1);
 
@@ -483,24 +485,19 @@ void SkyDrawable::setupModels(defn::Sky const *def)
     for(int i = 0; i < def->modelCount(); ++i)
     {
         Record const &modef = def->model(i);
-        ModelData &mdata    = model(i);
+        ModelConfig &mcfg   = model(i);
 
         // Is the model ID set?
         try
         {
-            mdata.model = &d->resSys().modelDef(modef.gets("id"));
-            if(!mdata.model->subCount())
+            mcfg.model = &d->resSys().modelDef(modef.gets("id"));
+            if(mcfg.model->subCount())
             {
-                continue;
+                mcfg.def = modef.accessedRecordPtr();
+
+                // There is a model here.
+                d->haveModels = true;
             }
-
-            // There is a model here.
-            d->haveModels = true;
-
-            mdata.def      = modef.accessedRecordPtr();
-            mdata.maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
-            mdata.yaw      = modef.getf("yaw");
-            mdata.frame    = mdata.model->subModelDef(0).frame;
         }
         catch(ResourceSystem::MissingModelDefError const &)
         {} // Ignore this error.
@@ -512,19 +509,19 @@ bool SkyDrawable::hasModel(int index) const
     return (index >= 0 && index < MAX_MODELS);
 }
 
-SkyDrawable::ModelData &SkyDrawable::model(int index)
+SkyDrawable::ModelConfig &SkyDrawable::model(int index)
 {
     if(hasModel(index))
     {
         return d->models[index];
     }
-    /// @throw MissingModelError An invalid model index was specified.
-    throw MissingModelError("SkyDrawable::model", "Invalid model index #" + String::number(index) + ".");
+    /// @throw MissingModelConfigError An invalid model index was specified.
+    throw MissingModelConfigError("SkyDrawable::model", "Invalid model config index #" + String::number(index) + ".");
 }
 
-SkyDrawable::ModelData const &SkyDrawable::model(int index) const
+SkyDrawable::ModelConfig const &SkyDrawable::model(int index) const
 {
-    return const_cast<ModelData const &>(const_cast<SkyDrawable *>(this)->model(index));
+    return const_cast<ModelConfig const &>(const_cast<SkyDrawable *>(this)->model(index));
 }
 
 void SkyDrawable::cacheDrawableAssets(Sky const *sky)
@@ -543,7 +540,7 @@ void SkyDrawable::cacheDrawableAssets(Sky const *sky)
     {
         for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData &mdata = model(i);
+            ModelConfig &mdata = model(i);
             if(!mdata.def) continue;
 
             d->resSys().cache(mdata.model);
@@ -600,12 +597,15 @@ DENG2_PIMPL_NOREF(SkyDrawable::Animator)
     float height        = 1;
     float horizonOffset = 0;
 
-    LayerData layers[MAX_LAYERS];
+    LayerState layers[MAX_LAYERS];
     int firstActiveLayer = -1; ///< @c -1= no active layers.
+
+    ModelState models[MAX_MODELS];
 
     Instance(SkyDrawable *sky = 0) : sky(sky)
     {
         de::zap(layers);
+        de::zap(models);
     }
 };
 
@@ -621,6 +621,25 @@ SkyDrawable::Animator::~Animator()
 void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 {
     d->sky = sky;
+
+    // (Re)Initalize animation states.
+    de::zap(d->layers);
+    de::zap(d->models);
+
+    for(int i = 0; i < MAX_MODELS; ++i)
+    {
+        ModelState &mstate = model(i);
+
+        // Is this model in use?
+        SkyDrawable::ModelConfig const &mdata = sky->model(i);
+        if(mdata.def)
+        {
+            Record const *skyModelDef = mdata.def;
+            mstate.maxTimer = int(TICSPERSEC * skyModelDef->getf("frameInterval"));
+            mstate.yaw      = skyModelDef->getf("yaw");
+            mstate.frame    = mdata.model->subModelDef(0).frame;
+        }
+    }
 }
 
 SkyDrawable &SkyDrawable::Animator::sky() const
@@ -640,7 +659,7 @@ SkyDrawable::Animator &SkyDrawable::Animator::configure(Sky const &sky)
     for(int i = 0; i < MAX_LAYERS; ++i)
     {
         SkyLayer const *skyLayer = sky.layer(i);
-        LayerData &ldata         = layer(i);
+        LayerState &ldata         = layer(i);
 
         ldata.active       = skyLayer->isActive();
         ldata.masked       = skyLayer->isMasked();
@@ -671,24 +690,44 @@ bool SkyDrawable::Animator::hasLayer(int index) const
     return (index >= 0 && index < MAX_LAYERS);
 }
 
-SkyDrawable::Animator::LayerData &SkyDrawable::Animator::layer(int index)
+SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index)
 {
     if(hasLayer(index))
     {
         return d->layers[index];
     }
-    /// @throw MissingLayerError An invalid layer index was specified.
-    throw MissingModelError("SkyDrawable::Animator::layer", "Invalid layer index #" + String::number(index) + ".");
+    /// @throw MissingLayerStateError An invalid layer state index was specified.
+    throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::number(index) + ".");
 }
 
-SkyDrawable::Animator::LayerData const &SkyDrawable::Animator::layer(int index) const
+SkyDrawable::Animator::LayerState const &SkyDrawable::Animator::layer(int index) const
 {
-    return const_cast<LayerData const &>(const_cast<SkyDrawable::Animator *>(this)->layer(index));
+    return const_cast<LayerState const &>(const_cast<SkyDrawable::Animator *>(this)->layer(index));
 }
 
 int SkyDrawable::Animator::firstActiveLayer() const
 {
     return d->firstActiveLayer; // Updated at configure time.
+}
+
+bool SkyDrawable::Animator::hasModel(int index) const
+{
+    return (index >= 0 && index < MAX_MODELS);
+}
+
+SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index)
+{
+    if(hasModel(index))
+    {
+        return d->models[index];
+    }
+    /// @throw MissingModelStateError An invalid model state index was specified.
+    throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::number(index) + ".");
+}
+
+SkyDrawable::Animator::ModelState const &SkyDrawable::Animator::model(int index) const
+{
+    return const_cast<ModelState const &>(const_cast<SkyDrawable::Animator *>(this)->model(index));
 }
 
 void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
@@ -703,26 +742,27 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     // Animate layers.
     /*for(int i = 0; i < MAX_LAYERS; ++i)
     {
-        LayerData &lyr = sky().layer(i);
+        LayerState &lyr = layer(i);
     }*/
 
     // Animate models.
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        ModelData &mdata = sky().model(i);
-        if(!mdata.def) continue;
+        ModelConfig &mcfg  = sky().model(i);
+        ModelState &mstate = model(i);
+        if(!mcfg.def) continue;
 
         // Rotate the model.
-        mdata.yaw += mdata.def->getf("yawSpeed") / TICSPERSEC;
+        mstate.yaw += mcfg.def->getf("yawSpeed") / TICSPERSEC;
 
         // Is it time to advance to the next frame?
-        if(mdata.maxTimer > 0 && ++mdata.timer >= mdata.maxTimer)
+        if(mstate.maxTimer > 0 && ++mstate.timer >= mstate.maxTimer)
         {
-            mdata.frame++;
-            mdata.timer = 0;
+            mstate.frame++;
+            mstate.timer = 0;
 
             // Execute a console command?
-            String const execute = mdata.def->gets("execute");
+            String const execute = mcfg.def->gets("execute");
             if(!execute.isEmpty())
             {
                 Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);

@@ -42,17 +42,13 @@ class Sky;
 class SkyDrawable
 {
 public:
-    /// Required model is missing. @ingroup errors
-    DENG2_ERROR(MissingModelError);
+    /// Required model config is missing. @ingroup errors
+    DENG2_ERROR(MissingModelConfigError);
 
-    struct ModelData
+    struct ModelConfig
     {
         de::Record const *def; // Sky model def
         ModelDef *model;
-        int frame;
-        int timer;
-        int maxTimer;
-        float yaw;
     };
 
     /**
@@ -63,16 +59,27 @@ public:
     class Animator
     {
     public:
-        /// Required layer is missing. @ingroup errors
-        DENG2_ERROR(MissingLayerError);
+        /// Required layer state is missing. @ingroup errors
+        DENG2_ERROR(MissingLayerStateError);
 
-        struct LayerData
+        /// Required model state is missing. @ingroup errors
+        DENG2_ERROR(MissingModelStateError);
+
+        struct LayerState
         {
             bool active;
             bool masked;
             float offset;
             Material *material;
             float fadeOutLimit;
+        };
+
+        struct ModelState
+        {
+            int frame;
+            int timer;
+            int maxTimer;
+            float yaw;
         };
 
     public:
@@ -93,21 +100,36 @@ public:
         float horizonOffset() const;
 
         /**
-         * Determines whether the specified sky layer @a index is valid.
+         * Determines whether the specified animation layer state @a index is valid.
          * @see layer()
          */
         bool hasLayer(int index) const;
 
         /**
-         * Lookup a sky layer by it's unique @a index.
+         * Lookup an animation layer state by it's unique @a index.
          * @see hasLayer()
          */
-        LayerData &layer(int index);
+        LayerState &layer(int index);
 
         /// @copydoc layer()
-        LayerData const &layer(int index) const;
+        LayerState const &layer(int index) const;
 
         int firstActiveLayer() const;
+
+        /**
+         * Determines whether the specified animation model state @a index is valid.
+         * @see model()
+         */
+        bool hasModel(int index) const;
+
+        /**
+         * Lookup an animation model state by it's unique @a index.
+         * @see hasModel()
+         */
+        ModelState &model(int index);
+
+        /// @copydoc model()
+        ModelState const &model(int index) const;
 
         /**
          * Advances the animation state.
@@ -139,19 +161,19 @@ public:
     void draw(Animator const *animator = 0) const;
 
     /**
-     * Determines whether the specified sky model @a index is valid.
+     * Determines whether the specified model config @a index is valid.
      * @see model()
      */
     bool hasModel(int index) const;
 
     /**
-     * Lookup a sky model by it's unique @a index.
+     * Lookup a model config by it's unique @a index.
      * @see hasModel()
      */
-    ModelData &model(int index);
+    ModelConfig &model(int index);
 
     /// @copydoc model()
-    ModelData const &model(int index) const;
+    ModelConfig const &model(int index) const;
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
