@@ -145,6 +145,8 @@ DENG2_PIMPL(Sky)
 {
     Layers layers;
 
+    Record const *def   = nullptr; ///< Sky definition.
+
     float height        = 1;
     float horizonOffset = 0;
 
@@ -163,7 +165,12 @@ DENG2_PIMPL(Sky)
         }
     }
 
-    ~Instance() { qDeleteAll(layers); }
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self);
+
+        qDeleteAll(layers);
+    }
 
 #ifdef __CLIENT__
     /**
@@ -297,10 +304,12 @@ DENG2_PIMPL(Sky)
 
 #endif // __CLIENT__
 
+    DENG2_PIMPL_AUDIENCE(Deletion)
     DENG2_PIMPL_AUDIENCE(HeightChange)
     DENG2_PIMPL_AUDIENCE(HorizonOffsetChange)
 };
 
+DENG2_AUDIENCE_METHOD(Sky, Deletion)
 DENG2_AUDIENCE_METHOD(Sky, HeightChange)
 DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
@@ -309,14 +318,12 @@ Sky::Sky(defn::Sky const *definition) : MapElement(DMU_SKY), d(new Instance(this
     configure(definition);
 }
 
-Sky::Layers const &Sky::layers() const
-{
-    return d->layers;
-}
-
 void Sky::configure(defn::Sky const *def)
 {
     LOG_AS("Sky::configure");
+
+    // Remember the definition for this configuration (if any).
+    d->def = def? def->accessedRecordPtr() : 0;
 
     setHeight(def? def->getf("height") : DEFAULT_SKY_HEIGHT);
     setHorizonOffset(def? def->getf("horizonOffset") : DEFAULT_SKY_HORIZON_OFFSET);
@@ -363,10 +370,17 @@ void Sky::configure(defn::Sky const *def)
     {
         d->ambientLight.reset();
     }
-
-    // Models are set up using the data in the definition (will override the sphere by default).
-    ClientApp::renderSystem().sky().setupModels(def);
 #endif
+}
+
+Record const *Sky::def() const
+{
+    return d->def;
+}
+
+Sky::Layers const &Sky::layers() const
+{
+    return d->layers;
 }
 
 float Sky::height() const

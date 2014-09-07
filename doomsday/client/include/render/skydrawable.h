@@ -42,10 +42,19 @@ class Sky;
 class SkyDrawable
 {
 public:
+    /// Required layer config is missing. @ingroup errors
+    DENG2_ERROR(MissingLayerConfigError);
+
     /// Required model config is missing. @ingroup errors
     DENG2_ERROR(MissingModelConfigError);
 
-    struct ModelConfig
+    struct LayerData
+    {
+        bool active;
+        float offset;
+    };
+
+    struct ModelData
     {
         de::Record const *def; // Sky model def
         ModelDef *model;
@@ -67,11 +76,7 @@ public:
 
         struct LayerState
         {
-            bool active;
-            bool masked;
             float offset;
-            Material *material;
-            float fadeOutLimit;
         };
 
         struct ModelState
@@ -91,15 +96,6 @@ public:
         SkyDrawable &sky() const;
 
         /**
-         * @param sky  Sky to configure animation state for.
-         * @return  Reference to this animator, for caller convenience.
-         */
-        Animator &configure(Sky const &sky);
-
-        float height() const;
-        float horizonOffset() const;
-
-        /**
          * Determines whether the specified animation layer state @a index is valid.
          * @see layer()
          */
@@ -113,8 +109,6 @@ public:
 
         /// @copydoc layer()
         LayerState const &layer(int index) const;
-
-        int firstActiveLayer() const;
 
         /**
          * Determines whether the specified animation model state @a index is valid.
@@ -143,22 +137,46 @@ public:
     };
 
 public:
-    SkyDrawable();
+    explicit SkyDrawable(Sky const *sky = nullptr);
 
     /**
-     * Models are set up according to the given @a skyDef.
+     * Reconfigure the drawable for visualizing the given @a sky.
+     *
+     * @return Reference to this drawable, for caller convenience.
      */
-    void setupModels(defn::Sky const *skyDef = 0);
+    SkyDrawable &configure(Sky const *sky = nullptr);
 
     /**
-     * Cache all assets needed for visualizing the sky.
+     * Returns a pointer to configured sky, if any (may be @c nullptr).
      */
-    void cacheDrawableAssets(Sky const *sky = 0);
+    Sky const *sky() const;
 
     /**
      * Render the sky.
      */
-    void draw(Animator const *animator = 0) const;
+    void draw(Animator const *animator = nullptr) const;
+
+    /**
+     * Cache all assets needed for visualizing the sky.
+     */
+    void cacheDrawableAssets();
+
+    int firstActiveLayer() const;
+
+    /**
+     * Determines whether the specified model config @a index is valid.
+     * @see model()
+     */
+    bool hasLayer(int index) const;
+
+    /**
+     * Lookup a layer config by it's unique @a index.
+     * @see hasLayer()
+     */
+    LayerData &layer(int index);
+
+    /// @copydoc layer()
+    LayerData const &layer(int index) const;
 
     /**
      * Determines whether the specified model config @a index is valid.
@@ -170,10 +188,10 @@ public:
      * Lookup a model config by it's unique @a index.
      * @see hasModel()
      */
-    ModelConfig &model(int index);
+    ModelData &model(int index);
 
     /// @copydoc model()
-    ModelConfig const &model(int index) const;
+    ModelData const &model(int index) const;
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);

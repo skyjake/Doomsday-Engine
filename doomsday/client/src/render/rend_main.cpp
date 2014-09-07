@@ -3475,7 +3475,7 @@ static inline WorldSystem &worldSys()
     return ClientApp::worldSystem();
 }
 
-static void drawSky(Sky const &sky)
+static void drawSky()
 {
     DrawLists::FoundLists lists;
     rendSys().drawLists().findAll(SkyMaskGeom, lists);
@@ -3513,7 +3513,7 @@ static void drawSky(Sky const &sky)
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    rendSys().sky().draw(&worldSys().skyAnimator().configure(sky));
+    rendSys().sky().draw(&worldSys().skyAnimator());
 
     if(!devRendSkyAlways)
     {
@@ -3644,7 +3644,7 @@ static void drawAllLists(Map &map)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    drawSky(map.sky());
+    drawSky();
 
     // Render the real surfaces of the visible world.
 

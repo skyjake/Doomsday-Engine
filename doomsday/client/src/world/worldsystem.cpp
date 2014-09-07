@@ -496,9 +496,6 @@ DENG2_PIMPL(WorldSystem)
         map->_effectiveGravity = map->_globalGravity;
 
 #ifdef __CLIENT__
-        // Set up the SkyDrawable to get its config from the map's Sky.
-        skyAnimator.setSky(&ClientApp::renderSystem().sky());
-
         // Reconfigure the sky.
         defn::Sky skyDef;
         if(mapInfo)
@@ -513,6 +510,9 @@ DENG2_PIMPL(WorldSystem)
             }
         }
         map->sky().configure(&skyDef);
+
+        // Set up the SkyDrawable to get its config from the map's Sky.
+        skyAnimator.setSky(&ClientApp::renderSystem().sky().configure(&map->sky()));
 #endif
 
         // Init the thinker lists (public and private).
@@ -611,6 +611,8 @@ DENG2_PIMPL(WorldSystem)
         // Precaching from 100 to 200.
         Con_SetProgress(100);
         Time begunPrecacheAt;
+        // Sky models usually have big skins.
+        ClientApp::renderSystem().sky().cacheDrawableAssets();
         App_ResourceSystem().cacheForCurrentMap();
         App_ResourceSystem().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();

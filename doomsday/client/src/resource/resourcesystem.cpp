@@ -3983,9 +3983,6 @@ void ResourceSystem::cacheForCurrentMap()
         }
     }
 
-     // Sky models usually have big skins.
-    ClientApp::renderSystem().sky().cacheDrawableAssets(&map.sky());
-
     // Precache model skins?
     if(useModels && precacheSkins)
     {

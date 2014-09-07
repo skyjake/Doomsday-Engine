@@ -43,6 +43,9 @@
 class Sky : public de::MapElement
 {
 public:
+    /// Notified when the sky is about to be deleted.
+    DENG2_DEFINE_AUDIENCE2(Deletion, void skyBeingDeleted(Sky const &sky))
+
     /// Notified whenever the height changes.
     DENG2_DEFINE_AUDIENCE2(HeightChange, void skyHeightChanged(Sky &sky))
 
@@ -68,7 +71,7 @@ public:
         /**
          * Construct a new sky layer.
          */
-        Layer(Sky &sky, Material *material = 0);
+        Layer(Sky &sky, Material *material = nullptr);
 
         /**
          * Returns the sky of which this is a layer.
@@ -150,7 +153,7 @@ public:
     typedef QList<Layer *> Layers;
 
 public:
-    explicit Sky(defn::Sky const *definition = 0);
+    explicit Sky(defn::Sky const *definition = nullptr);
 
     /**
      * Reconfigure according to the specified @a definition if not @c NULL,
@@ -158,7 +161,7 @@ public:
      *
      * @see configureDefault()
      */
-    void configure(defn::Sky const *definition = 0);
+    void configure(defn::Sky const *definition = nullptr);
 
     /**
      * Reconfigure the sky, returning all values to their defaults.
@@ -166,6 +169,11 @@ public:
      * @see configure()
      */
     inline void configureDefault() { configure(); }
+
+    /**
+     * Returns the definition used to configure the sky, if any (may return @c nullptr).
+     */
+    de::Record const *def() const;
 
     /**
      * Provides access to the list of sky layers, for efficient traversal.

@@ -50,6 +50,7 @@ Record &Sky::addLayer()
     layer->addText  ("material", "");
     layer->addNumber("offset", DEFAULT_SKY_SPHERE_XOFFSET);
     layer->addNumber("colorLimit", DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
+    layer->addNumber("scrollOffset", 0);
 
     def()["layer"].value<ArrayValue>()
             .add(new RecordValue(layer, RecordValue::OwnsRecord));

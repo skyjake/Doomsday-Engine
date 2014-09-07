@@ -1798,6 +1798,7 @@ DENG2_PIMPL(DEDParser)
                             RV_FLAGS("Flags", layerDef["flags"], "slf_")
                             RV_FLT("Offset", layerDef["offset"])
                             RV_FLT("Color limit", layerDef["colorLimit"])
+                            RV_FLT("Scroll X", layerDef["scrollOffset"])
                             RV_END
                             CHECKSC;
                         }
@@ -1957,6 +1958,7 @@ DENG2_PIMPL(DEDParser)
                             RV_FLAGS("Flags", layerDef["flags"], "slf_")
                             RV_FLT("Offset", layerDef["offset"])
                             RV_FLT("Color limit", layerDef["colorLimit"])
+                            RV_FLT("Scroll X", layerDef["scrollOffset"])
                             RV_END
                             CHECKSC;
                         }
