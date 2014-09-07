@@ -95,7 +95,7 @@ struct Hemisphere
         {
             return resSys().materialPtr(de::Uri("System", Path("gray")));
         }
-        if(Material *mat = sky.layer(layerIndex).material())
+        if(Material *mat = sky.layer(layerIndex)->material())
         {
             return mat;
         }
@@ -110,9 +110,9 @@ struct Hemisphere
     {
         if(Material *mat = chooseMaterialForSkyLayer(sky, layerIndex))
         {
-            SkyLayer const &skyLayer   = sky.layer(layerIndex);
-            float const fadeoutLimit   = skyLayer.fadeoutLimit();
-            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer.isMasked()));
+            SkyLayer const *layer      = sky.layer(layerIndex);
+            float const fadeoutLimit   = layer->fadeoutLimit();
+            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
 
             Texture &pTex = ms.texture(MTU_PRIMARY).generalCase();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
@@ -195,9 +195,11 @@ struct Hemisphere
         bool drawFadeOut = true;
         drawCap(chooseCapColor(hemisphere, sky, firstLayer, &drawFadeOut), drawFadeOut);
 
-        for(int i = firstLayer; i < MAX_SKY_LAYERS; ++i)
+        for(int i = firstLayer; i < sky.layerCount(); ++i)
         {
-            if(!sky.layer(i).isActive()) continue;
+            SkyLayer const *layer = sky.layer(i);
+
+            if(!layer->isActive()) continue;
 
             // The fade out is only drawn for the first layer.
             drawFadeOut = (i == firstLayer);
@@ -205,8 +207,7 @@ struct Hemisphere
             TextureVariant *layerTex = 0;
             if(Material *mat = chooseMaterialForSkyLayer(sky, i))
             {
-                SkyLayer const &skyLayer   = sky.layer(i);
-                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer.isMasked()));
+                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
 
                 layerTex = &ms.texture(MTU_PRIMARY);
                 GL_BindTexture(layerTex);
@@ -218,7 +219,7 @@ struct Hemisphere
                 Vector2i const &texSize = layerTex->generalCase().dimensions();
                 if(texSize.x > 0)
                 {
-                    glTranslatef(skyLayer.offset() / texSize.x, 0, 0);
+                    glTranslatef(layer->offset() / texSize.x, 0, 0);
                     glScalef(1024.f / texSize.x, 1, 1);
                 }
                 if(yflip)
@@ -417,7 +418,7 @@ DENG2_PIMPL(SkyDrawable)
             if(!skyModelDef) continue;
 
             // If the associated sky layer is not active then the model won't be drawn.
-            if(!sky.layer(skyModelDef->geti("layer")).isActive())
+            if(!sky.layer(skyModelDef->geti("layer"))->isActive())
             {
                 continue;
             }
@@ -520,12 +521,11 @@ void SkyDrawable::cacheDrawableAssets(Sky const *sky)
 {
     DENG2_ASSERT(sky);
 
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    for(SkyLayer const *layer : sky->layers())
     {
-        Sky::Layer const &lyr = sky->layer(i);
-        if(Material *mat = lyr.material())
+        if(Material *mat = layer->material())
         {
-            d->resSys().cache(*mat, layerMaterialSpec(lyr.isMasked()));
+            d->resSys().cache(*mat, layerMaterialSpec(layer->isMasked()));
         }
     }
 
@@ -619,7 +619,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     if(!DD_IsSharpTick()) return;
 
     // Animate layers.
-    /*for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    /*for(int i = 0; i < NUM_LAYERS; ++i)
     {
         Sky::Layer &lyr = sky().layer(i);
     }*/

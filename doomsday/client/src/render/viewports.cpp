@@ -1159,13 +1159,14 @@ DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
     }
 
     Sky &sky = ClientApp::worldSystem().map().sky();
-    if(sky.hasLayer(layerIndex))
+    if(layerIndex >= 0 && layerIndex < sky.layerCount())
     {
-        Sky::Layer &layer = sky.layer(layerIndex);
+        SkyLayer *layer = sky.layer(layerIndex);
         switch(param)
         {
-        case DD_ENABLE:  layer.enable();  break;
-        case DD_DISABLE: layer.disable(); break;
+        case DD_ENABLE:  layer->enable();  break;
+        case DD_DISABLE: layer->disable(); break;
+
         default:
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Failed configuring layer #%i: bad parameter %i")

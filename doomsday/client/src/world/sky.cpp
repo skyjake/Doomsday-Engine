@@ -22,6 +22,7 @@
 #include "world/sky.h"
 
 #include <cmath>
+#include <QtAlgorithms>
 #include <de/Log>
 
 #ifdef __CLIENT__
@@ -35,6 +36,8 @@
 #  include "Texture"
 #endif
 
+#define NUM_LAYERS  2
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(Sky::Layer)
@@ -44,11 +47,27 @@ DENG2_PIMPL_NOREF(Sky::Layer)
     Material *material = nullptr;
     float offset       = 0;
     float fadeoutLimit = 0;
+
+    Sky &sky;
+    Instance(Sky &sky) : sky(sky) {}
+
+    DENG2_PIMPL_AUDIENCE(ActiveChange)
+    DENG2_PIMPL_AUDIENCE(MaskedChange)
+    DENG2_PIMPL_AUDIENCE(MaterialChange)
 };
 
-Sky::Layer::Layer(Material *material) : d(new Instance)
+DENG2_AUDIENCE_METHOD(Sky::Layer, ActiveChange)
+DENG2_AUDIENCE_METHOD(Sky::Layer, MaskedChange)
+DENG2_AUDIENCE_METHOD(Sky::Layer, MaterialChange)
+
+Sky::Layer::Layer(Sky &sky, Material *material) : d(new Instance(sky))
 {
     setMaterial(material);
+}
+
+Sky &Sky::Layer::sky() const
+{
+    return d->sky;
 }
 
 bool Sky::Layer::isActive() const
@@ -61,7 +80,7 @@ void Sky::Layer::setActive(bool yes)
     if(d->active == yes) return;
 
     d->active = yes;
-    DENG2_FOR_AUDIENCE(ActiveChange, i)
+    DENG2_FOR_AUDIENCE2(ActiveChange, i)
     {
         i->skyLayerActiveChanged(*this);
     }
@@ -77,7 +96,7 @@ void Sky::Layer::setMasked(bool yes)
     if(d->masked == yes) return;
 
     d->masked = yes;
-    DENG2_FOR_AUDIENCE(MaskedChange, i)
+    DENG2_FOR_AUDIENCE2(MaskedChange, i)
     {
         i->skyLayerMaskedChanged(*this);
     }
@@ -93,7 +112,7 @@ void Sky::Layer::setMaterial(Material *newMaterial)
     if(d->material == newMaterial) return;
 
     d->material = newMaterial;
-    DENG2_FOR_AUDIENCE(MaterialChange, i)
+    DENG2_FOR_AUDIENCE2(MaterialChange, i)
     {
         i->skyLayerMaterialChanged(*this);
     }
@@ -126,9 +145,9 @@ DENG2_PIMPL(Sky)
 , DENG2_OBSERVES(Layer, MaskedChange)
 #endif
 {
-    Layer layers[MAX_SKY_LAYERS];
+    Layers layers;
     int firstActiveLayer            = -1;  /// @c -1= 'no active layers'.
-    bool needUpdateFirstActiveLayer = true;
+    bool needFirstActiveLayerUpdate = true;
 
     float height        = 0;
     float horizonOffset = 0;
@@ -141,26 +160,33 @@ DENG2_PIMPL(Sky)
 
     Instance(Public *i) : Base(i)
     {
-        for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+        for(int i = 0; i < NUM_LAYERS; ++i)
         {
-            layers[i].audienceForActiveChange   += this;
+            layers.append(new Layer(self));
+            Layer *layer = layers.last();
+
+            layer->audienceForActiveChange()   += this;
 #ifdef __CLIENT__
-            layers[i].audienceForMaterialChange += this;
-            layers[i].audienceForMaskedChange   += this;
+            layer->audienceForMaskedChange()   += this;
+            layer->audienceForMaterialChange() += this;
 #endif
         }
     }
 
+    ~Instance()
+    {
+        qDeleteAll(layers);
+    }
+
     void updateFirstActiveLayerIfNeeded()
     {
-        if(!needUpdateFirstActiveLayer) return;
-
-        needUpdateFirstActiveLayer = false;
+        if(!needFirstActiveLayerUpdate) return;
+        needFirstActiveLayerUpdate = false;
 
         firstActiveLayer = -1; // -1 denotes 'no active layers'.
-        for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+        for(int i = 0; i < layers.count(); ++i)
         {
-            if(layers[i].isActive())
+            if(layers[i]->isActive())
             {
                 firstActiveLayer = i;
                 break;
@@ -171,7 +197,7 @@ DENG2_PIMPL(Sky)
     /// Observes Layer ActiveChange
     void skyLayerActiveChanged(Layer & /*layer*/)
     {
-        needUpdateFirstActiveLayer = true;
+        needFirstActiveLayerUpdate = true;
 #ifdef __CLIENT__
         needUpdateAmbientColor     = true;
 #endif
@@ -203,9 +229,9 @@ DENG2_PIMPL(Sky)
         Vector3f topCapColor;
 
         int avgCount = 0;
-        for(int i = firstActiveLayer; i < MAX_SKY_LAYERS; ++i)
+        for(int i = firstActiveLayer; i < layers.count(); ++i)
         {
-            Layer &layer = layers[i];
+            Layer &layer = *layers[i];
 
             // Inactive layers won't be drawn.
             if(!layer.isActive()) continue;
@@ -269,41 +295,29 @@ DENG2_PIMPL(Sky)
     }
 
 #endif // __CLIENT__
+
+    DENG2_PIMPL_AUDIENCE(HeightChange)
+    DENG2_PIMPL_AUDIENCE(HorizonOffsetChange)
 };
 
-Sky::Sky()
-    : MapElement(DMU_SKY)
-    , d(new Instance(this))
-{}
+DENG2_AUDIENCE_METHOD(Sky, HeightChange)
+DENG2_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
-bool Sky::hasLayer(int index) const
+Sky::Sky(defn::Sky const *definition) : MapElement(DMU_SKY), d(new Instance(this))
 {
-    return (index >= 0 && index < MAX_SKY_LAYERS);
+    configure(definition);
 }
 
-Sky::Layer &Sky::layer(int index)
+Sky::Layers const &Sky::layers() const
 {
-    if(hasLayer(index))
-    {
-        return d->layers[index];
-    }
-    /// @throw MissingLayerError An invalid layer index was specified.
-    throw MissingLayerError("Sky::layer", "Invalid layer index #" + String::number(index) + ".");
+    return d->layers;
 }
 
-Sky::Layer const &Sky::layer(int index) const
+void Sky::configure(defn::Sky const *def)
 {
-    return const_cast<Layer const &>(const_cast<Sky *>(this)->layer(index));
-}
+    LOG_AS("Sky::configure");
 
-int Sky::firstActiveLayer() const
-{
-    d->updateFirstActiveLayerIfNeeded();
-    return d->firstActiveLayer;
-}
-
-void Sky::configureDefault()
-{
+    // The default configuration is used as a starting point.
     d->height                 = DEFAULT_SKY_HEIGHT;
     d->horizonOffset          = DEFAULT_SKY_HORIZON_OFFSET;
 
@@ -313,9 +327,9 @@ void Sky::configureDefault()
     d->needUpdateAmbientColor = true;
 #endif
 
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    for(int i = 0; i < d->layers.count(); ++i)
     {
-        Layer &lyr = d->layers[i];
+        Layer &lyr = *d->layers[i];
 
         lyr.setMasked(false);
         lyr.setOffset(DEFAULT_SKY_SPHERE_XOFFSET);
@@ -330,24 +344,16 @@ void Sky::configureDefault()
         catch(MaterialManifest::MissingMaterialError const &)
         {} // Ignore this error.
     }
-}
-
-void Sky::configure(defn::Sky const *def)
-{
-    LOG_AS("Sky::configure");
-
-    // The default configuration is used as a starting point.
-    configureDefault();
 
     if(!def) return; // Go with the defaults, then.
 
     setHeight(def->getf("height"));
     setHorizonOffset(def->getf("horizonOffset"));
 
-    for(int i = 0; i < MAX_SKY_LAYERS; ++i)
+    for(int i = 0; i < d->layers.count(); ++i)
     {
         Record const &lyrDef = def->layer(i);
-        Sky::Layer &lyr = layer(i);
+        Layer &lyr           = *d->layers[i];
 
         lyr.setMasked((lyrDef.geti("flags") & SLF_MASK) != 0);
         lyr.setOffset(lyrDef.getf("offset"));
@@ -364,7 +370,7 @@ void Sky::configure(defn::Sky const *def)
             {
                 // Log but otherwise ignore this error.
                 LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default")
-                    << matUri << i;
+                        << matUri << i;
             }
         }
 
@@ -383,16 +389,6 @@ void Sky::configure(defn::Sky const *def)
 #endif
 }
 
-float Sky::horizonOffset() const
-{
-    return d->horizonOffset;
-}
-
-void Sky::setHorizonOffset(float newOffset)
-{
-    d->horizonOffset = newOffset;
-}
-
 float Sky::height() const
 {
     return d->height;
@@ -400,7 +396,38 @@ float Sky::height() const
 
 void Sky::setHeight(float newHeight)
 {
-    d->height = de::clamp(0.f, newHeight, 1.f);
+    newHeight = de::clamp(0.f, newHeight, 1.f);
+    if(!de::fequal(d->height, newHeight))
+    {
+        d->height = newHeight;
+        DENG2_FOR_AUDIENCE2(HeightChange, i)
+        {
+            i->skyHeightChanged(*this);
+        }
+    }
+}
+
+float Sky::horizonOffset() const
+{
+    return d->horizonOffset;
+}
+
+void Sky::setHorizonOffset(float newOffset)
+{
+    if(!de::fequal(d->horizonOffset, newOffset))
+    {
+        d->horizonOffset = newOffset;
+        DENG2_FOR_AUDIENCE2(HorizonOffsetChange, i)
+        {
+            i->skyHorizonOffsetChanged(*this);
+        }
+    }
+}
+
+int Sky::firstActiveLayer() const
+{
+    d->updateFirstActiveLayerIfNeeded();
+    return d->firstActiveLayer;
 }
 
 int Sky::property(DmuArgs &args) const
@@ -409,8 +436,8 @@ int Sky::property(DmuArgs &args) const
     {
     case DMU_FLAGS: {
         int flags = 0;
-        if(layer(0).isActive()) flags |= SKYF_LAYER0_ENABLED;
-        if(layer(1).isActive()) flags |= SKYF_LAYER1_ENABLED;
+        if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
+        if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
 
         args.setValue(DDVT_INT, &flags, 0);
         break; }
@@ -434,20 +461,29 @@ int Sky::setProperty(DmuArgs const &args)
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        int flags;
+        int flags = 0;
+        if(layer(0)->isActive()) flags |= SKYF_LAYER0_ENABLED;
+        if(layer(1)->isActive()) flags |= SKYF_LAYER1_ENABLED;
+
         args.value(DDVT_INT, &flags, 0);
 
-        layer(0).setActive(flags & SKYF_LAYER0_ENABLED);
-        layer(1).setActive(flags & SKYF_LAYER1_ENABLED);
+        layer(0)->setActive(flags & SKYF_LAYER0_ENABLED);
+        layer(1)->setActive(flags & SKYF_LAYER1_ENABLED);
         break; }
 
-    case DMU_HEIGHT:
-        args.value(DDVT_FLOAT, &d->height, 0);
-        break;
+    case DMU_HEIGHT: {
+        float newHeight = d->height;
+        args.value(DDVT_FLOAT, &newHeight, 0);
 
-    /*case DMU_HORIZONOFFSET:
+        setHeight(newHeight);
+        break; }
+
+    /*case DMU_HORIZONOFFSET: {
+        float newOffset = d->horizonOffset;
         args.value(DDVT_FLOAT, &d->horizonOffset, 0);
-        break;*/
+
+        setHorizonOffset(newOffset);
+        break; }*/
 
     default: return MapElement::setProperty(args);
     }

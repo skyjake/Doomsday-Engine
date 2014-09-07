@@ -1,7 +1,7 @@
 /** @file sky.h  Sky behavior logic for the world system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,6 +21,7 @@
 #ifndef DENG_WORLD_SKY_H
 #define DENG_WORLD_SKY_H
 
+#include <QList>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>
@@ -31,23 +32,22 @@
 #include "Material"
 #include "ModelDef"
 
-#define MAX_SKY_LAYERS                   ( 2 )
-
 #define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_MATERIAL      ( "Textures:SKY1" )
 
 /**
- * Logical sky.
- *
- * This version supports only two sky layers. (More would be a waste of resources?)
+ * Behavior logic for a sky in the world system.
  *
  * @ingroup world
  */
 class Sky : public de::MapElement
 {
 public:
-    /// Required layer is missing. @ingroup errors
-    DENG2_ERROR(MissingLayerError);
+    /// Notified whenever the height changes.
+    DENG2_DEFINE_AUDIENCE2(HeightChange, void skyHeightChanged(Sky &sky))
+
+    /// Notified whenever the horizon offset changes.
+    DENG2_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
 
     /**
      * Multiple layers can be used for parallax effects.
@@ -55,20 +55,25 @@ public:
     class Layer
     {
     public:
-        /// Notified whenever the layer material changes.
-        DENG2_DEFINE_AUDIENCE(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
-
         /// Notified whenever the active-state changes.
-        DENG2_DEFINE_AUDIENCE(ActiveChange, void skyLayerActiveChanged(Layer &layer))
+        DENG2_DEFINE_AUDIENCE2(ActiveChange, void skyLayerActiveChanged(Layer &layer))
 
         /// Notified whenever the masked-state changes.
-        DENG2_DEFINE_AUDIENCE(MaskedChange, void skyLayerMaskedChanged(Layer &layer))
+        DENG2_DEFINE_AUDIENCE2(MaskedChange, void skyLayerMaskedChanged(Layer &layer))
+
+        /// Notified whenever the layer material changes.
+        DENG2_DEFINE_AUDIENCE2(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
 
     public:
         /**
          * Construct a new sky layer.
          */
-        Layer(Material *material = 0);
+        Layer(Sky &sky, Material *material = 0);
+
+        /**
+         * Returns the sky of which this is a layer.
+         */
+        Sky &sky() const;
 
         /**
          * Returns @a true of the layer is currently active.
@@ -85,7 +90,7 @@ public:
          */
         void setActive(bool yes);
 
-        inline void enable()  { setActive(true); }
+        inline void enable()  { setActive(true);  }
         inline void disable() { setActive(false); }
 
         /**
@@ -142,8 +147,10 @@ public:
         DENG2_PRIVATE(d)
     };
 
+    typedef QList<Layer *> Layers;
+
 public:
-    Sky();
+    explicit Sky(defn::Sky const *definition = 0);
 
     /**
      * Reconfigure according to the specified @a definition if not @c NULL,
@@ -151,45 +158,45 @@ public:
      *
      * @see configureDefault()
      */
-    void configure(defn::Sky const *definition);
+    void configure(defn::Sky const *definition = 0);
 
     /**
      * Reconfigure the sky, returning all values to their defaults.
      *
      * @see configure()
      */
-    void configureDefault();
+    inline void configureDefault() { configure(); }
 
     /**
-     * Determines whether the specified sky layer @a index is valid.
-     *
-     * @see layer(), layerPtr()
+     * Provides access to the list of sky layers, for efficient traversal.
      */
-    bool hasLayer(int index) const;
+    Layers const &layers() const;
 
     /**
-     * Lookup a sky layer by it's unique @a index.
-     *
-     * @see hasLayer()
+     * Convenient method of returning a sky layer by unique @a index.
      */
-    Layer &layer(int index);
-
-    /// @copydoc layer()
-    Layer const &layer(int index) const;
+    inline Layer *layer(int index) const { return layers().at(index); }
 
     /**
-     * Returns a pointer to the referenced sky layer; otherwise @c 0.
-     *
-     * @see hasLayer(), layer()
+     * Returns the total number of sky layers (both active and inactive).
      */
-    inline Layer *layerPtr(int index) { return hasLayer(index)? &layer(index) : 0; }
+    inline int layerCount() const { return layers().count(); }
 
     /**
-     * Returns the unique identifier of the sky's first active layer.
+     * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
      *
-     * @see Layer::isActive()
+     * @see setHeight()
      */
-    int firstActiveLayer() const;
+    float height() const;
+
+    /**
+     * Change the height scale factor for the sky.
+     *
+     * @param newHeight  New height scale factor to apply (will be normalized).
+     *
+     * @see height()
+     */
+    void setHeight(float newHeight);
 
     /**
      * Returns the horizon offset for the sky.
@@ -208,20 +215,11 @@ public:
     void setHorizonOffset(float newOffset);
 
     /**
-     * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
+     * Returns the unique identifier of the sky's first active layer.
      *
-     * @see setHeight()
+     * @see Layer::isActive()
      */
-    float height() const;
-
-    /**
-     * Change the height scale factor for the sky.
-     *
-     * @param newHeight  New height scale factor to apply (will be normalized).
-     *
-     * @see height()
-     */
-    void setHeight(float newHeight);
+    int firstActiveLayer() const;
 
 #ifdef __CLIENT__
 
