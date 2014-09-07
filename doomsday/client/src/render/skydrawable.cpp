@@ -130,7 +130,7 @@ struct Hemisphere
             // Is the colored fadeout in use?
             Vector3f color(avgColor->color.rgb);
             float const fadeOutLimit = layer.fadeOutLimit;
-            if(color >= Vector3f(fadeOutLimit, fadeOutLimit, fadeOutLimit))
+            if(color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
             {
                 if(needFadeOut) *needFadeOut = true;
                 return color;
