@@ -536,14 +536,14 @@ void SkyDrawable::cacheDrawableAssets(Sky const *sky)
         }
     }
 
-    if(d->haveModels)
-    {
-        for(int i = 0; i < MAX_MODELS; ++i)
-        {
-            ModelConfig &mdata = model(i);
-            if(!mdata.def) continue;
+    if(!d->haveModels) return;
 
-            d->resSys().cache(mdata.model);
+    for(int i = 0; i < MAX_MODELS; ++i)
+    {
+        ModelConfig &mcfg = model(i);
+        if(mcfg.def)
+        {
+            d->resSys().cache(mcfg.model);
         }
     }
 }

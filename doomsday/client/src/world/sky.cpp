@@ -139,15 +139,13 @@ void Sky::Layer::setFadeoutLimit(float newLimit)
 }
 
 DENG2_PIMPL(Sky)
-, DENG2_OBSERVES(Layer, ActiveChange)
 #ifdef __CLIENT__
+, DENG2_OBSERVES(Layer, ActiveChange)
 , DENG2_OBSERVES(Layer, MaterialChange)
 , DENG2_OBSERVES(Layer, MaskedChange)
 #endif
 {
     Layers layers;
-    int firstActiveLayer            = -1;  /// @c -1= 'no active layers'.
-    bool needFirstActiveLayerUpdate = true;
 
     float height        = 0;
     float horizonOffset = 0;
@@ -163,10 +161,10 @@ DENG2_PIMPL(Sky)
         for(int i = 0; i < NUM_LAYERS; ++i)
         {
             layers.append(new Layer(self));
-            Layer *layer = layers.last();
 
-            layer->audienceForActiveChange()   += this;
 #ifdef __CLIENT__
+            Layer *layer = layers.last();
+            layer->audienceForActiveChange()   += this;
             layer->audienceForMaskedChange()   += this;
             layer->audienceForMaterialChange() += this;
 #endif
@@ -178,32 +176,12 @@ DENG2_PIMPL(Sky)
         qDeleteAll(layers);
     }
 
-    void updateFirstActiveLayerIfNeeded()
-    {
-        if(!needFirstActiveLayerUpdate) return;
-        needFirstActiveLayerUpdate = false;
-
-        firstActiveLayer = -1; // -1 denotes 'no active layers'.
-        for(int i = 0; i < layers.count(); ++i)
-        {
-            if(layers[i]->isActive())
-            {
-                firstActiveLayer = i;
-                break;
-            }
-        }
-    }
-
+#ifdef __CLIENT__
     /// Observes Layer ActiveChange
     void skyLayerActiveChanged(Layer & /*layer*/)
     {
-        needFirstActiveLayerUpdate = true;
-#ifdef __CLIENT__
-        needUpdateAmbientColor     = true;
-#endif
+        needUpdateAmbientColor = true;
     }
-
-#ifdef __CLIENT__
 
     /**
      * @todo Move to SkyDrawable and have it simply update this component once the
@@ -221,7 +199,15 @@ DENG2_PIMPL(Sky)
         // By default the ambient color is pure white.
         ambientColor = Vector3f(1, 1, 1);
 
-        updateFirstActiveLayerIfNeeded();
+        int firstActiveLayer = -1; // -1 denotes 'no active layers'.
+        for(int i = 0; i < layers.count(); ++i)
+        {
+            if(layers[i]->isActive())
+            {
+                firstActiveLayer = i;
+                break;
+            }
+        }
         if(firstActiveLayer < 0) return;
 
         Vector3f avgMaterialColor;
@@ -403,12 +389,6 @@ void Sky::setHorizonOffset(float newOffset)
             i->skyHorizonOffsetChanged(*this);
         }
     }
-}
-
-int Sky::firstActiveLayer() const
-{
-    d->updateFirstActiveLayerIfNeeded();
-    return d->firstActiveLayer;
 }
 
 int Sky::property(DmuArgs &args) const

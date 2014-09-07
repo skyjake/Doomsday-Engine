@@ -214,13 +214,6 @@ public:
      */
     void setHorizonOffset(float newOffset);
 
-    /**
-     * Returns the unique identifier of the sky's first active layer.
-     *
-     * @see Layer::isActive()
-     */
-    int firstActiveLayer() const;
-
 #ifdef __CLIENT__
 
     /**
