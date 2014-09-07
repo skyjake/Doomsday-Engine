@@ -317,75 +317,58 @@ void Sky::configure(defn::Sky const *def)
 {
     LOG_AS("Sky::configure");
 
-    // The default configuration is used as a starting point.
-    d->height                 = DEFAULT_SKY_HEIGHT;
-    d->horizonOffset          = DEFAULT_SKY_HORIZON_OFFSET;
-
-#ifdef __CLIENT__
-    d->ambientColor           = Vector3f(1, 1, 1);
-    d->ambientColorDefined    = false;
-    d->needUpdateAmbientColor = true;
-#endif
+    setHeight(def? def->getf("height") : DEFAULT_SKY_HEIGHT);
+    setHorizonOffset(def? def->getf("horizonOffset") : DEFAULT_SKY_HORIZON_OFFSET);
 
     for(int i = 0; i < d->layers.count(); ++i)
     {
+        Record const *lyrDef = def? &def->layer(i) : 0;
         Layer &lyr = *d->layers[i];
 
-        lyr.setMasked(false);
-        lyr.setOffset(DEFAULT_SKY_SPHERE_XOFFSET);
-        lyr.setFadeoutLimit(DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
-        lyr.setActive(i == 0);
+        lyr.setMasked(lyrDef? (lyrDef->geti("flags") & SLF_MASK) : false);
+        lyr.setOffset(lyrDef? lyrDef->getf("offset") : DEFAULT_SKY_SPHERE_XOFFSET);
+        lyr.setFadeoutLimit(lyrDef? lyrDef->getf("colorLimit") : DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
-        lyr.setMaterial(0);
+        de::Uri const matUri = lyrDef? de::Uri(lyrDef->gets("material")) : de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL);
+        Material *mat = 0;
         try
         {
-            lyr.setMaterial(App_ResourceSystem().materialPtr(de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL)));
+            mat = App_ResourceSystem().materialPtr(matUri);
         }
-        catch(MaterialManifest::MissingMaterialError const &)
-        {} // Ignore this error.
-    }
-
-    if(!def) return; // Go with the defaults, then.
-
-    setHeight(def->getf("height"));
-    setHorizonOffset(def->getf("horizonOffset"));
-
-    for(int i = 0; i < d->layers.count(); ++i)
-    {
-        Record const &lyrDef = def->layer(i);
-        Layer &lyr           = *d->layers[i];
-
-        lyr.setMasked((lyrDef.geti("flags") & SLF_MASK) != 0);
-        lyr.setOffset(lyrDef.getf("offset"));
-        lyr.setFadeoutLimit(lyrDef.getf("colorLimit"));
-
-        de::Uri const matUri(lyrDef.gets("material"));
-        if(!matUri.isEmpty())
+        catch(MaterialManifest::MissingMaterialError const &er)
         {
-            try
+            // Log if a material is specified but otherwise ignore this error.
+            if(lyrDef)
             {
-                lyr.setMaterial(App_ResourceSystem().materialPtr(matUri));
-            }
-            catch(ResourceSystem::MissingManifestError const &er)
-            {
-                // Log but otherwise ignore this error.
                 LOG_RES_WARNING(er.asText() + ". Unknown material \"%s\" in definition layer %i, using default")
                         << matUri << i;
             }
         }
+        lyr.setMaterial(mat);
 
-        lyr.setActive(lyrDef.geti("flags") & SLF_ENABLE);
+        lyr.setActive(lyrDef? (lyrDef->geti("flags") & SLF_ENABLE) : i == 0);
     }
 
 #ifdef __CLIENT__
-    Vector3f ambientColor = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
-    if(ambientColor != Vector3f(0, 0, 0))
+    if(def)
     {
-        setAmbientColor(ambientColor);
+        Vector3f ambientColor = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
+        if(ambientColor != Vector3f(0, 0, 0))
+        {
+            setAmbientColor(ambientColor);
+        }
     }
+    else
+    {
+        d->ambientColor           = Vector3f(1, 1, 1);
+        d->ambientColorDefined    = false;
+        d->needUpdateAmbientColor = true;
+    }
+#endif
 
+#ifdef __CLIENT__
     // Models are set up using the data in the definition (will override the sphere by default).
-    ClientApp::renderSystem().sky().setupModels(*def);
+    ClientApp::renderSystem().sky().setupModels(def);
 #endif
 }
 

@@ -461,18 +461,20 @@ DENG2_PIMPL(SkyDrawable)
 SkyDrawable::SkyDrawable() : d(new Instance(this))
 {}
 
-void SkyDrawable::setupModels(defn::Sky const &def)
+void SkyDrawable::setupModels(defn::Sky const *def)
 {
     // Normally the sky sphere is not drawn if models are in use.
-    d->alwaysDrawSphere = (def.geti("flags") & SIF_DRAW_SPHERE) != 0;
+    d->alwaysDrawSphere = (def && (def->geti("flags") & SIF_DRAW_SPHERE) != 0);
 
     // The normal sphere is used if no models will be set up.
     d->haveModels = false;
     de::zap(d->models);
 
-    for(int i = 0; i < def.modelCount(); ++i)
+    if(!def) return;
+
+    for(int i = 0; i < def->modelCount(); ++i)
     {
-        Record const &modef = def.model(i);
+        Record const &modef = def->model(i);
         ModelData *mdata = &d->models[i];
 
         // Is the model ID set?

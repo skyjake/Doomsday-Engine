@@ -88,7 +88,7 @@ public:
     /**
      * Models are set up according to the given @a skyDef.
      */
-    void setupModels(defn::Sky const &skyDef);
+    void setupModels(defn::Sky const *skyDef = 0);
 
     /**
      * Cache all assets needed for visualizing the sky.
