@@ -46,7 +46,7 @@ DENG2_PIMPL_NOREF(Sky::Layer)
     bool masked        = false;
     Material *material = nullptr;
     float offset       = 0;
-    float fadeoutLimit = 0;
+    float fadeOutLimit = 0;
 
     Sky &sky;
     Instance(Sky &sky) : sky(sky) {}
@@ -130,12 +130,12 @@ void Sky::Layer::setOffset(float newOffset)
 
 float Sky::Layer::fadeOutLimit() const
 {
-    return d->fadeoutLimit;
+    return d->fadeOutLimit;
 }
 
 void Sky::Layer::setFadeoutLimit(float newLimit)
 {
-    d->fadeoutLimit = newLimit;
+    d->fadeOutLimit = newLimit;
 }
 
 DENG2_PIMPL(Sky)
@@ -151,9 +151,28 @@ DENG2_PIMPL(Sky)
     float horizonOffset = 0;
 
 #ifdef __CLIENT__
-    bool ambientColorDefined    = false;  /// @c true= pre-defined in a MapInfo def.
-    bool needUpdateAmbientColor = true;   /// @c true= update if not pre-defined.
-    Vector3f ambientColor;
+    /**
+     * Ambient lighting characteristics.
+     */
+    struct AmbientLight
+    {
+        bool custom     = false;  /// @c true= defined in a MapInfo def.
+        bool needUpdate = true;   /// @c true= update if not custom.
+        Vector3f color;
+
+        void setColor(Vector3f const &newColor)
+        {
+            color  = newColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
+            custom = true;
+        }
+
+        void reset()
+        {
+            custom     = false;
+            color      = Vector3f(1, 1, 1);
+            needUpdate = true;
+        }
+    } ambientLight;
 #endif
 
     Instance(Public *i) : Base(i)
@@ -177,12 +196,6 @@ DENG2_PIMPL(Sky)
     }
 
 #ifdef __CLIENT__
-    /// Observes Layer ActiveChange
-    void skyLayerActiveChanged(Layer & /*layer*/)
-    {
-        needUpdateAmbientColor = true;
-    }
-
     /**
      * @todo Move to SkyDrawable and have it simply update this component once the
      * ambient color has been calculated.
@@ -190,14 +203,13 @@ DENG2_PIMPL(Sky)
      * @todo Re-implement me by rendering the sky to a low-quality cubemap and use
      * that to obtain the lighting characteristics.
      */
-    void updateAmbientColorIfNeeded()
+    void updateAmbientLightIfNeeded()
     {
-        if(!needUpdateAmbientColor) return;
-
-        needUpdateAmbientColor = false;
+        if(!ambientLight.needUpdate) return;
+        ambientLight.needUpdate = false;
 
         // By default the ambient color is pure white.
-        ambientColor = Vector3f(1, 1, 1);
+        ambientLight.color = Vector3f(1, 1, 1);
 
         int firstActiveLayer = -1; // -1 denotes 'no active layers'.
         for(int i = 0; i < layers.count(); ++i)
@@ -256,8 +268,14 @@ DENG2_PIMPL(Sky)
         {
             // The caps cover a large amount of the sky sphere, so factor it in too.
             // Each cap is another unit.
-            ambientColor = (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
+            ambientLight.color = (avgMaterialColor + topCapColor + bottomCapColor) / (avgCount + 2);
         }
+    }
+
+    /// Observes Layer ActiveChange
+    void skyLayerActiveChanged(Layer &)
+    {
+        ambientLight.needUpdate = true;
     }
 
     /// Observes Layer MaterialChange
@@ -265,9 +283,9 @@ DENG2_PIMPL(Sky)
     {
         // We may need to recalculate the ambient color of the sky.
         if(!layer.isActive()) return;
-        //if(ambientColorDefined) return;
+        //if(ambientLight.custom) return;
 
-        needUpdateAmbientColor = true;
+        ambientLight.needUpdate = true;
     }
 
     /// Observes Layer MaskedChange
@@ -275,9 +293,9 @@ DENG2_PIMPL(Sky)
     {
         // We may need to recalculate the ambient color of the sky.
         if(!layer.isActive()) return;
-        //if(ambientColorDefined) return;
+        //if(ambientLight.custom) return;
 
-        needUpdateAmbientColor = true;
+        ambientLight.needUpdate = true;
     }
 
 #endif // __CLIENT__
@@ -338,17 +356,15 @@ void Sky::configure(defn::Sky const *def)
 #ifdef __CLIENT__
     if(def)
     {
-        Vector3f ambientColor = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
-        if(ambientColor != Vector3f(0, 0, 0))
+        Vector3f color = Vector3f(def->get("color")).max(Vector3f(0, 0, 0));
+        if(color != Vector3f(0, 0, 0))
         {
-            setAmbientColor(ambientColor);
+            d->ambientLight.setColor(color);
         }
     }
     else
     {
-        d->ambientColor           = Vector3f(1, 1, 1);
-        d->ambientColorDefined    = false;
-        d->needUpdateAmbientColor = true;
+        d->ambientLight.reset();
     }
 
     // Models are set up using the data in the definition (will override the sphere by default).
@@ -458,21 +474,20 @@ Vector3f const &Sky::ambientColor() const
 {
     static Vector3f const white(1, 1, 1);
 
-    if(d->ambientColorDefined || rendSkyLightAuto)
+    if(d->ambientLight.custom || rendSkyLightAuto)
     {
-        if(!d->ambientColorDefined)
+        if(!d->ambientLight.custom)
         {
-            d->updateAmbientColorIfNeeded();
+            d->updateAmbientLightIfNeeded();
         }
-        return d->ambientColor;
+        return d->ambientLight.color;
     }
     return white;
 }
 
 void Sky::setAmbientColor(Vector3f const &newColor)
 {
-    d->ambientColor = newColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
-    d->ambientColorDefined = true;
+    d->ambientLight.setColor(newColor);
 }
 
 #endif // __CLIENT__
