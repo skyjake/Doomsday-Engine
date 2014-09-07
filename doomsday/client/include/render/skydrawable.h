@@ -1,7 +1,7 @@
 /** @file skydrawable.h  Drawable specialized for the sky.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,6 +28,7 @@
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
 #include "MaterialVariantSpec"
+#include "ModelDef"
 
 class Sky;
 
@@ -41,20 +42,8 @@ class Sky;
 class SkyDrawable
 {
 public:
-    /// Required layer is missing. @ingroup errors
-    DENG2_ERROR(MissingLayerError);
-
     /// Required model is missing. @ingroup errors
     DENG2_ERROR(MissingModelError);
-
-    struct LayerData
-    {
-        bool active;
-        bool masked;
-        float offset;
-        Material *material;
-        float fadeOutLimit;
-    };
 
     struct ModelData
     {
@@ -74,12 +63,51 @@ public:
     class Animator
     {
     public:
+        /// Required layer is missing. @ingroup errors
+        DENG2_ERROR(MissingLayerError);
+
+        struct LayerData
+        {
+            bool active;
+            bool masked;
+            float offset;
+            Material *material;
+            float fadeOutLimit;
+        };
+
+    public:
         Animator();
         Animator(SkyDrawable &sky);
         virtual ~Animator();
 
         void setSky(SkyDrawable *sky);
         SkyDrawable &sky() const;
+
+        /**
+         * @param sky  Sky to configure animation state for.
+         * @return  Reference to this animator, for caller convenience.
+         */
+        Animator &configure(Sky const &sky);
+
+        float height() const;
+        float horizonOffset() const;
+
+        /**
+         * Determines whether the specified sky layer @a index is valid.
+         * @see layer()
+         */
+        bool hasLayer(int index) const;
+
+        /**
+         * Lookup a sky layer by it's unique @a index.
+         * @see hasLayer()
+         */
+        LayerData &layer(int index);
+
+        /// @copydoc layer()
+        LayerData const &layer(int index) const;
+
+        int firstActiveLayer() const;
 
         /**
          * Advances the animation state.
@@ -108,24 +136,7 @@ public:
     /**
      * Render the sky.
      */
-    void draw(Sky const *sky = 0) const;
-
-    /**
-     * Determines whether the specified sky layer @a index is valid.
-     * @see layer()
-     */
-    bool hasLayer(int index) const;
-
-    /**
-     * Lookup a sky layer by it's unique @a index.
-     * @see hasLayer()
-     */
-    LayerData &layer(int index);
-
-    /// @copydoc layer()
-    LayerData const &layer(int index) const;
-
-    int firstActiveLayer() const;
+    void draw(Animator const *animator = 0) const;
 
     /**
      * Determines whether the specified sky model @a index is valid.

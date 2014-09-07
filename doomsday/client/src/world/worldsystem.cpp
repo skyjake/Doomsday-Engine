@@ -901,6 +901,11 @@ void WorldSystem::tick(timespan_t elapsed)
 }
 
 #ifdef __CLIENT__
+SkyDrawable::Animator &WorldSystem::skyAnimator() const
+{
+    return d->skyAnimator;
+}
+
 Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?

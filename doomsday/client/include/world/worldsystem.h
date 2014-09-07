@@ -38,6 +38,8 @@
 #include <de/System>
 
 #ifdef __CLIENT__
+#  include "render/skydrawable.h"
+
 class Hand;
 #endif
 
@@ -141,6 +143,8 @@ public:
      * that must be completed after view(s) have been drawn.
      */
     void endFrame();
+
+    SkyDrawable::Animator &skyAnimator() const;
 
     /**
      * Returns the hand of the "user" in the world. Used for manipulating elements

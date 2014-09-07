@@ -3465,10 +3465,20 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     popGLStateForPass(mode);
 }
 
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
+}
+
 static void drawSky(Sky const &sky)
 {
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
+    rendSys().drawLists().findAll(SkyMaskGeom, lists);
     if(!devRendSkyAlways && lists.isEmpty())
     {
         return;
@@ -3503,7 +3513,7 @@ static void drawSky(Sky const &sky)
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    ClientApp::renderSystem().sky().draw(&sky);
+    rendSys().sky().draw(&worldSys().skyAnimator().configure(sky));
 
     if(!devRendSkyAlways)
     {
