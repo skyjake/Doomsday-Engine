@@ -44,6 +44,9 @@
 #include "Texture"
 #include "world/sky.h"
 
+#define MAX_LAYERS  2
+#define MAX_MODELS  32
+
 using namespace de;
 
 namespace internal {
@@ -83,9 +86,9 @@ struct Hemisphere
     }
 
     /**
-     * Determine the material to use for the given @a sky, @a layerIndex.
+     * Determine the material to use for the given sky @a layer.
      */
-    static Material *chooseMaterialForSkyLayer(Sky const &sky, int layerIndex)
+    static Material *chooseMaterialForSkyLayer(SkyDrawable::LayerData const &layer)
     {
         if(renderTextures == 0)
         {
@@ -95,7 +98,7 @@ struct Hemisphere
         {
             return resSys().materialPtr(de::Uri("System", Path("gray")));
         }
-        if(Material *mat = sky.layer(layerIndex)->material())
+        if(Material *mat = layer.material)
         {
             return mat;
         }
@@ -103,16 +106,14 @@ struct Hemisphere
     }
 
     /**
-     * Determine the cap/fadeout color to use for the given @a sky, @a layerIndex.
+     * Determine the cap/fadeout color to use for the given sky @a layer.
      */
-    static Vector3f chooseCapColor(SphereComponent hemisphere, Sky const &sky, int layerIndex,
+    static Vector3f chooseCapColor(SphereComponent hemisphere, SkyDrawable::LayerData const &layer,
                                    bool *needFadeOut = 0)
     {
-        if(Material *mat = chooseMaterialForSkyLayer(sky, layerIndex))
+        if(Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            SkyLayer const *layer      = sky.layer(layerIndex);
-            float const fadeoutLimit   = layer->fadeoutLimit();
-            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer.masked));
 
             Texture &pTex = ms.texture(MTU_PRIMARY).generalCase();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
@@ -128,7 +129,8 @@ struct Hemisphere
 
             // Is the colored fadeout in use?
             Vector3f color(avgColor->color.rgb);
-            if(color >= Vector3f(fadeoutLimit, fadeoutLimit, fadeoutLimit))
+            float const fadeOutLimit = layer.fadeOutLimit;
+            if(color >= Vector3f(fadeOutLimit, fadeOutLimit, fadeOutLimit))
             {
                 if(needFadeOut) *needFadeOut = true;
                 return color;
@@ -175,12 +177,12 @@ struct Hemisphere
         glEnd();
     }
 
-    void draw(SphereComponent hemisphere, Sky const &sky) const
+    void draw(SphereComponent hemisphere, SkyDrawable const &sky) const
     {
         if(verts.isEmpty()) return;
 
-        int const firstLayer = sky.firstActiveLayer();
-        if(firstLayer < 0) return;
+        int const firstActiveLayer = sky.firstActiveLayer();
+        if(firstActiveLayer < 0) return;
 
         bool const yflip = (hemisphere == LowerHemisphere);
         if(yflip)
@@ -193,21 +195,21 @@ struct Hemisphere
 
         // First draw the cap and the background for fadeouts, if needed.
         bool drawFadeOut = true;
-        drawCap(chooseCapColor(hemisphere, sky, firstLayer, &drawFadeOut), drawFadeOut);
+        drawCap(chooseCapColor(hemisphere, sky.layer(firstActiveLayer), &drawFadeOut), drawFadeOut);
 
-        for(int i = firstLayer; i < sky.layerCount(); ++i)
+        for(int i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const *layer = sky.layer(i);
+            SkyDrawable::LayerData const &layer = sky.layer(i);
 
-            if(!layer->isActive()) continue;
+            if(!layer.active) continue;
 
             // The fade out is only drawn for the first layer.
-            drawFadeOut = (i == firstLayer);
+            drawFadeOut = (i == firstActiveLayer);
 
             TextureVariant *layerTex = 0;
-            if(Material *mat = chooseMaterialForSkyLayer(sky, i))
+            if(Material *mat = chooseMaterialForSkyLayer(layer))
             {
-                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer.masked));
 
                 layerTex = &ms.texture(MTU_PRIMARY);
                 GL_BindTexture(layerTex);
@@ -219,7 +221,7 @@ struct Hemisphere
                 Vector2i const &texSize = layerTex->generalCase().dimensions();
                 if(texSize.x > 0)
                 {
-                    glTranslatef(layer->offset() / texSize.x, 0, 0);
+                    glTranslatef(layer.offset / texSize.x, 0, 0);
                     glScalef(1024.f / texSize.x, 1, 1);
                 }
                 if(yflip)
@@ -320,17 +322,17 @@ struct Hemisphere
         }
     }
 
-    void rebuildIfNeeded(Sky const &sky)
+    void rebuildIfNeeded(float newHeight, float newHorizonOffset)
     {
         // Rebuild our model if any parameters have changed.
-        if(verts.isEmpty() || horizonOffset != sky.horizonOffset())
+        if(verts.isEmpty() || horizonOffset != newHorizonOffset)
         {
-            horizonOffset = sky.horizonOffset();
+            horizonOffset = newHorizonOffset;
             needRebuild   = true;
         }
-        if(verts.isEmpty() || height != sky.height())
+        if(verts.isEmpty() || height != newHeight)
         {
-            height      = sky.height();
+            height      = newHeight;
             needRebuild = true;
         }
 
@@ -350,12 +352,16 @@ using namespace ::internal;
 
 DENG2_PIMPL(SkyDrawable)
 {
-    ModelData models[MAX_SKY_MODELS];
+    LayerData layers[MAX_LAYERS];
+    int firstActiveLayer = -1; ///< Denotes no active layers.
+
+    ModelData models[MAX_MODELS];
     bool haveModels       = false;
     bool alwaysDrawSphere = false;
 
     Instance(Public *i) : Base(i)
     {
+        de::zap(layers);
         de::zap(models);
     }
 
@@ -363,7 +369,7 @@ DENG2_PIMPL(SkyDrawable)
         return ClientApp::resourceSystem();
     }
 
-    void drawSphere(Sky const &sky) const
+    void drawSphere(float height, float horizonOffset) const
     {
         if(haveModels && !alwaysDrawSphere) return;
 
@@ -380,11 +386,11 @@ DENG2_PIMPL(SkyDrawable)
         glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
         glScalef(sphereDistance, sphereDistance, sphereDistance);
 
-        hemisphere.rebuildIfNeeded(sky);
+        hemisphere.rebuildIfNeeded(height, horizonOffset);
 
         // Always draw both hemispheres.
-        hemisphere.draw(Hemisphere::LowerHemisphere, sky);
-        hemisphere.draw(Hemisphere::UpperHemisphere, sky);
+        hemisphere.draw(Hemisphere::LowerHemisphere, self);
+        hemisphere.draw(Hemisphere::UpperHemisphere, self);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -396,7 +402,7 @@ DENG2_PIMPL(SkyDrawable)
         glEnable(GL_DEPTH_TEST);
     }
 
-    void drawModels(Sky const &sky) const
+    void drawModels() const
     {
         if(!haveModels) return;
 
@@ -410,15 +416,15 @@ DENG2_PIMPL(SkyDrawable)
         // Setup basic translation.
         glTranslatef(vOrigin.x, vOrigin.y, vOrigin.z);
 
-        for(int i = 0; i < MAX_SKY_MODELS; ++i)
+        for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData const &mdata    = models[i];
+            ModelData const &mdata    = self.model(i);
             Record const *skyModelDef = mdata.def;
 
             if(!skyModelDef) continue;
 
             // If the associated sky layer is not active then the model won't be drawn.
-            if(!sky.layer(skyModelDef->geti("layer"))->isActive())
+            if(!self.layer(skyModelDef->geti("layer")).active)
             {
                 continue;
             }
@@ -475,13 +481,13 @@ void SkyDrawable::setupModels(defn::Sky const *def)
     for(int i = 0; i < def->modelCount(); ++i)
     {
         Record const &modef = def->model(i);
-        ModelData *mdata = &d->models[i];
+        ModelData &mdata    = model(i);
 
         // Is the model ID set?
         try
         {
-            mdata->model = &d->resSys().modelDef(modef.gets("id"));
-            if(!mdata->model->subCount())
+            mdata.model = &d->resSys().modelDef(modef.gets("id"));
+            if(!mdata.model->subCount())
             {
                 continue;
             }
@@ -489,19 +495,44 @@ void SkyDrawable::setupModels(defn::Sky const *def)
             // There is a model here.
             d->haveModels = true;
 
-            mdata->def      = modef.accessedRecordPtr();
-            mdata->maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
-            mdata->yaw      = modef.getf("yaw");
-            mdata->frame    = mdata->model->subModelDef(0).frame;
+            mdata.def      = modef.accessedRecordPtr();
+            mdata.maxTimer = int(TICSPERSEC * modef.getf("frameInterval"));
+            mdata.yaw      = modef.getf("yaw");
+            mdata.frame    = mdata.model->subModelDef(0).frame;
         }
         catch(ResourceSystem::MissingModelDefError const &)
         {} // Ignore this error.
     }
 }
 
+bool SkyDrawable::hasLayer(int index) const
+{
+    return (index >= 0 && index < MAX_LAYERS);
+}
+
+SkyDrawable::LayerData &SkyDrawable::layer(int index)
+{
+    if(hasLayer(index))
+    {
+        return d->layers[index];
+    }
+    /// @throw MissingLayerError An invalid layer index was specified.
+    throw MissingModelError("SkyDrawable::layer", "Invalid layer index #" + String::number(index) + ".");
+}
+
+SkyDrawable::LayerData const &SkyDrawable::layer(int index) const
+{
+    return const_cast<LayerData const &>(const_cast<SkyDrawable *>(this)->layer(index));
+}
+
+int SkyDrawable::firstActiveLayer() const
+{
+    return d->firstActiveLayer; // Updated at draw time.
+}
+
 bool SkyDrawable::hasModel(int index) const
 {
-    return (index >= 0 && index < MAX_SKY_MODELS);
+    return (index >= 0 && index < MAX_MODELS);
 }
 
 SkyDrawable::ModelData &SkyDrawable::model(int index)
@@ -533,9 +564,9 @@ void SkyDrawable::cacheDrawableAssets(Sky const *sky)
 
     if(d->haveModels)
     {
-        for(int i = 0; i < MAX_SKY_MODELS; ++i)
+        for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData &mdata = d->models[i];
+            ModelData &mdata = model(i);
             if(!mdata.def) continue;
 
             d->resSys().cache(mdata.model);
@@ -549,13 +580,33 @@ void SkyDrawable::draw(Sky const *sky) const
     DENG2_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    // The sky is only drawn when at least one layer is active.
-    if(sky->firstActiveLayer() < 0) return;
+    // Determine the layer configuration for drawing.
+    // Note that this is used for sky models even if the sphere is not being drawn.
+    d->firstActiveLayer = -1;
+    for(int i = 0; i < MAX_LAYERS; ++i)
+    {
+        SkyLayer const *skyLayer = sky->layer(i);
+        LayerData &ldata         = const_cast<SkyDrawable *>(this)->layer(i);
+
+        ldata.active       = skyLayer->isActive();
+        ldata.masked       = skyLayer->isMasked();
+        ldata.offset       = skyLayer->offset();
+        ldata.material     = skyLayer->material();
+        ldata.fadeOutLimit = skyLayer->fadeoutLimit();
+
+        if(d->firstActiveLayer == -1 && ldata.active)
+        {
+            d->firstActiveLayer = i;
+        }
+    }
+
+    // Only drawn when at least one layer is active.
+    if(d->firstActiveLayer < 0) return;
 
     if(usingFog) glEnable(GL_FOG);
 
-    d->drawSphere(*sky);
-    d->drawModels(*sky);
+    d->drawSphere(sky->height(), sky->horizonOffset());
+    d->drawModels();
 
     if(usingFog) glDisable(GL_FOG);
 }
@@ -621,13 +672,13 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     if(!DD_IsSharpTick()) return;
 
     // Animate layers.
-    /*for(int i = 0; i < NUM_LAYERS; ++i)
+    /*for(int i = 0; i < MAX_LAYERS; ++i)
     {
-        Sky::Layer &lyr = sky().layer(i);
+        LayerData &lyr = sky().layer(i);
     }*/
 
     // Animate models.
-    for(int i = 0; i < MAX_SKY_MODELS; ++i)
+    for(int i = 0; i < MAX_MODELS; ++i)
     {
         ModelData &mdata = sky().model(i);
         if(!mdata.def) continue;

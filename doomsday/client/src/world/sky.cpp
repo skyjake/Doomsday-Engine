@@ -364,9 +364,7 @@ void Sky::configure(defn::Sky const *def)
         d->ambientColorDefined    = false;
         d->needUpdateAmbientColor = true;
     }
-#endif
 
-#ifdef __CLIENT__
     // Models are set up using the data in the definition (will override the sphere by default).
     ClientApp::renderSystem().sky().setupModels(def);
 #endif

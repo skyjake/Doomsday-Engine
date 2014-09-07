@@ -31,8 +31,6 @@
 
 class Sky;
 
-#define MAX_SKY_MODELS                   ( 32 )
-
 /**
  * Sky drawable.
  *
@@ -43,8 +41,20 @@ class Sky;
 class SkyDrawable
 {
 public:
+    /// Required layer is missing. @ingroup errors
+    DENG2_ERROR(MissingLayerError);
+
     /// Required model is missing. @ingroup errors
     DENG2_ERROR(MissingModelError);
+
+    struct LayerData
+    {
+        bool active;
+        bool masked;
+        float offset;
+        Material *material;
+        float fadeOutLimit;
+    };
 
     struct ModelData
     {
@@ -101,28 +111,36 @@ public:
     void draw(Sky const *sky = 0) const;
 
     /**
+     * Determines whether the specified sky layer @a index is valid.
+     * @see layer()
+     */
+    bool hasLayer(int index) const;
+
+    /**
+     * Lookup a sky layer by it's unique @a index.
+     * @see hasLayer()
+     */
+    LayerData &layer(int index);
+
+    /// @copydoc layer()
+    LayerData const &layer(int index) const;
+
+    int firstActiveLayer() const;
+
+    /**
      * Determines whether the specified sky model @a index is valid.
-     *
-     * @see model(), modelPtr()
+     * @see model()
      */
     bool hasModel(int index) const;
 
     /**
      * Lookup a sky model by it's unique @a index.
-     *
      * @see hasModel()
      */
     ModelData &model(int index);
 
     /// @copydoc model()
     ModelData const &model(int index) const;
-
-    /**
-     * Returns a pointer to the referenced sky model; otherwise @c 0.
-     *
-     * @see hasModel(), model()
-     */
-    inline ModelData *modelPtr(int index) { return hasModel(index)? &model(index) : 0; }
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
