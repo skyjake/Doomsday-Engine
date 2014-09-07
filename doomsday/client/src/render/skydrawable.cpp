@@ -626,18 +626,19 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
     de::zap(d->layers);
     de::zap(d->models);
 
+    if(!sky) return;
+
     for(int i = 0; i < MAX_MODELS; ++i)
     {
         ModelState &mstate = model(i);
 
         // Is this model in use?
-        SkyDrawable::ModelConfig const &mdata = sky->model(i);
-        if(mdata.def)
+        SkyDrawable::ModelConfig const &mcfg = sky->model(i);
+        if(Record const *skyModelDef = mcfg.def)
         {
-            Record const *skyModelDef = mdata.def;
             mstate.maxTimer = int(TICSPERSEC * skyModelDef->getf("frameInterval"));
             mstate.yaw      = skyModelDef->getf("yaw");
-            mstate.frame    = mdata.model->subModelDef(0).frame;
+            mstate.frame    = mcfg.model->subModelDef(0).frame;
         }
     }
 }
@@ -654,24 +655,25 @@ SkyDrawable::Animator &SkyDrawable::Animator::configure(Sky const &sky)
     d->horizonOffset = sky.horizonOffset();
 
     // Determine the layer configuration for drawing.
-    // Note that this is used for sky models even if the sphere is not being drawn.
+    // Note that this is also used for sky models even if the sphere is not being drawn.
     d->firstActiveLayer = -1;
     for(int i = 0; i < MAX_LAYERS; ++i)
     {
         SkyLayer const *skyLayer = sky.layer(i);
-        LayerState &ldata         = layer(i);
+        LayerState &lstate       = layer(i);
 
-        ldata.active       = skyLayer->isActive();
-        ldata.masked       = skyLayer->isMasked();
-        ldata.offset       = skyLayer->offset();
-        ldata.material     = skyLayer->material();
-        ldata.fadeOutLimit = skyLayer->fadeOutLimit();
+        lstate.active       = skyLayer->isActive();
+        lstate.masked       = skyLayer->isMasked();
+        lstate.offset       = skyLayer->offset();
+        lstate.material     = skyLayer->material();
+        lstate.fadeOutLimit = skyLayer->fadeOutLimit();
 
-        if(d->firstActiveLayer == -1 && ldata.active)
+        if(d->firstActiveLayer == -1 && lstate.active)
         {
             d->firstActiveLayer = i;
         }
     }
+
     return *this;
 }
 
