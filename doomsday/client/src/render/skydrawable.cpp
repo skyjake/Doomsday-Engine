@@ -322,6 +322,11 @@ struct Hemisphere
         }
     }
 
+    /**
+     * @todo It should not be necessary to rebuild the hemisphere model when these
+     * properties change. Instead drawing could be revised to use a "unit sized"
+     * model that is simply scaled and/or offset. -ds
+     */
     void rebuildIfNeeded(float newHeight, float newHorizonOffset)
     {
         // Rebuild our model if any parameters have changed.
