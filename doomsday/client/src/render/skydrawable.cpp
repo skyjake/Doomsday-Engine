@@ -592,7 +592,7 @@ void SkyDrawable::draw(Sky const *sky) const
         ldata.masked       = skyLayer->isMasked();
         ldata.offset       = skyLayer->offset();
         ldata.material     = skyLayer->material();
-        ldata.fadeOutLimit = skyLayer->fadeoutLimit();
+        ldata.fadeOutLimit = skyLayer->fadeOutLimit();
 
         if(d->firstActiveLayer == -1 && ldata.active)
         {

@@ -128,7 +128,7 @@ void Sky::Layer::setOffset(float newOffset)
     d->offset = newOffset;
 }
 
-float Sky::Layer::fadeoutLimit() const
+float Sky::Layer::fadeOutLimit() const
 {
     return d->fadeoutLimit;
 }

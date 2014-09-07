@@ -134,7 +134,7 @@ public:
         /**
          * Returns the fadeout limit for the layer.
          */
-        float fadeoutLimit() const;
+        float fadeOutLimit() const;
 
         /**
          * Change the fadeout limit for the layer.
