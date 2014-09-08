@@ -22,20 +22,21 @@
 #include "render/skydrawable.h"
 
 #include <cmath>
-#include <de/timer.h>
 #include <de/concurrency.h>
+#include <de/timer.h>
 #include <de/Log>
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
 
 #include "clientapp.h"
-#include "client/cl_def.h"
+#include "client/cl_def.h" // clientPaused
 
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
+#include "ModelDef"
 
 #include "render/rend_main.h"
 #include "render/rend_model.h"
@@ -57,7 +58,18 @@ static float sphereDistance = 1600; ///< Map units.
 static int sphereRows       = 3;
 
 /**
- * Geometry used with the sky sphere. The crest of the hemisphere is up (i.e., y+)
+ * Effective layer configuration used with both sphere and model drawing.
+ */
+struct LayerData
+{
+    bool active;   ///< @c true= the layer is active/enabled (will be drawn).
+    float offset;  ///< Layer material offset (along the horizon).
+};
+
+/**
+ * Geometry used with the sky sphere. The crest of the hemisphere is up (i.e., y+).
+ *
+ * @todo Should be a subcomponent of SkyDrawable (cleaner interface). -ds
  */
 struct Hemisphere
 {
@@ -179,14 +191,12 @@ struct Hemisphere
         glEnd();
     }
 
-    void draw(SphereComponent hemisphere, SkyDrawable const *drawable) const
+    void draw(SphereComponent hemisphere, Sky const &sky, int firstActiveLayer,
+              LayerData const *layerData) const
     {
-        DENG2_ASSERT(drawable);
-        Sky const &sky = *drawable->sky();
+        DENG2_ASSERT(layerData);
 
         if(verts.isEmpty()) return;
-
-        int const firstActiveLayer = drawable->firstActiveLayer();
         if(firstActiveLayer < 0) return;
 
         bool const yflip = (hemisphere == LowerHemisphere);
@@ -204,8 +214,8 @@ struct Hemisphere
 
         for(int i = firstActiveLayer; i < MAX_LAYERS; ++i)
         {
-            SkyLayer const *skyLayer            = sky.layer(i);
-            SkyDrawable::LayerData const &ldata = drawable->layer(i);
+            SkyLayer const *skyLayer = sky.layer(i);
+            LayerData const &ldata   = layerData[i];
 
             if(!ldata.active) continue;
 
@@ -337,11 +347,6 @@ static Hemisphere hemisphere;
 } // namespace internal
 using namespace ::internal;
 
-/**
- * @todo It should not be necessary to rebuild the hemisphere model when the
- * sky height and/or horizonOffset properties change. Instead drawing could
- * be revised to use a "unit sized" model that is simply scaled and/or offset. -ds
- */
 DENG2_PIMPL(SkyDrawable)
 , DENG2_OBSERVES(Sky, Deletion)
 , DENG2_OBSERVES(Sky, HeightChange)
@@ -356,10 +361,14 @@ DENG2_PIMPL(SkyDrawable)
     bool needHorizonOffsetUpdate = false;
 
     LayerData layers[MAX_LAYERS];
-    int firstActiveLayer = -1; ///< @c -1= no active layers.
+    int firstActiveLayer = -1;  ///< @c -1= no active layers.
 
     bool needBuildHemisphere = true;
 
+    struct ModelData
+    {
+        ModelDef *modef;
+    };
     ModelData models[MAX_MODELS];
     bool haveModels       = false;
     bool alwaysDrawSphere = false;
@@ -371,7 +380,7 @@ DENG2_PIMPL(SkyDrawable)
 
     ~Instance()
     {
-        // Stop observing Sky change audiences, if necessary.
+        // Stop observing Sky change notifications (if observing).
         self.configure();
     }
 
@@ -384,8 +393,8 @@ DENG2_PIMPL(SkyDrawable)
      */
     void prepare(Animator const *animator)
     {
-        // Determine the layer configuration for drawing.
-        // Note that this is also used for sky models even if the sphere is not being drawn.
+        // Determine the layer configuration. Note that this is also used for sky
+        // models even if the sphere is not being drawn.
         firstActiveLayer = -1;
         for(int i = 0; i < MAX_LAYERS; ++i)
         {
@@ -403,7 +412,7 @@ DENG2_PIMPL(SkyDrawable)
         updateHeightIfNeeded();
         updateHorizonOffsetIfNeeded();
 
-        if(needBuildHemisphere)
+        if(needBuildHemisphere || hemisphere.needRebuild)
         {
             needBuildHemisphere = false;
             hemisphere.makeVertices(height, horizonOffset);
@@ -428,8 +437,8 @@ DENG2_PIMPL(SkyDrawable)
         glScalef(sphereDistance, sphereDistance, sphereDistance);
 
         // Always draw both hemispheres.
-        hemisphere.draw(Hemisphere::LowerHemisphere, thisPublic);
-        hemisphere.draw(Hemisphere::UpperHemisphere, thisPublic);
+        hemisphere.draw(Hemisphere::LowerHemisphere, *sky, firstActiveLayer, layers);
+        hemisphere.draw(Hemisphere::UpperHemisphere, *sky, firstActiveLayer, layers);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -457,25 +466,26 @@ DENG2_PIMPL(SkyDrawable)
 
         for(int i = 0; i < MAX_MODELS; ++i)
         {
-            ModelData const &mdata    = self.model(i);
-            Record const *skyModelDef = mdata.def;
-            ModelDef *modef           = mdata.model;
+            ModelData const &mdata = models[i];
 
-            if(!skyModelDef) continue;
+            // Is this model in use?
+            ModelDef *modef = mdata.modef;
+            if(!modef) continue;
 
             // If the associated layer is not active then the model won't be drawn.
-            if(!layers[skyModelDef->geti("layer")].active) continue;
+            Record const &skyModelDef = defn::Sky(*sky->def()).model(i);
+            if(!layers[skyModelDef.geti("layer")].active) continue;
 
             Animator::ModelState const &mstate = animator->model(i);
 
             // Prepare a vissprite for ordered drawing.
             vissprite_t vis; de::zap(vis);
 
-            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef->get("originOffset")).xzy();
+            vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef.get("originOffset")).xzy();
             vis.pose.topZ            = vis.pose.origin.z;
             vis.pose.distance        = 1;
 
-            Vector2f rotate(skyModelDef->get("rotate"));
+            Vector2f rotate(skyModelDef.get("rotate"));
             vis.pose.yaw             = mstate.yaw;
             vis.pose.extraYawAngle   = vis.pose.yawAngleOffset   = rotate.x;
             vis.pose.extraPitchAngle = vis.pose.pitchAngleOffset = rotate.y;
@@ -487,7 +497,7 @@ DENG2_PIMPL(SkyDrawable)
             visModel.shineTranslateWithViewerPos = true;
             resSys().setModelDefFrame(*modef, mstate.frame);
 
-            vis.light.ambientColor = Vector4f(skyModelDef->get("color"), 1);
+            vis.light.ambientColor = Vector4f(skyModelDef.get("color"), 1);
 
             Rend_DrawModel(vis);
         }
@@ -517,19 +527,18 @@ DENG2_PIMPL(SkyDrawable)
         defn::Sky const skyDef(*def);
         for(int i = 0; i < skyDef.modelCount(); ++i)
         {
-            Record const &modef = skyDef.model(i);
-            ModelData &mdata    = self.model(i);
+            ModelData &mdata          = models[i];
+            Record const &skyModelDef = skyDef.model(i);
 
-            // Is the model ID set?
             try
             {
-                mdata.model = &resSys().modelDef(modef.gets("id"));
-                if(mdata.model->subCount())
+                if(ModelDef *modef = &resSys().modelDef(skyModelDef.gets("id")))
                 {
-                    mdata.def = modef.accessedRecordPtr();
-
-                    // There is a model here.
-                    haveModels = true;
+                    if(modef->subCount())
+                    {
+                        mdata.modef = modef;
+                        haveModels = true; // There is at least one model here.
+                    }
                 }
             }
             catch(ResourceSystem::MissingModelDefError const &)
@@ -566,7 +575,7 @@ DENG2_PIMPL(SkyDrawable)
     /// Observes Sky Deletion
     void skyBeingDeleted(Sky const &)
     {
-        // Stop observing Sky change audiences.
+        // Stop observing Sky change notifications.
         self.configure();
     }
 
@@ -621,52 +630,7 @@ Sky const *SkyDrawable::sky() const
     return d->sky;
 }
 
-int SkyDrawable::firstActiveLayer() const
-{
-    return d->firstActiveLayer;
-}
-
-bool SkyDrawable::hasLayer(int index) const
-{
-    return (index >= 0 && index < MAX_LAYERS);
-}
-
-SkyDrawable::LayerData &SkyDrawable::layer(int index)
-{
-    if(hasLayer(index))
-    {
-        return d->layers[index];
-    }
-    /// @throw MissingLayerConfigError An invalid model index was specified.
-    throw MissingLayerConfigError("SkyDrawable::layer", "Invalid layer config index #" + String::number(index) + ".");
-}
-
-SkyDrawable::LayerData const &SkyDrawable::layer(int index) const
-{
-    return const_cast<LayerData const &>(const_cast<SkyDrawable *>(this)->layer(index));
-}
-
-bool SkyDrawable::hasModel(int index) const
-{
-    return (index >= 0 && index < MAX_MODELS);
-}
-
-SkyDrawable::ModelData &SkyDrawable::model(int index)
-{
-    if(hasModel(index))
-    {
-        return d->models[index];
-    }
-    /// @throw MissingModelConfigError An invalid model index was specified.
-    throw MissingModelConfigError("SkyDrawable::model", "Invalid model config index #" + String::number(index) + ".");
-}
-
-SkyDrawable::ModelData const &SkyDrawable::model(int index) const
-{
-    return const_cast<ModelData const &>(const_cast<SkyDrawable *>(this)->model(index));
-}
-
-void SkyDrawable::cacheDrawableAssets()
+void SkyDrawable::cacheAssets()
 {
     if(!d->sky) return;
 
@@ -682,12 +646,21 @@ void SkyDrawable::cacheDrawableAssets()
 
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        ModelData &mdata = model(i);
-        if(mdata.def)
+        // Is this model in use?
+        if(ModelDef *modef = d->models[i].modef)
         {
-            d->resSys().cache(mdata.model);
+            d->resSys().cache(modef);
         }
     }
+}
+
+ModelDef *SkyDrawable::modelDef(int modelIndex) const
+{
+    if(modelIndex >= 0 && modelIndex < MAX_MODELS)
+    {
+        return d->models[modelIndex].modef;
+    }
+    return 0;
 }
 
 void SkyDrawable::draw(Animator const *animator) const
@@ -768,17 +741,18 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 
     if(!d->sky) return;
 
+    defn::Sky const skyDef(*d->sky->sky()->def());
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        ModelState &mstate = model(i);
+        ModelState &mstate        = model(i);
+        Record const &skyModelDef = skyDef.model(i);
 
         // Is this model in use?
-        SkyDrawable::ModelData const &mdata = sky->model(i);
-        if(Record const *skyModelDef = mdata.def)
+        if(ModelDef const *modef = d->sky->modelDef(i))
         {
-            mstate.maxTimer = int(TICSPERSEC * skyModelDef->getf("frameInterval"));
-            mstate.yaw      = skyModelDef->getf("yaw");
-            mstate.frame    = mdata.model->subModelDef(0).frame;
+            mstate.frame    = modef->subModelDef(0).frame;
+            mstate.maxTimer = int(TICSPERSEC * skyModelDef.getf("frameInterval"));
+            mstate.yaw      = skyModelDef.getf("yaw");
         }
     }
 }
@@ -842,20 +816,25 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     defn::Sky const skyDef(*sky().sky()->def());
     for(int i = 0; i < MAX_LAYERS; ++i)
     {
-        LayerState &lstate = layer(i);
-        lstate.offset += skyDef.layer(i).getf("scrollOffset");
+        Record const &skyLayerDef = skyDef.layer(i);
+        LayerState &lstate        = layer(i);
+
+        // Translate the layer origin.
+        lstate.offset += skyLayerDef.getf("offsetSpeed") / TICSPERSEC;
     }
 
     // Animate models.
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        ModelState &mstate = model(i);
-        ModelData &mdata   = sky().model(i);
-        if(!mdata.def) continue;
+        Record const &skyModelDef = skyDef.model(i);
+        ModelState &mstate        = model(i);
+
+        // Is this model in use?
+        ModelDef const *modef = sky().modelDef(i);
+        if(!modef) continue;
 
         // Rotate the model.
-        Record const *skyModelDef = mdata.def;
-        mstate.yaw += skyModelDef->getf("yawSpeed") / TICSPERSEC;
+        mstate.yaw += skyModelDef.getf("yawSpeed") / TICSPERSEC;
 
         // Is it time to advance to the next frame?
         if(mstate.maxTimer > 0 && ++mstate.timer >= mstate.maxTimer)
@@ -864,7 +843,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
             mstate.timer = 0;
 
             // Execute a console command?
-            String const execute = skyModelDef->gets("execute");
+            String const execute = skyModelDef.gets("execute");
             if(!execute.isEmpty())
             {
                 Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);

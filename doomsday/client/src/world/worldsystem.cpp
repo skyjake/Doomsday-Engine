@@ -612,7 +612,7 @@ DENG2_PIMPL(WorldSystem)
         Con_SetProgress(100);
         Time begunPrecacheAt;
         // Sky models usually have big skins.
-        ClientApp::renderSystem().sky().cacheDrawableAssets();
+        ClientApp::renderSystem().sky().cacheAssets();
         App_ResourceSystem().cacheForCurrentMap();
         App_ResourceSystem().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();

@@ -1423,10 +1423,10 @@ String MapInfoTranslator::translate()
             os << "\n  Sky Layer 1 {"
                << "\n    Flags = enable;"
                << "\n    Material = \"" + skyLayer1MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf("sky1ScrollDelta");
+            dfloat scrollDelta = info.getf("sky1ScrollDelta") * 35 /*TICSPERSEC*/;
             if(!de::fequal(scrollDelta, 0))
             {
-                os << "\n    Scroll X = " + String::number(scrollDelta) + ";";
+                os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
             }
             os << "\n  }";
         }
@@ -1439,10 +1439,10 @@ String MapInfoTranslator::translate()
                 os << "\n    Flags = enable | mask;";
             }
             os << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf("sky2ScrollDelta");
+            dfloat scrollDelta = info.getf("sky2ScrollDelta") * 35 /*TICSPERSEC*/;
             if(!de::fequal(scrollDelta, 0))
             {
-                os << "\n    Scroll X = " + String::number(scrollDelta) + ";";
+                os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
             }
             os << "\n  }";
         }

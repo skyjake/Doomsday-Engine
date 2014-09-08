@@ -26,7 +26,6 @@
 #include <de/Log>
 
 #ifdef __CLIENT__
-#  include "clientapp.h"
 #  include "gl/gl_main.h"
 #  include "gl/gl_tex.h"
 #  include "render/rend_main.h"    // rendSkyLightAuto
@@ -320,7 +319,7 @@ Sky::Sky(defn::Sky const *definition) : MapElement(DMU_SKY), d(new Instance(this
 
 void Sky::configure(defn::Sky const *def)
 {
-    LOG_AS("Sky::configure");
+    LOG_AS("Sky");
 
     // Remember the definition for this configuration (if any).
     d->def = def? def->accessedRecordPtr() : 0;
@@ -414,6 +413,8 @@ void Sky::setHorizonOffset(float newOffset)
 
 int Sky::property(DmuArgs &args) const
 {
+    LOG_AS("Sky");
+
     switch(args.prop)
     {
     case DMU_FLAGS: {
@@ -440,6 +441,8 @@ int Sky::property(DmuArgs &args) const
 
 int Sky::setProperty(DmuArgs const &args)
 {
+    LOG_AS("Sky");
+
     switch(args.prop)
     {
     case DMU_FLAGS: {

@@ -24,7 +24,6 @@
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/Observers>
-#include <de/Vector>
 #include <doomsday/defs/ded.h>
 #include <doomsday/defs/sky.h>
 #include "MaterialVariantSpec"
@@ -33,37 +32,17 @@
 class Sky;
 
 /**
- * Sky drawable.
+ * Specialized drawable for Sky visualization.
  *
- * This version supports only two sky layers. (More would be a waste of resources?)
+ * This version supports only two layers. (More would be a waste of resources?)
  *
  * @ingroup render
  */
 class SkyDrawable
 {
 public:
-    /// Required layer config is missing. @ingroup errors
-    DENG2_ERROR(MissingLayerConfigError);
-
-    /// Required model config is missing. @ingroup errors
-    DENG2_ERROR(MissingModelConfigError);
-
-    struct LayerData
-    {
-        bool active;
-        float offset;
-    };
-
-    struct ModelData
-    {
-        de::Record const *def; // Sky model def
-        ModelDef *model;
-    };
-
     /**
-     * Sky sphere and model animator.
-     *
-     * Animates a sky according to the configured definition.
+     * Animates the drawable according to the configured Sky.
      */
     class Animator
     {
@@ -137,6 +116,11 @@ public:
     };
 
 public:
+    /**
+     * Create a new SkyDrawable for visualization of the given @a sky.
+     *
+     * @param sky  Sky to visualize, if any (may be @c nullptr to configure layer).
+     */
     explicit SkyDrawable(Sky const *sky = nullptr);
 
     /**
@@ -147,7 +131,7 @@ public:
     SkyDrawable &configure(Sky const *sky = nullptr);
 
     /**
-     * Returns a pointer to configured sky, if any (may be @c nullptr).
+     * Returns a pointer to the configured sky, if any (may be @c nullptr).
      */
     Sky const *sky() const;
 
@@ -157,41 +141,16 @@ public:
     void draw(Animator const *animator = nullptr) const;
 
     /**
-     * Cache all assets needed for visualizing the sky.
+     * Cache all the assets needed for visualizing the sky.
      */
-    void cacheDrawableAssets();
-
-    int firstActiveLayer() const;
+    void cacheAssets();
 
     /**
-     * Determines whether the specified model config @a index is valid.
-     * @see model()
+     * Returns the definition for a configured model, if any (may be @a nullptr).
+     *
+     * @param modelIndex  Unique index of the model.
      */
-    bool hasLayer(int index) const;
-
-    /**
-     * Lookup a layer config by it's unique @a index.
-     * @see hasLayer()
-     */
-    LayerData &layer(int index);
-
-    /// @copydoc layer()
-    LayerData const &layer(int index) const;
-
-    /**
-     * Determines whether the specified model config @a index is valid.
-     * @see model()
-     */
-    bool hasModel(int index) const;
-
-    /**
-     * Lookup a model config by it's unique @a index.
-     * @see hasModel()
-     */
-    ModelData &model(int index);
-
-    /// @copydoc model()
-    ModelData const &model(int index) const;
+    ModelDef *modelDef(int modelIndex) const;
 
 public:
     static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
