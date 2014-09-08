@@ -211,9 +211,19 @@ def build_source_package():
     # Create a source Debian package and upload it to Launchpad.
     pkgVer = '%s.%i+%s' % (ev.version_base(), ev.number(), distro)
     pkgDir = pkgName + '-%s' % pkgVer
+
+    print "Extracting", fn
     system_command('tar xzf %s' % fn)
+    print "Renaming", fn[:-7], 'to', pkgDir + '.orig'
     os.rename(fn[:-7], pkgDir + '.orig')
+
+    origName = pkgName + '_%s' % ev.version_base() + '.orig.tar.gz'
+    print "Symlink to", origName 
+    system_command('ln %s %s' % (fn, origName))
+
+    print "Extracting", fn
     system_command('tar xzf %s' % fn)
+    print "Renaming", fn[:-7], 'to', pkgDir
     os.rename(fn[:-7], pkgDir)
     os.chdir(pkgDir)
     system_command('echo "" | dh_make -s -c gpl2 --file ../%s' % fn)
