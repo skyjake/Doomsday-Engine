@@ -55,7 +55,12 @@ namespace internal {
 /// Console variables:
 static int sphereDetail     = 6;
 static float sphereDistance = 1600; ///< Map units.
-static int sphereRows       = 3;
+static int sphereRows       = 3;    ///< Per hemisphere.
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 /**
  * Effective layer configuration used with both sphere and model drawing.
@@ -86,10 +91,6 @@ struct Hemisphere
     typedef QVector<Vector3f> VBuf;
     VBuf verts;
     bool needRebuild = true;
-
-    static inline ResourceSystem &resSys() {
-        return ClientApp::resourceSystem();
-    }
 
     // Look up the precalculated vertex.
     inline Vector3f const &vertex(int r, int c) const {
@@ -367,7 +368,7 @@ DENG2_PIMPL(SkyDrawable)
 
     struct ModelData
     {
-        ModelDef *modef;
+        ModelDef *modef = nullptr;
     };
     ModelData models[MAX_MODELS];
     bool haveModels       = false;
@@ -384,17 +385,13 @@ DENG2_PIMPL(SkyDrawable)
         self.configure();
     }
 
-    static inline ResourceSystem &resSys() {
-        return ClientApp::resourceSystem();
-    }
-
     /**
      * Prepare for drawing; determine layer configuration, sphere dimensions, etc..
      */
     void prepare(Animator const *animator)
     {
         // Determine the layer configuration. Note that this is also used for sky
-        // models even if the sphere is not being drawn.
+        // models, even if the sphere is not being drawn.
         firstActiveLayer = -1;
         for(int i = 0; i < MAX_LAYERS; ++i)
         {
@@ -634,11 +631,12 @@ void SkyDrawable::cacheAssets()
 {
     if(!d->sky) return;
 
-    for(SkyLayer const *layer : d->sky->layers())
+    for(int i = 0; i < MAX_LAYERS; ++i)
     {
+        SkyLayer const *layer = d->sky->layer(i);
         if(Material *mat = layer->material())
         {
-            d->resSys().cache(*mat, layerMaterialSpec(layer->isMasked()));
+            resSys().cache(*mat, layerMaterialSpec(layer->isMasked()));
         }
     }
 
@@ -649,7 +647,7 @@ void SkyDrawable::cacheAssets()
         // Is this model in use?
         if(ModelDef *modef = d->models[i].modef)
         {
-            d->resSys().cache(modef);
+            resSys().cache(modef);
         }
     }
 }
@@ -685,10 +683,9 @@ void SkyDrawable::draw(Animator const *animator) const
 
 MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
 {
-    return Instance::resSys()
-                .materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
-                              0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
-                              0, -1, -1, false, true, false, false);
+    return resSys().materialSpec(SkySphereContext, TSF_NO_COMPRESSION | (masked? TSF_ZEROMASK : 0),
+                                 0, 0, 0, GL_REPEAT, GL_CLAMP_TO_EDGE,
+                                 0, -1, -1, false, true, false, false);
 }
 
 namespace {
