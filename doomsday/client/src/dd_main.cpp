@@ -1177,13 +1177,19 @@ static int DD_ActivateGameWorker(void *context)
     }
 
     // Now that resources have been located we can begin to initialize the game.
-    if(App_GameLoaded() && gx.PreInit)
+    if(App_GameLoaded())
     {
-        DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+        // Any game initialization hooks?
+        DD_CallHooks(HOOK_GAME_INIT, 0, 0);
 
-        DD_SetActivePluginId(App_CurrentGame().pluginId());
-        gx.PreInit(App_Games().id(App_CurrentGame()));
-        DD_SetActivePluginId(0);
+        if(gx.PreInit)
+        {
+            DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+
+            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            gx.PreInit(App_Games().id(App_CurrentGame()));
+            DD_SetActivePluginId(0);
+        }
     }
 
     if(parms.initiatedBusyMode)
