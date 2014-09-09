@@ -247,6 +247,32 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 {
     if(isCustom) *isCustom = false;
 
+    if(Str_StartsWith(path, "LumpIndex:"))
+    {
+        bool isNumber;
+        lumpnum_t const lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
+        LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+        if(isNumber && lumpIndex.hasLump(lumpNum))
+        {
+            File1 &lump = lumpIndex.lump(lumpNum);
+            if(isCustom) *isCustom = lump.hasCustom();
+
+            // Ignore zero-length lumps.
+            if(!lump.size()) return 0;
+
+            // Ensure the resulting string is terminated.
+            AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
+            lump.unlock();
+
+            if(Str_IsEmpty(string))
+                return 0;
+
+            return string;
+        }
+
+        return 0;
+    }
+
     if(Str_StartsWith(path, "Lumps:"))
     {
         char const *lumpName       = Str_Text(path) + 6;
