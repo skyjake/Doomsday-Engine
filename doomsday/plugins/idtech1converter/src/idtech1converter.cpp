@@ -21,6 +21,8 @@
 
 #include "idtech1converter.h"
 #include "mapinfotranslator.h"
+#include <doomsday/filesys/lumpindex.h>
+#include <de/App>
 #include <de/Log>
 
 using namespace de;
@@ -71,16 +73,40 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
-void ConvertMapInfo()
+/**
+ * This function will be called when Doomsday begins to initialize a loaded game.
+ *
+ * Our job is to determine whether the game resources include any Hexen, MAPINFO-syntax
+ * definitions that need to be converted into DED format, for parsing later.
+ *
+ * @return  @c true if successful (always).
+ */
+int ConvertMapInfo(int /*hookType*/, int /*parm*/, void * /*context*/)
 {
     // Initialize a new translator.
     MapInfoTranslator xltr;
 
-    // Read the primary MAPINFO (from the IWAD).
-    xltr.mergeFromFile("Lumps:MAPINFO");
+    // Process all MAPINFO lumps, in load order.
+    bool needTranslate = false;
+    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
+    for(int i = 0; i < lumpIndex.size(); ++i)
+    {
+        String const &fileName = lumpIndex[i].name();
+        if(fileName.fileNameWithoutExtension().toLower() == "mapinfo")
+        {
+            xltr.mergeFromFile("LumpIndex:" + String::number(i));
+            needTranslate = true;
+        }
+    }
 
-    String text = xltr.translate() + "\n"; // End with a newline, for neatness sake.
-    qDebug() << text;
+    if(needTranslate)
+    {
+        /// @todo: Output the translated MAPINFOs to the auto-load directory for definitions.
+        String text = xltr.translate() + "\n"; // End with a newline, for neatness sake.
+        qDebug() << text;
+    }
+
+    return true; // success
 }
 
 /**
@@ -89,6 +115,7 @@ void ConvertMapInfo()
  */
 extern "C" void DP_Initialize()
 {
+    Plug_AddHook(HOOK_GAME_INIT, ConvertMapInfo);
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
 
