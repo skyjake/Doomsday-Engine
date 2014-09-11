@@ -509,23 +509,18 @@ public:
 struct LabelWidget : public Widget
 {
 public:
-    char const *text;
-
-    /// Patch to be used when drawing this instead of text if Patch Replacement is in use.
-    patchid_t *patch;
-
-    /// @ref mnTextFlags
-    int flags;
-
-public:
-    LabelWidget();
-    virtual ~LabelWidget() {}
+    LabelWidget(de::String const &text = "", patchid_t *patch = 0);
+    virtual ~LabelWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *page);
-};
 
-void LabelWidget_SetFlags(Widget *wi, flagop_t op, int flags);
+    void setPatch(patchid_t *newPatch);
+    void setText(de::String const &newText);
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 /**
  * Buttons.

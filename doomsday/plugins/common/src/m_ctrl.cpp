@@ -297,11 +297,16 @@ void Hu_MenuInitControlsPage()
     {
         controlconfig_t *binds = &controlConfig[i];
 
+        char const *labelTxt = binds->text;
+        if(labelTxt && (PTR2INT(labelTxt) > 0 && PTR2INT(labelTxt) < NUMTEXT))
+        {
+            labelTxt = GET_TXT(PTR2INT(labelTxt));
+        }
+
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            LabelWidget *txt = new LabelWidget;
-            txt->text          = binds->text;
+            LabelWidget *txt = new LabelWidget(labelTxt);
             txt->_pageColorIdx = MENU_COLOR2;
 
             // A new group begins;
@@ -311,9 +316,7 @@ void Hu_MenuInitControlsPage()
         }
         else
         {
-
-            LabelWidget *labelOb = new LabelWidget;
-            labelOb->text = binds->text;
+            LabelWidget *labelOb = new LabelWidget(labelTxt);
             labelOb->setGroup(group);
 
             page->_widgets << labelOb;

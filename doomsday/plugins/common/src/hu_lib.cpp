@@ -1346,14 +1346,9 @@ void Page::initObjects()
             wi->setShortcut(shortcut);
         }
 
-        if(LabelWidget *txt = wi->maybeAs<LabelWidget>())
+        if(wi->is<LabelWidget>())
         {
             wi->setFlags(FO_SET, MNF_NO_FOCUS);
-
-            if(txt->text && (PTR2INT(txt->text) > 0 && PTR2INT(txt->text) < NUMTEXT))
-            {
-                txt->text = GET_TXT(PTR2INT(txt->text));
-            }
         }
         if(LineEditWidget *edit = wi->maybeAs<LineEditWidget>())
         {
@@ -1767,15 +1762,23 @@ void RectWidget::setBackgroundPatch(patchid_t newBackgroundPatch)
     patch = newBackgroundPatch;
 }
 
-LabelWidget::LabelWidget()
-    : Widget()
-    , text (0)
-    , patch(0)
-    , flags(0)
+DENG2_PIMPL_NOREF(LabelWidget)
+{
+    String text;
+    patchid_t *patch = 0;  ///< Used instead of text if Patch Replacement is in use.
+    int flags = 0;         ///< @ref mnTextFlags
+};
+
+LabelWidget::LabelWidget(String const &text, patchid_t *patch) : Widget(), d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
+    setText(text);
+    setPatch(patch);
 }
+
+LabelWidget::~LabelWidget()
+{}
 
 void LabelWidget::draw(Point2Raw const *origin)
 {
@@ -1796,16 +1799,16 @@ void LabelWidget::draw(Point2Raw const *origin)
     FR_SetFont(fontId);
     FR_SetColorAndAlphav(color);
 
-    if(patch)
+    if(d->patch)
     {
-        char const *replacement = 0;
-        if(!(flags & MNTEXT_NO_ALTTEXT))
+        String replacement;
+        if(!(d->flags & MNTEXT_NO_ALTTEXT))
         {
-            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), *patch, text);
+            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), *d->patch, d->text);
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch(*patch, replacement, de::Vector2i(origin->x, origin->y),
+        WI_DrawPatch(*d->patch, replacement, Vector2i(origin->x, origin->y),
                      ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -1813,7 +1816,7 @@ void LabelWidget::draw(Point2Raw const *origin)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(text, origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawText3(d->text.toUtf8().constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -1821,33 +1824,29 @@ void LabelWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
 
-    Size2Raw size;
     /// @todo What if patch replacement is disabled?
-    if(patch != 0)
+    if(d->patch)
     {
         patchinfo_t info;
-        R_GetPatchInfo(*patch, &info);
+        R_GetPatchInfo(*d->patch, &info);
         Rect_SetWidthHeight(_geometry, info.geometry.size.width, info.geometry.size.height);
         return;
     }
+
+    Size2Raw size;
     FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
-    FR_TextSize(&size, text);
+    FR_TextSize(&size, d->text.toUtf8().constData());
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-void LabelWidget_SetFlags(Widget *wi, flagop_t op, int flags)
+void LabelWidget::setPatch(patchid_t *newPatch)
 {
-    DENG2_ASSERT(wi != 0);
-    LabelWidget *txt = static_cast<LabelWidget *>(wi);
+    d->patch = newPatch;
+}
 
-    switch(op)
-    {
-    case FO_CLEAR:  txt->flags &= ~flags;  break;
-    case FO_SET:    txt->flags |= flags;   break;
-    case FO_TOGGLE: txt->flags ^= flags;   break;
-
-    default: DENG2_ASSERT(!"LabelWidget::SetFlags: Unknown op.");
-    }
+void LabelWidget::setText(String const &newText)
+{
+    d->text = newText;
 }
 
 LineEditWidget::LineEditWidget()
@@ -2517,12 +2516,10 @@ void InlineListWidget::updateGeometry(Page *page)
 
 DENG2_PIMPL_NOREF(ButtonWidget)
 {
-    de::String text;  ///< Label text.
-    patchid_t patch;  ///< Used when drawing this instead of text, if set.
-    bool noAltText;
+    String text;              ///< Label text.
+    patchid_t patch = -1;     ///< Used when drawing this instead of text, if set.
+    bool noAltText  = false;
     QVariant data;
-
-    Instance() : patch(-1), noAltText(false) {}
 };
 
 ButtonWidget::ButtonWidget() : Widget(), d(new Instance)
@@ -2559,13 +2556,12 @@ void ButtonWidget::draw(Point2Raw const *origin)
     FR_SetColorAndAlphav(color);
     DGL_Color4f(1, 1, 1, color[CA]);
 
-    Block textAsUtf8 = d->text.toUtf8();
     if(d->patch >= 0)
     {
-        char const *replacement = 0;
+        String replacement;
         if(!d->noAltText)
         {
-            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, textAsUtf8.constData());
+            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text);
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -2577,7 +2573,7 @@ void ButtonWidget::draw(Point2Raw const *origin)
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(textAsUtf8.constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawText3(d->text.toUtf8().constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -2619,8 +2615,7 @@ void ButtonWidget::updateGeometry(Page *page)
     //int act   = (_flags & MNF_ACTIVE)   != 0;
     //int click = (_flags & MNF_CLICKED)  != 0;
     //dd_bool down = act || click;
-    Block textAsUtf8 = d->text.toUtf8();
-    char const *useText = textAsUtf8.constData();
+    String useText = d->text;
     Size2Raw size;
 
     // @todo What if patch replacement is disabled?
@@ -2629,10 +2624,10 @@ void ButtonWidget::updateGeometry(Page *page)
         if(!d->noAltText)
         {
             // Use the replacement string?
-            useText = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text.toUtf8().constData());
+            useText = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text);
         }
 
-        if(!useText || !useText[0])
+        if(useText.isEmpty())
         {
             // Use the original patch.
             patchinfo_t info;
@@ -2644,7 +2639,7 @@ void ButtonWidget::updateGeometry(Page *page)
     }
 
     FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
-    FR_TextSize(&size, useText);
+    FR_TextSize(&size, useText.toUtf8().constData());
 
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }

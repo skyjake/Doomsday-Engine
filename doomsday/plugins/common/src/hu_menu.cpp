@@ -446,12 +446,7 @@ void Hu_MenuInitColorWidgetPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Red";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Red");
     {
         SliderWidget *sld = new SliderWidget;
         sld->_flags    = MNF_ID1;
@@ -467,12 +462,7 @@ void Hu_MenuInitColorWidgetPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Green";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Green");
     {
         SliderWidget *sld = new SliderWidget;
         sld->_flags    = MNF_ID2;
@@ -488,12 +478,7 @@ void Hu_MenuInitColorWidgetPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Blue";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Blue");
     {
         SliderWidget *sld = new SliderWidget;
         sld->_flags    = MNF_ID3;
@@ -510,9 +495,8 @@ void Hu_MenuInitColorWidgetPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Opacity");
         text->_flags = MNF_ID4;
-        text->text   = "Opacity";
         page->_widgets << text;
     }
 
@@ -558,10 +542,9 @@ void Hu_MenuInitMainPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("", &pMainTitle);
         text->_origin.x = -3;
         text->_origin.y = -70;
-        text->patch     = &pMainTitle;
         page->_widgets << text;
     }
 #endif
@@ -867,10 +850,9 @@ void Hu_MenuInitPlayerSetupPage()
 
 #if __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Class");
         text->_flags    = MNF_LAYOUT_OFFSET;
         text->_origin.y = 5;
-        text->text      = "Class";
         page->_widgets << text;
     }
 
@@ -891,12 +873,11 @@ void Hu_MenuInitPlayerSetupPage()
 #endif
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Color");
 #ifdef __JHERETIC__
         text->_flags    = MNF_LAYOUT_OFFSET;
         text->_origin.y = 5;
 #endif
-        text->text      = "Color";
         page->_widgets << text;
     }
 
@@ -958,24 +939,14 @@ void Hu_MenuInitSaveOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Confirm quick load/save";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Confirm quick load/save");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("game-save-confirm");
         btn->setShortcut('q');
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Confirm reborn load";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Confirm reborn load");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("game-save-confirm-loadonreborn");
         btn->setShortcut('r');
@@ -983,17 +954,15 @@ void Hu_MenuInitSaveOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Reborn preferences");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Reborn preferences";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Load last save");
         text->setGroup(1);
-        text->text = "Load last save";
         page->_widgets << text;
     }
 
@@ -1273,36 +1242,21 @@ void Hu_MenuInitGameplayOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Always Run";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Always Run");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-run");
         btn->setShortcut('r');
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Use LookSpring";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Use LookSpring");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-look-spring");
         btn->setShortcut('l');
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Disable AutoAim";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Disable AutoAim");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-aim-noauto");
         btn->setShortcut('a');
@@ -1310,12 +1264,7 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Allow Jumping";
-        page->_widgets << text;
-    }
-
+    page->_widgets << new LabelWidget("Allow Jumping");
     {
         CVarToggleWidget *btn = new CVarToggleWidget("player-jump");
         btn->setShortcut('j');
@@ -1324,29 +1273,22 @@ void Hu_MenuInitGameplayOptionsPage()
 #endif
 
 #if __JDOOM64__
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Weapon Recoil";
-        page->_widgets << text;
-    }
-
-    page->_widgets << new CVarToggleWidget("player-weapon-recoil");
+    page->_widgets << new LabelWidget("Weapon Recoil")
+                   << new CVarToggleWidget("player-weapon-recoil");
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Compatibility");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Compatibility";
         page->_widgets << text;
     }
 
 # if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Any Boss Trigger 666");
         text->setGroup(1);
-        text->text   = "Any Boss Trigger 666";
         page->_widgets << text;
     }
 
@@ -1359,9 +1301,8 @@ void Hu_MenuInitGameplayOptionsPage()
 
 #  if !__JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Av Resurrects Ghosts");
         text->setGroup(1);
-        text->text = "Av Resurrects Ghosts";
         page->_widgets << text;
     }
 
@@ -1374,9 +1315,8 @@ void Hu_MenuInitGameplayOptionsPage()
 
 # if __JDOOM__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("VileChase uses Av radius");
         text->setGroup(1);
-        text->text = "VileChase uses Av radius";
         page->_widgets << text;
     }
 
@@ -1390,9 +1330,8 @@ void Hu_MenuInitGameplayOptionsPage()
 #  endif // !__JDOOM64__
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("PE Limited To 21 Lost Souls");
         text->setGroup(1);
-        text->text = "PE Limited To 21 Lost Souls";
         page->_widgets << text;
     }
 
@@ -1403,9 +1342,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("LS Can Get Stuck Inside Walls");
         text->setGroup(1);
-        text->text = "LS Can Get Stuck Inside Walls";
         page->_widgets << text;
     }
 
@@ -1417,9 +1355,8 @@ void Hu_MenuInitGameplayOptionsPage()
 # endif // __JDOOM__ || __JDOOM64__
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Monsters Fly Over Obstacles");
         text->setGroup(1);
-        text->text = "Monsters Fly Over Obstacles";
         page->_widgets << text;
     }
 
@@ -1430,9 +1367,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Monsters Can Get Stuck In Doors");
         text->setGroup(1);
-        text->text = "Monsters Can Get Stuck In Doors";
         page->_widgets << text;
     }
 
@@ -1444,9 +1380,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Some Objects Never Hang Over Ledges");
         text->setGroup(1);
-        text->text = "Some Objects Never Hang Over Ledges";
         page->_widgets << text;
     }
 
@@ -1458,9 +1393,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Objects Fall Under Own Weight");
         text->setGroup(1);
-        text->text = "Objects Fall Under Own Weight";
         page->_widgets << text;
     }
 
@@ -1473,9 +1407,8 @@ void Hu_MenuInitGameplayOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("All Crushed Objects Become A Pile Of Gibs");
         text->setGroup(1);
-        text->text = "All Crushed Objects Become A Pile Of Gibs";
         page->_widgets << text;
     }
 
@@ -1488,9 +1421,8 @@ void Hu_MenuInitGameplayOptionsPage()
 #endif
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Corpses Slide Down Stairs");
         text->setGroup(1);
-        text->text = "Corpses Slide Down Stairs";
         page->_widgets << text;
     }
 
@@ -1502,9 +1434,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Use Exactly Doom's Clipping Code");
         text->setGroup(1);
-        text->text = "Use Exactly Doom's Clipping Code";
         page->_widgets << text;
     }
 
@@ -1516,9 +1447,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("  ^If Not NorthOnly WallRunning");
         text->setGroup(1);
-        text->text = "  ^If Not NorthOnly WallRunning";
         page->_widgets << text;
     }
 
@@ -1531,9 +1461,8 @@ void Hu_MenuInitGameplayOptionsPage()
 
 # if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Zombie Players Can Exit Maps");
         text->setGroup(1);
-        text->text = "Zombie Players Can Exit Maps";
         page->_widgets << text;
     }
 
@@ -1545,9 +1474,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Fix Ouch Face");
         text->setGroup(1);
-        text->text = "Fix Ouch Face";
         page->_widgets << text;
     }
 
@@ -1558,9 +1486,8 @@ void Hu_MenuInitGameplayOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Fix Weapon Slot Display");
         text->setGroup(1);
-        text->text = "Fix Weapon Slot Display";
         page->_widgets << text;
     }
 
@@ -1586,11 +1513,7 @@ void Hu_MenuInitHUDOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "View Size";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("View Size");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -1610,20 +1533,11 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
 #if __JDOOM__
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Single Key Display";
-        page->_widgets << text;
-    }
-
-    page->_widgets << new CVarToggleWidget("hud-keys-combine");
+    page->_widgets << new LabelWidget("Single Key Display")
+                   << new CVarToggleWidget("hud-keys-combine");
 #endif
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "AutoHide";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("AutoHide");
 
     {
         SliderWidget *sld = new TextualSliderWidget;
@@ -1643,17 +1557,15 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("UnHide Events");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "UnHide Events";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Receive Damage");
         text->setGroup(1);
-        text->text = "Receive Damage";
         page->_widgets << text;
     }
 
@@ -1664,9 +1576,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Health");
         text->setGroup(1);
-        text->text = "Pickup Health";
         page->_widgets << text;
     }
 
@@ -1677,9 +1588,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Armor");
         text->setGroup(1);
-        text->text = "Pickup Armor";
         page->_widgets << text;
     }
 
@@ -1690,9 +1600,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Powerup");
         text->setGroup(1);
-        text->text = "Pickup Powerup";
         page->_widgets << text;
     }
 
@@ -1703,9 +1612,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Weapon");
         text->setGroup(1);
-        text->text = "Pickup Weapon";
         page->_widgets << text;
     }
 
@@ -1716,13 +1624,12 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
-        text->setGroup(1);
 #if __JHEXEN__
-        text->text = "Pickup Mana";
+        LabelWidget *text = new LabelWidget("Pickup Mana");
 #else
-        text->text = "Pickup Ammo";
+        LabelWidget *text = new LabelWidget("Pickup Ammo");
 #endif
+        text->setGroup(1);
         page->_widgets << text;
     }
 
@@ -1733,9 +1640,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Key");
         text->setGroup(1);
-        text->text = "Pickup Key";
         page->_widgets << text;
     }
 
@@ -1747,9 +1653,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Item");
         text->setGroup(1);
-        text->text = "Pickup Item";
         page->_widgets << text;
     }
 
@@ -1761,17 +1666,15 @@ void Hu_MenuInitHUDOptionsPage()
 #endif // __JHERETIC__ || __JHEXEN__
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Messages");
         text->setGroup(2);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Messages";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Shown");
         text->setGroup(2);
-        text->text = "Shown";
         page->_widgets << text;
     }
 
@@ -1783,9 +1686,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Uptime");
         text->setGroup(2);
-        text->text   = "Uptime";
         page->_widgets << text;
     }
 
@@ -1808,9 +1710,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Size");
         text->setGroup(2);
-        text->text = "Size";
         page->_widgets << text;
     }
 
@@ -1829,9 +1730,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Color");
         text->setGroup(2);
-        text->text = "Color";
         page->_widgets << text;
     }
 
@@ -1850,18 +1750,16 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Crosshair");
         text->setGroup(3);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Crosshair";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Symbol");
         text->setGroup(3);
         text->setShortcut('c');
-        text->text = "Symbol";
         page->_widgets << text;
     }
 
@@ -1885,9 +1783,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Size");
         text->setGroup(3);
-        text->text   = "Size";
         page->_widgets << text;
     }
 
@@ -1906,9 +1803,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Angle");
         text->setGroup(3);
-        text->text = "Angle";
         page->_widgets << text;
     }
 
@@ -1927,9 +1823,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Opacity");
         text->setGroup(3);
-        text->text = "Opacity";
         page->_widgets << text;
     }
 
@@ -1948,9 +1843,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Vitality Color");
         text->setGroup(3);
-        text->text = "Vitality Color";
         page->_widgets << text;
     }
 
@@ -1961,9 +1855,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Color");
         text->setGroup(3);
-        text->text = "Color";
         page->_widgets << text;
     }
 
@@ -1983,17 +1876,15 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Statusbar");
         text->setGroup(4);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Statusbar";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Size");
         text->setGroup(4);
-        text->text = "Size";
         page->_widgets << text;
     }
 
@@ -2012,9 +1903,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Opacity");
         text->setGroup(4);
-        text->text = "Opacity";
         page->_widgets << text;
     }
 
@@ -2036,17 +1926,15 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Counters");
         text->setGroup(5);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Counters";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Items");
         text->setGroup(5);
-        text->text = "Items";
         page->_widgets << text;
     }
 
@@ -2069,9 +1957,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Kills");
         text->setGroup(5);
-        text->text = "Kills";
         page->_widgets << text;
     }
 
@@ -2094,9 +1981,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Secrets");
         text->setGroup(5);
-        text->text = "Secrets";
         page->_widgets << text;
     }
 
@@ -2119,9 +2005,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Automap Only");
         text->setGroup(5);
-        text->text = "Automap Only";
         page->_widgets << text;
     }
 
@@ -2132,9 +2017,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Size");
         text->setGroup(5);
-        text->text = "Size";
         page->_widgets << text;
     }
 
@@ -2155,17 +2039,15 @@ void Hu_MenuInitHUDOptionsPage()
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Fullscreen");
         text->setGroup(6);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Fullscreen";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Size");
         text->setGroup(6);
-        text->text = "Size";
         page->_widgets << text;
     }
 
@@ -2184,9 +2066,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Text Color");
         text->setGroup(6);
-        text->text = "Text Color";
         page->_widgets << text;
     }
 
@@ -2207,9 +2088,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Mana");
         text->setGroup(6);
-        text->text = "Show Mana";
         page->_widgets << text;
     }
 
@@ -2223,9 +2103,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Ammo");
         text->setGroup(6);
-        text->text = "Show Ammo";
         page->_widgets << text;
     }
 
@@ -2237,9 +2116,8 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Armor");
         text->setGroup(6);
-        text->text = "Show Armor";
         page->_widgets << text;
     }
 
@@ -2254,9 +2132,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show PowerKeys");
         text->setGroup(6);
-        text->text = "Show PowerKeys";
         page->_widgets << text;
     }
 
@@ -2271,9 +2148,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Status");
         text->setGroup(6);
-        text->text = "Show Status";
         page->_widgets << text;
     }
 
@@ -2287,9 +2163,8 @@ void Hu_MenuInitHUDOptionsPage()
 #endif // __JDOOM__
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Health");
         text->setGroup(6);
-        text->text = "Show Health";
         page->_widgets << text;
     }
 
@@ -2302,9 +2177,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Keys");
         text->setGroup(6);
-        text->text = "Show Keys";
         page->_widgets << text;
     }
 
@@ -2318,9 +2192,8 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Ready-Item");
         text->setGroup(6);
-        text->text = "Show Ready-Item";
         page->_widgets << text;
     }
 
@@ -2346,11 +2219,7 @@ void Hu_MenuInitAutomapOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Background Opacity";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Background Opacity");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -2366,11 +2235,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Line Opacity";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Line Opacity");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -2386,11 +2251,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Line Width";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Line Width");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -2405,11 +2266,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "HUD Display";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("HUD Display");
 
 #if !__JDOOM64__
     {
@@ -2428,11 +2285,7 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 #endif
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Door Colors";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Door Colors");
 
     {
         CVarToggleWidget *btn = new CVarToggleWidget("map-door-colors");
@@ -2440,11 +2293,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Door Glow";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Door Glow");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -2460,11 +2309,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Use Custom Colors";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Use Custom Colors");
 
     {
         InlineListWidget *list = new InlineListWidget;
@@ -2480,11 +2325,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << list;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Wall";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Wall");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2498,11 +2339,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Floor Height Change";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Floor Height Change");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2516,11 +2353,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Ceiling Height Change";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Ceiling Height Change");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2533,11 +2366,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Unseen";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Unseen");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2551,11 +2380,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Thing";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Thing");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2569,11 +2394,7 @@ void Hu_MenuInitAutomapOptionsPage()
         page->_widgets << cbox;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Background";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Background");
 
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
@@ -2658,9 +2479,8 @@ void Hu_MenuInitWeaponsPage()
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Priority Order");
         text->_pageColorIdx = MENU_COLOR2;
-        text->text = "Priority Order";
         page->_widgets << text;
     }
 
@@ -2682,17 +2502,15 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Cycling");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Cycling";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Use Priority Order");
         text->setGroup(1);
-        text->text = "Use Priority Order";
         page->_widgets << text;
     }
 
@@ -2704,9 +2522,8 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Sequential");
         text->setGroup(1);
-        text->text = "Sequential";
         page->_widgets << text;
     }
 
@@ -2718,17 +2535,15 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Autoswitch");
         text->setGroup(2);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Autoswitch";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Weapon");
         text->setGroup(2);
-        text->text = "Pickup Weapon";
         page->_widgets << text;
     }
 
@@ -2749,9 +2564,8 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("   If Not Firing");
         text->setGroup(2);
-        text->text = "   If Not Firing";
         page->_widgets << text;
     }
 
@@ -2763,9 +2577,8 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Ammo");
         text->setGroup(2);
-        text->text = "Pickup Ammo";
         page->_widgets << text;
     }
 
@@ -2787,9 +2600,8 @@ void Hu_MenuInitWeaponsPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Pickup Beserk");
         text->setGroup(2);
-        text->text = "Pickup Beserk";
         page->_widgets << text;
     }
 
@@ -2812,11 +2624,7 @@ void Hu_MenuInitInventoryOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Select Mode";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Select Mode");
 
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-mode");
@@ -2824,11 +2632,7 @@ void Hu_MenuInitInventoryOptionsPage()
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Wrap Around";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Wrap Around");
 
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-wrap");
@@ -2836,11 +2640,7 @@ void Hu_MenuInitInventoryOptionsPage()
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Choose And Use";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Choose And Use");
 
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-use-immediate");
@@ -2848,11 +2648,7 @@ void Hu_MenuInitInventoryOptionsPage()
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Select Next If Use Failed";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Select Next If Use Failed");
 
     {
         CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-use-next");
@@ -2860,11 +2656,7 @@ void Hu_MenuInitInventoryOptionsPage()
         page->_widgets << btn;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "AutoHide";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("AutoHide");
 
     {
         SliderWidget *sld = new TextualSliderWidget;
@@ -2885,17 +2677,15 @@ void Hu_MenuInitInventoryOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Fullscreen HUD");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
-        text->text          = "Fullscreen HUD";
         page->_widgets << text;
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Max Visible Slots");
         text->setGroup(1);
-        text->text = "Max Visible Slots";
         page->_widgets << text;
     }
 
@@ -2917,9 +2707,8 @@ void Hu_MenuInitInventoryOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget;
+        LabelWidget *text = new LabelWidget("Show Empty Slots");
         text->setGroup(1);
-        text->text = "Show Empty Slots";
         page->_widgets << text;
     }
 
@@ -2947,11 +2736,7 @@ void Hu_MenuInitSoundOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "SFX Volume";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("SFX Volume");
 
     {
         SliderWidget *sld = new SliderWidget;
@@ -2967,11 +2752,7 @@ void Hu_MenuInitSoundOptionsPage()
         page->_widgets << sld;
     }
 
-    {
-        LabelWidget *text = new LabelWidget;
-        text->text = "Music Volume";
-        page->_widgets << text;
-    }
+    page->_widgets << new LabelWidget("Music Volume");
 
     {
         SliderWidget *sld = new SliderWidget;

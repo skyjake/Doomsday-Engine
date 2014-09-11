@@ -102,7 +102,7 @@ static patchid_t pTeamIcons[NUMTEAMS];
 
 /// @todo Revise API to select a replacement mode according to the usage context
 /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
-static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
+static inline String patchReplacementText(patchid_t patchId, String const &text = "")
 {
     return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
                                      patchId, text);
@@ -132,7 +132,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     // Draw <MapName>
     String const mapTitle         = G_MapTitle(wbs->currentMap);
     patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->currentMap);
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()),
+    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(mapTitlePatch, &info))
@@ -165,7 +165,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
         origin.y += (5 * info.geometry.size.height) / 4;
 
     // Draw map.
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle.toUtf8().constData()), origin, ALIGN_TOP);
+    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle), origin, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -359,8 +359,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
     {
         if(teamInfo[i].playerCount > 0)
         {
-            patchid_t const patchId = pTeamBackgrounds[i];
-            char const *replacement = patchReplacementText(patchId);
+            patchid_t const patchId  = pTeamBackgrounds[i];
+            String const replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
@@ -386,8 +386,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
         }
         else
         {
-            patchid_t const patchId = pTeamIcons[i];
-            char const *replacement = patchReplacementText(patchId);
+            patchid_t const patchId  = pTeamIcons[i];
+            String const replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);

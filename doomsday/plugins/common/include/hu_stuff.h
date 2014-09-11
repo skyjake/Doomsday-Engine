@@ -172,7 +172,8 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  * @param patchId       Unique identifier of the patch to choose a replacement for.
  * @param text          A prechoosen string replacement to be used if appropriate.
  */
-char const *Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId, char const *text = 0);
+de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId,
+                                     de::String const &text = "");
 
 /**
  * Implements patch replacement.
@@ -185,8 +186,12 @@ char const *Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t 
  * @param patchFlags    @ref drawPatchFlags
  * @param textFlags     @ref drawTextFlags
  */
-void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin = de::Vector2i(0, 0),
-                  int alignFlags = ALIGN_TOPLEFT, int patchFlags = 0, short textFlags = 0);
+void WI_DrawPatch(patchid_t patchId,
+                  de::String const &replacement = "",
+                  de::Vector2i const &origin    = de::Vector2i(0, 0),
+                  int alignFlags                = ALIGN_TOPLEFT,
+                  int patchFlags                = 0,
+                  short textFlags               = 0);
 
 #endif // __cplusplus
 #endif // LIBCOMMON_HU_STUFF_H

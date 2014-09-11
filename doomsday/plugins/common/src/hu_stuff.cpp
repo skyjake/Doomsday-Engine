@@ -1154,7 +1154,7 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, char const *text)
+de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, de::String const &text)
 {
     if(mode != PRM_NONE)
     {
@@ -1165,10 +1165,10 @@ char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
             R_GetPatchInfo(patchId, &info);
             if(!info.flags.isCustom)
             {
-                if(!text || !text[0])
+                if(text.isEmpty())
                 {
                     // Look for a user replacement.
-                    text = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
+                    return de::String(Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD));
                 }
 
                 return text;
@@ -1180,17 +1180,17 @@ char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
         }
     }
 
-    return 0; // No replacement available/wanted.
+    return ""; // No replacement available/wanted.
 }
 
-void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin,
+void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vector2i const &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
     Point2Raw const originAsPoint2Raw(origin.x, origin.y);
-    if(replacement && replacement[0])
+    if(!replacement.isEmpty())
     {
         // Use the replacement string.
-        FR_DrawText3(replacement, &originAsPoint2Raw, alignFlags, textFlags);
+        FR_DrawText3(replacement.toUtf8().constData(), &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
     // Use the original patch.
@@ -1485,7 +1485,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = G_MapTitlePatch(mapUri);
-    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
+    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title),
                  de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.

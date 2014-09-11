@@ -121,7 +121,7 @@ namespace internal
 
     /// @todo Revise API to select a replacement mode according to the usage context
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
-    static inline char const *patchReplacementText(patchid_t patchId, char const *text = 0)
+    static inline String patchReplacementText(patchid_t patchId, String const &text = "")
     {
         return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
                                          patchId, text);
@@ -408,7 +408,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     // Draw map title.
     String const title         = G_MapTitle(wbs->currentMap);
     patchid_t const titlePatch = G_MapTitlePatch(wbs->currentMap);
-    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title.toUtf8().constData()), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
     patchinfo_t info;
     if(R_GetPatchInfo(titlePatch, &info))
     {
@@ -453,7 +453,7 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
         origin.y += (5 * info.geometry.size.height) / 4;
     }
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
-    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title.toUtf8().constData()),
+    WI_DrawPatch(titlePatch, patchReplacementText(titlePatch, title),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -781,8 +781,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
         {
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-            patchid_t const patchId = pTeamBackgrounds[i];
-            char const *replacement = patchReplacementText(patchId);
+            patchid_t const patchId  = pTeamBackgrounds[i];
+            String const replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
@@ -809,8 +809,8 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
         {
             FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-            patchid_t const patchId = pTeamIcons[i];
-            char const *replacement = patchReplacementText(patchId);
+            patchid_t const patchId  = pTeamIcons[i];
+            String const replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
