@@ -54,7 +54,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         // Attempt a conversion...
         try
         {
-            QScopedPointer<MapImporter> map(new MapImporter(recognizer));
+            std::unique_ptr<MapImporter> map(new MapImporter(recognizer));
 
             // The archived map data was read successfully.
             // Transfer to the engine via the runtime map editing interface.
@@ -89,14 +89,12 @@ int ConvertMapInfo(int /*hookType*/, int /*parm*/, void * /*context*/)
     // Process all MAPINFO lumps, in load order.
     bool needTranslate = false;
     LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
-    for(int i = 0; i < lumpIndex.size(); ++i)
+    LumpIndex::FoundIndices foundMapInfos;
+    lumpIndex.findAll("MAPINFO.lmp", foundMapInfos);
+    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundMapInfos)
     {
-        String const &fileName = lumpIndex[i].name();
-        if(fileName.fileNameWithoutExtension().toLower() == "mapinfo")
-        {
-            xltr.mergeFromFile("LumpIndex:" + String::number(i));
-            needTranslate = true;
-        }
+        xltr.mergeFromFile("LumpIndex:" + String::number(*i));
+        needTranslate = true;
     }
 
     if(needTranslate)
