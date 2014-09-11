@@ -2786,6 +2786,12 @@ void Hu_MenuInitEpisodePage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
+    if(!Defs().episodes.size())
+    {
+        LOG_RES_WARNING("No episodes are defined. It will not be possible to start a new game from the menu");
+        return;
+    }
+
     int y = 0;
     int n = 0;
     for(auto const &pair : Defs().episodes.lookup("id").elements())
