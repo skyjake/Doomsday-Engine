@@ -77,21 +77,21 @@ namespace internal {
 
         void resetToDefaults() {
             // Add all expected fields with their default values.
-            addText   ("map", "Maps:"); // URI. Unknown.
+            addNumber ("cdTrack", 1);
+            addBoolean("doubleSky", false);
+            addText   ("fadeTable", "COLORMAP");
             addNumber ("hub", 0);
-            addNumber ("warpTrans", 0);
+            addBoolean("lightning", false);
+            addText   ("map", "Maps:");       // URI. Unknown.
             addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
             addText   ("secretNextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
-            addNumber ("cdTrack", 1);
             addText   ("title", "Untitled");
             addText   ("sky1Material", defaultSkyMaterial());
-            addText   ("sky2Material", defaultSkyMaterial());
             addNumber ("sky1ScrollDelta", 0);
+            addText   ("sky2Material", defaultSkyMaterial());
             addNumber ("sky2ScrollDelta", 0);
-            addBoolean("doubleSky", false);
-            addBoolean("lightning", false);
-            addText   ("fadeTable", "COLORMAP");
-            addText   ("songLump", "DEFSONG");
+            addText   ("songLump", "");
+            addNumber ("warpTrans", 0);
         }
     };
 
@@ -1399,6 +1399,9 @@ String MapInfoTranslator::translate()
         episodeIdx += 1;
     }
 
+    GameInfo gameInfo;
+    DD_GameInfo(&gameInfo);
+
     // Output mapinfo defs.
     for(HexDefs::MapInfos::const_iterator i = d->defs.mapInfos.begin(); i != d->defs.mapInfos.end(); ++i)
     {
@@ -1410,9 +1413,13 @@ String MapInfoTranslator::translate()
         os << "\n\nMap Info {"
            << "\n  ID = \"" + mapUri.compose() + "\";"
            << "\n  Name = \"" + info.gets("title") + "\";"
-           << "\n  Music = \"" + info.gets("songLump") + "\";"
+           << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
            << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
            << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+        if(!info.gets("songLump").isEmpty())
+        {
+            os << "\n  Music = \"" + info.gets("songLump") + "\";";
+        }
         if(info.getb("lightning"))
         {
             os << "\n  Flags = lightning;";
