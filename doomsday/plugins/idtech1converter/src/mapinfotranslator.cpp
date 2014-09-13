@@ -1415,6 +1415,8 @@ String MapInfoTranslator::translate()
         de::Uri mapUri(info.gets("map"), RC_NULL);
         if(mapUri.path().isEmpty()) continue;
 
+        bool const doubleSky = info.getb("doubleSky");
+
         os << "\n\nMap Info {"
            << "\n  ID = \"" + toMapId(mapUri) + "\";"
            << "\n  Name = \"" + info.gets("title") + "\";"
@@ -1429,29 +1431,29 @@ String MapInfoTranslator::translate()
         {
             os << "\n  Flags = lightning;";
         }
-        de::Uri skyLayer1MaterialUri(info.gets("sky1Material"), RC_NULL);
+        de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
         if(!skyLayer1MaterialUri.path().isEmpty())
         {
             os << "\n  Sky Layer 1 {"
                << "\n    Flags = enable;"
                << "\n    Material = \"" + skyLayer1MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf("sky1ScrollDelta") * 35 /*TICSPERSEC*/;
+            dfloat scrollDelta = info.getf(doubleSky? "sky2ScrollDelta" : "sky1ScrollDelta") * 35 /*TICSPERSEC*/;
             if(!de::fequal(scrollDelta, 0))
             {
                 os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
             }
             os << "\n  }";
         }
-        de::Uri skyLayer2MaterialUri(info.gets("sky2Material"), RC_NULL);
+        de::Uri skyLayer2MaterialUri(info.gets(doubleSky? "sky1Material" : "sky2Material"), RC_NULL);
         if(!skyLayer2MaterialUri.path().isEmpty())
         {
             os << "\n  Sky Layer 2 {";
-            if(info.getb("doubleSky"))
+            if(doubleSky)
             {
                 os << "\n    Flags = enable | mask;";
             }
             os << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf("sky2ScrollDelta") * 35 /*TICSPERSEC*/;
+            dfloat scrollDelta = info.getf(doubleSky? "sky1ScrollDelta" : "sky2ScrollDelta") * 35 /*TICSPERSEC*/;
             if(!de::fequal(scrollDelta, 0))
             {
                 os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
