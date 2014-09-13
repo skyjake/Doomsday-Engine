@@ -120,9 +120,6 @@ static de::Uri getMapUriForWarpNumber(int warpNumber)
 {
     if(!warpNumber)
     {
-        /// @todo Surely this is never reached because warping to the current map is
-        /// usually impossible in Hexen. Does anything actually use this? -ds
-        DENG2_ASSERT(!"getMapUriForWarpNumber() called with warpNumber:0");
         return COMMON_GAMESESSION->mapUri(); // Current map URI.
     }
     return TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), warpNumber);
