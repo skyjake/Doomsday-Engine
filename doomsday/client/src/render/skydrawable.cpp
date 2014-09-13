@@ -220,9 +220,6 @@ struct Hemisphere
 
             if(!ldata.active) continue;
 
-            // The fade out is only drawn for the first layer.
-            drawFadeOut = (i == firstActiveLayer);
-
             TextureVariant *layerTex = 0;
             if(Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
