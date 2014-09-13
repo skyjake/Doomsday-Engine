@@ -741,12 +741,13 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
     defn::Sky const skyDef(*d->sky->sky()->def());
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        ModelState &mstate        = model(i);
-        Record const &skyModelDef = skyDef.model(i);
+        ModelState &mstate = model(i);
 
         // Is this model in use?
         if(ModelDef const *modef = d->sky->modelDef(i))
         {
+            Record const &skyModelDef = skyDef.model(i);
+
             mstate.frame    = modef->subModelDef(0).frame;
             mstate.maxTimer = int(TICSPERSEC * skyModelDef.getf("frameInterval"));
             mstate.yaw      = skyModelDef.getf("yaw");
@@ -823,12 +824,12 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     // Animate models.
     for(int i = 0; i < MAX_MODELS; ++i)
     {
-        Record const &skyModelDef = skyDef.model(i);
-        ModelState &mstate        = model(i);
-
         // Is this model in use?
         ModelDef const *modef = sky().modelDef(i);
         if(!modef) continue;
+
+        Record const &skyModelDef = skyDef.model(i);
+        ModelState &mstate        = model(i);
 
         // Rotate the model.
         mstate.yaw += skyModelDef.getf("yawSpeed") / TICSPERSEC;
