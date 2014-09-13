@@ -102,15 +102,15 @@ dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
 wbstartstruct_t wmInfo; // Intermission parameters.
 
+de::Uri nextMapUri;
+uint nextMapEntryPoint;
+
 static GameSession session;
 
 static bool quitInProgress;
 static gamestate_t gameState = GS_STARTUP;
 
 static SaveSlots *sslots;
-
-static de::Uri nextMapUri;
-static uint nextMapEntryPoint;
 
 // Game actions.
 static gameaction_t gameAction;

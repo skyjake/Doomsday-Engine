@@ -1177,7 +1177,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #if __JHEXEN__
         defn::Episode epsd(*episodeDef());
         Record const *currentHub = epsd.tryFindHubByMapId(d->mapUri.compose());
-        if(currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
+        if(!currentHub || currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
 #endif
         {
             // Clear all saved map states in the current hub.

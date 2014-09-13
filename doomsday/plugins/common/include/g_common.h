@@ -32,6 +32,9 @@ class SaveSlots;
 
 extern GameRuleset defaultGameRules;
 
+extern de::Uri nextMapUri;
+extern uint nextMapEntryPoint;
+
 /**
  * Schedule a new game session (deferred).
  *
