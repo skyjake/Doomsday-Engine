@@ -46,6 +46,11 @@ namespace internal {
         return "Textures:SKY1";
     }
 
+    static inline String toMapId(de::Uri const &mapUri)
+    {
+        return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path();
+    }
+
     class Music : public de::Record
     {
     public:
@@ -1326,7 +1331,7 @@ String MapInfoTranslator::translate()
         os << "\n\nEpisode {"
            << "\n  ID = \"" + episodeId + "\";"
            << "\n  Title = \"" + info.gets("title") + "\";"
-           << "\n  Start Map = \"" + startMapUri.compose() + "\";";
+           << "\n  Start Map = \"" + toMapId(startMapUri) + "\";";
         String menuHelpInfo = info.gets("menuHelpInfo");
         if(!menuHelpInfo.isEmpty())
         {
@@ -1371,16 +1376,16 @@ String MapInfoTranslator::translate()
                 if(!mapUri.path().isEmpty())
                 {
                     os << "\n    Map {"
-                       << "\n      ID = \"" + mapUri.compose() + "\";";
+                       << "\n      ID = \"" + toMapId(mapUri) + "\";";
                     de::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
                     if(!nextMapUri.path().isEmpty())
                     {
-                        os << "\n      Exit { ID = \"next\"; Target Map = \"" + nextMapUri.compose() + "\"; }";
+                        os << "\n      Exit { ID = \"next\"; Target Map = \"" + toMapId(nextMapUri) + "\"; }";
                     }
                     de::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
                     if(!secretNextMapUri.path().isEmpty())
                     {
-                        os << "\n      Exit { ID = \"secret\"; Target Map = \"" + secretNextMapUri.compose() + "\"; }";
+                        os << "\n      Exit { ID = \"secret\"; Target Map = \"" + toMapId(secretNextMapUri) + "\"; }";
                     }
                     os << "\n      Warp Number = " + String::number(mapInfo->geti("warpTrans")) + ";";
                     os << "\n    }";
@@ -1411,7 +1416,7 @@ String MapInfoTranslator::translate()
         if(mapUri.path().isEmpty()) continue;
 
         os << "\n\nMap Info {"
-           << "\n  ID = \"" + mapUri.compose() + "\";"
+           << "\n  ID = \"" + toMapId(mapUri) + "\";"
            << "\n  Name = \"" + info.gets("title") + "\";"
            << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
            << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
