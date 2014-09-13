@@ -665,8 +665,8 @@ void NetSv_SendGameState(int flags, int to)
 
     // Print a short message that describes the game state.
     LOG_NET_NOTE("Sending game setup: %s %s %s %s")
-            << gameId
-            << episodeId
+            << Str_Text(gameId)
+            << Str_Text(episodeId)
             << mapUri.resolved()
             << gameConfigString;
 
