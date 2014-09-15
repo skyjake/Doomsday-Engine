@@ -32,6 +32,7 @@ DENG2_PIMPL(HexLex)
 {
     String sourcePath;                   ///< Used to identify the source in error messages.
     ddstring_s const *script = nullptr;  ///< The start of the script being parsed.
+    int scriptLength         = 0;
     int readPos              = 0;        ///< Current read position.
     int lineNumber           = 0;
     ddstring_s token;
@@ -62,7 +63,7 @@ DENG2_PIMPL(HexLex)
     bool atEnd()
     {
         checkOpen();
-        return (readPos >= Str_Length(script));
+        return (readPos >= scriptLength);
     }
 };
 
@@ -80,10 +81,11 @@ void HexLex::parse(ddstring_s const *script)
 {
     LOG_AS("HexLex");
 
-    d->script     = script;
-    d->readPos    = 0;
-    d->lineNumber = 1;
-    d->alreadyGot = false;
+    d->script       = script;
+    d->scriptLength = (d->script? Str_Length(d->script) : 0);
+    d->readPos      = 0;
+    d->lineNumber   = 1;
+    d->alreadyGot   = false;
     Str_Clear(&d->token);
 }
 
@@ -92,6 +94,7 @@ void HexLex::setSourcePath(String const &sourcePath)
     d->sourcePath = sourcePath;
 }
 
+/// @todo Revise with get/peek character mechanics.
 bool HexLex::readToken()
 {
     LOG_AS("HexLex");
@@ -111,84 +114,83 @@ bool HexLex::readToken()
         return false;
     }
 
+    // Skip any whitespace before the beginning of the next token.
     bool foundToken = false;
     while(!foundToken)
     {
-        while(Str_At(d->script, d->readPos) <= ' ')
+        char ch;
+        while((ch = Str_At(d->script, d->readPos)) <= ' ')
         {
-            if(d->atEnd())
-            {
-                return false;
-            }
+            if(d->atEnd()) return false;
 
-            if(Str_At(d->script, d->readPos++) == '\n')
+            d->readPos++;
+
+            if(ch == '\n')
             {
                 d->lineNumber++;
                 d->multiline = true;
             }
         }
 
-        if(d->atEnd())
-        {
-            return false;
-        }
+        if(d->atEnd()) return false;
 
-        if(Str_At(d->script, d->readPos) != ';')
+        ch = Str_At(d->script, d->readPos);
+
+        // A single line comment?
+        if(ch == ';' || (ch == '/' && d->readPos + 1 < d->scriptLength && Str_At(d->script, d->readPos + 1) == '/'))
         {
-            // Found a token
-            foundToken = true;
-        }
-        else
-        {
-            // Skip comment.
-            while(Str_At(d->script, d->readPos++) != '\n')
+            while((ch = Str_At(d->script, d->readPos++)) != '\n')
             {
-                if(d->atEnd())
-                {
-                    return false;
-                }
+                if(d->atEnd()) return false;
             }
 
             d->lineNumber++;
             d->multiline = true;
         }
+        else
+        {
+            foundToken = true;
+        }
     }
 
     Str_Clear(&d->token);
+
+    // A quoted string?
     if(Str_At(d->script, d->readPos) == '"')
     {
-        // Quoted string.
+        char ch;
         d->readPos++;
-        while(Str_At(d->script, d->readPos) != '"')
+        while((ch = Str_At(d->script, d->readPos)) != '"')
         {
-            char const ch = Str_At(d->script, d->readPos++);
             if(ch != '\r')
             {
                 Str_AppendChar(&d->token, ch);
             }
+            d->readPos++;
+
             if(ch == '\n')
             {
                 d->lineNumber++;
             }
 
-            if(d->atEnd())
-            {
-                break;
-            }
+            if(d->atEnd()) break;
         }
         d->readPos++;
     }
     else
     {
-        // Normal string.
-        while(Str_At(d->script, d->readPos) > ' ' &&
-              Str_At(d->script, d->readPos) != ';')
+        // Normal token.
+        char ch;
+        while((ch = Str_At(d->script, d->readPos)) > ' ')
         {
-            Str_AppendChar(&d->token, Str_At(d->script, d->readPos++));
-            if(d->atEnd())
-            {
+            // A single line comment?
+            if(ch == ';'|| (ch == '/' && d->readPos + 1 < d->scriptLength && Str_At(d->script, d->readPos + 1) == '/'))
                 break;
-            }
+
+            Str_AppendChar(&d->token, ch);
+            d->readPos++;
+
+            if(d->atEnd()) break;
         }
     }
 

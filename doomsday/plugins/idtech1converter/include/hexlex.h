@@ -43,7 +43,7 @@ public:
      * Construct a new lexer and optionally prepare a script for parsing.
      *
      * @param script      If non-zero, prepare this script for parsing.
-     * @param sourcePath  If non-zero, set this as the script source path.
+     * @param sourcePath  Path of the source of @a script, used when logging/reporting errors.
      *
      * @see parse(), setSourcePath()
      */
