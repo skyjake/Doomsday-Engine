@@ -408,7 +408,7 @@ public:
                     }
                     else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                     {
-                        LOG_WARNING("[Cheat] patches are not supported.");
+                        LOG_WARNING("DeHackEd [Cheat] patches are not supported.");
                         skipToNextSection();
                     }
                     else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
@@ -873,12 +873,12 @@ public:
             else if(!var.compareWithoutCase("Bits2")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits2\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits2 is not supported.");
             }
             else if(!var.compareWithoutCase("Bits3")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits3\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits3 is not supported.");
             }
             else if(!var.compareWithoutCase("Blood color")) // Eternity
             {
@@ -894,7 +894,7 @@ public:
                  * Orange              8
                  */
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Blood color\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Blood color is not supported.");
             }
             else if(!var.compareWithoutCase("ID #"))
             {
@@ -975,7 +975,7 @@ public:
                 //int const value = expr.toInt(0, 10, String::AllowSuffix);
                 //float const opacity = de::clamp(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Translucency is not supported.");
             }
             else if(!var.compareWithoutCase("Width"))
             {
@@ -1039,7 +1039,7 @@ public:
             else if(!var.compareWithoutCase("Particle event")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Frame - \"Particle event\" patches are not supported.");
+                LOG_WARNING("DeHackEd Frame.Particle event is not supported.");
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
@@ -1096,7 +1096,7 @@ public:
             }
             else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
             {
-                LOG_WARNING("Frame - \"%s\" patches are not supported.") << var;
+                LOG_WARNING("DeHackEd Frame.%s is not supported.") << var;
             }
             else
             {
@@ -1161,7 +1161,7 @@ public:
 
             if(!var.compareWithoutCase("Offset")) // sound->id
             {
-                LOG_WARNING("Sound - \"Offset\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Offset is not supported.");
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
@@ -1185,7 +1185,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 1")) // sound->link
             {
-                LOG_WARNING("Sound - \"Zero 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 1 is not supported.");
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
@@ -1209,11 +1209,11 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 4")) // ??
             {
-                LOG_WARNING("Sound - \"Zero 4\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 4 is not supported.");
             }
             else if(!var.compareWithoutCase("Neg. One 1")) // ??
             {
-                LOG_WARNING("Sound - \"Neg. One 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Neg. One 1 is not supported.");
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
@@ -1478,13 +1478,13 @@ public:
     void parseHelperBex()
     {
         LOG_AS("parseHelperBex");
-        LOG_WARNING("[HELPER] patches are not supported.");
+        LOG_WARNING("DeHackEd [HELPER] patches are not supported.");
     }
 
     void parseSpritesBex()
     {
         LOG_AS("parseSpritesBex");
-        LOG_WARNING("[SPRITES] patches are not supported.");
+        LOG_WARNING("DeHackEd [SPRITES] patches are not supported.");
     }
 
     void parseSoundsBex()
@@ -1644,7 +1644,7 @@ public:
     void parseStringsBex()
     {
         LOG_AS("parseStringsBex");
-        LOG_WARNING("[Strings] patches not supported.");
+        LOG_WARNING("DeHackEd [Strings] patches are not supported.");
     }
 
     void createValueDef(QString const &path, QString const &value)
@@ -1680,7 +1680,7 @@ public:
 
         /// @todo Presently disabled because the engine can't handle remapping.
         DENG2_UNUSED(newName);
-        LOG_WARNING("Sprite name table remapping is not supported.");
+        LOG_WARNING("DeHackEd sprite name table remapping is not supported.");
         return true; // Pretend success.
 
 #if 0
