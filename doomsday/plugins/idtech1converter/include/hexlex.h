@@ -61,8 +61,22 @@ public:
      * Change the source path used to identify the script in log messages.
      *
      * @param sourcePath  New source path to apply. A copy is made.
+     *
+     * @see sourcePath()
      */
     void setSourcePath(de::String const &sourcePath);
+
+    /**
+     * Returns the currently configured source path.
+     *
+     * @see setSourcePath()
+     */
+    de::String const &sourcePath() const;
+
+    /**
+     * Returns the line number at the current position in the script.
+     */
+    int lineNumber() const;
 
     /**
      * Attempt to read the next token from the script. @c true is returned if a
@@ -85,11 +99,6 @@ public:
     de::ddouble readNumber();
     Str const *readString();
     de::Uri readUri(de::String const &defaultScheme = "");
-
-    /**
-     * Returns the line number at the current position in the script.
-     */
-    int lineNumber() const;
 
 private:
     DENG2_PRIVATE(d)

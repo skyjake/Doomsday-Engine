@@ -32,7 +32,6 @@ DENG2_PIMPL(HexLex)
 {
     String sourcePath;                   ///< Used to identify the source in error messages.
     ddstring_s const *script = nullptr;  ///< The start of the script being parsed.
-    int scriptLength         = 0;
     int readPos              = 0;        ///< Current read position.
     int lineNumber           = 0;
     ddstring_s token;
@@ -63,7 +62,7 @@ DENG2_PIMPL(HexLex)
     bool atEnd()
     {
         checkOpen();
-        return (readPos >= scriptLength);
+        return (readPos >= Str_Length(script));
     }
 };
 
@@ -81,17 +80,26 @@ void HexLex::parse(ddstring_s const *script)
 {
     LOG_AS("HexLex");
 
-    d->script       = script;
-    d->scriptLength = (d->script? Str_Length(d->script) : 0);
-    d->readPos      = 0;
-    d->lineNumber   = 1;
-    d->alreadyGot   = false;
+    d->script     = script;
+    d->readPos    = 0;
+    d->lineNumber = 1;
+    d->alreadyGot = false;
     Str_Clear(&d->token);
 }
 
 void HexLex::setSourcePath(String const &sourcePath)
 {
     d->sourcePath = sourcePath;
+}
+
+String const &HexLex::sourcePath() const
+{
+    return d->sourcePath;
+}
+
+int HexLex::lineNumber() const
+{
+    return d->lineNumber;
 }
 
 /// @todo Revise with get/peek character mechanics.
@@ -137,7 +145,7 @@ bool HexLex::readToken()
         ch = Str_At(d->script, d->readPos);
 
         // A single line comment?
-        if(ch == ';' || (ch == '/' && d->readPos + 1 < d->scriptLength && Str_At(d->script, d->readPos + 1) == '/'))
+        if(ch == ';' || (ch == '/' && d->readPos + 1 < Str_Length(d->script) && Str_At(d->script, d->readPos + 1) == '/'))
         {
             while((ch = Str_At(d->script, d->readPos++)) != '\n')
             {
@@ -184,7 +192,7 @@ bool HexLex::readToken()
         while((ch = Str_At(d->script, d->readPos)) > ' ')
         {
             // A single line comment?
-            if(ch == ';'|| (ch == '/' && d->readPos + 1 < d->scriptLength && Str_At(d->script, d->readPos + 1) == '/'))
+            if(ch == ';'|| (ch == '/' && d->readPos + 1 < Str_Length(d->script) && Str_At(d->script, d->readPos + 1) == '/'))
                 break;
 
             Str_AppendChar(&d->token, ch);
@@ -251,11 +259,6 @@ de::Uri HexLex::readUri(String const &defaultScheme)
         throw SyntaxError("HexLex", String("Missing URI value\nIn ") + d->readPosAsText());
     }
     return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&d->token))))));
-}
-
-int HexLex::lineNumber() const
-{
-    return d->lineNumber;
 }
 
 } // namespace idtech1
