@@ -19,93 +19,94 @@
  * 02110-1301 USA</small>
  */
 
-#include "hexlex.h"
 #include <cstdio>
 #include <cstring>
+#include "hexlex.h"
+#include <de/Log>
 
 using namespace de;
 
 namespace idtech1 {
 
-#define T_COMMENT ';' ///< Single-line comment.
-#define T_QUOTE   '"'
-
-void HexLex::checkOpen()
+DENG2_PIMPL(HexLex)
 {
-    if(_script) return;
-    throw Error("HexLex::checkOpen", "No script to parse!");
-}
+    String sourcePath;                   ///< Used to identify the source in error messages.
+    ddstring_s const *script = nullptr;  ///< The start of the script being parsed.
+    int readPos              = 0;        ///< Current read position.
+    int lineNumber           = 0;
+    ddstring_s token;
+    bool alreadyGot          = false;
+    bool multiline           = false;    ///< @c true= current token spans multiple lines.
 
-bool HexLex::atEnd()
+    Instance(Public *i) : Base(i)
+    {
+        Str_InitStd(&token);
+    }
+
+    ~Instance()
+    {
+        Str_Free(&token);
+    }
+
+    void checkOpen()
+    {
+        if(script) return;
+        throw Error("HexLex::checkOpen", "No script to parse!");
+    }
+
+    String readPosAsText()
+    {
+        return "\"" + NativePath(sourcePath).pretty() + "\" on line #" + String::number(lineNumber);
+    }
+
+    bool atEnd()
+    {
+        checkOpen();
+        return (readPos >= Str_Length(script));
+    }
+};
+
+HexLex::HexLex(ddstring_s const *script, String const &sourcePath)
+    : d(new Instance(this))
 {
-    checkOpen();
-    return (_readPos >= Str_Length(_script));
-}
-
-void HexLex::syntaxError(char const *message)
-{
-    throw SyntaxError("HexLex", String("%1\nIn \"").arg(message) + NativePath(Str_Text(&_sourcePath)).pretty() + "\" on line #" + String::number(_lineNumber));
-}
-
-HexLex::HexLex(ddstring_s const *script, ddstring_s const *sourcePath)
-    : _script    (0)
-    , _readPos   (0)
-    , _lineNumber(0)
-    , _alreadyGot(false)
-    , _multiline (false)
-{
-    Str_InitStd(&_sourcePath);
-    Str_InitStd(&_token);
-
+    setSourcePath(sourcePath);
     if(script)
     {
         parse(script);
     }
-    if(sourcePath)
-    {
-        setSourcePath(sourcePath);
-    }
-}
-
-HexLex::~HexLex()
-{
-    Str_Free(&_sourcePath);
-    Str_Free(&_token);
 }
 
 void HexLex::parse(ddstring_s const *script)
 {
-    _script     = script;
-    _readPos    = 0;
-    _lineNumber = 1;
-    _alreadyGot = false;
-    Str_Clear(&_token);
+    LOG_AS("HexLex");
+
+    d->script     = script;
+    d->readPos    = 0;
+    d->lineNumber = 1;
+    d->alreadyGot = false;
+    Str_Clear(&d->token);
 }
 
-void HexLex::setSourcePath(ddstring_s const *sourcePath)
+void HexLex::setSourcePath(String const &sourcePath)
 {
-    if(!sourcePath)
-    {
-        Str_Clear(&_sourcePath);
-    }
-    else
-    {
-        Str_Copy(&_sourcePath, sourcePath);
-    }
+    d->sourcePath = sourcePath;
 }
 
 bool HexLex::readToken()
 {
-    checkOpen();
-    if(_alreadyGot)
+    LOG_AS("HexLex");
+
+    d->checkOpen();
+
+    if(d->alreadyGot)
     {
-        _alreadyGot = false;
+        d->alreadyGot = false;
         return true;
     }
 
-    _multiline = false;
+    d->multiline = false;
 
-    if(atEnd())
+    if(d->atEnd())
     {
         return false;
     }
@@ -113,26 +114,26 @@ bool HexLex::readToken()
     bool foundToken = false;
     while(!foundToken)
     {
-        while(Str_At(_script, _readPos) <= ' ')
+        while(Str_At(d->script, d->readPos) <= ' ')
         {
-            if(atEnd())
+            if(d->atEnd())
             {
                 return false;
             }
 
-            if(Str_At(_script, _readPos++) == '\n')
+            if(Str_At(d->script, d->readPos++) == '\n')
             {
-                _lineNumber++;
-                _multiline = true;
+                d->lineNumber++;
+                d->multiline = true;
             }
         }
 
-        if(atEnd())
+        if(d->atEnd())
         {
             return false;
         }
 
-        if(Str_At(_script, _readPos) != T_COMMENT)
+        if(Str_At(d->script, d->readPos) != ';')
         {
             // Found a token
             foundToken = true;
@@ -140,51 +141,51 @@ bool HexLex::readToken()
         else
         {
             // Skip comment.
-            while(Str_At(_script, _readPos++) != '\n')
+            while(Str_At(d->script, d->readPos++) != '\n')
             {
-                if(atEnd())
+                if(d->atEnd())
                 {
                     return false;
                 }
             }
 
-            _lineNumber++;
-            _multiline = true;
+            d->lineNumber++;
+            d->multiline = true;
         }
     }
 
-    Str_Clear(&_token);
-    if(Str_At(_script, _readPos) == T_QUOTE)
+    Str_Clear(&d->token);
+    if(Str_At(d->script, d->readPos) == '"')
     {
         // Quoted string.
-        _readPos++;
-        while(Str_At(_script, _readPos) != T_QUOTE)
+        d->readPos++;
+        while(Str_At(d->script, d->readPos) != '"')
         {
-            char const ch = Str_At(_script, _readPos++);
+            char const ch = Str_At(d->script, d->readPos++);
             if(ch != '\r')
             {
-                Str_AppendChar(&_token, ch);
+                Str_AppendChar(&d->token, ch);
             }
             if(ch == '\n')
             {
-                _lineNumber++;
+                d->lineNumber++;
             }
 
-            if(atEnd())
+            if(d->atEnd())
             {
                 break;
             }
         }
-        _readPos++;
+        d->readPos++;
     }
     else
     {
         // Normal string.
-        while(Str_At(_script, _readPos) > ' ' &&
-              Str_At(_script, _readPos) != T_COMMENT)
+        while(Str_At(d->script, d->readPos) > ' ' &&
+              Str_At(d->script, d->readPos) != ';')
         {
-            Str_AppendChar(&_token, Str_At(_script, _readPos++));
-            if(atEnd())
+            Str_AppendChar(&d->token, Str_At(d->script, d->readPos++));
+            if(d->atEnd())
             {
                 break;
             }
@@ -196,32 +197,33 @@ bool HexLex::readToken()
 
 void HexLex::unreadToken()
 {
-    if(_readPos == 0)
-    {
-        return;
-    }
-    _alreadyGot = true;
+    if(!d->readPos) return;
+
+    d->alreadyGot = true;
 }
 
 ddstring_s const *HexLex::token()
 {
-    return &_token;
+    return &d->token;
 }
 
 ddouble HexLex::readNumber()
 {
+    LOG_AS("HexLex");
+
     if(!readToken())
     {
-        syntaxError("Missing number value");
+        /// @throw SyntaxError Expected a number value.
+        throw SyntaxError("HexLex", String("Missing number value\nIn ") + d->readPosAsText());
     }
 
     char *stopper;
-    ddouble number = strtod(Str_Text(&_token), &stopper);
+    ddouble number = strtod(Str_Text(&d->token), &stopper);
     if(*stopper != 0)
     {
         return 0;
-        //Con_Error("HexLex: Non-numeric constant '%s' in \"%s\" on line #%i",
-        //          Str_Text(&_token), F_PrettyPath(Str_Text(&_sourcePath)), _lineNumber);
+        //Con_Error("HexLex: Non-numeric constant '%s'\nIn %s",
+        //          Str_Text(&d->token), d->readPosAsText().toUtf8().constData());
     }
 
     return number;
@@ -229,25 +231,29 @@ ddouble HexLex::readNumber()
 
 ddstring_s const *HexLex::readString()
 {
+    LOG_AS("HexLex");
     if(!readToken())
     {
-        syntaxError("Missing string");
+        /// @throw SyntaxError Expected a string value.
+        throw SyntaxError("HexLex", String("Missing string value\nIn ") + d->readPosAsText());
     }
-    return &_token;
+    return &d->token;
 }
 
 de::Uri HexLex::readUri(String const &defaultScheme)
 {
+    LOG_AS("HexLex");
     if(!readToken())
     {
-        syntaxError("Missing uri");
+        /// @throw SyntaxError Expected a URI value.
+        throw SyntaxError("HexLex", String("Missing URI value\nIn ") + d->readPosAsText());
     }
-    return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token))))));
+    return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&d->token))))));
 }
 
 int HexLex::lineNumber() const
 {
-    return _lineNumber;
+    return d->lineNumber;
 }
 
 } // namespace idtech1

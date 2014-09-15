@@ -47,8 +47,7 @@ public:
      *
      * @see parse(), setSourcePath()
      */
-    HexLex(Str const *script = 0, Str const *sourcePath = 0);
-    ~HexLex();
+    explicit HexLex(Str const *script = nullptr, de::String const &sourcePath = "");
 
     /**
      * Prepare a new script for parsing. It is assumed that the @a script data
@@ -63,7 +62,7 @@ public:
      *
      * @param sourcePath  New source path to apply. A copy is made.
      */
-    void setSourcePath(Str const *sourcePath = 0);
+    void setSourcePath(de::String const &sourcePath);
 
     /**
      * Attempt to read the next token from the script. @c true is returned if a
@@ -93,19 +92,7 @@ public:
     int lineNumber() const;
 
 private:
-    void checkOpen();
-    bool atEnd();
-    void syntaxError(char const *message);
-
-    Str _sourcePath;    ///< Used to identify the source in error messages.
-
-    Str const *_script; ///< The start of the script being parsed.
-    int _readPos;       ///< Current read position.
-    int _lineNumber;
-
-    Str _token;
-    bool _alreadyGot;
-    bool _multiline;    ///< @c true= current token spans multiple lines.
+    DENG2_PRIVATE(d)
 };
 
 } // namespace idtech1
