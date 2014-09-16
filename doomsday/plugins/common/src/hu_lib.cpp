@@ -950,10 +950,8 @@ static void drawPageHeading(Page *page, Point2Raw const *offset)
     FR_PopAttrib();
 }
 
-void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
+void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
 {
-    if(!page) return;
-
     alpha = de::clamp(0.f, alpha, 1.f);
     if(alpha <= .0001f) return;
 
@@ -962,21 +960,21 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
 
     // Object geometry is determined from properties defined in the
     // render state, so configure render state before we begin.
-    setupRenderStateForPageDrawing(page, alpha);
+    setupRenderStateForPageDrawing(&page, alpha);
 
     // Update object geometry. We'll push the font renderer state because
     // updating geometry may require changing the current values.
     FR_PushAttrib();
-    updatePageObjectGeometries(page);
+    updatePageObjectGeometries(&page);
 
     // Back to default page render state.
     FR_PopAttrib();
 
     // We can now layout the widgets of this page.
-    page->applyPageLayout();
+    page.applyPageLayout();
 
     // Determine the origin of the focus object (this dictates the page scroll location).
-    Widget *focusObj = page->focusWidget();
+    Widget *focusObj = page.focusWidget();
     if(focusObj && !MNObject_IsDrawable(focusObj))
     {
         focusObj = 0;
@@ -985,7 +983,7 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
     // Are we focusing?
     if(focusObj)
     {
-        focusObjHeight = page->cursorSize();
+        focusObjHeight = page.cursorSize();
 
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
@@ -1002,7 +1000,7 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
                 if(list->selectionIsVisible())
                 {
                     FR_PushAttrib();
-                    FR_SetFont(page->predefinedFont(mn_page_fontid_t(focusObj->font())));
+                    FR_SetFont(page.predefinedFont(mn_page_fontid_t(focusObj->font())));
                     focusObjHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
                     cursorOrigin.y += (list->selection() - list->first()) * focusObjHeight;
                     FR_PopAttrib();
@@ -1014,17 +1012,17 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(page->origin.x, page->origin.y, 0);
+    DGL_Translatef(page.origin.x, page.origin.y, 0);
 
     // Apply page scroll?
-    if(!(page->flags & MPF_NEVER_SCROLL) && focusObj)
+    if(!(page.flags & MPF_NEVER_SCROLL) && focusObj)
     {
         RectRaw pageGeometry, viewRegion;
-        Rect_Raw(page->geometry, &pageGeometry);
+        Rect_Raw(page.geometry, &pageGeometry);
 
         // Determine available screen region for the page.
         viewRegion.origin.x = 0;
-        viewRegion.origin.y = page->origin.y;
+        viewRegion.origin.y = page.origin.y;
         viewRegion.size.width  = SCREENWIDTH;
         viewRegion.size.height = SCREENHEIGHT - 40/*arbitrary but enough for the help message*/;
 
@@ -1042,7 +1040,7 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
     }
 
     // Draw child objects.
-    foreach(Widget *wi, page->widgets())
+    for(Widget *wi : page.widgets())
     {
         RectRaw geometry;
 
@@ -1065,13 +1063,13 @@ void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    drawPageHeading(page, NULL/*no offset*/);
+    drawPageHeading(&page, NULL/*no offset*/);
 
     // The page has its own drawer.
-    if(page->drawer)
+    if(page.drawer)
     {
         FR_PushAttrib();
-        page->drawer(page, &page->origin);
+        page.drawer(&page, &page.origin);
         FR_PopAttrib();
     }
 

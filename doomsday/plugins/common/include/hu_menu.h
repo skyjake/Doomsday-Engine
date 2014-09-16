@@ -113,14 +113,43 @@ void Hu_MenuTicker(timespan_t ticLength);
 /// @return  @c true if the menu is presently visible.
 dd_bool Hu_MenuIsVisible();
 
-menu::Page *Hu_MenuFindPageByName(de::String name);
+/**
+ * Returns @c true if a current menu page is configured.
+ */
+bool Hu_MenuHasPage();
 
 /**
- * Lookup the unique page identifier/name for the given @a page.
+ * Returns @c true if the menu contains a Page associated with @a name.
+ * @see Hu_MenuPage()
+ */
+bool Hu_MenuHasPage(de::String name);
+
+/**
+ * Returns the currently configured menu Page.
+ * @see Hu_MenuHasActivePage()
+ */
+menu::Page &Hu_MenuPage();
+
+inline menu::Page *Hu_MenuPagePtr() { return Hu_MenuHasPage()? &Hu_MenuPage() : 0; }
+
+/**
+ * Lookup a Page with the unique identifier @a name.
+ */
+menu::Page &Hu_MenuPage(de::String name);
+
+inline menu::Page *Hu_MenuPagePtr(de::String name) { return Hu_MenuHasPage(name)? &Hu_MenuPage(name) : 0; }
+
+/**
+ * Change the current menu Page to @a page.
+ */
+void Hu_MenuSetPage(menu::Page *page, bool canReactivate = false);
+
+/**
+ * Lookup the unique identifier/name for the given @a page.
  *
  * @return  Unique identifier/name of the page; otherwise an empty string.
  */
-de::String Hu_MenuFindPageName(menu::Page const *page);
+de::String Hu_MenuNameFor(menu::Page const *page);
 
 /**
  * @param name  Symbolic name.
@@ -179,17 +208,6 @@ float Hu_MenuAlpha();
  * @param alpha  Alpha level to set the menu too (0...1)
  */
 void Hu_MenuSetAlpha(float alpha);
-
-/**
- * Retrieve the currently active page.
- */
-menu::Page *Hu_MenuActivePage();
-
-/**
- * Change the current active page.
- */
-void Hu_MenuSetActivePage2(menu::Page *page, dd_bool canReactivate);
-void Hu_MenuSetActivePage(menu::Page *page);
 
 /**
  * Initialize a new singleplayer game according to the options set via the menu.

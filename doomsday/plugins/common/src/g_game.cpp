@@ -2524,7 +2524,7 @@ D_CMD(SaveSession)
     {
         // No quick-save slot has been nominated - allow doing so now.
         Hu_MenuCommand(MCMD_OPEN);
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
+        Hu_MenuSetPage(Hu_MenuPagePtr("SaveGame"));
         menuNominatingQuickSaveSlot = true;
         return true;
     }

@@ -294,7 +294,7 @@ void Hu_MenuInitControlsPage()
     Page *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     int group = 0;
     for(int i = 0; i < configCount; ++i)

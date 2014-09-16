@@ -94,7 +94,7 @@ struct Page;
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-void MN_DrawPage(Page *page, float alpha, dd_bool showFocusCursor);
+void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor);
 
 // Menu render state:
 typedef struct mn_rendstate_s {

@@ -93,10 +93,10 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     {
         if(!menuWidgetId) return;
 
-        Page *page = Hu_MenuFindPageByName(pageName);
-        if(!page) return; // Not initialized yet?
+        if(!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
 
-        Widget *wi = page->tryFindWidget(0, menuWidgetId);
+        Page &page = Hu_MenuPage(pageName);
+        Widget *wi = page.tryFindWidget(0, menuWidgetId);
         if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
@@ -115,10 +115,10 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
             edit.setText("");
         }
 
-        if(Hu_MenuIsActive() && Hu_MenuActivePage() == page)
+        if(Hu_MenuIsActive() && Hu_MenuPagePtr() == &page)
         {
             // Re-open the active page to update focus if necessary.
-            Hu_MenuSetActivePage2(page, true);
+            Hu_MenuSetPage(&page, true);
         }
     }
 

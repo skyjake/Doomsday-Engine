@@ -259,7 +259,7 @@ cvarbutton_t mnCVarButtons[] = {
 int menuTime;
 dd_bool menuNominatingQuickSaveSlot;
 
-static Page *menuActivePage;
+static Page *currentPage;
 static dd_bool menuActive;
 
 static float mnAlpha; // Alpha level for the entire menu.
@@ -320,20 +320,30 @@ static menucommand_e chooseCloseMethod()
     return Con_GetInteger("con-transition-tics") == 0? MCMD_CLOSE : MCMD_CLOSEFAST;
 }
 
-Page *Hu_MenuFindPageByName(String name)
+bool Hu_MenuHasPage(String name)
+{
+    if(!name.isEmpty())
+    {
+        return pages.contains(name.toLower());
+    }
+    return false;
+}
+
+Page &Hu_MenuPage(String name)
 {
     if(!name.isEmpty())
     {
         Pages::iterator found = pages.find(name.toLower());
         if(found != pages.end())
         {
-            return *found;
+            return *found.value();
         }
     }
-    return 0; // Not found.
+    /// @throw Error No Page exists with the name specified.
+    throw Error("Hu_MenuPage", "Unknown page '" + name + "'");
 }
 
-String Hu_MenuFindPageName(Page const *page)
+String Hu_MenuNameFor(Page const *page)
 {
     if(page)
     {
@@ -364,7 +374,7 @@ static void Hu_MenuUpdateCursorState()
 {
     if(menuActive)
     {
-        Page *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
+        Page *page = colorWidgetActive? Hu_MenuPagePtr("ColorWidget") : Hu_MenuPagePtr();
         if(Widget *wi = page->focusWidget())
         {
             cursorHasRotation = Hu_MenuHasCursorRotation(wi);
@@ -699,7 +709,7 @@ void Hu_MenuInitGameTypePage()
 
     Page *page = Hu_MenuNewPage("GameType", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawGameTypePage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     int y = 0;
 
@@ -760,7 +770,7 @@ void Hu_MenuInitSkillPage()
 
     Page *page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
+    page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
     int y = 0;
 
@@ -801,7 +811,7 @@ void Hu_MenuInitMultiplayerPage()
 
     Page *page = Hu_MenuNewPage("Multiplayer", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
+    page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
     {
         auto *btn = new ButtonWidget;
@@ -813,7 +823,6 @@ void Hu_MenuInitMultiplayerPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
         auto *btn = new ButtonWidget;
         btn->setShortcut('p');
@@ -838,7 +847,7 @@ void Hu_MenuInitPlayerSetupPage()
     page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("Multiplayer"));
+    page->setPreviousPage(Hu_MenuPagePtr("Multiplayer"));
 
     {
         auto *mprev = new MobjPreviewWidget;
@@ -946,7 +955,7 @@ void Hu_MenuInitSaveOptionsPage()
     Page *page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("Save Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("Confirm quick load/save");
     {
@@ -988,7 +997,7 @@ void Hu_MenuInitFilesPage()
 
     Page *page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     int y = 0;
 
@@ -1083,7 +1092,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 
     Page *loadPage = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
     loadPage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    loadPage->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    loadPage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     int y = 0;
     int i = 0;
@@ -1106,7 +1115,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 
     Page *savePage = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
     savePage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    savePage->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    savePage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     y = 0;
     i = 0;
@@ -1139,7 +1148,7 @@ void Hu_MenuInitOptionsPage()
 
     Page *page = Hu_MenuNewPage("Options", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawOptionsPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Main"));
+    page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     {
         auto *btn = new ButtonWidget;
@@ -1256,7 +1265,7 @@ void Hu_MenuInitGameplayOptionsPage()
     Page *page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("Gameplay Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("Always Run");
     {
@@ -1500,7 +1509,7 @@ void Hu_MenuInitHUDOptionsPage()
     Page *page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("HUD Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("View Size");
 
@@ -2109,7 +2118,7 @@ void Hu_MenuInitAutomapOptionsPage()
     Page *page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("Automap Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("Background Opacity");
 
@@ -2347,7 +2356,7 @@ void Hu_MenuInitWeaponsPage()
     Page *page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker);
     page->setTitle("Weapons Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     {
         auto *text = new LabelWidget("Priority Order");
@@ -2475,7 +2484,7 @@ void Hu_MenuInitInventoryOptionsPage()
     Page *page = Hu_MenuNewPage("InventoryOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("Inventory Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("Select Mode");
     {
@@ -2578,7 +2587,7 @@ void Hu_MenuInitSoundOptionsPage()
     Page *page = Hu_MenuNewPage("SoundOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
     page->setTitle("Sound Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->_widgets << new LabelWidget("SFX Volume");
     {
@@ -2626,7 +2635,7 @@ void Hu_MenuInitEpisodePage()
 
     Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
+    page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
     if(!Defs().episodes.size())
     {
@@ -2737,7 +2746,7 @@ void Hu_MenuInitPlayerClassPage()
 
     Page *page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
-    page->setPreviousPage(Hu_MenuFindPageByName("Episode"));
+    page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
     uint y = 0;
 
@@ -2838,7 +2847,7 @@ void Hu_MenuInit()
     Hu_MenuShutdown();
 
     mnAlpha = mnTargetAlpha = 0;
-    menuActivePage    = 0;
+    currentPage       = 0;
     menuActive        = false;
     cursorHasRotation = false;
     cursorAngle       = 0;
@@ -2862,12 +2871,12 @@ void Hu_MenuInit()
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        Page *page = Hu_MenuFindPageByName("Main");
+        Page &mainPage = Hu_MenuPage("Main");
 
-        Widget &wiReadThis = page->findWidget(0, MNF_ID0);
+        Widget &wiReadThis = mainPage.findWidget(0, MNF_ID0);
         wiReadThis.setFlags(FO_SET, MNF_DISABLED | MNF_HIDDEN | MNF_NO_FOCUS);
 
-        Widget &wiQuitGame = page->findWidget(0, MNF_ID1);
+        Widget &wiQuitGame = mainPage.findWidget(0, MNF_ID1);
         wiQuitGame.setFixedY(wiQuitGame.fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
@@ -2960,17 +2969,26 @@ void Hu_MenuTicker(timespan_t ticLength)
     frame = (menuTime / 3) % 18;
 
     // Call the active page's ticker.
-    menuActivePage->ticker(menuActivePage);
+    currentPage->ticker(currentPage);
 
 #undef MENUALPHA_FADE_STEP
 }
 
-Page *Hu_MenuActivePage()
+bool Hu_MenuHasPage()
 {
-    return menuActivePage;
+    return currentPage != 0;
 }
 
-void Hu_MenuSetActivePage2(Page *page, dd_bool canReactivate)
+Page &Hu_MenuPage()
+{
+    if(currentPage)
+    {
+        return *currentPage;
+    }
+    throw Error("Hu_MenuPage", "No current Page is presently configured");
+}
+
+void Hu_MenuSetPage(Page *page, bool canReactivate)
 {
     if(!menuActive) return;
     if(!page) return;
@@ -2983,7 +3001,7 @@ void Hu_MenuSetActivePage2(Page *page, dd_bool canReactivate)
     cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
     menuNominatingQuickSaveSlot = false;
 
-    if(menuActivePage == page)
+    if(currentPage == page)
     {
         if(!canReactivate) return;
         page->clearFocusWidget();
@@ -2992,13 +3010,8 @@ void Hu_MenuSetActivePage2(Page *page, dd_bool canReactivate)
     page->updateWidgets();
 
     // This is now the "active" page.
-    menuActivePage = page;
+    currentPage = page;
     page->initialize();
-}
-
-void Hu_MenuSetActivePage(Page *page)
-{
-    Hu_MenuSetActivePage2(page, false/*don't reactivate*/);
 }
 
 dd_bool Hu_MenuIsVisible()
@@ -3123,11 +3136,11 @@ void Hu_MenuDrawer()
     GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
-    Widget *focusOb   = Hu_MenuActivePage()->focusWidget();
+    Widget *focused = Hu_MenuPage().focusWidget();
     dd_bool showFocusCursor = true;
-    if(focusOb && (focusOb->flags() & MNF_ACTIVE))
+    if(focused && (focused->flags() & MNF_ACTIVE))
     {
-        if(focusOb->is<ColorPreviewWidget>() || focusOb->is<InputBindingWidget>())
+        if(focused->is<ColorPreviewWidget>() || focused->is<InputBindingWidget>())
         {
             showFocusCursor = false;
         }
@@ -3140,7 +3153,7 @@ void Hu_MenuDrawer()
     DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    MN_DrawPage(Hu_MenuActivePage(), mnAlpha, showFocusCursor);
+    MN_DrawPage(Hu_MenuPage(), mnAlpha, showFocusCursor);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -3148,20 +3161,20 @@ void Hu_MenuDrawer()
     GL_EndBorderedProjection(&bp);
 
     // Drawing any overlays?
-    if(focusOb && (focusOb->flags() & MNF_ACTIVE))
+    if(focused && (focused->flags() & MNF_ACTIVE))
     {
-        if(focusOb->is<ColorPreviewWidget>())
+        if(focused->is<ColorPreviewWidget>())
         {
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
 
             beginOverlayDraw();
-                MN_DrawPage(Hu_MenuFindPageByName("ColorWidget"), 1, true);
+                MN_DrawPage(Hu_MenuPage("ColorWidget"), 1, true);
             endOverlayDraw();
 
             GL_EndBorderedProjection(&bp);
         }
-        if(InputBindingWidget *binds = focusOb->maybeAs<InputBindingWidget>())
+        if(InputBindingWidget *binds = focused->maybeAs<InputBindingWidget>())
         {
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
@@ -3343,7 +3356,7 @@ static void fallbackCommandResponder(Page *page, menucommand_e cmd)
         else
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
-            Hu_MenuSetActivePage(page->previous);
+            Hu_MenuSetPage(page->previous);
         }
         break;
 
@@ -3360,7 +3373,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
     // "active" widget - interpret the command instead as "navigate out".
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
-        if(Widget *wi = Hu_MenuActivePage()->focusWidget())
+        if(Widget *wi = Hu_MenuPage().focusWidget())
         {
             if((wi->flags() & MNF_ACTIVE) &&
                (wi->is<LineEditWidget>() || wi->is<ListWidget>() || wi->is<ColorPreviewWidget>()))
@@ -3378,7 +3391,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     cmd = translateCommand(cmd);
 
     // Determine the page which will respond to this command.
-    Page *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
+    Page *page = colorWidgetActive? Hu_MenuPagePtr("ColorWidget") : Hu_MenuPagePtr();
 
     if(cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST)
     {
@@ -3439,8 +3452,8 @@ void Hu_MenuCommand(menucommand_e cmd)
             menuActive = true;
             menuTime = 0;
 
-            menuActivePage = NULL; // Always re-activate this page.
-            Hu_MenuSetActivePage(Hu_MenuFindPageByName("Main"));
+            currentPage = NULL; // Always re-activate this page.
+            Hu_MenuSetPage(Hu_MenuPagePtr("Main"));
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
@@ -3477,10 +3490,12 @@ int Hu_MenuPrivilegedResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        Widget *wi = Hu_MenuActivePage()->focusWidget();
-        if(wi && !(wi->flags() & MNF_DISABLED))
+        if(Widget *focused = Hu_MenuPage().focusWidget())
         {
-            return wi->handleEvent_Privileged(ev);
+            if(!(focused->flags() & MNF_DISABLED))
+            {
+                return focused->handleEvent_Privileged(ev);
+            }
         }
     }
     return false;
@@ -3490,10 +3505,12 @@ int Hu_MenuResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        Widget *wi = Hu_MenuActivePage()->focusWidget();
-        if(wi && !(wi->flags() & MNF_DISABLED))
+        if(Widget *focused = Hu_MenuPage().focusWidget())
         {
-            return wi->handleEvent(ev);
+            if(!(focused->flags() & MNF_DISABLED))
+            {
+                return focused->handleEvent(ev);
+            }
         }
     }
     return false; // Not eaten.
@@ -3501,7 +3518,7 @@ int Hu_MenuResponder(event_t *ev)
 
 int Hu_MenuFallbackResponder(event_t *ev)
 {
-    Page *page = Hu_MenuActivePage();
+    Page *page = Hu_MenuPagePtr();
 
     if(!Hu_MenuIsActive() || !page) return false;
 
@@ -3535,11 +3552,11 @@ void Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
     if(Widget::MNA_ACTIVEOUT != action) return;
 
     // Linked focus between LoadGame and SaveGame pages.
-    Page *page = Hu_MenuFindPageByName("SaveGame");
-    page->setFocus(page->tryFindWidget(0, wi->data2));
+    Page &saveGamePage = Hu_MenuPage("SaveGame");
+    saveGamePage.setFocus(saveGamePage.tryFindWidget(0, wi->data2));
 
-    page = Hu_MenuFindPageByName("LoadGame");
-    page->setFocus(page->tryFindWidget(0, wi->data2));
+    Page &loadGamePage = Hu_MenuPage("LoadGame");
+    loadGamePage.setFocus(loadGamePage.tryFindWidget(0, wi->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
@@ -3732,11 +3749,11 @@ void Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
         return;
     }
 
-    Page *page = Hu_MenuFindPageByName("SaveGame");
-    page->setFocus(&page->findWidget(0, wi->data2));
+    Page &saveGamePage = Hu_MenuPage("SaveGame");
+    saveGamePage.setFocus(saveGamePage.tryFindWidget(0, wi->data2));
 
-    page = Hu_MenuFindPageByName("LoadGame");
-    page->setFocus(&page->findWidget(0, wi->data2));
+    Page &loadGamePage = Hu_MenuPage("LoadGame");
+    loadGamePage.setFocus(loadGamePage.tryFindWidget(0, wi->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
 }
@@ -3757,19 +3774,19 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
     if(action != Widget::MNA_ACTIVE) return;
 
     ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
-    Page *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
 
-    ColorPreviewWidget &cboxMix = colorWidgetPage->findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
-    SliderWidget &sldrRed       = colorWidgetPage->findWidget(0, MNF_ID1).as<SliderWidget>();
-    SliderWidget &sldrGreen     = colorWidgetPage->findWidget(0, MNF_ID2).as<SliderWidget>();
-    SliderWidget &sldrBlue      = colorWidgetPage->findWidget(0, MNF_ID3).as<SliderWidget>();
-    SliderWidget &textAlpha     = colorWidgetPage->findWidget(0, MNF_ID4).as<SliderWidget>();
-    SliderWidget &sldrAlpha     = colorWidgetPage->findWidget(0, MNF_ID5).as<SliderWidget>();
+    Page &colorWidgetPage       = Hu_MenuPage("ColorWidget");
+    ColorPreviewWidget &cboxMix = colorWidgetPage.findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
+    SliderWidget &sldrRed       = colorWidgetPage.findWidget(0, MNF_ID1).as<SliderWidget>();
+    SliderWidget &sldrGreen     = colorWidgetPage.findWidget(0, MNF_ID2).as<SliderWidget>();
+    SliderWidget &sldrBlue      = colorWidgetPage.findWidget(0, MNF_ID3).as<SliderWidget>();
+    SliderWidget &textAlpha     = colorWidgetPage.findWidget(0, MNF_ID4).as<SliderWidget>();
+    SliderWidget &sldrAlpha     = colorWidgetPage.findWidget(0, MNF_ID5).as<SliderWidget>();
 
     colorWidgetActive = true;
 
-    colorWidgetPage->initialize();
-    colorWidgetPage->userData = wi;
+    colorWidgetPage.initialize();
+    colorWidgetPage.userData = wi;
 
     cboxMix.setColor(cbox.color(), 0);
 
@@ -3860,7 +3877,7 @@ void Hu_MenuActionSetActivePage(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     if(Widget::MNA_ACTIVEOUT != action) return;
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName(wi->as<ButtonWidget>().data().toString()));
+    Hu_MenuSetPage(Hu_MenuPagePtr(wi->as<ButtonWidget>().data().toString()));
 }
 
 void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
@@ -3869,7 +3886,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     float value = sldr.value();
-    ColorPreviewWidget &cboxMix = Hu_MenuFindPageByName("ColorWidget")->findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
+    ColorPreviewWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
 
     switch(wi->data2)
     {
@@ -3924,14 +3941,14 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
         mnEpisode = episodesById.begin()->second->as<RecordValue>().record()->gets("id");
 #if __JHEXEN__
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
+        Hu_MenuSetPage(Hu_MenuPagePtr("PlayerClass"));
 #else
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
+        Hu_MenuSetPage(Hu_MenuPagePtr("Skill"));
 #endif
     }
     else
     {
-        Hu_MenuSetActivePage(Hu_MenuFindPageByName("Episode"));
+        Hu_MenuSetPage(Hu_MenuPagePtr("Episode"));
     }
 }
 
@@ -3939,10 +3956,10 @@ void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
     if(Widget::MNA_ACTIVEOUT != action) return;
 
-    Page *page = Hu_MenuFindPageByName("Multiplayer");
+    Page &multiplayerPage = Hu_MenuPage("Multiplayer");
 
     // Set the appropriate label.
-    ButtonWidget *btn = &page->findWidget(0, MNF_ID0).as<ButtonWidget>();
+    ButtonWidget *btn = &multiplayerPage.findWidget(0, MNF_ID0).as<ButtonWidget>();
     if(IS_NETGAME)
     {
         btn->setText("Disconnect");
@@ -3952,7 +3969,7 @@ void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         btn->setText("Join Game");
     }
 
-    Hu_MenuSetActivePage(page);
+    Hu_MenuSetPage(&multiplayerPage);
 }
 
 void Hu_MenuSelectJoinGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4065,7 +4082,7 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
         DD_Executef(false, "setcolor %i", cfg.netColor);
     }
 
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("Multiplayer"));
+    Hu_MenuSetPage(Hu_MenuPagePtr("Multiplayer"));
 }
 
 void Hu_MenuSelectQuitGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4093,7 +4110,7 @@ void Hu_MenuSelectLoadGame(Widget * /*wi*/, Widget::mn_actionid_t action)
         }
     }
 
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("LoadGame"));
+    Hu_MenuSetPage(Hu_MenuPagePtr("LoadGame"));
 }
 
 void Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4126,15 +4143,14 @@ void Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
     }
 
     Hu_MenuCommand(MCMD_OPEN);
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("SaveGame"));
+    Hu_MenuSetPage(Hu_MenuPagePtr("SaveGame"));
 }
 
 #if __JHEXEN__
 void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
 {
-    Page *skillPage = Hu_MenuFindPageByName("Skill");
+    Page &skillPage = Hu_MenuPage("Skill");
     int option = wi->data2;
-    ButtonWidget *skillObj;
 
     if(Widget::MNA_ACTIVEOUT != action) return;
 
@@ -4155,33 +4171,34 @@ void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
         mnPlrClass = option;
     }
 
-    skillObj = &skillPage->findWidget(0, MNF_ID0).as<ButtonWidget>();
-    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]));
-    if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
+    ButtonWidget *btn;
+    btn = &skillPage.findWidget(0, MNF_ID0).as<ButtonWidget>();
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]));
+    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    skillObj = &skillPage->findWidget(0, MNF_ID1).as<ButtonWidget>();
-    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
-    if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
+    btn = &skillPage.findWidget(0, MNF_ID1).as<ButtonWidget>();
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
+    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    skillObj = &skillPage->findWidget(0, MNF_ID2).as<ButtonWidget>();
-    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
-    if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
+    btn = &skillPage.findWidget(0, MNF_ID2).as<ButtonWidget>();
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
+    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    skillObj = &skillPage->findWidget(0, MNF_ID3).as<ButtonWidget>();
-    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
-    if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
+    btn = &skillPage.findWidget(0, MNF_ID3).as<ButtonWidget>();
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
+    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    skillObj = &skillPage->findWidget(0, MNF_ID4).as<ButtonWidget>();
-    skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
-    if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
+    btn = &skillPage.findWidget(0, MNF_ID4).as<ButtonWidget>();
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
+    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     switch(mnPlrClass)
     {
-    case PCLASS_FIGHTER:    skillPage->setX(120); break;
-    case PCLASS_CLERIC:     skillPage->setX(116); break;
-    case PCLASS_MAGE:       skillPage->setX(112); break;
+    case PCLASS_FIGHTER:    skillPage.setX(120); break;
+    case PCLASS_CLERIC:     skillPage.setX(116); break;
+    case PCLASS_MAGE:       skillPage.setX(112); break;
     }
-    Hu_MenuSetActivePage(skillPage);
+    Hu_MenuSetPage(&skillPage);
 }
 
 void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
@@ -4204,9 +4221,9 @@ void Hu_MenuSelectEpisode(Widget *wi, Widget::mn_actionid_t /*action*/)
     DENG2_ASSERT(wi != 0);
     mnEpisode = wi->as<ButtonWidget>().data().toString();
 #if __JHEXEN__
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("PlayerClass"));
+    Hu_MenuSetPage(Hu_MenuPagePtr("PlayerClass"));
 #else
-    Hu_MenuSetActivePage(Hu_MenuFindPageByName("Skill"));
+    Hu_MenuSetPage(Hu_MenuPagePtr("Skill"));
 #endif
 }
 
@@ -4315,10 +4332,11 @@ D_CMD(MenuOpen)
             return true;
         }
 
-        if(Page *page = Hu_MenuFindPageByName(argv[1]))
+        char const *pageName = argv[1];
+        if(Hu_MenuHasPage(pageName))
         {
             Hu_MenuCommand(MCMD_OPEN);
-            Hu_MenuSetActivePage(page);
+            Hu_MenuSetPage(Hu_MenuPagePtr(pageName));
             return true;
         }
         return false;
