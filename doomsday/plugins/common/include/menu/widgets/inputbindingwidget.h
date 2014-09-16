@@ -45,6 +45,8 @@ public:
 
     int handleEvent_Privileged(event_t *ev);
 
+    int handleCommand(menucommand_e command);
+
     char const *controlName();
 };
 

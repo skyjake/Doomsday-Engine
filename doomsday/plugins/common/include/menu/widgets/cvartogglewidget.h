@@ -32,6 +32,8 @@ public:
     CVarToggleWidget(char const *cvarPath);
     virtual ~CVarToggleWidget();
 
+    int handleCommand(menucommand_e command);
+
     char const *cvarPath() const;
 
 private:

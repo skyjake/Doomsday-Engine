@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_LISTWIDGET
 #define LIBCOMMON_UI_LISTWIDGET
 
+#include <QList>
 #include "widget.h"
 
 namespace common {
@@ -66,6 +67,7 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
+    int handleCommand(menucommand_e command);
 
     Items &items();
     Items const &items() const;

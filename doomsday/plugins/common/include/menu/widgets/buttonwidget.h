@@ -34,6 +34,7 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
+    int handleCommand(menucommand_e command);
 
     de::String const &text() const;
     ButtonWidget &setText(de::String newText);

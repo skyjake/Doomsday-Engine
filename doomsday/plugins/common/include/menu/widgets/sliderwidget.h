@@ -74,6 +74,7 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
+    int handleCommand(menucommand_e command);
 
     int thumbPos() const;
 

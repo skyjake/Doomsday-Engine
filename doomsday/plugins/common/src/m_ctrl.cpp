@@ -547,9 +547,8 @@ void InputBindingWidget::draw(Point2Raw const *origin)
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 
-int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
+int InputBindingWidget::handleCommand(menucommand_e cmd)
 {
-    controlconfig_t *binds = static_cast<InputBindingWidget *>(ob)->binds;
     switch(cmd)
     {
     case MCMD_DELETE: {
@@ -577,10 +576,10 @@ int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
 
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
-        ob->_flags |= MNF_ACTIVE;
-        if(ob->hasAction(Widget::MNA_ACTIVE))
+        Widget::_flags |= MNF_ACTIVE;
+        if(hasAction(MNA_ACTIVE))
         {
-            ob->execAction(Widget::MNA_ACTIVE);
+            execAction(MNA_ACTIVE);
             return true;
         }
         break;
@@ -589,6 +588,12 @@ int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
     }
 
     return false; // Not eaten.
+}
+
+int InputBindingWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<InputBindingWidget>().handleCommand(cmd);
 }
 
 void InputBindingWidget::updateGeometry(Page * /*page*/)

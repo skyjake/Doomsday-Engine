@@ -49,8 +49,6 @@
 #include "menu/widgets/sliderwidget.h"
 #include "menu/widgets/textualsliderwidget.h"
 
-extern common::menu::cvarbutton_t mnCVarButtons[];
-
 using namespace de;
 using namespace common;
 
@@ -1635,29 +1633,34 @@ Widget &Widget::setHelpInfo(String newHelpInfo)
     return *this;
 }
 
-int Widget_DefaultCommandResponder(Widget *ob, menucommand_e cmd)
+int Widget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(ob);
-    if(MCMD_SELECT == cmd && (ob->_flags & MNF_FOCUS) && !(ob->_flags & MNF_DISABLED))
+    if(MCMD_SELECT == cmd && (_flags & MNF_FOCUS) && !(_flags & MNF_DISABLED))
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        if(!(ob->_flags & MNF_ACTIVE))
+        if(!(_flags & MNF_ACTIVE))
         {
-            ob->_flags |= MNF_ACTIVE;
-            if(ob->hasAction(Widget::MNA_ACTIVE))
+            _flags |= MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVE))
             {
-                ob->execAction(Widget::MNA_ACTIVE);
+                execAction(MNA_ACTIVE);
             }
         }
 
-        ob->_flags &= ~MNF_ACTIVE;
-        if(ob->hasAction(Widget::MNA_ACTIVEOUT))
+        _flags &= ~MNF_ACTIVE;
+        if(hasAction(MNA_ACTIVEOUT))
         {
-            ob->execAction(Widget::MNA_ACTIVEOUT);
+            execAction(MNA_ACTIVEOUT);
         }
         return true;
     }
     return false; // Not eaten.
+}
+
+int Widget_DefaultCommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->handleCommand(cmd);
 }
 
 Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
@@ -1839,11 +1842,10 @@ void LabelWidget::setText(String const &newText)
 DENG2_PIMPL_NOREF(LineEditWidget)
 {
     String text;
-    String oldText;    ///< If the edit is canceled...
-    String emptyText;  ///< If value is is empty/null.
+    String oldText;    ///< For restoring a canceled edit.
+    String emptyText;  ///< Used when value is empty.
     int maxLength       = 0;
     int maxVisibleChars = 0;
-    void *data1         = nullptr;
 };
 
 LineEditWidget::LineEditWidget()
@@ -1966,67 +1968,6 @@ void LineEditWidget::draw(Point2Raw const *_origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi != 0);
-    LineEditWidget *edit = static_cast<LineEditWidget *>(wi);
-
-    if(cmd == MCMD_SELECT)
-    {
-        if(!(wi->_flags & MNF_ACTIVE))
-        {
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
-            wi->_flags |= MNF_ACTIVE;
-            wi->timer = 0;
-            // Store a copy of the present text value so we can restore it.
-            edit->oldText = edit->text;
-            if(wi->hasAction(Widget::MNA_ACTIVE))
-            {
-                wi->execAction(Widget::MNA_ACTIVE);
-            }
-        }
-        else
-        {
-            S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            edit->oldText = edit->text;
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
-            {
-                wi->execAction(Widget::MNA_ACTIVEOUT);
-            }
-        }
-        return true;
-    }
-
-    if(wi->_flags & MNF_ACTIVE)
-    {
-        switch(cmd)
-        {
-        case MCMD_NAV_OUT:
-            edit->text = edit->oldText;
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_CLOSE))
-            {
-                wi->execAction(Widget::MNA_CLOSE);
-            }
-            return true;
-
-        // Eat all other navigation commands, when active.
-        case MCMD_NAV_LEFT:
-        case MCMD_NAV_RIGHT:
-        case MCMD_NAV_DOWN:
-        case MCMD_NAV_UP:
-        case MCMD_NAV_PAGEDOWN:
-        case MCMD_NAV_PAGEUP:
-            return true;
-
-        default: break;
-        }
-    }
-
-    return false; // Not eaten.
-}
-
 int LineEditWidget::maxLength() const
 {
     return d->maxLength;
@@ -2133,6 +2074,70 @@ int LineEditWidget::handleEvent(event_t *ev)
     }
 
     return false;
+}
+
+int LineEditWidget::handleCommand(menucommand_e cmd)
+{
+    if(cmd == MCMD_SELECT)
+    {
+        if(!(Widget::_flags & MNF_ACTIVE))
+        {
+            S_LocalSound(SFX_MENU_CYCLE, NULL);
+            Widget::_flags |= MNF_ACTIVE;
+            Widget::timer = 0;
+            // Store a copy of the present text value so we can restore it.
+            d->oldText = d->text;
+            if(hasAction(MNA_ACTIVE))
+            {
+                execAction(MNA_ACTIVE);
+            }
+        }
+        else
+        {
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+            d->oldText = d->text;
+            Widget::_flags &= ~MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVEOUT))
+            {
+                execAction(MNA_ACTIVEOUT);
+            }
+        }
+        return true;
+    }
+
+    if(Widget::_flags & MNF_ACTIVE)
+    {
+        switch(cmd)
+        {
+        case MCMD_NAV_OUT:
+            d->text = d->oldText;
+            Widget::_flags &= ~MNF_ACTIVE;
+            if(hasAction(MNA_CLOSE))
+            {
+                execAction(MNA_CLOSE);
+            }
+            return true;
+
+        // Eat all other navigation commands, when active.
+        case MCMD_NAV_LEFT:
+        case MCMD_NAV_RIGHT:
+        case MCMD_NAV_DOWN:
+        case MCMD_NAV_UP:
+        case MCMD_NAV_PAGEDOWN:
+        case MCMD_NAV_PAGEUP:
+            return true;
+
+        default: break;
+        }
+    }
+
+    return false; // Not eaten.
+}
+
+int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<LineEditWidget>().handleCommand(cmd);
 }
 
 void LineEditWidget::updateGeometry(Page * /*page*/)
@@ -2289,35 +2294,32 @@ void ListWidget::draw(Point2Raw const *_origin)
     }
 }
 
-int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int ListWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    ListWidget *list = static_cast<ListWidget *>(wi);
-
     switch(cmd)
     {
     case MCMD_NAV_DOWN:
     case MCMD_NAV_UP:
-        if(wi->_flags & MNF_ACTIVE)
+        if(Widget::_flags & MNF_ACTIVE)
         {
-            int oldSelection = list->selection();
+            int oldSelection = d->selection;
             if(MCMD_NAV_DOWN == cmd)
             {
-                if(list->selection() < list->itemCount() - 1)
-                    list->selectItem(list->selection() + 1);
+                if(d->selection < itemCount() - 1)
+                    selectItem(d->selection + 1);
             }
             else
             {
-                if(list->selection() > 0)
-                    list->selectItem(list->selection() - 1);
+                if(d->selection > 0)
+                    selectItem(d->selection - 1);
             }
 
-            if(list->selection() != oldSelection)
+            if(d->selection != oldSelection)
             {
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
-                if(wi->hasAction(Widget::MNA_MODIFIED))
+                if(hasAction(MNA_MODIFIED))
                 {
-                    wi->execAction(Widget::MNA_MODIFIED);
+                    execAction(MNA_MODIFIED);
                 }
             }
             return true;
@@ -2325,41 +2327,47 @@ int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
         return false; // Not eaten.
 
     case MCMD_NAV_OUT:
-        if(wi->_flags & MNF_ACTIVE)
+        if(Widget::_flags & MNF_ACTIVE)
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_CLOSE))
+            Widget::_flags &= ~MNF_ACTIVE;
+            if(hasAction(MNA_CLOSE))
             {
-                wi->execAction(Widget::MNA_CLOSE);
+                execAction(MNA_CLOSE);
             }
             return true;
         }
         return false; // Not eaten.
 
     case MCMD_SELECT:
-        if(!(wi->_flags & MNF_ACTIVE))
+        if(!(Widget::_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVE))
+            Widget::_flags |= MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE);
+                execAction(MNA_ACTIVE);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+            Widget::_flags &= ~MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT);
+                execAction(MNA_ACTIVEOUT);
             }
         }
         return true;
 
     default: return false; // Not eaten.
     }
+}
+
+int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<ListWidget>().handleCommand(cmd);
 }
 
 int ListWidget::selection() const
@@ -2505,41 +2513,38 @@ void InlineListWidget::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int InlineListWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    ListWidget *list = static_cast<ListWidget *>(wi);
-
     switch(cmd)
     {
     case MCMD_SELECT: // Treat as @c MCMD_NAV_RIGHT
     case MCMD_NAV_LEFT:
     case MCMD_NAV_RIGHT: {
-        int oldSelection = list->selection();
+        int oldSelection = selection();
 
         if(MCMD_NAV_LEFT == cmd)
         {
-            if(list->selection() > 0)
-                list->selectItem(list->selection() - 1);
+            if(selection() > 0)
+                selectItem(selection() - 1);
             else
-                list->selectItem(list->itemCount() - 1);
+                selectItem(itemCount() - 1);
         }
         else
         {
-            if(list->selection() < list->itemCount() - 1)
-                list->selectItem(list->selection() + 1);
+            if(selection() < itemCount() - 1)
+                selectItem(selection() + 1);
             else
-                list->selectItem(0);
+                selectItem(0);
         }
 
-        list->updateVisibleSelection();
+        updateVisibleSelection();
 
-        if(oldSelection != list->selection())
+        if(oldSelection != selection())
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(Widget::MNA_MODIFIED))
+            if(hasAction(MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED);
+                execAction(MNA_MODIFIED);
             }
         }
         return true;
@@ -2547,6 +2552,12 @@ int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
     default:
         return false; // Not eaten.
     }
+}
+
+int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<InlineListWidget>().handleCommand(cmd);
 }
 
 void ListWidget::updateGeometry(Page *page)
@@ -2669,35 +2680,38 @@ void ButtonWidget::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int ButtonWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    //ButtonWidget *btn = static_cast<ButtonWidget *>(wi);
-
     if(cmd == MCMD_SELECT)
     {
-        if(!(wi->_flags & MNF_ACTIVE))
+        if(!(Widget::_flags & MNF_ACTIVE))
         {
-            wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVE))
+            Widget::_flags |= MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE);
+                execAction(MNA_ACTIVE);
             }
         }
 
         // We are not going to receive an "up event" so action that now.
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        wi->_flags &= ~MNF_ACTIVE;
-        if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+        Widget::_flags &= ~MNF_ACTIVE;
+        if(hasAction(MNA_ACTIVEOUT))
         {
-            wi->execAction(Widget::MNA_ACTIVEOUT);
+            execAction(MNA_ACTIVEOUT);
         }
 
-        wi->timer = 0;
+        Widget::timer = 0;
         return true;
     }
 
     return false; // Not eaten.
+}
+
+int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<ButtonWidget>().handleCommand(cmd);
 }
 
 void ButtonWidget::updateGeometry(Page *page)
@@ -2798,54 +2812,59 @@ char const *CVarToggleWidget::cvarPath() const
     return _cvarPath;
 }
 
-int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int CVarToggleWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    //CVarToggleWidget *tog = static_cast<CVarToggleWidget *>(wi);
-
     if(cmd == MCMD_SELECT)
     {
-        dd_bool justActivated = false;
-        if(!(wi->_flags & MNF_ACTIVE))
+        bool justActivated = false;
+        if(!(Widget::_flags & MNF_ACTIVE))
         {
             justActivated = true;
             S_LocalSound(SFX_MENU_CYCLE, NULL);
 
-            wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVE))
+            Widget::_flags |= MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE);
+                execAction(MNA_ACTIVE);
             }
         }
 
         if(!justActivated)
-            wi->_flags ^= MNF_ACTIVE;
-
-        if(wi->data1)
         {
-            void *data = wi->data1;
+            Widget::_flags ^= MNF_ACTIVE;
+        }
 
-            *((char *)data) = (wi->_flags & MNF_ACTIVE) != 0;
-            if(wi->hasAction(Widget::MNA_MODIFIED))
+        if(Widget::data1)
+        {
+            void *data = Widget::data1;
+
+            *((char *)data) = (Widget::_flags & MNF_ACTIVE) != 0;
+            if(hasAction(MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED);
+                execAction(MNA_MODIFIED);
             }
         }
 
-        if(!justActivated && !(wi->_flags & MNF_ACTIVE))
+        if(!justActivated && !(Widget::_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+            if(hasAction(MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT);
+                execAction(MNA_ACTIVEOUT);
             }
         }
 
-        wi->timer = 0;
+        Widget::timer = 0;
         return true;
     }
 
     return false; // Not eaten.
+}
+
+int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<CVarToggleWidget>().handleCommand(cmd);
 }
 
 void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
@@ -3017,36 +3036,39 @@ void ColorPreviewWidget::draw(Point2Raw const *offset)
     DGL_DrawRectf2Color(x, y, w, h, d->color.x, d->color.y, d->color.z, d->color.w * rs.pageAlpha);
 }
 
-int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int ColorPreviewWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    //ColorPreviewWidget *cbox = (ColorPreviewWidget *)wi->_typedata;
-
     switch(cmd)
     {
     case MCMD_SELECT:
-        if(!(wi->_flags & MNF_ACTIVE))
+        if(!(Widget::_flags & MNF_ACTIVE))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            wi->_flags |= MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVE))
+            Widget::_flags |= MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVE))
             {
-                wi->execAction(Widget::MNA_ACTIVE);
+                execAction(MNA_ACTIVE);
             }
         }
         else
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            wi->_flags &= ~MNF_ACTIVE;
-            if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+            Widget::_flags &= ~MNF_ACTIVE;
+            if(hasAction(MNA_ACTIVEOUT))
             {
-                wi->execAction(Widget::MNA_ACTIVEOUT);
+                execAction(MNA_ACTIVEOUT);
             }
         }
         return true;
 
     default: return false; // Not eaten.
     }
+}
+
+int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<ColorPreviewWidget>().handleCommand(cmd);
 }
 
 void ColorPreviewWidget::updateGeometry(Page * /*page*/)
@@ -3357,37 +3379,34 @@ void SliderWidget::draw(Point2Raw const *origin)
 #undef WIDTH
 }
 
-int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+int SliderWidget::handleCommand(menucommand_e cmd)
 {
-    DENG2_ASSERT(wi != 0);
-    SliderWidget *sldr = static_cast<SliderWidget *>(wi);
-
     switch(cmd)
     {
     case MCMD_NAV_LEFT:
     case MCMD_NAV_RIGHT: {
-        float oldvalue = sldr->_value;
+        float const oldvalue = _value;
 
         if(MCMD_NAV_LEFT == cmd)
         {
-            sldr->_value -= sldr->step;
-            if(sldr->_value < sldr->min)
-                sldr->_value = sldr->min;
+            _value -= step;
+            if(_value < min)
+                _value = min;
         }
         else
         {
-            sldr->_value += sldr->step;
-            if(sldr->_value > sldr->max)
-                sldr->_value = sldr->max;
+            _value += step;
+            if(_value > max)
+                _value = max;
         }
 
         // Did the value change?
-        if(oldvalue != sldr->_value)
+        if(oldvalue != _value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(wi->hasAction(Widget::MNA_MODIFIED))
+            if(hasAction(MNA_MODIFIED))
             {
-                wi->execAction(Widget::MNA_MODIFIED);
+                execAction(MNA_MODIFIED);
             }
         }
         return true;
@@ -3395,6 +3414,12 @@ int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
 
     default: return false; // Not eaten.
     }
+}
+
+int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
+{
+    DENG2_ASSERT(wi);
+    return wi->as<SliderWidget>().handleCommand(cmd);
 }
 
 void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)

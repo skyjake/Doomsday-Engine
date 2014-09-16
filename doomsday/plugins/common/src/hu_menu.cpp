@@ -4161,7 +4161,7 @@ void Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
     int selection = list.itemData(list.selection());
     if(selection >= 0)
     {
-        wi->pagePtr()->findWidget(0, MNF_ID0).as<MobjPreviewWidget>().setTranslationMap(selection);
+        wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>().setTranslationMap(selection);
     }
 }
 

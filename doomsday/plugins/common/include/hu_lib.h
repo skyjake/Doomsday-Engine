@@ -24,10 +24,6 @@
 #include "common.h"
 #include "hu_stuff.h"
 
-#ifdef __cplusplus
-#include <QList>
-#endif
-
 typedef enum menucommand_e
 {
     MCMD_OPEN, // Open the menu.

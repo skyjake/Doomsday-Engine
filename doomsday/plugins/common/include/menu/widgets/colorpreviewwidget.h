@@ -55,6 +55,8 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
 
+    int handleCommand(menucommand_e command);
+
     /**
      * Change the dimensions of the preview area (in fixed 320x200 space).
      *

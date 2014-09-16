@@ -159,6 +159,10 @@ public:
     /// @return  @c true if the event is eaten.
     virtual int handleEvent_Privileged(event_t *ev);
 
+    /// Respond to the given menu @a command.
+    /// @return  @c true if the command was eaten.
+    virtual int handleCommand(menucommand_e command);
+
     /// Process time (the "tick") for this object.
     virtual void tick();
 

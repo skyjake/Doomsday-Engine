@@ -67,6 +67,8 @@ public:
     void updateGeometry(Page *pagePtr);
     int handleEvent(event_t *ev);
 
+    int handleCommand(menucommand_e command);
+
     void setMaxLength(int newMaxLength);
     int maxLength() const;
 
