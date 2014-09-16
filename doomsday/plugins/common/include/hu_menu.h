@@ -83,35 +83,8 @@ extern menu::cvarbutton_t mnCVarButtons[];
 #define MENU_CURSOR_FRAMECOUNT      2
 #define MENU_CURSOR_TICSPERFRAME    8
 
-/// Register the console commands, variables, etc..., of this module.
-void Hu_MenuRegister();
-
-/**
- * Menu initialization.
- * Called during (post-engine) init and after updating game/engine state.
- *
- * Initializes the various vars, fonts, adjust the menu structs and
- * anything else that needs to be done before the menu can be used.
- */
 void Hu_MenuInit();
-
-/**
- * Menu shutdown, to be called when the game menu is no longer needed.
- */
 void Hu_MenuShutdown();
-
-/**
- * Load any resources the menu needs.
- */
-void Hu_MenuLoadResources();
-
-/**
- * Updates on Game Tick.
- */
-void Hu_MenuTicker(timespan_t ticLength);
-
-/// @return  @c true if the menu is presently visible.
-dd_bool Hu_MenuIsVisible();
 
 /**
  * Returns @c true if a current menu page is configured.
@@ -159,40 +132,46 @@ inline void Hu_MenuSetPage(de::String name, bool allowReactivate = false) {
 }
 
 /**
- * Lookup the unique identifier/name for the given @a page.
+ * Add a new Page to the menu. If the name of @a page is not unique, or the page
+ * has already been added - an Error will be thrown and the page will not be added.
  *
- * @return  Unique identifier/name of the page; otherwise an empty string.
+ * @param page  Page to add.
+ *
+ * @return  Same as @a page, for caller convenience.
  */
-de::String Hu_MenuNameFor(menu::Page const *page);
+menu::Page *Hu_MenuAddPage(menu::Page *page);
 
 /**
- * @param name  Symbolic name.
- * @param origin  Topleft corner.
- * @param flags  @ref menuPageFlags.
- * @param ticker  Ticker callback.
- * @param drawer  Page drawing routine.
- * @param cmdResponder  Menu-command responder routine.
- * @param userData  User data pointer to be associated with the page.
+ * Returns @c true if the menu is currently active (open).
  */
-menu::Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
-    void (*ticker) (menu::Page *page),
-    void (*drawer) (menu::Page *page, Point2Raw const *origin) = 0,
-    int (*cmdResponder) (menu::Page *page, menucommand_e cmd) = 0,
-    void *userData = 0);
+bool Hu_MenuIsActive();
 
 /**
- * This is the main menu drawing routine (called every tic by the drawing
- * loop) Draws the current menu 'page' by calling the funcs attached to
- * each menu obj.
+ * Change the opacity of the entire menu to @a newOpacity.
+ * @see Hu_MenuOpacity()
+ */
+void Hu_MenuSetOpacity(float newOpacity);
+
+/**
+ * Returns the current menu opacity.
+ * @see Hu_MenuSetOpacity()
+ */
+float Hu_MenuOpacity();
+
+/**
+ * Returns @c true if the menu is presently visible.
+ */
+bool Hu_MenuIsVisible();
+
+/**
+ * This is the main menu drawing routine (called every tic by the drawing loop).
  */
 void Hu_MenuDrawer();
 
-void Hu_MenuPageTicker(menu::Page *page);
-
-void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
-
-void Hu_MenuDrawPageTitle(char const *title, int x, int y);
-void Hu_MenuDrawPageHelp(char const *help, int x, int y);
+/**
+ * Updates on Game Tick.
+ */
+void Hu_MenuTicker(timespan_t ticLength);
 
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuPrivilegedResponder(event_t *ev);
@@ -200,38 +179,25 @@ int Hu_MenuPrivilegedResponder(event_t *ev);
 /// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuResponder(event_t *ev);
 
-/**
- * Handles "hotkey" navigation in the menu.
- * @return  @c true if the input event @a ev was eaten.
- */
+/// @return  @c true if the input event @a ev was eaten.
 int Hu_MenuFallbackResponder(event_t *ev);
 
-/**
- * @return  @c true iff the menu is currently active (open).
- */
-dd_bool Hu_MenuIsActive();
+/// @return  @c true if the menu @a command was eaten.
+void Hu_MenuCommand(menucommand_e command);
 
-/**
- * @return  Current alpha level of the menu.
- */
-float Hu_MenuAlpha();
+/// Register the console commands, variables, etc..., of this module.
+void Hu_MenuConsoleRegister();
 
-/**
- * Set the alpha level of the entire menu.
- *
- * @param alpha  Alpha level to set the menu too (0...1)
- */
-void Hu_MenuSetAlpha(float alpha);
-
-/**
- * Initialize a new singleplayer game according to the options set via the menu.
- * @param confirmed  If @c true this game configuration has already been confirmed.
- */
-void Hu_MenuInitNewGame(dd_bool confirmed);
-
-void Hu_MenuCommand(menucommand_e cmd);
+// ----------------------------------------------------------------------------------------
 
 void Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action);
+
+void Hu_MenuPageTicker(menu::Page *page);
+
+void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
+
+void Hu_MenuDrawPageTitle(char const *title, int x, int y);
+void Hu_MenuDrawPageHelp(char const *help, int x, int y);
 
 } // namespace common
 

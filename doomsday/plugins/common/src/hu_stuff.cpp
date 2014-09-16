@@ -1352,10 +1352,10 @@ static void drawFogEffect(void)
 #undef mfd
 }
 
-void Hu_Drawer(void)
+void Hu_Drawer()
 {
-    dd_bool menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    dd_bool pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
+    bool const menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
+    bool const pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;

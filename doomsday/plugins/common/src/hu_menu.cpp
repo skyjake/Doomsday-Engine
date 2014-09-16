@@ -141,6 +141,8 @@ void Hu_MenuBindings(Widget *wi, Widget::mn_actionid_t action);
 void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action);
 void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action);
 
+static void Hu_MenuInitNewGame(dd_bool confirmed);
+
 static void initAllPages();
 static void destroyAllPages();
 
@@ -343,23 +345,6 @@ Page &Hu_MenuPage(String name)
     throw Error("Hu_MenuPage", "Unknown page '" + name + "'");
 }
 
-String Hu_MenuNameFor(Page const *page)
-{
-    if(page)
-    {
-        Pages::const_iterator i = pages.constBegin();
-        while(i != pages.constEnd())
-        {
-            if(i.value() == page)
-            {
-                return i.key();
-            }
-            i++;
-        }
-    }
-    return "";
-}
-
 /// @todo Make this state an object property flag.
 /// @return  @c true if the rotation of a cursor on this object should be animated.
 static dd_bool Hu_MenuHasCursorRotation(Widget *wi)
@@ -384,7 +369,7 @@ static void Hu_MenuUpdateCursorState()
     cursorHasRotation = false;
 }
 
-void Hu_MenuLoadResources()
+static void Hu_MenuLoadResources()
 {
     char buf[9];
 
@@ -456,7 +441,7 @@ void Hu_MenuInitColorWidgetPage()
     Point2Raw const origin(124, 60);
 #endif
 
-    Page *page = Hu_MenuNewPage("ColorWidget", &origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder, NULL);
+    Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, Hu_MenuColorWidgetCmdResponder));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
     {
@@ -519,7 +504,6 @@ void Hu_MenuInitColorWidgetPage()
         text->_flags = MNF_ID4;
         page->_widgets << text;
     }
-
     {
         auto *sld = new SliderWidget;
         sld->_flags    = MNF_ID5;
@@ -552,9 +536,9 @@ void Hu_MenuInitMainPage()
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    Page *page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Main", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker));
 #else
-    Page *page = Hu_MenuNewPage("Main", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Main", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawMainPage));
 #endif
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
 
@@ -707,7 +691,7 @@ void Hu_MenuInitGameTypePage()
     Point2Raw origin(104, 65);
 #endif
 
-    Page *page = Hu_MenuNewPage("GameType", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawGameTypePage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("GameType", origin, 0, Hu_MenuPageTicker, Hu_MenuDrawGameTypePage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -768,7 +752,7 @@ void Hu_MenuInitSkillPage()
     };
 #endif
 
-    Page *page = Hu_MenuNewPage("Skill", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Skill", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSkillPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -809,7 +793,7 @@ void Hu_MenuInitMultiplayerPage()
     Point2Raw const origin(97, 65);
 #endif
 
-    Page *page = Hu_MenuNewPage("Multiplayer", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Multiplayer", origin, 0, Hu_MenuPageTicker, Hu_MenuDrawMultiplayerPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
@@ -843,7 +827,7 @@ void Hu_MenuInitPlayerSetupPage()
     Point2Raw const origin(70, 54);
 #endif
 
-    Page *page = Hu_MenuNewPage("PlayerSetup", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, 0, Hu_MenuPageTicker, Hu_MenuDrawPlayerSetupPage));
     page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
@@ -950,9 +934,7 @@ void Hu_MenuInitPlayerSetupPage()
 
 void Hu_MenuInitSaveOptionsPage()
 {
-    Point2Raw const origin(60, 50);
-
-    Page *page = Hu_MenuNewPage("SaveOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("SaveOptions", Point2Raw(60, 50), 0, Hu_MenuPageTicker));
     page->setTitle("Save Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -993,9 +975,7 @@ void Hu_MenuInitSaveOptionsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitFilesPage()
 {
-    Point2Raw origin(110, 60);
-
-    Page *page = Hu_MenuNewPage("Files", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Files", Point2Raw(110, 60), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -1090,7 +1070,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 #endif
     };
 
-    Page *loadPage = Hu_MenuNewPage("LoadGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage, NULL, NULL);
+    Page *loadPage = Hu_MenuAddPage(new Page("LoadGame", origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawLoadGamePage));
     loadPage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     loadPage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -1113,7 +1093,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         loadPage->_widgets << edit;
     }
 
-    Page *savePage = Hu_MenuNewPage("SaveGame", &origin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage, NULL, NULL);
+    Page *savePage = Hu_MenuAddPage(new Page("SaveGame", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawSaveGamePage));
     savePage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     savePage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -1146,7 +1126,7 @@ void Hu_MenuInitOptionsPage()
     Point2Raw const origin(110, 63);
 #endif
 
-    Page *page = Hu_MenuNewPage("Options", &origin, 0, Hu_MenuPageTicker, Hu_MenuDrawOptionsPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("Options", origin, 0, Hu_MenuPageTicker, Hu_MenuDrawOptionsPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -1262,7 +1242,7 @@ void Hu_MenuInitGameplayOptionsPage()
     Point2Raw const origin(30, 40);
 #endif
 
-    Page *page = Hu_MenuNewPage("GameplayOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("GameplayOptions", origin, 0, Hu_MenuPageTicker));
     page->setTitle("Gameplay Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -1506,7 +1486,7 @@ void Hu_MenuInitHUDOptionsPage()
     Point2Raw const origin(97, 28);
 #endif
 
-    Page *page = Hu_MenuNewPage("HudOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("HudOptions", origin, 0, Hu_MenuPageTicker));
     page->setTitle("HUD Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -2115,7 +2095,7 @@ void Hu_MenuInitAutomapOptionsPage()
     Point2Raw const origin(70, 40);
 #endif
 
-    Page *page = Hu_MenuNewPage("AutomapOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("AutomapOptions", origin, 0, Hu_MenuPageTicker));
     page->setTitle("Automap Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -2353,7 +2333,7 @@ void Hu_MenuInitWeaponsPage()
         { "", WT_NOCHANGE}
     };
 
-    Page *page = Hu_MenuNewPage("WeaponOptions", &origin, 0, Hu_MenuPageTicker);
+    Page *page = Hu_MenuAddPage(new Page("WeaponOptions", origin, 0, Hu_MenuPageTicker));
     page->setTitle("Weapons Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -2479,9 +2459,7 @@ void Hu_MenuInitWeaponsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitInventoryOptionsPage()
 {
-    Point2Raw const origin(78, 48);
-
-    Page *page = Hu_MenuNewPage("InventoryOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Point2Raw(78, 48), 0, Hu_MenuPageTicker));
     page->setTitle("Inventory Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -2584,7 +2562,7 @@ void Hu_MenuInitSoundOptionsPage()
     Point2Raw const origin(97, 40);
 #endif
 
-    Page *page = Hu_MenuNewPage("SoundOptions", &origin, 0, Hu_MenuPageTicker, NULL, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("SoundOptions", origin, 0, Hu_MenuPageTicker));
     page->setTitle("Sound Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -2633,7 +2611,7 @@ void Hu_MenuInitEpisodePage()
     Point2Raw const origin(48, 63);
 #endif
 
-    Page *page = Hu_MenuNewPage("Episode", &origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage);
+    Page *page = Hu_MenuAddPage(new Page("Episode", origin, MPF_LAYOUT_FIXED, Hu_MenuPageTicker, Hu_MenuDrawEpisodePage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
@@ -2731,8 +2709,6 @@ void Hu_MenuInitEpisodePage()
  */
 void Hu_MenuInitPlayerClassPage()
 {
-    Point2Raw const pageOrigin(66, 66);
-
     // First determine the number of selectable player classes.
     int count = 0;
     for(int i = 0; i < NUM_PLAYER_CLASSES; ++i)
@@ -2744,7 +2720,7 @@ void Hu_MenuInitPlayerClassPage()
         }
     }
 
-    Page *page = Hu_MenuNewPage("PlayerClass", &pageOrigin, MPF_LAYOUT_FIXED|MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Point2Raw(66, 66), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuPageTicker, Hu_MenuDrawPlayerClassPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -2819,28 +2795,34 @@ void Hu_MenuInitPlayerClassPage()
 }
 #endif
 
-static Page *addPageToCollection(Page *page, String name)
+Page *Hu_MenuAddPage(Page *page)
 {
-    String nameInIndex = name.toLower();
+    if(!page) return page;
+
+    // Have we already added this page?
+    for(Page *other : pages)
+    {
+        if(other == page) return page;
+    }
+
+    // Is the name valid?
+    String nameInIndex = page->name().toLower();
+    if(nameInIndex.isEmpty())
+    {
+        throw Error("Hu_MenuPage", "A page must have a valid (i.e., not empty) name");
+    }
+
+    // Is the name unique?
     if(pages.contains(nameInIndex))
     {
-        delete pages[nameInIndex];
+        throw Error("Hu_MenuPage", "A page with the name '" + page->name() + "' is already present");
     }
+
     pages.insert(nameInIndex, page);
     return page;
 }
 
-Page *Hu_MenuNewPage(char const *name, Point2Raw const *origin, int flags,
-    void (*ticker) (Page *page),
-    void (*drawer) (Page *page, Point2Raw const *origin),
-    int (*cmdResponder) (Page *page, menucommand_e cmd),
-    void *userData)
-{
-    DENG2_ASSERT(origin != 0);
-    DENG2_ASSERT(name != 0 && name[0]);
-    return addPageToCollection(new Page(*origin, flags, ticker, drawer, cmdResponder, userData), name);
-}
-
+/// @note Called during (post-engine) init and after updating game/engine state.
 void Hu_MenuInit()
 {
     // Close the menu (if open) and shutdown (if initialized - we're reinitializing).
@@ -2893,18 +2875,18 @@ void Hu_MenuShutdown()
     inited = false;
 }
 
-dd_bool Hu_MenuIsActive()
+bool Hu_MenuIsActive()
 {
     return menuActive;
 }
 
-void Hu_MenuSetAlpha(float alpha)
+void Hu_MenuSetOpacity(float alpha)
 {
     // The menu's alpha will start moving towards this target value.
     mnTargetAlpha = alpha;
 }
 
-float Hu_MenuAlpha()
+float Hu_MenuOpacity()
 {
     return mnAlpha;
 }
@@ -3014,7 +2996,7 @@ void Hu_MenuSetPage(Page *page, bool canReactivate)
     page->initialize();
 }
 
-dd_bool Hu_MenuIsVisible()
+bool Hu_MenuIsVisible()
 {
     return (menuActive || mnAlpha > .0001f);
 }
@@ -3448,7 +3430,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             //Con_Open(false);
 
             Hu_FogEffectSetAlphaTarget(1);
-            Hu_MenuSetAlpha(1);
+            Hu_MenuSetOpacity(1);
             menuActive = true;
             menuTime = 0;
 
@@ -4251,7 +4233,7 @@ void Hu_MenuFocusSkillMode(Widget *wi, Widget::mn_actionid_t action)
 }
 
 #if __JDOOM__
-int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, void * /*context*/)
+static int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
     if(response == MSG_YES)
     {
@@ -4261,7 +4243,11 @@ int Hu_MenuConfirmInitNewGame(msgresponse_t response, int /*userValue*/, void * 
 }
 #endif
 
-void Hu_MenuInitNewGame(dd_bool confirmed)
+/**
+ * Initialize a new singleplayer game according to the options set via the menu.
+ * @param confirmed  If @c true this game configuration has already been confirmed.
+ */
+static void Hu_MenuInitNewGame(dd_bool confirmed)
 {
 #if __JDOOM__
     if(!confirmed && SM_NIGHTMARE == mnSkillmode)
@@ -4405,7 +4391,7 @@ D_CMD(MenuCommand)
     return false;
 }
 
-void Hu_MenuRegister()
+void Hu_MenuConsoleRegister()
 {
     C_VAR_FLOAT("menu-scale",               &cfg.menuScale,              0, .1f, 1);
     C_VAR_BYTE ("menu-stretch",             &cfg.menuScaleMode,          0, SCALEMODE_FIRST, SCALEMODE_LAST);

@@ -291,7 +291,7 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    Page *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("ControlOptions", pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage));
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));

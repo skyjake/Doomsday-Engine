@@ -38,6 +38,9 @@ struct Page
 {
 public:
     typedef QList<Widget *> Widgets;
+
+public: /// @todo make private:
+    de::String _name;
     Widgets _widgets;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
@@ -72,13 +75,18 @@ public:
     int _timer;
 
 public:
-    Page(Point2Raw const &origin = Point2Raw(), int flags = 0,
+    Page(de::String name, Point2Raw const &origin = Point2Raw(), int flags = 0,
          void (*ticker) (Page *page) = 0,
          void (*drawer) (Page *page, Point2Raw const *origin) = 0,
          int (*cmdResponder) (Page *page, menucommand_e cmd) = 0,
          void *userData = 0);
 
     ~Page();
+
+    /**
+     * Returns the name of the page.
+     */
+    de::String name() const;
 
     Widgets const &widgets() const;
 

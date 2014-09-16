@@ -1081,12 +1081,13 @@ void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
     }
 }
 
-Page::Page(Point2Raw const &origin, int flags,
+Page::Page(String name, Point2Raw const &origin, int flags,
     void (*ticker) (Page *page),
     void (*drawer) (Page *page, Point2Raw const *origin),
     int (*cmdResponder) (Page *page, menucommand_e cmd),
     void *userData)
-    : origin          (origin)
+    : _name           (name)
+    , origin          (origin)
     , geometry        (Rect_New())
     , previous        (0)
     , focus           (-1) /// @todo Make this a page flag.
@@ -1120,6 +1121,11 @@ Page::~Page()
         if(wi->_geometry) Rect_Delete(wi->_geometry);
     }
     qDeleteAll(_widgets);
+}
+
+String Page::name() const
+{
+    return _name;
 }
 
 Page::Widgets const &Page::widgets() const
