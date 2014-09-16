@@ -126,23 +126,37 @@ bool Hu_MenuHasPage(de::String name);
 
 /**
  * Returns the currently configured menu Page.
- * @see Hu_MenuHasActivePage()
+ * @see Hu_MenuHasPage()
  */
 menu::Page &Hu_MenuPage();
 
-inline menu::Page *Hu_MenuPagePtr() { return Hu_MenuHasPage()? &Hu_MenuPage() : 0; }
+inline menu::Page *Hu_MenuPagePtr() {
+    return Hu_MenuHasPage()? &Hu_MenuPage() : 0;
+}
 
 /**
  * Lookup a Page with the unique identifier @a name.
+ * @see Hu_MenuHasPage()
  */
 menu::Page &Hu_MenuPage(de::String name);
 
-inline menu::Page *Hu_MenuPagePtr(de::String name) { return Hu_MenuHasPage(name)? &Hu_MenuPage(name) : 0; }
+inline menu::Page *Hu_MenuPagePtr(de::String name) {
+    return Hu_MenuHasPage(name)? &Hu_MenuPage(name) : 0;
+}
 
 /**
  * Change the current menu Page to @a page.
+ * @see Hu_MenuPage(), Hu_MenuHasPage()
  */
-void Hu_MenuSetPage(menu::Page *page, bool canReactivate = false);
+void Hu_MenuSetPage(menu::Page *page, bool allowReactivate = false);
+
+/**
+ * Convenient method for changing the current menu page to that with the @a name given.
+ * @see Hu_MenuSetPage()
+ */
+inline void Hu_MenuSetPage(de::String name, bool allowReactivate = false) {
+    Hu_MenuSetPage(Hu_MenuPagePtr(name), allowReactivate);
+}
 
 /**
  * Lookup the unique identifier/name for the given @a page.

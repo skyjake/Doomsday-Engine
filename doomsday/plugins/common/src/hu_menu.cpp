@@ -3453,7 +3453,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             menuTime = 0;
 
             currentPage = NULL; // Always re-activate this page.
-            Hu_MenuSetPage(Hu_MenuPagePtr("Main"));
+            Hu_MenuSetPage("Main");
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
@@ -3941,14 +3941,14 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
         DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
         mnEpisode = episodesById.begin()->second->as<RecordValue>().record()->gets("id");
 #if __JHEXEN__
-        Hu_MenuSetPage(Hu_MenuPagePtr("PlayerClass"));
+        Hu_MenuSetPage("PlayerClass");
 #else
-        Hu_MenuSetPage(Hu_MenuPagePtr("Skill"));
+        Hu_MenuSetPage("Skill");
 #endif
     }
     else
     {
-        Hu_MenuSetPage(Hu_MenuPagePtr("Episode"));
+        Hu_MenuSetPage("Episode");
     }
 }
 
@@ -4082,7 +4082,7 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
         DD_Executef(false, "setcolor %i", cfg.netColor);
     }
 
-    Hu_MenuSetPage(Hu_MenuPagePtr("Multiplayer"));
+    Hu_MenuSetPage("Multiplayer");
 }
 
 void Hu_MenuSelectQuitGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4110,7 +4110,7 @@ void Hu_MenuSelectLoadGame(Widget * /*wi*/, Widget::mn_actionid_t action)
         }
     }
 
-    Hu_MenuSetPage(Hu_MenuPagePtr("LoadGame"));
+    Hu_MenuSetPage("LoadGame");
 }
 
 void Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4143,7 +4143,7 @@ void Hu_MenuSelectSaveGame(Widget * /*wi*/, Widget::mn_actionid_t action)
     }
 
     Hu_MenuCommand(MCMD_OPEN);
-    Hu_MenuSetPage(Hu_MenuPagePtr("SaveGame"));
+    Hu_MenuSetPage("SaveGame");
 }
 
 #if __JHEXEN__
@@ -4221,9 +4221,9 @@ void Hu_MenuSelectEpisode(Widget *wi, Widget::mn_actionid_t /*action*/)
     DENG2_ASSERT(wi != 0);
     mnEpisode = wi->as<ButtonWidget>().data().toString();
 #if __JHEXEN__
-    Hu_MenuSetPage(Hu_MenuPagePtr("PlayerClass"));
+    Hu_MenuSetPage("PlayerClass");
 #else
-    Hu_MenuSetPage(Hu_MenuPagePtr("Skill"));
+    Hu_MenuSetPage("Skill");
 #endif
 }
 
@@ -4336,7 +4336,7 @@ D_CMD(MenuOpen)
         if(Hu_MenuHasPage(pageName))
         {
             Hu_MenuCommand(MCMD_OPEN);
-            Hu_MenuSetPage(Hu_MenuPagePtr(pageName));
+            Hu_MenuSetPage(pageName);
             return true;
         }
         return false;
