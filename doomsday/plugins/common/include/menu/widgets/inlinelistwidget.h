@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file inlinelistwidget.h  UI widget for a selectable, inline-list of items.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_INLINELISTWIDGET
+#define LIBCOMMON_UI_INLINELISTWIDGET
 
-#include "hu_lib.h"
+#include "listwidget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+struct InlineListWidget : public ListWidget
+{
+public:
+    InlineListWidget();
+    virtual ~InlineListWidget() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+};
+
+int InlineListWidget_CommandResponder(Widget *wi, menucommand_e command);
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_INLINELISTWIDGET

@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file buttonwidget.h  Button widget.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,42 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_BUTTONWIDGET
+#define LIBCOMMON_UI_BUTTONWIDGET
 
-#include "hu_lib.h"
+#include "widget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+struct ButtonWidget : public Widget
+{
+public:
+    ButtonWidget();
+    virtual ~ButtonWidget();
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+
+    de::String const &text() const;
+    ButtonWidget &setText(de::String newText);
+
+    patchid_t patch() const;
+    ButtonWidget &setPatch(patchid_t newPatch);
+
+    bool noAltText() const;
+    ButtonWidget &setNoAltText(bool yes = true);
+
+    void setData(QVariant const &d);
+    QVariant const &data() const;
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+int ButtonWidget_CommandResponder(Widget *wi, menucommand_e command);
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_BUTTONWIDGET

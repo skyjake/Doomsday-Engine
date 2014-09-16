@@ -24,7 +24,11 @@
 #include <cstring>
 #include <cctype>
 #include <cstdio>
+
 #include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/inputbindingwidget.h"
+#include "menu/widgets/labelwidget.h"
 
 using namespace de;
 

@@ -46,6 +46,19 @@
 #include "saveslots.h"
 #include "x_hair.h"
 
+#include "menu/page.h"
+#include "menu/widgets/colorpreviewwidget.h"
+#include "menu/widgets/cvarinlinelistwidget.h"
+#include "menu/widgets/cvarlineeditwidget.h"
+#include "menu/widgets/cvarlistwidget.h"
+#include "menu/widgets/cvartogglewidget.h"
+#include "menu/widgets/inputbindingwidget.h"
+#include "menu/widgets/labelwidget.h"
+#include "menu/widgets/mobjpreviewwidget.h"
+#include "menu/widgets/rectwidget.h"
+#include "menu/widgets/sliderwidget.h"
+#include "menu/widgets/textualsliderwidget.h"
+
 using namespace de;
 
 namespace common {
@@ -353,7 +366,7 @@ static void Hu_MenuUpdateCursorState()
     if(menuActive)
     {
         Page *page = colorWidgetActive? Hu_MenuFindPageByName("ColorWidget") : Hu_MenuActivePage();
-        if(Widget *wi = page->focusObject())
+        if(Widget *wi = page->focusWidget())
         {
             cursorHasRotation = Hu_MenuHasCursorRotation(wi);
             return;
@@ -438,11 +451,9 @@ void Hu_MenuInitColorWidgetPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
-        cbox->_flags   = MNF_ID0 | MNF_NO_FOCUS;
-        cbox->width    = SCREENHEIGHT / 7;
-        cbox->height   = SCREENHEIGHT / 7;
-        cbox->_rgbaMode = true;
+        ColorPreviewWidget *cbox = new ColorPreviewWidget(Vector4f(), true);
+        cbox->_flags = MNF_ID0 | MNF_NO_FOCUS;
+        cbox->setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7));
         page->_widgets << cbox;
     }
 
@@ -776,7 +787,7 @@ void Hu_MenuInitSkillPage()
 #if __JDOOM__
     if(gameMode != doom2_hacx && gameMode != doom_chex)
     {
-        MN_MustFindObjectOnPage(page, 0, MNF_ID4)->as<ButtonWidget>().setNoAltText();
+        page->findWidget(0, MNF_ID4).as<ButtonWidget>().setNoAltText();
     }
 #endif
 }
@@ -839,12 +850,10 @@ void Hu_MenuInitPlayerSetupPage()
     }
 
     {
-        LineEditWidget *edit = new LineEditWidget;
+        CVarLineEditWidget *edit = new CVarLineEditWidget("net-name");
         edit->_flags    = MNF_ID1 | MNF_LAYOUT_OFFSET;
         edit->_origin.y = 75;
-        edit->data1     = (void *)"net-name";
-        edit->_maxLength = 24;
-        edit->actions[Widget::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
+        edit->setMaxLength(24);
         page->_widgets << edit;
     }
 
@@ -864,9 +873,10 @@ void Hu_MenuInitPlayerSetupPage()
         list->actions[Widget::MNA_MODIFIED].callback = Hu_MenuSelectPlayerSetupPlayerClass;
         list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 
-        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS1, PCLASS_FIGHTER);
-        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS2, PCLASS_CLERIC);
-        list->_items << new mndata_listitem_t((char const *)TXT_PLAYERCLASS3, PCLASS_MAGE);
+        list->items()
+                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS1), PCLASS_FIGHTER)
+                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS2), PCLASS_CLERIC)
+                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS3), PCLASS_MAGE);
 
         page->_widgets << list;
     }
@@ -892,30 +902,34 @@ void Hu_MenuInitPlayerSetupPage()
         /// @todo Read these names from Text definitions.
         int colorIdx = 0;
 #if __JHEXEN__
-        list->_items << new mndata_listitem_t("Red",    colorIdx++);
-        list->_items << new mndata_listitem_t("Blue",   colorIdx++);
-        list->_items << new mndata_listitem_t("Yellow", colorIdx++);
-        list->_items << new mndata_listitem_t("Green",  colorIdx++);
+        list->items()
+                << new ListWidgetItem("Red",    colorIdx++)
+                << new ListWidgetItem("Blue",   colorIdx++)
+                << new ListWidgetItem("Yellow", colorIdx++)
+                << new ListWidgetItem("Green",  colorIdx++);
+
         if(gameMode != hexen_v10) // Hexen v1.0 has only four player colors.
         {
-            list->_items << new mndata_listitem_t("Jade",   colorIdx++);
-            list->_items << new mndata_listitem_t("White",  colorIdx++);
-            list->_items << new mndata_listitem_t("Hazel",  colorIdx++);
-            list->_items << new mndata_listitem_t("Purple", colorIdx++);
+            list->items()
+                    << new ListWidgetItem("Jade",   colorIdx++)
+                    << new ListWidgetItem("White",  colorIdx++)
+                    << new ListWidgetItem("Hazel",  colorIdx++)
+                    << new ListWidgetItem("Purple", colorIdx++);
         }
 #elif __JHERETIC__
-        list->_items << new mndata_listitem_t("Green",  colorIdx++);
-        list->_items << new mndata_listitem_t("Orange", colorIdx++);
-        list->_items << new mndata_listitem_t("Red",    colorIdx++);
-        list->_items << new mndata_listitem_t("Blue",   colorIdx++);
+        list->items()
+                << new ListWidgetItem("Green",  colorIdx++)
+                << new ListWidgetItem("Orange", colorIdx++)
+                << new ListWidgetItem("Red",    colorIdx++)
+                << new ListWidgetItem("Blue",   colorIdx++);
 #else
-        list->_items << new mndata_listitem_t("Green",  colorIdx++);
-        list->_items << new mndata_listitem_t("Indigo", colorIdx++);
-        list->_items << new mndata_listitem_t("Brown",  colorIdx++);
-        list->_items << new mndata_listitem_t("Red",    colorIdx++);
-
+        list->items()
+                << new ListWidgetItem("Green",  colorIdx++)
+                << new ListWidgetItem("Indigo", colorIdx++)
+                << new ListWidgetItem("Brown",  colorIdx++)
+                << new ListWidgetItem("Red",    colorIdx++);
 #endif
-        list->_items << new mndata_listitem_t("Automatic", colorIdx++);
+        list->items() << new ListWidgetItem("Automatic", colorIdx++);
 
         page->_widgets << list;
     }
@@ -1071,10 +1085,10 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectLoadSlot;
         edit->actions[Widget::MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuLoadSlotCommandResponder;
-        edit->_maxLength      = 24;
+        edit->setMaxLength(24);
         edit->data1          = Str_Text(Str_Appendf(Str_New(), "%i", i));
         edit->data2          = saveSlotObjectIds[i];
-        edit->emptyString    = (char const *) TXT_EMPTYSTRING;
+        edit->setEmptyText(GET_TXT(TXT_EMPTYSTRING));
         loadPage->_widgets << edit;
     }
 
@@ -1095,8 +1109,8 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
         edit->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuSaveSlotEdit;
         edit->actions[Widget::MNA_FOCUSOUT ].callback = Hu_MenuDefaultFocusAction;
         edit->cmdResponder   = Hu_MenuSaveSlotCommandResponder;
-        edit->emptyString    = (char const *) TXT_EMPTYSTRING;
-        edit->_maxLength     = 24;
+        edit->setEmptyText(GET_TXT(TXT_EMPTYSTRING));
+        edit->setMaxLength(24);
         edit->data1          = Str_Text(Str_Appendf(Str_New(), "%i", i));
         edit->data2          = saveSlotObjectIds[i];
         savePage->_widgets << edit;
@@ -1738,10 +1752,9 @@ void Hu_MenuInitHUDOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setGroup(2);
-        cbox->_rgbaMode = false;
-        cbox->data1     = (void *)"msg-color-r";
-        cbox->data2     = (void *)"msg-color-g";
-        cbox->data3     = (void *)"msg-color-b";
+        cbox->data1 = (void *)"msg-color-r";
+        cbox->data2 = (void *)"msg-color-g";
+        cbox->data3 = (void *)"msg-color-b";
         cbox->actions[Widget::MNA_MODIFIED ].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
@@ -1764,20 +1777,20 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("view-cross-type");
         list->setGroup(3);
-        list->_pageColorIdx  = MENU_COLOR3;
+        list->_pageColorIdx = MENU_COLOR3;
         list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
         list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"view-cross-type";
 
         int xhairIdx = 0;
-        list->_items << new mndata_listitem_t("None",        xhairIdx++);
-        list->_items << new mndata_listitem_t("Cross",       xhairIdx++);
-        list->_items << new mndata_listitem_t("Twin Angles", xhairIdx++);
-        list->_items << new mndata_listitem_t("Square",      xhairIdx++);
-        list->_items << new mndata_listitem_t("Open Square", xhairIdx++);
-        list->_items << new mndata_listitem_t("Angle",       xhairIdx++);
+        list->items()
+                << new ListWidgetItem("None",        xhairIdx++)
+                << new ListWidgetItem("Cross",       xhairIdx++)
+                << new ListWidgetItem("Twin Angles", xhairIdx++)
+                << new ListWidgetItem("Square",      xhairIdx++)
+                << new ListWidgetItem("Open Square", xhairIdx++)
+                << new ListWidgetItem("Angle",       xhairIdx++);
 
         page->_widgets << list;
     }
@@ -1863,10 +1876,9 @@ void Hu_MenuInitHUDOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setGroup(3);
-        cbox->_rgbaMode = false;
-        cbox->data1     = (void *)"view-cross-r";
-        cbox->data2     = (void *)"view-cross-g";
-        cbox->data3     = (void *)"view-cross-b";
+        cbox->data1 = (void *)"view-cross-r";
+        cbox->data2 = (void *)"view-cross-g";
+        cbox->data3 = (void *)"view-cross-b";
         cbox->actions[Widget::MNA_MODIFIED ].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
@@ -1939,19 +1951,15 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT);
         list->setGroup(5);
         list->setShortcut('i');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"hud-cheat-counter";
-        list->mask  = CCH_ITEMS | CCH_ITEMS_PRCNT;
 
-        list->_items << new mndata_listitem_t("Hidden",        0);
-        list->_items << new mndata_listitem_t("Count",         CCH_ITEMS);
-        list->_items << new mndata_listitem_t("Percent",       CCH_ITEMS_PRCNT);
-        list->_items << new mndata_listitem_t("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT);
+        list->items()
+                << new ListWidgetItem("Hidden",        0)
+                << new ListWidgetItem("Count",         CCH_ITEMS)
+                << new ListWidgetItem("Percent",       CCH_ITEMS_PRCNT)
+                << new ListWidgetItem("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT);
 
         page->_widgets << list;
     }
@@ -1963,19 +1971,15 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT);
         list->setGroup(5);
         list->setShortcut('k');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"hud-cheat-counter";
-        list->mask  = CCH_KILLS | CCH_KILLS_PRCNT;
 
-        list->_items << new mndata_listitem_t("Hidden",        0);
-        list->_items << new mndata_listitem_t("Count",         CCH_KILLS);
-        list->_items << new mndata_listitem_t("Percent",       CCH_KILLS_PRCNT);
-        list->_items << new mndata_listitem_t("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT);
+        list->items()
+                << new ListWidgetItem("Hidden",        0)
+                << new ListWidgetItem("Count",         CCH_KILLS)
+                << new ListWidgetItem("Percent",       CCH_KILLS_PRCNT)
+                << new ListWidgetItem("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT);
 
         page->_widgets << list;
     }
@@ -1987,19 +1991,15 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT);
         list->setGroup(5);
         list->setShortcut('s');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"hud-cheat-counter";
-        list->mask  = CCH_SECRETS | CCH_SECRETS_PRCNT;
 
-        list->_items << new mndata_listitem_t("Hidden",        0);
-        list->_items << new mndata_listitem_t("Count",         CCH_SECRETS);
-        list->_items << new mndata_listitem_t("Percent",       CCH_SECRETS_PRCNT);
-        list->_items << new mndata_listitem_t("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT);
+        list->items()
+                << new ListWidgetItem("Hidden",        0)
+                << new ListWidgetItem("Count",         CCH_SECRETS)
+                << new ListWidgetItem("Percent",       CCH_SECRETS_PRCNT)
+                << new ListWidgetItem("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT);
 
         page->_widgets << list;
     }
@@ -2072,13 +2072,12 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        ColorPreviewWidget *cbox = new ColorPreviewWidget(Vector4f(), true);
         cbox->setGroup(6);
-        cbox->_rgbaMode = true;
-        cbox->data1     = (void *)"hud-color-r";
-        cbox->data2     = (void *)"hud-color-g";
-        cbox->data3     = (void *)"hud-color-b";
-        cbox->data4     = (void *)"hud-color-a";
+        cbox->data1 = (void *)"hud-color-r";
+        cbox->data2 = (void *)"hud-color-g";
+        cbox->data3 = (void *)"hud-color-b";
+        cbox->data4 = (void *)"hud-color-a";
         cbox->actions[Widget::MNA_MODIFIED ].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
@@ -2270,16 +2269,13 @@ void Hu_MenuInitAutomapOptionsPage()
 
 #if !__JDOOM64__
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("map-huddisplay");
         list->setShortcut('h');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"map-huddisplay";
 
-        list->_items << new mndata_listitem_t("None",      0);
-        list->_items << new mndata_listitem_t("Current",   1);
-        list->_items << new mndata_listitem_t("Statusbar", 2);
+        list->items()
+                << new ListWidgetItem("None",      0)
+                << new ListWidgetItem("Current",   1)
+                << new ListWidgetItem("Statusbar", 2);
 
         page->_widgets << list;
     }
@@ -2312,16 +2308,11 @@ void Hu_MenuInitAutomapOptionsPage()
     page->_widgets << new LabelWidget("Use Custom Colors");
 
     {
-        InlineListWidget *list = new InlineListWidget;
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"map-customcolors";
-
-        list->_items << new mndata_listitem_t("Never",  0);
-        list->_items << new mndata_listitem_t("Auto",   1);
-        list->_items << new mndata_listitem_t("Always", 2);
-
+        CVarInlineListWidget *list = new CVarInlineListWidget("map-customcolors");
+        list->items()
+                << new ListWidgetItem("Never",  0)
+                << new ListWidgetItem("Auto",   1)
+                << new ListWidgetItem("Always", 2);
         page->_widgets << list;
     }
 
@@ -2330,9 +2321,9 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setShortcut('w');
-        cbox->data1     = (void *)"map-wall-r";
-        cbox->data2     = (void *)"map-wall-g";
-        cbox->data3     = (void *)"map-wall-b";
+        cbox->data1 = (void *)"map-wall-r";
+        cbox->data2 = (void *)"map-wall-g";
+        cbox->data3 = (void *)"map-wall-b";
         cbox->actions[Widget::MNA_MODIFIED].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
         cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -2344,9 +2335,9 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setShortcut('f');
-        cbox->data1     = (void *)"map-wall-floorchange-r";
-        cbox->data2     = (void *)"map-wall-floorchange-g";
-        cbox->data3     = (void *)"map-wall-floorchange-b";
+        cbox->data1 = (void *)"map-wall-floorchange-r";
+        cbox->data2 = (void *)"map-wall-floorchange-g";
+        cbox->data3 = (void *)"map-wall-floorchange-b";
         cbox->actions[Widget::MNA_MODIFIED].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
         cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -2371,9 +2362,9 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setShortcut('u');
-        cbox->data1     = (void *)"map-wall-unseen-r";
-        cbox->data2     = (void *)"map-wall-unseen-g";
-        cbox->data3     = (void *)"map-wall-unseen-b";
+        cbox->data1 = (void *)"map-wall-unseen-r";
+        cbox->data2 = (void *)"map-wall-unseen-g";
+        cbox->data3 = (void *)"map-wall-unseen-b";
         cbox->actions[Widget::MNA_MODIFIED].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
         cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -2385,9 +2376,9 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setShortcut('t');
-        cbox->data1     = (void *)"map-mobj-r";
-        cbox->data2     = (void *)"map-mobj-g";
-        cbox->data3     = (void *)"map-mobj-b";
+        cbox->data1 = (void *)"map-mobj-r";
+        cbox->data2 = (void *)"map-mobj-g";
+        cbox->data3 = (void *)"map-mobj-b";
         cbox->actions[Widget::MNA_MODIFIED].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
         cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -2399,9 +2390,9 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         ColorPreviewWidget *cbox = new ColorPreviewWidget;
         cbox->setShortcut('b');
-        cbox->data1     = (void *)"map-background-r";
-        cbox->data2     = (void *)"map-background-g";
-        cbox->data3     = (void *)"map-background-b";
+        cbox->data1 = (void *)"map-background-r";
+        cbox->data2 = (void *)"map-background-g";
+        cbox->data3 = (void *)"map-background-b";
         cbox->actions[Widget::MNA_MODIFIED].callback = CvarColorPreviewWidget_UpdateCvar;
         cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
         cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -2409,16 +2400,16 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 }
 
-static bool compareWeaponPriority(mndata_listitem_t const *a, mndata_listitem_t const *b)
+static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const *b)
 {
     int i = 0, aIndex = -1, bIndex = -1;
     do
     {
-        if(cfg.weaponOrder[i] == a->data)
+        if(cfg.weaponOrder[i] == a->userValue())
         {
             aIndex = i;
         }
-        if(cfg.weaponOrder[i] == b->data)
+        if(cfg.weaponOrder[i] == b->userValue())
         {
             bIndex = i;
         }
@@ -2494,9 +2485,15 @@ void Hu_MenuInitWeaponsPage()
 
         for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
         {
-            list->_items << new mndata_listitem_t(weaponOrder[i].text, weaponOrder[i].data);
+            char const *itemText = weaponOrder[i].text;
+            if(itemText && (PTR2INT(itemText) > 0 && PTR2INT(itemText) < NUMTEXT))
+            {
+                itemText = GET_TXT(PTR2INT(itemText));
+            }
+            list->items() << new ListWidgetItem(itemText, weaponOrder[i].data);
         }
-        qSort(list->_items.begin(), list->_items.end(), compareWeaponPriority);
+        ListWidget::Items &allItems = list->items();
+        qSort(allItems.begin(), allItems.end(), compareWeaponPriority);
 
         page->_widgets << list;
     }
@@ -2548,18 +2545,13 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("player-autoswitch");
         list->setGroup(2);
         list->setShortcut('w');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"player-autoswitch";
-
-        list->_items << new mndata_listitem_t("Never",     0);
-        list->_items << new mndata_listitem_t("If Better", 1);
-        list->_items << new mndata_listitem_t("Always",    2);
-
+        list->items()
+                << new ListWidgetItem("Never",     0)
+                << new ListWidgetItem("If Better", 1)
+                << new ListWidgetItem("Always",    2);
         page->_widgets << list;
     }
 
@@ -2583,18 +2575,13 @@ void Hu_MenuInitWeaponsPage()
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        CVarInlineListWidget *list = new CVarInlineListWidget("player-autoswitch-ammo");
         list->setGroup(2);
         list->setShortcut('a');
-        list->_pageColorIdx  = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-        list->data  = (void *)"player-autoswitch-ammo";
-
-        list->_items << new mndata_listitem_t("Never",     0);
-        list->_items << new mndata_listitem_t("If Better", 1);
-        list->_items << new mndata_listitem_t("Always",    2);
-
+        list->items()
+                << new ListWidgetItem("Never",     0)
+                << new ListWidgetItem("If Better", 1)
+                << new ListWidgetItem("Always",    2);
         page->_widgets << list;
     }
 
@@ -3020,11 +3007,13 @@ void Hu_MenuInit()
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
     {
-        Widget *wi = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID0); // Read This!
-        wi->setFlags(FO_SET, MNF_DISABLED|MNF_HIDDEN|MNF_NO_FOCUS);
+        Page *page = Hu_MenuFindPageByName("Main");
 
-        wi = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("Main"), 0, MNF_ID1); // Quit Game
-        wi->setFixedY(wi->fixedY() - FIXED_LINE_HEIGHT);
+        Widget &wiReadThis = page->findWidget(0, MNF_ID0);
+        wiReadThis.setFlags(FO_SET, MNF_DISABLED | MNF_HIDDEN | MNF_NO_FOCUS);
+
+        Widget &wiQuitGame = page->findWidget(0, MNF_ID1);
+        wiQuitGame.setFixedY(wiQuitGame.fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
 
@@ -3142,10 +3131,10 @@ void Hu_MenuSetActivePage2(Page *page, dd_bool canReactivate)
     if(menuActivePage == page)
     {
         if(!canReactivate) return;
-        page->clearFocusObject();
+        page->clearFocusWidget();
     }
 
-    page->updateObjects();
+    page->updateWidgets();
 
     // This is now the "active" page.
     menuActivePage = page;
@@ -3279,7 +3268,7 @@ void Hu_MenuDrawer()
     GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
-    Widget *focusOb   = Hu_MenuActivePage()->focusObject();
+    Widget *focusOb   = Hu_MenuActivePage()->focusWidget();
     dd_bool showFocusCursor = true;
     if(focusOb && (focusOb->flags() & MNF_ACTIVE))
     {
@@ -3412,7 +3401,7 @@ static void initAllObjectsOnAllPages()
 {
     foreach(Page *page, pages)
     {
-        page->initObjects();
+        page->initWidgets();
     }
 }
 
@@ -3442,7 +3431,7 @@ int Hu_MenuColorWidgetCmdResponder(Page *page, menucommand_e cmd)
         cbox.setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        cbox.copyColor(0, MN_MustFindObjectOnPage(page, 0, MNF_ID0)->as<ColorPreviewWidget>());
+        cbox.setColor(page->findWidget(0, MNF_ID0).as<ColorPreviewWidget>().color(), 0);
 
         /// @kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
@@ -3470,7 +3459,7 @@ static void fallbackCommandResponder(Page *page, menucommand_e cmd)
     case MCMD_NAV_UP:
     case MCMD_NAV_DOWN:
         // An object on this page must have focus in order to navigate.
-        if(page->focusObject())
+        if(page->focusWidget())
         {
             int i = 0, giveFocus = page->focus;
             do
@@ -3516,7 +3505,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
     // "active" widget - interpret the command instead as "navigate out".
     if(menuActive && (cmd == MCMD_CLOSE || cmd == MCMD_CLOSEFAST))
     {
-        if(Widget *wi = Hu_MenuActivePage()->focusObject())
+        if(Widget *wi = Hu_MenuActivePage()->focusWidget())
         {
             if((wi->flags() & MNF_ACTIVE) &&
                (wi->is<LineEditWidget>() || wi->is<ListWidget>() || wi->is<ColorPreviewWidget>()))
@@ -3606,8 +3595,7 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
 
     // Try the current focus object.
-    Widget *wi = page->focusObject();
-    if(wi && wi->cmdResponder)
+    if(Widget *wi = page->focusWidget())
     {
         if(wi->cmdResponder(wi, cmd))
             return;
@@ -3627,7 +3615,7 @@ int Hu_MenuPrivilegedResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        Widget *wi = Hu_MenuActivePage()->focusObject();
+        Widget *wi = Hu_MenuActivePage()->focusWidget();
         if(wi && !(wi->flags() & MNF_DISABLED))
         {
             return wi->handleEvent_Privileged(ev);
@@ -3640,7 +3628,7 @@ int Hu_MenuResponder(event_t *ev)
 {
     if(Hu_MenuIsActive())
     {
-        Widget *wi = Hu_MenuActivePage()->focusObject();
+        Widget *wi = Hu_MenuActivePage()->focusWidget();
         if(wi && !(wi->flags() & MNF_DISABLED))
         {
             return wi->handleEvent(ev);
@@ -3686,10 +3674,10 @@ void Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
 
     // Linked focus between LoadGame and SaveGame pages.
     Page *page = Hu_MenuFindPageByName("SaveGame");
-    page->setFocus(page->findObject(0, wi->data2));
+    page->setFocus(page->tryFindWidget(0, wi->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
-    page->setFocus(page->findObject(0, wi->data2));
+    page->setFocus(page->tryFindWidget(0, wi->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
@@ -3745,7 +3733,7 @@ void Hu_MenuPlayerClassBackgroundTicker(Widget *wi)
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(Widget *mop = wi->page()->focusObject())
+    if(Widget *mop = wi->page().focusWidget())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -3774,7 +3762,7 @@ void Hu_MenuPlayerClassPreviewTicker(Widget *wi)
     // Determine our selection according to the current focus object.
     /// @todo Do not search for the focus object, flag the "random"
     ///        state through a focus action.
-    if(Widget *mop = wi->page()->focusObject())
+    if(Widget *mop = wi->page().focusWidget())
     {
         playerclass_t pClass = (playerclass_t) mop->data2;
         if(pClass == PCLASS_NONE)
@@ -3876,17 +3864,17 @@ void Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
         menuNominatingQuickSaveSlot = false;
     }
 
-    String userDescription = Str_Text(edit.text());
+    String userDescription = edit.text();
     if(!G_SetGameActionSaveSession(saveSlotId, &userDescription))
     {
         return;
     }
 
     Page *page = Hu_MenuFindPageByName("SaveGame");
-    page->setFocus(MN_MustFindObjectOnPage(page, 0, wi->data2));
+    page->setFocus(&page->findWidget(0, wi->data2));
 
     page = Hu_MenuFindPageByName("LoadGame");
-    page->setFocus(MN_MustFindObjectOnPage(page, 0, wi->data2));
+    page->setFocus(&page->findWidget(0, wi->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
 }
@@ -3897,8 +3885,8 @@ void Hu_MenuSaveSlotEdit(Widget *wi, Widget::mn_actionid_t action)
     if(Widget::MNA_ACTIVE != action) return;
     if(cfg.menuGameSaveSuggestDescription)
     {
-        String const description = G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/);
-        wi->as<LineEditWidget>().setText(MNEDIT_STF_NO_ACTION, description.toLatin1().constData());
+        auto &edit = wi->as<LineEditWidget>();
+        edit.setText(G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/));
     }
 }
 
@@ -3909,24 +3897,24 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
     ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
     Page *colorWidgetPage = Hu_MenuFindPageByName("ColorWidget");
 
-    ColorPreviewWidget &cboxMix = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID0)->as<ColorPreviewWidget>();
-    SliderWidget &sldrRed   = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID1)->as<SliderWidget>();
-    SliderWidget &sldrGreen = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID2)->as<SliderWidget>();
-    SliderWidget &sldrBlue  = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID3)->as<SliderWidget>();
-    SliderWidget &textAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID4)->as<SliderWidget>();
-    SliderWidget &sldrAlpha = MN_MustFindObjectOnPage(colorWidgetPage, 0, MNF_ID5)->as<SliderWidget>();
+    ColorPreviewWidget &cboxMix = colorWidgetPage->findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
+    SliderWidget &sldrRed       = colorWidgetPage->findWidget(0, MNF_ID1).as<SliderWidget>();
+    SliderWidget &sldrGreen     = colorWidgetPage->findWidget(0, MNF_ID2).as<SliderWidget>();
+    SliderWidget &sldrBlue      = colorWidgetPage->findWidget(0, MNF_ID3).as<SliderWidget>();
+    SliderWidget &textAlpha     = colorWidgetPage->findWidget(0, MNF_ID4).as<SliderWidget>();
+    SliderWidget &sldrAlpha     = colorWidgetPage->findWidget(0, MNF_ID5).as<SliderWidget>();
 
     colorWidgetActive = true;
 
     colorWidgetPage->initialize();
     colorWidgetPage->userData = wi;
 
-    cboxMix.copyColor(0, cbox);
+    cboxMix.setColor(cbox.color(), 0);
 
-    sldrRed  .setValue(MNSLIDER_SVF_NO_ACTION, cbox.redf());
-    sldrGreen.setValue(MNSLIDER_SVF_NO_ACTION, cbox.greenf());
-    sldrBlue .setValue(MNSLIDER_SVF_NO_ACTION, cbox.bluef());
-    sldrAlpha.setValue(MNSLIDER_SVF_NO_ACTION, cbox.alphaf());
+    sldrRed  .setValue(MNSLIDER_SVF_NO_ACTION, cbox.red());
+    sldrGreen.setValue(MNSLIDER_SVF_NO_ACTION, cbox.green());
+    sldrBlue .setValue(MNSLIDER_SVF_NO_ACTION, cbox.blue());
+    sldrAlpha.setValue(MNSLIDER_SVF_NO_ACTION, cbox.alpha());
 
     textAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
     sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
@@ -4019,14 +4007,14 @@ void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     float value = sldr.value();
-    ColorPreviewWidget &cboxMix = MN_MustFindObjectOnPage(Hu_MenuFindPageByName("ColorWidget"), 0, MNF_ID0)->as<ColorPreviewWidget>();
+    ColorPreviewWidget &cboxMix = Hu_MenuFindPageByName("ColorWidget")->findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
 
     switch(wi->data2)
     {
-    case CR: cboxMix.setRedf  (MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CG: cboxMix.setGreenf(MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CB: cboxMix.setBluef (MNCOLORBOX_SCF_NO_ACTION, value); break;
-    case CA: cboxMix.setAlphaf(MNCOLORBOX_SCF_NO_ACTION, value); break;
+    case CR: cboxMix.setRed  (value); break;
+    case CG: cboxMix.setGreen(value); break;
+    case CB: cboxMix.setBlue (value); break;
+    case CA: cboxMix.setAlpha(value); break;
 
     default: DENG2_ASSERT(!"Hu_MenuUpdateColorWidgetColor: Invalid value for data2.");
     }
@@ -4087,13 +4075,12 @@ void Hu_MenuSelectSingleplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
 
 void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
 {
-    Page *multiplayerPage = Hu_MenuFindPageByName("Multiplayer");
-    Widget *label = MN_MustFindObjectOnPage(multiplayerPage, 0, MNF_ID0);
-    ButtonWidget *btn = &label->as<ButtonWidget>();
-
     if(Widget::MNA_ACTIVEOUT != action) return;
 
+    Page *page = Hu_MenuFindPageByName("Multiplayer");
+
     // Set the appropriate label.
+    ButtonWidget *btn = &page->findWidget(0, MNF_ID0).as<ButtonWidget>();
     if(IS_NETGAME)
     {
         btn->setText("Disconnect");
@@ -4102,7 +4089,8 @@ void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
     {
         btn->setText("Join Game");
     }
-    Hu_MenuSetActivePage(multiplayerPage);
+
+    Hu_MenuSetActivePage(page);
 }
 
 void Hu_MenuSelectJoinGame(Widget * /*wi*/, Widget::mn_actionid_t action)
@@ -4123,9 +4111,9 @@ void Hu_MenuActivatePlayerSetup(Page *page)
 {
     DENG2_ASSERT(page != 0);
 
-    MobjPreviewWidget &mop = MN_MustFindObjectOnPage(page, 0, MNF_ID0)->as<MobjPreviewWidget>();
-    LineEditWidget &name   = MN_MustFindObjectOnPage(page, 0, MNF_ID1)->as<LineEditWidget>();
-    ListWidget &color      = MN_MustFindObjectOnPage(page, 0, MNF_ID3)->as<ListWidget>();
+    MobjPreviewWidget &mop = page->findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
+    LineEditWidget &name   = page->findWidget(0, MNF_ID1).as<LineEditWidget>();
+    ListWidget &color      = page->findWidget(0, MNF_ID3).as<ListWidget>();
 
 #if __JHEXEN__
     mop.setMobjType(PCLASS_INFO(cfg.netClass)->mobjType);
@@ -4137,13 +4125,13 @@ void Hu_MenuActivatePlayerSetup(Page *page)
     mop.setTranslationClass(0);
     mop.setTranslationMap(cfg.netColor);
 
-    color.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netColor);
+    color.selectItemByValue(cfg.netColor);
 #if __JHEXEN__
-    ListWidget &class_ = MN_MustFindObjectOnPage(page, 0, MNF_ID2)->as<ListWidget>();
-    class_.selectItemByValue(MNLIST_SIF_NO_ACTION, cfg.netClass);
+    ListWidget &class_ = page->findWidget(0, MNF_ID2).as<ListWidget>();
+    class_.selectItemByValue(cfg.netClass);
 #endif
 
-    name.setText(MNEDIT_STF_NO_ACTION|MNEDIT_STF_REPLACEOLD, Con_GetString("net-name"));
+    name.setText(Con_GetString("net-name"), MNEDIT_STF_NO_ACTION | MNEDIT_STF_REPLACEOLD);
 }
 
 #if __JHEXEN__
@@ -4156,7 +4144,7 @@ void Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t actio
     int selection = list.selection();
     if(selection >= 0)
     {
-        MobjPreviewWidget &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<MobjPreviewWidget>();
+        MobjPreviewWidget &mop = wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
         mop.setPlayerClass(selection);
         mop.setMobjType(PCLASS_INFO(selection)->mobjType);
     }
@@ -4173,19 +4161,19 @@ void Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
     int selection = list.itemData(list.selection());
     if(selection >= 0)
     {
-        MobjPreviewWidget &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<MobjPreviewWidget>();
-        mop.setTranslationMap(selection);
+        wi->pagePtr()->findWidget(0, MNF_ID0).as<MobjPreviewWidget>().setTranslationMap(selection);
     }
 }
 
 void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
-    LineEditWidget &plrNameEdit = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID1)->as<LineEditWidget>();
+    Page &page                  = wi->page();
+    LineEditWidget &plrNameEdit = page.findWidget(0, MNF_ID1).as<LineEditWidget>();
 #if __JHEXEN__
-    ListWidget &plrClassList = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID2)->as<ListWidget>();
+    ListWidget &plrClassList    = page.findWidget(0, MNF_ID2).as<ListWidget>();
 #endif
-    ListWidget &plrColorList = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID3)->as<ListWidget>();
+    ListWidget &plrColorList    = page.findWidget(0, MNF_ID3).as<ListWidget>();
 
 #if __JHEXEN__
     cfg.netClass = plrClassList.selection();
@@ -4197,13 +4185,13 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
 
     char buf[300];
     strcpy(buf, "net-name ");
-    M_StrCatQuoted(buf, Str_Text(plrNameEdit.text()), 300);
+    M_StrCatQuoted(buf, plrNameEdit.text().toUtf8().constData(), 300);
     DD_Execute(false, buf);
 
     if(IS_NETGAME)
     {
         strcpy(buf, "setname ");
-        M_StrCatQuoted(buf, Str_Text(plrNameEdit.text()), 300);
+        M_StrCatQuoted(buf, plrNameEdit.text().toUtf8().constData(), 300);
         DD_Execute(false, buf);
 #if __JHEXEN__
         // Must do 'setclass' first; the real class and color do not change
@@ -4305,23 +4293,23 @@ void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
         mnPlrClass = option;
     }
 
-    skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID0)->as<ButtonWidget>();
+    skillObj = &skillPage->findWidget(0, MNF_ID0).as<ButtonWidget>();
     skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
-    skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID1)->as<ButtonWidget>();
+    skillObj = &skillPage->findWidget(0, MNF_ID1).as<ButtonWidget>();
     skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
-    skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID2)->as<ButtonWidget>();
+    skillObj = &skillPage->findWidget(0, MNF_ID2).as<ButtonWidget>();
     skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
-    skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID3)->as<ButtonWidget>();
+    skillObj = &skillPage->findWidget(0, MNF_ID3).as<ButtonWidget>();
     skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
-    skillObj = &MN_MustFindObjectOnPage(skillPage, 0, MNF_ID4)->as<ButtonWidget>();
+    skillObj = &skillPage->findWidget(0, MNF_ID4).as<ButtonWidget>();
     skillObj->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
     if(!skillObj->text().isEmpty() && skillObj->text().first().isLetterOrNumber()) skillObj->setShortcut(skillObj->text().first().toLatin1());
 
@@ -4341,7 +4329,7 @@ void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
     if(Widget::MNA_FOCUS != action) return;
 
     playerclass_t plrClass = (playerclass_t)wi->data2;
-    MobjPreviewWidget &mop = MN_MustFindObjectOnPage(wi->page(), 0, MNF_ID0)->as<MobjPreviewWidget>();
+    MobjPreviewWidget &mop = wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
     mop.setPlayerClass(plrClass);
     mop.setMobjType((PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 

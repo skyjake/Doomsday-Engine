@@ -68,6 +68,8 @@
 #include "saveslots.h"
 #include "x_hair.h"
 
+#include "menu/widgets/widget.h"
+
 using namespace de;
 using namespace common;
 

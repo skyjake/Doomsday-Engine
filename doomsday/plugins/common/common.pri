@@ -71,7 +71,24 @@ HEADERS += \
     $$common_inc/saveslots.h \
     $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
-    $$common_inc/x_hair.h
+    $$common_inc/x_hair.h \
+    $$common_inc/menu/page.h \
+    $$common_inc/menu/widgets/buttonwidget.h \
+    $$common_inc/menu/widgets/colorpreviewwidget.h \
+    $$common_inc/menu/widgets/cvarinlinelistwidget.h \
+    $$common_inc/menu/widgets/cvarlineeditwidget.h \
+    $$common_inc/menu/widgets/cvarlistwidget.h \
+    $$common_inc/menu/widgets/cvartogglewidget.h \
+    $$common_inc/menu/widgets/inlinelistwidget.h \
+    $$common_inc/menu/widgets/inputbindingwidget.h \
+    $$common_inc/menu/widgets/labelwidget.h \
+    $$common_inc/menu/widgets/lineeditwidget.h \
+    $$common_inc/menu/widgets/listwidget.h \
+    $$common_inc/menu/widgets/mobjpreviewwidget.h \
+    $$common_inc/menu/widgets/rectwidget.h \
+    $$common_inc/menu/widgets/sliderwidget.h \
+    $$common_inc/menu/widgets/textualsliderwidget.h \
+    $$common_inc/menu/widgets/widget.h
 
 SOURCES += \
     $$common_src/am_map.c \

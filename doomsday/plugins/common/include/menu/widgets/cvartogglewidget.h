@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file cvartogglewidget.h  Button widget for toggling cvars.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,49 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_CVARTOGGLEWIDGET
+#define LIBCOMMON_UI_CVARTOGGLEWIDGET
 
-#include "hu_lib.h"
+#include "buttonwidget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+struct CVarToggleWidget : public ButtonWidget
+{
+public:
+    CVarToggleWidget(char const *cvarPath);
+    virtual ~CVarToggleWidget();
+
+    char const *cvarPath() const;
+
+private:
+    char const *_cvarPath;
+};
+
+int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd);
+void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+
+/// @todo Refactor away.
+struct cvarbutton_t
+{
+    char active;
+    char const *cvarname;
+    char const *yes;
+    char const *no;
+    int mask;
+
+    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
+                 int mask = 0)
+        : active(active)
+        , cvarname(cvarname)
+        , yes(yes)
+        , no(no)
+        , mask(mask)
+    {}
+};
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_CVARTOGGLEWIDGET

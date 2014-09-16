@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file labelwidget.h  Text label widget.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,41 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_LABELWIDGET
+#define LIBCOMMON_UI_LABELWIDGET
 
-#include "hu_lib.h"
+#include "widget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+/**
+ * @defgroup mnTextFlags  MNText Flags
+ */
+///@{
+#define MNTEXT_NO_ALTTEXT          0x1 ///< Do not use alt text instead of lump.
+///@}
+
+/**
+ * Text objects.
+ */
+struct LabelWidget : public Widget
+{
+public:
+    LabelWidget(de::String const &text = "", patchid_t *patch = 0);
+    virtual ~LabelWidget();
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+
+    void setPatch(patchid_t *newPatch);
+    void setText(de::String const &newText);
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_LABELWIDGET

@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file rectwidget.h  Simple rectangular widget with a background image.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,39 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_RECTWIDGET
+#define LIBCOMMON_UI_RECTWIDGET
 
-#include "hu_lib.h"
+#include "widget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+/**
+ * A simple rectangluar widget with a background.
+ */
+struct RectWidget : public Widget
+{
+public:
+    explicit RectWidget(patchid_t backgroundPatch = 0);
+    virtual ~RectWidget();
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+
+    /**
+     * Apply the Patch graphic referenced by @a patch as the background for this rect.
+     *
+     * @param newBackgroundPatch  Unique identifier of the patch. If @c <= 0 the current
+     * background will be cleared and the Rect will be drawn as a solid color.
+     */
+    void setBackgroundPatch(patchid_t newBackgroundPatch);
+
+private:
+    DENG2_PRIVATE(d)
+};
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_WIDGET

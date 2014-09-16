@@ -21,15 +21,18 @@
 #include "common.h"
 #include "saveslots.h"
 
-#include "g_common.h"
-#include "gamesession.h"
-#include "hu_menu.h"
+#include <map>
+#include <utility>
 #include <de/App>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
-#include <map>
-#include <utility>
+#include "g_common.h"
+#include "gamesession.h"
+
+#include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/lineeditwidget.h"
 
 static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
 static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
@@ -93,7 +96,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         Page *page = Hu_MenuFindPageByName(pageName);
         if(!page) return; // Not initialized yet?
 
-        Widget *wi = page->findObject(0, menuWidgetId);
+        Widget *wi = page->tryFindWidget(0, menuWidgetId);
         if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
@@ -104,12 +107,12 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         wi->setFlags(FO_SET, MNF_DISABLED);
         if(status == Loadable)
         {
-            edit.setText(MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
+            edit.setText(session->metadata().gets("userDescription", ""));
             wi->setFlags(FO_CLEAR, MNF_DISABLED);
         }
         else
         {
-            edit.setText(MNEDIT_STF_NO_ACTION, "");
+            edit.setText("");
         }
 
         if(Hu_MenuIsActive() && Hu_MenuActivePage() == page)

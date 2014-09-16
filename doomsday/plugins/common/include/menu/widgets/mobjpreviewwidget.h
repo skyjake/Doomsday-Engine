@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file mobjpreviewwidget.h  UI widget for previewing a mobj.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,42 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_MOBJPREVIEWWIDGET
+#define LIBCOMMON_UI_MOBJPREVIEWWIDGET
 
-#include "hu_lib.h"
+#include "sliderwidget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+#define MNDATA_MOBJPREVIEW_WIDTH    44
+#define MNDATA_MOBJPREVIEW_HEIGHT   66
+
+/**
+ * UI widget for previewing a Mobj.
+ */
+struct MobjPreviewWidget : public Widget
+{
+public:
+    int mobjType;
+    /// Color translation class and map.
+    int tClass, tMap;
+    int plrClass;  ///< Player class identifier.
+
+public:
+    MobjPreviewWidget();
+    virtual ~MobjPreviewWidget() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+
+    void setMobjType(int mobjType);
+    void setPlayerClass(int plrClass);
+    void setTranslationClass(int tClass);
+    void setTranslationMap(int tMap);
+};
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_MOBJPREVIEWWIDGET

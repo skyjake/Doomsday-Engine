@@ -1,4 +1,4 @@
-/** @file m_ctrl.h  Controls menu page and associated widgets.
+/** @file inputbindingwidget.h  UI widget for manipulating input bindings.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,21 +18,39 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MENU_CONTROLS
-#define LIBCOMMON_MENU_CONTROLS
-#ifdef __cplusplus
+#ifndef LIBCOMMON_UI_INPUTBINDINGWIDGET
+#define LIBCOMMON_UI_INPUTBINDINGWIDGET
 
-#include "hu_lib.h"
+#include "widget.h"
 
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+struct controlconfig_t;
+
+/**
+ * Bindings visualizer widget.
+ */
+struct InputBindingWidget : public Widget
+{
+public:
+    controlconfig_t *binds;
+
+public:
+    InputBindingWidget();
+    virtual ~InputBindingWidget() {}
+
+    void draw(Point2Raw const *origin);
+    void updateGeometry(Page *pagePtr);
+
+    int handleEvent_Privileged(event_t *ev);
+
+    char const *controlName();
+};
+
+int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
 
 } // namespace menu
 } // namespace common
 
-#endif // __cplusplus
-#endif // LIBCOMMON_MENU_CONTROLS
+#endif // LIBCOMMON_UI_INPUTBINDINGWIDGET
