@@ -40,7 +40,6 @@ private:
     char const *_cvarPath;
 };
 
-int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd);
 void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 /// @todo Refactor away.

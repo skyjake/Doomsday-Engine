@@ -38,7 +38,6 @@
 #include "menu/widgets/colorpreviewwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
-#include "menu/widgets/cvarlistwidget.h"
 #include "menu/widgets/cvartogglewidget.h"
 #include "menu/widgets/inlinelistwidget.h"
 #include "menu/widgets/inputbindingwidget.h"
@@ -1393,7 +1392,7 @@ void Page::updateWidgets()
                 }
             }
         }
-        if(CVarListWidget *list = wi->maybeAs<CVarListWidget>())
+        if(CVarInlineListWidget *list = wi->maybeAs<CVarInlineListWidget>())
         {
             int itemValue = Con_GetInteger(list->cvarPath());
             if(int valueMask = list->cvarValueMask())
@@ -1657,12 +1656,6 @@ int Widget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-int Widget_DefaultCommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->handleCommand(cmd);
-}
-
 Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
 {
     DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
@@ -1854,7 +1847,6 @@ LineEditWidget::LineEditWidget()
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = LineEditWidget_CommandResponder;
 }
 
 LineEditWidget::~LineEditWidget()
@@ -2134,12 +2126,6 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-int LineEditWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<LineEditWidget>().handleCommand(cmd);
-}
-
 void LineEditWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly.
@@ -2228,7 +2214,6 @@ ListWidget::ListWidget()
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = ListWidget_CommandResponder;
 }
 
 ListWidget::~ListWidget()
@@ -2364,12 +2349,6 @@ int ListWidget::handleCommand(menucommand_e cmd)
     }
 }
 
-int ListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<ListWidget>().handleCommand(cmd);
-}
-
 int ListWidget::selection() const
 {
     return d->selection;
@@ -2421,18 +2400,19 @@ int ListWidget::findItem(int userValue) const
 
 bool ListWidget::selectItem(int itemIndex, int flags)
 {
-    int oldSelection = d->selection;
-
-    if(0 > itemIndex || itemIndex >= itemCount()) return false;
-
-    d->selection = itemIndex;
-    if(d->selection == oldSelection) return false;
-
-    if(!(flags & MNLIST_SIF_NO_ACTION) && hasAction(MNA_MODIFIED))
+    if(itemIndex >= 0 && itemIndex < itemCount())
     {
-        execAction(MNA_MODIFIED);
+        if(d->selection != itemIndex)
+        {
+            d->selection = itemIndex;
+            if(!(flags & MNLIST_SIF_NO_ACTION) && hasAction(MNA_MODIFIED))
+            {
+                execAction(MNA_MODIFIED);
+            }
+            return true;
+        }
     }
-    return true;
+    return false;
 }
 
 bool ListWidget::selectItemByValue(int userValue, int flags)
@@ -2440,66 +2420,9 @@ bool ListWidget::selectItemByValue(int userValue, int flags)
     return selectItem(findItem(userValue), flags);
 }
 
-CVarListWidget::CVarListWidget(char const *cvarPath, int cvarValueMask)
-    : ListWidget()
-    , _cvarPath(cvarPath)
-    , _cvarValueMask(cvarValueMask)
-{}
-
-CVarListWidget::~CVarListWidget()
-{}
-
-char const *CVarListWidget::cvarPath() const
-{
-    return _cvarPath;
-}
-
-int CVarListWidget::cvarValueMask() const
-{
-    return _cvarValueMask;
-}
-
-void CvarListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
-{
-    CVarListWidget const *list = &wi->as<CVarListWidget>();
-
-    if(Widget::MNA_MODIFIED != action) return;
-
-    if(list->selection() < 0) return; // Hmm?
-
-    cvartype_t varType = Con_GetVariableType((char const *)list->cvarPath());
-    if(CVT_NULL == varType) return;
-
-    ListWidget::Item const *item = list->items()[list->selection()];
-    int value;
-    if(list->cvarValueMask())
-    {
-        value = Con_GetInteger((char const *)list->cvarPath());
-        value = (value & ~list->cvarValueMask()) | (item->userValue() & list->cvarValueMask());
-    }
-    else
-    {
-        value = item->userValue();
-    }
-
-    switch(varType)
-    {
-    case CVT_INT:
-        Con_SetInteger2((char const *)list->cvarPath(), value, SVF_WRITE_OVERRIDE);
-        break;
-    case CVT_BYTE:
-        Con_SetInteger2((char const *)list->cvarPath(), (byte) value, SVF_WRITE_OVERRIDE);
-        break;
-
-    default: Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
-    }
-}
-
 InlineListWidget::InlineListWidget()
     : ListWidget()
-{
-    ListWidget::cmdResponder = InlineListWidget_CommandResponder;
-}
+{}
 
 void InlineListWidget::draw(Point2Raw const *origin)
 {
@@ -2554,12 +2477,6 @@ int InlineListWidget::handleCommand(menucommand_e cmd)
     }
 }
 
-int InlineListWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<InlineListWidget>().handleCommand(cmd);
-}
-
 void ListWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
@@ -2600,7 +2517,7 @@ CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMa
     , _cvarValueMask(cvarValueMask)
 {
     Widget::_pageColorIdx  = MENU_COLOR3;
-    Widget::actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
+    Widget::actions[Widget::MNA_MODIFIED].callback = CvarInlineListWidget_UpdateCvar;
     Widget::actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
@@ -2617,6 +2534,42 @@ int CVarInlineListWidget::cvarValueMask() const
     return _cvarValueMask;
 }
 
+void CvarInlineListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+{
+    CVarInlineListWidget const *list = &wi->as<CVarInlineListWidget>();
+
+    if(Widget::MNA_MODIFIED != action) return;
+
+    if(list->selection() < 0) return; // Hmm?
+
+    cvartype_t varType = Con_GetVariableType((char const *)list->cvarPath());
+    if(CVT_NULL == varType) return;
+
+    ListWidget::Item const *item = list->items()[list->selection()];
+    int value;
+    if(list->cvarValueMask())
+    {
+        value = Con_GetInteger((char const *)list->cvarPath());
+        value = (value & ~list->cvarValueMask()) | (item->userValue() & list->cvarValueMask());
+    }
+    else
+    {
+        value = item->userValue();
+    }
+
+    switch(varType)
+    {
+    case CVT_INT:
+        Con_SetInteger2((char const *)list->cvarPath(), value, SVF_WRITE_OVERRIDE);
+        break;
+    case CVT_BYTE:
+        Con_SetInteger2((char const *)list->cvarPath(), (byte) value, SVF_WRITE_OVERRIDE);
+        break;
+
+    default: Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
+    }
+}
+
 DENG2_PIMPL_NOREF(ButtonWidget)
 {
     String text;              ///< Label text.
@@ -2629,7 +2582,6 @@ ButtonWidget::ButtonWidget() : Widget(), d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT2;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = ButtonWidget_CommandResponder;
 }
 
 ButtonWidget::~ButtonWidget()
@@ -2706,12 +2658,6 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
     }
 
     return false; // Not eaten.
-}
-
-int ButtonWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<ButtonWidget>().handleCommand(cmd);
 }
 
 void ButtonWidget::updateGeometry(Page *page)
@@ -2799,7 +2745,6 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR3;
-    Widget::cmdResponder  = CVarToggleWidget_CommandResponder;
     Widget::actions[MNA_MODIFIED].callback = CvarToggleWidget_UpdateCvar;
     Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
@@ -2861,12 +2806,6 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-int CVarToggleWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<CVarToggleWidget>().handleCommand(cmd);
-}
-
 void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
@@ -2917,7 +2856,6 @@ ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = ColorPreviewWidget_CommandResponder;
 
     d->rgbaMode = rgbaMode;
     d->color    = color;
@@ -3063,12 +3001,6 @@ int ColorPreviewWidget::handleCommand(menucommand_e cmd)
 
     default: return false; // Not eaten.
     }
-}
-
-int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<ColorPreviewWidget>().handleCommand(cmd);
 }
 
 void ColorPreviewWidget::updateGeometry(Page * /*page*/)
@@ -3284,7 +3216,6 @@ SliderWidget::SliderWidget()
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = SliderWidget_CommandResponder;
 }
 
 void SliderWidget::loadResources() // static
@@ -3414,12 +3345,6 @@ int SliderWidget::handleCommand(menucommand_e cmd)
 
     default: return false; // Not eaten.
     }
-}
-
-int SliderWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<SliderWidget>().handleCommand(cmd);
 }
 
 void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)

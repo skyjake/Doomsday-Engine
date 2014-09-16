@@ -103,8 +103,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-int ColorPreviewWidget_CommandResponder(Widget *wi, menucommand_e command);
-
 void CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu

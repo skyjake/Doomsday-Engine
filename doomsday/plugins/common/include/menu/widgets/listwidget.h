@@ -113,8 +113,6 @@ private:
 
 typedef ListWidget::Item ListWidgetItem;
 
-int ListWidget_CommandResponder(Widget *wi, menucommand_e command);
-
 } // namespace menu
 } // namespace common
 

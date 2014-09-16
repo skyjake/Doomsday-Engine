@@ -42,15 +42,11 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
-
     int handleEvent_Privileged(event_t *ev);
-
     int handleCommand(menucommand_e command);
 
     char const *controlName();
 };
-
-int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
 
 } // namespace menu
 } // namespace common

@@ -38,8 +38,6 @@ public:
     int handleCommand(menucommand_e command);
 };
 
-int InlineListWidget_CommandResponder(Widget *wi, menucommand_e command);
-
 } // namespace menu
 } // namespace common
 

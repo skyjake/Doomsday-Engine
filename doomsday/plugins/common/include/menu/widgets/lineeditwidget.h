@@ -94,8 +94,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-int LineEditWidget_CommandResponder(Widget *wi, menucommand_e command);
-
 } // namespace menu
 } // namespace common
 

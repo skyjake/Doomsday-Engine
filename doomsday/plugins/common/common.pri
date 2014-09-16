@@ -77,7 +77,6 @@ HEADERS += \
     $$common_inc/menu/widgets/colorpreviewwidget.h \
     $$common_inc/menu/widgets/cvarinlinelistwidget.h \
     $$common_inc/menu/widgets/cvarlineeditwidget.h \
-    $$common_inc/menu/widgets/cvarlistwidget.h \
     $$common_inc/menu/widgets/cvartogglewidget.h \
     $$common_inc/menu/widgets/inlinelistwidget.h \
     $$common_inc/menu/widgets/inputbindingwidget.h \

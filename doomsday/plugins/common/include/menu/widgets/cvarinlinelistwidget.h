@@ -40,6 +40,8 @@ private:
     int _cvarValueMask;
 };
 
+void CvarInlineListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+
 } // namespace menu
 } // namespace common
 

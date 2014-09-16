@@ -525,7 +525,6 @@ InputBindingWidget::InputBindingWidget()
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = InputBindingWidget_CommandResponder;
 }
 
 void InputBindingWidget::draw(Point2Raw const *origin)
@@ -588,12 +587,6 @@ int InputBindingWidget::handleCommand(menucommand_e cmd)
     }
 
     return false; // Not eaten.
-}
-
-int InputBindingWidget_CommandResponder(Widget *wi, menucommand_e cmd)
-{
-    DENG2_ASSERT(wi);
-    return wi->as<InputBindingWidget>().handleCommand(cmd);
 }
 
 void InputBindingWidget::updateGeometry(Page * /*page*/)

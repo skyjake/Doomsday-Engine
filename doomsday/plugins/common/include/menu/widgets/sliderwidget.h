@@ -92,8 +92,6 @@ public:
     static void loadResources();
 };
 
-int SliderWidget_CommandResponder(Widget *wi, menucommand_e command);
-
 void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu

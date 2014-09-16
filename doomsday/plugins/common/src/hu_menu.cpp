@@ -50,7 +50,6 @@
 #include "menu/widgets/colorpreviewwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
-#include "menu/widgets/cvarlistwidget.h"
 #include "menu/widgets/cvartogglewidget.h"
 #include "menu/widgets/inputbindingwidget.h"
 #include "menu/widgets/labelwidget.h"
@@ -451,7 +450,7 @@ void Hu_MenuInitColorWidgetPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget(Vector4f(), true);
+        auto *cbox = new ColorPreviewWidget(Vector4f(), true);
         cbox->_flags = MNF_ID0 | MNF_NO_FOCUS;
         cbox->setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7));
         page->_widgets << cbox;
@@ -459,13 +458,13 @@ void Hu_MenuInitColorWidgetPage()
 
     page->_widgets << new LabelWidget("Red");
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->_flags    = MNF_ID1;
         sld->setShortcut('r');
         sld->data2     = (void*)CR;
         sld->min       = 0;
         sld->max       = 1;
-        sld->_value     = 0;
+        sld->_value    = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -475,13 +474,13 @@ void Hu_MenuInitColorWidgetPage()
 
     page->_widgets << new LabelWidget("Green");
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->_flags    = MNF_ID2;
         sld->setShortcut('g');
         sld->data2     = (void*)CG;
         sld->min       = 0;
         sld->max       = 1;
-        sld->_value     = 0;
+        sld->_value    = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -491,13 +490,13 @@ void Hu_MenuInitColorWidgetPage()
 
     page->_widgets << new LabelWidget("Blue");
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->_flags    = MNF_ID3;
         sld->setShortcut('b');
         sld->data2     = (void*)CB;
         sld->min       = 0;
         sld->max       = 1;
-        sld->_value     = 0;
+        sld->_value    = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -506,19 +505,19 @@ void Hu_MenuInitColorWidgetPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget("Opacity");
+        auto *text = new LabelWidget("Opacity");
         text->_flags = MNF_ID4;
         page->_widgets << text;
     }
 
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->_flags    = MNF_ID5;
         sld->setShortcut('o');
         sld->data2     = (void*)CA;
         sld->min       = 0;
         sld->max       = 1;
-        sld->_value     = 0;
+        sld->_value    = 0;
         sld->step      = .05f;
         sld->floatMode = true;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
@@ -553,7 +552,7 @@ void Hu_MenuInitMainPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("", &pMainTitle);
+        auto *text = new LabelWidget("", &pMainTitle);
         text->_origin.x = -3;
         text->_origin.y = -70;
         page->_widgets << text;
@@ -561,7 +560,7 @@ void Hu_MenuInitMainPage()
 #endif
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('n');
         btn->_pageFontIdx = MENU_FONT1;
@@ -579,7 +578,7 @@ void Hu_MenuInitMainPage()
     y += FIXED_LINE_HEIGHT;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('o');
         btn->_pageFontIdx = MENU_FONT1;
@@ -598,7 +597,7 @@ void Hu_MenuInitMainPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('l');
         btn->_pageFontIdx = MENU_FONT1;
@@ -615,7 +614,7 @@ void Hu_MenuInitMainPage()
     y += FIXED_LINE_HEIGHT;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
@@ -633,7 +632,7 @@ void Hu_MenuInitMainPage()
 
 #else
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('f');
         btn->_pageFontIdx = MENU_FONT1;
@@ -649,7 +648,7 @@ void Hu_MenuInitMainPage()
 
 #if !__JDOOM64__
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
 # if __JDOOM__
         btn->_flags       = MNF_ID0;
@@ -672,7 +671,7 @@ void Hu_MenuInitMainPage()
 #endif
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
 #if __JDOOM__
         btn->_flags       = MNF_ID1;
 #endif
@@ -705,7 +704,7 @@ void Hu_MenuInitGameTypePage()
     int y = 0;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText(GET_TXT(TXT_SINGLEPLAYER));
@@ -718,7 +717,7 @@ void Hu_MenuInitGameTypePage()
     y += FIXED_LINE_HEIGHT;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText(GET_TXT(TXT_MULTIPLAYER));
@@ -767,7 +766,7 @@ void Hu_MenuInitSkillPage()
 
     for(uint i = 0; i < NUM_SKILL_MODES; ++i, y += FIXED_LINE_HEIGHT)
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_flags         = skillButtonFlags[i];
         btn->_origin.y      = y;
         btn->_pageFontIdx   = MENU_FONT1;
@@ -805,7 +804,7 @@ void Hu_MenuInitMultiplayerPage()
     page->setPreviousPage(Hu_MenuFindPageByName("GameType"));
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_flags       = MNF_ID0;
         btn->setShortcut('j');
         btn->_pageFontIdx = MENU_FONT1;
@@ -816,7 +815,7 @@ void Hu_MenuInitMultiplayerPage()
     }
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('p');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText("Player Setup");
@@ -842,7 +841,7 @@ void Hu_MenuInitPlayerSetupPage()
     page->setPreviousPage(Hu_MenuFindPageByName("Multiplayer"));
 
     {
-        MobjPreviewWidget *mprev = new MobjPreviewWidget;
+        auto *mprev = new MobjPreviewWidget;
         mprev->_origin.x = SCREENWIDTH/2 - origin.x;
         mprev->_origin.y = 60;
         mprev->_flags    = MNF_ID0 | MNF_POSITION_FIXED;
@@ -850,7 +849,7 @@ void Hu_MenuInitPlayerSetupPage()
     }
 
     {
-        CVarLineEditWidget *edit = new CVarLineEditWidget("net-name");
+        auto *edit = new CVarLineEditWidget("net-name");
         edit->_flags    = MNF_ID1 | MNF_LAYOUT_OFFSET;
         edit->_origin.y = 75;
         edit->setMaxLength(24);
@@ -859,14 +858,14 @@ void Hu_MenuInitPlayerSetupPage()
 
 #if __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget("Class");
+        auto *text = new LabelWidget("Class");
         text->_flags    = MNF_LAYOUT_OFFSET;
         text->_origin.y = 5;
         page->_widgets << text;
     }
 
     {
-        InlineListWidget *list = new InlineListWidget;
+        auto *list = new InlineListWidget;
         list->_flags         = MNF_ID2;
         list->setShortcut('c');
         list->_pageColorIdx  = MENU_COLOR3;
@@ -883,7 +882,7 @@ void Hu_MenuInitPlayerSetupPage()
 #endif
 
     {
-        LabelWidget *text = new LabelWidget("Color");
+        auto *text = new LabelWidget("Color");
 #ifdef __JHERETIC__
         text->_flags    = MNF_LAYOUT_OFFSET;
         text->_origin.y = 5;
@@ -893,7 +892,7 @@ void Hu_MenuInitPlayerSetupPage()
 
     // Setup the player color selection list.
     {
-        InlineListWidget *list = new InlineListWidget;
+        auto *list = new InlineListWidget;
         list->_flags         = MNF_ID3;
         list->_pageColorIdx  = MENU_COLOR3;
         list->actions[Widget::MNA_MODIFIED].callback = Hu_MenuSelectPlayerColor;
@@ -902,32 +901,28 @@ void Hu_MenuInitPlayerSetupPage()
         /// @todo Read these names from Text definitions.
         int colorIdx = 0;
 #if __JHEXEN__
-        list->items()
-                << new ListWidgetItem("Red",    colorIdx++)
-                << new ListWidgetItem("Blue",   colorIdx++)
-                << new ListWidgetItem("Yellow", colorIdx++)
-                << new ListWidgetItem("Green",  colorIdx++);
+        list->items() << new ListWidgetItem("Red",    colorIdx++);
+        list->items() << new ListWidgetItem("Blue",   colorIdx++);
+        list->items() << new ListWidgetItem("Yellow", colorIdx++);
+        list->items() << new ListWidgetItem("Green",  colorIdx++);
 
         if(gameMode != hexen_v10) // Hexen v1.0 has only four player colors.
         {
-            list->items()
-                    << new ListWidgetItem("Jade",   colorIdx++)
-                    << new ListWidgetItem("White",  colorIdx++)
-                    << new ListWidgetItem("Hazel",  colorIdx++)
-                    << new ListWidgetItem("Purple", colorIdx++);
+            list->items() << new ListWidgetItem("Jade",   colorIdx++);
+            list->items() << new ListWidgetItem("White",  colorIdx++);
+            list->items() << new ListWidgetItem("Hazel",  colorIdx++);
+            list->items() << new ListWidgetItem("Purple", colorIdx++);
         }
 #elif __JHERETIC__
-        list->items()
-                << new ListWidgetItem("Green",  colorIdx++)
-                << new ListWidgetItem("Orange", colorIdx++)
-                << new ListWidgetItem("Red",    colorIdx++)
-                << new ListWidgetItem("Blue",   colorIdx++);
+        list->items() << new ListWidgetItem("Green",  colorIdx++);
+        list->items() << new ListWidgetItem("Orange", colorIdx++);
+        list->items() << new ListWidgetItem("Red",    colorIdx++);
+        list->items() << new ListWidgetItem("Blue",   colorIdx++);
 #else
-        list->items()
-                << new ListWidgetItem("Green",  colorIdx++)
-                << new ListWidgetItem("Indigo", colorIdx++)
-                << new ListWidgetItem("Brown",  colorIdx++)
-                << new ListWidgetItem("Red",    colorIdx++);
+        list->items() << new ListWidgetItem("Green",  colorIdx++);
+        list->items() << new ListWidgetItem("Indigo", colorIdx++);
+        list->items() << new ListWidgetItem("Brown",  colorIdx++);
+        list->items() << new ListWidgetItem("Red",    colorIdx++);
 #endif
         list->items() << new ListWidgetItem("Automatic", colorIdx++);
 
@@ -935,7 +930,7 @@ void Hu_MenuInitPlayerSetupPage()
     }
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('s');
         btn->setText("Save Changes");
         btn->actions[Widget::MNA_ACTIVEOUT].callback = Hu_MenuSelectAcceptPlayerSetup;
@@ -955,33 +950,31 @@ void Hu_MenuInitSaveOptionsPage()
 
     page->_widgets << new LabelWidget("Confirm quick load/save");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-save-confirm");
+        auto *btn = new CVarToggleWidget("game-save-confirm");
         btn->setShortcut('q');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Confirm reborn load");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-save-confirm-loadonreborn");
+        auto *btn = new CVarToggleWidget("game-save-confirm-loadonreborn");
         btn->setShortcut('r');
         page->_widgets << btn;
     }
 
     {
-        LabelWidget *text = new LabelWidget("Reborn preferences");
+        auto *text = new LabelWidget("Reborn preferences");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Load last save");
+        auto *text = new LabelWidget("Load last save");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-save-last-loadonreborn");
+        auto *btn = new CVarToggleWidget("game-save-last-loadonreborn");
         btn->setGroup(1)
             .setShortcut('a');
         page->_widgets << btn;
@@ -1000,7 +993,7 @@ void Hu_MenuInitFilesPage()
     int y = 0;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('l');
         btn->_pageFontIdx = MENU_FONT1;
@@ -1012,7 +1005,7 @@ void Hu_MenuInitFilesPage()
     y += FIXED_LINE_HEIGHT;
 
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->_origin.y    = y;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
@@ -1039,20 +1032,39 @@ int Hu_MenuLoadSlotCommandResponder(Widget *wi, menucommand_e cmd)
         deleteGameSave((char *)edit.data1);
         return true;
     }
-    return Widget_DefaultCommandResponder(wi, cmd);
+    if(MCMD_SELECT == cmd && (wi->_flags & MNF_FOCUS) && !(wi->_flags & MNF_DISABLED))
+    {
+        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        if(!(wi->_flags & MNF_ACTIVE))
+        {
+            wi->_flags |= MNF_ACTIVE;
+            if(wi->hasAction(Widget::MNA_ACTIVE))
+            {
+                wi->execAction(Widget::MNA_ACTIVE);
+            }
+        }
+
+        wi->_flags &= ~MNF_ACTIVE;
+        if(wi->hasAction(Widget::MNA_ACTIVEOUT))
+        {
+            wi->execAction(Widget::MNA_ACTIVEOUT);
+        }
+        return true;
+    }
+    return false; // Not eaten.
 }
 
 int Hu_MenuSaveSlotCommandResponder(Widget *wi, menucommand_e cmd)
 {
     DENG2_ASSERT(wi != 0);
+    LineEditWidget &edit = wi->as<LineEditWidget>();
     if(MCMD_DELETE == cmd &&
        (wi->_flags & MNF_FOCUS) && !(wi->_flags & MNF_ACTIVE) && !(wi->_flags & MNF_DISABLED))
     {
-        LineEditWidget &edit = wi->as<LineEditWidget>();
         deleteGameSave((char *)edit.data1);
         return true;
     }
-    return LineEditWidget_CommandResponder(wi, cmd);
+    return edit.handleCommand(cmd);
 }
 
 void Hu_MenuInitLoadGameAndSaveGamePages()
@@ -1077,7 +1089,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     int i = 0;
     for(; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
-        LineEditWidget *edit = new LineEditWidget;
+        auto *edit = new LineEditWidget;
         edit->_origin.x      = 0;
         edit->_origin.y      = y;
         edit->_flags         = saveSlotObjectIds[i] | MNF_DISABLED;
@@ -1100,7 +1112,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     i = 0;
     for(; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
-        LineEditWidget *edit = new LineEditWidget;
+        auto *edit = new LineEditWidget;
         edit->_origin.x      = 0;
         edit->_origin.y      = y;
         edit->_flags         = saveSlotObjectIds[i];
@@ -1129,9 +1141,8 @@ void Hu_MenuInitOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuFindPageByName("Main"));
 
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('e');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText("End Game");
@@ -1139,9 +1150,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('t');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setText("Show Taskbar");
@@ -1149,9 +1159,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('c');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("ControlOptions"));
@@ -1160,9 +1169,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('g');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("GameplayOptions"));
@@ -1171,9 +1179,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("SaveOptions"));
@@ -1182,9 +1189,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('h');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("HUDOptions"));
@@ -1193,9 +1199,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('a');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("AutomapOptions"));
@@ -1204,9 +1209,8 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('w');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("WeaponOptions"));
@@ -1215,10 +1219,9 @@ void Hu_MenuInitOptionsPage()
         btn->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << btn;
     }
-
 #if __JHERETIC__ || __JHEXEN__
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('i');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("InventoryOptions"));
@@ -1228,9 +1231,8 @@ void Hu_MenuInitOptionsPage()
         page->_widgets << btn;
     }
 #endif
-
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setShortcut('s');
         btn->_pageFontIdx = MENU_FONT1;
         btn->setData(String("SoundOptions"));
@@ -1258,21 +1260,21 @@ void Hu_MenuInitGameplayOptionsPage()
 
     page->_widgets << new LabelWidget("Always Run");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-run");
+        auto *btn = new CVarToggleWidget("ctl-run");
         btn->setShortcut('r');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Use LookSpring");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-look-spring");
+        auto *btn = new CVarToggleWidget("ctl-look-spring");
         btn->setShortcut('l');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Disable AutoAim");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-aim-noauto");
+        auto *btn = new CVarToggleWidget("ctl-aim-noauto");
         btn->setShortcut('a');
         page->_widgets << btn;
     }
@@ -1280,7 +1282,7 @@ void Hu_MenuInitGameplayOptionsPage()
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     page->_widgets << new LabelWidget("Allow Jumping");
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("player-jump");
+        auto *btn = new CVarToggleWidget("player-jump");
         btn->setShortcut('j');
         page->_widgets << btn;
     }
@@ -1293,49 +1295,43 @@ void Hu_MenuInitGameplayOptionsPage()
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Compatibility");
+        auto *text = new LabelWidget("Compatibility");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
 # if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Any Boss Trigger 666");
+        auto *text = new LabelWidget("Any Boss Trigger 666");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-anybossdeath666");
+        auto *btn = new CVarToggleWidget("game-anybossdeath666");
         btn->setGroup(1)
             .setShortcut('b');
         page->_widgets << btn;
     }
-
 #  if !__JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Av Resurrects Ghosts");
+        auto *text = new LabelWidget("Av Resurrects Ghosts");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-raiseghosts");
+        auto *btn = new CVarToggleWidget("game-raiseghosts");
         btn->setGroup(1)
             .setShortcut('g');
         page->_widgets << btn;
     }
-
 # if __JDOOM__
     {
-        LabelWidget *text = new LabelWidget("VileChase uses Av radius");
+        auto *text = new LabelWidget("VileChase uses Av radius");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-vilechase-usevileradius");
+        auto *btn = new CVarToggleWidget("game-vilechase-usevileradius");
         btn->setGroup(1)
             .setShortcut('g');
         page->_widgets << btn;
@@ -1344,76 +1340,66 @@ void Hu_MenuInitGameplayOptionsPage()
 #  endif // !__JDOOM64__
 
     {
-        LabelWidget *text = new LabelWidget("PE Limited To 21 Lost Souls");
+        auto *text = new LabelWidget("PE Limited To 21 Lost Souls");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-maxskulls");
+        auto *btn = new CVarToggleWidget("game-maxskulls");
         btn->setShortcut('p');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("LS Can Get Stuck Inside Walls");
+        auto *text = new LabelWidget("LS Can Get Stuck Inside Walls");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-skullsinwalls");
+        auto *btn = new CVarToggleWidget("game-skullsinwalls");
         btn->setGroup(1);
         page->_widgets << btn;
     }
 # endif // __JDOOM__ || __JDOOM64__
 
     {
-        LabelWidget *text = new LabelWidget("Monsters Fly Over Obstacles");
+        auto *text = new LabelWidget("Monsters Fly Over Obstacles");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-monsters-floatoverblocking");
+        auto *btn = new CVarToggleWidget("game-monsters-floatoverblocking");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Monsters Can Get Stuck In Doors");
+        auto *text = new LabelWidget("Monsters Can Get Stuck In Doors");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-monsters-stuckindoors");
+        auto *btn = new CVarToggleWidget("game-monsters-stuckindoors");
         btn->setGroup(1);
         btn->setShortcut('d');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Some Objects Never Hang Over Ledges");
+        auto *text = new LabelWidget("Some Objects Never Hang Over Ledges");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-objects-neverhangoverledges");
+        auto *btn = new CVarToggleWidget("game-objects-neverhangoverledges");
         btn->setGroup(1);
         btn->setShortcut('h');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Objects Fall Under Own Weight");
+        auto *text = new LabelWidget("Objects Fall Under Own Weight");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-objects-falloff");
+        auto *btn = new CVarToggleWidget("game-objects-falloff");
         btn->setGroup(1);
         btn->setShortcut('f');
         page->_widgets << btn;
@@ -1421,13 +1407,12 @@ void Hu_MenuInitGameplayOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("All Crushed Objects Become A Pile Of Gibs");
+        auto *text = new LabelWidget("All Crushed Objects Become A Pile Of Gibs");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-objects-gibcrushednonbleeders");
+        auto *btn = new CVarToggleWidget("game-objects-gibcrushednonbleeders");
         btn->setGroup(1);
         btn->setShortcut('g');
         page->_widgets << btn;
@@ -1435,39 +1420,34 @@ void Hu_MenuInitGameplayOptionsPage()
 #endif
 
     {
-        LabelWidget *text = new LabelWidget("Corpses Slide Down Stairs");
+        auto *text = new LabelWidget("Corpses Slide Down Stairs");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-corpse-sliding");
+        auto *btn = new CVarToggleWidget("game-corpse-sliding");
         btn->setGroup(1);
         btn->setShortcut('s');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Use Exactly Doom's Clipping Code");
+        auto *text = new LabelWidget("Use Exactly Doom's Clipping Code");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-objects-clipping");
+        auto *btn = new CVarToggleWidget("game-objects-clipping");
         btn->setGroup(1)
             .setShortcut('c');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("  ^If Not NorthOnly WallRunning");
+        auto *text = new LabelWidget("  ^If Not NorthOnly WallRunning");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-player-wallrun-northonly");
+        auto *btn = new CVarToggleWidget("game-player-wallrun-northonly");
         btn->setGroup(1)
             .setShortcut('w');
         page->_widgets << btn;
@@ -1475,38 +1455,33 @@ void Hu_MenuInitGameplayOptionsPage()
 
 # if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Zombie Players Can Exit Maps");
+        auto *text = new LabelWidget("Zombie Players Can Exit Maps");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("game-zombiescanexit");
+        auto *btn = new CVarToggleWidget("game-zombiescanexit");
         btn->setGroup(1);
         btn->setShortcut('e');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Fix Ouch Face");
+        auto *text = new LabelWidget("Fix Ouch Face");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-face-ouchfix");
+        auto *btn = new CVarToggleWidget("hud-face-ouchfix");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Fix Weapon Slot Display");
+        auto *text = new LabelWidget("Fix Weapon Slot Display");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-status-weaponslots-ownedfix");
+        auto *btn = new CVarToggleWidget("hud-status-weaponslots-ownedfix");
         btn->setGroup(1);
         page->_widgets << btn;
     }
@@ -1530,7 +1505,7 @@ void Hu_MenuInitHUDOptionsPage()
     page->_widgets << new LabelWidget("View Size");
 
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->min       = 3;
 #if __JDOOM64__
         sld->max       = 11;
@@ -1552,9 +1527,8 @@ void Hu_MenuInitHUDOptionsPage()
 #endif
 
     page->_widgets << new LabelWidget("AutoHide");
-
     {
-        SliderWidget *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget;
         sld->_pageColorIdx  = MENU_COLOR3;
         sld->min            = 0;
         sld->max            = 60;
@@ -1571,142 +1545,123 @@ void Hu_MenuInitHUDOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget("UnHide Events");
+        auto *text = new LabelWidget("UnHide Events");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Receive Damage");
+        auto *text = new LabelWidget("Receive Damage");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-damage");
+        auto *btn = new CVarToggleWidget("hud-unhide-damage");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Health");
+        auto *text = new LabelWidget("Pickup Health");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-health");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-health");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Armor");
+        auto *text = new LabelWidget("Pickup Armor");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-armor");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-armor");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Powerup");
+        auto *text = new LabelWidget("Pickup Powerup");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-powerup");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-powerup");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Weapon");
+        auto *text = new LabelWidget("Pickup Weapon");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-weapon");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-weapon");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
 #if __JHEXEN__
-        LabelWidget *text = new LabelWidget("Pickup Mana");
+        auto *text = new LabelWidget("Pickup Mana");
 #else
-        LabelWidget *text = new LabelWidget("Pickup Ammo");
+        auto *text = new LabelWidget("Pickup Ammo");
 #endif
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-ammo");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-ammo");
         btn->setGroup(1);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Key");
+        auto *text = new LabelWidget("Pickup Key");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-key");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-key");
         btn->setGroup(1);
         page->_widgets << btn;
     }
 
 #if __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget("Pickup Item");
+        auto *text = new LabelWidget("Pickup Item");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-unhide-pickup-invitem");
+        auto *btn = new CVarToggleWidget("hud-unhide-pickup-invitem");
         btn->setGroup(1);
         page->_widgets << btn;
     }
 #endif // __JHERETIC__ || __JHEXEN__
 
     {
-        LabelWidget *text = new LabelWidget("Messages");
+        auto *text = new LabelWidget("Messages");
         text->setGroup(2);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Shown");
+        auto *text = new LabelWidget("Shown");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("msg-show");
+        auto *btn = new CVarToggleWidget("msg-show");
         btn->setGroup(2)
             .setShortcut('m');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Uptime");
+        auto *text = new LabelWidget("Uptime");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget;
         sld->setGroup(2);
         sld->_pageColorIdx  = MENU_COLOR3;
         sld->min            = 0;
@@ -1722,15 +1677,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Size");
+        auto *text = new LabelWidget("Size");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(2);
         sld->min       = 0;
         sld->max       = 1;
@@ -1742,15 +1695,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Color");
+        auto *text = new LabelWidget("Color");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setGroup(2);
         cbox->data1 = (void *)"msg-color-r";
         cbox->data2 = (void *)"msg-color-g";
@@ -1761,48 +1712,37 @@ void Hu_MenuInitHUDOptionsPage()
         cbox->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << cbox;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Crosshair");
+        auto *text = new LabelWidget("Crosshair");
         text->setGroup(3);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Symbol");
+        auto *text = new LabelWidget("Symbol");
         text->setGroup(3);
         text->setShortcut('c');
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("view-cross-type");
+        auto *list = new CVarInlineListWidget("view-cross-type");
         list->setGroup(3);
-        list->_pageColorIdx = MENU_COLOR3;
-        list->actions[Widget::MNA_MODIFIED].callback = CvarListWidget_UpdateCvar;
-        list->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
-
-        int xhairIdx = 0;
         list->items()
-                << new ListWidgetItem("None",        xhairIdx++)
-                << new ListWidgetItem("Cross",       xhairIdx++)
-                << new ListWidgetItem("Twin Angles", xhairIdx++)
-                << new ListWidgetItem("Square",      xhairIdx++)
-                << new ListWidgetItem("Open Square", xhairIdx++)
-                << new ListWidgetItem("Angle",       xhairIdx++);
-
+                << new ListWidgetItem("None",        0)
+                << new ListWidgetItem("Cross",       1)
+                << new ListWidgetItem("Twin Angles", 2)
+                << new ListWidgetItem("Square",      3)
+                << new ListWidgetItem("Open Square", 4)
+                << new ListWidgetItem("Angle",       5);
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Size");
+        auto *text = new LabelWidget("Size");
         text->setGroup(3);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(3);
         sld->min       = 0;
         sld->max       = 1;
@@ -1814,15 +1754,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Angle");
+        auto *text = new LabelWidget("Angle");
         text->setGroup(3);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(3);
         sld->min       = 0;
         sld->max       = 1;
@@ -1834,15 +1772,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Opacity");
+        auto *text = new LabelWidget("Opacity");
         text->setGroup(3);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(3);
         sld->min       = 0;
         sld->max       = 1;
@@ -1854,27 +1790,23 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Vitality Color");
+        auto *text = new LabelWidget("Vitality Color");
         text->setGroup(3);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("view-cross-vitality");
+        auto *btn = new CVarToggleWidget("view-cross-vitality");
         btn->setGroup(3);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Color");
+        auto *text = new LabelWidget("Color");
         text->setGroup(3);
         page->_widgets << text;
     }
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setGroup(3);
         cbox->data1 = (void *)"view-cross-r";
         cbox->data2 = (void *)"view-cross-g";
@@ -1888,20 +1820,18 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget("Statusbar");
+        auto *text = new LabelWidget("Statusbar");
         text->setGroup(4);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Size");
+        auto *text = new LabelWidget("Size");
         text->setGroup(4);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(4);
         sld->min       = 0;
         sld->max       = 1;
@@ -1913,15 +1843,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Opacity");
+        auto *text = new LabelWidget("Opacity");
         text->setGroup(4);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(4);
         sld->min       = 0;
         sld->max       = 1;
@@ -1938,92 +1866,76 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget("Counters");
+        auto *text = new LabelWidget("Counters");
         text->setGroup(5);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Items");
+        auto *text = new LabelWidget("Items");
         text->setGroup(5);
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT);
+        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT);
         list->setGroup(5);
         list->setShortcut('i');
-
         list->items()
                 << new ListWidgetItem("Hidden",        0)
                 << new ListWidgetItem("Count",         CCH_ITEMS)
                 << new ListWidgetItem("Percent",       CCH_ITEMS_PRCNT)
                 << new ListWidgetItem("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT);
-
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Kills");
+        auto *text = new LabelWidget("Kills");
         text->setGroup(5);
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT);
+        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT);
         list->setGroup(5);
         list->setShortcut('k');
-
         list->items()
                 << new ListWidgetItem("Hidden",        0)
                 << new ListWidgetItem("Count",         CCH_KILLS)
                 << new ListWidgetItem("Percent",       CCH_KILLS_PRCNT)
                 << new ListWidgetItem("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT);
-
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Secrets");
+        auto *text = new LabelWidget("Secrets");
         text->setGroup(5);
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT);
+        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT);
         list->setGroup(5);
         list->setShortcut('s');
-
         list->items()
                 << new ListWidgetItem("Hidden",        0)
                 << new ListWidgetItem("Count",         CCH_SECRETS)
                 << new ListWidgetItem("Percent",       CCH_SECRETS_PRCNT)
                 << new ListWidgetItem("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT);
-
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Automap Only");
+        auto *text = new LabelWidget("Automap Only");
         text->setGroup(5);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-cheat-counter-show-mapopen");
+        auto *btn = new CVarToggleWidget("hud-cheat-counter-show-mapopen");
         btn->setGroup(5);
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Size");
+        auto *text = new LabelWidget("Size");
         text->setGroup(5);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(5);
         sld->min       = 0;
         sld->max       = 1;
@@ -2039,20 +1951,18 @@ void Hu_MenuInitHUDOptionsPage()
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
     {
-        LabelWidget *text = new LabelWidget("Fullscreen");
+        auto *text = new LabelWidget("Fullscreen");
         text->setGroup(6);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Size");
+        auto *text = new LabelWidget("Size");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setGroup(6);
         sld->min       = 0;
         sld->max       = 1;
@@ -2064,15 +1974,13 @@ void Hu_MenuInitHUDOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Text Color");
+        auto *text = new LabelWidget("Text Color");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget(Vector4f(), true);
+        auto *cbox = new ColorPreviewWidget(Vector4f(), true);
         cbox->setGroup(6);
         cbox->data1 = (void *)"hud-color-r";
         cbox->data2 = (void *)"hud-color-g";
@@ -2087,88 +1995,77 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget("Show Mana");
+        auto *text = new LabelWidget("Show Mana");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-mana");
+        auto *btn = new CVarToggleWidget("hud-mana");
         btn->setGroup(6);
         page->_widgets << btn;
     }
-
 #endif // __JHEXEN__
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget("Show Ammo");
+        auto *text = new LabelWidget("Show Ammo");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-ammo");
+        auto *btn = new CVarToggleWidget("hud-ammo");
         btn->setGroup(6)
             .setShortcut('a');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Show Armor");
+        auto *text = new LabelWidget("Show Armor");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-armor");
+        auto *btn = new CVarToggleWidget("hud-armor");
         btn->setGroup(6)
             .setShortcut('r');
         page->_widgets << btn;
     }
-
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
 #if __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Show PowerKeys");
+        auto *text = new LabelWidget("Show PowerKeys");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-power");
+        auto *btn = new CVarToggleWidget("hud-power");
         btn->setGroup(6)
             .setShortcut('p');
         page->_widgets << btn;
     }
-
 #endif // __JDOOM64__
 
 #if __JDOOM__
     {
-        LabelWidget *text = new LabelWidget("Show Status");
+        auto *text = new LabelWidget("Show Status");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-face");
+        auto *btn = new CVarToggleWidget("hud-face");
         btn->setGroup(6)
             .setShortcut('f');
         page->_widgets << btn;
     }
-
 #endif // __JDOOM__
 
     {
-        LabelWidget *text = new LabelWidget("Show Health");
+        auto *text = new LabelWidget("Show Health");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-health");
+        auto *btn = new CVarToggleWidget("hud-health");
         btn->setGroup(6)
             .setShortcut('h');
         page->_widgets << btn;
@@ -2176,32 +2073,28 @@ void Hu_MenuInitHUDOptionsPage()
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {
-        LabelWidget *text = new LabelWidget("Show Keys");
+        auto *text = new LabelWidget("Show Keys");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-keys");
+        auto *btn = new CVarToggleWidget("hud-keys");
         btn->setGroup(6);
         page->_widgets << btn;
     }
-
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
 #if __JHERETIC__ || __JHEXEN__
     {
-        LabelWidget *text = new LabelWidget("Show Ready-Item");
+        auto *text = new LabelWidget("Show Ready-Item");
         text->setGroup(6);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-currentitem");
+        auto *btn = new CVarToggleWidget("hud-currentitem");
         btn->setGroup(6);
         page->_widgets << btn;
     }
-
 #endif // __JHERETIC__ || __JHEXEN__
 }
 
@@ -2221,7 +2114,7 @@ void Hu_MenuInitAutomapOptionsPage()
     page->_widgets << new LabelWidget("Background Opacity");
 
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setShortcut('o');
         sld->min       = 0;
         sld->max       = 1;
@@ -2235,9 +2128,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Line Opacity");
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setShortcut('l');
         sld->min       = 0;
         sld->max       = 1;
@@ -2251,9 +2143,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Line Width");
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->min       = .1f;
         sld->max       = 2;
         sld->_value    = 0;
@@ -2269,30 +2160,26 @@ void Hu_MenuInitAutomapOptionsPage()
 
 #if !__JDOOM64__
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("map-huddisplay");
+        auto *list = new CVarInlineListWidget("map-huddisplay");
         list->setShortcut('h');
-
         list->items()
                 << new ListWidgetItem("None",      0)
                 << new ListWidgetItem("Current",   1)
                 << new ListWidgetItem("Statusbar", 2);
-
         page->_widgets << list;
     }
 #endif
 
     page->_widgets << new LabelWidget("Door Colors");
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("map-door-colors");
+        auto *btn = new CVarToggleWidget("map-door-colors");
         btn->setShortcut('d');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Door Glow");
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setShortcut('g');
         sld->min       = 0;
         sld->max       = 200;
@@ -2306,9 +2193,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Use Custom Colors");
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("map-customcolors");
+        auto *list = new CVarInlineListWidget("map-customcolors");
         list->items()
                 << new ListWidgetItem("Never",  0)
                 << new ListWidgetItem("Auto",   1)
@@ -2317,9 +2203,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Wall");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setShortcut('w');
         cbox->data1 = (void *)"map-wall-r";
         cbox->data2 = (void *)"map-wall-g";
@@ -2331,9 +2216,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Floor Height Change");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setShortcut('f');
         cbox->data1 = (void *)"map-wall-floorchange-r";
         cbox->data2 = (void *)"map-wall-floorchange-g";
@@ -2345,9 +2229,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Ceiling Height Change");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->data1 = (void *)"map-wall-ceilingchange-r";
         cbox->data2 = (void *)"map-wall-ceilingchange-g";
         cbox->data3 = (void *)"map-wall-ceilingchange-b";
@@ -2358,9 +2241,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Unseen");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setShortcut('u');
         cbox->data1 = (void *)"map-wall-unseen-r";
         cbox->data2 = (void *)"map-wall-unseen-g";
@@ -2372,9 +2254,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Thing");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setShortcut('t');
         cbox->data1 = (void *)"map-mobj-r";
         cbox->data2 = (void *)"map-mobj-g";
@@ -2386,9 +2267,8 @@ void Hu_MenuInitAutomapOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Background");
-
     {
-        ColorPreviewWidget *cbox = new ColorPreviewWidget;
+        auto *cbox = new ColorPreviewWidget;
         cbox->setShortcut('b');
         cbox->data1 = (void *)"map-background-r";
         cbox->data2 = (void *)"map-background-g";
@@ -2470,13 +2350,12 @@ void Hu_MenuInitWeaponsPage()
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     {
-        LabelWidget *text = new LabelWidget("Priority Order");
+        auto *text = new LabelWidget("Priority Order");
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        ListWidget *list = new ListWidget;
+        auto *list = new ListWidget;
         list->setHelpInfo("Use left/right to move weapon up/down");
         list->setShortcut('p');
         list->_pageColorIdx  = MENU_COLOR3;
@@ -2497,55 +2376,47 @@ void Hu_MenuInitWeaponsPage()
 
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Cycling");
+        auto *text = new LabelWidget("Cycling");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Use Priority Order");
+        auto *text = new LabelWidget("Use Priority Order");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("player-weapon-nextmode");
+        auto *btn = new CVarToggleWidget("player-weapon-nextmode");
         btn->setGroup(1);
         btn->setShortcut('o');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Sequential");
+        auto *text = new LabelWidget("Sequential");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("player-weapon-cycle-sequential");
+        auto *btn = new CVarToggleWidget("player-weapon-cycle-sequential");
         btn->setGroup(1);
         btn->setShortcut('s');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Autoswitch");
+        auto *text = new LabelWidget("Autoswitch");
         text->setGroup(2);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Weapon");
+        auto *text = new LabelWidget("Pickup Weapon");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("player-autoswitch");
+        auto *list = new CVarInlineListWidget("player-autoswitch");
         list->setGroup(2);
         list->setShortcut('w');
         list->items()
@@ -2554,28 +2425,24 @@ void Hu_MenuInitWeaponsPage()
                 << new ListWidgetItem("Always",    2);
         page->_widgets << list;
     }
-
     {
-        LabelWidget *text = new LabelWidget("   If Not Firing");
+        auto *text = new LabelWidget("   If Not Firing");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("player-autoswitch-notfiring");
+        auto *btn = new CVarToggleWidget("player-autoswitch-notfiring");
         btn->setGroup(2)
             .setShortcut('f');
         page->_widgets << btn;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Pickup Ammo");
+        auto *text = new LabelWidget("Pickup Ammo");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        CVarInlineListWidget *list = new CVarInlineListWidget("player-autoswitch-ammo");
+        auto *list = new CVarInlineListWidget("player-autoswitch-ammo");
         list->setGroup(2);
         list->setShortcut('a');
         list->items()
@@ -2587,13 +2454,12 @@ void Hu_MenuInitWeaponsPage()
 
 #if __JDOOM__ || __JDOOM64__
     {
-        LabelWidget *text = new LabelWidget("Pickup Beserk");
+        auto *text = new LabelWidget("Pickup Beserk");
         text->setGroup(2);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("player-autoswitch-berserk");
+        auto *btn = new CVarToggleWidget("player-autoswitch-berserk");
         btn->setGroup(2)
             .setShortcut('b');
         page->_widgets << btn;
@@ -2612,41 +2478,36 @@ void Hu_MenuInitInventoryOptionsPage()
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     page->_widgets << new LabelWidget("Select Mode");
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-mode");
+        auto *btn = new CVarToggleWidget("ctl-inventory-mode");
         btn->setShortcut('s');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Wrap Around");
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-wrap");
+        auto *btn = new CVarToggleWidget("ctl-inventory-wrap");
         btn->setShortcut('w');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Choose And Use");
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-use-immediate");
+        auto *btn = new CVarToggleWidget("ctl-inventory-use-immediate");
         btn->setShortcut('c');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("Select Next If Use Failed");
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("ctl-inventory-use-next");
+        auto *btn = new CVarToggleWidget("ctl-inventory-use-next");
         btn->setShortcut('n');
         page->_widgets << btn;
     }
 
     page->_widgets << new LabelWidget("AutoHide");
-
     {
-        SliderWidget *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget;
         sld->setShortcut('h');
         sld->_pageColorIdx = MENU_COLOR3;
         sld->min           = 0;
@@ -2664,20 +2525,18 @@ void Hu_MenuInitInventoryOptionsPage()
     }
 
     {
-        LabelWidget *text = new LabelWidget("Fullscreen HUD");
+        auto *text = new LabelWidget("Fullscreen HUD");
         text->setGroup(1);
         text->_pageColorIdx = MENU_COLOR2;
         page->_widgets << text;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Max Visible Slots");
+        auto *text = new LabelWidget("Max Visible Slots");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        SliderWidget *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget;
         sld->setGroup(1);
         sld->setShortcut('v');
         sld->_pageColorIdx  = MENU_COLOR3;
@@ -2692,15 +2551,13 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->_widgets << sld;
     }
-
     {
-        LabelWidget *text = new LabelWidget("Show Empty Slots");
+        auto *text = new LabelWidget("Show Empty Slots");
         text->setGroup(1);
         page->_widgets << text;
     }
-
     {
-        CVarToggleWidget *btn = new CVarToggleWidget("hud-inventory-slot-showempty");
+        auto *btn = new CVarToggleWidget("hud-inventory-slot-showempty");
         btn->setGroup(1)
             .setShortcut('e');
         page->_widgets << btn;
@@ -2724,9 +2581,8 @@ void Hu_MenuInitSoundOptionsPage()
     page->setPreviousPage(Hu_MenuFindPageByName("Options"));
 
     page->_widgets << new LabelWidget("SFX Volume");
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setShortcut('s');
         sld->min       = 0;
         sld->max       = 255;
@@ -2740,9 +2596,8 @@ void Hu_MenuInitSoundOptionsPage()
     }
 
     page->_widgets << new LabelWidget("Music Volume");
-
     {
-        SliderWidget *sld = new SliderWidget;
+        auto *sld = new SliderWidget;
         sld->setShortcut('m');
         sld->min       = 0;
         sld->max       = 255;
@@ -2785,7 +2640,7 @@ void Hu_MenuInitEpisodePage()
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
 
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
 
         btn->setFixedY(y);
 
@@ -2894,7 +2749,7 @@ void Hu_MenuInitPlayerClassPage()
 
         if(!info->userSelectable) continue;
 
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
 
         if(info->niceName && (PTR2INT(info->niceName) > 0 && PTR2INT(info->niceName) < NUMTEXT))
         {
@@ -2918,7 +2773,7 @@ void Hu_MenuInitPlayerClassPage()
 
     // Random class button.
     {
-        ButtonWidget *btn = new ButtonWidget;
+        auto *btn = new ButtonWidget;
         btn->setText(GET_TXT(TXT_RANDOMPLAYERCLASS));
         if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
         btn->_origin.x      = 0;
@@ -2933,7 +2788,7 @@ void Hu_MenuInitPlayerClassPage()
 
     // Mobj preview background.
     {
-        RectWidget *rect = new RectWidget;
+        auto *rect = new RectWidget;
         rect->_flags         = MNF_NO_FOCUS|MNF_ID1;
         rect->_origin.x      = 108;
         rect->_origin.y      = -58;
@@ -2945,7 +2800,7 @@ void Hu_MenuInitPlayerClassPage()
 
     // Mobj preview.
     {
-        MobjPreviewWidget *mprev = new MobjPreviewWidget;
+        auto *mprev = new MobjPreviewWidget;
         mprev->_flags         = MNF_ID0;
         mprev->_origin.x      = 108 + 55;
         mprev->_origin.y      = -58 + 76;
@@ -3597,8 +3452,15 @@ void Hu_MenuCommand(menucommand_e cmd)
     // Try the current focus object.
     if(Widget *wi = page->focusWidget())
     {
-        if(wi->cmdResponder(wi, cmd))
+        if(wi->cmdResponder)
+        {
+            if(wi->cmdResponder(wi, cmd))
+                return;
+        }
+        else if(wi->handleCommand(cmd))
+        {
             return;
+        }
     }
 
     // Try the page's cmd responder.
