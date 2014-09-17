@@ -26,21 +26,31 @@
 namespace common {
 namespace menu {
 
+/**
+ * UI widget for manipulating a value with a textual slider.
+ *
+ * @ingroup menu
+ */
 struct TextualSliderWidget : public SliderWidget
 {
 public:
-    void *data1 = nullptr;
-    void *data2 = nullptr;
-    void *data3 = nullptr;
-    void *data4 = nullptr;
-    void *data5 = nullptr;
-
-public:
-    TextualSliderWidget();
-    virtual ~TextualSliderWidget() {}
+    TextualSliderWidget(float min = 0.0f, float max = 1.0f, float step = 0.1f, bool floatMode = true);
+    virtual ~TextualSliderWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
+
+    void setEmptyText(char const *newEmptyText);
+    char const *emptyText() const;
+
+    void setOnethSuffix(char const *newOnethSuffix);
+    char const *onethSuffix() const;
+
+    void setNthSuffix(char const *newNthSuffix);
+    char const *nthSuffix() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace menu

@@ -40,7 +40,7 @@ private:
     char const *_cvarPath;
 };
 
-void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
 
 /// @todo Refactor away.
 struct cvarbutton_t

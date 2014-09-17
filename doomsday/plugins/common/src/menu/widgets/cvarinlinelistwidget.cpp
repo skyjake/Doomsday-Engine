@@ -34,7 +34,7 @@ CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMa
     , _cvarValueMask(cvarValueMask)
 {
     Widget::_pageColorIdx  = MENU_COLOR3;
-    Widget::actions[Widget::MNA_MODIFIED].callback = CvarInlineListWidget_UpdateCvar;
+    Widget::actions[Widget::MNA_MODIFIED].callback = CVarInlineListWidget_UpdateCVar;
     Widget::actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
@@ -51,7 +51,7 @@ int CVarInlineListWidget::cvarValueMask() const
     return _cvarValueMask;
 }
 
-void CvarInlineListWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CVarInlineListWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarInlineListWidget const *list = &wi->as<CVarInlineListWidget>();
 

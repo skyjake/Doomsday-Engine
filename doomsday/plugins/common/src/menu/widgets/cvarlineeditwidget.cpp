@@ -32,7 +32,7 @@ CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
     : LineEditWidget()
     , _cvarPath(cvarPath)
 {
-    Widget::actions[MNA_MODIFIED].callback = CvarLineEditWidget_UpdateCvar;
+    Widget::actions[MNA_MODIFIED].callback = CVarLineEditWidget_UpdateCVar;
     Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
@@ -44,7 +44,7 @@ char const *CVarLineEditWidget::cvarPath() const
     return _cvarPath;
 }
 
-void CvarLineEditWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CVarLineEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     CVarLineEditWidget const &edit = wi->as<CVarLineEditWidget>();

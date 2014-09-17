@@ -1474,15 +1474,11 @@ void Hu_MenuInitHUDOptionsPage()
 
     page->widgets() << new LabelWidget("AutoHide");
     {
-        auto *sld = new TextualSliderWidget;
-        sld->_pageColorIdx  = MENU_COLOR3;
-        sld->setRange(0, 60, 1);
-        sld->data1          = (void *)"hud-timer";
-        sld->data2          = (void *)"Disabled";
-        sld->data4          = (void *)" second";
-        sld->data5          = (void *)" seconds";
-        sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
-        sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        auto *sld = new TextualSliderWidget(0, 60, 1);
+        sld->setEmptyText("Disabled");
+        sld->setOnethSuffix(" second");
+        sld->setNthSuffix(" seconds");
+        sld->data1 = (void *)"hud-timer";
         page->widgets() << sld;
     }
 
@@ -1603,16 +1599,12 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget(0, 60, 1);
+        sld->setEmptyText("Disabled");
+        sld->setOnethSuffix(" second");
+        sld->setNthSuffix(" seconds");
         sld->setGroup(2);
-        sld->_pageColorIdx  = MENU_COLOR3;
-        sld->setRange(0, 60, 1);
-        sld->data1          = (void *)"msg-uptime";
-        sld->data2          = (void *)"Disabled";
-        sld->data4          = (void *)" second";
-        sld->data5          = (void *)" seconds";
-        sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
-        sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        sld->data1 = (void *)"msg-uptime";
         page->widgets() << sld;
     }
     {
@@ -2345,16 +2337,12 @@ void Hu_MenuInitInventoryOptionsPage()
 
     page->widgets() << new LabelWidget("AutoHide");
     {
-        auto *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget(0, 30, 1.f);
+        sld->setEmptyText("Disabled");
+        sld->setOnethSuffix(" second");
+        sld->setNthSuffix(" seconds");
         sld->setShortcut('h');
-        sld->_pageColorIdx = MENU_COLOR3;
-        sld->setRange(0, 30, 1.f);
         sld->data1 = (void *)"hud-inventory-timer";
-        sld->data2 = (void *)"Disabled";
-        sld->data4 = (void *)" second";
-        sld->data5 = (void *)" seconds";
-        sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
-        sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
     }
 
@@ -2370,16 +2358,11 @@ void Hu_MenuInitInventoryOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new TextualSliderWidget;
+        auto *sld = new TextualSliderWidget(0, 16, 1, false);
         sld->setGroup(1);
         sld->setShortcut('v');
-        sld->_pageColorIdx  = MENU_COLOR3;
-        sld->setRange(0, 16, 1);
-        sld->setFloatMode(false);
+        sld->setEmptyText("Automatic");
         sld->data1 = (void *)"hud-inventory-slot-max";
-        sld->data2 = (void *)"Automatic";
-        sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
-        sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
     }
     {

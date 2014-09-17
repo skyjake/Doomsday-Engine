@@ -24,115 +24,137 @@
 #include "hu_menu.h" // Hu_MenuMergeEffectWithDrawTextFlags
 #include "menu/page.h" // mnRendState
 
+/// @todo remove me
+#include "menu/widgets/cvarsliderwidget.h" // CVarSliderWidget_UpdateCVar
+
 using namespace de;
 
 namespace common {
 namespace menu {
 
-static inline dd_bool valueIsOne(float value, dd_bool floatMode)
+DENG2_PIMPL(TextualSliderWidget)
 {
-    if(floatMode)
+    void *data1 = nullptr;
+    //char const *templateString = nullptr;
+    char const *onethSuffix = nullptr;
+    char const *nthSuffix   = nullptr;
+    char const *emptyText   = nullptr;
+
+    Instance(Public *i) : Base(i) {}
+
+    inline bool valueIsOne(float value)
     {
-        return INRANGE_OF(1, value, .0001f);
+        if(self.floatMode())
+        {
+            return INRANGE_OF(1, value, .0001f);
+        }
+        return (value > 0 && 1 == int(value + .5f));
     }
-    return (value > 0 && 1 == (int)(value + .5f));
-}
 
-static char *composeTextualValue(float value, dd_bool floatMode, int precision,
-    size_t bufSize, char* buf)
-{
-    DENG2_ASSERT(0 != bufSize && buf);
-    precision = de::max(0, precision);
-    if(floatMode && !valueIsOne(value, floatMode))
+    char *composeTextualValue(float value, int precision, size_t bufSize, char *buf)
     {
-        dd_snprintf(buf, bufSize, "%.*f", precision, value);
-    }
-    else
-    {
-        dd_snprintf(buf, bufSize, "%.*i", precision, (int)value);
-    }
-    return buf;
-}
-
-static char *composeValueString(float value, float defaultValue, dd_bool floatMode,
-    int precision, char const *defaultString, char const *templateString,
-    char const *onethSuffix, char const *nthSuffix, size_t bufSize, char *buf)
-{
-    DENG2_ASSERT(0 != bufSize && buf);
-
-    dd_bool const haveTemplateString = (templateString && templateString[0]);
-    dd_bool const haveDefaultString  = (defaultString && defaultString[0]);
-    dd_bool const haveOnethSuffix    = (onethSuffix && onethSuffix[0]);
-    dd_bool const haveNthSuffix      = (nthSuffix && nthSuffix[0]);
-    char const *suffix = 0;
-    char textualValue[11];
-
-    // Is the default-value-string in use?
-    if(haveDefaultString && INRANGE_OF(value, defaultValue, .0001f))
-    {
-        strncpy(buf, defaultString, bufSize);
-        buf[bufSize] = '\0';
+        DENG2_ASSERT(0 != bufSize && buf);
+        precision = de::max(0, precision);
+        if(self.floatMode() && !valueIsOne(value))
+        {
+            dd_snprintf(buf, bufSize, "%.*f", precision, value);
+        }
+        else
+        {
+            dd_snprintf(buf, bufSize, "%.*i", precision, int(value));
+        }
         return buf;
     }
 
-    composeTextualValue(value, floatMode, precision, 10, textualValue);
-
-    // Choose a suffix.
-    if(haveOnethSuffix && valueIsOne(value, floatMode))
+    char *composeValueString(float value, float defaultValue, int precision,
+                             size_t bufSize, char *buf)
     {
-        suffix = onethSuffix;
-    }
-    else if(haveNthSuffix)
-    {
-        suffix = nthSuffix;
-    }
-    else
-    {
-        suffix = "";
-    }
+        DENG2_ASSERT(0 != bufSize && buf);
 
-    // Are we substituting the textual value into a template?
-    if(haveTemplateString)
-    {
-        char const *c, *beginSubstring = 0;
-        ddstring_t compStr;
+        //dd_bool const haveTemplateString = (templateString && templateString[0]);
+        bool const haveOnethSuffix = (onethSuffix && onethSuffix[0]);
+        bool const haveNthSuffix   = (nthSuffix && nthSuffix[0]);
+        bool const haveEmptyText   = (emptyText && emptyText[0]);
+        char const *suffix = 0;
+        char textualValue[11];
 
-        // Reserve a conservative amount of storage, we assume the caller
-        // knows best and take the value given as the output buffer size.
-        Str_Init(&compStr);
-        Str_Reserve(&compStr, bufSize);
-
-        // Composite the final string.
-        beginSubstring = templateString;
-        for(c = beginSubstring; *c; c++)
+        // Is the default-value-string in use?
+        if(haveEmptyText && INRANGE_OF(value, defaultValue, .0001f))
         {
-            if(c[0] == '%' && c[1] == '1')
-            {
-                Str_PartAppend(&compStr, beginSubstring, 0, c - beginSubstring);
-                Str_Appendf(&compStr, "%s%s", textualValue, suffix);
-                // Next substring will begin from here.
-                beginSubstring = c + 2;
-                c += 1;
-            }
+            strncpy(buf, emptyText, bufSize);
+            buf[bufSize] = '\0';
+            return buf;
         }
-        // Anything remaining?
-        if(beginSubstring != c)
-            Str_Append(&compStr, beginSubstring);
 
-        strncpy(buf, Str_Text(&compStr), bufSize);
-        buf[bufSize] = '\0';
-        Str_Free(&compStr);
-    }
-    else
-    {
-        dd_snprintf(buf, bufSize, "%s%s", textualValue, suffix);
-    }
+        composeTextualValue(value, precision, 10, textualValue);
 
-    return buf;
+        // Choose a suffix.
+        if(haveOnethSuffix && valueIsOne(value))
+        {
+            suffix = onethSuffix;
+        }
+        else if(haveNthSuffix)
+        {
+            suffix = nthSuffix;
+        }
+        else
+        {
+            suffix = "";
+        }
+
+#if 0
+        // Are we substituting the textual value into a template?
+        if(haveTemplateString)
+        {
+            char const *c, *beginSubstring = 0;
+            ddstring_t compStr;
+
+            // Reserve a conservative amount of storage, we assume the caller
+            // knows best and take the value given as the output buffer size.
+            Str_Init(&compStr);
+            Str_Reserve(&compStr, bufSize);
+
+            // Composite the final string.
+            beginSubstring = templateString;
+            for(c = beginSubstring; *c; c++)
+            {
+                if(c[0] == '%' && c[1] == '1')
+                {
+                    Str_PartAppend(&compStr, beginSubstring, 0, c - beginSubstring);
+                    Str_Appendf(&compStr, "%s%s", textualValue, suffix);
+                    // Next substring will begin from here.
+                    beginSubstring = c + 2;
+                    c += 1;
+                }
+            }
+            // Anything remaining?
+            if(beginSubstring != c)
+                Str_Append(&compStr, beginSubstring);
+
+            strncpy(buf, Str_Text(&compStr), bufSize);
+            buf[bufSize] = '\0';
+            Str_Free(&compStr);
+        }
+        else
+#endif
+        {
+            dd_snprintf(buf, bufSize, "%s%s", textualValue, suffix);
+        }
+
+        return buf;
+    }
+};
+
+TextualSliderWidget::TextualSliderWidget(float min, float max, float step, bool floatMode)
+    : SliderWidget(min, max, step, floatMode)
+    , d(new Instance(this))
+{
+    Widget::_pageColorIdx = MENU_COLOR3;
+    Widget::actions[Widget::MNA_MODIFIED].callback = CVarSliderWidget_UpdateCVar;
+    Widget::actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
-TextualSliderWidget::TextualSliderWidget()
-    : SliderWidget()
+TextualSliderWidget::~TextualSliderWidget()
 {}
 
 void TextualSliderWidget::draw(Point2Raw const *origin)
@@ -141,8 +163,7 @@ void TextualSliderWidget::draw(Point2Raw const *origin)
 
     float const val = de::clamp(min(), value(), max());
     char textualValue[41];
-    char const *str = composeValueString(val, 0, floatMode(), 0,
-        (char const *)data2, (char const *)data3, (char const *)data4, (char const *)data5, 40, textualValue);
+    char const *str = d->composeValueString(val, 0, 0, 40, textualValue);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin->x, origin->y, 0);
@@ -166,14 +187,43 @@ void TextualSliderWidget::updateGeometry(Page *page)
     fontid_t const font = page->predefinedFont(mn_page_fontid_t(_pageFontIdx));
     float const val = de::clamp(min(), value(), max());
     char textualValue[41];
-    char const *str = composeValueString(val, 0, floatMode(), 0,
-        (char const *)data2, (char const *)data3, (char const *)data4, (char const *)data5, 40, textualValue);
+    char const *str = d->composeValueString(val, 0, 0, 40, textualValue);
 
     FR_SetFont(font);
 
     Size2Raw size; FR_TextSize(&size, str);
 
     Rect_SetWidthHeight(_geometry, size.width, size.height);
+}
+
+void TextualSliderWidget::setEmptyText(char const *newEmptyText)
+{
+    d->emptyText = newEmptyText;
+}
+
+char const *TextualSliderWidget::emptyText() const
+{
+    return d->emptyText;
+}
+
+void TextualSliderWidget::setOnethSuffix(char const *newOnethSuffix)
+{
+    d->onethSuffix = newOnethSuffix;
+}
+
+char const *TextualSliderWidget::onethSuffix() const
+{
+    return d->onethSuffix;
+}
+
+void TextualSliderWidget::setNthSuffix(char const *newNthSuffix)
+{
+    d->nthSuffix = newNthSuffix;
+}
+
+char const *TextualSliderWidget::nthSuffix() const
+{
+    return d->nthSuffix;
 }
 
 } // namespace menu

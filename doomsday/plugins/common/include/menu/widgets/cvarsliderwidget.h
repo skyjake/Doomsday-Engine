@@ -44,7 +44,7 @@ private:
     char const *_cvarPath;
 };
 
-void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CVarSliderWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common

@@ -34,7 +34,7 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR3;
-    Widget::actions[MNA_MODIFIED].callback = CvarToggleWidget_UpdateCvar;
+    Widget::actions[MNA_MODIFIED].callback = CVarToggleWidget_UpdateCVar;
     Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
@@ -95,7 +95,7 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void CvarToggleWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
     cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;

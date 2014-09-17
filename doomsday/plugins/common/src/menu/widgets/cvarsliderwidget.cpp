@@ -32,7 +32,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath, float min, float max, f
     : SliderWidget(min, max, step, floatMode)
     , _cvarPath(cvarPath)
 {
-    Widget::actions[MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
+    Widget::actions[MNA_MODIFIED].callback = CVarSliderWidget_UpdateCVar;
     Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
 }
 
@@ -44,7 +44,7 @@ char const *CVarSliderWidget::cvarPath() const
     return _cvarPath;
 }
 
-void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CVarSliderWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     if(Widget::MNA_MODIFIED != action) return;
 
