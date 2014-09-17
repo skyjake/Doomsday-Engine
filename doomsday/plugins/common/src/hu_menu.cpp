@@ -758,7 +758,7 @@ void Hu_MenuInitSkillPage()
 #if __JDOOM__
     if(gameMode != doom2_hacx && gameMode != doom_chex)
     {
-        page->findWidget(0, MNF_ID4).as<ButtonWidget>().setNoAltText();
+        page->findWidget(MNF_ID4).as<ButtonWidget>().setNoAltText();
     }
 #endif
 }
@@ -2661,10 +2661,10 @@ void Hu_MenuInit()
     {
         Page &mainPage = Hu_MenuPage("Main");
 
-        Widget &wiReadThis = mainPage.findWidget(0, MNF_ID0);
+        Widget &wiReadThis = mainPage.findWidget(MNF_ID0);
         wiReadThis.setFlags(FO_SET, MNF_DISABLED | MNF_HIDDEN | MNF_NO_FOCUS);
 
-        Widget &wiQuitGame = mainPage.findWidget(0, MNF_ID1);
+        Widget &wiQuitGame = mainPage.findWidget(MNF_ID1);
         wiQuitGame.setFixedY(wiQuitGame.fixedY() - FIXED_LINE_HEIGHT);
     }
 #endif
@@ -3052,7 +3052,7 @@ int Hu_MenuColorWidgetCmdResponder(Page *page, menucommand_e cmd)
         cbox.setFlags(FO_CLEAR, MNF_ACTIVE);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        cbox.setColor(page->findWidget(0, MNF_ID0).as<ColorPreviewWidget>().color(), 0);
+        cbox.setColor(page->findWidget(MNF_ID0).as<ColorPreviewWidget>().color(), 0);
 
         /// @kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
@@ -3232,10 +3232,10 @@ void Hu_MenuSelectLoadSlot(Widget *wi, Widget::mn_actionid_t action)
 
     // Linked focus between LoadGame and SaveGame pages.
     Page &saveGamePage = Hu_MenuPage("SaveGame");
-    saveGamePage.setFocus(saveGamePage.tryFindWidget(0, wi->data2));
+    saveGamePage.setFocus(saveGamePage.tryFindWidget(wi->data2));
 
     Page &loadGamePage = Hu_MenuPage("LoadGame");
-    loadGamePage.setFocus(loadGamePage.tryFindWidget(0, wi->data2));
+    loadGamePage.setFocus(loadGamePage.tryFindWidget(wi->data2));
 
     G_SetGameActionLoadSession((char *)edit->data1);
     Hu_MenuCommand(chooseCloseMethod());
@@ -3429,10 +3429,10 @@ void Hu_MenuSelectSaveSlot(Widget *wi, Widget::mn_actionid_t action)
     }
 
     Page &saveGamePage = Hu_MenuPage("SaveGame");
-    saveGamePage.setFocus(saveGamePage.tryFindWidget(0, wi->data2));
+    saveGamePage.setFocus(saveGamePage.tryFindWidget(wi->data2));
 
     Page &loadGamePage = Hu_MenuPage("LoadGame");
-    loadGamePage.setFocus(loadGamePage.tryFindWidget(0, wi->data2));
+    loadGamePage.setFocus(loadGamePage.tryFindWidget(wi->data2));
 
     Hu_MenuCommand(chooseCloseMethod());
 }
@@ -3455,12 +3455,12 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
     ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
 
     Page &colorWidgetPage       = Hu_MenuPage("ColorWidget");
-    ColorPreviewWidget &cboxMix = colorWidgetPage.findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
-    SliderWidget &sldrRed       = colorWidgetPage.findWidget(0, MNF_ID1).as<SliderWidget>();
-    SliderWidget &sldrGreen     = colorWidgetPage.findWidget(0, MNF_ID2).as<SliderWidget>();
-    SliderWidget &sldrBlue      = colorWidgetPage.findWidget(0, MNF_ID3).as<SliderWidget>();
-    SliderWidget &textAlpha     = colorWidgetPage.findWidget(0, MNF_ID4).as<SliderWidget>();
-    SliderWidget &sldrAlpha     = colorWidgetPage.findWidget(0, MNF_ID5).as<SliderWidget>();
+    ColorPreviewWidget &cboxMix = colorWidgetPage.findWidget(MNF_ID0).as<ColorPreviewWidget>();
+    SliderWidget &sldrRed       = colorWidgetPage.findWidget(MNF_ID1).as<SliderWidget>();
+    SliderWidget &sldrGreen     = colorWidgetPage.findWidget(MNF_ID2).as<SliderWidget>();
+    SliderWidget &sldrBlue      = colorWidgetPage.findWidget(MNF_ID3).as<SliderWidget>();
+    LabelWidget  &labelAlpha    = colorWidgetPage.findWidget(MNF_ID4).as<LabelWidget>();
+    SliderWidget &sldrAlpha     = colorWidgetPage.findWidget(MNF_ID5).as<SliderWidget>();
 
     colorWidgetActive = true;
 
@@ -3474,8 +3474,8 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
     sldrBlue .setValue(cbox.blue());
     sldrAlpha.setValue(cbox.alpha());
 
-    textAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
-    sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
+    labelAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED | MNF_HIDDEN);
+    sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED | MNF_HIDDEN);
 }
 
 void Hu_MenuDrawLoadGamePage(Page * /*page*/, Point2Raw const *origin)
@@ -3493,7 +3493,7 @@ void Hu_MenuDrawLoadGamePage(Page * /*page*/, Point2Raw const *origin)
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
-    Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
+    Point2Raw helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin.x, helpOrigin.y);
 }
 
@@ -3513,7 +3513,7 @@ void Hu_MenuDrawSaveGamePage(Page * /*page*/, Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
-    Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
+    Point2Raw helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
     Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin.x, helpOrigin.y);
 }
 
@@ -3565,7 +3565,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     float value = sldr.value();
-    ColorPreviewWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(0, MNF_ID0).as<ColorPreviewWidget>();
+    ColorPreviewWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(MNF_ID0).as<ColorPreviewWidget>();
 
     switch(wi->data2)
     {
@@ -3638,7 +3638,7 @@ void Hu_MenuSelectMultiplayer(Widget * /*wi*/, Widget::mn_actionid_t action)
     Page &multiplayerPage = Hu_MenuPage("Multiplayer");
 
     // Set the appropriate label.
-    ButtonWidget *btn = &multiplayerPage.findWidget(0, MNF_ID0).as<ButtonWidget>();
+    ButtonWidget *btn = &multiplayerPage.findWidget(MNF_ID0).as<ButtonWidget>();
     if(IS_NETGAME)
     {
         btn->setText("Disconnect");
@@ -3669,9 +3669,9 @@ void Hu_MenuActivatePlayerSetup(Page *page)
 {
     DENG2_ASSERT(page != 0);
 
-    MobjPreviewWidget &mop = page->findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
-    LineEditWidget &name   = page->findWidget(0, MNF_ID1).as<LineEditWidget>();
-    ListWidget &color      = page->findWidget(0, MNF_ID3).as<ListWidget>();
+    MobjPreviewWidget &mop = page->findWidget(MNF_ID0).as<MobjPreviewWidget>();
+    LineEditWidget &name   = page->findWidget(MNF_ID1).as<LineEditWidget>();
+    ListWidget &color      = page->findWidget(MNF_ID3).as<ListWidget>();
 
 #if __JHEXEN__
     mop.setMobjType(PCLASS_INFO(cfg.netClass)->mobjType);
@@ -3685,7 +3685,7 @@ void Hu_MenuActivatePlayerSetup(Page *page)
 
     color.selectItemByValue(cfg.netColor);
 #if __JHEXEN__
-    ListWidget &class_ = page->findWidget(0, MNF_ID2).as<ListWidget>();
+    ListWidget &class_ = page->findWidget(MNF_ID2).as<ListWidget>();
     class_.selectItemByValue(cfg.netClass);
 #endif
 
@@ -3702,7 +3702,7 @@ void Hu_MenuSelectPlayerSetupPlayerClass(Widget *wi, Widget::mn_actionid_t actio
     int selection = list.selection();
     if(selection >= 0)
     {
-        MobjPreviewWidget &mop = wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
+        MobjPreviewWidget &mop = wi->page().findWidget(MNF_ID0).as<MobjPreviewWidget>();
         mop.setPlayerClass(selection);
         mop.setMobjType(PCLASS_INFO(selection)->mobjType);
     }
@@ -3719,7 +3719,7 @@ void Hu_MenuSelectPlayerColor(Widget *wi, Widget::mn_actionid_t action)
     int selection = list.itemData(list.selection());
     if(selection >= 0)
     {
-        wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>().setTranslationMap(selection);
+        wi->page().findWidget(MNF_ID0).as<MobjPreviewWidget>().setTranslationMap(selection);
     }
 }
 
@@ -3727,11 +3727,11 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     Page &page                  = wi->page();
-    LineEditWidget &plrNameEdit = page.findWidget(0, MNF_ID1).as<LineEditWidget>();
+    LineEditWidget &plrNameEdit = page.findWidget(MNF_ID1).as<LineEditWidget>();
 #if __JHEXEN__
-    ListWidget &plrClassList    = page.findWidget(0, MNF_ID2).as<ListWidget>();
+    ListWidget &plrClassList    = page.findWidget(MNF_ID2).as<ListWidget>();
 #endif
-    ListWidget &plrColorList    = page.findWidget(0, MNF_ID3).as<ListWidget>();
+    ListWidget &plrColorList    = page.findWidget(MNF_ID3).as<ListWidget>();
 
 #if __JHEXEN__
     cfg.netClass = plrClassList.selection();
@@ -3851,23 +3851,23 @@ void Hu_MenuSelectPlayerClass(Widget *wi, Widget::mn_actionid_t action)
     }
 
     ButtonWidget *btn;
-    btn = &skillPage.findWidget(0, MNF_ID0).as<ButtonWidget>();
+    btn = &skillPage.findWidget(MNF_ID0).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    btn = &skillPage.findWidget(0, MNF_ID1).as<ButtonWidget>();
+    btn = &skillPage.findWidget(MNF_ID1).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    btn = &skillPage.findWidget(0, MNF_ID2).as<ButtonWidget>();
+    btn = &skillPage.findWidget(MNF_ID2).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    btn = &skillPage.findWidget(0, MNF_ID3).as<ButtonWidget>();
+    btn = &skillPage.findWidget(MNF_ID3).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
-    btn = &skillPage.findWidget(0, MNF_ID4).as<ButtonWidget>();
+    btn = &skillPage.findWidget(MNF_ID4).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
@@ -3887,7 +3887,7 @@ void Hu_MenuFocusOnPlayerClass(Widget *wi, Widget::mn_actionid_t action)
     if(Widget::MNA_FOCUS != action) return;
 
     playerclass_t plrClass = (playerclass_t)wi->data2;
-    MobjPreviewWidget &mop = wi->page().findWidget(0, MNF_ID0).as<MobjPreviewWidget>();
+    MobjPreviewWidget &mop = wi->page().findWidget(MNF_ID0).as<MobjPreviewWidget>();
     mop.setPlayerClass(plrClass);
     mop.setMobjType((PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));
 

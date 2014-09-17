@@ -96,7 +96,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         if(!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
 
         Page &page = Hu_MenuPage(pageName);
-        Widget *wi = page.tryFindWidget(0, menuWidgetId);
+        Widget *wi = page.tryFindWidget(menuWidgetId);
         if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;

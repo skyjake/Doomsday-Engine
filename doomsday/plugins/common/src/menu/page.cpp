@@ -596,16 +596,16 @@ void Page::clearFocusWidget()
     refocus();
 }
 
-Widget &Page::findWidget(int group, int flags)
+Widget &Page::findWidget(int flags, int group)
 {
-    if(Widget *wi = tryFindWidget(group, flags))
+    if(Widget *wi = tryFindWidget(flags, group))
     {
         return *wi;
     }
     throw Error("Page::findWidget", QString("Failed to locate widget in group #%1 with flags %2").arg(group).arg(flags));
 }
 
-Widget *Page::tryFindWidget(int group, int flags)
+Widget *Page::tryFindWidget(int flags, int group)
 {
     for(Widget *wi : d->widgets)
     {

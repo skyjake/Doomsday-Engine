@@ -102,15 +102,15 @@ public:
     /**
      * Locate a widget on the page in the specified @a group.
      *
-     * @param group  Widget group identifier.
      * @param flags  @ref mnobjectFlags used to locate the widget. All flags specified
      *               must be set.
+     * @param group  Widget group identifier.
      *
      * @return  Found widget.
      */
-    Widget &findWidget(int group, int flags);
+    Widget &findWidget(int flags, int group = 0);
 
-    Widget *tryFindWidget(int group, int flags);
+    Widget *tryFindWidget(int flags, int group = 0);
 
     /**
      * Returns the in-page index of the given @a widget; otherwise @c -1
