@@ -77,6 +77,7 @@ HEADERS += \
     $$common_inc/menu/widgets/colorpreviewwidget.h \
     $$common_inc/menu/widgets/cvarinlinelistwidget.h \
     $$common_inc/menu/widgets/cvarlineeditwidget.h \
+    $$common_inc/menu/widgets/cvarsliderwidget.h \
     $$common_inc/menu/widgets/cvartogglewidget.h \
     $$common_inc/menu/widgets/inlinelistwidget.h \
     $$common_inc/menu/widgets/inputbindingwidget.h \
@@ -156,6 +157,7 @@ SOURCES += \
     $$common_src/menu/widgets/colorpreviewwidget.cpp \
     $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
     $$common_src/menu/widgets/cvarlineeditwidget.cpp \
+    $$common_src/menu/widgets/cvarsliderwidget.cpp \
     $$common_src/menu/widgets/cvartogglewidget.cpp \
     $$common_src/menu/widgets/buttonwidget.cpp \
     $$common_src/menu/widgets/inlinelistwidget.cpp \

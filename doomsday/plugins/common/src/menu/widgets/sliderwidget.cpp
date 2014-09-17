@@ -35,7 +35,6 @@ static patchid_t pSliderRight;
 static patchid_t pSliderMiddle;
 static patchid_t pSliderHandle;
 
-/// @todo Extract CVarSliderWidget from this.
 DENG2_PIMPL_NOREF(SliderWidget)
 {
     float min      = 0.0f;
@@ -43,12 +42,6 @@ DENG2_PIMPL_NOREF(SliderWidget)
     float value    = 0.0f;
     float step     = 0.1f;  ///< Button step.
     bool floatMode = true;  ///< @c false= only integers are allowed.
-
-    void *data1 = nullptr;
-    void *data2 = nullptr;
-    void *data3 = nullptr;
-    void *data4 = nullptr;
-    void *data5 = nullptr;
 };
 
 SliderWidget::SliderWidget(float min, float max, float step, bool floatMode)
@@ -105,6 +98,11 @@ float SliderWidget::min() const
 float SliderWidget::max() const
 {
     return d->max;
+}
+
+float SliderWidget::step() const
+{
+    return d->step;
 }
 
 void SliderWidget::setFloatMode(bool yes)
@@ -243,40 +241,6 @@ void SliderWidget::updateGeometry(Page * /*page*/)
 
     Rect_SetWidthHeight(_geometry, .5f + Rect_Width (_geometry) * MNDATA_SLIDER_SCALE,
                                    .5f + Rect_Height(_geometry) * MNDATA_SLIDER_SCALE);
-}
-
-void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
-{
-    if(Widget::MNA_MODIFIED != action) return;
-
-    SliderWidget &sldr = wi->as<SliderWidget>();
-    cvartype_t varType = Con_GetVariableType((char const *)sldr.data1);
-    if(CVT_NULL == varType) return;
-
-    float value = sldr.value();
-    switch(varType)
-    {
-    case CVT_FLOAT:
-        if(sldr.step >= .01f)
-        {
-            Con_SetFloat2((char const *)sldr.data1, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
-        }
-        else
-        {
-            Con_SetFloat2((char const *)sldr.data1, value, SVF_WRITE_OVERRIDE);
-        }
-        break;
-
-    case CVT_INT:
-        Con_SetInteger2((char const *)sldr.data1, (int) value, SVF_WRITE_OVERRIDE);
-        break;
-
-    case CVT_BYTE:
-        Con_SetInteger2((char const *)sldr.data1, (byte) value, SVF_WRITE_OVERRIDE);
-        break;
-
-    default: break;
-    }
 }
 
 } // namespace menu

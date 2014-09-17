@@ -77,6 +77,7 @@ public:
     void setRange(float newMin, float newMax, float newStep);
     float min() const;
     float max() const;
+    float step() const;
 
     void setFloatMode(bool yes = true);
     bool floatMode() const;
@@ -87,8 +88,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common

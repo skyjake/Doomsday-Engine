@@ -27,6 +27,7 @@
 #include "menu/widgets/buttonwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
+#include "menu/widgets/cvarsliderwidget.h"
 #include "menu/widgets/colorpreviewwidget.h"
 #include "menu/widgets/inlinelistwidget.h"
 #include "menu/widgets/inputbindingwidget.h"
@@ -779,19 +780,14 @@ void Page::updateWidgets()
         {
             edit->setText(Con_GetString(edit->cvarPath()));
         }
-        if(SliderWidget *sldr = wi->maybeAs<SliderWidget>())
+        if(CVarSliderWidget *sldr = wi->maybeAs<CVarSliderWidget>())
         {
-            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
-
-            if(action && action->callback == CvarSliderWidget_UpdateCvar)
-            {
-                float value;
-                if(sldr->floatMode())
-                    value = Con_GetFloat((char const *)sldr->data1);
-                else
-                    value = Con_GetInteger((char const *)sldr->data1);
-                sldr->setValue(MNSLIDER_SVF_NO_ACTION, value);
-            }
+            float value;
+            if(sldr->floatMode())
+                value = Con_GetFloat(sldr->cvarPath());
+            else
+                value = Con_GetInteger(sldr->cvarPath());
+            sldr->setValue(MNSLIDER_SVF_NO_ACTION, value);
         }
         if(ColorPreviewWidget *cbox = wi->maybeAs<ColorPreviewWidget>())
         {

@@ -1,4 +1,4 @@
-/** @file textualsliderwidget.h  UI widget for a textual slider.
+/** @file cvarsliderwidget.h  UI widget for manipulating a cvar with a graphical slider.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,32 +18,35 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_TEXTUALSLIDERWIDGET
-#define LIBCOMMON_UI_TEXTUALSLIDERWIDGET
+#ifndef LIBCOMMON_UI_CVARSLIDERWIDGET
+#define LIBCOMMON_UI_CVARSLIDERWIDGET
 
 #include "sliderwidget.h"
 
 namespace common {
 namespace menu {
 
-struct TextualSliderWidget : public SliderWidget
+/**
+ * UI widget for manipulating a console variable with a graphical slider.
+ *
+ * @ingroup menu
+ */
+struct CVarSliderWidget : public SliderWidget
 {
 public:
-    void *data1 = nullptr;
-    void *data2 = nullptr;
-    void *data3 = nullptr;
-    void *data4 = nullptr;
-    void *data5 = nullptr;
+    explicit CVarSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,
+                              float step = 0.1f, bool floatMode = true);
+    virtual ~CVarSliderWidget();
 
-public:
-    TextualSliderWidget();
-    virtual ~TextualSliderWidget() {}
+    char const *cvarPath() const;
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+private:
+    char const *_cvarPath;
 };
+
+void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_TEXTUALSLIDERWIDGET
+#endif // LIBCOMMON_UI_SLIDERWIDGET
