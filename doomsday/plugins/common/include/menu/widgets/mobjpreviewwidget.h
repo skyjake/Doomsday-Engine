@@ -35,14 +35,8 @@ namespace menu {
 struct MobjPreviewWidget : public Widget
 {
 public:
-    int mobjType;
-    /// Color translation class and map.
-    int tClass, tMap;
-    int plrClass;  ///< Player class identifier.
-
-public:
     MobjPreviewWidget();
-    virtual ~MobjPreviewWidget() {}
+    virtual ~MobjPreviewWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
@@ -51,6 +45,9 @@ public:
     void setPlayerClass(int plrClass);
     void setTranslationClass(int tClass);
     void setTranslationMap(int tMap);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace menu

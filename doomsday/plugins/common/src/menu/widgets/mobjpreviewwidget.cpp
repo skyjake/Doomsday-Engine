@@ -29,16 +29,24 @@ using namespace de;
 namespace common {
 namespace menu {
 
+DENG2_PIMPL_NOREF(MobjPreviewWidget)
+{
+    int mobjType    = 0;
+    int playerClass = 0;
+    int xlatClass   = 0;  ///< Color translation class.
+    int xlatMap     = 0;  ///< Color translation map.
+};
+
 MobjPreviewWidget::MobjPreviewWidget()
     : Widget()
-    , mobjType(0)
-    , tClass  (0)
-    , tMap    (0)
-    , plrClass(0)
+    , d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
 }
+
+MobjPreviewWidget::~MobjPreviewWidget()
+{}
 
 static void findSpriteForMobjType(int mobjType, spritetype_e *sprite, int *frame)
 {
@@ -52,22 +60,22 @@ static void findSpriteForMobjType(int mobjType, spritetype_e *sprite, int *frame
 
 void MobjPreviewWidget::setMobjType(int newMobjType)
 {
-    mobjType = newMobjType;
+    d->mobjType = newMobjType;
 }
 
 void MobjPreviewWidget::setPlayerClass(int newPlayerClass)
 {
-    plrClass = newPlayerClass;
+    d->playerClass = newPlayerClass;
 }
 
 void MobjPreviewWidget::setTranslationClass(int newTranslationClass)
 {
-    tClass = newTranslationClass;
+    d->xlatClass = newTranslationClass;
 }
 
 void MobjPreviewWidget::setTranslationMap(int newTranslationMap)
 {
-    tMap = newTranslationMap;
+    d->xlatMap = newTranslationMap;
 }
 
 /// @todo We can do better - the engine should be able to render this visual for us.
@@ -75,11 +83,11 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
 {
     DENG2_ASSERT(offset != 0);
 
-    if(MT_NONE == mobjType) return;
+    if(MT_NONE == d->mobjType) return;
 
     spritetype_e sprite;
     int spriteFrame;
-    findSpriteForMobjType(mobjType, &sprite, &spriteFrame);
+    findSpriteForMobjType(d->mobjType, &sprite, &spriteFrame);
 
     spriteinfo_t info;
     if(!R_GetSpriteInfo(sprite, spriteFrame, &info)) return;
@@ -93,8 +101,8 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
     float s = info.texCoord[0];
     float t = info.texCoord[1];
 
-    int tClassCycled = tClass;
-    int tMapCycled   = tMap;
+    int tClassCycled = d->xlatClass;
+    int tMapCycled   = d->xlatMap;
     // Are we cycling the translation map?
     if(tMapCycled == NUMPLAYERCOLORS)
     {
@@ -104,11 +112,11 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
     if(gameMode == hexen_v10)
     {
         // Cycle through the four available colomnRendState->
-        if(tMap == NUMPLAYERCOLORS) tMapCycled = menuTime / 5 % 4;
+        if(d->xlatMap == NUMPLAYERCOLORS) tMapCycled = menuTime / 5 % 4;
     }
-    if(plrClass >= PCLASS_FIGHTER)
+    if(d->playerClass >= PCLASS_FIGHTER)
     {
-        R_GetTranslation(plrClass, tMapCycled, &tClassCycled, &tMapCycled);
+        R_GetTranslation(d->playerClass, tMapCycled, &tClassCycled, &tMapCycled);
     }
 #endif
 
