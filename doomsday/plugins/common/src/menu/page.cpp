@@ -345,7 +345,7 @@ static void drawPageNavigation(Page *page, int x, int y)
     FR_SetColorv(cfg.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else

@@ -41,7 +41,7 @@ void InlineListWidget::draw(Point2Raw const *origin)
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(mnRendState->textFonts[_pageFontIdx]);
     FR_SetColorAndAlphav(mnRendState->textColors[_pageColorIdx]);
-    FR_DrawText3(item->text().toUtf8().constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawText3(item->text().toUtf8().constData(), origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

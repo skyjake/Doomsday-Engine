@@ -2988,6 +2988,11 @@ void Hu_MenuDefaultFocusAction(Widget * /*wi*/, Widget::mn_actionid_t action)
     Hu_MenuUpdateCursorState();
 }
 
+short Hu_MenuMergeEffectWithDrawTextFlags(short f)
+{
+    return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
+}
+
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -3041,7 +3046,7 @@ void Hu_MenuDrawPageTitle(String title, int x, int y)
     FR_SetColorv(cfg.menuTextColors[0]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(title.toUtf8().constData(), x, y, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(title.toUtf8().constData(), x, y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3055,7 +3060,7 @@ void Hu_MenuDrawPageHelp(const char* help, int x, int y)
     FR_SetColorv(cfg.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(help, x, y, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(help, x, y, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3427,7 +3432,7 @@ void Hu_MenuDrawMainPage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
     WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pMainTitle),
-                 Vector2i(origin->x + TITLEOFFSET_X, origin->y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + TITLEOFFSET_X, origin->y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #if __JHEXEN__
     GL_DrawPatchXY(pBullWithFire[(frame + 2) % 7], origin->x - 73, origin->y + 24);
     GL_DrawPatchXY(pBullWithFire[frame], origin->x + 168, origin->y + 24);
@@ -3517,7 +3522,7 @@ void Hu_MenuDrawPlayerClassPage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Choose class:", origin->x - 32, origin->y - 42, ALIGN_TOPLEFT,
-                   MN_MergeMenuEffectWithDrawTextFlags(0));
+                   Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -3536,7 +3541,7 @@ void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin)
     FR_SetAlpha(mnRendState->pageAlpha);
 
     WI_DrawPatch(pEpisode, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pEpisode),
-                 Vector2i(origin->x + 7, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 7, origin->y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif !defined(__JHERETIC__)
@@ -3547,7 +3552,7 @@ void Hu_MenuDrawEpisodePage(Page *page, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Choose episode:", origin->x - 32, origin->y - 42, ALIGN_TOPLEFT,
-                   MN_MergeMenuEffectWithDrawTextFlags(0));
+                   Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else
@@ -3564,9 +3569,9 @@ void Hu_MenuDrawSkillPage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pNewGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pNewGame),
-                 Vector2i(origin->x + 48, origin->y - 49), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 48, origin->y - 49), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
     WI_DrawPatch(pSkill, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSkill),
-                 Vector2i(origin->x + 6, origin->y - 25), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 6, origin->y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #elif __JHEXEN__
@@ -3656,10 +3661,10 @@ void Hu_MenuDrawLoadGamePage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawTextXY3("Load Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3("Load Game", SCREENWIDTH/2, origin->y-20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pLoadGame),
-                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -3678,7 +3683,7 @@ void Hu_MenuDrawSaveGamePage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pSaveGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSaveGame),
-                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x - 8, origin->y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -3706,7 +3711,7 @@ void Hu_MenuDrawOptionsPage(Page * /*page*/, Point2Raw const *origin)
     FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     WI_DrawPatch(pOptionsTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pOptionsTitle),
-                 Vector2i(origin->x + 42, origin->y - 20), ALIGN_TOP, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                 Vector2i(origin->x + 42, origin->y - 20), ALIGN_TOP, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif

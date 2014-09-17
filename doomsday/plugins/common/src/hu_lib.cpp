@@ -30,28 +30,13 @@
 #include "hu_lib.h"
 #include "hu_log.h"
 #include "hu_automap.h"
-#include "m_ctrl.h"
 
-#include "hu_menu.h" // For the menu sound ids.
-#include "menu/page.h"
-#include "menu/widgets/buttonwidget.h"
-#include "menu/widgets/colorpreviewwidget.h"
-#include "menu/widgets/cvarinlinelistwidget.h"
-#include "menu/widgets/cvarlineeditwidget.h"
-#include "menu/widgets/cvartogglewidget.h"
-#include "menu/widgets/inlinelistwidget.h"
-#include "menu/widgets/inputbindingwidget.h"
-#include "menu/widgets/labelwidget.h"
+/// @todo remove me
 #include "menu/widgets/lineeditwidget.h"
-#include "menu/widgets/mobjpreviewwidget.h"
-#include "menu/widgets/rectwidget.h"
 #include "menu/widgets/sliderwidget.h"
-#include "menu/widgets/textualsliderwidget.h"
 
 using namespace de;
 using namespace common;
-
-void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
 static dd_bool inited = false;
 
@@ -677,14 +662,3 @@ void UIWidget_SetOpacity(uiwidget_t *ob, float opacity)
         }
     }
 }
-
-namespace common {
-namespace menu {
-
-short MN_MergeMenuEffectWithDrawTextFlags(short f)
-{
-    return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
-}
-
-} // namespace menu
-} // namespace common

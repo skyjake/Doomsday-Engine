@@ -29,6 +29,7 @@
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
+#include "hu_menu.h"
 #include "m_argv.h"
 #include "p_inventory.h"
 #include "p_map.h"
@@ -134,7 +135,7 @@ void D_PreInit()
     cfg.menuTextGlitter = .5f;
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
-    cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
+    cfg.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
     cfg.menuTextFlashColor[2] = 1;

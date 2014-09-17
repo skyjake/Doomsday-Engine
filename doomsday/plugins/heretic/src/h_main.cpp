@@ -29,6 +29,7 @@
 #include "g_defs.h"
 #include "gamesession.h"
 #include "hereticv13mapstatereader.h"
+#include "hu_menu.h"
 #include "m_argv.h"
 #include "p_inventory.h"
 #include "p_map.h"

@@ -147,14 +147,14 @@ void LineEditWidget::draw(Point2Raw const *_origin)
 
         // Draw the text:
         FR_SetColorAndAlphav(color);
-        FR_DrawText3(useText.toUtf8().constData(), &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+        FR_DrawText3(useText.toUtf8().constData(), &origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
         if((Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS) && (menuTime & 8) &&
            (!d->maxLength || d->text.length() < d->maxLength))
         {
             origin.x += FR_TextWidth(useText.toUtf8().constData());
-            FR_DrawChar3('_', &origin, ALIGN_TOPLEFT,  MN_MergeMenuEffectWithDrawTextFlags(0));
+            FR_DrawChar3('_', &origin, ALIGN_TOPLEFT,  Hu_MenuMergeEffectWithDrawTextFlags(0));
         }
     }
 

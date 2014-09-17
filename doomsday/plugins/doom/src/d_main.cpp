@@ -23,13 +23,14 @@
 #include "jdoom.h"
 
 #include <de/App>
+#include "am_map.h"
 #include "d_netsv.h"
+#include "doomv9mapstatereader.h"
+#include "g_defs.h"
 #include "gamesession.h"
+#include "hu_menu.h"
 #include "m_argv.h"
 #include "p_map.h"
-#include "doomv9mapstatereader.h"
-#include "am_map.h"
-#include "g_defs.h"
 #include "saveslots.h"
 
 using namespace de;
@@ -183,7 +184,7 @@ void D_PreInit()
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestDescription = true;
-    cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
+    cfg.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
     cfg.menuTextFlashColor[2] = 1;

@@ -74,29 +74,6 @@ typedef enum mn_page_fontid_e
 
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
-#ifdef __cplusplus
-
-namespace common {
-namespace menu {
-
-/**
- * @defgroup menuEffectFlags  Menu Effect Flags
- */
-///@{
-#define MEF_TEXT_TYPEIN             (DTF_NO_TYPEIN)
-#define MEF_TEXT_SHADOW             (DTF_NO_SHADOW)
-#define MEF_TEXT_GLITTER            (DTF_NO_GLITTER)
-
-#define MEF_EVERYTHING              (MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER)
-///@}
-
-short MN_MergeMenuEffectWithDrawTextFlags(short f);
-
-} // namespace menu
-} // namespace common
-
-#endif // __cplusplus
-
 void lerpColor(float *dst, float const *a, float const *b, float t, dd_bool rgbaMode);
 
 typedef enum {

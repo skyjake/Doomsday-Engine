@@ -21,6 +21,7 @@
 #include "common.h"
 #include "menu/widgets/labelwidget.h"
 
+#include "hu_menu.h" // Hu_MenuMergeEffectWithDrawTextFlags
 #include "hu_lib.h" // lerpColor
 #include "menu/page.h" // mnRendState
 
@@ -78,14 +79,14 @@ void LabelWidget::draw(Point2Raw const *origin)
 
         DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch(*d->patch, replacement, Vector2i(origin->x, origin->y),
-                     ALIGN_TOPLEFT, 0, MN_MergeMenuEffectWithDrawTextFlags(0));
+                     ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(d->text.toUtf8().constData(), origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawText3(d->text.toUtf8().constData(), origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 

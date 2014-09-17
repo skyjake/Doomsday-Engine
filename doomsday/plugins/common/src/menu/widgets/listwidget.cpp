@@ -153,7 +153,7 @@ void ListWidget::draw(Point2Raw const *_origin)
                 FR_SetColorAndAlphav(dimColor);
             }
 
-            FR_DrawText3(item->text().toUtf8().constData(), &origin, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+            FR_DrawText3(item->text().toUtf8().constData(), &origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
             origin.y += FR_TextHeight(item->text().toUtf8().constData()) * (1+MNDATA_LIST_LEADING);
         } while(++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);
 

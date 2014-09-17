@@ -197,6 +197,19 @@ void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 void Hu_MenuDrawPageTitle(de::String title, int x, int y);
 void Hu_MenuDrawPageHelp(char const *help, int x, int y);
 
+/**
+ * @defgroup menuEffectFlags  Menu Effect Flags
+ */
+///@{
+#define MEF_TEXT_TYPEIN             DTF_NO_TYPEIN
+#define MEF_TEXT_SHADOW             DTF_NO_SHADOW
+#define MEF_TEXT_GLITTER            DTF_NO_GLITTER
+
+#define MEF_EVERYTHING              MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER
+///@}
+
+short Hu_MenuMergeEffectWithDrawTextFlags(short f);
+
 } // namespace common
 
 #endif // __cplusplus

@@ -21,6 +21,7 @@
 #include "common.h"
 #include "menu/widgets/textualsliderwidget.h"
 
+#include "hu_menu.h" // Hu_MenuMergeEffectWithDrawTextFlags
 #include "menu/page.h" // mnRendState
 
 using namespace de;
@@ -150,7 +151,7 @@ void TextualSliderWidget::draw(Point2Raw const *origin)
 
     FR_SetFont(mnRendState->textFonts[_pageFontIdx]);
     FR_SetColorAndAlphav(mnRendState->textColors[_pageColorIdx]);
-    FR_DrawTextXY3(str, 0, 0, ALIGN_TOPLEFT, MN_MergeMenuEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(str, 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
