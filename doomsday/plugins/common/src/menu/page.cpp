@@ -28,12 +28,12 @@
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
+#include "menu/widgets/cvartextualsliderwidget.h"
 #include "menu/widgets/colorpreviewwidget.h"
 #include "menu/widgets/inlinelistwidget.h"
 #include "menu/widgets/inputbindingwidget.h"
 #include "menu/widgets/labelwidget.h"
 #include "menu/widgets/mobjpreviewwidget.h"
-#include "menu/widgets/textualsliderwidget.h"
 
 using namespace de;
 
@@ -272,7 +272,7 @@ void Page::applyLayout()
                 nextWi->is<InlineListWidget>()     ||
                 nextWi->is<ColorPreviewWidget>()   ||
                 nextWi->is<InputBindingWidget>()   ||
-                nextWi->is<TextualSliderWidget>()))
+                nextWi->is<CVarTextualSliderWidget>()))
             {
                 int const margin = lineOffset * 2;
 

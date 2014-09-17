@@ -78,6 +78,7 @@ HEADERS += \
     $$common_inc/menu/widgets/cvarinlinelistwidget.h \
     $$common_inc/menu/widgets/cvarlineeditwidget.h \
     $$common_inc/menu/widgets/cvarsliderwidget.h \
+    $$common_inc/menu/widgets/cvartextualsliderwidget.h \
     $$common_inc/menu/widgets/cvartogglewidget.h \
     $$common_inc/menu/widgets/inlinelistwidget.h \
     $$common_inc/menu/widgets/inputbindingwidget.h \
@@ -87,7 +88,6 @@ HEADERS += \
     $$common_inc/menu/widgets/mobjpreviewwidget.h \
     $$common_inc/menu/widgets/rectwidget.h \
     $$common_inc/menu/widgets/sliderwidget.h \
-    $$common_inc/menu/widgets/textualsliderwidget.h \
     $$common_inc/menu/widgets/widget.h
 
 SOURCES += \
@@ -158,6 +158,7 @@ SOURCES += \
     $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
     $$common_src/menu/widgets/cvarlineeditwidget.cpp \
     $$common_src/menu/widgets/cvarsliderwidget.cpp \
+    $$common_src/menu/widgets/cvartextualsliderwidget.cpp \
     $$common_src/menu/widgets/cvartogglewidget.cpp \
     $$common_src/menu/widgets/buttonwidget.cpp \
     $$common_src/menu/widgets/inlinelistwidget.cpp \
@@ -168,5 +169,4 @@ SOURCES += \
     $$common_src/menu/widgets/mobjpreviewwidget.cpp \
     $$common_src/menu/widgets/rectwidget.cpp \
     $$common_src/menu/widgets/sliderwidget.cpp \
-    $$common_src/menu/widgets/textualsliderwidget.cpp \
     $$common_src/menu/widgets/widget.cpp

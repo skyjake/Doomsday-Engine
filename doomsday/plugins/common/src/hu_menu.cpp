@@ -51,13 +51,13 @@
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
+#include "menu/widgets/cvartextualsliderwidget.h"
 #include "menu/widgets/cvartogglewidget.h"
 #include "menu/widgets/inputbindingwidget.h"
 #include "menu/widgets/labelwidget.h"
 #include "menu/widgets/mobjpreviewwidget.h"
 #include "menu/widgets/rectwidget.h"
 #include "menu/widgets/sliderwidget.h"
-#include "menu/widgets/textualsliderwidget.h"
 
 using namespace de;
 
@@ -1474,11 +1474,10 @@ void Hu_MenuInitHUDOptionsPage()
 
     page->widgets() << new LabelWidget("AutoHide");
     {
-        auto *sld = new TextualSliderWidget(0, 60, 1);
+        auto *sld = new CVarTextualSliderWidget("hud-timer", 0, 60, 1);
         sld->setEmptyText("Disabled");
         sld->setOnethSuffix(" second");
         sld->setNthSuffix(" seconds");
-        sld->data1 = (void *)"hud-timer";
         page->widgets() << sld;
     }
 
@@ -1599,12 +1598,11 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new TextualSliderWidget(0, 60, 1);
+        auto *sld = new CVarTextualSliderWidget("msg-uptime", 0, 60, 1);
         sld->setEmptyText("Disabled");
         sld->setOnethSuffix(" second");
         sld->setNthSuffix(" seconds");
         sld->setGroup(2);
-        sld->data1 = (void *)"msg-uptime";
         page->widgets() << sld;
     }
     {
@@ -2337,12 +2335,11 @@ void Hu_MenuInitInventoryOptionsPage()
 
     page->widgets() << new LabelWidget("AutoHide");
     {
-        auto *sld = new TextualSliderWidget(0, 30, 1.f);
+        auto *sld = new CVarTextualSliderWidget("hud-inventory-timer", 0, 30, 1.f);
         sld->setEmptyText("Disabled");
         sld->setOnethSuffix(" second");
         sld->setNthSuffix(" seconds");
         sld->setShortcut('h');
-        sld->data1 = (void *)"hud-inventory-timer";
         page->widgets() << sld;
     }
 
@@ -2358,11 +2355,10 @@ void Hu_MenuInitInventoryOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new TextualSliderWidget(0, 16, 1, false);
+        auto *sld = new CVarTextualSliderWidget("hud-inventory-slot-max", 0, 16, 1, false);
         sld->setGroup(1);
         sld->setShortcut('v');
         sld->setEmptyText("Automatic");
-        sld->data1 = (void *)"hud-inventory-slot-max";
         page->widgets() << sld;
     }
     {

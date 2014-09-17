@@ -1,4 +1,4 @@
-/** @file textualsliderwidget.h  UI widget for a textual slider.
+/** @file cvartextualsliderwidget.h  UI widget for a textual slider.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,36 +18,37 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_TEXTUALSLIDERWIDGET
-#define LIBCOMMON_UI_TEXTUALSLIDERWIDGET
+#ifndef LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
+#define LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
 
-#include "sliderwidget.h"
+#include "cvarsliderwidget.h"
 
 namespace common {
 namespace menu {
 
 /**
- * UI widget for manipulating a value with a textual slider.
+ * UI widget for manipulating a console variable with a textual slider.
  *
  * @ingroup menu
  */
-struct TextualSliderWidget : public SliderWidget
+struct CVarTextualSliderWidget : public CVarSliderWidget
 {
 public:
-    TextualSliderWidget(float min = 0.0f, float max = 1.0f, float step = 0.1f, bool floatMode = true);
-    virtual ~TextualSliderWidget();
+    CVarTextualSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,
+                            float step = 0.1f, bool floatMode = true);
+    virtual ~CVarTextualSliderWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
 
-    void setEmptyText(char const *newEmptyText);
-    char const *emptyText() const;
+    void setEmptyText(de::String const &newEmptyText);
+    de::String emptyText() const;
 
-    void setOnethSuffix(char const *newOnethSuffix);
-    char const *onethSuffix() const;
+    void setOnethSuffix(de::String const &newOnethSuffix);
+    de::String onethSuffix() const;
 
-    void setNthSuffix(char const *newNthSuffix);
-    char const *nthSuffix() const;
+    void setNthSuffix(de::String const &newNthSuffix);
+    de::String nthSuffix() const;
 
 private:
     DENG2_PRIVATE(d)
@@ -56,4 +57,4 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_TEXTUALSLIDERWIDGET
+#endif // LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
