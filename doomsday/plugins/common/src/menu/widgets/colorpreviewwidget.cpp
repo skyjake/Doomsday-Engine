@@ -373,7 +373,7 @@ bool ColorPreviewWidget::setColor(Vector4f const &newColor, int flags)
     return true;
 }
 
-void CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
+void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     ColorPreviewWidget *cbox = &wi->as<ColorPreviewWidget>();
 

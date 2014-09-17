@@ -26,7 +26,10 @@
 namespace common {
 namespace menu {
 
-struct CVarLineEditWidget : public LineEditWidget
+/**
+ * @ingroup menu
+ */
+class CVarLineEditWidget : public LineEditWidget
 {
 public:
     CVarLineEditWidget(char const *cvarPath);

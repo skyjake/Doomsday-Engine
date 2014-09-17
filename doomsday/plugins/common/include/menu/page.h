@@ -50,7 +50,7 @@ extern mn_rendstate_t const *mnRendState;
  *
  * @ingroup menu
  */
-struct Page
+class Page
 {
 public:
     typedef QList<Widget *> Widgets;

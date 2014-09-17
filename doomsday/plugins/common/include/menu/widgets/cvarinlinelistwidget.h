@@ -26,7 +26,10 @@
 namespace common {
 namespace menu {
 
-struct CVarInlineListWidget : public InlineListWidget
+/**
+ * @ingroup menu
+ */
+class CVarInlineListWidget : public InlineListWidget
 {
 public:
     CVarInlineListWidget(char const *cvarPath, int cvarValueMask = 0);

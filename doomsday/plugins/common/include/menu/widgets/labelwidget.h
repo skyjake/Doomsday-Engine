@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_LABELWIDGET
 #define LIBCOMMON_UI_LABELWIDGET
 
+#include <de/String>
 #include "widget.h"
 
 namespace common {
@@ -34,9 +35,11 @@ namespace menu {
 ///@}
 
 /**
- * Text objects.
+ * Text object.
+ *
+ * @ingroup menu
  */
-struct LabelWidget : public Widget
+class LabelWidget : public Widget
 {
 public:
     LabelWidget(de::String const &text = "", patchid_t *patch = 0);

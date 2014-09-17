@@ -22,6 +22,7 @@
 #define LIBCOMMON_UI_LISTWIDGET
 
 #include <QList>
+#include <de/String>
 #include "widget.h"
 
 namespace common {
@@ -39,8 +40,10 @@ namespace menu {
 
 /**
  * UI list selection widget.
+ *
+ * @ingroup menu
  */
-struct ListWidget : public Widget
+class ListWidget : public Widget
 {
 public:
     struct Item

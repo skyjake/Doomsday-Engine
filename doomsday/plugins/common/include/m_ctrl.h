@@ -27,7 +27,7 @@
 namespace common {
 namespace menu {
 
-struct Page;
+class Page;
 
 // Control config flags.
 #define CCF_NON_INVERSE         0x1

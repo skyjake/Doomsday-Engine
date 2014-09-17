@@ -48,20 +48,20 @@ void CVarLineEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     DENG2_ASSERT(wi != 0);
     CVarLineEditWidget const &edit = wi->as<CVarLineEditWidget>();
-    cvartype_t varType = Con_GetVariableType((char const *)edit.cvarPath());
+    cvartype_t varType = Con_GetVariableType(edit.cvarPath());
 
     if(Widget::MNA_MODIFIED != action) return;
 
     switch(varType)
     {
     case CVT_CHARPTR:
-        Con_SetString2((char const *)edit.cvarPath(), edit.text().toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2(edit.cvarPath(), edit.text().toUtf8().constData(), SVF_WRITE_OVERRIDE);
         break;
 
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
         de::Uri uri(edit.text(), RC_NULL);
-        Con_SetUri2((char const *)edit.cvarPath(), reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
+        Con_SetUri2(edit.cvarPath(), reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
         break; }
 
     default: break;

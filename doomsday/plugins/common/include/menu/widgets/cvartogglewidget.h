@@ -26,7 +26,10 @@
 namespace common {
 namespace menu {
 
-struct CVarToggleWidget : public ButtonWidget
+/**
+ * @ingroup menu
+ */
+class CVarToggleWidget : public ButtonWidget
 {
 public:
     CVarToggleWidget(char const *cvarPath);

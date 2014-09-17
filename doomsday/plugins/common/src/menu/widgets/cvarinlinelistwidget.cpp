@@ -59,14 +59,14 @@ void CVarInlineListWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 
     if(list->selection() < 0) return; // Hmm?
 
-    cvartype_t varType = Con_GetVariableType((char const *)list->cvarPath());
+    cvartype_t varType = Con_GetVariableType(list->cvarPath());
     if(CVT_NULL == varType) return;
 
     ListWidget::Item const *item = list->items()[list->selection()];
     int value;
     if(list->cvarValueMask())
     {
-        value = Con_GetInteger((char const *)list->cvarPath());
+        value = Con_GetInteger(list->cvarPath());
         value = (value & ~list->cvarValueMask()) | (item->userValue() & list->cvarValueMask());
     }
     else
@@ -77,13 +77,13 @@ void CVarInlineListWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
     switch(varType)
     {
     case CVT_INT:
-        Con_SetInteger2((char const *)list->cvarPath(), value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2(list->cvarPath(), value, SVF_WRITE_OVERRIDE);
         break;
     case CVT_BYTE:
-        Con_SetInteger2((char const *)list->cvarPath(), (byte) value, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2(list->cvarPath(), (byte) value, SVF_WRITE_OVERRIDE);
         break;
 
-    default: Con_Error("Hu_MenuCvarList: Unsupported variable type %i", (int)varType);
+    default: Con_Error("CVarInlineListWidget_UpdateCVar: Unsupported variable type %i", (int)varType);
     }
 }
 

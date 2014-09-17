@@ -28,8 +28,10 @@ namespace menu {
 
 /**
  * A simple rectangluar widget with a background.
+ *
+ * @ingroup menu
  */
-struct RectWidget : public Widget
+class RectWidget : public Widget
 {
 public:
     explicit RectWidget(patchid_t backgroundPatch = 0);

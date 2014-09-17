@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
 #define LIBCOMMON_UI_CVARTEXTUALSLIDERWIDGET
 
+#include <de/String>
 #include "cvarsliderwidget.h"
 
 namespace common {
@@ -31,7 +32,7 @@ namespace menu {
  *
  * @ingroup menu
  */
-struct CVarTextualSliderWidget : public CVarSliderWidget
+class CVarTextualSliderWidget : public CVarSliderWidget
 {
 public:
     CVarTextualSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,

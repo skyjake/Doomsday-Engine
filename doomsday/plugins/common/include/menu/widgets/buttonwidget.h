@@ -21,12 +21,16 @@
 #ifndef LIBCOMMON_UI_BUTTONWIDGET
 #define LIBCOMMON_UI_BUTTONWIDGET
 
+#include <QVariant>
 #include "widget.h"
 
 namespace common {
 namespace menu {
 
-struct ButtonWidget : public Widget
+/**
+ * @ingroup menu
+ */
+class ButtonWidget : public Widget
 {
 public:
     explicit ButtonWidget(de::String const &text = "", patchid_t patch = 0);

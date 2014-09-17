@@ -793,7 +793,7 @@ void Page::updateWidgets()
         {
             Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
 
-            if(action && action->callback == CvarColorPreviewWidget_UpdateCvar)
+            if(action && action->callback == CVarColorPreviewWidget_UpdateCVar)
             {
                 cbox->setColor(Vector4f(Con_GetFloat((char const *)cbox->data1),
                                         Con_GetFloat((char const *)cbox->data2),

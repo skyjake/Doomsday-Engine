@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_COLORPREVIEWWIDGET
 #define LIBCOMMON_UI_COLORPREVIEWWIDGET
 
+#include <de/Vector>
 #include "widget.h"
 
 namespace common {
@@ -38,8 +39,10 @@ namespace menu {
 
 /**
  * UI widget for previewing a color.
+ *
+ * @ingroup menu
  */
-struct ColorPreviewWidget : public Widget
+class ColorPreviewWidget : public Widget
 {
 public:
     void *data1;
@@ -54,7 +57,6 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
-
     int handleCommand(menucommand_e command);
 
     /**
@@ -103,7 +105,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-void CvarColorPreviewWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
+void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common

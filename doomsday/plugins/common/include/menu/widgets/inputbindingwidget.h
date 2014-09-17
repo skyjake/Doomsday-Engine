@@ -30,8 +30,10 @@ struct controlconfig_t;
 
 /**
  * Bindings visualizer widget.
+ *
+ * @ingroup menu
  */
-struct InputBindingWidget : public Widget
+class InputBindingWidget : public Widget
 {
 public:
     controlconfig_t *binds;

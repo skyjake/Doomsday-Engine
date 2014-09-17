@@ -26,7 +26,10 @@
 namespace common {
 namespace menu {
 
-struct InlineListWidget : public ListWidget
+/**
+ * @ingroup menu
+ */
+class InlineListWidget : public ListWidget
 {
 public:
     InlineListWidget();
@@ -34,7 +37,6 @@ public:
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
-
     int handleCommand(menucommand_e command);
 };
 

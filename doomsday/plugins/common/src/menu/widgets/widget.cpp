@@ -214,7 +214,7 @@ Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
     return &actions[id];
 }
 
-dd_bool Widget::hasAction(mn_actionid_t id)
+bool Widget::hasAction(mn_actionid_t id)
 {
     mn_actioninfo_t const *info = action(id);
     return (info && info->callback != 0);

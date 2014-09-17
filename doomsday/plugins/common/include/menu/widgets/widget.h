@@ -29,7 +29,7 @@
 namespace common {
 namespace menu {
 
-struct Page;
+class Page;
 
 /**
  * @defgroup menuObjectFlags Menu Object Flags
@@ -68,9 +68,11 @@ enum flagop_t
 };
 
 /**
- * Base class from which all widgets must be derived.
+ * Base class from which all menu widgets must be derived.
+ *
+ * @ingroup menu
  */
-struct Widget
+class Widget
 {
 public:
     /**
@@ -237,7 +239,7 @@ public:
 
     /// @return  @c true if this object has a registered executeable action
     /// associated with the unique identifier @a action.
-    dd_bool hasAction(mn_actionid_t action);
+    bool hasAction(mn_actionid_t action);
 
     /**
      * Lookup the unique ActionInfo associated with the identifier @a id.

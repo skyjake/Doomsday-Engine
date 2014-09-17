@@ -53,8 +53,10 @@ namespace menu {
 
 /**
  * UI widget for manipulating a value with a graphical slider.
+ *
+ * @ingroup menu
  */
-struct SliderWidget : public Widget
+class SliderWidget : public Widget
 {
 public:
     explicit SliderWidget(float min = 0.0f, float max = 1.0f, float step = 0.1f, bool floatMode = true);

@@ -31,8 +31,10 @@ namespace menu {
 
 /**
  * UI widget for previewing a Mobj.
+ *
+ * @ingroup menu
  */
-struct MobjPreviewWidget : public Widget
+class MobjPreviewWidget : public Widget
 {
 public:
     MobjPreviewWidget();

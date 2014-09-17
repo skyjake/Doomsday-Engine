@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_LINEEDITWIDGET
 #define LIBCOMMON_UI_LINEEDITWIDGET
 
+#include <de/String>
 #include "widget.h"
 
 namespace common {
@@ -55,9 +56,11 @@ namespace menu {
 /**@}*/
 
 /**
- * UI widget for an editable line of text
+ * UI widget for an editable line of text.
+ *
+ * @ingroup menu
  */
-struct LineEditWidget : public Widget
+class LineEditWidget : public Widget
 {
 public:
     LineEditWidget();
@@ -66,7 +69,6 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
     int handleEvent(event_t *ev);
-
     int handleCommand(menucommand_e command);
 
     void setMaxLength(int newMaxLength);

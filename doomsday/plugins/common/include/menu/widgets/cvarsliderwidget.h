@@ -31,7 +31,7 @@ namespace menu {
  *
  * @ingroup menu
  */
-struct CVarSliderWidget : public SliderWidget
+class CVarSliderWidget : public SliderWidget
 {
 public:
     explicit CVarSliderWidget(char const *cvarPath, float min = 0.0f, float max = 1.0f,
