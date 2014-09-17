@@ -786,7 +786,7 @@ void Page::updateWidgets()
             if(action && action->callback == CvarSliderWidget_UpdateCvar)
             {
                 float value;
-                if(sldr->floatMode)
+                if(sldr->floatMode())
                     value = Con_GetFloat((char const *)sldr->data1);
                 else
                     value = Con_GetInteger((char const *)sldr->data1);

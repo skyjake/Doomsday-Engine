@@ -453,15 +453,10 @@ void Hu_MenuInitColorWidgetPage()
 
     page->widgets() << new LabelWidget("Red");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0.0f, 1.0f, .05f);
         sld->_flags    = MNF_ID1;
         sld->setShortcut('r');
-        sld->data2     = (void*)CR;
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .05f;
-        sld->floatMode = true;
+        sld->data2     = (void *)CR;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -469,15 +464,10 @@ void Hu_MenuInitColorWidgetPage()
 
     page->widgets() << new LabelWidget("Green");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0.0f, 1.0f, .05f);
         sld->_flags    = MNF_ID2;
         sld->setShortcut('g');
-        sld->data2     = (void*)CG;
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .05f;
-        sld->floatMode = true;
+        sld->data2     = (void *)CG;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
         page->widgets() << sld;
@@ -485,15 +475,10 @@ void Hu_MenuInitColorWidgetPage()
 
     page->widgets() << new LabelWidget("Blue");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0.0f, 1.0f, 0.05f);
         sld->_flags    = MNF_ID3;
         sld->setShortcut('b');
-        sld->data2     = (void*)CB;
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .05f;
-        sld->floatMode = true;
+        sld->data2     = (void *)CB;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -505,15 +490,10 @@ void Hu_MenuInitColorWidgetPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0.0f, 1.0f, 0.05f);
         sld->_flags    = MNF_ID5;
         sld->setShortcut('o');
-        sld->data2     = (void*)CA;
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .05f;
-        sld->floatMode = true;
+        sld->data2     = (void *)CA;
         sld->actions[Widget::MNA_MODIFIED].callback = Hu_MenuUpdateColorWidgetColor;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1477,15 +1457,12 @@ void Hu_MenuInitHUDOptionsPage()
 
     {
         auto *sld = new SliderWidget;
-        sld->min       = 3;
 #if __JDOOM64__
-        sld->max       = 11;
+        sld->setRange(3, 11, 1);
 #else
-        sld->max       = 13;
+        sld->setRange(3, 13, 1);
 #endif
-        sld->_value     = 0;
-        sld->step      = 1;
-        sld->floatMode = false;
+        sld->setFloatMode(false);
         sld->data1     = (void *)"view-size";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
@@ -1501,11 +1478,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new TextualSliderWidget;
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->min            = 0;
-        sld->max            = 60;
-        sld->_value         = 0;
-        sld->step           = 1;
-        sld->floatMode      = true;
+        sld->setRange(0, 60, 1);
         sld->data1          = (void *)"hud-timer";
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
@@ -1635,11 +1608,7 @@ void Hu_MenuInitHUDOptionsPage()
         auto *sld = new TextualSliderWidget;
         sld->setGroup(2);
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->min            = 0;
-        sld->max            = 60;
-        sld->_value         = 0;
-        sld->step           = 1;
-        sld->floatMode      = true;
+        sld->setRange(0, 60, 1);
         sld->data1          = (void *)"msg-uptime";
         sld->data2          = (void *)"Disabled";
         sld->data4          = (void *)" second";
@@ -1656,12 +1625,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(2);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"msg-scale";
+        sld->data1 = (void *)"msg-scale";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1715,12 +1679,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(3);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = .1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"view-cross-size";
+        sld->data1 = (void *)"view-cross-size";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1731,14 +1690,9 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0.0f, 1.0f, 0.0625f);
         sld->setGroup(3);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.0625f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"view-cross-angle";
+        sld->data1 = (void *)"view-cross-angle";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1751,12 +1705,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(3);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"view-cross-a";
+        sld->data1 = (void *)"view-cross-a";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1804,12 +1753,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(4);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"hud-status-size";
+        sld->data1 = (void *)"hud-status-size";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1822,12 +1766,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(4);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"hud-status-alpha";
+        sld->data1 = (void *)"hud-status-alpha";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1908,12 +1847,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(5);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"hud-cheat-counter-scale";
+        sld->data1 = (void *)"hud-cheat-counter-scale";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -1935,12 +1869,7 @@ void Hu_MenuInitHUDOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setGroup(6);
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"hud-scale";
+        sld->data1 = (void *)"hud-scale";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2087,12 +2016,7 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setShortcut('o');
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"map-opacity";
+        sld->data1 = (void *)"map-opacity";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2102,12 +2026,7 @@ void Hu_MenuInitAutomapOptionsPage()
     {
         auto *sld = new SliderWidget;
         sld->setShortcut('l');
-        sld->min       = 0;
-        sld->max       = 1;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"map-line-opacity";
+        sld->data1 = (void *)"map-line-opacity";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2115,13 +2034,8 @@ void Hu_MenuInitAutomapOptionsPage()
 
     page->widgets() << new LabelWidget("Line Width");
     {
-        auto *sld = new SliderWidget;
-        sld->min       = .1f;
-        sld->max       = 2;
-        sld->_value    = 0;
-        sld->step      = 0.1f;
-        sld->floatMode = true;
-        sld->data1     = (void *)"map-line-width";
+        auto *sld = new SliderWidget(0.1f, 2.f);
+        sld->data1 = (void *)"map-line-width";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2150,14 +2064,9 @@ void Hu_MenuInitAutomapOptionsPage()
 
     page->widgets() << new LabelWidget("Door Glow");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0, 200, 5);
         sld->setShortcut('g');
-        sld->min       = 0;
-        sld->max       = 200;
-        sld->_value    = 0;
-        sld->step      = 5;
-        sld->floatMode = true;
-        sld->data1     = (void *)"map-door-glow";
+        sld->data1 = (void *)"map-door-glow";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2479,15 +2388,11 @@ void Hu_MenuInitInventoryOptionsPage()
         auto *sld = new TextualSliderWidget;
         sld->setShortcut('h');
         sld->_pageColorIdx = MENU_COLOR3;
-        sld->min           = 0;
-        sld->max           = 30;
-        sld->_value        = 0;
-        sld->step          = 1.f;
-        sld->floatMode     = true;
-        sld->data1         = (void *)"hud-inventory-timer";
-        sld->data2         = (void *)"Disabled";
-        sld->data4         = (void *)" second";
-        sld->data5         = (void *)" seconds";
+        sld->setRange(0, 30, 1.f);
+        sld->data1 = (void *)"hud-inventory-timer";
+        sld->data2 = (void *)"Disabled";
+        sld->data4 = (void *)" second";
+        sld->data5 = (void *)" seconds";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2509,13 +2414,10 @@ void Hu_MenuInitInventoryOptionsPage()
         sld->setGroup(1);
         sld->setShortcut('v');
         sld->_pageColorIdx  = MENU_COLOR3;
-        sld->min            = 0;
-        sld->max            = 16;
-        sld->_value         = 0;
-        sld->step           = 1;
-        sld->floatMode      = false;
-        sld->data1          = (void *)"hud-inventory-slot-max";
-        sld->data2          = (void *)"Automatic";
+        sld->setRange(0, 16, 1);
+        sld->setFloatMode(false);
+        sld->data1 = (void *)"hud-inventory-slot-max";
+        sld->data2 = (void *)"Automatic";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2551,14 +2453,9 @@ void Hu_MenuInitSoundOptionsPage()
 
     page->widgets() << new LabelWidget("SFX Volume");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0, 255, 5, false);
         sld->setShortcut('s');
-        sld->min       = 0;
-        sld->max       = 255;
-        sld->_value    = 0;
-        sld->step      = 5;
-        sld->floatMode = false;
-        sld->data1     = (void *)"sound-volume";
+        sld->data1 = (void *)"sound-volume";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -2566,14 +2463,9 @@ void Hu_MenuInitSoundOptionsPage()
 
     page->widgets() << new LabelWidget("Music Volume");
     {
-        auto *sld = new SliderWidget;
+        auto *sld = new SliderWidget(0, 255, 5, false);
         sld->setShortcut('m');
-        sld->min       = 0;
-        sld->max       = 255;
-        sld->_value    = 0;
-        sld->step      = 5;
-        sld->floatMode = false;
-        sld->data1     = (void *)"music-volume";
+        sld->data1 = (void *)"music-volume";
         sld->actions[Widget::MNA_MODIFIED].callback = CvarSliderWidget_UpdateCvar;
         sld->actions[Widget::MNA_FOCUS].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << sld;
@@ -3644,10 +3536,10 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
 
     cboxMix.setColor(cbox.color(), 0);
 
-    sldrRed  .setValue(MNSLIDER_SVF_NO_ACTION, cbox.red());
-    sldrGreen.setValue(MNSLIDER_SVF_NO_ACTION, cbox.green());
-    sldrBlue .setValue(MNSLIDER_SVF_NO_ACTION, cbox.blue());
-    sldrAlpha.setValue(MNSLIDER_SVF_NO_ACTION, cbox.alpha());
+    sldrRed  .setValue(cbox.red());
+    sldrGreen.setValue(cbox.green());
+    sldrBlue .setValue(cbox.blue());
+    sldrAlpha.setValue(cbox.alpha());
 
     textAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);
     sldrAlpha.setFlags((cbox.rgbaMode()? FO_CLEAR : FO_SET), MNF_DISABLED|MNF_HIDDEN);

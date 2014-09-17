@@ -35,22 +35,37 @@ static patchid_t pSliderRight;
 static patchid_t pSliderMiddle;
 static patchid_t pSliderHandle;
 
-SliderWidget::SliderWidget()
+/// @todo Extract CVarSliderWidget from this.
+DENG2_PIMPL_NOREF(SliderWidget)
+{
+    float min      = 0.0f;
+    float max      = 1.0f;
+    float value    = 0.0f;
+    float step     = 0.1f;  ///< Button step.
+    bool floatMode = true;  ///< @c false= only integers are allowed.
+
+    void *data1 = nullptr;
+    void *data2 = nullptr;
+    void *data3 = nullptr;
+    void *data4 = nullptr;
+    void *data5 = nullptr;
+};
+
+SliderWidget::SliderWidget(float min, float max, float step, bool floatMode)
     : Widget()
-    , min      (0)
-    , max      (0)
-    , _value   (0)
-    , step     (0)
-    , floatMode(false)
-    , data1    (0)
-    , data2    (0)
-    , data3    (0)
-    , data4    (0)
-    , data5    (0)
+    , d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
     Widget::_pageColorIdx = MENU_COLOR1;
+
+    d->min       = min;
+    d->max       = max;
+    d->step      = step;
+    d->floatMode = floatMode;
 }
+
+SliderWidget::~SliderWidget()
+{}
 
 void SliderWidget::loadResources() // static
 {
@@ -60,19 +75,46 @@ void SliderWidget::loadResources() // static
     pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
 }
 
-float SliderWidget::value() const
+void SliderWidget::setValue(float newValue, int /*flags*/)
 {
-    if(floatMode)
-    {
-        return _value;
-    }
-    return (int) (_value + (_value > 0? .5f : -.5f));
+    if(d->floatMode) d->value = newValue;
+    else             d->value = int( newValue + (newValue > 0? + .5f : -.5f) );
 }
 
-void SliderWidget::setValue(int /*flags*/, float value)
+float SliderWidget::value() const
 {
-    if(floatMode) _value = value;
-    else          _value = (int) (value + (value > 0? + .5f : -.5f));
+    if(d->floatMode)
+    {
+        return d->value;
+    }
+    return int( d->value + (d->value > 0? .5f : -.5f) );
+}
+
+void SliderWidget::setRange(float newMin, float newMax, float newStep)
+{
+    d->min  = newMin;
+    d->max  = newMax;
+    d->step = newStep;
+}
+
+float SliderWidget::min() const
+{
+    return d->min;
+}
+
+float SliderWidget::max() const
+{
+    return d->max;
+}
+
+void SliderWidget::setFloatMode(bool yes)
+{
+    d->floatMode = yes;
+}
+
+bool SliderWidget::floatMode() const
+{
+    return d->floatMode;
 }
 
 int SliderWidget::thumbPos() const
@@ -82,10 +124,10 @@ int SliderWidget::thumbPos() const
     patchinfo_t middleInfo;
     if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return 0;
 
-    float range = max - min;
-    if(!range) range = 1; // Should never happen.
+    float range = d->max - d->min;
+    if(!range) range = 1; // Should never happen...
 
-    float useVal = value() - min;
+    float useVal = value() - d->min;
     return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
 
 #undef WIDTH
@@ -116,12 +158,9 @@ void SliderWidget::draw(Point2Raw const *origin)
 
     if(cfg.menuShadow > 0)
     {
-        float from[2], to[2];
-        from[0] = 2;
-        from[1] = 1+HEIGHT/2;
-        to[0] = (MNDATA_SLIDER_SLOTS * WIDTH) - 2;
-        to[1] = 1+HEIGHT/2;
-        M_DrawGlowBar(from, to, HEIGHT*1.1f, true, true, true, 0, 0, 0, mnRendState->pageAlpha * mnRendState->textShadow);
+        float const from[] = { 2, 1 + HEIGHT / 2 };
+        float const to[]   = { MNDATA_SLIDER_SLOTS * WIDTH - 2, 1 + HEIGHT / 2 };
+        M_DrawGlowBar(from, to, HEIGHT * 1.1f, true, true, true, 0, 0, 0, mnRendState->pageAlpha * mnRendState->textShadow);
     }
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -150,23 +189,23 @@ int SliderWidget::handleCommand(menucommand_e cmd)
     {
     case MCMD_NAV_LEFT:
     case MCMD_NAV_RIGHT: {
-        float const oldvalue = _value;
+        float const oldvalue = d->value;
 
         if(MCMD_NAV_LEFT == cmd)
         {
-            _value -= step;
-            if(_value < min)
-                _value = min;
+            d->value -= d->step;
+            if(d->value < d->min)
+                d->value = d->min;
         }
         else
         {
-            _value += step;
-            if(_value > max)
-                _value = max;
+            d->value += d->step;
+            if(d->value > d->max)
+                d->value = d->max;
         }
 
         // Did the value change?
-        if(oldvalue != _value)
+        if(oldvalue != d->value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             if(hasAction(MNA_MODIFIED))
@@ -174,11 +213,36 @@ int SliderWidget::handleCommand(menucommand_e cmd)
                 execAction(MNA_MODIFIED);
             }
         }
-        return true;
-      }
+        return true; }
 
-    default: return false; // Not eaten.
+    default: break;
     }
+
+    return false; // Not eaten.
+}
+
+void SliderWidget::updateGeometry(Page * /*page*/)
+{
+    patchinfo_t info;
+    if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
+
+    int middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
+    Rect_SetWidthHeight(_geometry, middleWidth, info.geometry.size.height);
+
+    if(R_GetPatchInfo(pSliderLeft, &info))
+    {
+        info.geometry.origin.x = -info.geometry.size.width;
+        Rect_UniteRaw(_geometry, &info.geometry);
+    }
+
+    if(R_GetPatchInfo(pSliderRight, &info))
+    {
+        info.geometry.origin.x += middleWidth;
+        Rect_UniteRaw(_geometry, &info.geometry);
+    }
+
+    Rect_SetWidthHeight(_geometry, .5f + Rect_Width (_geometry) * MNDATA_SLIDER_SCALE,
+                                   .5f + Rect_Height(_geometry) * MNDATA_SLIDER_SCALE);
 }
 
 void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
@@ -213,30 +277,6 @@ void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action)
 
     default: break;
     }
-}
-
-void SliderWidget::updateGeometry(Page * /*page*/)
-{
-    patchinfo_t info;
-    if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
-
-    int middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
-    Rect_SetWidthHeight(_geometry, middleWidth, info.geometry.size.height);
-
-    if(R_GetPatchInfo(pSliderLeft, &info))
-    {
-        info.geometry.origin.x = -info.geometry.size.width;
-        Rect_UniteRaw(_geometry, &info.geometry);
-    }
-
-    if(R_GetPatchInfo(pSliderRight, &info))
-    {
-        info.geometry.origin.x += middleWidth;
-        Rect_UniteRaw(_geometry, &info.geometry);
-    }
-
-    Rect_SetWidthHeight(_geometry, .5f + Rect_Width (_geometry) * MNDATA_SLIDER_SCALE,
-                                   .5f + Rect_Height(_geometry) * MNDATA_SLIDER_SCALE);
 }
 
 } // namespace menu

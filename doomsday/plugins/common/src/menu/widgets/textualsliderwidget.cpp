@@ -139,9 +139,9 @@ void TextualSliderWidget::draw(Point2Raw const *origin)
 {
     DENG2_ASSERT(origin != 0);
 
-    float const value = de::clamp(min, _value, max);
+    float const val = de::clamp(min(), value(), max());
     char textualValue[41];
-    char const *str = composeValueString(value, 0, floatMode, 0,
+    char const *str = composeValueString(val, 0, floatMode(), 0,
         (char const *)data2, (char const *)data3, (char const *)data4, (char const *)data5, 40, textualValue);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -164,9 +164,9 @@ void TextualSliderWidget::updateGeometry(Page *page)
     DENG2_ASSERT(page != 0);
 
     fontid_t const font = page->predefinedFont(mn_page_fontid_t(_pageFontIdx));
-    float const value = de::clamp(min, _value, max);
+    float const val = de::clamp(min(), value(), max());
     char textualValue[41];
-    char const *str = composeValueString(value, 0, floatMode, 0,
+    char const *str = composeValueString(val, 0, floatMode(), 0,
         (char const *)data2, (char const *)data3, (char const *)data4, (char const *)data5, 40, textualValue);
 
     FR_SetFont(font);

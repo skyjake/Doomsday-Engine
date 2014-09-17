@@ -57,20 +57,8 @@ namespace menu {
 struct SliderWidget : public Widget
 {
 public:
-    float min, max;
-    float _value;
-    float step; // Button step.
-    dd_bool floatMode; // Otherwise only integers are allowed.
-    /// @todo Turn this into a property record or something.
-    void *data1;
-    void *data2;
-    void *data3;
-    void *data4;
-    void *data5;
-
-public:
-    SliderWidget();
-    virtual ~SliderWidget() {}
+    explicit SliderWidget(float min = 0.0f, float max = 1.0f, float step = 0.1f, bool floatMode = true);
+    virtual ~SliderWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
@@ -78,18 +66,26 @@ public:
 
     int thumbPos() const;
 
-    /// @return  Current value represented by the slider.
-    float value() const;
-
     /**
      * Change the current value represented by the slider.
-     * @param flags  @ref mnsliderSetValueFlags
      * @param value  New value.
+     * @param flags  @ref mnsliderSetValueFlags
      */
-    void setValue(int flags, float value);
+    void setValue(float value, int flags = MNSLIDER_SVF_NO_ACTION);
+    float value() const;
+
+    void setRange(float newMin, float newMax, float newStep);
+    float min() const;
+    float max() const;
+
+    void setFloatMode(bool yes = true);
+    bool floatMode() const;
 
 public:
     static void loadResources();
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 void CvarSliderWidget_UpdateCvar(Widget *wi, Widget::mn_actionid_t action);
