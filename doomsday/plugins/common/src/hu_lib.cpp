@@ -750,6 +750,131 @@ dd_bool MNObject_IsDrawable(Widget *wi)
     return !(wi->flags() & MNF_HIDDEN);
 }
 
+DENG2_PIMPL_NOREF(Page)
+{
+    String name;               ///< Symbolic name/identifier.
+    Widgets widgets;
+
+    /// "Physical" geometry in fixed 320x200 screen coordinate space.
+    Point2Raw origin;
+    Rect *geometry = Rect_New();
+
+    String title;              ///< Title of this page.
+    Page *previous = nullptr;  ///< Previous page.
+    int focus      = -1;       ///< Index of the currently focused widget else @c -1
+    int flags      = 0;        ///< @ref menuPageFlags
+    int timer      = 0;
+    void *userData = nullptr;
+
+    /// Predefined fonts objects on this page.
+    fontid_t fonts[MENU_FONT_COUNT];
+
+    /// Predefined colors for objects on this page.
+    uint colors[MENU_COLOR_COUNT];
+
+    OnActiveCallback onActiveCallback = nullptr;
+    OnDrawCallback drawer             = nullptr;
+    CommandResponder cmdResponder     = nullptr;
+
+    Instance()
+    {
+        fontid_t fontId = FID(GF_FONTA);
+        for(int i = 0; i < MENU_FONT_COUNT; ++i)
+        {
+            fonts[i] = fontId;
+        }
+
+        de::zap(colors);
+        colors[1] = 1;
+        colors[2] = 2;
+    }
+
+    ~Instance()
+    {
+        Rect_Delete(geometry);
+        qDeleteAll(widgets);
+    }
+
+    /// @pre @a wi is a child of this page.
+    void giveChildFocus(Widget *wi, bool allowRefocus = false)
+    {
+        DENG2_ASSERT(wi != 0);
+
+        if(!(0 > focus))
+        {
+            if(wi != widgets[focus])
+            {
+                Widget *oldFocused = widgets[focus];
+                if(oldFocused->hasAction(Widget::MNA_FOCUSOUT))
+                {
+                    oldFocused->execAction(Widget::MNA_FOCUSOUT);
+                }
+                oldFocused->setFlags(FO_CLEAR, MNF_FOCUS);
+            }
+            else if(!allowRefocus)
+            {
+                return;
+            }
+        }
+
+        focus = widgets.indexOf(wi);
+        wi->setFlags(FO_SET, MNF_FOCUS);
+        if(wi->hasAction(Widget::MNA_FOCUS))
+        {
+            wi->execAction(Widget::MNA_FOCUS);
+        }
+    }
+
+    /**
+     * Determines the size of the menu cursor for a focused widget. If no widget is currently
+     * focused the default cursor size (i.e., the effective line height for @c MENU_FONT1)
+     * is used.
+     *
+     * (Which means this should @em not be called to determine whether the cursor is in use).
+     */
+    int cursorSizeFor(Widget *focused, int lineHeight)
+    {
+        int focusedHeight = focused? Size2_Height(focused->size()) : 0;
+
+        // Ensure the cursor is at least as tall as the effective line height for
+        // the page. This is necessary because some mods replace the menu button
+        // graphics with empty and/or tiny images (e.g., Hell Revealed 2).
+        /// @note Handling this correctly would mean separate physical/visual
+        /// geometries for menu widgets.
+        return de::max(focusedHeight, lineHeight);
+    }
+};
+
+Page::Page(String name, Point2Raw const &origin, int flags,
+    OnDrawCallback drawer, CommandResponder cmdResponder, void *userData)
+    : d(new Instance)
+{
+    std::memcpy(&d->origin, &origin, sizeof(d->origin));
+    d->name         = name;
+    d->flags        = flags;
+    d->drawer       = drawer;
+    d->cmdResponder = cmdResponder;
+    d->userData     = userData;
+}
+
+Page::~Page()
+{}
+
+String Page::name() const
+{
+    return d->name;
+}
+
+Page::Widgets &Page::widgets()
+{
+    return d->widgets;
+}
+
+Page::Widgets const &Page::widgets() const
+{
+    return d->widgets;
+}
+
 int Page::lineHeight(int *lineOffset)
 {
     fontid_t oldFont = FR_Font();
@@ -768,22 +893,22 @@ int Page::lineHeight(int *lineOffset)
     return lh;
 }
 
-void Page::applyPageLayout()
+void Page::applyLayout()
 {
-    Rect_SetXY(geometry, 0, 0);
-    Rect_SetWidthHeight(geometry, 0, 0);
+    Rect_SetXY(d->geometry, 0, 0);
+    Rect_SetWidthHeight(d->geometry, 0, 0);
 
     // Apply layout logic to this page.
 
-    if(flags & MPF_LAYOUT_FIXED)
+    if(d->flags & MPF_LAYOUT_FIXED)
     {
         // This page uses a fixed layout.
-        foreach(Widget *wi, _widgets)
+        for(Widget *wi : d->widgets)
         {
             if(!MNObject_IsDrawable(wi)) continue;
 
             Rect_SetXY(wi->_geometry, wi->_origin.x, wi->_origin.y);
-            Rect_Unite(geometry, wi->_geometry);
+            Rect_Unite(d->geometry, wi->_geometry);
         }
         return;
     }
@@ -794,24 +919,24 @@ void Page::applyPageLayout()
 
     Point2Raw origin;
 
-    for(int i = 0; i < _widgets.count(); )
+    for(int i = 0; i < d->widgets.count(); )
     {
-        Widget *ob = _widgets[i];
-        Widget *nextOb = i + 1 < _widgets.count()? _widgets[i + 1] : 0;
+        Widget *wi = d->widgets[i];
+        Widget *nextWi = i + 1 < d->widgets.count()? d->widgets[i + 1] : 0;
 
-        if(!MNObject_IsDrawable(ob))
+        if(!MNObject_IsDrawable(wi))
         {
-            // Proceed to the next object!
+            // Proceed to the next widget!
             i += 1;
             continue;
         }
 
-        // If the object has a fixed position, we will ignore it while doing
+        // If the widget has a fixed position, we will ignore it while doing
         // dynamic layout.
-        if(ob->flags() & MNF_POSITION_FIXED)
+        if(wi->flags() & MNF_POSITION_FIXED)
         {
-            Rect_SetXY(ob->_geometry, ob->_origin.x, ob->_origin.y);
-            Rect_Unite(geometry, ob->_geometry);
+            Rect_SetXY(wi->_geometry, wi->_origin.x, wi->_origin.y);
+            Rect_Unite(d->geometry, wi->_geometry);
 
             // To the next object.
             i += 1;
@@ -819,39 +944,39 @@ void Page::applyPageLayout()
         }
 
         // An additional offset requested?
-        if(ob->flags() & MNF_LAYOUT_OFFSET)
+        if(wi->flags() & MNF_LAYOUT_OFFSET)
         {
-            origin.x += ob->_origin.x;
-            origin.y += ob->_origin.y;
+            origin.x += wi->_origin.x;
+            origin.y += wi->_origin.y;
         }
 
-        Rect_SetXY(ob->_geometry, origin.x, origin.y);
+        Rect_SetXY(wi->_geometry, origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
-        // vertical dividing line, with the label on the left, other object
+        // vertical dividing line, with the label on the left, other widget
         // on the right.
-        // @todo Do not assume pairing, an object should designate it's pair.
-        if(ob->is<LabelWidget>() && nextOb)
+        // @todo Do not assume pairing, a widget should designate it's label.
+        if(wi->is<LabelWidget>() && nextWi)
         {
-            if(MNObject_IsDrawable(nextOb) &&
-               (nextOb->is<ButtonWidget>()         ||
-                nextOb->is<InlineListWidget>()     ||
-                nextOb->is<ColorPreviewWidget>()   ||
-                nextOb->is<InputBindingWidget>()   ||
-                nextOb->is<TextualSliderWidget>()))
+            if(MNObject_IsDrawable(nextWi) &&
+               (nextWi->is<ButtonWidget>()         ||
+                nextWi->is<InlineListWidget>()     ||
+                nextWi->is<ColorPreviewWidget>()   ||
+                nextWi->is<InputBindingWidget>()   ||
+                nextWi->is<TextualSliderWidget>()))
             {
                 int const margin = lineOffset * 2;
 
-                Rect_SetXY(nextOb->_geometry, margin + Rect_Width(ob->_geometry), origin.y);
+                Rect_SetXY(nextWi->_geometry, margin + Rect_Width(wi->_geometry), origin.y);
 
                 RectRaw united;
-                origin.y += Rect_United(ob->_geometry, nextOb->_geometry, &united)
+                origin.y += Rect_United(wi->_geometry, nextWi->_geometry, &united)
                           ->size.height + lineOffset;
 
-                Rect_UniteRaw(geometry, &united);
+                Rect_UniteRaw(d->geometry, &united);
 
                 // Extra spacing between object groups.
-                if(i + 2 < _widgets.count() && nextOb->group() != _widgets[i + 2]->group())
+                if(i + 2 < d->widgets.count() && nextWi->group() != d->widgets[i + 2]->group())
                 {
                     origin.y += lh;
                 }
@@ -862,12 +987,12 @@ void Page::applyPageLayout()
             }
         }
 
-        Rect_Unite(geometry, ob->_geometry);
+        Rect_Unite(d->geometry, wi->_geometry);
 
-        origin.y += Rect_Height(ob->_geometry) + lineOffset;
+        origin.y += Rect_Height(wi->_geometry) + lineOffset;
 
         // Extra spacing between object groups.
-        if(nextOb && nextOb->group() != ob->group())
+        if(nextWi && nextWi->group() != wi->group())
         {
             origin.y += lh;
         }
@@ -879,7 +1004,7 @@ void Page::applyPageLayout()
 
 void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
 {
-    onActiveCallback = newCallback;
+    d->onActiveCallback = newCallback;
 }
 
 #if __JDOOM__ || __JDOOM64__
@@ -926,18 +1051,12 @@ static void drawPageNavigation(Page *page, int x, int y)
 #endif
 }
 
-static void drawPageHeading(Page *page, Point2Raw const *offset)
+static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
 {
-    Point2Raw origin;
-
     if(!page) return;
+    if(page->title().isEmpty()) return;
 
-    /// @kludge no title = no heading.
-    if(Str_IsEmpty(&page->title)) return;
-    // kludge end.
-
-    origin.x = SCREENWIDTH/2;
-    origin.y = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2-5)/cfg.menuScale);
+    Point2Raw origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
     if(offset)
     {
         origin.x += offset->x;
@@ -945,64 +1064,65 @@ static void drawPageHeading(Page *page, Point2Raw const *offset)
     }
 
     FR_PushAttrib();
-    Hu_MenuDrawPageTitle(Str_Text(&page->title), origin.x, origin.y); origin.y += 16;
+    Hu_MenuDrawPageTitle(page->title(), origin.x, origin.y); origin.y += 16;
     drawPageNavigation(page, origin.x, origin.y);
     FR_PopAttrib();
 }
 
-void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
+void Page::draw(float alpha, bool showFocusCursor)
 {
     alpha = de::clamp(0.f, alpha, 1.f);
     if(alpha <= .0001f) return;
 
-    int focusObjHeight = 0;
+    int focusedHeight = 0;
     Point2Raw cursorOrigin;
 
     // Object geometry is determined from properties defined in the
     // render state, so configure render state before we begin.
-    setupRenderStateForPageDrawing(&page, alpha);
+    setupRenderStateForPageDrawing(this, alpha);
 
     // Update object geometry. We'll push the font renderer state because
     // updating geometry may require changing the current values.
     FR_PushAttrib();
-    updatePageObjectGeometries(&page);
+    updatePageObjectGeometries(this);
 
     // Back to default page render state.
     FR_PopAttrib();
 
     // We can now layout the widgets of this page.
-    page.applyPageLayout();
+    /// @todo Do not modify the page layout here.
+    applyLayout();
 
     // Determine the origin of the focus object (this dictates the page scroll location).
-    Widget *focusObj = page.focusWidget();
-    if(focusObj && !MNObject_IsDrawable(focusObj))
+    Widget *focused = focusWidget();
+    if(focused && !MNObject_IsDrawable(focused))
     {
-        focusObj = 0;
+        focused = 0;
     }
 
     // Are we focusing?
-    if(focusObj)
+    if(focused)
     {
-        focusObjHeight = page.cursorSize();
+        focusedHeight = d->cursorSizeFor(focused, lineHeight());
 
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
         cursorOrigin.x = -1;
-        cursorOrigin.y = Point2_Y(focusObj->origin());
+        cursorOrigin.y = Point2_Y(focused->origin());
 
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(focusObj->flags() & MNF_ACTIVE)
+        if(focused->flags() & MNF_ACTIVE)
         {
-            if(ListWidget const *list = focusObj->maybeAs<ListWidget>())
+            if(ListWidget const *list = focused->maybeAs<ListWidget>())
             {
                 if(list->selectionIsVisible())
                 {
                     FR_PushAttrib();
-                    FR_SetFont(page.predefinedFont(mn_page_fontid_t(focusObj->font())));
-                    focusObjHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                    cursorOrigin.y += (list->selection() - list->first()) * focusObjHeight;
+                    FR_SetFont(predefinedFont(mn_page_fontid_t(focused->font())));
+                    focusedHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                    cursorOrigin.y += (list->selection() - list->first()) * focusedHeight;
                     FR_PopAttrib();
                 }
             }
@@ -1012,17 +1132,17 @@ void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(page.origin.x, page.origin.y, 0);
+    DGL_Translatef(d->origin.x, d->origin.y, 0);
 
     // Apply page scroll?
-    if(!(page.flags & MPF_NEVER_SCROLL) && focusObj)
+    if(!(d->flags & MPF_NEVER_SCROLL) && focused)
     {
         RectRaw pageGeometry, viewRegion;
-        Rect_Raw(page.geometry, &pageGeometry);
+        Rect_Raw(d->geometry, &pageGeometry);
 
         // Determine available screen region for the page.
         viewRegion.origin.x = 0;
-        viewRegion.origin.y = page.origin.y;
+        viewRegion.origin.y = d->origin.y;
         viewRegion.size.width  = SCREENWIDTH;
         viewRegion.size.height = SCREENHEIGHT - 40/*arbitrary but enough for the help message*/;
 
@@ -1040,7 +1160,7 @@ void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
     }
 
     // Draw child objects.
-    for(Widget *wi : page.widgets())
+    for(Widget *wi : d->widgets)
     {
         RectRaw geometry;
 
@@ -1055,139 +1175,84 @@ void MN_DrawPage(Page &page, float alpha, dd_bool showFocusCursor)
 
     // How about a focus cursor?
     /// @todo cursor should be drawn on top of the page drawer.
-    if(showFocusCursor && focusObj)
+    if(showFocusCursor && focused)
     {
-        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusObjHeight, alpha);
+        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusedHeight, alpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    drawPageHeading(&page, NULL/*no offset*/);
+    drawPageHeading(this);
 
     // The page has its own drawer.
-    if(page.drawer)
+    if(d->drawer)
     {
         FR_PushAttrib();
-        page.drawer(&page, &page.origin);
+        d->drawer(this, &d->origin);
         FR_PopAttrib();
     }
 
     // How about some additional help/information for the focused item?
-    if(focusObj && focusObj->hasHelpInfo())
+    if(focused && focused->hasHelpInfo())
     {
         Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
-        Hu_MenuDrawPageHelp(focusObj->helpInfo().toUtf8().constData(), helpOrigin.x, helpOrigin.y);
+        Hu_MenuDrawPageHelp(focused->helpInfo().toUtf8().constData(), helpOrigin.x, helpOrigin.y);
     }
 }
 
-Page::Page(String name, Point2Raw const &origin, int flags,
-    void (*ticker) (Page *page),
-    void (*drawer) (Page *page, Point2Raw const *origin),
-    int (*cmdResponder) (Page *page, menucommand_e cmd),
-    void *userData)
-    : _name           (name)
-    , origin          (origin)
-    , geometry        (Rect_New())
-    , previous        (0)
-    , focus           (-1) /// @todo Make this a page flag.
-    , flags           (flags)
-    , ticker          (ticker)
-    , drawer          (drawer)
-    , cmdResponder    (cmdResponder)
-    , onActiveCallback(0)
-    , userData        (userData)
+void Page::setTitle(String const &newTitle)
 {
-    Str_InitStd(&title);
-
-    fontid_t fontId = FID(GF_FONTA);
-    for(int i = 0; i < MENU_FONT_COUNT; ++i)
-    {
-        fonts[i] = fontId;
-    }
-
-    de::zap(colors);
-    colors[1] = 1;
-    colors[2] = 2;
+    d->title = newTitle;
 }
 
-Page::~Page()
+String Page::title() const
 {
-    Str_Free(&title);
-    if(geometry) Rect_Delete(geometry);
-
-    foreach(Widget *wi, _widgets)
-    {
-        if(wi->_geometry) Rect_Delete(wi->_geometry);
-    }
-    qDeleteAll(_widgets);
-}
-
-String Page::name() const
-{
-    return _name;
-}
-
-Page::Widgets const &Page::widgets() const
-{
-    return _widgets;
-}
-
-void Page::setTitle(char const *newTitle)
-{
-    Str_Set(&title, newTitle? newTitle : "");
+    return d->title;
 }
 
 void Page::setX(int x)
 {
-    origin.x = x;
+    d->origin.x = x;
 }
 
 void Page::setY(int y)
 {
-    origin.y = y;
+    d->origin.y = y;
 }
 
 void Page::setPreviousPage(Page *newPrevious)
 {
-    previous = newPrevious;
+    d->previous = newPrevious;
+}
+
+Page *Page::previousPage() const
+{
+    return d->previous;
 }
 
 Widget *Page::focusWidget()
 {
-    if(_widgets.isEmpty() || focus < 0) return 0;
-    return _widgets[focus];
+    if(d->widgets.isEmpty() || d->focus < 0) return 0;
+    return d->widgets[d->focus];
 }
 
 void Page::clearFocusWidget()
 {
-    if(focus >= 0)
+    if(d->focus >= 0)
     {
-        Widget *wi = _widgets[focus];
+        Widget *wi = d->widgets[d->focus];
         if(wi->flags() & MNF_ACTIVE)
         {
             return;
         }
     }
-    focus = -1;
-    foreach(Widget *wi, _widgets)
+    d->focus = -1;
+    for(Widget *wi : d->widgets)
     {
         wi->setFlags(FO_CLEAR, MNF_FOCUS);
     }
     refocus();
-}
-
-int Page::cursorSize()
-{
-    Widget *focusOb = focusWidget();
-    int focusObHeight = focusOb? Size2_Height(focusOb->size()) : 0;
-
-    // Ensure the cursor is at least as tall as the effective line height for
-    // the page. This is necessary because some mods replace the menu button
-    // graphics with empty and/or tiny images (e.g., Hell Revealed 2).
-    /// @note Handling this correctly would mean separate physical/visual
-    /// geometries for menu widgets.
-    return de::max(focusObHeight, lineHeight());
 }
 
 Widget &Page::findWidget(int group, int flags)
@@ -1201,47 +1266,12 @@ Widget &Page::findWidget(int group, int flags)
 
 Widget *Page::tryFindWidget(int group, int flags)
 {
-    foreach(Widget *wi, _widgets)
+    for(Widget *wi : d->widgets)
     {
         if(wi->group() == group && (wi->flags() & flags) == flags)
             return wi;
     }
     return 0; // Not found.
-}
-
-int Page::indexOf(Widget *wi)
-{
-    return _widgets.indexOf(wi);
-}
-
-/// @pre @a ob is a child of @a page.
-void Page::giveChildFocus(Widget *wi, dd_bool allowRefocus)
-{
-    DENG2_ASSERT(wi != 0);
-
-    if(!(0 > focus))
-    {
-        if(wi != _widgets[focus])
-        {
-            Widget *oldFocusOb = _widgets[focus];
-            if(oldFocusOb->hasAction(Widget::MNA_FOCUSOUT))
-            {
-                oldFocusOb->execAction(Widget::MNA_FOCUSOUT);
-            }
-            oldFocusOb->setFlags(FO_CLEAR, MNF_FOCUS);
-        }
-        else if(!allowRefocus)
-        {
-            return;
-        }
-    }
-
-    focus = _widgets.indexOf(wi);
-    wi->setFlags(FO_SET, MNF_FOCUS);
-    if(wi->hasAction(Widget::MNA_FOCUS))
-    {
-        wi->execAction(Widget::MNA_FOCUS);
-    }
 }
 
 void Page::setFocus(Widget *wi)
@@ -1252,34 +1282,36 @@ void Page::setFocus(Widget *wi)
         DENG2_ASSERT(!"Page::Focus: Failed to determine index-in-page for widget.");
         return;
     }
-    giveChildFocus(_widgets[index], false);
+    d->giveChildFocus(d->widgets[index]);
 }
 
 void Page::refocus()
 {
+    LOG_AS("Page");
+
     // If we haven't yet visited this page then find the first focusable
-    // object and select it.
-    if(0 > focus)
+    // wodget and select it.
+    if(0 > d->focus)
     {
         int i, giveFocus = -1;
 
-        // First look for a default focus object. There should only be one
+        // First look for a default focus wodget. There should only be one
         // but find the last with this flag...
-        for(i = 0; i < _widgets.count(); ++i)
+        for(i = 0; i < d->widgets.count(); ++i)
         {
-            Widget *ob = _widgets[i];
-            if((ob->flags() & MNF_DEFAULT) && !(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
+            Widget *wi = d->widgets[i];
+            if((wi->flags() & MNF_DEFAULT) && !(wi->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
             }
         }
 
-        // No default focus? Find the first focusable object.
+        // No default focus? Find the first focusable widget.
         if(-1 == giveFocus)
-        for(i = 0; i < _widgets.count(); ++i)
+        for(i = 0; i < d->widgets.count(); ++i)
         {
-            Widget *ob = _widgets[i];
-            if(!(ob->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
+            Widget *wi = d->widgets[i];
+            if(!(wi->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
             {
                 giveFocus = i;
                 break;
@@ -1288,27 +1320,27 @@ void Page::refocus()
 
         if(-1 != giveFocus)
         {
-            giveChildFocus(_widgets[giveFocus], false);
+            d->giveChildFocus(d->widgets[giveFocus]);
         }
         else
         {
-            LOGDEV_WARNING("Page::refocus: No focusable object on page");
+            LOGDEV_WARNING("No focusable object on page");
         }
     }
     else
     {
         // We've been here before; re-focus on the last focused object.
-        giveChildFocus(_widgets[focus], true);
+        d->giveChildFocus(d->widgets[d->focus], true);
     }
 }
 
 void Page::initialize()
 {
     // Reset page timer.
-    _timer = 0;
+    d->timer = 0;
 
     // (Re)init objects.
-    foreach(Widget *wi, _widgets)
+    for(Widget *wi : d->widgets)
     {
         // Reset object timer.
         wi->timer = 0;
@@ -1326,7 +1358,7 @@ void Page::initialize()
         }
     }
 
-    if(_widgets.isEmpty())
+    if(d->widgets.isEmpty())
     {
         // Presumably the widgets will be added later...
         return;
@@ -1334,15 +1366,15 @@ void Page::initialize()
 
     refocus();
 
-    if(onActiveCallback)
+    if(d->onActiveCallback)
     {
-        onActiveCallback(this);
+        d->onActiveCallback(this);
     }
 }
 
 void Page::initWidgets()
 {
-    foreach(Widget *wi, _widgets)
+    for(Widget *wi : d->widgets)
     {
         wi->_page     = this;
         wi->_geometry = Rect_New();
@@ -1367,7 +1399,7 @@ void Page::initWidgets()
 /// Main task is to update objects linked to cvars.
 void Page::updateWidgets()
 {
-    foreach(Widget *wi, _widgets)
+    for(Widget *wi : d->widgets)
     {
         if(wi->is<LabelWidget>() || wi->is<MobjPreviewWidget>())
         {
@@ -1380,7 +1412,7 @@ void Page::updateWidgets()
                 // This button has already been initialized.
                 cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
                 cvb->active = (Con_GetByte(tog->cvarPath()) & (cvb->mask? cvb->mask : ~0)) != 0;
-                tog->setText(cvb->active ? cvb->yes : cvb->no);
+                tog->setText(cvb->active? cvb->yes : cvb->no);
                 continue;
             }
 
@@ -1439,7 +1471,7 @@ void Page::updateWidgets()
 void Page::tick()
 {
     // Call the ticker of each object, unless they're hidden or paused.
-    foreach(Widget *wi, _widgets)
+    for(Widget *wi : d->widgets)
     {
         if((wi->flags() & MNF_PAUSED) || (wi->flags() & MNF_HIDDEN))
             continue;
@@ -1450,26 +1482,26 @@ void Page::tick()
         wi->timer++;
     }
 
-    _timer++;
+    d->timer++;
 }
 
 fontid_t Page::predefinedFont(mn_page_fontid_t id)
 {
     DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
-    return fonts[id];
+    return d->fonts[id];
 }
 
 void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
 {
     DENG2_ASSERT(VALID_MNPAGE_FONTID(id));
-    fonts[id] = fontId;
+    d->fonts[id] = fontId;
 }
 
 void Page::predefinedColor(mn_page_colorid_t id, float rgb[3])
 {
     DENG2_ASSERT(rgb != 0);
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
-    uint colorIndex = colors[id];
+    uint colorIndex = d->colors[id];
     rgb[CR] = cfg.menuTextColors[colorIndex][CR];
     rgb[CG] = cfg.menuTextColors[colorIndex][CG];
     rgb[CB] = cfg.menuTextColors[colorIndex][CB];
@@ -1477,15 +1509,98 @@ void Page::predefinedColor(mn_page_colorid_t id, float rgb[3])
 
 int Page::timer()
 {
-    return _timer;
+    return d->timer;
+}
+
+int Page::handleCommand(menucommand_e cmd)
+{
+    // Maybe the currently focused widget will handle this?
+    if(Widget *focused = focusWidget())
+    {
+        if(focused->cmdResponder)
+        {
+            if(int result = focused->cmdResponder(focused, cmd))
+                return result;
+        }
+        else
+        {
+            if(int result = focused->handleCommand(cmd))
+                return result;
+        }
+    }
+
+    // Maybe a custom command responder for the page?
+    if(d->cmdResponder)
+    {
+        if(int result = d->cmdResponder(this, cmd))
+            return result;
+    }
+
+    // Default/fallback handling for the page:
+    switch(cmd)
+    {
+    case MCMD_NAV_PAGEUP:
+    case MCMD_NAV_PAGEDOWN:
+        /// @todo Why is the sound played here?
+        S_LocalSound(cmd == MCMD_NAV_PAGEUP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
+        return true;
+
+    case MCMD_NAV_UP:
+    case MCMD_NAV_DOWN:
+        // An object on this page must have focus in order to navigate.
+        if(Widget *focused = focusWidget())
+        {
+            int i = 0, giveFocus = indexOf(focused);
+            do
+            {
+                giveFocus += (cmd == MCMD_NAV_UP? -1 : 1);
+                if(giveFocus < 0)
+                    giveFocus = widgetCount() - 1;
+                else if(giveFocus >= widgetCount())
+                    giveFocus = 0;
+            } while(++i < widgetCount() && (d->widgets[giveFocus]->flags() & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
+
+            if(giveFocus != indexOf(focusWidget()))
+            {
+                S_LocalSound(cmd == MCMD_NAV_UP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
+                setFocus(d->widgets[giveFocus]);
+            }
+        }
+        return true;
+
+    case MCMD_NAV_OUT:
+        if(!d->previous)
+        {
+            S_LocalSound(SFX_MENU_CLOSE, NULL);
+            Hu_MenuCommand(MCMD_CLOSE);
+        }
+        else
+        {
+            S_LocalSound(SFX_MENU_CANCEL, NULL);
+            Hu_MenuSetPage(d->previous);
+        }
+        return true;
+
+    default: break;
+    }
+
+    return false; // Not handled.
+}
+
+void Page::setUserData(void *newUserData)
+{
+    d->userData = newUserData;
+}
+
+void *Page::userData() const
+{
+    return d->userData;
 }
 
 DENG2_PIMPL_NOREF(Widget)
 {
-    int group;        ///< Object group identifier.
+    int group = 0;    ///< Object group identifier.
     String helpInfo;  ///< Additional help information displayed when the widget has focus.
-
-    Instance() : group(0) {}
 };
 
 Widget::Widget()
@@ -1506,7 +1621,9 @@ Widget::Widget()
 }
 
 Widget::~Widget()
-{}
+{
+    Rect_Delete(_geometry);
+}
 
 int Widget::handleEvent(event_t * /*ev*/)
 {
@@ -2582,10 +2699,15 @@ DENG2_PIMPL_NOREF(ButtonWidget)
     QVariant data;
 };
 
-ButtonWidget::ButtonWidget() : Widget(), d(new Instance)
+ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
+    : Widget()
+    , d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT2;
     Widget::_pageColorIdx = MENU_COLOR1;
+
+    setText(text);
+    setPatch(patch);
 }
 
 ButtonWidget::~ButtonWidget()
@@ -2700,12 +2822,12 @@ void ButtonWidget::updateGeometry(Page *page)
     Rect_SetWidthHeight(_geometry, size.width, size.height);
 }
 
-String const &ButtonWidget::text() const
+String ButtonWidget::text() const
 {
     return d->text;
 }
 
-ButtonWidget &ButtonWidget::setText(String newText)
+ButtonWidget &ButtonWidget::setText(String const &newText)
 {
     d->text = newText;
     return *this;

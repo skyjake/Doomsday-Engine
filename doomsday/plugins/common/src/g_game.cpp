@@ -319,7 +319,7 @@ void G_CommonPreInit()
     Pause_Register();
     G_ControlRegister();          // For controls/input.
     SaveSlots::consoleRegister(); // Game-save system.
-    Hu_MenuConsoleRegister();            // For the menu.
+    Hu_MenuConsoleRegister();     // For the menu.
     GUI_Register();               // For the UI library.
     Hu_MsgRegister();             // For the game messages.
     ST_Register();                // For the hud/statusbar.

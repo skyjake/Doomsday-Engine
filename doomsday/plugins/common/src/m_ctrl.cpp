@@ -291,7 +291,7 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("ControlOptions", pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage));
+    Page *page = Hu_MenuAddPage(new Page("ControlOptions", pageOrigin, 0, Hu_MenuDrawControlsPage));
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -301,37 +301,37 @@ void Hu_MenuInitControlsPage()
     {
         controlconfig_t *binds = &controlConfig[i];
 
-        char const *labelTxt = binds->text;
-        if(labelTxt && (PTR2INT(labelTxt) > 0 && PTR2INT(labelTxt) < NUMTEXT))
+        char const *labelText = binds->text;
+        if(labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
         {
-            labelTxt = GET_TXT(PTR2INT(labelTxt));
+            labelText = GET_TXT(PTR2INT(labelText));
         }
 
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            LabelWidget *txt = new LabelWidget(labelTxt);
-            txt->_pageColorIdx = MENU_COLOR2;
+            LabelWidget *label = new LabelWidget(labelText);
+            label->_pageColorIdx = MENU_COLOR2;
 
-            // A new group begins;
-            txt->setGroup(++group);
+            // A new group begins.
+            label->setGroup(++group);
 
-            page->_widgets << txt;
+            page->widgets() << label;
         }
         else
         {
-            LabelWidget *labelOb = new LabelWidget(labelTxt);
-            labelOb->setGroup(group);
+            LabelWidget *label = new LabelWidget(labelText);
+            label->setGroup(group);
 
-            page->_widgets << labelOb;
+            page->widgets() << label;
 
-            InputBindingWidget *bindingsOb = new InputBindingWidget;
-            bindingsOb->binds = binds;
-            bindingsOb->setGroup(group);
-            bindingsOb->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+            InputBindingWidget *binding = new InputBindingWidget;
+            binding->binds = binds;
+            binding->setGroup(group);
+            binding->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
+            binding->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
 
-            page->_widgets << bindingsOb;
+            page->widgets() << binding;
         }
     }
 }

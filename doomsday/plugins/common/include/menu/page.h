@@ -39,100 +39,49 @@ struct Page
 public:
     typedef QList<Widget *> Widgets;
 
-public: /// @todo make private:
-    de::String _name;
-    Widgets _widgets;
-
-    /// "Physical" geometry in fixed 320x200 screen coordinate space.
-    Point2Raw origin;
-    Rect *geometry;
-
-    Page *previous;    ///< Previous page.
-    ddstring_t title;  ///< Title of this page.
-    int focus;         ///< Index of the currently focused widget else @c -1
-    int flags;         ///< @ref menuPageFlags
-
-    /// Predefined fonts objects on this page.
-    fontid_t fonts[MENU_FONT_COUNT];
-
-    /// Predefined colors for objects on this page.
-    uint colors[MENU_COLOR_COUNT];
-
-    /// Process time (the "tick") for this object.
-    void (*ticker) (Page *page);
-
-    /// Page drawing routine.
-    void (*drawer) (Page *page, Point2Raw const *offset);
-
-    /// Menu-command responder routine.
-    int (*cmdResponder) (Page *page, menucommand_e cmd);
-
-    /// Automatically called when the page is made activate/current.
     typedef void (*OnActiveCallback) (Page *);
-    OnActiveCallback onActiveCallback;
+    typedef void (*OnDrawCallback) (Page *, Point2Raw const *);
 
-    void *userData;
-    int _timer;
+    typedef int (*CommandResponder) (Page *, menucommand_e);
 
 public:
+    /**
+     * Construct a new menu Page.
+     *
+     * @param name    Symbolic name/identifier for the page.
+     * @param origin  Origin of the page in fixed 320x200 space.
+     * @param flags   @ref menuPageFlags.
+     * ---
+     * @param drawer
+     * @param cmdResponder
+     * @param userData
+     */
     Page(de::String name, Point2Raw const &origin = Point2Raw(), int flags = 0,
-         void (*ticker) (Page *page) = 0,
-         void (*drawer) (Page *page, Point2Raw const *origin) = 0,
-         int (*cmdResponder) (Page *page, menucommand_e cmd) = 0,
+         OnDrawCallback drawer = 0,
+         CommandResponder cmdResponder = 0,
          void *userData = 0);
 
-    ~Page();
+    virtual ~Page();
+
 
     /**
-     * Returns the name of the page.
+     * Returns the symbolic name/identifier of the page.
      */
     de::String name() const;
 
+    Widgets &widgets();
     Widgets const &widgets() const;
 
     inline int widgetCount() const { return widgets().count(); }
 
-    void initialize();
-
-    void initWidgets();
-    void updateWidgets();
-
-    /// Call the ticker routine for each widget.
-    void tick();
-
-    void setTitle(char const *title);
+    void setTitle(de::String const &newTitle);
+    de::String title() const;
 
     void setX(int x);
     void setY(int y);
 
     void setPreviousPage(Page *newPreviousPage);
-
-    void refocus();
-
-    /// @return  Currently focused widget; otherwise @c 0.
-    Widget *focusWidget();
-
-    void clearFocusWidget();
-
-    /**
-     * Attempt to give focus to the given widget which is thought to be on the page.
-     * If @a newFocusWidget is present and is not currently in-focus, an out-focus
-     * action is first sent to the presently focused widget, then this page's focused
-     * widget is set before finally executing an in-focus action on the new widget.
-     * If the widget is not found on this page then nothing will happen.
-     *
-     * @param newFocusWidget  Widget to be given focus.
-     */
-    void setFocus(Widget *newFocusWidget);
-
-    /**
-     * Determines the size of the menu cursor for the currently focused widget. If
-     * no widget is currently focused the default cursor size (i.e., the effective
-     * line height for @c MENU_FONT1) is used. (Which means this should @em not be
-     * called to determine whether the cursor is actually in use -- for that purpose,
-     * use @ref focusWidget() instead).
-     */
-    int cursorSize();
+    Page *previousPage() const;
 
     /**
      * Locate a widget on the page in the specified @a group.
@@ -150,7 +99,48 @@ public:
     /**
      * Returns the in-page index of the given @a widget; otherwise @c -1
      */
-    int indexOf(Widget *widget);
+    inline int indexOf(Widget *widget) {
+        return widgets().indexOf(widget);
+    }
+
+    /**
+     * Attempt to give focus to the given widget which is thought to be on the page.
+     * If @a newFocusWidget is present and is not currently in-focus, an out-focus
+     * action is first sent to the presently focused widget, then this page's focused
+     * widget is set before finally executing an in-focus action on the new widget.
+     * If the widget is not found on this page then nothing will happen.
+     *
+     * @param newFocusWidget  Widget to be given focus.
+     */
+    void setFocus(Widget *newFocusWidget);
+
+    /**
+     * Returns a pointer to the currently focused widget, if any (may be @c nullptr).
+     */
+    Widget *focusWidget();
+
+    void clearFocusWidget();
+    void refocus();
+
+    /**
+     * Returns the current time in tics since last page activation.
+     */
+    int timer();
+
+    /// Call the ticker routine for each widget.
+    void tick();
+
+    /**
+     * Draw this menu page.
+     */
+    void draw(float opacity = 1.f, bool showFocusCursor = true);
+
+    /**
+     * Change the function to callback on page activation to @a newCallback.
+     *
+     * @param newCallback  Function to callback on page activation. Use @c 0 to clear.
+     */
+    void setOnActiveCallback(OnActiveCallback newCallback);
 
     /**
      * Retrieve a predefined color triplet associated with this page by it's logical
@@ -160,6 +150,8 @@ public:
      * @param rgb  Found color values are written here, else set to white.
      */
     void predefinedColor(mn_page_colorid_t id, float rgb[3]);
+
+    void setPredefinedFont(mn_page_fontid_t id, fontid_t fontId);
 
     /**
      * Retrieve a predefined Doomsday font-identifier associated with this page
@@ -171,8 +163,6 @@ public:
      */
     fontid_t predefinedFont(mn_page_fontid_t id);
 
-    void setPredefinedFont(mn_page_fontid_t id, fontid_t fontId);
-
     /**
      * Returns the effective line height for the predefined @c MENU_FONT1.
      *
@@ -180,20 +170,19 @@ public:
      */
     int lineHeight(int *lineOffset = 0);
 
-    /// @return  Current time in tics since page activation.
-    int timer();
+    void initialize();
+    void initWidgets();
+    void updateWidgets();
 
-    void applyPageLayout();
+    void applyLayout();
 
-    /**
-     * Change the function to callback on page activation to @a newCallback.
-     *
-     * @param newCallback  Function to callback on page activation. Use @c 0 to clear.
-     */
-    void setOnActiveCallback(OnActiveCallback newCallback);
+    int handleCommand(menucommand_e cmd);
+
+    void setUserData(void *newUserData);
+    void *userData() const;
 
 private:
-    void giveChildFocus(Widget *wi, dd_bool allowRefocus);
+    DENG2_PRIVATE(d)
 };
 
 } // namespace menu

@@ -29,21 +29,21 @@ namespace menu {
 struct ButtonWidget : public Widget
 {
 public:
-    ButtonWidget();
+    explicit ButtonWidget(de::String const &text = "", patchid_t patch = 0);
     virtual ~ButtonWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
     int handleCommand(menucommand_e command);
 
-    de::String const &text() const;
-    ButtonWidget &setText(de::String newText);
+    ButtonWidget &setText(de::String const &newText);
+    de::String text() const;
 
-    patchid_t patch() const;
     ButtonWidget &setPatch(patchid_t newPatch);
+    patchid_t patch() const;
 
-    bool noAltText() const;
     ButtonWidget &setNoAltText(bool yes = true);
+    bool noAltText() const;
 
     void setData(QVariant const &d);
     QVariant const &data() const;

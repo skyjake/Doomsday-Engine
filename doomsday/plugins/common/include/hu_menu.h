@@ -87,7 +87,7 @@ void Hu_MenuInit();
 void Hu_MenuShutdown();
 
 /**
- * Returns @c true if a current menu page is configured.
+ * Returns @c true if a current menu Page is configured.
  */
 bool Hu_MenuHasPage();
 
@@ -124,7 +124,7 @@ inline menu::Page *Hu_MenuPagePtr(de::String name) {
 void Hu_MenuSetPage(menu::Page *page, bool allowReactivate = false);
 
 /**
- * Convenient method for changing the current menu page to that with the @a name given.
+ * Convenient method for changing the current menu Page to that with the @a name given.
  * @see Hu_MenuSetPage()
  */
 inline void Hu_MenuSetPage(de::String name, bool allowReactivate = false) {
@@ -192,11 +192,9 @@ void Hu_MenuConsoleRegister();
 
 void Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action);
 
-void Hu_MenuPageTicker(menu::Page *page);
-
 void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
 
-void Hu_MenuDrawPageTitle(char const *title, int x, int y);
+void Hu_MenuDrawPageTitle(de::String title, int x, int y);
 void Hu_MenuDrawPageHelp(char const *help, int x, int y);
 
 } // namespace common
