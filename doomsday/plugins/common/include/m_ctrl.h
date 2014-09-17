@@ -27,6 +27,25 @@
 namespace common {
 namespace menu {
 
+struct Page;
+
+// Control config flags.
+#define CCF_NON_INVERSE         0x1
+#define CCF_INVERSE             0x2
+#define CCF_STAGED              0x4
+#define CCF_REPEAT              0x8
+#define CCF_SIDESTEP_MODIFIER   0x10
+#define CCF_MULTIPLAYER         0x20
+
+struct controlconfig_t
+{
+    char const *text;
+    char const *bindContext;
+    char const *controlName;
+    char const *command;
+    int flags;
+};
+
 void Hu_MenuInitControlsPage(void);
 void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);

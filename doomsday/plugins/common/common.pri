@@ -151,4 +151,20 @@ SOURCES += \
     $$common_src/saveslots.cpp \
     $$common_src/thingarchive.cpp \
     $$common_src/thinkerinfo.cpp \
-    $$common_src/x_hair.c
+    $$common_src/x_hair.c \
+    $$common_src/menu/page.cpp \
+    $$common_src/menu/widgets/colorpreviewwidget.cpp \
+    $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
+    $$common_src/menu/widgets/cvarlineeditwidget.cpp \
+    $$common_src/menu/widgets/cvartogglewidget.cpp \
+    $$common_src/menu/widgets/buttonwidget.cpp \
+    $$common_src/menu/widgets/inlinelistwidget.cpp \
+    $$common_src/menu/widgets/inputbindingwidget.cpp \
+    $$common_src/menu/widgets/labelwidget.cpp \
+    $$common_src/menu/widgets/lineeditwidget.cpp \
+    $$common_src/menu/widgets/listwidget.cpp \
+    $$common_src/menu/widgets/mobjpreviewwidget.cpp \
+    $$common_src/menu/widgets/rectwidget.cpp \
+    $$common_src/menu/widgets/sliderwidget.cpp \
+    $$common_src/menu/widgets/textualsliderwidget.cpp \
+    $$common_src/menu/widgets/widget.cpp

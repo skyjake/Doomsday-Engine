@@ -79,8 +79,6 @@ typedef enum mn_page_fontid_e
 namespace common {
 namespace menu {
 
-struct Page;
-
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
  */
@@ -94,21 +92,12 @@ struct Page;
 
 short MN_MergeMenuEffectWithDrawTextFlags(short f);
 
-// Menu render state:
-typedef struct mn_rendstate_s {
-    float pageAlpha;
-    float textGlitter;
-    float textShadow;
-    float textColors[MENU_COLOR_COUNT][4];
-    fontid_t textFonts[MENU_FONT_COUNT];
-} mn_rendstate_t;
-
-extern mn_rendstate_t const *mnRendState;
-
 } // namespace menu
 } // namespace common
 
 #endif // __cplusplus
+
+void lerpColor(float *dst, float const *a, float const *b, float t, dd_bool rgbaMode);
 
 typedef enum {
     GUI_NONE,

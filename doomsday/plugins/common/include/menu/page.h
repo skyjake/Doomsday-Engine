@@ -34,6 +34,22 @@ namespace menu {
 #define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
 ///@}
 
+/// @todo refactor away.
+struct mn_rendstate_t
+{
+    float pageAlpha;
+    float textGlitter;
+    float textShadow;
+    float textColors[MENU_COLOR_COUNT][4];
+    fontid_t textFonts[MENU_FONT_COUNT];
+};
+extern mn_rendstate_t const *mnRendState;
+
+/**
+ * UI menu page (dialog).
+ *
+ * @ingroup menu
+ */
 struct Page
 {
 public:
