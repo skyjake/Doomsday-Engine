@@ -787,7 +787,7 @@ void Page::updateWidgets()
                 value = Con_GetFloat(sldr->cvarPath());
             else
                 value = Con_GetInteger(sldr->cvarPath());
-            sldr->setValue(MNSLIDER_SVF_NO_ACTION, value);
+            sldr->setValue(value);
         }
         if(ColorPreviewWidget *cbox = wi->maybeAs<ColorPreviewWidget>())
         {
