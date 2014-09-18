@@ -38,10 +38,6 @@ DENG2_PIMPL_NOREF(ColorPreviewWidget)
 
 ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
     : Widget()
-    , data1(0)
-    , data2(0)
-    , data3(0)
-    , data4(0)
     , d(new Instance)
 {
     Widget::_pageFontIdx  = MENU_FONT1;
@@ -371,24 +367,6 @@ bool ColorPreviewWidget::setColor(Vector4f const &newColor, int flags)
         execAction(MNA_MODIFIED);
     }
     return true;
-}
-
-void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
-{
-    ColorPreviewWidget *cbox = &wi->as<ColorPreviewWidget>();
-
-    if(action != Widget::MNA_MODIFIED) return;
-
-    // MNColorBox's current color has already been updated and we know
-    // that at least one of the color components have changed.
-    // So our job is to simply update the associated cvamnRendState->
-    Con_SetFloat2((char const *)cbox->data1, cbox->red(),   SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data2, cbox->green(), SVF_WRITE_OVERRIDE);
-    Con_SetFloat2((char const *)cbox->data3, cbox->blue(),  SVF_WRITE_OVERRIDE);
-    if(cbox->rgbaMode())
-    {
-        Con_SetFloat2((char const *)cbox->data4, cbox->alpha(), SVF_WRITE_OVERRIDE);
-    }
 }
 
 } // namespace menu

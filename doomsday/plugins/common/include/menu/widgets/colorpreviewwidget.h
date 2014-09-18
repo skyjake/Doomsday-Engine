@@ -45,12 +45,6 @@ namespace menu {
 class ColorPreviewWidget : public Widget
 {
 public:
-    void *data1;
-    void *data2;
-    void *data3;
-    void *data4;
-
-public:
     explicit ColorPreviewWidget(de::Vector4f const &color = de::Vector4f(),
                                 bool rgbaMode = false);
     virtual ~ColorPreviewWidget();
@@ -104,8 +98,6 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
-
-void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common

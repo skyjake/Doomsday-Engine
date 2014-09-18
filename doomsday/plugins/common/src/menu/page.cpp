@@ -25,11 +25,11 @@
 
 /// @todo Page should not need knowledge of Widget specializations - remove all.
 #include "menu/widgets/buttonwidget.h"
+#include "menu/widgets/cvarcolorpreviewwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
 #include "menu/widgets/cvartextualsliderwidget.h"
-#include "menu/widgets/colorpreviewwidget.h"
 #include "menu/widgets/inlinelistwidget.h"
 #include "menu/widgets/inputbindingwidget.h"
 #include "menu/widgets/labelwidget.h"
@@ -789,17 +789,12 @@ void Page::updateWidgets()
                 value = Con_GetInteger(sldr->cvarPath());
             sldr->setValue(value);
         }
-        if(ColorPreviewWidget *cbox = wi->maybeAs<ColorPreviewWidget>())
+        if(CVarColorPreviewWidget *cbox = wi->maybeAs<CVarColorPreviewWidget>())
         {
-            Widget::mn_actioninfo_t const *action = wi->action(Widget::MNA_MODIFIED);
-
-            if(action && action->callback == CVarColorPreviewWidget_UpdateCVar)
-            {
-                cbox->setColor(Vector4f(Con_GetFloat((char const *)cbox->data1),
-                                        Con_GetFloat((char const *)cbox->data2),
-                                        Con_GetFloat((char const *)cbox->data3),
-                                        (cbox->rgbaMode()? Con_GetFloat((char const *)cbox->data4) : 1.f)));
-            }
+            cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
+                                    Con_GetFloat(cbox->greenCVarPath()),
+                                    Con_GetFloat(cbox->blueCVarPath()),
+                                    (cbox->rgbaMode()? Con_GetFloat(cbox->alphaCVarPath()) : 1.f)));
         }
     }
 }

@@ -75,6 +75,7 @@ HEADERS += \
     $$common_inc/menu/page.h \
     $$common_inc/menu/widgets/buttonwidget.h \
     $$common_inc/menu/widgets/colorpreviewwidget.h \
+    $$common_inc/menu/widgets/cvarcolorpreviewwidget.h \
     $$common_inc/menu/widgets/cvarinlinelistwidget.h \
     $$common_inc/menu/widgets/cvarlineeditwidget.h \
     $$common_inc/menu/widgets/cvarsliderwidget.h \
@@ -155,6 +156,7 @@ SOURCES += \
     $$common_src/x_hair.c \
     $$common_src/menu/page.cpp \
     $$common_src/menu/widgets/colorpreviewwidget.cpp \
+    $$common_src/menu/widgets/cvarcolorpreviewwidget.cpp \
     $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
     $$common_src/menu/widgets/cvarlineeditwidget.cpp \
     $$common_src/menu/widgets/cvarsliderwidget.cpp \

@@ -48,6 +48,7 @@
 
 #include "menu/page.h"
 #include "menu/widgets/colorpreviewwidget.h"
+#include "menu/widgets/cvarcolorpreviewwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
@@ -1621,15 +1622,10 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("msg-color-r", "msg-color-g", "msg-color-b");
         cbox->setGroup(2);
-        cbox->data1 = (void *)"msg-color-r";
-        cbox->data2 = (void *)"msg-color-g";
-        cbox->data3 = (void *)"msg-color-b";
-        cbox->actions[Widget::MNA_MODIFIED ].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << cbox;
     }
     {
@@ -1702,15 +1698,10 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("view-cross-r", "view-cross-g", "view-cross-b");
         cbox->setGroup(3);
-        cbox->data1 = (void *)"view-cross-r";
-        cbox->data2 = (void *)"view-cross-g";
-        cbox->data3 = (void *)"view-cross-b";
-        cbox->actions[Widget::MNA_MODIFIED ].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << cbox;
     }
 
@@ -1844,16 +1835,11 @@ void Hu_MenuInitHUDOptionsPage()
         page->widgets() << text;
     }
     {
-        auto *cbox = new ColorPreviewWidget(Vector4f(), true);
+        auto *cbox = new CVarColorPreviewWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a",
+                                                Vector4f(), true);
         cbox->setGroup(6);
-        cbox->data1 = (void *)"hud-color-r";
-        cbox->data2 = (void *)"hud-color-g";
-        cbox->data3 = (void *)"hud-color-b";
-        cbox->data4 = (void *)"hud-color-a";
-        cbox->actions[Widget::MNA_MODIFIED ].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVEOUT].callback = CVarColorPreviewWidget_UpdateCVar;
         cbox->actions[Widget::MNA_ACTIVE   ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS    ].callback = Hu_MenuDefaultFocusAction;
         page->widgets() << cbox;
     }
 
@@ -2034,78 +2020,48 @@ void Hu_MenuInitAutomapOptionsPage()
 
     page->widgets() << new LabelWidget("Wall");
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("map-wall-r", "map-wall-g", "map-wall-b");
         cbox->setShortcut('w');
-        cbox->data1 = (void *)"map-wall-r";
-        cbox->data2 = (void *)"map-wall-g";
-        cbox->data3 = (void *)"map-wall-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 
     page->widgets() << new LabelWidget("Floor Height Change");
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b");
         cbox->setShortcut('f');
-        cbox->data1 = (void *)"map-wall-floorchange-r";
-        cbox->data2 = (void *)"map-wall-floorchange-g";
-        cbox->data3 = (void *)"map-wall-floorchange-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 
     page->widgets() << new LabelWidget("Ceiling Height Change");
     {
-        auto *cbox = new ColorPreviewWidget;
-        cbox->data1 = (void *)"map-wall-ceilingchange-r";
-        cbox->data2 = (void *)"map-wall-ceilingchange-g";
-        cbox->data3 = (void *)"map-wall-ceilingchange-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        auto *cbox = new CVarColorPreviewWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b");
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 
     page->widgets() << new LabelWidget("Unseen");
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b");
         cbox->setShortcut('u');
-        cbox->data1 = (void *)"map-wall-unseen-r";
-        cbox->data2 = (void *)"map-wall-unseen-g";
-        cbox->data3 = (void *)"map-wall-unseen-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 
     page->widgets() << new LabelWidget("Thing");
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("map-mobj-r", "map-mobj-g", "map-mobj-b");
         cbox->setShortcut('t');
-        cbox->data1 = (void *)"map-mobj-r";
-        cbox->data2 = (void *)"map-mobj-g";
-        cbox->data3 = (void *)"map-mobj-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 
     page->widgets() << new LabelWidget("Background");
     {
-        auto *cbox = new ColorPreviewWidget;
+        auto *cbox = new CVarColorPreviewWidget("map-background-r", "map-background-g", "map-background-b");
         cbox->setShortcut('b');
-        cbox->data1 = (void *)"map-background-r";
-        cbox->data2 = (void *)"map-background-g";
-        cbox->data3 = (void *)"map-background-b";
-        cbox->actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-        cbox->actions[Widget::MNA_ACTIVE  ].callback = Hu_MenuActivateColorWidget;
-        cbox->actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+        cbox->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateColorWidget;
         page->widgets() << cbox;
     }
 }
