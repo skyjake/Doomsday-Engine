@@ -41,8 +41,9 @@ LabelWidget::LabelWidget(String const &text, patchid_t *patch)
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
+    setFlags(NoFocus); // never focusable.
     setText(text);
     setPatch(patch);
 }
@@ -52,22 +53,22 @@ LabelWidget::~LabelWidget()
 
 void LabelWidget::draw(Point2Raw const *origin)
 {
-    fontid_t fontId = mnRendState->textFonts[_pageFontIdx];
-    float color[4], t = (Widget::_flags & MNF_FOCUS)? 1 : 0;
+    fontid_t fontId = mnRendState->textFonts[font()];
+    float textColor[4], t = (isFocused()? 1 : 0);
 
-    // Flash if focused?
-    if((Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+    // Flash if focused.
+    if(isFocused() && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    lerpColor(color, mnRendState->textColors[_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-    color[CA] = mnRendState->textColors[_pageColorIdx][CA];
+    lerpColor(textColor, mnRendState->textColors[color()], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    textColor[CA] = mnRendState->textColors[color()][CA];
 
-    DGL_Color4f(1, 1, 1, color[CA]);
+    DGL_Color4f(1, 1, 1, textColor[CA]);
     FR_SetFont(fontId);
-    FR_SetColorAndAlphav(color);
+    FR_SetColorAndAlphav(textColor);
 
     if(d->patch)
     {
@@ -99,14 +100,14 @@ void LabelWidget::updateGeometry(Page *page)
     {
         patchinfo_t info;
         R_GetPatchInfo(*d->patch, &info);
-        Rect_SetWidthHeight(_geometry, info.geometry.size.width, info.geometry.size.height);
+        Rect_SetWidthHeight(geometry(), info.geometry.size.width, info.geometry.size.height);
         return;
     }
 
     Size2Raw size;
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, d->text.toUtf8().constData());
-    Rect_SetWidthHeight(_geometry, size.width, size.height);
+    Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
 void LabelWidget::setPatch(patchid_t *newPatch)

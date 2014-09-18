@@ -71,8 +71,8 @@ ListWidget::ListWidget()
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 }
 
 ListWidget::~ListWidget()
@@ -91,8 +91,8 @@ ListWidget::Items const &ListWidget::items() const
 void ListWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
-    Rect_SetWidthHeight(_geometry, 0, 0);
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
+    Rect_SetWidthHeight(geometry(), 0, 0);
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
 
     RectRaw itemGeometry;
     for(int i = 0; i < itemCount(); ++i)
@@ -105,7 +105,7 @@ void ListWidget::updateGeometry(Page *page)
             itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
         }
 
-        Rect_UniteRaw(_geometry, &itemGeometry);
+        Rect_UniteRaw(geometry(), &itemGeometry);
 
         itemGeometry.origin.y += itemGeometry.size.height;
     }
@@ -115,20 +115,20 @@ void ListWidget::draw(Point2Raw const *_origin)
 {
     DENG2_ASSERT(_origin != 0);
 
-    bool const flashSelection = ((Widget::_flags & MNF_ACTIVE) && selectionIsVisible());
-    float const *color = mnRendState->textColors[_pageColorIdx];
+    bool const flashSelection = (isActive() && selectionIsVisible());
+    float const *textColor = mnRendState->textColors[color()];
     float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
 
     if(flashSelection && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    lerpColor(flashColor, mnRendState->textColors[_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-    flashColor[CA] = color[CA];
+    lerpColor(flashColor, mnRendState->textColors[color()], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    flashColor[CA] = textColor[CA];
 
-    std::memcpy(dimColor, color, sizeof(dimColor));
+    std::memcpy(dimColor, textColor, sizeof(dimColor));
     dimColor[CR] *= MNDATA_LIST_NONSELECTION_LIGHT;
     dimColor[CG] *= MNDATA_LIST_NONSELECTION_LIGHT;
     dimColor[CB] *= MNDATA_LIST_NONSELECTION_LIGHT;
@@ -136,7 +136,7 @@ void ListWidget::draw(Point2Raw const *_origin)
     if(d->first < d->items.count() && d->numvis > 0)
     {
         DGL_Enable(DGL_TEXTURE_2D);
-        FR_SetFont(mnRendState->textFonts[_pageFontIdx]);
+        FR_SetFont(mnRendState->textFonts[font()]);
 
         Point2Raw origin(*_origin);
         int itemIdx = d->first;
@@ -146,7 +146,7 @@ void ListWidget::draw(Point2Raw const *_origin)
 
             if(d->selection == itemIdx)
             {
-                FR_SetColorAndAlphav(flashSelection? flashColor : color);
+                FR_SetColorAndAlphav(flashSelection? flashColor : textColor);
             }
             else
             {
@@ -167,7 +167,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
     {
     case MCMD_NAV_DOWN:
     case MCMD_NAV_UP:
-        if(Widget::_flags & MNF_ACTIVE)
+        if(isActive())
         {
             int oldSelection = d->selection;
             if(MCMD_NAV_DOWN == cmd)
@@ -194,10 +194,10 @@ int ListWidget::handleCommand(menucommand_e cmd)
         return false; // Not eaten.
 
     case MCMD_NAV_OUT:
-        if(Widget::_flags & MNF_ACTIVE)
+        if(isActive())
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
-            Widget::_flags &= ~MNF_ACTIVE;
+            setFlags(Active, UnsetFlags);
             if(hasAction(MNA_CLOSE))
             {
                 execAction(MNA_CLOSE);
@@ -207,10 +207,10 @@ int ListWidget::handleCommand(menucommand_e cmd)
         return false; // Not eaten.
 
     case MCMD_SELECT:
-        if(!(Widget::_flags & MNF_ACTIVE))
+        if(!isActive())
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            Widget::_flags |= MNF_ACTIVE;
+            setFlags(Active);
             if(hasAction(MNA_ACTIVE))
             {
                 execAction(MNA_ACTIVE);
@@ -219,7 +219,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
-            Widget::_flags &= ~MNF_ACTIVE;
+            setFlags(Active, UnsetFlags);
             if(hasAction(MNA_ACTIVEOUT))
             {
                 execAction(MNA_ACTIVEOUT);

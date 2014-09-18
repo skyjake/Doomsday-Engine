@@ -30,12 +30,13 @@ namespace menu {
 
 CVarToggleWidget::CVarToggleWidget(char const *cvarPath)
     : ButtonWidget()
+    , data1(nullptr)
     , _cvarPath(cvarPath)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR3;
-    Widget::actions[MNA_MODIFIED].callback = CVarToggleWidget_UpdateCVar;
-    Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR3);
+    setAction(MNA_MODIFIED, CVarToggleWidget_UpdateCVar);
+    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 }
 
 CVarToggleWidget::~CVarToggleWidget()
@@ -51,12 +52,12 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
     if(cmd == MCMD_SELECT)
     {
         bool justActivated = false;
-        if(!(Widget::_flags & MNF_ACTIVE))
+        if(!isActive())
         {
             justActivated = true;
             S_LocalSound(SFX_MENU_CYCLE, NULL);
 
-            Widget::_flags |= MNF_ACTIVE;
+            setFlags(Active);
             if(hasAction(MNA_ACTIVE))
             {
                 execAction(MNA_ACTIVE);
@@ -65,21 +66,19 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
 
         if(!justActivated)
         {
-            Widget::_flags ^= MNF_ACTIVE;
+            setFlags(Active, isActive()? UnsetFlags : SetFlags);
         }
 
-        if(Widget::data1)
+        if(data1)
         {
-            void *data = Widget::data1;
-
-            *((char *)data) = (Widget::_flags & MNF_ACTIVE) != 0;
+            *((char *)data1) = isActive();
             if(hasAction(MNA_MODIFIED))
             {
                 execAction(MNA_MODIFIED);
             }
         }
 
-        if(!justActivated && !(Widget::_flags & MNF_ACTIVE))
+        if(!justActivated && !isActive())
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
             if(hasAction(MNA_ACTIVEOUT))
@@ -88,7 +87,6 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
             }
         }
 
-        Widget::timer = 0;
         return true;
     }
 
@@ -98,7 +96,7 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
 void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
-    cvarbutton_t const *cb = (cvarbutton_t *)wi->data1;
+    cvarbutton_t const *cb = (cvarbutton_t *)tog->data1;
     cvartype_t varType = Con_GetVariableType(tog->cvarPath());
     int value;
 

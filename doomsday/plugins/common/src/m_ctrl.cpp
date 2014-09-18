@@ -272,7 +272,7 @@ void Hu_MenuInitControlsPage()
         {
             // Inert.
             LabelWidget *label = new LabelWidget(labelText);
-            label->_pageColorIdx = MENU_COLOR2;
+            label->setColor(MENU_COLOR2);
 
             // A new group begins.
             label->setGroup(++group);
@@ -289,8 +289,8 @@ void Hu_MenuInitControlsPage()
             InputBindingWidget *binding = new InputBindingWidget;
             binding->binds = binds;
             binding->setGroup(group);
-            binding->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            binding->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
+            binding->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateBindingsGrab);
+            binding->setAction(Widget::MNA_FOCUS,  Hu_MenuDefaultFocusAction);
 
             page->widgets() << binding;
         }

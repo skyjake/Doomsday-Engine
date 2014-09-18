@@ -40,8 +40,8 @@ ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 
     d->rgbaMode = rgbaMode;
     d->color    = color;
@@ -165,10 +165,10 @@ int ColorPreviewWidget::handleCommand(menucommand_e cmd)
     switch(cmd)
     {
     case MCMD_SELECT:
-        if(!(Widget::_flags & MNF_ACTIVE))
+        if(!(flags() & Active))
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            Widget::_flags |= MNF_ACTIVE;
+            setFlags(Active);
             if(hasAction(MNA_ACTIVE))
             {
                 execAction(MNA_ACTIVE);
@@ -177,7 +177,7 @@ int ColorPreviewWidget::handleCommand(menucommand_e cmd)
         else
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            Widget::_flags &= ~MNF_ACTIVE;
+            setFlags(Active, UnsetFlags);
             if(hasAction(MNA_ACTIVEOUT))
             {
                 execAction(MNA_ACTIVEOUT);
@@ -193,14 +193,14 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
 {
     patchinfo_t info;
 
-    Rect_SetWidthHeight(_geometry, d->dimensions.x, d->dimensions.y);
+    Rect_SetWidthHeight(geometry(), d->dimensions.x, d->dimensions.y);
 
     // Add bottom border?
     if(R_GetPatchInfo(borderPatches[2], &info))
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = d->dimensions.y;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add right border?
@@ -208,7 +208,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = d->dimensions.x;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add top border?
@@ -216,7 +216,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = -info.geometry.size.height;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add left border?
@@ -224,7 +224,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = -info.geometry.size.width;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add top-left corner?
@@ -232,7 +232,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = -info.geometry.size.height;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add top-right corner?
@@ -240,7 +240,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = -info.geometry.size.height;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add bottom-right corner?
@@ -248,7 +248,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = d->dimensions.y;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     // Add bottom-left corner?
@@ -256,7 +256,7 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = d->dimensions.y;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 }
 

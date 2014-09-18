@@ -104,11 +104,11 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
         LineEditWidget &edit = wi->as<LineEditWidget>();
 
-        wi->setFlags(FO_SET, MNF_DISABLED);
+        wi->setFlags(Widget::Disabled);
         if(status == Loadable)
         {
             edit.setText(session->metadata().gets("userDescription", ""));
-            wi->setFlags(FO_CLEAR, MNF_DISABLED);
+            wi->setFlags(Widget::Disabled, UnsetFlags);
         }
         else
         {

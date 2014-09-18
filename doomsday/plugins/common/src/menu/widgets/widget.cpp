@@ -30,31 +30,41 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(Widget)
 {
-    int group = 0;    ///< Object group identifier.
-    String helpInfo;  ///< Additional help information displayed when the widget has focus.
+    Flags flags;
+    int group = 0;             ///< Object group identifier.
+    Point2Raw origin;          ///< Used with the fixed layout (in the page coordinate space).
+
+    Rect *geometry = nullptr;  ///< Current geometry.
+    Page *page     = nullptr;  ///< Page which owns this object (if any).
+
+    String helpInfo;           ///< Additional help information displayed when the widget has focus.
+    int shortcut     = 0;      ///< DDKEY used to switch focus (@c 0= none).
+    int pageFontIdx  = 0;      ///< Index of the predefined page font to use when drawing this.
+    int pageColorIdx = 0;      ///< Index of the predefined page color to use when drawing this.
+
+    mn_actioninfo_t actions[MNACTION_COUNT];
+
+    OnTickCallback onTickCallback = nullptr;
+    CommandResponder cmdResponder = nullptr;
+
+    // User data values.
+    QVariant userValue;
+    QVariant userValue2;
+
+    Instance()
+    {
+        geometry = Rect_New();
+        de::zap(actions);
+    }
+
+    ~Instance() { Rect_Delete(geometry); }
 };
 
-Widget::Widget()
-    : _flags             (0)
-    , _shortcut          (0)
-    , _pageFontIdx       (0)
-    , _pageColorIdx      (0)
-    , onTickCallback     (0)
-    , cmdResponder       (0)
-    , data1              (0)
-    , data2              (0)
-    , _geometry          (0)
-    , _page              (0)
-    , timer              (0)
-    , d(new Instance)
-{
-    de::zap(actions);
-}
+Widget::Widget() : d(new Instance)
+{}
 
 Widget::~Widget()
-{
-    Rect_Delete(_geometry);
-}
+{}
 
 int Widget::handleEvent(event_t * /*ev*/)
 {
@@ -66,76 +76,110 @@ int Widget::handleEvent_Privileged(event_t * /*ev*/)
     return 0; // Not handled.
 }
 
+void Widget::setCommandResponder(CommandResponder newResponder)
+{
+    d->cmdResponder = newResponder;
+}
+
+int Widget::cmdResponder(menucommand_e command)
+{
+    if(d->cmdResponder)
+    {
+        if(int result = d->cmdResponder(this, command))
+            return result;
+    }
+    else
+    {
+        if(int result = handleCommand(command))
+            return result;
+    }
+    return false; // Not handled.
+}
+
 void Widget::tick()
 {
-    if(onTickCallback)
+    // Hidden widgets do not tick.
+    if(isHidden()) return;
+
+    // Paused widgets do not tick.
+    if(flags() & Paused) return;
+
+    // Process the tick.
+    if(d->onTickCallback)
     {
-        onTickCallback(this);
+        d->onTickCallback(this);
     }
+}
+
+void Widget::setOnTickCallback(OnTickCallback newCallback)
+{
+    d->onTickCallback = newCallback;
 }
 
 bool Widget::hasPage() const
 {
-    return _page != 0;
+    return d->page != 0;
+}
+
+void Widget::setPage(Page *newPage)
+{
+    d->page = newPage;
 }
 
 Page &Widget::page() const
 {
-    if(_page)
+    if(d->page)
     {
-        return *_page;
+        return *d->page;
     }
     throw Error("Widget::page", "No page is attributed");
 }
 
-int Widget::flags() const
+Widget::Flags Widget::flags() const
 {
-    return _flags;
+    return d->flags;
+}
+
+Rect *Widget::geometry()
+{
+    return d->geometry;
 }
 
 Rect const *Widget::geometry() const
 {
-    return _geometry;
+    return d->geometry;
 }
 
 Point2Raw const *Widget::fixedOrigin() const
 {
-    return &_origin;
+    return &d->origin;
 }
 
 Widget &Widget::setFixedOrigin(Point2Raw const *newOrigin)
 {
     if(newOrigin)
     {
-        _origin.x = newOrigin->x;
-        _origin.y = newOrigin->y;
+        d->origin.x = newOrigin->x;
+        d->origin.y = newOrigin->y;
     }
     return *this;
 }
 
 Widget &Widget::setFixedX(int newX)
 {
-    _origin.x = newX;
+    d->origin.x = newX;
     return *this;
 }
 
 Widget &Widget::setFixedY(int newY)
 {
-    _origin.y = newY;
+    d->origin.y = newY;
     return *this;
 }
 
-Widget &Widget::setFlags(flagop_t op, int flagsToChange)
+void Widget::setFlags(Flags flagsToChange, FlagOp operation)
 {
-    switch(op)
-    {
-    case FO_CLEAR:  _flags &= ~flagsToChange;  break;
-    case FO_SET:    _flags |= flagsToChange;   break;
-    case FO_TOGGLE: _flags ^= flagsToChange;   break;
-
-    default: DENG2_ASSERT(!"Widget::SetFlags: Unknown op.");
-    }
-    return *this;
+    applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 int Widget::group() const
@@ -151,26 +195,36 @@ Widget &Widget::setGroup(int newGroup)
 
 int Widget::shortcut()
 {
-    return _shortcut;
+    return d->shortcut;
 }
 
 Widget &Widget::setShortcut(int ddkey)
 {
     if(isalnum(ddkey))
     {
-        _shortcut = tolower(ddkey);
+        d->shortcut = tolower(ddkey);
     }
     return *this;
 }
 
-int Widget::font()
+void Widget::setFont(int newPageFont)
 {
-    return _pageFontIdx;
+    d->pageFontIdx = newPageFont;
 }
 
-int Widget::color()
+int Widget::font() const
 {
-    return _pageColorIdx;
+    return d->pageFontIdx;
+}
+
+void Widget::setColor(int newPageColor)
+{
+    d->pageColorIdx = newPageColor;
+}
+
+int Widget::color() const
+{
+    return d->pageColorIdx;
 }
 
 String const &Widget::helpInfo() const
@@ -186,19 +240,19 @@ Widget &Widget::setHelpInfo(String newHelpInfo)
 
 int Widget::handleCommand(menucommand_e cmd)
 {
-    if(MCMD_SELECT == cmd && (_flags & MNF_FOCUS) && !(_flags & MNF_DISABLED))
+    if(MCMD_SELECT == cmd && isFocused() && !isDisabled())
     {
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        if(!(_flags & MNF_ACTIVE))
+        if(!isActive())
         {
-            _flags |= MNF_ACTIVE;
+            setFlags(Active);
             if(hasAction(MNA_ACTIVE))
             {
                 execAction(MNA_ACTIVE);
             }
         }
 
-        _flags &= ~MNF_ACTIVE;
+        setFlags(Active, UnsetFlags);
         if(hasAction(MNA_ACTIVEOUT))
         {
             execAction(MNA_ACTIVEOUT);
@@ -211,13 +265,19 @@ int Widget::handleCommand(menucommand_e cmd)
 Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
 {
     DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
-    return &actions[id];
+    return &d->actions[id];
 }
 
 bool Widget::hasAction(mn_actionid_t id)
 {
     mn_actioninfo_t const *info = action(id);
     return (info && info->callback != 0);
+}
+
+void Widget::setAction(mn_actionid_t id, mn_actioninfo_t::ActionCallback callback)
+{
+    DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
+    d->actions[id].callback = callback;
 }
 
 void Widget::execAction(mn_actionid_t id)
@@ -228,6 +288,26 @@ void Widget::execAction(mn_actionid_t id)
         return;
     }
     DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
+}
+
+void Widget::setUserValue(QVariant const &newValue)
+{
+    d->userValue = newValue;
+}
+
+QVariant const &Widget::userValue() const
+{
+    return d->userValue;
+}
+
+void Widget::setUserValue2(QVariant const &newValue)
+{
+    d->userValue2 = newValue;
+}
+
+QVariant const &Widget::userValue2() const
+{
+    return d->userValue2;
 }
 
 } // namespace menu

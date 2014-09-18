@@ -58,7 +58,6 @@ DENG2_PIMPL(Page)
     int focus      = -1;       ///< Index of the currently focused widget else @c -1
     int flags      = 0;        ///< @ref menuPageFlags
     int timer      = 0;
-    void *userData = nullptr;
 
     fontid_t fonts[MENU_FONT_COUNT]; ///< Predefined. Used by all widgets.
     uint colors[MENU_COLOR_COUNT];   ///< Predefined. Used by all widgets.
@@ -66,6 +65,9 @@ DENG2_PIMPL(Page)
     OnActiveCallback onActiveCallback = nullptr;
     OnDrawCallback drawer             = nullptr;
     CommandResponder cmdResponder     = nullptr;
+
+    // User data values.
+    QVariant userValue;
 
     Instance(Public *i) : Base(i)
     {
@@ -92,7 +94,7 @@ DENG2_PIMPL(Page)
         for(Widget *wi : widgets)
         {
             FR_PushAttrib();
-            Rect_SetXY(wi->_geometry, 0, 0);
+            Rect_SetXY(wi->geometry(), 0, 0);
             wi->updateGeometry(thisPublic);
             FR_PopAttrib();
         }
@@ -112,7 +114,7 @@ DENG2_PIMPL(Page)
                 {
                     oldFocused->execAction(Widget::MNA_FOCUSOUT);
                 }
-                oldFocused->setFlags(FO_CLEAR, MNF_FOCUS);
+                oldFocused->setFlags(Widget::Focused, UnsetFlags);
             }
             else if(!allowRefocus)
             {
@@ -121,7 +123,7 @@ DENG2_PIMPL(Page)
         }
 
         focus = widgets.indexOf(wi);
-        wi->setFlags(FO_SET, MNF_FOCUS);
+        wi->setFlags(Widget::Focused);
         if(wi->hasAction(Widget::MNA_FOCUS))
         {
             wi->execAction(Widget::MNA_FOCUS);
@@ -149,7 +151,7 @@ DENG2_PIMPL(Page)
 };
 
 Page::Page(String name, Point2Raw const &origin, int flags,
-    OnDrawCallback drawer, CommandResponder cmdResponder, void *userData)
+    OnDrawCallback drawer, CommandResponder cmdResponder)
     : d(new Instance(this))
 {
     std::memcpy(&d->origin, &origin, sizeof(d->origin));
@@ -157,7 +159,6 @@ Page::Page(String name, Point2Raw const &origin, int flags,
     d->flags        = flags;
     d->drawer       = drawer;
     d->cmdResponder = cmdResponder;
-    d->userData     = userData;
 }
 
 Page::~Page()
@@ -199,7 +200,7 @@ int Page::lineHeight(int *lineOffset)
 static inline bool widgetIsDrawable(Widget *wi)
 {
     DENG2_ASSERT(wi);
-    return !(wi->flags() & MNF_HIDDEN);
+    return !(wi->flags() & Widget::Hidden);
 }
 
 void Page::applyLayout()
@@ -216,8 +217,8 @@ void Page::applyLayout()
         {
             if(!widgetIsDrawable(wi)) continue;
 
-            Rect_SetXY(wi->_geometry, wi->_origin.x, wi->_origin.y);
-            Rect_Unite(d->geometry, wi->_geometry);
+            Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
+            Rect_Unite(d->geometry, wi->geometry());
         }
         return;
     }
@@ -242,10 +243,10 @@ void Page::applyLayout()
 
         // If the widget has a fixed position, we will ignore it while doing
         // dynamic layout.
-        if(wi->flags() & MNF_POSITION_FIXED)
+        if(wi->flags() & Widget::PositionFixed)
         {
-            Rect_SetXY(wi->_geometry, wi->_origin.x, wi->_origin.y);
-            Rect_Unite(d->geometry, wi->_geometry);
+            Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
+            Rect_Unite(d->geometry, wi->geometry());
 
             // To the next object.
             i += 1;
@@ -253,13 +254,13 @@ void Page::applyLayout()
         }
 
         // An additional offset requested?
-        if(wi->flags() & MNF_LAYOUT_OFFSET)
+        if(wi->flags() & Widget::LayoutOffset)
         {
-            origin.x += wi->_origin.x;
-            origin.y += wi->_origin.y;
+            origin.x += wi->fixedOrigin()->x;
+            origin.y += wi->fixedOrigin()->y;
         }
 
-        Rect_SetXY(wi->_geometry, origin.x, origin.y);
+        Rect_SetXY(wi->geometry(), origin.x, origin.y);
 
         // Orient label plus button/inline-list/textual-slider pairs about a
         // vertical dividing line, with the label on the left, other widget
@@ -276,10 +277,10 @@ void Page::applyLayout()
             {
                 int const margin = lineOffset * 2;
 
-                Rect_SetXY(nextWi->_geometry, margin + Rect_Width(wi->_geometry), origin.y);
+                Rect_SetXY(nextWi->geometry(), margin + Rect_Width(wi->geometry()), origin.y);
 
                 RectRaw united;
-                origin.y += Rect_United(wi->_geometry, nextWi->_geometry, &united)
+                origin.y += Rect_United(wi->geometry(), nextWi->geometry(), &united)
                           ->size.height + lineOffset;
 
                 Rect_UniteRaw(d->geometry, &united);
@@ -296,9 +297,9 @@ void Page::applyLayout()
             }
         }
 
-        Rect_Unite(d->geometry, wi->_geometry);
+        Rect_Unite(d->geometry, wi->geometry());
 
-        origin.y += Rect_Height(wi->_geometry) + lineOffset;
+        origin.y += Rect_Height(wi->geometry()) + lineOffset;
 
         // Extra spacing between object groups.
         if(nextWi && nextWi->group() != wi->group())
@@ -454,7 +455,7 @@ void Page::draw(float alpha, bool showFocusCursor)
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(focused->flags() & MNF_ACTIVE)
+        if(focused->flags() & Widget::Active)
         {
             if(ListWidget const *list = focused->maybeAs<ListWidget>())
             {
@@ -505,7 +506,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     {
         RectRaw geometry;
 
-        if(wi->flags() & MNF_HIDDEN) continue;
+        if(wi->flags() & Widget::Hidden) continue;
 
         Rect_Raw(wi->geometry(), &geometry);
 
@@ -583,7 +584,7 @@ void Page::clearFocusWidget()
     if(d->focus >= 0)
     {
         Widget *wi = d->widgets[d->focus];
-        if(wi->flags() & MNF_ACTIVE)
+        if(wi->flags() & Widget::Active)
         {
             return;
         }
@@ -591,7 +592,7 @@ void Page::clearFocusWidget()
     d->focus = -1;
     for(Widget *wi : d->widgets)
     {
-        wi->setFlags(FO_CLEAR, MNF_FOCUS);
+        wi->setFlags(Widget::Focused, UnsetFlags);
     }
     refocus();
 }
@@ -641,7 +642,7 @@ void Page::refocus()
         for(i = 0; i < d->widgets.count(); ++i)
         {
             Widget *wi = d->widgets[i];
-            if((wi->flags() & MNF_DEFAULT) && !(wi->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
+            if((wi->flags() & Widget::DefaultFocus) && !(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
             {
                 giveFocus = i;
             }
@@ -652,7 +653,7 @@ void Page::refocus()
         for(i = 0; i < d->widgets.count(); ++i)
         {
             Widget *wi = d->widgets[i];
-            if(!(wi->flags() & (MNF_DISABLED|MNF_NO_FOCUS)))
+            if(!(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
             {
                 giveFocus = i;
                 break;
@@ -683,14 +684,11 @@ void Page::initialize()
     // (Re)init widgets.
     for(Widget *wi : d->widgets)
     {
-        // Reset widget timer.
-        wi->timer = 0;
-
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
+            cvarbutton_t *cvb = (cvarbutton_t *) tog->data1;
             bool const activate = (cvb && cvb->active);
-            tog->setFlags((activate? FO_SET:FO_CLEAR), MNF_ACTIVE);
+            tog->setFlags(Widget::Active, (activate? SetFlags : UnsetFlags));
         }
         if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
@@ -717,23 +715,8 @@ void Page::initWidgets()
 {
     for(Widget *wi : d->widgets)
     {
-        wi->_page     = this;
-        wi->_geometry = Rect_New();
-
-        wi->timer = 0;
-        wi->setFlags(FO_CLEAR, MNF_FOCUS);
-
-        if(0 != wi->_shortcut)
-        {
-            int shortcut = wi->_shortcut;
-            wi->_shortcut = 0; // Clear invalid defaults.
-            wi->setShortcut(shortcut);
-        }
-
-        if(wi->is<LabelWidget>() || wi->is<MobjPreviewWidget>())
-        {
-            wi->setFlags(FO_SET, MNF_NO_FOCUS);
-        }
+        wi->setPage(this);
+        wi->setFlags(Widget::Focused, UnsetFlags);
     }
 }
 
@@ -744,14 +727,14 @@ void Page::updateWidgets()
     {
         if(wi->is<LabelWidget>() || wi->is<MobjPreviewWidget>())
         {
-            wi->setFlags(FO_SET, MNF_NO_FOCUS);
+            wi->setFlags(Widget::NoFocus);
         }
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            if(wi->data1)
+            if(tog->data1)
             {
                 // This button has already been initialized.
-                cvarbutton_t *cvb = (cvarbutton_t *) wi->data1;
+                cvarbutton_t *cvb = (cvarbutton_t *) tog->data1;
                 cvb->active = (Con_GetByte(tog->cvarPath()) & (cvb->mask? cvb->mask : ~0)) != 0;
                 tog->setText(cvb->active? cvb->yes : cvb->no);
                 continue;
@@ -760,10 +743,10 @@ void Page::updateWidgets()
             // Find the cvarbutton representing this one.
             for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
             {
-                if(!strcmp(tog->cvarPath(), cvb->cvarname) && wi->data2 == cvb->mask)
+                if(!strcmp(tog->cvarPath(), cvb->cvarname) && tog->data2 == cvb->mask)
                 {
                     cvb->active = (Con_GetByte(tog->cvarPath()) & (cvb->mask? cvb->mask : ~0)) != 0;
-                    wi->data1 = (void *) cvb;
+                    tog->data1 = (void *) cvb;
                     tog->setText(cvb->active ? cvb->yes : cvb->no);
                     break;
                 }
@@ -801,16 +784,10 @@ void Page::updateWidgets()
 
 void Page::tick()
 {
-    // Call the ticker of each object, unless they're hidden or paused.
+    // Call the ticker of each object.
     for(Widget *wi : d->widgets)
     {
-        if((wi->flags() & MNF_PAUSED) || (wi->flags() & MNF_HIDDEN))
-            continue;
-
         wi->tick();
-
-        // Advance object timer.
-        wi->timer++;
     }
 
     d->timer++;
@@ -848,16 +825,8 @@ int Page::handleCommand(menucommand_e cmd)
     // Maybe the currently focused widget will handle this?
     if(Widget *focused = focusWidget())
     {
-        if(focused->cmdResponder)
-        {
-            if(int result = focused->cmdResponder(focused, cmd))
-                return result;
-        }
-        else
-        {
-            if(int result = focused->handleCommand(cmd))
-                return result;
-        }
+        if(int result = focused->cmdResponder(cmd))
+            return result;
     }
 
     // Maybe a custom command responder for the page?
@@ -889,7 +858,7 @@ int Page::handleCommand(menucommand_e cmd)
                     giveFocus = widgetCount() - 1;
                 else if(giveFocus >= widgetCount())
                     giveFocus = 0;
-            } while(++i < widgetCount() && (d->widgets[giveFocus]->flags() & (MNF_DISABLED | MNF_NO_FOCUS | MNF_HIDDEN)));
+            } while(++i < widgetCount() && (d->widgets[giveFocus]->flags() & (Widget::Disabled | Widget::NoFocus | Widget::Hidden)));
 
             if(giveFocus != indexOf(focusWidget()))
             {
@@ -918,14 +887,14 @@ int Page::handleCommand(menucommand_e cmd)
     return false; // Not handled.
 }
 
-void Page::setUserData(void *newUserData)
+void Page::setUserValue(QVariant const &newValue)
 {
-    d->userData = newUserData;
+    d->userValue = newValue;
 }
 
-void *Page::userData() const
+QVariant const &Page::userValue() const
 {
-    return d->userData;
+    return d->userValue;
 }
 
 } // namespace menu

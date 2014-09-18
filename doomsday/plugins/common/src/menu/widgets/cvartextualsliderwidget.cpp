@@ -127,7 +127,7 @@ CVarTextualSliderWidget::CVarTextualSliderWidget(char const *cvarPath, float min
     : CVarSliderWidget(cvarPath, min, max, step, floatMode)
     , d(new Instance(this))
 {
-    Widget::_pageColorIdx = MENU_COLOR3;
+    setColor(MENU_COLOR3);
 }
 
 CVarTextualSliderWidget::~CVarTextualSliderWidget()
@@ -144,8 +144,8 @@ void CVarTextualSliderWidget::draw(Point2Raw const *origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_SetFont(mnRendState->textFonts[_pageFontIdx]);
-    FR_SetColorAndAlphav(mnRendState->textColors[_pageColorIdx]);
+    FR_SetFont(mnRendState->textFonts[font()]);
+    FR_SetColorAndAlphav(mnRendState->textColors[color()]);
     FR_DrawTextXY3(valueAsText.toUtf8().constData(), 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -160,10 +160,10 @@ void CVarTextualSliderWidget::updateGeometry(Page *page)
 
     String const valueAsText = d->valueAsText();
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
     Size2Raw size; FR_TextSize(&size, valueAsText.toUtf8().constData());
 
-    Rect_SetWidthHeight(_geometry, size.width, size.height);
+    Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
 void CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)

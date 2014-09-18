@@ -48,8 +48,8 @@ SliderWidget::SliderWidget(float min, float max, float step, bool floatMode)
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 
     d->min       = min;
     d->max       = max;
@@ -225,22 +225,22 @@ void SliderWidget::updateGeometry(Page * /*page*/)
     if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
 
     int middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
-    Rect_SetWidthHeight(_geometry, middleWidth, info.geometry.size.height);
+    Rect_SetWidthHeight(geometry(), middleWidth, info.geometry.size.height);
 
     if(R_GetPatchInfo(pSliderLeft, &info))
     {
         info.geometry.origin.x = -info.geometry.size.width;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
     if(R_GetPatchInfo(pSliderRight, &info))
     {
         info.geometry.origin.x += middleWidth;
-        Rect_UniteRaw(_geometry, &info.geometry);
+        Rect_UniteRaw(geometry(), &info.geometry);
     }
 
-    Rect_SetWidthHeight(_geometry, .5f + Rect_Width (_geometry) * MNDATA_SLIDER_SCALE,
-                                   .5f + Rect_Height(_geometry) * MNDATA_SLIDER_SCALE);
+    Rect_SetWidthHeight(geometry(), .5f + Rect_Width (geometry()) * MNDATA_SLIDER_SCALE,
+                                    .5f + Rect_Height(geometry()) * MNDATA_SLIDER_SCALE);
 }
 
 } // namespace menu

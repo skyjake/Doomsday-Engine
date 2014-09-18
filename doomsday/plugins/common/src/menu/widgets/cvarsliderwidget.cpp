@@ -32,8 +32,8 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath, float min, float max, f
     : SliderWidget(min, max, step, floatMode)
     , _cvarPath(cvarPath)
 {
-    Widget::actions[MNA_MODIFIED].callback = CVarSliderWidget_UpdateCVar;
-    Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    setAction(MNA_MODIFIED, CVarSliderWidget_UpdateCVar);
+    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 }
 
 CVarSliderWidget::~CVarSliderWidget()

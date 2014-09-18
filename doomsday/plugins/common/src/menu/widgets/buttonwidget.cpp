@@ -34,15 +34,14 @@ DENG2_PIMPL_NOREF(ButtonWidget)
     String text;              ///< Label text.
     patchid_t patch = -1;     ///< Used when drawing this instead of text, if set.
     bool noAltText  = false;
-    QVariant data;
 };
 
 ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT2;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT2);
+    setColor(MENU_COLOR1);
 
     setText(text);
     setPatch(patch);
@@ -54,26 +53,22 @@ ButtonWidget::~ButtonWidget()
 void ButtonWidget::draw(Point2Raw const *origin)
 {
     DENG2_ASSERT(origin != 0);
-    //int dis   = (_flags & MNF_DISABLED) != 0;
-    //int act   = (_flags & MNF_ACTIVE)   != 0;
-    //int click = (_flags & MNF_CLICKED)  != 0;
-    //dd_bool down = act || click;
-    fontid_t const fontId = mnRendState->textFonts[_pageFontIdx];
-    float color[4], t = (_flags & MNF_FOCUS)? 1 : 0;
+    fontid_t const fontId = mnRendState->textFonts[font()];
+    float textColor[4], t = (isFocused()? 1 : 0);
 
-    // Flash if focused?
-    if((_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+    // Flash if focused.
+    if(isFocused() && cfg.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    lerpColor(color, mnRendState->textColors[_pageColorIdx], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-    color[CA] = mnRendState->textColors[_pageColorIdx][CA];
+    lerpColor(textColor, mnRendState->textColors[color()], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+    textColor[CA] = mnRendState->textColors[color()][CA];
 
     FR_SetFont(fontId);
-    FR_SetColorAndAlphav(color);
-    DGL_Color4f(1, 1, 1, color[CA]);
+    FR_SetColorAndAlphav(textColor);
+    DGL_Color4f(1, 1, 1, textColor[CA]);
 
     if(d->patch >= 0)
     {
@@ -100,9 +95,9 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
 {
     if(cmd == MCMD_SELECT)
     {
-        if(!(Widget::_flags & MNF_ACTIVE))
+        if(!isActive())
         {
-            Widget::_flags |= MNF_ACTIVE;
+            setFlags(Active);
             if(hasAction(MNA_ACTIVE))
             {
                 execAction(MNA_ACTIVE);
@@ -111,13 +106,12 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
 
         // We are not going to receive an "up event" so action that now.
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        Widget::_flags &= ~MNF_ACTIVE;
+        setFlags(Active, UnsetFlags);
         if(hasAction(MNA_ACTIVEOUT))
         {
             execAction(MNA_ACTIVEOUT);
         }
 
-        Widget::timer = 0;
         return true;
     }
 
@@ -127,10 +121,6 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
 void ButtonWidget::updateGeometry(Page *page)
 {
     DENG2_ASSERT(page != 0);
-    //int dis   = (_flags & MNF_DISABLED) != 0;
-    //int act   = (_flags & MNF_ACTIVE)   != 0;
-    //int click = (_flags & MNF_CLICKED)  != 0;
-    //dd_bool down = act || click;
     String useText = d->text;
     Size2Raw size;
 
@@ -148,16 +138,16 @@ void ButtonWidget::updateGeometry(Page *page)
             // Use the original patch.
             patchinfo_t info;
             R_GetPatchInfo(d->patch, &info);
-            Rect_SetWidthHeight(_geometry, info.geometry.size.width,
-                                           info.geometry.size.height);
+            Rect_SetWidthHeight(geometry(), info.geometry.size.width,
+                                            info.geometry.size.height);
             return;
         }
     }
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, useText.toUtf8().constData());
 
-    Rect_SetWidthHeight(_geometry, size.width, size.height);
+    Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
 String ButtonWidget::text() const
@@ -191,16 +181,6 @@ ButtonWidget &ButtonWidget::setNoAltText(bool yes)
 {
     d->noAltText = yes;
     return *this;
-}
-
-void ButtonWidget::setData(QVariant const &v)
-{
-    d->data = v;
-}
-
-QVariant const &ButtonWidget::data() const
-{
-    return d->data;
 }
 
 } // namespace menu

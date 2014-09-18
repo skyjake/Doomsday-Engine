@@ -21,6 +21,9 @@
 #ifndef LIBCOMMON_UI_PAGE
 #define LIBCOMMON_UI_PAGE
 
+#include <QList>
+#include <QVariant>
+#include <de/String>
 #include "widgets/widget.h"
 
 namespace common {
@@ -70,12 +73,10 @@ public:
      * ---
      * @param drawer
      * @param cmdResponder
-     * @param userData
      */
     Page(de::String name, Point2Raw const &origin = Point2Raw(), int flags = 0,
          OnDrawCallback drawer = 0,
-         CommandResponder cmdResponder = 0,
-         void *userData = 0);
+         CommandResponder cmdResponder = 0);
 
     virtual ~Page();
 
@@ -194,8 +195,8 @@ public:
 
     int handleCommand(menucommand_e cmd);
 
-    void setUserData(void *newUserData);
-    void *userData() const;
+    void setUserValue(QVariant const &newValue);
+    QVariant const &userValue() const;
 
 private:
     DENG2_PRIVATE(d)

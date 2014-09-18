@@ -33,9 +33,9 @@ CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMa
     , _cvarPath(cvarPath)
     , _cvarValueMask(cvarValueMask)
 {
-    Widget::_pageColorIdx  = MENU_COLOR3;
-    Widget::actions[Widget::MNA_MODIFIED].callback = CVarInlineListWidget_UpdateCVar;
-    Widget::actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    setColor(MENU_COLOR3);
+    setAction(MNA_MODIFIED, CVarInlineListWidget_UpdateCVar);
+    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 }
 
 CVarInlineListWidget::~CVarInlineListWidget()

@@ -21,7 +21,6 @@
 #ifndef LIBCOMMON_UI_BUTTONWIDGET
 #define LIBCOMMON_UI_BUTTONWIDGET
 
-#include <QVariant>
 #include "widget.h"
 
 namespace common {
@@ -48,9 +47,6 @@ public:
 
     ButtonWidget &setNoAltText(bool yes = true);
     bool noAltText() const;
-
-    void setData(QVariant const &d);
-    QVariant const &data() const;
 
 private:
     DENG2_PRIVATE(d)

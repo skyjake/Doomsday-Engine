@@ -46,8 +46,8 @@ LineEditWidget::LineEditWidget()
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 }
 
 LineEditWidget::~LineEditWidget()
@@ -102,7 +102,7 @@ void LineEditWidget::draw(Point2Raw const *_origin)
 {
     DENG2_ASSERT(_origin != 0);
 
-    fontid_t fontId = mnRendState->textFonts[_pageFontIdx];
+    fontid_t fontId = mnRendState->textFonts[font()];
 
     Point2Raw origin(_origin->x + MNDATA_EDIT_OFFSET_X, _origin->y + MNDATA_EDIT_OFFSET_Y);
 
@@ -112,7 +112,7 @@ void LineEditWidget::draw(Point2Raw const *_origin)
     {
         useText = d->text;
     }
-    else if(!((Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS)))
+    else if(!((flags() & Active) && (flags() & Focused)))
     {
         useText = d->emptyText;
         light *= .5f;
@@ -126,31 +126,31 @@ void LineEditWidget::draw(Point2Raw const *_origin)
 
     drawEditBackground(this, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
                              origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y,
-                       Rect_Width(_geometry), mnRendState->pageAlpha);
+                       Rect_Width(geometry()), mnRendState->pageAlpha);
 
     //if(string)
     {
-        float color[4], t = 0;
+        float textColor[4], t = 0;
 
         // Flash if focused?
-        if(!(Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS) && cfg.menuTextFlashSpeed > 0)
+        if(!(flags() & Active) && (flags() & Focused) && cfg.menuTextFlashSpeed > 0)
         {
             float const speed = cfg.menuTextFlashSpeed / 2.f;
-            t = (1 + sin(_page->timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+            t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
-        lerpColor(color, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-        color[CA] = textAlpha;
+        lerpColor(textColor, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
+        textColor[CA] = textAlpha;
 
         // Light the text.
-        color[CR] *= light; color[CG] *= light; color[CB] *= light;
+        textColor[CR] *= light; textColor[CG] *= light; textColor[CB] *= light;
 
         // Draw the text:
-        FR_SetColorAndAlphav(color);
+        FR_SetColorAndAlphav(textColor);
         FR_DrawText3(useText.toUtf8().constData(), &origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
-        if((Widget::_flags & MNF_ACTIVE) && (Widget::_flags & MNF_FOCUS) && (menuTime & 8) &&
+        if((flags() & Active) && (flags() & Focused) && (menuTime & 8) &&
            (!d->maxLength || d->text.length() < d->maxLength))
         {
             origin.x += FR_TextWidth(useText.toUtf8().constData());
@@ -218,7 +218,7 @@ int LineEditWidget::handleEvent(event_t *ev)
 {
     DENG2_ASSERT(ev != 0);
 
-    if(!(Widget::_flags & MNF_ACTIVE) || ev->type != EV_KEY)
+    if(!isActive() || ev->type != EV_KEY)
         return false;
 
     if(DDKEY_RSHIFT == ev->data1)
@@ -273,11 +273,10 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
 {
     if(cmd == MCMD_SELECT)
     {
-        if(!(Widget::_flags & MNF_ACTIVE))
+        if(!isActive())
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            Widget::_flags |= MNF_ACTIVE;
-            Widget::timer = 0;
+            setFlags(Active);
             // Store a copy of the present text value so we can restore it.
             d->oldText = d->text;
             if(hasAction(MNA_ACTIVE))
@@ -289,7 +288,7 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             d->oldText = d->text;
-            Widget::_flags &= ~MNF_ACTIVE;
+            setFlags(Active, UnsetFlags);
             if(hasAction(MNA_ACTIVEOUT))
             {
                 execAction(MNA_ACTIVEOUT);
@@ -298,13 +297,13 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
         return true;
     }
 
-    if(Widget::_flags & MNF_ACTIVE)
+    if(isActive())
     {
         switch(cmd)
         {
         case MCMD_NAV_OUT:
             d->text = d->oldText;
-            Widget::_flags &= ~MNF_ACTIVE;
+            setFlags(Active, UnsetFlags);
             if(hasAction(MNA_CLOSE))
             {
                 execAction(MNA_CLOSE);
@@ -330,7 +329,7 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
 void LineEditWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly.
-    Rect_SetWidthHeight(_geometry, 170, 14);
+    Rect_SetWidthHeight(geometry(), 170, 14);
 }
 
 } // namespace menu

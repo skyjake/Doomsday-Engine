@@ -32,8 +32,8 @@ CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
     : LineEditWidget()
     , _cvarPath(cvarPath)
 {
-    Widget::actions[MNA_MODIFIED].callback = CVarLineEditWidget_UpdateCVar;
-    Widget::actions[MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    setAction(MNA_MODIFIED, CVarLineEditWidget_UpdateCVar);
+    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 }
 
 CVarLineEditWidget::~CVarLineEditWidget()

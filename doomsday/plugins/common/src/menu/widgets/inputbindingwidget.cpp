@@ -167,8 +167,8 @@ InputBindingWidget::InputBindingWidget()
     : Widget()
     , binds(0)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 }
 
 static void drawSmallText(char const *string, int x, int y, float alpha)
@@ -292,7 +292,7 @@ int InputBindingWidget::handleCommand(menucommand_e cmd)
 
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
-        Widget::_flags |= MNF_ACTIVE;
+        setFlags(Active);
         if(hasAction(MNA_ACTIVE))
         {
             execAction(MNA_ACTIVE);
@@ -309,7 +309,7 @@ int InputBindingWidget::handleCommand(menucommand_e cmd)
 void InputBindingWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly!
-    Rect_SetWidthHeight(_geometry, 60, 10 * SMALL_SCALE);
+    Rect_SetWidthHeight(geometry(), 60, 10 * SMALL_SCALE);
 }
 
 int InputBindingWidget::handleEvent_Privileged(event_t *ev)
@@ -317,7 +317,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t *ev)
     DENG2_ASSERT(ev != 0);
 
     // We're interested in key or button down events.
-    if((Widget::_flags & MNF_ACTIVE) && ev->type == EV_SYMBOLIC)
+    if(isActive() && ev->type == EV_SYMBOLIC)
     {
         char const *bindContext = "game";
         char const *symbol = 0;
@@ -430,7 +430,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t *ev)
         DD_Execute(true, cmd);
 
         // We've finished the grab.
-        Widget::_flags &= ~MNF_ACTIVE;
+        setFlags(Active, UnsetFlags);
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

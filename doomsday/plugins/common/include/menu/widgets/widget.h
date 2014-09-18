@@ -22,6 +22,9 @@
 #define LIBCOMMON_UI_WIDGET
 
 #include "doomsday.h"
+
+#include <QFlags>
+#include <QVariant>
 #include <de/String>
 #include "common.h"
 #include "hu_lib.h"
@@ -32,42 +35,6 @@ namespace menu {
 class Page;
 
 /**
- * @defgroup menuObjectFlags Menu Object Flags
- */
-///@{
-#define MNF_HIDDEN              0x1
-#define MNF_DISABLED            0x2     ///< Can't be interacted with.
-#define MNF_PAUSED              0x4     ///< Ticker not called.
-#define MNF_CLICKED             0x8
-#define MNF_ACTIVE              0x10    ///< Object active.
-#define MNF_FOCUS               0x20    ///< Has focus.
-#define MNF_NO_FOCUS            0x40    ///< Can't receive focus.
-#define MNF_DEFAULT             0x80    ///< Has focus by default.
-#define MNF_POSITION_FIXED      0x100   ///< XY position is fixed and predefined; automatic layout does not apply.
-#define MNF_LAYOUT_OFFSET       0x200   ///< Predefined XY position is applied to the dynamic layout origin.
-//#define MNF_LEFT_ALIGN          0x100
-//#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
-//#define MNF_NEVER_FADE          0x400
-
-/// @todo We need a new dynamic id allocating mechanism.
-#define MNF_ID7                 0x1000000
-#define MNF_ID6                 0x2000000
-#define MNF_ID5                 0x4000000
-#define MNF_ID4                 0x8000000
-#define MNF_ID3                 0x10000000
-#define MNF_ID2                 0x20000000
-#define MNF_ID1                 0x40000000
-#define MNF_ID0                 0x80000000
-///@}
-
-enum flagop_t
-{
-    FO_CLEAR,
-    FO_SET,
-    FO_TOGGLE
-};
-
-/**
  * Base class from which all menu widgets must be derived.
  *
  * @ingroup menu
@@ -75,6 +42,33 @@ enum flagop_t
 class Widget
 {
 public:
+    enum Flag
+    {
+        Hidden        = 0x1,
+        Disabled      = 0x2,    ///< Currently disabled (non-interactive).
+        Paused        = 0x4,    ///< Paused widgets do not tick.
+
+        Active        = 0x10,   ///< In the active state (meaning is widget specific).
+        Focused       = 0x20,   ///< Currently focused.
+        NoFocus       = 0x40,   ///< Can never receive focus.
+        DefaultFocus  = 0x80,   ///< Has focus by default.
+        PositionFixed = 0x100,  ///< XY position is fixed and predefined; automatic layout does not apply.
+        LayoutOffset  = 0x200,  ///< Predefined XY position is applied to the dynamic layout origin.
+
+        /// @todo We need a new dynamic id mechanism.
+        Id7           = 0x1000000,
+        Id6           = 0x2000000,
+        Id5           = 0x4000000,
+        Id4           = 0x8000000,
+        Id3           = 0x10000000,
+        Id2           = 0x20000000,
+        Id1           = 0x40000000,
+        Id0           = 0x80000000,
+
+        DefaultFlags  = 0
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
     /**
      * Logical Menu (object) Action identifiers. Associated with/to events which
      * produce/result-in callbacks made either automatically by this subsystem,
@@ -106,39 +100,12 @@ public:
         ///
         /// @param ob      Object being referenced for this callback.
         /// @param action  Identifier of the Menu Action to be processed.
-        void (*callback) (Widget *wi, mn_actionid_t action);
+        typedef void (*ActionCallback) (Widget *wi, mn_actionid_t action);
+        ActionCallback callback;
     };
 
-public:
-    int _flags;        ///< @ref menuObjectFlags.
-
-    /// Used with the fixed layout method for positioning this object in
-    /// the owning page's coordinate space.
-    Point2Raw _origin;
-
-    /// DDKEY shortcut used to switch focus to this object directly.
-    /// @c 0= no shortcut defined.
-    int _shortcut;
-
-    int _pageFontIdx;  ///< Index of the predefined page font to use when drawing this.
-    int _pageColorIdx; ///< Index of the predefined page color to use when drawing this.
-
-    mn_actioninfo_t actions[MNACTION_COUNT];
-
-    void (*onTickCallback) (Widget *wi);
-
-    /// Respond to the given (menu) @a command. Can be @c NULL.
-    /// @return  @c true if the command is eaten.
-    int (*cmdResponder) (Widget *wi, menucommand_e command);
-
-    // Extra property values.
-    void *data1;
-    int data2;
-
-    Rect *_geometry;  ///< Current geometry.
-    Page *_page;      ///< MenuPage which owns this object (if any).
-
-    int timer;
+    typedef void (*OnTickCallback) (Widget *);
+    typedef int (*CommandResponder) (Widget *, menucommand_e);
 
 public:
     Widget();
@@ -165,18 +132,47 @@ public:
     /// @return  @c true if the command was eaten.
     virtual int handleCommand(menucommand_e command);
 
+    /// Configure a custom command responder to override the default mechanism.
+    void setCommandResponder(CommandResponder newResponder);
+
+    /// Delegate handling of @a command to the relevant responder.
+
+    /// @return  @c true if the command was eaten.
+    int cmdResponder(menucommand_e command);
+
     /// Process time (the "tick") for this object.
     virtual void tick();
 
+    void setOnTickCallback(OnTickCallback newCallback);
+
     bool hasPage() const;
+
+    /**
+     * Change the Page attributed to the widget to @a newPage. Not that this will only
+     * affect the Widget > Page side of the relationship.
+     *
+     * @param newPage  New Page to attribute. Use @c 0 to clear. Ownership unaffected.
+     */
+    void setPage(Page *newPage);
 
     Page &page() const;
 
     inline Page *pagePtr() const { return hasPage()? &page() : 0; }
 
-    int flags() const;
+    /**
+     * Sets or clears one or more flags.
+     *
+     * @param flags      Flags to modify.
+     * @param operation  Operation to perform on the flags.
+     */
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    Flags flags() const;
 
-    Widget &setFlags(flagop_t op, int flags);
+    inline bool isActive()   const { return flags() & Active;   }
+    inline bool isFocused()  const { return flags() & Focused;  }
+    inline bool isHidden()   const { return flags() & Hidden;   }
+    inline bool isDisabled() const { return flags() & Disabled; }
+    inline bool isPaused()   const { return flags() & Paused;   }
 
     /**
      * Retrieve the current geometry of object within the two-dimensioned
@@ -184,6 +180,7 @@ public:
      *
      * @return  Rectangluar region of the parent space.
      */
+    Rect *geometry();
     Rect const *geometry() const;
 
     /**
@@ -227,11 +224,11 @@ public:
     int shortcut();
     Widget &setShortcut(int ddkey);
 
-    /// @return  Index of the color used from the owning/active page.
-    int color();
+    void setColor(int newPageColor);
+    int color() const;
 
-    /// @return  Index of the font used from the owning/active page.
-    int font();
+    void setFont(int newPageFont);
+    int font() const;
 
     de::String const &helpInfo() const;
     Widget &setHelpInfo(de::String newHelpInfo);
@@ -240,6 +237,8 @@ public:
     /// @return  @c true if this object has a registered executeable action
     /// associated with the unique identifier @a action.
     bool hasAction(mn_actionid_t action);
+
+    void setAction(mn_actionid_t action, mn_actioninfo_t::ActionCallback callback);
 
     /**
      * Lookup the unique ActionInfo associated with the identifier @a id.
@@ -254,9 +253,17 @@ public:
      */
     void execAction(mn_actionid_t action);
 
+    void setUserValue(QVariant const &newValue);
+    QVariant const &userValue() const;
+
+    void setUserValue2(QVariant const &newValue);
+    QVariant const &userValue2() const;
+
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Flags)
 
 } // namespace menu
 } // namespace common

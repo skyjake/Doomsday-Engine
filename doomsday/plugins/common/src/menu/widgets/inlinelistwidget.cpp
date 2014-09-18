@@ -39,8 +39,8 @@ void InlineListWidget::draw(Point2Raw const *origin)
     Item const *item = items()[selection()];
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_SetFont(mnRendState->textFonts[_pageFontIdx]);
-    FR_SetColorAndAlphav(mnRendState->textColors[_pageColorIdx]);
+    FR_SetFont(mnRendState->textFonts[font()]);
+    FR_SetColorAndAlphav(mnRendState->textColors[color()]);
     FR_DrawText3(item->text().toUtf8().constData(), origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -93,9 +93,9 @@ void InlineListWidget::updateGeometry(Page *page)
     Item *item = items()[selection()];
     Size2Raw size;
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(_pageFontIdx)));
+    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, item->text().toUtf8().constData());
-    Rect_SetWidthHeight(_geometry, size.width, size.height);
+    Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
 } // namespace menu

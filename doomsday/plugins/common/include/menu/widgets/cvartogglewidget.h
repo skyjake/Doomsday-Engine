@@ -32,6 +32,10 @@ namespace menu {
 class CVarToggleWidget : public ButtonWidget
 {
 public:
+    void *data1;
+    int data2;
+
+public:
     CVarToggleWidget(char const *cvarPath);
     virtual ~CVarToggleWidget();
 

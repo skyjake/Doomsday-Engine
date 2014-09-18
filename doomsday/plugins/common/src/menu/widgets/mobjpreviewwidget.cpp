@@ -41,8 +41,9 @@ MobjPreviewWidget::MobjPreviewWidget()
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
+    setFlags(NoFocus); // never focusable.
 }
 
 MobjPreviewWidget::~MobjPreviewWidget()
@@ -155,7 +156,7 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
 void MobjPreviewWidget::updateGeometry(Page * /*page*/)
 {
     // @todo calculate visible dimensions properly!
-    Rect_SetWidthHeight(_geometry, MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
+    Rect_SetWidthHeight(geometry(), MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
 }
 
 } // namespace menu

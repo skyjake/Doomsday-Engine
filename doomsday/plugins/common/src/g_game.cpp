@@ -261,9 +261,10 @@ static void initSaveSlots()
 
     // Setup the logical save slot bindings.
     uint const gameMenuSaveSlotWidgetIds[NUMSAVESLOTS] = {
-        MNF_ID0, MNF_ID1, MNF_ID2, MNF_ID3, MNF_ID4, MNF_ID5,
+        menu::Widget::Id0, menu::Widget::Id1, menu::Widget::Id2,
+        menu::Widget::Id3, menu::Widget::Id4, menu::Widget::Id5,
 #if !__JHEXEN__
-        MNF_ID6, MNF_ID7
+        menu::Widget::Id6, menu::Widget::Id7
 #endif
     };
     for(int i = 0; i < NUMSAVESLOTS; ++i)

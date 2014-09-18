@@ -33,8 +33,8 @@ CVarColorPreviewWidget::CVarColorPreviewWidget(char const *redCVarPath, char con
     char const *blueCVarPath, char const *alphaCVarPath, Vector4f const &color, bool rgbaMode)
     : ColorPreviewWidget(color, rgbaMode)
 {
-    Widget::actions[Widget::MNA_MODIFIED].callback = CVarColorPreviewWidget_UpdateCVar;
-    Widget::actions[Widget::MNA_FOCUS   ].callback = Hu_MenuDefaultFocusAction;
+    setAction(MNA_MODIFIED, CVarColorPreviewWidget_UpdateCVar);
+    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 
     _cvarPaths[0] = redCVarPath;
     _cvarPaths[1] = greenCVarPath;

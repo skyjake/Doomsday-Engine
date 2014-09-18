@@ -38,8 +38,8 @@ RectWidget::RectWidget(patchid_t backgroundPatch)
     : Widget()
     , d(new Instance)
 {
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
+    setFont(MENU_FONT1);
+    setColor(MENU_COLOR1);
 
     setBackgroundPatch(backgroundPatch);
 }
@@ -87,7 +87,7 @@ void RectWidget::updateGeometry(Page * /*page*/)
             std::memcpy(&d->dimensions, &info.geometry.size, sizeof(d->dimensions));
         }
     }
-    Rect_SetWidthHeight(Widget::_geometry, d->dimensions.width, d->dimensions.height);
+    Rect_SetWidthHeight(geometry(), d->dimensions.width, d->dimensions.height);
 }
 
 void RectWidget::setBackgroundPatch(patchid_t newBackgroundPatch)
