@@ -68,10 +68,11 @@ void SliderWidget::loadResources() // static
     pSliderHandle = R_DeclarePatch(MNDATA_SLIDER_PATCH_HANDLE);
 }
 
-void SliderWidget::setValue(float newValue, int /*flags*/)
+SliderWidget &SliderWidget::setValue(float newValue, int /*flags*/)
 {
     if(d->floatMode) d->value = newValue;
     else             d->value = int( newValue + (newValue > 0? + .5f : -.5f) );
+    return *this;
 }
 
 float SliderWidget::value() const
@@ -83,11 +84,12 @@ float SliderWidget::value() const
     return int( d->value + (d->value > 0? .5f : -.5f) );
 }
 
-void SliderWidget::setRange(float newMin, float newMax, float newStep)
+SliderWidget &SliderWidget::setRange(float newMin, float newMax, float newStep)
 {
     d->min  = newMin;
     d->max  = newMax;
     d->step = newStep;
+    return *this;
 }
 
 float SliderWidget::min() const
@@ -105,9 +107,10 @@ float SliderWidget::step() const
     return d->step;
 }
 
-void SliderWidget::setFloatMode(bool yes)
+SliderWidget &SliderWidget::setFloatMode(bool yes)
 {
     d->floatMode = yes;
+    return *this;
 }
 
 bool SliderWidget::floatMode() const

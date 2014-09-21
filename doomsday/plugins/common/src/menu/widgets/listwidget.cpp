@@ -78,9 +78,16 @@ ListWidget::ListWidget()
 ListWidget::~ListWidget()
 {}
 
-ListWidget::Items &ListWidget::items()
+ListWidget &ListWidget::addItem(Item *item)
 {
-    return d->items;
+    if(item) d->items << item;
+    return *this;
+}
+
+ListWidget &ListWidget::addItems(Items const &itemsToAdd)
+{
+    for(Item *item : itemsToAdd) addItem(item);
+    return *this;
 }
 
 ListWidget::Items const &ListWidget::items() const

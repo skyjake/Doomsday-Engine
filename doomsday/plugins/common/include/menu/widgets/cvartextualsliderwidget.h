@@ -42,13 +42,13 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
 
-    void setEmptyText(de::String const &newEmptyText);
+    CVarTextualSliderWidget &setEmptyText(de::String const &newEmptyText);
     de::String emptyText() const;
 
-    void setOnethSuffix(de::String const &newOnethSuffix);
+    CVarTextualSliderWidget &setOnethSuffix(de::String const &newOnethSuffix);
     de::String onethSuffix() const;
 
-    void setNthSuffix(de::String const &newNthSuffix);
+    CVarTextualSliderWidget &setNthSuffix(de::String const &newNthSuffix);
     de::String nthSuffix() const;
 
 private:

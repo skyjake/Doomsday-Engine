@@ -133,7 +133,7 @@ public:
     virtual int handleCommand(menucommand_e command);
 
     /// Configure a custom command responder to override the default mechanism.
-    void setCommandResponder(CommandResponder newResponder);
+    Widget &setCommandResponder(CommandResponder newResponder);
 
     /// Delegate handling of @a command to the relevant responder.
 
@@ -143,7 +143,7 @@ public:
     /// Process time (the "tick") for this object.
     virtual void tick();
 
-    void setOnTickCallback(OnTickCallback newCallback);
+    Widget &setOnTickCallback(OnTickCallback newCallback);
 
     bool hasPage() const;
 
@@ -153,7 +153,7 @@ public:
      *
      * @param newPage  New Page to attribute. Use @c 0 to clear. Ownership unaffected.
      */
-    void setPage(Page *newPage);
+    Widget &setPage(Page *newPage);
 
     Page &page() const;
 
@@ -164,8 +164,10 @@ public:
      *
      * @param flags      Flags to modify.
      * @param operation  Operation to perform on the flags.
+     *
+     * @return  Reference to this Widget.
      */
-    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    Widget &setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
     Flags flags() const;
 
     inline bool isActive()   const { return flags() & Active;   }
@@ -212,22 +214,22 @@ public:
      *
      * @param ob  MNObject-derived instance.
      * @param origin  New origin coordinates.
-     * @return  Same as @a ob for caller convenience.
+     * @return  Reference to this Widget.
      */
     Widget &setFixedOrigin(Point2Raw const *origin);
     Widget &setFixedX(int x);
     Widget &setFixedY(int y);
 
-    int group() const;
     Widget &setGroup(int newGroup);
+    int group() const;
 
-    int shortcut();
     Widget &setShortcut(int ddkey);
+    int shortcut();
 
-    void setColor(int newPageColor);
+    Widget &setColor(int newPageColor);
     int color() const;
 
-    void setFont(int newPageFont);
+    Widget &setFont(int newPageFont);
     int font() const;
 
     de::String const &helpInfo() const;
@@ -238,7 +240,7 @@ public:
     /// associated with the unique identifier @a action.
     bool hasAction(mn_actionid_t action);
 
-    void setAction(mn_actionid_t action, mn_actioninfo_t::ActionCallback callback);
+    Widget &setAction(mn_actionid_t action, mn_actioninfo_t::ActionCallback callback);
 
     /**
      * Lookup the unique ActionInfo associated with the identifier @a id.
@@ -253,10 +255,10 @@ public:
      */
     void execAction(mn_actionid_t action);
 
-    void setUserValue(QVariant const &newValue);
+    Widget &setUserValue(QVariant const &newValue);
     QVariant const &userValue() const;
 
-    void setUserValue2(QVariant const &newValue);
+    Widget &setUserValue2(QVariant const &newValue);
     QVariant const &userValue2() const;
 
 private:

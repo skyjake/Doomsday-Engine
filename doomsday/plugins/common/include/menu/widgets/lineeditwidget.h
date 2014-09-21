@@ -71,7 +71,7 @@ public:
     int handleEvent(event_t *ev);
     int handleCommand(menucommand_e command);
 
-    void setMaxLength(int newMaxLength);
+    LineEditWidget &setMaxLength(int newMaxLength);
     int maxLength() const;
 
     /**
@@ -79,14 +79,14 @@ public:
      * @param newText  New text value.
      * @param flags    @ref mneditSetTextFlags
      */
-    void setText(de::String const &newText, int flags = MNEDIT_STF_NO_ACTION);
+    LineEditWidget &setText(de::String const &newText, int flags = MNEDIT_STF_NO_ACTION);
 
     /**
      * Returns a copy of the current editable value.
      */
     de::String text() const;
 
-    void setEmptyText(de::String const &newEmptyText);
+    LineEditWidget &setEmptyText(de::String const &newEmptyText);
     de::String emptyText() const;
 
 public:

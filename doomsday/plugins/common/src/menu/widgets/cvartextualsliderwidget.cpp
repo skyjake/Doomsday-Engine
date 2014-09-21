@@ -166,9 +166,10 @@ void CVarTextualSliderWidget::updateGeometry(Page *page)
     Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
-void CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)
 {
     d->emptyText = newEmptyText;
+    return *this;
 }
 
 String CVarTextualSliderWidget::emptyText() const
@@ -176,9 +177,10 @@ String CVarTextualSliderWidget::emptyText() const
     return d->emptyText;
 }
 
-void CVarTextualSliderWidget::setOnethSuffix(String const &newOnethSuffix)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setOnethSuffix(String const &newOnethSuffix)
 {
     d->onethSuffix = newOnethSuffix;
+    return *this;
 }
 
 String CVarTextualSliderWidget::onethSuffix() const
@@ -186,9 +188,10 @@ String CVarTextualSliderWidget::onethSuffix() const
     return d->onethSuffix;
 }
 
-void CVarTextualSliderWidget::setNthSuffix(String const &newNthSuffix)
+CVarTextualSliderWidget &CVarTextualSliderWidget::setNthSuffix(String const &newNthSuffix)
 {
     d->nthSuffix = newNthSuffix;
+    return *this;
 }
 
 String CVarTextualSliderWidget::nthSuffix() const

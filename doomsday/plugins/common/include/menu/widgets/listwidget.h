@@ -72,7 +72,16 @@ public:
     void updateGeometry(Page *pagePtr);
     int handleCommand(menucommand_e command);
 
-    Items &items();
+    /**
+     * Add an Item to the ListWidget. Ownership of the Item is given to ListWidget.
+     */
+    ListWidget &addItem(Item *item);
+
+    /**
+     * Add set of Items to the ListWidget in order. Ownership of the Items is given to ListWidget.
+     */
+    ListWidget &addItems(Items const &itemsToAdd);
+
     Items const &items() const;
 
     inline int itemCount() const { return items().count(); }

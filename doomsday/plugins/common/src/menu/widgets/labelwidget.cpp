@@ -110,14 +110,16 @@ void LabelWidget::updateGeometry(Page *page)
     Rect_SetWidthHeight(geometry(), size.width, size.height);
 }
 
-void LabelWidget::setPatch(patchid_t *newPatch)
+LabelWidget &LabelWidget::setPatch(patchid_t *newPatch)
 {
     d->patch = newPatch;
+    return *this;
 }
 
-void LabelWidget::setText(String const &newText)
+LabelWidget &LabelWidget::setText(String const &newText)
 {
     d->text = newText;
+    return *this;
 }
 
 } // namespace menu

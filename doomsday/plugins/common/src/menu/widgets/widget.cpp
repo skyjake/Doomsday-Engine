@@ -76,9 +76,10 @@ int Widget::handleEvent_Privileged(event_t * /*ev*/)
     return 0; // Not handled.
 }
 
-void Widget::setCommandResponder(CommandResponder newResponder)
+Widget &Widget::setCommandResponder(CommandResponder newResponder)
 {
     d->cmdResponder = newResponder;
+    return *this;
 }
 
 int Widget::cmdResponder(menucommand_e command)
@@ -111,9 +112,10 @@ void Widget::tick()
     }
 }
 
-void Widget::setOnTickCallback(OnTickCallback newCallback)
+Widget &Widget::setOnTickCallback(OnTickCallback newCallback)
 {
     d->onTickCallback = newCallback;
+    return *this;
 }
 
 bool Widget::hasPage() const
@@ -121,9 +123,10 @@ bool Widget::hasPage() const
     return d->page != 0;
 }
 
-void Widget::setPage(Page *newPage)
+Widget &Widget::setPage(Page *newPage)
 {
     d->page = newPage;
+    return *this;
 }
 
 Page &Widget::page() const
@@ -177,9 +180,10 @@ Widget &Widget::setFixedY(int newY)
     return *this;
 }
 
-void Widget::setFlags(Flags flagsToChange, FlagOp operation)
+Widget &Widget::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
+    return *this;
 }
 
 int Widget::group() const
@@ -207,9 +211,10 @@ Widget &Widget::setShortcut(int ddkey)
     return *this;
 }
 
-void Widget::setFont(int newPageFont)
+Widget &Widget::setFont(int newPageFont)
 {
     d->pageFontIdx = newPageFont;
+    return *this;
 }
 
 int Widget::font() const
@@ -217,9 +222,10 @@ int Widget::font() const
     return d->pageFontIdx;
 }
 
-void Widget::setColor(int newPageColor)
+Widget &Widget::setColor(int newPageColor)
 {
     d->pageColorIdx = newPageColor;
+    return *this;
 }
 
 int Widget::color() const
@@ -274,10 +280,11 @@ bool Widget::hasAction(mn_actionid_t id)
     return (info && info->callback != 0);
 }
 
-void Widget::setAction(mn_actionid_t id, mn_actioninfo_t::ActionCallback callback)
+Widget &Widget::setAction(mn_actionid_t id, mn_actioninfo_t::ActionCallback callback)
 {
     DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
     d->actions[id].callback = callback;
+    return *this;
 }
 
 void Widget::execAction(mn_actionid_t id)
@@ -290,9 +297,10 @@ void Widget::execAction(mn_actionid_t id)
     DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
 }
 
-void Widget::setUserValue(QVariant const &newValue)
+Widget &Widget::setUserValue(QVariant const &newValue)
 {
     d->userValue = newValue;
+    return *this;
 }
 
 QVariant const &Widget::userValue() const
@@ -300,9 +308,10 @@ QVariant const &Widget::userValue() const
     return d->userValue;
 }
 
-void Widget::setUserValue2(QVariant const &newValue)
+Widget &Widget::setUserValue2(QVariant const &newValue)
 {
     d->userValue2 = newValue;
+    return *this;
 }
 
 QVariant const &Widget::userValue2() const

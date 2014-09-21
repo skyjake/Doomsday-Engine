@@ -169,9 +169,12 @@ String Page::name() const
     return d->name;
 }
 
-Page::Widgets &Page::widgets()
+Widget &Page::addWidget(Widget *widget)
 {
-    return d->widgets;
+    DENG2_ASSERT(widget != 0);
+    d->widgets << widget;
+    widget->setPage(this);
+    return *widget;
 }
 
 Page::Widgets const &Page::widgets() const
@@ -713,7 +716,6 @@ void Page::initWidgets()
 {
     for(Widget *wi : d->widgets)
     {
-        wi->setPage(this);
         wi->setFlags(Widget::Focused, UnsetFlags);
     }
 }

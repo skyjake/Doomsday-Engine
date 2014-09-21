@@ -277,14 +277,14 @@ void Hu_MenuInitControlsPage()
             // A new group begins.
             label->setGroup(++group);
 
-            page->widgets() << label;
+            page->addWidget(label);
         }
         else
         {
             LabelWidget *label = new LabelWidget(labelText);
             label->setGroup(group);
 
-            page->widgets() << label;
+            page->addWidget(label);
 
             InputBindingWidget *binding = new InputBindingWidget;
             binding->binds = binds;
@@ -292,7 +292,7 @@ void Hu_MenuInitControlsPage()
             binding->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateBindingsGrab);
             binding->setAction(Widget::MNA_FOCUS,  Hu_MenuDefaultFocusAction);
 
-            page->widgets() << binding;
+            page->addWidget(binding);
         }
     }
 }

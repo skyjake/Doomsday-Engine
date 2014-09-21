@@ -57,8 +57,10 @@ public:
      * Change the dimensions of the preview area (in fixed 320x200 space).
      *
      * @param newDimensions  New dimensions of the preview area.
+     *
+     * @return  Reference to this ColorPreviewWidget.
      */
-    void setPreviewDimensions(de::Vector2i const &newDimensions);
+    ColorPreviewWidget &setPreviewDimensions(de::Vector2i const &newDimensions);
 
     /**
      * Returns the dimensions of the preview area (in fixed 320x200 space).
@@ -86,14 +88,14 @@ public:
      * @param newColor  New color and alpha.
      * @param flags     @ref mncolorboxSetColorFlags
      *
-     * @return  @c true if the current color changed.
+     * @return  Reference to this ColorPreviewWidget.
      */
-    bool setColor(de::Vector4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorPreviewWidget &setColor(de::Vector4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
-    bool setRed  (float red,   int flags = MNCOLORBOX_SCF_NO_ACTION);
-    bool setGreen(float green, int flags = MNCOLORBOX_SCF_NO_ACTION);
-    bool setBlue (float blue,  int flags = MNCOLORBOX_SCF_NO_ACTION);
-    bool setAlpha(float alpha, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorPreviewWidget &setRed  (float newRed,   int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorPreviewWidget &setGreen(float newGreen, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorPreviewWidget &setBlue (float newBlue,  int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorPreviewWidget &setAlpha(float newAlpha, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
 private:
     DENG2_PRIVATE(d)

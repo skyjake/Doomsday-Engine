@@ -80,15 +80,44 @@ public:
 
     virtual ~Page();
 
-
     /**
      * Returns the symbolic name/identifier of the page.
      */
     de::String name() const;
 
-    Widgets &widgets();
+    /**
+     * Adds a widget object as a child widget of the Page and sets up the Widget -> Page
+     * relationship. The object must be an instance of a class derived from Widget.
+     *
+     * @param widget  Widget object to add to the Page. The Page takes ownership.
+     *
+     * @return  Reference to @a widget, for caller convenience.
+     */
+    template <typename WidgetType>
+    inline WidgetType &addWidget(WidgetType *widget) {
+        DENG2_ASSERT(widget != 0);
+        addWidget(static_cast<Widget *>(widget));
+        return *widget;
+    }
+
+    /**
+     * Adds a Widget instance as a child widget of the Page and sets up the Widget -> Page
+     * relationship.
+     *
+     * @param widget  Widget to add to the Page. The Page takes ownership.
+     *
+     * @return  Reference to @a widget, for caller convenience.
+     */
+    Widget &addWidget(Widget *widget);
+
+    /**
+     * Provides access to the list of child widgets of the Page, for efficient traversal.
+     */
     Widgets const &widgets() const;
 
+    /**
+     * Returns the total number of child widgets of the Page.
+     */
     inline int widgetCount() const { return widgets().count(); }
 
     void setTitle(de::String const &newTitle);

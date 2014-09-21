@@ -48,8 +48,8 @@ public:
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
 
-    void setPatch(patchid_t *newPatch);
-    void setText(de::String const &newText);
+    LabelWidget &setPatch(patchid_t *newPatch);
+    LabelWidget &setText(de::String const &newText);
 
 private:
     DENG2_PRIVATE(d)

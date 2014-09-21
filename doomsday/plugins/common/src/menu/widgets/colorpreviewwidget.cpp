@@ -29,16 +29,84 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL_NOREF(ColorPreviewWidget)
+DENG2_PIMPL(ColorPreviewWidget)
 {
     bool rgbaMode       = false;
     Vector4f color      = Vector4f(0, 0, 0, 1.f);
     Vector2i dimensions = Vector2i(MNDATA_COLORBOX_WIDTH, MNDATA_COLORBOX_HEIGHT);  ///< Inner dimensions in fixed 320x200 space.
+
+    Instance(Public *i) : Base(i) {}
+
+    bool setRed(float red, int flags)
+    {
+        float const oldRed = color.x;
+
+        color.x = red;
+        if(color.x != oldRed)
+        {
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            {
+                self.execAction(MNA_MODIFIED);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool setGreen(float green, int flags)
+    {
+        float const oldGreen = color.y;
+
+        color.y = green;
+        if(color.y != oldGreen)
+        {
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            {
+                self.execAction(MNA_MODIFIED);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool setBlue(float blue, int flags)
+    {
+        float const oldBlue = color.z;
+
+        color.z = blue;
+        if(color.z != oldBlue)
+        {
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            {
+                self.execAction(MNA_MODIFIED);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool setAlpha(float alpha, int flags)
+    {
+        if(rgbaMode)
+        {
+            float const oldAlpha = color.w;
+            color.w = alpha;
+            if(color.w != oldAlpha)
+            {
+                if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+                {
+                    self.execAction(MNA_MODIFIED);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
 };
 
 ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
     : Widget()
-    , d(new Instance)
+    , d(new Instance(this))
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);
@@ -260,9 +328,10 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     }
 }
 
-void ColorPreviewWidget::setPreviewDimensions(Vector2i const &newDimensions)
+ColorPreviewWidget &ColorPreviewWidget::setPreviewDimensions(Vector2i const &newDimensions)
 {
     d->dimensions = newDimensions;
+    return *this;
 }
 
 Vector2i ColorPreviewWidget::previewDimensions() const
@@ -275,6 +344,26 @@ bool ColorPreviewWidget::rgbaMode() const
     return d->rgbaMode;
 }
 
+ColorPreviewWidget &ColorPreviewWidget::setColor(Vector4f const &newColor, int flags)
+{
+    int setComps = 0;
+    int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
+
+    if(d->setRed  (newColor.x, setCompFlags)) setComps |= 0x1;
+    if(d->setGreen(newColor.y, setCompFlags)) setComps |= 0x2;
+    if(d->setBlue (newColor.z, setCompFlags)) setComps |= 0x4;
+    if(d->setAlpha(newColor.w, setCompFlags)) setComps |= 0x8;
+
+    if(setComps)
+    {
+        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
+        {
+            execAction(MNA_MODIFIED);
+        }
+    }
+    return *this;
+}
+
 Vector4f ColorPreviewWidget::color() const
 {
     if(!d->rgbaMode)
@@ -284,89 +373,28 @@ Vector4f ColorPreviewWidget::color() const
     return d->color;
 }
 
-bool ColorPreviewWidget::setRed(float red, int flags)
+ColorPreviewWidget &ColorPreviewWidget::setRed(float newRed, int flags)
 {
-    float const oldRed = d->color.x;
-
-    d->color.x = red;
-    if(d->color.x != oldRed)
-    {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-        {
-            execAction(MNA_MODIFIED);
-        }
-        return true;
-    }
-    return false;
+    d->setRed(newRed, flags);
+    return *this;
 }
 
-bool ColorPreviewWidget::setGreen(float green, int flags)
+ColorPreviewWidget &ColorPreviewWidget::setGreen(float newGreen, int flags)
 {
-    float const oldGreen = d->color.y;
-
-    d->color.y = green;
-    if(d->color.y != oldGreen)
-    {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-        {
-            execAction(MNA_MODIFIED);
-        }
-        return true;
-    }
-    return false;
+    d->setGreen(newGreen, flags);
+    return *this;
 }
 
-bool ColorPreviewWidget::setBlue(float blue, int flags)
+ColorPreviewWidget &ColorPreviewWidget::setBlue(float newBlue, int flags)
 {
-    float const oldBlue = d->color.z;
-
-    d->color.z = blue;
-    if(d->color.z != oldBlue)
-    {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-        {
-            execAction(MNA_MODIFIED);
-        }
-        return true;
-    }
-    return false;
+    d->setBlue(newBlue, flags);
+    return *this;
 }
 
-bool ColorPreviewWidget::setAlpha(float alpha, int flags)
+ColorPreviewWidget &ColorPreviewWidget::setAlpha(float newAlpha, int flags)
 {
-    if(d->rgbaMode)
-    {
-        float const oldAlpha = d->color.w;
-        d->color.w = alpha;
-        if(d->color.w != oldAlpha)
-        {
-            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
-            return true;
-        }
-    }
-    return false;
-}
-
-bool ColorPreviewWidget::setColor(Vector4f const &newColor, int flags)
-{
-    int setComps = 0;
-    int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
-
-    if(setRed  (newColor.x, setCompFlags)) setComps |= 0x1;
-    if(setGreen(newColor.y, setCompFlags)) setComps |= 0x2;
-    if(setBlue (newColor.z, setCompFlags)) setComps |= 0x4;
-    if(setAlpha(newColor.w, setCompFlags)) setComps |= 0x8;
-
-    if(!setComps) return false;
-
-    if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-    {
-        execAction(MNA_MODIFIED);
-    }
-    return true;
+    d->setAlpha(newAlpha, flags);
+    return *this;
 }
 
 } // namespace menu

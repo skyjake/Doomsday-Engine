@@ -339,60 +339,42 @@ void Hu_MenuInitColorWidgetPage()
     Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, MPF_NEVER_SCROLL, NULL, Hu_MenuColorWidgetCmdResponder));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
-    {
-        auto *cbox = new ColorPreviewWidget(Vector4f(), true);
-        cbox->setFlags(Widget::Id0 | Widget::NoFocus);
-        cbox->setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7));
-        page->widgets() << cbox;
-    }
+    page->addWidget(new ColorPreviewWidget(Vector4f(), true))
+            .setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7))
+            .setFlags(Widget::Id0 | Widget::NoFocus);
 
-    page->widgets() << new LabelWidget("Red");
-    {
-        auto *sld = new SliderWidget(0.0f, 1.0f, .05f);
-        sld->setFlags(Widget::Id1);
-        sld->setShortcut('r');
-        sld->setUserValue2(int(CR));
-        sld->setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor);
-        sld->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Red"));
 
-    page->widgets() << new LabelWidget("Green");
-    {
-        auto *sld = new SliderWidget(0.0f, 1.0f, .05f);
-        sld->setFlags(Widget::Id2);
-        sld->setShortcut('g');
-        sld->setUserValue2(int(CG));
-        sld->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-        sld->setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor);
-        page->widgets() << sld;
-    }
+    page->addWidget(new SliderWidget(0.0f, 1.0f, .05f))
+            .setFlags(Widget::Id1)
+            .setShortcut('r')
+            .setUserValue2(int(CR))
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 
-    page->widgets() << new LabelWidget("Blue");
-    {
-        auto *sld = new SliderWidget(0.0f, 1.0f, 0.05f);
-        sld->setFlags(Widget::Id3);
-        sld->setShortcut('b');
-        sld->setUserValue2(int(CB));
-        sld->setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor);
-        sld->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Green"));
+    page->addWidget(new SliderWidget(0.0f, 1.0f, .05f))
+            .setFlags(Widget::Id2)
+            .setShortcut('g')
+            .setUserValue2(int(CG))
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction)
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor);
 
-    {
-        auto *text = new LabelWidget("Opacity");
-        text->setFlags(Widget::Id4);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new SliderWidget(0.0f, 1.0f, 0.05f);
-        sld->setFlags(Widget::Id5);
-        sld->setShortcut('o');
-        sld->setUserValue2(int(CA));
-        sld->setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor);
-        sld->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Blue"));
+    page->addWidget(new SliderWidget(0.0f, 1.0f, 0.05f))
+            .setFlags(Widget::Id3)
+            .setShortcut('b')
+            .setUserValue2(int(CB))
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new LabelWidget("Opacity")).setFlags(Widget::Id4);
+    page->addWidget(new SliderWidget(0.0f, 1.0f, 0.05f))
+            .setFlags(Widget::Id5)
+            .setShortcut('o')
+            .setUserValue2(int(CA))
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuUpdateColorWidgetColor)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitMainPage()
@@ -420,141 +402,117 @@ void Hu_MenuInitMainPage()
     int y = 0;
 
 #if __JDOOM__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("", &pMainTitle);
-        text->setFixedX(-3);
-        text->setFixedY(-70);
-        page->widgets() << text;
-    }
+    page->addWidget(new LabelWidget("", &pMainTitle))
+            .setFixedX(-3)
+            .setFixedY(-70);
 #endif
 
-    {
-        auto *btn = new ButtonWidget;
-        btn->setFixedY(y);
-        btn->setShortcut('n');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("GameType"));
+    page->addWidget(new ButtonWidget)
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
-        btn->setPatch(pNGame);
+            .setPatch(pNGame)
 #else
-        btn->setText("New Game");
+            .setText("New Game")
 #endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+            .setFixedY(y)
+            .setShortcut('n')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("GameType"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 
-    {
-        auto *btn = new ButtonWidget;
-        btn->setFixedY(y);
-        btn->setShortcut('o');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("Options"));
+    page->addWidget(new ButtonWidget)
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
-        btn->setPatch(pOptions);
+            .setPatch(pOptions)
 #else
-        btn->setText("Options");
+            .setText("Options")
 #endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+            .setFixedY(y)
+            .setShortcut('o')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("Options"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 
 #if __JDOOM__ || __JDOOM64__
-    {
-        auto *btn = new ButtonWidget;
-        btn->setFixedY(y);
-        btn->setShortcut('l');
-        btn->setFont(MENU_FONT1);
+    page->addWidget(new ButtonWidget)
 # if __JDOOM64__
-        btn->setText("Load Game");
+            .setText("Load Game")
 # else
-        btn->setPatch(pLoadGame);
+            .setPatch(pLoadGame)
 # endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+            .setFixedY(y)
+            .setShortcut('l')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 
-    {
-        auto *btn = new ButtonWidget;
-        btn->setFixedY(y);
-        btn->setShortcut('s');
-        btn->setFont(MENU_FONT1);
+    page->addWidget(new ButtonWidget)
 # if __JDOOM64__
-        btn->setText("Save Game");
+            .setText("Save Game")
 # else
-        btn->setPatch(pSaveGame);
+            .setPatch(pSaveGame)
 # endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+            .setFixedY(y)
+            .setShortcut('s')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 
 #else
-    {
-        auto *btn = new ButtonWidget("Game Files");
-        btn->setFixedY(y);
-        btn->setShortcut('f');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("Files"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("Game Files"))
+            .setFixedY(y)
+            .setShortcut('f')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("Files"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 #endif
 
 #if !__JDOOM64__
-    {
-        auto *btn = new ButtonWidget;
-        btn->setFixedY(y);
-# if __JDOOM__
-        btn->setFlags(Widget::Id0);
-        btn->setShortcut('r');
-# else
-        btn->setShortcut('i');
-# endif
-        btn->setFont(MENU_FONT1);
+    page->addWidget(new ButtonWidget)
 # if defined(__JDOOM__)
-        btn->setPatch(pReadThis);
+            .setPatch(pReadThis)
 # else
-        btn->setText("Info");
+            .setText("Info")
 # endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectHelp);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+            .setFixedY(y)
+# if __JDOOM__
+            .setFlags(Widget::Id0)
+            .setShortcut('r')
+# else
+            .setShortcut('i')
+# endif
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectHelp)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 #endif
 
-    {
-        auto *btn = new ButtonWidget;
-#if __JDOOM__
-        btn->setFlags(Widget::Id1);
-#endif
-        btn->setFixedY(y);
-        btn->setShortcut('q');
-        btn->setFont(MENU_FONT1);
+    page->addWidget(new ButtonWidget)
 #if defined(__JDOOM__) && !defined(__JDOOM64__)
-        btn->setPatch(pQuitGame);
+            .setPatch(pQuitGame)
 #else
-        btn->setText("Quit Game");
+            .setText("Quit Game")
 #endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectQuitGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+#if __JDOOM__
+            .setFlags(Widget::Id1)
+#endif
+            .setFixedY(y)
+            .setShortcut('q')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectQuitGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitGameTypePage()
@@ -571,27 +529,25 @@ void Hu_MenuInitGameTypePage()
 
     int y = 0;
 
-    {
-        auto *btn = new ButtonWidget(GET_TXT(TXT_SINGLEPLAYER));
-        btn->setFixedY(y);
-        btn->setFont(MENU_FONT1);
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSingleplayer);
-        btn->setAction(Widget::MNA_FOCUS, Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    String labelText = GET_TXT(TXT_SINGLEPLAYER);
+    int shortcut     = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
+    page->addWidget(new ButtonWidget(labelText))
+            .setFixedY(y)
+            .setFont(MENU_FONT1)
+            .setShortcut(shortcut)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSingleplayer)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 
     y += FIXED_LINE_HEIGHT;
 
-    {
-        auto *btn = new ButtonWidget(GET_TXT(TXT_MULTIPLAYER));
-        btn->setFixedY(y);
-        btn->setFont(MENU_FONT1);
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectMultiplayer);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    labelText = GET_TXT(TXT_MULTIPLAYER);
+    shortcut  = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
+    page->addWidget(new ButtonWidget(labelText))
+            .setFixedY(y)
+            .setFont(MENU_FONT1)
+            .setShortcut(shortcut)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectMultiplayer)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitSkillPage()
@@ -632,21 +588,25 @@ void Hu_MenuInitSkillPage()
 
     for(uint i = 0; i < NUM_SKILL_MODES; ++i, y += FIXED_LINE_HEIGHT)
     {
-        auto *btn = new ButtonWidget;
-        btn->setFlags(skillButtonFlags[i]);
-        btn->setFixedY(y);
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue2(int(SM_BABY + i));
 #if !__JHEXEN__
-        btn->setText(GET_TXT(skillButtonTexts[i]));
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
-# if __JDOOM__ || __JDOOM64__
-        btn->setPatch(pSkillModeNames[i]);
-# endif
+        String const labelText = GET_TXT(skillButtonTexts[i]);
+        int const shortcut     = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
 #endif
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionInitNewGame);
-        btn->setAction(Widget::MNA_FOCUS, Hu_MenuFocusSkillMode);
-        page->widgets() << btn;
+
+        page->addWidget(new ButtonWidget)
+#if !__JHEXEN__
+                .setText(labelText)
+# if __JDOOM__ || __JDOOM64__
+                .setPatch(pSkillModeNames[i])
+# endif
+                .setShortcut(shortcut)
+#endif
+                .setFlags(skillButtonFlags[i])
+                .setFixedY(y)
+                .setFont(MENU_FONT1)
+                .setUserValue2(int(SM_BABY + i))
+                .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionInitNewGame)
+                .setAction(Widget::MNA_FOCUS, Hu_MenuFocusSkillMode);
     }
 
 #if __JDOOM__
@@ -669,24 +629,19 @@ void Hu_MenuInitMultiplayerPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
-    {
-        auto *btn = new ButtonWidget("Join Game");
-        btn->setFlags(Widget::Id0);
-        btn->setShortcut('j');
-        btn->setFont(MENU_FONT1);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectJoinGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Player Setup");
-        btn->setShortcut('p');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("PlayerSetup"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("Join Game"))
+            .setFlags(Widget::Id0)
+            .setShortcut('j')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectJoinGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Player Setup"))
+            .setShortcut('p')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("PlayerSetup"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitPlayerSetupPage()
@@ -703,102 +658,80 @@ void Hu_MenuInitPlayerSetupPage()
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Multiplayer"));
 
-    {
-        auto *mprev = new MobjPreviewWidget;
-        mprev->setFixedX(SCREENWIDTH / 2 - origin.x);
-        mprev->setFixedY(60);
-        mprev->setFlags(Widget::Id0 | Widget::PositionFixed);
-        page->widgets() << mprev;
-    }
+    page->addWidget(new MobjPreviewWidget)
+            .setFixedX(SCREENWIDTH / 2 - origin.x)
+            .setFixedY(60)
+            .setFlags(Widget::Id0 | Widget::PositionFixed);
 
-    {
-        auto *edit = new CVarLineEditWidget("net-name");
-        edit->setFlags(Widget::Id1 | Widget::LayoutOffset);
-        edit->setFixedY(75);
-        edit->setMaxLength(24);
-        page->widgets() << edit;
-    }
+    page->addWidget(new CVarLineEditWidget("net-name"))
+            .setMaxLength(24)
+            .setFlags(Widget::Id1 | Widget::LayoutOffset)
+            .setFixedY(75);
 
 #if __JHEXEN__
-    {
-        auto *text = new LabelWidget("Class");
-        text->setFlags(Widget::LayoutOffset);
-        text->setFixedY(5);
-        page->widgets() << text;
-    }
+    page->addWidget(new LabelWidget("Class"))
+            .setFlags(Widget::LayoutOffset)
+            .setFixedY(5);
 
-    {
-        auto *list = new InlineListWidget;
-        list->setFlags(Widget::Id2);
-        list->setShortcut('c');
-        list->setColor(MENU_COLOR3);
-        list->setAction(Widget::MNA_MODIFIED, Hu_MenuSelectPlayerSetupPlayerClass);
-        list->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-
-        list->items()
-                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS1), PCLASS_FIGHTER)
-                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS2), PCLASS_CLERIC)
-                << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS3), PCLASS_MAGE);
-
-        page->widgets() << list;
-    }
+    page->addWidget(new InlineListWidget)
+            .addItems(ListWidget::Items() << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS1), PCLASS_FIGHTER)
+                                          << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS2), PCLASS_CLERIC)
+                                          << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS3), PCLASS_MAGE))
+            .setFlags(Widget::Id2)
+            .setShortcut('c')
+            .setColor(MENU_COLOR3)
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuSelectPlayerSetupPlayerClass)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 #endif
 
-    {
-        auto *text = new LabelWidget("Color");
+    auto &label = page->addWidget(new LabelWidget("Color"));
 #ifdef __JHERETIC__
-        text->setFlags(Widget::LayoutOffset);
-        text->setFixedY(5);
+    label.setFlags(Widget::LayoutOffset);
+    label.setFixedY(5);
+#else
+    DENG2_UNUSED(label);
 #endif
-        page->widgets() << text;
-    }
 
     // Setup the player color selection list.
-    {
-        auto *list = new InlineListWidget;
-        list->setFlags(Widget::Id3);
-        list->setColor(MENU_COLOR3);
-        list->setAction(Widget::MNA_MODIFIED, Hu_MenuSelectPlayerColor);
-        list->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
-
-        /// @todo Read these names from Text definitions.
-        int colorIdx = 0;
+    /// @todo Read these names from Text definitions.
+    int colorIdx = 0;
+    ListWidget::Items items;
 #if __JHEXEN__
-        list->items() << new ListWidgetItem("Red",    colorIdx++);
-        list->items() << new ListWidgetItem("Blue",   colorIdx++);
-        list->items() << new ListWidgetItem("Yellow", colorIdx++);
-        list->items() << new ListWidgetItem("Green",  colorIdx++);
-
-        if(gameMode != hexen_v10) // Hexen v1.0 has only four player colors.
-        {
-            list->items() << new ListWidgetItem("Jade",   colorIdx++);
-            list->items() << new ListWidgetItem("White",  colorIdx++);
-            list->items() << new ListWidgetItem("Hazel",  colorIdx++);
-            list->items() << new ListWidgetItem("Purple", colorIdx++);
-        }
-#elif __JHERETIC__
-        list->items() << new ListWidgetItem("Green",  colorIdx++);
-        list->items() << new ListWidgetItem("Orange", colorIdx++);
-        list->items() << new ListWidgetItem("Red",    colorIdx++);
-        list->items() << new ListWidgetItem("Blue",   colorIdx++);
-#else
-        list->items() << new ListWidgetItem("Green",  colorIdx++);
-        list->items() << new ListWidgetItem("Indigo", colorIdx++);
-        list->items() << new ListWidgetItem("Brown",  colorIdx++);
-        list->items() << new ListWidgetItem("Red",    colorIdx++);
-#endif
-        list->items() << new ListWidgetItem("Automatic", colorIdx++);
-
-        page->widgets() << list;
-    }
-
+    items << new ListWidgetItem("Red",    colorIdx++);
+    items << new ListWidgetItem("Blue",   colorIdx++);
+    items << new ListWidgetItem("Yellow", colorIdx++);
+    items << new ListWidgetItem("Green",  colorIdx++);
+    if(gameMode != hexen_v10) // Hexen v1.0 has only four player colors.
     {
-        auto *btn = new ButtonWidget("Save Changes");
-        btn->setShortcut('s');
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectAcceptPlayerSetup);
-        btn->setAction(Widget::MNA_FOCUS, Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
+        items << new ListWidgetItem("Jade",   colorIdx++);
+        items << new ListWidgetItem("White",  colorIdx++);
+        items << new ListWidgetItem("Hazel",  colorIdx++);
+        items << new ListWidgetItem("Purple", colorIdx++);
     }
+#elif __JHERETIC__
+    items << new ListWidgetItem("Green",  colorIdx++);
+    items << new ListWidgetItem("Orange", colorIdx++);
+    items << new ListWidgetItem("Red",    colorIdx++);
+    items << new ListWidgetItem("Blue",   colorIdx++);
+#else
+    items << new ListWidgetItem("Green",  colorIdx++);
+    items << new ListWidgetItem("Indigo", colorIdx++);
+    items << new ListWidgetItem("Brown",  colorIdx++);
+    items << new ListWidgetItem("Red",    colorIdx++);
+#endif
+    items << new ListWidgetItem("Automatic", colorIdx++);
+
+    page->addWidget(new InlineListWidget)
+            .addItems(items)
+            .setFlags(Widget::Id3)
+            .setColor(MENU_COLOR3)
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuSelectPlayerColor)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Save Changes"))
+            .setShortcut('s')
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectAcceptPlayerSetup)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitSaveOptionsPage()
@@ -808,37 +741,23 @@ void Hu_MenuInitSaveOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("Confirm quick load/save");
-    {
-        auto *btn = new CVarToggleWidget("game-save-confirm");
-        btn->setShortcut('q');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Confirm quick load/save"));
+    page->addWidget(new CVarToggleWidget("game-save-confirm"))
+            .setShortcut('q');
 
-    page->widgets() << new LabelWidget("Confirm reborn load");
-    {
-        auto *btn = new CVarToggleWidget("game-save-confirm-loadonreborn");
-        btn->setShortcut('r');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Confirm reborn load"));
+    page->addWidget(new CVarToggleWidget("game-save-confirm-loadonreborn"))
+            .setShortcut('r');
 
-    {
-        auto *text = new LabelWidget("Reborn preferences");
-        text->setGroup(1);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Load last save");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-save-last-loadonreborn");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("Reborn preferences"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Load last save"))
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-save-last-loadonreborn"))
+            .setGroup(1)
             .setShortcut('a');
-        page->widgets() << btn;
-    }
 }
 
 #if __JHERETIC__ || __JHEXEN__
@@ -850,26 +769,21 @@ void Hu_MenuInitFilesPage()
 
     int y = 0;
 
-    {
-        auto *btn = new ButtonWidget("Load Game");
-        btn->setFixedY(y);
-        btn->setShortcut('l');
-        btn->setFont(MENU_FONT1);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("Load Game"))
+            .setFixedY(y)
+            .setShortcut('l')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
     y += FIXED_LINE_HEIGHT;
 
-    {
-        auto *btn = new ButtonWidget("Save Game");
-        btn->setFixedY(y);
-        btn->setShortcut('s');
-        btn->setFont(MENU_FONT1);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("Save Game"))
+            .setFixedY(y)
+            .setShortcut('s')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 #endif
 
@@ -943,18 +857,17 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     int i = 0;
     for(; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
-        auto *edit = new LineEditWidget;
-        edit->setFixedY(y);
-        edit->setFlags(saveSlotObjectIds[i] | Widget::Disabled);
-        edit->setShortcut('0' + i);
-        edit->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadSlot);
-        edit->setAction(Widget::MNA_FOCUSOUT,  Hu_MenuDefaultFocusAction);
-        edit->setCommandResponder(Hu_MenuLoadSlotCommandResponder);
-        edit->setMaxLength(24);
-        edit->setUserValue(String::number(i));
-        edit->setUserValue2(int(saveSlotObjectIds[i]));
-        edit->setEmptyText(GET_TXT(TXT_EMPTYSTRING));
-        loadPage->widgets() << edit;
+        loadPage->addWidget(new LineEditWidget)
+                    .setMaxLength(24)
+                    .setEmptyText(GET_TXT(TXT_EMPTYSTRING))
+                    .setFixedY(y)
+                    .setFlags(saveSlotObjectIds[i] | Widget::Disabled)
+                    .setShortcut('0' + i)
+                    .setCommandResponder(Hu_MenuLoadSlotCommandResponder)
+                    .setUserValue(String::number(i))
+                    .setUserValue2(int(saveSlotObjectIds[i]))
+                    .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectLoadSlot)
+                    .setAction(Widget::MNA_FOCUSOUT,  Hu_MenuDefaultFocusAction);
     }
 
     Page *savePage = Hu_MenuAddPage(new Page("SaveGame", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawSaveGamePage));
@@ -965,19 +878,18 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
     i = 0;
     for(; i < NUMSAVESLOTS; ++i, y += FIXED_LINE_HEIGHT)
     {
-        auto *edit = new LineEditWidget;
-        edit->setFixedY(y);
-        edit->setFlags(saveSlotObjectIds[i]);
-        edit->setShortcut('0' + i);
-        edit->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveSlot);
-        edit->setAction(Widget::MNA_ACTIVE,    Hu_MenuSaveSlotEdit);
-        edit->setAction(Widget::MNA_FOCUSOUT,  Hu_MenuDefaultFocusAction);
-        edit->setCommandResponder(Hu_MenuSaveSlotCommandResponder);
-        edit->setEmptyText(GET_TXT(TXT_EMPTYSTRING));
-        edit->setMaxLength(24);
-        edit->setUserValue(String::number(i));
-        edit->setUserValue2(int(saveSlotObjectIds[i]));
-        savePage->widgets() << edit;
+        savePage->addWidget(new LineEditWidget)
+                    .setMaxLength(24)
+                    .setEmptyText(GET_TXT(TXT_EMPTYSTRING))
+                    .setFixedY(y)
+                    .setFlags(saveSlotObjectIds[i])
+                    .setShortcut('0' + i)
+                    .setCommandResponder(Hu_MenuSaveSlotCommandResponder)
+                    .setUserValue(String::number(i))
+                    .setUserValue2(int(saveSlotObjectIds[i]))
+                    .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectSaveSlot)
+                    .setAction(Widget::MNA_ACTIVE,    Hu_MenuSaveSlotEdit)
+                    .setAction(Widget::MNA_FOCUSOUT,  Hu_MenuDefaultFocusAction);
     }
 }
 
@@ -993,96 +905,75 @@ void Hu_MenuInitOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
-    {
-        auto *btn = new ButtonWidget("End Game");
-        btn->setShortcut('e');
-        btn->setFont(MENU_FONT1);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectEndGame);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Show Taskbar");
-        btn->setShortcut('t');
-        btn->setFont(MENU_FONT1);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectControlPanelLink);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Controls");
-        btn->setShortcut('c');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("ControlOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Gameplay");
-        btn->setShortcut('g');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("GameplayOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Game saves");
-        btn->setShortcut('s');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("SaveOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("HUD");
-        btn->setShortcut('h');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("HUDOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Automap");
-        btn->setShortcut('a');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("AutomapOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
-    {
-        auto *btn = new ButtonWidget("Weapons");
-        btn->setShortcut('w');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("WeaponOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("End Game"))
+            .setShortcut('e')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectEndGame)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Show Taskbar"))
+            .setShortcut('t')
+            .setFont(MENU_FONT1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectControlPanelLink)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Controls"))
+            .setShortcut('c')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("ControlOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Gameplay"))
+            .setShortcut('g')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("GameplayOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Game saves"))
+            .setShortcut('s')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("SaveOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("HUD"))
+            .setShortcut('h')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("HUDOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Automap"))
+            .setShortcut('a')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("AutomapOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
+    page->addWidget(new ButtonWidget("Weapons"))
+            .setShortcut('w')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("WeaponOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
+
 #if __JHERETIC__ || __JHEXEN__
-    {
-        auto *btn = new ButtonWidget("Inventory");
-        btn->setShortcut('i');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("InventoryOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+    page->addWidget(new ButtonWidget("Inventory"))
+            .setShortcut('i')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("InventoryOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 #endif
-    {
-        auto *btn = new ButtonWidget("Sound");
-        btn->setShortcut('s');
-        btn->setFont(MENU_FONT1);
-        btn->setUserValue(String("SoundOptions"));
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage);
-        btn->setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
-        page->widgets() << btn;
-    }
+
+    page->addWidget(new ButtonWidget("Sound"))
+            .setShortcut('s')
+            .setFont(MENU_FONT1)
+            .setUserValue(String("SoundOptions"))
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuActionSetActivePage)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitGameplayOptionsPage()
@@ -1100,233 +991,147 @@ void Hu_MenuInitGameplayOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("Always Run");
-    {
-        auto *btn = new CVarToggleWidget("ctl-run");
-        btn->setShortcut('r');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Always Run"));
+    page->addWidget(new CVarToggleWidget("ctl-run"))
+            .setShortcut('r');
 
-    page->widgets() << new LabelWidget("Use LookSpring");
-    {
-        auto *btn = new CVarToggleWidget("ctl-look-spring");
-        btn->setShortcut('l');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Use LookSpring"));
+    page->addWidget(new CVarToggleWidget("ctl-look-spring"))
+            .setShortcut('l');
 
-    page->widgets() << new LabelWidget("Disable AutoAim");
-    {
-        auto *btn = new CVarToggleWidget("ctl-aim-noauto");
-        btn->setShortcut('a');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Disable AutoAim"));
+    page->addWidget(new CVarToggleWidget("ctl-aim-noauto"))
+            .setShortcut('a');
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    page->widgets() << new LabelWidget("Allow Jumping");
-    {
-        auto *btn = new CVarToggleWidget("player-jump");
-        btn->setShortcut('j');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Allow Jumping"));
+    page->addWidget(new CVarToggleWidget("player-jump"))
+            .setShortcut('j');
 #endif
 
 #if __JDOOM64__
-    page->widgets() << new LabelWidget("Weapon Recoil")
-                   << new CVarToggleWidget("player-weapon-recoil");
+    page->addWidget(new LabelWidget("Weapon Recoil"));
+    page->addWidget(new CVarToggleWidget("player-weapon-recoil"));
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("Compatibility");
-        text->setGroup(1);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
+    page->addWidget(new LabelWidget("Compatibility"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
 # if __JDOOM__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("Any Boss Trigger 666");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-anybossdeath666");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("Any Boss Trigger 666"))
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-anybossdeath666"))
+            .setGroup(1)
             .setShortcut('b');
-        page->widgets() << btn;
-    }
+
 #  if !__JDOOM64__
-    {
-        auto *text = new LabelWidget("Av Resurrects Ghosts");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-raiseghosts");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("Av Resurrects Ghosts"))
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-raiseghosts"))
+            .setGroup(1)
             .setShortcut('g');
-        page->widgets() << btn;
-    }
 # if __JDOOM__
-    {
-        auto *text = new LabelWidget("VileChase uses Av radius");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-vilechase-usevileradius");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("VileChase uses Av radius"))
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-vilechase-usevileradius"))
+            .setGroup(1)
             .setShortcut('g');
-        page->widgets() << btn;
-    }
 # endif
 #  endif // !__JDOOM64__
 
-    {
-        auto *text = new LabelWidget("PE Limited To 21 Lost Souls");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-maxskulls");
-        btn->setShortcut('p');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("LS Can Get Stuck Inside Walls");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-skullsinwalls");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("PE Limited To 21 Lost Souls"))
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-maxskulls"))
+            .setGroup(1)
+            .setShortcut('p');
+
+    page->addWidget(new LabelWidget("LS Can Get Stuck Inside Walls"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-skullsinwalls"))
+            .setGroup(1);
 # endif // __JDOOM__ || __JDOOM64__
 
-    {
-        auto *text = new LabelWidget("Monsters Fly Over Obstacles");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-monsters-floatoverblocking");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Monsters Can Get Stuck In Doors");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-monsters-stuckindoors");
-        btn->setGroup(1);
-        btn->setShortcut('d');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Some Objects Never Hang Over Ledges");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-objects-neverhangoverledges");
-        btn->setGroup(1);
-        btn->setShortcut('h');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Objects Fall Under Own Weight");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-objects-falloff");
-        btn->setGroup(1);
-        btn->setShortcut('f');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Monsters Fly Over Obstacles"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-monsters-floatoverblocking"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Monsters Can Get Stuck In Doors"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-monsters-stuckindoors"))
+            .setGroup(1)
+            .setShortcut('d');
+
+    page->addWidget(new LabelWidget("Some Objects Never Hang Over Ledges"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-objects-neverhangoverledges"))
+            .setGroup(1)
+            .setShortcut('h');
+
+    page->addWidget(new LabelWidget("Objects Fall Under Own Weight"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-objects-falloff"))
+            .setGroup(1)
+            .setShortcut('f');
 
 #if __JDOOM__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("All Crushed Objects Become A Pile Of Gibs");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-objects-gibcrushednonbleeders");
-        btn->setGroup(1);
-        btn->setShortcut('g');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("All Crushed Objects Become A Pile Of Gibs"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-objects-gibcrushednonbleeders"))
+            .setGroup(1)
+            .setShortcut('g');
 #endif
 
-    {
-        auto *text = new LabelWidget("Corpses Slide Down Stairs");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-corpse-sliding");
-        btn->setGroup(1);
-        btn->setShortcut('s');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Use Exactly Doom's Clipping Code");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-objects-clipping");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("Corpses Slide Down Stairs"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-corpse-sliding"))
+            .setGroup(1)
+            .setShortcut('s');
+
+    page->addWidget(new LabelWidget("Use Exactly Doom's Clipping Code"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-objects-clipping"))
+            .setGroup(1)
             .setShortcut('c');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("  ^If Not NorthOnly WallRunning");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-player-wallrun-northonly");
-        btn->setGroup(1)
+
+    page->addWidget(new LabelWidget("  ^If Not NorthOnly WallRunning"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-player-wallrun-northonly"))
+            .setGroup(1)
             .setShortcut('w');
-        page->widgets() << btn;
-    }
 
 # if __JDOOM__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("Zombie Players Can Exit Maps");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("game-zombiescanexit");
-        btn->setGroup(1);
-        btn->setShortcut('e');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Fix Ouch Face");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-face-ouchfix");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Fix Weapon Slot Display");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-status-weaponslots-ownedfix");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
+
+    page->addWidget(new LabelWidget("Zombie Players Can Exit Maps"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("game-zombiescanexit"))
+            .setGroup(1)
+            .setShortcut('e');
+
+    page->addWidget(new LabelWidget("Fix Ouch Face"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-face-ouchfix"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Fix Weapon Slot Display"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-status-weaponslots-ownedfix"))
+            .setGroup(1);
+
 # endif // __JDOOM__ || __JDOOM64__
 #endif // __JDOOM__ || __JHERETIC__ || __JDOOM64__
 }
@@ -1344,497 +1149,333 @@ void Hu_MenuInitHUDOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("View Size");
+    page->addWidget(new LabelWidget("View Size"));
 
-    {
-        auto *sld = new CVarSliderWidget("view-size");
+    page->addWidget(new CVarSliderWidget("view-size"))
 #if __JDOOM64__
-        sld->setRange(3, 11, 1);
+            .setRange(3, 11, 1)
 #else
-        sld->setRange(3, 13, 1);
+            .setRange(3, 13, 1)
 #endif
-        sld->setFloatMode(false);
-        page->widgets() << sld;
-    }
+            .setFloatMode(false);
 
 #if __JDOOM__
-    page->widgets()
-            << new LabelWidget("Single Key Display")
-            << new CVarToggleWidget("hud-keys-combine");
+    page->addWidget(new LabelWidget("Single Key Display"));
+    page->addWidget(new CVarToggleWidget("hud-keys-combine"));
 #endif
 
-    page->widgets() << new LabelWidget("AutoHide");
-    {
-        auto *sld = new CVarTextualSliderWidget("hud-timer", 0, 60, 1);
-        sld->setEmptyText("Disabled");
-        sld->setOnethSuffix(" second");
-        sld->setNthSuffix(" seconds");
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("AutoHide"));
+    page->addWidget(new CVarTextualSliderWidget("hud-timer", 0, 60, 1))
+            .setEmptyText("Disabled")
+            .setOnethSuffix(" second")
+            .setNthSuffix(" seconds");
 
-    {
-        auto *text = new LabelWidget("UnHide Events");
-        text->setGroup(1);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Receive Damage");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-damage");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Health");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-health");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Armor");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-armor");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Powerup");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-powerup");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Weapon");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-weapon");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
+    page->addWidget(new LabelWidget("UnHide Events"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Receive Damage"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-damage"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Health"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-health"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Armor"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-armor"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Powerup"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-powerup"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Weapon"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-weapon"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget)
 #if __JHEXEN__
-        auto *text = new LabelWidget("Pickup Mana");
+            .setText("Pickup Mana")
 #else
-        auto *text = new LabelWidget("Pickup Ammo");
+            .setText("Pickup Ammo")
 #endif
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-ammo");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Key");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-key");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-ammo"))
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Key"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-key"))
+            .setGroup(1);
 
 #if __JHERETIC__ || __JHEXEN__
-    {
-        auto *text = new LabelWidget("Pickup Item");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-unhide-pickup-invitem");
-        btn->setGroup(1);
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Pickup Item"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-invitem"))
+            .setGroup(1);
 #endif // __JHERETIC__ || __JHEXEN__
 
-    {
-        auto *text = new LabelWidget("Messages");
-        text->setGroup(2);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Shown");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("msg-show");
-        btn->setGroup(2)
+    page->addWidget(new LabelWidget("Messages"))
+            .setGroup(2)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Shown"))
+            .setGroup(2);
+
+    page->addWidget(new CVarToggleWidget("msg-show"))
+            .setGroup(2)
             .setShortcut('m');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Uptime");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarTextualSliderWidget("msg-uptime", 0, 60, 1);
-        sld->setEmptyText("Disabled");
-        sld->setOnethSuffix(" second");
-        sld->setNthSuffix(" seconds");
-        sld->setGroup(2);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Size");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("msg-scale");
-        sld->setGroup(2);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Color");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *cbox = new CVarColorPreviewWidget("msg-color-r", "msg-color-g", "msg-color-b");
-        cbox->setGroup(2);
-        cbox->setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar);
-        cbox->setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
-    {
-        auto *text = new LabelWidget("Crosshair");
-        text->setGroup(3);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Symbol");
-        text->setGroup(3);
-        text->setShortcut('c');
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("view-cross-type");
-        list->setGroup(3);
-        list->items()
-                << new ListWidgetItem("None",        0)
-                << new ListWidgetItem("Cross",       1)
-                << new ListWidgetItem("Twin Angles", 2)
-                << new ListWidgetItem("Square",      3)
-                << new ListWidgetItem("Open Square", 4)
-                << new ListWidgetItem("Angle",       5);
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("Size");
-        text->setGroup(3);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("view-cross-size");
-        sld->setGroup(3);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Angle");
-        text->setGroup(3);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("view-cross-angle", 0.0f, 1.0f, 0.0625f);
-        sld->setGroup(3);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Opacity");
-        text->setGroup(3);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("view-cross-a");
-        sld->setGroup(3);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Vitality Color");
-        text->setGroup(3);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("view-cross-vitality");
-        btn->setGroup(3);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Color");
-        text->setGroup(3);
-        page->widgets() << text;
-    }
-    {
-        auto *cbox = new CVarColorPreviewWidget("view-cross-r", "view-cross-g", "view-cross-b");
-        cbox->setGroup(3);
-        cbox->setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar);
-        cbox->setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+
+    page->addWidget(new LabelWidget("Uptime"))
+            .setGroup(2);
+
+    page->addWidget(new CVarTextualSliderWidget("msg-uptime", 0, 60, 1))
+            .setEmptyText("Disabled")
+            .setOnethSuffix(" second")
+            .setNthSuffix(" seconds")
+            .setGroup(2);
+
+    page->addWidget(new LabelWidget("Size"))
+            .setGroup(2);
+
+    page->addWidget(new CVarSliderWidget("msg-scale"))
+            .setGroup(2);
+
+    page->addWidget(new LabelWidget("Color"))
+            .setGroup(2);
+
+    page->addWidget(new CVarColorPreviewWidget("msg-color-r", "msg-color-g", "msg-color-b"))
+            .setGroup(2)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
+
+    page->addWidget(new LabelWidget("Crosshair"))
+            .setGroup(3)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Symbol"))
+            .setGroup(3)
+            .setShortcut('c');
+
+    page->addWidget(new CVarInlineListWidget("view-cross-type"))
+            .addItems(ListWidget::Items() << new ListWidgetItem("None",        0)
+                                          << new ListWidgetItem("Cross",       1)
+                                          << new ListWidgetItem("Twin Angles", 2)
+                                          << new ListWidgetItem("Square",      3)
+                                          << new ListWidgetItem("Open Square", 4)
+                                          << new ListWidgetItem("Angle",       5))
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("Size"))
+            .setGroup(3);
+
+    page->addWidget(new CVarSliderWidget("view-cross-size"))
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("Angle"))
+            .setGroup(3);
+
+    page->addWidget(new CVarSliderWidget("view-cross-angle", 0.0f, 1.0f, 0.0625f))
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("Opacity"))
+            .setGroup(3);
+
+    page->addWidget(new CVarSliderWidget("view-cross-a"))
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("Vitality Color"))
+            .setGroup(3);
+
+    page->addWidget(new CVarToggleWidget("view-cross-vitality"))
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("Color"))
+            .setGroup(3);
+
+    page->addWidget(new CVarColorPreviewWidget("view-cross-r", "view-cross-g", "view-cross-b"))
+            .setGroup(3)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    {
-        auto *text = new LabelWidget("Statusbar");
-        text->setGroup(4);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Size");
-        text->setGroup(4);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("hud-status-size");
-        sld->setGroup(4);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Opacity");
-        text->setGroup(4);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("hud-status-alpha");
-        sld->setGroup(4);
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Statusbar"))
+            .setGroup(4)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Size"))
+            .setGroup(4);
+
+    page->addWidget(new CVarSliderWidget("hud-status-size"))
+            .setGroup(4);
+
+    page->addWidget(new LabelWidget("Opacity"))
+            .setGroup(4);
+
+    page->addWidget(new CVarSliderWidget("hud-status-alpha"))
+            .setGroup(4);
 
 #endif // __JDOOM__ || __JHERETIC__ || __JHEXEN__
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    {
-        auto *text = new LabelWidget("Counters");
-        text->setGroup(5);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Items");
-        text->setGroup(5);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT);
-        list->setGroup(5);
-        list->setShortcut('i');
-        list->items()
-                << new ListWidgetItem("Hidden",        0)
-                << new ListWidgetItem("Count",         CCH_ITEMS)
-                << new ListWidgetItem("Percent",       CCH_ITEMS_PRCNT)
-                << new ListWidgetItem("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT);
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("Kills");
-        text->setGroup(5);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT);
-        list->setGroup(5);
-        list->setShortcut('k');
-        list->items()
-                << new ListWidgetItem("Hidden",        0)
-                << new ListWidgetItem("Count",         CCH_KILLS)
-                << new ListWidgetItem("Percent",       CCH_KILLS_PRCNT)
-                << new ListWidgetItem("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT);
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("Secrets");
-        text->setGroup(5);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT);
-        list->setGroup(5);
-        list->setShortcut('s');
-        list->items()
-                << new ListWidgetItem("Hidden",        0)
-                << new ListWidgetItem("Count",         CCH_SECRETS)
-                << new ListWidgetItem("Percent",       CCH_SECRETS_PRCNT)
-                << new ListWidgetItem("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT);
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("Automap Only");
-        text->setGroup(5);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-cheat-counter-show-mapopen");
-        btn->setGroup(5);
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Size");
-        text->setGroup(5);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("hud-cheat-counter-scale");
-        sld->setGroup(5);
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Counters"))
+            .setGroup(5)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Items"))
+            .setGroup(5);
+
+    page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Hidden",        0)
+                                          << new ListWidgetItem("Count",         CCH_ITEMS)
+                                          << new ListWidgetItem("Percent",       CCH_ITEMS_PRCNT)
+                                          << new ListWidgetItem("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT))
+            .setGroup(5)
+            .setShortcut('i');
+
+    page->addWidget(new LabelWidget("Kills"))
+            .setGroup(5);
+
+    page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Hidden",        0)
+                                          << new ListWidgetItem("Count",         CCH_KILLS)
+                                          << new ListWidgetItem("Percent",       CCH_KILLS_PRCNT)
+                                          << new ListWidgetItem("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT))
+            .setGroup(5)
+            .setShortcut('k');
+
+    page->addWidget(new LabelWidget("Secrets"))
+            .setGroup(5);
+
+    page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Hidden",        0)
+                                          << new ListWidgetItem("Count",         CCH_SECRETS)
+                                          << new ListWidgetItem("Percent",       CCH_SECRETS_PRCNT)
+                                          << new ListWidgetItem("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT))
+            .setGroup(5)
+            .setShortcut('s');
+
+    page->addWidget(new LabelWidget("Automap Only"))
+            .setGroup(5);
+
+    page->addWidget(new CVarToggleWidget("hud-cheat-counter-show-mapopen"))
+            .setGroup(5);
+
+    page->addWidget(new LabelWidget("Size"))
+            .setGroup(5);
+
+    page->addWidget(new CVarSliderWidget("hud-cheat-counter-scale"))
+            .setGroup(5);
 
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
-    {
-        auto *text = new LabelWidget("Fullscreen");
-        text->setGroup(6);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Size");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarSliderWidget("hud-scale");
-        sld->setGroup(6);
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Text Color");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *cbox = new CVarColorPreviewWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a",
-                                                Vector4f(), true);
-        cbox->setGroup(6);
-        cbox->setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar);
-        cbox->setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Fullscreen"))
+            .setGroup(6)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Size"))
+            .setGroup(6);
+
+    page->addWidget(new CVarSliderWidget("hud-scale"))
+            .setGroup(6);
+
+    page->addWidget(new LabelWidget("Text Color"))
+            .setGroup(6);
+
+    page->addWidget(new CVarColorPreviewWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", Vector4f(), true))
+            .setGroup(6)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
 
 #if __JHEXEN__
-    {
-        auto *text = new LabelWidget("Show Mana");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-mana");
-        btn->setGroup(6);
-        page->widgets() << btn;
-    }
+
+    page->addWidget(new LabelWidget("Show Mana"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-mana"))
+            .setGroup(6);
+
 #endif // __JHEXEN__
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    {
-        auto *text = new LabelWidget("Show Ammo");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-ammo");
-        btn->setGroup(6)
+
+    page->addWidget(new LabelWidget("Show Ammo"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-ammo"))
+            .setGroup(6)
             .setShortcut('a');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Show Armor");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-armor");
-        btn->setGroup(6)
+
+    page->addWidget(new LabelWidget("Show Armor"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-armor"))
+            .setGroup(6)
             .setShortcut('r');
-        page->widgets() << btn;
-    }
+
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
 #if __JDOOM64__
-    {
-        auto *text = new LabelWidget("Show PowerKeys");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-power");
-        btn->setGroup(6)
+
+    page->addWidget(new LabelWidget("Show PowerKeys"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-power"))
+            .setGroup(6)
             .setShortcut('p');
-        page->widgets() << btn;
-    }
+
 #endif // __JDOOM64__
 
 #if __JDOOM__
-    {
-        auto *text = new LabelWidget("Show Status");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-face");
-        btn->setGroup(6)
+
+    page->addWidget(new LabelWidget("Show Status"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-face"))
+            .setGroup(6)
             .setShortcut('f');
-        page->widgets() << btn;
-    }
+
 #endif // __JDOOM__
 
-    {
-        auto *text = new LabelWidget("Show Health");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-health");
-        btn->setGroup(6)
+    page->addWidget(new LabelWidget("Show Health"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-health"))
+            .setGroup(6)
             .setShortcut('h');
-        page->widgets() << btn;
-    }
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    {
-        auto *text = new LabelWidget("Show Keys");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-keys");
-        btn->setGroup(6);
-        page->widgets() << btn;
-    }
+
+    page->addWidget(new LabelWidget("Show Keys"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-keys"))
+            .setGroup(6);
+
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
 #if __JHERETIC__ || __JHEXEN__
-    {
-        auto *text = new LabelWidget("Show Ready-Item");
-        text->setGroup(6);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-currentitem");
-        btn->setGroup(6);
-        page->widgets() << btn;
-    }
+
+    page->addWidget(new LabelWidget("Show Ready-Item"))
+            .setGroup(6);
+
+    page->addWidget(new CVarToggleWidget("hud-currentitem"))
+            .setGroup(6);
+
 #endif // __JHERETIC__ || __JHEXEN__
 }
 
@@ -1851,109 +1492,69 @@ void Hu_MenuInitAutomapOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("Background Opacity");
+    page->addWidget(new LabelWidget("Background Opacity"));
+    page->addWidget(new CVarSliderWidget("map-opacity"))
+            .setShortcut('o');
 
-    {
-        auto *sld = new CVarSliderWidget("map-opacity");
-        sld->setShortcut('o');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Line Opacity"));
+    page->addWidget(new CVarSliderWidget("map-line-opacity"))
+            .setShortcut('l');
 
-    page->widgets() << new LabelWidget("Line Opacity");
-    {
-        auto *sld = new CVarSliderWidget("map-line-opacity");
-        sld->setShortcut('l');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Line Width"));
+    page->addWidget(new CVarSliderWidget("map-line-width", 0.1f, 2.f));
 
-    page->widgets()
-            << new LabelWidget("Line Width")
-            << new CVarSliderWidget("map-line-width", 0.1f, 2.f);
-
-    page->widgets() << new LabelWidget("HUD Display");
+    page->addWidget(new LabelWidget("HUD Display"));
 
 #if !__JDOOM64__
-    {
-        auto *list = new CVarInlineListWidget("map-huddisplay");
-        list->setShortcut('h');
-        list->items()
-                << new ListWidgetItem("None",      0)
-                << new ListWidgetItem("Current",   1)
-                << new ListWidgetItem("Statusbar", 2);
-        page->widgets() << list;
-    }
+    page->addWidget(new CVarInlineListWidget("map-huddisplay"))
+            .addItems(ListWidget::Items() << new ListWidgetItem("None",      0)
+                                          << new ListWidgetItem("Current",   1)
+                                          << new ListWidgetItem("Statusbar", 2))
+            .setShortcut('h');
 #endif
 
-    page->widgets() << new LabelWidget("Door Colors");
-    {
-        auto *btn = new CVarToggleWidget("map-door-colors");
-        btn->setShortcut('d');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Door Colors"));
+    page->addWidget(new CVarToggleWidget("map-door-colors"))
+            .setShortcut('d');
 
-    page->widgets() << new LabelWidget("Door Glow");
-    {
-        auto *sld = new CVarSliderWidget("map-door-glow", 0, 200, 5);
-        sld->setShortcut('g');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Door Glow"));
+    page->addWidget(new CVarSliderWidget("map-door-glow", 0, 200, 5))
+            .setShortcut('g');
 
-    page->widgets() << new LabelWidget("Use Custom Colors");
-    {
-        auto *list = new CVarInlineListWidget("map-customcolors");
-        list->items()
-                << new ListWidgetItem("Never",  0)
-                << new ListWidgetItem("Auto",   1)
-                << new ListWidgetItem("Always", 2);
-        page->widgets() << list;
-    }
+    page->addWidget(new LabelWidget("Use Custom Colors"));
+    page->addWidget(new CVarInlineListWidget("map-customcolors"))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Never",  0)
+                                          << new ListWidgetItem("Auto",   1)
+                                          << new ListWidgetItem("Always", 2));
 
-    page->widgets() << new LabelWidget("Wall");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-wall-r", "map-wall-g", "map-wall-b");
-        cbox->setShortcut('w');
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Wall"));
+    page->addWidget(new CVarColorPreviewWidget("map-wall-r", "map-wall-g", "map-wall-b"))
+            .setShortcut('w')
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
-    page->widgets() << new LabelWidget("Floor Height Change");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b");
-        cbox->setShortcut('f');
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Floor Height Change"));
+    page->addWidget(new CVarColorPreviewWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"))
+            .setShortcut('f')
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
-    page->widgets() << new LabelWidget("Ceiling Height Change");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b");
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Ceiling Height Change"));
+    page->addWidget(new CVarColorPreviewWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"))
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
-    page->widgets() << new LabelWidget("Unseen");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b");
-        cbox->setShortcut('u');
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Unseen"));
+    page->addWidget(new CVarColorPreviewWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"))
+            .setShortcut('u')
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
-    page->widgets() << new LabelWidget("Thing");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-mobj-r", "map-mobj-g", "map-mobj-b");
-        cbox->setShortcut('t');
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Thing"));
+    page->addWidget(new CVarColorPreviewWidget("map-mobj-r", "map-mobj-g", "map-mobj-b"))
+            .setShortcut('t')
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
-    page->widgets() << new LabelWidget("Background");
-    {
-        auto *cbox = new CVarColorPreviewWidget("map-background-r", "map-background-g", "map-background-b");
-        cbox->setShortcut('b');
-        cbox->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
-        page->widgets() << cbox;
-    }
+    page->addWidget(new LabelWidget("Background"));
+    page->addWidget(new CVarColorPreviewWidget("map-background-r", "map-background-g", "map-background-b"))
+            .setShortcut('b')
+            .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 }
 
 static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const *b)
@@ -2025,121 +1626,86 @@ void Hu_MenuInitWeaponsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    {
-        auto *text = new LabelWidget("Priority Order");
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new ListWidget;
-        list->setHelpInfo("Use left/right to move weapon up/down");
-        list->setShortcut('p');
-        list->setColor(MENU_COLOR3);
-        list->setAction(Widget::MNA_MODIFIED, Hu_MenuChangeWeaponPriority);
-        list->setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    page->addWidget(new LabelWidget("Priority Order"))
+            .setColor(MENU_COLOR2);
 
-        for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
+    ListWidget::Items weapItems;
+    for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
+    {
+        char const *itemText = weaponOrder[i].text;
+        if(itemText && (PTR2INT(itemText) > 0 && PTR2INT(itemText) < NUMTEXT))
         {
-            char const *itemText = weaponOrder[i].text;
-            if(itemText && (PTR2INT(itemText) > 0 && PTR2INT(itemText) < NUMTEXT))
-            {
-                itemText = GET_TXT(PTR2INT(itemText));
-            }
-            list->items() << new ListWidgetItem(itemText, weaponOrder[i].data);
+            itemText = GET_TXT(PTR2INT(itemText));
         }
-        ListWidget::Items &allItems = list->items();
-        qSort(allItems.begin(), allItems.end(), compareWeaponPriority);
+        weapItems << new ListWidgetItem(itemText, weaponOrder[i].data);
+    }
+    qSort(weapItems.begin(), weapItems.end(), compareWeaponPriority);
+    page->addWidget(new ListWidget)
+            .addItems(weapItems)
+            .setHelpInfo("Use left/right to move weapon up/down")
+            .setShortcut('p')
+            .setColor(MENU_COLOR3)
+            .setAction(Widget::MNA_MODIFIED, Hu_MenuChangeWeaponPriority)
+            .setAction(Widget::MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("Cycling");
-        text->setGroup(1);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Use Priority Order");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("player-weapon-nextmode");
-        btn->setGroup(1);
-        btn->setShortcut('o');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Sequential");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("player-weapon-cycle-sequential");
-        btn->setGroup(1);
-        btn->setShortcut('s');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Autoswitch");
-        text->setGroup(2);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Weapon");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("player-autoswitch");
-        list->setGroup(2);
-        list->setShortcut('w');
-        list->items()
-                << new ListWidgetItem("Never",     0)
-                << new ListWidgetItem("If Better", 1)
-                << new ListWidgetItem("Always",    2);
-        page->widgets() << list;
-    }
-    {
-        auto *text = new LabelWidget("   If Not Firing");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("player-autoswitch-notfiring");
-        btn->setGroup(2)
+    page->addWidget(new LabelWidget("Cycling"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Use Priority Order"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("player-weapon-nextmode"))
+            .setGroup(1)
+            .setShortcut('o');
+
+    page->addWidget(new LabelWidget("Sequential"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("player-weapon-cycle-sequential"))
+            .setGroup(1)
+            .setShortcut('s');
+
+    page->addWidget(new LabelWidget("Autoswitch"))
+            .setGroup(2)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Pickup Weapon"))
+            .setGroup(2);
+
+    page->addWidget(new CVarInlineListWidget("player-autoswitch"))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Never",     0)
+                                          << new ListWidgetItem("If Better", 1)
+                                          << new ListWidgetItem("Always",    2))
+            .setGroup(2)
+            .setShortcut('w');
+
+    page->addWidget(new LabelWidget("   If Not Firing"))
+            .setGroup(2);
+
+    page->addWidget(new CVarToggleWidget("player-autoswitch-notfiring"))
+            .setGroup(2)
             .setShortcut('f');
-        page->widgets() << btn;
-    }
-    {
-        auto *text = new LabelWidget("Pickup Ammo");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *list = new CVarInlineListWidget("player-autoswitch-ammo");
-        list->setGroup(2);
-        list->setShortcut('a');
-        list->items()
-                << new ListWidgetItem("Never",     0)
-                << new ListWidgetItem("If Better", 1)
-                << new ListWidgetItem("Always",    2);
-        page->widgets() << list;
-    }
+
+    page->addWidget(new LabelWidget("Pickup Ammo"))
+            .setGroup(2);
+
+    page->addWidget(new CVarInlineListWidget("player-autoswitch-ammo"))
+            .addItems(ListWidget::Items() << new ListWidgetItem("Never",     0)
+                                          << new ListWidgetItem("If Better", 1)
+                                          << new ListWidgetItem("Always",    2))
+            .setGroup(2)
+            .setShortcut('a');
 
 #if __JDOOM__ || __JDOOM64__
-    {
-        auto *text = new LabelWidget("Pickup Beserk");
-        text->setGroup(2);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("player-autoswitch-berserk");
-        btn->setGroup(2)
+
+    page->addWidget(new LabelWidget("Pickup Beserk"))
+            .setGroup(2);
+
+    page->addWidget(new CVarToggleWidget("player-autoswitch-berserk"))
+            .setGroup(2)
             .setShortcut('b');
-        page->widgets() << btn;
-    }
+
 #endif
 }
 
@@ -2151,73 +1717,47 @@ void Hu_MenuInitInventoryOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("Select Mode");
-    {
-        auto *btn = new CVarToggleWidget("ctl-inventory-mode", 0, "Scroll", "Cursor");
-        btn->setShortcut('s');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Select Mode"));
+    page->addWidget(new CVarToggleWidget("ctl-inventory-mode", 0, "Scroll", "Cursor"))
+            .setShortcut('s');
 
-    page->widgets() << new LabelWidget("Wrap Around");
-    {
-        auto *btn = new CVarToggleWidget("ctl-inventory-wrap");
-        btn->setShortcut('w');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Wrap Around"));
+    page->addWidget(new CVarToggleWidget("ctl-inventory-wrap"))
+            .setShortcut('w');
 
-    page->widgets() << new LabelWidget("Choose And Use");
-    {
-        auto *btn = new CVarToggleWidget("ctl-inventory-use-immediate");
-        btn->setShortcut('c');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Choose And Use"));
+    page->addWidget(new CVarToggleWidget("ctl-inventory-use-immediate"))
+            .setShortcut('c');
 
-    page->widgets() << new LabelWidget("Select Next If Use Failed");
-    {
-        auto *btn = new CVarToggleWidget("ctl-inventory-use-next");
-        btn->setShortcut('n');
-        page->widgets() << btn;
-    }
+    page->addWidget(new LabelWidget("Select Next If Use Failed"));
+    page->addWidget(new CVarToggleWidget("ctl-inventory-use-next"))
+            .setShortcut('n');
 
-    page->widgets() << new LabelWidget("AutoHide");
-    {
-        auto *sld = new CVarTextualSliderWidget("hud-inventory-timer", 0, 30, 1.f);
-        sld->setEmptyText("Disabled");
-        sld->setOnethSuffix(" second");
-        sld->setNthSuffix(" seconds");
-        sld->setShortcut('h');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("AutoHide"));
+    page->addWidget(new CVarTextualSliderWidget("hud-inventory-timer", 0, 30, 1.f))
+            .setEmptyText("Disabled")
+            .setOnethSuffix(" second")
+            .setNthSuffix(" seconds")
+            .setShortcut('h');
 
-    {
-        auto *text = new LabelWidget("Fullscreen HUD");
-        text->setGroup(1);
-        text->setColor(MENU_COLOR2);
-        page->widgets() << text;
-    }
-    {
-        auto *text = new LabelWidget("Max Visible Slots");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *sld = new CVarTextualSliderWidget("hud-inventory-slot-max", 0, 16, 1, false);
-        sld->setGroup(1);
-        sld->setShortcut('v');
-        sld->setEmptyText("Automatic");
-        page->widgets() << sld;
-    }
-    {
-        auto *text = new LabelWidget("Show Empty Slots");
-        text->setGroup(1);
-        page->widgets() << text;
-    }
-    {
-        auto *btn = new CVarToggleWidget("hud-inventory-slot-showempty");
-        btn->setGroup(1)
+    page->addWidget(new LabelWidget("Fullscreen HUD"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Max Visible Slots"))
+            .setGroup(1);
+
+    page->addWidget(new CVarTextualSliderWidget("hud-inventory-slot-max", 0, 16, 1, false))
+            .setEmptyText("Automatic")
+            .setGroup(1)
+            .setShortcut('v');
+
+    page->addWidget(new LabelWidget("Show Empty Slots"))
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-inventory-slot-showempty"))
+            .setGroup(1)
             .setShortcut('e');
-        page->widgets() << btn;
-    }
 }
 #endif
 
@@ -2236,19 +1776,13 @@ void Hu_MenuInitSoundOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->widgets() << new LabelWidget("SFX Volume");
-    {
-        auto *sld = new CVarSliderWidget("sound-volume", 0, 255, 5, false);
-        sld->setShortcut('s');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("SFX Volume"));
+    page->addWidget(new CVarSliderWidget("sound-volume", 0, 255, 5, false))
+            .setShortcut('s');
 
-    page->widgets() << new LabelWidget("Music Volume");
-    {
-        auto *sld = new CVarSliderWidget("music-volume", 0, 255, 5, false);
-        sld->setShortcut('m');
-        page->widgets() << sld;
-    }
+    page->addWidget(new LabelWidget("Music Volume"));
+    page->addWidget(new CVarSliderWidget("music-volume", 0, 255, 5, false))
+            .setShortcut('m');
 }
 
 /**
@@ -2347,7 +1881,7 @@ void Hu_MenuInitEpisodePage()
 
         btn->setAction(Widget::MNA_FOCUS, Hu_MenuDefaultFocusAction);
         btn->setFont(MENU_FONT1);
-        page->widgets() << btn;
+        page->addWidget(btn);
 
         y += FIXED_LINE_HEIGHT;
         n += 1;
@@ -2404,42 +1938,35 @@ void Hu_MenuInitPlayerClassPage()
         btn->setUserValue2(int(info->plrClass));
         btn->setFont(MENU_FONT1);
 
-        page->widgets() << btn;
+        page->addWidget(btn);
         y += FIXED_LINE_HEIGHT;
     }
 
     // Random class button.
-    {
-        auto *btn = new ButtonWidget(GET_TXT(TXT_RANDOMPLAYERCLASS));
-        if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
-        btn->setFixedY(y);
-        btn->setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectPlayerClass);
-        btn->setAction(Widget::MNA_FOCUS, Hu_MenuFocusOnPlayerClass);
-        btn->setUserValue2(int(PCLASS_NONE));
-        btn->setFont(MENU_FONT1);
-        btn->setColor(MENU_COLOR1);
-        page->widgets() << btn;
-    }
+    String const labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
+    int const shortcut     = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
+    page->addWidget(new ButtonWidget(labelText))
+            .setFixedY(y)
+            .setShortcut(shortcut)
+            .setUserValue2(int(PCLASS_NONE))
+            .setFont(MENU_FONT1)
+            .setColor(MENU_COLOR1)
+            .setAction(Widget::MNA_ACTIVEOUT, Hu_MenuSelectPlayerClass)
+            .setAction(Widget::MNA_FOCUS,     Hu_MenuFocusOnPlayerClass);
 
     // Mobj preview background.
-    {
-        auto *rect = new RectWidget;
-        rect->setFlags(Widget::NoFocus | Widget::Id1);
-        rect->setFixedX(108);
-        rect->setFixedY(-58);
-        rect->setOnTickCallback(Hu_MenuPlayerClassBackgroundTicker);
-        page->widgets() << rect;
-    }
+    page->addWidget(new RectWidget)
+            .setFlags(Widget::NoFocus | Widget::Id1)
+            .setFixedX(108)
+            .setFixedY(-58)
+            .setOnTickCallback(Hu_MenuPlayerClassBackgroundTicker);
 
     // Mobj preview.
-    {
-        auto *mprev = new MobjPreviewWidget;
-        mprev->setFlags(Widget::Id0);
-        mprev->setFixedX(108 + 55);
-        mprev->setFixedY(-58 + 76);
-        mprev->setOnTickCallback(Hu_MenuPlayerClassPreviewTicker);
-        page->widgets() << mprev;
-    }
+    page->addWidget(new MobjPreviewWidget)
+            .setFlags(Widget::Id0)
+            .setFixedX(108 + 55)
+            .setFixedY(-58 + 76)
+            .setOnTickCallback(Hu_MenuPlayerClassPreviewTicker);
 }
 #endif
 

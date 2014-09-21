@@ -166,7 +166,7 @@ int LineEditWidget::maxLength() const
     return d->maxLength;
 }
 
-void LineEditWidget::setMaxLength(int newMaxLength)
+LineEditWidget &LineEditWidget::setMaxLength(int newMaxLength)
 {
     newMaxLength = de::max(newMaxLength, 0);
     if(d->maxLength != newMaxLength)
@@ -178,6 +178,7 @@ void LineEditWidget::setMaxLength(int newMaxLength)
         }
         d->maxLength = newMaxLength;
     }
+    return *this;
 }
 
 String LineEditWidget::text() const
@@ -185,7 +186,7 @@ String LineEditWidget::text() const
     return d->text;
 }
 
-void LineEditWidget::setText(String const &newText, int flags)
+LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
 {
     d->text = newText;
     if(d->maxLength) d->text.truncate(d->maxLength);
@@ -199,11 +200,13 @@ void LineEditWidget::setText(String const &newText, int flags)
     {
         execAction(MNA_MODIFIED);
     }
+    return *this;
 }
 
-void LineEditWidget::setEmptyText(String const &newEmptyText)
+LineEditWidget &LineEditWidget::setEmptyText(String const &newEmptyText)
 {
     d->emptyText = newEmptyText;
+    return *this;
 }
 
 String LineEditWidget::emptyText() const

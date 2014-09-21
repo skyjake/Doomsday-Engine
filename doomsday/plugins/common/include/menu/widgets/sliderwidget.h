@@ -73,15 +73,15 @@ public:
      * @param value  New value.
      * @param flags  @ref mnsliderSetValueFlags
      */
-    void setValue(float value, int flags = MNSLIDER_SVF_NO_ACTION);
+    SliderWidget &setValue(float value, int flags = MNSLIDER_SVF_NO_ACTION);
     float value() const;
 
-    void setRange(float newMin, float newMax, float newStep);
+    SliderWidget &setRange(float newMin, float newMax, float newStep);
     float min() const;
     float max() const;
     float step() const;
 
-    void setFloatMode(bool yes = true);
+    SliderWidget &setFloatMode(bool yes = true);
     bool floatMode() const;
 
 public:
