@@ -28,24 +28,33 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarToggleWidget::CVarToggleWidget(char const *cvarPath)
+DENG2_PIMPL_NOREF(CVarToggleWidget)
+{
+    State state          = Up;
+    char const *cvarPath = nullptr;
+    int cvarValueMask    = 0;
+    String downText;
+    String upText;
+};
+
+CVarToggleWidget::CVarToggleWidget(char const *cvarPath, int cvarValueMask,
+                                   String const &downText, String const &upText)
     : ButtonWidget()
-    , data1(nullptr)
-    , _cvarPath(cvarPath)
+    , d(new Instance)
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR3);
     setAction(MNA_MODIFIED, CVarToggleWidget_UpdateCVar);
     setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+
+    d->cvarPath      = cvarPath;
+    d->cvarValueMask = cvarValueMask;
+    setDownText(downText);
+    setUpText(upText);
 }
 
 CVarToggleWidget::~CVarToggleWidget()
 {}
-
-char const *CVarToggleWidget::cvarPath() const
-{
-    return _cvarPath;
-}
 
 int CVarToggleWidget::handleCommand(menucommand_e cmd)
 {
@@ -69,13 +78,10 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
             setFlags(Active, isActive()? UnsetFlags : SetFlags);
         }
 
-        if(data1)
+        setState(isActive()? Down : Up);
+        if(hasAction(MNA_MODIFIED))
         {
-            *((char *)data1) = isActive();
-            if(hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
+            execAction(MNA_MODIFIED);
         }
 
         if(!justActivated && !isActive())
@@ -96,34 +102,73 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
 void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
     CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
-    cvarbutton_t const *cb = (cvarbutton_t *)tog->data1;
-    cvartype_t varType = Con_GetVariableType(tog->cvarPath());
-    int value;
 
     if(Widget::MNA_MODIFIED != action) return;
 
-    tog->setText(cb->active? cb->yes : cb->no);
+    tog->setText(tog->isDown()? tog->downText() : tog->upText());
 
+    cvartype_t varType = Con_GetVariableType(tog->cvarPath());
     if(CVT_NULL == varType) return;
 
-    if(cb->mask)
+    int value;
+    if(int const valueMask = tog->cvarValueMask())
     {
         value = Con_GetInteger(tog->cvarPath());
-        if(cb->active)
+        if(tog->isDown())
         {
-            value |= cb->mask;
+            value |= valueMask;
         }
         else
         {
-            value &= ~cb->mask;
+            value &= ~valueMask;
         }
     }
     else
     {
-        value = cb->active;
+        value = int(tog->state());
     }
 
     Con_SetInteger2(tog->cvarPath(), value, SVF_WRITE_OVERRIDE);
+}
+
+void CVarToggleWidget::setState(State newState)
+{
+    d->state = newState;
+}
+
+CVarToggleWidget::State CVarToggleWidget::state() const
+{
+    return d->state;
+}
+
+char const *CVarToggleWidget::cvarPath() const
+{
+    return d->cvarPath;
+}
+
+int CVarToggleWidget::cvarValueMask() const
+{
+    return d->cvarValueMask;
+}
+
+void CVarToggleWidget::setDownText(String const &newDownText)
+{
+    d->downText = newDownText;
+}
+
+String CVarToggleWidget::downText() const
+{
+    return d->downText;
+}
+
+void CVarToggleWidget::setUpText(String const &newUpText)
+{
+    d->upText = newUpText;
+}
+
+String CVarToggleWidget::upText() const
+{
+    return d->upText;
 }
 
 } // namespace menu

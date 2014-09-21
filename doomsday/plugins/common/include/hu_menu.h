@@ -32,8 +32,6 @@ namespace common {
 extern int menuTime;
 extern dd_bool menuNominatingQuickSaveSlot;
 
-extern menu::cvarbutton_t mnCVarButtons[];
-
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
 #define SFX_MENU_CLOSE      (SFX_SWTCHX)

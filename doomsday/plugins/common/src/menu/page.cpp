@@ -686,9 +686,7 @@ void Page::initialize()
     {
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            cvarbutton_t *cvb = (cvarbutton_t *) tog->data1;
-            bool const activate = (cvb && cvb->active);
-            tog->setFlags(Widget::Active, (activate? SetFlags : UnsetFlags));
+            tog->setFlags(Widget::Active, tog->isDown()? SetFlags : UnsetFlags);
         }
         if(ListWidget *list = wi->maybeAs<ListWidget>())
         {
@@ -731,26 +729,9 @@ void Page::updateWidgets()
         }
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
-            if(tog->data1)
-            {
-                // This button has already been initialized.
-                cvarbutton_t *cvb = (cvarbutton_t *) tog->data1;
-                cvb->active = (Con_GetByte(tog->cvarPath()) & (cvb->mask? cvb->mask : ~0)) != 0;
-                tog->setText(cvb->active? cvb->yes : cvb->no);
-                continue;
-            }
-
-            // Find the cvarbutton representing this one.
-            for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
-            {
-                if(!strcmp(tog->cvarPath(), cvb->cvarname) && tog->data2 == cvb->mask)
-                {
-                    cvb->active = (Con_GetByte(tog->cvarPath()) & (cvb->mask? cvb->mask : ~0)) != 0;
-                    tog->data1 = (void *) cvb;
-                    tog->setText(cvb->active ? cvb->yes : cvb->no);
-                    break;
-                }
-            }
+            int value = Con_GetByte(tog->cvarPath()) & (tog->cvarValueMask()? tog->cvarValueMask() : ~0);
+            tog->setState(value? CVarToggleWidget::Down : CVarToggleWidget::Up);
+            tog->setText(tog->isDown()? tog->downText() : tog->upText());
         }
         if(CVarInlineListWidget *list = wi->maybeAs<CVarInlineListWidget>())
         {

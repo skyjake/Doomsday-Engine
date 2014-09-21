@@ -154,112 +154,6 @@ static void Hu_MenuUpdateCursorState();
 
 static dd_bool Hu_MenuHasCursorRotation(Widget *wi);
 
-cvarbutton_t mnCVarButtons[] = {
-    cvarbutton_t(0, "ctl-aim-noauto"),
-#if __JHERETIC__ || __JHEXEN__
-    cvarbutton_t(0, "ctl-inventory-mode", "Scroll", "Cursor"),
-    cvarbutton_t(0, "ctl-inventory-use-immediate"),
-    cvarbutton_t(0, "ctl-inventory-use-next"),
-    cvarbutton_t(0, "ctl-inventory-wrap"),
-#endif
-    cvarbutton_t(0, "ctl-look-spring"),
-    cvarbutton_t(0, "ctl-run"),
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "game-anybossdeath666"),
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    cvarbutton_t(0, "game-corpse-sliding"),
-#endif
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "game-maxskulls"),
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    cvarbutton_t(0, "game-monsters-stuckindoors"),
-    cvarbutton_t(0, "game-monsters-floatoverblocking"),
-    cvarbutton_t(0, "game-objects-clipping"),
-    cvarbutton_t(0, "game-objects-falloff"),
-#endif
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "game-objects-gibcrushednonbleeders"),
-#endif
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    cvarbutton_t(0, "game-objects-neverhangoverledges"),
-    cvarbutton_t(0, "game-player-wallrun-northonly"),
-#endif
-#if __JDOOM__
-    cvarbutton_t(0, "game-raiseghosts"),
-#endif
-    cvarbutton_t(0, "game-save-confirm"),
-    cvarbutton_t(0, "game-save-confirm-loadonreborn"),
-    cvarbutton_t(0, "game-save-last-loadonreborn"),
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "game-skullsinwalls"),
-#if __JDOOM__
-    cvarbutton_t(0, "game-vilechase-usevileradius"),
-#endif
-    cvarbutton_t(0, "game-zombiescanexit"),
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "hud-ammo"),
-    cvarbutton_t(0, "hud-armor"),
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "hud-cheat-counter-show-mapopen"),
-#endif
-#if __JHERETIC__ || __JHEXEN__
-    cvarbutton_t(0, "hud-currentitem"),
-#endif
-#if __JDOOM__
-    cvarbutton_t(0, "hud-face"),
-    cvarbutton_t(0, "hud-face-ouchfix"),
-#endif
-    cvarbutton_t(0, "hud-health"),
-#if __JHERETIC__ || __JHEXEN__
-    cvarbutton_t(0, "hud-inventory-slot-showempty"),
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    cvarbutton_t(0, "hud-keys"),
-#endif
-#if __JDOOM__
-    cvarbutton_t(0, "hud-keys-combine"),
-#endif
-#if __JHEXEN__
-    cvarbutton_t(0, "hud-mana"),
-#endif
-#if __JDOOM64__
-    cvarbutton_t(0, "hud-power"),
-#endif
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "hud-status-weaponslots-ownedfix"),
-#endif
-    cvarbutton_t(0, "hud-unhide-damage"),
-    cvarbutton_t(0, "hud-unhide-pickup-ammo"),
-    cvarbutton_t(0, "hud-unhide-pickup-armor"),
-    cvarbutton_t(0, "hud-unhide-pickup-health"),
-#if __JHERETIC__ || __JHEXEN__
-    cvarbutton_t(0, "hud-unhide-pickup-invitem"),
-#endif
-    cvarbutton_t(0, "hud-unhide-pickup-powerup"),
-    cvarbutton_t(0, "hud-unhide-pickup-key"),
-    cvarbutton_t(0, "hud-unhide-pickup-weapon"),
-    cvarbutton_t(0, "map-door-colors"),
-    cvarbutton_t(0, "msg-show"),
-#if __JDOOM__ || __JDOOM64__
-    cvarbutton_t(0, "player-autoswitch-berserk"),
-#endif
-    cvarbutton_t(0, "player-autoswitch-notfiring"),
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    cvarbutton_t(0, "player-jump"),
-#endif
-    cvarbutton_t(0, "player-weapon-cycle-sequential"),
-    cvarbutton_t(0, "player-weapon-nextmode"),
-#if __JDOOM64__
-    cvarbutton_t(0, "player-weapon-recoil"),
-#endif
-    cvarbutton_t(0, "view-cross-vitality"),
-    cvarbutton_t()
-};
-
 int menuTime;
 dd_bool menuNominatingQuickSaveSlot;
 
@@ -2259,7 +2153,7 @@ void Hu_MenuInitInventoryOptionsPage()
 
     page->widgets() << new LabelWidget("Select Mode");
     {
-        auto *btn = new CVarToggleWidget("ctl-inventory-mode");
+        auto *btn = new CVarToggleWidget("ctl-inventory-mode", 0, "Scroll", "Cursor");
         btn->setShortcut('s');
         page->widgets() << btn;
     }
@@ -2593,13 +2487,6 @@ void Hu_MenuInit()
     DD_Execute(true, "deactivatebcontext menu");
 
     Hu_MenuLoadResources();
-
-    // Set default Yes/No strings.
-    for(cvarbutton_t *cvb = mnCVarButtons; cvb->cvarname; cvb++)
-    {
-        if(!cvb->yes) cvb->yes = "Yes";
-        if(!cvb->no) cvb->no = "No";
-    }
 
     initAllPages();
     initAllObjectsOnAllPages();

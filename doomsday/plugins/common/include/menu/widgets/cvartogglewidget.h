@@ -32,41 +32,39 @@ namespace menu {
 class CVarToggleWidget : public ButtonWidget
 {
 public:
-    void *data1;
-    int data2;
+    enum State {
+        Up,
+        Down
+    };
 
 public:
-    CVarToggleWidget(char const *cvarPath);
+    CVarToggleWidget(char const *cvarPath, int cvarValueMask = 0,
+                     de::String const &downText = "Yes",
+                     de::String const &upText   = "No");
     virtual ~CVarToggleWidget();
 
     int handleCommand(menucommand_e command);
 
+    void setState(State newState);
+    State state() const;
+
+    inline bool isUp()   const { return state() == Up; }
+    inline bool isDown() const { return state() == Down; }
+
     char const *cvarPath() const;
+    int cvarValueMask() const;
+
+    void setDownText(de::String const &newDownText);
+    de::String downText() const;
+
+    void setUpText(de::String const &newUpText);
+    de::String upText() const;
 
 private:
-    char const *_cvarPath;
+    DENG2_PRIVATE(d)
 };
 
 void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
-
-/// @todo Refactor away.
-struct cvarbutton_t
-{
-    char active;
-    char const *cvarname;
-    char const *yes;
-    char const *no;
-    int mask;
-
-    cvarbutton_t(char active = 0, char const *cvarname = 0, char const *yes = 0, char const *no = 0,
-                 int mask = 0)
-        : active(active)
-        , cvarname(cvarname)
-        , yes(yes)
-        , no(no)
-        , mask(mask)
-    {}
-};
 
 } // namespace menu
 } // namespace common
