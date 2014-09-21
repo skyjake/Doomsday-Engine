@@ -1,4 +1,4 @@
-/** @file colorpreviewwidget.cpp  UI widget for previewing a color.
+/** @file coloreditwidget.cpp  UI widget for editing a color.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "common.h"
-#include "menu/widgets/colorpreviewwidget.h"
+#include "menu/widgets/coloreditwidget.h"
 
 #include "hu_menu.h" // menu sounds
 #include "menu/page.h" // mnRendState
@@ -29,7 +29,7 @@ using namespace de;
 namespace common {
 namespace menu {
 
-DENG2_PIMPL(ColorPreviewWidget)
+DENG2_PIMPL(ColorEditWidget)
 {
     bool rgbaMode       = false;
     Vector4f color      = Vector4f(0, 0, 0, 1.f);
@@ -104,7 +104,7 @@ DENG2_PIMPL(ColorPreviewWidget)
     }
 };
 
-ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
+ColorEditWidget::ColorEditWidget(Vector4f const &color, bool rgbaMode)
     : Widget()
     , d(new Instance(this))
 {
@@ -116,10 +116,10 @@ ColorPreviewWidget::ColorPreviewWidget(Vector4f const &color, bool rgbaMode)
     if(!d->rgbaMode) d->color.w = 1.f;
 }
 
-ColorPreviewWidget::~ColorPreviewWidget()
+ColorEditWidget::~ColorEditWidget()
 {}
 
-void ColorPreviewWidget::draw(Point2Raw const *offset)
+void ColorEditWidget::draw(Point2Raw const *offset)
 {
     DENG2_ASSERT(offset != 0);
 
@@ -228,7 +228,7 @@ void ColorPreviewWidget::draw(Point2Raw const *offset)
     DGL_DrawRectf2Color(x, y, w, h, d->color.x, d->color.y, d->color.z, d->color.w * mnRendState->pageAlpha);
 }
 
-int ColorPreviewWidget::handleCommand(menucommand_e cmd)
+int ColorEditWidget::handleCommand(menucommand_e cmd)
 {
     switch(cmd)
     {
@@ -257,7 +257,7 @@ int ColorPreviewWidget::handleCommand(menucommand_e cmd)
     }
 }
 
-void ColorPreviewWidget::updateGeometry(Page * /*page*/)
+void ColorEditWidget::updateGeometry(Page * /*page*/)
 {
     patchinfo_t info;
 
@@ -328,23 +328,23 @@ void ColorPreviewWidget::updateGeometry(Page * /*page*/)
     }
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setPreviewDimensions(Vector2i const &newDimensions)
+ColorEditWidget &ColorEditWidget::setPreviewDimensions(Vector2i const &newDimensions)
 {
     d->dimensions = newDimensions;
     return *this;
 }
 
-Vector2i ColorPreviewWidget::previewDimensions() const
+Vector2i ColorEditWidget::previewDimensions() const
 {
     return d->dimensions;
 }
 
-bool ColorPreviewWidget::rgbaMode() const
+bool ColorEditWidget::rgbaMode() const
 {
     return d->rgbaMode;
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setColor(Vector4f const &newColor, int flags)
+ColorEditWidget &ColorEditWidget::setColor(Vector4f const &newColor, int flags)
 {
     int setComps = 0;
     int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
@@ -364,7 +364,7 @@ ColorPreviewWidget &ColorPreviewWidget::setColor(Vector4f const &newColor, int f
     return *this;
 }
 
-Vector4f ColorPreviewWidget::color() const
+Vector4f ColorEditWidget::color() const
 {
     if(!d->rgbaMode)
     {
@@ -373,25 +373,25 @@ Vector4f ColorPreviewWidget::color() const
     return d->color;
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setRed(float newRed, int flags)
+ColorEditWidget &ColorEditWidget::setRed(float newRed, int flags)
 {
     d->setRed(newRed, flags);
     return *this;
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setGreen(float newGreen, int flags)
+ColorEditWidget &ColorEditWidget::setGreen(float newGreen, int flags)
 {
     d->setGreen(newGreen, flags);
     return *this;
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setBlue(float newBlue, int flags)
+ColorEditWidget &ColorEditWidget::setBlue(float newBlue, int flags)
 {
     d->setBlue(newBlue, flags);
     return *this;
 }
 
-ColorPreviewWidget &ColorPreviewWidget::setAlpha(float newAlpha, int flags)
+ColorEditWidget &ColorEditWidget::setAlpha(float newAlpha, int flags)
 {
     d->setAlpha(newAlpha, flags);
     return *this;

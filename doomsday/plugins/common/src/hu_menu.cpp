@@ -47,8 +47,8 @@
 #include "x_hair.h"
 
 #include "menu/page.h"
-#include "menu/widgets/colorpreviewwidget.h"
-#include "menu/widgets/cvarcolorpreviewwidget.h"
+#include "menu/widgets/coloreditwidget.h"
+#include "menu/widgets/cvarcoloreditwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
@@ -339,7 +339,7 @@ void Hu_MenuInitColorWidgetPage()
     Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, MPF_NEVER_SCROLL, NULL, Hu_MenuColorWidgetCmdResponder));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
-    page->addWidget(new ColorPreviewWidget(Vector4f(), true))
+    page->addWidget(new ColorEditWidget(Vector4f(), true))
             .setPreviewDimensions(Vector2i(SCREENHEIGHT / 7, SCREENHEIGHT / 7))
             .setFlags(Widget::Id0 | Widget::NoFocus);
 
@@ -1258,9 +1258,9 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new LabelWidget("Color"))
             .setGroup(2);
 
-    page->addWidget(new CVarColorPreviewWidget("msg-color-r", "msg-color-g", "msg-color-b"))
+    page->addWidget(new CVarColorEditWidget("msg-color-r", "msg-color-g", "msg-color-b"))
             .setGroup(2)
-            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Crosshair"))
@@ -1307,9 +1307,9 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new LabelWidget("Color"))
             .setGroup(3);
 
-    page->addWidget(new CVarColorPreviewWidget("view-cross-r", "view-cross-g", "view-cross-b"))
+    page->addWidget(new CVarColorEditWidget("view-cross-r", "view-cross-g", "view-cross-b"))
             .setGroup(3)
-            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
@@ -1396,9 +1396,9 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new LabelWidget("Text Color"))
             .setGroup(6);
 
-    page->addWidget(new CVarColorPreviewWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", Vector4f(), true))
+    page->addWidget(new CVarColorEditWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", Vector4f(), true))
             .setGroup(6)
-            .setAction(Widget::MNA_ACTIVEOUT, CVarColorPreviewWidget_UpdateCVar)
+            .setAction(Widget::MNA_ACTIVEOUT, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::MNA_ACTIVE,    Hu_MenuActivateColorWidget);
 
 #if __JHEXEN__
@@ -1528,31 +1528,31 @@ void Hu_MenuInitAutomapOptionsPage()
                                           << new ListWidgetItem("Always", 2));
 
     page->addWidget(new LabelWidget("Wall"));
-    page->addWidget(new CVarColorPreviewWidget("map-wall-r", "map-wall-g", "map-wall-b"))
+    page->addWidget(new CVarColorEditWidget("map-wall-r", "map-wall-g", "map-wall-b"))
             .setShortcut('w')
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Floor Height Change"));
-    page->addWidget(new CVarColorPreviewWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"))
+    page->addWidget(new CVarColorEditWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"))
             .setShortcut('f')
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Ceiling Height Change"));
-    page->addWidget(new CVarColorPreviewWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"))
+    page->addWidget(new CVarColorEditWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"))
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Unseen"));
-    page->addWidget(new CVarColorPreviewWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"))
+    page->addWidget(new CVarColorEditWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"))
             .setShortcut('u')
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Thing"));
-    page->addWidget(new CVarColorPreviewWidget("map-mobj-r", "map-mobj-g", "map-mobj-b"))
+    page->addWidget(new CVarColorEditWidget("map-mobj-r", "map-mobj-g", "map-mobj-b"))
             .setShortcut('t')
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Background"));
-    page->addWidget(new CVarColorPreviewWidget("map-background-r", "map-background-g", "map-background-b"))
+    page->addWidget(new CVarColorEditWidget("map-background-r", "map-background-g", "map-background-b"))
             .setShortcut('b')
             .setAction(Widget::MNA_ACTIVE, Hu_MenuActivateColorWidget);
 }
@@ -2295,7 +2295,7 @@ void Hu_MenuDrawer()
     bool showFocusCursor = true;
     if(focused && focused->isActive())
     {
-        if(focused->is<ColorPreviewWidget>() || focused->is<InputBindingWidget>())
+        if(focused->is<ColorEditWidget>() || focused->is<InputBindingWidget>())
         {
             showFocusCursor = false;
         }
@@ -2318,7 +2318,7 @@ void Hu_MenuDrawer()
     // Drawing any overlays?
     if(focused && focused->isActive())
     {
-        if(focused->is<ColorPreviewWidget>())
+        if(focused->is<ColorEditWidget>())
         {
             drawOverlayBackground(OVERLAY_DARKEN);
             GL_BeginBorderedProjection(&bp);
@@ -2411,11 +2411,11 @@ int Hu_MenuColorWidgetCmdResponder(Page *page, menucommand_e cmd)
 
     case MCMD_SELECT: {
         Widget *wi = static_cast<Widget *>(page->userValue().value<void *>());
-        ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
+        ColorEditWidget &cbox = wi->as<ColorEditWidget>();
         cbox.setFlags(Widget::Active, UnsetFlags);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         colorWidgetActive = false;
-        cbox.setColor(page->findWidget(Widget::Id0).as<ColorPreviewWidget>().color(), 0);
+        cbox.setColor(page->findWidget(Widget::Id0).as<ColorEditWidget>().color(), 0);
 
         /// @kludge We should re-focus on the object instead.
         cursorAngle = 0; // Stop cursor rotation animation dead (don't rewind).
@@ -2439,7 +2439,7 @@ static menucommand_e translateCommand(menucommand_e cmd)
         if(Widget *wi = Hu_MenuPage().focusWidget())
         {
             if(wi->isActive() &&
-               (wi->is<LineEditWidget>() || wi->is<ListWidget>() || wi->is<ColorPreviewWidget>()))
+               (wi->is<LineEditWidget>() || wi->is<ListWidget>() || wi->is<ColorEditWidget>()))
             {
                 cmd = MCMD_NAV_OUT;
             }
@@ -2818,10 +2818,10 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
 {
     if(action != Widget::MNA_ACTIVE) return;
 
-    ColorPreviewWidget &cbox = wi->as<ColorPreviewWidget>();
+    ColorEditWidget &cbox = wi->as<ColorEditWidget>();
 
     Page &colorWidgetPage       = Hu_MenuPage("ColorWidget");
-    ColorPreviewWidget &cboxMix = colorWidgetPage.findWidget(Widget::Id0).as<ColorPreviewWidget>();
+    ColorEditWidget &cboxMix = colorWidgetPage.findWidget(Widget::Id0).as<ColorEditWidget>();
     SliderWidget &sldrRed       = colorWidgetPage.findWidget(Widget::Id1).as<SliderWidget>();
     SliderWidget &sldrGreen     = colorWidgetPage.findWidget(Widget::Id2).as<SliderWidget>();
     SliderWidget &sldrBlue      = colorWidgetPage.findWidget(Widget::Id3).as<SliderWidget>();
@@ -2931,7 +2931,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget *wi, Widget::mn_actionid_t action)
 
     SliderWidget &sldr = wi->as<SliderWidget>();
     float value = sldr.value();
-    ColorPreviewWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(Widget::Id0).as<ColorPreviewWidget>();
+    ColorEditWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(Widget::Id0).as<ColorEditWidget>();
 
     int const component = wi->userValue2().toInt();
     switch(component)

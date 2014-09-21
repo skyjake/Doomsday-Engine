@@ -1,4 +1,4 @@
-/** @file cvarcolorpreviewwidget.h  UI widget for previewing a color cvar.
+/** @file cvarcoloreditwidget.h  UI widget for editing a color cvar.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,27 +18,27 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_CVARCOLORPREVIEWWIDGET
-#define LIBCOMMON_UI_CVARCOLORPREVIEWWIDGET
+#ifndef LIBCOMMON_UI_CVARCOLOREDITWIDGET
+#define LIBCOMMON_UI_CVARCOLOREDITWIDGET
 
-#include "colorpreviewwidget.h"
+#include "coloreditwidget.h"
 
 namespace common {
 namespace menu {
 
 /**
- * UI widget for previewing a color cvar.
+ * UI widget for editing a color cvar.
  *
  * @ingroup menu
  */
-class CVarColorPreviewWidget : public ColorPreviewWidget
+class CVarColorEditWidget : public ColorEditWidget
 {
 public:
-    explicit CVarColorPreviewWidget(char const *redCVarPath, char const *greenCVarPath,
-                                    char const *blueCVarPath, char const *alphaCVarPath = 0,
-                                    de::Vector4f const &color = de::Vector4f(),
-                                    bool rgbaMode = false);
-    virtual ~CVarColorPreviewWidget();
+    explicit CVarColorEditWidget(char const *redCVarPath,  char const *greenCVarPath,
+                                 char const *blueCVarPath, char const *alphaCVarPath = 0,
+                                 de::Vector4f const &color = de::Vector4f(),
+                                 bool rgbaMode = false);
+    virtual ~CVarColorEditWidget();
 
     char const *cvarPath(int component) const;
 
@@ -51,9 +51,9 @@ private:
     char const *_cvarPaths[4];
 };
 
-void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
+void CVarColorEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
 
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_COLORPREVIEWWIDGET
+#endif // LIBCOMMON_UI_CVARCOLOREDITWIDGET

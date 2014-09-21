@@ -25,7 +25,7 @@
 
 /// @todo Page should not need knowledge of Widget specializations - remove all.
 #include "menu/widgets/buttonwidget.h"
-#include "menu/widgets/cvarcolorpreviewwidget.h"
+#include "menu/widgets/cvarcoloreditwidget.h"
 #include "menu/widgets/cvarinlinelistwidget.h"
 #include "menu/widgets/cvarlineeditwidget.h"
 #include "menu/widgets/cvarsliderwidget.h"
@@ -274,7 +274,7 @@ void Page::applyLayout()
             if(widgetIsDrawable(nextWi) &&
                (nextWi->is<ButtonWidget>()         ||
                 nextWi->is<InlineListWidget>()     ||
-                nextWi->is<ColorPreviewWidget>()   ||
+                nextWi->is<ColorEditWidget>()   ||
                 nextWi->is<InputBindingWidget>()   ||
                 nextWi->is<CVarTextualSliderWidget>()))
             {
@@ -755,7 +755,7 @@ void Page::updateWidgets()
                 value = Con_GetInteger(sldr->cvarPath());
             sldr->setValue(value);
         }
-        if(CVarColorPreviewWidget *cbox = wi->maybeAs<CVarColorPreviewWidget>())
+        if(CVarColorEditWidget *cbox = wi->maybeAs<CVarColorEditWidget>())
         {
             cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
                                     Con_GetFloat(cbox->greenCVarPath()),

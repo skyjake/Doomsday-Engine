@@ -1,4 +1,4 @@
-/** @file cvarcolorpreviewwidget.cpp  UI widget for previewing a color in a cvar.
+/** @file cvarcoloreditwidget.cpp  UI widget for editing a color in a cvar.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -19,7 +19,7 @@
  */
 
 #include "common.h"
-#include "menu/widgets/cvarcolorpreviewwidget.h"
+#include "menu/widgets/cvarcoloreditwidget.h"
 
 #include "hu_menu.h" // Hu_MenuDefaultFocusAction
 #include "menu/page.h" // mnRendState
@@ -29,11 +29,11 @@ using namespace de;
 namespace common {
 namespace menu {
 
-CVarColorPreviewWidget::CVarColorPreviewWidget(char const *redCVarPath, char const *greenCVarPath,
+CVarColorEditWidget::CVarColorEditWidget(char const *redCVarPath, char const *greenCVarPath,
     char const *blueCVarPath, char const *alphaCVarPath, Vector4f const &color, bool rgbaMode)
-    : ColorPreviewWidget(color, rgbaMode)
+    : ColorEditWidget(color, rgbaMode)
 {
-    setAction(MNA_MODIFIED, CVarColorPreviewWidget_UpdateCVar);
+    setAction(MNA_MODIFIED, CVarColorEditWidget_UpdateCVar);
     setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
 
     _cvarPaths[0] = redCVarPath;
@@ -42,10 +42,10 @@ CVarColorPreviewWidget::CVarColorPreviewWidget(char const *redCVarPath, char con
     _cvarPaths[3] = alphaCVarPath;
 }
 
-CVarColorPreviewWidget::~CVarColorPreviewWidget()
+CVarColorEditWidget::~CVarColorEditWidget()
 {}
 
-char const *CVarColorPreviewWidget::cvarPath(int component) const
+char const *CVarColorEditWidget::cvarPath(int component) const
 {
     if(component >= 0 && component < 4)
     {
@@ -54,9 +54,9 @@ char const *CVarColorPreviewWidget::cvarPath(int component) const
     return 0;
 }
 
-void CVarColorPreviewWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarColorEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
 {
-    CVarColorPreviewWidget *cbox = &wi->as<CVarColorPreviewWidget>();
+    CVarColorEditWidget *cbox = &wi->as<CVarColorEditWidget>();
 
     if(action != Widget::MNA_MODIFIED) return;
 

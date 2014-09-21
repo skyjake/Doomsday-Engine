@@ -1,4 +1,4 @@
-/** @file colorpreviewwidget.h  UI widget for previewing a color.
+/** @file coloreditwidget.h  UI widget for editing a color.
  *
  * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_UI_COLORPREVIEWWIDGET
-#define LIBCOMMON_UI_COLORPREVIEWWIDGET
+#ifndef LIBCOMMON_UI_COLOREDITWIDGET
+#define LIBCOMMON_UI_COLOREDITWIDGET
 
 #include <de/Vector>
 #include "widget.h"
@@ -38,16 +38,16 @@ namespace menu {
 ///@}
 
 /**
- * UI widget for previewing a color.
+ * UI widget for editing a color.
  *
  * @ingroup menu
  */
-class ColorPreviewWidget : public Widget
+class ColorEditWidget : public Widget
 {
 public:
-    explicit ColorPreviewWidget(de::Vector4f const &color = de::Vector4f(),
-                                bool rgbaMode = false);
-    virtual ~ColorPreviewWidget();
+    explicit ColorEditWidget(de::Vector4f const &color = de::Vector4f(),
+                             bool rgbaMode = false);
+    virtual ~ColorEditWidget();
 
     void draw(Point2Raw const *origin);
     void updateGeometry(Page *pagePtr);
@@ -58,9 +58,9 @@ public:
      *
      * @param newDimensions  New dimensions of the preview area.
      *
-     * @return  Reference to this ColorPreviewWidget.
+     * @return  Reference to this ColorEditWidget.
      */
-    ColorPreviewWidget &setPreviewDimensions(de::Vector2i const &newDimensions);
+    ColorEditWidget &setPreviewDimensions(de::Vector2i const &newDimensions);
 
     /**
      * Returns the dimensions of the preview area (in fixed 320x200 space).
@@ -88,14 +88,14 @@ public:
      * @param newColor  New color and alpha.
      * @param flags     @ref mncolorboxSetColorFlags
      *
-     * @return  Reference to this ColorPreviewWidget.
+     * @return  Reference to this ColorEditWidget.
      */
-    ColorPreviewWidget &setColor(de::Vector4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setColor(de::Vector4f const &newColor, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
-    ColorPreviewWidget &setRed  (float newRed,   int flags = MNCOLORBOX_SCF_NO_ACTION);
-    ColorPreviewWidget &setGreen(float newGreen, int flags = MNCOLORBOX_SCF_NO_ACTION);
-    ColorPreviewWidget &setBlue (float newBlue,  int flags = MNCOLORBOX_SCF_NO_ACTION);
-    ColorPreviewWidget &setAlpha(float newAlpha, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setRed  (float newRed,   int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setGreen(float newGreen, int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setBlue (float newBlue,  int flags = MNCOLORBOX_SCF_NO_ACTION);
+    ColorEditWidget &setAlpha(float newAlpha, int flags = MNCOLORBOX_SCF_NO_ACTION);
 
 private:
     DENG2_PRIVATE(d)
@@ -104,4 +104,4 @@ private:
 } // namespace menu
 } // namespace common
 
-#endif // LIBCOMMON_UI_COLORPREVIEWWIDGET
+#endif // LIBCOMMON_UI_COLOREDITWIDGET
