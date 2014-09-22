@@ -46,16 +46,16 @@ mn_rendstate_t const *mnRendState = &rs;
 
 DENG2_PIMPL(Page)
 {
-    String name;               ///< Symbolic name/identifier.
-    Widgets widgets;
+    String name;                     ///< Symbolic name/identifier.
+    Children children;
 
     Vector2i origin;
-    Rectanglei geometry;       ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
+    Rectanglei geometry;             ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
 
-    String title;              ///< Title of this page.
-    Page *previous = nullptr;  ///< Previous page.
-    int focus      = -1;       ///< Index of the currently focused widget else @c -1
-    int flags      = 0;        ///< @ref menuPageFlags
+    String title;                    ///< Title of this page.
+    Page *previous = nullptr;        ///< Previous page.
+    int focus      = -1;             ///< Index of the currently focused widget else @c -1
+    Flags flags    = DefaultFlags;   ///< @ref menuPageFlags
     int timer      = 0;
 
     fontid_t fonts[MENU_FONT_COUNT]; ///< Predefined. Used by all widgets.
@@ -83,13 +83,13 @@ DENG2_PIMPL(Page)
 
     ~Instance()
     {
-        qDeleteAll(widgets);
+        qDeleteAll(children);
     }
 
-    void updateAllWidgetGeometry()
+    void updateAllChildGeometry()
     {
         // Update objects.
-        for(Widget *wi : widgets)
+        for(Widget *wi : children)
         {
             FR_PushAttrib();
             wi->geometry().moveTopLeft(Vector2i(0, 0));
@@ -105,10 +105,10 @@ DENG2_PIMPL(Page)
 
         // Apply layout logic to this page.
 
-        if(flags & MPF_LAYOUT_FIXED)
+        if(flags & FixedLayout)
         {
             // This page uses a fixed layout.
-            for(Widget *wi : widgets)
+            for(Widget *wi : children)
             {
                 if(wi->isHidden()) continue;
 
@@ -124,10 +124,10 @@ DENG2_PIMPL(Page)
 
         Vector2i origin;
 
-        for(int i = 0; i < widgets.count(); )
+        for(int i = 0; i < children.count(); )
         {
-            Widget *wi = widgets[i];
-            Widget *nextWi = i + 1 < widgets.count()? widgets[i + 1] : 0;
+            Widget *wi = children[i];
+            Widget *nextWi = i + 1 < children.count()? children[i + 1] : 0;
 
             if(wi->isHidden())
             {
@@ -178,7 +178,7 @@ DENG2_PIMPL(Page)
                     origin.y += united.height() + lineOffset;
 
                     // Extra spacing between object groups.
-                    if(i + 2 < widgets.count() && nextWi->group() != widgets[i + 2]->group())
+                    if(i + 2 < children.count() && nextWi->group() != children[i + 2]->group())
                     {
                         origin.y += lh;
                     }
@@ -204,17 +204,16 @@ DENG2_PIMPL(Page)
     }
 
     /// @pre @a wi is a child of this page.
-    void giveChildFocus(Widget *wi, bool allowRefocus = false)
+    void giveChildFocus(Widget *newFocus, bool allowRefocus = false)
     {
-        DENG2_ASSERT(wi != 0);
+        DENG2_ASSERT(newFocus != 0);
 
-        if(!(0 > focus))
+        if(Widget *focused = self.focusWidget())
         {
-            if(wi != widgets[focus])
+            if(focused != newFocus)
             {
-                Widget *oldFocused = widgets[focus];
-                oldFocused->execAction(Widget::FocusLost);
-                oldFocused->setFlags(Widget::Focused, UnsetFlags);
+                focused->execAction(Widget::FocusLost);
+                focused->setFlags(Widget::Focused, UnsetFlags);
             }
             else if(!allowRefocus)
             {
@@ -222,47 +221,46 @@ DENG2_PIMPL(Page)
             }
         }
 
-        focus = widgets.indexOf(wi);
-        wi->setFlags(Widget::Focused);
-        wi->execAction(Widget::FocusGained);
+        focus = self.indexOf(newFocus);
+        newFocus->setFlags(Widget::Focused);
+        newFocus->execAction(Widget::FocusGained);
     }
 
     void refocus()
     {
-        LOG_AS("Page");
-
-        // If we haven't yet visited this page then find the first focusable
-        // widget and select it.
+        // If we haven't yet visited this page then find a child widget to give focus.
         if(focus < 0)
         {
-            int i, giveFocus = -1;
+            Widget *newFocus = nullptr;
 
-            // First look for a default focus widget. There should only be one
-            // but find the last with this flag...
-            for(i = 0; i < widgets.count(); ++i)
+            // First look for a child with the default focus flag. There should only be one
+            // but we'll choose the last with this flag...
+            for(Widget *wi : children)
             {
-                Widget *wi = widgets[i];
-                if((wi->flags() & Widget::DefaultFocus) && !(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
-                {
-                    giveFocus = i;
-                }
+                if(wi->isDisabled()) continue;
+                if(wi->flags() & Widget::NoFocus) continue;
+                if(!(wi->flags() & Widget::DefaultFocus)) continue;
+
+                newFocus = wi;
             }
 
-            // No default focus? Find the first focusable widget.
-            if(-1 == giveFocus)
-            for(i = 0; i < widgets.count(); ++i)
+            // No default focus?
+            if(!newFocus)
             {
-                Widget *wi = widgets[i];
-                if(!(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
+                // Find the first focusable child.
+                for(Widget *wi : children)
                 {
-                    giveFocus = i;
+                    if(wi->isDisabled()) continue;
+                    if(wi->flags() & Widget::NoFocus) continue;
+
+                    newFocus = wi;
                     break;
                 }
             }
 
-            if(-1 != giveFocus)
+            if(newFocus)
             {
-                giveChildFocus(widgets[giveFocus]);
+                giveChildFocus(newFocus);
             }
             else
             {
@@ -272,13 +270,13 @@ DENG2_PIMPL(Page)
         else
         {
             // We've been here before; re-focus on the last focused object.
-            giveChildFocus(widgets[focus], true);
+            giveChildFocus(children[focus], true);
         }
     }
 
     void fetch()
     {
-        for(Widget *wi : widgets)
+        for(Widget *wi : children)
         {
             if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
             {
@@ -336,7 +334,7 @@ DENG2_PIMPL(Page)
     }
 };
 
-Page::Page(String name, Vector2i const &origin, int flags,
+Page::Page(String name, Vector2i const &origin, Flags const &flags,
     OnDrawCallback drawer, CommandResponder cmdResponder)
     : d(new Instance(this))
 {
@@ -357,20 +355,24 @@ String Page::name() const
 
 Widget &Page::addWidget(Widget *widget)
 {
-    DENG2_ASSERT(widget != 0);
-    d->widgets << widget;
+    LOG_AS("Page");
+
+    DENG2_ASSERT(widget);
+    d->children << widget;
     widget->setPage(this)
            .setFlags(Widget::Focused, UnsetFlags); // Not focused initially.
     return *widget;
 }
 
-Page::Widgets const &Page::widgets() const
+Page::Children const &Page::children() const
 {
-    return d->widgets;
+    return d->children;
 }
 
 int Page::lineHeight(int *lineOffset)
 {
+    LOG_AS("Page");
+
     fontid_t oldFont = FR_Font();
 
     /// @kludge We cannot yet query line height from the font...
@@ -393,36 +395,32 @@ void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
 }
 
 #if __JDOOM__ || __JDOOM64__
-static void composeSubpageString(Page *page, char *buf, size_t bufSize)
+static inline String subpageText(int page = 0, int totalPages = 0)
 {
-    DENG2_ASSERT(page != 0);
-    DENG2_UNUSED(page);
-    if(!buf || 0 == bufSize) return;
-    dd_snprintf(buf, bufSize, "Page %i/%i", 0, 0);
+    if(totalPages <= 0) return "";
+    return String("Page %1/%2").arg(page).arg(totalPages);
 }
 #endif
 
-static void drawPageNavigation(Page *page, Vector2i const origin)
+static void drawNavigation(Vector2i const origin)
 {
     int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
     int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
 #if __JDOOM__ || __JDOOM64__
-    char buf[1024];
-
     DENG2_UNUSED(currentPage);
 #endif
 
-    if(!page || totalPages <= 1) return;
+    if(totalPages <= 1) return;
 
 #if __JDOOM__ || __JDOOM64__
-    composeSubpageString(page, buf, 1024);
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorv(cfg.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(buf, origin.x, origin.y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(subpageText(currentPage, totalPages).toUtf8().constData(), origin.x, origin.y,
+                   ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else
@@ -436,10 +434,9 @@ static void drawPageNavigation(Page *page, Vector2i const origin)
 #endif
 }
 
-static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
+static void drawTitle(String const &title, Point2Raw const *offset = nullptr)
 {
-    if(!page) return;
-    if(page->title().isEmpty()) return;
+    if(title.isEmpty()) return;
 
     Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
     if(offset)
@@ -449,26 +446,24 @@ static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
     }
 
     FR_PushAttrib();
-    Hu_MenuDrawPageTitle(page->title(), origin); origin.y += 16;
-    drawPageNavigation(page, origin);
+    Hu_MenuDrawPageTitle(title, origin); origin.y += 16;
+    drawNavigation(origin);
     FR_PopAttrib();
 }
 
-static void setupRenderStateForPageDrawing(Page *page, float alpha)
+static void setupRenderStateForPageDrawing(Page &page, float alpha)
 {
-    if(!page) return; // Huh?
-
     rs.pageAlpha   = alpha;
     rs.textGlitter = cfg.menuTextGlitter;
     rs.textShadow  = cfg.menuShadow;
 
     for(int i = 0; i < MENU_FONT_COUNT; ++i)
     {
-        rs.textFonts[i] = page->predefinedFont(mn_page_fontid_t(i));
+        rs.textFonts[i] = page.predefinedFont(mn_page_fontid_t(i));
     }
     for(int i = 0; i < MENU_COLOR_COUNT; ++i)
     {
-        page->predefinedColor(mn_page_colorid_t(i), rs.textColors[i]);
+        page.predefinedColor(mn_page_colorid_t(i), rs.textColors[i]);
         rs.textColors[i][CA] = alpha; // For convenience.
     }
 
@@ -487,12 +482,12 @@ void Page::draw(float alpha, bool showFocusCursor)
 
     // Object geometry is determined from properties defined in the
     // render state, so configure render state before we begin.
-    setupRenderStateForPageDrawing(this, alpha);
+    setupRenderStateForPageDrawing(*this, alpha);
 
     // Update object geometry. We'll push the font renderer state because
     // updating geometry may require changing the current values.
     FR_PushAttrib();
-    d->updateAllWidgetGeometry();
+    d->updateAllChildGeometry();
 
     // Back to default page render state.
     FR_PopAttrib();
@@ -541,7 +536,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     DGL_Translatef(d->origin.x, d->origin.y, 0);
 
     // Apply page scroll?
-    if(!(d->flags & MPF_NEVER_SCROLL) && focused)
+    if(!(d->flags & NoScroll) && focused)
     {
         Rectanglei viewRegion;
 
@@ -562,8 +557,8 @@ void Page::draw(float alpha, bool showFocusCursor)
         }
     }
 
-    // Draw child objects.
-    for(Widget *wi : d->widgets)
+    // Draw all child widgets that aren't hidden.
+    for(Widget *wi : d->children)
     {
         if(wi->isHidden()) continue;
 
@@ -582,7 +577,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
-    drawPageHeading(this);
+    drawTitle(d->title);
 
     // The page has its own drawer.
     if(d->drawer)
@@ -642,8 +637,8 @@ Page *Page::previousPage() const
 
 Widget *Page::focusWidget()
 {
-    if(d->widgets.isEmpty() || d->focus < 0) return 0;
-    return d->widgets[d->focus];
+    if(d->children.isEmpty() || d->focus < 0) return 0;
+    return d->children[d->focus];
 }
 
 Widget &Page::findWidget(int flags, int group)
@@ -657,7 +652,7 @@ Widget &Page::findWidget(int flags, int group)
 
 Widget *Page::tryFindWidget(int flags, int group)
 {
-    for(Widget *wi : d->widgets)
+    for(Widget *wi : d->children)
     {
         if(wi->group() == group && (wi->flags() & flags) == flags)
             return wi;
@@ -676,7 +671,7 @@ void Page::setFocus(Widget *newFocus)
         }
 
         d->focus = -1;
-        for(Widget *wi : d->widgets)
+        for(Widget *wi : d->children)
         {
             wi->setFlags(Widget::Focused, UnsetFlags);
         }
@@ -690,18 +685,23 @@ void Page::setFocus(Widget *newFocus)
         DENG2_ASSERT(!"Page::Focus: Failed to determine index-in-page for widget.");
         return;
     }
-    d->giveChildFocus(d->widgets[index]);
+    d->giveChildFocus(d->children[index]);
 }
 
 void Page::activate()
 {
+    LOG_AS("Page");
+
     d->fetch();
 
     // Reset page timer.
     d->timer = 0;
 
+    if(d->children.isEmpty())
+        return; // Presumably the widgets will be added later...
+
     // (Re)init widgets.
-    for(Widget *wi : d->widgets)
+    for(Widget *wi : d->children)
     {
         if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
         {
@@ -714,12 +714,6 @@ void Page::activate()
         }
     }
 
-    if(d->widgets.isEmpty())
-    {
-        // Presumably the widgets will be added later...
-        return;
-    }
-
     d->refocus();
 
     if(d->onActiveCallback)
@@ -730,8 +724,8 @@ void Page::activate()
 
 void Page::tick()
 {
-    // Call the ticker of each object.
-    for(Widget *wi : d->widgets)
+    // Call the ticker of each child widget.
+    for(Widget *wi : d->children)
     {
         wi->tick();
     }
@@ -801,15 +795,15 @@ int Page::handleCommand(menucommand_e cmd)
             {
                 giveFocus += (cmd == MCMD_NAV_UP? -1 : 1);
                 if(giveFocus < 0)
-                    giveFocus = widgetCount() - 1;
-                else if(giveFocus >= widgetCount())
+                    giveFocus = d->children.count() - 1;
+                else if(giveFocus >= d->children.count())
                     giveFocus = 0;
-            } while(++i < widgetCount() && (d->widgets[giveFocus]->flags() & (Widget::Disabled | Widget::NoFocus | Widget::Hidden)));
+            } while(++i < d->children.count() && (d->children[giveFocus]->flags() & (Widget::Disabled | Widget::NoFocus | Widget::Hidden)));
 
             if(giveFocus != indexOf(focusWidget()))
             {
                 S_LocalSound(cmd == MCMD_NAV_UP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
-                setFocus(d->widgets[giveFocus]);
+                setFocus(d->children[giveFocus]);
             }
         }
         return true;

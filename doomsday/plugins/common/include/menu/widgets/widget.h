@@ -127,7 +127,7 @@ public:
     Widget &setOnTickCallback(OnTickCallback newCallback);
 
     /**
-     * Returns @c true if a Page is is presently attributed to the widget.
+     * Returns @c true if a Page is presently attributed to the widget.
      * @see page(), setPage()
      */
     bool hasPage() const;

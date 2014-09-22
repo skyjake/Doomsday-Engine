@@ -334,7 +334,7 @@ void Hu_MenuInitColorWidgetPage()
     Vector2i const origin(124, 60);
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, MPF_NEVER_SCROLL, NULL, Hu_MenuColorWidgetCmdResponder));
+    Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, Page::NoScroll, NULL, Hu_MenuColorWidgetCmdResponder));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
 
     page->addWidget(new ColorEditWidget(Vector4f(), true))
@@ -391,9 +391,9 @@ void Hu_MenuInitMainPage()
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    Page *page = Hu_MenuAddPage(new Page("Main", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL));
+    Page *page = Hu_MenuAddPage(new Page("Main", origin, Page::FixedLayout | Page::NoScroll));
 #else
-    Page *page = Hu_MenuAddPage(new Page("Main", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawMainPage));
+    Page *page = Hu_MenuAddPage(new Page("Main", origin, Page::FixedLayout | Page::NoScroll, Hu_MenuDrawMainPage));
 #endif
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
 
@@ -577,7 +577,7 @@ void Hu_MenuInitSkillPage()
     };
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("Skill", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawSkillPage));
+    Page *page = Hu_MenuAddPage(new Page("Skill", origin, Page::FixedLayout | Page::NoScroll, Hu_MenuDrawSkillPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -759,7 +759,7 @@ void Hu_MenuInitSaveOptionsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitFilesPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("Files", Vector2i(110, 60), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL));
+    Page *page = Hu_MenuAddPage(new Page("Files", Vector2i(110, 60), Page::FixedLayout | Page::NoScroll));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -837,7 +837,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 #endif
     };
 
-    Page *loadPage = Hu_MenuAddPage(new Page("LoadGame", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawLoadGamePage));
+    Page *loadPage = Hu_MenuAddPage(new Page("LoadGame", origin, Page::FixedLayout | Page::NoScroll, Hu_MenuDrawLoadGamePage));
     loadPage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     loadPage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -858,7 +858,7 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
                     .setAction(Widget::FocusLost,   Hu_MenuDefaultFocusAction);
     }
 
-    Page *savePage = Hu_MenuAddPage(new Page("SaveGame", origin, MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawSaveGamePage));
+    Page *savePage = Hu_MenuAddPage(new Page("SaveGame", origin, Page::FixedLayout | Page::NoScroll, Hu_MenuDrawSaveGamePage));
     savePage->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     savePage->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -1786,7 +1786,7 @@ void Hu_MenuInitEpisodePage()
     Vector2i const origin(48, 63);
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("Episode", origin, MPF_LAYOUT_FIXED, Hu_MenuDrawEpisodePage));
+    Page *page = Hu_MenuAddPage(new Page("Episode", origin, Page::FixedLayout, Hu_MenuDrawEpisodePage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
@@ -1893,7 +1893,7 @@ void Hu_MenuInitPlayerClassPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawPlayerClassPage));
+    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), Page::FixedLayout | Page::NoScroll, Hu_MenuDrawPlayerClassPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -2540,7 +2540,7 @@ int Hu_MenuFallbackResponder(event_t *ev)
     {
         if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         {
-            foreach(Widget *wi, page->widgets())
+            foreach(Widget *wi, page->children())
             {
                 if(wi->isDisabled() || wi->isHidden())
                     continue;

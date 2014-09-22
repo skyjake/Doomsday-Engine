@@ -21,6 +21,7 @@
 #ifndef LIBCOMMON_UI_PAGE
 #define LIBCOMMON_UI_PAGE
 
+#include <QFlags>
 #include <QList>
 #include <QVariant>
 #include <de/String>
@@ -29,13 +30,6 @@
 namespace common {
 namespace menu {
 
-/**
- * @defgroup menuPageFlags  Menu Page Flags
- */
-///@{
-#define MPF_LAYOUT_FIXED            0x1 ///< Page uses a fixed layout.
-#define MPF_NEVER_SCROLL            0x2 ///< Page scrolling is disabled.
-///@}
 
 /// @todo refactor away.
 struct mn_rendstate_t
@@ -48,6 +42,8 @@ struct mn_rendstate_t
 };
 extern mn_rendstate_t const *mnRendState;
 
+typedef QList<Widget *> WidgetList;
+
 /**
  * UI menu page (dialog).
  *
@@ -56,12 +52,21 @@ extern mn_rendstate_t const *mnRendState;
 class Page
 {
 public:
-    typedef QList<Widget *> Widgets;
+    enum Flag
+    {
+        FixedLayout  = 0x1, ///< Children are positioned using a fixed layout.
+        NoScroll     = 0x2, ///< Scrolling is disabled.
+
+        DefaultFlags = 0
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
+    typedef WidgetList Children;
 
     typedef void (*OnActiveCallback) (Page &);
-    typedef void (*OnDrawCallback) (Page const &, de::Vector2i const &);
+    typedef void (*OnDrawCallback)   (Page const &, de::Vector2i const &);
 
-    typedef int (*CommandResponder) (Page &, menucommand_e);
+    typedef int (*CommandResponder)  (Page &, menucommand_e);
 
 public:
     /**
@@ -69,14 +74,15 @@ public:
      *
      * @param name    Symbolic name/identifier for the page.
      * @param origin  Origin of the page in fixed 320x200 space.
-     * @param flags   @ref menuPageFlags.
+     * @param flags   Page flags.
      * ---
      * @param drawer
      * @param cmdResponder
      */
-    Page(de::String name, de::Vector2i const &origin = de::Vector2i(), int flags = 0,
-         OnDrawCallback drawer = 0,
-         CommandResponder cmdResponder = 0);
+    explicit Page(de::String name, de::Vector2i const &origin = de::Vector2i(),
+                  Flags const &flags = DefaultFlags,
+                  OnDrawCallback drawer = 0,
+                  CommandResponder cmdResponder = 0);
 
     virtual ~Page();
 
@@ -138,18 +144,13 @@ public:
     /**
      * Provides access to the list of child widgets of the Page, for efficient traversal.
      */
-    Widgets const &widgets() const;
-
-    /**
-     * Returns the total number of child widgets of the Page.
-     */
-    inline int widgetCount() const { return widgets().count(); }
+    Children const &children() const;
 
     /**
      * Returns the in-page index of the given @a widget; otherwise @c -1
      */
     inline int indexOf(Widget *widget) {
-        return widgets().indexOf(widget);
+        return children().indexOf(widget);
     }
 
     /**
@@ -225,6 +226,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Page::Flags)
 
 } // namespace menu
 } // namespace common
