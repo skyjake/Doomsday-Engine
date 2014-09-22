@@ -101,10 +101,12 @@ void LabelWidget::updateGeometry()
         return;
     }
 
+    FR_PushAttrib();
     Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, d->text.toUtf8().constData());
     geometry().setSize(Vector2ui(size.width, size.height));
+    FR_PopAttrib();
 }
 
 LabelWidget &LabelWidget::setPatch(patchid_t *newPatch)

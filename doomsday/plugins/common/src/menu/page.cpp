@@ -55,7 +55,7 @@ DENG2_PIMPL(Page)
     String title;                    ///< Title of this page.
     Page *previous = nullptr;        ///< Previous page.
     int focus      = -1;             ///< Index of the currently focused widget else @c -1
-    Flags flags    = DefaultFlags;   ///< @ref menuPageFlags
+    Flags flags    = DefaultFlags;
     int timer      = 0;
 
     fontid_t fonts[MENU_FONT_COUNT]; ///< Predefined. Used by all widgets.
@@ -88,14 +88,33 @@ DENG2_PIMPL(Page)
 
     void updateAllChildGeometry()
     {
-        // Update objects.
         for(Widget *wi : children)
         {
-            FR_PushAttrib();
             wi->geometry().moveTopLeft(Vector2i(0, 0));
             wi->updateGeometry();
-            FR_PopAttrib();
         }
+    }
+
+    /**
+     * Returns the effective line height for the predefined @c MENU_FONT1.
+     *
+     * @param lineOffset  If not @c 0 the line offset is written here.
+     */
+    int lineHeight(int *lineOffset = 0)
+    {
+        fontid_t oldFont = FR_Font();
+
+        /// @kludge We cannot yet query line height from the font...
+        FR_SetFont(self.predefinedFont(MENU_FONT1));
+        int lh = FR_TextHeight("{case}WyQ");
+        if(lineOffset)
+        {
+            *lineOffset = de::max(1.f, .5f + lh * .34f);
+        }
+        // Restore the old font.
+        FR_SetFont(oldFont);
+
+        return lh;
     }
 
     void applyLayout()
@@ -103,11 +122,8 @@ DENG2_PIMPL(Page)
         geometry.topLeft = Vector2i(0, 0);
         geometry.setSize(Vector2ui(0, 0));
 
-        // Apply layout logic to this page.
-
         if(flags & FixedLayout)
         {
-            // This page uses a fixed layout.
             for(Widget *wi : children)
             {
                 if(wi->isHidden()) continue;
@@ -120,7 +136,7 @@ DENG2_PIMPL(Page)
 
         // This page uses a dynamic layout.
         int lineOffset;
-        int lh = self.lineHeight(&lineOffset);
+        int const lh = lineHeight(&lineOffset);
 
         Vector2i origin;
 
@@ -369,26 +385,6 @@ Page::Children const &Page::children() const
     return d->children;
 }
 
-int Page::lineHeight(int *lineOffset)
-{
-    LOG_AS("Page");
-
-    fontid_t oldFont = FR_Font();
-
-    /// @kludge We cannot yet query line height from the font...
-    FR_SetFont(predefinedFont(MENU_FONT1));
-    int lh = FR_TextHeight("{case}WyQ");
-    if(lineOffset)
-    {
-        *lineOffset = de::max(1.f, .5f + lh * .34f);
-    }
-
-    // Restore the old font.
-    FR_SetFont(oldFont);
-
-    return lh;
-}
-
 void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
 {
     d->onActiveCallback = newCallback;
@@ -434,16 +430,11 @@ static void drawNavigation(Vector2i const origin)
 #endif
 }
 
-static void drawTitle(String const &title, Point2Raw const *offset = nullptr)
+static void drawTitle(String const &title)
 {
     if(title.isEmpty()) return;
 
     Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
-    if(offset)
-    {
-        origin.x += offset->x;
-        origin.y += offset->y;
-    }
 
     FR_PushAttrib();
     Hu_MenuDrawPageTitle(title, origin); origin.y += 16;
@@ -484,13 +475,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     // render state, so configure render state before we begin.
     setupRenderStateForPageDrawing(*this, alpha);
 
-    // Update object geometry. We'll push the font renderer state because
-    // updating geometry may require changing the current values.
-    FR_PushAttrib();
     d->updateAllChildGeometry();
-
-    // Back to default page render state.
-    FR_PopAttrib();
 
     // We can now layout the widgets of this page.
     /// @todo Do not modify the page layout here.
@@ -507,7 +492,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     int focusedHeight = 0;
     if(focused)
     {
-        focusedHeight = d->cursorSizeFor(focused, lineHeight());
+        focusedHeight = d->cursorSizeFor(focused, d->lineHeight());
 
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...

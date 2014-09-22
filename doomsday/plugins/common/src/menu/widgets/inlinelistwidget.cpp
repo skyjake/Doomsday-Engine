@@ -91,11 +91,13 @@ int InlineListWidget::handleCommand(menucommand_e cmd)
 void InlineListWidget::updateGeometry()
 {
     Item *item = items()[selection()];
-    Size2Raw size;
 
+    FR_PushAttrib();
+    Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, item->text().toUtf8().constData());
     geometry().setSize(Vector2ui(size.width, size.height));
+    FR_PopAttrib();
 }
 
 } // namespace menu

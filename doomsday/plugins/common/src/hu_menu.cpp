@@ -2540,7 +2540,7 @@ int Hu_MenuFallbackResponder(event_t *ev)
     {
         if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         {
-            foreach(Widget *wi, page->children())
+            for(Widget *wi : page->children())
             {
                 if(wi->isDisabled() || wi->isHidden())
                     continue;

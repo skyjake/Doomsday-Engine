@@ -177,7 +177,7 @@ public:
     void tick();
 
     /**
-     * Draw this menu page.
+     * Draw this page.
      */
     void draw(float opacity = 1.f, bool showFocusCursor = true);
 
@@ -208,13 +208,6 @@ public:
      * @return  Identifier of the found font else @c 0
      */
     fontid_t predefinedFont(mn_page_fontid_t id);
-
-    /**
-     * Returns the effective line height for the predefined @c MENU_FONT1.
-     *
-     * @param lineOffset  If not @c 0 the line offset is written here.
-     */
-    int lineHeight(int *lineOffset = 0);
 
     void activate();
 

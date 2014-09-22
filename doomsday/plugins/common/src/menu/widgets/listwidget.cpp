@@ -98,6 +98,7 @@ ListWidget::Items const &ListWidget::items() const
 void ListWidget::updateGeometry()
 {
     geometry().setSize(Vector2ui(0, 0));
+    FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
 
     RectRaw itemGeometry;
@@ -115,6 +116,7 @@ void ListWidget::updateGeometry()
 
         itemGeometry.origin.y += itemGeometry.size.height;
     }
+    FR_PopAttrib();
 }
 
 void ListWidget::draw() const

@@ -157,10 +157,11 @@ void CVarTextualSliderWidget::updateGeometry()
 {
     String const valueAsText = d->valueAsText();
 
+    FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     Size2Raw size; FR_TextSize(&size, valueAsText.toUtf8().constData());
-
     geometry().setSize(Vector2ui(size.width, size.height));
+    FR_PopAttrib();
 }
 
 CVarTextualSliderWidget &CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)
