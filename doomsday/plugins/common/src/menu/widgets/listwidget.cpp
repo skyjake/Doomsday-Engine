@@ -22,7 +22,6 @@
 #include "common.h"
 #include "menu/widgets/listwidget.h"
 
-#include "hu_lib.h" // lerpColor
 #include "hu_menu.h" // menu sounds
 #include "menu/page.h"
 
@@ -122,8 +121,8 @@ void ListWidget::updateGeometry()
 void ListWidget::draw() const
 {
     bool const flashSelection = (isActive() && selectionIsVisible());
-    float const *textColor = mnRendState->textColors[color()];
-    float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
+    Vector4f const &textColor = mnRendState->textColors[color()];
+    float t = flashSelection? 1 : 0;
 
     if(flashSelection && cfg.menuTextFlashSpeed > 0)
     {
@@ -131,13 +130,10 @@ void ListWidget::draw() const
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    lerpColor(flashColor, mnRendState->textColors[color()], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-    flashColor[CA] = textColor[CA];
+    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), 1), t);
 
-    std::memcpy(dimColor, textColor, sizeof(dimColor));
-    dimColor[CR] *= MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor[CG] *= MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor[CB] *= MNDATA_LIST_NONSELECTION_LIGHT;
+    Vector4f dimColor = textColor * MNDATA_LIST_NONSELECTION_LIGHT;
+    dimColor.w = textColor.w;
 
     if(d->first < d->items.count() && d->numvis > 0)
     {
@@ -148,17 +144,10 @@ void ListWidget::draw() const
         int itemIdx = d->first;
         do
         {
-            Item const *item = d->items[itemIdx];
+            Item const *item      = d->items[itemIdx];
+            Vector4f const &color = d->selection == itemIdx? (flashSelection? flashColor : textColor) : dimColor;
 
-            if(d->selection == itemIdx)
-            {
-                FR_SetColorAndAlphav(flashSelection? flashColor : textColor);
-            }
-            else
-            {
-                FR_SetColorAndAlphav(dimColor);
-            }
-
+            FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
             FR_DrawTextXY3(item->text().toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
             origin.y += FR_TextHeight(item->text().toUtf8().constData()) * (1 + MNDATA_LIST_LEADING);
         } while(++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);

@@ -30,14 +30,13 @@
 namespace common {
 namespace menu {
 
-
 /// @todo refactor away.
 struct mn_rendstate_t
 {
     float pageAlpha;
     float textGlitter;
     float textShadow;
-    float textColors[MENU_COLOR_COUNT][4];
+    de::Vector4f textColors[MENU_COLOR_COUNT];
     fontid_t textFonts[MENU_FONT_COUNT];
 };
 extern mn_rendstate_t const *mnRendState;
@@ -193,9 +192,8 @@ public:
      * page color identifier.
      *
      * @param id   Unique identifier of the predefined color being retrieved.
-     * @param rgb  Found color values are written here, else set to white.
      */
-    void predefinedColor(mn_page_colorid_t id, float rgb[3]);
+    de::Vector3f predefinedColor(mn_page_colorid_t id);
 
     void setPredefinedFont(mn_page_fontid_t id, fontid_t fontId);
 

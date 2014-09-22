@@ -454,8 +454,7 @@ static void setupRenderStateForPageDrawing(Page &page, float alpha)
     }
     for(int i = 0; i < MENU_COLOR_COUNT; ++i)
     {
-        page.predefinedColor(mn_page_colorid_t(i), rs.textColors[i]);
-        rs.textColors[i][CA] = alpha; // For convenience.
+        rs.textColors[i] = Vector4f(page.predefinedColor(mn_page_colorid_t(i)), alpha);
     }
 
     // Configure the font renderer (assume state has already been pushed if necessary).
@@ -730,14 +729,11 @@ void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
     d->fonts[id] = fontId;
 }
 
-void Page::predefinedColor(mn_page_colorid_t id, float rgb[3])
+Vector3f Page::predefinedColor(mn_page_colorid_t id)
 {
-    DENG2_ASSERT(rgb != 0);
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
-    uint colorIndex = d->colors[id];
-    rgb[CR] = cfg.menuTextColors[colorIndex][CR];
-    rgb[CG] = cfg.menuTextColors[colorIndex][CG];
-    rgb[CB] = cfg.menuTextColors[colorIndex][CB];
+    uint const colorIndex = d->colors[id];
+    return Vector3f(cfg.menuTextColors[colorIndex]);
 }
 
 int Page::timer()

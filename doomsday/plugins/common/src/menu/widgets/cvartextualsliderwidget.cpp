@@ -135,8 +135,9 @@ CVarTextualSliderWidget::~CVarTextualSliderWidget()
 
 void CVarTextualSliderWidget::draw() const
 {
-    Vector2i const &origin   = geometry().topLeft;
-    String const valueAsText = d->valueAsText();
+    Vector2i const &origin    = geometry().topLeft;
+    String const valueAsText  = d->valueAsText();
+    Vector4f const &textColor = mnRendState->textColors[color()];
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin.x, origin.y, 0);
@@ -144,7 +145,7 @@ void CVarTextualSliderWidget::draw() const
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(mnRendState->textFonts[font()]);
-    FR_SetColorAndAlphav(mnRendState->textColors[color()]);
+    FR_SetColorAndAlpha(textColor.x, textColor.y, textColor.z, textColor.w);
     FR_DrawTextXY3(valueAsText.toUtf8().constData(), 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);

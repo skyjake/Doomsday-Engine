@@ -39,11 +39,12 @@ InlineListWidget::~InlineListWidget()
 
 void InlineListWidget::draw() const
 {
-    Item const *item = items()[selection()];
+    Item const *item          = items()[selection()];
+    Vector4f const &textColor = mnRendState->textColors[color()];
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(mnRendState->textFonts[font()]);
-    FR_SetColorAndAlphav(mnRendState->textColors[color()]);
+    FR_SetColorAndAlpha(textColor.x, textColor.y, textColor.z, textColor.w);
     FR_DrawTextXY3(item->text().toUtf8().constData(), geometry().topLeft.x, geometry().topLeft.y,
                    ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 

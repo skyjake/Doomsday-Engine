@@ -22,7 +22,6 @@
 #include "menu/widgets/labelwidget.h"
 
 #include "hu_menu.h" // Hu_MenuMergeEffectWithDrawTextFlags
-#include "hu_lib.h" // lerpColor
 #include "menu/page.h" // mnRendState
 
 using namespace de;
@@ -53,8 +52,9 @@ LabelWidget::~LabelWidget()
 
 void LabelWidget::draw() const
 {
-    fontid_t fontId = mnRendState->textFonts[font()];
-    float textColor[4], t = (isFocused()? 1 : 0);
+    fontid_t fontId           = mnRendState->textFonts[font()];
+    Vector4f const &textColor = mnRendState->textColors[color()];
+    float t = (isFocused()? 1 : 0);
 
     // Flash if focused.
     if(isFocused() && cfg.menuTextFlashSpeed > 0)
@@ -63,12 +63,10 @@ void LabelWidget::draw() const
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    lerpColor(textColor, mnRendState->textColors[color()], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-    textColor[CA] = mnRendState->textColors[color()][CA];
-
-    DGL_Color4f(1, 1, 1, textColor[CA]);
+    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), 1), t);
+    DGL_Color4f(1, 1, 1, color.w);
     FR_SetFont(fontId);
-    FR_SetColorAndAlphav(textColor);
+    FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
 
     if(d->patch)
     {

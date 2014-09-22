@@ -74,8 +74,6 @@ typedef enum mn_page_fontid_e
 
 #define VALID_MNPAGE_FONTID(v)      ((v) >= MENU_FONT1 && (v) < MENU_FONT_COUNT)
 
-void lerpColor(float *dst, float const *a, float const *b, float t, dd_bool rgbaMode);
-
 typedef enum {
     GUI_NONE,
     GUI_BOX,

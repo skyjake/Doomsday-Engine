@@ -54,30 +54,6 @@ static void errorIfNotInited(char const *callerName)
     exit(1);
 }
 
-void lerpColor(float *dst, float const *a, float const *b, float t, dd_bool rgbaMode)
-{
-    if(t <= 0)
-    {
-        dst[CR] = a[CR];
-        dst[CG] = a[CG];
-        dst[CB] = a[CB];
-        if(rgbaMode) dst[CA] = a[CA];
-        return;
-    }
-    if(t >= 1)
-    {
-        dst[CR] = b[CR];
-        dst[CG] = b[CG];
-        dst[CB] = b[CB];
-        if(rgbaMode) dst[CA] = b[CA];
-        return;
-    }
-    dst[CR] = (1 - t) * a[CR] + t * b[CR];
-    dst[CG] = (1 - t) * a[CG] + t * b[CG];
-    dst[CB] = (1 - t) * a[CB] + t * b[CB];
-    if(rgbaMode) dst[CA] = (1 - t) * a[CA] + t * b[CA];
-}
-
 static uiwidgetid_t nextUnusedId()
 {
     return uiwidgetid_t(numWidgets);

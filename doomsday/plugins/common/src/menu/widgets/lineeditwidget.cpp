@@ -127,7 +127,7 @@ void LineEditWidget::draw() const
 
     //if(string)
     {
-        float textColor[4], t = 0;
+        float t = 0;
 
         // Flash if focused?
         if(!isActive() && isFocused() && cfg.menuTextFlashSpeed > 0)
@@ -136,14 +136,12 @@ void LineEditWidget::draw() const
             t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
-        lerpColor(textColor, cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX], cfg.menuTextFlashColor, t, false/*rgb mode*/);
-        textColor[CA] = textAlpha;
-
-        // Light the text.
-        textColor[CR] *= light; textColor[CG] *= light; textColor[CB] *= light;
+        Vector4f color = de::lerp(Vector3f(cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.menuTextFlashColor), t);
+        color *= light;
+        color.w = textAlpha;
 
         // Draw the text:
-        FR_SetColorAndAlphav(textColor);
+        FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
         FR_DrawTextXY3(useText.toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
