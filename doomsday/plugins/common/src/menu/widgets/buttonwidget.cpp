@@ -50,9 +50,8 @@ ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
 ButtonWidget::~ButtonWidget()
 {}
 
-void ButtonWidget::draw(Point2Raw const *origin)
+void ButtonWidget::draw() const
 {
-    DENG2_ASSERT(origin != 0);
     fontid_t const fontId = mnRendState->textFonts[font()];
     float textColor[4], t = (isFocused()? 1 : 0);
 
@@ -79,15 +78,15 @@ void ButtonWidget::draw(Point2Raw const *origin)
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch(d->patch, replacement, Vector2i(origin->x, origin->y),
-                     ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+        WI_DrawPatch(d->patch, replacement, geometry().topLeft, ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
         return;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawText3(d->text.toUtf8().constData(), origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(d->text.toUtf8().constData(), geometry().topLeft.x, geometry().topLeft.y,
+                   ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -98,19 +97,13 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
         if(!isActive())
         {
             setFlags(Active);
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
 
         // We are not going to receive an "up event" so action that now.
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         setFlags(Active, UnsetFlags);
-        if(hasAction(MNA_ACTIVEOUT))
-        {
-            execAction(MNA_ACTIVEOUT);
-        }
+        execAction(Deactivated);
 
         return true;
     }
@@ -118,11 +111,9 @@ int ButtonWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void ButtonWidget::updateGeometry(Page *page)
+void ButtonWidget::updateGeometry()
 {
-    DENG2_ASSERT(page != 0);
     String useText = d->text;
-    Size2Raw size;
 
     // @todo What if patch replacement is disabled?
     if(d->patch >= 0)
@@ -138,16 +129,15 @@ void ButtonWidget::updateGeometry(Page *page)
             // Use the original patch.
             patchinfo_t info;
             R_GetPatchInfo(d->patch, &info);
-            Rect_SetWidthHeight(geometry(), info.geometry.size.width,
-                                            info.geometry.size.height);
+            geometry().setSize(Vector2ui(info.geometry.size.width, info.geometry.size.height));
             return;
         }
     }
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
+    Size2Raw size;
+    FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, useText.toUtf8().constData());
-
-    Rect_SetWidthHeight(geometry(), size.width, size.height);
+    geometry().setSize(Vector2ui(size.width, size.height));
 }
 
 String ButtonWidget::text() const

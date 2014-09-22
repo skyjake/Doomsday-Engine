@@ -25,6 +25,7 @@
 
 #include <QFlags>
 #include <QVariant>
+#include <de/Rectangle>
 #include <de/String>
 #include "common.h"
 #include "hu_lib.h"
@@ -42,6 +43,9 @@ class Page;
 class Widget
 {
 public:
+    /// Required Page is presently missing. @ingroup errors
+    DENG2_ERROR(MissingPageError);
+
     enum Flag
     {
         Hidden        = 0x1,
@@ -70,42 +74,22 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
-     * Logical Menu (object) Action identifiers. Associated with/to events which
-     * produce/result-in callbacks made either automatically by this subsystem,
-     * or "actioned" through the type-specific event/command responders of the
-     * various widgets, according to their own widget-specific logic.
+     * Logical Action identifiers. Associated with/to events which trigger user-definable
+     * callbacks according to widget-specific logic.
      */
-    enum mn_actionid_t
+    enum Action
     {
-        MNA_NONE = -1,
-        MNACTION_FIRST = 0,
-        MNA_MODIFIED = MNACTION_FIRST, /// Object's internal "modified" status changed.
-        MNA_ACTIVEOUT,              /// Deactivated i.e., no longer active.
-        MNA_ACTIVE,                 /// Becomes "active".
-        MNA_CLOSE,                  /// Normally means changed-state to be discarded.
-        MNA_FOCUSOUT,               /// Loses selection "focus".
-        MNA_FOCUS,                  /// Gains selection "focus".
-        MNACTION_LAST = MNA_FOCUS
-    };
-    static int const MNACTION_COUNT = (MNACTION_LAST + 1 - MNACTION_FIRST);
-
-    /**
-     * Menu Action Info (Record). Holds information about an "actionable" menu
-     * event, such as an object being activated or upon receiving focus.
-     */
-    struct mn_actioninfo_t
-    {
-        /// Callback to be made when this action is executed. Can be @c NULL in
-        /// which case attempts to action this will be NOPs.
-        ///
-        /// @param ob      Object being referenced for this callback.
-        /// @param action  Identifier of the Menu Action to be processed.
-        typedef void (*ActionCallback) (Widget *wi, mn_actionid_t action);
-        ActionCallback callback;
+        Modified,     ///< The internal "modified" status was changed.
+        Deactivated,  ///< Deactivated i.e., no longer active.
+        Activated,    ///< Becomes "active".
+        Closed,       ///< Normally means changed-state to be discarded.
+        FocusLost,    ///< Loses selection "focus".
+        FocusGained   ///< Gains selection "focus".
     };
 
-    typedef void (*OnTickCallback) (Widget *);
-    typedef int (*CommandResponder) (Widget *, menucommand_e);
+    typedef void (*ActionCallback) (Widget &, Action);
+    typedef void (*OnTickCallback) (Widget &);
+    typedef int (*CommandResponder) (Widget &, menucommand_e);
 
 public:
     Widget();
@@ -113,18 +97,16 @@ public:
 
     DENG2_AS_IS_METHODS()
 
-    /// Draw this at the specified offset within the owning view-space.
-    /// Can be @c NULL in which case this will never be drawn.
-    virtual void draw(Point2Raw const * /*origin*/) {}
+    virtual void draw() const {}
 
-    /// Calculate geometry for this when visible on the specified page.
-    virtual void updateGeometry(Page * /*page*/) {}
+    /// Update the geometry for this widget.
+    virtual void updateGeometry() {}
 
-    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
     virtual int handleEvent(event_t *ev);
 
-    /// Respond to the given (input) event @a ev. Can be @c NULL.
+    /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
     virtual int handleEvent_Privileged(event_t *ev);
 
@@ -136,7 +118,6 @@ public:
     Widget &setCommandResponder(CommandResponder newResponder);
 
     /// Delegate handling of @a command to the relevant responder.
-
     /// @return  @c true if the command was eaten.
     int cmdResponder(menucommand_e command);
 
@@ -145,6 +126,10 @@ public:
 
     Widget &setOnTickCallback(OnTickCallback newCallback);
 
+    /**
+     * Returns @c true if a Page is is presently attributed to the widget.
+     * @see page(), setPage()
+     */
     bool hasPage() const;
 
     /**
@@ -152,11 +137,18 @@ public:
      * affect the Widget > Page side of the relationship.
      *
      * @param newPage  New Page to attribute. Use @c 0 to clear. Ownership unaffected.
+     *
+     * @see page(), hasPage()
      */
     Widget &setPage(Page *newPage);
 
+    /**
+     * Returns a reference to the Page presently attributed to the widget.
+     * @see hasPage()
+     */
     Page &page() const;
 
+    /// Convenient method of returning a pointer to the presently attributed Page, if any.
     inline Page *pagePtr() const { return hasPage()? &page() : 0; }
 
     /**
@@ -177,27 +169,13 @@ public:
     inline bool isPaused()   const { return flags() & Paused;   }
 
     /**
-     * Retrieve the current geometry of object within the two-dimensioned
+     * Retrieve the current geometry of widget within the two-dimensioned
      * coordinate space of the owning object.
      *
      * @return  Rectangluar region of the parent space.
      */
-    Rect *geometry();
-    Rect const *geometry() const;
-
-    /**
-     * Retrieve the origin of the object within the two-dimensioned coordinate
-     * space of the owning object.
-     * @return  Origin point within the parent space.
-     */
-    inline Point2 const *origin() const { return Rect_Origin(geometry()); }
-
-    /**
-     * Retrieve the boundary dimensions of the object expressed as units of
-     * the coordinate space of the owning object.
-     * @return  Size of this object in units of the parent's coordinate space.
-     */
-    inline Size2 const *size() const { return Rect_Size(geometry()); }
+    de::Rectanglei &geometry();
+    de::Rectanglei const &geometry() const;
 
     /**
      * Retreive the current fixed origin coordinates.
@@ -205,18 +183,11 @@ public:
      * @param ob  MNObject-derived instance.
      * @return  Fixed origin.
      */
-    Point2Raw const *fixedOrigin() const;
-    inline int fixedX() const { return fixedOrigin()->x; }
-    inline int fixedY() const { return fixedOrigin()->y; }
+    de::Vector2i fixedOrigin() const;
+    inline int fixedX() const { return fixedOrigin().x; }
+    inline int fixedY() const { return fixedOrigin().y; }
 
-    /**
-     * Change the current fixed origin coordinates.
-     *
-     * @param ob  MNObject-derived instance.
-     * @param origin  New origin coordinates.
-     * @return  Reference to this Widget.
-     */
-    Widget &setFixedOrigin(Point2Raw const *origin);
+    Widget &setFixedOrigin(de::Vector2i const &newOrigin);
     Widget &setFixedX(int x);
     Widget &setFixedY(int y);
 
@@ -232,28 +203,21 @@ public:
     Widget &setFont(int newPageFont);
     int font() const;
 
-    de::String const &helpInfo() const;
     Widget &setHelpInfo(de::String newHelpInfo);
-    inline bool hasHelpInfo() const { return !helpInfo().isEmpty(); }
-
-    /// @return  @c true if this object has a registered executeable action
-    /// associated with the unique identifier @a action.
-    bool hasAction(mn_actionid_t action);
-
-    Widget &setAction(mn_actionid_t action, mn_actioninfo_t::ActionCallback callback);
+    de::String const &helpInfo() const;
 
     /**
-     * Lookup the unique ActionInfo associated with the identifier @a id.
-     * @return  Associated info if found else @c NULL.
+     * Returns @c true if a triggerable action is defined for the specified @a id.
      */
-    mn_actioninfo_t const *action(mn_actionid_t action);
+    bool hasAction(Action id) const;
+
+    Widget &setAction(Action id, ActionCallback callback);
 
     /**
-     * Execute the action associated with @a id
-     * @param action  Identifier of the action to be executed (if found).
-     * @return  Return value of the executed action else @c -1 if NOP.
+     * Trigger the ActionCallback associated with @a id, if any.
+     * @param id  Unique identifier of the action.
      */
-    void execAction(mn_actionid_t action);
+    void execAction(Action id);
 
     Widget &setUserValue(QVariant const &newValue);
     QVariant const &userValue() const;

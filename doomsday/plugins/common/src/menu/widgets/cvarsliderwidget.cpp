@@ -32,8 +32,8 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath, float min, float max, f
     : SliderWidget(min, max, step, floatMode)
     , _cvarPath(cvarPath)
 {
-    setAction(MNA_MODIFIED, CVarSliderWidget_UpdateCVar);
-    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    setAction(Modified,    CVarSliderWidget_UpdateCVar);
+    setAction(FocusGained, Hu_MenuDefaultFocusAction);
 }
 
 CVarSliderWidget::~CVarSliderWidget()
@@ -44,11 +44,11 @@ char const *CVarSliderWidget::cvarPath() const
     return _cvarPath;
 }
 
-void CVarSliderWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarSliderWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    if(Widget::MNA_MODIFIED != action) return;
+    if(action != Widget::Modified) return;
 
-    CVarSliderWidget &sldr = wi->as<CVarSliderWidget>();
+    CVarSliderWidget &sldr = wi.as<CVarSliderWidget>();
     cvartype_t varType = Con_GetVariableType(sldr.cvarPath());
     if(CVT_NULL == varType) return;
 

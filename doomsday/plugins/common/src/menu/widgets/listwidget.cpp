@@ -95,11 +95,10 @@ ListWidget::Items const &ListWidget::items() const
     return d->items;
 }
 
-void ListWidget::updateGeometry(Page *page)
+void ListWidget::updateGeometry()
 {
-    DENG2_ASSERT(page != 0);
-    Rect_SetWidthHeight(geometry(), 0, 0);
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
+    geometry().setSize(Vector2ui(0, 0));
+    FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
 
     RectRaw itemGeometry;
     for(int i = 0; i < itemCount(); ++i)
@@ -112,16 +111,14 @@ void ListWidget::updateGeometry(Page *page)
             itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
         }
 
-        Rect_UniteRaw(geometry(), &itemGeometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(itemGeometry.origin.xy), Vector2ui(itemGeometry.size.width, itemGeometry.size.height));
 
         itemGeometry.origin.y += itemGeometry.size.height;
     }
 }
 
-void ListWidget::draw(Point2Raw const *_origin)
+void ListWidget::draw() const
 {
-    DENG2_ASSERT(_origin != 0);
-
     bool const flashSelection = (isActive() && selectionIsVisible());
     float const *textColor = mnRendState->textColors[color()];
     float dimColor[4], flashColor[4], t = flashSelection? 1 : 0;
@@ -145,7 +142,7 @@ void ListWidget::draw(Point2Raw const *_origin)
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(mnRendState->textFonts[font()]);
 
-        Point2Raw origin(*_origin);
+        Vector2i origin = geometry().topLeft;
         int itemIdx = d->first;
         do
         {
@@ -160,8 +157,8 @@ void ListWidget::draw(Point2Raw const *_origin)
                 FR_SetColorAndAlphav(dimColor);
             }
 
-            FR_DrawText3(item->text().toUtf8().constData(), &origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
-            origin.y += FR_TextHeight(item->text().toUtf8().constData()) * (1+MNDATA_LIST_LEADING);
+            FR_DrawTextXY3(item->text().toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+            origin.y += FR_TextHeight(item->text().toUtf8().constData()) * (1 + MNDATA_LIST_LEADING);
         } while(++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -191,10 +188,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
             if(d->selection != oldSelection)
             {
                 S_LocalSound(cmd == MCMD_NAV_DOWN? SFX_MENU_NAV_DOWN : SFX_MENU_NAV_UP, NULL);
-                if(hasAction(MNA_MODIFIED))
-                {
-                    execAction(MNA_MODIFIED);
-                }
+                execAction(Modified);
             }
             return true;
         }
@@ -205,10 +199,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             setFlags(Active, UnsetFlags);
-            if(hasAction(MNA_CLOSE))
-            {
-                execAction(MNA_CLOSE);
-            }
+            execAction(Closed);
             return true;
         }
         return false; // Not eaten.
@@ -218,19 +209,13 @@ int ListWidget::handleCommand(menucommand_e cmd)
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             setFlags(Active);
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             setFlags(Active, UnsetFlags);
-            if(hasAction(MNA_ACTIVEOUT))
-            {
-                execAction(MNA_ACTIVEOUT);
-            }
+            execAction(Deactivated);
         }
         return true;
 
@@ -294,9 +279,9 @@ bool ListWidget::selectItem(int itemIndex, int flags)
         if(d->selection != itemIndex)
         {
             d->selection = itemIndex;
-            if(!(flags & MNLIST_SIF_NO_ACTION) && hasAction(MNA_MODIFIED))
+            if(!(flags & MNLIST_SIF_NO_ACTION))
             {
-                execAction(MNA_MODIFIED);
+                execAction(Modified);
             }
             return true;
         }

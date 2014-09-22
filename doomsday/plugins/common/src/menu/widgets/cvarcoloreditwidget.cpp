@@ -33,8 +33,8 @@ CVarColorEditWidget::CVarColorEditWidget(char const *redCVarPath, char const *gr
     char const *blueCVarPath, char const *alphaCVarPath, Vector4f const &color, bool rgbaMode)
     : ColorEditWidget(color, rgbaMode)
 {
-    setAction(MNA_MODIFIED, CVarColorEditWidget_UpdateCVar);
-    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    setAction(Modified,    CVarColorEditWidget_UpdateCVar);
+    setAction(FocusGained, Hu_MenuDefaultFocusAction);
 
     _cvarPaths[0] = redCVarPath;
     _cvarPaths[1] = greenCVarPath;
@@ -54,11 +54,11 @@ char const *CVarColorEditWidget::cvarPath(int component) const
     return 0;
 }
 
-void CVarColorEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarColorEditWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    CVarColorEditWidget *cbox = &wi->as<CVarColorEditWidget>();
+    CVarColorEditWidget *cbox = &wi.as<CVarColorEditWidget>();
 
-    if(action != Widget::MNA_MODIFIED) return;
+    if(action != Widget::Modified) return;
 
     Con_SetFloat2(cbox->redCVarPath(),   cbox->red(),   SVF_WRITE_OVERRIDE);
     Con_SetFloat2(cbox->greenCVarPath(), cbox->green(), SVF_WRITE_OVERRIDE);

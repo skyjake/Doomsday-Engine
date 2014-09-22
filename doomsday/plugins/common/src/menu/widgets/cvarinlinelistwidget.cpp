@@ -34,8 +34,8 @@ CVarInlineListWidget::CVarInlineListWidget(char const *cvarPath, int cvarValueMa
     , _cvarValueMask(cvarValueMask)
 {
     setColor(MENU_COLOR3);
-    setAction(MNA_MODIFIED, CVarInlineListWidget_UpdateCVar);
-    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    setAction(Modified,    CVarInlineListWidget_UpdateCVar);
+    setAction(FocusGained, Hu_MenuDefaultFocusAction);
 }
 
 CVarInlineListWidget::~CVarInlineListWidget()
@@ -51,11 +51,11 @@ int CVarInlineListWidget::cvarValueMask() const
     return _cvarValueMask;
 }
 
-void CVarInlineListWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarInlineListWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    CVarInlineListWidget const *list = &wi->as<CVarInlineListWidget>();
+    CVarInlineListWidget const *list = &wi.as<CVarInlineListWidget>();
 
-    if(Widget::MNA_MODIFIED != action) return;
+    if(action != Widget::Modified) return;
 
     if(list->selection() < 0) return; // Hmm?
 

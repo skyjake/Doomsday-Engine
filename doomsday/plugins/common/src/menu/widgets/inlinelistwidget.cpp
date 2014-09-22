@@ -34,14 +34,18 @@ InlineListWidget::InlineListWidget()
     : ListWidget()
 {}
 
-void InlineListWidget::draw(Point2Raw const *origin)
+InlineListWidget::~InlineListWidget()
+{}
+
+void InlineListWidget::draw() const
 {
     Item const *item = items()[selection()];
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(mnRendState->textFonts[font()]);
     FR_SetColorAndAlphav(mnRendState->textColors[color()]);
-    FR_DrawText3(item->text().toUtf8().constData(), origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(item->text().toUtf8().constData(), geometry().topLeft.x, geometry().topLeft.y,
+                   ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -75,10 +79,7 @@ int InlineListWidget::handleCommand(menucommand_e cmd)
         if(oldSelection != selection())
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
+            execAction(Modified);
         }
         return true;
       }
@@ -87,15 +88,14 @@ int InlineListWidget::handleCommand(menucommand_e cmd)
     }
 }
 
-void InlineListWidget::updateGeometry(Page *page)
+void InlineListWidget::updateGeometry()
 {
-    DENG2_ASSERT(page != 0);
     Item *item = items()[selection()];
     Size2Raw size;
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
+    FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     FR_TextSize(&size, item->text().toUtf8().constData());
-    Rect_SetWidthHeight(geometry(), size.width, size.height);
+    geometry().setSize(Vector2ui(size.width, size.height));
 }
 
 } // namespace menu

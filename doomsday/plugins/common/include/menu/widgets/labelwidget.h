@@ -45,8 +45,8 @@ public:
     LabelWidget(de::String const &text = "", patchid_t *patch = 0);
     virtual ~LabelWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
 
     LabelWidget &setPatch(patchid_t *newPatch);
     LabelWidget &setText(de::String const &newText);

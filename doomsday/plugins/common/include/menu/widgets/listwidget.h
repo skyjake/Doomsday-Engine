@@ -68,8 +68,8 @@ public:
     ListWidget();
     virtual ~ListWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleCommand(menucommand_e command);
 
     /**

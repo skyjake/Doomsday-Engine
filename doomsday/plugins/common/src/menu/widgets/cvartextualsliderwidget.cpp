@@ -133,14 +133,13 @@ CVarTextualSliderWidget::CVarTextualSliderWidget(char const *cvarPath, float min
 CVarTextualSliderWidget::~CVarTextualSliderWidget()
 {}
 
-void CVarTextualSliderWidget::draw(Point2Raw const *origin)
+void CVarTextualSliderWidget::draw() const
 {
-    DENG2_ASSERT(origin != 0);
-
+    Vector2i const &origin   = geometry().topLeft;
     String const valueAsText = d->valueAsText();
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(origin->x, origin->y, 0);
+    DGL_Translatef(origin.x, origin.y, 0);
 
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -151,19 +150,17 @@ void CVarTextualSliderWidget::draw(Point2Raw const *origin)
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-origin->x, -origin->y, 0);
+    DGL_Translatef(-origin.x, -origin.y, 0);
 }
 
-void CVarTextualSliderWidget::updateGeometry(Page *page)
+void CVarTextualSliderWidget::updateGeometry()
 {
-    DENG2_ASSERT(page != 0);
-
     String const valueAsText = d->valueAsText();
 
-    FR_SetFont(page->predefinedFont(mn_page_fontid_t(font())));
+    FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     Size2Raw size; FR_TextSize(&size, valueAsText.toUtf8().constData());
 
-    Rect_SetWidthHeight(geometry(), size.width, size.height);
+    geometry().setSize(Vector2ui(size.width, size.height));
 }
 
 CVarTextualSliderWidget &CVarTextualSliderWidget::setEmptyText(String const &newEmptyText)

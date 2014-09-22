@@ -80,10 +80,8 @@ void MobjPreviewWidget::setTranslationMap(int newTranslationMap)
 }
 
 /// @todo We can do better - the engine should be able to render this visual for us.
-void MobjPreviewWidget::draw(Point2Raw const *offset)
+void MobjPreviewWidget::draw() const
 {
-    DENG2_ASSERT(offset != 0);
-
     if(MT_NONE == d->mobjType) return;
 
     spritetype_e sprite;
@@ -124,7 +122,7 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    DGL_Translatef(offset->x, offset->y, 0);
+    DGL_Translatef(geometry().topLeft.x, geometry().topLeft.y, 0);
     DGL_Scalef(scale, scale, 1);
     // Translate origin to the top left.
     DGL_Translatef(-origin.x, -origin.y, 0);
@@ -153,10 +151,10 @@ void MobjPreviewWidget::draw(Point2Raw const *offset)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void MobjPreviewWidget::updateGeometry(Page * /*page*/)
+void MobjPreviewWidget::updateGeometry()
 {
     // @todo calculate visible dimensions properly!
-    Rect_SetWidthHeight(geometry(), MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT);
+    geometry().setSize(Vector2ui(MNDATA_MOBJPREVIEW_WIDTH, MNDATA_MOBJPREVIEW_HEIGHT));
 }
 
 } // namespace menu

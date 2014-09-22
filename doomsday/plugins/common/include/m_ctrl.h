@@ -27,8 +27,6 @@
 namespace common {
 namespace menu {
 
-class Page;
-
 // Control config flags.
 #define CCF_NON_INVERSE         0x1
 #define CCF_INVERSE             0x2
@@ -46,8 +44,7 @@ struct controlconfig_t
     int flags;
 };
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
+void Hu_MenuInitControlsPage();
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
 
 } // namespace menu

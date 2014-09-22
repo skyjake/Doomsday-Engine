@@ -68,43 +68,41 @@ void LineEditWidget::loadResources() // static
     pEditMiddle = R_DeclarePatch(MNDATA_EDIT_BACKGROUND_PATCH_MIDDLE);
 }
 
-static void drawEditBackground(Widget const *wi, int x, int y, int width, float alpha)
+static void drawEditBackground(Vector2i const &origin, int width, float alpha)
 {
-    DENG2_UNUSED(wi);
-
-    patchinfo_t leftInfo, rightInfo, middleInfo;
-    int leftOffset = 0, rightOffset = 0;
-
     DGL_Color4f(1, 1, 1, alpha);
 
+    int leftOffset = 0;
+    patchinfo_t leftInfo;
     if(R_GetPatchInfo(pEditLeft, &leftInfo))
     {
         DGL_SetPatch(pEditLeft, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRectf2(x, y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
+        DGL_DrawRectf2(origin.x, origin.y, leftInfo.geometry.size.width, leftInfo.geometry.size.height);
         leftOffset = leftInfo.geometry.size.width;
     }
 
+    int rightOffset = 0;
+    patchinfo_t rightInfo;
     if(R_GetPatchInfo(pEditRight, &rightInfo))
     {
         DGL_SetPatch(pEditRight, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRectf2(x + width - rightInfo.geometry.size.width, y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
+        DGL_DrawRectf2(origin.x + width - rightInfo.geometry.size.width, origin.y, rightInfo.geometry.size.width, rightInfo.geometry.size.height);
         rightOffset = rightInfo.geometry.size.width;
     }
 
+    patchinfo_t middleInfo;
     if(R_GetPatchInfo(pEditMiddle, &middleInfo))
     {
         DGL_SetPatch(pEditMiddle, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectf2Tiled(x + leftOffset, y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
+        DGL_DrawRectf2Tiled(origin.x + leftOffset, origin.y, width - leftOffset - rightOffset, middleInfo.geometry.size.height, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
     }
 }
 
-void LineEditWidget::draw(Point2Raw const *_origin)
+void LineEditWidget::draw() const
 {
-    DENG2_ASSERT(_origin != 0);
-
     fontid_t fontId = mnRendState->textFonts[font()];
 
-    Point2Raw origin(_origin->x + MNDATA_EDIT_OFFSET_X, _origin->y + MNDATA_EDIT_OFFSET_Y);
+    Vector2i origin = geometry().topLeft + Vector2i(MNDATA_EDIT_OFFSET_X, MNDATA_EDIT_OFFSET_Y);
 
     String useText;
     float light = 1, textAlpha = mnRendState->pageAlpha;
@@ -112,7 +110,7 @@ void LineEditWidget::draw(Point2Raw const *_origin)
     {
         useText = d->text;
     }
-    else if(!((flags() & Active) && (flags() & Focused)))
+    else if(!(isActive() && isFocused()))
     {
         useText = d->emptyText;
         light *= .5f;
@@ -124,16 +122,15 @@ void LineEditWidget::draw(Point2Raw const *_origin)
 
     //int const numVisCharacters = de::clamp(0, useText.isNull()? 0 : useText.length(), d->maxVisibleChars);
 
-    drawEditBackground(this, origin.x + MNDATA_EDIT_BACKGROUND_OFFSET_X,
-                             origin.y + MNDATA_EDIT_BACKGROUND_OFFSET_Y,
-                       Rect_Width(geometry()), mnRendState->pageAlpha);
+    drawEditBackground(origin + Vector2i(MNDATA_EDIT_BACKGROUND_OFFSET_X, MNDATA_EDIT_BACKGROUND_OFFSET_Y),
+                       geometry().width(), mnRendState->pageAlpha);
 
     //if(string)
     {
         float textColor[4], t = 0;
 
         // Flash if focused?
-        if(!(flags() & Active) && (flags() & Focused) && cfg.menuTextFlashSpeed > 0)
+        if(!isActive() && isFocused() && cfg.menuTextFlashSpeed > 0)
         {
             float const speed = cfg.menuTextFlashSpeed / 2.f;
             t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
@@ -147,14 +144,14 @@ void LineEditWidget::draw(Point2Raw const *_origin)
 
         // Draw the text:
         FR_SetColorAndAlphav(textColor);
-        FR_DrawText3(useText.toUtf8().constData(), &origin, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+        FR_DrawTextXY3(useText.toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
-        if((flags() & Active) && (flags() & Focused) && (menuTime & 8) &&
+        if(isActive() && isFocused() && (menuTime & 8) &&
            (!d->maxLength || d->text.length() < d->maxLength))
         {
             origin.x += FR_TextWidth(useText.toUtf8().constData());
-            FR_DrawChar3('_', &origin, ALIGN_TOPLEFT,  Hu_MenuMergeEffectWithDrawTextFlags(0));
+            FR_DrawCharXY3('_', origin.x, origin.y, ALIGN_TOPLEFT,  Hu_MenuMergeEffectWithDrawTextFlags(0));
         }
     }
 
@@ -196,9 +193,9 @@ LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
         d->oldText = d->text;
     }
 
-    if(!(flags & MNEDIT_STF_NO_ACTION) && hasAction(MNA_MODIFIED))
+    if(!(flags & MNEDIT_STF_NO_ACTION))
     {
-        execAction(MNA_MODIFIED);
+        execAction(Modified);
     }
     return *this;
 }
@@ -238,10 +235,7 @@ int LineEditWidget::handleEvent(event_t *ev)
         if(!d->text.isEmpty())
         {
             d->text.truncate(d->text.length() - 1);
-            if(hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
+            execAction(Modified);
         }
         return true;
     }
@@ -261,10 +255,7 @@ int LineEditWidget::handleEvent(event_t *ev)
         if(!d->maxLength || d->text.length() < d->maxLength)
         {
             d->text += ch;
-            if(hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
+            execAction(Modified);
         }
         return true;
     }
@@ -282,20 +273,14 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
             setFlags(Active);
             // Store a copy of the present text value so we can restore it.
             d->oldText = d->text;
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
         else
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             d->oldText = d->text;
             setFlags(Active, UnsetFlags);
-            if(hasAction(MNA_ACTIVEOUT))
-            {
-                execAction(MNA_ACTIVEOUT);
-            }
+            execAction(Deactivated);
         }
         return true;
     }
@@ -307,10 +292,7 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
         case MCMD_NAV_OUT:
             d->text = d->oldText;
             setFlags(Active, UnsetFlags);
-            if(hasAction(MNA_CLOSE))
-            {
-                execAction(MNA_CLOSE);
-            }
+            execAction(Closed);
             return true;
 
         // Eat all other navigation commands, when active.
@@ -329,10 +311,10 @@ int LineEditWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void LineEditWidget::updateGeometry(Page * /*page*/)
+void LineEditWidget::updateGeometry()
 {
     // @todo calculate visible dimensions properly.
-    Rect_SetWidthHeight(geometry(), 170, 14);
+    geometry().setSize(Vector2ui(170, 14));
 }
 
 } // namespace menu

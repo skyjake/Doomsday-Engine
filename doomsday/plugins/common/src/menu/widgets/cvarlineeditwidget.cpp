@@ -32,8 +32,8 @@ CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
     : LineEditWidget()
     , _cvarPath(cvarPath)
 {
-    setAction(MNA_MODIFIED, CVarLineEditWidget_UpdateCVar);
-    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    setAction(Modified,    CVarLineEditWidget_UpdateCVar);
+    setAction(FocusGained, Hu_MenuDefaultFocusAction);
 }
 
 CVarLineEditWidget::~CVarLineEditWidget()
@@ -44,13 +44,12 @@ char const *CVarLineEditWidget::cvarPath() const
     return _cvarPath;
 }
 
-void CVarLineEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    DENG2_ASSERT(wi != 0);
-    CVarLineEditWidget const &edit = wi->as<CVarLineEditWidget>();
+    CVarLineEditWidget const &edit = wi.as<CVarLineEditWidget>();
     cvartype_t varType = Con_GetVariableType(edit.cvarPath());
 
-    if(Widget::MNA_MODIFIED != action) return;
+    if(action != Widget::Modified) return;
 
     switch(varType)
     {

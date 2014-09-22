@@ -43,7 +43,7 @@ private:
     int _cvarValueMask;
 };
 
-void CVarInlineListWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
+void CVarInlineListWidget_UpdateCVar(Widget &wi, Widget::Action action);
 
 } // namespace menu
 } // namespace common

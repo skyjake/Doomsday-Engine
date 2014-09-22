@@ -35,8 +35,8 @@ public:
     explicit ButtonWidget(de::String const &text = "", patchid_t patch = 0);
     virtual ~ButtonWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleCommand(menucommand_e command);
 
     ButtonWidget &setText(de::String const &newText);

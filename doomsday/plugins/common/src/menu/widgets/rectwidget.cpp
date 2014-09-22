@@ -30,8 +30,8 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(RectWidget)
 {
-    Size2Raw dimensions;  ///< Dimensions of the rectangle.
-    patchid_t patch = 0;  ///< Background patch.
+    Vector2ui dimensions;  ///< Dimensions of the rectangle.
+    patchid_t patch = 0;   ///< Background patch.
 };
 
 RectWidget::RectWidget(patchid_t backgroundPatch)
@@ -47,13 +47,12 @@ RectWidget::RectWidget(patchid_t backgroundPatch)
 RectWidget::~RectWidget()
 {}
 
-void RectWidget::draw(Point2Raw const *origin)
+void RectWidget::draw() const
 {
-    if(origin)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(origin->x, origin->y, 0);
-    }
+    Vector2i const origin = geometry().topLeft;
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(origin.x, origin.y, 0);
 
     if(d->patch)
     {
@@ -62,32 +61,29 @@ void RectWidget::draw(Point2Raw const *origin)
     }
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    DGL_DrawRect2(0, 0, d->dimensions.width, d->dimensions.height);
+    DGL_DrawRect2(0, 0, d->dimensions.x, d->dimensions.y);
 
     if(d->patch)
     {
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
-    if(origin)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-origin->x, -origin->y, 0);
-    }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(-origin.x, -origin.y, 0);
 }
 
-void RectWidget::updateGeometry(Page * /*page*/)
+void RectWidget::updateGeometry()
 {
-    if(d->dimensions.width == 0 && d->dimensions.height == 0)
+    if(d->dimensions == Vector2ui(0, 0))
     {
         // Inherit dimensions from the patch.
         patchinfo_t info;
         if(R_GetPatchInfo(d->patch, &info))
         {
-            std::memcpy(&d->dimensions, &info.geometry.size, sizeof(d->dimensions));
+            d->dimensions = Vector2ui(info.geometry.size.width, info.geometry.size.height);
         }
     }
-    Rect_SetWidthHeight(geometry(), d->dimensions.width, d->dimensions.height);
+    geometry().setSize(d->dimensions);
 }
 
 void RectWidget::setBackgroundPatch(patchid_t newBackgroundPatch)

@@ -64,7 +64,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
-void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
+void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action);
 
 } // namespace menu
 } // namespace common

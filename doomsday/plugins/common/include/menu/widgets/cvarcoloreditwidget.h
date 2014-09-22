@@ -51,7 +51,7 @@ private:
     char const *_cvarPaths[4];
 };
 
-void CVarColorEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
+void CVarColorEditWidget_UpdateCVar(Widget &wi, Widget::Action action);
 
 } // namespace menu
 } // namespace common

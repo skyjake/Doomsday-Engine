@@ -40,10 +40,10 @@ public:
 
 public:
     InputBindingWidget();
-    virtual ~InputBindingWidget() {}
+    virtual ~InputBindingWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleEvent_Privileged(event_t *ev);
     int handleCommand(menucommand_e command);
 

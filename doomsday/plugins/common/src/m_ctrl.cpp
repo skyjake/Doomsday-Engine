@@ -217,40 +217,23 @@ static controlconfig_t controlConfig[] =
     { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
-void Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/)
+static void Hu_MenuDrawControlsPage(Page const &page, Vector2i const &offset);
+
+void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 {
-     // Start grabbing for this control.
+    // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
 }
 
 void Hu_MenuInitControlsPage()
 {
-    int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
-
-    LOGDEV_VERBOSE("Hu_MenuInitControlsPage: Creating controls items");
-
-    int textCount = 0;
-    int bindingsCount = 0;
-    for(int i = 0; i < configCount; ++i)
-    {
-        controlconfig_t *binds = &controlConfig[i];
-        if(!binds->command && !binds->controlName)
-        {
-            ++textCount;
-        }
-        else
-        {
-            ++textCount;
-            ++bindingsCount;
-        }
-    }
-
     Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     int group = 0;
+    int const configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     for(int i = 0; i < configCount; ++i)
     {
         controlconfig_t *binds = &controlConfig[i];
@@ -264,41 +247,30 @@ void Hu_MenuInitControlsPage()
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            LabelWidget *label = new LabelWidget(labelText);
-            label->setColor(MENU_COLOR2);
-
-            // A new group begins.
-            label->setGroup(++group);
-
-            page->addWidget(label);
+            page->addWidget(new LabelWidget(labelText))
+                    .setGroup(++group)
+                    .setColor(MENU_COLOR2);
         }
         else
         {
-            LabelWidget *label = new LabelWidget(labelText);
-            label->setGroup(group);
-
-            page->addWidget(label);
+            page->addWidget(new LabelWidget(labelText))
+                    .setGroup(group);
 
             InputBindingWidget *binding = new InputBindingWidget;
             binding->binds = binds;
             binding->setGroup(group);
-            binding->setAction(Widget::MNA_ACTIVE, Hu_MenuActivateBindingsGrab);
-            binding->setAction(Widget::MNA_FOCUS,  Hu_MenuDefaultFocusAction);
+            binding->setAction(Widget::Activated,   Hu_MenuActivateBindingsGrab);
+            binding->setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
             page->addWidget(binding);
         }
     }
 }
 
-/**
- * Hu_MenuDrawControlsPage
- */
-void Hu_MenuDrawControlsPage(Page * /*page*/, Point2Raw const * /*offset*/)
+static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vector2i const & /*offset*/)
 {
-    Point2Raw origin;
-    origin.x = SCREENWIDTH/2;
-    origin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
-    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin.x, origin.y);
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin);
 }
 
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)

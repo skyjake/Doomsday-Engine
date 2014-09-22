@@ -39,8 +39,8 @@ public:
                             float step = 0.1f, bool floatMode = true);
     virtual ~CVarTextualSliderWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
 
     CVarTextualSliderWidget &setEmptyText(de::String const &newEmptyText);
     de::String emptyText() const;

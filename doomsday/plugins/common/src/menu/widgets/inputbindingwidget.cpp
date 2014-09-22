@@ -171,6 +171,9 @@ InputBindingWidget::InputBindingWidget()
     setColor(MENU_COLOR1);
 }
 
+InputBindingWidget::~InputBindingWidget()
+{}
+
 static void drawSmallText(char const *string, int x, int y, float alpha)
 {
     int height = FR_TextHeight(string);
@@ -244,11 +247,9 @@ static void drawBinding(bindingitertype_t type, int /*bid*/, const char *name,
 #undef BIND_GAP
 }
 
-void InputBindingWidget::draw(Point2Raw const *origin)
+void InputBindingWidget::draw() const
 {
-    bindingdrawerdata_t draw;
     char buf[1024];
-
     if(binds->controlName)
     {
         B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
@@ -257,8 +258,10 @@ void InputBindingWidget::draw(Point2Raw const *origin)
     {
         B_BindingsForCommand(binds->command, buf, sizeof(buf));
     }
-    draw.origin.x = origin->x;
-    draw.origin.y = origin->y;
+
+    bindingdrawerdata_t draw;
+    draw.origin.x = geometry().topLeft.x;
+    draw.origin.y = geometry().topLeft.y;
     draw.alpha = mnRendState->pageAlpha;
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
@@ -293,9 +296,9 @@ int InputBindingWidget::handleCommand(menucommand_e cmd)
     case MCMD_SELECT:
         S_LocalSound(SFX_MENU_CYCLE, NULL);
         setFlags(Active);
-        if(hasAction(MNA_ACTIVE))
+        if(hasAction(Activated))
         {
-            execAction(MNA_ACTIVE);
+            execAction(Activated);
             return true;
         }
         break;
@@ -306,10 +309,10 @@ int InputBindingWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void InputBindingWidget::updateGeometry(Page * /*page*/)
+void InputBindingWidget::updateGeometry()
 {
     // @todo calculate visible dimensions properly!
-    Rect_SetWidthHeight(geometry(), 60, 10 * SMALL_SCALE);
+    geometry().setSize(Vector2ui(60, 10 * SMALL_SCALE));
 }
 
 int InputBindingWidget::handleEvent_Privileged(event_t *ev)

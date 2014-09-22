@@ -41,7 +41,7 @@ private:
     char const *_cvarPath;
 };
 
-void CVarLineEditWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action);
+void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action);
 
 } // namespace menu
 } // namespace common

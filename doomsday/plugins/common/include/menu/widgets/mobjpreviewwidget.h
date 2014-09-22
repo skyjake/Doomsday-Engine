@@ -40,8 +40,8 @@ public:
     MobjPreviewWidget();
     virtual ~MobjPreviewWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
 
     void setMobjType(int mobjType);
     void setPlayerClass(int plrClass);

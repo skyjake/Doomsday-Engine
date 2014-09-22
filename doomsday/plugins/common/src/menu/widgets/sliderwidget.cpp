@@ -35,18 +35,36 @@ static patchid_t pSliderRight;
 static patchid_t pSliderMiddle;
 static patchid_t pSliderHandle;
 
-DENG2_PIMPL_NOREF(SliderWidget)
+DENG2_PIMPL(SliderWidget)
 {
     float min      = 0.0f;
     float max      = 1.0f;
     float value    = 0.0f;
     float step     = 0.1f;  ///< Button step.
     bool floatMode = true;  ///< @c false= only integers are allowed.
+
+    Instance(Public *i) : Base(i) {}
+
+    int thumbPos() const
+    {
+#define WIDTH           (middleInfo.geometry.size.width)
+
+        patchinfo_t middleInfo;
+        if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return 0;
+
+        float range = max - min;
+        if(!range) range = 1; // Should never happen...
+
+        float useVal = self.value() - min;
+        return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
+
+#undef WIDTH
+    }
 };
 
 SliderWidget::SliderWidget(float min, float max, float step, bool floatMode)
     : Widget()
-    , d(new Instance)
+    , d(new Instance(this))
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR1);
@@ -118,41 +136,23 @@ bool SliderWidget::floatMode() const
     return d->floatMode;
 }
 
-int SliderWidget::thumbPos() const
-{
-#define WIDTH           (middleInfo.geometry.size.width)
-
-    patchinfo_t middleInfo;
-    if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return 0;
-
-    float range = d->max - d->min;
-    if(!range) range = 1; // Should never happen...
-
-    float useVal = value() - d->min;
-    return useVal / range * MNDATA_SLIDER_SLOTS * WIDTH;
-
-#undef WIDTH
-}
-
-void SliderWidget::draw(Point2Raw const *origin)
+void SliderWidget::draw() const
 {
 #define WIDTH                   (middleInfo.geometry.size.width)
 #define HEIGHT                  (middleInfo.geometry.size.height)
 
-    DENG2_ASSERT(origin != 0);
-    float x, y;// float range = max - min;
     patchinfo_t middleInfo, leftInfo;
 
     if(!R_GetPatchInfo(pSliderMiddle, &middleInfo)) return;
     if(!R_GetPatchInfo(pSliderLeft, &leftInfo)) return;
     if(WIDTH <= 0 || HEIGHT <= 0) return;
 
-    x = origin->x + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width);
-    y = origin->y + MNDATA_SLIDER_SCALE * (MNDATA_SLIDER_OFFSET_Y);
+    Vector2f origin = geometry().topLeft;
+    origin += Vector2f(MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width, MNDATA_SLIDER_OFFSET_Y) * MNDATA_SLIDER_SCALE;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
+    DGL_Translatef(origin.x, origin.y, 0);
     DGL_Scalef(MNDATA_SLIDER_SCALE, MNDATA_SLIDER_SCALE, 1);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -173,7 +173,7 @@ void SliderWidget::draw(Point2Raw const *origin)
     DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatchXY3(pSliderHandle, thumbPos(), 1, ALIGN_TOP, DPF_NO_OFFSET);
+    GL_DrawPatchXY3(pSliderHandle, d->thumbPos(), 1, ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -209,10 +209,7 @@ int SliderWidget::handleCommand(menucommand_e cmd)
         if(oldvalue != d->value)
         {
             S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
-            if(hasAction(MNA_MODIFIED))
-            {
-                execAction(MNA_MODIFIED);
-            }
+            execAction(Modified);
         }
         return true; }
 
@@ -222,28 +219,28 @@ int SliderWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void SliderWidget::updateGeometry(Page * /*page*/)
+void SliderWidget::updateGeometry()
 {
     patchinfo_t info;
     if(!R_GetPatchInfo(pSliderMiddle, &info)) return;
 
     int middleWidth = info.geometry.size.width * MNDATA_SLIDER_SLOTS;
-    Rect_SetWidthHeight(geometry(), middleWidth, info.geometry.size.height);
+    geometry().setSize(Vector2ui(middleWidth, info.geometry.size.height));
 
     if(R_GetPatchInfo(pSliderLeft, &info))
     {
         info.geometry.origin.x = -info.geometry.size.width;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     if(R_GetPatchInfo(pSliderRight, &info))
     {
         info.geometry.origin.x += middleWidth;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
-    Rect_SetWidthHeight(geometry(), .5f + Rect_Width (geometry()) * MNDATA_SLIDER_SCALE,
-                                    .5f + Rect_Height(geometry()) * MNDATA_SLIDER_SCALE);
+    geometry().setSize(Vector2ui(.5f + geometry().width()  * MNDATA_SLIDER_SCALE,
+                                 .5f + geometry().height() * MNDATA_SLIDER_SCALE));
 }
 
 } // namespace menu

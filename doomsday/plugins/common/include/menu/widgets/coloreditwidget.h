@@ -49,8 +49,8 @@ public:
                              bool rgbaMode = false);
     virtual ~ColorEditWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleCommand(menucommand_e command);
 
     /**

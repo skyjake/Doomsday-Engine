@@ -58,10 +58,10 @@ class Page
 public:
     typedef QList<Widget *> Widgets;
 
-    typedef void (*OnActiveCallback) (Page *);
-    typedef void (*OnDrawCallback) (Page *, Point2Raw const *);
+    typedef void (*OnActiveCallback) (Page &);
+    typedef void (*OnDrawCallback) (Page const &, de::Vector2i const &);
 
-    typedef int (*CommandResponder) (Page *, menucommand_e);
+    typedef int (*CommandResponder) (Page &, menucommand_e);
 
 public:
     /**

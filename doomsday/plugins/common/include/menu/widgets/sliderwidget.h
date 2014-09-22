@@ -62,11 +62,9 @@ public:
     explicit SliderWidget(float min = 0.0f, float max = 1.0f, float step = 0.1f, bool floatMode = true);
     virtual ~SliderWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleCommand(menucommand_e command);
-
-    int thumbPos() const;
 
     /**
      * Change the current value represented by the slider.

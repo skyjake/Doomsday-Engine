@@ -188,12 +188,12 @@ void Hu_MenuConsoleRegister();
 
 // ----------------------------------------------------------------------------------------
 
-void Hu_MenuDefaultFocusAction(menu::Widget *wi, menu::Widget::mn_actionid_t action);
+void Hu_MenuDefaultFocusAction(menu::Widget &wi, menu::Widget::Action action);
 
-void Hu_MenuDrawFocusCursor(int x, int y, int focusObjectHeight, float alpha);
+void Hu_MenuDrawFocusCursor(de::Vector2i const &origin, int focusObjectHeight, float alpha);
 
-void Hu_MenuDrawPageTitle(de::String title, int x, int y);
-void Hu_MenuDrawPageHelp(char const *help, int x, int y);
+void Hu_MenuDrawPageTitle(de::String titleText, de::Vector2i const &origin);
+void Hu_MenuDrawPageHelp(de::String helpText, de::Vector2i const &origin);
 
 /**
  * @defgroup menuEffectFlags  Menu Effect Flags
@@ -206,7 +206,7 @@ void Hu_MenuDrawPageHelp(char const *help, int x, int y);
 #define MEF_EVERYTHING              MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER
 ///@}
 
-short Hu_MenuMergeEffectWithDrawTextFlags(short f);
+short Hu_MenuMergeEffectWithDrawTextFlags(short flags);
 
 } // namespace common
 

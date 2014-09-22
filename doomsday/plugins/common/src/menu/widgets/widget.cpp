@@ -18,6 +18,7 @@
  * 02110-1301 USA</small>
  */
 
+#include <QMap>
 #include "common.h"
 #include "menu/widgets/widget.h"
 
@@ -32,17 +33,18 @@ DENG2_PIMPL_NOREF(Widget)
 {
     Flags flags;
     int group = 0;             ///< Object group identifier.
-    Point2Raw origin;          ///< Used with the fixed layout (in the page coordinate space).
+    Vector2i origin;           ///< Used with the fixed layout (in the page coordinate space).
 
-    Rect *geometry = nullptr;  ///< Current geometry.
-    Page *page     = nullptr;  ///< Page which owns this object (if any).
+    Rectanglei geometry;       ///< "Physical" geometry.
+    Page *page = nullptr;      ///< Page which owns this object (if any).
 
     String helpInfo;           ///< Additional help information displayed when the widget has focus.
     int shortcut     = 0;      ///< DDKEY used to switch focus (@c 0= none).
     int pageFontIdx  = 0;      ///< Index of the predefined page font to use when drawing this.
     int pageColorIdx = 0;      ///< Index of the predefined page color to use when drawing this.
 
-    mn_actioninfo_t actions[MNACTION_COUNT];
+    typedef QMap<Action, ActionCallback> Actions;
+    Actions actions;
 
     OnTickCallback onTickCallback = nullptr;
     CommandResponder cmdResponder = nullptr;
@@ -50,14 +52,6 @@ DENG2_PIMPL_NOREF(Widget)
     // User data values.
     QVariant userValue;
     QVariant userValue2;
-
-    Instance()
-    {
-        geometry = Rect_New();
-        de::zap(actions);
-    }
-
-    ~Instance() { Rect_Delete(geometry); }
 };
 
 Widget::Widget() : d(new Instance)
@@ -86,7 +80,7 @@ int Widget::cmdResponder(menucommand_e command)
 {
     if(d->cmdResponder)
     {
-        if(int result = d->cmdResponder(this, command))
+        if(int result = d->cmdResponder(*this, command))
             return result;
     }
     else
@@ -103,12 +97,12 @@ void Widget::tick()
     if(isHidden()) return;
 
     // Paused widgets do not tick.
-    if(flags() & Paused) return;
+    if(isPaused()) return;
 
     // Process the tick.
     if(d->onTickCallback)
     {
-        d->onTickCallback(this);
+        d->onTickCallback(*this);
     }
 }
 
@@ -135,37 +129,29 @@ Page &Widget::page() const
     {
         return *d->page;
     }
-    throw Error("Widget::page", "No page is attributed");
+    /// @throw MissingPageError No Page is presently attributed.
+    throw MissingPageError("Widget::page", "No page is attributed");
 }
 
-Widget::Flags Widget::flags() const
-{
-    return d->flags;
-}
-
-Rect *Widget::geometry()
+Rectanglei &Widget::geometry()
 {
     return d->geometry;
 }
 
-Rect const *Widget::geometry() const
+Rectanglei const &Widget::geometry() const
 {
     return d->geometry;
 }
 
-Point2Raw const *Widget::fixedOrigin() const
+Widget &Widget::setFixedOrigin(Vector2i const &newOrigin)
 {
-    return &d->origin;
-}
-
-Widget &Widget::setFixedOrigin(Point2Raw const *newOrigin)
-{
-    if(newOrigin)
-    {
-        d->origin.x = newOrigin->x;
-        d->origin.y = newOrigin->y;
-    }
+    d->origin = newOrigin;
     return *this;
+}
+
+Vector2i Widget::fixedOrigin() const
+{
+    return d->origin;
 }
 
 Widget &Widget::setFixedX(int newX)
@@ -186,9 +172,9 @@ Widget &Widget::setFlags(Flags flagsToChange, FlagOp operation)
     return *this;
 }
 
-int Widget::group() const
+Widget::Flags Widget::flags() const
 {
-    return d->group;
+    return d->flags;
 }
 
 Widget &Widget::setGroup(int newGroup)
@@ -197,9 +183,9 @@ Widget &Widget::setGroup(int newGroup)
     return *this;
 }
 
-int Widget::shortcut()
+int Widget::group() const
 {
-    return d->shortcut;
+    return d->group;
 }
 
 Widget &Widget::setShortcut(int ddkey)
@@ -209,6 +195,11 @@ Widget &Widget::setShortcut(int ddkey)
         d->shortcut = tolower(ddkey);
     }
     return *this;
+}
+
+int Widget::shortcut()
+{
+    return d->shortcut;
 }
 
 Widget &Widget::setFont(int newPageFont)
@@ -233,15 +224,15 @@ int Widget::color() const
     return d->pageColorIdx;
 }
 
-String const &Widget::helpInfo() const
-{
-    return d->helpInfo;
-}
-
 Widget &Widget::setHelpInfo(String newHelpInfo)
 {
     d->helpInfo = newHelpInfo;
     return *this;
+}
+
+String const &Widget::helpInfo() const
+{
+    return d->helpInfo;
 }
 
 int Widget::handleCommand(menucommand_e cmd)
@@ -252,49 +243,42 @@ int Widget::handleCommand(menucommand_e cmd)
         if(!isActive())
         {
             setFlags(Active);
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
 
         setFlags(Active, UnsetFlags);
-        if(hasAction(MNA_ACTIVEOUT))
-        {
-            execAction(MNA_ACTIVEOUT);
-        }
+        execAction(Deactivated);
         return true;
     }
     return false; // Not eaten.
 }
 
-Widget::mn_actioninfo_t const *Widget::action(mn_actionid_t id)
+bool Widget::hasAction(Action id) const
 {
-    DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
-    return &d->actions[id];
+    DENG2_ASSERT(id >= Modified && id <= FocusGained);
+    return d->actions.contains(id);
 }
 
-bool Widget::hasAction(mn_actionid_t id)
+Widget &Widget::setAction(Action id, ActionCallback callback)
 {
-    mn_actioninfo_t const *info = action(id);
-    return (info && info->callback != 0);
-}
-
-Widget &Widget::setAction(mn_actionid_t id, mn_actioninfo_t::ActionCallback callback)
-{
-    DENG2_ASSERT((id) >= MNACTION_FIRST && (id) <= MNACTION_LAST);
-    d->actions[id].callback = callback;
+    DENG2_ASSERT(id >= Modified && id <= FocusGained);
+    if(callback)
+    {
+        d->actions.insert(id, callback);
+    }
+    else
+    {
+        d->actions.remove(id);
+    }
     return *this;
 }
 
-void Widget::execAction(mn_actionid_t id)
+void Widget::execAction(Action id)
 {
     if(hasAction(id))
     {
-        action(id)->callback(this, id);
-        return;
+        d->actions[id](*this, id);
     }
-    DENG2_ASSERT(!"MNObject::ExecAction: Attempt to execute non-existent action.");
 }
 
 Widget &Widget::setUserValue(QVariant const &newValue)

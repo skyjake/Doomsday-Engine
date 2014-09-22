@@ -44,8 +44,8 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath, int cvarValueMask,
 {
     setFont(MENU_FONT1);
     setColor(MENU_COLOR3);
-    setAction(MNA_MODIFIED, CVarToggleWidget_UpdateCVar);
-    setAction(MNA_FOCUS,    Hu_MenuDefaultFocusAction);
+    setAction(Modified,    CVarToggleWidget_UpdateCVar);
+    setAction(FocusGained, Hu_MenuDefaultFocusAction);
 
     d->cvarPath      = cvarPath;
     d->cvarValueMask = cvarValueMask;
@@ -67,10 +67,7 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
             S_LocalSound(SFX_MENU_CYCLE, NULL);
 
             setFlags(Active);
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
 
         if(!justActivated)
@@ -79,18 +76,12 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
         }
 
         setState(isActive()? Down : Up);
-        if(hasAction(MNA_MODIFIED))
-        {
-            execAction(MNA_MODIFIED);
-        }
+        execAction(Modified);
 
         if(!justActivated && !isActive())
         {
             S_LocalSound(SFX_MENU_CYCLE, NULL);
-            if(hasAction(MNA_ACTIVEOUT))
-            {
-                execAction(MNA_ACTIVEOUT);
-            }
+            execAction(Deactivated);
         }
 
         return true;
@@ -99,16 +90,18 @@ int CVarToggleWidget::handleCommand(menucommand_e cmd)
     return false; // Not eaten.
 }
 
-void CVarToggleWidget_UpdateCVar(Widget *wi, Widget::mn_actionid_t action)
+void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action)
 {
-    CVarToggleWidget *tog = &wi->as<CVarToggleWidget>();
+    CVarToggleWidget *tog = &wi.as<CVarToggleWidget>();
 
-    if(Widget::MNA_MODIFIED != action) return;
+    if(action != Widget::Modified) return;
 
     tog->setText(tog->isDown()? tog->downText() : tog->upText());
 
-    cvartype_t varType = Con_GetVariableType(tog->cvarPath());
-    if(CVT_NULL == varType) return;
+    if(Con_GetVariableType(tog->cvarPath()) == CVT_NULL)
+    {
+        return;
+    }
 
     int value;
     if(int const valueMask = tog->cvarValueMask())

@@ -49,9 +49,8 @@ DENG2_PIMPL(Page)
     String name;               ///< Symbolic name/identifier.
     Widgets widgets;
 
-    /// "Physical" geometry in fixed 320x200 screen coordinate space.
     Vector2i origin;
-    Rect *geometry = Rect_New();
+    Rectanglei geometry;       ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
 
     String title;              ///< Title of this page.
     Page *previous = nullptr;  ///< Previous page.
@@ -84,7 +83,6 @@ DENG2_PIMPL(Page)
 
     ~Instance()
     {
-        Rect_Delete(geometry);
         qDeleteAll(widgets);
     }
 
@@ -94,16 +92,16 @@ DENG2_PIMPL(Page)
         for(Widget *wi : widgets)
         {
             FR_PushAttrib();
-            Rect_SetXY(wi->geometry(), 0, 0);
-            wi->updateGeometry(thisPublic);
+            wi->geometry().moveTopLeft(Vector2i(0, 0));
+            wi->updateGeometry();
             FR_PopAttrib();
         }
     }
 
     void applyLayout()
     {
-        Rect_SetXY(geometry, 0, 0);
-        Rect_SetWidthHeight(geometry, 0, 0);
+        geometry.topLeft = Vector2i(0, 0);
+        geometry.setSize(Vector2ui(0, 0));
 
         // Apply layout logic to this page.
 
@@ -114,8 +112,8 @@ DENG2_PIMPL(Page)
             {
                 if(wi->isHidden()) continue;
 
-                Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
-                Rect_Unite(geometry, wi->geometry());
+                wi->geometry().moveTopLeft(wi->fixedOrigin());
+                geometry |= wi->geometry();
             }
             return;
         }
@@ -133,7 +131,7 @@ DENG2_PIMPL(Page)
 
             if(wi->isHidden())
             {
-                // Proceed to the next widget!
+                // Proceed to the next widget.
                 i += 1;
                 continue;
             }
@@ -142,10 +140,10 @@ DENG2_PIMPL(Page)
             // dynamic layout.
             if(wi->flags() & Widget::PositionFixed)
             {
-                Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
-                Rect_Unite(geometry, wi->geometry());
+                wi->geometry().moveTopLeft(wi->fixedOrigin());
+                geometry |= wi->geometry();
 
-                // To the next object.
+                // Proceed to the next widget.
                 i += 1;
                 continue;
             }
@@ -153,11 +151,10 @@ DENG2_PIMPL(Page)
             // An additional offset requested?
             if(wi->flags() & Widget::LayoutOffset)
             {
-                origin.x += wi->fixedOrigin()->x;
-                origin.y += wi->fixedOrigin()->y;
+                origin += wi->fixedOrigin();
             }
 
-            Rect_SetXY(wi->geometry(), origin.x, origin.y);
+            wi->geometry().moveTopLeft(origin);
 
             // Orient label plus button/inline-list/textual-slider pairs about a
             // vertical dividing line, with the label on the left, other widget
@@ -174,13 +171,11 @@ DENG2_PIMPL(Page)
                 {
                     int const margin = lineOffset * 2;
 
-                    Rect_SetXY(nextWi->geometry(), margin + Rect_Width(wi->geometry()), origin.y);
+                    nextWi->geometry().moveTopLeft(Vector2i(margin + wi->geometry().width(), origin.y));
 
-                    RectRaw united;
-                    origin.y += Rect_United(wi->geometry(), nextWi->geometry(), &united)
-                              ->size.height + lineOffset;
-
-                    Rect_UniteRaw(geometry, &united);
+                    Rectanglei const united = wi->geometry() | nextWi->geometry();
+                    geometry |= united;
+                    origin.y += united.height() + lineOffset;
 
                     // Extra spacing between object groups.
                     if(i + 2 < widgets.count() && nextWi->group() != widgets[i + 2]->group())
@@ -194,9 +189,8 @@ DENG2_PIMPL(Page)
                 }
             }
 
-            Rect_Unite(geometry, wi->geometry());
-
-            origin.y += Rect_Height(wi->geometry()) + lineOffset;
+            geometry |= wi->geometry();
+            origin.y += wi->geometry().height() + lineOffset;
 
             // Extra spacing between object groups.
             if(nextWi && nextWi->group() != wi->group())
@@ -219,10 +213,7 @@ DENG2_PIMPL(Page)
             if(wi != widgets[focus])
             {
                 Widget *oldFocused = widgets[focus];
-                if(oldFocused->hasAction(Widget::MNA_FOCUSOUT))
-                {
-                    oldFocused->execAction(Widget::MNA_FOCUSOUT);
-                }
+                oldFocused->execAction(Widget::FocusLost);
                 oldFocused->setFlags(Widget::Focused, UnsetFlags);
             }
             else if(!allowRefocus)
@@ -233,10 +224,7 @@ DENG2_PIMPL(Page)
 
         focus = widgets.indexOf(wi);
         wi->setFlags(Widget::Focused);
-        if(wi->hasAction(Widget::MNA_FOCUS))
-        {
-            wi->execAction(Widget::MNA_FOCUS);
-        }
+        wi->execAction(Widget::FocusGained);
     }
 
     void refocus()
@@ -337,7 +325,7 @@ DENG2_PIMPL(Page)
      */
     int cursorSizeFor(Widget *focused, int lineHeight)
     {
-        int focusedHeight = focused? Size2_Height(focused->size()) : 0;
+        int focusedHeight = focused? focused->geometry().height() : 0;
 
         // Ensure the cursor is at least as tall as the effective line height for
         // the page. This is necessary because some mods replace the menu button
@@ -461,15 +449,9 @@ static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
     }
 
     FR_PushAttrib();
-    Hu_MenuDrawPageTitle(page->title(), origin.x, origin.y); origin.y += 16;
+    Hu_MenuDrawPageTitle(page->title(), origin); origin.y += 16;
     drawPageNavigation(page, origin);
     FR_PopAttrib();
-}
-
-static void MN_DrawObject(Widget *wi, Point2Raw const *offset)
-{
-    if(!wi) return;
-    wi->draw(offset);
 }
 
 static void setupRenderStateForPageDrawing(Page *page, float alpha)
@@ -503,9 +485,6 @@ void Page::draw(float alpha, bool showFocusCursor)
     alpha = de::clamp(0.f, alpha, 1.f);
     if(alpha <= .0001f) return;
 
-    int focusedHeight = 0;
-    Point2Raw cursorOrigin;
-
     // Object geometry is determined from properties defined in the
     // render state, so configure render state before we begin.
     setupRenderStateForPageDrawing(this, alpha);
@@ -522,14 +501,15 @@ void Page::draw(float alpha, bool showFocusCursor)
     /// @todo Do not modify the page layout here.
     d->applyLayout();
 
-    // Determine the origin of the focus object (this dictates the page scroll location).
+    // Determine the origin of the cursor (this dictates the page scroll location).
     Widget *focused = focusWidget();
     if(focused && focused->isHidden())
     {
         focused = 0;
     }
 
-    // Are we focusing?
+    Vector2i cursorOrigin;
+    int focusedHeight = 0;
     if(focused)
     {
         focusedHeight = d->cursorSizeFor(focused, lineHeight());
@@ -537,23 +517,20 @@ void Page::draw(float alpha, bool showFocusCursor)
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
         cursorOrigin.x = -1;
-        cursorOrigin.y = Point2_Y(focused->origin());
+        cursorOrigin.y = focused->geometry().topLeft.y;
 
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(focused->flags() & Widget::Active)
+        if(ListWidget const *list = focused->maybeAs<ListWidget>())
         {
-            if(ListWidget const *list = focused->maybeAs<ListWidget>())
+            if(focused->isActive() && list->selectionIsVisible())
             {
-                if(list->selectionIsVisible())
-                {
-                    FR_PushAttrib();
-                    FR_SetFont(predefinedFont(mn_page_fontid_t(focused->font())));
-                    focusedHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                    cursorOrigin.y += (list->selection() - list->first()) * focusedHeight;
-                    FR_PopAttrib();
-                }
+                FR_PushAttrib();
+                FR_SetFont(predefinedFont(mn_page_fontid_t(focused->font())));
+                focusedHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                cursorOrigin.y += (list->selection() - list->first()) * focusedHeight;
+                FR_PopAttrib();
             }
         }
         // kludge end
@@ -566,23 +543,20 @@ void Page::draw(float alpha, bool showFocusCursor)
     // Apply page scroll?
     if(!(d->flags & MPF_NEVER_SCROLL) && focused)
     {
-        RectRaw pageGeometry, viewRegion;
-        Rect_Raw(d->geometry, &pageGeometry);
+        Rectanglei viewRegion;
 
         // Determine available screen region for the page.
-        viewRegion.origin.x = 0;
-        viewRegion.origin.y = d->origin.y;
-        viewRegion.size.width  = SCREENWIDTH;
-        viewRegion.size.height = SCREENHEIGHT - 40/*arbitrary but enough for the help message*/;
+        viewRegion.topLeft = Vector2i(0, d->origin.y);
+        viewRegion.setSize(Vector2ui(SCREENWIDTH, SCREENHEIGHT - 40/*arbitrary but enough for the help message*/));
 
         // Is scrolling in effect?
-        if(pageGeometry.size.height > viewRegion.size.height)
+        if(d->geometry.height() > viewRegion.height())
         {
-            int const minY = -viewRegion.origin.y/2 + viewRegion.size.height/2;
+            int const minY = -viewRegion.topLeft.y / 2 + viewRegion.height() / 2;
             if(cursorOrigin.y > minY)
             {
-                int const scrollLimitY = pageGeometry.size.height - viewRegion.size.height/2;
-                int const scrollOriginY = MIN_OF(cursorOrigin.y, scrollLimitY) - minY;
+                int const scrollLimitY  = d->geometry.height() - viewRegion.height() / 2;
+                int const scrollOriginY = de::min(cursorOrigin.y, scrollLimitY) - minY;
                 DGL_Translatef(0, -scrollOriginY, 0);
             }
         }
@@ -591,14 +565,10 @@ void Page::draw(float alpha, bool showFocusCursor)
     // Draw child objects.
     for(Widget *wi : d->widgets)
     {
-        RectRaw geometry;
-
-        if(wi->flags() & Widget::Hidden) continue;
-
-        Rect_Raw(wi->geometry(), &geometry);
+        if(wi->isHidden()) continue;
 
         FR_PushAttrib();
-        MN_DrawObject(wi, &geometry.origin);
+        wi->draw();
         FR_PopAttrib();
     }
 
@@ -606,7 +576,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     /// @todo cursor should be drawn on top of the page drawer.
     if(showFocusCursor && focused)
     {
-        Hu_MenuDrawFocusCursor(cursorOrigin.x, cursorOrigin.y, focusedHeight, alpha);
+        Hu_MenuDrawFocusCursor(cursorOrigin, focusedHeight, alpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -618,16 +588,15 @@ void Page::draw(float alpha, bool showFocusCursor)
     if(d->drawer)
     {
         FR_PushAttrib();
-        Point2Raw offset(d->origin.x, d->origin.y);
-        d->drawer(this, &offset);
+        d->drawer(*this, d->origin);
         FR_PopAttrib();
     }
 
     // How about some additional help/information for the focused item?
-    if(focused && focused->hasHelpInfo())
+    if(focused && !focused->helpInfo().isEmpty())
     {
-        Point2Raw helpOrigin(SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale));
-        Hu_MenuDrawPageHelp(focused->helpInfo().toUtf8().constData(), helpOrigin.x, helpOrigin.y);
+        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+        Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }
 
@@ -755,7 +724,7 @@ void Page::activate()
 
     if(d->onActiveCallback)
     {
-        d->onActiveCallback(this);
+        d->onActiveCallback(*this);
     }
 }
 
@@ -809,7 +778,7 @@ int Page::handleCommand(menucommand_e cmd)
     // Maybe a custom command responder for the page?
     if(d->cmdResponder)
     {
-        if(int result = d->cmdResponder(this, cmd))
+        if(int result = d->cmdResponder(*this, cmd))
             return result;
     }
 

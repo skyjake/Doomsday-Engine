@@ -44,9 +44,9 @@ DENG2_PIMPL(ColorEditWidget)
         color.x = red;
         if(color.x != oldRed)
         {
-            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(MNA_MODIFIED);
+                self.execAction(Modified);
             }
             return true;
         }
@@ -60,9 +60,9 @@ DENG2_PIMPL(ColorEditWidget)
         color.y = green;
         if(color.y != oldGreen)
         {
-            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(MNA_MODIFIED);
+                self.execAction(Modified);
             }
             return true;
         }
@@ -76,9 +76,9 @@ DENG2_PIMPL(ColorEditWidget)
         color.z = blue;
         if(color.z != oldBlue)
         {
-            if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+            if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
             {
-                self.execAction(MNA_MODIFIED);
+                self.execAction(Modified);
             }
             return true;
         }
@@ -93,9 +93,9 @@ DENG2_PIMPL(ColorEditWidget)
             color.w = alpha;
             if(color.w != oldAlpha)
             {
-                if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && self.hasAction(MNA_MODIFIED))
+                if(!(flags & MNCOLORBOX_SCF_NO_ACTION))
                 {
-                    self.execAction(MNA_MODIFIED);
+                    self.execAction(Modified);
                 }
                 return true;
             }
@@ -119,10 +119,8 @@ ColorEditWidget::ColorEditWidget(Vector4f const &color, bool rgbaMode)
 ColorEditWidget::~ColorEditWidget()
 {}
 
-void ColorEditWidget::draw(Point2Raw const *offset)
+void ColorEditWidget::draw() const
 {
-    DENG2_ASSERT(offset != 0);
-
     patchinfo_t t, b, l, r, tl, tr, br, bl;
     int const up = 1;
 
@@ -135,8 +133,8 @@ void ColorEditWidget::draw(Point2Raw const *offset)
     R_GetPatchInfo(borderPatches[6], &br);
     R_GetPatchInfo(borderPatches[7], &bl);
 
-    int x = offset->x;
-    int y = offset->y;
+    int x = geometry().topLeft.x;
+    int y = geometry().topLeft.y;
     int w = d->dimensions.x;
     int h = d->dimensions.y;
 
@@ -230,45 +228,37 @@ void ColorEditWidget::draw(Point2Raw const *offset)
 
 int ColorEditWidget::handleCommand(menucommand_e cmd)
 {
-    switch(cmd)
+    if(cmd == MCMD_SELECT)
     {
-    case MCMD_SELECT:
-        if(!(flags() & Active))
+        S_LocalSound(SFX_MENU_CYCLE, NULL);
+        if(!isActive())
         {
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
             setFlags(Active);
-            if(hasAction(MNA_ACTIVE))
-            {
-                execAction(MNA_ACTIVE);
-            }
+            execAction(Activated);
         }
         else
         {
-            S_LocalSound(SFX_MENU_CYCLE, NULL);
             setFlags(Active, UnsetFlags);
-            if(hasAction(MNA_ACTIVEOUT))
-            {
-                execAction(MNA_ACTIVEOUT);
-            }
+            execAction(Deactivated);
         }
         return true;
-
-    default: return false; // Not eaten.
     }
+
+    return false; // Not eaten.
 }
 
-void ColorEditWidget::updateGeometry(Page * /*page*/)
+void ColorEditWidget::updateGeometry()
 {
     patchinfo_t info;
 
-    Rect_SetWidthHeight(geometry(), d->dimensions.x, d->dimensions.y);
+    geometry().setSize(d->dimensions.toVector2ui());
 
     // Add bottom border?
     if(R_GetPatchInfo(borderPatches[2], &info))
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = d->dimensions.y;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add right border?
@@ -276,7 +266,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = d->dimensions.x;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top border?
@@ -284,7 +274,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.width = d->dimensions.x;
         info.geometry.origin.y   = -info.geometry.size.height;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add left border?
@@ -292,7 +282,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.size.height = d->dimensions.y;
         info.geometry.origin.x    = -info.geometry.size.width;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top-left corner?
@@ -300,7 +290,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = -info.geometry.size.height;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add top-right corner?
@@ -308,7 +298,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = -info.geometry.size.height;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add bottom-right corner?
@@ -316,7 +306,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = d->dimensions.x;
         info.geometry.origin.y = d->dimensions.y;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 
     // Add bottom-left corner?
@@ -324,7 +314,7 @@ void ColorEditWidget::updateGeometry(Page * /*page*/)
     {
         info.geometry.origin.x = -info.geometry.size.width;
         info.geometry.origin.y = d->dimensions.y;
-        Rect_UniteRaw(geometry(), &info.geometry);
+        geometry() |= Rectanglei::fromSize(Vector2i(info.geometry.origin.xy), Vector2ui(info.geometry.size.width, info.geometry.size.height));
     }
 }
 
@@ -354,12 +344,9 @@ ColorEditWidget &ColorEditWidget::setColor(Vector4f const &newColor, int flags)
     if(d->setBlue (newColor.z, setCompFlags)) setComps |= 0x4;
     if(d->setAlpha(newColor.w, setCompFlags)) setComps |= 0x8;
 
-    if(setComps)
+    if(setComps && !(flags & MNCOLORBOX_SCF_NO_ACTION))
     {
-        if(!(flags & MNCOLORBOX_SCF_NO_ACTION) && hasAction(MNA_MODIFIED))
-        {
-            execAction(MNA_MODIFIED);
-        }
+        execAction(Modified);
     }
     return *this;
 }

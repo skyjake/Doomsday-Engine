@@ -66,8 +66,8 @@ public:
     LineEditWidget();
     virtual ~LineEditWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleEvent(event_t *ev);
     int handleCommand(menucommand_e command);
 

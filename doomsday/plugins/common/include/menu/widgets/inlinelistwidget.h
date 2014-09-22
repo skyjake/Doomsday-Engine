@@ -33,10 +33,10 @@ class InlineListWidget : public ListWidget
 {
 public:
     InlineListWidget();
-    virtual ~InlineListWidget() {}
+    virtual ~InlineListWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
     int handleCommand(menucommand_e command);
 };
 

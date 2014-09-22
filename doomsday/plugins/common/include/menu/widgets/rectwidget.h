@@ -37,8 +37,8 @@ public:
     explicit RectWidget(patchid_t backgroundPatch = 0);
     virtual ~RectWidget();
 
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *pagePtr);
+    void draw() const;
+    void updateGeometry();
 
     /**
      * Apply the Patch graphic referenced by @a patch as the background for this rect.
