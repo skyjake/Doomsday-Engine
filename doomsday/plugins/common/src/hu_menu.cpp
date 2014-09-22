@@ -148,8 +148,6 @@ static void Hu_MenuInitNewGame(dd_bool confirmed);
 static void initAllPages();
 static void destroyAllPages();
 
-static void initAllObjectsOnAllPages();
-
 static void Hu_MenuUpdateCursorState();
 
 static dd_bool Hu_MenuHasCursorRotation(Widget *wi);
@@ -331,9 +329,9 @@ static void Hu_MenuLoadResources()
 void Hu_MenuInitColorWidgetPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Point2Raw const origin(98, 60);
+    Vector2i const origin(98, 60);
 #else
-    Point2Raw const origin(124, 60);
+    Vector2i const origin(124, 60);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("ColorWidget", origin, MPF_NEVER_SCROLL, NULL, Hu_MenuColorWidgetCmdResponder));
@@ -380,9 +378,9 @@ void Hu_MenuInitColorWidgetPage()
 void Hu_MenuInitMainPage()
 {
 #if __JHEXEN__ || __JHERETIC__
-    Point2Raw origin(110, 56);
+    Vector2i origin(110, 56);
 #else
-    Point2Raw origin(97, 64);
+    Vector2i origin(97, 64);
 #endif
 
 #if __JDOOM__
@@ -518,9 +516,9 @@ void Hu_MenuInitMainPage()
 void Hu_MenuInitGameTypePage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Point2Raw origin(97, 65);
+    Vector2i origin(97, 65);
 #else
-    Point2Raw origin(104, 65);
+    Vector2i origin(104, 65);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("GameType", origin, 0, Hu_MenuDrawGameTypePage));
@@ -553,11 +551,11 @@ void Hu_MenuInitGameTypePage()
 void Hu_MenuInitSkillPage()
 {
 #if __JHEXEN__
-    Point2Raw const origin(120, 44);
+    Vector2i const origin(120, 44);
 #elif __JHERETIC__
-    Point2Raw const origin(38, 30);
+    Vector2i const origin(38, 30);
 #else
-    Point2Raw const origin(48, 63);
+    Vector2i const origin(48, 63);
 #endif
     Widget::Flags skillButtonFlags[NUM_SKILL_MODES] = {
         Widget::Id0,
@@ -620,9 +618,9 @@ void Hu_MenuInitSkillPage()
 void Hu_MenuInitMultiplayerPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Point2Raw const origin(97, 65);
+    Vector2i const origin(97, 65);
 #else
-    Point2Raw const origin(97, 65);
+    Vector2i const origin(97, 65);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("Multiplayer", origin, 0, Hu_MenuDrawMultiplayerPage));
@@ -647,9 +645,9 @@ void Hu_MenuInitMultiplayerPage()
 void Hu_MenuInitPlayerSetupPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Point2Raw const origin(70, 44);
+    Vector2i const origin(70, 44);
 #else
-    Point2Raw const origin(70, 54);
+    Vector2i const origin(70, 54);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, 0, Hu_MenuDrawPlayerSetupPage));
@@ -736,7 +734,7 @@ void Hu_MenuInitPlayerSetupPage()
 
 void Hu_MenuInitSaveOptionsPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("SaveOptions", Point2Raw(60, 50)));
+    Page *page = Hu_MenuAddPage(new Page("SaveOptions", Vector2i(60, 50)));
     page->setTitle("Save Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -763,7 +761,7 @@ void Hu_MenuInitSaveOptionsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitFilesPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("Files", Point2Raw(110, 60), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL));
+    Page *page = Hu_MenuAddPage(new Page("Files", Vector2i(110, 60), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
@@ -838,9 +836,9 @@ int Hu_MenuSaveSlotCommandResponder(Widget *wi, menucommand_e cmd)
 void Hu_MenuInitLoadGameAndSaveGamePages()
 {
 #if __JDOOM__ || __JDOOM64__
-    Point2Raw const origin(80, 54);
+    Vector2i const origin(80, 54);
 #else
-    Point2Raw const origin(70, 30);
+    Vector2i const origin(70, 30);
 #endif
     Widget::Flags const saveSlotObjectIds[NUMSAVESLOTS] = {
         Widget::Id0, Widget::Id1, Widget::Id2, Widget::Id3, Widget::Id4, Widget::Id5,
@@ -896,9 +894,9 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 void Hu_MenuInitOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Point2Raw const origin(110, 63);
+    Vector2i const origin(110, 63);
 #else
-    Point2Raw const origin(110, 63);
+    Vector2i const origin(110, 63);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("Options", origin, 0, Hu_MenuDrawOptionsPage));
@@ -979,11 +977,11 @@ void Hu_MenuInitOptionsPage()
 void Hu_MenuInitGameplayOptionsPage()
 {
 #if __JHEXEN__
-    Point2Raw const origin(88, 25);
+    Vector2i const origin(88, 25);
 #elif __JHERETIC__
-    Point2Raw const origin(30, 40);
+    Vector2i const origin(30, 40);
 #else
-    Point2Raw const origin(30, 40);
+    Vector2i const origin(30, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("GameplayOptions", origin));
@@ -1139,9 +1137,9 @@ void Hu_MenuInitGameplayOptionsPage()
 void Hu_MenuInitHUDOptionsPage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Point2Raw const origin(97, 40);
+    Vector2i const origin(97, 40);
 #else
-    Point2Raw const origin(97, 28);
+    Vector2i const origin(97, 28);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("HudOptions", origin));
@@ -1482,9 +1480,9 @@ void Hu_MenuInitHUDOptionsPage()
 void Hu_MenuInitAutomapOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Point2Raw const origin(64, 28);
+    Vector2i const origin(64, 28);
 #else
-    Point2Raw const origin(70, 40);
+    Vector2i const origin(70, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("AutomapOptions", origin));
@@ -1578,11 +1576,11 @@ static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const 
 void Hu_MenuInitWeaponsPage()
 {
 #if __JDOOM__ || __JDOOM64__
-    Point2Raw const origin(78, 40);
+    Vector2i const origin(78, 40);
 #elif __JHERETIC__
-    Point2Raw const origin(78, 26);
+    Vector2i const origin(78, 26);
 #elif __JHEXEN__
-    Point2Raw const origin(78, 38);
+    Vector2i const origin(78, 38);
 #endif
 
     const struct {
@@ -1712,7 +1710,7 @@ void Hu_MenuInitWeaponsPage()
 #if __JHERETIC__ || __JHEXEN__
 void Hu_MenuInitInventoryOptionsPage()
 {
-    Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Point2Raw(78, 48)));
+    Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Vector2i(78, 48)));
     page->setTitle("Inventory Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -1764,11 +1762,11 @@ void Hu_MenuInitInventoryOptionsPage()
 void Hu_MenuInitSoundOptionsPage()
 {
 #if __JHEXEN__
-    Point2Raw const origin(97, 25);
+    Vector2i const origin(97, 25);
 #elif __JHERETIC__
-    Point2Raw const origin(97, 30);
+    Vector2i const origin(97, 30);
 #elif __JDOOM__ || __JDOOM64__
-    Point2Raw const origin(97, 40);
+    Vector2i const origin(97, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("SoundOptions", origin));
@@ -1791,11 +1789,11 @@ void Hu_MenuInitSoundOptionsPage()
 void Hu_MenuInitEpisodePage()
 {
 #if __JHEXEN__
-    Point2Raw const origin(120, 44);
+    Vector2i const origin(120, 44);
 #elif __JHERETIC__
-    Point2Raw const origin(80, 50);
+    Vector2i const origin(80, 50);
 #else
-    Point2Raw const origin(48, 63);
+    Vector2i const origin(48, 63);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("Episode", origin, MPF_LAYOUT_FIXED, Hu_MenuDrawEpisodePage));
@@ -1905,7 +1903,7 @@ void Hu_MenuInitPlayerClassPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Point2Raw(66, 66), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawPlayerClassPage));
+    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), MPF_LAYOUT_FIXED | MPF_NEVER_SCROLL, Hu_MenuDrawPlayerClassPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -2016,7 +2014,6 @@ void Hu_MenuInit()
     Hu_MenuLoadResources();
 
     initAllPages();
-    initAllObjectsOnAllPages();
 
 #if __JDOOM__
     if(gameModeBits & GM_ANY_DOOM2)
@@ -2154,14 +2151,12 @@ void Hu_MenuSetPage(Page *page, bool canReactivate)
     if(currentPage == page)
     {
         if(!canReactivate) return;
-        page->clearFocusWidget();
+        page->setFocus(0);
     }
-
-    page->updateWidgets();
 
     // This is now the "active" page.
     currentPage = page;
-    page->initialize();
+    page->activate();
 }
 
 bool Hu_MenuIsVisible()
@@ -2378,14 +2373,6 @@ static void destroyAllPages()
 {
     qDeleteAll(pages);
     pages.clear();
-}
-
-static void initAllObjectsOnAllPages()
-{
-    foreach(Page *page, pages)
-    {
-        page->initWidgets();
-    }
 }
 
 int Hu_MenuColorWidgetCmdResponder(Page *page, menucommand_e cmd)
@@ -2820,17 +2807,17 @@ void Hu_MenuActivateColorWidget(Widget *wi, Widget::mn_actionid_t action)
 
     ColorEditWidget &cbox = wi->as<ColorEditWidget>();
 
-    Page &colorWidgetPage       = Hu_MenuPage("ColorWidget");
+    Page &colorWidgetPage    = Hu_MenuPage("ColorWidget");
     ColorEditWidget &cboxMix = colorWidgetPage.findWidget(Widget::Id0).as<ColorEditWidget>();
-    SliderWidget &sldrRed       = colorWidgetPage.findWidget(Widget::Id1).as<SliderWidget>();
-    SliderWidget &sldrGreen     = colorWidgetPage.findWidget(Widget::Id2).as<SliderWidget>();
-    SliderWidget &sldrBlue      = colorWidgetPage.findWidget(Widget::Id3).as<SliderWidget>();
-    LabelWidget  &labelAlpha    = colorWidgetPage.findWidget(Widget::Id4).as<LabelWidget>();
-    SliderWidget &sldrAlpha     = colorWidgetPage.findWidget(Widget::Id5).as<SliderWidget>();
+    SliderWidget &sldrRed    = colorWidgetPage.findWidget(Widget::Id1).as<SliderWidget>();
+    SliderWidget &sldrGreen  = colorWidgetPage.findWidget(Widget::Id2).as<SliderWidget>();
+    SliderWidget &sldrBlue   = colorWidgetPage.findWidget(Widget::Id3).as<SliderWidget>();
+    LabelWidget  &labelAlpha = colorWidgetPage.findWidget(Widget::Id4).as<LabelWidget>();
+    SliderWidget &sldrAlpha  = colorWidgetPage.findWidget(Widget::Id5).as<SliderWidget>();
 
     colorWidgetActive = true;
 
-    colorWidgetPage.initialize();
+    colorWidgetPage.activate();
     colorWidgetPage.setUserValue(qVariantFromValue((void *)wi)); // Ugly or what...
 
     cboxMix.setColor(cbox.color(), 0);

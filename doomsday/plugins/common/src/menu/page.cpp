@@ -50,7 +50,7 @@ DENG2_PIMPL(Page)
     Widgets widgets;
 
     /// "Physical" geometry in fixed 320x200 screen coordinate space.
-    Point2Raw origin;
+    Vector2i origin;
     Rect *geometry = Rect_New();
 
     String title;              ///< Title of this page.
@@ -100,6 +100,115 @@ DENG2_PIMPL(Page)
         }
     }
 
+    void applyLayout()
+    {
+        Rect_SetXY(geometry, 0, 0);
+        Rect_SetWidthHeight(geometry, 0, 0);
+
+        // Apply layout logic to this page.
+
+        if(flags & MPF_LAYOUT_FIXED)
+        {
+            // This page uses a fixed layout.
+            for(Widget *wi : widgets)
+            {
+                if(wi->isHidden()) continue;
+
+                Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
+                Rect_Unite(geometry, wi->geometry());
+            }
+            return;
+        }
+
+        // This page uses a dynamic layout.
+        int lineOffset;
+        int lh = self.lineHeight(&lineOffset);
+
+        Vector2i origin;
+
+        for(int i = 0; i < widgets.count(); )
+        {
+            Widget *wi = widgets[i];
+            Widget *nextWi = i + 1 < widgets.count()? widgets[i + 1] : 0;
+
+            if(wi->isHidden())
+            {
+                // Proceed to the next widget!
+                i += 1;
+                continue;
+            }
+
+            // If the widget has a fixed position, we will ignore it while doing
+            // dynamic layout.
+            if(wi->flags() & Widget::PositionFixed)
+            {
+                Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
+                Rect_Unite(geometry, wi->geometry());
+
+                // To the next object.
+                i += 1;
+                continue;
+            }
+
+            // An additional offset requested?
+            if(wi->flags() & Widget::LayoutOffset)
+            {
+                origin.x += wi->fixedOrigin()->x;
+                origin.y += wi->fixedOrigin()->y;
+            }
+
+            Rect_SetXY(wi->geometry(), origin.x, origin.y);
+
+            // Orient label plus button/inline-list/textual-slider pairs about a
+            // vertical dividing line, with the label on the left, other widget
+            // on the right.
+            // @todo Do not assume pairing, a widget should designate it's label.
+            if(wi->is<LabelWidget>() && nextWi)
+            {
+                if(!nextWi->isHidden() &&
+                   (nextWi->is<ButtonWidget>()         ||
+                    nextWi->is<InlineListWidget>()     ||
+                    nextWi->is<ColorEditWidget>()      ||
+                    nextWi->is<InputBindingWidget>()   ||
+                    nextWi->is<CVarTextualSliderWidget>()))
+                {
+                    int const margin = lineOffset * 2;
+
+                    Rect_SetXY(nextWi->geometry(), margin + Rect_Width(wi->geometry()), origin.y);
+
+                    RectRaw united;
+                    origin.y += Rect_United(wi->geometry(), nextWi->geometry(), &united)
+                              ->size.height + lineOffset;
+
+                    Rect_UniteRaw(geometry, &united);
+
+                    // Extra spacing between object groups.
+                    if(i + 2 < widgets.count() && nextWi->group() != widgets[i + 2]->group())
+                    {
+                        origin.y += lh;
+                    }
+
+                    // Proceed to the next object!
+                    i += 2;
+                    continue;
+                }
+            }
+
+            Rect_Unite(geometry, wi->geometry());
+
+            origin.y += Rect_Height(wi->geometry()) + lineOffset;
+
+            // Extra spacing between object groups.
+            if(nextWi && nextWi->group() != wi->group())
+            {
+                origin.y += lh;
+            }
+
+            // Proceed to the next object!
+            i += 1;
+        }
+    }
+
     /// @pre @a wi is a child of this page.
     void giveChildFocus(Widget *wi, bool allowRefocus = false)
     {
@@ -130,6 +239,95 @@ DENG2_PIMPL(Page)
         }
     }
 
+    void refocus()
+    {
+        LOG_AS("Page");
+
+        // If we haven't yet visited this page then find the first focusable
+        // widget and select it.
+        if(focus < 0)
+        {
+            int i, giveFocus = -1;
+
+            // First look for a default focus widget. There should only be one
+            // but find the last with this flag...
+            for(i = 0; i < widgets.count(); ++i)
+            {
+                Widget *wi = widgets[i];
+                if((wi->flags() & Widget::DefaultFocus) && !(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
+                {
+                    giveFocus = i;
+                }
+            }
+
+            // No default focus? Find the first focusable widget.
+            if(-1 == giveFocus)
+            for(i = 0; i < widgets.count(); ++i)
+            {
+                Widget *wi = widgets[i];
+                if(!(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
+                {
+                    giveFocus = i;
+                    break;
+                }
+            }
+
+            if(-1 != giveFocus)
+            {
+                giveChildFocus(widgets[giveFocus]);
+            }
+            else
+            {
+                LOGDEV_WARNING("No focusable widget");
+            }
+        }
+        else
+        {
+            // We've been here before; re-focus on the last focused object.
+            giveChildFocus(widgets[focus], true);
+        }
+    }
+
+    void fetch()
+    {
+        for(Widget *wi : widgets)
+        {
+            if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
+            {
+                int value = Con_GetByte(tog->cvarPath()) & (tog->cvarValueMask()? tog->cvarValueMask() : ~0);
+                tog->setState(value? CVarToggleWidget::Down : CVarToggleWidget::Up);
+                tog->setText(tog->isDown()? tog->downText() : tog->upText());
+            }
+            if(CVarInlineListWidget *list = wi->maybeAs<CVarInlineListWidget>())
+            {
+                int itemValue = Con_GetInteger(list->cvarPath());
+                if(int valueMask = list->cvarValueMask())
+                    itemValue &= valueMask;
+                list->selectItemByValue(itemValue);
+            }
+            if(CVarLineEditWidget *edit = wi->maybeAs<CVarLineEditWidget>())
+            {
+                edit->setText(Con_GetString(edit->cvarPath()));
+            }
+            if(CVarSliderWidget *sldr = wi->maybeAs<CVarSliderWidget>())
+            {
+                float value;
+                if(sldr->floatMode())
+                    value = Con_GetFloat(sldr->cvarPath());
+                else
+                    value = Con_GetInteger(sldr->cvarPath());
+                sldr->setValue(value);
+            }
+            if(CVarColorEditWidget *cbox = wi->maybeAs<CVarColorEditWidget>())
+            {
+                cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
+                                        Con_GetFloat(cbox->greenCVarPath()),
+                                        Con_GetFloat(cbox->blueCVarPath()),
+                                        (cbox->rgbaMode()? Con_GetFloat(cbox->alphaCVarPath()) : 1.f)));
+            }
+        }
+    }
+
     /**
      * Determines the size of the menu cursor for a focused widget. If no widget is currently
      * focused the default cursor size (i.e., the effective line height for @c MENU_FONT1)
@@ -150,11 +348,11 @@ DENG2_PIMPL(Page)
     }
 };
 
-Page::Page(String name, Point2Raw const &origin, int flags,
+Page::Page(String name, Vector2i const &origin, int flags,
     OnDrawCallback drawer, CommandResponder cmdResponder)
     : d(new Instance(this))
 {
-    std::memcpy(&d->origin, &origin, sizeof(d->origin));
+    d->origin       = origin;
     d->name         = name;
     d->flags        = flags;
     d->drawer       = drawer;
@@ -173,7 +371,8 @@ Widget &Page::addWidget(Widget *widget)
 {
     DENG2_ASSERT(widget != 0);
     d->widgets << widget;
-    widget->setPage(this);
+    widget->setPage(this)
+           .setFlags(Widget::Focused, UnsetFlags); // Not focused initially.
     return *widget;
 }
 
@@ -200,121 +399,6 @@ int Page::lineHeight(int *lineOffset)
     return lh;
 }
 
-static inline bool widgetIsDrawable(Widget *wi)
-{
-    DENG2_ASSERT(wi);
-    return !(wi->flags() & Widget::Hidden);
-}
-
-void Page::applyLayout()
-{
-    Rect_SetXY(d->geometry, 0, 0);
-    Rect_SetWidthHeight(d->geometry, 0, 0);
-
-    // Apply layout logic to this page.
-
-    if(d->flags & MPF_LAYOUT_FIXED)
-    {
-        // This page uses a fixed layout.
-        for(Widget *wi : d->widgets)
-        {
-            if(!widgetIsDrawable(wi)) continue;
-
-            Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
-            Rect_Unite(d->geometry, wi->geometry());
-        }
-        return;
-    }
-
-    // This page uses a dynamic layout.
-    int lineOffset;
-    int lh = lineHeight(&lineOffset);
-
-    Point2Raw origin;
-
-    for(int i = 0; i < d->widgets.count(); )
-    {
-        Widget *wi = d->widgets[i];
-        Widget *nextWi = i + 1 < d->widgets.count()? d->widgets[i + 1] : 0;
-
-        if(!widgetIsDrawable(wi))
-        {
-            // Proceed to the next widget!
-            i += 1;
-            continue;
-        }
-
-        // If the widget has a fixed position, we will ignore it while doing
-        // dynamic layout.
-        if(wi->flags() & Widget::PositionFixed)
-        {
-            Rect_SetXY(wi->geometry(), wi->fixedOrigin()->x, wi->fixedOrigin()->y);
-            Rect_Unite(d->geometry, wi->geometry());
-
-            // To the next object.
-            i += 1;
-            continue;
-        }
-
-        // An additional offset requested?
-        if(wi->flags() & Widget::LayoutOffset)
-        {
-            origin.x += wi->fixedOrigin()->x;
-            origin.y += wi->fixedOrigin()->y;
-        }
-
-        Rect_SetXY(wi->geometry(), origin.x, origin.y);
-
-        // Orient label plus button/inline-list/textual-slider pairs about a
-        // vertical dividing line, with the label on the left, other widget
-        // on the right.
-        // @todo Do not assume pairing, a widget should designate it's label.
-        if(wi->is<LabelWidget>() && nextWi)
-        {
-            if(widgetIsDrawable(nextWi) &&
-               (nextWi->is<ButtonWidget>()         ||
-                nextWi->is<InlineListWidget>()     ||
-                nextWi->is<ColorEditWidget>()   ||
-                nextWi->is<InputBindingWidget>()   ||
-                nextWi->is<CVarTextualSliderWidget>()))
-            {
-                int const margin = lineOffset * 2;
-
-                Rect_SetXY(nextWi->geometry(), margin + Rect_Width(wi->geometry()), origin.y);
-
-                RectRaw united;
-                origin.y += Rect_United(wi->geometry(), nextWi->geometry(), &united)
-                          ->size.height + lineOffset;
-
-                Rect_UniteRaw(d->geometry, &united);
-
-                // Extra spacing between object groups.
-                if(i + 2 < d->widgets.count() && nextWi->group() != d->widgets[i + 2]->group())
-                {
-                    origin.y += lh;
-                }
-
-                // Proceed to the next object!
-                i += 2;
-                continue;
-            }
-        }
-
-        Rect_Unite(d->geometry, wi->geometry());
-
-        origin.y += Rect_Height(wi->geometry()) + lineOffset;
-
-        // Extra spacing between object groups.
-        if(nextWi && nextWi->group() != wi->group())
-        {
-            origin.y += lh;
-        }
-
-        // Proceed to the next object!
-        i += 1;
-    }
-}
-
 void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
 {
     d->onActiveCallback = newCallback;
@@ -330,7 +414,7 @@ static void composeSubpageString(Page *page, char *buf, size_t bufSize)
 }
 #endif
 
-static void drawPageNavigation(Page *page, int x, int y)
+static void drawPageNavigation(Page *page, Vector2i const origin)
 {
     int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
     int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
@@ -350,15 +434,15 @@ static void drawPageNavigation(Page *page, int x, int y)
     FR_SetColorv(cfg.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(buf, x, y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(buf, origin.x, origin.y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], x - 144, y, ALIGN_RIGHT);
-    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], x + 144, y, ALIGN_LEFT);
+    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], origin.x - 144, origin.y, ALIGN_RIGHT);
+    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin.x + 144, origin.y, ALIGN_LEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -369,7 +453,7 @@ static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
     if(!page) return;
     if(page->title().isEmpty()) return;
 
-    Point2Raw origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
     if(offset)
     {
         origin.x += offset->x;
@@ -378,7 +462,7 @@ static void drawPageHeading(Page *page, Point2Raw const *offset = nullptr)
 
     FR_PushAttrib();
     Hu_MenuDrawPageTitle(page->title(), origin.x, origin.y); origin.y += 16;
-    drawPageNavigation(page, origin.x, origin.y);
+    drawPageNavigation(page, origin);
     FR_PopAttrib();
 }
 
@@ -436,11 +520,11 @@ void Page::draw(float alpha, bool showFocusCursor)
 
     // We can now layout the widgets of this page.
     /// @todo Do not modify the page layout here.
-    applyLayout();
+    d->applyLayout();
 
     // Determine the origin of the focus object (this dictates the page scroll location).
     Widget *focused = focusWidget();
-    if(focused && !widgetIsDrawable(focused))
+    if(focused && focused->isHidden())
     {
         focused = 0;
     }
@@ -534,7 +618,8 @@ void Page::draw(float alpha, bool showFocusCursor)
     if(d->drawer)
     {
         FR_PushAttrib();
-        d->drawer(this, &d->origin);
+        Point2Raw offset(d->origin.x, d->origin.y);
+        d->drawer(this, &offset);
         FR_PopAttrib();
     }
 
@@ -554,6 +639,16 @@ void Page::setTitle(String const &newTitle)
 String Page::title() const
 {
     return d->title;
+}
+
+void Page::setOrigin(Vector2i const &newOrigin)
+{
+    d->origin = newOrigin;
+}
+
+Vector2i Page::origin() const
+{
+    return d->origin;
 }
 
 void Page::setX(int x)
@@ -582,24 +677,6 @@ Widget *Page::focusWidget()
     return d->widgets[d->focus];
 }
 
-void Page::clearFocusWidget()
-{
-    if(d->focus >= 0)
-    {
-        Widget *wi = d->widgets[d->focus];
-        if(wi->flags() & Widget::Active)
-        {
-            return;
-        }
-    }
-    d->focus = -1;
-    for(Widget *wi : d->widgets)
-    {
-        wi->setFlags(Widget::Focused, UnsetFlags);
-    }
-    refocus();
-}
-
 Widget &Page::findWidget(int flags, int group)
 {
     if(Widget *wi = tryFindWidget(flags, group))
@@ -619,9 +696,26 @@ Widget *Page::tryFindWidget(int flags, int group)
     return 0; // Not found.
 }
 
-void Page::setFocus(Widget *wi)
+void Page::setFocus(Widget *newFocus)
 {
-    int index = indexOf(wi);
+    // Are we clearing focus?
+    if(!newFocus)
+    {
+        if(Widget *focused = focusWidget())
+        {
+            if(focused->isActive()) return;
+        }
+
+        d->focus = -1;
+        for(Widget *wi : d->widgets)
+        {
+            wi->setFlags(Widget::Focused, UnsetFlags);
+        }
+        d->refocus();
+        return;
+    }
+
+    int index = indexOf(newFocus);
     if(index < 0)
     {
         DENG2_ASSERT(!"Page::Focus: Failed to determine index-in-page for widget.");
@@ -630,57 +724,10 @@ void Page::setFocus(Widget *wi)
     d->giveChildFocus(d->widgets[index]);
 }
 
-void Page::refocus()
+void Page::activate()
 {
-    LOG_AS("Page");
+    d->fetch();
 
-    // If we haven't yet visited this page then find the first focusable
-    // widget and select it.
-    if(0 > d->focus)
-    {
-        int i, giveFocus = -1;
-
-        // First look for a default focus widget. There should only be one
-        // but find the last with this flag...
-        for(i = 0; i < d->widgets.count(); ++i)
-        {
-            Widget *wi = d->widgets[i];
-            if((wi->flags() & Widget::DefaultFocus) && !(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
-            {
-                giveFocus = i;
-            }
-        }
-
-        // No default focus? Find the first focusable widget.
-        if(-1 == giveFocus)
-        for(i = 0; i < d->widgets.count(); ++i)
-        {
-            Widget *wi = d->widgets[i];
-            if(!(wi->isDisabled() || (wi->flags() & Widget::NoFocus)))
-            {
-                giveFocus = i;
-                break;
-            }
-        }
-
-        if(-1 != giveFocus)
-        {
-            d->giveChildFocus(d->widgets[giveFocus]);
-        }
-        else
-        {
-            LOGDEV_WARNING("No focusable widget");
-        }
-    }
-    else
-    {
-        // We've been here before; re-focus on the last focused object.
-        d->giveChildFocus(d->widgets[d->focus], true);
-    }
-}
-
-void Page::initialize()
-{
     // Reset page timer.
     d->timer = 0;
 
@@ -704,64 +751,11 @@ void Page::initialize()
         return;
     }
 
-    refocus();
+    d->refocus();
 
     if(d->onActiveCallback)
     {
         d->onActiveCallback(this);
-    }
-}
-
-void Page::initWidgets()
-{
-    for(Widget *wi : d->widgets)
-    {
-        wi->setFlags(Widget::Focused, UnsetFlags);
-    }
-}
-
-/// Main task is to update objects linked to cvars.
-void Page::updateWidgets()
-{
-    for(Widget *wi : d->widgets)
-    {
-        if(wi->is<LabelWidget>() || wi->is<MobjPreviewWidget>())
-        {
-            wi->setFlags(Widget::NoFocus);
-        }
-        if(CVarToggleWidget *tog = wi->maybeAs<CVarToggleWidget>())
-        {
-            int value = Con_GetByte(tog->cvarPath()) & (tog->cvarValueMask()? tog->cvarValueMask() : ~0);
-            tog->setState(value? CVarToggleWidget::Down : CVarToggleWidget::Up);
-            tog->setText(tog->isDown()? tog->downText() : tog->upText());
-        }
-        if(CVarInlineListWidget *list = wi->maybeAs<CVarInlineListWidget>())
-        {
-            int itemValue = Con_GetInteger(list->cvarPath());
-            if(int valueMask = list->cvarValueMask())
-                itemValue &= valueMask;
-            list->selectItemByValue(itemValue);
-        }
-        if(CVarLineEditWidget *edit = wi->maybeAs<CVarLineEditWidget>())
-        {
-            edit->setText(Con_GetString(edit->cvarPath()));
-        }
-        if(CVarSliderWidget *sldr = wi->maybeAs<CVarSliderWidget>())
-        {
-            float value;
-            if(sldr->floatMode())
-                value = Con_GetFloat(sldr->cvarPath());
-            else
-                value = Con_GetInteger(sldr->cvarPath());
-            sldr->setValue(value);
-        }
-        if(CVarColorEditWidget *cbox = wi->maybeAs<CVarColorEditWidget>())
-        {
-            cbox->setColor(Vector4f(Con_GetFloat(cbox->redCVarPath()),
-                                    Con_GetFloat(cbox->greenCVarPath()),
-                                    Con_GetFloat(cbox->blueCVarPath()),
-                                    (cbox->rgbaMode()? Con_GetFloat(cbox->alphaCVarPath()) : 1.f)));
-        }
     }
 }
 

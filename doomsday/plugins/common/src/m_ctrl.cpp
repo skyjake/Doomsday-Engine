@@ -225,13 +225,6 @@ void Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action
 
 void Hu_MenuInitControlsPage()
 {
-#if __JDOOM__ || __JDOOM64__
-    Point2Raw const pageOrigin(32, 40);
-#elif __JHERETIC__
-    Point2Raw const pageOrigin(32, 40);
-#elif __JHEXEN__
-    Point2Raw const pageOrigin(32, 40);
-#endif
     int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
 
     LOGDEV_VERBOSE("Hu_MenuInitControlsPage: Creating controls items");
@@ -252,7 +245,7 @@ void Hu_MenuInitControlsPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("ControlOptions", pageOrigin, 0, Hu_MenuDrawControlsPage));
+    Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));

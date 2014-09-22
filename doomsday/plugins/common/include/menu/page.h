@@ -74,7 +74,7 @@ public:
      * @param drawer
      * @param cmdResponder
      */
-    Page(de::String name, Point2Raw const &origin = Point2Raw(), int flags = 0,
+    Page(de::String name, de::Vector2i const &origin = de::Vector2i(), int flags = 0,
          OnDrawCallback drawer = 0,
          CommandResponder cmdResponder = 0);
 
@@ -84,6 +84,18 @@ public:
      * Returns the symbolic name/identifier of the page.
      */
     de::String name() const;
+
+    void setTitle(de::String const &newTitle);
+    de::String title() const;
+
+    void setOrigin(de::Vector2i const &newOrigin);
+    de::Vector2i origin() const;
+
+    void setX(int x);
+    void setY(int y);
+
+    void setPreviousPage(Page *newPreviousPage);
+    Page *previousPage() const;
 
     /**
      * Adds a widget object as a child widget of the Page and sets up the Widget -> Page
@@ -111,25 +123,6 @@ public:
     Widget &addWidget(Widget *widget);
 
     /**
-     * Provides access to the list of child widgets of the Page, for efficient traversal.
-     */
-    Widgets const &widgets() const;
-
-    /**
-     * Returns the total number of child widgets of the Page.
-     */
-    inline int widgetCount() const { return widgets().count(); }
-
-    void setTitle(de::String const &newTitle);
-    de::String title() const;
-
-    void setX(int x);
-    void setY(int y);
-
-    void setPreviousPage(Page *newPreviousPage);
-    Page *previousPage() const;
-
-    /**
      * Locate a widget on the page in the specified @a group.
      *
      * @param flags  @ref mnobjectFlags used to locate the widget. All flags specified
@@ -143,6 +136,16 @@ public:
     Widget *tryFindWidget(int flags, int group = 0);
 
     /**
+     * Provides access to the list of child widgets of the Page, for efficient traversal.
+     */
+    Widgets const &widgets() const;
+
+    /**
+     * Returns the total number of child widgets of the Page.
+     */
+    inline int widgetCount() const { return widgets().count(); }
+
+    /**
      * Returns the in-page index of the given @a widget; otherwise @c -1
      */
     inline int indexOf(Widget *widget) {
@@ -150,13 +153,12 @@ public:
     }
 
     /**
-     * Attempt to give focus to the given widget which is thought to be on the page.
-     * If @a newFocusWidget is present and is not currently in-focus, an out-focus
-     * action is first sent to the presently focused widget, then this page's focused
-     * widget is set before finally executing an in-focus action on the new widget.
-     * If the widget is not found on this page then nothing will happen.
+     * Attempt to give focus to the widget specified. If @a newFocusWidget is not @c nullptr,
+     * is present and is not currently in-focus, an out-focus action is first sent to the
+     * presently focused widget, then this page's focused widget is set before finally
+     * triggering an in-focus action on the new widget.
      *
-     * @param newFocusWidget  Widget to be given focus.
+     * @param newFocusWidget  Widget to be given focus. Use @c nullptr to clear.
      */
     void setFocus(Widget *newFocusWidget);
 
@@ -164,9 +166,6 @@ public:
      * Returns a pointer to the currently focused widget, if any (may be @c nullptr).
      */
     Widget *focusWidget();
-
-    void clearFocusWidget();
-    void refocus();
 
     /**
      * Returns the current time in tics since last page activation.
@@ -216,11 +215,7 @@ public:
      */
     int lineHeight(int *lineOffset = 0);
 
-    void initialize();
-    void initWidgets();
-    void updateWidgets();
-
-    void applyLayout();
+    void activate();
 
     int handleCommand(menucommand_e cmd);
 
