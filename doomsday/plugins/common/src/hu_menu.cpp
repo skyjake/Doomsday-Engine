@@ -2502,13 +2502,14 @@ void Hu_MenuCommand(menucommand_e cmd)
 
 int Hu_MenuPrivilegedResponder(event_t *ev)
 {
+    DENG2_ASSERT(ev);
     if(Hu_MenuIsActive())
     {
         if(Widget *focused = Hu_MenuPage().focusWidget())
         {
             if(!focused->isDisabled())
             {
-                return focused->handleEvent_Privileged(ev);
+                return focused->handleEvent_Privileged(*ev);
             }
         }
     }
@@ -2517,13 +2518,14 @@ int Hu_MenuPrivilegedResponder(event_t *ev)
 
 int Hu_MenuResponder(event_t *ev)
 {
+    DENG2_ASSERT(ev);
     if(Hu_MenuIsActive())
     {
         if(Widget *focused = Hu_MenuPage().focusWidget())
         {
             if(!focused->isDisabled())
             {
-                return focused->handleEvent(ev);
+                return focused->handleEvent(*ev);
             }
         }
     }
@@ -2532,6 +2534,7 @@ int Hu_MenuResponder(event_t *ev)
 
 int Hu_MenuFallbackResponder(event_t *ev)
 {
+    DENG2_ASSERT(ev);
     Page *page = Hu_MenuPagePtr();
 
     if(!Hu_MenuIsActive() || !page) return false;

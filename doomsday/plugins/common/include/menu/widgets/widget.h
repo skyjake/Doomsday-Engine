@@ -87,8 +87,9 @@ public:
         FocusGained   ///< Gains selection "focus".
     };
 
-    typedef void (*ActionCallback) (Widget &, Action);
-    typedef void (*OnTickCallback) (Widget &);
+    typedef void (*ActionCallback)  (Widget &, Action);
+    typedef void (*OnTickCallback)  (Widget &);
+
     typedef int (*CommandResponder) (Widget &, menucommand_e);
 
 public:
@@ -104,11 +105,11 @@ public:
 
     /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
-    virtual int handleEvent(event_t *ev);
+    virtual int handleEvent(event_t const &ev);
 
     /// Respond to the given (input) event @a ev.
     /// @return  @c true if the event is eaten.
-    virtual int handleEvent_Privileged(event_t *ev);
+    virtual int handleEvent_Privileged(event_t const &ev);
 
     /// Respond to the given menu @a command.
     /// @return  @c true if the command was eaten.

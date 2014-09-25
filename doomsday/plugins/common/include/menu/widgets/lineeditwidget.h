@@ -68,7 +68,7 @@ public:
 
     void draw() const;
     void updateGeometry();
-    int handleEvent(event_t *ev);
+    int handleEvent(event_t const &ev);
     int handleCommand(menucommand_e command);
 
     LineEditWidget &setMaxLength(int newMaxLength);

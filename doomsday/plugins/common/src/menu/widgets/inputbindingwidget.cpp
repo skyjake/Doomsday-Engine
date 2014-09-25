@@ -315,24 +315,22 @@ void InputBindingWidget::updateGeometry()
     geometry().setSize(Vector2ui(60, 10 * SMALL_SCALE));
 }
 
-int InputBindingWidget::handleEvent_Privileged(event_t *ev)
+int InputBindingWidget::handleEvent_Privileged(event_t const &ev)
 {
-    DENG2_ASSERT(ev != 0);
-
     // We're interested in key or button down events.
-    if(isActive() && ev->type == EV_SYMBOLIC)
+    if(isActive() && ev.type == EV_SYMBOLIC)
     {
         char const *bindContext = "game";
         char const *symbol = 0;
         char cmd[512];
 
 #ifndef __64BIT__
-        symbol = (char const *) ev->data1;
+        symbol = (char const *) ev.data1;
 #else
         {
-            uint64_t address = (uint32_t) ev->data2;
+            uint64_t address = (uint32_t) ev.data2;
             address <<= 32;
-            address |= (uint32_t) ev->data1;
+            address |= (uint32_t) ev.data1;
             symbol = (char const *) address;
         }
 #endif

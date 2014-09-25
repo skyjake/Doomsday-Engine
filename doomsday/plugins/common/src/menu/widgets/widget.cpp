@@ -60,12 +60,12 @@ Widget::Widget() : d(new Instance)
 Widget::~Widget()
 {}
 
-int Widget::handleEvent(event_t * /*ev*/)
+int Widget::handleEvent(event_t const &)
 {
     return 0; // Not handled.
 }
 
-int Widget::handleEvent_Privileged(event_t * /*ev*/)
+int Widget::handleEvent_Privileged(event_t const &)
 {
     return 0; // Not handled.
 }

@@ -212,23 +212,21 @@ String LineEditWidget::emptyText() const
 /**
  * Responds to alphanumeric input for edit fields.
  */
-int LineEditWidget::handleEvent(event_t *ev)
+int LineEditWidget::handleEvent(event_t const &ev)
 {
-    DENG2_ASSERT(ev != 0);
-
-    if(!isActive() || ev->type != EV_KEY)
+    if(!isActive() || ev.type != EV_KEY)
         return false;
 
-    if(DDKEY_RSHIFT == ev->data1)
+    if(ev.data1 == DDKEY_RSHIFT)
     {
-        shiftdown = (EVS_DOWN == ev->state || EVS_REPEAT == ev->state);
+        shiftdown = (ev.state == EVS_DOWN || ev.state == EVS_REPEAT);
         return true;
     }
 
-    if(!(EVS_DOWN == ev->state || EVS_REPEAT == ev->state))
+    if(!(ev.state == EVS_DOWN || ev.state == EVS_REPEAT))
         return false;
 
-    if(DDKEY_BACKSPACE == ev->data1)
+    if(ev.data1 == DDKEY_BACKSPACE)
     {
         if(!d->text.isEmpty())
         {
@@ -238,9 +236,9 @@ int LineEditWidget::handleEvent(event_t *ev)
         return true;
     }
 
-    if(ev->data1 >= ' ' && ev->data1 <= 'z')
+    if(ev.data1 >= ' ' && ev.data1 <= 'z')
     {
-        char ch = char(ev->data1);
+        char ch = char(ev.data1);
         if(shiftdown)
         {
             ch = shiftXForm[ch];

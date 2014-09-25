@@ -44,7 +44,7 @@ public:
 
     void draw() const;
     void updateGeometry();
-    int handleEvent_Privileged(event_t *ev);
+    int handleEvent_Privileged(event_t const &ev);
     int handleCommand(menucommand_e command);
 
     char const *controlName();
