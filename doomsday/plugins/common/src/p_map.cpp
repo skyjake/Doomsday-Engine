@@ -159,13 +159,23 @@ static int PIT_StompThing(mobj_t *mo, void *context)
     // ...or non-shootables.
     if(!(mo->flags & MF_SHOOTABLE)) return false;
 
+    // Out of range?
+    coord_t const dist = mo->radius + parm.stompMobj->radius;
+    if(fabs(mo->origin[VX] - parm.location[VX]) >= dist ||
+       fabs(mo->origin[VY] - parm.location[VY]) >= dist)
+    {
+        return false;
+    }
+
     if(!parm.alwaysStomp)
     {
         // Is "this" mobj allowed to stomp?
-        if(!(parm.stompMobj->flags2 & MF2_TELESTOMP)) return true;
+        if(!(parm.stompMobj->flags2 & MF2_TELESTOMP))
+            return true;
 #if __JDOOM64__
         // Monsters don't stomp.
-        if(!Mobj_IsPlayer(parm.stompMobj)) return true;
+        if(!Mobj_IsPlayer(parm.stompMobj))
+            return true;
 #elif __JDOOM__
         // Monsters only stomp on a boss map.
         if(!Mobj_IsPlayer(parm.stompMobj) && G_CurrentMapNumber() != 29)
@@ -173,14 +183,8 @@ static int PIT_StompThing(mobj_t *mo, void *context)
 #endif
     }
 
-    // Within stomping distance?
-    coord_t const dist = mo->radius + parm.stompMobj->radius;
-    if(fabs(mo->origin[VX] - parm.location[VX]) < dist &&
-       fabs(mo->origin[VY] - parm.location[VY]) < dist)
-    {
-        // Stomp!
-        P_DamageMobj(mo, parm.stompMobj, parm.stompMobj, 10000, true);
-    }
+    // Stomp!
+    P_DamageMobj(mo, parm.stompMobj, parm.stompMobj, 10000, true);
 
     return false; // Continue iteration.
 }
