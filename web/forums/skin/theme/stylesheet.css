@@ -328,12 +328,16 @@ li.pagination {
     font-size: 1em;
 }
 
-.reported {
+/*.reported {
     background-color: #f7f7f7;
 }
 
 li.reported:hover {
     background-color: #ececec;
+}*/
+
+li.forumrow.reported {
+    border-color: #F00;
 }
 
 div.rules span.heading h1 {
@@ -342,10 +346,10 @@ div.rules span.heading h1 {
     margin-bottom: .4em;
 }
 
-p.rules {
+/*p.rules {
     background-color: #ececec;
     padding: 5px;
-}
+}*/
 
 /* Coloured usernames */
 .username-coloured {
@@ -1953,9 +1957,11 @@ dl.details dd { color: #68696D; }
 
 .error { color: #BC2A4D; }
 
+/*
 .reported { background-color: #F7ECEF; }
 
 li.reported:hover { background-color: #ECD5D8 !important; }
+*/
 
 /* Back to top of page */
 a.top { background-image: url("{IMG_ICON_BACK_TOP_SRC}"); }
