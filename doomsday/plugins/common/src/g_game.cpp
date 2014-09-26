@@ -1097,7 +1097,8 @@ static void printMapBanner(String episodeId, de::Uri const &mapUri)
     String const episodeTitle = G_EpisodeTitle(episodeId);
     if(!episodeTitle.isEmpty())
     {
-        LOG_NOTE("Episode: " DE2_ESC(i)) << episodeTitle;
+        LOG_NOTE("Episode: " DE2_ESC(i) "%s (id: %s)")
+                << episodeTitle << episodeId;
     }
 
     LOG_MSG(DE2_ESC(R));
