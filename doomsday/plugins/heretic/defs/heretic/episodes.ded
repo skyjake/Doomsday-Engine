@@ -13,51 +13,60 @@ Episode {
     Id = "E1M1";
     Exit { Id = "next";   Target Map = "E1M2"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 1;
   }
   
   Map {
     Id = "E1M2";
     Exit { Id = "next";   Target Map = "E1M3"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 2;
   }
   
   Map {
     Id = "E1M3";
     Exit { Id = "next";   Target Map = "E1M4"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 3;
   }
 
   Map {
     Id = "E1M4";
     Exit { Id = "next";   Target Map = "E1M5"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 4;
   }
 
   Map {
     Id = "E1M5";
     Exit { Id = "next";   Target Map = "E1M6"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 5;
   }
   
   Map {
     Id = "E1M6";
     Exit { Id = "next";   Target Map = "E1M7"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 6;
   }
   
   Map {
     Id = "E1M7";
     Exit { Id = "next";   Target Map = "E1M8"; }
     Exit { Id = "secret"; Target Map = "E1M9"; }
+    Warp Number = 7;
   }
   
   Map {
     Id = "E1M8";
+    Warp Number = 8;
   }
   
   Map {
     Id = "E1M9";
     Exit { Id = "next";   Target Map = "E1M7"; }
+    Warp Number = 9;
   }
 }
 
@@ -71,51 +80,60 @@ Episode {
     Id = "E2M1";
     Exit { Id = "next";   Target Map = "E2M2"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 1;
   }
 
   Map {
     Id = "E2M2";
     Exit { Id = "next";   Target Map = "E2M3"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 2;
   }
 
   Map {
     Id = "E2M3";
     Exit { Id = "next";   Target Map = "E2M4"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 3;
   }
 
   Map {
     Id = "E2M4";
     Exit { Id = "next";   Target Map = "E2M5"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 4;
   }
 
   Map {
     Id = "E2M5";
     Exit { Id = "next";   Target Map = "E2M6"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 5;
   }
 
   Map {
     Id = "E2M6";
     Exit { Id = "next";   Target Map = "E2M7"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 6;
   }
 
   Map {
     Id = "E2M7";
     Exit { Id = "next";   Target Map = "E2M8"; }
     Exit { Id = "secret"; Target Map = "E2M9"; }
+    Warp Number = 7;
   }
 
   Map {
     Id = "E2M8";
+    Warp Number = 8;
   }
 
   Map {
     Id = "E2M9";
     Exit { Id = "next";   Target Map = "E2M5"; }
+    Warp Number = 9;
   }
 }
 
@@ -129,51 +147,60 @@ Episode {
     Id = "E3M1";
     Exit { Id = "next";   Target Map = "E3M2"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 1;
   }
 
   Map {
     Id = "E3M2";
     Exit { Id = "next";   Target Map = "E3M3"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 2;
   }
 
   Map {
     Id = "E3M3";
     Exit { Id = "next";   Target Map = "E3M4"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 3;
   }
 
   Map {
     Id = "E3M4";
     Exit { Id = "next";   Target Map = "E3M5"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 4;
   }
 
   Map {
     Id = "E3M5";
     Exit { Id = "next";   Target Map = "E3M6"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 5;
   }
 
   Map {
     Id = "E3M6";
     Exit { Id = "next";   Target Map = "E3M7"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 6;
   }
 
   Map {
     Id = "E3M7";
     Exit { Id = "next";   Target Map = "E3M8"; }
     Exit { Id = "secret"; Target Map = "E3M9"; }
+    Warp Number = 7;
   }
 
   Map {
     Id = "E3M8";
+    Warp Number = 8;
   }
 
   Map {
     Id = "E3M9";
     Exit { Id = "next";   Target Map = "E3M5"; }
+    Warp Number = 9;
   }
 }
 
@@ -190,51 +217,60 @@ Episode {
     Id = "E4M1";
     Exit { Id = "next";   Target Map = "E4M2"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 1;
   }
 
   Map {
     Id = "E4M2";
     Exit { Id = "next";   Target Map = "E4M3"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 2;
   }
 
   Map {
     Id = "E4M3";
     Exit { Id = "next";   Target Map = "E4M4"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 3;
   }
 
   Map {
     Id = "E4M4";
     Exit { Id = "next";   Target Map = "E4M5"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 4;
   }
 
   Map {
     Id = "E4M5";
     Exit { Id = "next";   Target Map = "E4M6"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 5;
   }
 
   Map {
     Id = "E4M6";
     Exit { Id = "next";   Target Map = "E4M7"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 6;
   }
 
   Map {
     Id = "E4M7";
     Exit { Id = "next";   Target Map = "E4M8"; }
     Exit { Id = "secret"; Target Map = "E4M9"; }
+    Warp Number = 7;
   }
 
   Map {
     Id = "E4M8";
+    Warp Number = 8;
   }
 
   Map {
     Id = "E4M9";
     Exit { Id = "next";   Target Map = "E4M5"; }
+    Warp Number = 9;
   }
 }
 
@@ -248,51 +284,60 @@ Episode {
     Id = "E5M1";
     Exit { Id = "next";   Target Map = "E5M2"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 1;
   }
 
   Map {
     Id = "E5M2";
     Exit { Id = "next";   Target Map = "E5M3"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 2;
   }
 
   Map {
     Id = "E5M3";
     Exit { Id = "next";   Target Map = "E5M4"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 3;
   }
 
   Map {
     Id = "E5M4";
     Exit { Id = "next";   Target Map = "E5M5"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 4;
   }
 
   Map {
     Id = "E5M5";
     Exit { Id = "next"    Target Map = "E5M6"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 5;
   }
 
   Map {
     Id = "E5M6";
     Exit { Id = "next";   Target Map = "E5M7"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 6;
   }
 
   Map {
     Id = "E5M7";
     Exit { Id = "next";   Target Map = "E5M8"; }
     Exit { Id = "secret"; Target Map = "E5M9"; }
+    Warp Number = 7;
   }
 
   Map {
     Id = "E5M8";
+    Warp Number = 8;
   }
 
   Map {
     Id = "E5M9";
     Exit { Id = "next";   Target Map = "E5M4"; }
+    Warp Number = 9;
   }
 }
 
@@ -307,14 +352,17 @@ Episode {
   Map {
     Id = "E6M1";
     Exit { Id = "next"; Target Map = "E6M2"; }
+    Warp Number = 1;
   }
 
   Map {
     Id = "E6M2";
     Exit { Id = "next"; Target Map = "E6M3"; }
+    Warp Number = 2;
   }
 
   Map {
     Id = "E6M3";
+    Warp Number = 3;
   }
 }

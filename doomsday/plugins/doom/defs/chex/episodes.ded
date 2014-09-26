@@ -9,25 +9,30 @@ Episode {
   
   Map {
     Id = "E1M1";
-    Exit { Id = "next";   Target Map = "E1M2"; }
+    Exit { Id = "next"; Target Map = "E1M2"; }
+    Warp Number = 1;
   }
   
   Map {
     Id = "E1M2";
-    Exit { Id = "next";   Target Map = "E1M3"; }
+    Exit { Id = "next"; Target Map = "E1M3"; }
+    Warp Number = 2;
   }
   
   Map {
     Id = "E1M3";
     Exit { Id = "next";   Target Map = "E1M4"; }
+    Warp Number = 3;
   }
   
   Map {
     Id = "E1M4";
     Exit { Id = "next";   Target Map = "E1M5"; }
+    Warp Number = 4;
   }
   
   Map {
     Id = "E1M5";
+    Warp Number = 5;
   }
 }

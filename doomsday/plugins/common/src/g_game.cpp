@@ -815,10 +815,7 @@ void G_AutoStartOrBeginTitleLoop()
 
         // The map.
         bool isNumber;
-        int oldMapNumber = cmdLine.at(arg + (haveEpisode? 2 : 1)).toInt(&isNumber);
-#if !__JHEXEN__
-        if(oldMapNumber > 0) oldMapNumber -= 1; // zero-based.
-#endif
+        int mapWarpNumber = cmdLine.at(arg + (haveEpisode? 2 : 1)).toInt(&isNumber);
 
         if(!isNumber)
         {
@@ -828,23 +825,10 @@ void G_AutoStartOrBeginTitleLoop()
             startMapUri = de::Uri::fromUserInput(args, 1);
             if(startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
         }
-        else if(!startEpisodeId.isEmpty())
-        {
-#if __JHEXEN__
-            // Map numbers must be translated in the context of an episode.
-            startMapUri = TranslateMapWarpNumber(startEpisodeId, oldMapNumber);
-#else
-            int oldEpisodeNumber = startEpisodeId.toInt(&isNumber);
-            if(oldEpisodeNumber > 0) oldEpisodeNumber -= 1; // zero-based.
-            if(isNumber)
-            {
-                startMapUri = G_ComposeMapUri(oldEpisodeNumber, oldMapNumber);
-            }
-#endif
-        }
         else
         {
-            startMapUri = G_ComposeMapUri(0, oldMapNumber);
+            // Map warp numbers must be translated in the context of an Episode.
+            startMapUri = TranslateMapWarpNumber(startEpisodeId, mapWarpNumber);
         }
     }
 
@@ -2722,10 +2706,7 @@ D_CMD(WarpMap)
     // The map.
     de::Uri mapUri;
     bool isNumber;
-    int oldMapNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
-#if !__JHEXEN__
-    if(oldMapNumber > 0) oldMapNumber -= 1; // zero-based.
-#endif
+    int mapWarpNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
 
     if(!isNumber)
     {
@@ -2735,23 +2716,10 @@ D_CMD(WarpMap)
         mapUri = de::Uri::fromUserInput(args, 1);
         if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
     }
-    else if(!episodeId.isEmpty())
-    {
-#if __JHEXEN__
-        // Map numbers must be translated in the context of an episode.
-        mapUri = TranslateMapWarpNumber(episodeId, oldMapNumber);
-#else
-        int oldEpisodeNumber = episodeId.toInt(&isNumber);
-        if(oldEpisodeNumber > 0) oldEpisodeNumber -= 1; // zero-based.
-        if(isNumber)
-        {
-            mapUri = G_ComposeMapUri(oldEpisodeNumber, oldMapNumber);
-        }
-#endif
-    }
     else
     {
-        mapUri = G_ComposeMapUri(0, oldMapNumber);
+        // Map warp numbers must be translated in the context of an Episode.
+        mapUri = TranslateMapWarpNumber(episodeId, mapWarpNumber);
     }
 
     // Catch invalid maps.
