@@ -956,11 +956,12 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        LOG_RES_WARNING("Ignoring unknown Episode %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Episode \"%s\" in %s on line #%i")
                                 << otherEpisodeId << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
+                        defn::Episode(dummyEpsd).resetToDefaults();
                         epsd = &dummyEpsd;
                     }
                 }
@@ -1146,7 +1147,7 @@ DENG2_PIMPL(DEDParser)
                     idx = ded->getMobjNum(otherMobjId);
                     if(idx < 0)
                     {
-                        LOG_RES_WARNING("Ignoring unknown Mobj %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Mobj \"%s\" in %s on line #%i")
                                 << otherMobjId << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
@@ -1247,7 +1248,7 @@ DENG2_PIMPL(DEDParser)
                     idx = ded->getStateNum(otherStateId);
                     if(idx < 0)
                     {
-                        LOG_RES_WARNING("Ignoring unknown State %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown State \"%s\" in %s on line #%i")
                                 << otherStateId << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
@@ -1414,7 +1415,7 @@ DENG2_PIMPL(DEDParser)
 
                     if(!mat)
                     {
-                        LOG_RES_WARNING("Ignoring unknown Material %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Material \"%s\" in %s on line #%i")
                                 << otherMat->asText()
                                 << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
@@ -1735,30 +1736,78 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Music"))
             {
-                // New musics are appended to the end of the list.
-                idx = ded->addMusic();
-                Record &mus = ded->musics[idx];
+                bool bModify = false;
+                Record dummyMusic;
+                Record *music = 0;
 
-                if(prevMusicDefIdx >= 0)
+                ReadToken();
+                if(!ISTOKEN("Mods"))
                 {
-                    if(bCopyNext) ded->musics.copy(prevMusicDefIdx, mus);
+                    // New musics are appended to the end of the list.
+                    idx = ded->addMusic();
+                    music = &ded->musics[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    ded_stringid_t otherMusicId;
+
+                    READSTR(otherMusicId);
+                    ReadToken();
+
+                    idx = ded->getMusicNum(otherMusicId);
+                    if(idx >= 0)
+                    {
+                        music = &ded->musics[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Music \"%s\" in %s on line #%i")
+                                << otherMusicId << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+
+                        // We'll read into a dummy definition.
+                        defn::Music(dummyMusic).resetToDefaults();
+                        music = &dummyMusic;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify.");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(music != 0);
+
+                if(prevMusicDefIdx >= 0 && bCopyNext)
+                {
+                    ded->musics.copy(prevMusicDefIdx, *music);
                 }
 
                 FINDBEGIN;
                 forever
                 {
                     READLABEL;
-                    RV_STR("ID", mus["id"])
-                    RV_STR("Lump", mus["lumpName"])
-                    RV_URI("File name", mus["path"], "Music")
-                    RV_URI("File", mus["path"], "Music")
-                    RV_URI("Ext", mus["path"], "Music") // Both work.
-                    RV_INT("CD track", mus["cdTrack"])
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READSTR((*music)["id"]);
+                    }
+                    else RV_STR("Name", (*music)["title"])
+                    RV_STR("Lump", (*music)["lumpName"])
+                    RV_URI("File name", (*music)["path"], "Music")
+                    RV_URI("File", (*music)["path"], "Music")
+                    RV_URI("Ext", (*music)["path"], "Music") // Both work.
+                    RV_INT("CD track", (*music)["cdTrack"])
                     RV_END
                     CHECKSC;
                 }
 
-                prevMusicDefIdx = idx;
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevMusicDefIdx = idx;
+                }
             }
 
             if(ISTOKEN("Sky"))
@@ -1878,12 +1927,13 @@ DENG2_PIMPL(DEDParser)
                     }
                     else
                     {
-                        LOG_RES_WARNING("Ignoring unknown Map %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Map \"%s\" in %s on line #%i")
                                 << otherMap->asText()
                                 << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
+                        defn::MapInfo(dummyMi).resetToDefaults();
                         mi = &dummyMi;
                     }
                     delete otherMap;
