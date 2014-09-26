@@ -130,10 +130,8 @@ void ListWidget::draw() const
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), 1), t);
-
-    Vector4f dimColor = textColor * MNDATA_LIST_NONSELECTION_LIGHT;
-    dimColor.w = textColor.w;
+    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), textColor.w), t);
+    Vector4f const dimColor   = Vector4f(Vector3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
 
     if(d->first < d->items.count() && d->numvis > 0)
     {

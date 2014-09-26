@@ -63,7 +63,8 @@ void ButtonWidget::draw() const
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), 1), t);
+    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), textColor.w), t);
+
     FR_SetFont(fontId);
     FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
     DGL_Color4f(1, 1, 1, color.w);
