@@ -1790,7 +1790,8 @@ void Hu_MenuInitEpisodePage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("GameType"));
 
-    if(!Defs().episodes.size())
+    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+    if(!episodesById.size())
     {
         LOG_RES_WARNING("No episodes are defined. It will not be possible to start a new game from the menu");
         return;
@@ -1798,7 +1799,7 @@ void Hu_MenuInitEpisodePage()
 
     int y = 0;
     int n = 0;
-    for(auto const &pair : Defs().episodes.lookup("id").elements())
+    for(auto const &pair : episodesById)
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
 
@@ -2953,9 +2954,9 @@ void Hu_MenuSelectSingleplayer(Widget & /*wi*/, Widget::Action action)
     }
 
     // Skip episode selection if only one is defined.
-    if(Defs().episodes.size() == 1)
+    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+    if(episodesById.size() == 1)
     {
-        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
         mnEpisode = episodesById.begin()->second->as<RecordValue>().record()->gets("id");
 #if __JHEXEN__
         Hu_MenuSetPage("PlayerClass");
