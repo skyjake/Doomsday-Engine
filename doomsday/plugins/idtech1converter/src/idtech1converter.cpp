@@ -80,12 +80,12 @@ static String convertMapInfos(QList<QString> const &paths)
     MapInfoTranslator xltr;
     bool haveTranslation = false;
     for(String const &path : paths)
-     {
+    {
         if(path.isEmpty()) continue;
 
         xltr.mergeFromFile(path);
         haveTranslation = true;
-     }
+    }
 
     if(!haveTranslation) return "";
 
