@@ -576,6 +576,49 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
     }
 }
 
+/**
+ * Returns a URN list (in load order) for all lumps whose name matches the pattern "MAPINFO.lmp".
+ */
+static QStringList allMapInfoUrns()
+{
+    QStringList paths;
+    LumpIndex::FoundIndices foundMapInfos;
+    App_FileSystem().nameIndex().findAll("MAPINFO.lmp", foundMapInfos);
+    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundMapInfos)
+    {
+        paths << "LumpIndex:" + String::number(*i);
+    }
+    return paths;
+}
+
+/**
+ * @param mapInfoUrns  MAPINFO definitions to translate, in load order.
+ */
+static String translateMapInfos(QStringList const &mapInfoUrns)
+{
+    String translated;
+    String delimitedPaths = mapInfoUrns.join(";");
+    if(!delimitedPaths.isEmpty())
+    {
+        ddhook_mapinfo_convert_t parm;
+        Str_InitStd(&parm.paths);
+        Str_InitStd(&parm.result);
+        try
+        {
+            Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
+            if(DD_CallHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
+            {
+                translated = Str_Text(&parm.result);
+            }
+        }
+        catch(...)
+        {}
+        Str_Free(&parm.result);
+        Str_Free(&parm.paths);
+    }
+    return translated;
+}
+
 static void readAllDefinitions()
 {
     de::Time begunAt;
@@ -595,12 +638,25 @@ static void readAllDefinitions()
     readDefinitionFile(App::packageLoader().package("net.dengine.base").root()
                        .locate<File const>("defs/doomsday.ded").path());
 
-    /*
-     * Now any definition files required by the game on load.
-     */
     if(App_GameLoaded())
     {
-        Game::Manifests const& gameResources = App_CurrentGame().manifests();
+        // Some games use definitions that are translated to DED.
+        QStringList mapInfoUrns = allMapInfoUrns();
+        if(!mapInfoUrns.isEmpty())
+        {
+            String translatedDefs = translateMapInfos(mapInfoUrns);
+            if(!translatedDefs.isEmpty())
+            {
+                qDebug() << "[TranslatedMapInfos]\n" << translatedDefs;
+                if(!DED_ReadData(&defs, translatedDefs.toUtf8().constData(), "[TranslatedMapInfos]"))
+                {
+                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                }
+            }
+        }
+
+        // Now any startup definition files required by the game.
+        Game::Manifests const &gameResources = App_CurrentGame().manifests();
         int packageIdx = 0;
         for(Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
@@ -616,29 +672,25 @@ static void readAllDefinitions()
 
             readDefinitionFile(path);
         }
-    }
 
-    /*
-     * Next up are definition files in the games' /auto directory.
-     */
-    if(!CommandLine_Exists("-noauto") && App_GameLoaded())
-    {
-        FS1::PathList foundPaths;
-        if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
+        // Next are definition files in the games' /auto directory.
+        if(!CommandLine_Exists("-noauto"))
         {
-            foreach(FS1::PathListItem const &found, foundPaths)
+            FS1::PathList foundPaths;
+            if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
             {
-                // Ignore directories.
-                if(found.attrib & A_SUBDIR) continue;
+                foreach(FS1::PathListItem const &found, foundPaths)
+                {
+                    // Ignore directories.
+                    if(found.attrib & A_SUBDIR) continue;
 
-                readDefinitionFile(found.path);
+                    readDefinitionFile(found.path);
+                }
             }
         }
     }
 
-    /*
-     * Next up are any definition files specified on the command line.
-     */
+    // Next are any definition files specified on the command line.
     AutoStr *buf = AutoStr_NewStd();
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
@@ -662,9 +714,8 @@ static void readAllDefinitions()
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 
-    /*
-     * Last up are any DD_DEFNS definition lumps from loaded add-ons.
-     */
+    // Last are DD_DEFNS definition lumps from loaded add-ons.
+    /// @todo Shouldn't these be processed before definitions on the command line?
     Def_ReadLumpDefs();
 
     LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();

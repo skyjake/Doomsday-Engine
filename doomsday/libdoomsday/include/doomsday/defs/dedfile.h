@@ -40,7 +40,7 @@ LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum);
  * @param buffer        The data to be read, must be null-terminated.
  * @param _sourceFile   Just FYI.
  */
-int DED_ReadData(ded_t *ded, char const *buffer, de::String _sourceFile);
+LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String _sourceFile);
 
 /**
  * @return  @c true, if the file was successfully loaded.

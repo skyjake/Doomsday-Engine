@@ -60,6 +60,7 @@ enum {
                                          once all startup resources are loaded but @em before
                                          parsing of definitions and processing game data.
                                          This is a suitable time for game data conversion. */
+    HOOK_MAPINFO_CONVERT = 13,      ///< Called when map definition data needs converting.
     NUM_HOOK_TYPES
 };
 
@@ -91,6 +92,12 @@ typedef struct {
     Str outputPath;
     Str fallbackGameId;
 } ddhook_savegame_convert_t;
+
+/// Parameters for HOOK_MAPINFO_CONVERT
+typedef struct {
+    Str paths; // ';' delimited
+    Str result;
+} ddhook_mapinfo_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1
 {

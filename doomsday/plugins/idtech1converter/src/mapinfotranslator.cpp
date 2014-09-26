@@ -1421,8 +1421,9 @@ String MapInfoTranslator::translate()
            << "\n  ID = \"" + toMapId(mapUri) + "\";"
            << "\n  Name = \"" + info.gets("title") + "\";"
            << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
-           << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
            << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+           /// @todo Must revise Hexen Music def interpretation.
+           //<< "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";";
         if(!info.gets("songLump").isEmpty())
         {
             os << "\n  Music = \"" + info.gets("songLump") + "\";";
@@ -1464,6 +1465,7 @@ String MapInfoTranslator::translate()
     }
 
     // Output music defs.
+    /// @todo Must revise Hexen Music def interpretation (no Music defs exist yet).
     for(HexDefs::Musics::const_iterator i = d->defs.musics.begin(); i != d->defs.musics.end(); ++i)
     {
         Music const &music = i->second;

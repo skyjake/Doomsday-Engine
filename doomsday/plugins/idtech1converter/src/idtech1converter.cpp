@@ -73,38 +73,37 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
+static String convertMapInfos(QList<QString> const &paths)
+{
+    LOG_AS("IdTech1Converter");
+
+    MapInfoTranslator xltr;
+    bool haveTranslation = false;
+    for(String const &path : paths)
+     {
+        if(path.isEmpty()) continue;
+
+        xltr.mergeFromFile(path);
+        haveTranslation = true;
+     }
+
+    if(!haveTranslation) return "";
+
+    // End with a newline, for neatness sake.
+    return xltr.translate() + "\n";
+}
+
 /**
- * This function will be called when Doomsday begins to initialize a loaded game.
- *
- * Our job is to determine whether the game resources include any Hexen, MAPINFO-syntax
- * definitions that need to be converted into DED format, for parsing later.
- *
+ * This function will be called when Doomsday needs to translate a MAPINFO definition set.
  * @return  @c true if successful (always).
  */
-int ConvertMapInfo(int /*hookType*/, int /*parm*/, void * /*context*/)
+int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
 {
-    // Initialize a new translator.
-    MapInfoTranslator xltr;
-
-    // Process all MAPINFO lumps, in load order.
-    bool needTranslate = false;
-    LumpIndex const &lumpIndex = *reinterpret_cast<LumpIndex const *>(F_LumpIndex());
-    LumpIndex::FoundIndices foundMapInfos;
-    lumpIndex.findAll("MAPINFO.lmp", foundMapInfos);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundMapInfos)
-    {
-        xltr.mergeFromFile("LumpIndex:" + String::number(*i));
-        needTranslate = true;
-    }
-
-    if(needTranslate)
-    {
-        /// @todo: Output the translated MAPINFOs to the auto-load directory for definitions.
-        String text = xltr.translate() + "\n"; // End with a newline, for neatness sake.
-        qDebug() << text;
-    }
-
-    return true; // success
+    DENG2_ASSERT(context);
+    auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
+    QStringList allPaths = String(Str_Text(&parm.paths)).split(";");
+    Str_Set(&parm.result, convertMapInfos(allPaths).toUtf8().constData());
+    return true;
 }
 
 /**
@@ -113,8 +112,8 @@ int ConvertMapInfo(int /*hookType*/, int /*parm*/, void * /*context*/)
  */
 extern "C" void DP_Initialize()
 {
-    Plug_AddHook(HOOK_GAME_INIT, ConvertMapInfo);
-    Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
+    Plug_AddHook(HOOK_MAP_CONVERT,     ConvertMapHook);
+    Plug_AddHook(HOOK_MAPINFO_CONVERT, ConvertMapInfoHook);
 }
 
 /**
@@ -128,8 +127,8 @@ extern "C" char const *deng_LibraryType()
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(F);
-DENG_DECLARE_API(Material);
 DENG_DECLARE_API(Map);
+DENG_DECLARE_API(Material);
 DENG_DECLARE_API(MPE);
 DENG_DECLARE_API(Plug);
 DENG_DECLARE_API(Uri);
@@ -137,8 +136,8 @@ DENG_DECLARE_API(Uri);
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
-    DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP, Map);
+    DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
     DENG_GET_API(DE_API_PLUGIN, Plug);
     DENG_GET_API(DE_API_URI, Uri);
