@@ -55,17 +55,20 @@ public:
 
 public:
     /**
-     * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     * @param configDir     Name of the config directory.
-     *
-     * @param legacySavegameNameExp   Regular expression used for matching legacy savegame names.
+     * @param identityKey  Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+     * @param configDir  Name of the config directory.
+     * @param title  Textual title for the game mode (intended for humans).
+     * @param author  Textual author for the game mode (intended for humans).
+     * @param legacySavegameNameExp  Regular expression used for matching legacy savegame names.
      * @param legacySavegameSubfoler  Game-specific subdirectory of /home for legacy savegames.
+     * @param mapMapInfo  Base relative path to the main MAPINFO definition data.
      */
     Game(String const &identityKey, Path const &configDir,
          String const &title                   = "Unnamed",
          String const &author                  = "Unknown",
          String const &legacySavegameNameExp   = "",
-         String const &legacySavegameSubfolder = "");
+         String const &legacySavegameSubfolder = "",
+         String const &mainMapInfo             = "");
 
     virtual ~Game();
 
@@ -124,6 +127,11 @@ public:
      * Returns the name of the binding config file for the game.
      */
     de::Path const &bindingConfig() const;
+
+    /**
+     * Returns the base relative path of the main MAPINFO definition data for the game (if any).
+     */
+    de::Path const &mainMapInfo() const;
 
     /**
      * Returns the identifier of the Style logo image to represent this game.
