@@ -581,14 +581,46 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
  */
 static QStringList allMapInfoUrns()
 {
-    QStringList paths;
-    LumpIndex::FoundIndices foundMapInfos;
-    App_FileSystem().nameIndex().findAll("MAPINFO.lmp", foundMapInfos);
-    DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundMapInfos)
+    QStringList foundPaths;
+
+    // The game's main MAPINFO definitions should be processed first.
+    bool ignoreNonCustom = false;
+    try
     {
-        paths << "LumpIndex:" + String::number(*i);
+        String &mainMapInfo = App_FileSystem().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        if(!mainMapInfo.isEmpty())
+        {
+            foundPaths << mainMapInfo;
+            ignoreNonCustom = true;
+        }
     }
-    return paths;
+    catch(FS1::NotFoundError &)
+    {} // Ignore this error.
+
+    // Process all other lumps named MAPINFO.lmp
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex::FoundIndices foundLumps;
+    lumpIndex.findAll("MAPINFO.lmp", foundLumps);
+    for(auto const &lumpNumber : foundLumps)
+    {
+        // Ignore MAPINFO definition data in IWADs?
+        if(ignoreNonCustom)
+        {
+            File1 const &file = lumpIndex[lumpNumber];
+            /// @todo Custom status for contained files is not inherited from the container?
+            if(file.isContained())
+            {
+                if(!file.container().hasCustom())
+                    continue;
+            }
+            else if(!file.hasCustom())
+                continue;
+        }
+
+        foundPaths << String("LumpIndex:%1").arg(lumpNumber);
+    }
+
+    return foundPaths;
 }
 
 /**
@@ -640,6 +672,8 @@ static void readAllDefinitions()
 
     if(App_GameLoaded())
     {
+        de::Game &game = App_CurrentGame();
+
         // Some games use definitions that are translated to DED.
         QStringList mapInfoUrns = allMapInfoUrns();
         if(!mapInfoUrns.isEmpty())
@@ -656,7 +690,7 @@ static void readAllDefinitions()
         }
 
         // Now any startup definition files required by the game.
-        Game::Manifests const &gameResources = App_CurrentGame().manifests();
+        Game::Manifests const &gameResources = game.manifests();
         int packageIdx = 0;
         for(Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)

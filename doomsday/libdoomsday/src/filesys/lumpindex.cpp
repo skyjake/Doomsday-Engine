@@ -380,8 +380,9 @@ DENG2_PIMPL(LumpIndex)
         int numFlagged = 0;
         for(int i = 0; i < numRecords; ++i)
         {
+            File1 *lump = lumps[i];
             if(pruneFlags.testBit(i)) continue;
-            if(&lumps[i]->container() != &file) continue;
+            if(!lump->isContained() || &lump->container() != &file) continue;
             pruneFlags.setBit(i, true);
             numFlagged += 1;
         }
