@@ -88,14 +88,16 @@ namespace internal {
             addNumber ("hub", 0);
             addBoolean("lightning", false);
             addText   ("map", "Maps:");       // URI. Unknown.
+            addBoolean("nointermission", false);
             addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
+            addNumber ("par", 0);
             addText   ("secretNextMap", "");  // URI. None. (If scheme is "@wt" then the path is a warp trans number).
-            addText   ("title", "Untitled");
             addText   ("sky1Material", defaultSkyMaterial());
             addNumber ("sky1ScrollDelta", 0);
             addText   ("sky2Material", defaultSkyMaterial());
             addNumber ("sky2ScrollDelta", 0);
             addText   ("songLump", "");
+            addText   ("title", "Untitled");
             addNumber ("warpTrans", 0);
         }
     };
@@ -217,11 +219,11 @@ namespace internal {
         {
             if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
-                return de::max(path.substr(3).toInt(), 1);
+                return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
             if(path.beginsWith("map", Qt::CaseInsensitive))
             {
-                return de::max(path.substr(3).toInt(), 1);
+                return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
         }
         return 0;
@@ -438,43 +440,52 @@ namespace internal {
 
         void parseEpisode() // ZDoom
         {
-            LOG_WARNING("MAPINFO Episode definitions are not supported.");
             de::Uri mapUri(Str_Text(lexer.readString()), RC_NULL);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+
+            // A new episode info.
+            String const id = String::number(db.episodeInfos.size() + 1);
+            EpisodeInfo *info = &db.episodeInfos[id.toStdString()];
+
+            info->set("startMap", mapUri.compose());
 
             // Process optional tokens.
             while(lexer.readToken())
             {
                 if(!Str_CompareIgnoreCase(lexer.token(), "name"))
                 {
-                    lexer.readString();
+                    info->set("title", Str_Text(lexer.readString()));
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "lookup"))
                 {
-                    lexer.readString();
+                    info->set("title", Str_Text(lexer.readString()));
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "picname"))
                 {
-                    lexer.readString();
+                    info->set("menuImage", lexer.readUri("Patches").compose());
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "key"))
                 {
-                    lexer.readString();
+                    info->set("menuShortcut", Str_Text(lexer.readString()));
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "remove"))
                 {
+                    LOG_WARNING("MAPINFO Episode.remove is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noskillmenu"))
                 {
+                    LOG_WARNING("MAPINFO Episode.noskillmenu not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "optional"))
                 {
+                    // All episodes are "optional".
+                    //LOG_WARNING("MAPINFO Episode.optional is not supported.");
                     continue;
                 }
 
@@ -616,7 +627,7 @@ namespace internal {
                 if(!info)
                 {
                     // A new map info.
-                    info = &db.mapInfos[mapUri.path().asText().toLower().toUtf8().constData()];
+                    info = &db.mapInfos[mapUri.path().asText().toLower().toStdString()];
 
                     // Initialize with custom default values?
                     if(defaultMap)
@@ -889,7 +900,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nointermission")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noIntermission is not supported.");
+                    info->set("nointermission", true);
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noinventorybar")) // ZDoom
@@ -925,8 +936,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "par")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.par is not supported.");
-                    lexer.readNumber();
+                    info->set("par", lexer.readNumber());
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "secretnext")) // ZDoom
@@ -1238,15 +1248,6 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
     void preprocess()
     {
-#if 1//def __JHEXEN__
-        // Ensure there is at least one episode.
-        if(defs.episodeInfos.empty())
-        {
-            EpisodeInfo &info = defs.episodeInfos["1"];
-            info.set("startMap", "@wt:1");
-        }
-#endif
-
         // Warp numbers may be used as internal map references (doh!)
         translateWarpNumbers();
 
@@ -1271,29 +1272,16 @@ void MapInfoTranslator::reset()
     d->translatedFiles.clear();
 }
 
-void MapInfoTranslator::mergeFromFile(String sourceFile)
+void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, bool /*sourceIsCustom*/)
 {
     LOG_AS("MapInfoTranslator");
 
-    dd_bool sourceIsCustom;
-    AutoStr *buffer = M_ReadFileIntoString(AutoStr_FromTextStd(sourceFile.toUtf8().constData()), &sourceIsCustom);
-    if(!buffer || Str_IsEmpty(buffer)) return;
+    if(Str_IsEmpty(&definitions)) return;
 
-    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourceFile).pretty();
-    d->translatedFiles << sourceFile;
+    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourcePath).pretty();
+    d->translatedFiles << sourcePath;
     MapInfoParser parser(d->defs);
-    parser.parse(*buffer, sourceFile);
-
-    String const gameIdKey = DENG2_APP->game().id();
-    if(!sourceIsCustom && (gameIdKey == "hexen" || gameIdKey == "hexen-v10"))
-    {
-        // MAPINFO in the Hexen IWAD contains a bunch of broken definitions.
-        // As later map definitions now replace earlier ones, these broken defs
-        // override the earlier "good" defs. For now we'll kludge around this
-        // issue by patching the affected defs with the expected values.
-        MapInfo *info = d->defs.getMapInfo(de::Uri("Maps:MAP07", RC_NULL));
-        info->set("warpTrans", "@wt:7");
-    }
+    parser.parse(definitions, sourcePath);
 }
 
 String MapInfoTranslator::translate()
@@ -1428,9 +1416,17 @@ String MapInfoTranslator::translate()
         {
             os << "\n  Music = \"" + info.gets("songLump") + "\";";
         }
-        if(info.getb("lightning"))
+        dfloat parTime = info.getf("par");
+        if(parTime > 0)
         {
-            os << "\n  Flags = lightning;";
+            os << "\n  Par time = " + String::number(parTime) + ";";
+        }
+        QStringList allFlags;
+        if(info.getb("lightning"))      allFlags << "lightning";
+        if(info.getb("nointermission")) allFlags << "nointermission";
+        if(!allFlags.isEmpty())
+        {
+            os << "\n Flags = " + allFlags.join(" | ") + ";";
         }
         de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
         if(!skyLayer1MaterialUri.path().isEmpty())

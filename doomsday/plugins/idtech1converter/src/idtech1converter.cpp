@@ -28,6 +28,15 @@
 using namespace de;
 using namespace idtech1;
 
+static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0)
+{
+    dd_bool _isCustom;
+    ddstring_t sourcePath;
+    AutoStr *string = M_ReadFileIntoString(Str_InitStatic(&sourcePath, path.toUtf8().constData()), &_isCustom);
+    if(isCustom) *isCustom = _isCustom;
+    return string;
+}
+
 /**
  * This function will be called when Doomsday is asked to load a map that is not
  * available in its native map format.
@@ -73,24 +82,25 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
-static String convertMapInfos(QList<QString> const &paths)
+static String convertMapInfos(QList<QString> const &pathsInLoadOrder)
 {
-    LOG_AS("IdTech1Converter");
+    MapInfoTranslator translator;
 
-    MapInfoTranslator xltr;
     bool haveTranslation = false;
-    for(String const &path : paths)
+    for(String const &sourcePath : pathsInLoadOrder)
     {
-        if(path.isEmpty()) continue;
+        if(sourcePath.isEmpty()) continue;
 
-        xltr.mergeFromFile(path);
-        haveTranslation = true;
+        bool sourceIsCustom;
+        if(AutoStr *definitions = readFileIntoString(sourcePath, &sourceIsCustom))
+        {
+            translator.merge(*definitions, sourcePath, sourceIsCustom);
+            haveTranslation = true;
+        }
     }
-
     if(!haveTranslation) return "";
 
-    // End with a newline, for neatness sake.
-    return xltr.translate() + "\n";
+    return translator.translate() + "\n"; // End with a newline, for neatness sake.
 }
 
 /**
@@ -99,10 +109,11 @@ static String convertMapInfos(QList<QString> const &paths)
  */
 int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
 {
+    LOG_AS("IdTech1Converter");
     DENG2_ASSERT(context);
     auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
-    QStringList allPaths = String(Str_Text(&parm.paths)).split(";");
-    Str_Set(&parm.result, convertMapInfos(allPaths).toUtf8().constData());
+    QStringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
+    Str_Set(&parm.result, convertMapInfos(allPathsInLoadOrder).toUtf8().constData());
     return true;
 }
 
