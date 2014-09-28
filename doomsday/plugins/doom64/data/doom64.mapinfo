@@ -1,0 +1,168 @@
+; Episode 1 ------------------------------------------------------------
+
+episode MAP01
+
+map MAP01 lookup HUSTR_MAP01
+next MAP02
+barrelnext MAP32
+warptrans 1
+par 90
+
+map MAP02 lookup HUSTR_MAP02
+next MAP03
+warptrans 2
+par 120
+
+map MAP03 lookup HUSTR_MAP03
+next MAP04
+warptrans 3
+par 120
+
+map MAP04 lookup HUSTR_MAP04
+next MAP05
+secretnext MAP29
+warptrans 4
+par 120
+
+map MAP05 lookup HUSTR_MAP05
+next MAP06
+warptrans 5
+par 130
+
+map MAP06 lookup HUSTR_MAP06
+next MAP07
+warptrans 6
+par 150
+
+map MAP07 lookup HUSTR_MAP07
+next MAP08
+warptrans 7
+par 240
+
+map MAP08 lookup HUSTR_MAP08
+next MAP09
+warptrans 8
+par 120
+
+map MAP09 lookup HUSTR_MAP09
+next MAP10
+warptrans 9
+par 240
+
+map MAP10 lookup HUSTR_MAP10
+next MAP11
+warptrans 10
+par 120
+
+map MAP11 lookup HUSTR_MAP11
+next MAP12
+warptrans 11
+par 190
+
+map MAP12 lookup HUSTR_MAP12
+next MAP13
+secretnext MAP30
+warptrans 12
+par 180
+
+map MAP13 lookup HUSTR_MAP13
+next MAP14
+warptrans 13
+par 160
+
+map MAP14 lookup HUSTR_MAP14
+next MAP15
+warptrans 14
+par 120
+
+map MAP15 lookup HUSTR_MAP15
+next MAP16
+warptrans 15
+par 190
+
+map MAP16 lookup HUSTR_MAP16
+next MAP17
+warptrans 16
+par 120
+
+map MAP17 lookup HUSTR_MAP17
+next MAP18
+warptrans 17
+par 240
+
+map MAP18 lookup HUSTR_MAP18
+next MAP19
+secretnext MAP31
+warptrans 18
+par 160
+
+map MAP19 lookup HUSTR_MAP19
+next MAP20
+warptrans 19
+par 90
+
+map MAP20 lookup HUSTR_MAP20
+next MAP21
+warptrans 20
+par 180
+
+map MAP21 lookup HUSTR_MAP21
+next MAP22
+warptrans 21
+par 180
+
+map MAP22 lookup HUSTR_MAP22
+next MAP23
+warptrans 22
+par 120
+
+map MAP23 lookup HUSTR_MAP23
+next MAP24
+warptrans 23
+par 240
+
+map MAP24 lookup HUSTR_MAP24
+next MAP25
+warptrans 24
+par 180
+
+map MAP25 lookup HUSTR_MAP25
+next MAP26
+warptrans 25
+par 90
+
+map MAP26 lookup HUSTR_MAP26
+next MAP27
+warptrans 26
+par 30
+
+map MAP27 lookup HUSTR_MAP27
+next MAP28
+warptrans 27
+par 30
+
+map MAP28 lookup HUSTR_MAP28
+warptrans 28
+par 400
+
+; Secret maps:
+
+map MAP29 lookup HUSTR_MAP29
+next MAP05
+warptrans 29
+par 190
+
+map MAP30 lookup HUSTR_MAP30
+next MAP13
+warptrans 30
+par 160
+
+map MAP31 lookup HUSTR_MAP31
+next MAP19
+warptrans 31
+par 120
+
+map MAP32 lookup HUSTR_MAP32
+next MAP02
+warptrans 32
+par 90

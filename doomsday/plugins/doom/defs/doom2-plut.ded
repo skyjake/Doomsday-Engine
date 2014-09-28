@@ -7,12 +7,10 @@
 # Include common definitions for games playable with jDoom.
 Include "jdoom.ded";
 
-Include "doom2-plut/episodes.ded";
 Include "doom1/anim.ded";
 Include "doom2/anim.ded";
 Include "doom2-plut/anim.ded";
 Include "doom2/skies.ded";
-Include "doom2-plut/maps.ded";
 Include "doom2-plut/finales.ded";
 Include "doom1/fonts.ded";
 Include "doom1/materials.ded";

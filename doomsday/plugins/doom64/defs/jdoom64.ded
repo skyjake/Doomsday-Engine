@@ -12,8 +12,14 @@ Header {
   Default model scale = 1.2;
 }
 
+# Used for any maps without a map info definition
+Map Info {
+  ID = "*";
+  Gravity = 1;
+  Sky = "skya";
+}
+
 Include "flags.ded";
-Include "episodes.ded";
 Include "fonts.ded";
 Include "objects.ded";
 Include "sprites.ded";
@@ -23,7 +29,6 @@ Include "audio.ded";
 Include "special.ded";
 Include "lights.ded";
 Include "skies.ded";
-Include "maps.ded";
 Include "finales.ded";
 Include "text.ded";
 Include "values.ded";

@@ -1,0 +1,230 @@
+; Episode 1 ------------------------------------------------------------
+
+episode MAP01
+name "TNT: Evilution"
+key t
+
+map MAP01 lookup THUSTR_1
+next MAP02
+warptrans 1
+sky1 SKY1 0
+par 30
+music D_RUNNIN
+
+map MAP02 lookup THUSTR_2
+next MAP03
+warptrans 2
+sky1 SKY1 0
+par 90
+music D_STALKS
+
+map MAP03 lookup THUSTR_3
+next MAP04
+warptrans 3
+sky1 SKY1 0
+par 120
+music D_COUNTD
+
+map MAP04 lookup THUSTR_4
+next MAP05
+warptrans 4
+sky1 SKY1 0
+par 120
+music D_BETWEE
+
+map MAP05 lookup THUSTR_5
+next MAP06
+warptrans 5
+sky1 SKY1 0
+par 90
+music D_DOOM
+
+map MAP06 lookup THUSTR_6
+next MAP07
+warptrans 6
+sky1 SKY1 0
+par 150
+music D_THE_DA
+
+map MAP07 lookup THUSTR_7
+next MAP08
+warptrans 7
+sky1 SKY1 0
+par 120
+music D_SHAWN
+
+map MAP08 lookup THUSTR_8
+next MAP09
+warptrans 8
+sky1 SKY1 0
+par 120
+music D_DDTBLU
+
+map MAP09 lookup THUSTR_9
+next MAP10
+warptrans 9
+sky1 SKY1 0
+par 270
+music D_INCIT
+
+map MAP10 lookup THUSTR_10
+next MAP11
+warptrans 10
+sky1 SKY1 0
+par 90
+music D_DEAD
+
+map MAP11 lookup THUSTR_11
+next MAP12
+warptrans 11
+sky1 SKY1 0
+par 210
+music D_STLKS2
+
+map MAP12 lookup THUSTR_12
+next MAP13
+warptrans 12
+sky1 SKY2 0
+par 150
+music D_THEDA2
+
+map MAP13 lookup THUSTR_13
+next MAP14
+warptrans 13
+sky1 SKY2 0
+par 150
+music D_DOOM2
+
+map MAP14 lookup THUSTR_14
+next MAP15
+warptrans 14
+sky1 SKY2 0
+par 150
+music D_DDTBL2
+
+map MAP15 lookup THUSTR_15
+next MAP16
+secretnext MAP31
+warptrans 15
+sky1 SKY2 0
+par 210
+music D_RUNNI2
+
+map MAP16 lookup THUSTR_16
+next MAP17
+warptrans 16
+sky1 SKY2 0
+par 150
+music D_DEAD2
+
+map MAP17 lookup THUSTR_17
+next MAP18
+warptrans 17
+sky1 SKY2 0
+par 420
+music D_STLKS3
+
+map MAP18 lookup THUSTR_18
+next MAP19
+warptrans 18
+sky1 SKY2 0
+par 150
+music D_ROMERO
+
+map MAP19 lookup THUSTR_19
+next MAP20
+warptrans 19
+sky1 SKY2 0
+par 210
+music D_SHAWN2
+
+map MAP20 lookup THUSTR_20
+next MAP21
+warptrans 20
+sky1 SKY2 0
+par 150
+music D_MESSAG
+
+map MAP21 lookup THUSTR_21
+next MAP22
+warptrans 21
+sky1 SKY3 0
+par 240
+music D_COUNT2
+
+map MAP22 lookup THUSTR_22
+next MAP23
+warptrans 22
+sky1 SKY3 0
+par 150
+music D_DDTBL3
+
+map MAP23 lookup THUSTR_23
+next MAP24
+warptrans 23
+sky1 SKY3 0
+par 180
+music D_AMPIE
+
+map MAP24 lookup THUSTR_24
+next MAP25
+warptrans 24
+sky1 SKY3 0
+par 150
+music D_THEDA3
+
+map MAP25 lookup THUSTR_25
+next MAP26
+warptrans 25
+sky1 SKY3 0
+par 150
+music D_ADRIAN
+
+map MAP26 lookup THUSTR_26
+next MAP27
+warptrans 26
+sky1 SKY3 0
+par 300
+music D_MESSG2
+
+map MAP27 lookup THUSTR_27
+next MAP28
+warptrans 27
+sky1 SKY3 0
+par 330
+music D_ROMER2
+
+map MAP28 lookup THUSTR_28
+next MAP29
+warptrans 28
+sky1 SKY3 0
+par 420
+music D_TENSE
+
+map MAP29 lookup THUSTR_29
+next MAP30
+warptrans 29
+sky1 SKY3 0
+par 300
+music D_SHAWN3
+
+map MAP30 lookup THUSTR_30
+warptrans 30
+sky1 SKY3 0
+par 180
+music D_OPENIN
+
+map MAP31 lookup THUSTR_31
+next MAP16
+secretnext MAP32
+warptrans 31
+sky1 SKY3 0
+par 120
+music D_EVIL
+
+map MAP32 lookup THUSTR_32
+next MAP16
+warptrans 32
+sky1 SKY3 0
+par 30
+music D_ULTIMA

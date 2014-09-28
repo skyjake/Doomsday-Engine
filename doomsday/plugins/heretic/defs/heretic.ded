@@ -7,11 +7,9 @@
 # Include common definitions for games playable with jHeretic.
 Include "jheretic.ded";
 
-Include "heretic/episodes.ded";
 Include "heretic/anim.ded";
 Include "heretic/particles.ded";
 Include "heretic/skies.ded";
-Include "heretic/maps.ded";
 Include "heretic/finales.ded";
 Include "heretic/lights.ded";
 Include "heretic/materials.ded";

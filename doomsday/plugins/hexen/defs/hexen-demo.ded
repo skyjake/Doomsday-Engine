@@ -18,7 +18,6 @@ Map Info {
   Gravity = 1;
 }
 
-Include "hexen/episodes.ded";
 Include "hexen/anim.ded";
 Include "hexen/finales.ded";
 Include "hexen/lights.ded";

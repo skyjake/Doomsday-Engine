@@ -1,0 +1,248 @@
+episode @wt:1
+
+; --- Cluster 1 ---
+
+map 41 "RUINED VILLAGE"
+warptrans 1
+next 2
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 13
+
+map 42 "BLIGHT"
+warptrans 2
+next 3
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 2
+
+map 43 "SUMP"
+warptrans 3
+next 4
+cluster 1
+sky1 SKYFOG2 20
+sky2 SKYFOG 60
+doublesky
+fadetable fogmap
+cdtrack 22
+
+map 44 "CATACOMB"
+warptrans 4
+next 5
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 15
+
+map 45 "BADLANDS"
+warptrans 5
+next 6
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 9
+
+map 46 "BRACKENWOOD"
+warptrans 6
+next 7
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 21
+
+map 47 "PYRE"
+warptrans 7
+next 8
+cluster 1
+sky1 SKYWALL 0
+sky2 SKY1 40
+doublesky
+cdtrack 14
+
+; --- Cluster 2 ---
+
+map 48 "CONSTABLE'S GATE"
+warptrans 8
+next 9
+cluster 2
+sky1 SKYWALL2 0
+sky2 SKY2 60
+doublesky
+cdtrack 8
+
+map 49 "TREASURY"
+warptrans 9
+next 10
+cluster 2
+sky1 SKYWALL2 0
+sky2 SKY2 60
+doublesky
+cdtrack 20
+
+map 50 "MARKET PLACE"
+warptrans 10
+next 11
+cluster 2
+sky1 SKYWALL2 0
+sky2 SKY2 60
+doublesky
+cdtrack 6
+
+map 51 "LOCUS REQUIESCAT"
+warptrans 11
+next 12
+cluster 2
+sky1 SKY2 0
+sky2 SKY3 0
+lightning
+cdtrack 5
+
+map 52 "ORDEAL"
+warptrans 12
+next 13
+cluster 2
+sky1 SKYWALL2 0
+sky2 SKY2 60
+doublesky
+cdtrack 16
+
+map 53 "ARMORY"
+warptrans 13
+next 14
+cluster 2
+sky1 SKYWALL2 0
+sky2 SKY2 60
+doublesky
+cdtrack 18
+
+; --- Cluster 3 ---
+
+map 54 "NAVE"
+warptrans 14
+next 15
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 15
+
+map 55 "CHANTRY"
+warptrans 15
+next 16
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 9
+
+map 56 "ABATTOIR"
+warptrans 16
+next 17
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 19
+
+map 57 "DARK WATCH"
+warptrans 17
+next 18
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 17
+
+map 58 "CLOACA"
+warptrans 18
+next 19
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 8
+
+map 59 "ICE HOLD"
+warptrans 19
+next 20
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 6
+
+map 60 "DARK CITADEL"
+warptrans 20
+next 1
+cluster 3
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 15
+
+; --- Cluster 4 ---
+map 33 "TRANSIT"
+warptrans 33
+next 34
+cluster 4
+sky1 SKY1 0
+sky2 SKY4 0
+cdtrack 7
+
+map 34 "OVER N UNDER"
+warptrans 34
+next 35
+cluster 4
+sky1 SKY1 0
+sky2 SKY4 0
+cdtrack 13
+
+map 35 "DEATHFOG"
+warptrans 35
+next 36
+cluster 4
+sky1 SKYFOG2 20
+sky2 SKYFOG 60
+doublesky
+fadetable fogmap
+cdtrack 16
+
+map 36 "CASTLE OF PAIN"
+warptrans 36
+next 37
+cluster 4
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 9
+
+map 37 "SEWER PIT"
+warptrans 37
+next 38
+cluster 4
+sky1 SKY4 0
+sky2 SKY4 0
+cdtrack 3
+
+map 38 "THE ROSE"
+warptrans 38
+next 36
+cluster 4
+sky1 SKY1 0
+sky2 SKY4 0
+cdtrack 10
+
+map 83 "TEST"
+warptrans 39
+next 37
+cluster 4
+sky1 SKY1 0
+sky2 SKY4 0
+cdtrack 10
+
+; ===== Non-level specific CD tracks =====
+cd_start_track 0
+cd_end1_track 5
+cd_end2_track 5
+cd_end3_track 5
+cd_intermission_track 7
+cd_title_track 4

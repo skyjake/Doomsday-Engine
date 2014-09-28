@@ -7,11 +7,9 @@
 # Include common definitions for games playable with jDoom.
 Include "jdoom.ded";
 
-Include "doom1/episodes.ded";
 Include "doom1/anim.ded";
 Include "doom1/particles.ded";
 Include "doom1/skies.ded";
-Include "doom1/maps.ded";
 Include "doom1/finales.ded";
 Include "doom1/fonts.ded";
 Include "doom1/lights.ded";
