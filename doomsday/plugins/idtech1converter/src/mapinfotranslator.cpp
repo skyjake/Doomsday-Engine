@@ -98,6 +98,7 @@ namespace internal {
             addNumber ("sky2ScrollDelta", 0);
             addText   ("songLump", "");
             addText   ("title", "Untitled");
+            addText   ("titleImage", "");     // URI. None.
             addNumber ("warpTrans", 0);
         }
     };
@@ -479,7 +480,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noskillmenu"))
                 {
-                    LOG_WARNING("MAPINFO Episode.noskillmenu not supported.");
+                    LOG_WARNING("MAPINFO Episode.noskillmenu is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "optional"))
@@ -1019,8 +1020,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "titlepatch")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.titlePatch is not supported.");
-                    lexer.readString();
+                    info->set("titleImage", lexer.readUri("Patches").compose());
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "totalinfighting")) // ZDoom
@@ -1407,11 +1407,16 @@ String MapInfoTranslator::translate()
 
         os << "\n\nMap Info {"
            << "\n  ID = \"" + toMapId(mapUri) + "\";"
-           << "\n  Name = \"" + info.gets("title") + "\";"
+           << "\n  Title = \"" + info.gets("title") + "\";"
            << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
            << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
-           /// @todo Must revise Hexen Music def interpretation.
-           //<< "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";";
+        /// @todo Must revise Hexen Music def interpretation.
+        //   << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";";
+        de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
+        if(!titleImageUri.path().isEmpty())
+        {
+            os << "\n  Title image = \"" + titleImageUri.compose() + "\";";
+        }
         if(!info.gets("songLump").isEmpty())
         {
             os << "\n  Music = \"" + info.gets("songLump") + "\";";
