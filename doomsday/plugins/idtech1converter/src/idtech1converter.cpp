@@ -32,8 +32,9 @@ static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0
 {
     dd_bool _isCustom;
     ddstring_t sourcePath;
-    AutoStr *string = M_ReadFileIntoString(Str_InitStatic(&sourcePath, path.toUtf8().constData()), &_isCustom);
+    AutoStr *string = M_ReadFileIntoString(Str_Set(Str_InitStd(&sourcePath), path.toUtf8().constData()), &_isCustom);
     if(isCustom) *isCustom = _isCustom;
+    Str_Free(&sourcePath);
     return string;
 }
 
