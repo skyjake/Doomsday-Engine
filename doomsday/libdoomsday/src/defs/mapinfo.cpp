@@ -32,6 +32,7 @@ void MapInfo::resetToDefaults()
     // Add all expected fields with their default values.
     def().addText  ("id", "");
     def().addText  ("title", "Untitled");
+    def().addText  ("titleImage", "");
     def().addText  ("author", "Unknown");
     def().addNumber("flags", 0);
     def().addText  ("music", "");

@@ -2151,43 +2151,13 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
     return author;
 }
 
-#if __JDOOM__
-static uint episodeNumberFor(de::Uri const &mapUri)
+de::Uri G_MapTitleImage(de::Uri const &mapUri)
 {
-    String path = mapUri.path();
-    if(!path.isEmpty())
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
-        if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
-        {
-            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
-            {
-                return path.substr(1, 1).toInt() - 1;
-            }
-        }
+        return de::Uri(mapInfo->gets("titleImage"), RC_NULL);
     }
-    return 0;
-}
-#endif // __JDOOM__
-
-patchid_t G_MapTitlePatch(de::Uri const &mapUri)
-{
-#if __JDOOM__ || __JDOOM64__
-    uint map = G_MapNumberFor(mapUri);
-#  if __JDOOM__
-    if(!(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX)))
-    {
-        uint episode = episodeNumberFor(mapUri);
-        map = (episode * 9) + map;
-    }
-#  endif
-    if(map < pMapNamesSize)
-    {
-        return pMapNames[map];
-    }
-#else
-    DENG2_UNUSED(mapUri);
-#endif
-    return 0;
+    return de::Uri();
 }
 
 /**

@@ -97,7 +97,7 @@ de::String G_MapTitle(de::Uri const &mapUri);
 /**
  * @param mapUri  Identifier of the map to lookup the title of.
  */
-patchid_t G_MapTitlePatch(de::Uri const &mapUri);
+de::Uri G_MapTitleImage(de::Uri const &mapUri);
 
 /**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default

@@ -124,18 +124,29 @@ static void drawBackground()
 
 static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
+    patchid_t patchId = 0;
+
+    String const title       = G_MapTitle(wbs->currentMap);
+    de::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
+    if(!titleImage.isEmpty())
+    {
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+        }
+    }
+
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
 
     // Draw <MapName>
-    String const mapTitle         = G_MapTitle(wbs->currentMap);
-    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->currentMap);
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle),
+    WI_DrawPatch(patchId, patchReplacementText(patchId, title),
                  origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
+
     patchinfo_t info;
-    if(R_GetPatchInfo(mapTitlePatch, &info))
+    if(R_GetPatchInfo(patchId, &info))
     {
         origin.y += (5 * info.geometry.size.height) / 4;
     }
@@ -148,8 +159,18 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
 
 static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TITLEY))
 {
-    // See if there is a map name...
-    String mapTitle = G_MapTitle(wbs->nextMap);
+    patchid_t patchId = 0;
+
+    // See if there is a title for the map...
+    String const title       = G_MapTitle(wbs->nextMap);
+    de::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
+    if(!titleImage.isEmpty())
+    {
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+        }
+    }
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -160,12 +181,13 @@ static void drawEnteringTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     WI_DrawPatch(pEntering, patchReplacementText(pEntering), origin, ALIGN_TOP);
 
     patchinfo_t info;
-    patchid_t const mapTitlePatch = G_MapTitlePatch(wbs->nextMap);
-    if(R_GetPatchInfo(mapTitlePatch, &info))
+    if(R_GetPatchInfo(patchId, &info))
+    {
         origin.y += (5 * info.geometry.size.height) / 4;
+    }
 
     // Draw map.
-    WI_DrawPatch(mapTitlePatch, patchReplacementText(mapTitlePatch, mapTitle), origin, ALIGN_TOP);
+    WI_DrawPatch(patchId, patchReplacementText(patchId, title), origin, ALIGN_TOP);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }

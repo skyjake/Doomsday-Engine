@@ -1962,7 +1962,9 @@ DENG2_PIMPL(DEDParser)
                     {
                         READURI((*mi)["id"], "Maps");
                     }
-                    else RV_STR("Name", (*mi)["title"])
+                    else RV_STR("Title", (*mi)["title"])
+                    RV_STR("Name", (*mi)["title"]) // Alias
+                    RV_URI("Title image", (*mi)["titleImage"], "Patches")
                     RV_STR("Author", (*mi)["author"])
                     RV_FLAGS("Flags", (*mi)["flags"], "mif_")
                     RV_STR("Music", (*mi)["music"])
