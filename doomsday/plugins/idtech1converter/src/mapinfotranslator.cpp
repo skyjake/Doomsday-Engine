@@ -1278,10 +1278,19 @@ void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, 
 
     if(Str_IsEmpty(&definitions)) return;
 
-    LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourcePath).pretty();
     d->translatedFiles << sourcePath;
-    MapInfoParser parser(d->defs);
-    parser.parse(definitions, sourcePath);
+    try
+    {
+        LOG_RES_VERBOSE("Parsing \"%s\"...") << NativePath(sourcePath).pretty();
+        MapInfoParser parser(d->defs);
+        parser.parse(definitions, sourcePath);
+    }
+    catch(MapInfoParser::ParseError const &er)
+    {
+        LOG_WARNING("Failed to parse \"%s\" as MAPINFO:\n")
+                << (sourcePath.isEmpty()? "[definition-data]" : sourcePath)
+                << er.asText();
+    }
 }
 
 String MapInfoTranslator::translate()
