@@ -31,9 +31,6 @@
 #  include <de/Vector>
 #endif
 
-DENG_EXTERN_C patchid_t *pMapNames; // Name graphics of each map.
-DENG_EXTERN_C uint pMapNamesSize;
-
 #if __JHERETIC__ || __JHEXEN__
 DENG_EXTERN_C patchid_t pInvItemBox;
 DENG_EXTERN_C patchid_t pInvSelectBox;

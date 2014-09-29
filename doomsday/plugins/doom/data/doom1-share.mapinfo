@@ -12,6 +12,7 @@ warptrans 1
 sky1 SKY1 0
 par 30
 music D_E1M1
+titlepatch WILV00
 
 map E1M2 lookup HUSTR_E1M2
 next E1M3
@@ -20,6 +21,7 @@ warptrans 2
 sky1 SKY1 0
 par 75
 music D_E1M2
+titlepatch WILV01
 
 map E1M3 lookup HUSTR_E1M3
 next E1M4
@@ -28,6 +30,7 @@ warptrans 3
 sky1 SKY1 0
 par 120
 music D_E1M3
+titlepatch WILV02
 
 map E1M4 lookup HUSTR_E1M4
 next E1M5
@@ -36,6 +39,7 @@ warptrans 4
 sky1 SKY1 0
 par 90
 music D_E1M4
+titlepatch WILV03
 
 map E1M5 lookup HUSTR_E1M5
 next E1M6
@@ -44,6 +48,7 @@ warptrans 5
 sky1 SKY1 0
 par 165
 music D_E1M5
+titlepatch WILV04
 
 map E1M6 lookup HUSTR_E1M6
 next E1M7
@@ -52,6 +57,7 @@ warptrans 6
 sky1 SKY1 0
 par 180
 music D_E1M9
+titlepatch WILV05
 
 map E1M7 lookup HUSTR_E1M7
 next E1M8
@@ -60,6 +66,7 @@ warptrans 7
 sky1 SKY1 0
 par 180
 music D_E1M7
+titlepatch WILV06
 
 map E1M8 lookup HUSTR_E1M8
 warptrans 8
@@ -67,9 +74,11 @@ sky1 SKY1 0
 nointermission
 par 30
 muisc E1M8
+titlepatch WILV07
 
 map E1M9 lookup HUSTR_E1M9
 next E1M4
 warptrans 9
 sky1 SKY1 0
 par 165
+titlepatch WILV08

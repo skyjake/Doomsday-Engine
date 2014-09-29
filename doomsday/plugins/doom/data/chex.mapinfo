@@ -8,6 +8,7 @@ warptrans 1
 sky1 SKY1 0
 par 30
 music D_E1M1
+titlepatch WILV00
 
 map E1M2 lookup HUSTR_E1M2
 next E1M3
@@ -15,6 +16,7 @@ warptrans 2
 sky1 SKY1 0
 par 75
 music D_E1M2
+titlepatch WILV01
 
 map E1M3 lookup HUSTR_E1M3
 next E1M4
@@ -22,6 +24,7 @@ warptrans 3
 sky1 SKY1 0
 par 120
 music D_E1M3
+titlepatch WILV02
 
 map E1M4 lookup HUSTR_E1M4
 next E1M5
@@ -29,6 +32,7 @@ warptrans 4
 sky1 SKY1 0
 par 90
 music D_E1M4
+titlepatch WILV03
 
 map E1M5 lookup HUSTR_E1M5
 warptrans 5
@@ -36,3 +40,4 @@ sky1 SKY1 0
 nointermission
 par 165
 music D_E1M5
+titlepatch WILV04

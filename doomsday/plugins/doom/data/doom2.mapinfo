@@ -10,6 +10,7 @@ warptrans 1
 sky1 SKY1 0
 par 30
 music D_RUNNIN
+titlepatch CWILV00
 
 map MAP02 lookup HUSTR_2
 next MAP03
@@ -17,6 +18,7 @@ warptrans 2
 sky1 SKY1 0
 par 90
 music D_STALKS
+titlepatch CWILV01
 
 map MAP03 lookup HUSTR_3
 next MAP04
@@ -24,6 +26,7 @@ warptrans 3
 sky1 SKY1 0
 par 120
 music D_COUNTD
+titlepatch CWILV02
 
 map MAP04 lookup HUSTR_4
 next MAP05
@@ -31,6 +34,7 @@ warptrans 4
 sky1 SKY1 0
 par 120
 music D_BETWEE
+titlepatch CWILV03
 
 map MAP05 lookup HUSTR_5
 next MAP06
@@ -38,6 +42,7 @@ warptrans 5
 sky1 SKY1 0
 par 90
 music D_DOOM
+titlepatch CWILV04
 
 map MAP06 lookup HUSTR_6
 next MAP07
@@ -45,6 +50,7 @@ warptrans 6
 sky1 SKY1 0
 par 150
 music D_THE_DA
+titlepatch CWILV05
 
 map MAP07 lookup HUSTR_7
 next MAP08
@@ -52,6 +58,7 @@ warptrans 7
 sky1 SKY1 0
 par 120
 music D_SHAWN
+titlepatch CWILV06
 
 map MAP08 lookup HUSTR_8
 next MAP09
@@ -59,6 +66,7 @@ warptrans 8
 sky1 SKY1 0
 par 120
 music D_DDTBLU
+titlepatch CWILV07
 
 map MAP09 lookup HUSTR_9
 next MAP10
@@ -66,6 +74,7 @@ warptrans 9
 sky1 SKY1 0
 par 270
 music D_IN_CIT
+titlepatch CWILV08
 
 map MAP10 lookup HUSTR_10
 next MAP11
@@ -73,6 +82,7 @@ warptrans 10
 sky1 SKY1 0
 par 90
 music D_DEAD
+titlepatch CWILV09
 
 map MAP11 lookup HUSTR_11
 next MAP12
@@ -80,6 +90,7 @@ warptrans 11
 sky1 SKY1 0
 par 210
 music D_STLKS2
+titlepatch CWILV10
 
 map MAP12 lookup HUSTR_12
 next MAP13
@@ -87,6 +98,7 @@ warptrans 12
 sky1 SKY2 0
 par 150
 music D_THEDA2
+titlepatch CWILV11
 
 map MAP13 lookup HUSTR_13
 next MAP14
@@ -94,6 +106,7 @@ warptrans 13
 sky1 SKY2 0
 par 150
 music D_DOOM2
+titlepatch CWILV12
 
 map MAP14 lookup HUSTR_14
 next MAP15
@@ -101,6 +114,7 @@ warptrans 14
 sky1 SKY2 0
 par 150
 music D_DDTBL2
+titlepatch CWILV13
 
 map MAP15 lookup HUSTR_15
 next MAP16
@@ -109,6 +123,7 @@ warptrans 15
 sky1 SKY2 0
 par 210
 music D_RUNNI2
+titlepatch CWILV14
 
 map MAP16 lookup HUSTR_16
 next MAP17
@@ -116,6 +131,7 @@ warptrans 16
 sky1 SKY2 0
 par 150
 music D_DEAD2
+titlepatch CWILV15
 
 map MAP17 lookup HUSTR_17
 next MAP18
@@ -123,6 +139,7 @@ warptrans 17
 sky1 SKY2 0
 par 420
 music D_STLKS3
+titlepatch CWILV16
 
 map MAP18 lookup HUSTR_18
 next MAP19
@@ -130,6 +147,7 @@ warptrans 18
 sky1 SKY2 0
 par 150
 music D_ROMERO
+titlepatch CWILV17
 
 map MAP19 lookup HUSTR_19
 next MAP20
@@ -137,6 +155,7 @@ warptrans 19
 sky1 SKY2 0
 par 210
 music D_SHAWN2
+titlepatch CWILV18
 
 map MAP20 lookup HUSTR_20
 next MAP21
@@ -144,6 +163,7 @@ warptrans 20
 sky1 SKY2 0
 par 150
 music D_MESSAG
+titlepatch CWILV19
 
 map MAP21 lookup HUSTR_21
 next MAP22
@@ -151,6 +171,7 @@ warptrans 21
 sky1 SKY3 0
 par 240
 music D_COUNT2
+titlepatch CWILV20
 
 map MAP22 lookup HUSTR_22
 next MAP23
@@ -158,6 +179,7 @@ warptrans 22
 sky1 SKY3 0
 par 150
 music D_DDTBL3
+titlepatch CWILV21
 
 map MAP23 lookup HUSTR_23
 next MAP24
@@ -165,6 +187,7 @@ warptrans 23
 sky1 SKY3 0
 par 180
 music D_AMPIE
+titlepatch CWILV22
 
 map MAP24 lookup HUSTR_24
 next MAP25
@@ -172,6 +195,7 @@ warptrans 24
 sky1 SKY3 0
 par 150
 music D_THEDA3
+titlepatch CWILV23
 
 map MAP25 lookup HUSTR_25
 next MAP26
@@ -179,6 +203,7 @@ warptrans 25
 sky1 SKY3 0
 par 150
 music D_ADRIAN
+titlepatch CWILV24
 
 map MAP26 lookup HUSTR_26
 next MAP27
@@ -186,6 +211,7 @@ warptrans 26
 sky1 SKY3 0
 par 300
 music D_MESSG2
+titlepatch CWILV25
 
 map MAP27 lookup HUSTR_27
 next MAP28
@@ -193,6 +219,7 @@ warptrans 27
 sky1 SKY3 0
 par 330
 music D_ROMER2
+titlepatch CWILV26
 
 map MAP28 lookup HUSTR_28
 next MAP29
@@ -200,6 +227,7 @@ warptrans 28
 sky1 SKY3 0
 par 420
 music D_TENSE
+titlepatch CWILV27
 
 map MAP29 lookup HUSTR_29
 next MAP30
@@ -207,12 +235,14 @@ warptrans 29
 sky1 SKY3 0
 par 300
 music D_SHAWN3
+titlepatch CWILV28
 
 map MAP30 lookup HUSTR_30
 warptrans 30
 sky1 SKY3 0
 par 180
 music D_OPENIN
+titlepatch CWILV29
 
 map MAP31 lookup HUSTR_31
 next MAP16
@@ -221,6 +251,7 @@ warptrans 31
 sky1 SKY3 0
 par 120
 music D_EVIL
+titlepatch CWILV30
 
 map MAP32 lookup HUSTR_32
 next MAP16
@@ -228,3 +259,4 @@ warptrans 32
 sky1 SKY3 0
 par 30
 music D_ULTIMA
+titlepatch CWILV31

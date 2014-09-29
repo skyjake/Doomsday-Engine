@@ -149,10 +149,6 @@ const char shiftXForm[] = {
 
 // Misc UI patches:
 patchid_t borderPatches[8];
-#if __JDOOM__ || __JDOOM64__
-patchid_t *pMapNames; // Name graphics for each map.
-uint pMapNamesSize;
-#endif
 #if __JHERETIC__ || __JHEXEN__
 patchid_t pInvItemBox;
 patchid_t pInvSelectBox;
@@ -257,50 +253,6 @@ static void declareGraphicPatches()
     m_pause = R_DeclarePatch("PAUSED");
 #endif
 
-    // Map name patches:
-#if __JDOOM__ || __JDOOM64__
-# if !__JDOOM64__
-    if(gameModeBits & GM_ANY_DOOM2)
-# endif
-    {
-        pMapNamesSize = 32;
-        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-
-        Str name; Str_InitStd(&name);
-        for(uint i = 0; i < pMapNamesSize; ++i)
-        {
-# if __JDOOM64__
-            Str_Appendf(Str_Clear(&name), "WILV%2.2u", i);
-# else // __JDOOM__
-            Str_Appendf(Str_Clear(&name), "CWILV%2.2u", i);
-# endif
-            pMapNames[i] = R_DeclarePatch(Str_Text(&name));
-        }
-        Str_Free(&name);
-    }
-# if !__JDOOM64__
-    else
-    {
-        const uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
-        Str name; Str_InitStd(&name);
-
-        // Don't waste space - patches are loaded back to back
-        // ie no space in the array is left for E1M10
-        pMapNamesSize = 9 * 4;
-        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-        for(uint i = 0; i < numEpisodes; ++i)
-        {
-            for(uint k = 0; k < 9; ++k) // Number of maps per episode.
-            {
-                Str_Appendf(Str_Clear(&name), "WILV%2.2u", (i * 10) + k);
-                pMapNames[(i * 9) + k] = R_DeclarePatch(Str_Text(&name));
-            }
-        }
-        Str_Free(&name);
-    }
-# endif
-#endif
-
 #if __JHERETIC__ || __JHEXEN__
     pInvItemBox      = R_DeclarePatch("ARTIBOX");
     pInvSelectBox    = R_DeclarePatch("SELECTBO");
@@ -341,10 +293,6 @@ void Hu_LoadData()
 
 void Hu_UnloadData()
 {
-#if __JDOOM__ || __JDOOM64__
-    Z_Free(pMapNames); pMapNames = 0;
-#endif
-
     releaseFogTexture();
 }
 
@@ -1440,12 +1388,20 @@ dd_bool Hu_IsStatusBarVisible(int player)
 int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
-    patchinfo_t patchInfo;
-    if(R_GetPatchInfo(G_MapTitlePatch(COMMON_GAMESESSION->mapUri()), &patchInfo))
+    de::Uri titleImage = G_MapTitleImage(COMMON_GAMESESSION->mapUri());
+    if(!titleImage.isEmpty())
     {
-        y = patchInfo.geometry.size.height + 2;
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchinfo_t info;
+            patchid_t patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            if(R_GetPatchInfo(patchId, &info))
+            {
+                y = info.geometry.size.height + 2;
+            }
+        }
     }
-    return MAX_OF(14, y);
+    return de::max(14, y);
 }
 #endif
 
@@ -1484,7 +1440,15 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = G_MapTitlePatch(mapUri);
+    patchid_t patchId = 0;
+    de::Uri const titleImage = G_MapTitleImage(mapUri);
+    if(!titleImage.isEmpty())
+    {
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+        }
+    }
     WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title),
                  de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
