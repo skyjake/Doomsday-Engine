@@ -73,7 +73,7 @@ warptrans 8
 sky1 SKY1 0
 nointermission
 par 30
-muisc E1M8
+music E1M8
 titlepatch WILV07
 
 map E1M9 lookup HUSTR_E1M9
