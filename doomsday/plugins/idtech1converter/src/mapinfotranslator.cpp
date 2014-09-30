@@ -46,6 +46,17 @@ namespace internal {
         return "Textures:SKY1";
     }
 
+    /**
+     * Determines whether to interpret cluster numbers as episode ids. This is necessary for
+     * ZDoom-compatible interpretation of MAPINFO.
+     */
+    static bool interpretHubNumberAsEpisodeId()
+    {
+        String const gameIdKey = DENG2_APP->game().id();
+        return (gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic") ||
+                gameIdKey.beginsWith("chex"));
+    }
+
     static inline String toMapId(de::Uri const &mapUri)
     {
         return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path();
@@ -86,8 +97,8 @@ namespace internal {
             addBoolean("doubleSky", false);
             addText   ("fadeTable", "COLORMAP");
             addNumber ("hub", 0);
+            addText   ("id", "Maps:");        // URI. Unknown.
             addBoolean("lightning", false);
-            addText   ("map", "Maps:");       // URI. Unknown.
             addBoolean("nointermission", false);
             addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
             addNumber ("par", 0);
@@ -116,11 +127,12 @@ namespace internal {
 
         void resetToDefaults() {
             // Add all expected fields with their default values.
-            addText("startMap", "Maps:"); // URI. Unknown.
-            addText("title", "Untitled");
+            addText("id", "");            // Unknown.
             addText("menuHelpInfo", "");  // None.
             addText("menuImage", "");     // URI. None.
             addText("menuShortcut", "");  // Key name. None.
+            addText("startMap", "Maps:"); // URI. Unknown.
+            addText("title", "Untitled");
         }
     };
 
@@ -448,6 +460,7 @@ namespace internal {
             String const id = String::number(db.episodeInfos.size() + 1);
             EpisodeInfo *info = &db.episodeInfos[id.toStdString()];
 
+            info->set("id", id);
             info->set("startMap", mapUri.compose());
 
             // Process optional tokens.
@@ -636,7 +649,7 @@ namespace internal {
                         *info = *defaultMap;
                     }
 
-                    info->set("map", mapUri.compose());
+                    info->set("id", mapUri.compose());
 
                     // Attempt to extract the map "warp number".
                     info->set("warpTrans", mapWarpNumberFor(mapUri));
@@ -1175,14 +1188,30 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
     StringList translatedFiles;
 
     typedef QMultiMap<int, MapInfo *> MapInfos;
-    MapInfos buildHubMapInfoTable(String /*episodeId*/)
+    MapInfos buildHubMapInfoTable(String episodeId)
     {
+        bool const hubNumberIsEpisodeId = interpretHubNumberAsEpisodeId();
+
         MapInfos set;
         for(HexDefs::MapInfos::const_iterator it = defs.mapInfos.begin(); it != defs.mapInfos.end(); ++it)
         {
             MapInfo const &mapInfo = it->second;
-            set.insert(mapInfo.geti("hub"), const_cast<MapInfo *>(&mapInfo));
+
+            int hub = mapInfo.geti("hub");
+            if(hubNumberIsEpisodeId)
+            {
+                if(String::number(hub) != episodeId)
+                    continue;
+
+                /// @todo Once hubs are supported in DOOM and Heretic, whether or not this
+                /// map should be grouped into a DED Episode.Hub definition is determined
+                /// by whether or not the ZDoom ClusterDef.hub property is true.
+                hub = 0;
+            }
+
+            set.insert(hub, const_cast<MapInfo *>(&mapInfo));
         }
+
         return set;
     }
 
@@ -1199,13 +1228,13 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
                 if(info.geti("hub"))
                 {
                     LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
-                            << map << info.gets("map") << info.geti("hub");
-                    return de::Uri(info.gets("map"), RC_NULL);
+                            << map << info.gets("id") << info.geti("hub");
+                    return de::Uri(info.gets("id"), RC_NULL);
                 }
 
                 LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
-                        << map << info.gets("map");
-                matchedWithoutHub = de::Uri(info.gets("map"), RC_NULL);
+                        << map << info.gets("id");
+                matchedWithoutHub = de::Uri(info.gets("id"), RC_NULL);
             }
         }
 
@@ -1257,7 +1286,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
             MapInfo const &info = i->second;
             LOG_RES_MSG("MAPINFO %s { title: \"%s\" hub: %i map: %s warp: %i nextMap: %s }")
                     << i->first.c_str() << info.gets("title")
-                    << info.geti("hub") << info.gets("map") << info.geti("warpTrans") << info.gets("nextMap");
+                    << info.geti("hub") << info.gets("id") << info.geti("warpTrans") << info.gets("nextMap");
         }
 #endif*/
     }
@@ -1373,7 +1402,7 @@ String MapInfoTranslator::translate()
             while(n-- > 0)
             {
                 MapInfo const *mapInfo = mapInfosForHub.at(n);
-                de::Uri mapUri(mapInfo->gets("map"), RC_NULL);
+                de::Uri mapUri(mapInfo->gets("id"), RC_NULL);
                 if(!mapUri.path().isEmpty())
                 {
                     os << "\n    Map {"
@@ -1413,7 +1442,7 @@ String MapInfoTranslator::translate()
     {
         MapInfo const &info = i->second;
 
-        de::Uri mapUri(info.gets("map"), RC_NULL);
+        de::Uri mapUri(info.gets("id"), RC_NULL);
         if(mapUri.path().isEmpty()) continue;
 
         bool const doubleSky = info.getb("doubleSky");

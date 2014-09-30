@@ -13,6 +13,7 @@ sky1 SKY1 0
 par 30
 music D_E1M1
 titlepatch WILV00
+cluster 1
 
 map E1M2 lookup HUSTR_E1M2
 next E1M3
@@ -22,6 +23,7 @@ sky1 SKY1 0
 par 75
 music D_E1M2
 titlepatch WILV01
+cluster 1
 
 map E1M3 lookup HUSTR_E1M3
 next E1M4
@@ -31,6 +33,7 @@ sky1 SKY1 0
 par 120
 music D_E1M3
 titlepatch WILV02
+cluster 1
 
 map E1M4 lookup HUSTR_E1M4
 next E1M5
@@ -40,6 +43,7 @@ sky1 SKY1 0
 par 90
 music D_E1M4
 titlepatch WILV03
+cluster 1
 
 map E1M5 lookup HUSTR_E1M5
 next E1M6
@@ -49,6 +53,7 @@ sky1 SKY1 0
 par 165
 music D_E1M5
 titlepatch WILV04
+cluster 1
 
 map E1M6 lookup HUSTR_E1M6
 next E1M7
@@ -58,6 +63,7 @@ sky1 SKY1 0
 par 180
 music D_E1M9
 titlepatch WILV05
+cluster 1
 
 map E1M7 lookup HUSTR_E1M7
 next E1M8
@@ -67,6 +73,7 @@ sky1 SKY1 0
 par 180
 music D_E1M7
 titlepatch WILV06
+cluster 1
 
 map E1M8 lookup HUSTR_E1M8
 warptrans 8
@@ -75,6 +82,7 @@ nointermission
 par 30
 music E1M8
 titlepatch WILV07
+cluster 1
 
 map E1M9 lookup HUSTR_E1M9
 next E1M4
@@ -82,6 +90,7 @@ warptrans 9
 sky1 SKY1 0
 par 165
 titlepatch WILV08
+cluster 1
 
 ; Episode 2 ------------------------------------------------------------
 
@@ -98,6 +107,7 @@ sky1 SKY2 0
 par 90
 music D_E2M1
 titlepatch WILV10
+cluster 2
 
 map E2M2 lookup HUSTR_E2M2
 next E2M3
@@ -107,6 +117,7 @@ sky1 SKY2 0
 par 90
 music D_E2M2
 titlepatch WILV11
+cluster 2
 
 map E2M3 lookup HUSTR_E2M3
 next E2M4
@@ -116,6 +127,7 @@ sky1 SKY2 0
 par 90
 music D_E2M3
 titlepatch WILV12
+cluster 2
 
 map E2M4 lookup HUSTR_E2M4
 next E2M5
@@ -125,6 +137,7 @@ sky1 SKY2 0
 par 120
 music D_E2M4
 titlepatch WILV13
+cluster 2
 
 map E2M5 lookup HUSTR_E2M5
 next E2M6
@@ -134,6 +147,7 @@ sky1 SKY2 0
 par 90
 music D_E2M5
 titlepatch WILV14
+cluster 2
 
 map E2M6 lookup HUSTR_E2M6
 next E2M7
@@ -143,6 +157,7 @@ sky1 SKY2 0
 par 360
 music D_E2M6
 titlepatch WILV15
+cluster 2
 
 map E2M7 lookup HUSTR_E2M7
 next E2M8
@@ -152,6 +167,7 @@ sky1 SKY2 0
 par 240
 music D_E2M7
 titlepatch WILV16
+cluster 2
 
 map E2M8 lookup HUSTR_E2M8
 warptrans 8
@@ -160,6 +176,7 @@ nointermission
 par 30
 music D_E2M8
 titlepatch WILV17
+cluster 2
 
 map E2M9 lookup HUSTR_E2M9
 next E2M6
@@ -168,6 +185,7 @@ sky1 SKY2 0
 par 170
 music D_E2M9
 titlepatch WILV18
+cluster 2
 
 ; Episode 3 ------------------------------------------------------------
 
@@ -184,6 +202,7 @@ sky1 SKY3 0
 par 90
 music D_E3M1
 titlepatch WILV20
+cluster 3
 
 map E3M2 lookup HUSTR_E3M2
 next E3M3
@@ -193,6 +212,7 @@ sky1 SKY3 0
 par 45
 music D_E3M2
 titlepatch WILV21
+cluster 3
 
 map E3M3 lookup HUSTR_E3M3
 next E3M4
@@ -202,6 +222,7 @@ sky1 SKY3 0
 par 90
 music D_E3M3
 titlepatch WILV22
+cluster 3
 
 map E3M4 lookup HUSTR_E3M4
 next E3M5
@@ -211,6 +232,7 @@ sky1 SKY3 0
 par 150
 music D_E3M4
 titlepatch WILV23
+cluster 3
 
 map E3M5 lookup HUSTR_E3M5
 next E3M6
@@ -220,6 +242,7 @@ sky1 SKY3 0
 par 90
 music D_E3M5
 titlepatch WILV24
+cluster 3
 
 map E3M6 lookup HUSTR_E3M6
 next E3M7
@@ -229,6 +252,7 @@ sky1 SKY3 0
 par 90
 music D_E3M6
 titlepatch WILV25
+cluster 3
 
 map E3M7 lookup HUSTR_E3M7
 next E3M8
@@ -238,6 +262,7 @@ sky1 SKY3 0
 par 165
 music D_E3M7
 titlepatch WILV26
+cluster 3
 
 map E3M8 lookup HUSTR_E3M8
 warptrans 8
@@ -246,6 +271,7 @@ nointermission
 par 30
 music D_E3M8
 titlepatch WILV27
+cluster 3
 
 map E3M9 lookup HUSTR_E3M9
 next E3M7
@@ -254,6 +280,7 @@ sky1 SKY3 0
 par 135
 music D_E3M9
 titlepatch WILV28
+cluster 3
 
 ; Episode 4 ------------------------------------------------------------
 
@@ -270,6 +297,7 @@ sky1 SKY4 0
 par 90
 music D_E3M4
 titlepatch WILV30
+cluster 4
 
 map E4M2 lookup HUSTR_E4M2
 next E4M3
@@ -279,6 +307,7 @@ sky1 SKY4 0
 par 120
 music D_E3M2
 titlepatch WILV31
+cluster 4
 
 map E4M3 lookup HUSTR_E4M3
 next E4M4
@@ -288,6 +317,7 @@ sky1 SKY4 0
 par 120
 music D_E3M3
 titlepatch WILV32
+cluster 4
 
 map E4M4 lookup HUSTR_E4M4
 next E4M5
@@ -297,6 +327,7 @@ sky1 SKY4 0
 par 90
 music D_E1M5
 titlepatch WILV33
+cluster 4
 
 map E4M5 lookup HUSTR_E4M5
 next E4M6
@@ -306,6 +337,7 @@ sky1 SKY4 0
 par 150
 music D_E2M7
 titlepatch WILV34
+cluster 4
 
 map E4M6 lookup HUSTR_E4M6
 next E4M7
@@ -315,6 +347,7 @@ sky1 SKY4 0
 par 120
 music D_E2M4
 titlepatch WILV35
+cluster 4
 
 map E4M7 lookup HUSTR_E4M7
 next E4M8
@@ -324,6 +357,7 @@ sky1 SKY4 0
 par 120
 music D_E2M6
 titlepatch WILV36
+cluster 4
 
 map E4M8 lookup HUSTR_E4M8
 warptrans 8
@@ -331,6 +365,7 @@ sky1 SKY4 0
 nointermission
 music D_E2M5
 titlepatch WILV37
+cluster 4
 
 map E4M9 lookup HUSTR_E4M9
 next E4M3
@@ -339,3 +374,4 @@ sky1 SKY4 0
 par 90
 music D_E1M9
 titlepatch WILV38
+cluster 4
