@@ -262,7 +262,7 @@ public:
                 try
                 {
                     /// @note Some sections have their own grammar quirks!
-                    if(line.beginsWith("include", Qt::CaseInsensitive)) // .bex
+                    if(line.beginsWith("include", Qt::CaseInsensitive)) // BEX
                     {
                         parseInclude(line.substr(7).leftStrip());
                         skipToNextSection();
@@ -411,46 +411,44 @@ public:
                         LOG_WARNING("DeHackEd [Cheat] patches are not supported.");
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parsePointerBex();
+                        parseCodePointers();
                     }
-                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[PARS]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parseParsBex();
+                        parsePars();
                     }
-                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[STRINGS]", Qt::CaseInsensitive)) // BEX
                     {
-                        // Not yet supported.
-                        //skipToNextLine();
-                        parseStringsBex();
-                        skipToNextSection();
+                        skipToNextLine();
+                        parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // BEX
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
-                        parseHelperBex();
+                        parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // BEX
                     {
                         // Not yet supported.
                         //skipToNextLine();
-                        parseSpritesBex();
+                        parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parseSoundsBex();
+                        parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // .bex
+                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
-                        parseMusicBex();
+                        parseMusic();
                     }
                     else
                     {
@@ -726,7 +724,7 @@ public:
                 continue;
             }
 
-            // Flags can also be specified by name (a .bex extension).
+            // Flags can also be specified by name (a BEX extension).
             FlagMapping const *flag;
             if(parseMobjTypeFlag(token, &flag))
             {
@@ -1396,10 +1394,10 @@ public:
         }
     }
 
-    void parseParsBex()
+    void parsePars() // BEX
     {
-        LOG_AS("parseParsBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parsePars");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1475,22 +1473,22 @@ public:
         }
     }
 
-    void parseHelperBex()
+    void parseHelper() // BEX
     {
-        LOG_AS("parseHelperBex");
+        LOG_AS("parseHelper");
         LOG_WARNING("DeHackEd [HELPER] patches are not supported.");
     }
 
-    void parseSpritesBex()
+    void parseSprites() // BEX
     {
-        LOG_AS("parseSpritesBex");
+        LOG_AS("parseSprites");
         LOG_WARNING("DeHackEd [SPRITES] patches are not supported.");
     }
 
-    void parseSoundsBex()
+    void parseSounds() // BEX
     {
-        LOG_AS("parseSoundsBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseSounds");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1517,10 +1515,10 @@ public:
         }
     }
 
-    void parseMusicBex()
+    void parseMusic() // BEX
     {
-        LOG_AS("parseMusicBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseMusic");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1547,10 +1545,10 @@ public:
         }
     }
 
-    void parsePointerBex()
+    void parseCodePointers() // BEX
     {
-        LOG_AS("parsePointerBex");
-        // .bex doesn't follow the same rules as .deh
+        LOG_AS("parseCodePointers");
+        // BEX doesn't follow the same rules as .deh
         for(; !line.trimmed().isEmpty(); readLine())
         {
             // Skip comment lines.
@@ -1613,8 +1611,8 @@ public:
     {
         LOG_AS("parseText");
 
-        String oldStr = readTextBlob(oldSize);
-        String newStr = readTextBlob(newSize);
+        String const oldStr = readTextBlob(oldSize);
+        String const newStr = readTextBlob(newSize);
 
         if(!(flags & NoText)) // Disabled?
         {
@@ -1641,13 +1639,83 @@ public:
         skipToNextLine();
     }
 
-    void parseStringsBex()
+    static void replaceTextValue(String const &id, String newValue)
     {
-        LOG_AS("parseStringsBex");
-        LOG_WARNING("DeHackEd [Strings] patches are not supported.");
+        if(id.isEmpty()) return;
+
+        int textIdx = Def_Get(DD_DEF_TEXT, id.toUtf8().constData(), nullptr);
+        if(textIdx < 0) return;
+
+        // We must escape new lines.
+        newValue.replace("\n", "\\n");
+
+        // Replace this text.
+        Def_Set(DD_DEF_TEXT, textIdx, 0, newValue.toUtf8().constData());
+        LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
+                << textIdx << id << newValue;
     }
 
-    void createValueDef(QString const &path, QString const &value)
+    void parseStrings() // BEX
+    {
+        LOG_AS("parseStrings");
+
+        bool multiline = false;
+        String textId;
+        String newValue;
+
+        // BEX doesn't follow the same rules as .deh
+        for(;; readLine())
+        {
+            if(!multiline)
+            {
+                if(line.trimmed().isEmpty()) break;
+
+                // Skip comment lines.
+                if(line.at(0) == '#') continue;
+
+                // Determine the split (or 'pivot') position.
+                int assign = line.indexOf('=');
+                if(assign < 0)
+                {
+                    throw SyntaxError("parseStrings", String("Expected assignment statement but encountered \"%1\" on line #%2")
+                                                        .arg(line).arg(currentLineNumber));
+                }
+
+                textId = line.substr(0, assign).rightStrip();
+
+                // Nothing before '=' ?
+                if(textId.isEmpty())
+                {
+                    throw SyntaxError("parseStrings", String("Expected keyword before '=' on line #%1")
+                                                        .arg(currentLineNumber));
+                }
+
+                newValue = line.substr(assign + 1).leftStrip();
+            }
+            else
+            {
+                newValue += line.leftStrip();
+            }
+
+            // Concatenate another multi-line replacement?
+            if(newValue.endsWith('\\'))
+            {
+                newValue.truncate(newValue.length() - 1);
+                multiline = true;
+                continue;
+            }
+
+            replaceTextValue(textId, newValue);
+            multiline = false;
+        }
+
+        if(line.trimmed().isEmpty())
+        {
+            skipToNextSection();
+        }
+    }
+
+    void createValueDef(String const &path, String const &value)
     {
         // An existing value?
         ded_value_t *def;
