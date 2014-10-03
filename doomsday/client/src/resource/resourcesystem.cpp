@@ -1149,7 +1149,7 @@ DENG2_PIMPL(ResourceSystem)
             if(!mdl) continue;
 
             // Load all skins.
-            foreach(ModelSkin const &skin, mdl->skins())
+            for(ModelSkin const &skin : mdl->skins())
             {
                 if(Texture *tex = skin.texture)
                 {
@@ -1681,10 +1681,6 @@ DENG2_PIMPL(ResourceSystem)
         for(int i = 0; i < mdl.skinCount(); ++i)
         {
             ModelSkin &skin = mdl.skin(i);
-
-            if(skin.name.isEmpty())
-                continue;
-
             try
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
@@ -1694,10 +1690,10 @@ DENG2_PIMPL(ResourceSystem)
                 // We have found one more skin for this model.
                 numFoundSkins += 1;
             }
-            catch(FS1::NotFoundError const&)
+            catch(FS1::NotFoundError const &)
             {
                 LOG_RES_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\"")
-                    << skin.name << i << NativePath(modelFilePath).pretty();
+                        << skin.name << i << NativePath(modelFilePath).pretty();
             }
         }
 
@@ -1705,7 +1701,6 @@ DENG2_PIMPL(ResourceSystem)
         {
             // Lastly try a skin named similarly to the model in the same directory.
             de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
-
             try
             {
                 String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
@@ -1737,10 +1732,10 @@ DENG2_PIMPL(ResourceSystem)
         for(ModelSkin const &skin : mdl.skins())
         {
             TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
-            LOGDEV_RES_XVERBOSE("  %i: %s")
+            LOGDEV_RES_XVERBOSE("  %i: %s %s")
                     << (skinIdx++) << skin.name
-                    << (texManifest? texManifest->composeUri() : "(missing texture)")
-                    << (texManifest? String(" => ") + NativePath(texManifest->resourceUri().compose()).pretty() : "");
+                    << (texManifest? (String("\"") + texManifest->composeUri() + "\"") : "(missing texture)")
+                    << (texManifest? (String(" => \"") + NativePath(texManifest->resourceUri().compose()).pretty() + "\"") : "");
         }
 #endif
     }
