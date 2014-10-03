@@ -1730,6 +1730,19 @@ DENG2_PIMPL(ResourceSystem)
             LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
                 << NativePath(modelFilePath).pretty();
         }
+
+#ifdef DENG2_DEBUG
+        LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
+        int skinIdx = 0;
+        for(ModelSkin const &skin : mdl.skins())
+        {
+            TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
+            LOGDEV_RES_XVERBOSE("  %i: %s")
+                    << (skinIdx++) << skin.name
+                    << (texManifest? texManifest->composeUri() : "(missing texture)")
+                    << (texManifest? String(" => ") + NativePath(texManifest->resourceUri().compose()).pretty() : "");
+        }
+#endif
     }
 
     /**
