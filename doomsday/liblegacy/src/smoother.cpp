@@ -200,14 +200,9 @@ dd_bool Smoother_EvaluateComponent(Smoother const *sm, int component, coord_t *v
 
 dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
 {
-    const pos_t *past;
-    const pos_t *now;
-    float t;
-    int i;
-
-    DENG_ASSERT(sm);
-    past = &sm->past;
-    now = &sm->now;
+    DENG2_ASSERT(sm);
+    pos_t const *past = &sm->past;
+    pos_t const *now = &sm->now;
 
     if(!Smoother_IsValid(sm))
         return false;
@@ -218,7 +213,7 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = past->xyz[VX];
         xyz[VY] = past->xyz[VY];
         xyz[VZ] = past->xyz[VZ];
-        LOGDEV_XVERBOSE("Smoother %p falling behind") << sm;
+        //LOGDEV_XVERBOSE("Smoother %p falling behind") << sm;
         return true;
     }
     //DENG_ASSERT(sm->at <= now->time);
@@ -228,13 +223,13 @@ dd_bool Smoother_Evaluate(Smoother const *sm, coord_t *xyz)
         xyz[VX] = now->xyz[VX];
         xyz[VY] = now->xyz[VY];
         xyz[VZ] = now->xyz[VZ];
-        LOGDEV_XVERBOSE("Smoother %p stalling") << sm;
+        //LOGDEV_XVERBOSE("Smoother %p stalling") << sm;
         return true;
     }
 
     // We're somewhere between past and now.
-    t = (sm->at - past->time) / (now->time - past->time);
-    for(i = 0; i < 3; ++i)
+    float const t = (sm->at - past->time) / (now->time - past->time);
+    for(int i = 0; i < 3; ++i)
     {
         // Linear interpolation.
         xyz[i] = now->xyz[i] * t + past->xyz[i] * (1-t);

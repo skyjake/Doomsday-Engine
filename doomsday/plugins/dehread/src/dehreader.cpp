@@ -426,26 +426,26 @@ public:
                         skipToNextLine();
                         parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[HELPER]", Qt::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
                         parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[SPRITES]", Qt::CaseInsensitive)) // Eternity
                     {
                         // Not yet supported.
                         //skipToNextLine();
                         parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[SOUNDS]", Qt::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[MUSIC]", Qt::CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseMusic();
@@ -1473,19 +1473,19 @@ public:
         }
     }
 
-    void parseHelper() // BEX
+    void parseHelper() // Eternity
     {
         LOG_AS("parseHelper");
         LOG_WARNING("DeHackEd [HELPER] patches are not supported.");
     }
 
-    void parseSprites() // BEX
+    void parseSprites() // Eternity
     {
         LOG_AS("parseSprites");
         LOG_WARNING("DeHackEd [SPRITES] patches are not supported.");
     }
 
-    void parseSounds() // BEX
+    void parseSounds() // Eternity
     {
         LOG_AS("parseSounds");
         // BEX doesn't follow the same rules as .deh
@@ -1515,7 +1515,7 @@ public:
         }
     }
 
-    void parseMusic() // BEX
+    void parseMusic() // Eternity
     {
         LOG_AS("parseMusic");
         // BEX doesn't follow the same rules as .deh

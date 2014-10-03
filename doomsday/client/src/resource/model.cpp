@@ -756,7 +756,8 @@ int Model::skinNumber(String name) const
 {
     if(!name.isEmpty())
     {
-        for(int i = 0; i < d->skins.count(); ++i)
+        // Reverse iteration so that later skins override earlier ones.
+        for(int i = d->skins.count(); i--> 0; )
         {
             Skin const &skin = d->skins.at(i);
             if(!skin.name.compareWithoutCase(name))
@@ -779,10 +780,7 @@ Model::Skin &Model::skin(int number) const
 Model::Skin &Model::newSkin(String name)
 {
     LOG_AS("Model");
-    if(int index = skinNumber(name) > 0)
-    {
-        return skin(index);
-    }
+    // Allow duplicates so that skin indices remain unchanged for selection by index.
     d->skins.append(ModelSkin(name));
     return d->skins.last();
 }

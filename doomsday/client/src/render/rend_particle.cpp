@@ -142,7 +142,7 @@ static byte loadParticleTexture(uint particleTex)
     image_t image;
     if(!GL_LoadImage(image, foundPath.toUtf8().constData()))
     {
-        LOG_RES_WARNING("Failed to load \"%s\"") << foundPath;
+        LOG_RES_WARNING("Failed to load \"%s\"") << NativePath(foundPath).pretty();
         return 0;
     }
 

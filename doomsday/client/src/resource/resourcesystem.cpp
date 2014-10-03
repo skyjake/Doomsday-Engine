@@ -1150,7 +1150,7 @@ DENG2_PIMPL(ResourceSystem)
             if(!mdl) continue;
 
             // Load all skins.
-            foreach(ModelSkin const &skin, mdl->skins())
+            for(ModelSkin const &skin : mdl->skins())
             {
                 if(Texture *tex = skin.texture)
                 {
@@ -1682,10 +1682,6 @@ DENG2_PIMPL(ResourceSystem)
         for(int i = 0; i < mdl.skinCount(); ++i)
         {
             ModelSkin &skin = mdl.skin(i);
-
-            if(skin.name.isEmpty())
-                continue;
-
             try
             {
                 de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
@@ -1695,10 +1691,10 @@ DENG2_PIMPL(ResourceSystem)
                 // We have found one more skin for this model.
                 numFoundSkins += 1;
             }
-            catch(FS1::NotFoundError const&)
+            catch(FS1::NotFoundError const &)
             {
                 LOG_RES_WARNING("Failed to locate \"%s\" (#%i) for model \"%s\"")
-                    << skin.name << i << NativePath(modelFilePath).pretty();
+                        << skin.name << i << NativePath(modelFilePath).pretty();
             }
         }
 
@@ -1706,7 +1702,6 @@ DENG2_PIMPL(ResourceSystem)
         {
             // Lastly try a skin named similarly to the model in the same directory.
             de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
-
             try
             {
                 String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
@@ -1731,6 +1726,19 @@ DENG2_PIMPL(ResourceSystem)
             LOG_RES_WARNING("Model \"%s\" will be rendered without a skin (none found)")
                 << NativePath(modelFilePath).pretty();
         }
+
+#ifdef DENG2_DEBUG
+        LOGDEV_RES_XVERBOSE("Model \"%s\" skins:") << NativePath(modelFilePath).pretty();
+        int skinIdx = 0;
+        for(ModelSkin const &skin : mdl.skins())
+        {
+            TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
+            LOGDEV_RES_XVERBOSE("  %i: %s %s")
+                    << (skinIdx++) << skin.name
+                    << (texManifest? (String("\"") + texManifest->composeUri() + "\"") : "(missing texture)")
+                    << (texManifest? (String(" => \"") + NativePath(texManifest->resourceUri().compose()).pretty() + "\"") : "");
+        }
+#endif
     }
 
     /**
