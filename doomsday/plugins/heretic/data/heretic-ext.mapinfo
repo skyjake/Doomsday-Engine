@@ -249,7 +249,7 @@ music MUS_E1M1
 
 map E4M7 lookup HUSTR_E4M7
 next E4M8
-secret E4M9
+secretnext E4M9
 warptrans 7
 sky1 SKY1 0
 music MUS_E1M7
