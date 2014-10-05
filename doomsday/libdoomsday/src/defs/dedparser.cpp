@@ -570,6 +570,8 @@ DENG2_PIMPL(DEDParser)
 
     int ReadFlags(int *dest, char const *prefix)
     {
+        DENG2_ASSERT(dest);
+
         // By default, no flags are set.
         *dest = 0;
 
@@ -599,14 +601,10 @@ DENG2_PIMPL(DEDParser)
             {
                 *dest = ded->evalFlags2(flag.toUtf8().constData());
             }
-            else
-            {
-                *dest = 0;
-            }
             return true;
         }
 
-        for(;;)
+        forever
         {
             // Read the flag.
             ReadToken();
@@ -899,11 +897,13 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Flag"))
             {
                 ded_stringid_t id;
-                int value;
+                int value = 0;
                 char dummyStr[2];
 
+                de::zap(id);
+
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     RV_STR("ID", id)
@@ -913,10 +913,12 @@ DENG2_PIMPL(DEDParser)
                     CHECKSC;
                 }
 
-                ded->addFlag(id, value);
-
-                // Sanity check.
-                DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
+                if(qstrlen(id))
+                {
+                    ded->addFlag(id, value);
+                    // Sanity check.
+                    DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
+                }
             }
 
             if(ISTOKEN("Mobj") || ISTOKEN("Thing"))

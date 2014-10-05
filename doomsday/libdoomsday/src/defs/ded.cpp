@@ -67,7 +67,7 @@ void ded_s::clear()
     modelOffset = 0;
 }
 
-int ded_s::addFlag(char const *id, int value)
+int ded_s::addFlag(String const &id, int value)
 {
     Record &def = flags.append();
     def.addText("id", id);
