@@ -2176,6 +2176,9 @@ void C_DECL A_BishopAttack(mobj_t* actor)
 
     if(IS_NETWORK_SERVER && actor->target)
     {
+        /// @todo fixme: Do not assume that this action has been triggered by the named
+        /// state because this breaks mod compatibility. Why are we communicating a state
+        /// change here in a way that is incompatible with the rest of the playsim? -ds
         NetSv_SendLocalMobjState(actor, "BISHOP_ATK5");
     }
 }
