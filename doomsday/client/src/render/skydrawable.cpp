@@ -803,6 +803,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
     LOG_AS("SkyDrawable::Animator");
 
     if(!d->sky) return;
+    if(!sky().sky()) return;
 
     if(clientPaused) return;
     if(!DD_IsSharpTick()) return;
