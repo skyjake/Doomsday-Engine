@@ -151,7 +151,7 @@ namespace internal
         }
 
         // If defined, the character at position 7 is also a rotation number.
-        if(name.length() >= 7)
+        if(name.length() > 7)
         {
             if(toSpriteRotation(name.at(7)) < 0)
             {
@@ -1506,27 +1506,30 @@ DENG2_PIMPL(ResourceSystem)
             Vector2i dimensions;
             Vector2i origin;
 
-            // If this is a Patch read the world dimension and origin offset values.
-            ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
-            if(Patch::recognize(fileData))
+            if(file.size())
             {
-                try
+                // If this is a Patch read the world dimension and origin offset values.
+                ByteRefArray fileData = ByteRefArray(file.cache(), file.size());
+                if(Patch::recognize(fileData))
                 {
-                    PatchMetadata info = Patch::loadMetadata(fileData);
+                    try
+                    {
+                        PatchMetadata info = Patch::loadMetadata(fileData);
 
-                    dimensions = info.logicalDimensions;
-                    origin     = -info.origin;
+                        dimensions = info.logicalDimensions;
+                        origin     = -info.origin;
+                    }
+                    catch(IByteArray::OffsetError const &)
+                    {
+                        LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
+                                        "World dimension and origin offset not set for sprite \"%s\".")
+                                << NativePath(file.container().composePath()).pretty()
+                                << NativePath(file.composePath()).pretty()
+                                << uri;
+                    }
                 }
-                catch(IByteArray::OffsetError const &)
-                {
-                    LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch. "
-                                    "World dimension and origin offset not set for sprite \"%s\".")
-                            << NativePath(file.container().composePath()).pretty()
-                            << NativePath(file.composePath()).pretty()
-                            << uri;
-                }
+                file.unlock();
             }
-            file.unlock();
 
             de::Uri resourceUri = composeLumpIndexResourceUrn(i);
             try

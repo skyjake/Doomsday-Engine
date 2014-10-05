@@ -623,18 +623,19 @@ D_CMD(StopFinale)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!FI_StackActive()) return false;
-
-    // Only 'overlays' can be explictly stopped this way.
-    if(fi_state_t *s = stackTop())
+    if(FI_StackActive())
     {
-        if(s->mode == FIMODE_OVERLAY)
+        // Only 'overlays' can be explictly stopped this way.
+        if(fi_state_t *s = stackTop())
         {
-            FI_ScriptTerminate(s->finaleId);
-            return true;
+            if(s->mode == FIMODE_OVERLAY)
+            {
+                FI_ScriptTerminate(s->finaleId);
+            }
         }
     }
-    return false;
+
+    return true; // Always
 }
 
 void FI_StackRegister()

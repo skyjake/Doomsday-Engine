@@ -22,8 +22,9 @@
 
 #include <vector>
 #include <de/libcore.h>
-#include <de/Vector>
 #include <de/Record>
+#include <de/String>
+#include <de/Vector>
 #include "../uri.h"
 
 #include "dedtypes.h"
@@ -138,7 +139,7 @@ public:
 
     void clear();
 
-    int addFlag(char const *id, int value);
+    int addFlag(de::String const &id, int value);
 
     int addEpisode();
 

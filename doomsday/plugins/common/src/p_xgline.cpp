@@ -1445,6 +1445,8 @@ int XL_ValidateLineRef(Line *line, int reftype, void * /*context*/, char const *
  */
 void XL_DoFunction(linetype_t *info, Line *line, int sideNum, mobj_t *actThing, int evType)
 {
+    DENG2_ASSERT(info && line);
+    DENG2_ASSERT(info->lineClass >= 0 && info->lineClass < NUMXGCLASSES);
     xgclass_t *xgClass = &xgClasses[info->lineClass];
 
     XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
