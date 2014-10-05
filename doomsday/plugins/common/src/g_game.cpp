@@ -2699,6 +2699,17 @@ D_CMD(WarpMap)
     {
         // Map warp numbers must be translated in the context of an Episode.
         mapUri = TranslateMapWarpNumber(episodeId, mapWarpNumber);
+
+        if(mapUri.isEmpty())
+        {
+            // It may be a map that is outside the defined progression.
+            bool isNumber;
+            int episodeNum = episodeId.toInt(&isNumber);
+            if(isNumber)
+            {
+                mapUri = G_ComposeMapUri(episodeNum, mapWarpNumber > 0? mapWarpNumber - 1 : 0);
+            }
+        }
     }
 
     // Catch invalid maps.
