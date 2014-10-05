@@ -206,15 +206,15 @@ void IN_Init()
         << Location( Vector2i( 71,  24), de::Uri("Maps:E1M9", RC_NULL) );
 
     episode2Anims
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M1", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M2", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M3", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M4", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M5", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M6", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M7", RC_NULL) )
-        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M8", RC_NULL), ILS_SHOW_NEXTMAP )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M8", RC_NULL) );
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M2", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M3", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M4", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M5", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M6", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M9", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M7", RC_NULL) )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M8", RC_NULL) )
+        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M9", RC_NULL), ILS_SHOW_NEXTMAP );
 
     episode2Locations
         << Location( Vector2i(254,  25), de::Uri("Maps:E2M1", RC_NULL) )
@@ -524,7 +524,7 @@ static void beginAnimations()
         Animation const &def = (*anims)[i];
         wianimstate_t &state = animStates[i];
 
-        // Is the animation active for the current map?
+        // Is the animation active for the next map?
         if(!def.mapUri.path().isEmpty() && wbs->nextMap != def.mapUri)
             continue;
 
@@ -558,7 +558,7 @@ static void animateBackground()
         Animation const &def = (*anims)[i];
         wianimstate_t &state = animStates[i];
 
-        // Is the animation active for the current map?
+        // Is the animation active for the next map?
         if(!def.mapUri.path().isEmpty() && wbs->nextMap != def.mapUri)
             continue;
 
