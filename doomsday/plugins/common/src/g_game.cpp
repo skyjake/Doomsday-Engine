@@ -2893,7 +2893,10 @@ D_CMD(LoadSession)
                 return G_SetGameActionLoadSession(sslot->id());
             }
 
-            S_LocalSound(SFX_QUICKLOAD_PROMPT, NULL);
+            // Are we already awaiting a reponse of some kind?
+            if(Hu_IsMessageActive()) return false;
+
+            S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
             // Compose the confirmation message.
             de::String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, existingDescription.toUtf8().constData());
@@ -3000,7 +3003,10 @@ D_CMD(SaveSession)
                 return G_SetGameActionSaveSession(sslot->id(), &userDescription);
             }
 
-            S_LocalSound(SFX_QUICKSAVE_PROMPT, NULL);
+            // Are we already awaiting a reponse of some kind?
+            if(Hu_IsMessageActive()) return false;
+
+            S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
             de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
@@ -3074,7 +3080,10 @@ D_CMD(DeleteSavedSession)
             }
             else
             {
-                S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, NULL);
+                // Are we already awaiting a reponse of some kind?
+                if(Hu_IsMessageActive()) return false;
+
+                S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
                 de::String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
