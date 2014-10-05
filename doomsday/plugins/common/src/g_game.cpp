@@ -2352,6 +2352,9 @@ D_CMD(LoadSession)
                 return G_SetGameActionLoadSession(sslot->id());
             }
 
+            // Are we already awaiting a reponse of some kind?
+            if(Hu_IsMessageActive()) return false;
+
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
             // Compose the confirmation message.
             String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
@@ -2459,6 +2462,9 @@ D_CMD(SaveSession)
                 return G_SetGameActionSaveSession(sslot->id(), &userDescription);
             }
 
+            // Are we already awaiting a reponse of some kind?
+            if(Hu_IsMessageActive()) return false;
+
             S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
@@ -2532,6 +2538,9 @@ D_CMD(DeleteSavedSession)
             }
             else
             {
+                // Are we already awaiting a reponse of some kind?
+                if(Hu_IsMessageActive()) return false;
+
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
