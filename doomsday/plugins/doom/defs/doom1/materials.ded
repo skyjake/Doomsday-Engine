@@ -121,20 +121,6 @@ SkipIf hacx;
 # Glowing textures:
 #
 
-Material Mods "textures:FIREBLU1" {
-  Layer {
-      Stage { Glow = 1.8; Glow Rnd = .8; }
-      Stage { Glow = 1.8; Glow Rnd = .8; }
-  }
-}
-
-Material Mods "textures:FIREBLU2" {
-  Layer {
-      Stage { Glow = 1.8; Glow Rnd = .8; }
-      Stage { Glow = 1.8; Glow Rnd = .8; }
-  }
-}
-
 Material Mods "textures:FIRELAV3" {
   Layer {
       Stage { Glow = 1.8; Glow Rnd = .8; }
@@ -198,6 +184,23 @@ Material Mods "textures:FIREWALB" {
 Material Mods "textures:FIREWALL" {
   Layer {
       Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
+}
+
+# Plutonia's version of FIREBLU is slimy rock animation.
+SkipIf doom2-plut;
+
+Material Mods "textures:FIREBLU1" {
+  Layer {
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+      Stage { Glow = 1.8; Glow Rnd = .8; }
+  }
+}
+
+Material Mods "textures:FIREBLU2" {
+  Layer {
       Stage { Glow = 1.8; Glow Rnd = .8; }
       Stage { Glow = 1.8; Glow Rnd = .8; }
   }
