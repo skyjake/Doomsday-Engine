@@ -2005,8 +2005,15 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
         }
     }
 
-    if(target->player)
-    {   // Player specific.
+    if(target->player) // Player specific.
+    {
+        if(damage < 1000 &&
+           ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
+            target->player->powers[PT_INVULNERABILITY]))
+        {
+            return 0;
+        }
+
         // Check if player-player damage is disabled.
         if(source && source->player && source->player != target->player)
         {
@@ -2230,12 +2237,12 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
     {
         target->player->update |= PSF_HEALTH;
 
-        if(damage < 1000 &&
+        /*if(damage < 1000 &&
            ((P_GetPlayerCheats(target->player) & CF_GODMODE) ||
             target->player->powers[PT_INVULNERABILITY]))
         {
             return 0;
-        }
+        }*/
 
         savedPercent = FIX2FLT(
             PCLASS_INFO(player->class_)->autoArmorSave + player->armorPoints[ARMOR_ARMOR] +
