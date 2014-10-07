@@ -849,7 +849,7 @@ static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
     GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
                                    SCREENWIDTH, SCREENHEIGHT,
                                    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
-                                   FI_ScaleMode());
+                                   scalemode_t(Con_GetByte("rend-finale-stretch")));
 }
 
 bool FI_IsStretchedToView()

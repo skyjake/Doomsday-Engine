@@ -32,6 +32,7 @@
 #include "resource/resourcesystem.h"
 #include "Games"
 #include "world/worldsystem.h"
+#include "ui/fi_main.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include <doomsday/filesys/sys_direc.h>
@@ -127,6 +128,9 @@ void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
 de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+
+/// @return  The application's global InFineSystem.
+InFineSystem &App_InFineSystem();
 
 /// @return  The application's global ResourceSystem.
 ResourceSystem &App_ResourceSystem();

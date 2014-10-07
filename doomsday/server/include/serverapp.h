@@ -22,6 +22,7 @@
 
 #include <de/TextApp>
 #include "serversystem.h"
+#include "ui/fi_main.h"
 #include "resource/resourcesystem.h"
 #include "Games"
 #include "world/worldsystem.h"
@@ -44,6 +45,7 @@ public:
 public:
     static ServerApp &app();
     static ServerSystem &serverSystem();
+    static InFineSystem &infineSystem();
     static ResourceSystem &resourceSystem();
     static de::Games &games();
     static de::WorldSystem &worldSystem();

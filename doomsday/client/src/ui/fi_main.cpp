@@ -1,7 +1,7 @@
-/** @file fi_main.cpp
+/** @file fi_main.cpp  Interactive animation sequence system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,265 +17,301 @@
  * http://www.gnu.org/licenses</small>
  */
 
-// HEADER FILES ------------------------------------------------------------
-
 #define DENG_NO_API_MACROS_INFINE
 
-#include <de/memory.h>
-#include <de/memoryzone.h>
+#include <QtAlgorithms>
+#include <de/Log>
+#include <doomsday/console/var.h>
 
-#include "de_console.h"
-#include "de_defs.h"
-#include "de_graphics.h"
-#include "de_resource.h"
-#include "de_infine.h"
-#include "de_misc.h"
-#include "dd_def.h"
-#include "dd_main.h"
+#include "de_base.h"
+#include "ui/fi_main.h"
 
-#include "ui/finaleinterpreter.h"
 #include "network/net_main.h"
-
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
 #endif
+#include "ui/b_context.h"
+#include "ui/finaleinterpreter.h"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
-// TYPES -------------------------------------------------------------------
-
-/**
- * A Finale instance contains the high-level state of an InFine script.
- *
- * @see FinaleInterpreter (interactive script interpreter)
- *
- * @ingroup InFine
- */
-typedef struct {
-    /// @ref finaleFlags
-    int flags;
-    /// Unique identifier/reference (chosen automatically).
+DENG2_PIMPL(Finale)
+{
+    bool active;
+    int flags;  ///< @ref finaleFlags
     finaleid_t id;
-    /// Interpreter for this script.
-    finaleinterpreter_t* _interpreter;
-    /// Interpreter is active?
-    dd_bool active;
-} finale_t;
+    finaleinterpreter_t *interpreter;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+    Instance(Public *i, int flags, finaleid_t id)
+        : Base(i)
+        , active     (false)
+        , flags      (flags)
+        , id         (id)
+        , interpreter(P_CreateFinaleInterpreter(id))
+    {}
 
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+    ~Instance()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self);
 
-finale_t*           P_CreateFinale(void);
-void                P_DestroyFinale(finale_t* f);
+        P_DestroyFinaleInterpreter(interpreter);
+    }
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+    void loadScript(String const &script)
+    {
+        if(script.isEmpty()) return;
 
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+        LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << id << script;
+        Block const scriptAsUtf8 = script.toUtf8();
+        FinaleInterpreter_LoadScript(interpreter, scriptAsUtf8.constData());
+#ifdef __SERVER__
+        if(!(flags & FF_LOCAL) && ::isServer)
+        {
+            // Instruct clients to start playing this Finale.
+            Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, scriptAsUtf8.constData());
+        }
+#endif
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+        active = true;
+    }
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
+    DENG2_PIMPL_AUDIENCE(Deletion)
+};
 
-static dd_bool inited = false;
+DENG2_AUDIENCE_METHOD(Finale, Deletion)
 
-/// Scripts.
-static uint finalesSize;
-static finale_t* finales;
+Finale::Finale(int flags, finaleid_t id, String const &script)
+    : d(new Instance(this, flags, id))
+{
+    d->loadScript(script);
+}
 
-static byte scaleMode = SCALEMODE_SMART_STRETCH;
+int Finale::flags() const
+{
+    return d->flags;
+}
 
-// CODE --------------------------------------------------------------------
+finaleid_t Finale::id() const
+{
+    return d->id;
+}
 
-void FI_Register(void)
+bool Finale::isActive() const
+{
+    return d->active;
+}
+
+bool Finale::isSuspended() const
+{
+    return FinaleInterpreter_IsSuspended(d->interpreter);
+}
+
+void Finale::resume()
+{
+    d->active = true;
+    FinaleInterpreter_Resume(d->interpreter);
+}
+
+void Finale::suspend()
+{
+    d->active = false;
+    FinaleInterpreter_Suspend(d->interpreter);
+}
+
+bool Finale::terminate()
+{
+    if(!d->active) return false;
+
+    LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << d->id;
+    d->active = false;
+    P_DestroyFinaleInterpreter(d->interpreter); d->interpreter = nullptr;
+    return true;
+}
+
+bool Finale::runTicks()
+{
+    if(d->active)
+    {
+        if(FinaleInterpreter_RunTic(d->interpreter))
+        {
+            // The script has ended!
+            terminate();
+            return false;
+        }
+    }
+    return true;
+}
+
+int Finale::handleEvent(ddevent_t const &ev)
+{
+    if(!d->active) return false;
+    return FinaleInterpreter_Responder(d->interpreter, &ev);
+}
+
+bool Finale::requestSkip()
+{
+    return FinaleInterpreter_Skip(d->interpreter);
+}
+
+bool Finale::isMenuTrigger() const
+{
+    if(!isActive()) return false;
+    LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << FinaleInterpreter_IsMenuTrigger(d->interpreter);
+    return FinaleInterpreter_IsMenuTrigger(d->interpreter);
+}
+
+bool Finale::commandExecuted() const
+{
+    return FinaleInterpreter_CommandExecuted(d->interpreter);
+}
+
+finaleinterpreter_t const &Finale::interpreter() const
+{
+    DENG2_ASSERT(d->interpreter);
+    return *d->interpreter;
+}
+
+// --------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(InFineSystem)
+, DENG2_OBSERVES(Finale, Deletion)
+{
+    Finales finales;
+
+    ~Instance() { qDeleteAll(finales); }
+
+    Finale *finaleForId(finaleid_t id)
+    {
+        if(id != 0)
+        {
+            for(Finale const *f : finales)
+            {
+                if(f->id() == id) return const_cast<Finale *>(f);
+            }
+        }
+        return nullptr;
+    }
+
+    finaleid_t nextUnusedId()
+    {
+        finaleid_t id = 0;
+        while(finaleForId(++id)) {}
+        return id;
+    }
+
+    void finaleBeingDeleted(Finale const &finale)
+    {
+        finales.removeOne(const_cast<Finale *>(&finale));
+    }
+};
+
+InFineSystem::InFineSystem() : d(new Instance)
+{}
+
+void InFineSystem::reset()
+{
+    LOG_AS("InFineSystem");
+
+    while(!d->finales.isEmpty())
+    {
+        std::unique_ptr<Finale> finale(d->finales.takeFirst());
+        finale->terminate();
+    }
+}
+
+void InFineSystem::runTicks()
+{
+    LOG_AS("InFineSystem");
+
+    if(!DD_IsSharpTick()) return;
+
+    // A new 'sharp' tick has begun.
+
+    // All finales tic unless inactive.
+    for(int i = 0; i < d->finales.count(); ++i)
+    {
+        Finale *finale = d->finales[i];
+        if(!finale->runTicks())
+        {
+            // The script has terminated.
+            delete finale;
+        }
+    }
+}
+
+Finale &InFineSystem::newFinale(int flags, String script, String const &setupCmds)
+{
+    LOG_AS("InFineSystem");
+
+    if(!setupCmds.isEmpty())
+    {
+        // Setup commands are included. We must prepend these to the script
+        // in a special control block that will be executed immediately.
+        script.prepend("OnLoad {\n" + setupCmds + "}\n");
+    }
+
+    d->finales << new Finale(flags, d->nextUnusedId(), script);
+    auto *finale = d->finales.last();
+    finale->audienceForDeletion() += d;
+    return *finale;
+}
+
+bool InFineSystem::hasFinale(finaleid_t id) const
+{
+    return d->finaleForId(id) != nullptr;
+}
+
+Finale &InFineSystem::finale(finaleid_t id)
+{
+    Finale *finale = d->finaleForId(id);
+    if(finale) return *finale;
+    /// @throw MissingFinaleError The given id does not reference a Finale
+    throw MissingFinaleError("finale", "No Finale known by id:" + String::number(id));
+}
+
+InFineSystem::Finales const &InFineSystem::finales() const
+{
+    return d->finales;
+}
+
+#ifdef __CLIENT__
+static bool inited;
+
+void InFineSystem::initBindingContext() // static
+{
+    // Already been here?
+    if(inited) return;
+
+    inited = true;
+    B_SetContextFallbackForDDEvents("finale", de::function_cast<int (*)(ddevent_t const *)>(gx.FinaleResponder));
+    B_ActivateContext(B_ContextByName("finale"), true); // always on
+}
+
+void InFineSystem::deinitBindingContext() // static
+{
+    // Not yet initialized?
+    if(!inited) return;
+
+    B_SetContextFallbackForDDEvents("finale", nullptr);
+    B_ActivateContext(B_ContextByName("finale"), false);
+    inited = false;
+}
+#endif // __CLIENT__
+
+namespace {
+byte scaleMode = SCALEMODE_SMART_STRETCH;
+}
+
+void InFineSystem::consoleRegister() // static
 {
     C_VAR_BYTE("rend-finale-stretch", &scaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
 }
 
-scalemode_t FI_ScaleMode()
+// Public API (C Wrapper) ---------------------------------------------------------------
+
+finaleid_t FI_Execute2(char const *script, int flags, char const *setupCmds)
 {
-    return scalemode_t(scaleMode);
-}
-
-static finale_t* finalesById(finaleid_t id)
-{
-    if(id != 0)
-    {
-        uint i;
-        for(i = 0; i < finalesSize; ++i)
-        {
-            finale_t* f = &finales[i];
-            if(f->id == id)
-                return f;
-        }
-    }
-    return 0;
-}
-
-static finale_t *getFinaleById(finaleid_t id)
-{
-    finale_t *f = finalesById(id);
-    if(!f)
-    {
-        LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
-    }
-    return f;
-}
-
-static void stopFinale(finale_t* f)
-{
-    if(!f || !f->active)
-        return;
-
-    LOGDEV_SCR_VERBOSE("Stopping finaleid %i") << f->id;
-
-    f->active = false;
-    P_DestroyFinaleInterpreter(f->_interpreter);
-}
-
-/**
- * @return  A new (unused) unique script id.
- */
-static finaleid_t finalesUniqueId(void)
-{
-    finaleid_t id = 0;
-    while(finalesById(++id)) {}
-    return id;
-}
-
-finale_t* P_CreateFinale(void)
-{
-    finale_t* f;
-    finales = (finale_t *) Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_APPSTATIC);
-    f = &finales[finalesSize-1];
-    f->id = finalesUniqueId();
-    f->_interpreter = P_CreateFinaleInterpreter();
-    f->_interpreter->_id = f->id;
-    f->active = true;
-    return f;
-}
-
-void P_DestroyFinale(finale_t* f)
-{
-    assert(f);
-    {uint i;
-    for(i = 0; i < finalesSize; ++i)
-    {
-        if(&finales[i] != f)
-            continue;
-
-        if(i != finalesSize-1)
-            memmove(&finales[i], &finales[i+1], sizeof(*finales) * (finalesSize-i));
-
-        if(finalesSize > 1)
-        {
-            finales = (finale_t *) Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_APPSTATIC);
-        }
-        else
-        {
-            Z_Free(finales); finales = 0;
-            finalesSize = 0;
-        }
-        break;
-    }}
-}
-
-dd_bool FI_ScriptRequestSkip(finaleid_t id)
-{
-    DENG_ASSERT(inited);
-    LOG_AS("FI_ScriptRequestSkip");
-
-    finale_t* f = getFinaleById(id);
-    if(!f) return false;
-    return FinaleInterpreter_Skip(f->_interpreter);
-}
-
-int FI_ScriptFlags(finaleid_t id)
-{
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return 0;
-    return f->flags;
-}
-
-dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
-{
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return false;
-    if(f->active)
-    {
-        LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << FinaleInterpreter_IsMenuTrigger(f->_interpreter);
-        return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
-    }
-    return false;
-}
-
-dd_bool FI_ScriptActive(finaleid_t id)
-{
-    DENG_ASSERT(inited);
-    LOG_AS("FI_ScriptActive");
-    finale_t *f = getFinaleById(id);
-    if(!f) return false;
-    return (f->active != 0);
-}
-
-void FI_Init(void)
-{
-    if(inited)
-        return; // Already been here.
-    finales = 0; finalesSize = 0;
-
-#ifdef __CLIENT__
-    B_SetContextFallbackForDDEvents("finale", (int (*)(const ddevent_t*)) gx.FinaleResponder);
-    B_ActivateContext(B_ContextByName("finale"), true); // always on
-#endif
-
-    inited = true;
-}
-
-void FI_Shutdown(void)
-{
-    if(!inited)
-        return; // Huh?
-
-    if(finalesSize)
-    {
-        uint i;
-        for(i = 0; i < finalesSize; ++i)
-        {
-            finale_t* f = &finales[i];
-            P_DestroyFinaleInterpreter(f->_interpreter);
-        }
-        Z_Free(finales);
-    }
-    finales = 0; finalesSize = 0;
-
-#ifdef __CLIENT__
-    B_SetContextFallbackForDDEvents("finale", NULL);
-    B_ActivateContext(B_ContextByName("finale"), false);
-#endif
-
-    inited = false;
-}
-
-dd_bool FI_ScriptCmdExecuted(finaleid_t id)
-{
-    DENG_ASSERT(inited);
-    LOG_AS("FI_ScriptCmdExecuted");
-    finale_t *f = getFinaleById(id);
-    if(!f) return false;
-    return FinaleInterpreter_CommandExecuted(f->_interpreter);
-}
-
-finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
-{
-    const char* script = _script;
-    char* tempScript = 0;
-    finale_t* f;
-
-    DENG_ASSERT(inited);
-    LOG_AS("FI_Execute2");
+    LOG_AS("InFine.Execute");
 
     if(!script || !script[0])
     {
@@ -289,117 +325,126 @@ finaleid_t FI_Execute2(const char* _script, int flags, const char* setupCmds)
         return 0;
     }
 
-    if(setupCmds && setupCmds[0])
-    {
-        // Setup commands are included. We must prepend these to the script
-        // in a special control block that will be executed immediately.
-        size_t setupCmdsLen = strlen(setupCmds);
-        size_t scriptLen = strlen(script);
-        char* p;
-
-        p = tempScript = (char *) M_Malloc(scriptLen + setupCmdsLen + 9 + 2 + 1);
-        strcpy(p, "OnLoad {\n"); p += 9;
-        memcpy(p, setupCmds, setupCmdsLen); p += setupCmdsLen;
-        strcpy(p, "}\n"); p += 2;
-        memcpy(p, script, scriptLen); p += scriptLen;
-        *p = '\0';
-        script = tempScript;
-    }
-
-    f = P_CreateFinale();
-    f->flags = flags;
-    FinaleInterpreter_LoadScript(f->_interpreter, script);
-
-#ifdef __SERVER__
-    if(!(flags & FF_LOCAL) && isServer)
-    {
-        // Instruct clients to start playing this Finale.
-        Sv_Finale(f->id, FINF_BEGIN | FINF_SCRIPT, script);
-    }
-#endif
-
-    LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << f->id << _script;
-
-    if(tempScript)
-    {
-        M_Free(tempScript);
-    }
-    return f->id;
+    return App_InFineSystem().newFinale(flags, script, setupCmds).id();
 }
 
-finaleid_t FI_Execute(const char* script, int flags)
+finaleid_t FI_Execute(char const *script, int flags)
 {
     return FI_Execute2(script, flags, 0);
 }
 
 void FI_ScriptTerminate(finaleid_t id)
 {
-    DENG_ASSERT(inited);
-    LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << id;
-    finale_t *f = getFinaleById(id);
-    if(!f) return;
-    if(f->active)
+    LOG_AS("InFine.ScriptTerminate");
+    if(App_InFineSystem().hasFinale(id))
     {
-        stopFinale(f);
-        P_DestroyFinale(f);
+        Finale &finale = App_InFineSystem().finale(id);
+        if(finale.terminate())
+        {
+            delete &finale;
+        }
+        return;
     }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
-void FI_Ticker(void)
+dd_bool FI_ScriptActive(finaleid_t id)
 {
-    if(!DD_IsSharpTick())
-        return;
-
-    // A new 'sharp' tick has begun.
-
-    // All finales tic unless inactive.
-    { uint i;
-    for(i = 0; i < finalesSize; ++i)
+    LOG_AS("InFine.ScriptActive");
+    if(App_InFineSystem().hasFinale(id))
     {
-        finale_t* f = &finales[i];
-        if(!f->active)
-            continue;
-        if(FinaleInterpreter_RunTic(f->_interpreter))
-        {   // The script has ended!
-            stopFinale(f);
-            P_DestroyFinale(f);
-        }
-    }}
+        return App_InFineSystem().finale(id).isActive();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return false;
 }
 
 void FI_ScriptSuspend(finaleid_t id)
 {
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return;
-    f->active = false;
-    FinaleInterpreter_Suspend(f->_interpreter);
+    LOG_AS("InFine.ScriptSuspend");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        App_InFineSystem().finale(id).suspend();
+        return;
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
 void FI_ScriptResume(finaleid_t id)
 {
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return;
-    f->active = true;
-    FinaleInterpreter_Resume(f->_interpreter);
+    LOG_AS("InFine.ScriptResume");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        App_InFineSystem().finale(id).resume();
+        return;
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
 }
 
 dd_bool FI_ScriptSuspended(finaleid_t id)
 {
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return false;
-    return FinaleInterpreter_IsSuspended(f->_interpreter);
+    LOG_AS("InFine.ScriptSuspend");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).isSuspended();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return false;
 }
 
-int FI_ScriptResponder(finaleid_t id, const void* ev)
+int FI_ScriptFlags(finaleid_t id)
 {
-    DENG_ASSERT(inited);
-    finale_t *f = getFinaleById(id);
-    if(!f) return false;
-    if(f->active)
-        return FinaleInterpreter_Responder(f->_interpreter, (const ddevent_t*)ev);
+    LOG_AS("InFine.ScriptFlags");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).flags();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return 0;
+}
+
+int FI_ScriptResponder(finaleid_t id, void const *ev)
+{
+    DENG2_ASSERT(ev);
+    LOG_AS("InFine.ScriptResponder");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).handleEvent(*static_cast<ddevent_t const *>(ev));
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return false;
+}
+
+dd_bool FI_ScriptCmdExecuted(finaleid_t id)
+{
+    LOG_AS("InFine.CmdExecuted");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).commandExecuted();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return false;
+}
+
+dd_bool FI_ScriptRequestSkip(finaleid_t id)
+{
+    LOG_AS("InFine.ScriptRequestSkip");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).requestSkip();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
+    return false;
+}
+
+dd_bool FI_ScriptIsMenuTrigger(finaleid_t id)
+{
+    LOG_AS("InFine.ScriptIsMenuTrigger");
+    if(App_InFineSystem().hasFinale(id))
+    {
+        return App_InFineSystem().finale(id).isMenuTrigger();
+    }
+    LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
     return false;
 }
 

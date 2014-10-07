@@ -21,10 +21,10 @@
 #include "client/cl_infine.h"
 
 #include "de_console.h"
-#include "de_infine.h"
 
 #include "network/net_main.h"
 #include "network/net_msg.h"
+#include "ui/finaleinterpreter.h"
 
 #include <de/memory.h>
 

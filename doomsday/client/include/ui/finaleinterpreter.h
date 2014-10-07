@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBDENG_FINALEINTERPRETER_H
-#define LIBDENG_FINALEINTERPRETER_H
+#ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
+#define DENG_UI_INFINE_FINALEINTERPRETER_H
 
 #include "dd_input.h"
 #include "dd_ui.h"
@@ -44,17 +44,19 @@
  * @see Finale
  * @ingroup infine
  */
-/// \todo Should be private.
-typedef struct fi_handler_s {
+/// @todo Should be private.
+struct fi_handler_t
+{
     ddevent_t       ev; // Template.
     fi_objectname_t marker;
-} fi_handler_t;
+};
 
-/// \todo Should be private.
-typedef struct fi_namespace_s {
-    uint            num;
-    struct fi_namespace_record_s* vector;
-} fi_namespace_t;
+/// @todo Should be private.
+struct fi_namespace_t
+{
+    uint num;
+    struct fi_namespace_record_s *vector;
+};
 
 /// UIPage indices.
 enum {
@@ -64,7 +66,8 @@ enum {
 
 #define FINALEINTERPRETER_MAX_TOKEN_LENGTH (8192)
 
-typedef struct finaleinterpreter_s {
+struct finaleinterpreter_t
+{
     struct finaleinterpreter_flags_s {
         char stopped:1;
         char suspended:1;
@@ -78,26 +81,26 @@ typedef struct finaleinterpreter_s {
     finaleid_t _id;
 
     /// Copy of the script being interpreted.
-    char* _script;
+    char *_script;
 
     /// Beginning of the script (after any directive blocks).
-    char* _scriptBegin;
+    char *_scriptBegin;
 
     /// Current position in the script.
-    const char* _cp;
+    char const *_cp;
 
     /// Script token read/parse buffer.
     char _token[FINALEINTERPRETER_MAX_TOKEN_LENGTH];
 
     /// Event handlers defined by the loaded script.
     uint _numEventHandlers;
-    fi_handler_t* _eventHandlers;
+    fi_handler_t *_eventHandlers;
 
     /// Known symbols (to the loaded script).
     fi_namespace_t _namespace;
 
     /// Pages on which objects created by this interpeter are visible.
-    struct fi_page_s* _pages[2];
+    struct fi_page_s *_pages[2];
 
     /// Set to true after first command is executed.
     dd_bool _cmdExecuted;
@@ -111,28 +114,28 @@ typedef struct finaleinterpreter_s {
 
     fi_objectname_t _gotoTarget;
 
-    struct fi_object_s* _waitingText;
-    struct fi_object_s* _waitingPic;
-} finaleinterpreter_t;
+    struct fi_object_s *_waitingText;
+    struct fi_object_s *_waitingPic;
+};
 
-finaleinterpreter_t* P_CreateFinaleInterpreter(void);
-void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
+finaleinterpreter_t *P_CreateFinaleInterpreter(finaleid_t id);
+void P_DestroyFinaleInterpreter(finaleinterpreter_t *fi);
 
-dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
-int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev);
+dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t *fi);
+int FinaleInterpreter_Responder(finaleinterpreter_t *fi, ddevent_t const *ev);
 
-void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script);
-void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
-void FinaleInterpreter_Suspend(finaleinterpreter_t* fi);
-void FinaleInterpreter_Resume(finaleinterpreter_t* fi);
+void FinaleInterpreter_LoadScript(finaleinterpreter_t *fi, char const *script);
+void FinaleInterpreter_ReleaseScript(finaleinterpreter_t *fi);
+void FinaleInterpreter_Suspend(finaleinterpreter_t *fi);
+void FinaleInterpreter_Resume(finaleinterpreter_t *fi);
 
-dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
-dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
-dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
-dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, dd_bool yes);
+dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t *fi);
+dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t *fi);
+dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t const *fi);
+dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t *fi);
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t *fi, dd_bool yes);
 
-dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
-dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi);
+dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t *fi, char const *marker);
+dd_bool FinaleInterpreter_Skip(finaleinterpreter_t *fi);
 
-#endif /* LIBDENG_FINALEINTERPRETER_H */
+#endif // DENG_UI_INFINE_FINALEINTERPRETER_H

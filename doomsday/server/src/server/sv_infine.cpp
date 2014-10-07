@@ -19,7 +19,7 @@
  */
 
 #include "de_network.h"
-#include "de_infine.h"
+#include "ui/finaleinterpreter.h"
 
 /**
  * The actual script is sent to the clients. @a script can be NULL.

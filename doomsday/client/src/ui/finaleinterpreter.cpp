@@ -29,9 +29,7 @@
 #include "de_console.h"
 #include "de_defs.h"
 #include "de_graphics.h"
-#include "de_infine.h"
 #include "de_misc.h"
-#include "de_infine.h"
 #include "de_ui.h"
 #include "de_filesys.h"
 #include "de_resource.h"
@@ -49,6 +47,8 @@
 #ifdef __CLIENT__
 #  include "gl/gl_texmanager.h"
 #endif
+
+#include "ui/finaleinterpreter.h"
 
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
@@ -970,14 +970,17 @@ static void changePageBackground(fi_page_t* p, Material* mat)
     FIPage_SetBackgroundMaterial(p, mat);
 }
 
-finaleinterpreter_t* P_CreateFinaleInterpreter(void)
+finaleinterpreter_t *P_CreateFinaleInterpreter(finaleid_t id)
 {
-    return (finaleinterpreter_t *) Z_Calloc(sizeof(finaleinterpreter_t), PU_APPSTATIC, 0);
+    auto *fi = (finaleinterpreter_t *) Z_Calloc(sizeof(finaleinterpreter_t), PU_APPSTATIC, 0);
+    fi->_id = id;
+    return fi;
 }
 
 void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi)
 {
-    assert(fi);
+    if(!fi) return;
+
     stopScript(fi);
     clearEventHandlers(fi);
     releaseScript(fi);
@@ -1163,7 +1166,7 @@ dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
     return (fi->flags.can_skip != 0);
 }
 
-dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
+dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t const *fi)
 {
     assert(fi);
     return fi->_cmdExecuted;
@@ -1250,7 +1253,8 @@ dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* mark
 
 dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
-    assert(fi);
+    DENG2_ASSERT(fi);
+    LOG_AS("FinaleInterpreter_Skip");
 
     if(fi->_waitingText && fi->flags.can_skip && !fi->flags.paused)
     {
