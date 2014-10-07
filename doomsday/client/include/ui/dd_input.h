@@ -110,16 +110,16 @@ typedef struct ddevent_s {
 } ddevent_t;
 
 // Convenience macros.
-#define IS_TOGGLE_DOWN(evp)            (evp->type == E_TOGGLE && evp->toggle.state == ETOG_DOWN)
-#define IS_TOGGLE_DOWN_ID(evp, togid)  (evp->type == E_TOGGLE && evp->toggle.state == ETOG_DOWN && evp->toggle.id == togid)
-#define IS_TOGGLE_UP(evp)              (evp->type == E_TOGGLE && evp->toggle.state == ETOG_UP)
-#define IS_TOGGLE_REPEAT(evp)          (evp->type == E_TOGGLE && evp->toggle.state == ETOG_REPEAT)
-#define IS_KEY_TOGGLE(evp)             (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE)
-#define IS_KEY_DOWN(evp)               (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state == ETOG_DOWN)
-#define IS_KEY_PRESS(evp)              (evp->device == IDEV_KEYBOARD && evp->type == E_TOGGLE && evp->toggle.state != ETOG_UP)
-#define IS_MOUSE_DOWN(evp)             (evp->device == IDEV_MOUSE && IS_TOGGLE_DOWN(evp))
-#define IS_MOUSE_UP(evp)               (evp->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
-#define IS_MOUSE_MOTION(evp)           (evp->device == IDEV_MOUSE && evp->type == E_AXIS)
+#define IS_TOGGLE_DOWN(evp)            ((evp)->type == E_TOGGLE && (evp)->toggle.state == ETOG_DOWN)
+#define IS_TOGGLE_DOWN_ID(evp, togid)  ((evp)->type == E_TOGGLE && (evp)->toggle.state == ETOG_DOWN && (evp)->toggle.id == togid)
+#define IS_TOGGLE_UP(evp)              ((evp)->type == E_TOGGLE && (evp)->toggle.state == ETOG_UP)
+#define IS_TOGGLE_REPEAT(evp)          ((evp)->type == E_TOGGLE && (evp)->toggle.state == ETOG_REPEAT)
+#define IS_KEY_TOGGLE(evp)             ((evp)->device == IDEV_KEYBOARD && (evp)->type == E_TOGGLE)
+#define IS_KEY_DOWN(evp)               ((evp)->device == IDEV_KEYBOARD && (evp)->type == E_TOGGLE && (evp)->toggle.state == ETOG_DOWN)
+#define IS_KEY_PRESS(evp)              ((evp)->device == IDEV_KEYBOARD && (evp)->type == E_TOGGLE && (evp)->toggle.state != ETOG_UP)
+#define IS_MOUSE_DOWN(evp)             ((evp)->device == IDEV_MOUSE && IS_TOGGLE_DOWN(evp))
+#define IS_MOUSE_UP(evp)               ((evp)->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
+#define IS_MOUSE_MOTION(evp)           ((evp)->device == IDEV_MOUSE && (evp)->type == E_AXIS)
 
 // Binding association. How the device axis/key/etc. relates to binding contexts.
 typedef struct inputdevassoc_s {

@@ -456,7 +456,7 @@ fi_page_t *FI_NewPage(fi_page_t *prevPage)
 
 void FI_DeletePage(fi_page_t *p)
 {
-    if(!p) App_Error("FI_DeletePage: Invalid page.");
+    if(!p) return;
 
     pageClear(p);
     pagesRemove(p);

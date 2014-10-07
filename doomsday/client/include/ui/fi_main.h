@@ -27,7 +27,12 @@
 #include "dd_input.h" // ddevent_t
 #include "api_infine.h" // finaleid_t
 
-struct finaleinterpreter_t;
+class FinaleInterpreter;
+
+#define FINF_BEGIN          0x01
+#define FINF_END            0x02
+#define FINF_SCRIPT         0x04 // Script included.
+#define FINF_SKIP           0x10
 
 /**
  * A Finale instance contains the high-level state of an InFine script.
@@ -54,7 +59,6 @@ public:
     finaleid_t id() const;
 
     bool isActive() const;
-    bool isSuspended() const;
 
     void resume();
     void suspend();
@@ -68,12 +72,11 @@ public:
     int handleEvent(ddevent_t const &ev);
     bool requestSkip();
     bool isMenuTrigger() const;
-    bool commandExecuted() const;
 
     /**
      * Provides access to the script interpreter. Mainly for debug purposes.
      */
-    finaleinterpreter_t const &interpreter() const;
+    FinaleInterpreter const &interpreter() const;
 
 private:
     DENG2_PRIVATE(d)

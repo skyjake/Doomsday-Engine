@@ -19,12 +19,9 @@
  */
 
 #include "de_network.h"
-#include "ui/finaleinterpreter.h"
+#include "ui/fi_main.h"
 
-/**
- * The actual script is sent to the clients. @a script can be NULL.
- */
-void Sv_Finale(finaleid_t id, int flags, const char* script)
+void Sv_Finale(finaleid_t id, int flags, char const *script)
 {
     size_t scriptLen = 0;
 

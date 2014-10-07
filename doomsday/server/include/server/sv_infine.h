@@ -26,7 +26,10 @@
 extern "C" {
 #endif
 
-void Sv_Finale(finaleid_t id, int flags, const char *script);
+/**
+ * @param script  The script to be communicated to clients if any.
+ */
+void Sv_Finale(finaleid_t id, int flags, char const *script);
 
 #ifdef __cplusplus
 } // extern "C"

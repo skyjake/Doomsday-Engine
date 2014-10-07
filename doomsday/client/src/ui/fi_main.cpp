@@ -40,21 +40,19 @@ DENG2_PIMPL(Finale)
     bool active;
     int flags;  ///< @ref finaleFlags
     finaleid_t id;
-    finaleinterpreter_t *interpreter;
+    FinaleInterpreter interpreter;
 
     Instance(Public *i, int flags, finaleid_t id)
         : Base(i)
         , active     (false)
         , flags      (flags)
         , id         (id)
-        , interpreter(P_CreateFinaleInterpreter(id))
+        , interpreter(id)
     {}
 
     ~Instance()
     {
         DENG2_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->finaleBeingDeleted(self);
-
-        P_DestroyFinaleInterpreter(interpreter);
     }
 
     void loadScript(String const &script)
@@ -63,7 +61,7 @@ DENG2_PIMPL(Finale)
 
         LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << id << script;
         Block const scriptAsUtf8 = script.toUtf8();
-        FinaleInterpreter_LoadScript(interpreter, scriptAsUtf8.constData());
+        interpreter.loadScript(scriptAsUtf8.constData());
 #ifdef __SERVER__
         if(!(flags & FF_LOCAL) && ::isServer)
         {
@@ -101,21 +99,16 @@ bool Finale::isActive() const
     return d->active;
 }
 
-bool Finale::isSuspended() const
-{
-    return FinaleInterpreter_IsSuspended(d->interpreter);
-}
-
 void Finale::resume()
 {
     d->active = true;
-    FinaleInterpreter_Resume(d->interpreter);
+    d->interpreter.resume();
 }
 
 void Finale::suspend()
 {
     d->active = false;
-    FinaleInterpreter_Suspend(d->interpreter);
+    d->interpreter.suspend();
 }
 
 bool Finale::terminate()
@@ -124,7 +117,7 @@ bool Finale::terminate()
 
     LOGDEV_SCR_VERBOSE("Terminating finaleid %i") << d->id;
     d->active = false;
-    P_DestroyFinaleInterpreter(d->interpreter); d->interpreter = nullptr;
+    d->interpreter.terminate();
     return true;
 }
 
@@ -132,7 +125,7 @@ bool Finale::runTicks()
 {
     if(d->active)
     {
-        if(FinaleInterpreter_RunTic(d->interpreter))
+        if(d->interpreter.runTicks())
         {
             // The script has ended!
             terminate();
@@ -145,30 +138,25 @@ bool Finale::runTicks()
 int Finale::handleEvent(ddevent_t const &ev)
 {
     if(!d->active) return false;
-    return FinaleInterpreter_Responder(d->interpreter, &ev);
+    return d->interpreter.handleEvent(ev);
 }
 
 bool Finale::requestSkip()
 {
-    return FinaleInterpreter_Skip(d->interpreter);
+    if(!d->active) return false;
+    return d->interpreter.skip();
 }
 
 bool Finale::isMenuTrigger() const
 {
-    if(!isActive()) return false;
-    LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << FinaleInterpreter_IsMenuTrigger(d->interpreter);
-    return FinaleInterpreter_IsMenuTrigger(d->interpreter);
+    if(!d->active) return false;
+    LOG_SCR_XVERBOSE("IsMenuTrigger: %i") << d->interpreter.isMenuTrigger();
+    return d->interpreter.isMenuTrigger();
 }
 
-bool Finale::commandExecuted() const
+FinaleInterpreter const &Finale::interpreter() const
 {
-    return FinaleInterpreter_CommandExecuted(d->interpreter);
-}
-
-finaleinterpreter_t const &Finale::interpreter() const
-{
-    DENG2_ASSERT(d->interpreter);
-    return *d->interpreter;
+    return d->interpreter;
 }
 
 // --------------------------------------------------------------------------------------
@@ -383,10 +371,10 @@ void FI_ScriptResume(finaleid_t id)
 
 dd_bool FI_ScriptSuspended(finaleid_t id)
 {
-    LOG_AS("InFine.ScriptSuspend");
+    LOG_AS("InFine.ScriptSuspended");
     if(App_InFineSystem().hasFinale(id))
     {
-        return App_InFineSystem().finale(id).isSuspended();
+        return App_InFineSystem().finale(id).interpreter().isSuspended();
     }
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
     return false;
@@ -420,7 +408,7 @@ dd_bool FI_ScriptCmdExecuted(finaleid_t id)
     LOG_AS("InFine.CmdExecuted");
     if(App_InFineSystem().hasFinale(id))
     {
-        return App_InFineSystem().finale(id).commandExecuted();
+        return App_InFineSystem().finale(id).interpreter().commandExecuted();
     }
     LOGDEV_SCR_WARNING("Unknown finaleid %i") << id;
     return false;

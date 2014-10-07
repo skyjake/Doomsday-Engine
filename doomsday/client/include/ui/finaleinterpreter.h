@@ -1,7 +1,7 @@
-/** @file finaleinterpreter.h
+/** @file finaleinterpreter.h  InFine animation system Finale script interpreter.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,122 +20,104 @@
 #ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
 #define DENG_UI_INFINE_FINALEINTERPRETER_H
 
-#include "dd_input.h"
-#include "dd_ui.h"
+#include "dd_input.h" // ddevent_t
+#include "dd_ui.h"    // finaleid_t
 
-#define FINF_BEGIN          0x01
-#define FINF_END            0x02
-#define FINF_SCRIPT         0x04 // Script included.
-#define FINF_SKIP           0x10
+struct fi_object_s;
 
 /**
- * @defgroup finaleInterpreterCommandDirective Finale Interpreter Command Directive
- * @ingroup infine
- */
-/*@{*/
-#define FID_NORMAL          0
-#define FID_ONLOAD          0x1
-/*@}*/
-
-/**
- * Interactive interpreter for Finale scripts. An instance of which is created
- * (and owned) by each active (running) script.
+ * Interpreter for finale scripts. An instance of which is created for each running
+ * script and owned by the Finale.
+ *
+ * @par UI pages / drawing order
+ * InFine imposes a strict object drawing order, which requires two pages; one for
+ * animation objects (also used for the background) and another for Text objects
+ * (also used for the filter).
+ *
+ * 1: Background.
+ * 2: Picture objects in the order in which they were created.
+ * 3: Text objects, in the order in which they were created.
+ * 4: Filter.
  *
  * @see Finale
- * @ingroup infine
+ * @ingroup InFine
  */
-/// @todo Should be private.
-struct fi_handler_t
+class FinaleInterpreter
 {
-    ddevent_t       ev; // Template.
-    fi_objectname_t marker;
+public:
+    enum PageIndex
+    {
+        Anims = 0,  ///< @note Also used for the background.
+        Texts = 1   ///< @note Also used for the filter.
+    };
+
+public:
+    FinaleInterpreter(finaleid_t id);
+
+    finaleid_t id() const;
+
+    bool runTicks();
+    int handleEvent(ddevent_t const &ev);
+
+    void loadScript(char const *script);
+
+    bool isSuspended() const;
+
+    void resume();
+    void suspend();
+    void terminate();
+
+    bool isMenuTrigger() const;
+    bool commandExecuted() const;
+
+    bool canSkip() const;
+    void allowSkip(bool yes = true);
+
+    bool skip();
+    bool skipToMarker(char const *marker);
+    bool skipInProgress() const;
+    bool lastSkipped() const;
+
+#ifdef __CLIENT__
+    void addEventHandler(ddevent_t const &evTemplate, char const *gotoMarker);
+    void removeEventHandler(ddevent_t const &evTemplate);
+#endif
+
+    fi_page_t &page(PageIndex index);
+
+    /**
+     * Find an object of the specified type with the type-unique name.
+     * @param name  Unique name of the object we are looking for.
+
+     * @return  Ptr to @c fi_object_t Either:
+     *          a) Existing object associated with unique @a name.
+     *          b) New object with unique @a name.
+     */
+    fi_object_s *findObject(fi_obtype_e type, char const *name);
+
+    void deleteObject(fi_object_s *ob);
+
+public: /// Script-level flow/state control (@todo make private): --------------------
+
+    void beginDoSkipMode();
+    void gotoEnd();
+    void pause();
+    void wait(int ticksToWait = 1);
+    void foundSkipHere();
+    void foundSkipMarker(char const *marker);
+
+    int inTime() const;
+    void setInTime(int seconds);
+
+    void setHandleEvents(bool yes = true);
+    void setShowMenu(bool yes = true);
+    void setSkip(bool allowed = true);
+    void setSkipNext(bool yes = true);
+    void setWaitAnim(fi_object_s *newWaitAnim);
+    void setWaitText(fi_object_s *newWaitText);
+
+private:
+    DENG2_PRIVATE(d)
 };
-
-/// @todo Should be private.
-struct fi_namespace_t
-{
-    uint num;
-    struct fi_namespace_record_s *vector;
-};
-
-/// UIPage indices.
-enum {
-    PAGE_PICS = 0, /// @note also used for its background.
-    PAGE_TEXT = 1 /// @note also used for its filter.
-};
-
-#define FINALEINTERPRETER_MAX_TOKEN_LENGTH (8192)
-
-struct finaleinterpreter_t
-{
-    struct finaleinterpreter_flags_s {
-        char stopped:1;
-        char suspended:1;
-        char paused:1;
-        char can_skip:1;
-        char eat_events:1; /// Script will eat all input events.
-        char show_menu:1;
-    } flags;
-
-    /// Id of the Finale which owns this interpreter.
-    finaleid_t _id;
-
-    /// Copy of the script being interpreted.
-    char *_script;
-
-    /// Beginning of the script (after any directive blocks).
-    char *_scriptBegin;
-
-    /// Current position in the script.
-    char const *_cp;
-
-    /// Script token read/parse buffer.
-    char _token[FINALEINTERPRETER_MAX_TOKEN_LENGTH];
-
-    /// Event handlers defined by the loaded script.
-    uint _numEventHandlers;
-    fi_handler_t *_eventHandlers;
-
-    /// Known symbols (to the loaded script).
-    fi_namespace_t _namespace;
-
-    /// Pages on which objects created by this interpeter are visible.
-    struct fi_page_s *_pages[2];
-
-    /// Set to true after first command is executed.
-    dd_bool _cmdExecuted;
-    dd_bool _skipping, _lastSkipped, _gotoSkip, _gotoEnd, _skipNext;
-
-    /// Level of DO-skipping.
-    int _doLevel;
-
-    uint _timer;
-    int _wait, _inTime;
-
-    fi_objectname_t _gotoTarget;
-
-    struct fi_object_s *_waitingText;
-    struct fi_object_s *_waitingPic;
-};
-
-finaleinterpreter_t *P_CreateFinaleInterpreter(finaleid_t id);
-void P_DestroyFinaleInterpreter(finaleinterpreter_t *fi);
-
-dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t *fi);
-int FinaleInterpreter_Responder(finaleinterpreter_t *fi, ddevent_t const *ev);
-
-void FinaleInterpreter_LoadScript(finaleinterpreter_t *fi, char const *script);
-void FinaleInterpreter_ReleaseScript(finaleinterpreter_t *fi);
-void FinaleInterpreter_Suspend(finaleinterpreter_t *fi);
-void FinaleInterpreter_Resume(finaleinterpreter_t *fi);
-
-dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t *fi);
-dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t *fi);
-dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t const *fi);
-dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t *fi);
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t *fi, dd_bool yes);
-
-dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t *fi, char const *marker);
-dd_bool FinaleInterpreter_Skip(finaleinterpreter_t *fi);
 
 #endif // DENG_UI_INFINE_FINALEINTERPRETER_H

@@ -1,9 +1,7 @@
-/** @file finaleinterpreter.cpp
+/** @file finaleinterpreter.cpp  InFine animation system Finale script interpreter.
  *
- * InFine "Finale" script interpreter.
- *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,78 +18,111 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <QList>
 #include <de/memory.h>
-#include <de/memoryzone.h>
+#include <de/timer.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
 
-#include "de_console.h"
-#include "de_defs.h"
-#include "de_graphics.h"
-#include "de_misc.h"
-#include "de_ui.h"
+#include "de_base.h"
+#include "ui/finaleinterpreter.h"
+
 #include "de_filesys.h"
-#include "de_resource.h"
+#include "de_ui.h"
+
 #include "dd_main.h"
 #include "dd_def.h"
 #include "Game"
 
 #include "api_material.h"
 #include "api_render.h"
+#include "api_resource.h"
 
 #include "audio/s_main.h"
 #include "network/net_main.h"
-#include "client/cl_infine.h"
 
 #ifdef __CLIENT__
-#  include "gl/gl_texmanager.h"
-#endif
+#  include "client/cl_infine.h"
 
-#include "ui/finaleinterpreter.h"
+#  include "gl/gl_main.h"
+#  include "gl/gl_texmanager.h"
+#  include "gl/texturecontent.h"
+#  include "gl/sys_opengl.h" // TODO: get rid of this
+#endif
 
 #ifdef __SERVER__
 #  include "server/sv_infine.h"
 #endif
 
-#include "gl/sys_opengl.h" // TODO: get rid of this
+#define MAX_TOKEN_LENGTH        (8192)
 
-#define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
+#define FRACSECS_TO_TICKS(sec)  (int(sec * TICSPERSEC + 0.5))
 
-// Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(const struct command_s* cmd, const fi_operand_t* ops, finaleinterpreter_t* fi)
+using namespace de;
 
-// Helper macro for accessing the value of an operand.
-#define OP_INT(n)           (ops[n].data.integer)
-#define OP_FLOAT(n)         (ops[n].data.flt)
-#define OP_CSTRING(n)       (ops[n].data.cstring)
-#define OP_OBJECT(n)        (ops[n].data.obj)
-#define OP_URI(n)           (ops[n].data.uri)
-
-typedef enum {
+enum fi_operand_type_t
+{
     FVT_INT,
     FVT_FLOAT,
     FVT_SCRIPT_STRING,
     FVT_OBJECT,
     FVT_URI
-} fi_operand_type_t;
+};
 
-typedef struct {
+static fi_operand_type_t operandTypeForCharCode(char code)
+{
+    switch(code)
+    {
+    case 'i': return FVT_INT;
+    case 'f': return FVT_FLOAT;
+    case 's': return FVT_SCRIPT_STRING;
+    case 'o': return FVT_OBJECT;
+    case 'u': return FVT_URI;
+
+    default:
+        App_Error("Error: operandTypeForCharCode: Unknown char-code %c", code);
+        exit(1); // Unreachable.
+    }
+}
+
+// Helper macro for accessing the value of an operand.
+#define OP_INT(n)           (ops[n].data.integer)
+#define OP_FLOAT(n)         (ops[n].data.flt)
+#define OP_CSTRING(n)       (ops[n].data.cstring)
+#define OP_OBJECT(n)        (ops[n].data.ob)
+#define OP_URI(n)           (ops[n].data.uri)
+
+struct fi_operand_t
+{
     fi_operand_type_t type;
     union {
         int         integer;
         float       flt;
-        const char* cstring;
-        fi_object_t* obj;
-        Uri*        uri;
+        char const *cstring;
+        fi_object_t *ob;
+        uri_s       *uri;
     } data;
-} fi_operand_t;
+};
 
-typedef struct command_s {
+// Helper macro for defining infine command functions.
+#define DEFFC(name) void FIC_##name(command_t const &cmd, fi_operand_t const *ops, FinaleInterpreter &fi)
+
+/**
+ * @defgroup finaleInterpreterCommandDirective Finale Interpreter Command Directive
+ * @ingroup infine
+ */
+/*@{*/
+#define FID_NORMAL          0
+#define FID_ONLOAD          0x1
+/*@}*/
+
+struct command_t
+{
     char const *token;
     char const *operands;
 
-    void (*func) (const struct command_s* cmd, const fi_operand_t* ops, finaleinterpreter_t* fi);
+    typedef void (*Func) (command_t const &, fi_operand_t const *, FinaleInterpreter &);
+    Func func;
 
     struct command_flags_s {
         char when_skipping:1;
@@ -101,12 +132,7 @@ typedef struct command_s {
     /// Command execution directives NOT supported by this command.
     /// @see finaleInterpreterCommandDirective
     int excludeDirectives;
-} command_t;
-
-typedef struct fi_namespace_record_s {
-    fi_objectname_t name; // Unique among objects of the same type and spawned by the same script.
-    fi_objectid_t   objectId;
-} fi_namespace_record_t;
+};
 
 // Command functions.
 DEFFC(Do);
@@ -199,8 +225,6 @@ DEFFC(Command);
 DEFFC(ShowMenu);
 DEFFC(NoShowMenu);
 
-static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type);
-
 /**
  * Time is measured in seconds.
  * Colors are floating point and [0..1].
@@ -212,1118 +236,1046 @@ static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obty
  *       At this time the command names could also be hashed and chained to
  *       improve performance. -ds
  */
-static const command_t commands[] = {
-    // Run Control
-    { "DO",         "", FIC_Do, true, true },
-    { "END",        "", FIC_End },
-    { "IF",         "s", FIC_If }, // if (value-id)
-    { "IFNOT",      "s", FIC_IfNot }, // ifnot (value-id)
-    { "ELSE",       "", FIC_Else },
-    { "GOTO",       "s", FIC_GoTo }, // goto (marker)
-    { "MARKER",     "s", FIC_Marker, true },
-    { "in",         "f", FIC_InTime }, // in (time)
-    { "pause",      "", FIC_Pause },
-    { "tic",        "", FIC_Tic },
-    { "wait",       "f", FIC_Wait }, // wait (time)
-    { "waittext",   "s", FIC_WaitText }, // waittext (id)
-    { "waitanim",   "s", FIC_WaitAnim }, // waitanim (id)
-    { "canskip",    "", FIC_CanSkip },
-    { "noskip",     "", FIC_NoSkip },
-    { "skiphere",   "", FIC_SkipHere, true },
-    { "events",     "", FIC_Events },
-    { "noevents",   "", FIC_NoEvents },
-    { "onkey",      "ss", FIC_OnKey }, // onkey (keyname) (marker)
-    { "unsetkey",   "s", FIC_UnsetKey }, // unsetkey (keyname)
-
-    // Screen Control
-    { "color",      "fff", FIC_Color }, // color (red) (green) (blue)
-    { "coloralpha", "ffff", FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
-    { "flat",       "u(flats:)", FIC_BGMaterial }, // flat (flat-id)
-    { "texture",    "u(textures:)", FIC_BGMaterial }, // texture (texture-id)
-    { "noflat",     "", FIC_NoBGMaterial },
-    { "notexture",  "", FIC_NoBGMaterial },
-    { "offx",       "f", FIC_OffsetX }, // offx (x)
-    { "offy",       "f", FIC_OffsetY }, // offy (y)
-    { "filter",     "ffff", FIC_Filter }, // filter (r) (g) (b) (a)
-
-    // Audio
-    { "sound",      "s", FIC_Sound }, // sound (snd)
-    { "soundat",    "sf", FIC_SoundAt }, // soundat (snd) (vol:0-1)
-    { "seesound",   "s", FIC_SeeSound }, // seesound (mobjtype)
-    { "diesound",   "s", FIC_DieSound }, // diesound (mobjtype)
-    { "music",      "s", FIC_Music }, // music (musicname)
-    { "musiconce",  "s", FIC_MusicOnce }, // musiconce (musicname)
-    { "nomusic",    "", FIC_NoMusic },
-
-    // Objects
-    { "del",        "o", FIC_Delete }, // del (obj)
-    { "x",          "of", FIC_ObjectOffX }, // x (obj) (x)
-    { "y",          "of", FIC_ObjectOffY }, // y (obj) (y)
-    { "z",          "of", FIC_ObjectOffZ }, // z (obj) (z)
-    { "sx",         "of", FIC_ObjectScaleX }, // sx (obj) (x)
-    { "sy",         "of", FIC_ObjectScaleY }, // sy (obj) (y)
-    { "sz",         "of", FIC_ObjectScaleZ }, // sz (obj) (z)
-    { "scale",      "of", FIC_ObjectScale }, // scale (obj) (factor)
-    { "scalexy",    "off", FIC_ObjectScaleXY }, // scalexy (obj) (x) (y)
-    { "scalexyz",   "offf", FIC_ObjectScaleXYZ }, // scalexyz (obj) (x) (y) (z)
-    { "rgb",        "offf", FIC_ObjectRGB }, // rgb (obj) (r) (g) (b)
-    { "alpha",      "of", FIC_ObjectAlpha }, // alpha (obj) (alpha)
-    { "angle",      "of", FIC_ObjectAngle }, // angle (obj) (degrees)
-
-    // Rects
-    { "rect",       "sffff", FIC_Rect }, // rect (hndl) (x) (y) (w) (h)
-    { "fillcolor",  "osffff", FIC_FillColor }, // fillcolor (obj) (top/bottom/both) (r) (g) (b) (a)
-    { "edgecolor",  "osffff", FIC_EdgeColor }, // edgecolor (obj) (top/bottom/both) (r) (g) (b) (a)
-
-    // Pics
-    { "image",      "ss", FIC_Image }, // image (id) (raw-image-lump)
-    { "imageat",    "sffs", FIC_ImageAt }, // imageat (id) (x) (y) (raw)
-    { "ximage",     "ss", FIC_XImage }, // ximage (id) (ext-gfx-filename)
-    { "patch",      "sffs", FIC_Patch }, // patch (id) (x) (y) (patch)
-    { "set",        "ss", FIC_SetPatch }, // set (id) (lump)
-    { "clranim",    "o", FIC_ClearAnim }, // clranim (obj)
-    { "anim",       "ssf", FIC_Anim }, // anim (id) (patch) (time)
-    { "imageanim",  "ssf", FIC_AnimImage }, // imageanim (id) (raw-img) (time)
-    { "picsound",   "ss", FIC_PicSound }, // picsound (id) (sound)
-    { "repeat",     "s", FIC_Repeat }, // repeat (id)
-    { "states",     "ssi", FIC_StateAnim }, // states (id) (state) (count)
-
-    // Text
-    { "text",       "sffs", FIC_Text }, // text (hndl) (x) (y) (string)
-    { "textdef",    "sffs", FIC_TextFromDef }, // textdef (hndl) (x) (y) (txt-id)
-    { "textlump",   "sffs", FIC_TextFromLump }, // textlump (hndl) (x) (y) (lump)
-    { "settext",    "ss", FIC_SetText }, // settext (id) (newtext)
-    { "settextdef", "ss", FIC_SetTextDef }, // settextdef (id) (txt-id)
-    { "center",     "s", FIC_TextCenter }, // center (id)
-    { "nocenter",   "s", FIC_TextNoCenter }, // nocenter (id)
-    { "scroll",     "sf", FIC_TextScroll }, // scroll (id) (speed)
-    { "pos",        "si", FIC_TextPos }, // pos (id) (pos)
-    { "rate",       "si", FIC_TextRate }, // rate (id) (rate)
-    { "font",       "su", FIC_Font }, // font (id) (font)
-    { "linehgt",    "sf", FIC_TextLineHeight }, // linehgt (hndl) (hgt)
-
-    // Game Control
-    { "playdemo",   "s", FIC_PlayDemo }, // playdemo (filename)
-    { "cmd",        "s", FIC_Command }, // cmd (console command)
-    { "trigger",    "", FIC_ShowMenu },
-    { "notrigger",  "", FIC_NoShowMenu },
-
-    // Misc.
-    { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
-    { "prefont",    "iu", FIC_PredefinedFont }, // prefont (num) (font)
-
-    // Deprecated Font commands
-    { "fonta",      "s", FIC_FontA }, // fonta (id)
-    { "fontb",      "s", FIC_FontB }, // fontb (id)
-
-    // Deprecated Pic commands
-    { "delpic",     "o", FIC_Delete }, // delpic (obj)
-
-    // Deprecated Text commands
-    { "deltext",    "o", FIC_DeleteText }, // deltext (obj)
-    { "textrgb",    "sfff", FIC_TextRGB }, // textrgb (id) (r) (g) (b)
-    { "textalpha",  "sf", FIC_TextAlpha }, // textalpha (id) (alpha)
-    { "tx",         "sf", FIC_TextOffX }, // tx (id) (x)
-    { "ty",         "sf", FIC_TextOffY }, // ty (id) (y)
-    { "tsx",        "sf", FIC_TextScaleX }, // tsx (id) (x)
-    { "tsy",        "sf", FIC_TextScaleY }, // tsy (id) (y)
-    { "textscale",  "sf", FIC_TextScale }, // textscale (id) (x) (y)
-
-    { NULL, 0, NULL } // Terminate.
-};
-
-static __inline fi_operand_type_t operandTypeForCharCode(char code)
+static command_t const *findCommand(char const *name)
 {
-    switch(code)
+    static command_t const commands[] = {
+        // Run Control
+        { "DO",         "", FIC_Do, true, true },
+        { "END",        "", FIC_End },
+        { "IF",         "s", FIC_If }, // if (value-id)
+        { "IFNOT",      "s", FIC_IfNot }, // ifnot (value-id)
+        { "ELSE",       "", FIC_Else },
+        { "GOTO",       "s", FIC_GoTo }, // goto (marker)
+        { "MARKER",     "s", FIC_Marker, true },
+        { "in",         "f", FIC_InTime }, // in (time)
+        { "pause",      "", FIC_Pause },
+        { "tic",        "", FIC_Tic },
+        { "wait",       "f", FIC_Wait }, // wait (time)
+        { "waittext",   "s", FIC_WaitText }, // waittext (id)
+        { "waitanim",   "s", FIC_WaitAnim }, // waitanim (id)
+        { "canskip",    "", FIC_CanSkip },
+        { "noskip",     "", FIC_NoSkip },
+        { "skiphere",   "", FIC_SkipHere, true },
+        { "events",     "", FIC_Events },
+        { "noevents",   "", FIC_NoEvents },
+        { "onkey",      "ss", FIC_OnKey }, // onkey (keyname) (marker)
+        { "unsetkey",   "s", FIC_UnsetKey }, // unsetkey (keyname)
+
+        // Screen Control
+        { "color",      "fff", FIC_Color }, // color (red) (green) (blue)
+        { "coloralpha", "ffff", FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
+        { "flat",       "u(flats:)", FIC_BGMaterial }, // flat (flat-id)
+        { "texture",    "u(textures:)", FIC_BGMaterial }, // texture (texture-id)
+        { "noflat",     "", FIC_NoBGMaterial },
+        { "notexture",  "", FIC_NoBGMaterial },
+        { "offx",       "f", FIC_OffsetX }, // offx (x)
+        { "offy",       "f", FIC_OffsetY }, // offy (y)
+        { "filter",     "ffff", FIC_Filter }, // filter (r) (g) (b) (a)
+
+        // Audio
+        { "sound",      "s", FIC_Sound }, // sound (snd)
+        { "soundat",    "sf", FIC_SoundAt }, // soundat (snd) (vol:0-1)
+        { "seesound",   "s", FIC_SeeSound }, // seesound (mobjtype)
+        { "diesound",   "s", FIC_DieSound }, // diesound (mobjtype)
+        { "music",      "s", FIC_Music }, // music (musicname)
+        { "musiconce",  "s", FIC_MusicOnce }, // musiconce (musicname)
+        { "nomusic",    "", FIC_NoMusic },
+
+        // Objects
+        { "del",        "o", FIC_Delete }, // del (ob)
+        { "x",          "of", FIC_ObjectOffX }, // x (ob) (x)
+        { "y",          "of", FIC_ObjectOffY }, // y (ob) (y)
+        { "z",          "of", FIC_ObjectOffZ }, // z (ob) (z)
+        { "sx",         "of", FIC_ObjectScaleX }, // sx (ob) (x)
+        { "sy",         "of", FIC_ObjectScaleY }, // sy (ob) (y)
+        { "sz",         "of", FIC_ObjectScaleZ }, // sz (ob) (z)
+        { "scale",      "of", FIC_ObjectScale }, // scale (ob) (factor)
+        { "scalexy",    "off", FIC_ObjectScaleXY }, // scalexy (ob) (x) (y)
+        { "scalexyz",   "offf", FIC_ObjectScaleXYZ }, // scalexyz (ob) (x) (y) (z)
+        { "rgb",        "offf", FIC_ObjectRGB }, // rgb (ob) (r) (g) (b)
+        { "alpha",      "of", FIC_ObjectAlpha }, // alpha (ob) (alpha)
+        { "angle",      "of", FIC_ObjectAngle }, // angle (ob) (degrees)
+
+        // Rects
+        { "rect",       "sffff", FIC_Rect }, // rect (hndl) (x) (y) (w) (h)
+        { "fillcolor",  "osffff", FIC_FillColor }, // fillcolor (ob) (top/bottom/both) (r) (g) (b) (a)
+        { "edgecolor",  "osffff", FIC_EdgeColor }, // edgecolor (ob) (top/bottom/both) (r) (g) (b) (a)
+
+        // Pics
+        { "image",      "ss", FIC_Image }, // image (id) (raw-image-lump)
+        { "imageat",    "sffs", FIC_ImageAt }, // imageat (id) (x) (y) (raw)
+        { "ximage",     "ss", FIC_XImage }, // ximage (id) (ext-gfx-filename)
+        { "patch",      "sffs", FIC_Patch }, // patch (id) (x) (y) (patch)
+        { "set",        "ss", FIC_SetPatch }, // set (id) (lump)
+        { "clranim",    "o", FIC_ClearAnim }, // clranim (ob)
+        { "anim",       "ssf", FIC_Anim }, // anim (id) (patch) (time)
+        { "imageanim",  "ssf", FIC_AnimImage }, // imageanim (id) (raw-img) (time)
+        { "picsound",   "ss", FIC_PicSound }, // picsound (id) (sound)
+        { "repeat",     "s", FIC_Repeat }, // repeat (id)
+        { "states",     "ssi", FIC_StateAnim }, // states (id) (state) (count)
+
+        // Text
+        { "text",       "sffs", FIC_Text }, // text (hndl) (x) (y) (string)
+        { "textdef",    "sffs", FIC_TextFromDef }, // textdef (hndl) (x) (y) (txt-id)
+        { "textlump",   "sffs", FIC_TextFromLump }, // textlump (hndl) (x) (y) (lump)
+        { "settext",    "ss", FIC_SetText }, // settext (id) (newtext)
+        { "settextdef", "ss", FIC_SetTextDef }, // settextdef (id) (txt-id)
+        { "center",     "s", FIC_TextCenter }, // center (id)
+        { "nocenter",   "s", FIC_TextNoCenter }, // nocenter (id)
+        { "scroll",     "sf", FIC_TextScroll }, // scroll (id) (speed)
+        { "pos",        "si", FIC_TextPos }, // pos (id) (pos)
+        { "rate",       "si", FIC_TextRate }, // rate (id) (rate)
+        { "font",       "su", FIC_Font }, // font (id) (font)
+        { "linehgt",    "sf", FIC_TextLineHeight }, // linehgt (hndl) (hgt)
+
+        // Game Control
+        { "playdemo",   "s", FIC_PlayDemo }, // playdemo (filename)
+        { "cmd",        "s", FIC_Command }, // cmd (console command)
+        { "trigger",    "", FIC_ShowMenu },
+        { "notrigger",  "", FIC_NoShowMenu },
+
+        // Misc.
+        { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
+        { "prefont",    "iu", FIC_PredefinedFont }, // prefont (num) (font)
+
+        // Deprecated Font commands
+        { "fonta",      "s", FIC_FontA }, // fonta (id)
+        { "fontb",      "s", FIC_FontB }, // fontb (id)
+
+        // Deprecated Pic commands
+        { "delpic",     "o", FIC_Delete }, // delpic (ob)
+
+        // Deprecated Text commands
+        { "deltext",    "o", FIC_DeleteText }, // deltext (ob)
+        { "textrgb",    "sfff", FIC_TextRGB }, // textrgb (id) (r) (g) (b)
+        { "textalpha",  "sf", FIC_TextAlpha }, // textalpha (id) (alpha)
+        { "tx",         "sf", FIC_TextOffX }, // tx (id) (x)
+        { "ty",         "sf", FIC_TextOffY }, // ty (id) (y)
+        { "tsx",        "sf", FIC_TextScaleX }, // tsx (id) (x)
+        { "tsy",        "sf", FIC_TextScaleY }, // tsy (id) (y)
+        { "textscale",  "sf", FIC_TextScale }, // textscale (id) (x) (y)
+
+        { nullptr, 0, nullptr } // Terminate.
+    };
+    for(size_t i = 0; commands[i].token; ++i)
     {
-    case 'i': return FVT_INT;
-    case 'f': return FVT_FLOAT;
-    case 's': return FVT_SCRIPT_STRING;
-    case 'o': return FVT_OBJECT;
-    case 'u': return FVT_URI;
-    default:
-        App_Error("Error: operandTypeForCharCode: Unknown char-code %c", code);
-        exit(1); // Unreachable.
-    }
-}
-
-static fi_objectid_t findIdForName(fi_namespace_t* names, const char* name)
-{
-    fi_objectid_t id;
-    // First check all pics.
-    id = toObjectId(names, name, FI_PIC);
-    // Then check text objects.
-    if(!id)
-        id = toObjectId(names, name, FI_TEXT);
-    return id;
-}
-
-static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type)
-{
-    assert(name && name[0]);
-    if(type == FI_NONE)
-    {   // Use a priority-based search.
-        return findIdForName(names, name);
-    }
-
-    {uint i;
-    for(i = 0; i < names->num; ++i)
-    {
-        fi_namespace_record_t* rec = &names->vector[i];
-        if(!stricmp(rec->name, name) && FI_Object(rec->objectId)->type == type)
-            return rec->objectId;
-    }}
-    return 0;
-}
-
-static void destroyObjectsInScope(fi_namespace_t* names)
-{
-    // Delete external images, text strings etc.
-    if(names->vector)
-    {
-        uint i;
-        for(i = 0; i < names->num; ++i)
+        command_t const *cmd = &commands[i];
+        if(!qstricmp(cmd->token, name))
         {
-            fi_namespace_record_t* rec = &names->vector[i];
-            FI_DeleteObject(FI_Object(rec->objectId));
-        }
-        Z_Free(names->vector);
-    }
-    names->vector = NULL;
-    names->num = 0;
-}
-
-static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    if(obj)
-    {
-        uint i;
-        for(i = 0; i < names->num; ++i)
-        {
-            fi_namespace_record_t* rec = &names->vector[i];
-            if(rec->objectId == obj->id)
-                return i+1;
-        }
-    }
-    return 0;
-}
-
-#if 0
-static __inline dd_bool objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    return objectIndexInNamespace(names, obj) != 0;
-}
-#endif
-
-/**
- * @note Does not check if the object already exists in this scope.
- */
-static fi_object_t* addObjectToNamespace(fi_namespace_t* names, const char* name, fi_object_t* obj)
-{
-    fi_namespace_record_t* rec;
-    names->vector = (fi_namespace_record_t *) Z_Realloc(names->vector, sizeof(*names->vector) * ++names->num, PU_APPSTATIC);
-    rec = &names->vector[names->num-1];
-
-    rec->objectId = obj->id;
-    memset(rec->name, 0, sizeof(rec->name));
-    dd_snprintf(rec->name, FI_NAME_MAX_LENGTH, "%s", name);
-
-    return obj;
-}
-
-/**
- * @pre There is at most one reference to the object in this scope.
- */
-static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    uint idx;
-    if((idx = objectIndexInNamespace(names, obj)))
-    {
-        idx -= 1; // Indices are 1-based.
-
-        if(idx != names->num-1)
-            memmove(&names->vector[idx], &names->vector[idx+1], sizeof(*names->vector) * (names->num-idx));
-
-        if(names->num > 1)
-        {
-            names->vector = (fi_namespace_record_t *) Z_Realloc(names->vector, sizeof(*names->vector) * --names->num, PU_APPSTATIC);
-        }
-        else
-        {
-            Z_Free(names->vector);
-            names->vector = NULL;
-            names->num = 0;
-        }
-    }
-    return obj;
-}
-
-static fi_objectid_t findObjectIdForName(fi_namespace_t* names, const char* name, fi_obtype_e type)
-{
-    if(!name || !name[0])
-        return 0;
-    return toObjectId(names, name, type);
-}
-
-static const command_t* findCommand(const char* name)
-{
-    size_t i;
-    for(i = 0; commands[i].token; ++i)
-    {
-        const command_t* cmd = &commands[i];
-        if(!stricmp(cmd->token, name))
             return cmd;
+        }
     }
     return 0; // Not found.
 }
 
-static void releaseScript(finaleinterpreter_t* fi)
+DENG2_PIMPL(FinaleInterpreter)
 {
-    if(fi->_script)
-        Z_Free(fi->_script);
-    fi->_script = 0;
-    fi->_scriptBegin = 0;
-    fi->_cp = 0;
-}
-
-static const char* nextToken(finaleinterpreter_t* fi)
-{
-    char* out;
-
-    // Skip whitespace.
-    while(*fi->_cp && isspace(*fi->_cp))
-        fi->_cp++;
-    if(!*fi->_cp)
-        return NULL; // The end has been reached.
-
-    out = fi->_token;
-    if(*fi->_cp == '"') // A string?
+    struct Flags
     {
-        for(fi->_cp++; *fi->_cp; fi->_cp++)
-        {
-            if(*fi->_cp == '"')
-            {
-                fi->_cp++;
-                // Convert double quotes to single ones.
-                if(*fi->_cp != '"')
-                    break;
-            }
-            *out++ = *fi->_cp;
-        }
-    }
-    else
-    {
-        while(!isspace(*fi->_cp) && *fi->_cp)
-            *out++ = *fi->_cp++;
-    }
-    *out++ = 0;
+        char stopped:1;
+        char suspended:1;
+        char paused:1;
+        char can_skip:1;
+        char eat_events:1; /// Script will eat all input events.
+        char show_menu:1;
+    } flags;
 
-    return fi->_token;
-}
+    finaleid_t id;       ///< Unique identifier.
+    ddstring_t *script;  ///< The script to be interpreted.
+    char *scriptBegin;   ///< Beginning of the script (after any directive blocks).
+    char const *cp;      ///< Current position in the script.
 
-static __inline const char* findDefaultValueEnd(const char* str)
-{
-    const char* defaultValueEnd;
-    for(defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
-    {}
-    DENG_ASSERT(defaultValueEnd < str + strlen(str));
-    return defaultValueEnd;
-}
-
-static const char* nextOperand(const char* operands)
-{
-    if(operands && operands[0])
-    {
-        // Some operands might include a default value.
-        int len = strlen(operands);
-        if(len > 1 && operands[1] == '(')
-        {
-            // A default value begins. Find the end.
-            return findDefaultValueEnd(operands + 2) + 1;
-        }
-        return operands + 1;
-    }
-    return NULL; // No more operands.
-}
-
-/// @return Total number of command operands in the control string @a operands.
-static int countCommandOperands(const char* operands)
-{
-    int count = 0;
-    while(operands && operands[0])
-    {
-        count += 1;
-        operands = nextOperand(operands);
-    }
-    return count;
-}
-
-/**
- * Prepare the command operands from the script. If successfull, a ptr to a new
- * vector of @c fi_operand_t objects is returned. Ownership of the vector is
- * given to the caller.
- *
- * @return  A new array of @c fi_operand_t else @c NULL
- */
-static fi_operand_t* prepareCommandOperands(finaleinterpreter_t* fi, const command_t* cmd,
-    int* count)
-{
-    const char* origCursorPos = fi->_cp;
-    int operandCount = 0;
-    fi_operand_t* operands = 0, *op;
-    const char* opRover;
-
-    DENG_ASSERT(fi && cmd);
-
-    operandCount = countCommandOperands(cmd->operands);
-    if(operandCount <= 0) return NULL;
-
-    operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
-    opRover = cmd->operands;
-    for(op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
-    {
-        const char charCode = *opRover;
-        dd_bool opHasDefaultValue, haveValue;
-
-        op->type = operandTypeForCharCode(charCode);
-        opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
-
-        haveValue = !!nextToken(fi);
-        if(!haveValue && !opHasDefaultValue)
-        {
-            fi->_cp = origCursorPos;
-
-            if(operands) free(operands);
-            if(count) *count = 0;
-
-            App_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
-            return 0; // Unreachable.
-        }
-
-        switch(op->type)
-        {
-        case FVT_INT: {
-            const char* valueStr = haveValue? fi->_token : 0;
-            if(!valueStr)
-            {
-                // Use the default.
-                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
-                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                valueStr = Str_Text(defaultValue);
-            }
-            op->data.integer = strtol(valueStr, NULL, 0);
-            break; }
-
-        case FVT_FLOAT: {
-            const char* valueStr = haveValue? fi->_token : 0;
-            if(!valueStr)
-            {
-                // Use the default.
-                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
-                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                valueStr = Str_Text(defaultValue);
-            }
-            op->data.flt = strtod(valueStr, NULL);
-            break; }
-
-        case FVT_SCRIPT_STRING: {
-            const char* valueStr = haveValue? fi->_token : 0;
-            int valueLen         = haveValue? strlen(fi->_token) : 0;
-            if(!valueStr)
-            {
-                // Use the default.
-                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
-                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                valueStr = Str_Text(defaultValue);
-                valueLen = defaultValueLen;
-            }
-            op->data.cstring = (char*)malloc(valueLen+1);
-            strcpy((char*)op->data.cstring, fi->_token);
-            break; }
-
-        case FVT_OBJECT: {
-            const char* obName = haveValue? fi->_token : 0;
-            if(!obName)
-            {
-                // Use the default.
-                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
-                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                obName = Str_Text(defaultValue);
-            }
-            op->data.obj = FI_Object(findObjectIdForName(&fi->_namespace, obName, FI_NONE));
-            break; }
-
-        case FVT_URI: {
-            Uri* uri = Uri_New();
-            // Always apply the default as it may contain a default scheme.
-            if(opHasDefaultValue)
-            {
-                const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
-                AutoStr* defaultValue = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
-                Uri_SetUri2(uri, Str_Text(defaultValue), RC_NULL);
-            }
-            if(haveValue)
-            {
-                Uri_SetUri2(uri, fi->_token, RC_NULL);
-            }
-            op->data.uri = uri;
-            break; }
-
-        default: break; // Unreachable.
-        }
-    }
-
-    if(count) *count = operandCount;
-
-    return operands;
-}
-
-static dd_bool skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
-{
-    if((fi->_skipNext && !cmd->flags.when_condition_skipping) ||
-       ((fi->_skipping || fi->_gotoSkip) && !cmd->flags.when_skipping))
-    {
-        // While not DO-skipping, the condskip has now been done.
-        if(!fi->_doLevel)
-        {
-            if(fi->_skipNext)
-                fi->_lastSkipped = true;
-            fi->_skipNext = false;
-        }
-        return true;
-    }
-    return false;
-}
-
-/**
- * Execute one (the next) command, advance script cursor.
- */
-static dd_bool executeCommand(finaleinterpreter_t* fi, const char* commandString,
-    int directive)
-{
-    dd_bool didSkip = false;
-
-    // Semicolon terminates DO-blocks.
-    if(!strcmp(commandString, ";"))
-    {
-        if(fi->_doLevel > 0)
-        {
-            if(--fi->_doLevel == 0)
-            {
-                // The DO-skip has been completed.
-                fi->_skipNext = false;
-                fi->_lastSkipped = true;
-            }
-        }
-        return true; // Success!
-    }
-
-    // We're now going to execute a command.
-    fi->_cmdExecuted = true;
-
-    // Is this a command we know how to execute?
-    {const command_t* cmd;
-    if((cmd = findCommand(commandString)))
-    {
-        dd_bool requiredOperands;
-        fi_operand_t* ops = NULL;
-        int numOps = 0;
-
-        // Is this command supported for this directive?
-        if(directive != 0 && cmd->excludeDirectives != 0 &&
-           (cmd->excludeDirectives & directive) == 0)
-            App_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
-                      cmd->token, directive);
-
-        // Check that there are enough operands.
-        requiredOperands = (cmd->operands && cmd->operands[0]);
-        /// @todo Dynamic memory allocation during script interpretation should be avoided.
-        if(0 == requiredOperands || (ops = prepareCommandOperands(fi, cmd, &numOps)))
-        {
-            // Should we skip this command?
-            if(!(didSkip = skippingCommand(fi, cmd)))
-            {
-                // Execute forthwith!
-                cmd->func(cmd, ops, fi);
-            }
-        }
-
-        if(!didSkip)
-        {
-            if(fi->_gotoEnd)
-            {
-                fi->_wait = 1;
-            }
-            else
-            {   // Now we've executed the latest command.
-                fi->_lastSkipped = false;
-            }
-        }
-
-        if(ops)
-        {
-            int i;
-            for(i = 0; i < numOps; ++i)
-            {
-                fi_operand_t* op = &ops[i];
-                switch(op->type)
-                {
-                case FVT_SCRIPT_STRING:
-                    free((char*)op->data.cstring);
-                    break;
-                case FVT_URI:
-                    Uri_Delete(op->data.uri);
-                    break;
-                default: break;
-                }
-            }
-            free(ops);
-        }
-    }}
-    return !didSkip;
-}
-
-static dd_bool executeNextCommand(finaleinterpreter_t* fi)
-{
-    const char* token;
-    if((token = nextToken(fi)))
-    {
-        executeCommand(fi, token, FID_NORMAL);
-        // Time to unhide the object page(s)?
-        if(fi->_cmdExecuted)
-        {
-            FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
-            FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
-        }
-        return true;
-    }
-    return false;
-}
-
-static __inline uint pageForObjectType(fi_obtype_e type)
-{
-    return (type == FI_TEXT? PAGE_TEXT : PAGE_PICS);
-}
-
-/**
- * Find an object of the specified type with the type-unique name.
- * @param name  Unique name of the object we are looking for.
-
- * @return  Ptr to @c fi_object_t Either:
- *          a) Existing object associated with unique @a name.
- *          b) New object with unique @a name.
- */
-static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const char* name)
-{
-    fi_objectid_t id;
-    fi_object_t* obj;
-    uint pageIdx;
-    assert(name && name);
-
-    // An existing object?
-    if((id = findObjectIdForName(&fi->_namespace, name, type)))
-    {
-        return FI_Object(id);
-    }
-
-    // A new object.
-    obj = FI_NewObject(type, name);
-    pageIdx = pageForObjectType(type);
-    switch(type)
-    {
-    case FI_TEXT:
-        FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[pageIdx], 0));
-        FIData_TextSetPreColor(obj, 1);
-        break;
-    default:
-        // No additional pre-configuration.
-        break;
-    }
-    return FIPage_AddObject(fi->_pages[pageIdx], addObjectToNamespace(&fi->_namespace, name, obj));
-}
-
-static void clearEventHandlers(finaleinterpreter_t* fi)
-{
-    if(fi->_numEventHandlers)
-        Z_Free(fi->_eventHandlers);
-    fi->_eventHandlers = 0;
-    fi->_numEventHandlers = 0;
-}
-
-static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev)
-{
-    uint i;
-    for(i = 0; i < fi->_numEventHandlers; ++i)
-    {
-        fi_handler_t* h = &fi->_eventHandlers[i];
-        if(h->ev.device != ev->device && h->ev.type != ev->type)
-            continue;
-        switch(h->ev.type)
-        {
-        case E_TOGGLE:
-            if(h->ev.toggle.id != ev->toggle.id)
-                continue;
-            break;
-        case E_AXIS:
-            if(h->ev.axis.id != ev->axis.id)
-                continue;
-            break;
-        case E_ANGLE:
-            if(h->ev.angle.id != ev->angle.id)
-                continue;
-            break;
-        default:
-            App_Error("Internal error: Invalid event template (type=%i) in finale event handler.", (int) h->ev.type);
-        }
-        return h;
-    }
-    return 0;
-}
+    /// Script token read/parse buffer.
+    char token[MAX_TOKEN_LENGTH];
 
 #ifdef __CLIENT__
-static fi_handler_t* createEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
-{
-    fi_handler_t* h;
-    fi->_eventHandlers = (fi_handler_t *) Z_Realloc(fi->_eventHandlers, sizeof(*h) * ++fi->_numEventHandlers, PU_APPSTATIC);
-    h = &fi->_eventHandlers[fi->_numEventHandlers-1];
-    memset(h, 0, sizeof(*h));
-    memcpy(&h->ev, ev, sizeof(h->ev));
-    dd_snprintf(h->marker, FI_NAME_MAX_LENGTH, "%s", marker);
-    return h;
-}
-
-static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
-{
-    assert(fi && h);
-    {uint i;
-    for(i = 0; i < fi->_numEventHandlers; ++i)
+    struct EventHandler
     {
-        fi_handler_t* other = &fi->_eventHandlers[i];
+        ddevent_t ev; // Template.
+        fi_objectname_t gotoMarker;
 
-        if(h != other)
-            continue;
+        explicit EventHandler(ddevent_t const *evTemplate = nullptr,
+                              char const *gotoMarker      = nullptr) {
+            std::memcpy(&ev, &evTemplate, sizeof(ev));
+            setGotoMarker(gotoMarker);
+        }
+        EventHandler(EventHandler const &other) {
+            std::memcpy(&ev, &other.ev, sizeof(ev));
+            setGotoMarker(other.gotoMarker);
+        }
 
-        if(i != fi->_numEventHandlers-1)
-            memmove(&fi->_eventHandlers[i], &fi->_eventHandlers[i+1], sizeof(*fi->_eventHandlers) * (fi->_numEventHandlers-i));
+        void setGotoMarker(char const *newGotoMarker) {
+            de::zap(gotoMarker);
+            if(newGotoMarker) {
+                dd_snprintf(gotoMarker, FI_NAME_MAX_LENGTH, "%s", newGotoMarker);
+            }
+        }
+    };
 
-        // Resize storage?
-        if(fi->_numEventHandlers > 1)
+    typedef QList<EventHandler> EventHandlers;
+    EventHandlers eventHandlers;
+#endif // __CLIENT__
+
+    struct KnownObjects
+    {
+        struct Item
         {
-            fi->_eventHandlers = (fi_handler_t *) Z_Realloc(fi->_eventHandlers, sizeof(*fi->_eventHandlers) * --fi->_numEventHandlers, PU_APPSTATIC);
+            fi_objectname_t name; ///< Unique among objects of the same type.
+            fi_objectid_t   id;
+
+            explicit Item(fi_objectid_t id = 0, char const *name = nullptr)
+                : id(id) {
+                setName(name);
+            }
+            Item(Item const &other) : id(other.id) {
+                setName(other.name);
+            }
+
+            void setName(char const *newName = nullptr) {
+                de::zap(name);
+                if(newName) {
+                    dd_snprintf(name, FI_NAME_MAX_LENGTH, "%s", newName);
+                }
+            }
+        };
+        typedef QList<Item> AllItems;
+        AllItems items;
+
+        ~KnownObjects() { clear(); }
+
+        void clear()
+        {
+            items.clear();
+        }
+
+        /**
+         * @param type  Type of object if known. Use FI_NONE for priority-based search.
+         */
+        fi_objectid_t toId(char const *name, fi_obtype_e type = FI_NONE)
+        {
+            DENG2_ASSERT(name && name[0]);
+
+            if(type == FI_NONE)
+            {
+                // First check all pics.
+                fi_objectid_t id = toId(name, FI_PIC);
+                // Then check text objects.
+                if(!id) id = toId(name, FI_TEXT);
+                return id;
+            }
+
+            for(Item const &item : items)
+            {
+                if(qstricmp(item.name, name)) continue;
+
+                fi_object_t *ob = FI_Object(item.id);
+                DENG2_ASSERT(ob);
+                if(ob->type == type)
+                {
+                    return item.id;
+                }
+            }
+            return 0;
+        }
+
+        int indexOf(fi_object_t *ob)
+        {
+            if(ob)
+            {
+                for(int i = 0; i < items.count(); ++i)
+                {
+                    if(items.at(i).id == ob->id) return i + 1; // 1-based
+                }
+            }
+            return 0;
+        }
+
+        /**
+         * @note Does not check if the object already exists in this scope.
+         */
+        fi_object_t *add(fi_object_t *ob, char const *name)
+        {
+            DENG2_ASSERT(ob && name);
+            items.append(Item(ob->id, name));
+            return ob;
+        }
+
+        /**
+         * @pre There is at most one reference to the object in this scope.
+         */
+        fi_object_t *remove(fi_object_t *ob)
+        {
+            if(int index = indexOf(ob))
+            {
+                items.removeAt(index);
+            }
+            return ob;
+        }
+    } names;
+
+    /// Pages on which objects created by this interpeter are visible.
+    fi_page_t *pages[2];
+
+    /// Set to true after first command is executed.
+    bool cmdExecuted;
+    bool skipping;
+    bool lastSkipped;
+    bool gotoSkip;
+    bool gotoEnd;
+    bool skipNext;
+
+    int doLevel; ///< Level of DO-skipping.
+
+    uint timer;
+    int wait;
+    int inTime;
+
+    fi_objectname_t gotoTarget;
+
+    fi_object_t *waitText;
+    fi_object_t *waitAnim;
+
+    Instance(Public *i, finaleid_t id)
+        : Base(i)
+        , id         (id)
+        , script     (nullptr)
+        , scriptBegin(nullptr)
+        , cp         (nullptr)
+        , cmdExecuted(false)
+        , skipping   (false)
+        , lastSkipped(false)
+        , gotoSkip   (false)
+        , gotoEnd    (false)
+        , skipNext   (false)
+        , doLevel    (0)
+        , timer      (0)
+        , wait       (0)
+        , inTime     (0)
+        , waitText   (nullptr)
+        , waitAnim   (nullptr)
+    {
+        de::zap(flags);
+        de::zap(token);
+        de::zap(pages);
+        de::zap(gotoTarget);
+    }
+
+    ~Instance()
+    {
+        stop();
+        releaseScript();
+        deleteAllObjects();
+        FI_DeletePage(pages[Anims]);
+        FI_DeletePage(pages[Texts]);
+    }
+
+    void initDefaultState()
+    {
+        flags.suspended = false;
+        flags.paused    = false;
+        flags.show_menu = true; // Unhandled events will show a menu.
+        flags.can_skip  = true; // By default skipping is enabled.
+
+        cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
+        skipping    = false;
+        wait        = 0;     // Not waiting for anything.
+        inTime      = 0;     // Interpolation is off.
+        timer       = 0;
+        gotoSkip    = false;
+        gotoEnd     = false;
+        skipNext    = false;
+        waitText    = nullptr;
+        waitAnim    = nullptr;
+        de::zap(gotoTarget);
+
+#ifdef __CLIENT__
+        eventHandlers.clear();
+#endif
+    }
+
+    void releaseScript()
+    {
+        Str_Delete(script); script = nullptr;
+        scriptBegin = nullptr;
+        cp          = nullptr;
+    }
+
+    void stop()
+    {
+        if(flags.stopped) return;
+
+        flags.stopped = true;
+        LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << id << scriptBegin;
+
+#ifdef __SERVER__
+        if(::isServer && !(FI_ScriptFlags(id) & FF_LOCAL))
+        {
+            // Tell clients to stop the finale.
+            Sv_Finale(id, FINF_END, 0);
+        }
+#endif
+
+        // Any hooks?
+        DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, id, 0);
+    }
+
+    bool atEnd() const
+    {
+        DENG2_ASSERT(script);
+        return (cp - Str_Text(script)) >= Str_Length(script);
+    }
+
+    void findBegin()
+    {
+        char const *tok;
+        while(!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "{")) {}
+    }
+
+    void findEnd()
+    {
+        char const *tok;
+        while(!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "}")) {}
+    }
+
+    char const *nextToken()
+    {
+        // Skip whitespace.
+        while(!atEnd() && isspace(*cp)) { cp++; }
+
+        // Have we reached the end?
+        if(atEnd()) return nullptr;
+
+        char *out = token;
+        if(*cp == '"') // A string?
+        {
+            for(cp++; !atEnd(); cp++)
+            {
+                if(*cp == '"')
+                {
+                    cp++;
+                    // Convert double quotes to single ones.
+                    if(*cp != '"') break;
+                }
+                *out++ = *cp;
+            }
         }
         else
         {
-            Z_Free(fi->_eventHandlers);
-            fi->_eventHandlers = NULL;
-            fi->_numEventHandlers = 0;
+            while(!isspace(*cp) && !atEnd()) { *out++ = *cp++; }
         }
-        return;
-    }}
-}
-#endif // __CLIENT__
+        *out++ = 0;
 
-#if 0
-/**
- * Find a @c fi_handler_t for the specified ddkey code.
- * @param ev  Input event to find a handler for.
- * @return  Ptr to @c fi_handler_t object. Either:
- *          a) Existing handler associated with unique @a code.
- *          b) New object with unique @a code.
- */
-static dd_bool getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
-{
-    // First, try to find an existing handler.
-    if(findEventHandler(fi, ev))
+        return token;
+    }
+
+    /// @return  @c true if the end of the script was reached.
+    bool executeNextCommand()
+    {
+        if(char const *tok = nextToken())
+        {
+            executeCommand(tok, FID_NORMAL);
+            // Time to unhide the object page(s)?
+            if(cmdExecuted)
+            {
+                FIPage_MakeVisible(pages[Anims], true);
+                FIPage_MakeVisible(pages[Texts], true);
+            }
+            return false;
+        }
         return true;
-    // Allocate and attach another.
-    createEventHandler(fi, ev, marker);
-    return true;
-}
-#endif
-
-static void stopScript(finaleinterpreter_t* fi)
-{
-    LOGDEV_SCR_MSG("Finale End - id:%i '%.30s'") << fi->_id << fi->_scriptBegin;
-
-    fi->flags.stopped = true;
-
-#ifdef __SERVER__
-    if(isServer && !(FI_ScriptFlags(fi->_id) & FF_LOCAL))
-    {
-        // Tell clients to stop the finale.
-        Sv_Finale(fi->_id, FINF_END, 0);
     }
-#endif
 
-    // Any hooks?
-    DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
-}
-
-static void changePageBackground(fi_page_t* p, Material* mat)
-{
-    // If the page does not yet have a background set we must setup the color+alpha.
-    if(mat && !FIPage_BackgroundMaterial(p))
+    static inline char const *findDefaultValueEnd(char const *str)
     {
-        FIPage_SetBackgroundTopColorAndAlpha(p, 1, 1, 1, 1, 0);
-        FIPage_SetBackgroundBottomColorAndAlpha(p, 1, 1, 1, 1, 0);
+        char const *defaultValueEnd;
+        for(defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
+        {}
+        DENG2_ASSERT(defaultValueEnd < str + qstrlen(str));
+        return defaultValueEnd;
     }
-    FIPage_SetBackgroundMaterial(p, mat);
-}
 
-finaleinterpreter_t *P_CreateFinaleInterpreter(finaleid_t id)
-{
-    auto *fi = (finaleinterpreter_t *) Z_Calloc(sizeof(finaleinterpreter_t), PU_APPSTATIC, 0);
-    fi->_id = id;
-    return fi;
-}
-
-void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi)
-{
-    if(!fi) return;
-
-    stopScript(fi);
-    clearEventHandlers(fi);
-    releaseScript(fi);
-    destroyObjectsInScope(&fi->_namespace);
-    FI_DeletePage(fi->_pages[PAGE_PICS]);
-    FI_DeletePage(fi->_pages[PAGE_TEXT]);
-    Z_Free(fi);
-}
-
-static __inline void findBegin(finaleinterpreter_t* fi)
-{
-    const char* token;
-    while(!fi->_gotoEnd && 0 != (token = nextToken(fi)) && stricmp(token, "{")) {}
-}
-
-static __inline void findEnd(finaleinterpreter_t* fi)
-{
-    const char* token;
-    while(!fi->_gotoEnd && 0 != (token = nextToken(fi)) && stricmp(token, "}")) {}
-}
-
-static void initDefaultState(finaleinterpreter_t* fi)
-{
-    assert(fi);
-
-    fi->flags.suspended = false;
-    fi->flags.paused = false;
-    fi->flags.show_menu = true; // Unhandled events will show a menu.
-    fi->flags.can_skip = true; // By default skipping is enabled.
-
-    fi->_cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
-    fi->_skipping = false;
-    fi->_wait = 0; // Not waiting for anything.
-    fi->_inTime = 0; // Interpolation is off.
-    fi->_timer = 0;
-    fi->_gotoSkip = false;
-    fi->_gotoEnd = false;
-    fi->_skipNext = false;
-
-    fi->_waitingText = 0;
-    fi->_waitingPic = 0;
-    memset(fi->_gotoTarget, 0, sizeof(fi->_gotoTarget));
-
-    clearEventHandlers(fi);
-}
-
-void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
-{
-    assert(fi && script && script[0]);
+    static char const *nextOperand(char const *operands)
     {
-    size_t size = strlen(script);
+        if(operands && operands[0])
+        {
+            // Some operands might include a default value.
+            int len = qstrlen(operands);
+            if(len > 1 && operands[1] == '(')
+            {
+                // A default value begins. Find the end.
+                return findDefaultValueEnd(operands + 2) + 1;
+            }
+            return operands + 1;
+        }
+        return nullptr; // No more operands.
+    }
+
+    /// @return Total number of command operands in the control string @a operands.
+    static int countCommandOperands(char const *operands)
+    {
+        int count = 0;
+        while(operands && operands[0])
+        {
+            count += 1;
+            operands = nextOperand(operands);
+        }
+        return count;
+    }
 
     /**
-     * InFine imposes a strict object drawing order:
+     * Prepare the command operands from the script. If successfull, a ptr to a new
+     * vector of @c fi_operand_t objects is returned. Ownership of the vector is
+     * given to the caller.
      *
-     * 1: Background flat (or a single-color background).
-     * 2: Picture objects (globally offseted with OffX and OffY), in the order in which they were created.
-     * 3: Text objects, in the order in which they were created.
-     * 4: Filter.
-     *
-     * For this we'll need two pages; one for it's background and for Pics and another for Text and it's filter.
+     * @return  Array of @c fi_operand_t else @c nullptr. Must be free'd with M_Free().
      */
-    fi->_pages[PAGE_PICS] = FI_NewPage(0);
-    fi->_pages[PAGE_TEXT] = FI_NewPage(0);
+    fi_operand_t *prepareCommandOperands(command_t const *cmd, int *count)
+    {
+        DENG2_ASSERT(cmd);
+
+        char const *origCursorPos = cp;
+        int const operandCount    = countCommandOperands(cmd->operands);
+        if(operandCount <= 0) return nullptr;
+
+        fi_operand_t *operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
+        char const *opRover    = cmd->operands;
+        for(fi_operand_t *op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
+        {
+            char const charCode = *opRover;
+
+            op->type = operandTypeForCharCode(charCode);
+            bool const opHasDefaultValue = (opRover < cmd->operands + (qstrlen(cmd->operands) - 2) && opRover[1] == '(');
+            bool const haveValue         = !!nextToken();
+
+            if(!haveValue && !opHasDefaultValue)
+            {
+                cp = origCursorPos;
+
+                if(operands) M_Free(operands);
+                if(count) *count = 0;
+
+                App_Error("prepareCommandOperands: Too few operands for command '%s'.\n", cmd->token);
+                return 0; // Unreachable.
+            }
+
+            switch(op->type)
+            {
+            case FVT_INT: {
+                char const *valueStr = haveValue? token : nullptr;
+                if(!valueStr)
+                {
+                    // Use the default.
+                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                    valueStr = Str_Text(defaultValue);
+                }
+                op->data.integer = strtol(valueStr, nullptr, 0);
+                break; }
+
+            case FVT_FLOAT: {
+                char const *valueStr = haveValue? token : nullptr;
+                if(!valueStr)
+                {
+                    // Use the default.
+                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                    valueStr = Str_Text(defaultValue);
+                }
+                op->data.flt = strtod(valueStr, nullptr);
+                break; }
+
+            case FVT_SCRIPT_STRING: {
+                char const *valueStr = haveValue? token : nullptr;
+                int valueLen         = haveValue? qstrlen(token) : 0;
+                if(!valueStr)
+                {
+                    // Use the default.
+                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                    valueStr = Str_Text(defaultValue);
+                    valueLen = defaultValueLen;
+                }
+                op->data.cstring = (char *)M_Malloc(valueLen + 1);
+                qstrcpy((char *)op->data.cstring, token);
+                break; }
+
+            case FVT_OBJECT: {
+                char const *obName = haveValue? token : nullptr;
+                if(!obName)
+                {
+                    // Use the default.
+                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                    obName = Str_Text(defaultValue);
+                }
+                op->data.ob = FI_Object(names.toId(obName, FI_NONE));
+                break; }
+
+            case FVT_URI: {
+                uri_s *uri = Uri_New();
+                // Always apply the default as it may contain a default scheme.
+                if(opHasDefaultValue)
+                {
+                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
+                    Uri_SetUri2(uri, Str_Text(defaultValue), RC_NULL);
+                }
+                if(haveValue)
+                {
+                    Uri_SetUri2(uri, token, RC_NULL);
+                }
+                op->data.uri = uri;
+                break; }
+
+            default: break; // Unreachable.
+            }
+        }
+
+        if(count) *count = operandCount;
+
+        return operands;
+    }
+
+    bool skippingCommand(command_t const *cmd)
+    {
+        DENG2_ASSERT(cmd);
+        if((skipNext && !cmd->flags.when_condition_skipping) ||
+           ((skipping || gotoSkip) && !cmd->flags.when_skipping))
+        {
+            // While not DO-skipping, the condskip has now been done.
+            if(!doLevel)
+            {
+                if(skipNext)
+                    lastSkipped = true;
+                skipNext = false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Execute one (the next) command, advance script cursor.
+     */
+    bool executeCommand(char const *commandString, int directive)
+    {
+        DENG2_ASSERT(commandString);
+        bool didSkip = false;
+
+        // Semicolon terminates DO-blocks.
+        if(!qstrcmp(commandString, ";"))
+        {
+            if(doLevel > 0)
+            {
+                if(--doLevel == 0)
+                {
+                    // The DO-skip has been completed.
+                    skipNext    = false;
+                    lastSkipped = true;
+                }
+            }
+            return true; // Success!
+        }
+
+        // We're now going to execute a command.
+        cmdExecuted = true;
+
+        // Is this a command we know how to execute?
+        if(command_t const *cmd = findCommand(commandString))
+        {
+            bool const requiredOperands = (cmd->operands && cmd->operands[0]);
+
+            // Is this command supported for this directive?
+            if(directive != 0 && cmd->excludeDirectives != 0 &&
+               (cmd->excludeDirectives & directive) == 0)
+                App_Error("executeCommand: Command \"%s\" is not supported for directive %i.",
+                          cmd->token, directive);
+
+            // Check that there are enough operands.
+            /// @todo Dynamic memory allocation during script interpretation should be avoided.
+            int numOps        = 0;
+            fi_operand_t *ops = nullptr;
+            if(!requiredOperands || (ops = prepareCommandOperands(cmd, &numOps)))
+            {
+                // Should we skip this command?
+                if(!(didSkip = skippingCommand(cmd)))
+                {
+                    // Execute forthwith!
+                    cmd->func(*cmd, ops, self);
+                }
+            }
+
+            if(!didSkip)
+            {
+                if(gotoEnd)
+                {
+                    wait = 1;
+                }
+                else
+                {   // Now we've executed the latest command.
+                    lastSkipped = false;
+                }
+            }
+
+            if(ops)
+            {
+                for(int i = 0; i < numOps; ++i)
+                {
+                    fi_operand_t *op = &ops[i];
+                    switch(op->type)
+                    {
+                    case FVT_SCRIPT_STRING: M_Free((char *)op->data.cstring); break;
+                    case FVT_URI:           Uri_Delete(op->data.uri);         break;
+
+                    default: break;
+                    }
+                }
+                M_Free(ops);
+            }
+        }
+
+        return !didSkip;
+    }
+
+    static inline PageIndex choosePageForObjectType(fi_obtype_e type)
+    {
+        return (type == FI_TEXT? Texts : Anims);
+    }
+
+    void deleteAllObjects()
+    {
+        for(KnownObjects::Item const &item : names.items)
+        {
+            FI_DeleteObject(FI_Object(item.id));
+        }
+        names.clear();
+    }
+
+#if __CLIENT__
+    EventHandler *findEventHandler(ddevent_t const &ev) const
+    {
+        for(EventHandler const &eh : eventHandlers)
+        {
+            if(eh.ev.device != ev.device && eh.ev.type != ev.type)
+                continue;
+
+            switch(eh.ev.type)
+            {
+            case E_TOGGLE:
+                if(eh.ev.toggle.id != ev.toggle.id)
+                    continue;
+                break;
+
+            case E_AXIS:
+                if(eh.ev.axis.id != ev.axis.id)
+                    continue;
+                break;
+
+            case E_ANGLE:
+                if(eh.ev.angle.id != ev.angle.id)
+                    continue;
+                break;
+
+            default:
+                App_Error("Internal error: Invalid event template (type=%i) in finale event handler.", int(eh.ev.type));
+            }
+            return &const_cast<EventHandler &>(eh);
+        }
+        return nullptr;
+    }
+#endif // __CLIENT__
+};
+
+FinaleInterpreter::FinaleInterpreter(finaleid_t id) : d(new Instance(this, id))
+{}
+
+finaleid_t FinaleInterpreter::id() const
+{
+    return d->id;
+}
+
+void FinaleInterpreter::loadScript(char const *script)
+{
+    DENG2_ASSERT(script && script[0]);
+
+    d->pages[Anims] = FI_NewPage(nullptr);
+    d->pages[Texts] = FI_NewPage(nullptr);
 
     // Hide our pages until command interpretation begins.
-    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
-    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
+    FIPage_MakeVisible(d->pages[Anims], false);
+    FIPage_MakeVisible(d->pages[Texts], false);
 
     // Take a copy of the script.
-    fi->_script = (char *) Z_Realloc(fi->_script, size + 1, PU_APPSTATIC);
-    memcpy(fi->_script, script, size);
-    fi->_script[size] = '\0';
-    fi->_scriptBegin = fi->_script;
-    fi->_cp = fi->_script; // Init cursor.
+    d->script      = Str_Set(Str_NewStd(), script);
+    d->scriptBegin = Str_Text(d->script);
+    d->cp          = Str_Text(d->script); // Init cursor.
 
-    initDefaultState(fi);
+    d->initDefaultState();
 
     // Locate the start of the script.
-    if(0 != nextToken(fi))
+    if(d->nextToken())
     {
         // The start of the script may include blocks of event directive
         // commands. These commands are automatically executed in response
         // to their associated events.
-        if(!stricmp(fi->_token, "OnLoad"))
+        if(!qstricmp(d->token, "OnLoad"))
         {
-            findBegin(fi);
-            for(;;)
+            d->findBegin();
+            forever
             {
-                nextToken(fi);
-                if(!stricmp(fi->_token, "}"))
+                d->nextToken();
+                if(!qstricmp(d->token, "}"))
                     goto end_read;
-                if(!executeCommand(fi, fi->_token, FID_ONLOAD))
+
+                if(!d->executeCommand(d->token, FID_ONLOAD))
                     App_Error("FinaleInterpreter::LoadScript: Unknown error"
                               "occured executing directive \"OnLoad\".");
             }
-            findEnd(fi);
+            d->findEnd();
 end_read:
+
             // Skip over any trailing whitespace to position the read cursor
             // on the first token.
-            while(*fi->_cp && isspace(*fi->_cp))
-                fi->_cp++;
+            while(*d->cp && isspace(*d->cp)) { d->cp++; }
 
             // Calculate the new script entry point and restore default state.
-            fi->_scriptBegin = fi->_script + (fi->_cp - fi->_script);
-            fi->_cp = fi->_scriptBegin;
-            initDefaultState(fi);
+            d->scriptBegin = Str_Text(d->script) + (d->cp - Str_Text(d->script));
+            d->cp          = d->scriptBegin;
+            d->initDefaultState();
         }
     }
 
     // Any hooks?
-    DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
-    }
+    DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, d->id, 0);
 }
 
-void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi)
+void FinaleInterpreter::resume()
 {
-    assert(fi);
-    if(!fi->flags.stopped)
-    {
-        stopScript(fi);
-    }
-    clearEventHandlers(fi);
-    releaseScript(fi);
-}
+    if(!d->flags.suspended) return;
 
-void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
-{
-    assert(fi);
-    if(!fi->flags.suspended)
-        return;
-    fi->flags.suspended = false;
-    FIPage_Pause(fi->_pages[PAGE_PICS], false);
-    FIPage_Pause(fi->_pages[PAGE_TEXT], false);
+    d->flags.suspended = false;
+    FIPage_Pause(d->pages[Anims], false);
+    FIPage_Pause(d->pages[Texts], false);
     // Do we need to unhide any pages?
-    if(fi->_cmdExecuted)
+    if(d->cmdExecuted)
     {
-        FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
-        FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
+        FIPage_MakeVisible(d->pages[Anims], true);
+        FIPage_MakeVisible(d->pages[Texts], true);
     }
 }
 
-void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
+void FinaleInterpreter::suspend()
 {
-    assert(fi);
-    if(fi->flags.suspended)
-        return;
-    fi->flags.suspended = true;
+    LOG_AS("FinaleInterpreter");
+
+    if(d->flags.suspended) return;
+
+    d->flags.suspended = true;
     // While suspended, all pages will be paused and hidden.
-    FIPage_Pause(fi->_pages[PAGE_PICS], true);
-    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
-    FIPage_Pause(fi->_pages[PAGE_TEXT], true);
-    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
+    FIPage_Pause(d->pages[Anims], true);
+    FIPage_MakeVisible(d->pages[Anims], false);
+    FIPage_Pause(d->pages[Texts], true);
+    FIPage_MakeVisible(d->pages[Texts], false);
 }
 
-dd_bool FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
+void FinaleInterpreter::terminate()
 {
-    assert(fi);
-    if(fi->flags.paused || fi->flags.can_skip)
+    d->stop();
+#ifdef __CLIENT__
+    d->eventHandlers.clear();
+#endif
+    d->releaseScript();
+}
+
+bool FinaleInterpreter::isMenuTrigger() const
+{
+    if(d->flags.paused || d->flags.can_skip)
     {
         // We want events to be used for unpausing/skipping.
         return false;
     }
     // If skipping is not allowed, we should show the menu, too.
-    return (fi->flags.show_menu != 0);
+    return (d->flags.show_menu != 0);
 }
 
-dd_bool FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
+bool FinaleInterpreter::isSuspended() const
 {
-    assert(fi);
-    return (fi->flags.suspended != 0);
+    return (d->flags.suspended != 0);
 }
 
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, dd_bool yes)
+void FinaleInterpreter::allowSkip(bool yes)
 {
-    assert(fi);
-    fi->flags.can_skip = yes;
+    d->flags.can_skip = yes;
 }
 
-dd_bool FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
+bool FinaleInterpreter::canSkip() const
 {
-    assert(fi);
-    return (fi->flags.can_skip != 0);
+    return (d->flags.can_skip != 0);
 }
 
-dd_bool FinaleInterpreter_CommandExecuted(finaleinterpreter_t const *fi)
+bool FinaleInterpreter::commandExecuted() const
 {
-    assert(fi);
-    return fi->_cmdExecuted;
+    return d->cmdExecuted;
 }
 
-static dd_bool runTic(finaleinterpreter_t* fi)
+static bool runOneTick(FinaleInterpreter &fi)
 {
-    ddhook_finale_script_ticker_paramaters_t params;
-    memset(&params, 0, sizeof(params));
-    params.runTick = true;
-    params.canSkip = FinaleInterpreter_CanSkip(fi);
-    DD_CallHooks(HOOK_FINALE_SCRIPT_TICKER, fi->_id, &params);
-    return params.runTick;
+    ddhook_finale_script_ticker_paramaters_t parm;
+    de::zap(parm);
+    parm.runTick = true;
+    parm.canSkip = fi.canSkip();
+    DD_CallHooks(HOOK_FINALE_SCRIPT_TICKER, fi.id(), &parm);
+    return parm.runTick;
 }
 
-dd_bool FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
+bool FinaleInterpreter::runTicks()
 {
-    assert(fi);
+    LOG_AS("FinaleInterpreter");
 
-    if(fi->flags.stopped || fi->flags.suspended)
+    if(d->flags.stopped || d->flags.suspended)
         return false;
 
-    fi->_timer++;
+    d->timer++;
 
-    if(!runTic(fi))
+    if(!runOneTick(*this))
         return false;
 
     // If waiting do not execute commands.
-    if(fi->_wait && --fi->_wait)
+    if(d->wait && --d->wait)
         return false;
 
     // If paused there is nothing further to do.
-    if(fi->flags.paused)
+    if(d->flags.paused)
         return false;
 
     // If waiting on a text to finish typing, do nothing.
-    if(fi->_waitingText && fi->_waitingText->type == FI_TEXT)
+    if(d->waitText && d->waitText->type == FI_TEXT)
     {
-        if(!((fidata_text_t*)fi->_waitingText)->animComplete)
+        if(!((fidata_text_t *)d->waitText)->animComplete)
             return false;
 
-        fi->_waitingText = NULL;
+        d->waitText = nullptr;
     }
 
     // Waiting for an animation to reach its end?
-    if(fi->_waitingPic && fi->_waitingPic->type == FI_PIC)
+    if(d->waitAnim && d->waitAnim->type == FI_PIC)
     {
-        if(!((fidata_pic_t*)fi->_waitingPic)->animComplete)
+        if(!((fidata_pic_t *)d->waitAnim)->animComplete)
             return false;
 
-        fi->_waitingPic = NULL;
+        d->waitAnim = nullptr;
     }
 
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (terminates).
-    {int last = 0;
-    while(!fi->_gotoEnd && !fi->_wait && !fi->_waitingText && !fi->_waitingPic && !last)
-        last = !executeNextCommand(fi);
-    return (fi->_gotoEnd || (last && fi->flags.can_skip));}
+    bool foundEnd = false;
+    while(!d->gotoEnd && !d->wait && !d->waitText && !d->waitAnim && !foundEnd)
+    {
+        foundEnd = d->executeNextCommand();
+    }
+    return (d->gotoEnd || (foundEnd && d->flags.can_skip));
 }
 
-dd_bool FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker)
+bool FinaleInterpreter::skip()
 {
-    assert(fi && marker);
+    LOG_AS("FinaleInterpreter");
 
-    if(!marker[0])
-        return false;
-
-    memset(fi->_gotoTarget, 0, sizeof(fi->_gotoTarget));
-    strncpy(fi->_gotoTarget, marker, sizeof(fi->_gotoTarget) - 1);
-
-    // Start skipping until the marker is found.
-    fi->_gotoSkip = true;
-
-    // Stop any waiting.
-    fi->_wait = 0;
-    fi->_waitingText = NULL;
-    fi->_waitingPic = NULL;
-
-    // Rewind the script so we can jump anywhere.
-    fi->_cp = fi->_scriptBegin;
-    return true;
-}
-
-dd_bool FinaleInterpreter_Skip(finaleinterpreter_t* fi)
-{
-    DENG2_ASSERT(fi);
-    LOG_AS("FinaleInterpreter_Skip");
-
-    if(fi->_waitingText && fi->flags.can_skip && !fi->flags.paused)
+    if(d->waitText && d->flags.can_skip && !d->flags.paused)
     {
         // Instead of skipping, just complete the text.
-        FIData_TextAccelerate(fi->_waitingText);
+        FIData_TextAccelerate(d->waitText);
         return true;
     }
 
     // Stop waiting for objects.
-    fi->_waitingText = NULL;
-    fi->_waitingPic = NULL;
-    if(fi->flags.paused)
+    d->waitText = nullptr;
+    d->waitAnim = nullptr;
+    if(d->flags.paused)
     {
-        fi->flags.paused = false;
-        fi->_wait = 0;
+        d->flags.paused = false;
+        d->wait = 0;
         return true;
     }
 
-    if(fi->flags.can_skip)
+    if(d->flags.can_skip)
     {
-        fi->_skipping = true; // Start skipping ahead.
-        fi->_wait = 0;
+        d->skipping = true; // Start skipping ahead.
+        d->wait     = 0;
         return true;
     }
 
-    return (fi->flags.eat_events != 0);
+    return (d->flags.eat_events != 0);
 }
 
-int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
+bool FinaleInterpreter::skipToMarker(char const *marker)
 {
-    assert(fi);
+    LOG_AS("FinaleInterpreter");
+    DENG2_ASSERT(marker);
 
-    LOG_AS("FinaleInterpreter_Responder");
-    LOG_SCR_XVERBOSE("fi %i, ev %i") << fi->_id << ev->type;
+    if(!marker[0]) return false;
 
-    if(fi->flags.suspended)
+    de::zap(d->gotoTarget);
+    qstrncpy(d->gotoTarget, marker, sizeof(d->gotoTarget) - 1);
+    d->gotoSkip = true;    // Start skipping until the marker is found.
+    d->wait     = 0;       // Stop any waiting.
+    d->waitText = nullptr;
+    d->waitAnim = nullptr;
+
+    // Rewind the script so we can jump anywhere.
+    d->cp = d->scriptBegin;
+    return true;
+}
+
+bool FinaleInterpreter::skipInProgress() const
+{
+    return d->skipNext;
+}
+
+bool FinaleInterpreter::lastSkipped() const
+{
+    return d->lastSkipped;
+}
+
+int FinaleInterpreter::handleEvent(ddevent_t const &ev)
+{
+    LOG_AS("FinaleInterpreter");
+
+    if(d->flags.suspended)
         return false;
 
     // During the first ~second disallow all events/skipping.
-    if(fi->_timer < 20)
+    if(d->timer < 20)
         return false;
 
-    if(!isClient)
+    if(!::isClient)
     {
+#ifdef __CLIENT__
         // Any handlers for this event?
-        if(IS_KEY_DOWN(ev))
+        if(IS_KEY_DOWN(&ev))
         {
-            fi_handler_t* h;
-            if((h = findEventHandler(fi, ev)))
+            if(Instance::EventHandler *eh = d->findEventHandler(ev))
             {
-                FinaleInterpreter_SkipToMarker(fi, h->marker);
-                // We'll never eat up events.
-                if(IS_TOGGLE_UP(ev))
-                    return false;
-                return (fi->flags.eat_events != 0);
+                skipToMarker(eh->gotoMarker);
+
+                // Never eat up events.
+                if(IS_TOGGLE_UP(&ev)) return false;
+
+                return (d->flags.eat_events != 0);
             }
         }
+#endif
     }
 
     // If we can't skip, there's no interaction of any kind.
-    if(!fi->flags.can_skip && !fi->flags.paused)
+    if(!d->flags.can_skip && !d->flags.paused)
         return false;
 
     // We are only interested in key/button down presses.
-    if(!IS_TOGGLE_DOWN(ev))
+    if(!IS_TOGGLE_DOWN(&ev))
         return false;
 
 #ifdef __CLIENT__
-    if(isClient)
+    if(::isClient)
     {
         // Request skip from the server.
         Cl_RequestFinaleSkip();
@@ -1332,29 +1284,171 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 #endif
 #ifdef __SERVER__
     // Tell clients to skip.
-    Sv_Finale(fi->_id, FINF_SKIP, 0);
+    Sv_Finale(d->id, FINF_SKIP, 0);
 #endif
-    return FinaleInterpreter_Skip(fi);
+    return skip();
 }
 
-DEFFC(Do)
+#ifdef __CLIENT__
+void FinaleInterpreter::addEventHandler(ddevent_t const &evTemplate, char const *gotoMarker)
 {
-    DENG2_UNUSED2(cmd, ops);
+    // Does a handler already exist for this?
+    if(d->findEventHandler(evTemplate)) return;
 
-    // This command is called even when (cond)skipping.
-    if(!fi->_skipNext)
-        return;
+    d->eventHandlers.append(Instance::EventHandler(&evTemplate, gotoMarker));
+}
+
+void FinaleInterpreter::removeEventHandler(ddevent_t const &evTemplate)
+{
+    if(Instance::EventHandler *eh = d->findEventHandler(evTemplate))
+    {
+        int index = 0;
+        while(&d->eventHandlers.at(index) != eh) { index++; }
+        d->eventHandlers.removeAt(index);
+    }
+}
+#endif // __CLIENT__
+
+fi_page_t &FinaleInterpreter::page(PageIndex index)
+{
+    DENG2_ASSERT(d->pages[index]);
+    return *d->pages[index];
+}
+
+fi_object_t *FinaleInterpreter::findObject(fi_obtype_e type, char const *name)
+{
+    DENG2_ASSERT(name && name[0]);
+
+    // An existing object?
+    if(fi_objectid_t id = d->names.toId(name, type))
+    {
+        return FI_Object(id);
+    }
+
+    // A new object.
+    fi_object_t *ob = FI_NewObject(type, name);
+    PageIndex const pageIndex = d->choosePageForObjectType(type);
+    switch(type)
+    {
+    case FI_TEXT:
+        FIData_TextSetFont(ob, FIPage_PredefinedFont(d->pages[pageIndex], 0));
+        FIData_TextSetPreColor(ob, 1);
+        break;
+
+    default: break;
+    }
+    return FIPage_AddObject(d->pages[pageIndex], d->names.add(ob, name));
+}
+
+void FinaleInterpreter::deleteObject(fi_object_t *ob)
+{
+    if(!ob) return;
+    FI_DeleteObject(d->names.remove(ob));
+}
+
+void FinaleInterpreter::beginDoSkipMode()
+{
+    if(!skipInProgress()) return;
 
     // A conditional skip has been issued.
     // We'll go into DO-skipping mode. skipnext won't be cleared
     // until the matching semicolon is found.
-    fi->_doLevel++;
+    d->doLevel++;
+}
+
+void FinaleInterpreter::gotoEnd()
+{
+    d->gotoEnd = true;
+}
+
+void FinaleInterpreter::pause()
+{
+    d->flags.paused = true;
+    wait(1);
+}
+
+void FinaleInterpreter::wait(int ticksToWait)
+{
+    d->wait = ticksToWait;
+}
+
+void FinaleInterpreter::foundSkipHere()
+{
+    d->skipping = false;
+}
+
+void FinaleInterpreter::foundSkipMarker(char const *marker)
+{
+    DENG2_ASSERT(marker);
+    // Does it match the current goto torget?
+    if(!qstricmp(d->gotoTarget, marker))
+    {
+        d->gotoSkip = false;
+    }
+}
+
+int FinaleInterpreter::inTime() const
+{
+    return d->inTime;
+}
+
+void FinaleInterpreter::setInTime(int seconds)
+{
+    d->inTime = seconds;
+}
+
+void FinaleInterpreter::setHandleEvents(bool yes)
+{
+    d->flags.eat_events = yes;
+}
+
+void FinaleInterpreter::setShowMenu(bool yes)
+{
+    d->flags.show_menu = yes;
+}
+
+void FinaleInterpreter::setSkip(bool allowed)
+{
+    d->flags.can_skip = allowed;
+}
+
+void FinaleInterpreter::setSkipNext(bool yes)
+{
+   d->skipNext = yes;
+}
+
+void FinaleInterpreter::setWaitAnim(fi_object_t *newWaitAnim)
+{
+    d->waitAnim = newWaitAnim;
+}
+
+void FinaleInterpreter::setWaitText(fi_object_t *newWaitText)
+{
+    d->waitText = newWaitText;
+}
+
+/// @note This command is called even when condition-skipping.
+DEFFC(Do)
+{
+    DENG2_UNUSED2(cmd, ops);
+    fi.beginDoSkipMode();
 }
 
 DEFFC(End)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->_gotoEnd = true;
+    fi.gotoEnd();
+}
+
+static void changePageBackground(fi_page_t &page, Material *newMaterial)
+{
+    // If the page does not yet have a background set we must setup the color+alpha.
+    if(newMaterial && !FIPage_BackgroundMaterial(&page))
+    {
+        FIPage_SetBackgroundTopColorAndAlpha   (&page, 1, 1, 1, 1, 0);
+        FIPage_SetBackgroundBottomColorAndAlpha(&page, 1, 1, 1, 1, 0);
+    }
+    FIPage_SetBackgroundMaterial(&page, newMaterial);
 }
 
 DEFFC(BGMaterial)
@@ -1362,7 +1456,7 @@ DEFFC(BGMaterial)
     DENG2_UNUSED(cmd);
 
     // First attempt to resolve as a Values URI (which defines the material URI).
-    Material *material = 0;
+    Material *material = nullptr;
     try
     {
         if(ded_value_t *value = Def_GetValueByUri(OP_URI(0)))
@@ -1374,99 +1468,98 @@ DEFFC(BGMaterial)
             material = &App_ResourceSystem().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
         }
     }
-    catch(de::MaterialManifest::MissingMaterialError const &)
+    catch(MaterialManifest::MissingMaterialError const &)
     {} // Ignore this error.
     catch(ResourceSystem::MissingManifestError const &)
     {} // Ignore this error.
 
-    changePageBackground(fi->_pages[PAGE_PICS], material);
+    changePageBackground(fi.page(FinaleInterpreter::Anims), material);
 }
 
 DEFFC(NoBGMaterial)
 {
     DENG2_UNUSED2(cmd, ops);
-    changePageBackground(fi->_pages[PAGE_PICS], 0);
+    changePageBackground(fi.page(FinaleInterpreter::Anims), 0);
 }
 
 DEFFC(InTime)
 {
     DENG2_UNUSED(cmd);
-    fi->_inTime = FRACSECS_TO_TICKS(OP_FLOAT(0));
+    fi.setInTime(FRACSECS_TO_TICKS(OP_FLOAT(0)));
 }
 
 DEFFC(Tic)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->_wait = 1;
+    fi.wait();
 }
 
 DEFFC(Wait)
 {
     DENG2_UNUSED(cmd);
-    fi->_wait = FRACSECS_TO_TICKS(OP_FLOAT(0));
+    fi.wait(FRACSECS_TO_TICKS(OP_FLOAT(0)));
 }
 
 DEFFC(WaitText)
 {
     DENG2_UNUSED(cmd);
-    fi->_waitingText = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi.setWaitText(fi.findObject(FI_TEXT, OP_CSTRING(0)));
 }
 
 DEFFC(WaitAnim)
 {
     DENG2_UNUSED(cmd);
-    fi->_waitingPic = getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi.setWaitAnim(fi.findObject(FI_PIC, OP_CSTRING(0)));
 }
 
 DEFFC(Color)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetBackgroundTopColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
-    FIPage_SetBackgroundBottomColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+    FIPage_SetBackgroundTopColor   (&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi.inTime());
+    FIPage_SetBackgroundBottomColor(&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi.inTime());
 }
 
 DEFFC(ColorAlpha)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetBackgroundTopColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
-    FIPage_SetBackgroundBottomColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetBackgroundTopColorAndAlpha   (&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
+    FIPage_SetBackgroundBottomColorAndAlpha(&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
 }
 
 DEFFC(Pause)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.paused = true;
-    fi->_wait = 1;
+    fi.pause();
 }
 
 DEFFC(CanSkip)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.can_skip = true;
+    fi.setSkip(true);
 }
 
 DEFFC(NoSkip)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.can_skip = false;
+    fi.setSkip(false);
 }
 
 DEFFC(SkipHere)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->_skipping = false;
+    fi.foundSkipHere();
 }
 
 DEFFC(Events)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.eat_events = true;
+    fi.setHandleEvents();
 }
 
 DEFFC(NoEvents)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.eat_events = false;
+    fi.setHandleEvents(false);
 }
 
 DEFFC(OnKey)
@@ -1474,20 +1567,14 @@ DEFFC(OnKey)
 #ifdef __CLIENT__
     DENG2_UNUSED(cmd);
 
-    ddevent_t ev;
-
     // Construct a template event for this handler.
-    memset(&ev, 0, sizeof(ev));
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_KEYBOARD;
-    ev.type = E_TOGGLE;
-    ev.toggle.id = DD_GetKeyCode(OP_CSTRING(0));
+    ev.type   = E_TOGGLE;
+    ev.toggle.id    = DD_GetKeyCode(OP_CSTRING(0));
     ev.toggle.state = ETOG_DOWN;
 
-    // First, try to find an existing handler.
-    if(findEventHandler(fi, &ev))
-        return;
-    // Allocate and attach another.
-    createEventHandler(fi, &ev, OP_CSTRING(1));
+    fi.addEventHandler(ev, OP_CSTRING(1));
 #else
     DENG2_UNUSED3(cmd, ops, fi);
 #endif
@@ -1499,17 +1586,13 @@ DEFFC(UnsetKey)
     DENG2_UNUSED(cmd);
 
     // Construct a template event for what we want to "unset".
-    ddevent_t ev; memset(&ev, 0, sizeof(ev));
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_KEYBOARD;
-    ev.type = E_TOGGLE;
-    ev.toggle.id = DD_GetKeyCode(OP_CSTRING(0));
+    ev.type   = E_TOGGLE;
+    ev.toggle.id    = DD_GetKeyCode(OP_CSTRING(0));
     ev.toggle.state = ETOG_DOWN;
 
-    fi_handler_t *h;
-    if((h = findEventHandler(fi, &ev)))
-    {
-        destroyEventHandler(fi, h);
-    }
+    fi.removeEventHandler(ev);
 #else
     DENG2_UNUSED3(cmd, ops, fi);
 #endif
@@ -1518,32 +1601,30 @@ DEFFC(UnsetKey)
 DEFFC(If)
 {
     DENG2_UNUSED2(cmd, ops);
-
-    char const *token = OP_CSTRING(0);
-    dd_bool val = false;
-
     LOG_AS("FIC_If");
 
+    char const *token = OP_CSTRING(0);
+    bool val          = false;
+
     // Built-in conditions.
-    if(!stricmp(token, "netgame"))
+    if(!qstricmp(token, "netgame"))
     {
         val = netGame;
     }
-    else if(!strnicmp(token, "mode:", 5))
+    else if(!qstrnicmp(token, "mode:", 5))
     {
         if(App_GameLoaded())
-            val = !de::String(token + 5).compareWithoutCase(App_CurrentGame().identityKey());
+            val = !String(token + 5).compareWithoutCase(App_CurrentGame().identityKey());
         else
             val = 0;
     }
     // Any hooks?
     else if(Plug_CheckForHook(HOOK_FINALE_EVAL_IF))
     {
-        ddhook_finale_script_evalif_paramaters_t p;
-        memset(&p, 0, sizeof(p));
-        p.token = token;
+        ddhook_finale_script_evalif_paramaters_t p; de::zap(p);
+        p.token     = token;
         p.returnVal = 0;
-        if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
+        if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi.id(), (void *) &p))
         {
             val = p.returnVal;
             LOG_SCR_XVERBOSE("HOOK_FINALE_EVAL_IF: %s => %i") << token << val;
@@ -1559,63 +1640,54 @@ DEFFC(If)
     }
 
     // Skip the next command if the value is false.
-    fi->_skipNext = !val;
+    fi.setSkipNext(!val);
 }
 
 DEFFC(IfNot)
 {
     FIC_If(cmd, ops, fi);
-    fi->_skipNext = !fi->_skipNext;
+    fi.setSkipNext(!fi.skipInProgress());
 }
 
+/// @note The only time the ELSE condition does not skip is immediately after a skip.
 DEFFC(Else)
 {
     DENG2_UNUSED2(cmd, ops);
-    // The only time the ELSE condition does not skip is immediately after a skip.
-    fi->_skipNext = !fi->_lastSkipped;
+    fi.setSkipNext(!fi.lastSkipped());
 }
 
 DEFFC(GoTo)
 {
     DENG2_UNUSED(cmd);
-    FinaleInterpreter_SkipToMarker(fi, OP_CSTRING(0));
+    fi.skipToMarker(OP_CSTRING(0));
 }
 
 DEFFC(Marker)
 {
     DENG2_UNUSED(cmd);
-    // Does it match the goto string?
-    if(!stricmp(fi->_gotoTarget, OP_CSTRING(0)))
-    {
-        fi->_gotoSkip = false;
-    }
+    fi.foundSkipMarker(OP_CSTRING(0));
 }
 
 DEFFC(Delete)
 {
     DENG2_UNUSED(cmd);
-    if(OP_OBJECT(0))
-    {
-        FI_DeleteObject(removeObjectInNamespace(&fi->_namespace, OP_OBJECT(0)));
-    }
+    fi.deleteObject(OP_OBJECT(0));
 }
 
 DEFFC(Image)
 {
     DENG2_UNUSED(cmd);
-
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    char const *name = OP_CSTRING(1);
-    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
-    rawtex_t *rawTex;
-
     LOG_AS("FIC_Image");
-    FIData_PicClearAnimation(obj);
 
-    rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
-    if(NULL != rawTex)
+    fi_object_t *ob   = fi.findObject(FI_PIC, OP_CSTRING(0));
+    char const *name  = OP_CSTRING(1);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
+
+    FIData_PicClearAnimation(ob);
+
+    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
+        FIData_PicAppendFrame(ob, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
 
@@ -1625,22 +1697,20 @@ DEFFC(Image)
 DEFFC(ImageAt)
 {
     DENG2_UNUSED(cmd);
-
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    float x = OP_FLOAT(1);
-    float y = OP_FLOAT(2);
-    char const *name = OP_CSTRING(3);
-    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
-    rawtex_t *rawTex;
-
     LOG_AS("FIC_ImageAt");
-    AnimatorVector3_Init(obj->pos, x, y, 0);
-    FIData_PicClearAnimation(obj);
 
-    rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
-    if(NULL != rawTex)
+    fi_object_t *ob   = fi.findObject(FI_PIC, OP_CSTRING(0));
+    float x           = OP_FLOAT(1);
+    float y           = OP_FLOAT(2);
+    char const *name  = OP_CSTRING(3);
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
+
+    AnimatorVector3_Init(ob->pos, x, y, 0);
+    FIData_PicClearAnimation(ob);
+
+    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
+        FIData_PicAppendFrame(ob, PFT_RAW, -1, &rawTex->lumpNum, 0, false);
         return;
     }
 
@@ -1679,18 +1749,18 @@ DEFFC(XImage)
 
     LOG_AS("FIC_XImage");
 
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t *ob      = fi.findObject(FI_PIC, OP_CSTRING(0));
 #ifdef __CLIENT__
     char const *fileName = OP_CSTRING(1);
 #endif
 
-    FIData_PicClearAnimation(obj);
+    FIData_PicClearAnimation(ob);
 
 #ifdef __CLIENT__
     // Load the external resource.
     if(DGLuint tex = loadAndPrepareExtTexture(fileName))
     {
-        FIData_PicAppendFrame(obj, PFT_XIMAGE, -1, &tex, 0, false);
+        FIData_PicAppendFrame(ob, PFT_XIMAGE, -1, &tex, 0, false);
     }
     else
     {
@@ -1703,18 +1773,17 @@ DEFFC(Patch)
 {
     DENG2_UNUSED(cmd);
 
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t *ob        = fi.findObject(FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(3);
-    patchid_t patchId;
 
     LOG_AS("FIC_Patch");
-    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    FIData_PicClearAnimation(obj);
+    AnimatorVector3_Init(ob->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    FIData_PicClearAnimation(ob);
 
-    patchId = R_DeclarePatch(encodedName);
-    if(patchId != 0)
+    patchid_t patchId = R_DeclarePatch(encodedName);
+    if(patchId)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void *)&patchId, 0, 0);
+        FIData_PicAppendFrame(ob, PFT_PATCH, -1, (void *)&patchId, 0, 0);
     }
     else
     {
@@ -1726,30 +1795,28 @@ DEFFC(SetPatch)
 {
     DENG2_UNUSED(cmd);
 
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t *ob        = fi.findObject(FI_PIC, OP_CSTRING(0));
     char const *encodedName = OP_CSTRING(1);
-    fidata_pic_frame_t *f;
-    patchid_t patchId;
 
     LOG_AS("FIC_SetPatch");
-    patchId = R_DeclarePatch(encodedName);
+    patchid_t patchId = R_DeclarePatch(encodedName);
     if(patchId == 0)
     {
         LOG_SCR_WARNING("Missing Patch '%s'") << encodedName;
         return;
     }
 
-    if(!((fidata_pic_t *)obj)->numFrames)
+    if(!((fidata_pic_t *)ob)->numFrames)
     {
-        FIData_PicAppendFrame(obj, PFT_PATCH, -1, (void *)&patchId, 0, false);
+        FIData_PicAppendFrame(ob, PFT_PATCH, -1, (void *)&patchId, 0, false);
         return;
     }
 
     // Convert the first frame.
-    f = ((fidata_pic_t *)obj)->frames[0];
-    f->type = PFT_PATCH;
+    fidata_pic_frame_t *f = ((fidata_pic_t *)ob)->frames[0];
+    f->type  = PFT_PATCH;
     f->texRef.patch = patchId;
-    f->tics = -1;
+    f->tics  = -1;
     f->sound = 0;
 }
 
@@ -1765,36 +1832,37 @@ DEFFC(ClearAnim)
 DEFFC(Anim)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    char const *encodedName = OP_CSTRING(1);
-    int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    patchid_t patchId;
-
     LOG_AS("FIC_Anim");
-    patchId = R_DeclarePatch(encodedName);
-    if(patchId == 0)
+
+    fi_object_t *ob        = fi.findObject(FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(1);
+    int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
+
+    patchid_t patchId = R_DeclarePatch(encodedName);
+    if(!patchId)
     {
         LOG_SCR_WARNING("Patch '%s' not found") << encodedName;
         return;
     }
 
-    FIData_PicAppendFrame(obj, PFT_PATCH, tics, (void *)&patchId, 0, false);
-    ((fidata_pic_t *)obj)->animComplete = false;
+    FIData_PicAppendFrame(ob, PFT_PATCH, tics, (void *)&patchId, 0, false);
+    ((fidata_pic_t *)ob)->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    char const *encodedName = OP_CSTRING(1);
-    int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
-    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
-    rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum);
     LOG_AS("FIC_AnimImage");
-    if(rawTex)
+
+    fi_object_t *ob        = fi.findObject(FI_PIC, OP_CSTRING(0));
+    char const *encodedName = OP_CSTRING(1);
+    int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
+
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(encodedName);
+    if(rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(lumpNum))
     {
-        FIData_PicAppendFrame(obj, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
-        ((fidata_pic_t *)obj)->animComplete = false;
+        FIData_PicAppendFrame(ob, PFT_RAW, tics, &rawTex->lumpNum, 0, false);
+        ((fidata_pic_t *)ob)->animComplete = false;
         return;
     }
     LOG_SCR_WARNING("Lump '%s' not found") << encodedName;
@@ -1803,26 +1871,26 @@ DEFFC(AnimImage)
 DEFFC(Repeat)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    ((fidata_pic_t*)obj)->flags.looping = true;
+    fi_object_t *ob = fi.findObject(FI_PIC, OP_CSTRING(0));
+    ((fidata_pic_t *)ob)->flags.looping = true;
 }
 
 DEFFC(StateAnim)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    int stateId = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
-    int count = OP_INT(2);
+    fi_object_t *ob = fi.findObject(FI_PIC, OP_CSTRING(0));
+    int stateId      = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
+    int count        = OP_INT(2);
 
     // Animate N states starting from the given one.
-    ((fidata_pic_t*)obj)->animComplete = false;
+    ((fidata_pic_t *)ob)->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
-        state_t* st = &runtimeDefs.states[stateId];
+        state_t *st = &runtimeDefs.states[stateId];
 #ifdef __CLIENT__
         spriteinfo_t sinf;
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
-        FIData_PicAppendFrame(obj, PFT_MATERIAL, (st->tics <= 0? 1 : st->tics), sinf.material, 0, sinf.flip);
+        FIData_PicAppendFrame(ob, PFT_MATERIAL, (st->tics <= 0? 1 : st->tics), sinf.material, 0, sinf.flip);
 #endif
 
         // Go to the next state.
@@ -1833,16 +1901,17 @@ DEFFC(StateAnim)
 DEFFC(PicSound)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
-    int sound = Def_Get(DD_DEF_SOUND, OP_CSTRING(1), 0);
-    if(!((fidata_pic_t*)obj)->numFrames)
+    fi_object_t *ob = fi.findObject(FI_PIC, OP_CSTRING(0));
+    int const sound  = Def_Get(DD_DEF_SOUND, OP_CSTRING(1), 0);
+
+    if(!((fidata_pic_t *)ob)->numFrames)
     {
-        FIData_PicAppendFrame(obj, PFT_MATERIAL, -1, 0, sound, false);
+        FIData_PicAppendFrame(ob, PFT_MATERIAL, -1, 0, sound, false);
         return;
     }
-    {fidata_pic_frame_t* f = ((fidata_pic_t*)obj)->frames[((fidata_pic_t*)obj)->numFrames-1];
+
+    fidata_pic_frame_t *f = ((fidata_pic_t *)ob)->frames[((fidata_pic_t *)ob)->numFrames - 1];
     f->sound = sound;
-    }
 }
 
 DEFFC(ObjectOffX)
@@ -1850,8 +1919,8 @@ DEFFC(ObjectOffX)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->pos[0], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->pos[0], OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1860,8 +1929,8 @@ DEFFC(ObjectOffY)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->pos[1], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->pos[1], OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1870,68 +1939,64 @@ DEFFC(ObjectOffZ)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->pos[2], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->pos[2], OP_FLOAT(1), fi.inTime());
     }
 }
 
 DEFFC(ObjectRGB)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = OP_OBJECT(0);
+    fi_object_t *ob = OP_OBJECT(0);
 
-    if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
+    if(!ob || !(ob->type == FI_TEXT || ob->type == FI_PIC))
         return;
 
     float rgb[3];
     rgb[CR] = OP_FLOAT(1);
     rgb[CG] = OP_FLOAT(2);
     rgb[CB] = OP_FLOAT(3);
-    switch(obj->type)
+    switch(ob->type)
     {
     case FI_TEXT:
-        FIData_TextSetColor(obj, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        FIData_TextSetColor(ob, rgb[CR], rgb[CG], rgb[CB], fi.inTime());
         break;
 
     case FI_PIC: {
-        fidata_pic_t *p = (fidata_pic_t *)obj;
-        AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        fidata_pic_t *p = (fidata_pic_t *)ob;
+        AnimatorVector3_Set(p->color,          rgb[CR], rgb[CG], rgb[CB], fi.inTime());
         // This affects all the colors.
-        AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
-        AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
-        AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        AnimatorVector3_Set(p->otherColor,     rgb[CR], rgb[CG], rgb[CB], fi.inTime());
+        AnimatorVector3_Set(p->edgeColor,      rgb[CR], rgb[CG], rgb[CB], fi.inTime());
+        AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi.inTime());
         break; }
 
-    default:
-        DENG_ASSERT(!"FIC_ObjectRGB: Unknown object type");
-        break;
+    default: DENG_ASSERT(!"FIC_ObjectRGB: Unknown object type");
     }
 }
 
 DEFFC(ObjectAlpha)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = OP_OBJECT(0);
+    fi_object_t *ob = OP_OBJECT(0);
 
-    if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
+    if(!ob || !(ob->type == FI_TEXT || ob->type == FI_PIC))
         return;
 
     float alpha = OP_FLOAT(1);
-    switch(obj->type)
+    switch(ob->type)
     {
     case FI_TEXT:
-        FIData_TextSetAlpha(obj, alpha, fi->_inTime);
+        FIData_TextSetAlpha(ob, alpha, fi.inTime());
         break;
 
     case FI_PIC: {
-        fidata_pic_t *p = (fidata_pic_t *)obj;
-        Animator_Set(&p->color[3], alpha, fi->_inTime);
-        Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
+        fidata_pic_t *p = (fidata_pic_t *)ob;
+        Animator_Set(&p->color[3],      alpha, fi.inTime());
+        Animator_Set(&p->otherColor[3], alpha, fi.inTime());
         break; }
 
-    default:
-        DENG_ASSERT(!"FIC_ObjectAlpha: Unknown object type");
-        break;
+    default: DENG_ASSERT(!"FIC_ObjectAlpha: Unknown object type");
     }
 }
 
@@ -1940,8 +2005,8 @@ DEFFC(ObjectScaleX)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->scale[0], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->scale[0], OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1950,8 +2015,8 @@ DEFFC(ObjectScaleY)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->scale[1], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->scale[1], OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1960,8 +2025,8 @@ DEFFC(ObjectScaleZ)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->scale[2], OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->scale[2], OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1970,8 +2035,8 @@ DEFFC(ObjectScale)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        AnimatorVector2_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        AnimatorVector2_Set(ob->scale, OP_FLOAT(1), OP_FLOAT(1), fi.inTime());
     }
 }
 
@@ -1980,8 +2045,8 @@ DEFFC(ObjectScaleXY)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        AnimatorVector2_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        AnimatorVector2_Set(ob->scale, OP_FLOAT(1), OP_FLOAT(2), fi.inTime());
     }
 }
 
@@ -1990,8 +2055,8 @@ DEFFC(ObjectScaleXYZ)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        AnimatorVector3_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        AnimatorVector3_Set(ob->scale, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
     }
 }
 
@@ -2000,15 +2065,15 @@ DEFFC(ObjectAngle)
     DENG2_UNUSED(cmd);
     if(OP_OBJECT(0))
     {
-        fi_object_t* obj = OP_OBJECT(0);
-        Animator_Set(&obj->angle, OP_FLOAT(1), fi->_inTime);
+        fi_object_t *ob = OP_OBJECT(0);
+        Animator_Set(&ob->angle, OP_FLOAT(1), fi.inTime());
     }
 }
 
 DEFFC(Rect)
 {
     DENG2_UNUSED(cmd);
-    fidata_pic_t *obj = (fidata_pic_t *) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fidata_pic_t *ob = (fidata_pic_t *) fi.findObject(FI_PIC, OP_CSTRING(0));
 
     /**
      * We may be converting an existing Pic to a Rect, so re-init the expected
@@ -2017,124 +2082,115 @@ DEFFC(Rect)
      * danij: This seems rather error-prone to me. How about we turn them into
      * seperate object classes instead (Pic inheriting from Rect).
      */
-    obj->animComplete = true;
-    obj->flags.looping = false; // Yeah?
+    ob->animComplete = true;
+    ob->flags.looping = false; // Yeah?
 
-    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    AnimatorVector3_Init(obj->scale, OP_FLOAT(3), OP_FLOAT(4), 1);
+    AnimatorVector3_Init(ob->pos,   OP_FLOAT(1), OP_FLOAT(2), 0);
+    AnimatorVector3_Init(ob->scale, OP_FLOAT(3), OP_FLOAT(4), 1);
 
     // Default colors.
-    AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
-    AnimatorVector4_Init(obj->otherColor, 1, 1, 1, 1);
+    AnimatorVector4_Init(ob->color,      1, 1, 1, 1);
+    AnimatorVector4_Init(ob->otherColor, 1, 1, 1, 1);
 
     // Edge alpha is zero by default.
-    AnimatorVector4_Init(obj->edgeColor, 1, 1, 1, 0);
-    AnimatorVector4_Init(obj->otherEdgeColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(ob->edgeColor,      1, 1, 1, 0);
+    AnimatorVector4_Init(ob->otherEdgeColor, 1, 1, 1, 0);
 }
 
 DEFFC(FillColor)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = OP_OBJECT(0);
-    int which = 0;
-    float rgba[4];
+    fi_object_t *ob = OP_OBJECT(0);
 
-    if(!obj || obj->type != FI_PIC)
+    if(!ob || ob->type != FI_PIC)
         return;
 
     // Which colors to modify?
-    if(!stricmp(OP_CSTRING(1), "top"))
-        which |= 1;
-    else if(!stricmp(OP_CSTRING(1), "bottom"))
-        which |= 2;
-    else
-        which = 3;
+    int which = 0;
+    if(!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
+    else if(!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    else                                        which = 3;
 
-    {uint i;
-    for(i = 0; i < 4; ++i)
+    float rgba[4];
+    for(uint i = 0; i < 4; ++i)
+    {
         rgba[i] = OP_FLOAT(2+i);
     }
 
     if(which & 1)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
+        AnimatorVector4_Set(((fidata_pic_t *)ob)->color,      rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi.inTime());
     if(which & 2)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
+        AnimatorVector4_Set(((fidata_pic_t *)ob)->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi.inTime());
 }
 
 DEFFC(EdgeColor)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = OP_OBJECT(0);
-    int which = 0;
-    float rgba[4];
+    fi_object_t *ob = OP_OBJECT(0);
 
-    if(!obj || obj->type != FI_PIC)
+    if(!ob || ob->type != FI_PIC)
         return;
 
     // Which colors to modify?
-    if(!stricmp(OP_CSTRING(1), "top"))
-        which |= 1;
-    else if(!stricmp(OP_CSTRING(1), "bottom"))
-        which |= 2;
-    else
-        which = 3;
+    int which = 0;
+    if(!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
+    else if(!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    else                                        which = 3;
 
-    {uint i;
-    for(i = 0; i < 4; ++i)
+    float rgba[4];
+    for(uint i = 0; i < 4; ++i)
+    {
         rgba[i] = OP_FLOAT(2+i);
     }
 
     if(which & 1)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
+        AnimatorVector4_Set(((fidata_pic_t *)ob)->edgeColor,      rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi.inTime());
     if(which & 2)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
+        AnimatorVector4_Set(((fidata_pic_t *)ob)->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi.inTime());
 }
 
 DEFFC(OffsetX)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetOffsetX(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
+    FIPage_SetOffsetX(&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), fi.inTime());
 }
 
 DEFFC(OffsetY)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetOffsetY(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
+    FIPage_SetOffsetY(&fi.page(FinaleInterpreter::Anims), OP_FLOAT(0), fi.inTime());
 }
 
 DEFFC(Sound)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), NULL);
-    if(num > 0)
-        S_LocalSound(num, NULL);
+    S_LocalSound(Def_Get(DD_DEF_SOUND, OP_CSTRING(0), nullptr), nullptr);
 }
 
 DEFFC(SoundAt)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), NULL);
-    float vol = MIN_OF(OP_FLOAT(1), 1);
-    if(num > 0)
-        S_LocalSoundAtVolume(num, NULL, vol);
+    int const soundId = Def_Get(DD_DEF_SOUND, OP_CSTRING(0), nullptr);
+    float vol = de::min(OP_FLOAT(1), 1.f);
+    S_LocalSoundAtVolume(soundId, nullptr, vol);
 }
 
 DEFFC(SeeSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), nullptr);
     if(num < 0 || runtimeDefs.mobjInfo[num].seeSound <= 0)
         return;
-    S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, NULL);
+    S_LocalSound(runtimeDefs.mobjInfo[num].seeSound, nullptr);
 }
 
 DEFFC(DieSound)
 {
     DENG2_UNUSED2(cmd, fi);
-    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, OP_CSTRING(0), nullptr);
     if(num < 0 || runtimeDefs.mobjInfo[num].deathSound <= 0)
         return;
-    S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, NULL);
+    S_LocalSound(runtimeDefs.mobjInfo[num].deathSound, nullptr);
 }
 
 DEFFC(Music)
@@ -2152,56 +2208,55 @@ DEFFC(MusicOnce)
 DEFFC(Filter)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetFilterColorAndAlpha(fi->_pages[PAGE_TEXT], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetFilterColorAndAlpha(&fi.page(FinaleInterpreter::Texts), OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
 }
 
 DEFFC(Text)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    FIData_TextCopy(obj, OP_CSTRING(3));
-    ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    AnimatorVector3_Init(ob->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    FIData_TextCopy(ob, OP_CSTRING(3));
+    ((fidata_text_t *)ob)->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromDef)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    AnimatorVector3_Init(ob->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     char *str;
     if(Def_Get(DD_DEF_TEXT, (char*)OP_CSTRING(3), &str))
     {
-        FIData_TextCopy(obj, str);
+        FIData_TextCopy(ob, str);
     }
     else
     {
-        FIData_TextCopy(obj, "(undefined)"); // Not found!
+        FIData_TextCopy(ob, "(undefined)"); // Not found!
     }
-    ((fidata_text_t *)obj)->cursorPos = 0; // Restart the text.
+    ((fidata_text_t *)ob)->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromLump)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    lumpnum_t lumpNum;
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
 
-    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    AnimatorVector3_Init(ob->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
 
-    lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
+    lumpnum_t lumpNum = App_FileSystem().lumpNumForName(OP_CSTRING(3));
     if(lumpNum >= 0)
     {
-        de::File1 &lump     = App_FileSystem().lump(lumpNum);
-        uint8_t const *data = lump.cache();
+        File1 &lump            = App_FileSystem().lump(lumpNum);
+        uint8_t const *rawText = lump.cache();
 
-        size_t bufSize = 2 * lump.size() + 1;
-        char *str = (char *) M_Calloc(bufSize);
+        AutoStr *text = AutoStr_NewStd();
+        Str_Reserve(text, lump.size() * 2);
 
-        char *out = str;
+        char *out = Str_Text(text);
         for(size_t i = 0; i < lump.size(); ++i)
         {
-            char ch = (char)(data[i]);
+            char ch = (char)(rawText[i]);
             if(ch == '\r') continue;
             if(ch == '\n')
             {
@@ -2215,52 +2270,48 @@ DEFFC(TextFromLump)
         }
         lump.unlock();
 
-        FIData_TextCopy(obj, str);
-        free(str);
+        FIData_TextCopy(ob, Str_Text(text));
     }
     else
     {
-        FIData_TextCopy(obj, "(not found)");
+        FIData_TextCopy(ob, "(not found)");
     }
-    ((fidata_text_t*)obj)->cursorPos = 0; // Restart.
+    ((fidata_text_t *)ob)->cursorPos = 0; // Restart.
 }
 
 DEFFC(SetText)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextCopy(obj, OP_CSTRING(1));
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    FIData_TextCopy(ob, OP_CSTRING(1));
 }
 
 DEFFC(SetTextDef)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
     char *str;
     if(Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str))
     {
-        FIData_TextCopy(obj, str);
+        FIData_TextCopy(ob, str);
     }
     else
     {
-        FIData_TextCopy(obj, "(undefined)"); // Not found!
+        FIData_TextCopy(ob, "(undefined)"); // Not found!
     }
 }
 
 DEFFC(DeleteText)
 {
     DENG2_UNUSED(cmd);
-    if(OP_OBJECT(0))
-    {
-        FI_DeleteObject(removeObjectInNamespace(&fi->_namespace, OP_OBJECT(0)));
-    }
+    fi.deleteObject(OP_OBJECT(0));
 }
 
 DEFFC(PredefinedColor)
 {
     DENG2_UNUSED(cmd);
-    FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
-    FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetPredefinedColor(&fi.page(FinaleInterpreter::Texts), de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS) - 1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
+    FIPage_SetPredefinedColor(&fi.page(FinaleInterpreter::Anims), de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_COLORS) - 1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
 }
 
 DEFFC(PredefinedFont)
@@ -2268,12 +2319,13 @@ DEFFC(PredefinedFont)
 #ifdef __CLIENT__
     DENG2_UNUSED(cmd);
     LOG_AS("FIC_PredefinedFont");
-    fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
+
+    fontid_t const fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
-        int idx = MINMAX_OF(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS)-1;
-        FIPage_SetPredefinedFont(fi->_pages[PAGE_TEXT], idx, fontNum);
-        FIPage_SetPredefinedFont(fi->_pages[PAGE_PICS], idx, fontNum);
+        int const idx = de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS) - 1;
+        FIPage_SetPredefinedFont(&fi.page(FinaleInterpreter::Texts), idx, fontNum);
+        FIPage_SetPredefinedFont(&fi.page(FinaleInterpreter::Anims), idx, fontNum);
         return;
     }
 
@@ -2287,72 +2339,72 @@ DEFFC(PredefinedFont)
 DEFFC(TextRGB)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextSetColor(obj, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    FIData_TextSetColor(ob, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi.inTime());
 }
 
 DEFFC(TextAlpha)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextSetAlpha(obj, OP_FLOAT(1), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    FIData_TextSetAlpha(ob, OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextOffX)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&obj->pos[0], OP_FLOAT(1), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&ob->pos[0], OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextOffY)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&obj->pos[1], OP_FLOAT(1), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&ob->pos[1], OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextCenter)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->alignFlags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->alignFlags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->alignFlags |= ALIGN_LEFT;
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->alignFlags |= ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->scrollWait = OP_INT(1);
-    ((fidata_text_t *)obj)->scrollTimer = 0;
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->scrollWait = OP_INT(1);
+    ((fidata_text_t *)ob)->scrollTimer = 0;
 }
 
 DEFFC(TextPos)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->cursorPos = OP_INT(1);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->cursorPos = OP_INT(1);
 }
 
 DEFFC(TextRate)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->wait = OP_INT(1);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->wait = OP_INT(1);
 }
 
 DEFFC(TextLineHeight)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    ((fidata_text_t *)obj)->lineHeight = OP_FLOAT(1);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t *)ob)->lineHeight = OP_FLOAT(1);
 }
 
 DEFFC(Font)
@@ -2360,11 +2412,12 @@ DEFFC(Font)
 #ifdef __CLIENT__
     DENG2_UNUSED(cmd);
     LOG_AS("FIC_Font");
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
     fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if(fontNum)
     {
-        FIData_TextSetFont(obj, fontNum);
+        FIData_TextSetFont(ob, fontNum);
         return;
     }
 
@@ -2378,43 +2431,42 @@ DEFFC(Font)
 DEFFC(FontA)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 0));
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    FIData_TextSetFont(ob, FIPage_PredefinedFont(&fi.page(FinaleInterpreter::Texts), 0));
 }
 
 DEFFC(FontB)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextSetFont(obj, FIPage_PredefinedFont(fi->_pages[PAGE_TEXT], 1));
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    FIData_TextSetFont(ob, FIPage_PredefinedFont(&fi.page(FinaleInterpreter::Texts), 1));
 }
 
 DEFFC(NoMusic)
 {
     DENG2_UNUSED3(cmd, ops, fi);
-    // Stop the currently playing song.
     S_StopMusic();
 }
 
 DEFFC(TextScaleX)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&obj->scale[0], OP_FLOAT(1), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&ob->scale[0], OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextScaleY)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&obj->scale[1], OP_FLOAT(1), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&ob->scale[1], OP_FLOAT(1), fi.inTime());
 }
 
 DEFFC(TextScale)
 {
     DENG2_UNUSED(cmd);
-    fi_object_t *obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector2_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+    fi_object_t *ob = fi.findObject(FI_TEXT, OP_CSTRING(0));
+    AnimatorVector2_Set(ob->scale, OP_FLOAT(1), OP_FLOAT(2), fi.inTime());
 }
 
 DEFFC(PlayDemo)
@@ -2422,13 +2474,13 @@ DEFFC(PlayDemo)
     /// @todo Demos are not supported at the moment. -jk
 #if 0
     // While playing a demo we suspend command interpretation.
-    FinaleInterpreter_Suspend(fi);
+    fi.suspend();
 
     // Start the demo.
     if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", OP_CSTRING(0)))
     {
         // Demo playback failed. Here we go again...
-        FinaleInterpreter_Resume(fi);
+        fi.resume();
     }
 #else
     DENG2_UNUSED3(cmd, ops, fi);
@@ -2444,11 +2496,11 @@ DEFFC(Command)
 DEFFC(ShowMenu)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.show_menu = true;
+    fi.setShowMenu();
 }
 
 DEFFC(NoShowMenu)
 {
     DENG2_UNUSED2(cmd, ops);
-    fi->flags.show_menu = false;
+    fi.setShowMenu(false);
 }

@@ -1576,6 +1576,9 @@ bool App_ChangeGame(Game &game, bool allowReload)
     }
 
     App_InFineSystem().reset();
+#ifdef __CLIENT__
+    App_InFineSystem().deinitBindingContext();
+#endif
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
     /// @todo The entire material collection should not be destroyed during a reload.
@@ -1622,6 +1625,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
      */
     if(!DD_IsShuttingDown())
     {
+#ifdef __CLIENT__
+        App_InFineSystem().initBindingContext();
+#endif
+
         /*
          * The bulk of this we can do in busy mode unless we are already busy
          * (which can happen if a fatal error occurs during game load and we must
@@ -2197,11 +2204,6 @@ static int DD_StartupWorker(void * /*context*/)
     Net_InitGame();
 #ifdef __CLIENT__
     Demo_Init();
-#endif
-
-    LOG_RES_VERBOSE("Initializing InFine subsystem...");
-#ifdef __CLIENT__
-    App_InFineSystem().initBindingContext();
 #endif
 
     LOG_VERBOSE("Initializing UI subsystem...");
