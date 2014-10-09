@@ -142,7 +142,10 @@ void DD_ConsoleInit()
 
 void DD_ShutdownAll()
 {
-    FI_Shutdown();
+    App_InFineSystem().reset();
+#ifdef __CLIENT__
+    App_InFineSystem().deinitBindingContext();
+#endif
     UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();

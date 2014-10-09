@@ -583,6 +583,20 @@ void App_AbnormalShutdown(char const *message)
     exit(1);
 }
 
+InFineSystem &App_InFineSystem()
+{
+    if(App::appExists())
+    {
+#ifdef __CLIENT__
+        return ClientApp::infineSystem();
+#endif
+#ifdef __SERVER__
+        return ServerApp::infineSystem();
+#endif
+    }
+    throw Error("App_InFineSystem", "App not yet initialized");
+}
+
 ResourceSystem &App_ResourceSystem()
 {
     if(App::appExists())
@@ -1564,7 +1578,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
         App_FileSystem().resetAllSchemes();
     }
 
-    FI_Shutdown();
+    App_InFineSystem().reset();
+#ifdef __CLIENT__
+    App_InFineSystem().deinitBindingContext();
+#endif
     titleFinale = 0; // If the title finale was in progress it isn't now.
 
     /// @todo The entire material collection should not be destroyed during a reload.
@@ -1595,8 +1612,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
                     << int(game.pluginId());
             return false;
         }
-
-        FI_Init();
     }
 
     // This is now the current game.
@@ -1613,6 +1628,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
      */
     if(!DD_IsShuttingDown())
     {
+#ifdef __CLIENT__
+        App_InFineSystem().initBindingContext();
+#endif
+
         /*
          * The bulk of this we can do in busy mode unless we are already busy
          * (which can happen if a fatal error occurs during game load and we must
@@ -2189,9 +2208,6 @@ static int DD_StartupWorker(void * /*context*/)
 #ifdef __CLIENT__
     Demo_Init();
 #endif
-
-    LOG_RES_VERBOSE("Initializing InFine subsystem...");
-    FI_Init();
 
     LOG_VERBOSE("Initializing UI subsystem...");
     UI_Init();
@@ -3282,7 +3298,7 @@ static void consoleRegister()
     ResourceSystem::consoleRegister();
     Net_Register();
     WorldSystem::consoleRegister();
-    FI_Register();
+    InFineSystem::consoleRegister();
 }
 
 // dd_loop.c

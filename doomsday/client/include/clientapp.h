@@ -26,6 +26,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/fi_main.h"
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
 #include "WidgetActions"
@@ -68,6 +69,7 @@ public:
     static SettingsRegister &networkSettings();
     static SettingsRegister &audioSettings();    ///< @todo Belongs in AudioSystem.
     static ServerLink &serverLink();
+    static InFineSystem &infineSystem();
     static InputSystem &inputSystem();
     static ClientWindowSystem &windowSystem();
     static RenderSystem &renderSystem();

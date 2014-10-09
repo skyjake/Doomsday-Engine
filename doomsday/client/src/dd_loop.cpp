@@ -162,7 +162,7 @@ static void baseTicker(timespan_t time)
         UI2_Ticker(time);
 
         // InFine ticks whenever it's active.
-        FI_Ticker();
+        App_InFineSystem().runTicks();
 
         // Game logic.
         if(App_GameLoaded() && gx.Ticker)

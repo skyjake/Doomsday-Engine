@@ -456,7 +456,7 @@ fi_page_t *FI_NewPage(fi_page_t *prevPage)
 
 void FI_DeletePage(fi_page_t *p)
 {
-    if(!p) App_Error("FI_DeletePage: Invalid page.");
+    if(!p) return;
 
     pageClear(p);
     pagesRemove(p);
@@ -849,7 +849,7 @@ static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
     GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
                                    SCREENWIDTH, SCREENHEIGHT,
                                    DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
-                                   FI_ScaleMode());
+                                   scalemode_t(Con_GetByte("rend-finale-stretch")));
 }
 
 bool FI_IsStretchedToView()

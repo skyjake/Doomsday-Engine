@@ -25,7 +25,6 @@
 
 #include "de_platform.h"
 #include "de_console.h"
-#include "de_infine.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -36,6 +35,7 @@
 #include "render/vr.h"
 
 #include "ui/clientwindowsystem.h"
+#include "ui/fi_main.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
