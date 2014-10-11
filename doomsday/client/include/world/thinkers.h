@@ -113,4 +113,15 @@ private:
 dd_bool Thinker_IsMobjFunc(thinkfunc_t func);
 de::Map &Thinker_Map(thinker_t const &th);
 
+/**
+ * Initializes the private data object of a thinker. The type of private data is chosen
+ * based on whether the thinker is on the client or server, and possibly based on other
+ * factors.
+ *
+ * Only call this when the thinker does not have a private data object.
+ *
+ * @param th  Thinker.
+ */
+void Thinker_InitPrivateData(thinker_t *th);
+
 #endif // DENG_WORLD_THINKERS_H

@@ -184,6 +184,7 @@ DENG_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum)
     }
 
     // Notify private data about the changed state.
+    if(mobj->thinker.d == nullptr) Thinker_InitPrivateData(&mobj->thinker);
     if(MobjThinkerData *data = THINKER_DATA_MAYBE(mobj->thinker, MobjThinkerData))
     {
         data->stateChanged(oldState);
