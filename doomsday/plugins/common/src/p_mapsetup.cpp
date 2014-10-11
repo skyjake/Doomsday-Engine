@@ -1,9 +1,9 @@
-/** @file p_mapsetup.cpp Common map setup routines.
+/** @file p_mapsetup.cpp  Common map setup routines.
  *
  * Management of extended map data objects (e.g., xlines).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -929,6 +929,16 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     spawnMapObjects();
     PO_InitForMap();
 
+    HU_UpdatePsprites();
+
+    // Set up world state.
+    P_BuildAllTagLists();
+
+#if !__JHEXEN__
+    // Init extended generalized lines and sectors.
+    XG_Init();
+#endif
+
 #if __JHEXEN__
     if(!IS_CLIENT)
     {
@@ -949,20 +959,11 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     }
 #endif
 
-    HU_UpdatePsprites();
-
-    // Set up world state.
-    P_BuildAllTagLists();
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     P_FindSecrets();
 #endif
     P_SpawnAllSpecialThinkers();
     P_SpawnAllMaterialOriginScrollers();
-
-#if !__JHEXEN__
-    // Init extended generalized lines and sectors.
-    XG_Init();
-#endif
 
 #if __JHEXEN__
     P_InitSky(mapUri);
@@ -1107,16 +1108,30 @@ void P_FindSecrets()
     // Find secret sectors.
     for(int i = 0; i < numsectors; ++i)
     {
-        if(P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i))->special == 9)
+        xsector_t *xsec = P_ToXSector((Sector *)P_ToPtr(DMU_SECTOR, i));
+
+        // XG sector types override the game's built-in types.
+        if(xsec->xg) continue;
+
+        if(xsec->special == 9)
+        {
             totalSecret++;
+        }
     }
 
 #if __JDOOM64__
     // Find secret lines.
     for(int i = 0; i < numlines; ++i)
     {
-        if(P_ToXLine((Line *)P_ToPtr(DMU_LINE, i))->special == 994)
+        xline_t *xline = P_ToXLine((Line *)P_ToPtr(DMU_LINE, i));
+
+        // XG line types override the game's built-in types.
+        if(xline->xg) continue;
+
+        if(xline->special == 994)
+        {
             totalSecret++;
+        }
     }
 #endif
 }
@@ -1132,9 +1147,11 @@ void P_SpawnSectorMaterialOriginScrollers()
         Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
-        if(!xsec->special) continue;
+#if !__JHEXEN__
+        // XG sector types override the game's built-in types.
+        if(xsec->xg) continue;
+#endif
 
-        // A scroller?
         P_SpawnSectorMaterialOriginScroller(sec, PLN_FLOOR, xsec->special);
     }
 }
@@ -1149,7 +1166,10 @@ void P_SpawnSideMaterialOriginScrollers()
         Line *line     = (Line *)P_ToPtr(DMU_LINE, i);
         xline_t *xline = P_ToXLine(line);
 
-        if(!xline->special) continue;
+#if !__JHEXEN__
+        // XG line types override the game's built-in types.
+        if(xline->xg) continue;
+#endif
 
         Side *frontSide = (Side *)P_GetPtrp(line, DMU_FRONT);
         P_SpawnSideMaterialOriginScroller(frontSide, xline->special);

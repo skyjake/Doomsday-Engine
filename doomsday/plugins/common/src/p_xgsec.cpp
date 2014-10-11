@@ -1,7 +1,7 @@
-/** @file p_xgsec.c Extended generalized sector types.
+/** @file p_xgsec.cpp  Extended generalized sector types.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -104,27 +104,25 @@
 
 void XS_DoChain(Sector *sec, int ch, int activating, void *actThing);
 
-static sectortype_t sectypebuffer;
-
-sectortype_t *XS_GetType(int id)
+/**
+ * Lookup a sectortype_t with the given @a id and if found - copy it into @a outBuffer.
+ *
+ * @param id         Unique identifier of the sector type.
+ * @param outBuffer  If found the sector type info is written here.
+ *
+ * @return  @c true if a sectortype_t was found.
+ */
+bool XS_GetType(int id, sectortype_t &outBuffer)
 {
-    sectortype_t*       ptr;
-    char                buff[6];
-
-    // Try finding it from the DDXGDATA lump.
-    ptr = XG_GetLumpSector(id);
-    if(ptr)
-    {   // Got it!
-        memcpy(&sectypebuffer, ptr, sizeof(*ptr));
-        return &sectypebuffer;
+    // Try the DDXGDATA lump first.
+    if(sectortype_t *found = XG_GetLumpSector(id))
+    {
+        std::memcpy(&outBuffer, found, sizeof(outBuffer));
+        return true;
     }
 
-    dd_snprintf(buff, 6, "%i", id);
-
-    if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
-        return &sectypebuffer;  // A definition was found.
-
-    return NULL; // None found.
+    // Try the DED database.
+    return Def_Get(DD_DEF_SECTOR_TYPE, de::String::number(id).toUtf8().constData(), &outBuffer);
 }
 
 void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
@@ -270,47 +268,45 @@ int destroyXSThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void XS_SetSectorType(Sector* sec, int special)
+void XS_SetSectorType(Sector *sec, int special)
 {
-    int                 i;
-    xsector_t*          xsec = P_ToXSector(sec);
-    xgsector_t*         xg;
-    sectortype_t*       info;
+    xsector_t *xsec = P_ToXSector(sec);
+    if(!xsec) return;
 
-    if(XS_GetType(special))
+    sectortype_t secType;
+    if(XS_GetType(special, secType))
     {
-        XG_Dev("XS_SetSectorType: Sector %i, type %i", P_ToIndex(sec),
-               special);
+        XG_Dev("XS_SetSectorType: Sector %i, type %i", P_ToIndex(sec), special);
 
         xsec->special = special;
 
         // All right, do the init.
         if(!xsec->xg)
+        {
             xsec->xg = (xgsector_t *) Z_Malloc(sizeof(xgsector_t), PU_MAP, 0);
-        memset(xsec->xg, 0, sizeof(*xsec->xg));
+        }
+        de::zapPtr(xsec->xg);
 
         // Get the type info.
-        memcpy(&xsec->xg->info, &sectypebuffer, sizeof(sectypebuffer));
+        std::memcpy(&xsec->xg->info, &secType, sizeof(secType));
 
         // Init the state.
-        xg = xsec->xg;
-        info = &xsec->xg->info;
+        xgsector_t *xg     = xsec->xg;
+        sectortype_t *info = &xsec->xg->info;
 
         // Init timer so ambient doesn't play immediately at map start.
-        xg->timer =
-            XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
-                         FLT2TIC(xg->info.soundInterval[1]));
+        xg->timer = XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
+                                 FLT2TIC(xg->info.soundInterval[1]));
 
         // Light function.
         XF_Init(sec, &xg->light, info->lightFunc, info->lightInterval[0],
                 info->lightInterval[1], 255, 0);
 
         // Color functions.
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
         {
             XF_Init(sec, &xg->rgb[i], info->colFunc[i],
-                    info->colInterval[i][0], info->colInterval[i][1], 255,
-                    0);
+                    info->colInterval[i][0], info->colInterval[i][1], 255, 0);
         }
 
         // Plane functions / floor.
@@ -351,22 +347,19 @@ void XS_SetSectorType(Sector* sec, int special)
             // Not created one yet.
             ThinkerT<xsthinker_t> xs(Thinker::AllocateMemoryZone);
             xs.function = XS_Thinker;
-            xs->sector = sec;
+            xs->sector  = sec;
             Thinker_Add(xs.Thinker::take());
         }
     }
     else
     {
-        XG_Dev("XS_SetSectorType: Sector %i, NORMAL TYPE %i", P_ToIndex(sec),
-               special);
+        XG_Dev("XS_SetSectorType: Sector %i, NORMAL TYPE %i", P_ToIndex(sec), special);
 
         // If there is an xsthinker for this, destroy it.
         Thinker_Iterate((thinkfunc_t) XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
-        if(xsec->xg)
-            Z_Free(xsec->xg);
-        xsec->xg = NULL;
+        Z_Free(xsec->xg); xsec->xg = nullptr;
 
         // Just set it, then. Must be a standard sector type...
         // Mind you, we're not going to spawn any standard flash funcs
@@ -375,32 +368,26 @@ void XS_SetSectorType(Sector* sec, int special)
     }
 }
 
-void XS_Init(void)
+void XS_Init()
 {
     /*  // Clients rely on the server, they don't do XG themselves.
-       if(IS_CLIENT) return; */
+    if(IS_CLIENT) return; */
 
-    if(numsectors > 0)
+    if(numsectors <= 0) return;
+
+    for(int i = 0; i < numsectors; ++i)
     {
-        // Allocate stair builder data.
-        Sector* sec;
-        xsector_t* xsec;
-        int i;
+        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
-        for(i = 0; i < numsectors; ++i)
-        {
-            sec = (Sector *) P_ToPtr(DMU_SECTOR, i);
-            xsec = P_ToXSector(sec);
+        P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
 
-            P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
+        xsec->SP_floororigheight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
+        xsec->SP_ceilorigheight  = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+        xsec->origLight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
-            xsec->SP_floororigheight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
-            xsec->SP_ceilorigheight  = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
-            xsec->origLight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-
-            // Initialize the XG data for this sector.
-            XS_SetSectorType(sec, xsec->special);
-        }
+        // Initialize XG data for this sector.
+        XS_SetSectorType(sec, xsec->special);
     }
 }
 

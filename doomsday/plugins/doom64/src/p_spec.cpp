@@ -751,6 +751,9 @@ void P_SpawnSectorSpecialThinkers()
         Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
+        // XG sector types override the game's built-in types.
+        if(xsec->xg) continue;
+
         // jd64 >
         // DJS - yet more hacks! Why use the tag?
         switch(xsec->tag)
