@@ -1,7 +1,7 @@
-/** @file p_xgsec.c Extended generalized sector types.
+/** @file p_xgsec.cpp  Extended generalized sector types.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -104,27 +104,25 @@
 
 void XS_DoChain(Sector *sec, int ch, int activating, void *actThing);
 
-static sectortype_t sectypebuffer;
-
-sectortype_t *XS_GetType(int id)
+/**
+ * Lookup a sectortype_t with the given @a id and if found - copy it into @a outBuffer.
+ *
+ * @param id         Unique identifier of the sector type.
+ * @param outBuffer  If found the sector type info is written here.
+ *
+ * @return  @c true if a sectortype_t was found.
+ */
+bool XS_GetType(int id, sectortype_t &outBuffer)
 {
-    sectortype_t*       ptr;
-    char                buff[6];
-
-    // Try finding it from the DDXGDATA lump.
-    ptr = XG_GetLumpSector(id);
-    if(ptr)
-    {   // Got it!
-        memcpy(&sectypebuffer, ptr, sizeof(*ptr));
-        return &sectypebuffer;
+    // Try the DDXGDATA lump first.
+    if(sectortype_t *found = XG_GetLumpSector(id))
+    {
+        std::memcpy(&outBuffer, found, sizeof(outBuffer));
+        return true;
     }
 
-    dd_snprintf(buff, 6, "%i", id);
-
-    if(Def_Get(DD_DEF_SECTOR_TYPE, buff, &sectypebuffer))
-        return &sectypebuffer;  // A definition was found.
-
-    return NULL; // None found.
+    // Try the DED database.
+    return Def_Get(DD_DEF_SECTOR_TYPE, de::String::number(id).toUtf8().constData(), &outBuffer);
 }
 
 void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,
@@ -247,21 +245,25 @@ int C_DECL XLTrav_LineAngle(Line* line, dd_bool dummy, void* context,
     return false; // Stop looking after first hit.
 }
 
-int findXSThinker(thinker_t* th, void* context)
+int findXSThinker(thinker_t *th, void *context)
 {
-    xsthinker_t* xs = (xsthinker_t*) th;
+    xsthinker_t *xs = (xsthinker_t *) th;
+    DENG2_ASSERT(xs);
 
-    if(xs->sector == (Sector*) context)
+    if(xs->sector == (Sector *) context)
+    {
         return true; // Stop iteration, we've found it.
+    }
 
     return false; // Continue iteration.
 }
 
-int destroyXSThinker(thinker_t* th, void* context)
+int destroyXSThinker(thinker_t *th, void *context)
 {
-    xsthinker_t* xs = (xsthinker_t*) th;
+    xsthinker_t *xs = (xsthinker_t *) th;
+    DENG2_ASSERT(xs);
 
-    if(xs->sector == (Sector*) context)
+    if(xs->sector == (Sector *) context)
     {
         Thinker_Remove(&xs->thinker);
         return true; // Stop iteration, we're done.
@@ -270,47 +272,47 @@ int destroyXSThinker(thinker_t* th, void* context)
     return false; // Continue iteration.
 }
 
-void XS_SetSectorType(Sector* sec, int special)
+void XS_SetSectorType(Sector *sec, int special)
 {
-    int                 i;
-    xsector_t*          xsec = P_ToXSector(sec);
-    xgsector_t*         xg;
-    sectortype_t*       info;
+    LOG_AS("XS_SetSectorType");
 
-    if(XS_GetType(special))
+    xsector_t *xsec = P_ToXSector(sec);
+    if(!xsec) return;
+
+    sectortype_t secType;
+    if(XS_GetType(special, secType))
     {
-        XG_Dev("XS_SetSectorType: Sector %i, type %i", P_ToIndex(sec),
-               special);
+        LOG_MAP_MSG_XGDEVONLY2("Sector %i, type %i", P_ToIndex(sec) << special);
 
         xsec->special = special;
 
         // All right, do the init.
         if(!xsec->xg)
+        {
             xsec->xg = (xgsector_t *) Z_Malloc(sizeof(xgsector_t), PU_MAP, 0);
-        memset(xsec->xg, 0, sizeof(*xsec->xg));
+        }
+        de::zapPtr(xsec->xg);
 
         // Get the type info.
-        memcpy(&xsec->xg->info, &sectypebuffer, sizeof(sectypebuffer));
+        std::memcpy(&xsec->xg->info, &secType, sizeof(secType));
 
         // Init the state.
-        xg = xsec->xg;
-        info = &xsec->xg->info;
+        xgsector_t *xg     = xsec->xg;
+        sectortype_t *info = &xsec->xg->info;
 
         // Init timer so ambient doesn't play immediately at map start.
-        xg->timer =
-            XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
-                         FLT2TIC(xg->info.soundInterval[1]));
+        xg->timer = XG_RandomInt(FLT2TIC(xg->info.soundInterval[0]),
+                                 FLT2TIC(xg->info.soundInterval[1]));
 
         // Light function.
         XF_Init(sec, &xg->light, info->lightFunc, info->lightInterval[0],
                 info->lightInterval[1], 255, 0);
 
         // Color functions.
-        for(i = 0; i < 3; ++i)
+        for(int i = 0; i < 3; ++i)
         {
             XF_Init(sec, &xg->rgb[i], info->colFunc[i],
-                    info->colInterval[i][0], info->colInterval[i][1], 255,
-                    0);
+                    info->colInterval[i][0], info->colInterval[i][1], 255, 0);
         }
 
         // Plane functions / floor.
@@ -351,22 +353,19 @@ void XS_SetSectorType(Sector* sec, int special)
             // Not created one yet.
             ThinkerT<xsthinker_t> xs(Thinker::AllocateMemoryZone);
             xs.function = XS_Thinker;
-            xs->sector = sec;
+            xs->sector  = sec;
             Thinker_Add(xs.Thinker::take());
         }
     }
     else
     {
-        XG_Dev("XS_SetSectorType: Sector %i, NORMAL TYPE %i", P_ToIndex(sec),
-               special);
+        LOG_MAP_MSG_XGDEVONLY2("Sector %i, NORMAL TYPE %i", P_ToIndex(sec) << special);
 
         // If there is an xsthinker for this, destroy it.
         Thinker_Iterate((thinkfunc_t) XS_Thinker, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
-        if(xsec->xg)
-            Z_Free(xsec->xg);
-        xsec->xg = NULL;
+        Z_Free(xsec->xg); xsec->xg = nullptr;
 
         // Just set it, then. Must be a standard sector type...
         // Mind you, we're not going to spawn any standard flash funcs
@@ -375,55 +374,54 @@ void XS_SetSectorType(Sector* sec, int special)
     }
 }
 
-void XS_Init(void)
+void XS_Init()
 {
     /*  // Clients rely on the server, they don't do XG themselves.
-       if(IS_CLIENT) return; */
+    if(IS_CLIENT) return; */
 
-    if(numsectors > 0)
+    if(numsectors <= 0) return;
+
+    for(int i = 0; i < numsectors; ++i)
     {
-        // Allocate stair builder data.
-        Sector* sec;
-        xsector_t* xsec;
-        int i;
+        Sector *sec     = (Sector *) P_ToPtr(DMU_SECTOR, i);
+        xsector_t *xsec = P_ToXSector(sec);
 
-        for(i = 0; i < numsectors; ++i)
-        {
-            sec = (Sector *) P_ToPtr(DMU_SECTOR, i);
-            xsec = P_ToXSector(sec);
+        P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
 
-            P_GetFloatpv(sec, DMU_COLOR, xsec->origRGB);
+        xsec->SP_floororigheight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
+        xsec->SP_ceilorigheight  = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
+        xsec->origLight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
 
-            xsec->SP_floororigheight = P_GetDoublep(sec, DMU_FLOOR_HEIGHT);
-            xsec->SP_ceilorigheight  = P_GetDoublep(sec, DMU_CEILING_HEIGHT);
-            xsec->origLight = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
-
-            // Initialize the XG data for this sector.
-            XS_SetSectorType(sec, xsec->special);
-        }
+        // Initialize XG data for this sector.
+        XS_SetSectorType(sec, xsec->special);
     }
 }
 
-void XS_SectorSound(Sector* sec, int soundId)
+void XS_SectorSound(Sector *sec, int soundId)
 {
+    LOG_AS("XS_SectorSound");
     if(!sec || !soundId) return;
-    XG_Dev("XS_SectorSound: Play Sound ID (%i) in Sector ID (%i)", soundId, P_ToIndex(sec));
+    LOG_MAP_MSG_XGDEVONLY2("Play Sound ID (%i) in Sector ID (%i)", soundId << P_ToIndex(sec));
     S_SectorSound(sec, soundId);
 }
 
-void XS_PlaneSound(Plane* pln, int soundId)
+void XS_PlaneSound(Plane *pln, int soundId)
 {
+    LOG_AS("XS_PlaneSound");
     if(!pln || !soundId) return;
-    XG_Dev("XS_PlaneSound: Play Sound ID (%i) in Sector ID (%i)", soundId, P_ToIndex(P_GetPtrp(pln, DMU_SECTOR)));
+    LOG_MAP_MSG_XGDEVONLY2("Play Sound ID (%i) in Sector ID (%i)",
+            soundId << P_ToIndex(P_GetPtrp(pln, DMU_SECTOR)));
     S_PlaneSound(pln, soundId);
 }
 
 void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
 {
-    xline_t    *origin = P_ToXLine(mover->origin);
+    DENG2_ASSERT(mover);
+    LOG_AS("XS_MoverStopped");
+    xline_t *origin = P_ToXLine(mover->origin);
 
-    XG_Dev("XS_MoverStopped: Sector %i (done=%i, origin line=%i)",
-           P_ToIndex(mover->sector), done, P_ToIndex(mover->origin));
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i (done=%i, origin line=%i)",
+           P_ToIndex(mover->sector) << done << P_ToIndex(mover->origin));
 
     if(done)
     {
@@ -621,7 +619,7 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
     mover.function = (thinkfunc_t) XS_PlaneMover;
 
     xgplanemover_t *th = mover.take();
-    th->sector = sec;
+    th->sector  = sec;
     th->ceiling = ceiling;
 
     Thinker_Add(&th->thinker);
@@ -629,13 +627,13 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
     return th;
 }
 
-void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling,
-                            Material* mat, float *rgb)
+void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling, Material *mat, float *rgb)
 {
-    XG_Dev("XS_ChangePlaneMaterial: Sector %i, %s, texture %i",
-           P_ToIndex(sector), (ceiling ? "ceiling" : "floor"), P_ToIndex(mat));
+    LOG_AS("XS_ChangePlaneMaterial");
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, texture %i",
+           P_ToIndex(sector) << (ceiling ? "ceiling" : "floor") << P_ToIndex(mat));
     if(rgb)
-        XG_Dev("red %g, green %g, blue %g", rgb[0], rgb[1], rgb[2]);
+        LOG_MAP_MSG_XGDEVONLY2("tintColor:%s", de::Vector3f(rgb).asText());
 
     if(ceiling)
     {
@@ -825,6 +823,8 @@ int XS_TextureHeight(Line* line, int part)
  */
 Sector *XS_FindTagged(int tag)
 {
+    LOG_AS("XS_FindTagged");
+
     int k;
     int foundcount = 0;
     int retsectorid = 0;
@@ -856,8 +856,8 @@ Sector *XS_FindTagged(int tag)
     {
         if(foundcount > 1)
         {
-            XG_Dev("XS_FindTagged: More than one sector exists with this tag (%i)!",tag);
-            XG_Dev("  The sector with the lowest ID (%i) will be used.", retsectorid);
+            LOG_MAP_MSG_XGDEVONLY2("More than one sector exists with this tag (%i)!", tag);
+            LOG_MAP_MSG_XGDEVONLY2("The sector with the lowest ID (%i) will be used", retsectorid);
         }
 
         if(retsector)
@@ -872,6 +872,8 @@ Sector *XS_FindTagged(int tag)
  */
 Sector *XS_FindActTagged(int tag)
 {
+    LOG_AS("XS_FindActTagged");
+
     int k;
     int foundcount = 0;
     int retsectorid = 0;
@@ -910,8 +912,8 @@ Sector *XS_FindActTagged(int tag)
     {
         if(foundcount > 1)
         {
-            XG_Dev("XS_FindActTagged: More than one sector exists with this ACT tag (%i)!",tag);
-            XG_Dev("  The sector with the lowest ID (%i) will be used.", retsectorid);
+            LOG_MAP_MSG_XGDEVONLY2("More than one sector exists with this ACT tag (%i)!", tag);
+            LOG_MAP_MSG_XGDEVONLY2("The sector with the lowest ID (%i) will be used", retsectorid);
         }
 
         if(retsector)
@@ -956,6 +958,8 @@ int findSectorExtremalMaterialHeight(void* ptr, void* context)
 dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     coord_t* height, Material** mat, Sector** planeSector)
 {
+    LOG_AS("XS_GetPlane");
+
     Material* otherMat;
     coord_t otherHeight;
     Sector* otherSec = NULL, *iter;
@@ -967,9 +971,9 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
 
     if(xgDev)
     {
-        XG_Dev("XS_GetPlane: Line %i, sector %i, ref (%s(%i)%s)",
-               P_ToIndex(actline), P_ToIndex(sector),
-               SPREFTYPESTR(ref), ref, refdata? buff : "" );
+        LOG_MAP_MSG_XGDEVONLY2("Line %i, sector %i, ref (%s(%i)%s)",
+               P_ToIndex(actline) << P_ToIndex(sector)
+               << SPREFTYPESTR(ref) << ref << (refdata? buff : ""));
     }
 
     if(ref == SPREF_NONE || ref == SPREF_SPECIAL)
@@ -1011,7 +1015,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     case SPREF_TAGGED_CEILING:
         if(!refdata)
         {
-            XG_Dev("  %s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
+            LOG_MAP_MSG_XGDEVONLY2("%s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
             return false;
         }
 
@@ -1029,12 +1033,12 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
 
         if(!xline->xg)
         {
-            XG_Dev("  ACT LINE IS NOT AN XG LINE!");
+            LOG_MAP_MSG_XGDEVONLY("ACT LINE IS NOT AN XG LINE!");
             return false;
         }
         if(!xline->xg->info.actTag)
         {
-            XG_Dev("  ACT LINE DOES NOT HAVE AN ACT TAG!");
+            LOG_MAP_MSG_XGDEVONLY("ACT LINE DOES NOT HAVE AN ACT TAG!");
             return false;
         }
 
@@ -1047,7 +1051,7 @@ dd_bool XS_GetPlane(Line* actline, Sector* sector, int ref, int* refdata,
     case SPREF_ACT_TAGGED_CEILING:
         if(!refdata)
         {
-            XG_Dev("  %s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
+            LOG_MAP_MSG_XGDEVONLY2("%s IS NOT VALID FOR THIS CLASS PARAMETER!", SPREFTYPESTR(ref));
             return false;
         }
 
@@ -1350,9 +1354,9 @@ void XS_InitMovePlane(Line *line)
 };
 
 int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
-                            void *context2, mobj_t *activator)
+                            void *context2, mobj_t * /*activator*/)
 {
-    DENG_UNUSED(activator);
+    LOG_AS("XSTrav_MovePlane");
 
     Line*           line = (Line *) context;
     linetype_t*     info = (linetype_t *) context2;
@@ -1364,8 +1368,8 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
 
     playsound = xline->xg->idata;
 
-    XG_Dev("XSTrav_MovePlane: Sector %i (by line %i of type %i)",
-           P_ToIndex(sector), P_ToIndex(line), info->id);
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i (by line %i of type %i)",
+           P_ToIndex(sector) << P_ToIndex(line) << info->id);
 
     // i2: destination type (zero, relative to current, surrounding
     //     highest/lowest floor/ceiling)
@@ -1414,7 +1418,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
     else
     {
         if(!XS_GetPlane(line, sector, info->iparm[9], NULL, 0, &mover->setMaterial, 0))
-            XG_Dev("  Couldn't find suitable material to set when move ends!");
+            LOG_MAP_MSG_XGDEVONLY("Couldn't find suitable material to set when move ends!");
     }
 
     // Init timer.
@@ -1443,7 +1447,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
     else
     {
         if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &mat, 0))
-            XG_Dev("  Couldn't find suitable material to set when move starts!");
+            LOG_MAP_MSG_XGDEVONLY("Couldn't find suitable material to set when move starts!");
     }
     if(mat)
         XS_ChangePlaneMaterial(sector, ceiling, mat, NULL);
@@ -1466,7 +1470,9 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
             XS_SetSectorType(sector, st);
         }
         else
-            XG_Dev("  SECTOR TYPE NOT SET (nothing referenced)");
+        {
+            LOG_MAP_MSG_XGDEVONLY("SECTOR TYPE NOT SET (nothing referenced)");
+        }
     }
 
     // Change sector type in the end of move?
@@ -1481,7 +1487,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
         }
         else
         {
-            XG_Dev("  SECTOR TYPE WON'T BE CHANGED AT END (nothing referenced)");
+            LOG_MAP_MSG_XGDEVONLY("SECTOR TYPE WON'T BE CHANGED AT END (nothing referenced)");
             mover->setSectorType = -1;
         }
     }
@@ -1799,6 +1805,8 @@ dd_bool spreadBuildToNeighborLowestIDX(Line *origin, linetype_t *info,
 int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
                               void *context2, mobj_t *activator)
 {
+    LOG_AS("XSTrav_BuildStairs");
+
     uint stepCount   = 0;
     Line *origin     = (Line *) context;
     linetype_t *info = (linetype_t *) context2;
@@ -1809,8 +1817,7 @@ int C_DECL XSTrav_BuildStairs(Sector *sector, dd_bool ceiling, void *context,
 
     DENG_UNUSED(activator);
 
-    XG_Dev("XSTrav_BuildStairs: Sector %i, %s", P_ToIndex(sector),
-           ceiling ? "ceiling" : "floor");
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s", P_ToIndex(sector) << (ceiling? "ceiling" : "floor"));
 
     // i2: (true/false) stop when texture changes
     // i3: (true/false) spread build?
@@ -1888,9 +1895,9 @@ int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
 
 int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
                                 void *context, void *context2,
-                                mobj_t *activator)
+                                mobj_t * /*activator*/)
 {
-    DENG_UNUSED(activator);
+    LOG_AS("XSTrav_PlaneMaterial");
 
     Line*           line = (Line *) context;
     linetype_t*     info = (linetype_t *) context2;
@@ -1909,8 +1916,7 @@ int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
     else
     {
         if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &mat, 0))
-            XG_Dev("XSTrav_PlaneMaterial: Sector %i, couldn't find suitable material!",
-                   P_ToIndex(sec));
+            LOG_MAP_MSG_XGDEVONLY2("Sector %i, couldn't find suitable material!", P_ToIndex(sec));
     }
 
     rgb[0] = MINMAX_OF(0.f, info->iparm[4] / 255.f, 1.f);
@@ -1937,6 +1943,8 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool /*ceiling*/,
                               void* context, void* context2,
                               mobj_t* /*activator*/)
 {
+    LOG_AS("XSTrav_SectorLight");
+
     Line*               line = (Line *) context;
     linetype_t*         info = (linetype_t *) context2;
     int                 num;
@@ -2043,7 +2051,7 @@ int C_DECL XSTrav_SectorLight(Sector* sector, dd_bool /*ceiling*/,
                 P_GetFloatpv(sector, DMU_COLOR, usergb);
             else
             {
-                XG_Dev("XSTrav_SectorLight: Warning, the referenced Line has no back sector. Using default color.");
+                LOG_MAP_MSG_XGDEVONLY("Warning, the referenced Line has no back sector. Using default color");
                 memset(usergb, 0, sizeof(usergb));
             }
             break;
@@ -2075,6 +2083,8 @@ int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
                               void *context, void *context2,
                               mobj_t * /*activator*/)
 {
+    LOG_AS("XSTrav_MimicSector");
+
     Line *line = (Line *) context;
     linetype_t *info = (linetype_t *) context2;
     Sector *from = NULL;
@@ -2107,8 +2117,7 @@ int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
     // If can't apply to a sector, just skip it.
     if(!XS_GetPlane(line, sector, info->iparm[2], &refdata, 0, 0, &from))
     {
-        XG_Dev("XSTrav_MimicSector: No suitable neighbor " "for %i.\n",
-               P_ToIndex(sector));
+        LOG_MAP_MSG_XGDEVONLY2("No suitable neighbor for %i", P_ToIndex(sector));
         return true;
     }
 
@@ -2116,8 +2125,7 @@ int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
     if(from == sector)
         return true;
 
-    XG_Dev("XSTrav_MimicSector: Sector %i mimicking sector %i",
-           P_ToIndex(sector), P_ToIndex(from));
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i mimicking sector %i", P_ToIndex(sector) << P_ToIndex(from));
 
     // Copy the properties of the target sector.
     P_CopySector(sector, from);
@@ -2136,6 +2144,8 @@ int C_DECL XSTrav_MimicSector(Sector *sector, dd_bool /*ceiling*/,
 int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*/,
                            void* context2, mobj_t* thing)
 {
+    LOG_AS("XSTrav_Teleport");
+
     mobj_t*         mo = NULL;
     dd_bool         ok = false;
     linetype_t*     info = (linetype_t *) context2;
@@ -2143,8 +2153,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
     // Don't teleport things marked noteleport!
     if(thing->flags2 & MF2_NOTELEPORT)
     {
-        XG_Dev("XSTrav_Teleport: Activator is unteleportable (THING type %i)",
-                thing->type);
+        LOG_MAP_MSG_XGDEVONLY2("Activator is unteleportable (THING type %i)", thing->type);
         return false;
     }
 
@@ -2174,13 +2183,15 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
         coord_t aboveFloor, fogDelta = 0;
         angle_t oldAngle;
 
-        XG_Dev("XSTrav_Teleport: Sector %i, %s, %s%s", P_ToIndex(sector),
-                info->iparm[2]? "No Flash":"", info->iparm[3]? "Play Sound":"Silent",
-                info->iparm[4]? " Stomp" : "");
+        LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, %s%s",
+                P_ToIndex(sector)
+                << (info->iparm[2]? "No Flash"   : "")
+                << (info->iparm[3]? "Play Sound" : "Silent")
+                << (info->iparm[4]? " Stomp"     : ""));
 
         if(!P_TeleportMove(thing, mo->origin[VX], mo->origin[VY], (info->iparm[4] > 0? 1 : 0)))
         {
-            XG_Dev("XSTrav_Teleport: No free space at teleport exit. Aborting teleport...");
+            LOG_MAP_MSG_XGDEVONLY("No free space at teleport exit. Aborting teleport...");
             return false;
         }
 
@@ -2302,7 +2313,7 @@ int C_DECL XSTrav_Teleport(Sector* sector, dd_bool /*ceiling*/, void* /*context*
     else
     {   // Keep looking, there may be another referenced sector we could
         // teleport to...
-        XG_Dev("XSTrav_Teleport: No teleport exit in referenced sector (ID %i)."
+        LOG_MAP_MSG_XGDEVONLY2("No teleport exit in referenced sector (ID %i)."
                " Continuing search...", P_ToIndex(sector));
         return true;
     }
@@ -2598,6 +2609,8 @@ void XS_UpdateLight(Sector* sec)
 
 void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
 {
+    LOG_AS("XS_DoChain");
+
     xgsector_t *xg;
     sectortype_t *info;
     float flevtime = TIC2FLT(mapTime);
@@ -2640,7 +2653,7 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
     if(!ltype)
     {
         // What is this? There is no such XG line type.
-        XG_Dev("XS_DoChain: Unknown XG line type %i", xdummyLine->special);
+        LOG_MAP_MSG_XGDEVONLY2("Unknown XG line type %i", xdummyLine->special);
         // We're done, free the dummy.
         Z_Free(xdummyLine->xg);
         P_FreeDummyLine(dummyLine);
@@ -2656,7 +2669,7 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
 
     xdummyLine->xg->active = (ch == XSCE_FUNCTION ? false : !activating);
 
-    XG_Dev("XS_DoChain: Dummy line will show up as %i", P_ToIndex(dummyLine));
+    LOG_MAP_MSG_XGDEVONLY2("Dummy line will show up as %i", P_ToIndex(dummyLine));
 
     // Send the event.
     if(XL_LineEvent((ch == XSCE_FUNCTION ? XLE_FUNC : XLE_CHAIN), 0,
@@ -2669,14 +2682,14 @@ void XS_DoChain(Sector *sec, int ch, int activating, void *act_thing)
             {
                 info->count[ch]--;
 
-                XG_Dev
-                    ("XS_DoChain: %s, sector %i (activating=%i): Counter now at %i",
-                     ch == XSCE_FLOOR ? "FLOOR" : ch ==
-                     XSCE_CEILING ? "CEILING" : ch ==
-                     XSCE_INSIDE ? "INSIDE" : ch ==
-                     XSCE_TICKER ? "TICKER" : ch ==
-                     XSCE_FUNCTION ? "FUNCTION" : "???", P_ToIndex(sec),
-                     activating, info->count[ch]);
+                LOG_MAP_MSG_XGDEVONLY2("%s, sector %i (activating=%i): Counter now at %i",
+                        (  ch == XSCE_FLOOR    ? "FLOOR"
+                         : ch == XSCE_CEILING  ? "CEILING"
+                         : ch == XSCE_INSIDE   ? "INSIDE"
+                         : ch == XSCE_TICKER   ? "TICKER"
+                         : ch == XSCE_FUNCTION ? "FUNCTION" : "???")
+                        << P_ToIndex(sec)
+                        << activating << info->count[ch]);
             }
         }
     }

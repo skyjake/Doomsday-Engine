@@ -1,7 +1,7 @@
 /** @file p_xg.h  Extended generalised line / sector types.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,11 +28,16 @@ DENG_EXTERN_C int xgDev;
 DENG_EXTERN_C dd_bool xgDataLumps;
 
 #ifdef __cplusplus
+
+/*
+ * XG debug message logging macros:
+ */
+
+#define LOG_MAP_MSG_XGDEVONLY(msg)         if(xgDev) { LOG_MAP_MSG(msg); }
+#define LOG_MAP_MSG_XGDEVONLY2(form, args) if(xgDev) { LOG_MAP_MSG(form) << args; }
+
 extern "C" {
 #endif
-
-// Debug message printer.
-void XG_Dev(char const *format, ...) PRINTF_F(1,2);
 
 // Called once post init.
 void XG_ReadTypes(void);

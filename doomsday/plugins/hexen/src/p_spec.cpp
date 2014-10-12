@@ -740,6 +740,9 @@ void P_SpawnSectorSpecialThinkers()
         Sector *sec     = (Sector *)P_ToPtr(DMU_SECTOR, i);
         xsector_t *xsec = P_ToXSector(sec);
 
+        // XG sector types override the game's built-in types.
+        //if(xsec->xg) continue;
+
         switch(xsec->special)
         {
         default: break;

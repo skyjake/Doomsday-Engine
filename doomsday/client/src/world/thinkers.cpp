@@ -392,29 +392,6 @@ static void unlinkThinkerFromList(thinker_t *th)
     th->prev->next = th->next;
 }
 
-static void initPrivateData(thinker_t *th)
-{
-    DENG2_ASSERT(th->d == 0);
-
-    /// @todo The game should be asked to create its own private data. -jk
-
-    if(Thinker_IsMobjFunc(th->function))
-    {
-#ifdef __CLIENT__
-        th->d = new ClientMobjThinkerData;
-#else
-        th->d = new MobjThinkerData;
-#endif
-    }
-    else
-    {
-        // Generic thinker data (Doomsday Script namespace, etc.).
-        th->d = new ThinkerData;
-    }
-
-    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
-}
-
 static int runThinker(thinker_t *th, void * /*context*/)
 {
     if(Thinker_InStasis(th)) return false; // Skip and continue.
@@ -438,10 +415,7 @@ static int runThinker(thinker_t *th, void * /*context*/)
     else if(th->function)
     {
         // Create a private data instance of appropriate type.
-        if(!th->d)
-        {
-            initPrivateData(th);
-        }
+        if(th->d == nullptr) Thinker_InitPrivateData(th);
 
         // Public thinker callback.
         th->function(th);
@@ -456,6 +430,29 @@ static int runThinker(thinker_t *th, void * /*context*/)
 } // namespace de
 
 using namespace de;
+
+void Thinker_InitPrivateData(thinker_t *th)
+{
+    DENG2_ASSERT(th->d == nullptr);
+
+    /// @todo The game should be asked to create its own private data. -jk
+
+    if(Thinker_IsMobjFunc(th->function))
+    {
+#ifdef __CLIENT__
+        th->d = new ClientMobjThinkerData;
+#else
+        th->d = new MobjThinkerData;
+#endif
+    }
+    else
+    {
+        // Generic thinker data (Doomsday Script namespace, etc.).
+        th->d = new ThinkerData;
+    }
+
+    if(th->d) THINKER_DATA(*th, ThinkerData).setThinker(th);
+}
 
 /**
  * Locates a mobj by it's unique identifier in the CURRENT map.

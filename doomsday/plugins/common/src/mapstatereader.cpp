@@ -514,8 +514,6 @@ DENG2_PIMPL(MapStateReader)
 
         bool const formatHasStasisInfo = (mapVersion >= 6);
 
-        removeLoadSpawnedThinkers();
-
 #if __JHEXEN__
         if(mapVersion < 4)
             beginSegment(ASEG_MOBJS);
@@ -537,7 +535,7 @@ DENG2_PIMPL(MapStateReader)
 #endif
 
         byte tClass = 0;
-        for(;;)
+        forever
         {
 #if __JHEXEN__
             if(reachedSpecialsBlock)
@@ -765,6 +763,7 @@ void MapStateReader::read(String const &mapUriStr)
 #if !__JHEXEN__
         d->thingArchive->initForLoad(d->thingArchiveSize);
 #endif
+        d->removeLoadSpawnedThinkers();
 
         d->readElements();
         d->readPolyobjs();
