@@ -2207,7 +2207,7 @@ int XL_CheckMobjGone(thinker_t *th, void *context)
     {
         // Not dead.
         LOG_MAP_MSG_XGDEVONLY2("Thing type %i: Found mo id=%i, health=%i, pos=%s",
-               thingtype << mo->thinker.id << mo->health << Vector4d(mo->origin).asText());
+               thingtype << mo->thinker.id << mo->health << Vector3d(mo->origin).asText());
         return true; // Stop iteration.
     }
 
