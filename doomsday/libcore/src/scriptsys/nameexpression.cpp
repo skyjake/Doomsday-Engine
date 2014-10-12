@@ -62,7 +62,7 @@ DENG2_PIMPL_NOREF(NameExpression)
             // The namespace is derived from another record. Let's look into each
             // super-record in turn.
             ArrayValue const &supers = where.geta(Record::SUPER_NAME);
-            for(dsize i = 0; i < supers.size(); ++i)
+            for(int i = 0; i < int(supers.size()); ++i)
             {
                 if(Variable *found = findInRecord(
                         name, supers.at(i).as<RecordValue>().dereference(), foundIn))

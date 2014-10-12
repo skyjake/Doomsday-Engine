@@ -47,7 +47,7 @@ Block::Block(char const *nullTerminatedCStr)
 {}
 
 Block::Block(void const *data, Size length)
-    : QByteArray(reinterpret_cast<char const *>(data), length), IByteArray(), IBlock()
+    : QByteArray(reinterpret_cast<char const *>(data), int(length)), IByteArray(), IBlock()
 {}
 
 Block::Block(IIStream &stream)

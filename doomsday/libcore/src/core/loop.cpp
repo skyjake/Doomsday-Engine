@@ -62,7 +62,7 @@ Loop::Loop() : d(new Instance(this))
 void Loop::setRate(int freqHz)
 {
     d->interval = 1.0 / freqHz;
-    d->timer->setInterval(de::max(duint64(1), d->interval.asMilliSeconds()));
+    d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
 }
 
 void Loop::start()
