@@ -696,7 +696,7 @@ DENG2_PIMPL(DEDParser)
 
     int ReadBlendmode(Variable *var)
     {
-        blendmode_t mode;
+        blendmode_t mode = BM_NORMAL;
         if(!ReadBlendmode(&mode)) return false;
         var->set(NumberValue(int(mode)));
         return true;
