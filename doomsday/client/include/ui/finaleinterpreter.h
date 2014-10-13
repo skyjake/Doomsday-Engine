@@ -20,10 +20,26 @@
 #ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
 #define DENG_UI_INFINE_FINALEINTERPRETER_H
 
-#include "dd_input.h" // ddevent_t
-#include "dd_ui.h"    // finaleid_t
+#include "dd_input.h"   // ddevent_t
+#include "api_infine.h" // finaleid_t
+#include <de/Error>
+#include <de/String>
 
-struct fi_object_s;
+class FinaleWidget;
+class FinaleAnimWidget;
+class FinaleTextWidget;
+class FinalePageWidget;
+
+#define FI_NAME_MAX_LENGTH          32
+typedef char fi_name_t[FI_NAME_MAX_LENGTH];
+typedef fi_name_t fi_objectname_t;
+
+/// @ingroup infine
+enum fi_obtype_e
+{
+    FI_ANIM,
+    FI_TEXT
+};
 
 /**
  * Interpreter for finale scripts. An instance of which is created for each running
@@ -45,6 +61,12 @@ struct fi_object_s;
 class FinaleInterpreter
 {
 public:
+    /// An unknown widget was referenced. @ingroup errors
+    DENG2_ERROR(MissingWidgetError);
+
+    /// An unknown page was referenced. @ingroup errors
+    DENG2_ERROR(MissingPageError);
+
     enum PageIndex
     {
         Anims = 0,  ///< @note Also used for the background.
@@ -74,28 +96,31 @@ public:
     void allowSkip(bool yes = true);
 
     bool skip();
-    bool skipToMarker(char const *marker);
+    bool skipToMarker(de::String const &marker);
     bool skipInProgress() const;
     bool lastSkipped() const;
 
 #ifdef __CLIENT__
-    void addEventHandler(ddevent_t const &evTemplate, char const *gotoMarker);
+    void addEventHandler(ddevent_t const &evTemplate, de::String const &gotoMarker);
     void removeEventHandler(ddevent_t const &evTemplate);
 #endif
 
-    fi_page_t &page(PageIndex index);
+    FinalePageWidget &page(PageIndex index);
+
+    FinaleWidget *tryFindWidget(de::String const &name);
+
+    FinaleWidget &findWidget(fi_obtype_e type, de::String const &name);
 
     /**
      * Find an object of the specified type with the type-unique name.
      * @param name  Unique name of the object we are looking for.
 
-     * @return  Ptr to @c fi_object_t Either:
-     *          a) Existing object associated with unique @a name.
+     * @return  a) Existing object associated with unique @a name.
      *          b) New object with unique @a name.
      */
-    fi_object_s *findObject(fi_obtype_e type, char const *name);
+    FinaleWidget &findOrCreateWidget(fi_obtype_e type, de::String const &name);
 
-    void deleteObject(fi_object_s *ob);
+    void removeWidget(FinaleWidget *widgetToRemove);
 
 public: /// Script-level flow/state control (@todo make private): --------------------
 
@@ -104,7 +129,7 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void pause();
     void wait(int ticksToWait = 1);
     void foundSkipHere();
-    void foundSkipMarker(char const *marker);
+    void foundSkipMarker(de::String const &marker);
 
     int inTime() const;
     void setInTime(int seconds);
@@ -113,8 +138,8 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void setShowMenu(bool yes = true);
     void setSkip(bool allowed = true);
     void setSkipNext(bool yes = true);
-    void setWaitAnim(fi_object_s *newWaitAnim);
-    void setWaitText(fi_object_s *newWaitText);
+    void setWaitAnim(FinaleAnimWidget *newWaitAnim);
+    void setWaitText(FinaleTextWidget *newWaitText);
 
 private:
     DENG2_PRIVATE(d)

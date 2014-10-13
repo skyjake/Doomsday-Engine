@@ -35,6 +35,22 @@ enum fontstyle_t {
     FONTSTYLE_COUNT
 };
 
+/// Numeric identifiers of predefined colors.
+/// @ingroup infine
+enum {
+    UIC_TEXT,
+    UIC_TITLE,
+    UIC_SHADOW,
+    UIC_BG_LIGHT,
+    UIC_BG_MEDIUM,
+    UIC_BG_DARK,
+    UIC_BRD_HI,
+    UIC_BRD_MED,
+    UIC_BRD_LOW,
+    UIC_HELP,
+    NUM_UI_COLORS
+};
+
 /// Standard dimensions.
 #define UI_WIDTH            (1000.0f)
 #define UI_HEIGHT           (1000.0f)

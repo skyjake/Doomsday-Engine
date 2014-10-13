@@ -1,12 +1,7 @@
-/**
- * @file dd_ui.h
- * User interface.
- * @ingroup gui
- *
- * @todo The meaning of the "fi_" prefix is unclear; rename to "ui_"?
+/** @file dd_ui.h  InFine animation system widgets.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,289 +18,329 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DOOMSDAY_GUI_H
-#define DOOMSDAY_GUI_H
+#ifndef DENG_UI_INFINE_WIDGETS_H
+#define DENG_UI_INFINE_WIDGETS_H
 
+#include <QList>
 #include <de/animator.h>
+#include <de/Error>
+#include <de/Id>
+#include <de/Observers>
 #include "api_fontrender.h"
 #include "api_svg.h"
 
 #include "Material"
+#include "ui/finaleinterpreter.h" // fi_objectid_t
+
+class FinalePageWidget;
 
 /**
- * @defgroup gui GUI
+ * Base class for Finale widgets.
+ *
+ * @ingroup infine
  */
-///@{
+class FinaleWidget
+{
+public:
+    /// Notified when the InFine object is about to be deleted.
+    DENG2_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(FinaleWidget const &widget))
 
-/// Numeric identifiers of predefined colors.
-enum {
-    UIC_TEXT,
-    UIC_TITLE,
-    UIC_SHADOW,
-    UIC_BG_LIGHT,
-    UIC_BG_MEDIUM,
-    UIC_BG_DARK,
-    UIC_BRD_HI,
-    UIC_BRD_MED,
-    UIC_BRD_LOW,
-    UIC_HELP,
-    NUM_UI_COLORS
+public:
+    explicit FinaleWidget(de::String const &name = "");
+    virtual ~FinaleWidget();
+
+    DENG2_AS_IS_METHODS()
+
+#ifdef __CLIENT__
+    virtual void draw(de::Vector3f const &offset) = 0;
+#endif
+    virtual void runTicks(/*timespan_t timeDelta*/);
+
+    /**
+     * Returns the unique identifier of the widget.
+     */
+    de::Id id() const;
+
+    /**
+     * Returns the symbolic name of the widget.
+     */
+    de::String name() const;
+    FinaleWidget &setName(de::String const &newName);
+
+    animatorvector3_t const &origin() const;
+    FinaleWidget &setOrigin(de::Vector3f const &newOrigin, int steps = 0);
+    FinaleWidget &setOriginX(float newX, int steps = 0);
+    FinaleWidget &setOriginY(float newY, int steps = 0);
+    FinaleWidget &setOriginZ(float newZ, int steps = 0);
+
+    animator_t const &angle() const;
+    FinaleWidget &setAngle(float newAngle, int steps = 0);
+
+    animatorvector3_t const &scale() const;
+    FinaleWidget &setScale(de::Vector3f const &newScale, int steps = 0);
+    FinaleWidget &setScaleX(float newScaleX, int steps = 0);
+    FinaleWidget &setScaleY(float newScaleY, int steps = 0);
+    FinaleWidget &setScaleZ(float newScaleZ, int steps = 0);
+
+    /**
+     * Returns the FinalePageWidget to which the widget is attributed (if any).
+     */
+    FinalePageWidget *page() const;
+
+    /**
+     * Change/setup a reverse link between this object and it's owning page.
+     * @note Changing this relationship here does not complete the task of
+     * linking an object with a page (not enough information). It is therefore
+     * the page's responsibility to call this when adding/removing objects.
+     */
+    FinaleWidget &setPage(FinalePageWidget *newPage);
+
+private:
+    DENG2_PRIVATE(d)
 };
 
-typedef ident_t fi_objectid_t;
-
-#define FI_NAME_MAX_LENGTH          32
-typedef char fi_name_t[FI_NAME_MAX_LENGTH];
-typedef fi_name_t fi_objectname_t;
-
-typedef enum {
-    FI_NONE,
-    FI_TEXT,
-    FI_PIC
-} fi_obtype_e;
-
-struct fi_object_s;
-struct fi_page_s;
-
 /**
- * Base fi_objects_t elements. All objects MUST use this as their basis.
+ * Finale animation widget. Colored rectangles or image sequence animations.
  *
- * @ingroup video
+ * @ingroup infine
  */
-#define FIOBJECT_BASE_ELEMENTS() \
-    fi_obtype_e     type; /* Type of the object. */ \
-    struct fi_page_s *page; /* Owning page */ \
-    int             group; \
-    struct { \
-        char looping:1; /* Animation will loop. */ \
-    } flags; \
-    dd_bool         animComplete; /* Animation finished (or repeated). */ \
-    fi_objectid_t   id; /* Unique id of the object. */ \
-    fi_objectname_t name; /* Nice name. */ \
-    animatorvector3_t pos; \
-    animator_t      angle; \
-    animatorvector3_t scale; \
-    void          (*drawer) (struct fi_object_s *, float const offset[3]); \
-    void          (*thinker) (struct fi_object_s *obj);
+class FinaleAnimWidget : public FinaleWidget
+{
+public:
+    /**
+     * Describes a frame in the animation sequence.
+     */
+    struct Frame
+    {
+        enum Type
+        {
+            PFT_MATERIAL,
+            PFT_PATCH,
+            PFT_RAW, /// "Raw" graphic or PCX lump.
+            PFT_XIMAGE /// External graphics resource.
+        };
 
-#ifdef __cplusplus
-extern "C" {
+        int tics;
+        Type type;
+        struct Flags {
+            char flip:1;
+        } flags;
+        union {
+            Material *material;
+            patchid_t patch;
+            lumpnum_t lumpNum;
+            DGLuint tex;
+        } texRef;
+        short sound;
+
+        Frame();
+        ~Frame();
+    };
+    typedef QList<Frame *> Frames;
+
+public:
+    FinaleAnimWidget(de::String const &name);
+    virtual ~FinaleAnimWidget();
+
+    /// @todo Observe instead.
+    bool animationComplete() const;
+
+    FinaleAnimWidget &setLooping(bool yes = true);
+
+    int newFrame(Frame::Type type, int tics, void *texRef, short sound, bool flagFlipH);
+
+    Frames const &allFrames() const;
+    FinaleAnimWidget &clearAllFrames();
+
+    inline int frameCount() const { return allFrames().count(); }
+
+    FinaleAnimWidget &resetAllColors();
+
+    animator_t const *color() const;
+    FinaleAnimWidget &setColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setAlpha(float newAlpha, int steps = 0);
+
+    animator_t const *edgeColor() const;
+    FinaleAnimWidget &setEdgeColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setEdgeColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setEdgeAlpha(float newAlpha, int steps = 0);
+
+    animator_t const *otherColor() const;
+    FinaleAnimWidget &setOtherColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setOtherAlpha(float newAlpha, int steps = 0);
+
+    animator_t const *otherEdgeColor() const;
+    FinaleAnimWidget &setOtherEdgeColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherEdgeColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleAnimWidget &setOtherEdgeAlpha(float newAlpha, int steps = 0);
+
+protected:
+#ifdef __CLIENT__
+    void draw(de::Vector3f const &offset);
 #endif
+    void runTicks();
 
-struct fi_object_s *FI_NewObject(fi_obtype_e type, char const *name);
+private:
+    DENG2_PRIVATE(d)
+};
 
-void FI_DeleteObject(struct fi_object_s* obj);
-
-struct fi_object_s *FI_Object(fi_objectid_t id);
-
-/**
- * @return  Page which presently owns this object. Can be @c NULL if the
- *     object is presently being moved from one page to another.
- */
-struct fi_page_s *FIObject_Page(struct fi_object_s *obj);
+typedef FinaleAnimWidget::Frame FinaleAnimWidgetFrame;
 
 /**
- * Change/setup a reverse link between this object and it's owning page.
- * @note Changing this relationship here does not complete the task of
- * linking an object with a page (not enough information). It is therefore
- * the page's responsibility to call this when adding/removing objects.
- */
-void FIObject_SetPage(struct fi_object_s *obj, struct fi_page_s *page);
-
-/**
- * A page is an aggregate visual/visual container.
+ * Finale text widget.
  *
- * @ingroup video
+ * @ingroup infine
  */
-typedef struct {
-    struct fi_object_s **vector;
-    uint size;
-} fi_object_collection_t;
+class FinaleTextWidget : public FinaleWidget
+{
+public:
+    FinaleTextWidget(de::String const &name);
+    virtual ~FinaleTextWidget();
 
-typedef struct fi_page_s {
-    struct fi_page_flags_s {
-        char hidden:1; /// Currently hidden (not drawn).
-        char paused:1; /// Currently paused (does not tic).
-        char showBackground:1; /// Draw the background?
-    } flags;
+    void accelerate();
+    FinaleTextWidget &setCursorPos(int newPos);
 
-    /// Child visuals (objects) visible on this page.
+    bool animationComplete() const;
+
+    /**
+     * Returns the total number of @em currently-visible characters, excluding control/escape
+     * sequence characters.
+     */
+    int visLength();
+
+    char const *text() const;
+    FinaleTextWidget &setText(char const *newText);
+
+    fontid_t font() const;
+    FinaleTextWidget &setFont(fontid_t newFont);
+
+    /// @return  @ref alignmentFlags
+    int alignment() const;
+    /// @param newAlignment  @ref alignmentFlags
+    FinaleTextWidget &setAlignment(int newAlignment);
+
+    float lineHeight() const;
+    FinaleTextWidget &setLineHeight(float newLineHeight);
+
+    int scrollRate() const;
+    FinaleTextWidget &setScrollRate(int newRateInTics);
+
+    int typeInRate() const;
+    FinaleTextWidget &setTypeInRate(int newRateInTics);
+
+    FinaleTextWidget &setPageColor(uint id);
+    FinaleTextWidget &setPageFont(uint id);
+
+    FinaleTextWidget &setColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+    FinaleTextWidget &setColor(de::Vector3f const &newColor, int steps = 0);
+    FinaleTextWidget &setAlpha(float alpha, int steps = 0);
+
+protected:
+#ifdef __CLIENT__
+    void draw(de::Vector3f const &offset);
+#endif
+    void runTicks();
+
+public:
+    DENG2_PRIVATE(d)
+};
+
+// ---------------------------------------------------------------------------------------
+
+/**
+ * Finale page widget (layer).
+ *
+ * @ingroup infine
+ */
+class FinalePageWidget
+{
+public:
+    /// An invalid color index was specified. @ingroup errors
+    DENG2_ERROR(InvalidColorError);
+
+    /// An invalid font index was specified. @ingroup errors
+    DENG2_ERROR(InvalidFontError);
+
     /// @note Unlike de::Visual the children are not owned by the page.
-    fi_object_collection_t _objects;
+    typedef QList<FinaleWidget *> Widgets;
 
-    /// Offset the world origin.
-    animatorvector3_t _offset;
+public:
+    FinalePageWidget();
+    virtual ~FinalePageWidget();
 
-    void (*drawer) (struct fi_page_s *page);
-    void (*ticker) (struct fi_page_s *page, timespan_t ticLength);
-
-    /// Pointer to the previous page, if any.
-    struct fi_page_s *previous;
-
-    struct fi_page_background_s {
-        Material *material;
-        animatorvector4_t topColor;
-        animatorvector4_t bottomColor;
-    } _bg;
-
-    animatorvector4_t _filter;
-    animatorvector3_t _preColor[FIPAGE_NUM_PREDEFINED_COLORS];
-    fontid_t _preFont[FIPAGE_NUM_PREDEFINED_FONTS];
-
-    uint _timer;
-} fi_page_t;
-
-fi_page_t *FI_NewPage(fi_page_t *prevPage);
-void FI_DeletePage(fi_page_t *page);
-
-/// Draws the page if not hidden.
-void FIPage_Drawer(fi_page_t *page);
-
-/// Tic the page if not paused.
-void FIPage_Ticker(fi_page_t *page, timespan_t ticLength);
-
-/// Adds UI object to the page if not already present. Page takes ownership.
-struct fi_object_s *FIPage_AddObject(fi_page_t *page, struct fi_object_s *obj);
-
-/// Removes UI object from the page if present. Page gives up ownership.
-struct fi_object_s *FIPage_RemoveObject(fi_page_t *page, struct fi_object_s *obj);
-
-/// Is the UI object present on the page?
-dd_bool FIPage_HasObject(fi_page_t *page, struct fi_object_s *obj);
-
-/// Current background Material.
-Material *FIPage_BackgroundMaterial(fi_page_t *page);
-
-/// Sets the 'is-visible' state.
-void FIPage_MakeVisible(fi_page_t *page, dd_bool yes);
-
-/// Sets the 'is-paused' state.
-void FIPage_Pause(fi_page_t *page, dd_bool yes);
-
-/// Sets the background Material.
-void FIPage_SetBackgroundMaterial(fi_page_t *page, Material *mat);
-
-/// Sets the background top color.
-void FIPage_SetBackgroundTopColor(fi_page_t *page, float red, float green, float blue, int steps);
-
-/// Sets the background top color and alpha.
-void FIPage_SetBackgroundTopColorAndAlpha(fi_page_t *page, float red, float green, float blue, float alpha, int steps);
-
-/// Sets the background bottom color.
-void FIPage_SetBackgroundBottomColor(fi_page_t *page, float red, float green, float blue, int steps);
-
-/// Sets the background bottom color and alpha.
-void FIPage_SetBackgroundBottomColorAndAlpha(fi_page_t *page, float red, float green, float blue, float alpha, int steps);
-
-/// Sets the x-axis component of the world offset.
-void FIPage_SetOffsetX(fi_page_t *page, float x, int steps);
-
-/// Sets the y-axis component of the world offset.
-void FIPage_SetOffsetY(fi_page_t *page, float y, int steps);
-
-/// Sets the world offset.
-void FIPage_SetOffsetXYZ(fi_page_t *page, float x, float y, float z, int steps);
-
-/// Sets the filter color and alpha.
-void FIPage_SetFilterColorAndAlpha(fi_page_t *page, float red, float green, float blue, float alpha, int steps);
-
-/// Sets a predefined color.
-void FIPage_SetPredefinedColor(fi_page_t *page, uint idx, float red, float green, float blue, int steps);
-
-/// @return  Animator which represents the identified predefined color.
-animatorvector3_t const *FIPage_PredefinedColor(fi_page_t *page, uint idx);
-
-/// Sets a predefined font.
-void FIPage_SetPredefinedFont(fi_page_t *page, uint idx, fontid_t font);
-
-/// @return  Unique identifier of the predefined font.
-fontid_t FIPage_PredefinedFont(fi_page_t *page, uint idx);
-
-typedef enum {
-    PFT_MATERIAL,
-    PFT_PATCH,
-    PFT_RAW, /// "Raw" graphic or PCX lump.
-    PFT_XIMAGE /// External graphics resource.
-} fi_pic_type_t;
-
-/**
- * Rectangle/Image sequence object.
- *
- * @ingroup video
- */
-typedef struct fidata_pic_frame_s {
-    int tics;
-    fi_pic_type_t type;
-    struct fidata_pic_frame_flags_s {
-        char flip:1;
-    } flags;
-    union {
-        Material *material;
-        patchid_t patch;
-        lumpnum_t lumpNum;
-        DGLuint tex;
-    } texRef;
-    short sound;
-} fidata_pic_frame_t;
-
-typedef struct fidata_pic_s {
-    FIOBJECT_BASE_ELEMENTS()
-    int tics;
-    uint curFrame;
-    fidata_pic_frame_t **frames;
-    uint numFrames;
-
-    animatorvector4_t color;
-
-    /// For rectangle-objects.
-    animatorvector4_t otherColor;
-    animatorvector4_t edgeColor;
-    animatorvector4_t otherEdgeColor;
-} fidata_pic_t;
-
-void FIData_PicThink(struct fi_object_s *pic);
-void FIData_PicDraw(struct fi_object_s *pic, float const offset[3]);
-uint FIData_PicAppendFrame(struct fi_object_s *pic, fi_pic_type_t type, int tics, void *texRef, short sound, dd_bool flagFlipH);
-void FIData_PicClearAnimation(struct fi_object_s *pic);
-
-/**
- * Text object.
- *
- * @ingroup video
- */
-typedef struct fidata_text_s {
-    FIOBJECT_BASE_ELEMENTS()
-    animatorvector4_t color;
-    uint pageColor; /// Identifier of the owning page's predefined color. Zero means use our own color.
-    int alignFlags; /// @ref alignmentFlags
-    short textFlags; /// @ref drawTextFlags
-    int scrollWait, scrollTimer; /// Automatic scrolling upwards.
-    size_t cursorPos;
-    int wait, timer;
-    float lineHeight;
-    fontid_t fontNum;
-    char *text;
-} fidata_text_t;
-
-void FIData_TextThink(struct fi_object_s *text);
-void FIData_TextDraw(struct fi_object_s *text, float const offset[3]);
-void FIData_TextCopy(struct fi_object_s *text, char const *str);
-void FIData_TextSetFont(struct fi_object_s *text, fontid_t fontNum);
-void FIData_TextSetPreColor(struct fi_object_s* text, uint id);
-void FIData_TextSetColor(struct fi_object_s *text, float red, float green, float blue, int steps);
-void FIData_TextSetAlpha(struct fi_object_s *text, float alpha, int steps);
-void FIData_TextSetColorAndAlpha(struct fi_object_s *text, float red, float green, float blue, float alpha, int steps);
-void FIData_TextAccelerate(struct fi_object_s *obj);
-
-/**
- * @return Length of the current text as a counter.
- */
-size_t FIData_TextLength(struct fi_object_s *text);
-
-///@}
-
-#ifdef __cplusplus
-} // extern "C"
+#ifdef __CLIENT__
+    virtual void draw();
 #endif
+    virtual void runTicks(timespan_t timeDelta);
 
-#endif /* DOOMSDAY_GUI_H */
+    void makeVisible(bool yes = true);
+    void pause(bool yes = true);
+
+    /**
+     * Returns @c true if @a widget is present on the page.
+     */
+    bool hasWidget(FinaleWidget *widget);
+
+    /**
+     * Adds a widget to the page if not already present. Page takes ownership.
+     *
+     * @param widgetToAdd  Widget to be added.
+     *
+     * @return  Same as @a widgetToAdd, for convenience.
+     */
+    FinaleWidget *addWidget(FinaleWidget *widgetToAdd);
+
+    /**
+     * Removes a widget from the page if present. Page gives up ownership.
+     *
+     * @param widgetToRemove  Widget to be removed.
+     *
+     * @return  Same as @a widgetToRemove, for convenience.
+     */
+    FinaleWidget *removeWidget(FinaleWidget *widgetToRemove);
+
+    FinalePageWidget &setOffset(de::Vector3f const &newOffset, int steps = 0);
+    FinalePageWidget &setOffsetX(float newOffsetX, int steps = 0);
+    FinalePageWidget &setOffsetY(float newOffsetY, int steps = 0);
+    FinalePageWidget &setOffsetZ(float newOffsetZ, int steps = 0);
+
+    /// Current background Material.
+    Material *backgroundMaterial() const;
+
+    /// Sets the background Material.
+    FinalePageWidget &setBackgroundMaterial(Material *newMaterial);
+
+    /// Sets the background top color.
+    FinalePageWidget &setBackgroundTopColor(de::Vector3f const &newColor, int steps = 0);
+
+    /// Sets the background top color and alpha.
+    FinalePageWidget &setBackgroundTopColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+
+    /// Sets the background bottom color.
+    FinalePageWidget &setBackgroundBottomColor(de::Vector3f const &newColor, int steps = 0);
+
+    /// Sets the background bottom color and alpha.
+    FinalePageWidget &setBackgroundBottomColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+
+    /// Sets the filter color and alpha.
+    FinalePageWidget &setFilterColorAndAlpha(de::Vector4f const &newColorAndAlpha, int steps = 0);
+
+    /// @return  Animator which represents the identified predefined color.
+    animatorvector3_t const *predefinedColor(uint idx);
+
+    /// Sets a predefined color.
+    FinalePageWidget &setPredefinedColor(uint idx, de::Vector3f const &newColor, int steps = 0);
+
+    /// @return  Unique identifier of the predefined font.
+    fontid_t predefinedFont(uint idx);
+
+    /// Sets a predefined font.
+    FinalePageWidget &setPredefinedFont(uint idx, fontid_t font);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+#endif // DENG_UI_INFINE_WIDGETS_H

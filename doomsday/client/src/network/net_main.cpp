@@ -41,6 +41,7 @@
 #endif
 
 #ifdef __CLIENT__
+#  include "api_fontrender.h"
 //#  include "render/rend_console.h"
 #  include "render/rend_main.h"
 #  include "render/lightgrid.h"

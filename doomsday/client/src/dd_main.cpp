@@ -2204,10 +2204,10 @@ static int DD_StartupWorker(void * /*context*/)
     Net_InitGame();
 #ifdef __CLIENT__
     Demo_Init();
-#endif
 
     LOG_VERBOSE("Initializing UI subsystem...");
     UI_Init();
+#endif
     Con_SetProgress(190);
 
     // In dedicated mode the console must be opened, so all input events

@@ -41,6 +41,7 @@
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
+#  include "api_fontrender.h"
 #endif
 
 using namespace de;

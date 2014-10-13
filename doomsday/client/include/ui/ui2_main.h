@@ -23,22 +23,19 @@
 #ifndef LIBDENG_UI2_MAIN_H
 #define LIBDENG_UI2_MAIN_H
 
-#include "dd_ui.h"
+#include "api_infine.h"
+#include <de/Id>
+#include <de/String>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+enum fi_obtype_e;
+class FinaleWidget;
+class FinalePageWidget;
 
-/// We'll use the base template directly as our object.
-typedef struct fi_object_s {
-    FIOBJECT_BASE_ELEMENTS()
-} fi_object_t;
+void UI_Init();
+void UI_Shutdown();
 
-void UI_Init(void);
-void UI_Shutdown(void);
-
-void UI2_Ticker(timespan_t ticLength);
-void UI2_Drawer(void);
+void UI2_Ticker(timespan_t timeDelta);
+void UI2_Drawer();
 
 int UI_PageCount();
 
@@ -48,8 +45,12 @@ int UI_PageCount();
  */
 bool FI_IsStretchedToView();
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+FinaleWidget *FI_Widget(de::Id const &id);
 
-#endif /* LIBDENG_UI2_MAIN_H */
+FinaleWidget *FI_Link(FinaleWidget *widgetToLink);
+FinaleWidget *FI_Unlink(FinaleWidget *widgetToUnlink);
+
+FinalePageWidget *FI_CreatePageWidget();
+void FI_DestroyPageWidget(FinalePageWidget *widget);
+
+#endif // LIBDENG_UI2_MAIN_H

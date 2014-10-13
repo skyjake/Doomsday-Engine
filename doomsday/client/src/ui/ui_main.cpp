@@ -27,6 +27,7 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include "api_fontrender.h"
 #include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "render/rend_main.h"

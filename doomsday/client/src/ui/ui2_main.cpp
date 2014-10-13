@@ -1,8 +1,7 @@
-/** @file ui2_main.cpp UI Widgets
- * @ingroup ui
+/** @file ui2_main.cpp  InFine animation system widgets.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,320 +18,74 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_ui.h"
-#include "de_render.h"
-#include "de_graphics.h"
-#include "de_audio.h"
-#include "de_resource.h"
-
-#include "gl/sys_opengl.h" // TODO: get rid of this
-
-#include <de/memory.h>
+#include <cstring> // memcpy, memmove
+#include <QtAlgorithms>
+#include <de/concurrency.h>
 #include <de/memoryzone.h>
 #include <de/timer.h>
-#include <de/concurrency.h>
 #include <de/vector1.h>
-#include <cstring> // memcpy, memmove
+#include <de/Log>
+
+#include "de_base.h"
+#include "de_audio.h"
+#include "de_console.h"
+#include "de_graphics.h"
+#include "de_render.h"
+#include "de_resource.h"
+#include "de_ui.h"
+
+#include "ui/dd_ui.h"
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
 #  include "gl/gl_texmanager.h"
+#  include "gl/sys_opengl.h" // TODO: get rid of this
 #  include "ui/clientwindow.h"
 #endif
 
 using namespace de;
 
-fidata_text_t *P_CreateText(fi_objectid_t id, char const *name, fontid_t fontNum);
-void P_DestroyText(fidata_text_t *text);
+static bool inited;
 
-fidata_pic_t *P_CreatePic(fi_objectid_t id, char const *name);
-void P_DestroyPic(fidata_pic_t* pic);
+/// Global widget store.
+static QList<FinalePageWidget *> pages;
+static QList<FinaleWidget *> widgets;
 
-static dd_bool inited = false;
-static uint numPages;
-static fi_page_t **pages;
-
-/// Global object store.
-static fi_object_collection_t objects;
-
-static fi_page_t *pagesAdd(fi_page_t *p)
+static FinaleWidget *findWidget(Id const &id)
 {
-    pages = (fi_page_t **) Z_Realloc(pages, sizeof(*pages) * ++numPages, PU_APPSTATIC);
-    pages[numPages-1] = p;
-    return p;
-}
-
-static fi_page_t *pagesRemove(fi_page_t *p)
-{
-    for(uint i = 0; i < numPages; ++i)
+    if(!id.isNone())
     {
-        if(pages[i] != p) continue;
-
-        if(i != numPages-1)
+        for(FinaleWidget *wi : widgets)
         {
-            std::memmove(&pages[i], &pages[i+1], sizeof(*pages) * (numPages-i));
-        }
-
-        if(numPages > 1)
-        {
-            pages = (fi_page_t **) Z_Realloc(pages, sizeof(*pages) * --numPages, PU_APPSTATIC);
-        }
-        else
-        {
-            Z_Free(pages); pages = 0;
-            numPages = 0;
-        }
-        break;
-    }
-    return p;
-}
-
-/**
- * Clear the specified page to the default, blank state.
- */
-static void pageClear(fi_page_t *p)
-{
-    p->_timer = 0;
-    p->flags.showBackground = true; /// Draw background by default.
-    p->_bg.material = 0; // No background material.
-
-    if(p->_objects.vector)
-    {
-        Z_Free(p->_objects.vector); p->_objects.vector = 0;
-    }
-    p->_objects.size = 0;
-
-    AnimatorVector3_Init(p->_offset, 0, 0, 0);
-    AnimatorVector4_Init(p->_bg.topColor, 1, 1, 1, 0);
-    AnimatorVector4_Init(p->_bg.bottomColor, 1, 1, 1, 0);
-    AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
-    memset(p->_preFont, 0, sizeof(p->_preFont));
-
-    for(uint i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
-    {
-        AnimatorVector3_Init(p->_preColor[i], 1, 1, 1);
-    }
-}
-
-static fi_page_t *newPage(fi_page_t *prevPage)
-{
-    fi_page_t *p = (fi_page_t *) Z_Malloc(sizeof(*p), PU_APPSTATIC, 0);
-    p->flags.hidden = p->flags.paused = p->flags.showBackground = 0;
-    p->_objects.vector = 0;
-    p->drawer = FIPage_Drawer;
-    p->ticker = FIPage_Ticker;
-    p->previous = prevPage;
-    pageClear(p);
-    return p;
-}
-
-static void objectsThink(fi_object_collection_t *c)
-{
-    for(uint i = 0; i < c->size; ++i)
-    {
-        fi_object_t *obj = c->vector[i];
-        obj->thinker(obj);
-    }
-}
-
-#ifdef __CLIENT__
-static void objectsDraw(fi_object_collection_t *c, fi_obtype_e type,
-    float const worldOrigin[3])
-{
-    for(uint i = 0; i < c->size; ++i)
-    {
-        fi_object_t *obj = c->vector[i];
-        if(type != FI_NONE && obj->type != type) continue;
-        obj->drawer(obj, worldOrigin);
-    }
-}
-#endif
-
-static uint objectsToIndex(fi_object_collection_t *c, fi_object_t *obj)
-{
-    if(obj)
-    {
-        for(uint i = 0; i < c->size; ++i)
-        {
-            fi_object_t *other = c->vector[i];
-            if(other == obj)
-                return i + 1; // 1-based index.
+            if(wi->id() == id) return wi;
         }
     }
-    return 0;
+    return nullptr;
 }
 
-static inline bool objectsIsPresent(fi_object_collection_t *c, fi_object_t *obj)
-{
-    return objectsToIndex(c, obj) != 0;
-}
-
-/**
- * @note Does not check if the object already exists in this collection.
- */
-static fi_object_t *objectsAdd(fi_object_collection_t *c, fi_object_t *obj)
-{
-    c->vector = (fi_object_t **) Z_Realloc(c->vector, sizeof(*c->vector) * ++c->size, PU_APPSTATIC);
-    c->vector[c->size-1] = obj;
-    return obj;
-}
-
-/**
- * @pre There is at most one reference to the object in this collection.
- */
-static fi_object_t *objectsRemove(fi_object_collection_t *c, fi_object_t *obj)
-{
-    uint idx;
-    if((idx = objectsToIndex(c, obj)))
-    {
-        idx -= 1; // Indices are 1-based.
-
-        if(idx != c->size-1)
-        {
-            std::memmove(&c->vector[idx], &c->vector[idx+1], sizeof(*c->vector) * (c->size-idx));
-        }
-
-        if(c->size > 1)
-        {
-            c->vector = (fi_object_t **) Z_Realloc(c->vector, sizeof(*c->vector) * --c->size, PU_APPSTATIC);
-        }
-        else
-        {
-            Z_Free(c->vector); c->vector = 0;
-            c->size = 0;
-        }
-    }
-    return obj;
-}
-
-static void objectsEmpty(fi_object_collection_t *c)
-{
-    if(c->size)
-    {
-        for(uint i = 0; i < c->size; ++i)
-        {
-            fi_object_t *obj = c->vector[i];
-            switch(obj->type)
-            {
-            case FI_PIC:    P_DestroyPic((fidata_pic_t *)obj);   break;
-            case FI_TEXT:   P_DestroyText((fidata_text_t *)obj); break;
-            default:
-                App_Error("InFine: Unknown object type %i in objectsEmpty.", int(obj->type));
-            }
-        }
-        Z_Free(c->vector);
-    }
-    c->vector = 0;
-    c->size = 0;
-}
-
-static fi_object_t *objectsById(fi_object_collection_t *c, fi_objectid_t id)
-{
-    if(id != 0)
-    {
-        for(uint i = 0; i < c->size; ++i)
-        {
-            fi_object_t *obj = c->vector[i];
-            if(obj->id == id)
-                return obj;
-        }
-    }
-    return 0;
-}
-
-/**
- * @return  A new (unused) unique object id.
- */
-static fi_objectid_t objectsUniqueId(fi_object_collection_t *c)
-{
-    fi_objectid_t id = 0;
-    while(objectsById(c, ++id)) {}
-    return id;
-}
-
-static void picFrameDeleteXImage(fidata_pic_frame_t *f)
-{
-#ifdef __CLIENT__
-    DGL_DeleteTextures(1, (DGLuint *)&f->texRef.tex);
-#endif
-    f->texRef.tex = 0;
-}
-
-static fidata_pic_frame_t *createPicFrame(fi_pic_type_t type, int tics, void *texRef, short sound, dd_bool flagFlipH)
-{
-    fidata_pic_frame_t * f = (fidata_pic_frame_t *) Z_Malloc(sizeof(*f), PU_APPSTATIC, 0);
-    f->flags.flip = flagFlipH;
-    f->type = type;
-    f->tics = tics;
-    switch(f->type)
-    {
-    case PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef); break;
-    case PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef);  break;
-    case PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef);  break;
-    case PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);    break;
-    default:
-        App_Error("createPicFrame: unknown frame type %i.", int(type));
-    }
-    f->sound = sound;
-    return f;
-}
-
-static void destroyPicFrame(fidata_pic_frame_t *f)
-{
-    if(f->type == PFT_XIMAGE)
-        picFrameDeleteXImage(f);
-    Z_Free(f);
-}
-
-static fidata_pic_frame_t* picAddFrame(fidata_pic_t *p, fidata_pic_frame_t *f)
-{
-    p->frames = (fidata_pic_frame_t **) Z_Realloc(p->frames, sizeof(*p->frames) * ++p->numFrames, PU_APPSTATIC);
-    p->frames[p->numFrames-1] = f;
-    return f;
-}
-
-static void objectSetName(fi_object_t *obj, char const *name)
-{
-    dd_snprintf(obj->name, FI_NAME_MAX_LENGTH, "%s", name);
-}
-
-void UI_Init(void)
+void UI_Init()
 {
     // Already been here?
     if(inited) return;
 
-    std::memset(&objects, 0, sizeof(objects));
-    pages = 0; numPages = 0;
-
     inited = true;
 }
 
-void UI_Shutdown(void)
+void UI_Shutdown()
 {
     if(!inited) return;
 
     // Garbage collection.
-    objectsEmpty(&objects);
-    if(numPages)
-    {
-        for(uint i = 0; i < numPages; ++i)
-        {
-            fi_page_t *p = pages[i];
-            pageClear(p);
-            Z_Free(p);
-        }
-        Z_Free(pages);
-    }
-    pages = 0; numPages = 0;
+    qDeleteAll(widgets); widgets.clear();
+    qDeleteAll(pages); pages.clear();
 
     inited = false;
 }
 
 int UI_PageCount()
 {
-    return numPages;
+    if(!inited) return 0;
+    return pages.count();
 }
 
 void UI2_Ticker(timespan_t ticLength)
@@ -344,173 +97,238 @@ void UI2_Ticker(timespan_t ticLength)
 
     if(!inited) return;
 
-    // All pages tic unless paused.
-    for(uint i = 0; i < numPages; ++i)
-    {
-        fi_page_t *page = pages[i];
-        page->ticker(page, ticLength);
-    }
+    // All pages tick unless paused.
+    for(FinalePageWidget *page : pages) page->runTicks(ticLength);
 }
 
-void FIObject_Delete(fi_object_t *obj)
-{
-    DENG_ASSERT(obj);
-    // Destroy all references to this object on all pages.
-    for(uint i = 0; i < numPages; ++i)
-    {
-        FIPage_RemoveObject(pages[i], obj);
-    }
-    objectsRemove(&objects, obj);
-    Z_Free(obj);
-}
-
-fidata_pic_t *P_CreatePic(fi_objectid_t id, char const *name)
-{
-    fidata_pic_t *p = (fidata_pic_t *) Z_Calloc(sizeof(*p), PU_APPSTATIC, 0);
-
-    p->type = FI_PIC;
-    p->drawer = FIData_PicDraw;
-    p->thinker = FIData_PicThink;
-    p->id = id;
-    p->flags.looping = false;
-    p->animComplete = true;
-    objectSetName((fi_object_t *)p, name);
-    AnimatorVector4_Init(p->color, 1, 1, 1, 1);
-    AnimatorVector3_Init(p->scale, 1, 1, 1);
-
-    FIData_PicClearAnimation((fi_object_t *)p);
-    return p;
-}
-
-void P_DestroyPic(fidata_pic_t *pic)
-{
-    DENG_ASSERT(pic);
-    FIData_PicClearAnimation((fi_object_t *)pic);
-    // Call parent destructor.
-    FIObject_Delete((fi_object_t *)pic);
-}
-
-fidata_text_t *P_CreateText(fi_objectid_t id, char const *name, fontid_t fontNum)
-{
-#define LEADING             (11.f/7-1)
-
-    fidata_text_t *t = (fidata_text_t *) Z_Calloc(sizeof(*t), PU_APPSTATIC, 0);
-
-    t->type = FI_TEXT;
-    t->drawer = FIData_TextDraw;
-    t->thinker = FIData_TextThink;
-    t->id = id;
-    t->flags.looping = false;
-    t->animComplete = true;
-    t->alignFlags = ALIGN_TOPLEFT;
-    t->textFlags = DTF_ONLY_SHADOW;
-    objectSetName((fi_object_t*)t, name);
-    t->pageColor = 0; // Do not use a predefined color by default.
-    AnimatorVector4_Init(t->color, 1, 1, 1, 1);
-    AnimatorVector3_Init(t->scale, 1, 1, 1);
-
-    t->wait = 3;
-    t->fontNum = fontNum;
-    t->lineHeight = LEADING;
-
-    return t;
-
-#undef LEADING
-}
-
-void P_DestroyText(fidata_text_t *text)
-{
-    DENG_ASSERT(text);
-    if(text->text)
-    {
-        Z_Free(text->text); text->text = 0;
-    }
-    // Call parent destructor.
-    FIObject_Delete((fi_object_t *)text);
-}
-
-void FIObject_Think(fi_object_t *obj)
-{
-    DENG_ASSERT(obj);
-    AnimatorVector3_Think(obj->pos);
-    AnimatorVector3_Think(obj->scale);
-    Animator_Think(&obj->angle);
-}
-
-struct fi_page_s *FIObject_Page(struct fi_object_s *obj)
-{
-    DENG_ASSERT(obj);
-    return obj->page;
-}
-
-void FIObject_SetPage(struct fi_object_s *obj, struct fi_page_s *page)
-{
-    DENG_ASSERT(obj);
-    obj->page = page;
-}
-
-fi_page_t *FI_NewPage(fi_page_t *prevPage)
-{
-    return pagesAdd(newPage(prevPage));
-}
-
-void FI_DeletePage(fi_page_t *p)
-{
-    if(!p) return;
-
-    pageClear(p);
-    pagesRemove(p);
-    for(uint i = 0; i < numPages; ++i)
-    {
-        fi_page_t *other = pages[i];
-        if(other->previous == p)
-            other->previous = 0;
-    }
-    Z_Free(p);
-}
-
-fi_object_t *FI_Object(fi_objectid_t id)
+FinaleWidget *FI_Widget(Id const &id)
 {
     if(!inited)
     {
-        LOG_AS("FI_Object")
-        LOGDEV_SCR_WARNING("Object %i not initialized yet!") << id;
+        LOG_AS("FI_Widget")
+        LOGDEV_SCR_WARNING("Widget %i not initialized yet!") << id;
         return 0;
     }
-    return objectsById(&objects, id);
+    return findWidget(id);
 }
 
-fi_object_t *FI_NewObject(fi_obtype_e type, char const *name)
+FinaleWidget *FI_Link(FinaleWidget *widgetToLink)
 {
-    fi_object_t *obj;
-    switch(type)
+    if(widgetToLink)
     {
-    case FI_TEXT: obj = (fi_object_t *) P_CreateText(objectsUniqueId(&objects), name, 0);   break;
-    case FI_PIC:  obj = (fi_object_t *) P_CreatePic(objectsUniqueId(&objects), name);       break;
-    default:
-        DENG_ASSERT(!"FI_NewObject: Invalid object type");
-        return 0;
+        widgets.append(widgetToLink);
     }
-    return objectsAdd(&objects, obj);
+    return widgetToLink;
 }
 
-void FI_DeleteObject(fi_object_t *obj)
+FinaleWidget *FI_Unlink(FinaleWidget *widgetToUnlink)
 {
-    DENG_ASSERT(obj);
-    if(!inited)
+    if(widgetToUnlink)
     {
-        LOG_AS("FI_DeleteObject")
-        LOGDEV_SCR_WARNING("Object not initialized yet!");
-        return;
+        widgets.removeOne(widgetToUnlink);
     }
-    switch(obj->type)
-    {
-    case FI_PIC:    P_DestroyPic((fidata_pic_t *)obj);   break;
-    case FI_TEXT:   P_DestroyText((fidata_text_t *)obj); break;
-    default:
-        DENG_ASSERT(!"FI_DeleteObject: Invalid object type");
-    }
+    return widgetToUnlink;
 }
+
+FinalePageWidget *FI_CreatePageWidget()
+{
+    pages.append(new FinalePageWidget);
+    return pages.last();
+}
+
+void FI_DestroyPageWidget(FinalePageWidget *widget)
+{
+    if(!widget) return;
+    pages.removeOne(widget);
+    delete widget;
+}
+
+// -------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(FinaleWidget)
+{
+    Id id;
+    String name;
+    animatorvector3_t pos;
+    animator_t angle;
+    animatorvector3_t scale;
+    FinalePageWidget *page = nullptr;
+
+    Instance()
+    {
+        AnimatorVector3_Init(pos, 0, 0, 0);
+        Animator_Init(&angle, 0);
+        AnimatorVector3_Init(scale, 1, 1, 1);
+    }
+};
+
+FinaleWidget::FinaleWidget(de::String const &name) : d(new Instance)
+{
+    setName(name);
+}
+
+FinaleWidget::~FinaleWidget()
+{
+    DENG2_FOR_AUDIENCE(Deletion, i) i->finaleWidgetBeingDeleted(*this);
+}
+
+Id FinaleWidget::id() const
+{
+    return d->id;
+}
+
+String FinaleWidget::name() const
+{
+    return d->name;
+}
+
+FinaleWidget &FinaleWidget::setName(String const &newName)
+{
+    d->name = newName;
+    return *this;
+}
+
+animatorvector3_t const &FinaleWidget::origin() const
+{
+    return d->pos;
+}
+
+FinaleWidget &FinaleWidget::setOrigin(Vector3f const &newPos, int steps)
+{
+    AnimatorVector3_Set(d->pos, newPos.x, newPos.y, newPos.z, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setOriginX(float newX, int steps)
+{
+    Animator_Set(&d->pos[0], newX, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setOriginY(float newY, int steps)
+{
+    Animator_Set(&d->pos[1], newY, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setOriginZ(float newZ, int steps)
+{
+    Animator_Set(&d->pos[2], newZ, steps);
+    return *this;
+}
+
+animator_t const &FinaleWidget::angle() const
+{
+    return d->angle;
+}
+
+FinaleWidget &FinaleWidget::setAngle(float newAngle, int steps)
+{
+    Animator_Set(&d->angle, newAngle, steps);
+    return *this;
+}
+
+animatorvector3_t const &FinaleWidget::scale() const
+{
+    return d->scale;
+}
+
+FinaleWidget &FinaleWidget::setScale(Vector3f const &newScale, int steps)
+{
+    AnimatorVector3_Set(d->scale, newScale.x, newScale.y, newScale.z, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setScaleX(float newXScale, int steps)
+{
+    Animator_Set(&d->scale[0], newXScale, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setScaleY(float newYScale, int steps)
+{
+    Animator_Set(&d->scale[1], newYScale, steps);
+    return *this;
+}
+
+FinaleWidget &FinaleWidget::setScaleZ(float newZScale, int steps)
+{
+    Animator_Set(&d->scale[2], newZScale, steps);
+    return *this;
+}
+
+FinalePageWidget *FinaleWidget::page() const
+{
+    return d->page;
+}
+
+FinaleWidget &FinaleWidget::setPage(FinalePageWidget *newPage)
+{
+    d->page = newPage;
+    return *this;
+}
+
+void FinaleWidget::runTicks(/*timespan_t timeDelta*/)
+{
+    AnimatorVector3_Think(d->pos);
+    AnimatorVector3_Think(d->scale);
+    Animator_Think(&d->angle);
+}
+
+// -------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(FinalePageWidget)
+, DENG2_OBSERVES(FinaleWidget, Deletion)
+{
+    struct Flags {
+        char hidden:1;         ///< Not drawn.
+        char paused:1;         ///< Does not tick.
+        char showBackground:1;
+    } flags;
+    Widgets widgets;           ///< Child widgets (@em not owned).
+    uint timer = 0;
+
+    animatorvector3_t offset;  ///< Offset the world origin.
+    animatorvector4_t filter;
+    animatorvector3_t preColor[FIPAGE_NUM_PREDEFINED_COLORS];
+    fontid_t preFont[FIPAGE_NUM_PREDEFINED_FONTS];
+
+    struct Background {
+        Material *material;
+        animatorvector4_t topColor;
+        animatorvector4_t bottomColor;
+
+        Background() : material(nullptr) {
+            AnimatorVector4_Init(topColor,    1, 1, 1, 0);
+            AnimatorVector4_Init(bottomColor, 1, 1, 1, 0);
+        }
+    } bg;
+
+    Instance()
+    {
+        de::zap(flags);
+        flags.showBackground = true; /// Draw background by default.
+
+        AnimatorVector3_Init(offset, 0, 0, 0);
+        AnimatorVector4_Init(filter, 0, 0, 0, 0);
+        for(int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+        {
+            AnimatorVector3_Init(preColor[i], 1, 1, 1);
+        }
+        de::zap(preFont);
+    }
+
+    void finaleWidgetBeingDeleted(FinaleWidget const &widget)
+    {
+        widgets.removeOne(&const_cast<FinaleWidget &>(widget));
+    }
+};
+
+FinalePageWidget::FinalePageWidget() : d(new Instance)
+{}
+
+FinalePageWidget::~FinalePageWidget()
+{}
 
 #ifdef __CLIENT__
 static void useColor(animator_t const *color, int components)
@@ -525,58 +343,49 @@ static void useColor(animator_t const *color, int components)
     }
 }
 
-static void drawPageBackground(fi_page_t *p, float x, float y, float width, float height,
-    float light, float alpha)
+void FinalePageWidget::draw()
 {
-    vec3f_t topColor, bottomColor;
-    float topAlpha, bottomAlpha;
+    if(d->flags.hidden) return;
 
-    V3f_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
-    topAlpha = p->_bg.topColor[3].value * alpha;
-
-    V3f_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
-    bottomAlpha = p->_bg.bottomColor[3].value * alpha;
-
-    if(topAlpha <= 0 && bottomAlpha <= 0) return;
-
-    if(p->_bg.material)
+    // Draw a background?
+    if(d->flags.showBackground)
     {
-        MaterialVariantSpec const &spec =
-            App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
-                                              GL_REPEAT, GL_REPEAT, 0, 1, 0,
-                                              false, false, false, false);
-        MaterialSnapshot const &ms = p->_bg.material->prepare(spec);
+        vec3f_t topColor; V3f_Set(topColor, d->bg.topColor[0].value, d->bg.topColor[1].value, d->bg.topColor[2].value);
+        float topAlpha = d->bg.topColor[3].value;
 
-        GL_BindTexture(&ms.texture(MTU_PRIMARY));
-        glEnable(GL_TEXTURE_2D);
+        vec3f_t bottomColor; V3f_Set(bottomColor, d->bg.bottomColor[0].value, d->bg.bottomColor[1].value, d->bg.bottomColor[2].value);
+        float bottomAlpha = d->bg.bottomColor[3].value;
+
+        if(topAlpha > 0 && bottomAlpha > 0)
+        {
+            if(d->bg.material)
+            {
+                MaterialVariantSpec const &spec =
+                    App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+                                                      GL_REPEAT, GL_REPEAT, 0, 1, 0,
+                                                      false, false, false, false);
+                MaterialSnapshot const &ms = d->bg.material->prepare(spec);
+
+                GL_BindTexture(&ms.texture(MTU_PRIMARY));
+                glEnable(GL_TEXTURE_2D);
+            }
+
+            if(d->bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
+            {
+                GL_BlendMode(BM_NORMAL);
+            }
+            else
+            {
+                glDisable(GL_BLEND);
+            }
+
+            GL_DrawRectf2TextureColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64,
+                                      topColor, topAlpha, bottomColor, bottomAlpha);
+
+            GL_SetNoTexture();
+            glEnable(GL_BLEND);
+        }
     }
-
-    if(p->_bg.material || topAlpha < 1.0 || bottomAlpha < 1.0)
-    {
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-
-    GL_DrawRectf2TextureColor(x, y, width, height, 64, 64, topColor, topAlpha, bottomColor, bottomAlpha);
-
-    GL_SetNoTexture();
-    glEnable(GL_BLEND);
-}
-#endif // __CLIENT__
-
-void FIPage_Drawer(fi_page_t *p)
-{
-#ifdef __CLIENT__
-    if(!p) App_Error("FIPage_Drawer: Invalid page.");
-
-    if(p->flags.hidden) return;
-
-    // First, draw the background.
-    if(p->flags.showBackground)
-        drawPageBackground(p, 0, 0, SCREENWIDTH, SCREENHEIGHT, 1.0, 1.0);
 
     // Now lets go into 3D mode for drawing the p objects.
     glMatrixMode(GL_MODELVIEW);
@@ -602,29 +411,28 @@ void FIPage_Drawer(fi_page_t *p)
     //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
 
-    vec3f_t worldOrigin;
-    V3f_Set(worldOrigin, /*-SCREENWIDTH/2*/ - p->_offset[VX].value,
-                         /*-SCREENHEIGHT/2*/ - p->_offset[VY].value,
-                         0/*.05f - p->_offset[VZ].value*/);
-    objectsDraw(&p->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
+    Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
+                         /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
+                         0/*.05f - d->offset[VZ].value*/);
 
-    /*{rendmodelparams_t params;
-    memset(&params, 0, sizeof(params));
+    for(FinaleWidget *wi : d->widgets) wi->draw(worldOrigin);
+
+    /*{rendmodelparm_t parm; de::zap(parm);
 
     glEnable(GL_DEPTH_TEST);
 
     worldOrigin[VY] += 50.f / SCREENWIDTH * (40);
     worldOrigin[VZ] += 20; // Suitable default?
-    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-    Rend_RenderModel(&params);
+    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
+    Rend_RenderModel(&parm);
 
     worldOrigin[VX] -= 160.f / SCREENWIDTH * (40);
-    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-    Rend_RenderModel(&params);
+    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
+    Rend_RenderModel(&parm);
 
     worldOrigin[VX] += 320.f / SCREENWIDTH * (40);
-    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-    Rend_RenderModel(&params);
+    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
+    Rend_RenderModel(&parm);
 
     glDisable(GL_DEPTH_TEST);}*/
 
@@ -636,173 +444,182 @@ void FIPage_Drawer(fi_page_t *p)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Filter on top of everything. Only draw if necessary.
-    if(p->_filter[3].value > 0)
+    if(d->filter[3].value > 0)
     {
-        GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
+        GL_DrawRectf2Color(0, 0, SCREENWIDTH, SCREENHEIGHT, d->filter[0].value, d->filter[1].value, d->filter[2].value, d->filter[3].value);
     }
 
     GL_SetMultisample(false);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-#else
-    DENG2_UNUSED(p);
+}
 #endif
+
+void FinalePageWidget::makeVisible(bool yes)
+{
+    d->flags.hidden = !yes;
 }
 
-void FIPage_MakeVisible(fi_page_t *p, dd_bool yes)
+void FinalePageWidget::pause(bool yes)
 {
-    if(!p) App_Error("FIPage_MakeVisible: Invalid page.");
-    p->flags.hidden = !yes;
+    d->flags.paused = yes;
 }
 
-void FIPage_Pause(fi_page_t *p, dd_bool yes)
+void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
 {
-    if(!p) App_Error("FIPage_Pause: Invalid page.");
-    p->flags.paused = yes;
-}
-
-void FIPage_Ticker(fi_page_t *p, timespan_t /*ticLength*/)
-{
-    if(!p) App_Error("FIPage_Ticker: Invalid page.");
-
     if(!DD_IsSharpTick()) return;
 
     // A new 'sharp' tick has begun.
-    p->_timer++;
+    d->timer++;
 
-    objectsThink(&p->_objects);
+    for(FinaleWidget *wi : d->widgets) wi->runTicks(/*timeDelta*/);
 
-    AnimatorVector3_Think(p->_offset);
-    AnimatorVector4_Think(p->_bg.topColor);
-    AnimatorVector4_Think(p->_bg.bottomColor);
-    AnimatorVector4_Think(p->_filter);
-    for(uint i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+    AnimatorVector3_Think(d->offset);
+    AnimatorVector4_Think(d->bg.topColor);
+    AnimatorVector4_Think(d->bg.bottomColor);
+    AnimatorVector4_Think(d->filter);
+    for(int i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
-        AnimatorVector3_Think(p->_preColor[i]);
+        AnimatorVector3_Think(d->preColor[i]);
     }
 }
 
-dd_bool FIPage_HasObject(fi_page_t *p, fi_object_t *obj)
+bool FinalePageWidget::hasWidget(FinaleWidget *widget)
 {
-    if(!p) App_Error("FIPage_HasObject: Invalid page.");
-    return objectsIsPresent(&p->_objects, obj);
+    if(!widget) return false;
+    return d->widgets.contains(widget);
 }
 
-fi_object_t *FIPage_AddObject(fi_page_t *p, fi_object_t *obj)
+FinaleWidget *FinalePageWidget::addWidget(FinaleWidget *widgetToAdd)
 {
-    if(!p) App_Error("FIPage_AddObject: Invalid page.");
-    if(obj && !objectsIsPresent(&p->_objects, obj))
+    if(widgetToAdd && !d->widgets.contains(widgetToAdd))
     {
-        FIObject_SetPage(obj, p);
-        return objectsAdd(&p->_objects, obj);
+        d->widgets.append(widgetToAdd);
+        widgetToAdd->setPage(this);
+        widgetToAdd->audienceForDeletion += d;
     }
-    return obj;
+    return widgetToAdd;
 }
 
-fi_object_t *FIPage_RemoveObject(fi_page_t *p, fi_object_t *obj)
+FinaleWidget *FinalePageWidget::removeWidget(FinaleWidget *widgetToRemove)
 {
-    if(!p) App_Error("FIPage_RemoveObject: Invalid page.");
-    if(obj && objectsIsPresent(&p->_objects, obj))
+    if(widgetToRemove && d->widgets.contains(widgetToRemove))
     {
-        FIObject_SetPage(obj, NULL);
-        return objectsRemove(&p->_objects, obj);
+        widgetToRemove->audienceForDeletion -= d;
+        widgetToRemove->setPage(nullptr);
+        d->widgets.removeOne(widgetToRemove);
     }
-    return obj;
+    return widgetToRemove;
 }
 
-Material *FIPage_BackgroundMaterial(fi_page_t *p)
+Material *FinalePageWidget::backgroundMaterial() const
 {
-    if(!p) App_Error("FIPage_BackgroundMaterial: Invalid page.");
-    return p->_bg.material;
+    return d->bg.material;
 }
 
-void FIPage_SetBackgroundMaterial(fi_page_t *p, Material *mat)
+FinalePageWidget &FinalePageWidget::setBackgroundMaterial(Material *newMaterial)
 {
-    if(!p) App_Error("FIPage_SetBackgroundMaterial: Invalid page.");
-    p->_bg.material = mat;
+    d->bg.material = newMaterial;
+    return *this;
 }
 
-void FIPage_SetBackgroundTopColor(fi_page_t *p, float red, float green, float blue, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColor(Vector3f const &newColor, int steps)
 {
-    if(!p) App_Error("FIPage_SetBackgroundTopColor: Invalid page.");
-    AnimatorVector3_Set(p->_bg.topColor, red, green, blue, steps);
+    AnimatorVector3_Set(d->bg.topColor, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
 }
 
-void FIPage_SetBackgroundTopColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
 {
-    if(!p) App_Error("FIPage_SetBackgroundTopColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->_bg.topColor, red, green, blue, alpha, steps);
+    AnimatorVector4_Set(d->bg.topColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
 }
 
-void FIPage_SetBackgroundBottomColor(fi_page_t *p, float red, float green, float blue, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColor(Vector3f const &newColor, int steps)
 {
-    if(!p) App_Error("FIPage_SetBackgroundBottomColor: Invalid page.");
-    AnimatorVector3_Set(p->_bg.bottomColor, red, green, blue, steps);
+    AnimatorVector3_Set(d->bg.bottomColor, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
 }
 
-void FIPage_SetBackgroundBottomColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
 {
-    if(!p) App_Error("FIPage_SetBackgroundBottomColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->_bg.bottomColor, red, green, blue, alpha, steps);
+    AnimatorVector4_Set(d->bg.bottomColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
 }
 
-void FIPage_SetOffsetX(fi_page_t *p, float x, int steps)
+FinalePageWidget &FinalePageWidget::setOffset(Vector3f const &newOffset, int steps)
 {
-    if(!p) App_Error("FIPage_SetOffsetX: Invalid page.");
-    Animator_Set(&p->_offset[VX], x, steps);
+    AnimatorVector3_Set(d->offset, newOffset.x, newOffset.y, newOffset.z, steps);
+    return *this;
 }
 
-void FIPage_SetOffsetY(fi_page_t *p, float y, int steps)
+FinalePageWidget &FinalePageWidget::setOffsetX(float x, int steps)
 {
-    if(!p) App_Error("FIPage_SetOffsetY: Invalid page.");
-    Animator_Set(&p->_offset[VY], y, steps);
+    Animator_Set(&d->offset[VX], x, steps);
+    return *this;
 }
 
-void FIPage_SetOffsetZ(fi_page_t *p, float y, int steps)
+FinalePageWidget &FinalePageWidget::setOffsetY(float y, int steps)
 {
-    if(!p) App_Error("FIPage_SetOffsetY: Invalid page.");
-    Animator_Set(&p->_offset[VZ], y, steps);
+    Animator_Set(&d->offset[VY], y, steps);
+    return *this;
 }
 
-void FIPage_SetOffsetXYZ(fi_page_t *p, float x, float y, float z, int steps)
+FinalePageWidget &FinalePageWidget::setOffsetZ(float y, int steps)
 {
-    if(!p) App_Error("FIPage_SetOffsetXYZ: Invalid page.");
-    AnimatorVector3_Set(p->_offset, x, y, z, steps);
+    Animator_Set(&d->offset[VZ], y, steps);
+    return *this;
 }
 
-void FIPage_SetFilterColorAndAlpha(fi_page_t *p, float red, float green, float blue, float alpha, int steps)
+FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
 {
-    if(!p) App_Error("FIPage_SetFilterColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->_filter, red, green, blue, alpha, steps);
+    AnimatorVector4_Set(d->filter, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
 }
 
-void FIPage_SetPredefinedColor(fi_page_t *p, uint idx, float red, float green, float blue, int steps)
+FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vector3f const &newColor, int steps)
 {
-    if(!p) App_Error("FIPage_SetPredefinedColor: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) App_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
-    AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
+    if(VALID_FIPAGE_PREDEFINED_COLOR(idx))
+    {
+        AnimatorVector3_Set(d->preColor[idx], newColor.x, newColor.y, newColor.z, steps);
+    }
+    else
+    {
+        throw InvalidColorError("FinalePageWidget::setPredefinedColor", "Invalid color #" + String::number(idx));
+    }
+    return *this;
 }
 
-animatorvector3_t const *FIPage_PredefinedColor(fi_page_t *p, uint idx)
+animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
 {
-    if(!p) App_Error("FIPage_PredefinedColor: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) App_Error("FIPage_PredefinedColor: Invalid color id %u.", idx);
-    return (animatorvector3_t const *) &p->_preColor[idx];
+    if(VALID_FIPAGE_PREDEFINED_COLOR(idx))
+    {
+        return &d->preColor[idx];
+    }
+    throw InvalidColorError("FinalePageWidget::predefinedColor", "Invalid color #" + String::number(idx));
 }
 
-void FIPage_SetPredefinedFont(fi_page_t *p, uint idx, fontid_t fontNum)
+FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum)
 {
-    if(!p) App_Error("FIPage_SetPredefinedFont: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) App_Error("FIPage_SetPredefinedFont: Invalid font id %u.", idx);
-    p->_preFont[idx] = fontNum;
+    if(VALID_FIPAGE_PREDEFINED_FONT(idx))
+    {
+        d->preFont[idx] = fontNum;
+    }
+    else
+    {
+        throw InvalidFontError("FinalePageWidget::setPredefinedFont", "Invalid font #" + String::number(idx));
+    }
+    return *this;
 }
 
-fontid_t FIPage_PredefinedFont(fi_page_t *p, uint idx)
+fontid_t FinalePageWidget::predefinedFont(uint idx)
 {
-    if(!p) App_Error("FIPage_PredefinedFont: Invalid page.");
-    if(!VALID_FIPAGE_PREDEFINED_FONT(idx)) App_Error("FIPage_PredefinedFont: Invalid font id %u.", idx);
-    return p->_preFont[idx];
+    if(VALID_FIPAGE_PREDEFINED_FONT(idx))
+    {
+        return d->preFont[idx];
+    }
+    throw InvalidFontError("FinalePageWidget::predefinedFont", "Invalid font #" + String::number(idx));
 }
 
 #if 0
@@ -859,19 +676,19 @@ bool FI_IsStretchedToView()
     return (bp.scaleMode == SCALEMODE_STRETCH);
 }
 
-void UI2_Drawer(void)
+void UI2_Drawer()
 {
-    if(!numPages) return;
-
-    dgl_borderedprojectionstate_t bp;
-    //dd_bool bordered;
-
     LOG_AS("UI2_Drawer");
     if(!inited)
     {
         LOGDEV_ERROR("Not initialized yet!");
         return;
     }
+
+    if(pages.isEmpty()) return;
+
+    dgl_borderedprojectionstate_t bp;
+    //dd_bool bordered;
 
     setupProjectionForFinale(&bp);
     GL_BeginBorderedProjection(&bp);
@@ -884,71 +701,14 @@ void UI2_Drawer(void)
         GL_BeginBorderedProjection(&borderedProjection);
     }*/
 
-    for(uint i = 0; i < numPages; ++i)
-    {
-        fi_page_t *page = pages[i];
-        page->drawer(page);
-    }
+    for(FinalePageWidget *page : pages) page->draw();
 
     GL_EndBorderedProjection(&bp);
 
     //if(bordered)
     //    GL_EndBorderedProjection(&borderedProjection);
 }
-#endif
 
-void FIData_PicThink(fi_object_t *obj)
-{
-    fidata_pic_t *p = (fidata_pic_t *)obj;
-    DENG_ASSERT(obj && obj->type == FI_PIC);
-
-    // Call parent thinker.
-    FIObject_Think(obj);
-
-    AnimatorVector4_Think(p->color);
-    AnimatorVector4_Think(p->otherColor);
-    AnimatorVector4_Think(p->edgeColor);
-    AnimatorVector4_Think(p->otherEdgeColor);
-
-    if(!(p->numFrames > 1)) return;
-
-    // If animating, decrease the sequence timer.
-    if(p->frames[p->curFrame]->tics > 0)
-    {
-        if(--p->tics <= 0)
-        {
-            fidata_pic_frame_t *f;
-            // Advance the sequence position. k = next pos.
-            uint next = p->curFrame + 1;
-
-            if(next == p->numFrames)
-            {
-                // This is the end.
-                p->animComplete = true;
-
-                // Stop the sequence?
-                if(p->flags.looping)
-                {
-                    next = 0; // Rewind back to beginning.
-                }
-                else // Yes.
-                {
-                    p->frames[next = p->curFrame]->tics = 0;
-                }
-            }
-
-            // Advance to the next pos.
-            f = p->frames[p->curFrame = next];
-            p->tics = f->tics;
-
-            // Play a sound?
-            if(f->sound > 0)
-                S_LocalSound(f->sound, 0);
-        }
-    }
-}
-
-#ifdef __CLIENT__
 static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
     Vector4f const &bottomColor, Vector4f const &topColor, Vector3f **posCoords,
     Vector4f **colorCoords, Vector2f **texCoords)
@@ -1003,9 +763,9 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
     glEnd();
 }
 
-static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
+static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
-    float const worldOffset[3])
+    Vector3f const &worldOffset)
 {
     vec3f_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
     vec2f_t texScale = { 1, 1 };
@@ -1018,17 +778,17 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     Vector4f *colorCoords;
     Vector2f *texCoords;
 
-    if(p->numFrames)
+    if(p->frameCount())
     {
         /// @todo Optimize: Texture/Material searches should be NOT be done here -ds
-        fidata_pic_frame_t *f = p->frames[frame];
+        FinaleAnimWidget::Frame *f = p->allFrames().at(frame);
 
         flipTextureS = (f->flags.flip != 0);
         showEdges = false;
 
         switch(f->type)
         {
-        case PFT_RAW: {
+        case FinaleAnimWidget::Frame::PFT_RAW: {
             rawtex_t *rawTex = App_ResourceSystem().declareRawTexture(f->texRef.lumpNum);
             if(rawTex)
             {
@@ -1049,7 +809,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             }
             break; }
 
-        case PFT_XIMAGE:
+        case FinaleAnimWidget::Frame::PFT_XIMAGE:
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
             V2f_Set(rotateCenter, .5f, .5f);
@@ -1062,7 +822,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             }
             break;
 
-        case PFT_MATERIAL: {
+        case FinaleAnimWidget::Frame::PFT_MATERIAL: {
             Material *mat = f->texRef.material;
             if(mat)
             {
@@ -1098,7 +858,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
             }
             break; }
 
-        case PFT_PATCH: {
+        case FinaleAnimWidget::Frame::PFT_PATCH: {
             TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches")
                                             .findByUniqueId(f->texRef.patch);
             if(manifest.hasTexture())
@@ -1135,7 +895,7 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 
     V3f_Sum(origin, _origin, center);
     V3f_Subtract(origin, origin, offset);
-    V3f_Sum(origin, origin, worldOffset);
+    for(int i = 0; i < 3; ++i) { origin[i] += worldOffset[i]; }
 
     V3f_Subtract(originOffset, offset, center);
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
@@ -1195,18 +955,18 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
     if(showEdges)
     {
         glBegin(GL_LINES);
-            useColor(p->edgeColor, 4);
+            useColor(p->edgeColor(), 4);
             glVertex2f(0, 0);
             glVertex2f(1, 0);
             glVertex2f(1, 0);
 
-            useColor(p->otherEdgeColor, 4);
+            useColor(p->otherEdgeColor(), 4);
             glVertex2f(1, 1);
             glVertex2f(1, 1);
             glVertex2f(0, 1);
             glVertex2f(0, 1);
 
-            useColor(p->edgeColor, 4);
+            useColor(p->edgeColor(), 4);
             glVertex2f(0, 0);
         glEnd();
     }
@@ -1217,142 +977,399 @@ static void drawPicFrame(fidata_pic_t *p, uint frame, float const _origin[3],
 }
 #endif // __CLIENT__
 
-void FIData_PicDraw(fi_object_t *obj, const float offset[3])
+// -----------------------------------------------------------------------------------
+
+FinaleAnimWidget::Frame::Frame()
+    : tics (0)
+    , type (PFT_MATERIAL)
+    , sound(0)
+{
+    de::zap(flags);
+    de::zap(texRef);
+}
+
+FinaleAnimWidget::Frame::~Frame()
 {
 #ifdef __CLIENT__
-    fidata_pic_t *p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicDraw: Not a FI_PIC.");
-
-    // Fully transparent pics will not be drawn.
-    if(!(p->color[CA].value > 0)) return;
-
-    vec3f_t scale, origin;
-    V3f_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
-    V3f_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
-
-    vec4f_t rgba, rgba2;
-    V4f_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
-    if(p->numFrames == 0)
-        V4f_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
-
-    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
-#else
-    DENG_UNUSED(obj); DENG_UNUSED(offset);
+    if(type == PFT_XIMAGE)
+    {
+        DGL_DeleteTextures(1, (DGLuint *)&texRef.tex);
+    }
 #endif
 }
 
-uint FIData_PicAppendFrame(fi_object_t *obj, fi_pic_type_t type, int tics, void *texRef, short sound,
-    dd_bool flagFlipH)
+static FinaleAnimWidget::Frame *newAnimWidgetFrame(FinaleAnimWidget::Frame::Type type, int tics,
+    void *texRef, short sound, bool flagFlipH)
 {
-    fidata_pic_t * p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicAppendFrame: Not a FI_PIC.");
-    picAddFrame(p, createPicFrame(type, tics, texRef, sound, flagFlipH));
-    return p->numFrames-1;
-}
+    FinaleAnimWidget::Frame *f = new FinaleAnimWidget::Frame;
+    f->flags.flip = flagFlipH;
+    f->type  = type;
+    f->tics  = tics;
+    f->sound = sound;
 
-void FIData_PicClearAnimation(fi_object_t *obj)
-{
-    fidata_pic_t *p = (fidata_pic_t *)obj;
-    if(!obj || obj->type != FI_PIC) App_Error("FIData_PicClearAnimation: Not a FI_PIC.");
-    if(p->frames)
+    switch(f->type)
     {
-        for(uint i = 0; i < p->numFrames; ++i)
-        {
-            destroyPicFrame(p->frames[i]);
-        }
-        Z_Free(p->frames);
+    case FinaleAnimWidget::Frame::PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef);  break;
+    case FinaleAnimWidget::Frame::PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef); break;
+    case FinaleAnimWidget::Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
+    case FinaleAnimWidget::Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
+
+    default: throw Error("createPicFrame", "Unknown frame type #" + String::number(type));
     }
-    p->flags.looping = false; // Yeah?
-    p->frames = 0;
-    p->numFrames = 0;
-    p->curFrame = 0;
-    p->animComplete = true;
+
+    return f;
 }
 
-void FIData_TextAccelerate(fi_object_t *obj)
+DENG2_PIMPL_NOREF(FinaleAnimWidget)
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSkipCursorToEnd: Not a FI_TEXT.");
+    bool animComplete = true;
+    bool animLooping  = false;  ///< @c true= loop back to the start when the end is reached.
+    int tics          = 0;
+    int curFrame      = 0;
+    Frames frames;
 
-    // Fill in the rest very quickly.
-    t->wait = -10;
-}
+    animatorvector4_t color;
 
-void FIData_TextThink(fi_object_t *obj)
-{
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextThink: Not a FI_TEXT.");
+    /// For rectangle-objects.
+    animatorvector4_t otherColor;
+    animatorvector4_t edgeColor;
+    animatorvector4_t otherEdgeColor;
 
-    // Call parent thinker.
-    FIObject_Think(obj);
-
-    AnimatorVector4_Think(t->color);
-
-    if(t->wait)
+    Instance()
     {
-        if(--t->timer <= 0)
+        AnimatorVector4_Init(color,          1, 1, 1, 1);
+        AnimatorVector4_Init(otherColor,     0, 0, 0, 0);
+        AnimatorVector4_Init(edgeColor,      0, 0, 0, 0);
+        AnimatorVector4_Init(otherEdgeColor, 0, 0, 0, 0);
+    }
+};
+
+FinaleAnimWidget::FinaleAnimWidget(String const &name)
+    : FinaleWidget(name)
+    , d(new Instance)
+{}
+
+FinaleAnimWidget::~FinaleAnimWidget()
+{
+    clearAllFrames();
+}
+
+bool FinaleAnimWidget::animationComplete() const
+{
+    return d->animComplete;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setLooping(bool yes)
+{
+    d->animLooping = yes;
+    return *this;
+}
+
+#ifdef __CLIENT__
+void FinaleAnimWidget::draw(Vector3f const &offset)
+{
+    // Fully transparent pics will not be drawn.
+    if(!(d->color[CA].value > 0)) return;
+
+    vec3f_t _scale, _origin;
+    V3f_Set(_origin, origin()[VX].value, origin()[VY].value, origin()[VZ].value);
+    V3f_Set(_scale, scale()[VX].value, scale()[VY].value, scale()[VZ].value);
+
+    vec4f_t rgba, rgba2;
+    V4f_Set(rgba, d->color[CR].value, d->color[CG].value, d->color[CB].value, d->color[CA].value);
+    if(!frameCount())
+    {
+        V4f_Set(rgba2, d->otherColor[CR].value, d->otherColor[CG].value, d->otherColor[CB].value, d->otherColor[CA].value);
+    }
+
+    drawPicFrame(this, d->curFrame, _origin, _scale, rgba, (!frameCount()? rgba2 : rgba), angle().value, offset);
+}
+#endif
+
+void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
+{
+    FinaleWidget::runTicks();
+
+    AnimatorVector4_Think(d->color);
+    AnimatorVector4_Think(d->otherColor);
+    AnimatorVector4_Think(d->edgeColor);
+    AnimatorVector4_Think(d->otherEdgeColor);
+
+    if(!(d->frames.count() > 1)) return;
+
+    // If animating, decrease the sequence timer.
+    if(d->frames.at(d->curFrame)->tics > 0)
+    {
+        if(--d->tics <= 0)
         {
-            if(t->wait > 0)
+            Frame *f;
+            // Advance the sequence position. k = next pos.
+            uint next = d->curFrame + 1;
+
+            if(next == d->frames.count())
+            {
+                // This is the end.
+                d->animComplete = true;
+
+                // Stop the sequence?
+                if(d->animLooping)
+                {
+                    next = 0; // Rewind back to beginning.
+                }
+                else // Yes.
+                {
+                    d->frames.at(next = d->curFrame)->tics = 0;
+                }
+            }
+
+            // Advance to the next pos.
+            f = d->frames.at(d->curFrame = next);
+            d->tics = f->tics;
+
+            // Play a sound?
+            if(f->sound > 0)
+                S_LocalSound(f->sound, 0);
+        }
+    }
+}
+
+int FinaleAnimWidget::newFrame(Frame::Type type, int tics, void *texRef, short sound, bool flagFlipH)
+{
+    d->frames.append(newAnimWidgetFrame(type, tics, texRef, sound, flagFlipH));
+    // The addition of a new frame means the animation has not yet completed.
+    d->animComplete = false;
+    return d->frames.count();
+}
+
+FinaleAnimWidget::Frames const &FinaleAnimWidget::allFrames() const
+{
+    return d->frames;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::clearAllFrames()
+{
+    qDeleteAll(d->frames); d->frames.clear();
+    d->curFrame     = 0;
+    d->animComplete = true;  // Nothing to animate.
+    d->animLooping  = false; // Yeah?
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::resetAllColors()
+{
+    // Default colors.
+    AnimatorVector4_Init(d->color,      1, 1, 1, 1);
+    AnimatorVector4_Init(d->otherColor, 1, 1, 1, 1);
+
+    // Edge alpha is zero by default.
+    AnimatorVector4_Init(d->edgeColor,      1, 1, 1, 0);
+    AnimatorVector4_Init(d->otherEdgeColor, 1, 1, 1, 0);
+    return *this;
+}
+
+animator_t const *FinaleAnimWidget::color() const
+{
+    return d->color;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setColor(Vector3f const &newColor, int steps)
+{
+    AnimatorVector3_Set(d->color, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setAlpha(float newAlpha, int steps)
+{
+    Animator_Set(&d->color[3], newAlpha, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+{
+    AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
+}
+
+animator_t const *FinaleAnimWidget::edgeColor() const
+{
+    return d->edgeColor;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColor(Vector3f const &newColor, int steps)
+{
+    AnimatorVector3_Set(d->edgeColor, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setEdgeAlpha(float newAlpha, int steps)
+{
+    Animator_Set(&d->edgeColor[3], newAlpha, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+{
+    AnimatorVector4_Set(d->edgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
+}
+
+animator_t const *FinaleAnimWidget::otherColor() const
+{
+    return d->otherColor;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherColor(de::Vector3f const &newColor, int steps)
+{
+    AnimatorVector3_Set(d->otherColor, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherAlpha(float newAlpha, int steps)
+{
+    Animator_Set(&d->otherColor[3], newAlpha, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+{
+    AnimatorVector4_Set(d->otherColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
+}
+
+animator_t const *FinaleAnimWidget::otherEdgeColor() const
+{
+    return d->otherEdgeColor;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColor(de::Vector3f const &newColor, int steps)
+{
+    AnimatorVector3_Set(d->otherEdgeColor, newColor.x, newColor.y, newColor.z, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeAlpha(float newAlpha, int steps)
+{
+    Animator_Set(&d->otherEdgeColor[3], newAlpha, steps);
+    return *this;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setOtherEdgeColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+{
+    AnimatorVector4_Set(d->otherEdgeColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    return *this;
+}
+
+// ------------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(FinaleTextWidget)
+{
+    animatorvector4_t color;
+    uint pageColor    = 0;                ///< 1-based page color index. @c 0= Use our own color.
+    uint pageFont     = 0;                ///< 1-based page font index. @c 0= Use our own font.
+    int alignFlags    = ALIGN_TOPLEFT;    ///< @ref alignmentFlags
+    short textFlags   = DTF_ONLY_SHADOW;  ///< @ref drawTextFlags
+    int scrollWait    = 0;
+    int scrollTimer   = 0;   ///< Automatic scrolling upwards.
+    int cursorPos     = 0;
+    int wait          = 3;
+    int timer         = 0;
+    float lineHeight  = 11.f / 7 - 1;
+    fontid_t fontNum  = 0;
+    char *text        = nullptr;
+    bool animComplete = true;
+
+    Instance()  { AnimatorVector4_Init(color, 1, 1, 1, 1); }
+    ~Instance() { Z_Free(text); }
+
+#ifdef __CLIENT__
+    static int textLineWidth(char const *text)
+    {
+        int width = 0;
+
+        for(; *text; text++)
+        {
+            if(*text == '\\')
+            {
+                if(!*++text)     break;
+                if(*text == 'n') break;
+
+                if(*text >= '0' && *text <= '9')
+                    continue;
+                if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
+                    continue;
+            }
+            width += FR_CharWidth(*text);
+        }
+
+        return width;
+    }
+#endif
+};
+
+FinaleTextWidget::FinaleTextWidget(String const &name)
+    : FinaleWidget(name)
+    , d(new Instance)
+{}
+
+FinaleTextWidget::~FinaleTextWidget()
+{}
+
+void FinaleTextWidget::accelerate()
+{
+    // Fill in the rest very quickly.
+    d->wait = -10;
+}
+
+FinaleTextWidget &FinaleTextWidget::setCursorPos(int newPos)
+{
+    d->cursorPos = de::max(0, newPos);
+    return *this;
+}
+
+void FinaleTextWidget::runTicks()
+{
+    FinaleWidget::runTicks();
+
+    AnimatorVector4_Think(d->color);
+
+    if(d->wait)
+    {
+        if(--d->timer <= 0)
+        {
+            if(d->wait > 0)
             {
                 // Positive wait: move cursor one position, wait again.
-                t->cursorPos++;
-                t->timer = t->wait;
+                d->cursorPos++;
+                d->timer = d->wait;
             }
             else
             {
                 // Negative wait: move cursor several positions, don't wait.
-                t->cursorPos += ABS(t->wait);
-                t->timer = 1;
+                d->cursorPos += ABS(d->wait);
+                d->timer = 1;
             }
         }
     }
 
-    if(t->scrollWait)
+    if(d->scrollWait)
     {
-        if(--t->scrollTimer <= 0)
+        if(--d->scrollTimer <= 0)
         {
-            t->scrollTimer = t->scrollWait;
-            t->pos[1].target -= 1;
-            t->pos[1].steps = t->scrollWait;
+            d->scrollTimer = d->scrollWait;
+            setOriginY(origin()[1].target - 1, d->scrollWait);
+            //pos[1].target -= 1;
+            //pos[1].steps = d->scrollWait;
         }
     }
 
     // Is the text object fully visible?
-    t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength((fi_object_t *)t));
+    d->animComplete = (!d->wait || d->cursorPos >= visLength());
 }
 
 #ifdef __CLIENT__
-static int textLineWidth(char const *text)
+void FinaleTextWidget::draw(Vector3f const &offset)
 {
-    int width = 0;
-
-    for(; *text; text++)
-    {
-        if(*text == '\\')
-        {
-            if(!*++text)
-                break;
-            if(*text == 'n')
-                break;
-            if(*text >= '0' && *text <= '9')
-                continue;
-            if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
-                continue;
-        }
-        width += FR_CharWidth(*text);
-    }
-
-    return width;
-}
-#endif
-
-void FIData_TextDraw(fi_object_t *obj, const float offset[3])
-{
-#ifdef __CLIENT__
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextDraw: Not a FI_TEXT.");
-
-    if(!t->text) return;
+    if(!d->text) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1360,36 +1377,36 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     //glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
-    glTranslatef(t->pos[0].value + offset[VX], t->pos[1].value + offset[VY], t->pos[2].value + offset[VZ]);
+    glTranslatef(origin()[0].value + offset.x, origin()[1].value + offset.y, origin()[2].value + offset.z);
 
-    if(t->angle.value != 0)
+    if(angle().value != 0)
     {
         // Counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
-        glRotatef(t->angle.value, 0, 0, 1);
+        glRotatef(angle().value, 0, 0, 1);
         glScalef(1, 240.0f / 200.0f, 1);
     }
 
-    glScalef(t->scale[0].value, t->scale[1].value, t->scale[2].value);
+    glScalef(scale()[0].value, scale()[1].value, scale()[2].value);
     glEnable(GL_TEXTURE_2D);
 
-    FR_SetFont(t->fontNum);
+    FR_SetFont(d->pageFont? page()->predefinedFont(d->pageFont - 1) : d->fontNum);
 
     // Set the normal color.
     animatorvector3_t const *color;
-    if(t->pageColor == 0)
-        color = (const animatorvector3_t*)&t->color;
+    if(d->pageColor == 0)
+        color = (animatorvector3_t const *)&d->color;
     else
-        color = FIPage_PredefinedColor(FIObject_Page(obj), t->pageColor-1);
+        color = page()->predefinedColor(d->pageColor - 1);
     FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
-    FR_SetAlpha(t->color[CA].value);
+    FR_SetAlpha(d->color[CA].value);
 
     int x = 0, y = 0, ch, linew = -1;
-    char *ptr = t->text;
-    for(size_t cnt = 0; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
+    char *ptr = d->text;
+    for(int cnt = 0; *ptr && (!d->wait || cnt < d->cursorPos); ptr++)
     {
         if(linew < 0)
-            linew = textLineWidth(ptr);
+            linew = d->textLineWidth(ptr);
 
         ch = *ptr;
         if(*ptr == '\\') // Escape?
@@ -1402,34 +1419,34 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
             {
                 uint colorIdx = *ptr - '0';
                 if(colorIdx == 0)
-                    color = (animatorvector3_t const *)&t->color;
+                    color = (animatorvector3_t const *)&d->color;
                 else
-                    color = FIPage_PredefinedColor(FIObject_Page(obj), colorIdx-1);
+                    color = page()->predefinedColor(colorIdx - 1);
                 FR_SetColor((*color)[CR].value, (*color)[CG].value, (*color)[CB].value);
-                FR_SetAlpha(t->color[CA].value);
+                FR_SetAlpha(d->color[CA].value);
                 continue;
             }
 
             // 'w' = half a second wait, 'W' = second'f wait
             if(*ptr == 'w' || *ptr == 'W') // Wait?
             {
-                if(t->wait)
-                    cnt += (int) ((float)TICRATE / t->wait / (*ptr == 'w' ? 2 : 1));
+                if(d->wait)
+                    cnt += int(float(TICRATE) / d->wait / (*ptr == 'w' ? 2 : 1));
                 continue;
             }
 
             // 'p' = 5 second wait, 'P' = 10 second wait
             if(*ptr == 'p' || *ptr == 'P') // Longer pause?
             {
-                if(t->wait)
-                    cnt += (int) ((float)TICRATE / t->wait * (*ptr == 'p' ? 5 : 10));
+                if(d->wait)
+                    cnt += int(float(TICRATE) / d->wait * (*ptr == 'p' ? 5 : 10));
                 continue;
             }
 
             if(*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
-                y += FR_CharHeight('A') * (1+t->lineHeight);
+                y += FR_CharHeight('A') * (1 + d->lineHeight);
                 linew = -1;
                 cnt++; // Include newlines in the wait count.
                 continue;
@@ -1440,10 +1457,10 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
         }
 
         // Let'f do Y-clipping (in case of tall text blocks).
-        if(t->scale[1].value * y + t->pos[1].value >= -t->scale[1].value * t->lineHeight &&
-           t->scale[1].value * y + t->pos[1].value < SCREENHEIGHT)
+        if(scale()[1].value * y + origin()[1].value >= -scale()[1].value * d->lineHeight &&
+           scale()[1].value * y + origin()[1].value < SCREENHEIGHT)
         {
-            FR_DrawCharXY(ch, (t->alignFlags & ALIGN_LEFT) ? x : x - linew / 2, y);
+            FR_DrawCharXY(ch, (d->alignFlags & ALIGN_LEFT) ? x : x - linew / 2, y);
             x += FR_CharWidth(ch);
         }
 
@@ -1454,22 +1471,23 @@ void FIData_TextDraw(fi_object_t *obj, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-#else
-    DENG2_UNUSED2(offset, obj);
+}
 #endif
+
+bool FinaleTextWidget::animationComplete() const
+{
+    return d->animComplete;
 }
 
-size_t FIData_TextLength(fi_object_t *obj)
+/// @todo optimize: Cache this result.
+int FinaleTextWidget::visLength()
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextLength: Not a FI_TEXT.");
-
-    size_t cnt = 0;
-    if(t->text)
+    int count = 0;
+    if(d->text)
     {
-        float secondLen = (t->wait ? TICRATE / t->wait : 0);
-        char const *ptr;
-        for(ptr = t->text; *ptr; ptr++)
+        float const secondLen = (d->wait? TICRATE / d->wait : 0);
+
+        for(char const *ptr = d->text; *ptr; ptr++)
         {
             if(*ptr == '\\') // Escape?
             {
@@ -1477,75 +1495,129 @@ size_t FIData_TextLength(fi_object_t *obj)
 
                 switch(*ptr)
                 {
-                case 'w':   cnt += secondLen / 2;   break;
-                case 'W':   cnt += secondLen;       break;
-                case 'p':   cnt += 5 * secondLen;   break;
-                case 'P':   cnt += 10 * secondLen;  break;
+                case 'w':   count += secondLen / 2;   break;
+                case 'W':   count += secondLen;       break;
+                case 'p':   count += 5 * secondLen;   break;
+                case 'P':   count += 10 * secondLen;  break;
+
                 default:
                     if((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
                         continue;
                 }
             }
-            cnt++;
+            count++;
         }
     }
-    return cnt;
+    return count;
 }
 
-void FIData_TextCopy(fi_object_t *obj, char const *str)
+char const *FinaleTextWidget::text() const
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextCopy: Not a FI_TEXT.");
+    return d->text;
+}
 
-    if(t->text)
+FinaleTextWidget &FinaleTextWidget::setText(char const *newText)
+{
+    Z_Free(d->text); d->text = nullptr;
+    if(newText && newText[0])
     {
-        Z_Free(t->text); t->text = 0;
+        int len = (int)qstrlen(newText) + 1;
+        d->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
+        std::memcpy(d->text, newText, len);
     }
-
-    if(str && str[0])
+    int const visLen = visLength();
+    if(d->cursorPos > visLen)
     {
-        size_t len = strlen(str) + 1;
-        t->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
-        memcpy(t->text, str, len);
+        d->cursorPos = visLen;
     }
+    return *this;
 }
 
-void FIData_TextSetFont(fi_object_t *obj, fontid_t fontNum)
+fontid_t FinaleTextWidget::font() const
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetFont: Not a FI_TEXT.");
-    if(fontNum != 0)
-        t->fontNum = fontNum;
+    return d->fontNum;
 }
 
-void FIData_TextSetColor(struct fi_object_s *obj, float red, float green, float blue, int steps)
+FinaleTextWidget &FinaleTextWidget::setFont(fontid_t newFont)
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetColor: Not a FI_TEXT.");
-    AnimatorVector3_Set(*((animatorvector3_t*)t->color), red, green, blue, steps);
-    t->pageColor = 0;
+    d->fontNum  = newFont;
+    d->pageFont = 0;
+    return *this;
 }
 
-void FIData_TextSetAlpha(struct fi_object_s *obj, float alpha, int steps)
+int FinaleTextWidget::alignment() const
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetAlpha: Not a FI_TEXT.");
-    Animator_Set(&t->color[CA], alpha, steps);
+    return d->alignFlags;
 }
 
-void FIData_TextSetColorAndAlpha(struct fi_object_s *obj, float red, float green, float blue,
-    float alpha, int steps)
+FinaleTextWidget &FinaleTextWidget::setAlignment(int newAlignment)
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetColorAndAlpha: Not a FI_TEXT.");
-    AnimatorVector4_Set(t->color, red, green, blue, alpha, steps);
-    t->pageColor = 0;
+    d->alignFlags = newAlignment;
+    return *this;
 }
 
-void FIData_TextSetPreColor(fi_object_t *obj, uint id)
+float FinaleTextWidget::lineHeight() const
 {
-    fidata_text_t *t = (fidata_text_t *)obj;
-    if(!obj || obj->type != FI_TEXT) App_Error("FIData_TextSetPreColor: Not a FI_TEXT.");
-    if(id >= FIPAGE_NUM_PREDEFINED_COLORS) App_Error("FIData_TextSetPreColor: Invalid color id %u.", id);
-    t->pageColor = id;
+    return d->lineHeight;
+}
+
+FinaleTextWidget &FinaleTextWidget::setLineHeight(float newLineHeight)
+{
+    d->lineHeight = newLineHeight;
+    return *this;
+}
+
+int FinaleTextWidget::scrollRate() const
+{
+    return d->scrollWait;
+}
+
+FinaleTextWidget &FinaleTextWidget::setScrollRate(int newRateInTics)
+{
+    d->scrollWait  = newRateInTics;
+    d->scrollTimer = 0;
+    return *this;
+}
+
+int FinaleTextWidget::typeInRate() const
+{
+    return d->wait;
+}
+
+FinaleTextWidget &FinaleTextWidget::setTypeInRate(int newRateInTics)
+{
+    d->wait = newRateInTics;
+    return *this;
+}
+
+FinaleTextWidget &FinaleTextWidget::setColor(Vector3f const &newColor, int steps)
+{
+    AnimatorVector3_Set(*((animatorvector3_t *)d->color), newColor.x, newColor.y, newColor.z, steps);
+    d->pageColor = 0;
+    return *this;
+}
+
+FinaleTextWidget &FinaleTextWidget::setAlpha(float alpha, int steps)
+{
+    Animator_Set(&d->color[CA], alpha, steps);
+    return *this;
+}
+
+FinaleTextWidget &FinaleTextWidget::setColorAndAlpha(Vector4f const &newColorAndAlpha, int steps)
+{
+    AnimatorVector4_Set(d->color, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
+    d->pageColor = 0;
+    return *this;
+}
+
+FinaleTextWidget &FinaleTextWidget::setPageColor(uint id)
+{
+    d->pageColor = id;
+    return *this;
+}
+
+FinaleTextWidget &FinaleTextWidget::setPageFont(uint id)
+{
+    d->pageFont = id;
+    return *this;
 }

@@ -31,6 +31,7 @@
 #include "sys_system.h"
 #include "ui/editors/rendererappearanceeditor.h"
 
+#include "api_fontrender.h"
 #include "edit_bias.h" /// @todo remove me
 #include "network/net_main.h" /// @todo remove me
 
