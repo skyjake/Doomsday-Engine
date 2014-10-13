@@ -2138,7 +2138,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/,
     de::Uri newMapUri;
     if(mapSpecified)
     {
-        LOG_MAP_MSG_XGDEVONLY("Next map set to %u", map+1);
+        LOG_MAP_MSG_XGDEVONLY2("Next map set to %u", map + 1);
         newMapUri = G_ComposeMapUri(::gameEpisode, map);
     }
     else
