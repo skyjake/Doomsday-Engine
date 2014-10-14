@@ -145,43 +145,6 @@ void FI_DestroyPageWidget(FinalePageWidget *widget)
 
 #ifdef __CLIENT__
 
-#if 0
-static void setupModelParamsForFIObject(rendmodelparams_t *params,
-    char const *modelId, float const worldOffset[3])
-{
-    float pos[] = { SCREENWIDTH/2, SCREENHEIGHT/2, 0 };
-    modeldef_t* mf = Models_Definition(modelId);
-    if(!mf) return;
-
-    params->mf = mf;
-    params->origin[VX] = worldOffset[VX] + pos[VX];
-    params->origin[VY] = worldOffset[VZ] + pos[VZ];
-    params->origin[VZ] = worldOffset[VY] + pos[VY];
-    params->distance = -10; /// @todo inherit depth.
-    params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
-    params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
-    params->yaw = params->yawAngleOffset + 180;
-    params->pitch = params->yawAngleOffset + 90;
-    params->shineYawOffset = -vang;
-    params->shinePitchOffset = vpitch + 90;
-    params->shinepspriteCoordSpace = true;
-    params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
-    params->ambientColor[CA] = 1;
-    /**
-     * @todo This additional scale multiplier is necessary for the model
-     * to be drawn at a scale consistent with the other object types
-     * (e.g., Model compared to Pic).
-     *
-     * Both terms are also present in the other object scale calcs and can
-     * therefore be refactored away.
-     */
-    params->extraScale = .1f - (.05f * .05f);
-
-    // Lets get it spinning so we can better see whats going on.
-    params->yaw += rFrameCount;
-}
-#endif
-
 static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
 {
     GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,

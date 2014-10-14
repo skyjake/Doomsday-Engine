@@ -17,15 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QtAlgorithms>
 #include <de/Log>
-#include <doomsday/console/var.h>
-
-#include "de_base.h"
 #include "ui/infine/finale.h"
+
 #include "ui/b_context.h"
 #include "ui/infine/finaleinterpreter.h"
-
 #include "network/net_main.h"
 #ifdef __SERVER__
 #  include "server/sv_infine.h"

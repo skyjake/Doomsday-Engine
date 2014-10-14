@@ -18,26 +18,106 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
+#include <de/vector1.h>
 #include "ui/infine/finaleanimwidget.h"
 
-#include <de/vector1.h>
+#include "dd_main.h"   // App_ResourceSystem()
 #include "api_sound.h"
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
-
 #  include "gl/gl_main.h"
-#  include "gl/gl_texmanager.h"
-#  include "gl/sys_opengl.h" // TODO: get rid of this
-
-#  include "render/r_draw.h"
-#  include "render/rend_main.h"
-
-#  include "ui/clientwindow.h"
+#  include "gl/gl_texmanager.h" // GL_PrepareRawTexture()
+#  include "render/r_draw.h"    // Rend_PatchTextureSpec()
+#  include "render/rend_main.h" // filterUI
 #endif
 
 using namespace de;
+
+FinaleAnimWidget::Frame::Frame()
+    : tics (0)
+    , type (PFT_MATERIAL)
+    , sound(0)
+{
+    de::zap(flags);
+    de::zap(texRef);
+}
+
+FinaleAnimWidget::Frame::~Frame()
+{
+#ifdef __CLIENT__
+    if(type == PFT_XIMAGE)
+    {
+        DGL_DeleteTextures(1, (DGLuint *)&texRef.tex);
+    }
+#endif
+}
+
+DENG2_PIMPL_NOREF(FinaleAnimWidget)
+{
+    bool animComplete = true;
+    bool animLooping  = false;  ///< @c true= loop back to the start when the end is reached.
+    int tics          = 0;
+    int curFrame      = 0;
+    Frames frames;
+
+    animatorvector4_t color;
+
+    /// For rectangle-objects.
+    animatorvector4_t otherColor;
+    animatorvector4_t edgeColor;
+    animatorvector4_t otherEdgeColor;
+
+    Instance()
+    {
+        AnimatorVector4_Init(color,          1, 1, 1, 1);
+        AnimatorVector4_Init(otherColor,     0, 0, 0, 0);
+        AnimatorVector4_Init(edgeColor,      0, 0, 0, 0);
+        AnimatorVector4_Init(otherEdgeColor, 0, 0, 0, 0);
+    }
+
+    static Frame *makeFrame(Frame::Type type, int tics, void *texRef, short sound, bool flagFlipH)
+    {
+        Frame *f = new Frame;
+        f->flags.flip = flagFlipH;
+        f->type  = type;
+        f->tics  = tics;
+        f->sound = sound;
+
+        switch(f->type)
+        {
+        case Frame::PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef);  break;
+        case Frame::PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef); break;
+        case Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
+        case Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
+
+        default: throw Error("FinaleAnimWidget::makeFrame", "Unknown frame type #" + String::number(type));
+        }
+
+        return f;
+    }
+};
+
+FinaleAnimWidget::FinaleAnimWidget(String const &name)
+    : FinaleWidget(name)
+    , d(new Instance)
+{}
+
+FinaleAnimWidget::~FinaleAnimWidget()
+{
+    clearAllFrames();
+}
+
+bool FinaleAnimWidget::animationComplete() const
+{
+    return d->animComplete;
+}
+
+FinaleAnimWidget &FinaleAnimWidget::setLooping(bool yes)
+{
+    d->animLooping = yes;
+    return *this;
+}
 
 #ifdef __CLIENT__
 static void useColor(animator_t const *color, int components)
@@ -319,109 +399,20 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     glPopMatrix();
 }
 
-#endif // __CLIENT__
-
-FinaleAnimWidget::Frame::Frame()
-    : tics (0)
-    , type (PFT_MATERIAL)
-    , sound(0)
-{
-    de::zap(flags);
-    de::zap(texRef);
-}
-
-FinaleAnimWidget::Frame::~Frame()
-{
-#ifdef __CLIENT__
-    if(type == PFT_XIMAGE)
-    {
-        DGL_DeleteTextures(1, (DGLuint *)&texRef.tex);
-    }
-#endif
-}
-
-static FinaleAnimWidget::Frame *newAnimWidgetFrame(FinaleAnimWidget::Frame::Type type, int tics,
-    void *texRef, short sound, bool flagFlipH)
-{
-    FinaleAnimWidget::Frame *f = new FinaleAnimWidget::Frame;
-    f->flags.flip = flagFlipH;
-    f->type  = type;
-    f->tics  = tics;
-    f->sound = sound;
-
-    switch(f->type)
-    {
-    case FinaleAnimWidget::Frame::PFT_MATERIAL:  f->texRef.material =  ((Material *)texRef);  break;
-    case FinaleAnimWidget::Frame::PFT_PATCH:     f->texRef.patch    = *((patchid_t *)texRef); break;
-    case FinaleAnimWidget::Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
-    case FinaleAnimWidget::Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
-
-    default: throw Error("createPicFrame", "Unknown frame type #" + String::number(type));
-    }
-
-    return f;
-}
-
-DENG2_PIMPL_NOREF(FinaleAnimWidget)
-{
-    bool animComplete = true;
-    bool animLooping  = false;  ///< @c true= loop back to the start when the end is reached.
-    int tics          = 0;
-    int curFrame      = 0;
-    Frames frames;
-
-    animatorvector4_t color;
-
-    /// For rectangle-objects.
-    animatorvector4_t otherColor;
-    animatorvector4_t edgeColor;
-    animatorvector4_t otherEdgeColor;
-
-    Instance()
-    {
-        AnimatorVector4_Init(color,          1, 1, 1, 1);
-        AnimatorVector4_Init(otherColor,     0, 0, 0, 0);
-        AnimatorVector4_Init(edgeColor,      0, 0, 0, 0);
-        AnimatorVector4_Init(otherEdgeColor, 0, 0, 0, 0);
-    }
-};
-
-FinaleAnimWidget::FinaleAnimWidget(String const &name)
-    : FinaleWidget(name)
-    , d(new Instance)
-{}
-
-FinaleAnimWidget::~FinaleAnimWidget()
-{
-    clearAllFrames();
-}
-
-bool FinaleAnimWidget::animationComplete() const
-{
-    return d->animComplete;
-}
-
-FinaleAnimWidget &FinaleAnimWidget::setLooping(bool yes)
-{
-    d->animLooping = yes;
-    return *this;
-}
-
-#ifdef __CLIENT__
 void FinaleAnimWidget::draw(Vector3f const &offset)
 {
     // Fully transparent pics will not be drawn.
-    if(!(d->color[CA].value > 0)) return;
+    if(!(d->color[3].value > 0)) return;
 
     vec3f_t _scale, _origin;
     V3f_Set(_origin, origin()[VX].value, origin()[VY].value, origin()[VZ].value);
     V3f_Set(_scale, scale()[VX].value, scale()[VY].value, scale()[VZ].value);
 
     vec4f_t rgba, rgba2;
-    V4f_Set(rgba, d->color[CR].value, d->color[CG].value, d->color[CB].value, d->color[CA].value);
+    V4f_Set(rgba, d->color[0].value, d->color[1].value, d->color[2].value, d->color[3].value);
     if(!frameCount())
     {
-        V4f_Set(rgba2, d->otherColor[CR].value, d->otherColor[CG].value, d->otherColor[CB].value, d->otherColor[CA].value);
+        V4f_Set(rgba2, d->otherColor[0].value, d->otherColor[1].value, d->otherColor[2].value, d->otherColor[3].value);
     }
 
     drawPicFrame(this, d->curFrame, _origin, _scale, rgba, (!frameCount()? rgba2 : rgba), angle().value, offset);
@@ -477,7 +468,7 @@ void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
 
 int FinaleAnimWidget::newFrame(Frame::Type type, int tics, void *texRef, short sound, bool flagFlipH)
 {
-    d->frames.append(newAnimWidgetFrame(type, tics, texRef, sound, flagFlipH));
+    d->frames.append(d->makeFrame(type, tics, texRef, sound, flagFlipH));
     // The addition of a new frame means the animation has not yet completed.
     d->animComplete = false;
     return d->frames.count();

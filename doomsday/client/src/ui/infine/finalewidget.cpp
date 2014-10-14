@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "ui/infine/finalewidget.h"
 #include "ui/infine/finalepagewidget.h"
 

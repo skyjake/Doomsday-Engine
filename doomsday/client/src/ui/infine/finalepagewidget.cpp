@@ -18,25 +18,16 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "ui/infine/finalepagewidget.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>
 #include <de/vector1.h>
-#include <de/Log>
+#include "dd_main.h" // App_ResourceSystem()
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
-
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
-#  include "gl/gl_texmanager.h"
-#  include "gl/sys_opengl.h" // TODO: get rid of this
-
-#  include "render/rend_main.h"
-
-#  include "ui/clientwindow.h"
+#  include "render/rend_main.h" // renderWireframe
 #endif
 
 using namespace de;
