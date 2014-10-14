@@ -27,7 +27,6 @@
 #include <de/Id>
 #include <de/String>
 
-enum fi_obtype_e;
 class FinaleWidget;
 class FinalePageWidget;
 

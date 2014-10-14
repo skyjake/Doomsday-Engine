@@ -30,10 +30,7 @@ class FinaleAnimWidget;
 class FinaleTextWidget;
 class FinalePageWidget;
 
-#define FI_NAME_MAX_LENGTH          32
-typedef char fi_name_t[FI_NAME_MAX_LENGTH];
-typedef fi_name_t fi_objectname_t;
-
+/// Used with findWidget and findOrCreateWidget:
 /// @ingroup infine
 enum fi_obtype_e
 {
@@ -56,7 +53,7 @@ enum fi_obtype_e
  * 4: Filter.
  *
  * @see Finale
- * @ingroup InFine
+ * @ingroup infine
  */
 class FinaleInterpreter
 {

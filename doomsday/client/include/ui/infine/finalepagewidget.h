@@ -24,7 +24,8 @@
 #include <QList>
 #include <de/Error>
 #include "finalewidget.h"
-#include "Material"
+
+class Material;
 
 /**
  * Finale page widget (layer).
@@ -61,7 +62,7 @@ public:
     bool hasWidget(FinaleWidget *widget);
 
     /**
-     * Adds a widget to the page if not already present. Page takes ownership.
+     * Adds a widget to the page if not already present.
      *
      * @param widgetToAdd  Widget to be added.
      *
@@ -70,7 +71,7 @@ public:
     FinaleWidget *addWidget(FinaleWidget *widgetToAdd);
 
     /**
-     * Removes a widget from the page if present. Page gives up ownership.
+     * Removes a widget from the page if present.
      *
      * @param widgetToRemove  Widget to be removed.
      *

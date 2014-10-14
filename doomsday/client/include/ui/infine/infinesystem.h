@@ -28,7 +28,7 @@
 /**
  * InFine script system.
  *
- * @ingroup InFine
+ * @ingroup infine
  */
 class InFineSystem
 {

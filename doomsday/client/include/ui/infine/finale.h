@@ -20,7 +20,6 @@
 #ifndef DENG_UI_INFINE_FINALE_H
 #define DENG_UI_INFINE_FINALE_H
 
-#include <QList>
 #include <de/Observers>
 #include <de/String>
 #include "../dd_input.h" // ddevent_t
@@ -38,7 +37,7 @@ class FinaleInterpreter;
  *
  * @see FinaleInterpreter (interactive script interpreter)
  *
- * @ingroup InFine
+ * @ingroup infine
  */
 class Finale
 {

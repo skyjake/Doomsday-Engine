@@ -22,6 +22,7 @@
 
 #include <de/vector1.h>
 #include "dd_main.h" // App_ResourceSystem()
+#include "Material"
 
 #ifdef __CLIENT__
 #  include "MaterialSnapshot"
@@ -137,21 +138,11 @@ void FinalePageWidget::draw()
 
     GL_SetMultisample(true);
 
-    // The 3D projection matrix.
-    // We're assuming pixels are squares.
-    /*float aspect = DENG_WINDOW->width / (float) DENG_WINDOW->height;
-    yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
-    GL_InfinitePerspective(yfov, aspect, .05f);*/
-
-    // We need a left-handed yflipped coordinate system.
-    //glScalef(1, -1, -1);
-
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
 
     Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
@@ -160,28 +151,8 @@ void FinalePageWidget::draw()
 
     for(FinaleWidget *wi : d->widgets) wi->draw(worldOrigin);
 
-    /*{rendmodelparm_t parm; de::zap(parm);
-
-    glEnable(GL_DEPTH_TEST);
-
-    worldOrigin[VY] += 50.f / SCREENWIDTH * (40);
-    worldOrigin[VZ] += 20; // Suitable default?
-    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
-    Rend_RenderModel(&parm);
-
-    worldOrigin[VX] -= 160.f / SCREENWIDTH * (40);
-    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
-    Rend_RenderModel(&parm);
-
-    worldOrigin[VX] += 320.f / SCREENWIDTH * (40);
-    setupModelparmForFIObject(&parm, "testmodel", worldOrigin);
-    Rend_RenderModel(&parm);
-
-    glDisable(GL_DEPTH_TEST);}*/
-
     // Restore original matrices and state: back to normal 2D.
     glDisable(GL_ALPHA_TEST);
-    //glDisable(GL_CULL_FACE);
     // Back from wireframe mode?
     if(renderWireframe > 1)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
