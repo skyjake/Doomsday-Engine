@@ -19,7 +19,6 @@
 
 #include "server_dummies.h"
 #include "ui/nativeui.h"
-#include "ui/finaleinterpreter.h"
 #include "Texture"
 
 void Con_TransitionTicker(timespan_t t)

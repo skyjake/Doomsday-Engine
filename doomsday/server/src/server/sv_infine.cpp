@@ -19,7 +19,7 @@
  */
 
 #include "de_network.h"
-#include "ui/fi_main.h"
+#include "ui/infine/finale.h"
 
 void Sv_Finale(finaleid_t id, int flags, char const *script)
 {

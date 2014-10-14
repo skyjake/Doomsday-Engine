@@ -25,7 +25,7 @@
 #include <doomsday/console/exec.h>
 
 #include "de_base.h"
-#include "ui/finaleinterpreter.h"
+#include "ui/infine/finaleinterpreter.h"
 
 #include "de_filesys.h"
 #include "de_ui.h"
@@ -41,9 +41,13 @@
 #include "audio/s_main.h"
 #include "network/net_main.h"
 
-#include "ui/dd_ui.h"
+#include "ui/infine/finalewidget.h"
+#include "ui/infine/finaleanimwidget.h"
+#include "ui/infine/finalepagewidget.h"
+#include "ui/infine/finaletextwidget.h"
 
 #ifdef __CLIENT__
+#  include "api_fontrender.h"
 #  include "client/cl_infine.h"
 
 #  include "gl/gl_main.h"

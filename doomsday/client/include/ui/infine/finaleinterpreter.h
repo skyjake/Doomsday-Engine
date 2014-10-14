@@ -20,10 +20,10 @@
 #ifndef DENG_UI_INFINE_FINALEINTERPRETER_H
 #define DENG_UI_INFINE_FINALEINTERPRETER_H
 
-#include "dd_input.h"   // ddevent_t
-#include "api_infine.h" // finaleid_t
 #include <de/Error>
 #include <de/String>
+#include "../dd_input.h" // ddevent_t
+#include "api_infine.h"  // finaleid_t
 
 class FinaleWidget;
 class FinaleAnimWidget;

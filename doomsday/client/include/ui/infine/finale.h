@@ -1,4 +1,4 @@
-/** @file fi_main.h  Interactive animation sequence system.
+/** @file finale.h  InFine animation systems, Finale script.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -17,15 +17,14 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_MAIN_H
-#define DENG_UI_INFINE_MAIN_H
+#ifndef DENG_UI_INFINE_FINALE_H
+#define DENG_UI_INFINE_FINALE_H
 
 #include <QList>
-#include <de/Error>
 #include <de/Observers>
 #include <de/String>
-#include "dd_input.h" // ddevent_t
-#include "api_infine.h" // finaleid_t
+#include "../dd_input.h" // ddevent_t
+#include "api_infine.h"  // finaleid_t
 
 class FinaleInterpreter;
 
@@ -82,66 +81,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-/**
- * InFine script system.
- *
- * @ingroup InFine
- */
-class InFineSystem
-{
-public:
-    /// The referenced Finale could not be found. @ingroup errors
-    DENG2_ERROR(MissingFinaleError);
-
-    typedef QList<Finale *> Finales;
-
-public:
-    InFineSystem();
-
-    void runTicks(/*timespan_t delta*/);
-
-    /**
-     * Terminate and clear all running Finales.
-     */
-    void reset();
-
-    /**
-     * Add a new Finale to the system.
-     *
-     * @param flags      @ref finaleFlags
-     * @param script     InFine script to be interpreted.
-     * @param setupCmds  InFine script for setting up the script environment on load.
-     */
-    Finale &newFinale(int flags, de::String script, de::String const &setupCmds = "");
-
-    /**
-     * Returns @c true if @a id references a known Finale.
-     */
-    bool hasFinale(finaleid_t id) const;
-
-    /**
-     * Lookup a Finale by it's unique @a id.
-     */
-    Finale &finale(finaleid_t id);
-
-    /**
-     * Provides a list of all the Finales in the system, in order, for efficient traversal.
-     */
-    Finales const &finales() const;
-
-public:
-#ifdef __CLIENT__
-    static void initBindingContext();
-    static void deinitBindingContext();
-#endif
-
-    /**
-     * Register the console commands and cvars of this module.
-     */
-    static void consoleRegister();
-
-private:
-    DENG2_PRIVATE(d)
-};
-
-#endif // DENG_UI_INFINE_MAIN_H
+#endif // DENG_UI_INFINE_FINALE_H

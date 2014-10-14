@@ -24,6 +24,6 @@
 #define LIBDENG_INFINE
 
 #include "api_infine.h"
-//#include "ui/fi_main.h"
+//#include "ui/infine/finale.h"
 
 #endif /* LIBDENG_INFINE */

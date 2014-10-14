@@ -202,11 +202,14 @@ DENG_HEADERS += \
     $$SRC/include/sys_system.h \
     $$SRC/include/tab_anorms.h \
     $$SRC/include/ui/busyvisual.h \
-    $$SRC/include/ui/dd_ui.h \
-    $$SRC/include/ui/fi_main.h \
-    $$SRC/include/ui/finaleinterpreter.h \
+    $$SRC/include/ui/infine/finale.h \
+    $$SRC/include/ui/infine/finaleanimwidget.h \
+    $$SRC/include/ui/infine/finaleinterpreter.h \
+    $$SRC/include/ui/infine/finalepagewidget.h \
+    $$SRC/include/ui/infine/finaletextwidget.h \
+    $$SRC/include/ui/infine/finalewidget.h \
+    $$SRC/include/ui/infine/ui2_main.h \
     $$SRC/include/ui/p_control.h \
-    $$SRC/include/ui/ui2_main.h \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/bsptreenode.h \
@@ -350,10 +353,15 @@ SOURCES += \
     $$SRC/src/resource/tga.cpp \
     $$SRC/src/sys_system.cpp \
     $$SRC/src/tab_tables.c \
-    $$SRC/src/ui/fi_main.cpp \
-    $$SRC/src/ui/finaleinterpreter.cpp \
+    $$SRC/src/ui/infine/finale.cpp \
+    $$SRC/src/ui/infine/finaleanimwidget.cpp \
+    $$SRC/src/ui/infine/finaleinterpreter.cpp \
+    $$SRC/src/ui/infine/finalepagewidget.cpp \
+    $$SRC/src/ui/infine/finaletextwidget.cpp \
+    $$SRC/src/ui/infine/finalewidget.cpp \
+    $$SRC/src/ui/infine/infinesystem.cpp \
+    $$SRC/src/ui/infine/ui2_main.cpp \
     $$SRC/src/ui/p_control.cpp \
-    $$SRC/src/ui/ui2_main.cpp \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \

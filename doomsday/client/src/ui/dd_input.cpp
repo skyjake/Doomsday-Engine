@@ -35,7 +35,7 @@
 #include "render/vr.h"
 
 #include "ui/clientwindowsystem.h"
-#include "ui/fi_main.h"
+#include "ui/infine/finale.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
