@@ -78,19 +78,23 @@ void InFineSystem::reset()
     }
 }
 
-void InFineSystem::runTicks()
+bool InFineSystem::finaleInProgess() const
+{
+    for(Finale *finale : d->finales)
+    {
+        if(finale->isActive() || finale->isSuspended())
+            return true;
+    }
+    return false;
+}
+
+void InFineSystem::runTicks(timespan_t timeDelta)
 {
     LOG_AS("InFineSystem");
-
-    if(!DD_IsSharpTick()) return;
-
-    // A new 'sharp' tick has begun.
-
-    // All finales tic unless inactive.
     for(int i = 0; i < d->finales.count(); ++i)
     {
         Finale *finale = d->finales[i];
-        if(!finale->runTicks())
+        if(finale->runTicks(timeDelta))
         {
             // The script has terminated.
             delete finale;

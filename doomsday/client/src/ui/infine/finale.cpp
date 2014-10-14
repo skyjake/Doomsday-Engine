@@ -93,6 +93,11 @@ bool Finale::isActive() const
     return d->active;
 }
 
+bool Finale::isSuspended() const
+{
+    return d->interpreter.isSuspended();
+}
+
 void Finale::resume()
 {
     d->active = true;
@@ -115,18 +120,15 @@ bool Finale::terminate()
     return true;
 }
 
-bool Finale::runTicks()
+bool Finale::runTicks(timespan_t timeDelta)
 {
-    if(d->active)
+    if(d->interpreter.runTicks(timeDelta, d->active && DD_IsSharpTick()))
     {
-        if(d->interpreter.runTicks())
-        {
-            // The script has ended!
-            terminate();
-            return false;
-        }
+        // The script has ended!
+        terminate();
+        return true;
     }
-    return true;
+    return false;
 }
 
 int Finale::handleEvent(ddevent_t const &ev)

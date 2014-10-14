@@ -28,15 +28,11 @@
 #include <de/String>
 
 class FinaleWidget;
-class FinalePageWidget;
 
 void UI_Init();
 void UI_Shutdown();
 
-void UI2_Ticker(timespan_t timeDelta);
 void UI2_Drawer();
-
-int UI_PageCount();
 
 /**
  * Determines if the currently running InFine script is drawn stretched over the
@@ -48,8 +44,5 @@ FinaleWidget *FI_Widget(de::Id const &id);
 
 FinaleWidget *FI_Link(FinaleWidget *widgetToLink);
 FinaleWidget *FI_Unlink(FinaleWidget *widgetToUnlink);
-
-FinalePageWidget *FI_CreatePageWidget();
-void FI_DestroyPageWidget(FinalePageWidget *widget);
 
 #endif // LIBDENG_UI2_MAIN_H

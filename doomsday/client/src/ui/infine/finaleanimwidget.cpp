@@ -421,7 +421,7 @@ void FinaleAnimWidget::draw(Vector3f const &offset)
 
 void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
 {
-    FinaleWidget::runTicks();
+    FinaleWidget::runTicks(/*timeDelta*/);
 
     AnimatorVector4_Think(d->color);
     AnimatorVector4_Think(d->otherColor);

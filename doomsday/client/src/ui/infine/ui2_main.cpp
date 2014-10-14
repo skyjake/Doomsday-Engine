@@ -34,6 +34,7 @@
 #include "de_resource.h"
 #include "de_ui.h"
 
+#include "ui/infine/finaleinterpreter.h"
 #include "ui/infine/finalepagewidget.h"
 
 #ifdef __CLIENT__
@@ -48,7 +49,6 @@ using namespace de;
 static bool inited;
 
 /// Global widget store.
-static QList<FinalePageWidget *> pages;
 static QList<FinaleWidget *> widgets;
 
 static FinaleWidget *findWidget(Id const &id)
@@ -77,28 +77,8 @@ void UI_Shutdown()
 
     // Garbage collection.
     qDeleteAll(widgets); widgets.clear();
-    qDeleteAll(pages); pages.clear();
 
     inited = false;
-}
-
-int UI_PageCount()
-{
-    if(!inited) return 0;
-    return pages.count();
-}
-
-void UI2_Ticker(timespan_t ticLength)
-{
-#ifdef __CLIENT__
-    // Always tic.
-    FR_Ticker(ticLength);
-#endif
-
-    if(!inited) return;
-
-    // All pages tick unless paused.
-    for(FinalePageWidget *page : pages) page->runTicks(ticLength);
 }
 
 FinaleWidget *FI_Widget(Id const &id)
@@ -130,19 +110,6 @@ FinaleWidget *FI_Unlink(FinaleWidget *widgetToUnlink)
     return widgetToUnlink;
 }
 
-FinalePageWidget *FI_CreatePageWidget()
-{
-    pages.append(new FinalePageWidget);
-    return pages.last();
-}
-
-void FI_DestroyPageWidget(FinalePageWidget *widget)
-{
-    if(!widget) return;
-    pages.removeOne(widget);
-    delete widget;
-}
-
 #ifdef __CLIENT__
 
 static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
@@ -169,7 +136,7 @@ void UI2_Drawer()
         return;
     }
 
-    if(pages.isEmpty()) return;
+    if(!App_InFineSystem().finaleInProgess()) return;
 
     dgl_borderedprojectionstate_t bp;
     //dd_bool bordered;
@@ -185,7 +152,11 @@ void UI2_Drawer()
         GL_BeginBorderedProjection(&borderedProjection);
     }*/
 
-    for(FinalePageWidget *page : pages) page->draw();
+    for(Finale *finale : App_InFineSystem().finales())
+    {
+        finale->interpreter().page(FinaleInterpreter::Anims).draw();
+        finale->interpreter().page(FinaleInterpreter::Texts).draw();
+    }
 
     GL_EndBorderedProjection(&bp);
 

@@ -57,15 +57,16 @@ public:
     finaleid_t id() const;
 
     bool isActive() const;
+    bool isSuspended() const;
 
     void resume();
     void suspend();
     bool terminate();
 
     /**
-     * @return @c false if the end of the script was reached.
+     * @return  @c true if the end of the script was reached.
      */
-    bool runTicks();
+    bool runTicks(timespan_t timeDelta);
 
     int handleEvent(ddevent_t const &ev);
     bool requestSkip();

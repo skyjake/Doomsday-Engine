@@ -532,8 +532,8 @@ DENG2_PIMPL(FinaleInterpreter)
         stop();
         releaseScript();
         clearAllWidgets();
-        FI_DestroyPageWidget(pages[Anims]);
-        FI_DestroyPageWidget(pages[Texts]);
+        delete pages[Anims];
+        delete pages[Texts];
     }
 
     void initDefaultState()
@@ -985,8 +985,8 @@ void FinaleInterpreter::loadScript(char const *script)
 {
     DENG2_ASSERT(script && script[0]);
 
-    d->pages[Anims] = FI_CreatePageWidget();
-    d->pages[Texts] = FI_CreatePageWidget();
+    d->pages[Anims] = new FinalePageWidget;
+    d->pages[Texts] = new FinalePageWidget;
 
     // Hide our pages until command interpretation begins.
     d->pages[Anims]->makeVisible(false);
@@ -1115,12 +1115,17 @@ static bool runOneTick(FinaleInterpreter &fi)
     return parm.runTick;
 }
 
-bool FinaleInterpreter::runTicks()
+bool FinaleInterpreter::runTicks(timespan_t timeDelta, bool processCommands)
 {
     LOG_AS("FinaleInterpreter");
 
-    if(d->flags.stopped || d->flags.suspended)
-        return false;
+    // All pages tick unless paused.
+    page(Anims).runTicks(timeDelta);
+    page(Texts).runTicks(timeDelta);
+
+    if(!processCommands)   return false;
+    if(d->flags.stopped)   return false;
+    if(d->flags.suspended) return false;
 
     d->timer++;
 
@@ -1302,6 +1307,11 @@ FinalePageWidget &FinaleInterpreter::page(PageIndex index)
         return *d->pages[index];
     }
     throw MissingPageError("FinaleInterpreter::page", "Unknown page #" + String::number(int(index)));
+}
+
+FinalePageWidget const &FinaleInterpreter::page(PageIndex index) const
+{
+    return const_cast<FinalePageWidget const &>(const_cast<FinaleInterpreter *>(this)->page(index));
 }
 
 FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)

@@ -41,12 +41,18 @@ public:
 public:
     InFineSystem();
 
-    void runTicks(/*timespan_t delta*/);
+    void runTicks(timespan_t timeDelta);
 
     /**
      * Terminate and clear all running Finales.
      */
     void reset();
+
+    /**
+     * Returns @c true if one or more Finales are currently in progress. For the purpose of
+     * this test, suspended scripts are interpreted as being in progress.
+     */
+    bool finaleInProgess() const;
 
     /**
      * Add a new Finale to the system.

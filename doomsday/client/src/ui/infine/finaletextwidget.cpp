@@ -100,9 +100,9 @@ FinaleTextWidget &FinaleTextWidget::setCursorPos(int newPos)
     return *this;
 }
 
-void FinaleTextWidget::runTicks()
+void FinaleTextWidget::runTicks(/*timespan_t timeDelta*/)
 {
-    FinaleWidget::runTicks();
+    FinaleWidget::runTicks(/*timeDelta*/);
 
     AnimatorVector4_Think(d->color);
 

@@ -87,7 +87,7 @@ FinalePageWidget::~FinalePageWidget()
 {}
 
 #ifdef __CLIENT__
-void FinalePageWidget::draw()
+void FinalePageWidget::draw() const
 {
     if(d->flags.hidden) return;
 
@@ -182,6 +182,7 @@ void FinalePageWidget::pause(bool yes)
 
 void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
 {
+    /// @todo Interpolate in fractional time.
     if(!DD_IsSharpTick()) return;
 
     // A new 'sharp' tick has begun.

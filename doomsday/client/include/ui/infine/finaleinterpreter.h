@@ -75,7 +75,7 @@ public:
 
     finaleid_t id() const;
 
-    bool runTicks();
+    bool runTicks(timespan_t timeDelta, bool processCommands);
     int handleEvent(ddevent_t const &ev);
 
     void loadScript(char const *script);
@@ -103,6 +103,7 @@ public:
 #endif
 
     FinalePageWidget &page(PageIndex index);
+    FinalePageWidget const &page(PageIndex index) const;
 
     FinaleWidget *tryFindWidget(de::String const &name);
 

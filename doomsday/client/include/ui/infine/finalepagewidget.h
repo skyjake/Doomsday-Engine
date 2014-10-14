@@ -49,7 +49,7 @@ public:
     virtual ~FinalePageWidget();
 
 #ifdef __CLIENT__
-    virtual void draw();
+    virtual void draw() const;
 #endif
     virtual void runTicks(timespan_t timeDelta);
 

@@ -106,7 +106,7 @@ protected:
 #ifdef __CLIENT__
     void draw(de::Vector3f const &offset);
 #endif
-    void runTicks();
+    void runTicks(/*timespan_t timeDelta*/);
 
 private:
     DENG2_PRIVATE(d)

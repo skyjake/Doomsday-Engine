@@ -159,10 +159,12 @@ static void baseTicker(timespan_t time)
         Demo_Ticker(time);
 #endif
         P_Ticker(time);
-        UI2_Ticker(time);
+#ifdef __CLIENT__
+        FR_Ticker(time);
+#endif
 
         // InFine ticks whenever it's active.
-        App_InFineSystem().runTicks();
+        App_InFineSystem().runTicks(time);
 
         // Game logic.
         if(App_GameLoaded() && gx.Ticker)
