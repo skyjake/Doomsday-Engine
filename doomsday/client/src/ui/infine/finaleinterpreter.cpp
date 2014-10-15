@@ -380,13 +380,32 @@ DENG2_PIMPL(FinaleInterpreter)
         char show_menu:1;
     } flags;
 
-    finaleid_t id;       ///< Unique identifier.
-    ddstring_t *script;  ///< The script to be interpreted.
-    char *scriptBegin;   ///< Beginning of the script (after any directive blocks).
-    char const *cp;      ///< Current position in the script.
+    finaleid_t id = 0;                  ///< Unique identifier.
 
-    /// Script token read/parse buffer.
-    char token[MAX_TOKEN_LENGTH];
+    ddstring_t *script      = nullptr;  ///< The script to be interpreted.
+    char const *scriptBegin = nullptr;  ///< Beginning of the script (after any directive blocks).
+    char const *cp          = nullptr;  ///< Current position in the script.
+    char token[MAX_TOKEN_LENGTH];       ///< Script token read/parse buffer.
+
+    /// Pages containing the widgets used to visualize the script objects.
+    std::unique_ptr<FinalePageWidget> pages[2];
+
+    bool cmdExecuted = false;  ///< Set to true after first command is executed.
+
+    bool skipping    = false;
+    bool lastSkipped = false;
+    bool skipNext    = false;
+    bool gotoEnd     = false;
+    bool gotoSkip    = false;
+    String gotoTarget;
+
+    int doLevel = 0;  ///< Level of DO-skipping.
+    uint timer  = 0;
+    int wait    = 0;
+    int inTime  = 0;
+
+    FinaleAnimWidget *waitAnim = nullptr;
+    FinaleTextWidget *waitText = nullptr;
 
 #ifdef __CLIENT__
     struct EventHandler
@@ -409,57 +428,16 @@ DENG2_PIMPL(FinaleInterpreter)
     EventHandlers eventHandlers;
 #endif // __CLIENT__
 
-    /// Pages on which objects created by this interpeter are visible.
-    FinalePageWidget *pages[2];
-
-    /// Set to true after first command is executed.
-    bool cmdExecuted;
-    bool skipping;
-    bool lastSkipped;
-    bool gotoSkip;
-    bool gotoEnd;
-    bool skipNext;
-
-    int doLevel; ///< Level of DO-skipping.
-
-    uint timer;
-    int wait;
-    int inTime;
-
-    String gotoTarget;
-
-    FinaleTextWidget *waitText;
-    FinaleAnimWidget *waitAnim;
-
-    Instance(Public *i, finaleid_t id)
-        : Base(i)
-        , id         (id)
-        , script     (nullptr)
-        , scriptBegin(nullptr)
-        , cp         (nullptr)
-        , cmdExecuted(false)
-        , skipping   (false)
-        , lastSkipped(false)
-        , gotoSkip   (false)
-        , gotoEnd    (false)
-        , skipNext   (false)
-        , doLevel    (0)
-        , timer      (0)
-        , wait       (0)
-        , inTime     (0)
-        , waitText   (nullptr)
-        , waitAnim   (nullptr)
+    Instance(Public *i, finaleid_t id) : Base(i), id(id)
     {
         de::zap(flags);
         de::zap(token);
-        de::zap(pages);
     }
 
     ~Instance()
     {
         stop();
         releaseScript();
-        clearAllWidgets();
     }
 
     void initDefaultState()
@@ -829,12 +807,6 @@ DENG2_PIMPL(FinaleInterpreter)
         return type == FI_ANIM? Anims : Texts;
     }
 
-    void clearAllWidgets()
-    {
-        delete pages[Anims]; pages[Anims] = nullptr;
-        delete pages[Texts]; pages[Texts] = nullptr;
-    }
-
     FinaleWidget *locateWidget(fi_obtype_e type, String const &name)
     {
         if(!name.isEmpty())
@@ -915,8 +887,8 @@ void FinaleInterpreter::loadScript(char const *script)
 {
     DENG2_ASSERT(script && script[0]);
 
-    d->pages[Anims] = new FinalePageWidget;
-    d->pages[Texts] = new FinalePageWidget;
+    d->pages[Anims].reset(new FinalePageWidget);
+    d->pages[Texts].reset(new FinalePageWidget);
 
     // Hide our pages until command interpretation begins.
     d->pages[Anims]->makeVisible(false);
