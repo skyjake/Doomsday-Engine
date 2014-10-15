@@ -4,6 +4,16 @@
 
 include(config_unix_any.pri)
 
+# File locations.
+macx-xcode {
+    DOOMSDAY_APP_PATH = $$OUT_PWD/../client/Debug/Doomsday.app
+}
+else {
+    exists($$OUT_PWD/../client): DOOMSDAY_APP_PATH = $$OUT_PWD/../client/Doomsday.app
+    else: DOOMSDAY_APP_PATH = $$OUT_PWD/../../client/Doomsday.app
+}
+echo(App path: $$DOOMSDAY_APP_PATH)
+
 DEFINES += MACOSX
 
 CONFIG += deng_nofixedasm deng_embedfluidsynth
@@ -123,6 +133,56 @@ deng_c++11 {
 
 # Add the bundled Frameworks to the rpath.
 QMAKE_LFLAGS += -Wl,-rpath,@loader_path/../Frameworks
+
+# Xcode project settings.
+*-xcode {
+    xcHeaderMap.name     = USE_HEADERMAP
+    xcHeaderMap.value    = NO
+    xcHidden.name        = GCC_SYMBOLS_PRIVATE_EXTERN
+    xcHidden.value       = NO
+    xcInlineHidden.name  = GCC_INLINES_ARE_PRIVATE_EXTERN
+    xcInlineHidden.value = NO
+    QMAKE_MAC_XCODE_SETTINGS += xcHeaderMap xcHidden xcInlineHidden
+
+    # Place all built binaries in the products folder.
+    DESTDIR = $$DENG_ROOT_DIR/../distrib/products
+
+    # Allow using libraries from the products folder.
+    LIBS += -L$$DESTDIR
+}
+
+defineTest(xcodeFinalizeBuild) {
+    # 1 - name of target
+    *-xcode {
+        doPostLink("cd $TARGET_BUILD_DIR")
+        versionComponents = $$split(VERSION, .)
+        major = $$first(versionComponents)
+        doPostLink("ln -fs lib$${1}.dylib lib$${1}.$${major}.dylib")
+        doPostLink("ln -fs lib$${1}.dylib $$DESTDIR/lib$${1}.$${major}.dylib")
+    }
+}
+
+defineTest(xcodeFinalizeAppBuild) {
+    *-xcode {
+        doPostLink("cd $TARGET_BUILD_DIR")
+        doPostLink(export PATH=\"$$[QT_HOST_BINS]:$PATH\")
+    }
+}
+
+defineTest(xcodeDeployDengPlugins) {
+    *-xcode {
+        QMAKE_BUNDLE_DATA += macx_plugins
+        
+        for(name, 1) {
+            macx_plugins.files += $$DESTDIR/$${name}.bundle
+        }
+        macx_plugins.path = Contents/DengPlugins
+        
+        export(QMAKE_BUNDLE_DATA)
+        export(macx_plugins.files)
+        export(macx_plugins.path)        
+    }
+}
 
 # Macros ---------------------------------------------------------------------
 

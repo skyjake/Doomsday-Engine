@@ -9,7 +9,8 @@ include(../../../config.pri)
 
 TEMPLATE = app
 
-      macx: TARGET = "Doomsday Shell"
+macx-xcode: TARGET = Shell
+ else:macx: TARGET = "Doomsday Shell"
 else:win32: TARGET = Doomsday-Shell
       else: TARGET = doomsday-shell
 
@@ -71,15 +72,20 @@ win32 {
 macx {
     ICON = res/macx/shell.icns
     QMAKE_INFO_PLIST = res/macx/Info.plist
+    macx-xcode: QMAKE_INFO_PLIST = res/macx/Info-Xcode.plist
+    macx-xcode: ICON = res/macx/AppIcon.appiconset
     QMAKE_BUNDLE_DATA += res
     res.path = Contents/Resources
     res.files = res/macx/English.lproj
 
-    # Clean up previous deployment.
-    doPostLink("rm -rf \"Doomsday Shell.app/Contents/PlugIns/\"")
-    doPostLink("rm -f \"Doomsday Shell.app/Contents/Resources/qt.conf\"")
+    xcodeDeployDengLibs(shell.1)
+    xcodeFinalizeAppBuild()
 
-    doPostLink("macdeployqt \"Doomsday Shell.app\"")
+    # Clean up previous deployment.
+    doPostLink("rm -rf \"$${TARGET}.app/Contents/PlugIns/\"")
+    doPostLink("rm -f \"$${TARGET}.app/Contents/Resources/qt.conf\"")
+
+    doPostLink("macdeployqt \"$${TARGET}.app\"")
 }
 else {
     unix {

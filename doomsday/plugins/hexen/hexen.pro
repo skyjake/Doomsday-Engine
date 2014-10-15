@@ -16,7 +16,6 @@ DEFINES += __JHEXEN__
 gamedata.files = $$OUT_PWD/../../libhexen.pk3
 
 macx {
-    gamedata.path = Contents/Resources
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {

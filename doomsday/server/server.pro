@@ -415,6 +415,7 @@ macx {
 
     QMAKE_INFO_PLIST = ../build/mac/Info.plist
 
+    xcodeFinalizeAppBuild()
     linkBinaryToBundledLibcore($$TARGET)
     linkBinaryToBundledLibshell($$TARGET)
 }

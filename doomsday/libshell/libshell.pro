@@ -107,6 +107,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)
     linkDylibToBundledLibcore(libdeng_shell)
 
     doPostLink("install_name_tool -id @rpath/libdeng_shell.1.dylib libdeng_shell.1.dylib")

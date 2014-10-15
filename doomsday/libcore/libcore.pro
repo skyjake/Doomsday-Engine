@@ -184,6 +184,7 @@ OTHER_FILES += \
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)
     defineTest(fixInstallName) {
         doPostLink("install_name_tool -change $$1 @rpath/$$1 libdeng_core.2.dylib")
         doPostLink("install_name_tool -change $$[QT_INSTALL_LIBS]/$$1 @rpath/$$1 libdeng_core.2.dylib")

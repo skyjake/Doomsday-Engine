@@ -16,7 +16,6 @@ DEFINES += __JDOOM64__
 gamedata.files = $$OUT_PWD/../../libdoom64.pk3
 
 macx {
-    gamedata.path = Contents/Resources
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {

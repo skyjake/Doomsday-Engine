@@ -813,6 +813,17 @@ startupfonts.files = \
     data/fonts/normallight24.dfn
 
 macx {
+    xcodeFinalizeAppBuild()
+    xcodeDeployDengLibs(shell.1 gui.1 appfw.1 doomsday.1 legacy.1)
+    xcodeDeployDengPlugins(audio_fluidsynth audio_fmod \
+        idtech1converter savegameconverter dehread \
+        doom heretic hexen doom64)
+    macx-xcode {
+        QMAKE_BUNDLE_DATA += exectools
+        exectools.files = $$DESTDIR/savegametool $$DESTDIR/doomsday-server
+        exectools.path = Contents/Resources
+    }
+
     res.path = Contents/Resources
     res.files = \
         res/macx/English.lproj \
@@ -827,7 +838,7 @@ macx {
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
+    FW_DIR = Doomsday.app/Contents/Frameworks/
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     !deng_nosdl {

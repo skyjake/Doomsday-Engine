@@ -248,6 +248,7 @@ SOURCES += \
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)
     linkDylibToBundledLibcore(libdeng_appfw)
 
     doPostLink("install_name_tool -id @rpath/libdeng_appfw.1.dylib libdeng_appfw.1.dylib")

@@ -73,6 +73,18 @@ macx {
     defineTest(linkDylibToBundledLibcore) {
         linkBinaryToBundledLibcore($${1}.dylib)
     }
+    defineTest(xcodeDeployDengLibs) {
+        # 1 - list of lib names (excluding core, which is always included)
+        *-xcode {
+            macx_libs.files = $$DESTDIR/libdeng_core.2.dylib
+            for(i, 1): macx_libs.files += $$DESTDIR/libdeng_$${i}.dylib
+            macx_libs.path = Contents/Frameworks
+            QMAKE_BUNDLE_DATA += macx_libs
+            export(QMAKE_BUNDLE_DATA)
+            export(macx_libs.files)
+            export(macx_libs.path)
+        }
+    }
 }
 
 DENG_PACKAGES += net.dengine.stdlib.pack

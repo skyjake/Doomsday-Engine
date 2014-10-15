@@ -10,6 +10,15 @@ deng_noclient {
 macx {
     CONFIG += lib_bundle
     QMAKE_BUNDLE_EXTENSION = .bundle
+    macx-xcode {
+        xcBundle.name = WRAPPER_EXTENSION
+        xcBundle.value = bundle
+        QMAKE_MAC_XCODE_SETTINGS += xcBundle
+    }
+    xcodeFinalizeAppBuild()
+    
+    gamedata.path = Contents/Resources
+    macx-xcode: gamedata.path = Versions/Current/Resources
 }
 unix:!macx {
     INSTALLS += target

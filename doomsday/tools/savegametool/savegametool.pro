@@ -33,6 +33,7 @@ SOURCES += \
 # Deployment -------------------------------------------------------------------
 
 macx {
+    xcodeFinalizeAppBuild()
     linkBinaryToBundledLibcore($$TARGET)
     linkBinaryToBundledLiblegacy($$TARGET)
 }

@@ -5,11 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>Doomsday Shell</string>
+	<string>Shell</string>
 	<key>CFBundleIdentifier</key>
 	<string>net.dengine.shell</string>
-	<key>CFBundleIconFile</key>
-	<string>shell.icns</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>

@@ -146,6 +146,7 @@ buildPackage(../net.dengine.base, $$OUT_PWD/..)
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)    
     linkDylibToBundledLibcore  (libdeng_doomsday)
     linkDylibToBundledLiblegacy(libdeng_doomsday)
     linkDylibToBundledLibshell (libdeng_doomsday)

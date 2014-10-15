@@ -126,6 +126,7 @@ else:unix {
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)
     linkDylibToBundledLibcore(libdeng_legacy)
 
     doPostLink("install_name_tool -id @rpath/libdeng_legacy.1.dylib libdeng_legacy.1.dylib")

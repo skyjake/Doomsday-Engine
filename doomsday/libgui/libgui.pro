@@ -224,6 +224,7 @@ OTHER_FILES += \
 # Installation ---------------------------------------------------------------
 
 macx {
+    xcodeFinalizeBuild($$TARGET)
     linkDylibToBundledLibcore(libdeng_gui)
 
     doPostLink("install_name_tool -id @rpath/libdeng_gui.1.dylib libdeng_gui.1.dylib")

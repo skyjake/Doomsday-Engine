@@ -16,7 +16,6 @@ DEFINES += __JHERETIC__
 gamedata.files = $$OUT_PWD/../../libheretic.pk3
 
 macx {
-    gamedata.path = Contents/Resources
     QMAKE_BUNDLE_DATA += gamedata
 }
 else {
