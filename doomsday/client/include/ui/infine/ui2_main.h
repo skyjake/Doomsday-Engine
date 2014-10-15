@@ -23,22 +23,12 @@
 #ifndef LIBDENG_UI2_MAIN_H
 #define LIBDENG_UI2_MAIN_H
 
-#include "api_infine.h"
 #include <de/Id>
-#include <de/String>
 
 class FinaleWidget;
 
 void UI_Init();
 void UI_Shutdown();
-
-void UI2_Drawer();
-
-/**
- * Determines if the currently running InFine script is drawn stretched over the
- * entire view.
- */
-bool FI_IsStretchedToView();
 
 FinaleWidget *FI_Widget(de::Id const &id);
 

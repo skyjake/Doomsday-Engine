@@ -34,15 +34,7 @@
 #include "de_resource.h"
 #include "de_ui.h"
 
-#include "ui/infine/finaleinterpreter.h"
-#include "ui/infine/finalepagewidget.h"
-
-#ifdef __CLIENT__
-#  include "MaterialSnapshot"
-#  include "gl/gl_texmanager.h"
-#  include "gl/sys_opengl.h" // TODO: get rid of this
-#  include "ui/clientwindow.h"
-#endif
+#include "ui/infine/finalewidget.h"
 
 using namespace de;
 
@@ -109,59 +101,3 @@ FinaleWidget *FI_Unlink(FinaleWidget *widgetToUnlink)
     }
     return widgetToUnlink;
 }
-
-#ifdef __CLIENT__
-
-static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
-{
-    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
-                                   SCREENWIDTH, SCREENHEIGHT,
-                                   DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
-                                   scalemode_t(Con_GetByte("rend-finale-stretch")));
-}
-
-bool FI_IsStretchedToView()
-{
-    dgl_borderedprojectionstate_t bp;
-    setupProjectionForFinale(&bp);
-    return (bp.scaleMode == SCALEMODE_STRETCH);
-}
-
-void UI2_Drawer()
-{
-    LOG_AS("UI2_Drawer");
-    if(!inited)
-    {
-        LOGDEV_ERROR("Not initialized yet!");
-        return;
-    }
-
-    if(!App_InFineSystem().finaleInProgess()) return;
-
-    dgl_borderedprojectionstate_t bp;
-    //dd_bool bordered;
-
-    setupProjectionForFinale(&bp);
-    GL_BeginBorderedProjection(&bp);
-
-    /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
-    if(bordered)
-    {
-        // Draw using the special bordered projection.
-        GL_ConfigureBorderedProjection(&borderedProjection);
-        GL_BeginBorderedProjection(&borderedProjection);
-    }*/
-
-    for(Finale *finale : App_InFineSystem().finales())
-    {
-        finale->interpreter().page(FinaleInterpreter::Anims).draw();
-        finale->interpreter().page(FinaleInterpreter::Texts).draw();
-    }
-
-    GL_EndBorderedProjection(&bp);
-
-    //if(bordered)
-    //    GL_EndBorderedProjection(&borderedProjection);
-}
-
-#endif // __CLIENT__

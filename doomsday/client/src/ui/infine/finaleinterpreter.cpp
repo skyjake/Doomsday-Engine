@@ -532,8 +532,6 @@ DENG2_PIMPL(FinaleInterpreter)
         stop();
         releaseScript();
         clearAllWidgets();
-        delete pages[Anims];
-        delete pages[Texts];
     }
 
     void initDefaultState()
@@ -906,6 +904,9 @@ DENG2_PIMPL(FinaleInterpreter)
             DENG2_ASSERT(widget);
             self.removeWidget(widget);
         }
+
+        delete pages[Anims]; pages[Anims] = nullptr;
+        delete pages[Texts]; pages[Texts] = nullptr;
     }
 
     /// @todo Refactor away.
@@ -914,7 +915,7 @@ DENG2_PIMPL(FinaleInterpreter)
         DENG2_ASSERT(!name.isEmpty());
         // An existing widget?
         if(fi_objectid_t found = (type == FI_ANIM? names.toId<FinaleAnimWidget>(name)
-                                                : names.toId<FinaleTextWidget>(name)))
+                                                 : names.toId<FinaleTextWidget>(name)))
         {
             return FI_Widget(found);
         }
