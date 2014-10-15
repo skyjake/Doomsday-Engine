@@ -4,7 +4,7 @@
  * @todo Move these to dd_init.cpp.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,6 +36,8 @@
 
 #include "def_main.h"
 #include "gl/svg.h"
+#include "ui/infine/ui2_main.h" /// @todo Remove me
+
 #ifdef __CLIENT__
 #  include "render/r_draw.h"
 #  include "render/r_main.h"
