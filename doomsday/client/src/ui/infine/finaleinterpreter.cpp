@@ -2100,7 +2100,7 @@ DEFFC(TextFromDef)
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
 
-    char *str = "(undefined)"; // Not found.
+    char const *str = "(undefined)"; // Not found.
     Def_Get(DD_DEF_TEXT, (char *)OP_CSTRING(3), &str);
 
     text.setText(str)
@@ -2162,7 +2162,7 @@ DEFFC(SetTextDef)
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
 
-    char *str = "(undefined)"; // Not found.
+    char const *str = "(undefined)"; // Not found.
     Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str);
 
     text.setText(str);

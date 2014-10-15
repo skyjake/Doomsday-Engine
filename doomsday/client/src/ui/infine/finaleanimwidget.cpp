@@ -439,7 +439,7 @@ void FinaleAnimWidget::runTicks(/*timespan_t timeDelta*/)
             // Advance the sequence position. k = next pos.
             uint next = d->curFrame + 1;
 
-            if(next == d->frames.count())
+            if(next == uint(d->frames.count()))
             {
                 // This is the end.
                 d->animComplete = true;
