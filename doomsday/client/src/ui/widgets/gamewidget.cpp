@@ -22,7 +22,6 @@
 #include "clientapp.h"
 #include "ui/dd_input.h"
 #include "ui/ui_main.h"
-#include "ui/infine/ui2_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"

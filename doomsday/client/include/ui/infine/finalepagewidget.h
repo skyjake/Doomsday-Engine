@@ -41,8 +41,7 @@ public:
     /// An invalid font index was specified. @ingroup errors
     DENG2_ERROR(InvalidFontError);
 
-    /// @note Unlike de::Visual the children are not owned by the page.
-    typedef QList<FinaleWidget *> Widgets;
+    typedef QList<FinaleWidget *> Children;
 
 public:
     FinalePageWidget();
@@ -62,22 +61,29 @@ public:
     bool hasWidget(FinaleWidget *widget);
 
     /**
-     * Adds a widget to the page if not already present.
+     * Add a child widget to the page, transferring ownership. If the widget is
+     * already contained by the page then nothing happens.
      *
      * @param widgetToAdd  Widget to be added.
      *
      * @return  Same as @a widgetToAdd, for convenience.
      */
-    FinaleWidget *addWidget(FinaleWidget *widgetToAdd);
+    FinaleWidget *addChild(FinaleWidget *widgetToAdd);
 
     /**
-     * Removes a widget from the page if present.
+     * Remove a child widget from the page, transferring ownership to the caller
+     * if owned by the page.
      *
      * @param widgetToRemove  Widget to be removed.
      *
      * @return  Same as @a widgetToRemove, for convenience.
      */
-    FinaleWidget *removeWidget(FinaleWidget *widgetToRemove);
+    FinaleWidget *removeChild(FinaleWidget *widgetToRemove);
+
+    /**
+     * Provides a list of all child widgets of the page, in addition order.
+     */
+    Children const &children() const;
 
     FinalePageWidget &setOffset(de::Vector3f const &newOffset, int steps = 0);
     FinalePageWidget &setOffsetX(float newOffsetX, int steps = 0);

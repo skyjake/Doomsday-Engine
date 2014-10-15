@@ -118,8 +118,6 @@ public:
      */
     FinaleWidget &findOrCreateWidget(fi_obtype_e type, de::String const &name);
 
-    void removeWidget(FinaleWidget *widgetToRemove);
-
 public: /// Script-level flow/state control (@todo make private): --------------------
 
     void beginDoSkipMode();

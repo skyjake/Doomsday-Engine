@@ -56,7 +56,6 @@
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "ui/infine/infinesystem.h"
-#include "ui/infine/ui2_main.h"
 #include "ui/p_control.h"
 #include "ui/progress.h"
 #include "ui/nativeui.h"
@@ -2204,9 +2203,6 @@ static int DD_StartupWorker(void * /*context*/)
     Net_InitGame();
 #ifdef __CLIENT__
     Demo_Init();
-
-    LOG_VERBOSE("Initializing UI subsystem...");
-    UI_Init();
 #endif
     Con_SetProgress(190);
 

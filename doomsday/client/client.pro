@@ -377,7 +377,6 @@ DENG_HEADERS += \
     include/ui/infine/finaletextwidget.h \
     include/ui/infine/finalewidget.h \
     include/ui/infine/infinesystem.h \
-    include/ui/infine/ui2_main.h \
     include/ui/progress.h \
     include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
@@ -700,7 +699,6 @@ SOURCES += \
     src/ui/infine/finaletextwidget.cpp \
     src/ui/infine/finalewidget.cpp \
     src/ui/infine/infinesystem.cpp \
-    src/ui/infine/ui2_main.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \

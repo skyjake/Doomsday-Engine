@@ -41,7 +41,7 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
         char paused:1;         ///< Does not tick.
         char showBackground:1;
     } flags;
-    Widgets widgets;           ///< Child widgets (@em not owned).
+    Children children;         ///< Child widgets (owned).
     uint timer = 0;
 
     animatorvector3_t offset;  ///< Offset the world origin.
@@ -74,9 +74,16 @@ DENG2_PIMPL_NOREF(FinalePageWidget)
         de::zap(preFont);
     }
 
+    ~Instance()
+    {
+        qDeleteAll(children);
+        DENG2_ASSERT(children.isEmpty());
+    }
+
     void finaleWidgetBeingDeleted(FinaleWidget const &widget)
     {
-        widgets.removeOne(&const_cast<FinaleWidget &>(widget));
+        DENG2_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
+        children.removeOne(&const_cast<FinaleWidget &>(widget));
     }
 };
 
@@ -149,7 +156,10 @@ void FinalePageWidget::draw() const
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
                          0/*.05f - d->offset[VZ].value*/);
 
-    for(FinaleWidget *wi : d->widgets) wi->draw(worldOrigin);
+    for(FinaleWidget *widget : d->children)
+    {
+        widget->draw(worldOrigin);
+    }
 
     // Restore original matrices and state: back to normal 2D.
     glDisable(GL_ALPHA_TEST);
@@ -188,7 +198,10 @@ void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
     // A new 'sharp' tick has begun.
     d->timer++;
 
-    for(FinaleWidget *wi : d->widgets) wi->runTicks(/*timeDelta*/);
+    for(FinaleWidget *widget : d->children)
+    {
+        widget->runTicks(/*timeDelta*/);
+    }
 
     AnimatorVector3_Think(d->offset);
     AnimatorVector4_Think(d->bg.topColor);
@@ -203,29 +216,34 @@ void FinalePageWidget::runTicks(timespan_t /*timeDelta*/)
 bool FinalePageWidget::hasWidget(FinaleWidget *widget)
 {
     if(!widget) return false;
-    return d->widgets.contains(widget);
+    return d->children.contains(widget);
 }
 
-FinaleWidget *FinalePageWidget::addWidget(FinaleWidget *widgetToAdd)
+FinaleWidget *FinalePageWidget::addChild(FinaleWidget *widgetToAdd)
 {
-    if(widgetToAdd && !d->widgets.contains(widgetToAdd))
+    if(!hasWidget(widgetToAdd))
     {
-        d->widgets.append(widgetToAdd);
+        d->children.append(widgetToAdd);
         widgetToAdd->setPage(this);
         widgetToAdd->audienceForDeletion += d;
     }
     return widgetToAdd;
 }
 
-FinaleWidget *FinalePageWidget::removeWidget(FinaleWidget *widgetToRemove)
+FinaleWidget *FinalePageWidget::removeChild(FinaleWidget *widgetToRemove)
 {
-    if(widgetToRemove && d->widgets.contains(widgetToRemove))
+    if(hasWidget(widgetToRemove))
     {
         widgetToRemove->audienceForDeletion -= d;
         widgetToRemove->setPage(nullptr);
-        d->widgets.removeOne(widgetToRemove);
+        d->children.removeOne(widgetToRemove);
     }
     return widgetToRemove;
+}
+
+FinalePageWidget::Children const &FinalePageWidget::children() const
+{
+    return d->children;
 }
 
 Material *FinalePageWidget::backgroundMaterial() const

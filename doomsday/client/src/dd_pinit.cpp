@@ -36,7 +36,6 @@
 
 #include "def_main.h"
 #include "gl/svg.h"
-#include "ui/infine/ui2_main.h" /// @todo Remove me
 
 #ifdef __CLIENT__
 #  include "render/r_draw.h"
@@ -148,7 +147,6 @@ void DD_ShutdownAll()
 #ifdef __CLIENT__
     App_InFineSystem().deinitBindingContext();
 #endif
-    UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
 

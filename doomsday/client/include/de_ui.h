@@ -24,8 +24,7 @@
 #ifndef LIBDENG_USER_INTERFACE_H
 #define LIBDENG_USER_INTERFACE_H
 
-#include "ui/infine/finale.h"
-#include "ui/infine/ui2_main.h"
+#include "ui/infine/infinesystem.h"
 
 #ifdef __CLIENT__
 #  include <de/input/ddkey.h>

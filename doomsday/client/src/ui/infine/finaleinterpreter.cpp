@@ -409,78 +409,6 @@ DENG2_PIMPL(FinaleInterpreter)
     EventHandlers eventHandlers;
 #endif // __CLIENT__
 
-    struct KnownObjects
-    {
-        struct Item
-        {
-            String name; ///< Unique among objects of the same type.
-            Id id = { Id::None };
-        };
-        typedef QList<Item> AllItems;
-        AllItems items;
-
-        void clear()
-        {
-            items.clear();
-        }
-
-        template <typename WidgetType>
-        fi_objectid_t toId(String const &name)
-        {
-            if(!name.isEmpty())
-            {
-                for(Item const &item : items)
-                {
-                    if(item.name.compareWithoutCase(name)) continue;
-
-                    FinaleWidget *widget = FI_Widget(item.id);
-                    if(widget && widget->is<WidgetType>())
-                    {
-                        return item.id;
-                    }
-                }
-            }
-            return 0;
-        }
-
-        int indexOf(FinaleWidget *widget)
-        {
-            if(widget)
-            {
-                for(int i = 0; i < items.count(); ++i)
-                {
-                    if(items.at(i).id == widget->id()) return i + 1; // 1-based
-                }
-            }
-            return 0;
-        }
-
-        /**
-         * @note Does not check if the object already exists in this scope.
-         */
-        FinaleWidget *add(FinaleWidget *widget)
-        {
-            DENG2_ASSERT(widget);
-            items.append(Item());
-            Item &item = items.last();
-            item.id   = widget->id();
-            item.name = widget->name();
-            return widget;
-        }
-
-        /**
-         * @pre There is at most one reference to the object in this scope.
-         */
-        FinaleWidget *remove(FinaleWidget *widget)
-        {
-            if(int index = indexOf(widget))
-            {
-                items.removeAt(index - 1 /*make zero-based*/);
-            }
-            return widget;
-        }
-    } names;
-
     /// Pages on which objects created by this interpeter are visible.
     FinalePageWidget *pages[2];
 
@@ -893,33 +821,34 @@ DENG2_PIMPL(FinaleInterpreter)
 
     static inline PageIndex choosePageFor(FinaleWidget &widget)
     {
-        return (widget.is<FinaleAnimWidget>()? Anims : Texts);
+        return widget.is<FinaleAnimWidget>()? Anims : Texts;
+    }
+
+    static inline PageIndex choosePageFor(fi_obtype_e type)
+    {
+        return type == FI_ANIM? Anims : Texts;
     }
 
     void clearAllWidgets()
     {
-        while(!names.items.isEmpty())
-        {
-            FinaleWidget *widget = FI_Widget(names.items.first().id);
-            DENG2_ASSERT(widget);
-            self.removeWidget(widget);
-        }
-
         delete pages[Anims]; pages[Anims] = nullptr;
         delete pages[Texts]; pages[Texts] = nullptr;
     }
 
-    /// @todo Refactor away.
     FinaleWidget *locateWidget(fi_obtype_e type, String const &name)
     {
-        DENG2_ASSERT(!name.isEmpty());
-        // An existing widget?
-        if(fi_objectid_t found = (type == FI_ANIM? names.toId<FinaleAnimWidget>(name)
-                                                 : names.toId<FinaleTextWidget>(name)))
+        if(!name.isEmpty())
         {
-            return FI_Widget(found);
+            FinalePageWidget::Children const &children = pages[choosePageFor(type)]->children();
+            for(FinaleWidget *widget : children)
+            {
+                if(!widget->name().compareWithoutCase(name))
+                {
+                    return widget;
+                }
+            }
         }
-        return nullptr;
+        return nullptr; // Not found.
     }
 
     FinaleWidget *makeWidget(fi_obtype_e type, String const &name)
@@ -1318,21 +1247,20 @@ FinalePageWidget const &FinaleInterpreter::page(PageIndex index) const
 FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)
 {
     // Perhaps an Anim?
-    if(fi_objectid_t found = d->names.toId<FinaleAnimWidget>(name))
+    if(FinaleWidget *found = d->locateWidget(FI_ANIM, name))
     {
-        return FI_Widget(found);
+        return found;
     }
     // Perhaps a Text?
-    if(fi_objectid_t found = d->names.toId<FinaleTextWidget>(name))
+    if(FinaleWidget *found = d->locateWidget(FI_TEXT, name))
     {
-        return FI_Widget(found);
+        return found;
     }
     return nullptr;
 }
 
 FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, String const &name)
 {
-    DENG2_ASSERT(!name.isEmpty());
     if(FinaleWidget *foundWidget = d->locateWidget(type, name))
     {
         return *foundWidget;
@@ -1352,16 +1280,7 @@ FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, String con
     FinaleWidget *newWidget = d->makeWidget(type, name);
     if(!newWidget) throw Error("FinaleInterpreter::findOrCreateWidget", "Failed making widget for type:" + String::number(int(type)));
 
-    FI_Link(newWidget);      // Link in the global store.
-    d->names.add(newWidget); // Link in the local namespace.
-    return *page(d->choosePageFor(*newWidget)).addWidget(newWidget);
-}
-
-void FinaleInterpreter::removeWidget(FinaleWidget *widgetToRemove)
-{
-    if(!widgetToRemove) return;
-    FI_Unlink(widgetToRemove);
-    delete d->names.remove(widgetToRemove);
+    return *page(d->choosePageFor(*newWidget)).addChild(newWidget);
 }
 
 void FinaleInterpreter::beginDoSkipMode()
@@ -1690,7 +1609,7 @@ DEFFC(Marker)
 DEFFC(Delete)
 {
     DENG2_UNUSED(cmd);
-    fi.removeWidget(fi.tryFindWidget(OP_CSTRING(0)));
+    delete fi.tryFindWidget(OP_CSTRING(0));
 }
 
 DEFFC(Image)
@@ -2280,7 +2199,7 @@ DEFFC(SetTextDef)
 DEFFC(DeleteText)
 {
     DENG2_UNUSED(cmd);
-    fi.removeWidget(fi.tryFindWidget(OP_CSTRING(0)));
+    delete fi.tryFindWidget(OP_CSTRING(0));
 }
 
 DEFFC(PredefinedColor)
