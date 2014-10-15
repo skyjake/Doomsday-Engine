@@ -35,12 +35,13 @@
 #include "render/vr.h"
 
 #include "ui/clientwindowsystem.h"
-#include "ui/fi_main.h"
+#include "ui/infine/finale.h"
 #include <de/KeyEvent>
 
 // For the debug visuals:
 #if _DEBUG
 #  include "de_graphics.h"
+#  include "api_fontrender.h"
 #endif
 
 using namespace de;

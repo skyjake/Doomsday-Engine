@@ -40,6 +40,7 @@
 
 /// Finale identifier. Used throughout the public API when referencing active Finales.
 typedef ident_t finaleid_t;
+typedef ident_t fi_objectid_t;
 
 /**
  * @defgroup finaleFlags Finale Flags

@@ -357,7 +357,6 @@ DENG_HEADERS += \
     include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
     include/ui/dd_input.h \
-    include/ui/dd_ui.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
@@ -371,6 +370,13 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/infine/finale.h \
+    include/ui/infine/finaleanimwidget.h \
+    include/ui/infine/finaleinterpreter.h \
+    include/ui/infine/finalepagewidget.h \
+    include/ui/infine/finaletextwidget.h \
+    include/ui/infine/finalewidget.h \
+    include/ui/infine/infinesystem.h \
     include/ui/progress.h \
     include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
@@ -396,8 +402,6 @@ DENG_HEADERS += \
     include/ui/widgets/singleplayersessionmenuwidget.h \
     include/ui/widgets/taskbarwidget.h \
     include/ui/widgets/tutorialwidget.h \
-    include/ui/fi_main.h \
-    include/ui/finaleinterpreter.h \
     include/ui/inputsystem.h \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
@@ -405,7 +409,6 @@ DENG_HEADERS += \
     include/ui/p_control.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
-    include/ui/ui2_main.h \
     include/ui/ui_main.h \
     include/ui/zonedebug.h \
     include/updater.h \
@@ -690,8 +693,13 @@ SOURCES += \
     src/ui/dialogs/vrsettingsdialog.cpp \
     src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
-    src/ui/fi_main.cpp \
-    src/ui/finaleinterpreter.cpp \
+    src/ui/infine/finale.cpp \
+    src/ui/infine/finaleanimwidget.cpp \
+    src/ui/infine/finaleinterpreter.cpp \
+    src/ui/infine/finalepagewidget.cpp \
+    src/ui/infine/finaletextwidget.cpp \
+    src/ui/infine/finalewidget.cpp \
+    src/ui/infine/infinesystem.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
@@ -699,7 +707,6 @@ SOURCES += \
     src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
-    src/ui/ui2_main.cpp \
     src/ui/ui_main.cpp \
     src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \

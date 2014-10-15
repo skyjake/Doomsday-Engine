@@ -24,7 +24,7 @@
 
 #include "network/net_main.h"
 #include "network/net_msg.h"
-#include "ui/finaleinterpreter.h"
+#include "ui/infine/finaleinterpreter.h"
 
 #include <de/memory.h>
 

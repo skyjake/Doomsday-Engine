@@ -22,7 +22,7 @@
 
 #include <de/TextApp>
 #include "serversystem.h"
-#include "ui/fi_main.h"
+#include "ui/infine/infinesystem.h"
 #include "resource/resourcesystem.h"
 #include "Games"
 #include "world/worldsystem.h"

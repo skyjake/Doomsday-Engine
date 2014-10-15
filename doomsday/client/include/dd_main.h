@@ -32,7 +32,7 @@
 #include "resource/resourcesystem.h"
 #include "Games"
 #include "world/worldsystem.h"
-#include "ui/fi_main.h"
+#include "ui/infine/infinesystem.h"
 #include "api_plugin.h"
 #include "api_gameexport.h"
 #include <doomsday/filesys/sys_direc.h>

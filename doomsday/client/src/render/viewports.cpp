@@ -43,6 +43,7 @@
 #include "Surface"
 #include "Contact"
 
+#include "ui/widgets/gameuiwidget.h"
 #include <doomsday/filesys/fs_util.h>
 #include <de/GLState>
 #include <QBitArray>
@@ -1006,7 +1007,8 @@ static void clearViewPorts()
 {
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
 
-    if(fx::Bloom::isEnabled() || (UI_PageCount() > 0 && !FI_IsStretchedToView()) ||
+    if(fx::Bloom::isEnabled() ||
+       (App_InFineSystem().finaleInProgess() && !GameUIWidget::finaleStretch()) ||
        ClientApp::vr().mode() == VRConfig::OculusRift)
     {
         /*

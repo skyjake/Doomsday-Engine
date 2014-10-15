@@ -474,6 +474,7 @@ D_CMD(BLEditor)
  * Editor visuals (would-be widgets):
  */
 
+#include "api_fontrender.h"
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"

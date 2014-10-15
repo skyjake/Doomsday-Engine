@@ -28,10 +28,20 @@
 #include "gl/gl_main.h"
 #include "edit_bias.h"
 #include "ui/busyvisual.h"
+#include "ui/infine/finaleinterpreter.h"
+#include "ui/infine/finalepagewidget.h"
 
 #include <de/GLState>
 
 using namespace de;
+
+static void setupProjectionForFinale(dgl_borderedprojectionstate_t *bp)
+{
+    GL_ConfigureBorderedProjection(bp, BPF_OVERDRAW_CLIP,
+                                   SCREENWIDTH, SCREENHEIGHT,
+                                   DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT,
+                                   scalemode_t(Con_GetByte("rend-finale-stretch")));
+}
 
 DENG2_PIMPL(GameUIWidget)
 {
@@ -44,7 +54,34 @@ DENG2_PIMPL(GameUIWidget)
         {
             R_RenderViewPorts(HUDLayer);
 
-            UI2_Drawer();
+            // Draw finales.
+            if(App_InFineSystem().finaleInProgess())
+            {
+                dgl_borderedprojectionstate_t bp;
+                //dd_bool bordered;
+
+                setupProjectionForFinale(&bp);
+                GL_BeginBorderedProjection(&bp);
+
+                /*bordered = (FI_ScriptActive() && FI_ScriptCmdExecuted());
+                if(bordered)
+                {
+                    // Draw using the special bordered projection.
+                    GL_ConfigureBorderedProjection(&borderedProjection);
+                    GL_BeginBorderedProjection(&borderedProjection);
+                }*/
+
+                for(Finale *finale : App_InFineSystem().finales())
+                {
+                    finale->interpreter().page(FinaleInterpreter::Anims).draw();
+                    finale->interpreter().page(FinaleInterpreter::Texts).draw();
+                }
+
+                GL_EndBorderedProjection(&bp);
+
+                //if(bordered)
+                //    GL_EndBorderedProjection(&borderedProjection);
+            }
 
             // Draw any full window game graphics.
             if(gx.DrawWindow)
@@ -95,3 +132,9 @@ void GameUIWidget::drawContent()
     GLState::pop().apply();
 }
 
+bool GameUIWidget::finaleStretch() //static
+{
+    dgl_borderedprojectionstate_t bp;
+    setupProjectionForFinale(&bp);
+    return (bp.scaleMode == SCALEMODE_STRETCH);
+}

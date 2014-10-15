@@ -29,6 +29,8 @@
 #include "de_render.h"
 #include "de_ui.h"
 
+#include "api_fontrender.h"
+
 #include "Face"
 #include "HEdge"
 

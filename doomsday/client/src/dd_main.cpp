@@ -55,8 +55,7 @@
 #include "world/p_players.h"
 #include "world/worldsystem.h"
 #include "world/map.h"
-#include "ui/ui2_main.h"
-#include "ui/fi_main.h"
+#include "ui/infine/infinesystem.h"
 #include "ui/p_control.h"
 #include "ui/progress.h"
 #include "ui/nativeui.h"
@@ -2208,9 +2207,6 @@ static int DD_StartupWorker(void * /*context*/)
 #ifdef __CLIENT__
     Demo_Init();
 #endif
-
-    LOG_VERBOSE("Initializing UI subsystem...");
-    UI_Init();
     Con_SetProgress(190);
 
     // In dedicated mode the console must be opened, so all input events

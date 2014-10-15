@@ -26,7 +26,7 @@
 #include "network/serverlink.h"
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
-#include "ui/fi_main.h"
+#include "ui/infine/infinesystem.h"
 #include "render/rendersystem.h"
 #include "resource/resourcesystem.h"
 #include "WidgetActions"

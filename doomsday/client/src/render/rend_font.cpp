@@ -29,6 +29,8 @@
 #include "de_render.h"
 #include "de_system.h"
 #include "de_ui.h"
+
+#include "api_fontrender.h"
 #include "m_misc.h"
 
 #include "BitmapFont"

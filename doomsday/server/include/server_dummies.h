@@ -59,7 +59,6 @@ DENG_EXTERN_C void Rend_ConsoleCursorResetBlink();
 
 DENG_EXTERN_C void Cl_InitPlayers(void);
 
-DENG_EXTERN_C void UI_Init();
 DENG_EXTERN_C void UI_Ticker(timespan_t t);
 DENG_EXTERN_C void UI_Shutdown();
 

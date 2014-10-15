@@ -1,4 +1,4 @@
-/** @file fi_main.h  Interactive animation sequence system.
+/** @file infinesystem.h  Interactive animation sequence system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -17,75 +17,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_UI_INFINE_MAIN_H
-#define DENG_UI_INFINE_MAIN_H
+#ifndef DENG_UI_INFINESYSTEM_H
+#define DENG_UI_INFINESYSTEM_H
 
 #include <QList>
 #include <de/Error>
-#include <de/Observers>
 #include <de/String>
-#include "dd_input.h" // ddevent_t
-#include "api_infine.h" // finaleid_t
-
-class FinaleInterpreter;
-
-#define FINF_BEGIN          0x01
-#define FINF_END            0x02
-#define FINF_SCRIPT         0x04 // Script included.
-#define FINF_SKIP           0x10
-
-/**
- * A Finale instance contains the high-level state of an InFine script.
- *
- * @see FinaleInterpreter (interactive script interpreter)
- *
- * @ingroup InFine
- */
-class Finale
-{
-public:
-    /// Notified when the finale is about to be deleted.
-    DENG2_DEFINE_AUDIENCE2(Deletion, void finaleBeingDeleted(Finale const &finale))
-
-public:
-    /**
-     * @param flags   @ref finaleFlags
-     * @param id      Unique identifier for the script.
-     * @param script  The InFine script to be interpreted (a copy is made).
-     */
-    Finale(int flags, finaleid_t id, de::String const &script);
-
-    int flags() const;
-    finaleid_t id() const;
-
-    bool isActive() const;
-
-    void resume();
-    void suspend();
-    bool terminate();
-
-    /**
-     * @return @c false if the end of the script was reached.
-     */
-    bool runTicks();
-
-    int handleEvent(ddevent_t const &ev);
-    bool requestSkip();
-    bool isMenuTrigger() const;
-
-    /**
-     * Provides access to the script interpreter. Mainly for debug purposes.
-     */
-    FinaleInterpreter const &interpreter() const;
-
-private:
-    DENG2_PRIVATE(d)
-};
+#include "finale.h"
 
 /**
  * InFine script system.
  *
- * @ingroup InFine
+ * @ingroup infine
  */
 class InFineSystem
 {
@@ -98,12 +41,18 @@ public:
 public:
     InFineSystem();
 
-    void runTicks(/*timespan_t delta*/);
+    void runTicks(timespan_t timeDelta);
 
     /**
      * Terminate and clear all running Finales.
      */
     void reset();
+
+    /**
+     * Returns @c true if one or more Finales are currently in progress. For the purpose of
+     * this test, suspended scripts are interpreted as being in progress.
+     */
+    bool finaleInProgess() const;
 
     /**
      * Add a new Finale to the system.
@@ -144,4 +93,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_UI_INFINE_MAIN_H
+#endif // DENG_UI_INFINESYSTEM_H
