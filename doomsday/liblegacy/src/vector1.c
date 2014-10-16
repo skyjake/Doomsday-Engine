@@ -1011,7 +1011,7 @@ int V3d_MajorAxis(const_pvec3d_t vec)
     vec3d_t fn;
     int axis;
 
-    V3d_Set(fn, fabsf(vec[VX]), fabsf(vec[VY]), fabsf(vec[VZ]));
+    V3d_Set(fn, fabs(vec[VX]), fabs(vec[VY]), fabs(vec[VZ]));
 
     axis = VX;
     if(fn[VY] > fn[axis])
@@ -1046,16 +1046,16 @@ void V3d_BuildTangents(pvec3d_t tangent, pvec3d_t bitangent, const_pvec3d_t norm
     int axis = VX;
     vec3d_t fn;
 
-    V3d_Set(fn, fabsf(normal[VX]), fabsf(normal[VY]), fabsf(normal[VZ]));
+    V3d_Set(fn, fabs(normal[VX]), fabs(normal[VY]), fabs(normal[VZ]));
 
     if(fn[VY] > fn[axis])
         axis = VY;
     if(fn[VZ] > fn[axis])
         axis = VZ;
 
-    if(fabsf(fn[VX] - 1.0f) < FLT_EPSILON ||
-       fabsf(fn[VY] - 1.0f) < FLT_EPSILON ||
-       fabsf(fn[VZ] - 1.0f) < FLT_EPSILON)
+    if(fabs(fn[VX] - 1.0) < FLT_EPSILON ||
+       fabs(fn[VY] - 1.0) < FLT_EPSILON ||
+       fabs(fn[VZ] - 1.0) < FLT_EPSILON)
     {
         // We must build the tangent vector manually.
         if(axis == VX && normal[VX] > 0.f)

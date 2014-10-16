@@ -90,6 +90,7 @@ static int loadPlugin(void * /*libraryFile*/, char const *fileName, char const *
 {
     typedef void (*PluginInitializer)(void);
 
+    DENG_UNUSED(fileName);
     DENG2_ASSERT(fileName != 0 && fileName[0]);
     DENG2_ASSERT(pluginPath != 0 && pluginPath[0]);
 

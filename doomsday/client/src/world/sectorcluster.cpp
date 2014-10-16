@@ -744,6 +744,7 @@ DENG2_PIMPL(SectorCluster)
     // Presently we define a 1:1 mapping to geometry vertices.
     static int countIlluminationPoints(MapElement &mapElement, int group)
     {
+        DENG_UNUSED(group);
         switch(mapElement.type())
         {
         case DMU_BSPLEAF: {
