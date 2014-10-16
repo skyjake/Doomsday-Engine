@@ -565,7 +565,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Red Delta", "", -1},                    // ip4 : plane surface color (red)
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
         {XGPF_INT, "Blue Delta", "", -1},                   // ip6 : "" (blue)
-        {XGPF_INT, "", "", -1},
+        {XGPF_INT, "Change Color", "", -1},                 // ip7: if non-zero tint color will be changed
         {XGPF_INT, "", "", -1},
         {XGPF_INT, "", "", -1},
         {XGPF_INT, "", "", -1},
