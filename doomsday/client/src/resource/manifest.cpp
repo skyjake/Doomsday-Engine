@@ -26,6 +26,7 @@
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
 #include <de/Path>
+#include <de/NativeFile>
 
 using namespace de;
 
@@ -256,19 +257,39 @@ void ResourceManifest::locateFile()
     int nameIndex = 0;
     for(QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
     {
-        // Attempt to resolve a path to the named resource.
+        StringList candidates;
+        
+        // Attempt to resolve a path to the named resource using FS1.
         try
         {
             String foundPath = App_FileSystem().findPath(de::Uri(*i, d->classId),
                                                          RLF_DEFAULT, App_ResourceClass(d->classId));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
+            candidates << foundPath;
+        }
+        catch(FS1::NotFoundError const &)
+        {} // Ignore this error.
 
+        // Also check what FS2 has to offer. FS1 can't access FS2's files, so we'll
+        // restrict this to native files.
+        App::fileSystem().forAll(*i, [&candidates] (File &f)
+        {
+            // We ignore interpretations and go straight to the source.
+            if(NativeFile const *native = f.source()->maybeAs<NativeFile>())
+            {
+                candidates << native->nativePath();
+            }
+            return IterContinue;
+        });
+        
+        for(String foundPath : candidates)
+        {
             // Perform identity validation.
             bool validated = false;
             if(d->classId == RC_PACKAGE)
             {
                 /// @todo The identity configuration should declare the type of resource...
-                    validated = validateWad(foundPath, d->identityKeys);
+                validated = validateWad(foundPath, d->identityKeys);
                 if(!validated)
                     validated = validateZip(foundPath, d->identityKeys);
             }
@@ -284,11 +305,9 @@ void ResourceManifest::locateFile()
                 d->flags |= FF_FOUND;
                 d->foundPath = foundPath;
                 d->foundNameIndex = nameIndex;
-                break;
+                return;
             }
         }
-        catch(FS1::NotFoundError const &)
-        {} // Ignore this error.
     }
 }
 
