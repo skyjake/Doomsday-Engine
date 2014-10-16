@@ -1620,13 +1620,11 @@ int XL_DoPower(Line * /*line*/, dd_bool /*ceiling*/, void * /*context*/,
     void *context2, mobj_t *activator)
 {
     linetype_t *info = static_cast<linetype_t *>(context2);
-    player_t *player = 0;
-    int delta;
+    DENG2_ASSERT(info);
+    player_t *player = activator? activator->player : nullptr;
 
-    if(activator)
-        player = activator->player;
-
-    if(!player) // Must be a player.
+    // Only players have armor.
+    if(!player)
     {
 /*        if(evtype == XLE_FUNC)
             LOG_MAP_MSG_XGDEVONLY("Sector Functions don't have activators! Use a Sector Chain instead");
@@ -1636,16 +1634,16 @@ int XL_DoPower(Line * /*line*/, dd_bool /*ceiling*/, void * /*context*/,
         return false;
     }
 
-    delta = XG_RandomInt(info->iparm[0], info->iparm[1]);
+    int delta = XG_RandomInt(info->iparm[0], info->iparm[1]);
     if(delta > 0)
     {
         if(player->armorPoints + delta >= info->iparm[3])
-            delta = info->iparm[3] - player->armorPoints;
+            delta = de::max(0, info->iparm[3] - player->armorPoints);
     }
     else
     {
         if(player->armorPoints + delta <= info->iparm[2])
-            delta = info->iparm[2] - player->armorPoints;
+            delta = de::min(0, info->iparm[2] - player->armorPoints);
     }
 
     if(delta)
