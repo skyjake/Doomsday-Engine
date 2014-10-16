@@ -118,29 +118,8 @@ static void determineGlobalPaths(application_t* app)
         Dir_Delete(temp);
     }
 
-    /**
-     * Determine the base path. Unless overridden on the command line this is
-     * determined according to the the build configuration.
-     * Usually this is something like "/usr/share/deng/".
-     */
-    if(CommandLine_CheckWith("-basedir", 1))
-    {
-        DD_SetBasePath(CommandLine_NextAsPath());
-    }
-    else
-    {
-#ifdef MACOSX
-        DD_SetBasePath("./");
-#else
-        DD_SetBasePath(DENG_BASE_DIR);
-#endif
-        // Also check the system config files.
-        filename_t pathFromUnixInfo;
-        if(UnixInfo_GetConfigValue("paths", "basedir", pathFromUnixInfo, FILENAME_T_MAXLEN))
-        {
-            DD_SetBasePath(pathFromUnixInfo);
-        }
-    }
+    // libcore has determined the native base path, so let FS1 know about it.
+    DD_SetBasePath(DENG2_APP->nativeBasePath().toUtf8());
 }
 
 dd_bool DD_Unix_Init(void)
