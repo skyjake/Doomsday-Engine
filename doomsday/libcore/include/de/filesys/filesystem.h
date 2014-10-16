@@ -26,6 +26,7 @@
 #include "../System"
 
 #include <QFlags>
+#include <functional>
 
 /**
  * @defgroup fs File System
@@ -180,6 +181,8 @@ public:
      */
     int findAll(String const &partialPath, FoundFiles &found) const;
 
+    Iteration forAll(String const &partialPath, std::function<Iteration (File &)> func);
+
     template <typename Predicate>
     int findAll(Predicate exclusion, String const &partialPath, FoundFiles &found) const {
         findAll(partialPath, found);
@@ -189,8 +192,11 @@ public:
 
     int findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const;
 
-    int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
+    Iteration forAllOfType(String const &typeIdentifier, String const &path,
+                           std::function<Iteration (File &)> func);
 
+    int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
+    
     /**
      * Finds a single file matching a full or partial path. The search is
      * done using the file system's index; no recursive descent into

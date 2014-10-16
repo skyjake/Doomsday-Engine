@@ -471,6 +471,14 @@ enum ClockDirection {
 };
 
 /**
+ * Status to return from abortable iteration loops that use callbacks per iteration.
+ */
+enum Iteration {
+    IterAbort    = 0,
+    IterContinue = 1
+};
+    
+/**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
  * incremented. Therefore, deserialization routines shouldn't check for

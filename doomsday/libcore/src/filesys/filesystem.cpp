@@ -216,11 +216,34 @@ int FileSystem::findAll(String const &path, FoundFiles &found) const
     return int(found.size());
 }
 
+Iteration FileSystem::forAll(String const &partialPath, std::function<Iteration (File &)> func)
+{
+    FoundFiles files;
+    findAll(partialPath, files);
+    for(File *f : files)
+    {
+        if(func(*f) == IterAbort) return IterAbort;
+    }
+    return IterContinue;
+}
+
 int FileSystem::findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const
 {
     LOG_AS("FS::findAllOfType");
 
     return findAllOfTypes(StringList() << typeIdentifier, path, found);
+}
+
+Iteration FileSystem::forAllOfType(String const &typeIdentifier, String const &path,
+                                   std::function<Iteration (File &)> func)
+{
+    FoundFiles files;
+    findAllOfType(typeIdentifier, path, files);
+    for(File *f : files)
+    {
+        if(func(*f) == IterAbort) return IterAbort;
+    }
+    return IterContinue;
 }
 
 int FileSystem::findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const
