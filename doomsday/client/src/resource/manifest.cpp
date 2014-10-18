@@ -25,8 +25,10 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/filesys/wad.h>
 #include <doomsday/filesys/zip.h>
-#include <de/Path>
+
+#include <de/App>
 #include <de/NativeFile>
+#include <de/Path>
 
 using namespace de;
 
