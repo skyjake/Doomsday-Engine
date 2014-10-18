@@ -181,7 +181,7 @@ public:
      */
     int findAll(String const &partialPath, FoundFiles &found) const;
 
-    Iteration forAll(String const &partialPath, std::function<Iteration (File &)> func);
+    LoopResult forAll(String const &partialPath, std::function<LoopResult (File &)> func);
 
     template <typename Predicate>
     int findAll(Predicate exclusion, String const &partialPath, FoundFiles &found) const {
@@ -192,8 +192,8 @@ public:
 
     int findAllOfType(String const &typeIdentifier, String const &path, FoundFiles &found) const;
 
-    Iteration forAllOfType(String const &typeIdentifier, String const &path,
-                           std::function<Iteration (File &)> func);
+    LoopResult forAllOfType(String const &typeIdentifier, String const &path,
+                            std::function<LoopResult (File &)> func);
 
     int findAllOfTypes(StringList const &typeIdentifiers, String const &path, FoundFiles &found) const;
     

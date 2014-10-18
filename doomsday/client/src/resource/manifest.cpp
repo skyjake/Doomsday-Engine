@@ -281,7 +281,7 @@ void ResourceManifest::locateFile()
             {
                 candidates << native->nativePath();
             }
-            return IterContinue;
+            return LoopContinue;
         });
         
         for(String foundPath : candidates)

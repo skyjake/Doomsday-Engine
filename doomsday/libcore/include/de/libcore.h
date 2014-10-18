@@ -472,10 +472,31 @@ enum ClockDirection {
 
 /**
  * Status to return from abortable iteration loops that use callbacks per iteration.
+ *
+ * The "for" pattern:
+ * <code>
+ * LoopResult forExampleObjects(std::function<LoopResult (ExampleObject &)> func);
+ *
+ * example.forExampleObjects([] (ExampleObject &ex) {
+ *     // do stuff...
+ *     return LoopContinue;
+ * });
+ * </code>
  */
-enum Iteration {
-    IterAbort    = 0,
-    IterContinue = 1
+enum GenericLoopResult {
+    LoopContinue = 0,
+    LoopAbort    = 1
+};
+
+/// Use as return type of iteration loop callbacks (a "for*" method).
+struct LoopResult
+{
+    int value;
+
+    LoopResult(int val = LoopContinue) : value(val) {}
+    operator bool () const { return value != LoopContinue; }
+    operator int () const { return value; }
+    operator GenericLoopResult () const { return GenericLoopResult(value); }
 };
     
 /**
