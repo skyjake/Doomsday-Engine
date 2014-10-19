@@ -31,6 +31,7 @@
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace ui;
@@ -171,7 +172,7 @@ DENG2_OBSERVES(App, GameChange)
 
         CVarSliderWidget *addSlider(char const *cvar)
         {
-            CVarSliderWidget *w = new CVarSliderWidget(cvar);
+            auto *w = new CVarSliderWidget(cvar);
             _group->add(w);
             _layout << *w;
             return w;
@@ -179,9 +180,18 @@ DENG2_OBSERVES(App, GameChange)
 
         CVarSliderWidget *addSlider(char const *cvar, Ranged const &range, double step, int precision)
         {
-            CVarSliderWidget *w = addSlider(cvar);
+            auto *w = addSlider(cvar);
             w->setRange(range, step);
             w->setPrecision(precision);
+            return w;
+        }
+
+        VariableSliderWidget *addSlider(Variable &var, Ranged const &range, double step, int precision)
+        {
+            auto *w = new VariableSliderWidget(var, range, step);
+            w->setPrecision(precision);
+            _group->add(w);
+            _layout << *w;
             return w;
         }
 
@@ -251,12 +261,13 @@ DENG2_OBSERVES(App, GameChange)
     Group *lightGroup;
     Group *volLightGroup;
     Group *glowGroup;
-    Group *haloGroup;
+    Group *lensGroup;
     Group *matGroup;
     Group *modelGroup;
     Group *spriteGroup;
     Group *objectGroup;
     Group *partGroup;
+    Group *fxGroup;
 
     Instance(Public *i)
         : Base(i),
@@ -386,60 +397,60 @@ DENG2_OBSERVES(App, GameChange)
         glowGroup->commit();
 
         // Camera lens settings.
-        haloGroup = new Group(this, "lens", tr("Camera Lens"));
+        lensGroup = new Group(this, "lens", tr("Camera Lens"));
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-bloom", tr("Bloom"));
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-bloom", tr("Bloom"));
 
-        haloGroup->addLabel(tr("Bloom Threshold:"));
-        haloGroup->addSlider("rend-bloom-threshold");
+        lensGroup->addLabel(tr("Bloom Threshold:"));
+        lensGroup->addSlider("rend-bloom-threshold");
 
-        haloGroup->addLabel(tr("Bloom Intensity:"));
-        haloGroup->addSlider("rend-bloom-intensity");
+        lensGroup->addLabel(tr("Bloom Intensity:"));
+        lensGroup->addSlider("rend-bloom-intensity");
 
-        haloGroup->addLabel(tr("Bloom Dispersion:"));
-        haloGroup->addSlider("rend-bloom-dispersion");
+        lensGroup->addLabel(tr("Bloom Dispersion:"));
+        lensGroup->addSlider("rend-bloom-dispersion");
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-vignette", tr("Vignetting"));
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-vignette", tr("Vignetting"));
 
-        haloGroup->addLabel(tr("Vignette Darkness:"));
-        haloGroup->addSlider("rend-vignette-darkness", Ranged(0, 2), .01, 2);
+        lensGroup->addLabel(tr("Vignette Darkness:"));
+        lensGroup->addSlider("rend-vignette-darkness", Ranged(0, 2), .01, 2);
 
-        haloGroup->addLabel(tr("Vignette Width:"));
-        haloGroup->addSlider("rend-vignette-width");
+        lensGroup->addLabel(tr("Vignette Width:"));
+        lensGroup->addSlider("rend-vignette-width");
 
-        haloGroup->addSpace();
-        haloGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
+        lensGroup->addSpace();
+        lensGroup->addToggle("rend-halo-realistic", tr("Realistic Halos"));
 
-        haloGroup->addLabel(tr("Flares per Halo:"));
-        haloGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
+        lensGroup->addLabel(tr("Flares per Halo:"));
+        lensGroup->addSlider("rend-halo")->setMinLabel(tr("None"));
 
-        haloGroup->addLabel(tr("Halo Brightness:"));
-        haloGroup->addSlider("rend-halo-bright", Ranged(0, 100), 1, 0);
+        lensGroup->addLabel(tr("Halo Brightness:"));
+        lensGroup->addSlider("rend-halo-bright", Ranged(0, 100), 1, 0);
 
-        haloGroup->addLabel(tr("Halo Size Factor:"));
-        haloGroup->addSlider("rend-halo-size");
+        lensGroup->addLabel(tr("Halo Size Factor:"));
+        lensGroup->addSlider("rend-halo-size");
 
-        haloGroup->addLabel(tr("Occlusion Fading:"));
-        haloGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
+        lensGroup->addLabel(tr("Occlusion Fading:"));
+        lensGroup->addSlider("rend-halo-occlusion", Ranged(1, 256), 1, 0);
 
-        haloGroup->addLabel(tr("Min Halo Radius:"));
-        haloGroup->addSlider("rend-halo-radius-min", Ranged(1, 80), .1, 1);
+        lensGroup->addLabel(tr("Min Halo Radius:"));
+        lensGroup->addSlider("rend-halo-radius-min", Ranged(1, 80), .1, 1);
 
-        haloGroup->addLabel(tr("Min Halo Size:"));
-        haloGroup->addSlider("rend-halo-secondary-limit", Ranged(0, 10), .1, 1);
+        lensGroup->addLabel(tr("Min Halo Size:"));
+        lensGroup->addSlider("rend-halo-secondary-limit", Ranged(0, 10), .1, 1);
 
-        haloGroup->addLabel(tr("Halo Fading Start:"));
-        haloGroup->addSlider("rend-halo-dim-near", Ranged(0, 200), .1, 1);
+        lensGroup->addLabel(tr("Halo Fading Start:"));
+        lensGroup->addSlider("rend-halo-dim-near", Ranged(0, 200), .1, 1);
 
-        haloGroup->addLabel(tr("Halo Fading End:"));
-        haloGroup->addSlider("rend-halo-dim-far", Ranged(0, 200), .1, 1);
+        lensGroup->addLabel(tr("Halo Fading End:"));
+        lensGroup->addSlider("rend-halo-dim-far", Ranged(0, 200), .1, 1);
 
-        haloGroup->addLabel(tr("Z-Mag Divisor:"));
-        haloGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
+        lensGroup->addLabel(tr("Z-Mag Divisor:"));
+        lensGroup->addSlider("rend-halo-zmag-div", Ranged(1, 100), .1, 1);
 
-        haloGroup->commit();
+        lensGroup->commit();
 
         // Material settings.
         matGroup = new Group(this, "material", tr("Materials"));
@@ -574,6 +585,14 @@ DENG2_OBSERVES(App, GameChange)
         partGroup->addSlider("rend-particle-visible-near", Ranged(0, 1000), 1, 0)->setMinLabel(tr("None"));
 
         partGroup->commit();
+
+        // Additional and miscellaneous effects.
+        fxGroup = new Group(this, "fx", tr("Other Effects"));
+
+        fxGroup->addLabel(tr("Pixel Density:"));
+        fxGroup->addSlider(App::config("render.fx.resize.factor"), Ranged(0, 1), .05, 2);
+
+        fxGroup->commit();
 
         // Now we can define the first column width.
         firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
@@ -727,13 +746,14 @@ RendererAppearanceEditor::RendererAppearanceEditor()
            << d->volLightGroup->title() << *d->volLightGroup
            << d->glowGroup->title()     << *d->glowGroup
            << d->shadowGroup->title()   << *d->shadowGroup
-           << d->haloGroup->title()     << *d->haloGroup
+           << d->lensGroup->title()     << *d->lensGroup
            << d->matGroup->title()      << *d->matGroup
            << d->objectGroup->title()   << *d->objectGroup
            << d->modelGroup->title()    << *d->modelGroup
            << d->spriteGroup->title()   << *d->spriteGroup
            << d->partGroup->title()     << *d->partGroup
-           << d->skyGroup->title()      << *d->skyGroup;
+           << d->skyGroup->title()      << *d->skyGroup
+           << d->fxGroup->title()       << *d->fxGroup;
 
     // Update container size.
     d->container->setContentSize(OperatorRule::maximum(layout.width(),

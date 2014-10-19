@@ -25,6 +25,7 @@
 
 #include <doomsday/console/exec.h>
 #include <de/VariableToggleWidget>
+#include <de/VariableSliderWidget>
 #include <de/ChoiceWidget>
 #include <de/SequentialLayout>
 #include <de/GridLayout>
@@ -61,7 +62,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(showFps      = new VariableToggleWidget(App::config()["window.main.showFps"]));
+        area.add(showFps      = new VariableToggleWidget(App::config("window.main.showFps")));
         area.add(fullscreen   = new ToggleWidget);
         area.add(maximized    = new ToggleWidget);
         area.add(centered     = new ToggleWidget);
@@ -149,16 +150,11 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->vsync->setText(tr("VSync"));
 
-    LabelWidget *modeLabel = 0;
 #ifdef USE_COLOR_DEPTH_CHOICE
     LabelWidget *colorLabel = 0;
 #endif
     if(gotDisplayMode)
     {
-        modeLabel = new LabelWidget;
-        modeLabel->setText(tr("Resolution:"));
-        area().add(modeLabel);
-
         // Choice of display modes + 16/32-bit color depth.
         d->modes->setOpeningDirection(ui::Up);
         if(DisplayMode_Count() > 10)
@@ -218,12 +214,33 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
            << *d->maximized
            << *d->centered;
 
+    GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
+    modeLayout.setGridSize(2, 0);
+    modeLayout.setColumnAlignment(0, ui::AlignRight);
+
+#ifdef DENG2_QT_5_0_OR_NEWER
+    // With HiDPI, allow specifying a global pixel density factor. This allows slower
+    // GPUs to generally compensate for the large resolution.
+    if(ClientApp::app().devicePixelRatio() > 1)
+    {
+        // Overall pixel density adjustment replaces the distinct display modes.
+        auto *pd = new VariableSliderWidget(App::config("render.pixelDensity"), Ranged(0, 1), .05);
+        pd->setPrecision(2);
+        area().add(pd);
+
+        auto *note = LabelWidget::newWithText(tr("Only affects the game view."), &area());
+        note->margins().setTop("");
+        note->setTextColor("label.altaccent");
+        note->setFont("separator.annotation");
+
+        modeLayout << *LabelWidget::newWithText(tr("Pixel Density:"), &area()) << *pd
+                   << Const(0) << *note;
+    }
+#endif
+
     if(gotDisplayMode)
     {
-        GridLayout modeLayout(d->vsync->rule().left(), d->vsync->rule().bottom() + gap);
-        modeLayout.setGridSize(2, 0);
-        modeLayout.setColumnAlignment(0, ui::AlignRight);
-        modeLayout << *modeLabel;
+        modeLayout << *LabelWidget::newWithText(tr("Resolution:"), &area());
 
         modeLayout.append(*d->modes, d->modes->rule().width() + d->windowButton->rule().width());
 
@@ -235,21 +252,16 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         modeLayout << *colorLabel << *d->depths;
 #endif
 
-        ButtonWidget *adjustButton = new ButtonWidget;
+        auto *adjustButton = new ButtonWidget;
         adjustButton->setText(tr("Color Adjustments..."));
         adjustButton->setAction(new SignalAction(this, SLOT(showColorAdjustments())));
         area().add(adjustButton);
 
         modeLayout << Const(0) << *adjustButton;
+    }
 
-        area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
-                              layout.height() + gap + modeLayout.height());
-    }
-    else
-    {
-        // There are no widgets for configuring display mode.
-        area().setContentSize(layout.width(), layout.height());
-    }
+    area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
+                          layout.height() + gap + modeLayout.height());
 
     d->fetch();
 

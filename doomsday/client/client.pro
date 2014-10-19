@@ -276,6 +276,7 @@ DENG_HEADERS += \
     include/render/fx/colorfilter.h \
     include/render/fx/lensflares.h \
     include/render/fx/postprocessing.h \
+    include/render/fx/resize.h \
     include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
     include/render/ilightsource.h \
@@ -598,6 +599,7 @@ SOURCES += \
     src/render/fx/colorfilter.cpp \
     src/render/fx/lensflares.cpp \
     src/render/fx/postprocessing.cpp \
+    src/render/fx/resize.cpp \
     src/render/fx/vignette.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \

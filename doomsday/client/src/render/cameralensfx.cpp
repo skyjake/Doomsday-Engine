@@ -41,11 +41,12 @@
 #include "render/cameralensfx.h"
 #include "render/rend_main.h"
 #include "render/viewports.h"
+#include "render/fx/bloom.h"
 #include "render/fx/colorfilter.h"
 #include "render/fx/lensflares.h"
 #include "render/fx/postprocessing.h"
+#include "render/fx/resize.h"
 #include "render/fx/vignette.h"
-#include "render/fx/bloom.h"
 
 #include "ui/clientwindow.h"
 
@@ -78,8 +79,8 @@ struct ConsoleEffectStack
 
 static ConsoleEffectStack fxConsole[DDMAXPLAYERS];
 
-#define IDX_LENS_FLARES         2
-#define IDX_POST_PROCESSING     4
+#define IDX_LENS_FLARES         3
+#define IDX_POST_PROCESSING     5
 
 D_CMD(PostFx)
 {
@@ -116,7 +117,7 @@ D_CMD(PostFx)
 
 void LensFx_Register()
 {
-    C_CMD("postfx", "is", PostFx);
+    C_CMD("postfx", "is",  PostFx);
     C_CMD("postfx", "isf", PostFx);
 }
 
@@ -126,6 +127,7 @@ void LensFx_Init()
     {
         ConsoleEffectStack &stack = fxConsole[i];
         stack.effects
+                << new fx::Resize(i)
                 << new fx::Bloom(i)
                 << new fx::Vignette(i)
                 << new fx::LensFlares(i)        // IDX_LENS_FLARES
