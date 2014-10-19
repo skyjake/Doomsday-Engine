@@ -777,6 +777,11 @@ Config &App::config()
     return *DENG2_APP->d->config;
 }
 
+Variable &App::config(String const &name)
+{
+    return config()[name];
+}
+
 UnixInfo &App::unixInfo()
 {
     return *DENG2_APP->d->unixInfo;

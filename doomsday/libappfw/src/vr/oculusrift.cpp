@@ -226,7 +226,7 @@ DENG2_PIMPL(OculusRift)
         // If there is no Oculus Rift connected, do nothing.
         if(!hmd) return;
 
-        App::config()["vr.oculusRift.pixelDensity"].audienceForChange() += this;
+        App::config("vr.oculusRift.pixelDensity").audienceForChange() += this;
 
         DENG2_GUARD(this);
 
@@ -349,7 +349,7 @@ DENG2_PIMPL(OculusRift)
 
         LOG_GL_MSG("Stopping Oculus Rift rendering");
 
-        App::config()["vr.oculusRift.pixelDensity"].audienceForChange() -= this;
+        App::config("vr.oculusRift.pixelDensity").audienceForChange() -= this;
 
         if(hmd)
         {
