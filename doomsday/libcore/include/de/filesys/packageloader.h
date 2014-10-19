@@ -93,6 +93,11 @@ public:
      */
     void sortInPackageOrder(FileSystem::FoundFiles &filesToSort) const;
 
+    /**
+     * Loads all the packages specified on the command line (using the @c -pkg option).
+     */
+    void loadFromCommandLine();
+
 private:
     DENG2_PRIVATE(d)
 };
