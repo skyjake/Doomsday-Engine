@@ -67,6 +67,12 @@ public:
      */
     Time const &time() const;
 
+    /**
+     * Number of times the time has changed. Every time the clock time is changed,
+     * its tick count is incremented.
+     */
+    duint32 tickCount() const;
+
 public:
     static void setAppClock(Clock *c);
     static Clock &get();

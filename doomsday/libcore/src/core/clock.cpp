@@ -24,6 +24,7 @@ DENG2_PIMPL_NOREF(Clock)
 {
     Time startedAt;
     Time time;
+    duint32 tickCount { 0 };
 
     DENG2_PIMPL_AUDIENCE(TimeChange)
 };
@@ -46,6 +47,8 @@ void Clock::setTime(Time const &currentTime)
 
     if(changed)
     {
+        d->tickCount++;
+
         DENG2_FOR_EACH_OBSERVER(PriorityTimeChangeAudience, i, audienceForPriorityTimeChange)
         {
             i->timeChanged(*this);
@@ -67,6 +70,11 @@ TimeDelta Clock::elapsed() const
 Time const &Clock::time() const
 {
     return d->time;
+}
+
+duint32 Clock::tickCount() const
+{
+    return d->tickCount;
 }
 
 void Clock::setAppClock(Clock *c)
