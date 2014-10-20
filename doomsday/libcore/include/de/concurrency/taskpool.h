@@ -40,6 +40,8 @@ class Task;
  * provided for interrupting any of the started tasks. If that is required, the
  * Task instances in question should periodically check for an abort condition
  * and shut themselves down nicely when requested.
+ *
+ * A Task is considered done/finished when it has exited its Task::runTask() method.
  */
 class DENG2_PUBLIC TaskPool : public QObject
 {
@@ -68,7 +70,8 @@ public:
     void start(Task *task, Priority priority = LowPriority);
 
     /**
-     * Blocks execution until all running tasks have finished.
+     * Blocks execution until all running tasks have finished. A Task is considered
+     * finished when it has exited its Task::runTask() method.
      */
     void waitForDone();
 
