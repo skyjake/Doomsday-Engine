@@ -220,8 +220,11 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
 #ifdef DENG2_QT_5_0_OR_NEWER
     // With HiDPI, allow specifying a global pixel density factor. This allows slower
-    // GPUs to generally compensate for the large resolution.
+    // GPUs to generally compensate for the large resolution. This is always shown on
+    // OS X because there the native video mode is not configurable.
+# ifndef MACOSX
     if(ClientApp::app().devicePixelRatio() > 1)
+# endif
     {
         // Overall pixel density adjustment replaces the distinct display modes.
         auto *pd = new VariableSliderWidget(App::config("render.pixelDensity"), Ranged(0, 1), .05);
