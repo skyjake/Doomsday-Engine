@@ -36,7 +36,10 @@ DENG2_PIMPL(Atlas)
     bool needCommit;
     bool needFullCommit;
     bool mayDefrag;
+    int successfulAllocCount { 0 };
+    int releaseCount { 0 };
     Rectanglei changedArea;
+    Time fullReportedAt;
 
     // Minimum backing size is 1x1 pixels.
     Instance(Public *i, Flags const &flg, Size const &size)
@@ -121,6 +124,9 @@ DENG2_PIMPL(Atlas)
     void defragment()
     {
         DENG2_ASSERT(hasBacking());
+
+        successfulAllocCount = 0; // Reset the counters.
+        releaseCount = 0;
 
         IAllocator::Allocations const oldLayout = allocator->allocs();
         if(!allocator->optimize())
@@ -271,6 +277,12 @@ Id Atlas::alloc(Image const &image)
 
     if(!id.isNone())
     {
+        if(++d->successfulAllocCount > 5)
+        {
+            // Defragmenting may again be helpful.
+            d->mayDefrag = true;
+        }
+
         Rectanglei const noBorders  = rect.shrunk(d->border);
         Rectanglei const withMargin = rect.expanded(d->margin);
 
@@ -345,15 +357,15 @@ Id Atlas::alloc(Image const &image)
                 commit(image, noBorders.topLeft);
             }
         }
-
-        // After a successful alloc we can attempt to defragment
-        // later.
-        d->mayDefrag = true;
     }
     else
     {
         LOG_AS("Atlas");
-        LOGDEV_GL_XVERBOSE("Full with %.1f%% usage") << d->usedPercentage()*100;
+        if(!d->fullReportedAt.isValid() || d->fullReportedAt.since() > 1.0)
+        {
+            LOGDEV_GL_XVERBOSE("Full with %.1f%% usage") << d->usedPercentage() * 100;
+            d->fullReportedAt = Time::currentHighPerformanceTime();
+        }
 
         DENG2_FOR_AUDIENCE2(OutOfSpace, i)
         {
@@ -371,7 +383,18 @@ void Atlas::release(Id const &id)
     DENG2_ASSERT(d->allocator.get());
 
     d->allocator->release(id);
-    d->mayDefrag = true;
+
+    if(++d->releaseCount > 5 && d->successfulAllocCount > 0)
+    {
+        // Defragmenting may help us again.
+        d->mayDefrag = true;
+    }
+
+    if(d->usedPercentage() < .1 && d->mayDefrag)
+    {
+        //qDebug() << "Defragmenting an almost empty atlas with" << d->allocator->count() << "allocs";
+        d->defragment();
+    }
 }
 
 bool Atlas::contains(Id const &id) const
