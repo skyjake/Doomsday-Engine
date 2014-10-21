@@ -334,7 +334,6 @@ public Font::RichFormat::IStyle
         LogWidget::Instance *d;
         int _maxEntries;
         int _next;
-        TaskPool _pool;
         int _width;
         bool _paused { false };
 
