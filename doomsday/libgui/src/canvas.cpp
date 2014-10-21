@@ -56,7 +56,6 @@ DENG2_PIMPL(Canvas)
     bool readyNotified;
     Size currentSize;
     Size pendingSize;
-    float pixelRatio;
 #ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
     QTimer resizeTimer;
 #endif
@@ -72,11 +71,6 @@ DENG2_PIMPL(Canvas)
         : Base(i)
         , parent(parentWindow)
         , readyNotified(false)
-#ifdef DENG2_QT_5_0_OR_NEWER
-        , pixelRatio(i->windowHandle()->devicePixelRatio())
-#else
-        , pixelRatio(1.f)
-#endif
         , mouseGrabbed(false)
     {        
         wheelDir[0] = wheelDir[1] = 0;

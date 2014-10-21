@@ -20,7 +20,6 @@ exists($${LIBOVR_DIR}/Include/OVR.h) {
             }
         }
         else {
-            include(dep_atl.pri)
             deng_debug: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovrd.lib
                   else: LIBS += $${LIBOVR_DIR}/Lib/Win32/VS2013/libovr.lib
             INCLUDEPATH += $${LIBOVR_DIR}/Src

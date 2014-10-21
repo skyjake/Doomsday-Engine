@@ -138,7 +138,7 @@ void FileIndex::remove(File const &file)
 
 int FileIndex::size() const
 {
-    return d->index.size();
+    return int(d->index.size());
 }
 
 static bool fileNotInAnyLoadedPackage(File *file)

@@ -89,12 +89,12 @@ DENG2_OBSERVES(Variable, Change)
 
         grabWidth  = style().rules().rule("gap").valuei();
 
-        App::config()["console.script"].audienceForChange() += this;
+        App::config("console.script").audienceForChange() += this;
     }
 
     ~Instance()
     {
-        App::config()["console.script"].audienceForChange() -= this;
+        App::config("console.script").audienceForChange() -= this;
 
         releaseRef(horizShift);
         releaseRef(width);
@@ -271,7 +271,7 @@ static PopupWidget *advancedFeaturesPopup()
                                         "the OS clipboard."))
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(QObject::tr("Doomsday Script"),
-                                          App::config()["console.script"])
+                                          App::config("console.script"))
             << new ui::Item(ui::Item::Annotation,
                             QObject::tr("The command prompt becomes an interactive script "
                                         "process with access to all the runtime modules."));
@@ -326,8 +326,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Scroll to Bottom"), new SignalAction(d->log, SLOT(scrollToBottom())))
-            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config()["console.snap"])
-            << new ui::VariableToggleItem(tr("Show Metadata"), App::config()["log.showMetadata"])
+            << new ui::VariableToggleItem(tr("Go to Bottom on Enter"), App::config("console.snap"))
+            << new ui::VariableToggleItem(tr("Show Metadata"), App::config("log.showMetadata"))
             << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each entry is printed."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Behavior"))

@@ -172,6 +172,8 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-glow-scale", 3)
                 .define(SReg::IntCVar,   "rend-glow-wall", 1)
 
+                .define(SReg::ConfigVariable, "render.fx.resize.factor")
+
                 .define(SReg::IntCVar,   "rend-bloom", 1)
                 .define(SReg::FloatCVar, "rend-bloom-intensity", .65f)
                 .define(SReg::FloatCVar, "rend-bloom-threshold", .35f)

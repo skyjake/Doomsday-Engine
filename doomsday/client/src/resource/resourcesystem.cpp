@@ -677,6 +677,8 @@ DENG2_PIMPL(ResourceSystem)
 
         // Create the legacy savegame folder.
         App::fileSystem().makeFolder("/legacysavegames");
+
+        App::packageLoader().loadFromCommandLine();
     }
 
     ~Instance()

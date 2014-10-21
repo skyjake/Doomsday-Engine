@@ -466,15 +466,16 @@ void XS_MoverStopped(xgplanemover_t *mover, dd_bool done)
 /**
  * A thinker function for plane movers.
  */
-void XS_PlaneMover(xgplanemover_t* mover)
+void XS_PlaneMover(xgplanemover_t *mover)
 {
-    int res, res2, dir;
-    coord_t ceil  = P_GetDoublep(mover->sector, DMU_CEILING_HEIGHT);
-    coord_t floor = P_GetDoublep(mover->sector, DMU_FLOOR_HEIGHT);
-    xsector_t* xsec = P_ToXSector(mover->sector);
+    DENG2_ASSERT(mover && mover->sector);
+    coord_t ceil    = P_GetDoublep(mover->sector, DMU_CEILING_HEIGHT);
+    coord_t floor   = P_GetDoublep(mover->sector, DMU_FLOOR_HEIGHT);
+    xsector_t *xsec = P_ToXSector(mover->sector);
     dd_bool docrush = (mover->flags & PMF_CRUSH) != 0;
     dd_bool follows = (mover->flags & PMF_OTHER_FOLLOWS) != 0;
     dd_bool setorig = (mover->flags & PMF_SET_ORIGINAL) != 0;
+    int res, res2, dir;
 
     // Play movesound when timer goes to zero.
     if(mover->timer-- <= 0)
@@ -542,8 +543,7 @@ void XS_PlaneMover(xgplanemover_t* mover)
         // The move is done. Do end stuff.
         if(mover->setMaterial)
         {
-            XS_ChangePlaneMaterial(mover->sector, mover->ceiling,
-                                   mover->setMaterial, NULL);
+            XS_ChangePlaneMaterial(*mover->sector, mover->ceiling, *mover->setMaterial);
         }
 
         if(mover->setSectorType >= 0)
@@ -627,30 +627,32 @@ xgplanemover_t *XS_GetPlaneMover(Sector *sec, dd_bool ceiling)
     return th;
 }
 
-void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling, Material *mat, float *rgb)
+void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, Material &newMaterial)
 {
     LOG_AS("XS_ChangePlaneMaterial");
     LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, texture %i",
-           P_ToIndex(sector) << (ceiling ? "ceiling" : "floor") << P_ToIndex(mat));
-    if(rgb)
-        LOG_MAP_MSG_XGDEVONLY2("tintColor:%s", de::Vector3f(rgb).asText());
+           P_ToIndex(&sector) << (ceiling ? "ceiling" : "floor") << P_ToIndex(&newMaterial));
 
-    if(ceiling)
+    P_SetPtrp(&sector, ceiling? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL, &newMaterial);
+}
+
+void XS_ChangePlaneTintColor(Sector &sector, bool ceiling, de::Vector3f const &newColor, bool isDelta)
+{
+    LOG_AS("XS_ChangePlaneTintColor");
+    LOG_MAP_MSG_XGDEVONLY2("Sector %i, %s, tintColor:%s",
+           P_ToIndex(&sector) << (ceiling ? "ceiling" : "floor") << newColor.asText());
+
+    float rgb[3];
+    if(isDelta)
     {
-        if(rgb)
-            P_SetFloatpv(sector, DMU_CEILING_COLOR, rgb);
-
-        if(mat)
-            P_SetPtrp(sector, DMU_CEILING_MATERIAL, mat);
+        P_GetFloatpv(&sector, ceiling? DMU_CEILING_COLOR : DMU_FLOOR_COLOR, rgb);
+        for(int i = 0; i < 3; ++i) { rgb[i] += newColor[i]; }
     }
     else
     {
-        if(rgb)
-            P_SetFloatpv(sector, DMU_FLOOR_COLOR, rgb);
-
-        if(mat)
-            P_SetPtrp(sector, DMU_FLOOR_MATERIAL, mat);
+        newColor.decompose(rgb);
     }
+    P_SetFloatpv(&sector, ceiling? DMU_CEILING_COLOR : DMU_FLOOR_COLOR, rgb); // will clamp
 }
 
 uint FindMaxOf(int *list, uint num)
@@ -1357,16 +1359,13 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
                             void *context2, mobj_t * /*activator*/)
 {
     LOG_AS("XSTrav_MovePlane");
-
-    Line*           line = (Line *) context;
-    linetype_t*     info = (linetype_t *) context2;
-    xgplanemover_t* mover;
-    int             st;
-    Material*       mat;
-    xline_t*        xline = P_ToXLine(line);
-    dd_bool         playsound;
-
-    playsound = xline->xg->idata;
+    DENG2_ASSERT(sector);
+    Line *line        = (Line *) context;
+    DENG2_ASSERT(line);
+    linetype_t *info  = (linetype_t *) context2;
+    DENG2_ASSERT(info);
+    xline_t *xline    = P_ToXLine(line);
+    dd_bool playsound = xline->xg->idata;
 
     LOG_MAP_MSG_XGDEVONLY2("Sector %i (by line %i of type %i)",
            P_ToIndex(sector) << P_ToIndex(line) << info->id);
@@ -1391,7 +1390,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
     // f5: time to wait before starting the move
     // f6: wait increment for each plane that gets moved
 
-    mover = XS_GetPlaneMover(sector, ceiling);
+    xgplanemover_t *mover = XS_GetPlaneMover(sector, ceiling);
     if(P_IsDummy(line))
         Con_Error("XSTrav_MovePlane: Attempted to use dummy Line as XGPlaneMover origin.");
     mover->origin = line;
@@ -1439,18 +1438,21 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
         XS_PlaneSound((Plane *) P_GetPtrp(sector, ceiling? DMU_CEILING_PLANE : DMU_FLOOR_PLANE),
                       info->iparm[4]);
 
-    // Change texture at start?
+    // Change material at start?
+    Material *mat = nullptr;
     if(info->iparm[7] == SPREF_NONE || info->iparm[7] == SPREF_SPECIAL)
     {
         mat = (Material *) P_ToPtr(DMU_MATERIAL, info->iparm[8]);
     }
-    else
+    else if(!XS_GetPlane(line, sector, info->iparm[7], nullptr, 0, &mat, 0))
     {
-        if(!XS_GetPlane(line, sector, info->iparm[7], NULL, 0, &mat, 0))
-            LOG_MAP_MSG_XGDEVONLY("Couldn't find suitable material to set when move starts!");
+        LOG_MAP_MSG_XGDEVONLY("Couldn't find suitable material to set when move starts!");
     }
+
     if(mat)
-        XS_ChangePlaneMaterial(sector, ceiling, mat, NULL);
+    {
+        XS_ChangePlaneMaterial(*sector, ceiling, *mat);
+    }
 
     // Should we play no more sounds?
     if(info->iparm[3] & PMF_ONE_SOUND_ONLY)
@@ -1460,7 +1462,7 @@ int C_DECL XSTrav_MovePlane(Sector *sector, dd_bool ceiling, void *context,
     }
 
     // Change sector type right now?
-    st = info->iparm[12];
+    int st = info->iparm[12];
     if(info->iparm[11] != LPREF_NONE)
     {
         if(XL_TraversePlanes
@@ -1893,38 +1895,42 @@ int C_DECL XSTrav_SectorSound(Sector* sec, dd_bool ceiling, void* context,
     return true;
 }
 
-int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling,
-                                void *context, void *context2,
-                                mobj_t * /*activator*/)
+// i2: (spref) material origin
+// i3: texture number (flat), used with SPREF_NONE
+// i4: tint color red
+// i5: tint color green
+// i6: tint color blue
+// i7: (true/false) set tint color
+int C_DECL XSTrav_PlaneMaterial(Sector *sec, dd_bool ceiling, void *context,
+                                void *context2, mobj_t * /*activator*/)
 {
     LOG_AS("XSTrav_PlaneMaterial");
+    DENG2_ASSERT(sec);
+    Line *line       = (Line *) context;
+    DENG2_ASSERT(line);
+    linetype_t *info = (linetype_t *) context2;
+    DENG2_ASSERT(info);
 
-    Line*           line = (Line *) context;
-    linetype_t*     info = (linetype_t *) context2;
-    Material*       mat;
-    float           rgb[3];
-
-    // i2: (spref) material origin
-    // i3: texture number (flat), used with SPREF_NONE
-    // i4: red
-    // i5: green
-    // i6: blue
+    Material *mat;
     if(info->iparm[2] == SPREF_NONE)
     {
         mat = (Material *) P_ToPtr(DMU_MATERIAL, info->iparm[3]);
     }
-    else
+    else if(!XS_GetPlane(line, sec, info->iparm[2], nullptr, 0, &mat, 0))
     {
-        if(!XS_GetPlane(line, sec, info->iparm[2], NULL, 0, &mat, 0))
-            LOG_MAP_MSG_XGDEVONLY2("Sector %i, couldn't find suitable material!", P_ToIndex(sec));
+        LOG_MAP_MSG_XGDEVONLY2("Sector %i, couldn't find suitable material!", P_ToIndex(sec));
     }
 
-    rgb[0] = MINMAX_OF(0.f, info->iparm[4] / 255.f, 1.f);
-    rgb[1] = MINMAX_OF(0.f, info->iparm[5] / 255.f, 1.f);
-    rgb[2] = MINMAX_OF(0.f, info->iparm[6] / 255.f, 1.f);
+    if(mat)
+    {
+        XS_ChangePlaneMaterial(*sec, ceiling, *mat);
+    }
 
-    // Set the texture.
-    XS_ChangePlaneMaterial(sec, ceiling, mat, rgb);
+    if(info->iparm[7])
+    {
+        de::Vector3f const color(info->iparm[4], info->iparm[5], info->iparm[6]);
+        XS_ChangePlaneTintColor(*sec, ceiling, color / 255.f);
+    }
 
     return true;
 }

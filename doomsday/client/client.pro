@@ -276,6 +276,7 @@ DENG_HEADERS += \
     include/render/fx/colorfilter.h \
     include/render/fx/lensflares.h \
     include/render/fx/postprocessing.h \
+    include/render/fx/resize.h \
     include/render/fx/vignette.h \
     include/render/huecirclevisual.h \
     include/render/ilightsource.h \
@@ -599,6 +600,7 @@ SOURCES += \
     src/render/fx/colorfilter.cpp \
     src/render/fx/lensflares.cpp \
     src/render/fx/postprocessing.cpp \
+    src/render/fx/resize.cpp \
     src/render/fx/vignette.cpp \
     src/render/huecirclevisual.cpp \
     src/render/lightdecoration.cpp \
@@ -815,6 +817,17 @@ startupfonts.files = \
     data/fonts/normallight24.dfn
 
 macx {
+    xcodeFinalizeAppBuild()
+    xcodeDeployDengLibs(shell.1 gui.1 appfw.1 doomsday.1 legacy.1)
+    xcodeDeployDengPlugins(audio_fluidsynth audio_fmod \
+        idtech1converter savegameconverter dehread \
+        doom heretic hexen doom64)
+    macx-xcode {
+        QMAKE_BUNDLE_DATA += exectools
+        exectools.files = $$DESTDIR/savegametool $$DESTDIR/doomsday-server
+        exectools.path = Contents/Resources
+    }
+
     res.path = Contents/Resources
     res.files = \
         res/macx/English.lproj \
@@ -829,7 +842,7 @@ macx {
 
     # Since qmake is unable to copy directories as bundle data, let's copy
     # the frameworks manually.
-    FW_DIR = \"$${OUT_PWD}/Doomsday.app/Contents/Frameworks/\"
+    FW_DIR = Doomsday.app/Contents/Frameworks/
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
     !deng_nosdl {

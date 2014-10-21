@@ -240,7 +240,7 @@ void Process::execute()
     }
 
     // We will execute until this depth is complete.
-    duint startDepth = d->depth();
+    dsize startDepth = d->depth();
     if(startDepth == 1)
     {
         // Mark the start time.

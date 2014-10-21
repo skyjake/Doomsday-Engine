@@ -130,6 +130,7 @@ DENG2_PIMPL(Hand)
     // Observes Grabbable OriginChange.
     void grabbableOriginChanged(Grabbable &grabbable)
     {
+        DENG_UNUSED(grabbable);
         DENG2_ASSERT(grab.contains(&grabbable)); //sanity check.
         needUpdateGrabOrigin = true;
     }

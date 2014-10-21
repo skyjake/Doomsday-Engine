@@ -62,6 +62,10 @@ String::String(char const *cStr, size_type length)
     : QString(QString::fromUtf8(cStr, length))
 {}
 
+String::String(char const *cStr, dsize length)
+    : QString(QString::fromUtf8(cStr, int(length)))
+{}
+
 String::String(size_type length, QChar ch) : QString(length, ch)
 {}
 
@@ -435,7 +439,7 @@ int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivit
 
 dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)
 {
-    return QString(a, count).compare(QString(b, count), Qt::CaseSensitive);
+    return QString(a, int(count)).compare(QString(b, int(count)), Qt::CaseSensitive);
 }
 
 void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)

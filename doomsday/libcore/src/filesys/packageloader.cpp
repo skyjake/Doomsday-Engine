@@ -268,4 +268,25 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     }
 }
 
+void PackageLoader::loadFromCommandLine()
+{
+    CommandLine &args = App::commandLine();
+
+    for(int p = 0; p < args.count(); )
+    {
+        // Find all the -pkg options.
+        if(!args.matches("-pkg", args.at(p)))
+        {
+            ++p;
+            continue;
+        }
+
+        // Load all the specified packages (by identifier, not by path).
+        while(++p != args.count() && !args.isOption(p))
+        {
+            load(args.at(p));
+        }
+    }
+}
+
 } // namespace de

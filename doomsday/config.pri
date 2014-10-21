@@ -45,6 +45,7 @@ CONFIG *= thread
 
 # Directories ----------------------------------------------------------------
 
+DENG_ROOT_DIR         = $$PWD
 DENG_API_DIR          = $$PWD/api
 DENG_INCLUDE_DIR      = $$PWD/client/include
 DENG_UNIX_INCLUDE_DIR = $$DENG_INCLUDE_DIR/unix
@@ -157,7 +158,7 @@ unix:deng_distcc {
     }
 }
 
-unix:deng_ccache {
+unix:!deng_noccache:deng_ccache {
     # ccache can be used to speed up recompilation.
     *-clang* {
         QMAKE_CC  = ccache $$QMAKE_CC  -Qunused-arguments

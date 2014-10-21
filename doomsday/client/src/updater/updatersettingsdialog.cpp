@@ -146,11 +146,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         String ago = st.lastCheckAgo();
         if(!ago.isEmpty())
         {
-            lastChecked->setText(_E(D)_E(t) + tr("Last checked %1.").arg(st.lastCheckAgo()));
+            lastChecked->setText(_E(F)_E(t) + tr("Last checked %1.").arg(st.lastCheckAgo()));
         }
         else
         {
-            lastChecked->setText(_E(D)_E(t) + tr("Never checked."));
+            lastChecked->setText(_E(F)_E(t) + tr("Never checked."));
         }
 
         autoCheck->setActive(!st.onlyCheckManually());

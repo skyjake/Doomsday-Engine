@@ -125,7 +125,7 @@ struct HuffCode {
 
 struct HuffBuffer {
     dbyte *data;
-    duint size;
+    dsize size;
 };
 
 struct Huffman

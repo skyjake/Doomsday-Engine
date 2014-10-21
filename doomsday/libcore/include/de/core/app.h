@@ -321,6 +321,15 @@ public:
     static Config &config();
 
     /**
+     * Returns a configuration variable.
+     *
+     * @param name  Name of the variable.
+     *
+     * @return Variable.
+     */
+    static Variable &config(String const &name);
+
+    /**
      * Returns the Unix system-level configuration preferences.
      */
     static UnixInfo &unixInfo();

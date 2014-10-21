@@ -471,6 +471,35 @@ enum ClockDirection {
 };
 
 /**
+ * Status to return from abortable iteration loops that use callbacks per iteration.
+ *
+ * The "for" pattern:
+ * <code>
+ * LoopResult forExampleObjects(std::function<LoopResult (ExampleObject &)> func);
+ *
+ * example.forExampleObjects([] (ExampleObject &ex) {
+ *     // do stuff...
+ *     return LoopContinue;
+ * });
+ * </code>
+ */
+enum GenericLoopResult {
+    LoopContinue = 0,
+    LoopAbort    = 1
+};
+
+/// Use as return type of iteration loop callbacks (a "for*" method).
+struct LoopResult
+{
+    int value;
+
+    LoopResult(int val = LoopContinue) : value(val) {}
+    operator bool () const { return value != LoopContinue; }
+    operator int () const { return value; }
+    operator GenericLoopResult () const { return GenericLoopResult(value); }
+};
+    
+/**
  * All serialization in all contexts use a common protocol version number.
  * Whenever anything changes in serialization, the protocol version needs to be
  * incremented. Therefore, deserialization routines shouldn't check for

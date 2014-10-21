@@ -89,7 +89,7 @@ public:
     /// @return Length of the token as number of characters.
     int size() const {
         if(!_begin || !_end) return 0;
-        return _end - _begin;
+        return int(_end - _begin);
     }
 
     bool isEmpty() const {

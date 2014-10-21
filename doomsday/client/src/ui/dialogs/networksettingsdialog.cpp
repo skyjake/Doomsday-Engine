@@ -41,7 +41,7 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self.area();
 
-        area.add(masterApi = new VariableLineEditWidget(App::config()["masterServer.apiUrl"]));
+        area.add(masterApi = new VariableLineEditWidget(App::config("masterServer.apiUrl")));
 
         // Developer options.
         self.add(devPopup = new GridPopupWidget);

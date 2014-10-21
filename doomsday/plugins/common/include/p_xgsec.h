@@ -23,6 +23,7 @@
 
 #include "g_common.h"
 #ifdef __cplusplus
+#  include <de/Vector>
 #  include "mapstatereader.h"
 #  include "mapstatewriter.h"
 #endif
@@ -185,8 +186,6 @@ int C_DECL XSTrav_Teleport(Sector *sector, dd_bool ceiling, void *context, void 
 
 void XS_SetSectorType(Sector *sec, int special);
 
-void XS_ChangePlaneMaterial(Sector *sector, dd_bool ceiling, Material* mat, float *rgb);
-
 xgplanemover_t *XS_GetPlaneMover(Sector *sector, dd_bool ceiling);
 
 void XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
@@ -199,6 +198,11 @@ D_CMD(MovePlane);
 
 #ifdef __cplusplus
 } // extern "C"
+
+void XS_ChangePlaneMaterial(Sector &sector, bool ceiling, Material &newMaterial);
+
+void XS_ChangePlaneTintColor(Sector &sector, bool ceiling, de::Vector3f const &newTintColor, bool isDelta = false);
+
 #endif
 
 #endif // LIBCOMMON_XG_SECTORTYPE_H

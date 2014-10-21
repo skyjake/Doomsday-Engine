@@ -70,7 +70,7 @@ DENG2_PIMPL(LogSettingsDialog)
 
             self.area().add(separately =
                     new VariableToggleWidget(tr("Filter by Subsystem"),
-                                             App::config()["log.filterBySubsystem"]));
+                                             App::config("log.filterBySubsystem")));
 
             levels << new ChoiceItem(        tr("1 - X.Verbose"), LogEntry::XVerbose)
                    << new ChoiceItem(        tr("2 - Verbose"),   LogEntry::Verbose )

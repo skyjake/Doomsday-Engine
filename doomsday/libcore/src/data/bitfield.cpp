@@ -242,7 +242,7 @@ String BitField::asText() const
     QTextStream os(&str);
     os << "BitField (" << d->elements->bitCount() << " bits, " << d->elements->size() << " elements):";
     os.setIntegerBase(2);
-    for(int i = d->packed.size() - 1; i >= 0; --i)
+    for(int i = int(d->packed.size()) - 1; i >= 0; --i)
     {
         os << " " << qSetPadChar('0') << qSetFieldWidth(8) << dbyte(d->packed[i])
            << qSetFieldWidth(0);

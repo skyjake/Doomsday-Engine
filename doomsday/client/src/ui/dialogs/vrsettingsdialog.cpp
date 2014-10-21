@@ -77,7 +77,7 @@ DENG_GUI_PIMPL(VRSettingsDialog)
 
         if(vrCfg().oculusRift().isReady())
         {
-            area.add(riftDensity = new VariableSliderWidget(App::config()["vr.oculusRift.pixelDensity"],
+            area.add(riftDensity = new VariableSliderWidget(App::config("vr.oculusRift.pixelDensity"),
                      Ranged(0.5, 1.0), .01));
             riftDensity->setPrecision(2);
 

@@ -147,7 +147,7 @@ public:
 
     Value const &front() const { return at(0); }
 
-    Value const &back() const { return at(size() - 1); }
+    Value const &back() const { return at(dint(size()) - 1); }
 
     /**
      * Empties the array of all values.
