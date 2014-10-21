@@ -25,132 +25,248 @@ namespace de {
 
 DENG2_PIMPL(TextDrawable)
 {
-    /**
-     * Background task for wrapping text onto lines and figuring out the
-     * formatting/tab stops.
-     */
-    class WrapTask : public Task
+    DENG2_DEFINE_AUDIENCE(Deletion, void ownerDeleted())
+
+    template <typename Type>
+    class LockablePointer : public Lockable
     {
     public:
-        WrapTask(Instance *inst, int toWidth) : d(inst), _width(toWidth), _valid(inst->validWrapId) {}
-        void runTask() {
-            if(_valid < d->validWrapId) {
-                return; // There's a later one.
-            }
-            DENG2_GUARD_FOR(d->backWrap, G);
+        LockablePointer(Type *p = nullptr) : _ptr(p) {}
 
-            //qDebug() << "running WrapTask" << _width;
-            //TimeDelta(0.05).sleep();
-
-            d->backWrap->wrapTextToWidth(d->backWrap->plainText, d->backWrap->format, _width);
-            d->needSwap = true;
-
-            //qDebug() << "WrapTask" << _width << "completed" << d->thisPublic << d->backWrap->text;
+        LockablePointer &operator = (Type *p)
+        {
+            DENG2_GUARD(this);
+            _ptr = p;
+            return *this;
         }
+
+        explicit operator bool () const
+        {
+            DENG2_GUARD(this);
+            return _ptr != nullptr;
+        }
+
+        operator Type * ()
+        {
+            DENG2_GUARD(this);
+            return _ptr;
+        }
+
+        Type *operator -> () { return _ptr; } // Lock beforehand!
+
     private:
-        Instance *d;
-        int _width;
-        duint32 _valid;
+        Type *_ptr;
     };
 
-    bool inited;
+    template <typename Type>
+    class LockableUniquePointer : public Lockable
+    {
+    public:
+        void reset(Type *p)
+        {
+            DENG2_GUARD(this);
+            _ptr.reset(p);
+        }
+
+        Type *take()
+        {
+            DENG2_GUARD(this);
+            return _ptr.release();
+        }
+
+        explicit operator bool () const
+        {
+            DENG2_GUARD(this);
+            return bool(_ptr);
+        }
+
+    private:
+        std::unique_ptr<Type> _ptr;
+    };
+
+    /// Counter used for keeping track of the latest wrapping task.
+    class SyncId : public Lockable
+    {
+    public:
+        operator duint32 () const
+        {
+            DENG2_GUARD(this);
+            return _id;
+        }
+
+        void invalidate()
+        {
+            DENG2_GUARD(this);
+            _id++;
+        }
+
+        bool isValid(duint32 value) const
+        {
+            DENG2_GUARD(this);
+            return value == _id;
+        }
+
+    private:
+        duint32 _id { 0 };
+    };
 
     struct Wrapper : public FontLineWrapping
     {
-        String text;
         String plainText;
         Font::RichFormat format;
-        int lineWidth;
-
-        Wrapper() : lineWidth(0) {}
     };
 
-    Wrapper *frontWrap; ///< For drawing.
-    Wrapper *backWrap;  ///< For background task.
-    String pendingStyledText;
-    bool pending;
-    bool needSwap;
-    bool needUpdate;
-    TaskPool tasks;
-    volatile duint32 validWrapId;
-
-    Instance(Public *i)
-        : Base(i)
-        , inited(false)
-        , pending(false)
-        , needSwap(false)
-        , needUpdate(false)
-        , validWrapId(0)
+    /**
+     * Background task for wrapping text onto lines and figuring out the
+     * formatting/tab stops. Observes the Instance for deletion so that if it has been
+     * destroyed while the task is running, we'll know to discard the results.
+     */
+    class WrapTask : public Task, public Instance::IDeletionObserver
     {
-        frontWrap = new Wrapper;
-        backWrap  = new Wrapper;
+    public:
+        WrapTask(Instance *inst, String const &styledText, int toWidth, Font const &font,
+                 Font::RichFormat::IStyle const *style)
+            : d(inst)
+            , _text(styledText)
+            , _width(toWidth)
+            , _font(font)
+            , _style(style)
+            , _valid(inst->sync)
+        {
+            d->audienceForDeletion += this;
+        }
+
+        void runTask()
+        {
+            // Check that it's okay if we start the operation now.
+            {
+                DENG2_GUARD(d);
+                if(!d) return; // Owner has been deleted.
+                if(!d->sync.isValid(_valid))
+                {
+                    // No longer the latest task, so ignore this one.
+                    d->audienceForDeletion -= this;
+                    return;
+                }
+            }
+
+            // Ok, we have a go. Set up the wrapper first.
+            auto *wrapper = new Wrapper;
+            wrapper->setFont(_font);
+            if(_style)
+            {
+                wrapper->format.setStyle(*_style);
+            }
+            wrapper->plainText = wrapper->format.initFromStyledText(_text);
+            
+            // This is where most of the time will be spent:
+            wrapper->wrapTextToWidth(wrapper->plainText, wrapper->format, _width);
+
+            // Pass the finished wrapping to the owner.
+            {
+                DENG2_GUARD(d);
+                if(d) d->audienceForDeletion -= this;
+                if(d && d->sync.isValid(_valid))
+                {
+                    d->incoming.reset(wrapper);
+                }
+                else
+                {
+                    // Well, that was a waste of time.
+                    delete wrapper;
+                }
+            }
+        }
+
+        void ownerDeleted()
+        {
+            d = nullptr;
+        }
+
+    private:
+        LockablePointer<Instance> d;
+        String _text;
+        int _width;
+        Font const &_font;
+        Font::RichFormat::IStyle const *_style;
+        duint32 _valid;
+    };
+
+    bool inited { false };
+    Font::RichFormat::IStyle const *style { nullptr };
+    String styledText;
+    Font const *font { nullptr };
+    int wrapWidth { 0 };
+    Wrapper *visibleWrap; ///< For drawing.
+    LockableUniquePointer<Wrapper> incoming; ///< Latest finished wrapping.
+    SyncId sync;
+    TaskPool tasks;
+
+    Instance(Public *i) : Base(i)
+    {
+        // The visible wrapper is replaced when new ones are produced by workers.
+        // There always needs to be a visible wrapper, though, so create an empty one.
+        visibleWrap = new Wrapper;
     }
 
     ~Instance()
     {
-        tasks.waitForDone();
+        // All ongoing tasks will be skipped/discarded.
+        sync.invalidate();
 
-        delete frontWrap;
-        delete backWrap;
+        // Let the background tasks know that we are gone.
+        DENG2_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
+
+        delete visibleWrap;
     }
 
-    void beginWrapTask(int toWidth)
+    void beginWrapTask()
     {
-        if(inited && toWidth > 0)
+        if(inited && wrapWidth > 0 && font)
         {
-            // Should this be done immediately? Background tasks unavoidably
-            // bring some extra latency before the job is finished, especially
-            // if a large number of tasks is queued.
-            if(backWrap->plainText.size() < 20)
+            sync.invalidate();
+
+            // Check if the wrapping can be done immediately. Background tasks unavoidably
+            // bring some extra latency before the job is finished, especially if a large
+            // number of tasks is queued.
+            if(styledText.size() <= 20)
             {
                 // Looks quick enough, just do it now.
-                WrapTask(this, toWidth).runTask();
+                WrapTask(this, styledText, wrapWidth, *font, style).runTask();
             }
             else
             {
                 // Queue the task to be run when there's time.
-                ++validWrapId;
-                tasks.start(new WrapTask(this, toWidth));
+                tasks.start(new WrapTask(this, styledText, wrapWidth, *font, style));
             }
         }
     }
 
     /**
-     * Swaps the back wrapping used by the background task with the front
-     * wrapping used for drawing.
+     * Replaces the front wrapper with the latest finished line wrapping created by
+     * background tasks.
+     *
+     * @return @c true, if a swap occurred; otherwise @c false.
      */
-    void swap()
+    bool swap()
     {
-        DENG2_ASSERT(tasks.isDone());
+        if(!incoming) return false;
 
-        if(!frontWrap->hasFont() || &backWrap->font() != &frontWrap->font())
-        {
-            frontWrap->setFont(backWrap->font());
-        }
+        delete visibleWrap;
+        visibleWrap = incoming.take();
 
-        frontWrap->lineWidth = backWrap->lineWidth;
-        frontWrap->text      = backWrap->text;
-        frontWrap->plainText = backWrap->plainText;
-        frontWrap->format    = backWrap->format;
+        DENG2_ASSERT(visibleWrap != nullptr);
 
-        std::swap(backWrap, frontWrap);
+        self.setWrapping(*visibleWrap);
+        self.GLTextComposer::setText(visibleWrap->plainText, visibleWrap->format);
 
-        self.setWrapping(*frontWrap);
-        self.GLTextComposer::setText(frontWrap->plainText, frontWrap->format);
-
-        if(needUpdate)
-        {
-            self.forceUpdate();
-            needUpdate = false;
-        }
-
-        needSwap = false;
+        return true;
     }
 };
 
 TextDrawable::TextDrawable() : d(new Instance(this))
 {
-    setWrapping(*d->frontWrap);
+    setWrapping(*d->visibleWrap);
 }
 
 void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle const *style)
@@ -158,16 +274,14 @@ void TextDrawable::init(Atlas &atlas, Font const &font, Font::RichFormat::IStyle
     d->inited = true;
 
     setAtlas(atlas);
-    if(style)
-    {        
-        d->frontWrap->format.setStyle(*style);
-        d->backWrap->format.setStyle(*style);
+    d->style = style;
+    d->font = &font;
 
-        // Previously defined text should be restyled, now.
-        d->backWrap->plainText = d->backWrap->format.initFromStyledText(d->backWrap->text);
+    if(!d->styledText.isEmpty())
+    {
+        // Update the wrapping, if possible.
+        d->beginWrapTask();
     }
-    GLTextComposer::setText(d->backWrap->plainText, d->backWrap->format);
-    setFont(font);
 }
 
 void TextDrawable::deinit()
@@ -179,53 +293,40 @@ void TextDrawable::deinit()
 
 void TextDrawable::clear()
 {
-    d->tasks.waitForDone();
-
-    d->frontWrap->clear();
-    d->backWrap->clear();
+    // Ignore whatever the background task(s) are doing.
+    d->sync.invalidate();
+    d->incoming.reset(nullptr);
+    d->visibleWrap->clear();
 
     release();
 }
 
 void TextDrawable::setLineWrapWidth(int maxLineWidth)
 {
-    if(d->backWrap->lineWidth != maxLineWidth)
+    if(d->wrapWidth != maxLineWidth)
     {
-        // Start a new background task.
-        d->backWrap->lineWidth = maxLineWidth;
-        d->beginWrapTask(maxLineWidth);
+        d->wrapWidth = maxLineWidth;
+        d->beginWrapTask();
     }
 }
 
 void TextDrawable::setText(String const &styledText)
 {
-    // If backWrap is being wrapped right now we shouldn't block, but add a pending wrap
-    // task instead.
-    if(!d->tasks.isDone())
+    if(d->styledText != styledText)
     {
-        // Cannot interrupt the ongoing backWrap.
-        d->pendingStyledText = styledText;
-        d->pending = true;
-        return;
+        d->styledText = styledText;
+
+        d->beginWrapTask();
     }
-
-    d->backWrap->clear();
-    d->needUpdate = true;
-
-    d->backWrap->text = styledText;
-    d->backWrap->plainText = d->backWrap->format.initFromStyledText(styledText);
-
-    d->beginWrapTask(d->backWrap->lineWidth);
 }
 
 void TextDrawable::setFont(Font const &font)
 {
-    d->backWrap->setFont(font);
-    d->backWrap->clear();
-
-    d->needUpdate = true;
-
-    d->beginWrapTask(d->backWrap->lineWidth);
+    if(d->font != &font)
+    {
+        d->font = &font;
+        d->beginWrapTask(); // Redo the contents.
+    }
 }
 
 void TextDrawable::setRange(Rangei const &lineRange)
@@ -236,53 +337,28 @@ void TextDrawable::setRange(Rangei const &lineRange)
 
 bool TextDrawable::update()
 {
-    bool swapped = false;
+    if(!d->inited || !d->font) return false;
 
-    // Has a background wrap completed?
-    if(!isBeingWrapped() && d->needSwap)
-    {
-        d->swap();
-        swapped = true;
-    }
-
-    if(!d->frontWrap->hasFont()) return false;
-
-    bool wasNotReady = !isReady();
-    bool changed = GLTextComposer::update() || swapped || (isReady() && wasNotReady);
-    bool result = changed && !isBeingWrapped();
-
-    // Begin a pending wrap?
-    if(!isBeingWrapped() && d->pending)
-    {
-        d->pending = false;
-        setText(d->pendingStyledText);
-    }
-
-    return result;
+    // Check for a completed background task.
+    bool swapped = d->swap();
+    bool const wasNotReady = !isReady();
+    return GLTextComposer::update() || swapped || (isReady() && wasNotReady);
 }
 
 FontLineWrapping const &TextDrawable::wraps() const
 {
-    return *d->frontWrap;
+    return *d->visibleWrap;
 }
 
 Vector2ui TextDrawable::wrappedSize() const
 {
-    return Vector2ui(d->frontWrap->width(), d->frontWrap->totalHeightInPixels());
+    return Vector2ui(d->visibleWrap->width(), d->visibleWrap->totalHeightInPixels());
 }
 
 String TextDrawable::text() const
 {
-    if(!d->frontWrap->hasFont())
-    {
-        return d->backWrap->text;
-    }
-    return d->frontWrap->text;
-}
-
-String TextDrawable::plainText() const
-{
-    return d->frontWrap->plainText;
+    // The latest text that is either pending or currently being shown.
+    return d->styledText;
 }
 
 bool TextDrawable::isBeingWrapped() const
@@ -292,7 +368,8 @@ bool TextDrawable::isBeingWrapped() const
 
 Font const &TextDrawable::font() const
 {
-    return d->backWrap->font();
+    DENG2_ASSERT(d->font != nullptr);
+    return *d->font;
 }
 
 } // namespace de

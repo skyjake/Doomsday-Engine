@@ -374,7 +374,11 @@ void GLTextComposer::setAtlas(Atlas &atlas)
 
 void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
 {
-    d->wraps = &wrappedLines;
+    if(d->wraps != &wrappedLines)
+    {
+        d->wraps = &wrappedLines;
+        forceUpdate();
+    }
 }
 
 void GLTextComposer::setText(String const &text)
@@ -409,6 +413,9 @@ Rangei GLTextComposer::range() const
 bool GLTextComposer::update()
 {
     DENG2_ASSERT(d->wraps != 0);
+
+    // If a font hasn't been defined, there isn't much to do.
+    if(!d->wraps->hasFont()) return false;
 
     if(d->font != &d->wraps->font())
     {
