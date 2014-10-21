@@ -27,8 +27,10 @@
 
 namespace de {
 
-DENG2_PIMPL(TaskPool), public Lockable, public Waitable
+DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
 {
+    bool deleteWhenDone { false }; ///< Private instance will be deleted when pool is empty.
+
     // Set of running tasks.
     typedef QSet<Task *> Tasks;
     Tasks tasks;
@@ -41,13 +43,15 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable
 
     ~Instance()
     {
-        waitForEmpty();
+        // The pool is always empty at this point because the destructor is not
+        // called until all the tasks have been finished and removed.
+        DENG2_ASSERT(tasks.isEmpty());
     }
 
     void add(Task *t)
     {
         DENG2_GUARD(this);
-        t->_pool = &self;
+        t->_pool = this;
         if(tasks.isEmpty())
         {
             wait(); // Semaphore now unavailable.
@@ -81,13 +85,47 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable
         DENG2_GUARD(this);
         return tasks.isEmpty();
     }
+
+    void taskFinishedRunning(Task &task)
+    {
+        lock();
+        if(remove(&task))
+        {
+            if(deleteWhenDone)
+            {
+                // All done, clean up!
+                unlock();
+                
+                // NOTE: Guard isn't used because the object doesn't exist past this point.
+                delete this;
+                return;
+            }
+            else
+            {
+                unlock();
+                emit self.allTasksDone();
+            }
+        }
+        else
+        {
+            unlock();
+        }
+    }
 };
 
 TaskPool::TaskPool() : d(new Instance(this))
 {}
 
 TaskPool::~TaskPool()
-{}
+{
+    DENG2_GUARD(d);
+    if(!d->isEmpty())
+    {
+        // Detach the private instance and make it auto-delete itself when done.
+        // The ongoing tasks will report themselves finished to the private instance.
+        d.release()->deleteWhenDone = true;
+    }
+}
 
 void TaskPool::start(Task *task, Priority priority)
 {
@@ -103,15 +141,6 @@ void TaskPool::waitForDone()
 bool TaskPool::isDone() const
 {
     return d->isEmpty();
-}
-
-void TaskPool::taskFinished(Task &task)
-{
-    DENG2_GUARD(d);
-    if(d->remove(&task))
-    {
-        emit allTasksDone();
-    }
 }
 
 } // namespace de
