@@ -47,14 +47,18 @@ public:
     /// Release the lock.
     void unlock() const;
 
+#ifdef DENG2_DEBUG
     /// Returns true, if the lock is currently locked.
     bool isLocked() const;
+#endif
 
 private:
     mutable QMutex _mutex;
 
+#ifdef DENG2_DEBUG
     mutable int _lockCount;
     mutable QMutex _countMutex;
+#endif
 };
 
 } // namespace de
