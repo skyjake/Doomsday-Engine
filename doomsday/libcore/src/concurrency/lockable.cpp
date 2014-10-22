@@ -25,7 +25,9 @@ namespace de {
 
 Lockable::Lockable()
     : _mutex(QMutex::Recursive)
+#ifdef DENG2_DEBUG
     , _lockCount(0)
+#endif
 {}
 
 Lockable::~Lockable()
@@ -35,32 +37,39 @@ Lockable::~Lockable()
 
 void Lockable::lock() const
 {
+    _mutex.lock();
+
+#ifdef DENG2_DEBUG
     _countMutex.lock();
     _lockCount++;
     _countMutex.unlock();
-
-    _mutex.lock();
+#endif
 }
 
 void Lockable::unlock() const
 {
-    // Release the lock.
-    _mutex.unlock();
-
+#ifdef DENG2_DEBUG
     _countMutex.lock();
     _lockCount--;
-    _countMutex.unlock();
+#endif
 
+    // Release the lock.
+    _mutex.unlock();
+    
+#ifdef DENG2_DEBUG
     DENG2_ASSERT(_lockCount >= 0);
+    _countMutex.unlock();
+#endif
 }
 
+#ifdef DENG2_DEBUG
 bool Lockable::isLocked() const
 {
-    bool result;
     _countMutex.lock();
-    result = (_lockCount > 0);
+    bool result = (_lockCount > 0);
     _countMutex.unlock();
     return result;
 }
+#endif
 
 } // namespace de
