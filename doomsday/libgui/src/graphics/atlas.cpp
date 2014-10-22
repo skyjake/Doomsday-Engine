@@ -36,8 +36,6 @@ DENG2_PIMPL(Atlas)
     bool needCommit;
     bool needFullCommit;
     bool mayDefrag;
-    int successfulAllocCount { 0 };
-    int releaseCount { 0 };
     Rectanglei changedArea;
     Time fullReportedAt;
 
@@ -124,9 +122,6 @@ DENG2_PIMPL(Atlas)
     void defragment()
     {
         DENG2_ASSERT(hasBacking());
-
-        successfulAllocCount = 0; // Reset the counters.
-        releaseCount = 0;
 
         IAllocator::Allocations const oldLayout = allocator->allocs();
         if(!allocator->optimize())
@@ -277,11 +272,8 @@ Id Atlas::alloc(Image const &image)
 
     if(!id.isNone())
     {
-        if(++d->successfulAllocCount > 5)
-        {
-            // Defragmenting may again be helpful.
-            d->mayDefrag = true;
-        }
+        // Defragmenting may again be helpful.
+        d->mayDefrag = true;
 
         Rectanglei const noBorders  = rect.shrunk(d->border);
         Rectanglei const withMargin = rect.expanded(d->margin);
@@ -384,17 +376,8 @@ void Atlas::release(Id const &id)
 
     d->allocator->release(id);
 
-    if(++d->releaseCount > 5 && d->successfulAllocCount > 0)
-    {
-        // Defragmenting may help us again.
-        d->mayDefrag = true;
-    }
-
-    if(d->usedPercentage() < .1 && d->mayDefrag)
-    {
-        //qDebug() << "Defragmenting an almost empty atlas with" << d->allocator->count() << "allocs";
-        d->defragment();
-    }
+    // Defragmenting may help us again.
+    d->mayDefrag = true;
 }
 
 bool Atlas::contains(Id const &id) const

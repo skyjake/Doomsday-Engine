@@ -87,7 +87,7 @@ DENG2_OBSERVES(Bank, Load)
           uTex      ("uTex",       GLUniform::Sampler2D),
           modelAnim (model),
           uModelTex ("uTex",       GLUniform::Sampler2D),
-          atlas     (AtlasTexture::newWithKdTreeAllocator(Atlas::AllowDefragment |
+          atlas     (AtlasTexture::newWithRowAllocator(Atlas::AllowDefragment |
                                                           Atlas::BackingStore |
                                                           Atlas::WrapBordersInBackingStore))
     {
@@ -489,7 +489,7 @@ DENG2_OBSERVES(Bank, Load)
         }
 
 #if 1
-        if(!(qrand() % 3) && !atlas->isEmpty())
+        if((qrand() % 10) <= 5 && !atlas->isEmpty())
         {
             // Randomly remove one of the allocations.
             QList<Id> ids;
@@ -502,7 +502,7 @@ DENG2_OBSERVES(Bank, Load)
 #endif
 
         // Generate a random image.
-        QSize imgSize(10 + qrand() % 40, 10 + qrand() % 40);
+        QSize imgSize(10 + qrand() % 40, 10 + 10 * (qrand() % 2));
         QImage img(imgSize, QImage::Format_ARGB32);
         QPainter painter(&img);
         painter.fillRect(img.rect(), QColor(qrand() % 256, qrand() % 256, qrand() % 256));
