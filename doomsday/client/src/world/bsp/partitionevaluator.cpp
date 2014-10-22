@@ -36,19 +36,14 @@ namespace internal
 {
     struct PartitionCost
     {
-        int total;
-        int splits;
-        int iffy;
-        int nearMiss;
-        int mapRight;
-        int mapLeft;
-        int partRight;
-        int partLeft;
-
-        PartitionCost() :
-            total(0), splits(0), iffy(0), nearMiss(0), mapRight(0),
-            mapLeft(0), partRight(0), partLeft(0)
-        {}
+        int total     = 0;
+        int splits    = 0;
+        int iffy      = 0;
+        int nearMiss  = 0;
+        int mapRight  = 0;
+        int mapLeft   = 0;
+        int partRight = 0;
+        int partLeft  = 0;
 
         inline PartitionCost &addSegmentRight(LineSegmentSide const &seg)
         {
@@ -98,10 +93,10 @@ namespace internal
         String asText() const
         {
             return String("PartitionCost(Total= %1.%2; splits:%3, iffy:%4, near:%5, left:%6+%7, right:%8+%9)")
-                    .arg(total / 100).arg(total % 100, 2, QChar('0'))
-                    .arg(splits).arg(iffy).arg(nearMiss)
-                    .arg(mapLeft).arg(partLeft)
-                    .arg(mapRight).arg(partRight);
+                       .arg(total / 100).arg(total % 100, 2, QChar('0'))
+                       .arg(splits).arg(iffy).arg(nearMiss)
+                       .arg(mapLeft).arg(partLeft)
+                       .arg(mapRight).arg(partRight);
         }
     };
 
@@ -176,12 +171,9 @@ using namespace internal;
 
 DENG2_PIMPL_NOREF(PartitionEvaluator)
 {
-    int splitCostFactor;
+    int splitCostFactor = 7;
 
-    LineSegmentBlockTreeNode *rootNode; ///< Current block tree root node.
-
-    Instance() : splitCostFactor(7), rootNode(0)
-    {}
+    LineSegmentBlockTreeNode *rootNode = nullptr; ///< Current block tree root node.
 
     struct PartitionCandidate
     {
@@ -197,7 +189,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
     PartitionCandidate *nextCandidate()
     {
         DENG2_ASSERT(costTaskPool.isDone());
-        if(candidates.isEmpty()) return 0;
+        if(candidates.isEmpty()) return nullptr;
         return candidates.takeFirst();
     }
 
@@ -229,19 +221,19 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
             if(!cost.mapLeft || !cost.mapRight)
             {
                 //LOG_DEBUG("evaluate: No map line segments on %s%sside")
-                //    << (cost.mapLeft? "" : "left ")
+                //    << (cost.mapLeft ? "" : "left ")
                 //    << (cost.mapRight? "" : "right ");
-                *partition = 0;
+                *partition = nullptr;
                 return;
             }
 
             // This is suitable for use as a partition.
 
             // Increase cost by the difference between left and right.
-            cost.total += 100 * abs(cost.mapLeft - cost.mapRight);
+            cost.total += 100 * de::abs(cost.mapLeft - cost.mapRight);
 
             // Allow partition segment counts to affect the outcome.
-            cost.total += 50 * abs(cost.partLeft - cost.partRight);
+            cost.total += 50 * de::abs(cost.partLeft - cost.partRight);
 
             // Another little twist, here we show a slight preference for partition
             // lines that lie either purely horizontally or purely vertically.
@@ -338,9 +330,9 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
          */
         void costForBlock(LineSegmentBlockTreeNode const &node)
         {
-            LineSegmentBlock const &block = *node.userData();
-            LineSegmentSide **partition   = &candidate.line;
-            PartitionCost &cost           = candidate.cost;
+            LineSegmentBlock const &block    = *node.userData();
+            LineSegmentSide const *partition = candidate.line;
+            PartitionCost &cost              = candidate.cost;
 
             /// @todo Why are we extending the bounding box for this test? Also,
             /// there is no need to convert from integer to floating-point each
@@ -351,7 +343,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
                           coord_t( block.bounds().maxX ) + SHORT_HEDGE_EPSILON * 1.5,
                           coord_t( block.bounds().maxY ) + SHORT_HEDGE_EPSILON * 1.5);
 
-            int side = (*partition)->boxOnSide(bounds);
+            int side = partition->boxOnSide(bounds);
             if(side > 0)
             {
                 // Right.
@@ -367,7 +359,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
                 return;
             }
 
-            foreach(LineSegmentSide *otherSeg, block.all())
+            for(LineSegmentSide *otherSeg : block.all())
             {
                 costForSegment(*otherSeg);
             }
@@ -389,7 +381,7 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
      */
     void beginPartitionCosting(LineSegmentSide *line)
     {
-        DENG2_ASSERT(line != 0 && line->hasMapSide());
+        DENG2_ASSERT(line && line->hasMapSide());
         // Run a new partition cost task.
         PartitionCandidate *newCandidate = new PartitionCandidate(*line);
         candidates << newCandidate;
@@ -414,8 +406,8 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
     validCount++;
 
     // Iterative pre-order traversal.
-    LineSegmentBlockTreeNode const *cur = d->rootNode;
-    LineSegmentBlockTreeNode const *prev = 0;
+    LineSegmentBlockTreeNode const *cur  = d->rootNode;
+    LineSegmentBlockTreeNode const *prev = nullptr;
     while(cur)
     {
         while(cur)
@@ -423,7 +415,7 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
             LineSegmentBlock const &segs = *cur->userData();
 
             // Test each line segment as a potential partition candidate.
-            foreach(LineSegmentSide *candidate, segs.all())
+            for(LineSegmentSide *candidate : segs.all())
             {
                 //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
                 //    << (candidate->hasMapLineSide()? "" : "mini-") << candidate
@@ -476,7 +468,7 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
         }
     }
 
-    LineSegmentSide *best = 0;
+    LineSegmentSide *best = nullptr;
     if(!d->candidates.isEmpty())
     {
         d->costTaskPool.waitForDone();

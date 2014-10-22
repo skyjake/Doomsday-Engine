@@ -47,42 +47,29 @@ namespace bsp {
 typedef QList<LineSegmentSide *> SegmentList;
 
 /**
- * Represents a clockwise ordering of a subset of the line segments and
- * implements logic for partitioning that subset into @em contiguous ranges
- * for geometry construction.
+ * Represents a clockwise ordering of a subset of the line segments and implements logic
+ * for partitioning the subset into @em contiguous ranges, for geometry construction.
  */
 struct Continuity
 {
     typedef QList<OrderedSegment *> OrderedSegmentList;
 
-    /// Front sector uniformly referenced by all line segments.
-    Sector *sector;
-
-    /// Coverage metric.
-    double coverage;
-
-    /// Number of discordant (i.e., non-contiguous) line segments.
-    int discordSegments;
+    Sector *sector = nullptr;  ///< Front sector uniformly referenced by all line segments.
+    double coverage = 0;       ///< Coverage metric.
+    int discordSegments = 0;   ///< Number of discordant (i.e., non-contiguous) line segments.
 
     /// Number of referencing line segments of each type:
-    int norm;
-    int part;
-    int self;
+    int norm = 0;
+    int part = 0;
+    int self = 0;
 
-    /// The ordered line segments.
-    OrderedSegmentList orderedSegs;
+    OrderedSegmentList orderedSegs;  ///< Ordered line segments (not owned).
+    OrderedSegmentList discordSegs;  ///< The discordant line segment subset (not owned).
 
-    /// The discordant line segments.
-    OrderedSegmentList discordSegs;
-
-    Continuity(Sector *sector)
-        : sector(sector),
-          coverage(0),
-          discordSegments(0),
-          norm(0),
-          part(0),
-          self(0)
-    {}
+    Continuity(Sector *frontSector)
+    {
+        sector = frontSector;
+    }
 
     /**
      * Perform heuristic comparison between two continuities to determine a
@@ -108,11 +95,11 @@ struct Continuity
      */
     void addOneSegment(OrderedSegment const &oseg)
     {
-        DENG_ASSERT(oseg.segment->sectorPtr() == sector);
+        DENG2_ASSERT(oseg.segment->sectorPtr() == sector);
 
         // Separate the discordant duplicates.
         OrderedSegmentList *list = &orderedSegs;
-        foreach(OrderedSegment const *other, orderedSegs)
+        for(OrderedSegment const *other : orderedSegs)
         {
             if(oseg == *other)
             {
@@ -167,7 +154,7 @@ struct Continuity
         }
     }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("Continuity %p (sector:%i, coverage:%f, discord:%i)")
@@ -176,11 +163,11 @@ struct Continuity
             << coverage
             << discordSegments;
 
-        foreach(OrderedSegment const *oseg, orderedSegs)
+        for(OrderedSegment const *oseg : orderedSegs)
         {
             oseg->debugPrint();
         }
-        foreach(OrderedSegment const *oseg, discordSegs)
+        for(OrderedSegment const *oseg : discordSegs)
         {
             oseg->debugPrint();
         }
@@ -192,21 +179,14 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
 {
     typedef QSet<LineSegmentSide *> Segments;
 
-    /// The set of line segments.
-    Segments segments;
-
-    /// The same line segments in a clockwise order with angle info.
-    OrderedSegments orderedSegments;
-
-    /// Set to @c true when the ordered segment list needs to be rebuilt.
-    bool needRebuildOrderedSegments;
-
-    /// BSP leaf attributed to the subspace (if any).
-    BspLeaf *bspLeaf;
+    Segments segments;                ///< All line segments.
+    OrderedSegments orderedSegments;  ///< All line segments in clockwise order, with angle info.
+    bool needRebuildOrderedSegments;  ///< @c true= the ordered segment list needs to be rebuilt.
+    BspLeaf *bspLeaf;                 ///< BSP leaf attributed to the subspace (if any).
 
     Instance()
-        : needRebuildOrderedSegments(false),
-          bspLeaf(0)
+        : needRebuildOrderedSegments(false)
+        , bspLeaf                   (nullptr)
     {}
 
     Instance(Instance const &other)
@@ -221,9 +201,9 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
      * Returns @c true iff at least one line segment in the set is derived
      * from a map line.
      */
-    bool haveMapLineSegment()
+    bool haveMapLineSegment() const
     {
-        foreach(LineSegmentSide *seg, segments)
+        for(LineSegmentSide const *seg : segments)
         {
             if(seg->hasMapSide())
                 return true;
@@ -231,11 +211,11 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
         return false;
     }
 
-    Vector2d findCenter()
+    Vector2d findCenter() const
     {
         Vector2d center;
         int numPoints = 0;
-        foreach(LineSegmentSide *seg, segments)
+        for(LineSegmentSide const *seg : segments)
         {
             center += seg->from().origin();
             center += seg->to().origin();
@@ -261,7 +241,7 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
 
         orderedSegments.clear();
 
-        foreach(LineSegmentSide *seg, segments)
+        for(LineSegmentSide *seg : segments)
         {
             Vector2d fromDist = seg->from().origin() - point;
             Vector2d toDist   = seg->to().origin() - point;
@@ -321,11 +301,11 @@ private:
 };
 
 ConvexSubspaceProxy::ConvexSubspaceProxy()
-    : d(new Instance())
+    : d(new Instance)
 {}
 
 ConvexSubspaceProxy::ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments)
-    : d(new Instance())
+    : d(new Instance)
 {
     addSegments(segments);
 }
@@ -352,7 +332,7 @@ void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegment
         d->needRebuildOrderedSegments = true;
     }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     int numSegmentsAdded = d->segments.size() - sizeBefore;
     if(numSegmentsAdded < newSegments.size())
     {
@@ -401,7 +381,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     typedef QHash<Sector *, Continuity *> SectorContinuityMap;
     SectorContinuityMap scMap;
 
-    foreach(OrderedSegment const &oseg, d->orderedSegments)
+    for(OrderedSegment const &oseg : d->orderedSegments)
     {
         Sector *frontSector = oseg.segment->sectorPtr();
 
@@ -427,13 +407,13 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
         if(!conty.discordSegs.isEmpty())
         {
-            Mesh *extraMesh = 0;
-            Face *face = 0;
+            Mesh *extraMesh = nullptr;
+            Face *face      = nullptr;
 
-            foreach(OrderedSegment const *oseg, conty.discordSegs)
+            for(OrderedSegment const *oseg : conty.discordSegs)
             {
                 LineSegmentSide *lineSeg = oseg->segment;
-                LineSide *mapSide = lineSeg->mapSidePtr();
+                LineSide *mapSide        = lineSeg->mapSidePtr();
                 if(!mapSide) continue;
 
                 if(!extraMesh)
@@ -453,7 +433,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 seg->setLineSideOffset(Vector2d(mapSide->from().origin() - lineSeg->from().origin()).length());
                 seg->setLength(Vector2d(lineSeg->to().origin() - lineSeg->from().origin()).length());
 #else
-                DENG_UNUSED(seg);
+                DENG2_UNUSED(seg);
 #endif
 
                 // Link the new half-edge for this line segment to the head of
@@ -519,7 +499,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
         << continuities.count();
 
-    foreach(Continuity const &conty, continuities)
+    for(Continuity const &conty : continuities)
     {
         conty.debugPrint();
     }

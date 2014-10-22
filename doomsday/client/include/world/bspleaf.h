@@ -51,7 +51,7 @@ public:
      * Construct a new BSP leaf and optionally attribute it to @a sector.
      * Ownership is unaffected.
      */
-    BspLeaf(Sector *sector = 0);
+    explicit BspLeaf(Sector *sector = nullptr);
 
     /**
      * Determines whether a subspace geometry is attributed to the BSP leaf half-space.
@@ -73,7 +73,9 @@ public:
      *
      * @see subspace(), hasSubspace()
      */
-    inline ConvexSubspace *subspacePtr() const { return hasSubspace()? &subspace() : 0; }
+    inline ConvexSubspace *subspacePtr() const {
+        return hasSubspace()? &subspace() : nullptr;
+    }
 
     /**
      * Change the subspace geometry attributed to the BSP leaf.

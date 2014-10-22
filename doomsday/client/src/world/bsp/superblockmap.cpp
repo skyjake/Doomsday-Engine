@@ -1,6 +1,6 @@
-/** @file superblockmap.cpp  BSP line segment block.
+/** @file superblockmap.cpp  BSP line segment blockmap block.
  *
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -29,21 +29,16 @@ using namespace de::bsp;
 
 DENG2_PIMPL_NOREF(LineSegmentBlock)
 {
-    AABox bounds;   ///< Block bounds at the node.
-    All segments;   ///< Line segments contained by the node (not owned).
-    int mapCount;   ///< Running total of map-line segments at/under this node.
-    int partCount;  ///< Running total of partition-line segments at/under this node.
-
-    Instance(AABox const &bounds)
-        : bounds   (bounds)
-        , mapCount (0)
-        , partCount(0)
-    {}
+    AABox bounds;       ///< Block bounds at the node.
+    All segments;       ///< Line segments contained by the node (not owned).
+    int mapCount  = 0;  ///< Running total of map-line segments at/under this node.
+    int partCount = 0;  ///< Running total of partition-line segments at/under this node.
 };
 
-LineSegmentBlock::LineSegmentBlock(AABox const &bounds)
-    : d(new Instance(bounds))
-{}
+LineSegmentBlock::LineSegmentBlock(AABox const &bounds) : d(new Instance)
+{
+    d->bounds = bounds;
+}
 
 AABox const &LineSegmentBlock::bounds() const
 {

@@ -1,7 +1,7 @@
 /** @file bspnode.cpp  World map BSP node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,8 +35,7 @@ DENG2_PIMPL_NOREF(BspNode)
 };
 
 BspNode::BspNode(Partition const &partition, AABoxd const &rightBounds, AABoxd const &leftBounds)
-    : BspElement()
-    , d(new Instance)
+    : d(new Instance)
 {
     d->partition   = partition;
     d->rightBounds = rightBounds;

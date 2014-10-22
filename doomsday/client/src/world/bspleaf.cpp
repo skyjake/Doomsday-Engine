@@ -28,14 +28,13 @@
 using namespace de;
 
 BspLeaf::BspLeaf(Sector *sector)
-    : BspElement()
-    , _sector(sector)
-    , _subspace(0)
+    : _sector  (sector)
+    , _subspace(nullptr)
 {}
 
 bool BspLeaf::hasSubspace() const
 {
-    return _subspace != 0;
+    return _subspace != nullptr;
 }
 
 ConvexSubspace &BspLeaf::subspace() const
@@ -54,7 +53,7 @@ void BspLeaf::setSubspace(ConvexSubspace *newSubspace)
 
     if(hasSubspace())
     {
-        _subspace->setBspLeaf(0);
+        _subspace->setBspLeaf(nullptr);
     }
 
     _subspace = newSubspace;
