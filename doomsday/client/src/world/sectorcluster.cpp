@@ -635,7 +635,7 @@ DENG2_PIMPL(SectorCluster)
 
         // Mark surfaces of the outer edge loop.
         /// @todo What about the special case of a cluster with no outer neighbors? -ds
-        if(!boundaryInfo->uniqueOuterEdges.isEmpty())
+        if(!boundaryData->uniqueOuterEdges.isEmpty())
         {
             HEdge *base = boundaryData->uniqueOuterEdges.first();
             SectorClusterCirculator it(base);

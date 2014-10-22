@@ -19,7 +19,7 @@
 #include "render/shard.h"
 #include <QVector>
 #include <QtAlgorithms>
-#include "con_main.h"
+#include <doomsday/console/var.h>
 #include "BiasIllum"
 #include "BiasTracker"
 #include "SectorCluster"
