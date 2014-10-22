@@ -22,10 +22,9 @@
 #include <QRunnable>
 
 #include "../libcore.h"
+#include "../TaskPool"
 
 namespace de {
-
-class TaskPool;
 
 /**
  * Concurrent task that will be executed asynchronously by a TaskPool. Override
@@ -37,7 +36,6 @@ public:
     Task();
     virtual ~Task() {}
 
-    TaskPool &pool() const;
     void run();
 
     /**
@@ -48,7 +46,7 @@ public:
 private:
     friend class TaskPool;
 
-    TaskPool *_pool;
+    TaskPool::IPool *_pool;
 };
 
 } // namespace de

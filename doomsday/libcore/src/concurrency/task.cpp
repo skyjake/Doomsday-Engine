@@ -22,14 +22,8 @@
 
 namespace de {
 
-Task::Task() : _pool(0)
+Task::Task() : _pool(nullptr)
 {}
-
-TaskPool &Task::pool() const
-{
-    DENG2_ASSERT(_pool != 0);
-    return *_pool;
-}
 
 void Task::run()
 {
@@ -44,7 +38,7 @@ void Task::run()
     }
 
     // Cleanup.
-    if(_pool) _pool->taskFinished(*this);
+    if(_pool) _pool->taskFinishedRunning(*this);
     Log::disposeThreadLog();
 }
 

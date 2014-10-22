@@ -57,6 +57,8 @@ public Font::RichFormat::IStyle
      */
     class CacheEntry
     {
+        bool _needWrap { true };
+        int _wrapWidth { 0 };
         int _height;    ///< Current height of the entry, in pixels.
         int _oldHeight; ///< Previous height, before calling updateVisibility().
 
@@ -92,10 +94,11 @@ public Font::RichFormat::IStyle
             return drawable.isReady();
         }
 
-        void wrap(String const &richText, int width)
+        void setupWrap(String const &richText, int width)
         {
-            drawable.setLineWrapWidth(width);
             drawable.setText(richText);
+            _needWrap = true;
+            _wrapWidth = width;
         }
 
         void rewrap(int width)
@@ -103,8 +106,10 @@ public Font::RichFormat::IStyle
             drawable.setLineWrapWidth(width);
         }
 
-        /// Returns the possible delta in the height of the entry.
-        /// Does not block even though a long wrapping task is in progress.
+        /**
+         * Returns the possible delta in the height of the entry.
+         * Does not block even though a long wrapping task is in progress.
+         */
         int update()
         {
             int const old = _height;
@@ -114,6 +119,15 @@ public Font::RichFormat::IStyle
                 return _height - old;
             }
             return 0;
+        }
+
+        void beginWrap()
+        {
+            if(_needWrap)
+            {
+                drawable.setLineWrapWidth(_wrapWidth);
+                _needWrap = false;
+            }
         }
 
         /**
@@ -127,6 +141,9 @@ public Font::RichFormat::IStyle
          */
         int updateVisibility(int yBottom, Rangei const &visiblePixels)
         {
+            // If the wrapping hasn't been started yet for this item, do so now.
+            beginWrap();
+
             int heightDelta = 0;
 
             // Remember the height we had prior to any updating.
@@ -243,6 +260,7 @@ public Font::RichFormat::IStyle
         void remove(int pos, int n = 1)
         {
             DENG2_GUARD(this);
+            DENG2_ASSERT(pos + n <= _next);
             MemoryLogSink::remove(pos, n);
             _next -= n;
         }
@@ -262,7 +280,26 @@ public Font::RichFormat::IStyle
         {
             DENG2_GUARD(_wrappedEntries);
             if(_wrappedEntries.isEmpty()) return 0;
+            //if(_wrappedEntries.first()->drawable.isBeingWrapped()) return 0;
             return _wrappedEntries.takeFirst();
+        }
+
+        /**
+         * Pauses the sink so that it doesn't produce cached entries any more.
+         * This will allow the widget to catch up.
+         */
+        void setPaused(bool pause)
+        {
+            if(_paused != pause)
+            {
+                _paused = pause;
+                if(!_paused) beginWorkOnNext();
+            }
+        }
+        
+        bool isPaused() const
+        {
+            return _paused;
         }
 
         /**
@@ -270,7 +307,7 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
-            if(!d->formatter) return; // Must have a formatter.
+            if(isPaused() || !d->formatter) return; // Must have a formatter.
 
             DENG2_GUARD(this);
 
@@ -280,10 +317,14 @@ public Font::RichFormat::IStyle
                 String const styled = d->formatter->logEntryToTextLines(ent).at(0);
 
                 CacheEntry *cached = new CacheEntry(*d->font, *d, *d->entryAtlas);
-                cached->wrap(styled, _width);
+                cached->setupWrap(styled, _width);
 
-                DENG2_GUARD(_wrappedEntries);
-                _wrappedEntries << cached;
+                // The cached entry will be passed to the widget when it's ready to
+                // receive new ones.
+                {
+                    DENG2_GUARD(_wrappedEntries);
+                    _wrappedEntries << cached;
+                }
 
                 _next++;
             }
@@ -293,8 +334,8 @@ public Font::RichFormat::IStyle
         LogWidget::Instance *d;
         int _maxEntries;
         int _next;
-        TaskPool _pool;
         int _width;
+        bool _paused { false };
 
         struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
         WrappedEntries _wrappedEntries; ///< New entries possibly created in background threads.
@@ -369,24 +410,14 @@ public Font::RichFormat::IStyle
         clearCache();
     }
 
-    void cancelRewraps()
-    {
-        // Cancel all wraps.
-        /// @todo TextDrawable does not support cancelling.
-    }
-
     void clearCache()
     {
-        cancelRewraps();
-
         entryAtlas->clear();
-        cache.clear();
+        cache.clear(); // Ongoing text wrapping cancelled automatically.
     }
 
     void updateStyle()
     {        
-        // TODO -- stop wrapping tasks in the sink
-
         Style const &st = style();
 
         font           = &self.font();
@@ -555,7 +586,7 @@ public Font::RichFormat::IStyle
     {
         if(visibleRange < 0) return;
 
-        int len = de::max(10, visibleRange.size());
+        int len = de::max(10, visibleRange.size()/2);
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
@@ -593,18 +624,15 @@ public Font::RichFormat::IStyle
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
-        // We must lock the sink during this so no new entries are added.
-        DENG2_GUARD(sink);
-
         // Remove oldest excess entries.
-        int num = sink.entryCount() - sink.maxEntries();
+        int num = cache.size() - sink.maxEntries();
         if(num > 0)
         {
             // There is one sink entry and one cached entry for each log entry.
             sink.remove(0, num);
             for(int i = 0; i < num; ++i)
             {
-                self.modifyContentHeight(-cache[0]->height());
+                self.modifyContentHeight(-cache.first()->height());
                 delete cache.takeFirst();
             }
         }
@@ -646,13 +674,20 @@ public Font::RichFormat::IStyle
         int initialYBottom = contentSize.y + self.scrollPositionY().valuei();
         contentOffsetForDrawing = std::ceil(contentOffset.value());
 
-        Rangei const visiblePixelRange = extendPixelRangeWithPadding(
+        Rangei visiblePixelRange = extendPixelRangeWithPadding(
                     Rangei(-contentOffsetForDrawing, contentSize.y - contentOffsetForDrawing));
+        if(!isVisible())
+        {
+            // The widget is hidden, so there's no point in loading anything into the atlas.
+            visiblePixelRange = Rangei(); // Nothing to be seen.
+        }
 
         for(int attempt = 0; attempt < 2; ++attempt)
         {
             if(entryAtlasFull)
             {
+                // Hopefully releasing some entries will make it possible to fit the
+                // new entries.
                 releaseAllNonVisibleEntries();
                 entryAtlasFull = false;
             }
@@ -688,9 +723,6 @@ public Font::RichFormat::IStyle
 
                 if(entry->isReady() && yBottom + contentOffsetForDrawing <= contentSize.y)
                 {
-                    //gotReady = true;
-
-                    // Rasterize and allocate if needed.
                     entry->make(verts, yBottom);
 
                     // Update the visible range.
@@ -703,6 +735,12 @@ public Font::RichFormat::IStyle
 
                 if(entryAtlasLayoutChanged || entryAtlasFull)
                 {
+                    if(entryAtlasFull)
+                    {
+                        // We're full at the moment so let's delay adding any new
+                        // entries for a while.
+                        sink.setPaused(true);
+                    }
                     goto nextAttempt;
                 }
             }
@@ -731,6 +769,20 @@ nextAttempt:
                 emit self.contentHeightIncreased(heightDelta);
             }
         }
+
+        // We don't need to keep all entries ready for drawing immediately.
+        releaseExcessComposedEntries();
+
+        if(contentOffset.done())
+        {
+            sink.setPaused(false);
+        }
+    }
+
+    bool isVisible() const
+    {
+        Rectanglei vp = self.viewport();
+        return vp.height() > 0 && vp.right() >= 0;
     }
 
     void draw()
@@ -770,9 +822,6 @@ nextAttempt:
 
             GLState::pop();
         }
-
-        // We don't need to keep all entries ready for drawing immediately.
-        releaseExcessComposedEntries();
     }
 };
 

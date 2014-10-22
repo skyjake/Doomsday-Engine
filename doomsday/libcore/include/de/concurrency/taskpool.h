@@ -55,9 +55,20 @@ public:
         HighPriority   = 2
     };
 
+    class IPool
+    {
+    public:
+        virtual void taskFinishedRunning(Task &) = 0;
+    };
+
 public:
     TaskPool();
 
+    /**
+     * Destroys the task pool when all running tasks have finished. This method will
+     * always return immediately and the public-facing TaskPool object will be deleted,
+     * but the private instance will exist until all the tasks have finished running.
+     */
     virtual ~TaskPool();
 
     /**
@@ -84,9 +95,6 @@ signals:
     void allTasksDone();
 
 private:
-    friend class Task;
-    void taskFinished(Task &task);
-
     DENG2_PRIVATE(d)
 };
 

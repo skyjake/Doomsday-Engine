@@ -349,14 +349,25 @@ void Animation::setClock(Clock const *clock)
     _clock = clock;
 }
 
-Time const &Animation::currentTime()
+Time const &Animation::currentTime() // static
 {
     DENG2_ASSERT(_clock != 0);
     if(!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
-    return _clock->time();
+
+    static Time theTime;
+    static duint32 latestTick = 0;
+
+    duint32 const tc = _clock->tickCount();
+    if(latestTick != tc)
+    {
+        theTime = _clock->time();
+        latestTick = tc;
+    }
+
+    return theTime;
 }
 
 Animation Animation::range(Style style, float from, float to, TimeDelta span, TimeDelta delay)

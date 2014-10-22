@@ -343,23 +343,25 @@ static dd_bool Con_CheckExecBuffer(void)
 {
 #define BUFFSIZE 1024 /// @todo Rewrite all of this; use de::String. -jk
 
-    dd_bool allDone;
+//    dd_bool allDone;
     dd_bool ret = true;
-    int     i, count = 0;
+    int     i; //, count = 0;
     char    storage[BUFFSIZE];
 
     storage[255] = 0;
 
-    do                          // We'll keep checking until all is done.
+//    do                          // We'll keep checking until all is done.
     {
-        allDone = true;
+        //allDone = true;
 
-        // Execute the commands marked for this or a previous tic.
+        TimeDelta const now = TimeDelta::sinceStartOfProcess();
+
+        // Execute the commands whose time has come.
         for(i = 0; i < exBuffSize; ++i)
         {
             execbuff_t *ptr = exBuff + i;
 
-            if(!ptr->used || ptr->when > TimeDelta::sinceStartOfProcess())
+            if(!ptr->used || ptr->when > now)
                 continue;
 
             // We'll now execute this command.
@@ -369,17 +371,17 @@ static dd_bool Con_CheckExecBuffer(void)
 
             if(!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
                 ret = false;
-            allDone = false;
+            //allDone = false;
         }
 
-        if(count++ > 100)
-        {            
+//        if(count++ > 100) break; // Don't hang here.
+/*        {
             DENG_ASSERT(!"Execution buffer overflow");
             LOG_SCR_ERROR("Console execution buffer overflow! Everything canceled!");
             Con_ClearExecBuffer();
             break;
-        }
-    } while(!allDone);
+        }*/
+    } //while(!allDone);
 
     return ret;
 #undef BUFFSIZE

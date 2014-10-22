@@ -30,10 +30,7 @@ Lockable::Lockable()
 
 Lockable::~Lockable()
 {    
-    while(isLocked())
-    {
-        unlock();
-    }
+    DENG2_ASSERT(!isLocked()); // You should unlock before deleting!
 }
 
 void Lockable::lock() const
