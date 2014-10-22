@@ -102,14 +102,10 @@ DENG2_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
             }
             else
             {
-                unlock();
                 emit self.allTasksDone();
             }
         }
-        else
-        {
-            unlock();
-        }
+        unlock();
     }
 };
 
