@@ -1,7 +1,7 @@
 /** @file bspnode.h  World map BSP node.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -26,6 +26,13 @@
 #include <de/Error>
 #include <de/aabox.h>
 
+class BspElement
+{
+public:
+    virtual ~BspElement() {}
+    DENG2_AS_IS_METHODS()
+};
+
 /**
  * Represents a node in the map's binary space partition (BSP) tree. Each node
  * defines a partition line which divides the subspace in two, a left child and
@@ -40,91 +47,32 @@
  *
  * @ingroup world
  */
-class BspNode : public de::MapElement
+class BspNode : public BspElement
 {
     DENG2_NO_COPY  (BspNode)
     DENG2_NO_ASSIGN(BspNode)
 
 public:
-    /// An invalid child element was specified. @ingroup errors
-    DENG2_ERROR(InvalidChildError);
-
-    /// Required child element is missing. @ingroup errors
-    DENG2_ERROR(MissingChildError);
-
     /// Child element identifiers:
     enum { Right, Left };
 
 public:
     /**
-     * Construct a new BSP node.
+     * Construct a new BSP node, making a copy of all arguments.
      *
-     * @param partition  Partition line in the map coordinate space which divides
-     *                   the space into two 'child' subspaces.
+     * @param partition    Half-plane partition which splits the parent space
+     *                     into two 'child' half-spaces.
+     * @param rightBounds  Axis-aligned bounding box for the right half-space.
+     * @param leftBounds   Axis-aligned bounding box for the left half-space.
      */
-    BspNode(de::Partition const &partition = de::Partition());
+    BspNode(de::Partition const &partition = de::Partition(),
+            AABoxd const &rightBound       = AABoxd(),
+            AABoxd const &leftBounds       = AABoxd());
 
     /**
      * Returns the space partition line at the node.
      */
     de::Partition const &partition() const;
-
-    /**
-     * Calculates the height of this BSP subtree (note result is not cached).
-     */
-    size_t height() const;
-
-    /**
-     * Returns @c true iff the specified child is configured.
-     */
-    bool hasChild(int left) const;
-
-    /**
-     * Returns @c true iff a @em right child is configured.
-     */
-    inline bool hasRight() const { return hasChild(Right); }
-
-    /**
-     * Returns @c true iff a @em left child is configured.
-     */
-    inline bool hasLeft() const { return hasChild(Left); }
-
-    /**
-     * Returns the specified child of the node.
-     *
-     * @param left  If not @c 0 return the Left child; otherwise the Right child.
-     *
-     * @see hasChild()
-     */
-    de::MapElement &child(int left);
-    de::MapElement const &child(int left) const;
-
-    inline de::MapElement &right() { return child(Right); }
-    inline de::MapElement const &right() const { return child(Right); }
-
-    inline de::MapElement &left() { return child(Left); }
-    inline de::MapElement const &left() const { return child(Left); }
-
-    /**
-     * Returns a pointer to the specified child of the BSP node, which may be
-     * @c 0 if no child is configured.
-     *
-     * @param left  If not @c 0 return the Left child; otherwise the Right child.
-     *
-     * @see hasChild()
-     */
-    inline de::MapElement *childPtr(int left) {
-        return hasChild(left)? &child(left) : 0;
-    }
-    inline de::MapElement const *childPtr(int left) const {
-        return hasChild(left)? &child(left) : 0;
-    }
-
-    void setChild(int left, de::MapElement *newChild);
-
-    inline void setRight(de::MapElement *newChild) { setChild(Right, newChild); }
-
-    inline void setLeft(de::MapElement *newChild) { setChild(Left, newChild); }
 
     /**
      * Returns the axis-aligned bounding box for the specified child, which,

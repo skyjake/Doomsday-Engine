@@ -1,7 +1,7 @@
 /** @file linesighttest.h  World map line of sight testing.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,9 +21,9 @@
 #ifndef DENG_WORLD_LINE_SIGHT_TEST_H
 #define DENG_WORLD_LINE_SIGHT_TEST_H
 
-#include "MapElement"
 #include <de/libcore.h>
 #include <de/Vector>
+#include "world/map.h"
 
 namespace de {
 
@@ -42,6 +42,9 @@ namespace de {
  */
 class LineSightTest
 {
+public:
+    typedef Map::BspTree BspTree;
+
 public:
     /**
      * Constructs a new line (of) sight test.
@@ -65,7 +68,7 @@ public:
      * @return  @c true iff an uninterrupted path exists between the preconfigured
      *          Start and End points of the trace line.
      */
-    bool trace(MapElement const &bspRoot);
+    bool trace(BspTree const &bspRoot);
 
 private:
     DENG2_PRIVATE(d)

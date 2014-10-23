@@ -22,6 +22,7 @@
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 
 #include "BiasDigest"
@@ -92,7 +93,7 @@ DENG2_PIMPL(BiasSource)
         /// @todo Do not assume the current map.
         bspLeaf = &App_WorldSystem().map().bspLeafAt(origin);
 
-        bool newInVoidState = !(bspLeaf->polyContains(origin));
+        bool newInVoidState = !(bspLeaf->hasSubspace() && bspLeaf->subspace().contains(origin));
         if(inVoid != newInVoidState)
         {
             inVoid = newInVoidState;
@@ -278,18 +279,20 @@ bool BiasSource::trackChanges(BiasDigest &changes, uint digestIndex, uint curren
         float const oldIntensity = intensity();
         float newIntensity = 0;
 
-        if(SectorCluster *cluster = d->bspLeaf->clusterPtr())
+        if(ConvexSubspace *subspace = d->bspLeaf->subspacePtr())
         {
+            SectorCluster &cluster = subspace->cluster();
+
             // Lower intensities are useless for light emission.
-            if(cluster->lightSourceIntensity() >= d->maxLight)
+            if(cluster.lightSourceIntensity() >= d->maxLight)
             {
                 newIntensity = d->primaryIntensity;
             }
 
-            if(cluster->lightSourceIntensity() >= d->minLight && d->minLight != d->maxLight)
+            if(cluster.lightSourceIntensity() >= d->minLight && d->minLight != d->maxLight)
             {
                 newIntensity = d->primaryIntensity *
-                    (cluster->lightSourceIntensity() - d->minLight) / (d->maxLight - d->minLight);
+                    (cluster.lightSourceIntensity() - d->minLight) / (d->maxLight - d->minLight);
             }
         }
 

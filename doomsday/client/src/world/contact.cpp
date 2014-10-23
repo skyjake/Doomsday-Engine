@@ -23,6 +23,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include <de/Error>
 #include <de/memoryzone.h>
 
@@ -144,11 +145,11 @@ ContactList::Node *ContactList::newNode(void *object) // static
 }
 
 // Separate contact lists for each BSP leaf and contact type.
-static ContactList *bspLeafContactLists;
+static ContactList *subspaceContactLists;
 
-ContactList &R_ContactList(BspLeaf &bspLeaf, ContactType type)
+ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type)
 {
-    return bspLeafContactLists[bspLeaf.indexInMap() * ContactTypeCount + int( type )];
+    return subspaceContactLists[subspace.indexInMap() * ContactTypeCount + int( type )];
 }
 
 static Contact *contacts;
@@ -186,17 +187,17 @@ static Contact *newContact(void *object, ContactType type)
 void R_InitContactLists(Map &map)
 {
     // Initialize object => BspLeaf contact lists.
-    bspLeafContactLists = (ContactList *)
-        Z_Calloc(map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists),
+    subspaceContactLists = (ContactList *)
+        Z_Calloc(map.subspaceCount() * ContactTypeCount * sizeof(*subspaceContactLists),
                  PU_MAPSTATIC, 0);
 }
 
 void R_DestroyContactLists()
 {
-    if(bspLeafContactLists)
+    if(subspaceContactLists)
     {
-        Z_Free(bspLeafContactLists);
-        bspLeafContactLists = 0;
+        Z_Free(subspaceContactLists);
+        subspaceContactLists = 0;
     }
 }
 
@@ -209,17 +210,17 @@ void R_ClearContactLists(Map &map)
     // Start reusing nodes from the first one in the list.
     ContactList::reset();
 
-    if(bspLeafContactLists)
+    if(subspaceContactLists)
     {
-        std::memset(bspLeafContactLists, 0,
-                    map.bspLeafCount() * ContactTypeCount * sizeof(*bspLeafContactLists));
+        std::memset(subspaceContactLists, 0,
+                    map.subspaceCount() * ContactTypeCount * sizeof(*subspaceContactLists));
     }
 }
 
 void R_AddContact(mobj_t &mobj)
 {
     // BspLeafs with no geometry cannot be contacted (zero world volume).
-    if(Mobj_BspLeafAtOrigin(mobj).hasCluster())
+    if(Mobj_BspLeafAtOrigin(mobj).hasSubspace())
     {
         newContact(&mobj, ContactMobj);
     }
@@ -228,7 +229,7 @@ void R_AddContact(mobj_t &mobj)
 void R_AddContact(Lumobj &lum)
 {
     // BspLeafs with no geometry cannot be contacted (zero world volume).
-    if(lum.bspLeafAtOrigin().hasCluster())
+    if(lum.bspLeafAtOrigin().hasSubspace())
     {
         newContact(&lum, ContactLumobj);
     }
@@ -245,10 +246,10 @@ int R_ContactIterator(int (*callback) (Contact &, void *), void *context)
     return false; // Continue iteration.
 }
 
-int R_BspLeafMobjContactIterator(BspLeaf &bspLeaf,
+int R_SubspaceMobjContactIterator(ConvexSubspace &subspace,
     int (*callback)(mobj_s &, void *), void *context)
 {
-    ContactList &list = R_ContactList(bspLeaf, ContactMobj);
+    ContactList &list = R_ContactList(subspace, ContactMobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<mobj_t *>(node->obj), context))
@@ -257,10 +258,10 @@ int R_BspLeafMobjContactIterator(BspLeaf &bspLeaf,
     return false; // Continue iteration.
 }
 
-int R_BspLeafLumobjContactIterator(BspLeaf &bspLeaf,
+int R_SubspaceLumobjContactIterator(ConvexSubspace &subspace,
     int (*callback)(Lumobj &, void *), void *context)
 {
-    ContactList &list = R_ContactList(bspLeaf, ContactLumobj);
+    ContactList &list = R_ContactList(subspace, ContactLumobj);
     for(ContactList::Node *node = list.begin(); node; node = node->next)
     {
         if(int result = callback(*static_cast<Lumobj *>(node->obj), context))

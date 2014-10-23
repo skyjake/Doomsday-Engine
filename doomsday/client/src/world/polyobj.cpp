@@ -26,8 +26,10 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #ifdef __CLIENT__
 #  include "SectorCluster"
+#  include "Shard"
 #endif
 
 #ifdef __CLIENT__
@@ -57,7 +59,10 @@ static void notifyGeometryChanged(Polyobj &po)
 
             /// @note If polyobjs are allowed to move between sector clusters
             /// then we'll need to revise the bias illumination storage specially.
-            po.bspLeaf().cluster().updateBiasAfterGeometryMove(hedge->mapElement(), LineSide::Middle);
+            if(Shard *shard = po.bspLeaf().subspace().cluster().findShard(hedge->mapElement(), LineSide::Middle))
+            {
+                shard->updateBiasAfterMove();
+            }
         }
     }
 #else // !__CLIENT__
@@ -138,12 +143,13 @@ void Polyobj::unlink()
 {
     if(_bspLeaf)
     {
-        Map &map = _bspLeaf->map();
-
-        _bspLeaf->unlink(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().unlink(*this);
+        }
         _bspLeaf = 0;
 
-        map.unlink(*this);
+        map().unlink(*this);
     }
 }
 
@@ -163,7 +169,10 @@ void Polyobj::link()
 
         // Given the center point determine in which BSP leaf the polyobj resides.
         _bspLeaf = &map().bspLeafAt(avg);
-        _bspLeaf->link(*this);
+        if(_bspLeaf->hasSubspace())
+        {
+            _bspLeaf->subspace().link(*this);
+        }
     }
 }
 
@@ -184,12 +193,12 @@ BspLeaf &Polyobj::bspLeaf() const
 
 bool Polyobj::hasSector() const
 {
-    return hasBspLeaf() && bspLeaf().hasCluster();
+    return hasBspLeaf() && bspLeaf().hasSubspace();
 }
 
 Sector &Polyobj::sector() const
 {
-    return bspLeaf().sector();
+    return *bspLeaf().sectorPtr();
 }
 
 Sector *Polyobj::sectorPtr() const

@@ -1,6 +1,6 @@
-/** @file world/bsp/convexsubspace.h World BSP Convex Subspace.
+/** @file convexsubspaceproxy.h  BSP builder convex subspace proxy.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_WORLD_BSP_CONVEXSUBSPACE_H
-#define DENG_WORLD_BSP_CONVEXSUBSPACE_H
+#ifndef DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
+#define DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
 #include <QList>
 
@@ -72,6 +72,8 @@ typedef QList<OrderedSegment> OrderedSegments;
  * analysis functionality necessary to classify and then separate the segments
  * into unique geometries.
  *
+ * Acts as staging area for the future construction of a ConvexSubspace.
+ *
  * Here infinity (i.e., a subspace containing no segments) is considered to be
  * convex. Accordingly any segments linked to the subspace are @em not "owned"
  * by it.
@@ -79,32 +81,34 @@ typedef QList<OrderedSegment> OrderedSegments;
  * @note Important: It is the user's responsibility to ensure convexity else
  * many of the operations on the set of segments will be illogical.
  *
+ * @todo This functionality could be merged into ConvexSubspace -ds
+ *
  * @ingroup bsp
  */
-class ConvexSubspace
+class ConvexSubspaceProxy
 {
 public:
     /**
-     * Construct an empty convex subspace.
+     * Construct an empty convex subspace proxy.
      */
-    ConvexSubspace();
+    ConvexSubspaceProxy();
 
     /**
-     * Construct a convex subspace from a list of line @a segments.
+     * Construct a convex subspace proxy from a list of line @a segments.
      *
      * @param segments  List of line segments which are assumed to define a
      *                  convex subspace in the plane. Ownership of the segments
      *                  is @em NOT given to the subspace. Note that duplicates
      *                  are pruned automatically.
      */
-    ConvexSubspace(QList<LineSegmentSide *> const &segments);
+    ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments);
 
     /**
      * Construct a convex subspace by duplicating @a other.
      */
-    ConvexSubspace(ConvexSubspace const &other);
+    ConvexSubspaceProxy(ConvexSubspaceProxy const &other);
 
-    ConvexSubspace &operator = (ConvexSubspace const &);
+    ConvexSubspaceProxy &operator = (ConvexSubspaceProxy const &);
 
     /**
      * Returns the total number of segments in the subspace.
@@ -156,7 +160,7 @@ public:
      *
      * @see addOneSegment()
      */
-    inline ConvexSubspace &operator << (LineSegmentSide const &segment) {
+    inline ConvexSubspaceProxy &operator << (LineSegmentSide const &segment) {
         addOneSegment(segment);
         return *this;
     }
@@ -205,4 +209,4 @@ private:
 } // namespace bsp
 } // namespace de
 
-#endif // DENG_WORLD_BSP_CONVEXSUBSPACE_H
+#endif // DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H

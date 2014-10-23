@@ -95,6 +95,7 @@
 
 // Opaque types for public use.
 struct bspleaf_s;
+struct convexsubspace_s;
 struct bspnode_s;
 struct segment_s;
 struct line_s;
@@ -107,21 +108,22 @@ struct vertex_s;
 struct material_s;
 struct interceptor_s;
 
-typedef struct bspleaf_s    BspLeaf;
-typedef struct bspnode_s    BspNode;
-typedef struct line_s       Line;
-typedef struct plane_s      Plane;
-typedef struct sector_s     Sector;
-typedef struct side_s       Side;
-typedef struct sky_s        Sky;
-typedef struct vertex_s     Vertex;
-typedef struct material_s   Material;
-typedef struct interceptor_s Interceptor;
+typedef struct bspleaf_s        BspLeaf;
+typedef struct convexsubspace_s ConvexSubspace;
+typedef struct bspnode_s        BspNode;
+typedef struct line_s           Line;
+typedef struct plane_s          Plane;
+typedef struct sector_s         Sector;
+typedef struct side_s           Side;
+typedef struct vertex_s         Vertex;
+typedef struct material_s       Material;
+typedef struct interceptor_s    Interceptor;
 
 #elif defined __cplusplus
 
 // Foward declarations.
 class BspLeaf;
+class ConvexSubspace;
 class Interceptor;
 class Line;
 class Material;
@@ -417,7 +419,7 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
-    int             (*BL_BoxIterator)(AABoxd const *box, int (*callback) (BspLeaf *, void *), void *context);
+    int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (ConvexSubspace *, void *), void *context);
 
     // Traversers
 
@@ -701,7 +703,7 @@ DENG_API_T(Map);
 #define Polyobj_BoxIterator                 _api_Map.PO_BoxIterator
 #define Polyobj_SetCallback                 _api_Map.PO_SetCallback
 
-#define BspLeaf_BoxIterator                 _api_Map.BL_BoxIterator
+#define Subspace_BoxIterator                _api_Map.SS_BoxIterator
 
 #define P_PathTraverse                      _api_Map.PathTraverse
 #define P_PathTraverse2                     _api_Map.PathTraverse2

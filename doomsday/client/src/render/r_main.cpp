@@ -34,6 +34,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 
 #include <de/GLState>
@@ -119,7 +120,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         }
         else
         {
-            Vector4f const color = spr->data.sprite.bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = spr->data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             float lightLevel = color.w;
@@ -143,7 +144,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.sprite.bspLeaf;
+        lparams.subspace     = spr->data.sprite.bspLeaf->subspacePtr();
         lparams.ambientColor = Vector3f(params->ambientColor);
 
         params->vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -249,7 +250,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         }
         else
         {
-            Vector4f const color = spr->data.model.bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = spr->data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             float lightLevel = color.w;
@@ -272,7 +273,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr->origin);
-        lparams.bspLeaf      = spr->data.model.bspLeaf;
+        lparams.subspace     = spr->data.model.bspLeaf->subspacePtr();
         lparams.ambientColor = Vector3f(vis.light.ambientColor);
         lparams.starkLight   = true;
 

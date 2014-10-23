@@ -676,9 +676,9 @@ static int drawMapLineWorker(void *line, void *uiWidget)
     return false; // Continue iteration.
 }
 
-static int drawMapLinesForBspLeafWorker(BspLeaf *bspLeaf, void *context)
+static int drawMapLinesForSubspaceWorker(ConvexSubspace *subspace, void *context)
 {
-    return P_Iteratep(bspLeaf, DMU_LINE, drawMapLineWorker, context);
+    return P_Iteratep(subspace, DMU_LINE, drawMapLineWorker, context);
 }
 
 /**
@@ -703,16 +703,16 @@ static void drawMapLines(uiwidget_t *obj, int objType, dd_bool addToLists)
     {
         AABoxd aaBox;
         UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
-        BspLeaf_BoxIterator(&aaBox, drawMapLinesForBspLeafWorker, obj);
+        Subspace_BoxIterator(&aaBox, drawMapLinesForSubspaceWorker, obj);
     }
     else
     {
         // No. As the map lists are considered static we want them to contain all
         // walls, not just those visible *now* (note rotation).
-        int i, numBspLeafs = P_Count(DMU_BSPLEAF);
-        for(i = 0; i < numBspLeafs; ++i)
+        int i, numSubspaces = P_Count(DMU_SUBSPACE);
+        for(i = 0; i < numSubspaces; ++i)
         {
-            P_Iteratep(P_ToPtr(DMU_BSPLEAF, i), DMU_LINE, drawMapLineWorker, obj);
+            P_Iteratep(P_ToPtr(DMU_SUBSPACE, i), DMU_LINE, drawMapLineWorker, obj);
         }
     }
 }

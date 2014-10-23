@@ -23,6 +23,7 @@
 
 #include "Mesh"
 
+#include "BspNode"
 #include "Line"
 #include "Polyobj"
 
@@ -40,6 +41,7 @@
 
 #include <doomsday/uri.h>
 
+#include <de/BinaryTree>
 #include <de/Observers>
 #include <de/Vector>
 #include <QList>
@@ -49,7 +51,8 @@
 
 class MapDef;
 class BspLeaf;
-class BspNode;
+class ConvexSubspace;
+class LineBlockmap;
 class Plane;
 class Sector;
 class SectorCluster;
@@ -60,8 +63,6 @@ class Vertex;
 #ifdef __CLIENT__
 class BiasTracker;
 #endif
-
-class LineBlockmap;
 
 namespace de {
 
@@ -93,7 +94,7 @@ public:
     DENG2_ERROR(MissingBlockmapError);
 
     /// Required BSP data is missing. @ingroup errors
-    DENG2_ERROR(MissingBspError);
+    DENG2_ERROR(MissingBspTreeError);
 
     /// Required thinker lists are missing. @ingroup errors
     DENG2_ERROR(MissingThinkersError);
@@ -135,9 +136,7 @@ public:
     typedef QList<Polyobj *> Polyobjs;
     typedef QList<Sector *>  Sectors;
 
-    typedef QList<BspNode *> BspNodes;
-    typedef QList<BspLeaf *> BspLeafs;
-
+    typedef QList<ConvexSubspace *> Subspaces;
     typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
 
 #ifdef __CLIENT__
@@ -149,6 +148,8 @@ public:
 
     typedef QHash<thid_t, mobj_t *> ClMobjHash;
 #endif
+
+    typedef de::BinaryTree<BspElement *> BspTree;
 
 public: /// @todo make private:
     coord_t _globalGravity; // The defined gravity for this map.
@@ -252,16 +253,6 @@ public:
      */
     Sectors const &sectors() const;
 
-    /**
-     * Provides access to the list of BSP nodes for efficient traversal.
-     */
-    BspNodes const &bspNodes() const;
-
-    /**
-     * Provides access to the list of BSP leafs for efficient traversal.
-     */
-    BspLeafs const &bspLeafs() const;
-
     inline int vertexCount() const        { return vertexes().count(); }
 
     inline int lineCount() const          { return lines().count(); }
@@ -272,9 +263,15 @@ public:
 
     inline int sectorCount() const        { return sectors().count(); }
 
-    inline int bspNodeCount() const       { return bspNodes().count(); }
+    /**
+     * Provides access to the subspace list for efficient traversal.
+     */
+    Subspaces const &subspaces() const;
 
-    inline int bspLeafCount() const       { return bspLeafs().count(); }
+    /**
+     * Returns the total number of subspaces in the map.
+     */
+    inline int subspaceCount() const { return subspaces().count(); }
 
     /**
      * Provides access to the SectorCluster map for efficient traversal.
@@ -343,19 +340,19 @@ public:
     Blockmap const &polyobjBlockmap() const;
 
     /**
-     * Provides access to the BSP leaf blockmap.
+     * Provides access to the convex subspace blockmap.
      */
-    Blockmap const &bspLeafBlockmap() const;
+    Blockmap const &subspaceBlockmap() const;
 
     /**
      * Returns @c true iff a BSP tree is available for the map.
      */
-    bool hasBspRoot() const;
+    bool hasBspTree() const;
 
     /**
-     * Returns the root element for the map's BSP tree.
+     * Provides access to map's BSP tree, for efficient traversal.
      */
-    MapElement &bspRoot() const;
+    BspTree const &bspTree() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies
@@ -481,8 +478,8 @@ public:
         return linePathIterator(from, to, LIF_ALL, callback, context);
     }
 
-    int bspLeafBoxIterator(AABoxd const &box,
-        int (*callback) (BspLeaf *bspLeaf, void *context), void *context = 0) const;
+    int subspaceBoxIterator(AABoxd const &box,
+        int (*callback) (ConvexSubspace *subspace, void *context), void *context = 0) const;
 
     /**
      * @note validCount should be incremented before calling this to begin a

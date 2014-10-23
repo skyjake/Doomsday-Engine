@@ -1,6 +1,6 @@
-/** @file partitioner.h World map binary space partitioner.
+/** @file partitioner.h  World map binary space partitioner.
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -27,7 +27,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "world/bsp/bsptreenode.h" /// @todo remove me
+#include "world/map.h"
 
 class Line;
 class Sector;
@@ -64,6 +64,7 @@ public:
     DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
         void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
+    typedef Map::BspTree BspTree;
     typedef QSet<Line *> LineSet;
 
 public:
@@ -82,7 +83,7 @@ public:
     void setSplitCostFactor(int newFactor);
 
     /**
-     * Build a new BSP for the given geometry.
+     * Build a new BspTree for the given geometry.
      *
      * @param lines  Set of lines to construct a BSP for. A copy of the set is
      *               made however the caller must ensure that line data remains
@@ -93,19 +94,18 @@ public:
      *               ensure that the mesh remains accessible until the build
      *               process has completed (ownership is unaffected).
      *
-     * @return  Root tree node of the resultant BSP otherwise @c 0 if no usable
+     * @return  Root tree node of the resultant BSP; otherwise @c 0 if no usable
      *          tree data was produced.
      */
-    BspTreeNode *buildBsp(LineSet const &lines, Mesh &mesh);
+    BspTree *makeBspTree(LineSet const &lines, Mesh &mesh);
 
     /**
      * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
      * Even if construction fails this will return a valid node.
      *
-     * The only time upon which @c 0 is returned is if called prior to calling
-     * build()
+     * The only time upon which @c 0 is returned is when called before @ref build()
      */
-    BspTreeNode *root() const;
+    BspTree *root() const;
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build
@@ -115,39 +115,12 @@ public:
      *
      * @return  Current number of Segments owned by the partitioner.
      */
-    int numSegments();
-
-    /**
-     * Retrieve the number of BspLeafs owned by the partitioner. When the
-     * build completes this number will be the total number of BspLeafs that
-     * were produced during that process. Note that as BspLeaf ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspLeafs owned by the Partitioner.
-     */
-    int numLeafs();
-
-    /**
-     * Retrieve the number of BspNodes owned by the partitioner. When the
-     * build completes this number will be the total number of BspNodes that
-     * were produced during that process. Note that as BspNode ownership is
-     * claimed this number will decrease respectively.
-     *
-     * @return  Current number of BspNodes owned by the partitioner.
-     */
-    int numNodes();
+    int segmentCount();
 
     /**
      * Retrieve the total number of Vertexes produced during the build process.
      */
-    int numVertexes();
-
-    /**
-     * Relinquish ownership of the specified map data element to the caller.
-     *
-     * @param mapElement  Map data element to relinquish ownership of.
-     */
-    void take(MapElement *mapElement);
+    int vertexCount();
 
 private:
     DENG2_PRIVATE(d)

@@ -24,7 +24,7 @@
 #include "Face"
 #include "HEdge"
 
-#include "BspLeaf"
+#include "ConvexSubspace"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"
@@ -150,7 +150,7 @@ void ShadowEdge::prepare(int planeIndex)
 {
     int const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     HEdge const &hedge = *d->leftMostHEdge;
-    SectorCluster const &cluster = hedge.face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const &cluster = hedge.face().mapElementAs<ConvexSubspace>().cluster();
     Plane const &plane = cluster.visPlane(planeIndex);
 
     LineSide const &lineSide = hedge.mapElementAs<LineSideSegment>().lineSide();
@@ -163,9 +163,9 @@ void ShadowEdge::prepare(int planeIndex)
     // in the polygon corner vertices (placement, opacity).
 
     if(hedge.twin().hasFace() &&
-       hedge.twin().face().mapElementAs<BspLeaf>().hasCluster())
+       hedge.twin().face().mapElementAs<ConvexSubspace>().hasCluster())
     {
-        SectorCluster const &backCluster = hedge.twin().face().mapElementAs<BspLeaf>().cluster();
+        SectorCluster const &backCluster = hedge.twin().face().mapElementAs<ConvexSubspace>().cluster();
         Plane const &backPlane = backCluster.visPlane(planeIndex);
         Surface const &wallEdgeSurface =
             lineSide.back().hasSector()? lineSide.surface(planeIndex == Sector::Ceiling? LineSide::Top : LineSide::Bottom)

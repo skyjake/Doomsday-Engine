@@ -1,7 +1,7 @@
 /** @file bspnode.cpp  World map BSP node.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,45 +21,25 @@
 #include "de_base.h"
 #include "world/bspnode.h"
 
-#include <de/Log>
 #include <de/vector1.h> /// @todo Remove me
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(BspNode)
 {
-    /// Space partition (half-plane).
-    Partition partition;
+    Partition partition;  ///< Half-plane space partition.
+    AABoxd rightBounds;   ///< Right half-space bounds.
+    AABoxd leftBounds;    ///< Left half-space bounds.
 
-    /// Right and left child elements for each half space.
-    MapElement *rightChild;
-    MapElement *leftChild;
-
-    /// Right and left bounding boxes for each half space.
-    AABoxd rightAABox;
-    AABoxd leftAABox;
-
-    Instance(Partition const &partition)
-        : partition(partition)
-        , rightChild(0)
-        , leftChild(0)
-    {}
-
-    inline MapElement **childAdr(int left) {
-        return left? &leftChild : &rightChild;
-    }
-
-    inline AABoxd &aaBox(int left) {
-        return left? leftAABox : rightAABox;
-    }
+    inline AABoxd &bounds(int left) { return left? leftBounds : rightBounds; }
 };
 
-BspNode::BspNode(Partition const &partition)
-    : MapElement(DMU_BSPNODE)
-    , d(new Instance(partition))
+BspNode::BspNode(Partition const &partition, AABoxd const &rightBounds, AABoxd const &leftBounds)
+    : d(new Instance)
 {
-    setRightAABox(0);
-    setLeftAABox(0);
+    d->partition   = partition;
+    d->rightBounds = rightBounds;
+    d->leftBounds  = leftBounds;
 }
 
 Partition const &BspNode::partition() const
@@ -67,62 +47,19 @@ Partition const &BspNode::partition() const
     return d->partition;
 }
 
-size_t BspNode::height() const
+AABoxd const &BspNode::childAABox(int which) const
 {
-    DENG2_ASSERT(hasLeft() || hasRight());
-    size_t rHeight = 0;
-    if(hasRight() && right().type() == DMU_BSPNODE)
-        rHeight = right().as<BspNode>().height();
-    size_t lHeight = 0;
-    if(hasLeft() && left().type() == DMU_BSPNODE)
-        lHeight = left().as<BspNode>().height();
-    return (rHeight> lHeight? rHeight : lHeight) + 1;
+    return d->bounds(which);
 }
 
-bool BspNode::hasChild(int left) const
+void BspNode::setChildAABox(int which, AABoxd const *newBounds)
 {
-    return *d->childAdr(left) != 0;
-}
-
-MapElement &BspNode::child(int left)
-{
-    if(MapElement *childElm = *d->childAdr(left))
+    if(newBounds)
     {
-        return *childElm;
-    }
-    /// @throw MissingChildError  The specified child element is missing.
-    throw MissingChildError("BspNode::child", QString("No %1 child is configured").arg(left? "left" : "right"));
-}
-
-MapElement const &BspNode::child(int left) const
-{
-    return const_cast<MapElement &>(const_cast<BspNode *>(this)->child(left));
-}
-
-void BspNode::setChild(int left, MapElement *newChild)
-{
-    if(!newChild || newChild != this)
-    {
-        *d->childAdr(left) = newChild;
-        return;
-    }
-    /// @throw InvalidChildError  Attempted to set a child element to "this" element.
-    throw InvalidChildError("BspNode::setChild", QString("Cannot set \"this\" element as a child of itself"));
-}
-
-AABoxd const &BspNode::childAABox(int left) const
-{
-    return d->aaBox(left);
-}
-
-void BspNode::setChildAABox(int left, AABoxd const *newAABox)
-{
-    if(newAABox)
-    {
-        d->aaBox(left) = *newAABox;
+        d->bounds(which) = *newBounds;
     }
     else
     {
-        d->aaBox(left).clear();
+        d->bounds(which).clear();
     }
 }

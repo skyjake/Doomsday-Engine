@@ -1,7 +1,7 @@
 /** @file viewports.h  Player viewports and related low-level rendering.
  *
- * @author Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @author Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @author Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @author Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,7 +28,7 @@
 #include <de/Matrix>
 #include <de/rect.h>
 
-class BspLeaf;
+class ConvexSubspace;
 struct Generator;
 class Lumobj;
 
@@ -152,18 +152,18 @@ void R_BeginFrame();
 void R_NewSharpWorld();
 
 /**
- * Returns @c true iff the BSP leaf is marked as visible for the current frame.
+ * Returns @c true iff the subspace is marked as visible for the current frame.
  *
- * @see R_ViewerBspLeafMarkVisible()
+ * @see R_ViewerSubspaceMarkVisible()
  */
-bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf);
+bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace);
 
 /**
- * Mark the BSP leaf as visible for the current frame.
+ * Mark the subspace as visible for the current frame.
  *
- * @see R_ViewerBspLeafIsVisible()
+ * @see R_ViewerSubspaceIsVisible()
  */
-void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes = true);
+void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes = true);
 
 /**
  * Returns @c true iff the (particle) generator is marked as visible for the current frame.
@@ -196,7 +196,7 @@ bool R_ViewerLumobjIsHidden(int idx);
  */
 void R_ViewerClipLumobj(Lumobj *lum);
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf);
+void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace);
 
 /**
  * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and

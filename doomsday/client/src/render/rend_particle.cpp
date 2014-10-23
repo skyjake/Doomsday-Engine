@@ -32,6 +32,7 @@
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "Line"
 #include "Plane"
 #include "SectorCluster"
@@ -283,11 +284,13 @@ static int populateSortBuffer(Generator *gen, void *context)
     ParticleInfo const *pinfo = gen->particleInfo();
     for(int p = 0; p < gen->count; ++p, pinfo++)
     {
-        if(pinfo->stage < 0 || !pinfo->bspLeaf)
-            continue;
+        if(pinfo->stage < 0) continue;
+
+        ConvexSubspace *subspace = pinfo->bspLeaf? pinfo->bspLeaf->subspacePtr() : 0;
+        if(!subspace) continue;
 
         // Is the BSP leaf at the particle's origin visible?
-        if(!R_ViewerBspLeafIsVisible(*pinfo->bspLeaf))
+        if(!R_ViewerSubspaceIsVisible(*subspace))
             continue; // No; this particle can't be seen.
 
         // Don't allow zero distance.
@@ -433,7 +436,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
     }
     else
     {
-        Map &map = pinfo->bspLeaf->map();
+        Map &map = pinfo->bspLeaf->subspace().sector().map();
 
         if(useBias && map.hasLightGrid())
         {
@@ -449,7 +452,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
         }
         else
         {
-            Vector4f const color = pinfo->bspLeaf->cluster().lightSourceColorfIntensity();
+            Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             float lightLevel = color.w;
 
@@ -474,7 +477,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
 
         collectaffectinglights_params_t lparams; zap(lparams);
         lparams.origin       = Vector3d(spr.pose.origin);
-        lparams.bspLeaf      = &map.bspLeafAt(lparams.origin);
+        lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
         lparams.ambientColor = Vector3f(spr.light.ambientColor);
 
         spr.light.vLightListIdx = R_CollectAffectingLights(&lparams);
@@ -625,9 +628,9 @@ static void renderParticles(int rtype, bool withBlend)
         {
             // This is a simplified version of sectorlight (no distance
             // attenuation or range compression).
-            if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+            if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
             {
-                float const lightLevel = cluster->lightSourceIntensity();
+                float const lightLevel = subspace->cluster().lightSourceIntensity();
                 color *= Vector4f(lightLevel, lightLevel, lightLevel, 1);
             }
         }
@@ -661,10 +664,11 @@ static void renderParticles(int rtype, bool withBlend)
         bool nearWall = (pinfo->contact && !pinfo->mov[VX] && !pinfo->mov[VY]);
 
         bool nearPlane = false;
-        if(SectorCluster *cluster = pinfo->bspLeaf->clusterPtr())
+        if(ConvexSubspace *subspace = pinfo->bspLeaf->subspacePtr())
         {
-            if(FLT2FIX(cluster->  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
-               FLT2FIX(cluster->visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[VZ])
+            SectorCluster &cluster = subspace->cluster();
+            if(FLT2FIX(cluster.  visFloor().heightSmoothed()) + 2 * FRACUNIT >= pinfo->origin[VZ] ||
+               FLT2FIX(cluster.visCeiling().heightSmoothed()) - 2 * FRACUNIT <= pinfo->origin[VZ])
             {
                 nearPlane = true;
             }

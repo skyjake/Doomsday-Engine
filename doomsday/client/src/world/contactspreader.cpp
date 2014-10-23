@@ -25,6 +25,7 @@
 
 #include "BspLeaf"
 #include "Contact"
+#include "ConvexSubspace"
 #include "Sector"
 #include "SectorCluster"
 #include "Surface"
@@ -110,25 +111,24 @@ struct ContactSpreader
 
 private:
     /**
-     * Link the contact in all BspLeafs which touch the linked object (tests are
-     * done with bounding boxes and the BSP leaf spread test).
+     * Link the contact in all non-degenerate subspaces which touch the linked
+     * object (tests are done with subspace bounding boxes and the spread test).
      *
      * @param contact  Contact to be spread.
      */
     void spreadContact(Contact &contact)
     {
-        BspLeaf &bspLeaf = contact.objectBspLeafAtOrigin();
-        DENG2_ASSERT(bspLeaf.hasCluster()); // Sanity check.
+        ConvexSubspace &subspace = contact.objectBspLeafAtOrigin().subspace();
 
-        R_ContactList(bspLeaf, contact.type()).link(&contact);
+        R_ContactList(subspace, contact.type()).link(&contact);
 
         // Spread to neighboring BSP leafs.
-        bspLeaf.setValidCount(++validCount);
+        subspace.setValidCount(++validCount);
 
         _spread.contact      = &contact;
         _spread.contactAABox = contact.objectAABox();
 
-        spreadInBspLeaf(bspLeaf);
+        spreadInSubspace(subspace);
     }
 
     void maybeSpreadOverEdge(HEdge *hedge)
@@ -137,26 +137,25 @@ private:
 
         if(!hedge) return;
 
-        BspLeaf &leaf = hedge->face().mapElementAs<BspLeaf>();
-        SectorCluster &cluster = leaf.cluster();
+        ConvexSubspace &subspace = hedge->face().mapElementAs<ConvexSubspace>();
+        SectorCluster &cluster   = subspace.cluster();
 
         // There must be a back BSP leaf to spread to.
-        if(!hedge->hasTwin()) return;
-        if(!hedge->twin().hasFace()) return;
+        if(!hedge->hasTwin() || !hedge->twin().hasFace() || !hedge->twin().face().hasMapElement())
+            return;
 
-        BspLeaf &backLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-        if(!backLeaf.hasCluster()) return;
-
-        SectorCluster &backCluster = backLeaf.cluster();
+        ConvexSubspace &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        SectorCluster &backCluster   = backSubspace.cluster();
 
         // Which way does the spread go?
-        if(!(leaf.validCount() == validCount && backLeaf.validCount() != validCount))
+        if(!(subspace.validCount() == validCount &&
+             backSubspace.validCount() != validCount))
         {
             return; // Not eligible for spreading.
         }
 
         // Is the leaf on the back side outside the origin's AABB?
-        AABoxd const &aaBox = backLeaf.poly().aaBox();
+        AABoxd const &aaBox = backSubspace.poly().aaBox();
         if(aaBox.maxX <= _spread.contactAABox.minX || aaBox.minX >= _spread.contactAABox.maxX ||
            aaBox.maxY <= _spread.contactAABox.minY || aaBox.minY >= _spread.contactAABox.maxY)
             return;
@@ -234,33 +233,30 @@ private:
         }
 
         // During the next step this contact will spread from the back leaf.
-        backLeaf.setValidCount(validCount);
+        backSubspace.setValidCount(validCount);
 
-        R_ContactList(backLeaf, _spread.contact->type()).link(_spread.contact);
+        R_ContactList(backSubspace, _spread.contact->type()).link(_spread.contact);
 
-        spreadInBspLeaf(backLeaf);
+        spreadInSubspace(backSubspace);
     }
 
     /**
-     * Attempt to spread the obj from the given contact from the source
-     * BspLeaf and into the (relative) back BspLeaf.
+     * Attempt to spread the obj from the given contact from the source subspace
+     * and into the (relative) back subsapce.
      *
-     * @param bspLeaf  BspLeaf to attempt to spread over to.
+     * @param subspace  Convex subspace to attempt to spread over to.
      *
      * @return  Always @c true. (This function is also used as an iterator.)
      */
-    void spreadInBspLeaf(BspLeaf &bspLeaf)
+    void spreadInSubspace(ConvexSubspace &subspace)
     {
-        if(bspLeaf.hasCluster())
+        HEdge *base = subspace.poly().hedge();
+        HEdge *hedge = base;
+        do
         {
-            HEdge *base = bspLeaf.poly().hedge();
-            HEdge *hedge = base;
-            do
-            {
-                maybeSpreadOverEdge(hedge);
+            maybeSpreadOverEdge(hedge);
 
-            } while((hedge = &hedge->next()) != base);
-        }
+        } while((hedge = &hedge->next()) != base);
     }
 
     static int spreadContactWorker(void *contact, void *context)

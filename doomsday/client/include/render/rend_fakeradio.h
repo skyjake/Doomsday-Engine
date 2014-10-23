@@ -42,6 +42,8 @@
 
 #include "render/rendpoly.h" // r_vertex_t
 
+class ConvexSubspace;
+
 /**
  * FakeRadio shadow data.
  * @ingroup render
@@ -142,10 +144,10 @@ void Rend_RadioWallSection(de::WallEdge const &leftEdge, de::WallEdge const &rig
     float shadowDark, float shadowSize);
 
 /**
- * Render FakeRadio for the given BSP leaf. Draws all shadow geometry linked to the
- * BspLeaf, that has not already been rendered.
+ * Render FakeRadio for the given subspace. Draws all shadow geometry linked to
+ * the ConvexSubspace, that has not already been rendered.
  */
-void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf);
+void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace);
 
 /**
  * Render the shadow poly vertices, for debug.

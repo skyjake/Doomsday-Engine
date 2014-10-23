@@ -1,9 +1,9 @@
-/** @file world/bsp/linesegment.h World BSP Line Segment.
+/** @file linesegment.h  World BSP Line Segment.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -39,8 +39,7 @@
 namespace de {
 namespace bsp {
 
-class ConvexSubspace;
-class SuperBlock;
+class ConvexSubspaceProxy;
 
 /**
  * LineRelationship delineates the possible logical relationships between two
@@ -175,9 +174,9 @@ public:
 
         /**
          * Returns a pointer to the map LineSide attributed to this side of the
-         * line segment; otherwise @c 0
+         * line segment; otherwise @c nullptr
          */
-        inline LineSide *mapSidePtr() const { return hasMapSide()? &mapSide() : 0; }
+        inline LineSide *mapSidePtr() const { return hasMapSide()? &mapSide() : nullptr; }
 
         /**
          * Change the map LineSide attributed to the "this" side of the line
@@ -278,18 +277,18 @@ public:
         inline void setRight(Side *newRight) { setNeighbor(Right, newRight); }
 
         /**
-         * Returns the superblock that contains "this" side of the line segment;
-         * otherwise @c 0 if not contained.
+         * Returns the line segment block tree node that contains "this" side of
+         * the line segment; otherwise @c 0 if not contained.
          */
-        SuperBlock *bmapBlockPtr() const;
+        /*LineSegmentBlockTreeNode*/ void *blockTreeNodePtr() const;
 
         /**
-         * Change the blockmap block to which "this" side of the line segment is
-         * associated.
+         * Change the line segment block tree node to which "this" side of the
+         * line segment is associated.
          *
-         * @param newBMapBlock  New blockmap block. Can be @c 0.
+         * @param newBMapBlock  New blockmap block. Use @c nullptr to clear.
          */
-        void setBMapBlock(SuperBlock *newBMapBlock);
+        void setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode);
 
         /**
          * Returns @c true iff a map sector is attributed to "this" side of the
@@ -306,17 +305,17 @@ public:
 
         /**
          * Returns a pointer to the Sector attributed to "this" side of the line
-         * segment; otherwise @c 0.
+         * segment; otherwise @c nullptr.
          *
          * @see hasSector()
          */
-        inline Sector *sectorPtr() const { return hasSector()? &sector() : 0; }
+        inline Sector *sectorPtr() const { return hasSector()? &sector() : nullptr; }
 
         /**
          * Change the sector attributed to "this" side of the line segment.
          *
          * @param newSector  New sector to attribute. Ownership is unaffected.
-         *                   Can be @c 0.
+         *                   Use @c nullptr to clear.
          */
         void setSector(Sector *newSector);
 
@@ -375,7 +374,8 @@ public:
          * @param toDist    Perpendicular distance from the "to" vertex.
          *                  Can be @c 0.
          */
-        void distance(Side const &other, coord_t *fromDist = 0, coord_t *toDist = 0) const;
+        void distance(Side const &other, coord_t *fromDist = nullptr,
+                      coord_t *toDist = nullptr) const;
 
         /**
          * Determine the logical relationship between "this" line segment side
@@ -428,7 +428,7 @@ public:
          *
          * @see hasHEdge()
          */
-        inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : 0; }
+        inline HEdge *hedgePtr() const { return hasHEdge()? &hedge() : nullptr; }
 
         /**
          * Change the built half-edge linked to "this" side of the line segment.
@@ -440,19 +440,19 @@ public:
         void setHEdge(HEdge *newHEdge);
 
         /**
-         * Returns a pointer to the ConvexSubspace to which "this" side of the
+         * Returns a pointer to the ConvexSubspaceProxy to which "this" side of the
          * line segment is attributed. May return @c 0 if not yet attributed.
          */
-        ConvexSubspace *convexSubspace() const;
+        ConvexSubspaceProxy *convexSubspace() const;
 
         /**
          * Change the convex subspace to which "this" side of the line segment
          * is attributed.
          *
-         * @param newConvexSubspace  ConvexSubspace to attribute. Can be @c 0
-         *                           (to clear the attribution).
+         * @param newConvexSubspace  ConvexSubspace to attribute. Use @c nullptr to
+         *                           clear the attribution.
          */
-        void setConvexSubspace(ConvexSubspace *newConvexSubspace);
+        void setConvexSubspace(ConvexSubspaceProxy *newConvexSubspace);
 
         /**
          * To be called to update precalculated vectors, distances, etc...

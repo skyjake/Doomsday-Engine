@@ -23,10 +23,8 @@
 #include "de_play.h"
 #include "de_network.h"
 
-#include "BspLeaf"
-#include "SectorCluster"
-
 #include "world/map.h"
+#include "SectorCluster"
 
 using namespace de;
 
@@ -125,7 +123,7 @@ dd_bool P_IsInVoid(player_t *player)
             return true;
         mobj_t *mo = ddpl->mo;
 
-        if(!Mobj_HasCluster(*mo))
+        if(!Mobj_HasSubspace(*mo))
             return true;
         SectorCluster &cluster = Mobj_Cluster(*mo);
 

@@ -30,6 +30,7 @@
 #include "world/thinkers.h"
 #include "client/cl_mobj.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
 
@@ -442,10 +443,10 @@ int Generator::newParticle()
          * Choosing the XY spot is a bit more difficult.
          * But we must be fast and only sufficiently accurate.
          *
-         * @todo Nothing prevents spawning on the wrong side (or inside)
-         * of one-sided walls (large diagonal BSP leafs!).
+         * @todo Nothing prevents spawning on the wrong side (or inside) of one-sided
+         * walls (large diagonal subspaces!).
          */
-        BspLeaf *bspLeaf;
+        ConvexSubspace *subspace = 0;
         for(int i = 0; i < 5; ++i) // Try a couple of times (max).
         {
             float x = sector->aaBox().minX +
@@ -453,33 +454,34 @@ int Generator::newParticle()
             float y = sector->aaBox().minY +
                 RNG_RandFloat() * (sector->aaBox().maxY - sector->aaBox().minY);
 
-            bspLeaf = &map().bspLeafAt(Vector2d(x, y));
-            if(bspLeaf->sectorPtr() == sector) break;
+            subspace = map().bspLeafAt(Vector2d(x, y)).subspacePtr();
+            if(subspace && sector == &subspace->sector())
+                break;
 
-            bspLeaf = 0;
+            subspace = 0;
         }
 
-        if(!bspLeaf || !bspLeaf->hasPoly())
+        if(!subspace)
         {
             pinfo->stage = -1;
             return -1;
         }
 
-        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
+        AABoxd const &subAABox = subspace->poly().aaBox();
 
         // Try a couple of times to get a good random spot.
         int tries;
         for(tries = 0; tries < 10; ++tries) // Max this many tries before giving up.
         {
-            float x = leafAABox.minX +
-                RNG_RandFloat() * (leafAABox.maxX - leafAABox.minX);
-            float y = leafAABox.minY +
-                RNG_RandFloat() * (leafAABox.maxY - leafAABox.minY);
+            float x = subAABox.minX +
+                RNG_RandFloat() * (subAABox.maxX - subAABox.minX);
+            float y = subAABox.minY +
+                RNG_RandFloat() * (subAABox.maxY - subAABox.minY);
 
             pinfo->origin[VX] = FLT2FIX(x);
             pinfo->origin[VY] = FLT2FIX(y);
 
-            if(&map().bspLeafAt(Vector2d(x, y)) == bspLeaf)
+            if(subspace == map().bspLeafAt(Vector2d(x, y)).subspacePtr())
                 break; // This is a good place.
         }
 
@@ -514,7 +516,7 @@ int Generator::newParticle()
         pinfo->bspLeaf = &map().bspLeafAt(ptOrigin);
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             pinfo->stage = -1;
             return -1;
@@ -675,7 +677,7 @@ static int touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
 
 float Generator::particleZ(ParticleInfo const &pinfo) const
 {
-    SectorCluster &cluster = pinfo.bspLeaf->cluster();
+    SectorCluster &cluster = pinfo.bspLeaf->subspace().cluster();
     if(pinfo.origin[VZ] == DDMAXINT)
     {
         return cluster.visCeiling().heightSmoothed() - 2;
@@ -832,7 +834,7 @@ void Generator::moveParticle(int index)
     bool zBounce = false, hitFloor = false;
     if(pinfo->origin[VZ] != DDMININT && pinfo->origin[VZ] != DDMAXINT && pinfo->bspLeaf)
     {
-        SectorCluster &cluster = pinfo->bspLeaf->cluster();
+        SectorCluster &cluster = pinfo->bspLeaf->subspace().cluster();
         if(z > FLT2FIX(cluster.visCeiling().heightSmoothed()) - hardRadius)
         {
             // The Z is through the roof!
@@ -1019,7 +1021,7 @@ void Generator::moveParticle(int index)
         pinfo->bspLeaf = &map().bspLeafAt(Vector2d(FIX2FLT(x), FIX2FLT(y)));
 
         // A BSP leaf with no geometry is not a suitable place for a particle.
-        if(!pinfo->bspLeaf->hasPoly())
+        if(!pinfo->bspLeaf->hasSubspace())
         {
             // Kill the particle.
             pinfo->stage = -1;

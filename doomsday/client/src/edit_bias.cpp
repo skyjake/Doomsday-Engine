@@ -26,6 +26,7 @@
 
 #include "world/map.h"
 #include "world/p_players.h" // viewPlayer
+#include "ConvexSubspace"
 #include "Hand"
 #include "HueCircle"
 #include "render/viewports.h"
@@ -585,12 +586,12 @@ static void drawLightGauge(Vector2i const &origin, int height = 255)
     else
         source = map.biasSourceNear(hand.origin());
 
-    if(SectorCluster *cluster = source->bspLeafAtOrigin().clusterPtr())
+    if(ConvexSubspace *subspace = source->bspLeafAtOrigin().subspacePtr())
     {
-        if(lastCluster != cluster)
+        if(subspace->hasCluster() && lastCluster != subspace->clusterPtr())
         {
-            minLevel = maxLevel = cluster->lightSourceIntensity();
-            lastCluster = cluster;
+            lastCluster = &subspace->cluster();
+            minLevel = maxLevel = lastCluster->lightSourceIntensity();
         }
     }
 

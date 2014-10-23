@@ -35,6 +35,7 @@
 
 #include "BspLeaf"
 #include "BspNode"
+#include "ConvexSubspace"
 #include "Line"
 #include "Polyobj"
 #include "Sector"
@@ -127,16 +128,34 @@ DENG2_PIMPL(Map)
 
     Mesh mesh;      ///< All map geometries.
 
-    /// Element LUTs:
     Sectors sectors;
     Lines lines;
     Polyobjs polyobjs;
 
-    /// BSP data structure:
-    MapElement *bspRoot;
-    BspNodes bspNodes;
-    BspLeafs bspLeafs;
+    struct Bsp
+    {
+        BspTree *tree; ///< Owns the BspElements.
 
+
+        Bsp() : tree(0) {}
+        ~Bsp() { clear(); }
+
+        void clear()
+        {
+            if(!tree) return;
+            tree->traversePostOrder(clearUserDataWorker);
+            delete tree; tree = 0;
+        }
+
+    private:
+        static int clearUserDataWorker(BspTree &subtree, void *)
+        {
+            delete subtree.userData();
+            return 0;
+        }
+    } bsp;
+
+    Subspaces subspaces;
     SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
@@ -145,11 +164,10 @@ DENG2_PIMPL(Map)
 
     EntityDatabase entityDatabase;
 
-    /// Blockmaps:
     QScopedPointer<Blockmap> mobjBlockmap;
     QScopedPointer<Blockmap> polyobjBlockmap;
     QScopedPointer<LineBlockmap> lineBlockmap;
-    QScopedPointer<Blockmap> bspLeafBlockmap;
+    QScopedPointer<Blockmap> subspaceBlockmap;
 
 #ifdef __CLIENT__
     struct ContactBlockmap : public Blockmap
@@ -298,7 +316,6 @@ DENG2_PIMPL(Map)
     Instance(Public *i)
         : Base            (i)
         , editingEnabled  (true)
-        , bspRoot         (0)
         , lineLinks       (0)
 #ifdef __CLIENT__
         , skyFloorHeight  (DDMAXFLOAT)
@@ -323,9 +340,9 @@ DENG2_PIMPL(Map)
         thinkers.reset();
 
         qDeleteAll(clusters);
+        qDeleteAll(subspaces);
         qDeleteAll(sectors);
-        qDeleteAll(bspNodes);
-        qDeleteAll(bspLeafs);
+
         foreach(Polyobj *polyobj, polyobjs)
         {
             polyobj->~Polyobj();
@@ -560,79 +577,15 @@ DENG2_PIMPL(Map)
         }
     }
 
-    void collateBspElements(bsp::Partitioner &partitioner, BspTreeNode &tree)
-    {
-        if(tree.isLeaf())
-        {
-            // Take ownership of the BspLeaf.
-            DENG2_ASSERT(tree.userData() != 0);
-            BspLeaf &leaf = tree.userData()->as<BspLeaf>();
-            partitioner.take(&leaf);
-
-            // Add this BspLeaf to the LUT.
-            leaf.setIndexInMap(bspLeafs.count());
-            bspLeafs.append(&leaf);
-
-            if(!leaf.hasParent())
-            {
-                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                    << &leaf << (leaf.hasPoly()? leaf.poly().hedgeCount() : 0);
-
-                // Attribute this leaf directly to the map.
-                leaf.setMap(thisPublic);
-            }
-
-#ifdef DENG_DEBUG
-            if(leaf.hasPoly())
-            {
-                // See if we received a partial geometry...
-                int discontinuities = 0;
-                HEdge *hedge = leaf.poly().hedge();
-                do
-                {
-                    if(hedge->next().origin() != hedge->twin().origin())
-                    {
-                        discontinuities++;
-                    }
-                } while((hedge = &hedge->next()) != leaf.poly().hedge());
-
-                if(discontinuities)
-                {
-                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                                "is not contiguous (%i gaps/overlaps).\n%s")
-                        << &leaf << leaf.poly().center().asText()
-                        << (leaf.hasParent()? leaf.parent().as<Sector>().indexInArchive() : -1)
-                        << discontinuities
-                        << leaf.poly().description();
-                }
-            }
-#endif
-
-            return;
-        }
-        // Else; a node.
-
-        // Take ownership of this BspNode.
-        DENG2_ASSERT(tree.userData() != 0);
-        BspNode &node = tree.userData()->as<BspNode>();
-        partitioner.take(&node);
-
-        // Add this BspNode to the LUT.
-        node.setMap(thisPublic);
-        node.setIndexInMap(bspNodes.count());
-        bspNodes.append(&node);
-    }
-
     /**
      * Build a new BSP tree.
      *
      * @pre Map line bounds have been determined and a line blockmap constructed.
      */
-    bool buildBsp()
+    bool buildBspTree()
     {
-        DENG2_ASSERT(bspRoot == 0);
-        DENG2_ASSERT(bspLeafs.isEmpty());
-        DENG2_ASSERT(bspNodes.isEmpty());
+        DENG2_ASSERT(bsp.tree == 0);
+        DENG2_ASSERT(subspaces.isEmpty());
 
         // It begins...
         Time begunAt;
@@ -649,13 +602,13 @@ DENG2_PIMPL(Map)
         int nextVertexOrd = mesh.vertexCount();
 
         // Determine the set of lines for which we will build a BSP.
-        QSet<Line *> linesToBuildBspFor = QSet<Line *>::fromList(lines);
+        QSet<Line *> linesToBuildFor = QSet<Line *>::fromList(lines);
 
         // Polyobj lines should be excluded.
         foreach(Polyobj *po, polyobjs)
         foreach(Line *line, po->lines())
         {
-            linesToBuildBspFor.remove(line);
+            linesToBuildFor.remove(line);
         }
 
         try
@@ -664,15 +617,14 @@ DENG2_PIMPL(Map)
             bsp::Partitioner partitioner(bspSplitFactor);
             partitioner.audienceForUnclosedSectorFound += this;
 
-            // Build a BSP!
-            BspTreeNode *rootNode = partitioner.buildBsp(linesToBuildBspFor, mesh);
+            // Build a new BSP tree.
+            bsp.tree = partitioner.makeBspTree(linesToBuildFor, mesh);
+            DENG2_ASSERT(bsp.tree != 0);
 
-            LOG_MAP_VERBOSE("BSP built: %d Nodes, %d Leafs, %d Segments and %d Vertexes. "
-                            "Tree balance is %d:%d.")
-                    << partitioner.numNodes()    << partitioner.numLeafs()
-                    << partitioner.numSegments() << partitioner.numVertexes()
-                    << (rootNode->isLeaf()? 0 : rootNode->right().height())
-                    << (rootNode->isLeaf()? 0 : rootNode->left().height());
+            LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes.")
+                    << bsp.tree->summary()
+                    << partitioner.segmentCount()
+                    << partitioner.vertexCount();
 
             // Attribute an index to any new vertexes.
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
@@ -682,28 +634,59 @@ DENG2_PIMPL(Map)
                 vtx->setIndexInMap(i);
             }
 
-            /*
-             * Take ownership of all the built map data elements.
-             */
-            bspRoot = rootNode->userData(); // We'll formally take ownership shortly...
-
 #ifdef DENG2_QT_4_7_OR_NEWER
-            bspNodes.reserve(partitioner.numNodes());
-            bspLeafs.reserve(partitioner.numLeafs());
+            /// @todo Determine the actual number of subspaces needed.
+            subspaces.reserve(bsp.tree->leafCount());
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspTreeNode *cur = rootNode;
-            BspTreeNode *prev = 0;
+            BspTree const *cur = bsp.tree;
+            BspTree const *prev = 0;
             while(cur)
             {
                 while(cur)
                 {
                     if(cur->userData())
                     {
-                        // Acquire ownership of and collate all map data elements
-                        // at this node of the tree.
-                        collateBspElements(partitioner, *cur);
+                        if(cur->isLeaf())
+                        {
+                            BspLeaf &leaf = cur->userData()->as<BspLeaf>();
+                            if(!leaf.sectorPtr())
+                            {
+                                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
+                            }
+
+                            if(leaf.hasSubspace())
+                            {
+                                // Add this subspace to the LUT.
+                                ConvexSubspace &subspace = leaf.subspace();
+                                subspace.setIndexInMap(subspaces.count());
+                                subspaces.append(&subspace);
+
+#ifdef DENG_DEBUG // See if we received a partial geometry...
+                                int discontinuities = 0;
+                                HEdge *hedge = subspace.poly().hedge();
+                                do
+                                {
+                                    if(hedge->next().origin() != hedge->twin().origin())
+                                    {
+                                        discontinuities++;
+                                    }
+                                } while((hedge = &hedge->next()) != subspace.poly().hedge());
+
+                                if(discontinuities)
+                                {
+                                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                                                "is not contiguous (%i gaps/overlaps).\n%s")
+                                        << &leaf << subspace.poly().center().asText()
+                                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+                                        << discontinuities
+                                        << subspace.poly().description();
+                                }
+#endif
+                            }
+                        }
                     }
 
                     if(prev == cur->parentPtr())
@@ -742,11 +725,11 @@ DENG2_PIMPL(Map)
         // How much time did we spend?
         LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
 
-        return bspRoot != 0;
+        return bsp.tree != 0;
     }
 
     /**
-     * (Re)Build BSP leaf clusters for the sector.
+     * (Re)Build subspace clusters for the sector.
      */
     void buildClusters(Sector &sector)
     {
@@ -754,54 +737,51 @@ DENG2_PIMPL(Map)
         while(it != clusters.end() && it.key() == &sector) { delete *it; }
         clusters.remove(&sector);
 
-        typedef QList<BspLeaf *> BspLeafs;
-        typedef QList<BspLeafs> BspLeafSets;
-        BspLeafSets bspLeafSets;
+        typedef QList<ConvexSubspace *> Subspaces;
+        typedef QList<Subspaces> SubspaceSets;
+        SubspaceSets subspaceSets;
 
         /*
-         * Separate the BSP leafs into edge-adjacency clusters. We'll do this by
-         * starting with a set per BSP leaf and then keep merging these sets until
+         * Separate the subspaces into edge-adjacency clusters. We'll do this by
+         * starting with a set per subspace and then keep merging these sets until
          * no more shared edges are found.
          */
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(ConvexSubspace *subspace, subspaces)
         {
-            if(&bspLeaf->parent().as<Sector>() != &sector)
-                continue;
-
-            // BSP leaf with no geometry are excluded.
-            if(!bspLeaf->hasPoly())
-                continue;
-
-            bspLeafSets.append(BspLeafs());
-            bspLeafSets.last().append(bspLeaf);
+            if(subspace->bspLeaf().sectorPtr() == &sector)
+            {
+                subspaceSets.append(Subspaces());
+                subspaceSets.last().append(subspace);
+            }
         }
 
-        if(bspLeafSets.isEmpty()) return;
+        if(subspaceSets.isEmpty()) return;
 
-        // Merge sets whose BSP leafs share a common edge.
-        while(bspLeafSets.count() > 1)
+        // Merge sets whose subspaces share a common edge.
+        while(subspaceSets.count() > 1)
         {
             bool didMerge = false;
-            for(int i = 0; i < bspLeafSets.count(); ++i)
-            for(int k = 0; k < bspLeafSets.count(); ++k)
+            for(int i = 0; i < subspaceSets.count(); ++i)
+            for(int k = 0; k < subspaceSets.count(); ++k)
             {
                 if(i == k) continue;
 
-                foreach(BspLeaf *leaf, bspLeafSets[i])
+                foreach(ConvexSubspace *subspace, subspaceSets[i])
                 {
-                    HEdge *baseHEdge = leaf->poly().hedge();
+                    HEdge *baseHEdge = subspace->poly().hedge();
                     HEdge *hedge = baseHEdge;
                     do
                     {
-                        if(hedge->twin().hasFace())
+                        if(hedge->twin().hasFace() &&
+                           hedge->twin().face().hasMapElement())
                         {
-                            BspLeaf &otherLeaf = hedge->twin().face().mapElementAs<BspLeaf>();
-                            if(&otherLeaf.parent() == &sector &&
-                               bspLeafSets[k].contains(&otherLeaf))
+                            ConvexSubspace &otherSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+                            if(otherSubspace.bspLeaf().sectorPtr() == &sector &&
+                               subspaceSets[k].contains(&otherSubspace))
                             {
                                 // Merge k into i.
-                                bspLeafSets[i].append(bspLeafSets[k]);
-                                bspLeafSets.removeAt(k);
+                                subspaceSets[i].append(subspaceSets[k]);
+                                subspaceSets.removeAt(k);
 
                                 // Compare the next pair.
                                 if(i >= k) i -= 1;
@@ -823,10 +803,10 @@ DENG2_PIMPL(Map)
         // Clustering complete.
 
         // Build clusters.
-        foreach(BspLeafs const &bspLeafSet, bspLeafSets)
+        foreach(Subspaces const &subspaceSet, subspaceSets)
         {
-            // BSP leaf ownership is not given to the cluster.
-            clusters.insert(&sector, new SectorCluster(bspLeafSet));
+            // Subspace ownership is not given to the cluster.
+            clusters.insert(&sector, new SectorCluster(subspaceSet));
         }
     }
 
@@ -1000,29 +980,25 @@ DENG2_PIMPL(Map)
     }
 
     /**
-     * Construct an initial (empty) BSP leaf blockmap.
+     * Construct an initial (empty) convex subspace blockmap.
      *
      * @pre Coordinate space bounds have already been determined.
      */
-    void initBspLeafBlockmap(ddouble margin = 8)
+    void initSubspaceBlockmap(ddouble margin = 8)
     {
         // Setup the blockmap area to enclose the whole map, plus a margin
         // (margin is needed for a map that fits entirely inside one blockmap cell).
-        bspLeafBlockmap.reset(
+        subspaceBlockmap.reset(
             new Blockmap(AABoxd(bounds.minX - margin, bounds.minY - margin,
                                 bounds.maxX + margin, bounds.maxY + margin)));
 
-        LOG_MAP_VERBOSE("BSP leaf blockmap dimensions:")
-            << bspLeafBlockmap->dimensions().asText();
+        LOG_MAP_VERBOSE("Convex subspace blockmap dimensions:")
+            << subspaceBlockmap->dimensions().asText();
 
         // Populate the blockmap.
-        foreach(BspLeaf *bspLeaf, bspLeafs)
+        foreach(ConvexSubspace *subspace, subspaces)
         {
-            // BspLeafs without a sector cluster don't get in.
-            if(bspLeaf->hasCluster())
-            {
-                bspLeafBlockmap->link(bspLeaf->poly().aaBox(), bspLeaf);
-            }
+            subspaceBlockmap->link(subspace->poly().aaBox(), subspace);
         }
     }
 
@@ -1564,7 +1540,7 @@ DENG2_PIMPL(Map)
                     if(pInfo->stage < 0 || !pInfo->bspLeaf)
                         continue;
 
-                    int listIndex = pInfo->bspLeaf->sector().indexInMap();
+                    int listIndex = pInfo->bspLeaf->sectorPtr()->indexInMap();
                     DENG2_ASSERT((unsigned)listIndex < gens.listsSize);
 
                     // Must check that it isn't already there...
@@ -1626,29 +1602,24 @@ Mesh const &Map::mesh() const
     return d->mesh;
 }
 
-bool Map::hasBspRoot() const
+bool Map::hasBspTree() const
 {
-    return d->bspRoot != 0;
+    return d->bsp.tree != 0;
 }
 
-MapElement &Map::bspRoot() const
+Map::BspTree const &Map::bspTree() const
 {
-    if(d->bspRoot)
+    if(d->bsp.tree)
     {
-        return *d->bspRoot;
+        return *d->bsp.tree;
     }
-    /// @throw MissingBspError  No BSP data is available.
-    throw MissingBspError("Map::bspRoot", "No BSP data available");
+    /// @throw MissingBspTreeError  Attempted with no BSP tree available.
+    throw MissingBspTreeError("Map::bspTree", "No BSP tree is available");
 }
 
-Map::BspNodes const &Map::bspNodes() const
+Map::Subspaces const &Map::subspaces() const
 {
-    return d->bspNodes;
-}
-
-Map::BspLeafs const &Map::bspLeafs() const
-{
-    return d->bspLeafs;
+    return d->subspaces;
 }
 
 Map::SectorClusters const &Map::clusters() const
@@ -2281,14 +2252,14 @@ LineBlockmap const &Map::lineBlockmap() const
     throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
-Blockmap const &Map::bspLeafBlockmap() const
+Blockmap const &Map::subspaceBlockmap() const
 {
-    if(!d->bspLeafBlockmap.isNull())
+    if(!d->subspaceBlockmap.isNull())
     {
-        return *d->bspLeafBlockmap;
+        return *d->subspaceBlockmap;
     }
-    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::bspLeafBlockmap", "BSP leaf blockmap is not initialized");
+    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
 struct blockmapcellmobjsiterator_params_t
@@ -2373,26 +2344,26 @@ static int blockmapCellLinesIterator(void *mapElement, void *context)
     return false; // Continue iteration.
 }
 
-struct blockmapcellbspleafsiterator_params_t
+struct blockmapcellsubspacesiterator_params_t
 {
     AABoxd const *box;
     int localValidCount;
-    int (*callback) (BspLeaf *, void *);
+    int (*callback) (ConvexSubspace *, void *);
     void *context;
 };
 
-static int blockmapCellBspLeafsIterator(void *object, void *context)
+static int blockmapCellSubspacesIterator(void *object, void *context)
 {
-    BspLeaf *bspLeaf = static_cast<BspLeaf *>(object);
-    blockmapcellbspleafsiterator_params_t &parm = *static_cast<blockmapcellbspleafsiterator_params_t *>(context);
+    ConvexSubspace *subspace = static_cast<ConvexSubspace *>(object);
+    blockmapcellsubspacesiterator_params_t &parm = *static_cast<blockmapcellsubspacesiterator_params_t *>(context);
 
-    if(bspLeaf->validCount() != parm.localValidCount)
+    if(subspace->validCount() != parm.localValidCount)
     {
-        // This BspLeaf has now been processed for the current iteration.
-        bspLeaf->setValidCount(parm.localValidCount);
+        // This subspace has now been processed for the current iteration.
+        subspace->setValidCount(parm.localValidCount);
 
         // Check the bounds.
-        AABoxd const &leafAABox = bspLeaf->poly().aaBox();
+        AABoxd const &leafAABox = subspace->poly().aaBox();
         if(parm.box)
         {
             if(leafAABox.maxX < parm.box->minX ||
@@ -2405,32 +2376,32 @@ static int blockmapCellBspLeafsIterator(void *object, void *context)
         }
 
         // Action the callback.
-        if(int result = parm.callback(bspLeaf, parm.context))
+        if(int result = parm.callback(subspace, parm.context))
             return result; // Stop iteration.
     }
 
     return false; // Continue iteration.
 }
 
-int Map::bspLeafBoxIterator(AABoxd const &box, int (*callback) (BspLeaf *, void *),
-                            void *context) const
+int Map::subspaceBoxIterator(AABoxd const &box, int (*callback) (ConvexSubspace *, void *),
+    void *context) const
 {
-    if(!d->bspLeafBlockmap.isNull())
+    if(!d->subspaceBlockmap.isNull())
     {
         static int localValidCount = 0;
         // This is only used here.
         localValidCount++;
 
-        blockmapcellbspleafsiterator_params_t parm; zap(parm);
+        blockmapcellsubspacesiterator_params_t parm; zap(parm);
         parm.localValidCount = localValidCount;
         parm.callback        = callback;
         parm.context         = context;
         parm.box             = &box;
 
-        return d->bspLeafBlockmap->iterate(box, blockmapCellBspLeafsIterator, &parm);
+        return d->subspaceBlockmap->iterate(box, blockmapCellSubspacesIterator, &parm);
     }
-    /// @throw MissingBlockmapError  The BSP leaf blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::bspLeafBoxIterator", "BSP leaf blockmap is not initialized");
+    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
+    throw MissingBlockmapError("Map::subspaceBoxIterator", "Convex subspace blockmap is not initialized");
 }
 
 int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
@@ -2464,7 +2435,7 @@ int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *
     QVarLengthArray<Sector *, 16> linkStore;
 
     // Always process the mobj's own sector first.
-    Sector &ownSec = Mobj_BspLeafAtOrigin(*mo).sector();
+    Sector &ownSec = *Mobj_BspLeafAtOrigin(*mo).sectorPtr();
     linkStore.append(&ownSec);
     ownSec.setValidCount(validCount);
 
@@ -2602,7 +2573,7 @@ void Map::link(mobj_t &mo, int flags)
     if(flags & MLF_SECTOR)
     {
         d->unlinkMobjFromSectors(mo);
-        bspLeafAtOrigin.sector().link(&mo);
+        bspLeafAtOrigin.sectorPtr()->link(&mo);
     }
     mo._bspLeaf = &bspLeafAtOrigin;
 
@@ -2626,19 +2597,21 @@ void Map::link(mobj_t &mo, int flags)
     {
         mo.dPlayer->inVoid = true;
 
-        if(!Mobj_BspLeafAtOrigin(mo).polyContains(Mobj_Origin(mo)))
-            return;
-
-        SectorCluster &cluster = Mobj_Cluster(mo);
-#ifdef __CLIENT__
-        if(mo.origin[VZ] <  cluster.visCeiling().heightSmoothed() + 4 &&
-           mo.origin[VZ] >= cluster.visFloor().heightSmoothed())
-#else
-        if(mo.origin[VZ] <  cluster.ceiling().height() + 4 &&
-           mo.origin[VZ] >= cluster.floor().height())
-#endif
+        if(SectorCluster *cluster = Mobj_ClusterPtr(mo))
         {
-            mo.dPlayer->inVoid = false;
+            if(Mobj_BspLeafAtOrigin(mo).subspace().contains(Mobj_Origin(mo)))
+            {
+#ifdef __CLIENT__
+                if(mo.origin[VZ] <  cluster->visCeiling().heightSmoothed() + 4 &&
+                   mo.origin[VZ] >= cluster->visFloor().heightSmoothed())
+#else
+                if(mo.origin[VZ] <  cluster->ceiling().height() + 4 &&
+                   mo.origin[VZ] >= cluster->floor().height())
+#endif
+                {
+                    mo.dPlayer->inVoid = false;
+                }
+            }
         }
     }
 }
@@ -2804,37 +2777,37 @@ int Map::linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
 
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const
 {
-    if(!d->bspRoot)
-        /// @throw MissingBspError  No BSP data is available.
-        throw MissingBspError("Map::bspLeafAt", "No BSP data available");
+    if(!d->bsp.tree)
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt", "No BSP data available");
 
-    MapElement *bspElement = d->bspRoot;
-    while(bspElement->type() != DMU_BSPLEAF)
+    BspTree const *bspTree = d->bsp.tree;
+    while(!bspTree->isLeaf())
     {
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspTree->userData()->as<BspNode>();
 
         int side = bspNode.partition().pointOnSide(point) < 0;
 
         // Descend to the child subspace on "this" side.
-        bspElement = bspNode.childPtr(side);
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return bspTree->userData()->as<BspLeaf>();
 }
 
 BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
 {
-    if(!d->bspRoot)
-        /// @throw MissingBspError  No BSP data is available.
-        throw MissingBspError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
+    if(!d->bsp.tree)
+        /// @throw MissingBspTreeError  No BSP data is available.
+        throw MissingBspTreeError("Map::bspLeafAt_FixedPrecision", "No BSP data available");
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
-    MapElement *bspElement = d->bspRoot;
-    while(bspElement->type() != DMU_BSPLEAF)
+    BspTree const *bspTree = d->bsp.tree;
+    while(!bspTree->isLeaf())
     {
-        BspNode &bspNode = bspElement->as<BspNode>();
+        BspNode &bspNode = bspTree->userData()->as<BspNode>();
         Partition const &partition = bspNode.partition();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(partition.origin.x),    DBL2FIX(partition.origin.y) };
@@ -2842,19 +2815,19 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vector2d const &point) const
         int side = V2x_PointOnLineSide(pointX, lineOriginX, lineDirectionX);
 
         // Decend to the child subspace on "this" side.
-        bspElement = bspNode.childPtr(side);
+        bspTree = bspTree->childPtr(BspTree::ChildId(side));
     }
 
     // We've arrived at a leaf.
-    return bspElement->as<BspLeaf>();
+    return bspTree->userData()->as<BspLeaf>();
 }
 
 SectorCluster *Map::clusterAt(Vector2d const &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
-    if(bspLeaf.polyContains(point))
+    if(bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
     {
-        return bspLeaf.clusterPtr();
+        return bspLeaf.subspace().clusterPtr();
     }
     return 0;
 }
@@ -3075,8 +3048,8 @@ Lumobj &Map::addLumobj(Lumobj const &lumobj)
 
     lum.setMap(this);
     lum.setIndexInMap(d->lumobjs.count() - 1);
-
-    lum.bspLeafAtOrigin().link(lum);
+    DENG2_ASSERT(lum.bspLeafAtOrigin().hasSubspace());
+    lum.bspLeafAtOrigin().subspace().link(lum);
     R_AddContact(lum); // For spreading purposes.
 
     return lum;
@@ -3092,9 +3065,9 @@ void Map::removeLumobj(int which)
 
 void Map::removeAllLumobjs()
 {
-    foreach(BspLeaf *leaf, d->bspLeafs)
+    foreach(ConvexSubspace *subspace, d->subspaces)
     {
-        leaf->unlinkAllLumobjs();
+        subspace->unlinkAllLumobjs();
     }
     qDeleteAll(d->lumobjs);
     d->lumobjs.clear();
@@ -3414,34 +3387,6 @@ String Map::objectSummaryAsStyledText() const
 #undef TABBED
 }
 
-static int bspTreeHeight(MapElement const &bspElem)
-{
-    if(bspElem.is<BspNode>())
-    {
-        return bspElem.as<BspNode>().height();
-    }
-    return 0;
-}
-
-static String bspTreeSummary(Map const &map)
-{
-    if(map.hasBspRoot())
-    {
-        String desc = String("%1 leafs, %2 nodes")
-                          .arg(map.bspLeafCount())
-                          .arg(map.bspNodeCount());
-        if(map.bspRoot().is<BspNode>())
-        {
-            BspNode const &bspRootNode = map.bspRoot().as<BspNode>();
-            desc += String(" (balance is %1:%2)")
-                        .arg(bspRootNode.hasRight()? bspTreeHeight(bspRootNode.right()) : 0)
-                        .arg(bspRootNode.hasLeft() ? bspTreeHeight(bspRootNode.left ()) : 0);
-        }
-        return desc;
-    }
-    return "";
-}
-
 D_CMD(InspectMap)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -3495,14 +3440,14 @@ D_CMD(InspectMap)
     Vector2d geometryDimensions = Vector2d(map.bounds().max) - Vector2d(map.bounds().min);
     LOG_SCR_MSG(_E(l) "Geometry dimensions: " _E(.) _E(i)) << geometryDimensions.asText();
 
-    if(map.hasBspRoot())
+    if(map.hasBspTree())
     {
-        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << bspTreeSummary(map);
+        LOG_SCR_MSG(_E(l) "BSP: " _E(.) _E(i)) << map.bspTree().summary();
     }
 
-    if(!map.bspLeafBlockmap().isNull())
+    if(!map.subspaceBlockmap().isNull())
     {
-        LOG_SCR_MSG(_E(l) "BSP leaf blockmap: " _E(.) _E(i)) << map.bspLeafBlockmap().dimensions().asText();
+        LOG_SCR_MSG(_E(l) "Subspace blockmap: " _E(.) _E(i)) << map.subspaceBlockmap().dimensions().asText();
     }
     if(!map.lineBlockmap().isNull())
     {
@@ -3532,7 +3477,6 @@ D_CMD(InspectMap)
 void Map::consoleRegister() // static
 {
     Mobj_ConsoleRegister();
-    SectorCluster::consoleRegister();
 
     C_VAR_INT("bsp-factor",                 &bspSplitFactor, CVF_NO_MAX, 0, 0);
 #ifdef __CLIENT__
@@ -4031,8 +3975,8 @@ bool Map::endEditing()
     // Build a line blockmap.
     d->initLineBlockmap();
 
-    // Build a BSP.
-    if(!d->buildBsp())
+    // Build a new BspTree.
+    if(!d->buildBspTree())
         return false;
 
     // The mobj and polyobj blockmaps are maintained dynamically.
@@ -4062,8 +4006,8 @@ bool Map::endEditing()
         plane->updateSoundEmitterOrigin();
     }
 
-    // We can now initialize the BSP leaf blockmap.
-    d->initBspLeafBlockmap();
+    // We can now initialize the convex subspace blockmap.
+    d->initSubspaceBlockmap();
 
     // Prepare the thinker lists.
     d->thinkers.reset(new Thinkers);

@@ -1,6 +1,6 @@
 /** @file biasillum.cpp  Shadow Bias map point illumination.
  *
- * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -22,6 +22,7 @@
 #include "world/map.h"
 #include "world/linesighttest.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
 #include "BiasTracker"
@@ -136,7 +137,7 @@ DENG2_PIMPL_NOREF(BiasIllum)
      * @param bspRoot        Root BSP element for the map.
      */
     void updateContribution(int index, Vector3d const &point,
-        Vector3f const &normalAtPoint, MapElement &bspRoot)
+        Vector3f const &normalAtPoint, Map::BspTree const &bspRoot)
     {
         DENG_ASSERT(tracker != 0);
 
@@ -144,18 +145,19 @@ DENG2_PIMPL_NOREF(BiasIllum)
         Vector3f &casted = contribution(index);
 
         /// @todo LineSightTest should (optionally) perform this test.
-        SectorCluster *cluster = source.bspLeafAtOrigin().clusterPtr();
-        if(!cluster)
+        ConvexSubspace *subspace = source.bspLeafAtOrigin().subspacePtr();
+        if(!subspace)
         {
             // This affecting source does not contribute any light.
             casted = Vector3f();
             return;
         }
 
-        if((!cluster->visFloor().surface().hasSkyMaskedMaterial() &&
-                source.origin().z < cluster->visFloor().heightSmoothed()) ||
-           (!cluster->visCeiling().surface().hasSkyMaskedMaterial() &&
-                source.origin().z > cluster->visCeiling().heightSmoothed()))
+        SectorCluster &cluster = subspace->cluster();
+        if((!cluster.visFloor().surface().hasSkyMaskedMaterial() &&
+                source.origin().z < cluster.visFloor().heightSmoothed()) ||
+           (!cluster.visCeiling().surface().hasSkyMaskedMaterial() &&
+                source.origin().z > cluster.visCeiling().heightSmoothed()))
         {
             casted = Vector3f();
             return;
@@ -270,7 +272,7 @@ Vector3f BiasIllum::evaluate(Vector3d const &point, Vector3f const &normalAtPoin
                 {
                     if(activeContributors & changedContributions & (1 << i))
                     {
-                        d->updateContribution(i, point, normalAtPoint, map.bspRoot());
+                        d->updateContribution(i, point, normalAtPoint, map.bspTree());
                     }
                 }
             }

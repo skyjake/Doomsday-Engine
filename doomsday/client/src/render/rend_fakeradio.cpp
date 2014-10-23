@@ -1,6 +1,6 @@
 /** @file rend_fakeradio.cpp  Faked Radiosity Lighting.
  *
- * @authors Copyright © 2004-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2004-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -30,7 +30,7 @@
 #include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Face"
-#include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "WallEdge"
 #include "world/map.h"
@@ -1098,12 +1098,12 @@ void Rend_RadioWallSection(WallEdge const &leftEdge, WallEdge const &rightEdge,
 
     LineSide &side = leftEdge.mapLineSide();
     HEdge const *hedge = side.leftHEdge();
-    SectorCluster const *cluster = &hedge->face().mapElementAs<BspLeaf>().cluster();
+    SectorCluster const *cluster = &hedge->face().mapElementAs<ConvexSubspace>().cluster();
     SectorCluster const *backCluster = 0;
 
     if(leftEdge.spec().section != LineSide::Middle && hedge->twin().hasFace())
     {
-        backCluster = hedge->twin().face().mapElementAs<BspLeaf>().clusterPtr();
+        backCluster = hedge->twin().face().mapElementAs<ConvexSubspace>().clusterPtr();
     }
 
     bool const haveBottomShadower = Rend_RadioPlaneCastsShadow(cluster->visFloor());
@@ -1273,15 +1273,16 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 
     // Missing, glowing or sky-masked materials are exempted.
     Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow()) return;
+    if(material.isSkyMasked() || material.hasGlow())
+        return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume
     // is not positive) then skip shadow drawing entirely.
     /// @todo Encapsulate this logic in ShadowEdge -ds
-    if(!leftHEdge->hasFace()) return;
+    if(!leftHEdge->hasFace() || !leftHEdge->face().hasMapElement())
+        return;
 
-    BspLeaf const &frontLeaf = leftHEdge->face().mapElementAs<BspLeaf>();
-    if(!frontLeaf.hasCluster() || !frontLeaf.cluster().hasWorldVolume())
+    if(!leftHEdge->face().mapElementAs<ConvexSubspace>().cluster().hasWorldVolume())
         return;
 
     static ShadowEdge leftEdge; // this function is called often; keep these around
@@ -1299,17 +1300,18 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 }
 
 /**
- * @attention Do not use the global radio state in here, as @a bspLeaf can be
- * part of any sector, not the one chosen for wall rendering.
+ * @attention Do not use the global radio state in here, as @a subspace can be
+ * part of any Sector, not the one chosen for wall rendering.
  */
-void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
+void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 {
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    if(bspLeaf.shadowLines().isEmpty()) return;
+    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
+    if(shadowLines.isEmpty()) return;
 
-    SectorCluster &cluster = bspLeaf.cluster();
+    SectorCluster &cluster = subspace.cluster();
     float sectorlight = cluster.lightSourceIntensity();
 
     // Determine the shadow properties.
@@ -1320,11 +1322,10 @@ void Rend_RadioBspLeafEdges(BspLeaf const &bspLeaf)
     // Any need to continue?
     if(shadowDark < .0001f) return;
 
-    Vector3f const eyeToSurface(Vector2d(Rend_EyeOrigin().x, Rend_EyeOrigin().z) - bspLeaf.poly().center());
+    Vector3f const eyeToSurface(Vector2d(Rend_EyeOrigin().x, Rend_EyeOrigin().z) - subspace.poly().center());
 
-    // We need to check all the shadow lines linked to this BspLeaf for
+    // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.
-    BspLeaf::ShadowLines const &shadowLines = bspLeaf.shadowLines();
     foreach(LineSide *side, shadowLines)
     {
         // Already rendered during the current frame? We only want to

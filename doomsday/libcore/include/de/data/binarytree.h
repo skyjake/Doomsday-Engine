@@ -21,7 +21,8 @@
 #define LIBDENG2_BINARYTREE_H
 
 #include "../libcore.h"
-#include "../error.h"
+#include "../Error"
+#include "../String"
 #include <algorithm>
 
 namespace de {
@@ -342,6 +343,32 @@ public:
     }
 
     /**
+     * Determine the total number of nodes in the tree.
+     */
+    int nodeCount() const
+    {
+        countsubtreeworker_params_t parm;
+        parm.countNodes = true;
+        parm.countLeafs = false;
+        parm.total      = 0;
+        const_cast<BinaryTree *>(this)->traversePreOrder(countSubtreeWorker, &parm);
+        return parm.total;
+    }
+
+    /**
+     * Determine the total number of leafs in the tree.
+     */
+    int leafCount() const
+    {
+        countsubtreeworker_params_t parm;
+        parm.countNodes = false;
+        parm.countLeafs = true;
+        parm.total      = 0;
+        const_cast<BinaryTree *>(this)->traversePreOrder(countSubtreeWorker, &parm);
+        return parm.total;
+    }
+
+    /**
      * Makes a copy of another tree. The structure of the other tree is
      * duplicated in full, with copies of its user data.
      *
@@ -389,7 +416,7 @@ public:
         // Visit this node.
         if(int result = callback(*this, parameters)) return result;
 
-        if(!isLeaf())
+        if(hasRight())
         {
             int result = right().traversePreOrder(callback, parameters);
             if(result) return result;
@@ -472,7 +499,44 @@ public:
         return callback(*this, parameters);
     }
 
+    /**
+     * Provides a textual summary of the tree structure.
+     */
+    String summary() const
+    {
+        String text = String("%1 nodes, %2 leafs")
+                        .arg(nodeCount())
+                        .arg(leafCount());
+        if(!isLeaf())
+        {
+            text += String(" (balance is %1:%2)")
+                        .arg(hasRight()? right().height() : 0)
+                        .arg(hasLeft() ? left ().height() : 0);
+        }
+        return text;
+    }
+
 private:
+    struct countsubtreeworker_params_t
+    {
+        bool countNodes, countLeafs;
+        int total;
+    };
+
+    static int countSubtreeWorker(BinaryTree &subtree, void *context)
+    {
+        countsubtreeworker_params_t &p = *static_cast<countsubtreeworker_params_t *>(context);
+        if(subtree.isLeaf() && p.countLeafs)
+        {
+            p.total++;
+        }
+        if(!subtree.isLeaf() && p.countNodes)
+        {
+            p.total++;
+        }
+        return false; // Continue iteration.
+    }
+
     /// Parent of this subtree (if any).
     BinaryTree *_parent;
 

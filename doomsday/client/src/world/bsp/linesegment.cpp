@@ -1,9 +1,9 @@
-/** @file world/bsp/linesegment.cpp BSP Builder Line Segment.
+/** @file linesegment.cpp  BSP Builder Line Segment.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -29,7 +29,7 @@
 
 #include <de/Observers>
 
-#include "world/bsp/convexsubspace.h"
+#include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
 
 #include "world/bsp/linesegment.h"
@@ -40,69 +40,53 @@ namespace bsp {
 DENG2_PIMPL_NOREF(LineSegment::Side)
 {
     /// Owning line segment.
-    LineSegment *line;
+    LineSegment *line = nullptr;
 
     /// Direction vector from -> to.
     Vector2d direction;
 
     /// Map Line side that "this" segment initially comes from or @c 0 signifying
     /// a partition line segment (not owned).
-    LineSide *mapSide;
+    LineSide *mapSide = nullptr;
 
     /// Map Line of the partition line which resulted in this segment due to
     /// splitting (not owned).
-    Line *partitionMapLine;
+    Line *partitionMapLine = nullptr;
 
     /// Neighbor line segments relative to "this" segment along the source
     /// line (both partition and map lines).
-    LineSegment::Side *rightNeighbor;
-    LineSegment::Side *leftNeighbor;
+    LineSegment::Side *rightNeighbor = nullptr;
+    LineSegment::Side *leftNeighbor  = nullptr;
 
     /// The superblock that contains "this" segment, or @c 0 if the segment is
     /// no longer in any superblock (e.g., attributed to a convex subspace).
-    SuperBlock *bmapBlock;
+    LineSegmentBlockTreeNode *blockTreeNode = nullptr;
 
     /// Convex subspace which "this" segment is attributed; otherwise @c 0.
-    ConvexSubspace *convexSubspace;
+    ConvexSubspaceProxy *convexSubspace = nullptr;
 
     /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
-    Sector *sector;
+    Sector *sector = nullptr;
 
     // Precomputed data for faster calculations.
-    coord_t pLength;
-    coord_t pAngle;
-    coord_t pPara;
-    coord_t pPerp;
-    slopetype_t pSlopeType;
+    coord_t pLength = 0;
+    coord_t pAngle  = 0;
+    coord_t pPara   = 0;
+    coord_t pPerp   = 0;
+    slopetype_t pSlopeType = ST_VERTICAL;
 
     /// Half-edge produced from this map line segment (if any, not owned).
-    HEdge *hedge;
-
-    Instance(LineSegment &line)
-        : line(&line),
-          mapSide(0),
-          partitionMapLine(0),
-          rightNeighbor(0),
-          leftNeighbor(0),
-          bmapBlock(0),
-          convexSubspace(0),
-          sector(0),
-          pLength(0),
-          pAngle(0),
-          pPara(0),
-          pPerp(0),
-          pSlopeType(ST_VERTICAL),
-          hedge(0)
-    {}
+    HEdge *hedge = nullptr;
 
     inline LineSegment::Side **neighborAdr(int edge) {
         return edge? &rightNeighbor : &leftNeighbor;
     }
 };
 
-LineSegment::Side::Side(LineSegment &line)
-    : d(new Instance(line))
-{}
+LineSegment::Side::Side(LineSegment &line) : d(new Instance)
+{
+    d->line = &line;
+}
 
 void LineSegment::Side::updateCache()
 {
@@ -142,7 +126,7 @@ coord_t LineSegment::Side::angle() const
 
 bool LineSegment::Side::hasHEdge() const
 {
-    return d->hedge != 0;
+    return d->hedge != nullptr;
 }
 
 HEdge &LineSegment::Side::hedge() const
@@ -160,19 +144,19 @@ void LineSegment::Side::setHEdge(HEdge *newHEdge)
     d->hedge = newHEdge;
 }
 
-ConvexSubspace *LineSegment::Side::convexSubspace() const
+ConvexSubspaceProxy *LineSegment::Side::convexSubspace() const
 {
     return d->convexSubspace;
 }
 
-void LineSegment::Side::setConvexSubspace(ConvexSubspace *newConvexSubspace)
+void LineSegment::Side::setConvexSubspace(ConvexSubspaceProxy *newConvexSubspace)
 {
     d->convexSubspace = newConvexSubspace;
 }
 
 bool LineSegment::Side::hasMapSide() const
 {
-    return d->mapSide != 0;
+    return d->mapSide != nullptr;
 }
 
 LineSide &LineSegment::Side::mapSide() const
@@ -202,7 +186,7 @@ void LineSegment::Side::setPartitionMapLine(Line *newMapLine)
 
 bool LineSegment::Side::hasNeighbor(int edge) const
 {
-    return (*d->neighborAdr(edge)) != 0;
+    return (*d->neighborAdr(edge)) != nullptr;
 }
 
 LineSegment::Side &LineSegment::Side::neighbor(int edge) const
@@ -221,19 +205,19 @@ void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)
     *d->neighborAdr(edge) = newNeighbor;
 }
 
-SuperBlock *LineSegment::Side::bmapBlockPtr() const
+/*LineSegmentBlockTreeNode*/ void *LineSegment::Side::blockTreeNodePtr() const
 {
-    return d->bmapBlock;
+    return d->blockTreeNode;
 }
 
-void LineSegment::Side::setBMapBlock(SuperBlock *newBMapBlock)
+void LineSegment::Side::setBlockTreeNode(/*LineSegmentBlockTreeNode*/ void *newNode)
 {
-    d->bmapBlock = newBMapBlock;
+    d->blockTreeNode = (LineSegmentBlockTreeNode *)newNode;
 }
 
 bool LineSegment::Side::hasSector() const
 {
-    return d->sector != 0;
+    return d->sector != nullptr;
 }
 
 Sector &LineSegment::Side::sector() const
@@ -258,8 +242,8 @@ coord_t LineSegment::Side::length() const
 
 coord_t LineSegment::Side::distance(Vector2d point) const
 {
-    coord_t pointV1[2] = { point.x, point.y };
-    coord_t directionV1[2] = { d->direction.x, d->direction.y };
+    coord_t const pointV1[2]     = { point.x, point.y };
+    coord_t const directionV1[2] = { d->direction.x, d->direction.y };
     return V2d_PointLineParaDistance(pointV1, directionV1, d->pPara, d->pLength);
 }
 
@@ -272,7 +256,7 @@ void LineSegment::Side::distance(LineSegment::Side const &other, coord_t *fromDi
     /// line are always treated as collinear. This special case is only
     /// necessary due to precision inaccuracies when a line is split into
     /// multiple segments.
-    if(d->partitionMapLine != 0 && d->partitionMapLine == other.partitionMapLine())
+    if(d->partitionMapLine && d->partitionMapLine == other.partitionMapLine())
     {
         if(fromDist) *fromDist = 0;
         if(toDist)   *toDist   = 0;
@@ -338,14 +322,14 @@ LineRelationship LineSegment::Side::relationship(LineSegment::Side const &other,
 
 int LineSegment::Side::boxOnSide(AABoxd const &box) const
 {
-    coord_t fromV1[2] = { from().origin().x, from().origin().y };
-    coord_t directionV1[2] = { d->direction.x, d->direction.y } ;
+    coord_t const fromV1[2]      = { from().origin().x, from().origin().y };
+    coord_t const directionV1[2] = { d->direction.x, d->direction.y } ;
     return M_BoxOnLineSide2(&box, fromV1, directionV1, d->pPerp, d->pLength,
                             LINESEGMENT_INCIDENT_DISTANCE_EPSILON);
 }
 
-DENG2_PIMPL(LineSegment),
-DENG2_OBSERVES(Vertex, OriginChange)
+DENG2_PIMPL(LineSegment)
+, DENG2_OBSERVES(Vertex, OriginChange)
 {
     /// Vertexes of the line segment (not owned).
     Vertex *from;
@@ -356,11 +340,11 @@ DENG2_OBSERVES(Vertex, OriginChange)
     LineSegment::Side back;
 
     Instance(Public *i, Vertex &from_, Vertex &to_)
-        : Base(i),
-          from(&from_),
-          to(&to_),
-          front(*i),
-          back(*i)
+        : Base (i)
+        , from (&from_)
+        , to   (&to_)
+        , front(*i)
+        , back (*i)
     {
         from->audienceForOriginChange += this;
         to->audienceForOriginChange   += this;
@@ -416,7 +400,7 @@ LineSegment::Side const &LineSegment::side(int back) const
 
 Vertex &LineSegment::vertex(int to) const
 {
-    DENG_ASSERT((to? d->to : d->from) != 0);
+    DENG2_ASSERT((to? d->to : d->from) != nullptr);
     return to? *d->to : *d->from;
 }
 

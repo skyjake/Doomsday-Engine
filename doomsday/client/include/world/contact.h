@@ -1,7 +1,7 @@
-/** @file contact.h World object => BSP leaf "contact" and contact lists.
+/** @file contact.h  Map object => subspace "contact" and contact lists.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,8 +27,8 @@
 
 #include "world/map.h"
 
-class BspLeaf;
 struct Contact;
+class ConvexSubspace;
 class Lumobj;
 
 enum ContactType
@@ -136,22 +136,22 @@ void R_AddContact(Lumobj &lumobj);
 int R_ContactIterator(int (*callback) (Contact &, void *), void *context = 0);
 
 /**
- * Returns the contact list for the specified BSP @a leaf and contact @a type.
+ * Returns the contact list for the specified @a subspace and contact @a type.
  */
-ContactList &R_ContactList(BspLeaf &leaf, ContactType type);
+ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
 
 /**
- * Traverse the list of mobj contacts linked directly to the specified BSP @a leaf,
+ * Traverse the list of mobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-int R_BspLeafMobjContactIterator(BspLeaf &leaf,
+int R_SubspaceMobjContactIterator(ConvexSubspace &subspace,
     int (*callback) (struct mobj_s &, void *), void *context = 0);
 
 /**
- * Traverse the list of lumobj contacts linked directly to the specified BSP @a leaf,
+ * Traverse the list of lumobj contacts linked directly to the specified @a subspace,
  * for the current render frame.
  */
-int R_BspLeafLumobjContactIterator(BspLeaf &leaf,
+int R_SubspaceLumobjContactIterator(ConvexSubspace &subspace,
     int (*callback) (Lumobj &, void *), void *context = 0);
 
 #endif // DENG_CLIENT_WORLD_CONTACT_H

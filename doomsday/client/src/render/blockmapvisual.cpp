@@ -41,7 +41,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
-#include "BspLeaf"
+#include "ConvexSubspace"
 
 #include "render/blockmapvisual.h"
 
@@ -88,15 +88,12 @@ static int drawLineWorker(void *linePtr, void * /*context*/)
     return false; // Continue iteration.
 }
 
-static void drawBspLeaf(BspLeaf const &bspLeaf)
+static void drawSubspace(ConvexSubspace const &subspace)
 {
-    if(!bspLeaf.hasPoly())
-        return;
-
     float const scale = de::max(bmapDebugSize, 1.f);
     float const width = (DENG_GAMEVIEW_WIDTH / 16) / scale;
 
-    Face const &poly = bspLeaf.poly();
+    Face const &poly = subspace.poly();
     HEdge *base = poly.hedge();
     HEdge *hedge = base;
     do
@@ -152,13 +149,13 @@ static void drawBspLeaf(BspLeaf const &bspLeaf)
     } while((hedge = &hedge->next()) != base);
 }
 
-static int drawBspLeafWorker(void *bspLeafPtr, void * /*context*/)
+static int drawSubspaceWorker(void *subspacePtr, void * /*context*/)
 {
-    BspLeaf &bspLeaf = *static_cast<BspLeaf *>(bspLeafPtr);
-    if(bspLeaf.validCount() != validCount)
+    ConvexSubspace &subspace = *static_cast<ConvexSubspace *>(subspacePtr);
+    if(subspace.validCount() != validCount)
     {
-        bspLeaf.setValidCount(validCount);
-        drawBspLeaf(bspLeaf);
+        subspace.setValidCount(validCount);
+        drawSubspace(subspace);
     }
     return false; // Continue iteration.
 }
@@ -198,9 +195,9 @@ static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *c
     return false; // Continue iteration.
 }
 
-static int drawCellBspLeafs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
-    bmap.iterate(cell, (int (*)(void*,void*)) drawBspLeafWorker, context);
+    bmap.iterate(cell, (int (*)(void*,void*)) drawSubspaceWorker, context);
     return false; // Continue iteration.
 }
 
@@ -539,9 +536,9 @@ void Rend_BlockmapDebug()
         break;
 
     case 3: // BSP leafs.
-        blockmap = &map.bspLeafBlockmap();
-        cellDrawer = drawCellBspLeafs;
-        objectTypeName = "BSP Leafs";
+        blockmap = &map.subspaceBlockmap();
+        cellDrawer = drawCellSubspaces;
+        objectTypeName = "Subspaces";
         break;
 
     case 4: // Polyobjs.

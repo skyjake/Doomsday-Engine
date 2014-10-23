@@ -39,6 +39,7 @@
 #include "world/p_players.h"
 #include "world/sky.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 #include "Surface"
 #include "Contact"
@@ -72,7 +73,7 @@ static viewport_t *currentViewport;
 static coord_t *luminousDist;
 static byte *luminousClipped;
 static uint *luminousOrder;
-static QBitArray bspLeafsVisible;
+static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
@@ -745,7 +746,7 @@ static void setupPlayerSprites()
         return;
     mobj_t *mo = ddpl->mo;
 
-    if(!Mobj_HasCluster(*mo))
+    if(!Mobj_HasSubspace(*mo))
         return;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
@@ -1179,16 +1180,16 @@ DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
     LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
 
-bool R_ViewerBspLeafIsVisible(BspLeaf const &bspLeaf)
+bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
 {
-    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
-    return bspLeafsVisible.testBit(bspLeaf.indexInMap());
+    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    return subspacesVisible.testBit(subspace.indexInMap());
 }
 
-void R_ViewerBspLeafMarkVisible(BspLeaf const &bspLeaf, bool yes)
+void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
 {
-    DENG2_ASSERT(bspLeaf.indexInMap() != MapElement::NoIndex);
-    bspLeafsVisible.setBit(bspLeaf.indexInMap(), yes);
+    DENG2_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
+    subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
 bool R_ViewerGeneratorIsVisible(Generator const &generator)
@@ -1257,8 +1258,8 @@ void R_BeginFrame()
 
     Map &map = ClientApp::worldSystem().map();
 
-    bspLeafsVisible.resize(map.bspLeafCount());
-    bspLeafsVisible.fill(false);
+    subspacesVisible.resize(map.subspaceCount());
+    subspacesVisible.fill(false);
 
     // Clear all generator visibility flags.
     generatorsVisible.fill(false);
@@ -1342,16 +1343,16 @@ void R_ViewerClipLumobj(Lumobj *lum)
         Vector3d const eye = Rend_EyeOrigin().xzy();
 
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
-                .trace(lum->map().bspRoot()))
+                .trace(lum->map().bspTree()))
         {
             luminousClipped[lumIdx] = 0; // Will have a halo.
         }
     }
 }
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
+void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace)
 {
-    if(!lum || !bspLeaf) return;
+    if(!lum || !subspace) return;
 
     // Already clipped?
     int lumIdx = lum->indexInMap();
@@ -1362,7 +1363,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, BspLeaf *bspLeaf)
     // between the viewpoint and the lumobj.
     Vector3d const eye = Rend_EyeOrigin().xzy();
 
-    foreach(Polyobj *po, bspLeaf->polyobjs())
+    foreach(Polyobj *po, subspace->polyobjs())
     foreach(HEdge *hedge, po->mesh().hedges())
     {
         // Is this on the back of a one-sided line?

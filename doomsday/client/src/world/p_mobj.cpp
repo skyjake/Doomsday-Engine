@@ -37,6 +37,7 @@
 #include "world/worldsystem.h" // validCount
 #include "world/thinkers.h"
 #include "BspLeaf"
+#include "ConvexSubspace"
 #include "SectorCluster"
 
 #ifdef __CLIENT__
@@ -270,20 +271,20 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mobj)
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
 
-bool Mobj_HasCluster(mobj_t const &mobj)
+bool Mobj_HasSubspace(mobj_t const &mobj)
 {
     if(!Mobj_IsLinked(mobj)) return false;
-    return Mobj_BspLeafAtOrigin(mobj).hasCluster();
+    return Mobj_BspLeafAtOrigin(mobj).hasSubspace();
 }
 
 SectorCluster &Mobj_Cluster(mobj_t const &mobj)
 {
-    return Mobj_BspLeafAtOrigin(mobj).cluster();
+    return Mobj_BspLeafAtOrigin(mobj).subspace().cluster();
 }
 
 SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
 {
-    return Mobj_HasCluster(mobj)? &Mobj_Cluster(mobj) : 0;
+    return Mobj_HasSubspace(mobj)? &Mobj_Cluster(mobj) : 0;
 }
 
 #undef Mobj_Sector
@@ -312,7 +313,7 @@ void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
     // Size of source sector might determine count.
     if(def->flags & Generator::ScaledRate)
     {
-        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sector().roughArea() / (128 * 128);
+        gen->spawnRateMultiplier = Mobj_BspLeafAtOrigin(*source).sectorPtr()->roughArea() / (128 * 128);
     }
     else
     {
@@ -383,7 +384,7 @@ DENG_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t *mo, mobj_t *inflictor, in
 
 dd_bool Mobj_OriginBehindVisPlane(mobj_t *mo)
 {
-    if(!mo || !Mobj_HasCluster(*mo))
+    if(!mo || !Mobj_HasSubspace(*mo))
         return false;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
@@ -424,7 +425,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     Mobj_UnlinkLumobjs(mo);
 
-    if(!Mobj_HasCluster(*mo)) return;
+    if(!Mobj_HasSubspace(*mo)) return;
     SectorCluster &cluster = Mobj_Cluster(*mo);
 
     if(!(((mo->state && (mo->state->flags & STF_FULLBRIGHT)) &&
@@ -445,7 +446,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
-    if(!Mobj_BspLeafAtOrigin(*mo).polyContains(mo->origin))
+    if(!Mobj_BspLeafAtOrigin(*mo).subspace().contains(mo->origin))
     {
         return;
     }
@@ -522,7 +523,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
 
     // Is this mobj in a valid state for shadow casting?
     if(!mo->state) return 0;
-    if(!Mobj_HasCluster(*mo)) return 0;
+    if(!Mobj_HasSubspace(*mo)) return 0;
 
     // Should this mobj even have a shadow?
     if((mo->state->flags & STF_FULLBRIGHT) ||

@@ -1,4 +1,4 @@
-/** @file hplane.cpp World map BSP builder half-plane.
+/** @file hplane.cpp  World map BSP builder half-plane.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
@@ -45,11 +45,11 @@ namespace de {
 namespace bsp {
 
 HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge)
-    : _before(0),
-      _after(0),
-      _distance(distance),
-      _lineSeg(&lineSeg),
-      _edge(edge)
+    : _before  (0)
+    , _after   (0)
+    , _distance(distance)
+    , _lineSeg (&lineSeg)
+    , _edge    (edge)
 {}
 
 LineSegmentSide &HPlane::Intercept::lineSegment() const
@@ -109,15 +109,15 @@ DENG2_PIMPL(HPlane)
     bool needSortIntercepts;      ///< @c true= @var intercepts requires sorting.
 
     Instance(Public *i, Partition const &partition)
-        : Base(i),
-          partition(partition),
-          length(partition.direction.length()),
-          angle(M_DirectionToAngleXY(partition.direction.x, partition.direction.y)),
-          slopeType(M_SlopeTypeXY(partition.direction.x, partition.direction.y)),
-          perp(partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y),
-          para(-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y),
-          lineSegment(0),
-          needSortIntercepts(false)
+        : Base(i)
+        , partition  (partition)
+        , length     (partition.direction.length())
+        , angle      (M_DirectionToAngleXY(partition.direction.x, partition.direction.y))
+        , slopeType  (M_SlopeTypeXY(partition.direction.x, partition.direction.y))
+        , perp       (partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y)
+        , para       (-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y)
+        , lineSegment(0)
+        , needSortIntercepts(false)
     {}
 
     /**

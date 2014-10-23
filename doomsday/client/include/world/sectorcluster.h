@@ -38,15 +38,16 @@
 #include <de/aabox.h>
 #include <QList>
 
-class BspLeaf;
+class ConvexSubspace;
 #ifdef __CLIENT__
 class BiasDigest;
+class Shard;
 #endif
 
 /**
- * Adjacent BSP leafs in the sector (i.e., those which share one or more
- * common edge) are grouped into a "cluster". Clusters are never empty and
- * will always contain at least one BSP leaf.
+ * Adjacent subspaces in the sector (i.e., those which share one or more common
+ * edge) are grouped into a "cluster". Clusters are never empty and will always
+ * contain at least one subspace.
  *
  * @ingroup world
  */
@@ -59,25 +60,25 @@ public:
     /// Notified when the cluster is about to be deleted.
     DENG2_DEFINE_AUDIENCE(Deletion, void sectorClusterBeingDeleted(SectorCluster const &cluster))
 
-    typedef QList<BspLeaf *> BspLeafs;
+    typedef QList<ConvexSubspace *> Subspaces;
 
 public:
     /**
-     * Construct a new sector cluster comprised of the specified set of BSP
-     * leafs. It is assumed that all BSP leafs in the list are attributed to
-     * the same sector and there is always at least one.
+     * Construct a new sector cluster comprised of the specified set of subspaces.
+     * It is assumed that all subspaces in the list are attributed to the same
+     * sector and there is always at least one.
      *
-     * @param bspLeafs  Set of BSP leafs comprising the resulting cluster.
+     * @param subspaces  Set of subspaces comprising the resulting cluster.
      */
-    SectorCluster(BspLeafs const &bspLeafs);
+    SectorCluster(Subspaces const &subspaces);
     virtual ~SectorCluster();
 
     /**
      * Determines whether the specified @a hedge is an "internal" edge:
      *
      * - both the half-edge and it's twin have a face.
-     * - both faces are assigned to a BSP leaf.
-     * - both of the assigned BSP leafs are in the same cluster.
+     * - both faces are assigned to a subspace.
+     * - both of the assigned subspaces are in the same cluster.
      *
      * @param hedge  Half-edge to test.
      *
@@ -162,30 +163,30 @@ public:
     inline int visPlaneCount() const { return sector().planeCount(); }
 
     /**
-     * To be called to force re-evaluation of mapped visual planes. This is
-     * only necessary when a surface material change occurs on boundary line
-     * of the cluster.
+     * To be called to force re-evaluation of mapped visual planes. This is only
+     * necessary when a surface material change occurs on boundary line of the
+     * cluster.
      */
     void markVisPlanesDirty();
 
     /**
-     * Returns @c true iff at least one of the mapped visual planes of the
-     * cluster presently has a sky-masked material bound.
+     * Returns @c true iff at least one of the mapped visual planes of the cluster
+     * presently has a sky-masked material bound.
      *
      * @see Surface::hasSkyMaskedMaterial()
      */
     bool hasSkyMaskedPlane() const;
 
     /**
-     * Provides access to the list of all BSP leafs in the cluster, for
-     * efficient traversal.
+     * Provides access to the list of all subspaces in the cluster, for efficient
+     * traversal.
      */
-    BspLeafs const &bspLeafs() const;
+    Subspaces const &subspaces() const;
 
     /**
-     * Returns the total number of BSP leafs in the cluster.
+     * Returns the total number of subspaces in the cluster.
      */
-    inline int bspLeafCount() const { return bspLeafs().count(); }
+    inline int subspaceCount() const { return subspaces().count(); }
 
     /**
      * Returns the axis-aligned bounding box of the cluster.
@@ -213,13 +214,13 @@ public:
 
     /**
      * Returns a rough approximation of the total combined area of the geometry
-     * for all BSP leafs which define the cluster (map units squared).
+     * for all the subspaces which define the cluster (map units squared).
      */
     coord_t roughArea() const;
 
     /**
-     * Request re-calculation of environmental audio (reverb) characteristics
-     * for the cluster (update is deferred until next accessed).
+     * Request re-calculation of environmental audio (reverb) characteristics for
+     * the cluster (update is deferred until next accessed).
      *
      * To be called whenever any of the properties governing reverb properties
      * have changed (i.e., wall/plane material changes).
@@ -265,6 +266,28 @@ public:
     int blockLightSourceZBias();
 
     /**
+     * Returns the geometry Shard for the specified @a mapElement and geometry
+     * group identifier @a geomId; otherwise @c 0.
+     */
+    Shard *findShard(de::MapElement &mapElement, int geomId);
+
+    /**
+     * Generate/locate the geometry Shard for the specified @a mapElement and
+     * geometry group identifier @a geomId.
+     */
+    Shard &shard(de::MapElement &mapElement, int geomId);
+
+    /**
+     * Shards owned by the SectorCluster should call this periodically to update
+     * their bias lighting contributions.
+     *
+     * @param shard  Shard to be updated (owned by the SectorCluster).
+     *
+     * @return  @c true if one or more BiasIllum contributors was updated.
+     */
+    bool updateBiasContributors(Shard *shard);
+
+    /**
      * Apply bias lighting changes to @em all geometry Shards within the cluster.
      *
      * @param changes  Digest of lighting changes to be applied.
@@ -272,31 +295,14 @@ public:
     void applyBiasDigest(BiasDigest &changes);
 
     /**
-     * Perform bias lighting for the supplied Shard geometry.
+     * Convenient method of determining the frameCount of the current bias render
+     * frame. Used for tracking changes to bias sources/surfaces.
      *
-     * @param mapElement   MapElement for the geometry to be lit.
-     * @param geomId       MapElement-unique geometry id.
-     * @param posCoords    World coordinates for each vertex.
-     * @param colorCoords  Final lighting values will be written here.
+     * @see Map::biasLastChangeOnFrame()
      */
-    void applyBiasLightSources(de::MapElement &mapElement, int geomId,
-                               de::Vector3f const *posCoords, de::Vector4f *colorCoords);
-
-    /**
-     * Schedule a lighting update to a geometry Shard following a move of some
-     * other element of dependent geometry.
-     *
-     * @param mapElement  MapElement for the geometry to be updated.
-     * @param geomId      MapElement-unique geometry id.
-     */
-    void updateBiasAfterGeometryMove(de::MapElement &mapElement, int geomId);
+    uint biasLastChangeOnFrame() const;
 
 #endif // __CLIENT__
-
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)
