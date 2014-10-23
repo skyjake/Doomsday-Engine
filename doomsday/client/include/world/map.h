@@ -39,15 +39,13 @@
 #  include "Lumobj"
 #endif
 
+#include <QList>
+#include <QHash>
+#include <QSet>
 #include <doomsday/uri.h>
-
 #include <de/BinaryTree>
 #include <de/Observers>
 #include <de/Vector>
-#include <QList>
-#include <QMultiMap>
-#include <QSet>
-#include <QHash>
 
 class MapDef;
 class BspLeaf;
@@ -136,7 +134,6 @@ public:
     typedef QList<Sector *>  Sectors;
 
     typedef QList<ConvexSubspace *> Subspaces;
-    typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
 
 #ifdef __CLIENT__
     typedef QSet<Plane *>    PlaneSet;
@@ -268,14 +265,20 @@ public:
     inline int subspaceCount() const { return subspaces().count(); }
 
     /**
-     * Provides access to the SectorCluster map for efficient traversal.
-     */
-    SectorClusters const &clusters() const;
-
-    /**
      * Returns the total number of SectorClusters in the map.
      */
-    inline int clusterCount() const { return clusters().count(); }
+    int clusterCount() const;
+
+    /**
+     * Iterate through the SectorClusters of the map.
+     *
+     * @param sector  If not @c nullptr, traverse the clusters of this Sector only.
+     */
+    LoopResult forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func);
+
+    inline LoopResult forAllClusters(std::function<LoopResult (SectorCluster &)> func) {
+        return forAllClusters(nullptr, func);
+    }
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex

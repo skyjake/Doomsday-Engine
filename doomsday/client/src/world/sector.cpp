@@ -104,22 +104,19 @@ DENG2_PIMPL(Sector)
         aaBox.clear();
         bool haveGeometry = false;
 
-        Map::SectorClusters const &clusterMap = self.map().clusters();
-        Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
-        while(i != clusterMap.end() && i.key() == thisPublic)
+        self.map().forAllClusters(thisPublic, [&] (SectorCluster &cluster)
         {
-            SectorCluster *cluster = *i;
             if(haveGeometry)
             {
-                V2d_UniteBox(aaBox.arvec2, cluster->aaBox().arvec2);
+                V2d_UniteBox(aaBox.arvec2, cluster.aaBox().arvec2);
             }
             else
             {
-                aaBox = cluster->aaBox();
+                aaBox = cluster.aaBox();
                 haveGeometry = true;
             }
-            ++i;
-        }
+            return LoopContinue;
+        });
 
         // The XY origin of our sound emitter can now be updated as the center
         // point of the sector geometry is now known.
@@ -141,13 +138,11 @@ DENG2_PIMPL(Sector)
         needRoughAreaUpdate = false;
 
         roughArea = 0;
-        Map::SectorClusters const &clusterMap = self.map().clusters();
-        Map::SectorClusters::const_iterator i = clusterMap.constFind(thisPublic);
-        while(i != clusterMap.end() && i.key() == thisPublic)
+        self.map().forAllClusters(thisPublic, [&] (SectorCluster &cluster)
         {
-            roughArea += (*i)->roughArea();
-            ++i;
-        }
+            roughArea += cluster.roughArea();
+            return LoopContinue;
+        });
     }
 #endif // __CLIENT__
 

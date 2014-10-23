@@ -4589,11 +4589,9 @@ static void drawTangentVectorsForWallSections(HEdge const *hedge)
 /**
  * @todo Use drawTangentVectorsForWallSections() for polyobjs too.
  */
-static void drawSurfaceTangentVectors(SectorCluster *cluster)
+static void drawSurfaceTangentVectors(SectorCluster &cluster)
 {
-    if(!cluster) return;
-
-    foreach(ConvexSubspace *subspace, cluster->subspaces())
+    for(ConvexSubspace *subspace : cluster.subspaces())
     {
         HEdge const *base  = subspace->poly().hedge();
         HEdge const *hedge = base;
@@ -4602,23 +4600,23 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, subspace->extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
+        for(Mesh *mesh : subspace->extraMeshes())
+        for(HEdge *hedge : mesh->hedges())
         {
             drawTangentVectorsForWallSections(hedge);
         }
 
-        foreach(Polyobj *polyobj, subspace->polyobjs())
-        foreach(HEdge *hedge, polyobj->mesh().hedges())
+        for(Polyobj *polyobj : subspace->polyobjs())
+        for(HEdge *hedge : polyobj->mesh().hedges())
         {
             drawTangentVectorsForWallSections(hedge);
         }
     }
 
-    int const planeCount = cluster->sector().planeCount();
+    int const planeCount = cluster.sector().planeCount();
     for(int i = 0; i < planeCount; ++i)
     {
-        Plane const &plane = cluster->visPlane(i);
+        Plane const &plane = cluster.visPlane(i);
         coord_t height     = 0;
 
         if(plane.surface().hasSkyMaskedMaterial() &&
@@ -4631,7 +4629,7 @@ static void drawSurfaceTangentVectors(SectorCluster *cluster)
             height = plane.heightSmoothed();
         }
 
-        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster->center(), height));
+        drawTangentVectorsForSurface(plane.surface(), Vector3d(cluster.center(), height));
     }
 }
 
@@ -4644,10 +4642,11 @@ static void drawAllSurfaceTangentVectors(Map &map)
 
     glDisable(GL_CULL_FACE);
 
-    foreach(SectorCluster *cluster, map.clusters())
+    map.forAllClusters([] (SectorCluster &cluster)
     {
         drawSurfaceTangentVectors(cluster);
-    }
+        return LoopContinue;
+    });
 
     glEnable(GL_CULL_FACE);
 }
@@ -5054,10 +5053,9 @@ static void drawVertexes(Map &map)
 #undef MAX_VERTEX_POINT_DIST
 }
 
-static String labelForCluster(SectorCluster const *cluster)
+static String labelForCluster(SectorCluster const &cluster)
 {
-    DENG_ASSERT(cluster != 0);
-    return String("%1").arg(cluster->sector().indexInMap());
+    return String::number(cluster.sector().indexInMap());
 }
 
 /**
@@ -5070,10 +5068,9 @@ static void drawSectors(Map &map)
     if(!devSectorIndices) return;
 
     // Draw per-cluster sector labels:
-
-    foreach(SectorCluster *cluster, map.clusters())
+    map.forAllClusters([] (SectorCluster &cluster)
     {
-        Vector3d const origin(cluster->center(), cluster->visPlane(Sector::Floor).heightSmoothed());
+        Vector3d const origin(cluster.center(), cluster.visPlane(Sector::Floor).heightSmoothed());
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_LABEL_DIST)
         {
@@ -5081,7 +5078,8 @@ static void drawSectors(Map &map)
                       distToEye / (DENG_GAMEVIEW_WIDTH / 2),
                       1 - distToEye / MAX_LABEL_DIST);
         }
-    }
+        return LoopContinue;
+    });
 
 #undef MAX_LABEL_DIST
 }
