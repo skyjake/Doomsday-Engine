@@ -82,6 +82,7 @@
 #include <doomsday/defs/mapinfo.h>
 #include <doomsday/defs/sky.h>
 #include <QBitArray>
+#include <QMultiMap>
 #include <QVarLengthArray>
 
 static int bspSplitFactor = 7; // cvar
@@ -156,6 +157,8 @@ DENG2_PIMPL(Map)
     } bsp;
 
     Subspaces subspaces;
+
+    typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
     SectorClusters clusters;
 
     /// Map entities and element properties (things, line specials, etc...).
@@ -584,14 +587,14 @@ DENG2_PIMPL(Map)
      */
     bool buildBspTree()
     {
-        DENG2_ASSERT(bsp.tree == 0);
+        DENG2_ASSERT(bsp.tree == nullptr);
         DENG2_ASSERT(subspaces.isEmpty());
 
         // It begins...
         Time begunAt;
 
         LOGDEV_MAP_XVERBOSE("Building BSP for \"%s\" with split cost factor %d...")
-            << (def? def->composeUri() : "(unknown map)") << bspSplitFactor;
+                << (def? def->composeUri() : "(unknown map)") << bspSplitFactor;
 
         // First we'll scan for so-called "one-way window" constructs and mark
         // them so that the space partitioner can treat them specially.
@@ -605,8 +608,8 @@ DENG2_PIMPL(Map)
         QSet<Line *> linesToBuildFor = QSet<Line *>::fromList(lines);
 
         // Polyobj lines should be excluded.
-        foreach(Polyobj *po, polyobjs)
-        foreach(Line *line, po->lines())
+        for(Polyobj *po : polyobjs)
+        for(Line *line : po->lines())
         {
             linesToBuildFor.remove(line);
         }
@@ -619,7 +622,7 @@ DENG2_PIMPL(Map)
 
             // Build a new BSP tree.
             bsp.tree = partitioner.makeBspTree(linesToBuildFor, mesh);
-            DENG2_ASSERT(bsp.tree != 0);
+            DENG2_ASSERT(bsp.tree);
 
             LOG_MAP_VERBOSE("BSP built: %s. With %d Segments and %d Vertexes.")
                     << bsp.tree->summary()
@@ -640,8 +643,8 @@ DENG2_PIMPL(Map)
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspTree const *cur = bsp.tree;
-            BspTree const *prev = 0;
+            BspTree const *cur  = bsp.tree;
+            BspTree const *prev = nullptr;
             while(cur)
             {
                 while(cur)
@@ -654,7 +657,7 @@ DENG2_PIMPL(Map)
                             if(!leaf.sectorPtr())
                             {
                                 LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
-                                    << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
+                                        << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
                             }
 
                             if(leaf.hasSubspace())
@@ -678,11 +681,11 @@ DENG2_PIMPL(Map)
                                 if(discontinuities)
                                 {
                                     LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                                                "is not contiguous (%i gaps/overlaps).\n%s")
-                                        << &leaf << subspace.poly().center().asText()
-                                        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
-                                        << discontinuities
-                                        << subspace.poly().description();
+                                                    "is not contiguous (%i gaps/overlaps).\n%s")
+                                            << &leaf << subspace.poly().center().asText()
+                                            << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+                                            << discontinuities
+                                            << subspace.poly().description();
                                 }
 #endif
                             }
@@ -725,7 +728,7 @@ DENG2_PIMPL(Map)
         // How much time did we spend?
         LOGDEV_MAP_VERBOSE("BSP built in %.2f seconds") << begunAt.since();
 
-        return bsp.tree != 0;
+        return bsp.tree != nullptr;
     }
 
     /**
@@ -733,8 +736,10 @@ DENG2_PIMPL(Map)
      */
     void buildClusters(Sector &sector)
     {
-        SectorClusters::iterator it = clusters.find(&sector);
-        while(it != clusters.end() && it.key() == &sector) { delete *it; }
+        for(auto it = clusters.find(&sector); it != clusters.end() && it.key() == &sector; )
+        {
+            delete *it;
+        }
         clusters.remove(&sector);
 
         typedef QList<ConvexSubspace *> Subspaces;
@@ -746,7 +751,7 @@ DENG2_PIMPL(Map)
          * starting with a set per subspace and then keep merging these sets until
          * no more shared edges are found.
          */
-        foreach(ConvexSubspace *subspace, subspaces)
+        for(ConvexSubspace *subspace : subspaces)
         {
             if(subspace->bspLeaf().sectorPtr() == &sector)
             {
@@ -766,7 +771,7 @@ DENG2_PIMPL(Map)
             {
                 if(i == k) continue;
 
-                foreach(ConvexSubspace *subspace, subspaceSets[i])
+                for(ConvexSubspace *subspace : subspaceSets[i])
                 {
                     HEdge *baseHEdge = subspace->poly().hedge();
                     HEdge *hedge = baseHEdge;
@@ -803,7 +808,7 @@ DENG2_PIMPL(Map)
         // Clustering complete.
 
         // Build clusters.
-        foreach(Subspaces const &subspaceSet, subspaceSets)
+        for(Subspaces const &subspaceSet : subspaceSets)
         {
             // Subspace ownership is not given to the cluster.
             clusters.insert(&sector, new SectorCluster(subspaceSet));
@@ -1622,9 +1627,27 @@ Map::Subspaces const &Map::subspaces() const
     return d->subspaces;
 }
 
-Map::SectorClusters const &Map::clusters() const
+LoopResult Map::forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func)
 {
-    return d->clusters;
+    if(sector)
+    {
+        for(auto it = d->clusters.constFind(sector); it != d->clusters.end() && it.key() == sector; ++it)
+        {
+            if(auto result = func(**it)) return result;
+        }
+    }
+
+    for(SectorCluster *cluster : d->clusters)
+    {
+        if(auto result = func(*cluster)) return result;
+    }
+
+    return LoopContinue;
+}
+
+int Map::clusterCount() const
+{
+    return d->clusters.count();
 }
 
 #ifdef __CLIENT__
