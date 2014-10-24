@@ -20,7 +20,7 @@
 
 #include "de_base.h"
 #include "world/convexsubspace.h"
-#include "Bspleaf"
+#include "BspLeaf"
 #include "Face"
 #include "Polyobj"
 #include "SectorCluster"
