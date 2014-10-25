@@ -31,7 +31,7 @@ using namespace de;
 
 namespace fx {
 
-static ddouble const MIN_FACTOR = 1.0 / 16.0;
+static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 
 DENG2_PIMPL(Resize)
 {
@@ -58,7 +58,8 @@ DENG2_PIMPL(Resize)
 
     float factor() const
     {
-        return max(MIN_FACTOR, pixelDensity * resizeFactor);
+        double const rf = (resizeFactor > 0? 1.0 / resizeFactor : 1.0);
+        return FACTOR_RANGE.clamp(pixelDensity * rf);
     }
 
     /// Determines if the post-processing shader will be applied.

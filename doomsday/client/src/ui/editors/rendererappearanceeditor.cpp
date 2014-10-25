@@ -267,7 +267,6 @@ DENG2_OBSERVES(App, GameChange)
     Group *spriteGroup;
     Group *objectGroup;
     Group *partGroup;
-    Group *fxGroup;
 
     Instance(Public *i)
         : Base(i),
@@ -399,6 +398,9 @@ DENG2_OBSERVES(App, GameChange)
         // Camera lens settings.
         lensGroup = new Group(this, "lens", tr("Camera Lens"));
 
+        lensGroup->addLabel(tr("Pixel Doubling:"));
+        lensGroup->addSlider(App::config("render.fx.resize.factor"), Ranged(1, 8), .1, 1);
+        
         lensGroup->addSpace();
         lensGroup->addToggle("rend-bloom", tr("Bloom"));
 
@@ -586,14 +588,6 @@ DENG2_OBSERVES(App, GameChange)
 
         partGroup->commit();
 
-        // Additional and miscellaneous effects.
-        fxGroup = new Group(this, "fx", tr("Other Effects"));
-
-        fxGroup->addLabel(tr("Pixel Density:"));
-        fxGroup->addSlider(App::config("render.fx.resize.factor"), Ranged(0, 1), .05, 2);
-
-        fxGroup->commit();
-
         // Now we can define the first column width.
         firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
     }
@@ -752,8 +746,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
            << d->modelGroup->title()    << *d->modelGroup
            << d->spriteGroup->title()   << *d->spriteGroup
            << d->partGroup->title()     << *d->partGroup
-           << d->skyGroup->title()      << *d->skyGroup
-           << d->fxGroup->title()       << *d->fxGroup;
+           << d->skyGroup->title()      << *d->skyGroup;
 
     // Update container size.
     d->container->setContentSize(OperatorRule::maximum(layout.width(),
