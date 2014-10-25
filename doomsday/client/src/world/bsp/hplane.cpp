@@ -3,7 +3,7 @@
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -23,8 +23,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/bsp/hplane.h"
+
+#include <memory>
+#include <QtAlgorithms>
+#include <de/mathutil.h> // M_InverseAngle
+#include <de/vector1.h> // remove me
+#include <de/Error>
+#include <de/Log>
 
 #include "Line"
 #include "Sector"
@@ -34,19 +40,12 @@
 #include "world/bsp/linesegment.h"
 #include "world/bsp/partitioner.h"
 
-#include <de/Error>
-#include <de/Log>
-#include <de/vector1.h> // remove me
-#include <de/mathutil.h> // M_InverseAngle
-#include <QtAlgorithms>
-#include <memory>
-
 namespace de {
 namespace bsp {
 
 HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edge)
-    : _before  (0)
-    , _after   (0)
+    : _before  (nullptr)
+    , _after   (nullptr)
     , _distance(distance)
     , _lineSeg (&lineSeg)
     , _edge    (edge)
@@ -54,6 +53,7 @@ HPlane::Intercept::Intercept(ddouble distance, LineSegmentSide &lineSeg, int edg
 
 LineSegmentSide &HPlane::Intercept::lineSegment() const
 {
+    DENG2_ASSERT(_lineSeg);
     return *_lineSeg;
 }
 
@@ -64,12 +64,12 @@ int HPlane::Intercept::lineSegmentEdge() const
 
 Sector *HPlane::Intercept::before() const
 {
-    return _before? _before->sectorPtr() : 0;
+    return _before? _before->sectorPtr() : nullptr;
 }
 
 Sector *HPlane::Intercept::after() const
 {
-    return _after? _after->sectorPtr() : 0;
+    return _after? _after->sectorPtr() : nullptr;
 }
 
 LineSegmentSide *HPlane::Intercept::beforeLineSegment() const
@@ -82,14 +82,14 @@ LineSegmentSide *HPlane::Intercept::afterLineSegment() const
     return _after;
 }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
 void HPlane::Intercept::debugPrint() const
 {
     LOGDEV_MAP_MSG("Vertex #%i %s beforeSector: #%d afterSector: #%d %s")
-        << vertex().indexInMap()
-        << vertex().origin().asText()
-        << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)
-        << (_after && _after->hasSector()? _after->sector().indexInArchive() : -1);
+            << vertex().indexInMap()
+            << vertex().origin().asText()
+            << (_before && _before->hasSector()? _before->sector().indexInArchive() : -1)
+            << (_after  && _after->hasSector() ? _after-> sector().indexInArchive() : -1);
 }
 #endif
 
@@ -114,7 +114,7 @@ DENG2_PIMPL(HPlane)
         , length     (partition.direction.length())
         , angle      (M_DirectionToAngleXY(partition.direction.x, partition.direction.y))
         , slopeType  (M_SlopeTypeXY(partition.direction.x, partition.direction.y))
-        , perp       (partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y)
+        , perp       ( partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y)
         , para       (-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y)
         , lineSegment(0)
         , needSortIntercepts(false)
@@ -125,7 +125,7 @@ DENG2_PIMPL(HPlane)
      */
     Intercept *interceptByVertex(Vertex const &vertex)
     {
-        foreach(Intercept const &icpt, intercepts)
+        for(Intercept const &icpt : intercepts)
         {
             if(&icpt.vertex() == &vertex)
                 return const_cast<Intercept *>(&icpt);
@@ -183,7 +183,7 @@ void HPlane::clearIntercepts()
 void HPlane::configure(LineSegmentSide const &newBaseSeg)
 {
     // Only map line segments are suitable.
-    DENG_ASSERT(newBaseSeg.hasMapSide());
+    DENG2_ASSERT(newBaseSeg.hasMapSide());
 
     LOG_AS("HPlane::configure");
 
@@ -209,7 +209,7 @@ void HPlane::configure(LineSegmentSide const &newBaseSeg)
             -  d->partition.origin.y * d->partition.direction.y;
 
     //LOG_DEBUG("line segment %p %s")
-    //    << &newBaseSeg << d->partition.asText();
+    //        << &newBaseSeg << d->partition.asText();
 }
 
 /**
@@ -224,29 +224,29 @@ static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
 {
     // Is there a tip exactly at this angle?
     if(tips.at(angle))
-        return 0; // Closed.
+        return nullptr; // Closed.
 
     // Find the first tip after (larger) than this angle. If present the side
     // we're interested in is the front.
     if(EdgeTip const *tip = tips.after(angle))
     {
-        return tip->hasFront()? &tip->front() : 0;
+        return tip->hasFront()? &tip->front() : nullptr;
     }
 
     // The open sector must therefore be on the back of the tip with the largest
     // angle (if present).
     if(EdgeTip const *tip = tips.largest())
     {
-        return tip->hasBack()? &tip->back() : 0;
+        return tip->hasBack()? &tip->back() : nullptr;
     }
 
-    return 0; // No edge tips.
+    return nullptr; // No edge tips.
 }
 
 double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
 {
     Vertex &vertex = lineSeg.vertex(edge);
-    coord_t pointV1[2] = { vertex.origin().x, vertex.origin().y };
+    coord_t pointV1[2]     = { vertex.origin().x, vertex.origin().y };
     coord_t directionV1[2] = { d->partition.direction.x, d->partition.direction.y };
     return V2d_PointLineParaDistance(pointV1, directionV1, d->para, d->length);
 }
@@ -399,11 +399,11 @@ HPlane::Intercepts const &HPlane::intercepts() const
     return d->intercepts;
 }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
 void HPlane::printIntercepts() const
 {
     uint index = 0;
-    foreach(Intercept const &icpt, d->intercepts)
+    for(Intercept const &icpt : d->intercepts)
     {
         LOG_DEBUG(" %u: >%1.2f") << (index++) << icpt.distance();
         icpt.debugPrint();

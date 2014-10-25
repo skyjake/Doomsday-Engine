@@ -221,8 +221,8 @@ DENG2_PIMPL_NOREF(PartitionEvaluator)
             if(!cost.mapLeft || !cost.mapRight)
             {
                 //LOG_DEBUG("evaluate: No map line segments on %s%sside")
-                //    << (cost.mapLeft ? "" : "left ")
-                //    << (cost.mapRight? "" : "right ");
+                //        << (cost.mapLeft ? "" : "left ")
+                //        << (cost.mapRight? "" : "right ");
                 *partition = nullptr;
                 return;
             }
@@ -418,10 +418,10 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
             for(LineSegmentSide *candidate : segs.all())
             {
                 //LOG_DEBUG("%sline segment %p sector:%d %s -> %s")
-                //    << (candidate->hasMapLineSide()? "" : "mini-") << candidate
-                //    << (candidate->sector? candidate->sector->indexInMap() : -1)
-                //    << candidate->fromOrigin().asText()
-                //    << candidate->toOrigin().asText();
+                //        << (candidate->hasMapLineSide()? "" : "mini-") << candidate
+                //        << (candidate->sector? candidate->sector->indexInMap() : -1)
+                //        << candidate->fromOrigin().asText()
+                //        << candidate->toOrigin().asText();
 
                 // Only map line segments are suitable candidates.
                 if(!candidate->hasMapSide())
@@ -487,8 +487,8 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
             delete candidate;
         }
 
-        // LOG_DEBUG("best %p score: %d.%02d.")
-        //      << best << bestCost.total / 100 << bestCost.total % 100;
+        //LOG_DEBUG("best %p score: %d.%02d")
+        //        << best << bestCost.total / 100 << bestCost.total % 100;
     }
 
     return best;

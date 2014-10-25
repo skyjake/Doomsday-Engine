@@ -1,9 +1,9 @@
-/** @file world/bsp/edgetip.h World BSP Edge Tip.
+/** @file edgetip.h  World BSP Edge Tip.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/
  *
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  * @authors Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  * @authors Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -27,15 +27,13 @@
 #define DENG_WORLD_BSP_EDGETIP_H
 
 #include <list>
-
 #include "world/bsp/linesegment.h"
 
 namespace de {
 namespace bsp {
 
 /**
- * A "edge tip" is where the edge of a line segment and the relevant
- * vertex meet.
+ * A "edge tip" is where the edge of a line segment and the relevant vertex meet.
  *
  * @ingroup bsp
  */
@@ -46,41 +44,35 @@ public:
     enum Side { Front, Back };
 
 public:
-    explicit EdgeTip(coord_t angle = 0, LineSegmentSide *front = 0, LineSegmentSide *back = 0)
-        : _angle(angle), _front(front), _back(back)
-    {}
+    EdgeTip() {}
     EdgeTip(LineSegmentSide &side)
-        : _angle(side.angle()),
-          _front(side.hasSector()? &side : 0),
-          _back(side.back().hasSector()? &side.back() : 0)
+        : _angle(side.angle())
+        , _front(side.hasSector()? &side : nullptr)
+        , _back(side.back().hasSector()? &side.back() : nullptr)
     {}
 
     coord_t angle() const { return _angle; }
 
-    void setAngle(coord_t newAngle)
-    {
+    void setAngle(coord_t newAngle) {
         _angle = newAngle;
     }
 
-    bool hasSide(Side sid) const
-    {
-        return sid == Front? _front != 0 : _back != 0;
+    bool hasSide(Side sid) const {
+        return sid == Front? _front != nullptr : _back != nullptr;
     }
 
     inline bool hasFront() const { return hasSide(Front); }
+    inline bool hasBack() const  { return hasSide(Back); }
 
-    inline bool hasBack() const { return hasSide(Back); }
-
-    LineSegmentSide &side(Side sid) const
-    {
+    LineSegmentSide &side(Side sid) const {
         if(sid == Front)
         {
-            DENG_ASSERT(_front != 0);
+            DENG2_ASSERT(_front != nullptr);
             return *_front;
         }
         else
         {
-            DENG_ASSERT(_back != 0);
+            DENG2_ASSERT(_back != nullptr);
             return *_back;
         }
     }
@@ -88,11 +80,10 @@ public:
     inline LineSegmentSide &front() const { return side(Front); }
     inline LineSegmentSide &back() const  { return side(Back); }
 
-    inline LineSegmentSide *frontPtr() const { return hasFront()? &front() : 0; }
-    inline LineSegmentSide *backPtr() const  { return hasBack() ? &back()  : 0; }
+    inline LineSegmentSide *frontPtr() const { return hasFront()? &front() : nullptr; }
+    inline LineSegmentSide *backPtr() const  { return hasBack() ? &back()  : nullptr; }
 
-    void setSide(Side sid, LineSegmentSide *lineSeg)
-    {
+    void setSide(Side sid, LineSegmentSide *lineSeg) {
         if(sid == Front)
         {
             _front = lineSeg;
@@ -108,11 +99,12 @@ public:
 
 private:
     /// Angle that line makes at vertex (degrees; 0 is E, 90 is N).
-    coord_t _angle;
+    coord_t _angle = 0;
 
     /// Line segments on each side of the tip. Front is the side of increasing
-    /// angles, back is the side of decreasing angles. Either can be @c 0.
-    LineSegmentSide *_front, *_back;
+    /// angles, back is the side of decreasing angles. Either may be @c nullptr.
+    LineSegmentSide *_front = nullptr;
+    LineSegmentSide *_back  = nullptr;
 };
 
 /**
@@ -123,16 +115,7 @@ private:
 class EdgeTips
 {
 public:
-    /**
-     * Construct a new edge tip set.
-     */
-    EdgeTips() : _tips(0)
-    {}
-
-    ~EdgeTips()
-    {
-        clear();
-    }
+    ~EdgeTips() { clear(); }
 
     /// @see insert()
     inline EdgeTips &operator << (EdgeTip const &tip) {
@@ -143,10 +126,7 @@ public:
     /**
      * Returns @c true iff the set contains zero edge tips.
      */
-    bool isEmpty() const
-    {
-        return _tips.empty();
-    }
+    bool isEmpty() const { return _tips.empty(); }
 
     /**
      * Insert a copy of @a tip into the set, in it's rightful place according to
@@ -154,8 +134,7 @@ public:
      *
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 1024)
-    {
+    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 1024) {
         Tips::reverse_iterator after = _tips.rbegin();
         while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
         {
@@ -165,61 +144,52 @@ public:
     }
 
     /**
-     * Returns the tip from the set with the smallest angle; otherwise @c 0 if
-     * the set is empty.
+     * Returns the tip from the set with the smallest angle if not empty.
      */
-    EdgeTip const *smallest() const
-    {
-        return _tips.empty()? 0 : &_tips.front();
+    EdgeTip const *smallest() const {
+        return _tips.empty()? nullptr : &_tips.front();
     }
 
     /**
-     * Returns the tip from the set with the largest angle; otherwise @c 0 if
-     * the set is empty.
+     * Returns the tip from the set with the largest angle if not empty.
      */
-    EdgeTip const *largest() const
-    {
-        return _tips.empty()? 0 : &_tips.back();
+    EdgeTip const *largest() const {
+        return _tips.empty()? nullptr : &_tips.back();
     }
 
     /**
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 1024) const
-    {
-        DENG2_FOR_EACH_CONST(Tips, it, _tips)
+    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 1024) const {
+        for(EdgeTip const &tip : _tips)
         {
-            coord_t delta = de::abs(it->angle() - angle);
+            coord_t delta = de::abs(tip.angle() - angle);
             if(delta < epsilon || delta > (360.0 - epsilon))
             {
-                return &(*it);
+                return &tip;
             }
         }
-        return 0;
+        return nullptr;
     }
 
     /**
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024) const
-    {
-        DENG2_FOR_EACH_CONST(Tips, it, _tips)
+    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024) const {
+        for(EdgeTip const &tip : _tips)
         {
-            if(angle + epsilon < it->angle())
+            if(angle + epsilon < tip.angle())
             {
-                return &(*it);
+                return &tip;
             }
         }
-        return 0;
+        return nullptr;
     }
 
     /**
      * Clear all tips in the set.
      */
-    void clear()
-    {
-        _tips.clear();
-    }
+    void clear() { _tips.clear(); }
 
     /**
      * Clear all tips attributed to the specified line segment @a seg.

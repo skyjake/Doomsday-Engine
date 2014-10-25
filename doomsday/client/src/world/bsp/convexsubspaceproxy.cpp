@@ -158,10 +158,10 @@ struct Continuity
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("Continuity %p (sector:%i, coverage:%f, discord:%i)")
-            << this
-            << (sector? sector->indexInArchive() : -1)
-            << coverage
-            << discordSegments;
+                << this
+                << (sector? sector->indexInArchive() : -1)
+                << coverage
+                << discordSegments;
 
         for(OrderedSegment const *oseg : orderedSegs)
         {
@@ -337,7 +337,7 @@ void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegment
     if(numSegmentsAdded < newSegments.size())
     {
         LOG_DEBUG("ConvexSubspaceProxy pruned %i duplicate segments")
-            << (newSegments.size() - numSegmentsAdded);
+                << (newSegments.size() - numSegmentsAdded);
     }
 #endif
 }
@@ -494,10 +494,10 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     leaf.setSector(continuities.first().sector);
 
 /*#ifdef DENG_DEBUG
-    LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
-        << d->findCenter().asText()
-        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
-        << continuities.count();
+    LOG_INFO("ConvexSubspace %s BSP sector:%i (%i continuities)")
+            << d->findCenter().asText()
+            << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+            << continuities.count();
 
     for(Continuity const &conty : continuities)
     {

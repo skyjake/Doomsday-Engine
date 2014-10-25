@@ -21,12 +21,10 @@
 #define DENG_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
 #include <QList>
-
 #include <de/Error>
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
 #  include <de/Log>
 #endif
-
 #include "world/bsp/linesegment.h"
 
 class BspLeaf;
@@ -53,15 +51,15 @@ struct OrderedSegment
                de::fequal(toAngle, other.toAngle);
     }
 
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("%p Angle: %1.6f %s -> Angle: %1.6f %s")
-            << this
-            << fromAngle
-            << (segment? segment->from().origin().asText() : "(null)")
-            << toAngle
-            << (segment? segment->to().origin().asText() : "(null)");
+                << this
+                << fromAngle
+                << (segment? segment->from().origin().asText() : "(null)")
+                << toAngle
+                << (segment? segment->to().origin().asText() : "(null)");
     }
 #endif
 };
@@ -176,8 +174,7 @@ public:
     void buildGeometry(BspLeaf &bspLeaf, Mesh &mesh) const;
 
     /**
-     * The BspLeaf to which the subspace has been attributed. May return @c 0
-     * if not attributed.
+     * The BspLeaf to which the subspace has been attributed if any.
      *
      * @see setBspLeaf()
      *
@@ -189,7 +186,7 @@ public:
      * Change the BspLeaf to which the subspace is attributed.
      *
      * @param newBspLeaf  BSP leaf to attribute (ownership is unaffected).
-     *                    Can be @c 0 (to clear the attribution).
+     *                    Use @c nullptr to clear.
      *
      * @see bspLeaf()
      *
