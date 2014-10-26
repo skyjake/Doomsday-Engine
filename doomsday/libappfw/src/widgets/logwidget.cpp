@@ -280,26 +280,7 @@ public Font::RichFormat::IStyle
         {
             DENG2_GUARD(_wrappedEntries);
             if(_wrappedEntries.isEmpty()) return 0;
-            //if(_wrappedEntries.first()->drawable.isBeingWrapped()) return 0;
             return _wrappedEntries.takeFirst();
-        }
-
-        /**
-         * Pauses the sink so that it doesn't produce cached entries any more.
-         * This will allow the widget to catch up.
-         */
-        void setPaused(bool pause)
-        {
-            if(_paused != pause)
-            {
-                _paused = pause;
-                if(!_paused) beginWorkOnNext();
-            }
-        }
-        
-        bool isPaused() const
-        {
-            return _paused;
         }
 
         /**
@@ -307,7 +288,7 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
-            if(isPaused() || !d->formatter) return; // Must have a formatter.
+            if(!d->formatter) return; // Must have a formatter.
 
             DENG2_GUARD(this);
 
@@ -335,7 +316,6 @@ public Font::RichFormat::IStyle
         int _maxEntries;
         int _next;
         int _width;
-        bool _paused { false };
 
         struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
         WrappedEntries _wrappedEntries; ///< New entries possibly created in background threads.
@@ -586,7 +566,7 @@ public Font::RichFormat::IStyle
     {
         if(visibleRange < 0) return;
 
-        int len = de::max(10, visibleRange.size()/2);
+        int len = de::max(10, visibleRange.size());
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
@@ -735,12 +715,6 @@ public Font::RichFormat::IStyle
 
                 if(entryAtlasLayoutChanged || entryAtlasFull)
                 {
-                    if(entryAtlasFull)
-                    {
-                        // We're full at the moment so let's delay adding any new
-                        // entries for a while.
-                        sink.setPaused(true);
-                    }
                     goto nextAttempt;
                 }
             }
@@ -772,11 +746,6 @@ nextAttempt:
 
         // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
-
-        if(contentOffset.done())
-        {
-            sink.setPaused(false);
-        }
     }
 
     bool isVisible() const
