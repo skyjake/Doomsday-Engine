@@ -1624,13 +1624,13 @@ LoopResult Map::forAllClusters(Sector *sector, std::function<LoopResult (SectorC
         {
             if(auto result = func(**it)) return result;
         }
+        return LoopContinue;
     }
 
     for(SectorCluster *cluster : d->clusters)
     {
         if(auto result = func(*cluster)) return result;
     }
-
     return LoopContinue;
 }
 
