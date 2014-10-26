@@ -2644,8 +2644,12 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
 {
     pit_changesector_params_t &parm = *static_cast<pit_changesector_params_t *>(context);
 
-    DENG_ASSERT(thing->info != 0);
-
+    if(!thing->info)
+    {
+        // Likely a remote object we don't know enough about.
+        return false;
+    }
+    
     // Skip mobjs that aren't blocklinked (supposedly immaterial).
     if(thing->info->flags & MF_NOBLOCKMAP)
     {
