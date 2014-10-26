@@ -338,7 +338,7 @@ DENG2_PIMPL(RowAtlasAllocator)
             }
 
             // Got a place, mark it down.
-            if(Slot *addedSlot = slot->allocateAndSplit(id? Id(id) : Id(), size.x))
+            if(Slot *addedSlot = slot->allocateAndSplit(id? Id(id) : Id(), needed.x))
             {
                 addVacant(addedSlot);
             }
