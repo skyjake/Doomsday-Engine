@@ -525,12 +525,9 @@ public Font::RichFormat::IStyle
     {
         self.modifyContentHeight(delta);
 
-        // Adjust visible offset so it remains fixed in relation to
-        // existing entries.
-        if(self.scrollPositionY().animation().target() > 0)
-        {
-            self.scrollPositionY().shift(delta);
-        }
+        // TODO: If content height changes below the visible range, we should adjust
+        // the current scroll position so that the entries don't change position
+        // inside the view.
     }
 
     void fetchNewCachedEntries()
@@ -543,20 +540,17 @@ public Font::RichFormat::IStyle
 
     void rewrapCache()
     {
-        int startFrom = cache.size() - 1;
-        if(visibleRange >= 0)
-        {
-            startFrom = min(startFrom, visibleRange.end + 1);
-        }
+        int startFrom = max(0, visibleRange.start);
 
-        // Resize all the existing entries, starting from the latest visible entry.
-        for(int idx = startFrom; idx >= 0; --idx)
+        // Resize entries starting from the first visible entry, continue down to the
+        // most recent entry.
+        for(int idx = startFrom; idx < cache.size(); ++idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
 
-        // Resize the rest of the items (below the visible range).
-        for(int idx = startFrom + 1; idx < cache.size(); ++idx)
+        // Resize the rest of the items (above the visible range).
+        for(int idx = startFrom - 1; idx >= 0; --idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
@@ -737,7 +731,7 @@ nextAttempt:
         // available for drawing.
         if(heightDelta)
         {
-            modifyContentHeight(heightDelta);
+            modifyContentHeight(heightDelta);            
             if(needHeightNotify && heightDelta > 0)
             {
                 emit self.contentHeightIncreased(heightDelta);
