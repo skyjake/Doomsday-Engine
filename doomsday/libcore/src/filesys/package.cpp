@@ -320,7 +320,7 @@ String Package::identifierForFile(File const &file)
     return prefix + extractIdentifier(file.name());
 }
 
-String Package::identifierForContainerOfFile(File const &file)
+File const *Package::containerOfFile(File const &file)
 {
     // Find the containing package.
     File const *i = file.parent();
@@ -328,7 +328,21 @@ String Package::identifierForContainerOfFile(File const &file)
     {
         i = i->parent();
     }
-    return i? identifierForFile(*i) : "";
+    return i;
 }
 
+String Package::identifierForContainerOfFile(File const &file)
+{
+    // Find the containing package.
+    File const *c = containerOfFile(file);
+    return c? identifierForFile(*c) : "";
+}
+
+Time Package::containerOfFileModifiedAt(File const &file)
+{
+    File const *c = containerOfFile(file);
+    if(!c) return file.status().modifiedAt;
+    return c->status().modifiedAt;
+}
+    
 } // namespace de
