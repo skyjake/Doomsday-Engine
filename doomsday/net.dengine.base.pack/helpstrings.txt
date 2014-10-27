@@ -985,26 +985,14 @@ desc = 1=Enable help window in Control Panel.
 [ui-panel-tips]
 desc = 1=Show help indicators in Control Panel.
 
-[vid-bpp]
-desc = Default color depth (bits per pixel), 16 or 32.
-
 [vid-bright]
 desc = Display brightness: -1=dark, 0=normal, 1=light.
 
 [vid-contrast]
 desc = Display contrast: 1=normal.
 
-[vid-fullscreen]
-desc = 1=Default to fullscreen.
-
 [vid-gamma]
 desc = Display gamma correction factor: 1=normal.
-
-[vid-res-x]
-desc = Default resolution (X).
-
-[vid-res-y]
-desc = Default resolution (Y).
 # Control Panel help strings
 
 #

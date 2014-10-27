@@ -137,8 +137,8 @@ enum {
     DD_DISPLAYPLAYER,
     DD_MIPMAPPING,
     DD_SMOOTH_IMAGES,
-    DD_DEFAULT_RES_X,
-    DD_DEFAULT_RES_Y,
+    DD_DEFAULT_RES_X_obsolete,
+    DD_DEFAULT_RES_Y_obsolete,
     DD_UNUSED1,
     DD_MOUSE_INVERSE_Y,
     DD_FULLBRIGHT, ///< Render everything fullbright?

@@ -51,7 +51,6 @@ class Material;
 
 DENG_EXTERN_C int numTexUnits;
 DENG_EXTERN_C dd_bool  envModAdd;
-DENG_EXTERN_C int defResX, defResY, defBPP, defFullscreen;
 DENG_EXTERN_C int viewph, viewpw, viewpx, viewpy;
 DENG_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DENG_EXTERN_C int r_detail;

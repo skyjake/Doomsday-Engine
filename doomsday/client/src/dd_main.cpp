@@ -2404,8 +2404,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
 #ifdef __CLIENT__
     {&mipmapping, 0},
     {&filterUI, 0},
-    {&defResX, &defResX},
-    {&defResY, &defResY},
+    {0, 0}, // defResX
+    {0, 0}, // defResY
 #else
     {0, 0},
     {0, 0},
