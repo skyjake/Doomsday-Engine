@@ -134,7 +134,7 @@ public:
      *
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 1024) {
+    void insert(EdgeTip const &tip, ddouble epsilon = 1.0 / 128) {
         Tips::reverse_iterator after = _tips.rbegin();
         while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
         {
@@ -160,7 +160,7 @@ public:
     /**
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 1024) const {
+    EdgeTip const *at(ddouble angle, ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)
         {
             coord_t delta = de::abs(tip.angle() - angle);
@@ -175,7 +175,7 @@ public:
     /**
      * @param epsilon  Angle equivalence threshold (in degrees).
      */
-    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 1024) const {
+    EdgeTip const *after(ddouble angle, ddouble epsilon = 1.0 / 128) const {
         for(EdgeTip const &tip : _tips)
         {
             if(angle + epsilon < tip.angle())

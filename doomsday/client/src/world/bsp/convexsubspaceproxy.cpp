@@ -38,9 +38,6 @@
 #include <QVarLengthArray>
 #include <QtAlgorithms>
 
-/// Smallest difference between two angles before being considered equal (in degrees).
-static coord_t const ANG_EPSILON = 1.0 / 1024.0;
-
 namespace de {
 namespace bsp {
 
@@ -265,7 +262,7 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
             {
                 OrderedSegment const &a = orderedSegments.at(i);
                 OrderedSegment const &b = orderedSegments.at(i+1);
-                if(a.fromAngle + ANG_EPSILON < b.fromAngle)
+                if(a.fromAngle < b.fromAngle)
                 {
                     orderedSegments.swap(i, i + 1);
                     swappedAny = true;

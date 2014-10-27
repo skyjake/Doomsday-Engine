@@ -44,9 +44,6 @@ static coord_t const SHORT_HEDGE_EPSILON = 4.0;
 /// Smallest distance between two points before being considered equal.
 static coord_t const DIST_EPSILON        = 1.0 / 128.0;
 
-/// Smallest difference between two angles before being considered equal (in degrees).
-static coord_t const ANG_EPSILON         = 1.0 / 1024.0;
-
 /**
  * World map binary space partitioner (BSP).
  *
