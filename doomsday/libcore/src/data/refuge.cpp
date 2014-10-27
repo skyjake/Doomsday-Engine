@@ -76,7 +76,8 @@ void Refuge::write() const
 {
     if(App::hasPersistentData())
     {
-        Writer(App::persistentData().entryBlock(d->persistentPath)).withHeader() << d->names;
+        Writer(App::mutablePersistentData().entryBlock(d->persistentPath)).withHeader()
+            << d->names;
     }
 }
 

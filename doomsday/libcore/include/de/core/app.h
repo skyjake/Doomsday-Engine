@@ -242,8 +242,16 @@ public:
      *
      * @return Persistent data archive.
      */
-    static Archive &persistentData();
+    static Archive const &persistentData();
 
+    /**
+     * Returns the persistent data as a mutable archive. Accessing the entries in 
+     * a mutable archive will automatically update their timestamps.
+     *
+     * @return Persistent data archive (allowing changes).
+     */
+    static Archive &mutablePersistentData();
+    
     static bool hasPersistentData();
 
     /**
