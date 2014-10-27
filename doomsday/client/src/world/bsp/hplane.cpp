@@ -116,7 +116,7 @@ DENG2_PIMPL(HPlane)
         , slopeType  (M_SlopeTypeXY(partition.direction.x, partition.direction.y))
         , perp       ( partition.origin.y * partition.direction.x - partition.origin.x * partition.direction.y)
         , para       (-partition.origin.x * partition.direction.x - partition.origin.y * partition.direction.y)
-        , lineSegment(0)
+        , lineSegment(nullptr)
         , needSortIntercepts(false)
     {}
 
@@ -254,7 +254,7 @@ double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
 HPlane::Intercept *HPlane::intercept(LineSegmentSide const &lineSeg, int edge,
     EdgeTips const &edgeTips)
 {
-    bool selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
+    bool const selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
     // Already present for this vertex?
     Intercept *icpt;
@@ -303,7 +303,7 @@ void HPlane::sortAndMergeIntercepts()
         {
             throw Error("HPlane::sortAndMergeIntercepts",
                         String("Invalid intercept order - %1 > %2")
-                            .arg(cur.distance(), 0, 'f', 3)
+                            .arg(cur.distance(),  0, 'f', 3)
                             .arg(next.distance(), 0, 'f', 3));
         }
 
@@ -314,7 +314,7 @@ void HPlane::sortAndMergeIntercepts()
             d->mergeIntercepts(cur, next);
 
             // Destroy the "next" intercept.
-            d->intercepts.removeAt(i+1);
+            d->intercepts.removeAt(i + 1);
 
             // Process the new "cur" and "next" pairing.
             i -= 1;
@@ -358,8 +358,7 @@ void HPlane::distance(LineSegmentSide const &lineSeg, coord_t *fromDist, coord_t
     /// line are always treated as collinear. This special case is only
     /// necessary due to precision inaccuracies when a line is split into
     /// multiple segments.
-    if(d->lineSegment != 0 &&
-       &d->lineSegment->mapSide().line() == lineSeg.partitionMapLine())
+    if(d->lineSegment && &d->lineSegment->mapSide().line() == lineSeg.partitionMapLine())
     {
         if(fromDist) *fromDist = 0;
         if(toDist)   *toDist   = 0;
@@ -375,7 +374,7 @@ void HPlane::distance(LineSegmentSide const &lineSeg, coord_t *fromDist, coord_t
     }
     if(toDist)
     {
-        coord_t toV1[2] = { lineSeg.to().origin().x, lineSeg.to().origin().y };
+        coord_t toV1[2]   = { lineSeg.to().origin().x, lineSeg.to().origin().y };
         *toDist = V2d_PointLinePerpDistance(toV1, toSegDirectionV1, d->perp, d->length);
     }
 }

@@ -611,6 +611,7 @@ DENG2_PIMPL(Partitioner)
             if(partSeg && cur.distance() >= nearDist && next.distance() <= farDist)
                 continue;
 
+            // Void space or an existing segment between the two intercepts?
             if(!cur.after() && !next.before())
                 continue;
 
@@ -646,29 +647,26 @@ DENG2_PIMPL(Partitioner)
             {
                 sector = next.before();
             }
-            else
+            // Choose the non-self-referencing sector when we can.
+            else if(cur.after() != next.before())
             {
-                // Choose the non-self-referencing sector when we can.
-                if(cur.after() != next.before())
+                if(!cur.lineSegmentIsSelfReferencing() &&
+                   !next.lineSegmentIsSelfReferencing())
                 {
-                    if(!cur.lineSegmentIsSelfReferencing() &&
-                       !next.lineSegmentIsSelfReferencing())
-                    {
-                        LOG_DEBUG("Sector mismatch #%d %s != #%d %s")
-                                << cur.after()->indexInMap()
-                                << cur.vertex().origin().asText()
-                                << next.before()->indexInMap()
-                                << next.vertex().origin().asText();
-                    }
+                    LOG_DEBUG("Sector mismatch #%d %s != #%d %s")
+                            << cur.after()->indexInMap()
+                            << cur.vertex().origin().asText()
+                            << next.before()->indexInMap()
+                            << next.vertex().origin().asText();
+                }
 
-                    LineSegmentSide *afterSeg = cur.afterLineSegment();
-                    if(afterSeg->hasMapLine() && afterSeg->mapLine().isSelfReferencing())
+                LineSegmentSide *afterSeg = cur.afterLineSegment();
+                if(afterSeg->hasMapLine() && afterSeg->mapLine().isSelfReferencing())
+                {
+                    LineSegmentSide *beforeSeg = next.beforeLineSegment();
+                    if(beforeSeg->hasMapLine() && !beforeSeg->mapLine().isSelfReferencing())
                     {
-                        LineSegmentSide *beforeSeg = next.beforeLineSegment();
-                        if(beforeSeg->hasMapLine() && !beforeSeg->mapLine().isSelfReferencing())
-                        {
-                            sector = next.before();
-                        }
+                        sector = next.before();
                     }
                 }
             }
