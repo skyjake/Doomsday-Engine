@@ -18,7 +18,7 @@
 #ifndef __AMETHYST_COMMON_DEFS_H__
 #define __AMETHYST_COMMON_DEFS_H__
 
-#define VERSION_STR     "1.1.1"
+#define VERSION_STR     "1.1.2"
 #define BUILD_STR       "Version "VERSION_STR" ("__DATE__")"
 #define MAX_COLUMNS     40
 
