@@ -1,7 +1,7 @@
-/** @file b_command.cpp  Event-Command Bindings. @ingroup ui
+/** @file b_command.cpp  Input system, event => command binding.
  *
  * @authors Copyright © 2007-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,25 +17,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/memory.h>
-
-#include "de_console.h"
-#include "de_misc.h"
-
-#include "world/p_players.h"
-#include "ui/b_main.h"
+#include "de_platform.h" // strdup macro
 #include "ui/b_command.h"
+
+#include <de/memory.h>
+#include <de/vector1.h>
+#include "world/p_players.h" // P_ConsoleToLocal
+#include "ui/b_main.h"
 #include "CommandAction"
 
-void B_InitCommandBindingList(evbinding_t* listRoot)
+void B_InitCommandBindingList(evbinding_t *listRoot)
 {
-    memset(listRoot, 0, sizeof(*listRoot));
+    DENG2_ASSERT(listRoot);
+    de::zapPtr(listRoot);
     listRoot->next = listRoot;
     listRoot->prev = listRoot;
 }
 
-void B_DestroyCommandBindingList(evbinding_t* listRoot)
+void B_DestroyCommandBindingList(evbinding_t *listRoot)
 {
+    DENG2_ASSERT(listRoot);
     while(listRoot->next != listRoot)
     {
         B_DestroyCommandBinding(listRoot->next);
@@ -45,9 +46,9 @@ void B_DestroyCommandBindingList(evbinding_t* listRoot)
 /**
  * Allocates a new command binding and gives it a unique identifier.
  */
-static evbinding_t* B_AllocCommandBinding(void)
+static evbinding_t *B_AllocCommandBinding()
 {
-    evbinding_t* eb = (evbinding_t *) M_Calloc(sizeof(evbinding_t));
+    evbinding_t *eb = (evbinding_t *) M_Calloc(sizeof(evbinding_t));
     eb->bid = B_NewIdentifier();
     return eb;
 }
@@ -57,21 +58,23 @@ static evbinding_t* B_AllocCommandBinding(void)
  *
  * @return  Pointer to the new condition, which should be filled with the condition parameters.
  */
-static statecondition_t* B_AllocCommandBindingCondition(evbinding_t* eb)
+static statecondition_t *B_AllocCommandBindingCondition(evbinding_t *eb)
 {
+    DENG2_ASSERT(eb);
     eb->conds = (statecondition_t *) M_Realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
-    memset(&eb->conds[eb->numConds - 1], 0, sizeof(statecondition_t));
+    de::zap(eb->conds[eb->numConds - 1]);
     return &eb->conds[eb->numConds - 1];
 }
 
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-dd_bool B_ParseEvent(evbinding_t* eb, const char* desc)
+static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
 {
+    DENG2_ASSERT(eb);
     LOG_AS("B_ParseEvent");
 
-    AutoStr* str = AutoStr_NewStd();
+    AutoStr *str = AutoStr_NewStd();
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
@@ -162,10 +165,10 @@ dd_bool B_ParseEvent(evbinding_t* eb, const char* desc)
     else if(!Str_CompareIgnoreCase(str, "sym"))
     {
         // It must be a symbolic event.
-        eb->type = E_SYMBOLIC;
-        eb->device = 0;
+        eb->type         = E_SYMBOLIC;
+        eb->device       = 0;
         eb->symbolicName = strdup(desc);
-        desc = NULL;
+        desc = nullptr;
     }
     else
     {
@@ -193,9 +196,9 @@ dd_bool B_ParseEvent(evbinding_t* eb, const char* desc)
  *
  * @return  @c true, if successful; otherwise @c false.
  */
-dd_bool B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
+static dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
 {
-    AutoStr* str = AutoStr_NewStd();
+    AutoStr *str = AutoStr_NewStd();
 
     // The main part, i.e., the first part.
     desc = Str_CopyDelim(str, desc, '+');
@@ -209,12 +212,10 @@ dd_bool B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     // Any conditions?
     while(desc)
     {
-        statecondition_t *cond;
-
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
 
-        cond = B_AllocCommandBindingCondition(eb);
+        statecondition_t *cond = B_AllocCommandBindingCondition(eb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parsing the condition.
@@ -226,26 +227,20 @@ dd_bool B_ParseEventDescriptor(evbinding_t* eb, const char* desc)
     return true;
 }
 
-/**
- * Creates a new event-command binding.
- *
- * @param bindsList     List of bindings where the binding will be added.
- * @param desc          Descriptor of the event.
- * @param command       Command that will be executed by the binding.
- *
- * @return              New binding, or @c NULL if there was an error.
- */
-evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc,
-                                 const char* command)
+evbinding_t *B_NewCommandBinding(evbinding_t *bindsList, char const *desc,
+                                 char const *command)
 {
-    evbinding_t*        eb = B_AllocCommandBinding();
+    DENG2_ASSERT(bindsList && command && command[0]);
+
+    evbinding_t *eb = B_AllocCommandBinding();
+    DENG2_ASSERT(eb);
 
     // Parse the description of the event.
     if(!B_ParseEventDescriptor(eb, desc))
     {
         // Error in parsing, failure to create binding.
         B_DestroyCommandBinding(eb);
-        return NULL;
+        return nullptr;
     }
 
     // The command string.
@@ -260,17 +255,11 @@ evbinding_t* B_NewCommandBinding(evbinding_t* bindsList, const char* desc,
     return eb;
 }
 
-/**
- * Destroys a command binding.
- *
- * @param eb  Command binding to destroy.
- */
-void B_DestroyCommandBinding(evbinding_t* eb)
+void B_DestroyCommandBinding(evbinding_t *eb)
 {
-    if(!eb)
-        return;
+    if(!eb) return;
 
-    assert(eb->bid != 0);
+    DENG2_ASSERT(eb->bid != 0);
 
     // Unlink first, if linked.
     if(eb->prev)
@@ -279,12 +268,9 @@ void B_DestroyCommandBinding(evbinding_t* eb)
         eb->next->prev = eb->prev;
     }
 
-    if(eb->command)
-        M_Free(eb->command);
-    if(eb->conds)
-        M_Free(eb->conds);
+    M_Free(eb->command);
+    M_Free(eb->conds);
     free(eb->symbolicName);
-
     M_Free(eb);
 }
 
@@ -303,9 +289,9 @@ void B_DestroyCommandBinding(evbinding_t* eb)
 static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
                                   evbinding_t * /*eb*/, ddstring_t *out)
 {
-    const char* ptr = command;
+    DENG2_ASSERT(command && event && out);
 
-    for(; *ptr; ptr++)
+    for(char const *ptr = command; *ptr; ptr++)
     {
         if(*ptr == '%')
         {
@@ -320,24 +306,12 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
                 int id = 0;
                 switch(event->type)
                 {
-                    case E_TOGGLE:
-                        id = event->toggle.id;
-                        break;
+                case E_TOGGLE:   id = event->toggle.id;   break;
+                case E_AXIS:     id = event->axis.id;     break;
+                case E_ANGLE:    id = event->angle.id;    break;
+                case E_SYMBOLIC: id = event->symbolic.id; break;
 
-                    case E_AXIS:
-                        id = event->axis.id;
-                        break;
-
-                    case E_ANGLE:
-                        id = event->angle.id;
-                        break;
-
-                    case E_SYMBOLIC:
-                        id = event->symbolic.id;
-                        break;
-
-                    default:
-                        break;
+                default: break;
                 }
                 Str_Appendf(out, "%i", id);
             }
@@ -362,36 +336,36 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
 }
 
 de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-                                        struct bcontext_s *eventClass,
-                                        bool respectHigherAssociatedContexts)
+    struct bcontext_s *eventClass, bool respectHigherAssociatedContexts)
 {
-    int         i;
-    inputdev_t* dev = 0;
-    ddstring_t  command;
+    DENG2_ASSERT(eb);
 
-    if(eb->device != event->device || eb->type != event->type)
-        return 0;
+    if(eb->device != event->device) return nullptr;
+    if(eb->type != event->type) return nullptr;
 
+    inputdev_t *dev = nullptr;
     if(event->type != E_SYMBOLIC)
     {
         dev = I_GetDevice(eb->device, OnlyActiveInputDevice);
         if(!dev)
         {
             // The device is not active, there is no way this could get executed.
-            return 0;
+            return nullptr;
         }
     }
 
     switch(event->type)
     {
     case E_TOGGLE:
+        DENG2_ASSERT(dev && eventClass);
+
         if(eb->id != event->toggle.id)
-            return 0;
+            return nullptr;
 
         if(respectHigherAssociatedContexts)
         {
             if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
-                return 0; // Shadowed by a more important active class.
+                return nullptr; // Shadowed by a more important active class.
         }
 
         // We're checking it, so clear the triggered flag.
@@ -400,76 +374,81 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
         // Is the state as required?
         switch(eb->state)
         {
-            case EBTOG_UNDEFINED:
-                // Passes no matter what.
-                break;
+        case EBTOG_UNDEFINED:
+            // Passes no matter what.
+            break;
 
-            case EBTOG_DOWN:
-                if(event->toggle.state != ETOG_DOWN)
-                    return 0;
-                break;
+        case EBTOG_DOWN:
+            if(event->toggle.state != ETOG_DOWN)
+                return nullptr;
+            break;
 
-            case EBTOG_UP:
-                if(event->toggle.state != ETOG_UP)
-                    return 0;
-                break;
+        case EBTOG_UP:
+            if(event->toggle.state != ETOG_UP)
+                return nullptr;
+            break;
 
-            case EBTOG_REPEAT:
-                if(event->toggle.state != ETOG_REPEAT)
-                    return 0;
-                break;
+        case EBTOG_REPEAT:
+            if(event->toggle.state != ETOG_REPEAT)
+                return nullptr;
+            break;
 
-            case EBTOG_PRESS:
-                if(event->toggle.state == ETOG_UP)
-                    return 0;
-                break;
+        case EBTOG_PRESS:
+            if(event->toggle.state == ETOG_UP)
+                return nullptr;
+            break;
 
-            default:
-                return 0;
+        default: return nullptr;
         }
         break;
 
     case E_AXIS:
+        DENG2_ASSERT(dev && eventClass);
+
         if(eb->id != event->axis.id)
-            return 0;
+            return nullptr;
+
         if(eventClass && dev->axes[eb->id].assoc.bContext != eventClass)
-            return 0; // Shadowed by a more important active class.
+            return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
         if(!B_CheckAxisPos(eb->state, eb->pos,
                            I_TransformAxis(I_GetDevice(event->device),
                                            event->axis.id, event->axis.pos)))
-            return 0;
+            return nullptr;
         break;
 
     case E_ANGLE:
+        DENG2_ASSERT(dev && eventClass);
+
         if(eb->id != event->angle.id)
-            return 0;
+            return nullptr;
+
         if(eventClass && dev->hats[eb->id].assoc.bContext != eventClass)
-            return 0; // Shadowed by a more important active class.
+            return nullptr; // Shadowed by a more important active class.
+
         // Is the position as required?
         if(event->angle.pos != eb->pos)
-            return 0;
+            return nullptr;
         break;
 
     case E_SYMBOLIC:
         if(strcmp(event->symbolic.name, eb->symbolicName))
-            return 0;
+            return nullptr;
         break;
 
-    default:
-        return 0;
+    default: return nullptr;
     }
 
     // Any conditions on the current state of the input devices?
-    for(i = 0; i < eb->numConds; ++i)
+    for(int i = 0; i < eb->numConds; ++i)
     {
-        if(!B_CheckCondition(&eb->conds[i], 0, NULL))
-            return 0;
+        if(!B_CheckCondition(&eb->conds[i], 0, nullptr))
+            return nullptr;
     }
 
     // Substitute parameters in the command.
-    Str_Init(&command);
+    ddstring_t command; Str_Init(&command);
     Str_Reserve(&command, strlen(eb->command));
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
@@ -479,36 +458,36 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     return act;
 }
 
-/**
- * Does the opposite of the B_Parse* methods for event descriptor, including the
- * state conditions.
- */
-void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
+void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
 {
-    int         i;
+    DENG2_ASSERT(eb && str);
 
     Str_Clear(str);
     B_AppendDeviceDescToString(eb->device, eb->type, eb->id, str);
 
-    if(eb->type == E_TOGGLE)
+    switch(eb->type)
     {
+    case E_TOGGLE:
         B_AppendToggleStateToString(eb->state, str);
-    }
-    else if(eb->type == E_AXIS)
-    {
+        break;
+
+    case E_AXIS:
         B_AppendAxisPositionToString(eb->state, eb->pos, str);
-    }
-    else if(eb->type == E_ANGLE)
-    {
+        break;
+
+    case E_ANGLE:
         B_AppendAnglePositionToString(eb->pos, str);
-    }
-    else if(eb->type == E_SYMBOLIC)
-    {
+        break;
+
+    case E_SYMBOLIC:
         Str_Appendf(str, "-%s", eb->symbolicName);
+        break;
+
+    default: break;
     }
 
     // Append any state conditions.
-    for(i = 0; i < eb->numConds; ++i)
+    for(int i = 0; i < eb->numConds; ++i)
     {
         Str_Append(str, " + ");
         B_AppendConditionToString(&eb->conds[i], str);
@@ -517,13 +496,17 @@ void B_EventBindingToString(const evbinding_t* eb, ddstring_t* str)
 
 evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device)
 {
-    for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
+    DENG2_ASSERT(listRoot);
+    if(command && command[0])
     {
-        if(!qstricmp(i->command, command) &&
-           (device >= NUM_INPUT_DEVICES || i->device == device))
+        for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
         {
-            return i;
+            if(!qstricmp(i->command, command) &&
+               (device >= NUM_INPUT_DEVICES || i->device == device))
+            {
+                return i;
+            }
         }
     }
-    return 0;
+    return nullptr;
 }

@@ -1,7 +1,7 @@
-/** @file b_util.cpp  Bindings-related Utility Functions. @ingroup ui
+/** @file b_util.cpp  Input system, binding utilities.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,20 +17,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <math.h>
+#include <cmath>
 
 #include "de_platform.h"
 #include "de_console.h"
 #include "dd_main.h"
 #include "de_misc.h"
-#include "ui/b_main.h"
-#include "ui/b_util.h"
-#include "ui/b_context.h"
 
+#include "ui/b_util.h"
+
+#include "ui/b_main.h"
+#include "ui/b_context.h"
 #include "network/net_main.h" // netGame
 
-dd_bool B_ParseToggleState(const char* toggleName, ebstate_t* state)
+dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
 {
+    DENG2_ASSERT(toggleName && state);
+
     if(!strlen(toggleName) || !strcasecmp(toggleName, "down"))
     {
         *state = EBTOG_DOWN; // this is the default, if omitted
@@ -61,195 +64,176 @@ dd_bool B_ParseToggleState(const char* toggleName, ebstate_t* state)
     return false; // Not recognized.
 }
 
-dd_bool B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
+dd_bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos)
 {
+    DENG2_ASSERT(desc && state && pos);
+
     if(!strncasecmp(desc, "within", 6) && strlen(desc) > 6)
     {
         *state = EBAXIS_WITHIN;
-        *pos = strtod(desc + 6, NULL);
+        *pos = strtod(desc + 6, nullptr);
+        return true;
     }
-    else if(!strncasecmp(desc, "beyond", 6) && strlen(desc) > 6)
+    if(!strncasecmp(desc, "beyond", 6) && strlen(desc) > 6)
     {
         *state = EBAXIS_BEYOND;
-        *pos = strtod(desc + 6, NULL);
+        *pos = strtod(desc + 6, nullptr);
+        return true;
     }
-    else if(!strncasecmp(desc, "pos", 3) && strlen(desc) > 3)
+    if(!strncasecmp(desc, "pos", 3) && strlen(desc) > 3)
     {
         *state = EBAXIS_BEYOND_POSITIVE;
-        *pos = strtod(desc + 3, NULL);
+        *pos = strtod(desc + 3, nullptr);
+        return true;
     }
-    else if(!strncasecmp(desc, "neg", 3) && strlen(desc) > 3)
+    if(!strncasecmp(desc, "neg", 3) && strlen(desc) > 3)
     {
         *state = EBAXIS_BEYOND_NEGATIVE;
-        *pos = -strtod(desc + 3, NULL);
+        *pos = -strtod(desc + 3, nullptr);
+        return true;
     }
-    else
-    {
-        LOG_INPUT_WARNING("Axis position \"%s\" is invalid") << desc;
-        return false;
-    }
-    return true;
+
+    LOG_INPUT_WARNING("Axis position \"%s\" is invalid") << desc;
+    return false;
 }
 
-dd_bool B_ParseModifierId(const char* desc, int* id)
+dd_bool B_ParseModifierId(char const *desc, int *id)
 {
-    *id = strtoul(desc, NULL, 10) - 1 + CTL_MODIFIER_1;
-    if(*id < CTL_MODIFIER_1 || *id > CTL_MODIFIER_4)
-    {
-        // Out of range.
-        return false;
-    }
-    return true;
+    DENG2_ASSERT(desc && id);
+    *id = strtoul(desc, nullptr, 10) - 1 + CTL_MODIFIER_1;
+    return (*id >= CTL_MODIFIER_1 && *id <= CTL_MODIFIER_4);
 }
 
-dd_bool B_ParseKeyId(const char* desc, int* id)
+dd_bool B_ParseKeyId(char const *desc, int *id)
 {
+    DENG2_ASSERT(desc && id);
     LOG_AS("B_ParseKeyId");
 
     // The possibilies: symbolic key name, or "codeNNN".
     if(!strncasecmp(desc, "code", 4) && strlen(desc) == 7)
     {
+        // Hexadecimal?
         if(desc[4] == 'x' || desc[4] == 'X')
         {
-            // Hexadecimal.
-            *id = strtoul(desc + 5, NULL, 16);
+            *id = strtoul(desc + 5, nullptr, 16);
+            return true;
         }
-        else
-        {
-            // Decimal.
-            *id = strtoul(desc + 4, NULL, 10);
-            if(*id <= 0 || *id > 255)
-            {
-                LOGDEV_INPUT_WARNING("Key code %i out of range") << *id;
-                return false;
-            }
-        }
+
+        // Decimal.
+        *id = strtoul(desc + 4, nullptr, 10);
+        if(*id > 0 && *id <= 255) return true;
+
+        LOGDEV_INPUT_WARNING("Key code %i out of range") << *id;
+        return false;
     }
-    else
-    {
-        // Symbolic key name.
-        *id = B_KeyForShortName(desc);
-        if(!*id)
-        {
-            LOG_INPUT_WARNING("Unknown key \"%s\"") << desc;
-            return false;
-        }
-    }
-    return true;
+
+    // Symbolic key name.
+    *id = B_KeyForShortName(desc);
+    if(*id) return true;
+
+    LOG_INPUT_WARNING("Unknown key \"%s\"") << desc;
+    return false;
 }
 
-dd_bool B_ParseMouseTypeAndId(const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
 {
-    // Maybe it's one of the buttons?
+    DENG2_ASSERT(desc && type && id);
+
+    // Maybe it's one of the named buttons?
     *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE), desc);
     if(*id >= 0)
     {
-        // Got it.
         *type = E_TOGGLE;
         return true;
     }
 
-    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6) // generic button
+    // Perhaps a generic button?
+    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
         *type = E_TOGGLE;
-        *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(IDEV_MOUSE)->numKeys)
-        {
-            LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
-            return false;
-        }
+        *id   = strtoul(desc + 6, nullptr, 10) - 1;
+        if(*id >= 0 && uint(*id) < I_GetDevice(IDEV_MOUSE)->numKeys)
+            return true;
+
+        LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
+        return false;
     }
-    else
-    {
-        // Try to find the axis.
-        *type = E_AXIS;
-        *id = I_GetAxisByName(I_GetDevice(IDEV_MOUSE), desc);
-        if(*id < 0)
-        {
-            LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
-            return false;
-        }
-    }
-    return true;
+
+    // Must be an axis, then.
+    *type = E_AXIS;
+    *id   = I_GetAxisByName(I_GetDevice(IDEV_MOUSE), desc);
+    if(*id >= 0) return true;
+
+    LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
+    return false;
 }
 
-dd_bool B_ParseDeviceAxisTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseDeviceAxisTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id)
 {
+    DENG2_ASSERT(desc && type && id);
     inputdev_t *dev = I_GetDevice(device);
 
     *type = E_AXIS;
-    *id = I_GetAxisByName(dev, desc);
-    if(*id < 0)
-    {
-        LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << dev->name;
-        return false;
-    }
-    return true;
+    *id   = I_GetAxisByName(dev, desc);
+    if(*id >= 0) return true;
+
+    LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << dev->name;
+    return false;
 }
 
-dd_bool B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_t* type, int* id)
+dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id)
 {
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
         *type = E_TOGGLE;
-        *id = strtoul(desc + 6, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(device)->numKeys)
-        {
-            LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
-            return false;
-        }
+        *id   = strtoul(desc + 6, nullptr, 10) - 1;
+        if(*id >= 0 && uint(*id) < I_GetDevice(device)->numKeys)
+            return true;
+
+        LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
+        return false;
     }
-    else if(!strncasecmp(desc, "hat", 3) && strlen(desc) > 3)
+    if(!strncasecmp(desc, "hat", 3) && strlen(desc) > 3)
     {
         *type = E_ANGLE;
-        *id = strtoul(desc + 3, NULL, 10) - 1;
-        if(*id < 0 || (uint)*id >= I_GetDevice(device)->numHats)
-        {
-            LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
-            return false;
-        }
+        *id   = strtoul(desc + 3, nullptr, 10) - 1;
+        if(*id >= 0 && uint(*id) < I_GetDevice(device)->numHats)
+            return true;
+
+        LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
+        return false;
     }
-    else if(!strcasecmp(desc, "hat"))
+    if(!strcasecmp(desc, "hat"))
     {
         *type = E_ANGLE;
-        *id = 0;
+        *id   = 0;
+        return true;
     }
-    else
-    {
-        // Try to find the axis.       
-        if(!B_ParseDeviceAxisTypeAndId(device, desc, type, id))
-        {
-            return false;
-        }
-    }
-    return true;
+
+    // Try to find the axis.
+    return B_ParseDeviceAxisTypeAndId(device, desc, type, id);
 }
 
-dd_bool B_ParseAnglePosition(const char* desc, float* pos)
+dd_bool B_ParseAnglePosition(char const *desc, float *pos)
 {
+    DENG2_ASSERT(desc && pos);
     if(!strcasecmp(desc, "center"))
     {
         *pos = -1;
+        return true;
     }
-    else if(!strncasecmp(desc, "angle", 5) && strlen(desc) > 5)
+    if(!strncasecmp(desc, "angle", 5) && strlen(desc) > 5)
     {
-        *pos = strtod(desc + 5, NULL);
+        *pos = strtod(desc + 5, nullptr);
+        return true;
     }
-    else
-    {
-        LOG_INPUT_WARNING("Angle position \"%s\" is invalid") << desc;
-        return false;
-    }
-    return true;
+    LOG_INPUT_WARNING("Angle position \"%s\" is invalid") << desc;
+    return false;
 }
 
-/**
- * Parse a state condition.
- */
-dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
+dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
 {
-    AutoStr* str = AutoStr_NewStd();
-    ddeventtype_t type;
+    AutoStr *str = AutoStr_NewStd();
 
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
@@ -304,6 +288,7 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
+        ddeventtype_t type;
         if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cond->id))
         {
             return false;
@@ -333,6 +318,7 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
+        ddeventtype_t type;
         if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
         {
             return false;
@@ -371,11 +357,13 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
     }
 
     // Check for valid toggle states.
-    if(cond->type == SCT_TOGGLE_STATE &&
-       cond->state != EBTOG_UP && cond->state != EBTOG_DOWN)
+    if(cond->type == SCT_TOGGLE_STATE)
     {
-        LOG_INPUT_WARNING("\"%s\": Toggle condition can only be 'up' or 'down'") << desc;
-        return false;
+        if(cond->state != EBTOG_UP && cond->state != EBTOG_DOWN)
+        {
+            LOG_INPUT_WARNING("\"%s\": Toggle condition can only be 'up' or 'down'") << desc;
+            return false;
+        }
     }
 
     // Finally, there may be the negation at the end.
@@ -386,14 +374,10 @@ dd_bool B_ParseStateCondition(statecondition_t* cond, const char* desc)
     }
 
     // Anything left that wasn't used?
-    if(desc)
-    {
-        LOG_INPUT_WARNING("Unrecognized condition \"%s\"") << desc;
-        return false;
-    }
+    if(!desc) return true; // No errors detected.
 
-    // No errors detected.
-    return true;
+    LOG_INPUT_WARNING("Unrecognized condition \"%s\"") << desc;
+    return false;
 }
 
 dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos)
@@ -401,35 +385,30 @@ dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos)
     switch(test)
     {
     case EBAXIS_WITHIN:
-        if((pos > 0 && pos > testPos) || (pos < 0 && pos < -testPos))
-            return false;
-        break;
+        return !((pos > 0 && pos > testPos) || (pos < 0 && pos < -testPos));
 
     case EBAXIS_BEYOND:
-        if(!((pos > 0 && pos >= testPos) || (pos < 0 && pos <= -testPos)))
-            return false;
-        break;
+        return ((pos > 0 && pos >= testPos) || (pos < 0 && pos <= -testPos));
 
     case EBAXIS_BEYOND_POSITIVE:
-        if(pos < testPos)
-            return false;
-        break;
+        return !(pos < testPos);
 
     case EBAXIS_BEYOND_NEGATIVE:
-        if(pos > -testPos)
-            return false;
-        break;
+        return !(pos > -testPos);
 
-    default:
-        return false;
+    default: break;
     }
-    return true;
+
+    return false;
 }
 
-dd_bool B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
+dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *context)
 {
-    dd_bool fulfilled = !cond->flags.negate;
+    DENG2_ASSERT(cond);
+    dd_bool const fulfilled = !cond->flags.negate;
+
     inputdev_t *dev = I_GetDevice(cond->device);
+    DENG2_ASSERT(dev);
 
     switch(cond->type)
     {
@@ -443,22 +422,24 @@ dd_bool B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
         {
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
-            dbinding_t* binds = &B_GetControlBinding(context, cond->id)->deviceBinds[localNum];
+            dbinding_t *binds = &B_GetControlBinding(context, cond->id)->deviceBinds[localNum];
             B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context, false /*no triggered*/);
             if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
                (cond->state == EBTOG_UP && fabs(pos) < .5))
+            {
                 return fulfilled;
+            }
         }
         break;
 
-    case SCT_TOGGLE_STATE:
-    {
+    case SCT_TOGGLE_STATE: {
         int isDown = (dev->keys[cond->id].isDown != 0);
-        if((isDown && cond->state == EBTOG_DOWN) ||
+        if(( isDown && cond->state == EBTOG_DOWN) ||
            (!isDown && cond->state == EBTOG_UP))
+        {
             return fulfilled;
-        break;
-    }
+        }
+        break; }
 
     case SCT_AXIS_BEYOND:
         if(B_CheckAxisPos(cond->state, cond->pos, dev->axes[cond->id].position))
@@ -470,24 +451,26 @@ dd_bool B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* conte
             return fulfilled;
         break;
     }
+
     return !fulfilled;
 }
 
-dd_bool B_EqualConditions(const statecondition_t* a, const statecondition_t* b)
+dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b)
 {
+    DENG2_ASSERT(a && b);
     return (a->device == b->device &&
-            a->type == b->type &&
-            a->id == b->id &&
-            a->state == b->state &&
-            FEQUAL(a->pos, b->pos) &&
-            a->flags.negate == b->flags.negate &&
+            a->type   == b->type &&
+            a->id     == b->id &&
+            a->state  == b->state &&
+            de::fequal(a->pos, b->pos) &&
+            a->flags.negate      == b->flags.negate &&
             a->flags.multiplayer == b->flags.multiplayer);
 }
 
-void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str)
+void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t *str)
 {
     inputdev_t *dev = I_GetDevice(device);
-    const char* name;
+    DENG2_ASSERT(dev);
 
     if(type != E_SYMBOLIC)
     {
@@ -505,14 +488,16 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
         }
         else if(device == IDEV_KEYBOARD)
         {
-            name = B_ShortNameForKey(id);
+            char const *name = B_ShortNameForKey(id);
             if(name)
                 Str_Append(str, name);
             else
                 Str_Appendf(str, "code%03i", id);
         }
         else
+        {
             Str_Appendf(str, "button%i",id + 1);
+        }
         break;
 
     case E_AXIS:
@@ -528,39 +513,38 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
         break;
 
     default:
-        App_Error("B_AppendDeviceDescToString: Invalid value, type = %i.",
-                  (int) type);
+        App_Error("B_AppendDeviceDescToString: Invalid value, type = %i.", (int) type);
         break;
     }
 }
 
-void B_AppendToggleStateToString(ebstate_t state, ddstring_t* str)
+void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str)
 {
-    if(state == EBTOG_UNDEFINED)
-        Str_Append(str, "-undefined");
-    if(state == EBTOG_DOWN)
-        Str_Append(str, "-down");
-    if(state == EBTOG_REPEAT)
-        Str_Append(str, "-repeat");
-    if(state == EBTOG_PRESS)
-        Str_Append(str, "-press");
-    if(state == EBTOG_UP)
-        Str_Append(str, "-up");
+    switch(state)
+    {
+    case EBTOG_UNDEFINED: Str_Append(str, "-undefined"); break;
+    case EBTOG_DOWN:      Str_Append(str, "-down");      break;
+    case EBTOG_REPEAT:    Str_Append(str, "-repeat");    break;
+    case EBTOG_PRESS:     Str_Append(str, "-press");     break;
+    case EBTOG_UP:        Str_Append(str, "-up");        break;
+
+    default: break;
+    }
 }
 
-void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str)
+void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t *str)
 {
-    if(state == EBAXIS_WITHIN)
-        Str_Appendf(str, "-within%g", pos);
-    else if(state == EBAXIS_BEYOND)
-        Str_Appendf(str, "-beyond%g", pos);
-    else if(state == EBAXIS_BEYOND_POSITIVE)
-        Str_Appendf(str, "-pos%g", pos);
-    else
-        Str_Appendf(str, "-neg%g", -pos);
+    switch(state)
+    {
+    case EBAXIS_WITHIN:          Str_Appendf(str, "-within%g", pos); break;
+    case EBAXIS_BEYOND:          Str_Appendf(str, "-beyond%g", pos); break;
+    case EBAXIS_BEYOND_POSITIVE: Str_Appendf(str, "-pos%g",    pos); break;
+
+    default: Str_Appendf(str, "-neg%g", -pos); break;
+    }
 }
 
-void B_AppendAnglePositionToString(float pos, ddstring_t* str)
+void B_AppendAnglePositionToString(float pos, ddstring_t *str)
 {
     if(pos < 0)
         Str_Append(str, "-center");
@@ -568,8 +552,10 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
         Str_Appendf(str, "-angle%g", pos);
 }
 
-void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
+void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str)
 {
+    DENG2_ASSERT(cond);
+
     if(cond->type == SCT_STATE)
     {
         if(cond->flags.multiplayer)
@@ -584,8 +570,9 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     else
     {
         B_AppendDeviceDescToString(cond->device,
-                                   cond->type == SCT_TOGGLE_STATE? E_TOGGLE :
-                                   cond->type == SCT_AXIS_BEYOND? E_AXIS : E_ANGLE,
+                                   (  cond->type == SCT_TOGGLE_STATE? E_TOGGLE
+                                    : cond->type == SCT_AXIS_BEYOND ? E_AXIS
+                                    : E_ANGLE),
                                    cond->id, str);
     }
 
@@ -609,30 +596,28 @@ void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
     }
 }
 
-/**
- * @param ev  Event.
- * @param str  The event in textual format is appended here.
- */
-void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
+void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
 {
+    DENG2_ASSERT(ev);
+
     B_AppendDeviceDescToString(ev->device, ev->type,
-                               ev->type == E_TOGGLE? ev->toggle.id :
-                               ev->type == E_AXIS? ev->axis.id :
-                               ev->type == E_ANGLE? ev->angle.id :
-                               ev->type == E_SYMBOLIC? ev->symbolic.id :
-                               0, str);
+                               (  ev->type == E_TOGGLE  ? ev->toggle.id
+                                : ev->type == E_AXIS    ? ev->axis.id
+                                : ev->type == E_ANGLE   ? ev->angle.id
+                                : ev->type == E_SYMBOLIC? ev->symbolic.id
+                                : 0), str);
 
     switch(ev->type)
     {
     case E_TOGGLE:
-        B_AppendToggleStateToString(ev->toggle.state == ETOG_DOWN? EBTOG_DOWN :
-                                    ev->toggle.state == ETOG_UP? EBTOG_UP :
-                                    EBTOG_REPEAT, str);
+        B_AppendToggleStateToString((  ev->toggle.state == ETOG_DOWN? EBTOG_DOWN
+                                     : ev->toggle.state == ETOG_UP  ? EBTOG_UP
+                                     : EBTOG_REPEAT), str);
         break;
 
     case E_AXIS:
-        B_AppendAxisPositionToString(ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE :
-                                     EBAXIS_BEYOND_NEGATIVE, ev->axis.pos, str);
+        B_AppendAxisPositionToString((ev->axis.pos >= 0? EBAXIS_BEYOND_POSITIVE : EBAXIS_BEYOND_NEGATIVE),
+                                     ev->axis.pos, str);
         break;
 
     case E_ANGLE:
@@ -643,7 +628,6 @@ void B_AppendEventToString(const ddevent_t* ev, ddstring_t* str)
         Str_Appendf(str, "-%s", ev->symbolic.name);
         break;
 
-    case E_FOCUS:
-        break;
+    default: break;
     }
 }

@@ -1,8 +1,8 @@
-/** @file api_event.h Public API for input events and bindings.
+/** @file api_event.h  Public API for input events and bindings.
  * @ingroup input
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -69,10 +69,40 @@ DENG_API_TYPEDEF(B)
 {
     de_api_t api;
 
-    void (*SetContextFallback)(const char* name, int (*responderFunc)(event_t*));
-    int  (*BindingsForCommand)(const char* cmd, char* buf, size_t bufSize);
-    int  (*BindingsForControl)(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
+    void (*SetContextFallback)(char const *name, int (*responderFunc)(event_t *));
 
+    /**
+     * Looks through the bindings to find the ones that are bound to the
+     * specified command. The result is a space-separated list of bindings
+     * such as (idnum is the binding ID number):
+     *
+     * <tt>idnum@@game:key-space-down idnum@@game:key-e-down</tt>
+     *
+     * @param cmd      Command to look for.
+     * @param buf      Output buffer for the result.
+     * @param bufSize  Size of output buffer.
+     *
+     * @return  Number of bindings found for the command.
+     */
+    int  (*BindingsForCommand)(char const *cmd, char *buf, size_t bufSize);
+
+    /**
+     * Looks through the bindings to find the ones that are bound to the
+     * specified control. The result is a space-separated list of bindings.
+     *
+     * @param localPlayer  Number of the local player (first one always 0).
+     * @param controlName  Name of the player control.
+     * @param inverse      One of BFCI_*.
+     * @param buf          Output buffer for the result.
+     * @param bufSize      Size of output buffer.
+     *
+     * @return  Number of bindings found for the command.
+     */
+    int  (*BindingsForControl)(int localPlayer, char const *controlName, int inverse, char *buf, size_t bufSize);
+
+    /**
+     * Return the key code that corresponds the given key identifier name.
+     */
     int  (*GetKeyCode)(const char* name);
 }
 DENG_API_T(B);

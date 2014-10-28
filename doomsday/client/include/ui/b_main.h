@@ -1,7 +1,7 @@
-/** @file b_main.h Event and device state bindings system.
+/** @file b_main.h  Event and device state bindings system.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,19 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_BIND_MAIN_H
-#define DENG_CLIENT_BIND_MAIN_H
-
-#ifndef __CLIENT__
-#  error "Bindings only exist in the Client"
-#endif
+#ifndef CLIENT_INPUTSYSTEM_BINDINGS_H
+#define CLIENT_INPUTSYSTEM_BINDINGS_H
 
 #include <de/types.h>
 #include "dd_input.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -38,38 +30,58 @@ extern "C" {
 
 extern int symbolicEchoMode;
 
-void            B_Register(void);
-void            B_Init(void);
-void            B_Shutdown(void);
-dd_bool         B_Delete(int bid);
-dd_bool         B_Responder(ddevent_t* ev);
-void            B_WriteToFile(FILE* file);
+void B_ConsoleRegister();
+
+void B_Init();
+
+/**
+ * Deallocates memory for the commands and bindings.
+ */
+void B_Shutdown();
+
+dd_bool B_Delete(int bid);
+
+/**
+ * Checks to see if we need to respond to the given input event in some way
+ * and then if so executes the action associated to the event.
+ *
+ * @param ev  ddevent_t we may need to respond to.
+ *
+ * @return  @c true if an action was executed.
+ */
+dd_bool B_Responder(ddevent_t *ev);
+
+/**
+ * Dump all the bindings to a text (cfg) file. Outputs console commands.
+ */
+void B_WriteToFile(FILE *file);
 
 /**
  * Enable the contexts for the initial state.
  */
-void B_InitialContextActivations(void);
+void B_InitialContextActivations();
 
-void B_BindDefaults(void);
-void B_BindGameDefaults(void);
+void B_BindDefaults();
 
-struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
-struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
-struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s** bContext);
+void B_BindGameDefaults();
+
+struct evbinding_s *B_BindCommand(char const *eventDesc, char const *command);
+
+struct dbinding_s *B_BindControl(char const *controlDesc, char const *device);
+
+struct dbinding_s *B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s **bContext);
 
 bool B_UnbindCommand(char const *command);
 
-// Utils
-/// @todo: move to b_util.h
-int B_NewIdentifier(void);
+/// Utils: @todo move to b_util.h ----------------------------------------------
 
-const char* B_ShortNameForKey2(int ddKey, dd_bool forceLowercase);
-const char* B_ShortNameForKey(int ddkey);
+/**
+ * @return  Never returns zero, as that is reserved for list roots.
+ */
+int B_NewIdentifier();
 
-int B_KeyForShortName(const char* key);
+char const *B_ShortNameForKey(int ddKey, dd_bool forceLowercase = true);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+int B_KeyForShortName(char const *key);
 
-#endif // DENG_CLIENT_BIND_MAIN_H
+#endif // CLIENT_INPUTSYSTEM_BINDINGS_H

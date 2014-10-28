@@ -3274,8 +3274,7 @@ static void consoleRegister()
     /// @todo Move to UI module.
     Con_TransitionRegister();
 
-    B_Register(); // for control bindings
-    DD_RegisterInput();
+    InputSystem::consoleRegister();
     SBE_Register(); // for bias editor
     RenderSystem::consoleRegister();
     GL_Register();

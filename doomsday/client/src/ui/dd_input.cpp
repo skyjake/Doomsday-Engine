@@ -1590,7 +1590,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
         // Is there symbolic name in the bindings system?
         if(!keyLabel)
         {
-            keyLabel = B_ShortNameForKey2(keyID, false/*do not force lowercase*/);
+            keyLabel = B_ShortNameForKey(keyID, false/*do not force lowercase*/);
         }
     }
 

@@ -1,7 +1,7 @@
-/** @file
+/** @file b_device.h  Input system, control => device binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,12 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * b_device.h: Control-Device Bindings
- */
-
-#ifndef __DOOMSDAY_BIND_DEVICE_H__
-#define __DOOMSDAY_BIND_DEVICE_H__
+#ifndef CLIENT_INPUTSYSTEM_DEVICEBINDING_H
+#define CLIENT_INPUTSYSTEM_DEVICEBINDING_H
 
 #include "b_util.h"
 
@@ -38,30 +34,38 @@ typedef enum cbdevtype_e {
 #define CBDF_TIME_STAGED    0x2
 
 typedef struct dbinding_s {
-    struct dbinding_s* next;
-    struct dbinding_s* prev;
+    struct dbinding_s *next;
+    struct dbinding_s *prev;
 
-    int         bid;
-    uint        device;
+    int bid;
+    uint device;
     cbdevtype_t type;
-    int         id;
-    float       angle;
-    uint        flags;
+    int id;
+    float angle;
+    uint flags;
 
-    // Additional conditions.
-    int         numConds;
-    statecondition_t* conds;
+    int numConds;
+    statecondition_t *conds;  ///< Additional conditions.
 } dbinding_t;
 
-void        B_InitDeviceBindingList(dbinding_t* listRoot);
-void        B_DestroyDeviceBindingList(dbinding_t* listRoot);
-dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc);
-void        B_DestroyDeviceBinding(dbinding_t* cb);
-void        B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str);
-void        B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot,
-                                        float* pos, float* relativeOffset,
-                                        struct bcontext_s* controlClass,
-                                        dd_bool allowTriggered);
+extern byte zeroControlUponConflict;
 
-#endif // __DOOMSDAY_BIND_DEVICE_H__
+void B_InitDeviceBindingList(dbinding_t *listRoot);
+
+void B_DestroyDeviceBindingList(dbinding_t *listRoot);
+
+dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc);
+
+void B_DestroyDeviceBinding(dbinding_t *cb);
+
+/**
+ * Does the opposite of the B_Parse* methods for a device binding, including the
+ * state conditions.
+ */
+void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str);
+
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
+    float *relativeOffset, struct bcontext_s *controlClass, dd_bool allowTriggered);
+
+#endif // CLIENT_INPUTSYSTEM_DEVICEBINDING_H
 

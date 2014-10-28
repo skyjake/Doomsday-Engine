@@ -2,7 +2,7 @@
  * @ingroup playsim
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -22,6 +22,8 @@
 #define DOOMSDAY_API_PLAYER_H
 
 #include "apis.h"
+#include "dd_share.h" // DDMAXPLAYERS
+#include "def_share.h"
 #include <de/smoother.h>
 
 /**

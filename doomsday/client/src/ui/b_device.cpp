@@ -1,7 +1,7 @@
-/** @file b_device.cpp  Control-Device Bindings. @ingroup ui
+/** @file b_device.cpp  Input system, control => device binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,25 +17,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/memory.h>
+#include "ui/b_device.h"
 
-#include "de_console.h"
-#include "de_misc.h"
+#include <de/memory.h>
+#include <de/timer.h>
 #include "dd_main.h"
 #include "ui/b_main.h"
-#include "ui/b_device.h"
 #include "ui/b_context.h"
 
 #define EVTYPE_TO_CBDTYPE(evt)  ((evt) == E_AXIS? CBD_AXIS : (evt) == E_TOGGLE? CBD_TOGGLE : CBD_ANGLE)
 #define CBDTYPE_TO_EVTYPE(cbt)  ((cbt) == CBD_AXIS? E_AXIS : (cbt) == CBD_TOGGLE? E_TOGGLE : E_ANGLE)
 
-float       stageThreshold = 6.f/35;
-float       stageFactor = .5f;
-byte        zeroControlUponConflict = true;
+byte zeroControlUponConflict = true;
 
-static dbinding_t* B_AllocDeviceBinding(void)
+static float stageThreshold = 6.f/35;
+static float stageFactor    = .5f;
+
+static dbinding_t *B_AllocDeviceBinding()
 {
-    dbinding_t* cb = (dbinding_t *) M_Calloc(sizeof(dbinding_t));
+    dbinding_t *cb = (dbinding_t *) M_Calloc(sizeof(*cb));
     cb->bid = B_NewIdentifier();
     return cb;
 }
@@ -45,32 +45,35 @@ static dbinding_t* B_AllocDeviceBinding(void)
  *
  * @return  Pointer to the new condition, which should be filled with the condition parameters.
  */
-static statecondition_t* B_AllocDeviceBindingCondition(dbinding_t* b)
+static statecondition_t *B_AllocDeviceBindingCondition(dbinding_t *b)
 {
-    b->conds = (statecondition_t *) M_Realloc(b->conds, ++b->numConds * sizeof(statecondition_t));
-    memset(&b->conds[b->numConds - 1], 0, sizeof(statecondition_t));
+    b->conds = (statecondition_t *) M_Realloc(b->conds, ++b->numConds * sizeof(*b->conds));
+    de::zap(b->conds[b->numConds - 1]);
     return &b->conds[b->numConds - 1];
 }
 
-void B_InitDeviceBindingList(dbinding_t* listRoot)
+void B_InitDeviceBindingList(dbinding_t *listRoot)
 {
-    memset(listRoot, 0, sizeof(*listRoot));
+    DENG2_ASSERT(listRoot);
+    de::zapPtr(listRoot);
     listRoot->next = listRoot->prev = listRoot;
 }
 
-void B_DestroyDeviceBindingList(dbinding_t* listRoot)
+void B_DestroyDeviceBindingList(dbinding_t *listRoot)
 {
+    if(!listRoot) return;
     while(listRoot->next != listRoot)
     {
         B_DestroyDeviceBinding(listRoot->next);
     }
 }
 
-dd_bool B_ParseDevice(dbinding_t* cb, const char* desc)
+dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
 {
+    DENG2_ASSERT(cb && desc);
     LOG_AS("B_ParseEvent");
 
-    AutoStr* str = AutoStr_NewStd();
+    AutoStr *str = AutoStr_NewStd();
     ddeventtype_t type;
 
     // First, the device name.
@@ -78,7 +81,7 @@ dd_bool B_ParseDevice(dbinding_t* cb, const char* desc)
     if(!Str_CompareIgnoreCase(str, "key"))
     {
         cb->device = IDEV_KEYBOARD;
-        cb->type = CBD_TOGGLE;
+        cb->type   = CBD_TOGGLE;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
@@ -144,9 +147,10 @@ dd_bool B_ParseDevice(dbinding_t* cb, const char* desc)
     return true;
 }
 
-dd_bool B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
+dd_bool B_ParseDeviceDescriptor(dbinding_t *cb, char const *desc)
 {
-    AutoStr* str = AutoStr_NewStd();
+    DENG2_ASSERT(cb && desc);
+    AutoStr *str = AutoStr_NewStd();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
@@ -160,12 +164,10 @@ dd_bool B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     // Any conditions?
     while(desc)
     {
-        statecondition_t *cond;
-
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
 
-        cond = B_AllocDeviceBindingCondition(cb);
+        statecondition_t *cond = B_AllocDeviceBindingCondition(cb);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             // Failure parusing the condition.
@@ -177,16 +179,17 @@ dd_bool B_ParseDeviceDescriptor(dbinding_t* cb, const char* desc)
     return true;
 }
 
-dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
+dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc)
 {
-    dbinding_t* cb = B_AllocDeviceBinding();
+    DENG2_ASSERT(listRoot);
+    dbinding_t *cb = B_AllocDeviceBinding();
 
     // Parse the description of the event.
     if(!B_ParseDeviceDescriptor(cb, deviceDesc))
     {
         // Error in parsing, failure to create binding.
         B_DestroyDeviceBinding(cb);
-        return NULL;
+        return nullptr;
     }
 
     // Link it into the list.
@@ -198,76 +201,58 @@ dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc)
     return cb;
 }
 
-dbinding_t* B_FindDeviceBinding(bcontext_t* context, uint device, cbdevtype_t bindType, int id)
+dbinding_t *B_FindDeviceBinding(bcontext_t *context, uint device, cbdevtype_t bindType, int id)
 {
-    controlbinding_t*   cb;
-    dbinding_t*         d;
-    int                 i;
+    if(!context) return nullptr;
 
-    if(!context)
-        return NULL;
-
-    for(cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
+    for(controlbinding_t *cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dbinding_t *d = cb->deviceBinds[i].next; d != &cb->deviceBinds[i]; d = d->next)
     {
-        for(i = 0; i < DDMAXPLAYERS; ++i)
+        if(d->device == device && d->type == bindType && d->id == id)
         {
-            for(d = cb->deviceBinds[i].next; d != &cb->deviceBinds[i]; d = d->next)
-            {
-                if(d->device == device && d->type == bindType && d->id == id)
-                {
-                    return d;
-                }
-            }
+            return d;
         }
     }
-    return NULL;
+
+    return nullptr;
 }
 
-void B_DestroyDeviceBinding(dbinding_t* cb)
+void B_DestroyDeviceBinding(dbinding_t *cb)
 {
-    if(cb)
+    if(!cb) return;
+    DENG2_ASSERT(cb->bid != 0);
+
+    // Unlink first, if linked.
+    if(cb->prev)
     {
-        assert(cb->bid != 0);
-
-        // Unlink first, if linked.
-        if(cb->prev)
-        {
-            cb->prev->next = cb->next;
-            cb->next->prev = cb->prev;
-        }
-
-        if(cb->conds)
-            M_Free(cb->conds);
-        M_Free(cb);
+        cb->prev->next = cb->next;
+        cb->next->prev = cb->prev;
     }
+
+    M_Free(cb->conds);
+    M_Free(cb);
 }
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset,
-                                 bcontext_t* controlClass, dd_bool allowTriggered)
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
+    float *relativeOffset, bcontext_t *controlClass, dd_bool allowTriggered)
 {
-    dbinding_t* cb;
-    int         i;
-    dd_bool     skip;
-    inputdev_t* dev;
-    inputdevaxis_t* axis;
-    float       devicePos;
-    float       deviceOffset;
-    uint        deviceTime;
-    uint        nowTime = Timer_RealMilliseconds();
-    dd_bool     conflicted[NUM_CBD_TYPES] = { false, false, false };
-    dd_bool     appliedState[NUM_CBD_TYPES] = { false, false, false };
+    DENG2_ASSERT(pos && relativeOffset);
 
     *pos = 0;
     *relativeOffset = 0;
 
-    if(!listRoot)
-        return;
+    if(!listRoot) return;
 
-    for(cb = listRoot->next; cb != listRoot; cb = cb->next)
+    uint const nowTime = Timer_RealMilliseconds();
+    dd_bool conflicted[NUM_CBD_TYPES]   = { false, false, false };
+    dd_bool appliedState[NUM_CBD_TYPES] = { false, false, false };
+
+    for(dbinding_t *cb = listRoot->next; cb != listRoot; cb = cb->next)
     {
         // If this binding has conditions, they may prevent using it.
-        skip = false;
-        for(i = 0; i < cb->numConds; ++i)
+        dd_bool skip = false;
+        for(int i = 0; i < cb->numConds; ++i)
         {
             if(!B_CheckCondition(&cb->conds[i], localNum, controlClass))
             {
@@ -275,17 +260,15 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
                 break;
             }
         }
-        if(skip)
-            continue;
+        if(skip) continue;
 
         // Get the device.
-        dev = I_GetDevice(cb->device, OnlyActiveInputDevice);
-        if(!dev)
-            continue; // Not available.
+        inputdev_t *dev = I_GetDevice(cb->device, OnlyActiveInputDevice);
+        if(!dev) continue; // Not available.
 
-        devicePos = 0;
-        deviceOffset = 0;
-        deviceTime = 0;
+        float devicePos = 0;
+        float deviceOffset = 0;
+        uint deviceTime = 0;
 
         switch(cb->type)
         {
@@ -305,8 +288,9 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             dev->keys[cb->id].assoc.flags &= ~IDAF_TRIGGERED;
             break;
 
-        case CBD_AXIS:
-            axis = &dev->axes[cb->id];
+        case CBD_AXIS: {
+            inputdevaxis_t *axis = &dev->axes[cb->id];
+
             if(controlClass && axis->assoc.bContext != controlClass)
             {
                 if(!B_FindDeviceBinding(axis->assoc.bContext, cb->device, CBD_AXIS, cb->id))
@@ -335,7 +319,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
                 devicePos = axis->position;
             }
             deviceTime = axis->time;
-            break;
+            break; }
 
         case CBD_ANGLE:
             if(controlClass && dev->hats[cb->id].assoc.bContext != controlClass)
@@ -344,12 +328,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             if(dev->hats[cb->id].assoc.flags & IDAF_EXPIRED)
                 break;
 
-            devicePos = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
+            devicePos  = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
             deviceTime = dev->hats[cb->id].time;
             break;
 
         default:
-            App_Error("B_EvaluateDeviceBindingList: Invalid value, cb->type = %i.", cb->type);
+            App_Error("B_EvaluateDeviceBindingList: Invalid value cb->type: %i.", cb->type);
             break;
         }
 
@@ -371,7 +355,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
         *relativeOffset += deviceOffset;
 
         // Is this state contributing to the outcome?
-        if(!FEQUAL(devicePos, 0.f))
+        if(!de::fequal(devicePos, 0.f))
         {
             if(appliedState[cb->type])
             {
@@ -386,22 +370,20 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
 
     if(zeroControlUponConflict)
     {
-        for(i = 0; i < NUM_CBD_TYPES; ++i)
+        for(int i = 0; i < NUM_CBD_TYPES; ++i)
+        {
             if(conflicted[i])
                 *pos = 0;
+        }
     }
 
     // Clamp to the normalized range.
-    *pos = MINMAX_OF(-1.0f, *pos, 1.0f);
+    *pos = de::clamp(-1.0f, *pos, 1.0f);
 }
 
-/**
- * Does the opposite of the B_Parse* methods for a device binding, including the
- * state conditions.
- */
-void B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str)
+void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str)
 {
-    int         i;
+    DENG2_ASSERT(b && str);
 
     Str_Clear(str);
 
@@ -424,7 +406,7 @@ void B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str)
     }
 
     // Append any state conditions.
-    for(i = 0; i < b->numConds; ++i)
+    for(int i = 0; i < b->numConds; ++i)
     {
         Str_Append(str, " + ");
         B_AppendConditionToString(&b->conds[i], str);
