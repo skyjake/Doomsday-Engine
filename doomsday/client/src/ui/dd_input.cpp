@@ -856,7 +856,7 @@ static void postToQueue(eventqueue_t *q, ddevent_t *ev)
 /// @note Called by the I/O functions when input is detected.
 void DD_PostEvent(ddevent_t *ev)
 {
-    DENG2_ASSERT(ev);
+    DENG2_ASSERT(ev && ev->device < NUM_INPUT_DEVICES);
 
     eventqueue_t *q = &queue;
     if(useSharpInputEvents &&
