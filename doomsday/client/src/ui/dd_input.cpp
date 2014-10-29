@@ -1,8 +1,7 @@
-/** @file dd_input.cpp Platform-independent input subsystem. 
- * @ingroup input
+/** @file dd_input.cpp  Platform-independent input subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,79 +18,82 @@
  * 02110-1301 USA</small>
  */
 
-#include <ctype.h>
-#include <math.h>
-#include <de/memory.h>
+#include "de_platform.h" // stricmp macro, etc...
+#include "ui/dd_input.h"
 
-#include "de_platform.h"
-#include "de_console.h"
-#include "de_system.h"
-#include "de_misc.h"
-#include "de_ui.h"
+#include <cctype>
+#include <cmath>
+#include <de/concurrency.h>
+#include <de/memory.h>
+#include <de/smoother.h>
+#include <de/timer.h> // SECONDSPERTIC
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
+#include <de/KeyEvent>
+
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
+#include "sys_system.h" // novideo
 
 #include "render/vr.h"
 
+#include "ui/b_main.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/joystick.h"
 #include "ui/infine/finale.h"
-#include <de/KeyEvent>
+#include "ui/sys_input.h"
+#include "ui/ui_main.h"
 
 // For the debug visuals:
-#if _DEBUG
+#ifdef DENG2_DEBUG
 #  include "de_graphics.h"
 #  include "api_fontrender.h"
 #endif
 
 using namespace de;
 
-#define DEFAULT_JOYSTICK_DEADZONE .05f // 5%
+#define DEFAULT_JOYSTICK_DEADZONE .05f  ///< 5%
 
 #define MAX_AXIS_FILTER 40
 
 #define KBDQUESIZE      32
 
 #if 0
-#define MAX_DOWNKEYS    16      // Most keyboards support 6 or 7.
+#define MAX_DOWNKEYS    16  ///< Most keyboards support 6 or 7.
 
-typedef struct repeater_s {
-    int key;                // The DDKEY code (0 if not in use).
-    int native;             // Used to determine which key is repeating.
-    char text[8];           // Text to insert.
-    timespan_t timer;       // How's the time?
-    int count;              // How many times has been repeated?
-} repeater_t;
+struct repeater_t
+{
+    int key;           ///< The DDKEY code (@c 0 if not in use).
+    int native;        ///< Used to determine which key is repeating.
+    char text[8];      ///< Text to insert.
+    timespan_t timer;  ///< How's the time?
+    int count;         ///< How many times has been repeated?
+};
 #endif
 
-typedef struct {
+struct eventqueue_t
+{
     ddevent_t events[MAXEVENTS];
     int head;
     int tail;
-} eventqueue_t;
+};
 
-#if 0
-D_CMD(AxisPrintConfig);
-D_CMD(AxisChangeOption);
-D_CMD(AxisChangeValue);
-#endif
-D_CMD(ListInputDevices);
-D_CMD(ReleaseMouse);
-
-static void postEventsFromInputDevices(void);
+static void postEventsFromInputDevices();
 
 // The initial and secondary repeater delays (tics).
-int     repWait1 = 15, repWait2 = 3;
-unsigned int  mouseFreq = 0;
-dd_bool shiftDown = false, altDown = false;
+int repWait1 = 15;
+int repWait2 = 3;
+uint mouseFreq;
+dd_bool shiftDown;
+dd_bool altDown;
 
 inputdev_t inputDevices[NUM_INPUT_DEVICES];
 
-//-------------------------------------------------------------------------
+static dd_bool ignoreInput;
 
-static dd_bool ignoreInput = false;
-
-static byte shiftKeyMappings[NUMKKEYS], altKeyMappings[NUMKKEYS];
+static byte shiftKeyMappings[NUMKKEYS];
+static byte altKeyMappings[NUMKKEYS];
 
 static eventqueue_t queue;
 static eventqueue_t sharpQueue;
@@ -112,39 +114,16 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 
 static float oldPOV = IJOY_POV_CENTER;
 
-static char* eventStrings[MAXEVENTS];
-static dd_bool uiMouseMode = false; // Can mouse data be modified?
+static char *eventStrings[MAXEVENTS];
+static dd_bool uiMouseMode; // Can mouse data be modified?
 
 static byte useSharpInputEvents = true; ///< cvar
 
-#if _DEBUG
-static byte devRendKeyState = false; ///< cvar
-static byte devRendMouseState = false; ///< cvar
-static byte devRendJoyState = false; ///< cvar
+#ifdef DENG2_DEBUG
+static byte devRendKeyState;   ///< cvar
+static byte devRendMouseState; ///< cvar
+static byte devRendJoyState;   ///< cvar
 #endif
-
-//-------------------------------------------------------------------------
-
-void DD_RegisterInput(void)
-{
-    // Cvars
-    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
-
-#if _DEBUG
-    C_VAR_BYTE("rend-dev-input-joy-state", &devRendJoyState, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-input-key-state", &devRendKeyState, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
-#endif
-
-    // Ccmds
-    C_CMD("listinputdevices", "", ListInputDevices);
-
-    C_CMD("releasemouse", "", ReleaseMouse);
-
-    //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
-}
 
 /**
  * Allocate an array of bytes for the input devices keys.
@@ -152,35 +131,35 @@ void DD_RegisterInput(void)
  */
 static void I_DeviceAllocKeys(inputdev_t *dev, uint count)
 {
+    DENG2_ASSERT(dev);
     dev->numKeys = count;
-    dev->keys = (inputdevkey_t *) M_Calloc(count * sizeof(inputdevkey_t));
+    dev->keys = (inputdevkey_t *) M_Calloc(count * sizeof(*dev->keys));
 }
 
 static void I_DeviceAllocHats(inputdev_t *dev, uint count)
 {
+    DENG2_ASSERT(dev);
     dev->numHats = count;
-    dev->hats = (inputdevhat_t *) M_Calloc(count * sizeof(inputdevhat_t));
+    dev->hats = (inputdevhat_t *) M_Calloc(count * sizeof(*dev->hats));
 }
 
 /**
  * Add a new axis to the input device.
  */
-static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint type)
+static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, char const *name, uint type)
 {
-    inputdevaxis_t *axis;
+    DENG2_ASSERT(dev && name);
 
-    dev->axes = (inputdevaxis_t *) M_Realloc(dev->axes, sizeof(inputdevaxis_t) * ++dev->numAxes);
+    dev->axes = (inputdevaxis_t *) M_Realloc(dev->axes, ++dev->numAxes * sizeof(*dev->axes));
+    de::zap(dev->axes[dev->numAxes - 1]);
+    inputdevaxis_t *axis = &dev->axes[dev->numAxes - 1];
 
-    axis = &dev->axes[dev->numAxes - 1];
-    memset(axis, 0, sizeof(*axis));
     strcpy(axis->name, name);
-    axis->type = type;
+    axis->type     = type;
     axis->smoother = Smoother_New();
-    Smoother_SetMaximumPastNowDelta(axis->smoother, 2*SECONDSPERTIC);
-
-    // Set reasonable defaults. The user's settings will be restored
-    // later.
-    axis->scale = 1;
+    Smoother_SetMaximumPastNowDelta(axis->smoother, 2 * SECONDSPERTIC);
+    // Set reasonable defaults. The user's settings will be restored later.
+    axis->scale    = 1;
     axis->deadZone = 0;
 
     return axis;
@@ -188,10 +167,11 @@ static inputdevaxis_t *I_DeviceNewAxis(inputdev_t *dev, const char *name, uint t
 
 static void registerAxisCvars(inputdev_t *device)
 {
+    DENG2_ASSERT(device);
     // Register console variables for the axis settings.
     for(uint i = 0; i < device->numAxes; ++i)
     {
-        inputdevaxis_t* axis = &device->axes[i];
+        inputdevaxis_t *axis = &device->axes[i];
 
         char varName[80];
 
@@ -206,17 +186,8 @@ static void registerAxisCvars(inputdev_t *device)
     }
 }
 
-/**
- * Initialize the input device state table.
- *
- * \note There need not be actual physical devices available in order to
- * use these state tables.
- */
-void I_InitVirtualInputDevices(void)
+void I_InitVirtualInputDevices()
 {
-    inputdev_t* dev;
-    inputdevaxis_t* axis;
-
     // Allow re-init.
     I_ShutdownInputDevices();
 
@@ -224,7 +195,7 @@ void I_InitVirtualInputDevices(void)
 
     // The keyboard is always assumed to be present.
     // DDKEYs are used as key indices.
-    dev = &inputDevices[IDEV_KEYBOARD];
+    inputdev_t *dev = &inputDevices[IDEV_KEYBOARD];
     dev->flags = ID_ACTIVE;
     strcpy(dev->niceName, "Keyboard");
     strcpy(dev->name, "key");
@@ -237,17 +208,17 @@ void I_InitVirtualInputDevices(void)
     I_DeviceAllocKeys(dev, IMB_MAXBUTTONS);
 
     // Some of the mouse buttons have symbolic names.
-    dev->keys[IMB_LEFT].name = "left";
-    dev->keys[IMB_MIDDLE].name = "middle";
-    dev->keys[IMB_RIGHT].name = "right";
-    dev->keys[IMB_MWHEELUP].name = "wheelup";
-    dev->keys[IMB_MWHEELDOWN].name = "wheeldown";
-    dev->keys[IMB_MWHEELLEFT].name = "wheelleft";
+    dev->keys[IMB_LEFT       ].name = "left";
+    dev->keys[IMB_MIDDLE     ].name = "middle";
+    dev->keys[IMB_RIGHT      ].name = "right";
+    dev->keys[IMB_MWHEELUP   ].name = "wheelup";
+    dev->keys[IMB_MWHEELDOWN ].name = "wheeldown";
+    dev->keys[IMB_MWHEELLEFT ].name = "wheelleft";
     dev->keys[IMB_MWHEELRIGHT].name = "wheelright";
 
     // The mouse wheel is translated to keys, so there is no need to
     // create an axis for it.
-    axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
+    inputdevaxis_t *axis = I_DeviceNewAxis(dev, "x", IDAT_POINTER);
     //axis->filter = 1; // On by default.
     axis->scale = 1.f/1000;
 
@@ -322,73 +293,58 @@ void I_InitVirtualInputDevices(void)
     }
 }
 
-/**
- * Free the memory allocated for the input devices.
- */
-void I_ShutdownInputDevices(void)
+void I_ShutdownInputDevices()
 {
-    uint i, k;
-    inputdev_t* dev;
-
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(uint i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        dev = &inputDevices[i];
+        inputdev_t *dev = &inputDevices[i];
 
-        if(dev->keys)
-        {
-            M_Free(dev->keys);
-            dev->keys = 0;
-        }
+        M_Free(dev->keys); dev->keys = nullptr;
 
         if(dev->axes)
         {
-            for(k = 0; k < dev->numAxes; ++k)
+            for(uint k = 0; k < dev->numAxes; ++k)
             {
                 Smoother_Delete(dev->axes[k].smoother);
             }
-            M_Free(dev->axes);
-            dev->axes = 0;
+            M_Free(dev->axes); dev->axes = nullptr;
         }
 
-        if(dev->hats)
-        {
-            M_Free(dev->hats);
-            dev->hats = 0;
-        }
+        M_Free(dev->hats); dev->hats = nullptr;
     }
 }
 
 void I_DeviceReset(uint ident)
 {
-    inputdev_t* dev = &inputDevices[ident];
-    int k;
+    DENG2_ASSERT(ident >= 0 && ident < NUM_INPUT_DEVICES);
+    inputdev_t *dev = &inputDevices[ident];
 
     LOG_INPUT_VERBOSE("Reset input device %s") << Str_Text(I_DeviceNameStr(ident));
 
-    for(k = 0; k < (int)dev->numKeys && dev->keys; ++k)
+    for(int i = 0; i < (int)dev->numKeys && dev->keys; ++i)
     {
-        if(dev->keys[k].isDown)
+        if(dev->keys[i].isDown)
         {
-            dev->keys[k].assoc.flags |= IDAF_EXPIRED;
+            dev->keys[i].assoc.flags |= IDAF_EXPIRED;
         }
         else
         {
-            dev->keys[k].isDown = false;
-            dev->keys[k].time = 0;
-            dev->keys[k].assoc.flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
+            dev->keys[i].isDown = false;
+            dev->keys[i].time   = 0;
+            dev->keys[i].assoc.flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
         }
     }
 
-    for(k = 0; k < (int)dev->numAxes && dev->axes; ++k)
+    for(int i = 0; i < (int)dev->numAxes && dev->axes; ++i)
     {
-        if(dev->axes[k].type == IDAT_POINTER)
+        if(dev->axes[i].type == IDAT_POINTER)
         {
             // Clear the accumulation.
-            dev->axes[k].position = 0;
-            dev->axes[k].sharpPosition = 0;
-            dev->axes[k].prevSmoothPos = 0;
+            dev->axes[i].position      = 0;
+            dev->axes[i].sharpPosition = 0;
+            dev->axes[i].prevSmoothPos = 0;
         }
-        Smoother_Clear(dev->axes[k].smoother);
+        Smoother_Clear(dev->axes[i].smoother);
     }
 
     if(ident == IDEV_KEYBOARD)
@@ -397,10 +353,9 @@ void I_DeviceReset(uint ident)
     }
 }
 
-void I_ResetAllDevices(void)
+void I_ResetAllDevices()
 {
-    uint i;
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(uint i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
         I_DeviceReset(i);
     }
@@ -408,12 +363,13 @@ void I_ResetAllDevices(void)
 
 inputdev_t *I_GetDevice(uint ident, InputDeviceGetMode mode)
 {
+    DENG2_ASSERT(ident >= 0 && ident < NUM_INPUT_DEVICES);
     inputdev_t *dev = &inputDevices[ident];
 
     if(mode == OnlyActiveInputDevice)
     {
         if(!(dev->flags & ID_ACTIVE))
-            return 0;
+            return nullptr;
     }
 
     return dev;
@@ -428,11 +384,12 @@ inputdev_t *I_GetDeviceByName(const char *name, InputDeviceGetMode mode)
             return I_GetDevice(i, mode);
         }
     }
-    return 0;
+    return nullptr;
 }
 
 ddstring_t const *I_DeviceNameStr(uint ident)
 {
+    DENG2_ASSERT(ident >= 0 && ident < NUM_INPUT_DEVICES);
     static const de::Str names[1 + NUM_INPUT_DEVICES] = {
         "(invalid-identifier)",
         "keyboard",
@@ -446,17 +403,16 @@ ddstring_t const *I_DeviceNameStr(uint ident)
     return names[1 + ident];
 }
 
-inputdevaxis_t* I_GetAxisByID(inputdev_t* device, uint id)
+inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id)
 {
     if(!device || id == 0 || id > device->numAxes - 1)
-        return NULL;
-    return &device->axes[id-1];
+        return nullptr;
+    return &device->axes[id - 1];
 }
 
-int I_GetAxisByName(inputdev_t* device, const char* name)
+int I_GetAxisByName(inputdev_t *device, char const *name)
 {
-    uint i;
-    for(i = 0; i < device->numAxes; ++i)
+    for(uint i = 0; i < device->numAxes; ++i)
     {
         if(!stricmp(device->axes[i].name, name))
             return i;
@@ -464,17 +420,16 @@ int I_GetAxisByName(inputdev_t* device, const char* name)
     return -1;
 }
 
-inputdevkey_t* I_GetKeyByID(inputdev_t* device, uint id)
+inputdevkey_t *I_GetKeyByID(inputdev_t *device, uint id)
 {
     if(!device || id == 0 || id > device->numKeys - 1)
-        return NULL;
-    return &device->keys[id-1];
+        return nullptr;
+    return &device->keys[id - 1];
 }
 
-int I_GetKeyByName(inputdev_t* device, const char* name)
+int I_GetKeyByName(inputdev_t *device, char const *name)
 {
-    int i;
-    for(i = 0; i < (int)device->numKeys; ++i)
+    for(int i = 0; i < (int)device->numKeys; ++i)
     {
         if(device->keys[i].name && !stricmp(device->keys[i].name, name))
             return i;
@@ -482,31 +437,30 @@ int I_GetKeyByName(inputdev_t* device, const char* name)
     return -1;
 }
 
-inputdevhat_t* I_GetHatByID(inputdev_t* device, uint id)
+inputdevhat_t *I_GetHatByID(inputdev_t *device, uint id)
 {
     if(!device || id == 0 || id > device->numHats - 1)
-        return NULL;
-    return &device->hats[id-1];
+        return nullptr;
+    return &device->hats[id - 1];
 }
 
-dd_bool I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
+dd_bool I_ParseDeviceAxis(char const *str, uint *deviceID, uint *axis)
 {
-    char name[30];
-    char const *ptr;
-    inputdev_t* device;
+    DENG2_ASSERT(str);
+    char const *ptr = strchr(str, '-');
+    if(!ptr) return false;
 
-    ptr = strchr(str, '-');
-    if(!ptr)
-        return false;
-
-    // The name of the device.
-    memset(name, 0, sizeof(name));
+    // Compose the name of the device.
+    char name[30]; std::memset(name, 0, sizeof(name));
     strncpy(name, str, ptr - str);
-    device = I_GetDeviceByName(name);
-    if(device == NULL)
-        return false;
+
+    inputdev_t *device = I_GetDeviceByName(name);
+    if(!device) return false;
+
     if(deviceID)
+    {
         *deviceID = device - inputDevices;
+    }
 
     // The axis name.
     if(axis)
@@ -523,10 +477,11 @@ dd_bool I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     return true;
 }
 
-float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
+float I_TransformAxis(inputdev_t *dev, uint axis, float rawPos)
 {
-    float               pos = rawPos;
-    inputdevaxis_t*     a = &dev->axes[axis];
+    DENG2_ASSERT(dev && axis < dev->numAxes);
+    inputdevaxis_t *a = &dev->axes[axis];
+    float pos         = rawPos;
 
     // Disabled axes are always zero.
     if(a->flags & IDA_DISABLED)
@@ -544,9 +499,9 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
         }
         else
         {
-            pos -= a->deadZone * SIGN_OF(pos);  // Remove the dead zone.
+            pos -= a->deadZone * de::sign(pos);  // Remove the dead zone.
             pos *= 1.0f/(1.0f - a->deadZone);   // Normalize.
-            pos = MINMAX_OF(-1.0f, pos, 1.0f);
+            pos = de::clamp(-1.0f, pos, 1.0f);
         }
     }
 
@@ -560,18 +515,13 @@ float I_TransformAxis(inputdev_t* dev, uint axis, float rawPos)
 }
 
 #if 0
-static float filterAxis(int grade, float* accumulation, float ticLength)
+static float filterAxis(int grade, float *accumulation, float ticLength)
 {
-    float   target;
-    float   avail;
-    float   used;
-    int     dir;
-
-    dir = SIGN_OF(*accumulation);
-    avail = fabs(*accumulation);
-
+    DENG2_ASSERT(accumulation);
+    int dir     = de::sign(*accumulation);
+    float avail = fabs(*accumulation);
     // Determine the target velocity.
-    target = avail * (MAX_AXIS_FILTER - MINMAX_OF(1, grade, 39));
+    float target = avail * (MAX_AXIS_FILTER - de::clamp(1, grade, 39));
 
     /*
     // test: clamp
@@ -582,17 +532,17 @@ static float filterAxis(int grade, float* accumulation, float ticLength)
 
     // Determine the amount of mickeys to send. It depends on the
     // current mouse velocity, and how much time has passed.
-    used = target * ticLength;
+    float used = target * ticLength;
 
     // Don't go past the available motion.
     if(used > avail)
     {
-        *accumulation = 0;
+        *accumulation = nullptr;
         used = avail;
     }
     else
     {
-        if(*accumulation > 0)
+        if(*accumulation > nullptr)
             *accumulation -= used;
         else
             *accumulation += used;
@@ -606,10 +556,11 @@ static float filterAxis(int grade, float* accumulation, float ticLength)
 /**
  * Update an input device axis.  Transformation is applied.
  */
-static void I_ApplyRealPositionToAxis(inputdev_t* dev, uint axis, float pos)
+static void I_ApplyRealPositionToAxis(inputdev_t *dev, uint axis, float pos)
 {
+    DENG2_ASSERT(dev && axis < dev->numAxes);
     inputdevaxis_t *a = &dev->axes[axis];
-    float oldRealPos = a->realPosition;
+    float oldRealPos  = a->realPosition;
     float transformed = I_TransformAxis(dev, axis, pos);
 
     // The unfiltered position.
@@ -636,6 +587,7 @@ static void I_ApplyRealPositionToAxis(inputdev_t* dev, uint axis, float pos)
 
 static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
 {
+    DENG2_ASSERT(dev && axis < dev->numAxes);
     inputdevaxis_t *a = &dev->axes[axis];
 
     Smoother_Advance(a->smoother, ticLength);
@@ -658,7 +610,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
         if(a->flags & IDA_RAW)
         {
             // The axis is supposed to be unfiltered.
-            a->position += a->realPosition;
+            a->position    += a->realPosition;
             a->realPosition = 0;
         }
         else
@@ -666,7 +618,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
             // Apply smoothing by converting back into a delta.
             coord_t smoothPos = a->prevSmoothPos;
             Smoother_EvaluateComponent(a->smoother, 0, &smoothPos);
-            a->position += smoothPos - a->prevSmoothPos;
+            a->position     += smoothPos - a->prevSmoothPos;
             a->prevSmoothPos = smoothPos;
         }
     }
@@ -675,22 +627,20 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, timespan_t ticLength)
     a->assoc.flags &= ~IDAF_EXPIRED;
 }
 
-dd_bool I_ShiftDown(void)
+dd_bool I_ShiftDown()
 {
     return shiftDown;
 }
 
-/**
- * Update the input device state table.
- */
 void I_TrackInput(ddevent_t *ev)
 {
+    DENG2_ASSERT(ev);
+
     if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
         return; // Not a tracked device state.
 
-    inputdev_t *dev;
-    if((dev = I_GetDevice(ev->device, OnlyActiveInputDevice)) == NULL)
-        return;
+    inputdev_t *dev = I_GetDevice(ev->device, OnlyActiveInputDevice);
+    if(!dev) return;
 
     // Track the state of Shift and Alt.
     if(IS_KEY_TOGGLE(ev))
@@ -724,7 +674,8 @@ void I_TrackInput(ddevent_t *ev)
     }
     else if(ev->type == E_TOGGLE)
     {
-        inputdevkey_t* key = &dev->keys[ev->toggle.id];
+        DENG2_ASSERT(ev->toggle.id >= 0 && (unsigned)ev->toggle.id < dev->numKeys);
+        inputdevkey_t *key = &dev->keys[ev->toggle.id];
 
         key->isDown = (ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
 
@@ -747,9 +698,10 @@ void I_TrackInput(ddevent_t *ev)
     }
     else if(ev->type == E_ANGLE)
     {
-        inputdevhat_t* hat = &dev->hats[ev->angle.id];
+        DENG2_ASSERT(ev->angle.id >= 0 && (unsigned)ev->angle.id < dev->numHats);
+        inputdevhat_t *hat = &dev->hats[ev->angle.id];
 
-        hat->pos = ev->angle.pos;
+        hat->pos  = ev->angle.pos;
 
         // Mark down the time when the change occurs.
         hat->time = Timer_RealMilliseconds();
@@ -762,38 +714,35 @@ void I_TrackInput(ddevent_t *ev)
     }
 }
 
-void I_ClearDeviceContextAssociations(void)
+void I_ClearDeviceContextAssociations()
 {
-    inputdev_t* dev;
-    uint i, j;
-
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(uint i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        dev = &inputDevices[i];
+        inputdev_t *dev = &inputDevices[i];
 
         // Keys.
-        for(j = 0; j < dev->numKeys; ++j)
+        for(uint k = 0; k < dev->numKeys; ++k)
         {
-            dev->keys[j].assoc.prevBContext = dev->keys[j].assoc.bContext;
-            dev->keys[j].assoc.bContext = NULL;
-            dev->keys[j].assoc.flags &= ~IDAF_TRIGGERED;
+            dev->keys[k].assoc.prevBContext = dev->keys[k].assoc.bContext;
+            dev->keys[k].assoc.bContext     = nullptr;
+            dev->keys[k].assoc.flags       &= ~IDAF_TRIGGERED;
         }
         // Axes.
-        for(j = 0; j < dev->numAxes; ++j)
+        for(uint k = 0; k < dev->numAxes; ++k)
         {
-            dev->axes[j].assoc.prevBContext = dev->axes[j].assoc.bContext;
-            dev->axes[j].assoc.bContext = NULL;
+            dev->axes[k].assoc.prevBContext = dev->axes[k].assoc.bContext;
+            dev->axes[k].assoc.bContext     = nullptr;
         }
         // Hats.
-        for(j = 0; j < dev->numHats; ++j)
+        for(uint k = 0; k < dev->numHats; ++k)
         {
-            dev->hats[j].assoc.prevBContext = dev->hats[j].assoc.bContext;
-            dev->hats[j].assoc.bContext = NULL;
+            dev->hats[k].assoc.prevBContext = dev->hats[k].assoc.bContext;
+            dev->hats[k].assoc.bContext     = nullptr;
         }
     }
 }
 
-dd_bool I_IsKeyDown(inputdev_t* dev, uint id)
+dd_bool I_IsKeyDown(inputdev_t *dev, uint id)
 {
     if(dev && id < dev->numKeys)
     {
@@ -802,12 +751,10 @@ dd_bool I_IsKeyDown(inputdev_t* dev, uint id)
     return false;
 }
 
-/**
- * @return  Either key number or the scan code for the given token.
- */
-int DD_KeyOrCode(char* token)
+#if 0
+static int DD_KeyOrCode(char *token)
 {
-    char* end = M_FindWhite(token);
+    char *end = M_FindWhite(token);
 
     if(end - token > 1)
     {
@@ -817,15 +764,11 @@ int DD_KeyOrCode(char* token)
     // Direct mapping.
     return (unsigned char) *token;
 }
+#endif
 
-/**
- * Initializes the key mappings to the default values.
- */
-void DD_InitInput(void)
+void DD_InitInput()
 {
-    int i;
-
-    for(i = 0; i < 256; ++i)
+    for(int i = 0; i < 256; ++i)
     {
         if(i >= 32 && i <= 127)
             shiftKeyMappings[i] = defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
@@ -843,13 +786,13 @@ void DD_InitInput(void)
  * These are intended for strings in ddevent_t that are valid during the
  * processing of an event.
  */
-const char* DD_AllocEventString(const char* str)
+static char const *allocEventString(char const *str)
 {
+    DENG2_ASSERT(str);
     static int eventStringRover = 0;
-    const char* returnValue = 0;
 
-    free(eventStrings[eventStringRover]);
-    returnValue = eventStrings[eventStringRover] = strdup(str);
+    M_Free(eventStrings[eventStringRover]);
+    char const *returnValue = eventStrings[eventStringRover] = strdup(str);
 
     if(++eventStringRover >= MAXEVENTS)
     {
@@ -858,25 +801,24 @@ const char* DD_AllocEventString(const char* str)
     return returnValue;
 }
 
-void DD_ClearEventStrings(void)
+void DD_ClearEventStrings()
 {
-    int i;
-
-    for(i = 0; i < MAXEVENTS; ++i)
+    for(int i = 0; i < MAXEVENTS; ++i)
     {
-        free(eventStrings[i]);
-        eventStrings[i] = 0;
+        M_Free(eventStrings[i]); eventStrings[i] = nullptr;
     }
 }
 
-static void clearQueue(eventqueue_t* q)
+static void clearQueue(eventqueue_t *q)
 {
+    DENG2_ASSERT(q);
     q->head = q->tail;
 }
 
 dd_bool DD_IgnoreInput(dd_bool ignore)
 {
-    dd_bool old = ignoreInput;
+    dd_bool const old = ignoreInput;
+
     ignoreInput = ignore;
     LOG_INPUT_VERBOSE("Ignoring input: %b") << ignore;
     if(!ignore)
@@ -888,10 +830,7 @@ dd_bool DD_IgnoreInput(dd_bool ignore)
     return old;
 }
 
-/**
- * Clear the input event queue.
- */
-void DD_ClearEvents(void)
+void DD_ClearEvents()
 {
     clearQueue(&queue);
     clearQueue(&sharpQueue);
@@ -899,28 +838,29 @@ void DD_ClearEvents(void)
     DD_ClearEventStrings();
 }
 
-static void postToQueue(eventqueue_t* q, ddevent_t* ev)
+static void postToQueue(eventqueue_t *q, ddevent_t *ev)
 {
+    DENG2_ASSERT(q && ev);
     q->events[q->head] = *ev;
 
     if(ev->type == E_SYMBOLIC)
     {
         // Allocate a throw-away string from our buffer.
-        q->events[q->head].symbolic.name = DD_AllocEventString(ev->symbolic.name);
+        q->events[q->head].symbolic.name = allocEventString(ev->symbolic.name);
     }
 
     q->head++;
     q->head &= MAXEVENTS - 1;
 }
 
-/**
- * Called by the I/O functions when input is detected.
- */
+/// @note Called by the I/O functions when input is detected.
 void DD_PostEvent(ddevent_t *ev)
 {
-    eventqueue_t* q = &queue;
-    if(useSharpInputEvents && (ev->type == E_TOGGLE || ev->type == E_AXIS ||
-                               ev->type == E_ANGLE))
+    DENG2_ASSERT(ev);
+
+    eventqueue_t *q = &queue;
+    if(useSharpInputEvents &&
+       (ev->type == E_TOGGLE || ev->type == E_AXIS || ev->type == E_ANGLE))
     {
         q = &sharpQueue;
     }
@@ -928,19 +868,19 @@ void DD_PostEvent(ddevent_t *ev)
     // Cleanup: make sure only keyboard toggles can have a text insert.
     if(ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
     {
-        memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
+        std::memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
     }
 
     postToQueue(q, ev);
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-    if(ev->device == IDEV_KEYBOARD && ev->type == E_TOGGLE
-            && ev->toggle.state == ETOG_DOWN)
+    if(ev->device == IDEV_KEYBOARD && ev->type == E_TOGGLE && ev->toggle.state == ETOG_DOWN)
     {
-        // Restart timer on each key down.
         extern float devCameraMovementStartTime;
         extern float devCameraMovementStartTimeRealSecs;
-        devCameraMovementStartTime = sysTime;
+
+        // Restart timer on each key down.
+        devCameraMovementStartTime         = sysTime;
         devCameraMovementStartTimeRealSecs = Sys_GetRealSeconds();
     }
 #endif
@@ -951,14 +891,14 @@ void DD_PostEvent(ddevent_t *ev)
  * @param q  Event queue.
  * @return @c NULL if no more events are available.
  */
-static ddevent_t* nextFromQueue(eventqueue_t* q)
+static ddevent_t *nextFromQueue(eventqueue_t *q)
 {
-    ddevent_t *ev;
+    DENG2_ASSERT(q);
 
     if(q->head == q->tail)
-        return NULL;
+        return nullptr;
 
-    ev = &q->events[q->tail];
+    ddevent_t *ev = &q->events[q->tail];
     q->tail = (q->tail + 1) & (MAXEVENTS - 1);
 
     return ev;
@@ -966,15 +906,15 @@ static ddevent_t* nextFromQueue(eventqueue_t* q)
 
 void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
 {
+    DENG2_ASSERT(ddEvent);
     using de::KeyEvent;
 
-    memset(ddEvent, 0, sizeof(*ddEvent));
+    de::zapPtr(ddEvent);
 
     switch(event.type())
     {
     case de::Event::KeyPress:
-    case de::Event::KeyRelease:
-    {
+    case de::Event::KeyRelease: {
         KeyEvent const &kev = event.as<KeyEvent>();
 
         ddEvent->device       = IDEV_KEYBOARD;
@@ -982,22 +922,21 @@ void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent)
         ddEvent->toggle.id    = kev.ddKey();
         ddEvent->toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
         strcpy(ddEvent->toggle.text, kev.text().toLatin1());
-        break;
-    }
+        break; }
 
-    default:
-        break;
+    default: break;
     }
 }
 
 bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 {
+    DENG2_ASSERT(ddEvent && ev);
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
     //
     /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
     //
-    memset(ev, 0, sizeof(*ev));
+    de::zapPtr(ev);
     if(ddEvent->type == E_SYMBOLIC)
     {
         ev->type = EV_SYMBOLIC;
@@ -1014,7 +953,7 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
     }
     else if(ddEvent->type == E_FOCUS)
     {
-        ev->type = EV_FOCUS;
+        ev->type  = EV_FOCUS;
         ev->data1 = ddEvent->focus.gained;
         ev->data2 = ddEvent->focus.inWindow;
     }
@@ -1026,9 +965,9 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
             ev->type = EV_KEY;
             if(ddEvent->type == E_TOGGLE)
             {
-                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
-                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
-                              EVS_REPEAT );
+                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
+                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
+                             : EVS_REPEAT );
                 ev->data1 = ddEvent->toggle.id;
             }
             break;
@@ -1042,9 +981,9 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
             {
                 ev->type = EV_MOUSE_BUTTON;
                 ev->data1 = ddEvent->toggle.id;
-                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
-                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
-                              EVS_REPEAT );
+                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
+                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
+                             : EVS_REPEAT );
             }
             break;
 
@@ -1054,7 +993,7 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
         case IDEV_JOY4:
             if(ddEvent->type == E_AXIS)
             {
-                int* data = &ev->data1;
+                int *data = &ev->data1;
                 ev->type = EV_JOY_AXIS;
                 ev->state = (evstate_t) 0;
                 if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
@@ -1067,13 +1006,15 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
             else if(ddEvent->type == E_TOGGLE)
             {
                 ev->type = EV_JOY_BUTTON;
-                ev->state = ( ddEvent->toggle.state == ETOG_UP? EVS_UP :
-                              ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN :
-                              EVS_REPEAT );
+                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
+                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
+                             : EVS_REPEAT );
                 ev->data1 = ddEvent->toggle.id;
             }
             else if(ddEvent->type == E_ANGLE)
+            {
                 ev->type = EV_POV;
+            }
             break;
 
         case IDEV_HEAD_TRACKER:
@@ -1081,7 +1022,7 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
             return false;
 
         default:
-#if _DEBUG
+#ifdef DENG2_DEBUG
             App_Error("DD_ProcessEvents: Unknown deviceID in ddevent_t");
 #endif
             return false;
@@ -1092,25 +1033,21 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 
 static void updateDeviceAxes(timespan_t ticLength)
 {
-    int i;
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(int i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(uint k = 0; k < inputDevices[i].numAxes; ++k)
     {
-        uint k;
-        for(k = 0; k < inputDevices[i].numAxes; ++k)
-        {
-            I_UpdateAxis(&inputDevices[i], k, ticLength);
-        }
+        I_UpdateAxis(&inputDevices[i], k, ticLength);
     }
 }
 
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, dd_bool updateAxes)
+static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, dd_bool updateAxes)
 {
-    const dd_bool callGameResponders = App_GameLoaded();
-    ddevent_t* ddev;
+    dd_bool const callGameResponders = App_GameLoaded();
 
+    ddevent_t *ddev;
     while((ddev = nextFromQueue(q)))
     {
         // Update the state of the input device tracking table.
@@ -1149,7 +1086,7 @@ static void dispatchEvents(eventqueue_t* q, timespan_t ticLength, dd_bool update
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
-static void postEventsFromInputDevices(void)
+static void postEventsFromInputDevices()
 {
 #ifdef __CLIENT__
     // On the client may have have input devices.
@@ -1160,13 +1097,6 @@ static void postEventsFromInputDevices(void)
 #endif
 }
 
-/**
- * Process all incoming input for the given timestamp.
- * This is called only in the main thread, and also from the busy loop.
- *
- * This gets called at least 35 times per second. Usually more frequently
- * than that.
- */
 void DD_ProcessEvents(timespan_t ticLength)
 {
     // Poll all event sources (i.e., input devices) and post events.
@@ -1185,9 +1115,6 @@ void DD_ProcessSharpEvents(timespan_t ticLength)
     }
 }
 
-/**
- * Apply all active modifiers to the key.
- */
 byte DD_ModKey(byte key)
 {
     if(shiftDown)
@@ -1197,9 +1124,7 @@ byte DD_ModKey(byte key)
 
     if(key >= DDKEY_NUMPAD7 && key <= DDKEY_NUMPAD0)
     {
-        byte numPadKeys[10] = {
-            '7', '8', '9', '4', '5', '6', '1', '2', '3', '0'
-        };
+        byte numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
         return numPadKeys[key - DDKEY_NUMPAD7];
     }
     else if(key == DDKEY_DIVIDE)
@@ -1226,81 +1151,56 @@ byte DD_ModKey(byte key)
     return key;
 }
 
-/**
- * Checks the current keyboard state, generates input events
- * based on pressed/held keys and posts them.
- */
-void DD_ReadKeyboard(void)
+void DD_ReadKeyboard()
 {
-    ddevent_t       ev;
-    size_t          n, numkeyevs = 0;
-    keyevent_t      keyevs[KBDQUESIZE];
+    if(novideo) return;
 
-    // Check the repeaters.
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_KEYBOARD;
-    ev.type = E_TOGGLE;
+    ev.type   = E_TOGGLE;
     ev.toggle.state = ETOG_REPEAT;
 
-    // Read the new keyboard events.
-    if(!novideo)
-    {
-        numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
-    }
-
-    // Convert to ddevents and post them.
-    for(n = 0; n < numkeyevs; ++n)
+    // Read the new keyboard events, convert to ddevents and post them.
+    keyevent_t keyevs[KBDQUESIZE];
+    size_t const numkeyevs = Keyboard_GetEvents(keyevs, KBDQUESIZE);
+    for(size_t n = 0; n < numkeyevs; ++n)
     {
         keyevent_t *ke = &keyevs[n];
 
         // Check the type of the event.
-        if(ke->type == IKE_DOWN)
+        switch(ke->type)
         {
-            ev.toggle.state = ETOG_DOWN;
-        }
-        else if(ke->type == IKE_REPEAT)
-        {
-            ev.toggle.state = ETOG_REPEAT;
-        }
-        else if(ke->type == IKE_UP)
-        {
-            ev.toggle.state = ETOG_UP;
+        case IKE_DOWN:   ev.toggle.state = ETOG_DOWN;   break;
+        case IKE_REPEAT: ev.toggle.state = ETOG_REPEAT; break;
+        case IKE_UP:     ev.toggle.state = ETOG_UP;     break;
+
+        default: break;
         }
 
         ev.toggle.id = ke->ddkey;
 
         // Text content to insert?
-        assert(sizeof(ev.toggle.text) == sizeof(ke->text));
-        memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+        DENG2_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
+        std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
         LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
                 << ev.toggle.id << ev.toggle.id << ev.toggle.text << strlen(ev.toggle.text);
 
-        // Post the event.
         DD_PostEvent(&ev);
     }
 }
 
-/**
- * Change between normal and UI mousing modes.
- */
 void I_SetUIMouseMode(dd_bool on)
 {
     uiMouseMode = on;
 }
 
-/**
- * Checks the current mouse state (axis, buttons and wheel).
- * Generates events and mickeys and posts them.
- */
-void DD_ReadMouse(void)
+void DD_ReadMouse()
 {
-    ddevent_t       ev;
-    mousestate_t    mouse;
-    float           xpos, ypos;
-    int             i;
-
     if(!Mouse_IsPresent())
         return;
+
+    mousestate_t mouse;
 
 #ifdef OLD_FILTER
     // Should we test the mouse input frequency?
@@ -1312,7 +1212,7 @@ void DD_ReadMouse(void)
         if(nowTime - lastTime < 1000/mouseFreq)
         {
             // Don't ask yet.
-            memset(&mouse, 0, sizeof(mouse));
+            std::memset(&mouse, 0, sizeof(mouse));
         }
         else
         {
@@ -1327,11 +1227,12 @@ void DD_ReadMouse(void)
         Mouse_GetState(&mouse);
     }
 
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_MOUSE;
-    ev.type = E_AXIS;
+    ev.type   = E_AXIS;
 
-    xpos = mouse.axis[IMA_POINTER].x;
-    ypos = mouse.axis[IMA_POINTER].y;
+    float xpos = mouse.axis[IMA_POINTER].x;
+    float ypos = mouse.axis[IMA_POINTER].y;
 
     if(uiMouseMode)
     {
@@ -1347,19 +1248,20 @@ void DD_ReadMouse(void)
     // Don't post empty events.
     if(xpos)
     {
-        ev.axis.id = 0;
+        ev.axis.id  = 0;
         ev.axis.pos = xpos;
         DD_PostEvent(&ev);
     }
     if(ypos)
     {
-        ev.axis.id = 1;
+        ev.axis.id  = 1;
         ev.axis.pos = ypos;
         DD_PostEvent(&ev);
     }
 
     // Some very verbose output about mouse buttons.
-    for(i = 0; i < IMB_MAXBUTTONS; ++i)
+    int i = 0;
+    for(; i < IMB_MAXBUTTONS; ++i)
     {
         if(mouse.buttonDowns[i] || mouse.buttonUps[i])
             break;
@@ -1395,27 +1297,20 @@ void DD_ReadMouse(void)
     }
 }
 
-/**
- * Checks the current joystick state (axis, sliders, hat and buttons).
- * Generates events and posts them. Axis clamps and dead zone is done
- * here.
- */
-void DD_ReadJoystick(void)
+void DD_ReadJoystick()
 {
-    int             i;
-    ddevent_t       ev;
-    joystate_t      state;
-
     if(!Joystick_IsPresent())
         return;
 
+    joystate_t state;
     Joystick_GetState(&state);
 
     // Joystick buttons.
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_JOY1;
-    ev.type = E_TOGGLE;
+    ev.type   = E_TOGGLE;
 
-    for(i = 0; i < state.numButtons; ++i)
+    for(int i = 0; i < state.numButtons; ++i)
     {
         ev.toggle.id = i;
         while(state.buttonDowns[i] > 0 || state.buttonUps[i] > 0)
@@ -1438,7 +1333,7 @@ void DD_ReadJoystick(void)
     if(state.numHats > 0)
     {
         // Check for a POV change.
-        // TODO: Some day, it would be nice to support multiple hats here. -jk
+        /// @todo: Some day it would be nice to support multiple hats here. -jk
         if(state.hatAngle[0] != oldPOV)
         {
             ev.type = E_ANGLE;
@@ -1462,16 +1357,16 @@ void DD_ReadJoystick(void)
     // Send joystick axis events, one per axis.
     ev.type = E_AXIS;
 
-    for(i = 0; i < state.numAxes; ++i)
+    for(int i = 0; i < state.numAxes; ++i)
     {
-        ev.axis.id = i;
-        ev.axis.pos = state.axis[i];
+        ev.axis.id   = i;
+        ev.axis.pos  = state.axis[i];
         ev.axis.type = EAXIS_ABSOLUTE;
         DD_PostEvent(&ev);
     }
 }
 
-void DD_ReadHeadTracker(void)
+void DD_ReadHeadTracker()
 {
     // These values are for the input subsystem and gameplay. The renderer will check the head
     // orientation independently, with as little latency as possible.
@@ -1489,32 +1384,31 @@ void DD_ReadHeadTracker(void)
     //vrCfg().oculusRift().allowUpdate();
     //vrCfg().oculusRift().update();
 
-    ddevent_t ev;
-
+    ddevent_t ev; de::zap(ev);
     ev.device = IDEV_HEAD_TRACKER;
-    ev.type = E_AXIS;
+    ev.type   = E_AXIS;
     ev.axis.type = EAXIS_ABSOLUTE;
 
     Vector3f const pry = vrCfg().oculusRift().headOrientation();
 
     // Yaw (1.0 means 180 degrees).
-    ev.axis.id = 0; // Yaw.
+    ev.axis.id  = 0; // Yaw.
     ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 
-    ev.axis.id = 1; // Pitch (1.0 means 85 degrees).
+    ev.axis.id  = 1; // Pitch (1.0 means 85 degrees).
     ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
     DD_PostEvent(&ev);
 
     // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
-    ev.axis.id = 2; // Roll.
+    ev.axis.id  = 2; // Roll.
     ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
     DD_PostEvent(&ev);
 }
 
-#ifdef _DEBUG
+#ifdef DENG2_DEBUG
 
-static void initDrawStateForVisual(const Point2Raw* origin)
+static void initDrawStateForVisual(Point2Raw const *origin)
 {
     FR_PushAttrib();
 
@@ -1527,7 +1421,7 @@ static void initDrawStateForVisual(const Point2Raw* origin)
     }
 }
 
-static void endDrawStateForVisual(const Point2Raw* origin)
+static void endDrawStateForVisual(Point2Raw const *origin)
 {
     // Ignore zero offsets.
     if(origin && !(origin->x == 0 && origin->y == 0))
@@ -1539,21 +1433,15 @@ static void endDrawStateForVisual(const Point2Raw* origin)
     FR_PopAttrib();
 }
 
-void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* _origin,
-    RectRaw* geometry)
+void Rend_RenderKeyStateVisual(inputdev_t *device, uint keyID, Point2Raw const *_origin,
+    RectRaw *geometry)
 {
-#define BORDER            4
+#define BORDER 4
 
-    Point2Raw const textOffset(BORDER, BORDER);
-    const float upColor[] = { .3f, .3f, .3f, .6f };
-    const float downColor[] = { .3f, .3f, 1, .6f };
-    const float expiredMarkColor[] = { 1, 0, 0, 1 };
-    const float triggeredMarkColor[] = { 1, 0, 1, 1 };
-    const char* keyLabel = NULL;
-    const inputdevkey_t* key;
-    char keyLabelBuf[2];
-    Point2Raw origin;
-    ddstring_t label;
+    float const upColor[] = { .3f, .3f, .3f, .6f };
+    float const downColor[] = { .3f, .3f, 1, .6f };
+    float const expiredMarkColor[] = { 1, 0, 0, 1 };
+    float const triggeredMarkColor[] = { 1, 0, 1, 1 };
 
     if(geometry)
     {
@@ -1561,15 +1449,18 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
         geometry->size.width = geometry->size.height = 0;
     }
 
-    key = I_GetKeyByID(device, keyID+1);
+    inputdevkey_t const *key = I_GetKeyByID(device, keyID+1);
     if(!key) return;
 
+    Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    Str_InitStd(&label);
+    ddstring_t label; Str_InitStd(&label);
 
     // Compose the key label.
+    char const *keyLabel = nullptr;
+    char keyLabelBuf[2];
     if(key->name)
     {
         // Use the symbolic name.
@@ -1616,6 +1507,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
 
     // Draw the text.
     glEnable(GL_TEXTURE_2D);
+    Point2Raw const textOffset(BORDER, BORDER);
     FR_DrawText(Str_Text(&label), &textOffset);
     glDisable(GL_TEXTURE_2D);
 
@@ -1651,7 +1543,7 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
 
     if(geometry)
     {
-        memcpy(&geometry->origin, &origin, sizeof(geometry->origin));
+        std::memcpy(&geometry->origin, &origin, sizeof(geometry->origin));
         geometry->size.width  = textGeom.width();
         geometry->size.height = textGeom.height();
     }
@@ -1659,18 +1551,16 @@ void Rend_RenderKeyStateVisual(inputdev_t* device, uint keyID, const Point2Raw* 
 #undef BORDER
 }
 
-void Rend_RenderAxisStateVisual(inputdev_t* device, uint axisID, const Point2Raw* origin,
-    RectRaw* geometry)
+void Rend_RenderAxisStateVisual(inputdev_t *device, uint axisID, Point2Raw const *origin,
+    RectRaw *geometry)
 {
-    const inputdevaxis_t* axis;
-
     if(geometry)
     {
         geometry->origin.x = geometry->origin.y = 0;
         geometry->size.width = geometry->size.height = 0;
     }
 
-    axis = I_GetAxisByID(device, axisID+1);
+    inputdevaxis_t const *axis = I_GetAxisByID(device, axisID + 1);
     if(!axis) return;
 
     initDrawStateForVisual(origin);
@@ -1678,18 +1568,16 @@ void Rend_RenderAxisStateVisual(inputdev_t* device, uint axisID, const Point2Raw
     endDrawStateForVisual(origin);
 }
 
-void Rend_RenderHatStateVisual(inputdev_t* device, uint hatID, const Point2Raw* origin,
-    RectRaw* geometry)
+void Rend_RenderHatStateVisual(inputdev_t *device, uint hatID, Point2Raw const *origin,
+    RectRaw *geometry)
 {
-    const inputdevhat_t* hat;
-
     if(geometry)
     {
         geometry->origin.x = geometry->origin.y = 0;
         geometry->size.width = geometry->size.height = 0;
     }
 
-    hat = I_GetHatByID(device, hatID+1);
+    inputdevhat_t const *hat = I_GetHatByID(device, hatID+1);
     if(!hat) return;
 
     initDrawStateForVisual(origin);
@@ -1697,31 +1585,29 @@ void Rend_RenderHatStateVisual(inputdev_t* device, uint hatID, const Point2Raw* 
     endDrawStateForVisual(origin);
 }
 
-typedef struct {
+struct inputdev_layout_control_t
+{
     inputdev_controltype_t type;
     uint id;
-} inputdev_layout_control_t;
+};
 
-typedef struct {
-    inputdev_layout_control_t* controls;
+struct inputdev_layout_controlgroup_t
+{
+    inputdev_layout_control_t *controls;
     uint numControls;
-} inputdev_layout_controlgroup_t;
+};
 
 // Defines the order of controls in the visual.
-typedef struct {
-    inputdev_layout_controlgroup_t* groups;
-    uint numGroups;
-} inputdev_layout_t;
-
-static void drawControlGroup(inputdev_t* device, const inputdev_layout_controlgroup_t* group,
-    Point2Raw* _origin, RectRaw* retGeometry)
+struct inputdev_layout_t
 {
-#define SPACING               2
+    inputdev_layout_controlgroup_t *groups;
+    uint numGroups;
+};
 
-    Point2Raw origin;
-    Rect* grpGeom = NULL;
-    RectRaw ctrlGeom;
-    uint i;
+static void drawControlGroup(inputdev_t *device, inputdev_layout_controlgroup_t const *group,
+    Point2Raw *_origin, RectRaw *retGeometry)
+{
+#define SPACING  2
 
     if(retGeometry)
     {
@@ -1731,26 +1617,26 @@ static void drawControlGroup(inputdev_t* device, const inputdev_layout_controlgr
 
     if(!device || !group) return;
 
+    Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    for(i = 0; i < group->numControls; ++i)
+    Rect *grpGeom = nullptr;
+    RectRaw ctrlGeom;
+    for(uint i = 0; i < group->numControls; ++i)
     {
-        const inputdev_layout_control_t* ctrl = group->controls + i;
+        inputdev_layout_control_t const *ctrl = group->controls + i;
 
         switch(ctrl->type)
         {
-        case IDC_KEY:
-            Rend_RenderKeyStateVisual(device, ctrl->id, &origin, &ctrlGeom);
-            break;
-        case IDC_AXIS:
-            Rend_RenderAxisStateVisual(device, ctrl->id, &origin, &ctrlGeom);
-            break;
-        case IDC_HAT:
-            Rend_RenderHatStateVisual(device, ctrl->id, &origin, &ctrlGeom);
-            break;
+        case IDC_KEY: Rend_RenderKeyStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
+
+        case IDC_AXIS: Rend_RenderAxisStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
+
+        case IDC_HAT: Rend_RenderHatStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
+
         default:
-            App_Error("drawControlGroup: Unknown inputdev_controltype %i.", (int)ctrl->type);
+            App_Error("drawControlGroup: Unknown inputdev_controltype_t: %i.", (int)ctrl->type);
             exit(1); // Unreachable.
         }
 
@@ -1781,14 +1667,10 @@ static void drawControlGroup(inputdev_t* device, const inputdev_layout_controlgr
 /**
  * Render a visual representation of the current state of the specified device.
  */
-void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout_t* layout,
-    const Point2Raw* origin, Size2Raw* retVisualDimensions)
+void Rend_RenderInputDeviceStateVisual(inputdev_t *device, inputdev_layout_t const *layout,
+    Point2Raw const *origin, Size2Raw *retVisualDimensions)
 {
-#define SPACING               2
-
-    Rect* visualGeom = NULL;
-    Point2Raw offset;
-    uint i;
+#define SPACING  2
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1809,7 +1691,8 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
     FR_SetColorAndAlpha(1, 1, 1, 1);
     initDrawStateForVisual(origin);
 
-    offset.x = offset.y = 0;
+    Point2Raw offset;
+    Rect *visualGeom = nullptr;
 
     // Draw device name first.
     if(device->niceName)
@@ -1817,7 +1700,7 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
         Size2Raw size;
 
         glEnable(GL_TEXTURE_2D);
-        FR_DrawText(device->niceName, NULL/*no offset*/);
+        FR_DrawText(device->niceName, nullptr/*no offset*/);
         glDisable(GL_TEXTURE_2D);
 
         FR_TextSize(&size, device->niceName);
@@ -1827,9 +1710,9 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
     }
 
     // Draw control groups.
-    for(i = 0; i < layout->numGroups; ++i)
+    for(uint i = 0; i < layout->numGroups; ++i)
     {
-        const inputdev_layout_controlgroup_t* grp = layout->groups + i;
+        inputdev_layout_controlgroup_t const *grp = &layout->groups[i];
         RectRaw grpGeometry;
 
         drawControlGroup(device, grp, &offset, &grpGeometry);
@@ -1859,10 +1742,10 @@ void Rend_RenderInputDeviceStateVisual(inputdev_t* device, const inputdev_layout
 #undef SPACING
 }
 
-void Rend_AllInputDeviceStateVisuals(void)
+void Rend_AllInputDeviceStateVisuals()
 {
-#define SPACING                    2
-#define NUMITEMS(x)                (sizeof(x)/sizeof((x)[0]))
+#define SPACING      2
+#define NUMITEMS(x)  (sizeof(x) / sizeof((x)[0]))
 
     // Keyboard (Standard US English layout):
     static inputdev_layout_control_t keyGroup1[] = {
@@ -2189,22 +2072,23 @@ void Rend_AllInputDeviceStateVisuals(void)
 #undef NUMITEMS
 #undef SPACING
 }
-#endif // _DEBUG
+#endif // DENG2_DEBUG
 
-static void I_PrintAxisConfig(inputdev_t* device, inputdevaxis_t* axis)
+static void I_PrintAxisConfig(inputdev_t *device, inputdevaxis_t *axis)
 {
-    LOG_INPUT_MSG("  " _E(>) "%s-%s Config:\n"
-                  "  Type: %s\n"
-                  //"  Filter: %i\n"
-                  "  Dead Zone: %f\n"
-                  "  Scale: %f\n"
-                  "  Flags: (%s%s)")
+    DENG2_ASSERT(device && axis);
+    LOG_INPUT_MSG(  "  " _E(>) "%s-%s Config:"
+                  "\n  Type: %s"
+                  //\n"  Filter: %i"
+                  "\n  Dead Zone: %f"
+                  "\n  Scale: %f"
+                  "\n  Flags: (%s%s)")
             << device->name << axis->name
             << (axis->type == IDAT_STICK? "STICK" : "POINTER")
-                  /*axis->filter,*/
+            // << axis->filter
             << axis->deadZone << axis->scale
-            << ((axis->flags & IDA_DISABLED)? "|disabled":"")
-            << ((axis->flags & IDA_INVERT)? "|inverted":"");
+            << ((axis->flags & IDA_DISABLED)? "|disabled" : "")
+            << ((axis->flags & IDA_INVERT)  ? "|inverted" : "");
 }
 
 /**
@@ -2214,22 +2098,21 @@ D_CMD(ListInputDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    inputdev_t* dev;
-    uint i, j;
-
     LOG_INPUT_MSG(_E(b) "Input Devices:");
-    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    for(uint i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        dev = &inputDevices[i];
-        if(!dev->name || !(dev->flags & ID_ACTIVE))
-            continue;
+        inputdev_t *dev = &inputDevices[i];
 
-        LOG_INPUT_MSG(_E(D) "%s" _E(.) " (%i keys, %i axes)") << dev->name << dev->numKeys << dev->numAxes;
+        if(!dev->name) continue;
+        if(!(dev->flags & ID_ACTIVE))  continue;
 
-        for(j = 0; j < dev->numAxes; ++j)
+        LOG_INPUT_MSG(_E(D) "%s" _E(.) " (%i keys, %i axes)")
+                << dev->name << dev->numKeys << dev->numAxes;
+
+        for(uint k = 0; k < dev->numAxes; ++k)
         {
-            LOG_INPUT_MSG("  Axis #%i: %s") << j << dev->axes[j].name;
-            I_PrintAxisConfig(dev, &dev->axes[j]);
+            LOG_INPUT_MSG("  Axis #%i: %s") << k << dev->axes[k].name;
+            I_PrintAxisConfig(dev, &dev->axes[k]);
         }
     }
     return true;
@@ -2245,4 +2128,24 @@ D_CMD(ReleaseMouse)
         return true;
     }
     return false;
+}
+
+void I_ConsoleRegister()
+{
+    // Cvars
+    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
+
+#ifdef DENG2_DEBUG
+    C_VAR_BYTE("rend-dev-input-joy-state",   &devRendJoyState,   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-input-key-state",   &devRendKeyState,   CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
+#endif
+
+    // Ccmds
+    C_CMD("listinputdevices",   "", ListInputDevices);
+    C_CMD("releasemouse",       "", ReleaseMouse);
+
+    //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
 }

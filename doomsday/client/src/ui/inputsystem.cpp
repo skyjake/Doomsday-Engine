@@ -95,5 +95,5 @@ SettingsRegister &InputSystem::settings()
 void InputSystem::consoleRegister() // static
 {
     B_ConsoleRegister(); // for control bindings
-    DD_RegisterInput();
+    I_ConsoleRegister();
 }

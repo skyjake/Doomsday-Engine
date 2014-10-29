@@ -759,4 +759,3 @@ char const *InputBindingWidget::controlName()
 
 } // namespace menu
 } // namespace common
-

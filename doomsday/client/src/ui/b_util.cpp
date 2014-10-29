@@ -513,7 +513,7 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
         break;
 
     default:
-        App_Error("B_AppendDeviceDescToString: Invalid value, type = %i.", (int) type);
+        App_Error("B_AppendDeviceDescToString: Invalid value type: %i.", (int) type);
         break;
     }
 }
