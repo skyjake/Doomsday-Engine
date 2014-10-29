@@ -328,7 +328,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
 
     d->scriptCmd = new ScriptCommandWidget("script");
     d->scriptCmd->setEmptyContentHint(tr("Enter scripts here"));
-    add(d->scriptCmd);\
+    add(d->scriptCmd);
 
     d->buttons->setOpacity(.75f);
     d->cmdLine->setOpacity(.75f);
