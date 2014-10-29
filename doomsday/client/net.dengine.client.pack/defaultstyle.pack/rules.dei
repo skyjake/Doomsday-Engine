@@ -54,6 +54,7 @@ group sidebar {
 }
 
 group console {
+    rule prompt.width { constant $= UNIT * 13 }
     rule width { constant $= UNIT * 125 }
 
     group commandline {

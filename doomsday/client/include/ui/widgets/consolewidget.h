@@ -42,7 +42,8 @@ class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 public:
     ConsoleWidget();
 
-    de::ButtonWidget &button();
+    GuiWidget &buttons();
+
     de::CommandWidget &commandLine();
     de::LogWidget &log();
 
@@ -81,7 +82,6 @@ public slots:
     void commandLineFocusGained();
     void commandLineFocusLost();
     void focusOnCommandLine();
-    void openMenu();
     void closeMenu();
     void commandWasEntered(de::String const &);
     void copyLogPathToClipboard();

@@ -337,9 +337,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     //d->console->log().set(bg);
 
     // Position the console button and command line in the task bar.
-    d->console->button().rule()
+    d->console->buttons().rule()
             .setInput(Rule::Left,   rule().left())
-            .setInput(Rule::Width,  d->console->button().rule().height())
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Height, rule().height());
 
@@ -429,6 +428,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Help"))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
+            << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
+            << new ui::Item(ui::Item::Annotation, tr("Hides these brief descriptions about menu functions."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Application"))
             << new ui::ActionItem(tr("Check for Updates..."), new CommandAction("updateandnotify"))
@@ -777,7 +778,7 @@ void TaskBarWidget::updateCommandLineLayout()
 
     // The command line extends the rest of the way.
     RuleRectangle &cmdRule = d->console->commandLine().rule();
-    cmdRule.setInput(Rule::Left,   d->console->button().rule().right())
+    cmdRule.setInput(Rule::Left,   d->console->buttons().rule().right())
            .setInput(Rule::Bottom, rule().bottom())
            .setInput(Rule::Right,  layout.widgets().last()->as<GuiWidget>().rule().left());
 

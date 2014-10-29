@@ -27,10 +27,14 @@ group logo {
     }
 }
 
-image alert    { path = "graphics/alert.png" }
+# Generic:
 image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
+image alert    { path = "graphics/alert.png" }
+
+# Subsystems:
+image log      { path = "graphics/log.png" }
 image display  { path = "graphics/display.png" }
 image network  { path = "graphics/network.png" }
 image renderer { path = "graphics/renderer.png" }
@@ -39,6 +43,7 @@ image input    { path = "graphics/input.png" }
 image audio    { path = "graphics/audio.png" }
 image updater  { path = "graphics/updater.png" }
 
+# Widgets:
 image toggle.onoff {
     path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
 }
