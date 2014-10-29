@@ -464,7 +464,8 @@ DENG2_PIMPL(ClientWindow)
         }
 
         // Generate an event about this.
-        ddevent_t ev;
+        ddevent_t ev; de::zap(ev);
+        ev.device         = uint(-1);
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.

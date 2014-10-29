@@ -164,7 +164,7 @@ static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
     }
     else if(!Str_CompareIgnoreCase(str, "sym"))
     {
-        // It must be a symbolic event.
+        // A symbolic event.
         eb->type         = E_SYMBOLIC;
         eb->device       = 0;
         eb->symbolicName = strdup(desc);

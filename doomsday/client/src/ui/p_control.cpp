@@ -294,23 +294,16 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     if(newState == db->previousClickState &&
        nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))
     {
-        ddevent_t event;
-        Str* symbolicName = Str_NewStd();
+        Str *symbolicName = Str_NewStd();
 
         db->triggered = true;
 
         switch(newState)
         {
-        case DBCS_POSITIVE:
-            Str_Append(symbolicName, "control-doubleclick-positive-");
-            break;
+        case DBCS_POSITIVE: Str_Append(symbolicName, "control-doubleclick-positive-"); break;
+        case DBCS_NEGATIVE: Str_Append(symbolicName, "control-doubleclick-negative-"); break;
 
-        case DBCS_NEGATIVE:
-            Str_Append(symbolicName, "control-doubleclick-negative-");
-            break;
-
-        default:
-            break;
+        default: break;
         }
 
         // Compose the name of the symbolic event.
@@ -322,12 +315,13 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
                 << playerNum << control << newState << nowTime - db->previousClickTime
                 << Str_Text(symbolicName);
 
-        event.device = 0;
-        event.type = E_SYMBOLIC;
-        event.symbolic.id = playerNum;
-        event.symbolic.name = Str_Text(symbolicName);
+        ddevent_t ev; de::zap(ev);
+        ev.device = uint(-1);
+        ev.type   = E_SYMBOLIC;
+        ev.symbolic.id = playerNum;
+        ev.symbolic.name = Str_Text(symbolicName);
 
-        DD_PostEvent(&event);
+        DD_PostEvent(&ev);
 
         Str_Delete(symbolicName);
     }

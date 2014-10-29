@@ -432,7 +432,8 @@ dd_bool B_Responder(ddevent_t *ev)
 {
     DENG2_ASSERT(ev);
 
-    if(symbolicEchoMode && ev->type != E_SYMBOLIC)
+    if(symbolicEchoMode &&
+       ev->type != E_SYMBOLIC && ev->type != E_FOCUS)
     {
         // Make an echo.
         // Axis events need a bit of filtering.
