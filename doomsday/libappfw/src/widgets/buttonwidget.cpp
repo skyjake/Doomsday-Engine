@@ -192,12 +192,21 @@ DENG2_AUDIENCE_METHOD(ButtonWidget, Triggered)
 ButtonWidget::ButtonWidget(String const &name) : LabelWidget(name), d(new Instance(this))
 {}
 
-void ButtonWidget::useInfoStyle()
+void ButtonWidget::useInfoStyle(bool yes)
 {
-    d->infoStyle = true;
-    setTextColor("inverted.text");
-    setHoverTextColor("inverted.text", ReplaceColor);
-    setBackgroundColor("inverted.background");
+    d->infoStyle = yes;
+    if(yes)
+    {
+        setTextColor("inverted.text");
+        setHoverTextColor("inverted.text", ReplaceColor);
+        setBackgroundColor("inverted.background");
+    }
+    else
+    {
+        setTextColor("text");
+        setHoverTextColor("text", ReplaceColor);
+        setBackgroundColor("background");
+    }
     updateStyle();
 }
 
