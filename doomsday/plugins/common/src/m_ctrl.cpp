@@ -654,10 +654,10 @@ int InputBindingWidget::handleEvent_Privileged(event_t *ev)
         {
             bindContext = binds->bindContext;
 
+            // The Delete key in the Menu context is reserved for deleting bindings
             if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
                !strcmp(symbol + 5, "key-delete-down"))
             {
-                throw Error("InputBindingWidget::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
                 return false;
             }
         }
