@@ -224,6 +224,7 @@ public:
     Page *page() const;
 
     int flags() const;
+    bool isActive() { return (_flags & MNF_ACTIVE) != 0; }
 
     Widget &setFlags(flagop_t op, int flags);
 

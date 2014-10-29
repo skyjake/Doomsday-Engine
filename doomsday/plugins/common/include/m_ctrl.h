@@ -50,7 +50,8 @@ public:
 
     int handleEvent_Privileged(event_t *ev);
 
-    char const *controlName();
+    char const *controlName() const;
+    de::String bindContext() const;
 };
 
 int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
