@@ -39,6 +39,7 @@
 #include "render/vr.h"
 
 #include "ui/b_main.h"
+#include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/joystick.h"
 #include "ui/infine/finale.h"
