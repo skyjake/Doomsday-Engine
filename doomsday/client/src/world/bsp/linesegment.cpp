@@ -23,16 +23,13 @@
  * 02110-1301 USA</small>
  */
 
+#include "world/bsp/linesegment.h"
+
 #include <de/vector1.h> /// @todo remove me
-
-#include "m_misc.h" // M_BoxOnLineSide2
-
 #include <de/Observers>
-
 #include "world/bsp/convexsubspaceproxy.h"
 #include "world/bsp/superblockmap.h"
-
-#include "world/bsp/linesegment.h"
+#include "m_misc.h" // M_BoxOnLineSide2
 
 namespace de {
 namespace bsp {
@@ -58,14 +55,14 @@ DENG2_PIMPL_NOREF(LineSegment::Side)
     LineSegment::Side *rightNeighbor = nullptr;
     LineSegment::Side *leftNeighbor  = nullptr;
 
-    /// The superblock that contains "this" segment, or @c 0 if the segment is
+    /// The superblock that contains "this" segment, or @c nullptr if the segment is
     /// no longer in any superblock (e.g., attributed to a convex subspace).
     LineSegmentBlockTreeNode *blockTreeNode = nullptr;
 
-    /// Convex subspace which "this" segment is attributed; otherwise @c 0.
+    /// Convex subspace which "this" segment is attributed (if any, not owned).
     ConvexSubspaceProxy *convexSubspace = nullptr;
 
-    /// Map sector attributed to the line segment. Can be @c 0 for partition lines.
+    /// Map sector attributed to the line segment. @c nullptr= partition line.
     Sector *sector = nullptr;
 
     // Precomputed data for faster calculations.
@@ -381,8 +378,7 @@ DENG2_PIMPL(LineSegment)
     }
 };
 
-LineSegment::LineSegment(Vertex &from, Vertex &to)
-    : d(new Instance(this, from, to))
+LineSegment::LineSegment(Vertex &from, Vertex &to) : d(new Instance(this, from, to))
 {
     d->front.updateCache();
     d->back.updateCache();

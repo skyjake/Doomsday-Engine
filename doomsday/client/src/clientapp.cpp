@@ -115,7 +115,7 @@ DENG2_PIMPL(ClientApp)
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
-    InFineSystem *infineSys;
+    InFineSystem infineSys; // instantiated at construction time
     ServerLink *svLink;
     Games games;
     WorldSystem *worldSys;
@@ -190,7 +190,7 @@ DENG2_PIMPL(ClientApp)
         , renderSys  (0)
         , resourceSys(0)
         , winSys     (0)
-        , infineSys  (0)
+        //, infineSys  (0)
         , svLink     (0)
         , worldSys   (0)
     {
@@ -209,7 +209,7 @@ DENG2_PIMPL(ClientApp)
         DD_Shutdown();
 
         delete worldSys;
-        delete infineSys;
+        //delete infineSys;
         delete winSys;
         delete svLink;
         delete renderSys;
@@ -393,7 +393,7 @@ void ClientApp::initialize()
     addSystem(*d->inputSys);
     d->widgetActions.reset(new WidgetActions);
 
-    d->infineSys = new InFineSystem;
+    //d->infineSys = new InFineSystem;
     //addSystem(*d->infineSys);
 
     // Create the world system.
@@ -491,8 +491,8 @@ ServerLink &ClientApp::serverLink()
 InFineSystem &ClientApp::infineSystem()
 {
     ClientApp &a = ClientApp::app();
-    DENG2_ASSERT(a.d->infineSys != 0);
-    return *a.d->infineSys;
+    //DENG2_ASSERT(a.d->infineSys != 0);
+    return a.d->infineSys;
 }
 
 InputSystem &ClientApp::inputSystem()

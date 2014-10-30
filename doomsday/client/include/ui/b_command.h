@@ -1,7 +1,7 @@
-/** @file
+/** @file b_command.h  Input system, event => command binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,40 +17,55 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * b_command.h: Event-Command Bindings
- */
-
-#ifndef __DOOMSDAY_BIND_COMMAND_H__
-#define __DOOMSDAY_BIND_COMMAND_H__
-
-#include "b_util.h"
+#ifndef CLIENT_INPUTSYSTEM_EVENTBINDING_H
+#define CLIENT_INPUTSYSTEM_EVENTBINDING_H
 
 #include <de/Action>
+#include "b_util.h"
+#include "dd_input.h"
 
 typedef struct evbinding_s {
-    struct evbinding_s* prev;       // Previous in list of bindings.
-    struct evbinding_s* next;       // Next in list of bindings.
-    int         bid;                // Binding identifier.
-    char*       command;            // Command to execute.
+    struct evbinding_s *prev;  ///< Previous in list of bindings.
+    struct evbinding_s *next;  ///< Next in list of bindings.
+    int bid;                   ///< Binding identifier.
+    char *command;             ///< Command to execute.
 
-    uint        device;             // Which device?
-    ddeventtype_t type;             // Type of event.
-    int         id;                 // Identifier.
-    ebstate_t   state;
-    float       pos;
-    char*       symbolicName;       // Name of a symbolic event.
+    uint device;               ///< Which device?
+    ddeventtype_t type;        ///< Type of event.
+    int id;                    ///< Identifier.
+    ebstate_t state;
+    float pos;
+    char *symbolicName;        ///< Name of a symbolic event.
 
-    // Additional conditions.
-    int         numConds;
-    statecondition_t* conds;
+    int numConds;
+    statecondition_t *conds;   ///< Additional conditions.
 } evbinding_t;
 
-void         B_InitCommandBindingList(evbinding_t* listRoot);
-void         B_DestroyCommandBindingList(evbinding_t* listRoot);
-evbinding_t* B_NewCommandBinding(evbinding_t* listRoot, const char* desc, const char* command);
-void         B_DestroyCommandBinding(evbinding_t* eb);
-void         B_EventBindingToString(const evbinding_t* eb, ddstring_t* str);
+void B_InitCommandBindingList(evbinding_t *listRoot);
+
+void B_DestroyCommandBindingList(evbinding_t *listRoot);
+
+/**
+ * Creates a new event-command binding.
+ *
+ * @param bindsList  List of bindings where the binding will be added.
+ * @param desc       Descriptor of the event.
+ * @param command    Command that will be executed by the binding.
+ *
+ * @return  New binding, or @c nullptr if there was an error.
+ */
+evbinding_t *B_NewCommandBinding(evbinding_t *listRoot, char const *desc, char const *command);
+
+/**
+ * Destroys command binding @eb.
+ */
+void B_DestroyCommandBinding(evbinding_t *eb);
+
+/**
+ * Does the opposite of the B_Parse* methods for event descriptor, including the
+ * state conditions.
+ */
+void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str);
 
 evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device);
 
@@ -65,9 +80,9 @@ evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *comma
  *                    class, the binding cannot be executed.
  * @param respectHigherAssociatedContexts  Bindings are shadowed by higher active contexts.
  *
- * @return  Action to be triggered, or @c NULL. Caller gets ownership.
+ * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
  */
 de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
                                         struct bcontext_s *eventClass, bool respectHigherAssociatedContexts);
 
-#endif // __DOOMSDAY_BIND_COMMAND_H__
+#endif // CLIENT_INPUTSYSTEM_EVENTBINDING_H

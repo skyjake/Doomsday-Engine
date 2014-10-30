@@ -29,6 +29,10 @@ def setDefaults(d)
         # The default audio and video subsystems.
         d.video = 'opengl'
         d.audio = 'fmod'
+
+        # Generic user interface settings.
+        record d.ui
+        d.ui.showAnnotations = True
            
         # Window manager defaults.
         record d.window

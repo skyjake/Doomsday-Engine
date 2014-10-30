@@ -315,140 +315,144 @@ void InputBindingWidget::updateGeometry()
     geometry().setSize(Vector2ui(60, 10 * SMALL_SCALE));
 }
 
-int InputBindingWidget::handleEvent_Privileged(event_t const &ev)
+/**
+ * Read the symbolic descriptor from the given @a event.
+ */
+static String symbolicDescriptor(event_t const &event)
 {
-    // We're interested in key or button down events.
-    if(isActive() && ev.type == EV_SYMBOLIC)
+    if(event.type == EV_SYMBOLIC)
     {
-        char const *bindContext = "game";
-        char const *symbol = 0;
-        char cmd[512];
-
 #ifndef __64BIT__
-        symbol = (char const *) ev.data1;
+        String symbol = (char const *) event.data1;
 #else
-        {
-            uint64_t address = (uint32_t) ev.data2;
-            address <<= 32;
-            address |= (uint32_t) ev.data1;
-            symbol = (char const *) address;
-        }
+        String symbol = (char const *)( (duint32(event.data2) << 32) | duint32(event.data1) );
 #endif
-
-        if(strncmp(symbol, "echo-", 5))
+        if(symbol.beginsWith("echo-"))
         {
-            return false;
+            return symbol.substr(5);
         }
-        if(!strncmp(symbol, "echo-key-", 9) && strcmp(symbol + strlen(symbol) - 5, "-down"))
-        {
-           return false;
-        }
-
-        if(binds->bindContext)
-        {
-            bindContext = binds->bindContext;
-
-            if((!strcmp(bindContext, "menu") || !strcmp(bindContext, "shortcut")) &&
-               !strcmp(symbol + 5, "key-delete-down"))
-            {
-                throw Error("InputBindingWidget::handleEvent_Priviledged", "The Delete key in the Menu context is reserved for deleting bindings");
-                return false;
-            }
-        }
-
-        if(binds->command)
-        {
-            char const *extraCondition = (binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "");
-            sprintf(cmd, "bindevent {%s:%s%s} {%s}", bindContext, &symbol[5], extraCondition, binds->command);
-
-            // Check for repeats.
-            if(binds->flags & CCF_REPEAT)
-            {
-                char const *downPtr = 0;
-                char temp[256];
-
-                downPtr = strstr(symbol + 5, "-down");
-                if(downPtr)
-                {
-                    char temp2[256];
-
-                    std::memset(temp2, 0, sizeof(temp2));
-                    strncpy(temp2, symbol + 5, downPtr - symbol - 5);
-                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindContext, temp2, binds->command);
-                    strcat(cmd, temp);
-                }
-            }
-        }
-        else if(binds->controlName)
-        {
-            // Have to exclude the state part.
-            dd_bool inv      = (binds->flags & CCF_INVERSE) != 0;
-            dd_bool isStaged = (binds->flags & CCF_STAGED) != 0;
-            char const *end = strchr(symbol + 5, '-');
-            char temp3[256];
-            char extra[256];
-
-            end = strchr(end + 1, '-');
-
-            if(!end)
-            {
-                Con_Error("what! %s\n", symbol);
-            }
-
-            std::memset(temp3, 0, sizeof(temp3));
-            strncpy(temp3, symbol + 5, end - symbol - 5);
-
-            // Check for inverse.
-            if(!strncmp(end, "-neg", 4))
-            {
-                inv = !inv;
-            }
-            if(isStaged && (!strncmp(temp3, "key-", 4) || strstr(temp3, "-button") ||
-                            !strcmp(temp3, "mouse-left") || !strcmp(temp3, "mouse-middle") ||
-                            !strcmp(temp3, "mouse-right")))
-            {
-                // Staging is for keys and buttons.
-                strcat(temp3, "-staged");
-            }
-            if(inv)
-            {
-                strcat(temp3, "-inverse");
-            }
-
-            strcpy(extra, "");
-            if(binds->flags & CCF_SIDESTEP_MODIFIER)
-            {
-                sprintf(cmd, "bindcontrol sidestep {%s + modifier-1-down}", temp3);
-                DD_Execute(true, cmd);
-
-                strcpy(extra, " + modifier-1-up");
-            }
-
-            sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
-        }
-
-        LOGDEV_INPUT_MSG("MNBindings_PrivilegedResponder: %s") << cmd;
-        DD_Execute(true, cmd);
-
-        // We've finished the grab.
-        setFlags(Active, UnsetFlags);
-        DD_SetInteger(DD_SYMBOLIC_ECHO, false);
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
-        return true;
     }
-
-    return false;
+    return ""; // No symbolic descriptor.
 }
 
-char const *InputBindingWidget::controlName()
+int InputBindingWidget::handleEvent_Privileged(event_t const &event)
 {
-    DENG2_ASSERT(binds != 0);
+    LOG_AS("InputBindingWidget");
+
+    // Only handle events when active.
+    if(!isActive()) return false;
+
+    // We're only interested in events with an echoed, symbolic descriptor.
+    String symbol = symbolicDescriptor(event);
+    if(symbol.isEmpty()) return false;
+
+    // We're interested in key or button down events.
+    if(symbol.beginsWith("key-") && !symbol.endsWith("-down"))
+    {
+       return false;
+    }
+
+    String const context = bindContext();
+
+    // The Delete key in the Menu context is reserved for deleting bindings
+    if((!context.compareWithCase("menu") || !context.compareWithCase("shortcut")) &&
+       !symbol.compareWithCase("key-delete-down"))
+    {
+        return false;
+    }
+
+    String cmd;
+    if(binds->command)
+    {
+        cmd = String("bindevent {%1:%2%3} {%4}")
+                  .arg(context)
+                  .arg(symbol)
+                  .arg(binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "")
+                  .arg(binds->command);
+
+        // Check for repeats.
+        if((binds->flags & CCF_REPEAT) && symbol.endsWith("-down"))
+        {
+            cmd += String("; bindevent {%1:%2-repeat} {%3}")
+                       .arg(context)
+                       .arg(symbol.left(symbol.length() - 5))
+                       .arg(binds->command);
+        }
+    }
+    else if(binds->controlName)
+    {
+        String stateFlags;
+
+        // Extract the symbolic key/button name (exclude the state part).
+        int const endOfName = symbol.indexOf('-', symbol.indexOf('-') + 1);
+        if(endOfName < 0)
+        {
+            throw Error("InputBindingWidget::handleEvent_Privileged", "Invalid symbol:" + symbol);
+        }
+        String const name = symbol.left(endOfName);
+
+        // Staged?
+        if(binds->flags & CCF_STAGED)
+        {
+            // Staging is for keys and buttons.
+            if(name.beginsWith("key-") || name.indexOf("-button") >= 0 ||
+               !name.compareWithCase("mouse-left") || !name.compareWithCase("mouse-middle") ||
+               !name.compareWithCase("mouse-right"))
+            {
+                stateFlags += "-staged";
+            }
+        }
+
+        // Inverted?
+        bool inv = (binds->flags & CCF_INVERSE) != 0;
+        if(symbol.substr(endOfName).beginsWith("-neg"))
+        {
+            inv = !inv;
+        }
+        if(inv)
+        {
+            stateFlags += "-inverse";
+        }
+
+        cmd = String("bindcontrol {%1} {%2%3%4}")
+                  .arg(binds->controlName)
+                  .arg(name)
+                  .arg(stateFlags)
+                  .arg((binds->flags & CCF_SIDESTEP_MODIFIER)? " + modifier-1-up" : "");
+
+        if(binds->flags & CCF_SIDESTEP_MODIFIER)
+        {
+            cmd += String("; bindcontrol sidestep {%1%2 + modifier-1-down}")
+                       .arg(name)
+                       .arg(stateFlags);
+        }
+    }
+
+    LOGDEV_INPUT_MSG("PrivilegedResponder: ") << cmd;
+    DD_Execute(true, cmd.toUtf8().constData());
+
+    // We've finished the grab.
+    setFlags(Active);
+    DD_SetInteger(DD_SYMBOLIC_ECHO, false);
+    S_LocalSound(SFX_MENU_ACCEPT, nullptr);
+    return true;
+}
+
+char const *InputBindingWidget::controlName() const
+{
+    DENG2_ASSERT(binds);
     // Map to a text definition?
     if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
     {
         return GET_TXT(PTR2INT(binds->text));
     }
     return binds->text;
+}
+
+String InputBindingWidget::bindContext() const
+{
+    DENG2_ASSERT(binds);
+    return (binds->bindContext? binds->bindContext : "game");
 }
 
 } // namespace menu

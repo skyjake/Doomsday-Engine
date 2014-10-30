@@ -1,6 +1,7 @@
 /** @file inputsystem.cpp  Input subsystem.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,15 +17,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
-#include "clientapp.h"
+//#include "de_platform.h"
 #include "ui/inputsystem.h"
-#include "ui/dd_input.h"
-#include "ui/sys_input.h"
-#include "ui/b_main.h"
 
 #include <de/Record>
 #include <de/NumberValue>
+#include "clientapp.h"
+#include "ui/dd_input.h"
+#include "ui/b_main.h"
+#include "ui/sys_input.h"
 
 using namespace de;
 
@@ -89,4 +90,10 @@ void InputSystem::timeChanged(Clock const &)
 SettingsRegister &InputSystem::settings()
 {
     return d->settings;
+}
+
+void InputSystem::consoleRegister() // static
+{
+    B_ConsoleRegister(); // for control bindings
+    I_ConsoleRegister();
 }

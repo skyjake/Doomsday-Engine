@@ -69,7 +69,6 @@ HEADERS += \
     include/de/findfile.h \
     include/de/fixedpoint.h \
     include/de/liblegacy.h \
-    include/de/kdtree.h \
     include/de/mathutil.h \
     include/de/memory.h \
     include/de/memoryblockset.h \
@@ -97,7 +96,6 @@ SOURCES += \
     src/concurrency.cpp \
     src/fixedpoint.c \
     src/liblegacy.c \
-    src/kdtree.c \
     src/mathutil.c \
     src/memory.c \
     src/memoryblockset.c \

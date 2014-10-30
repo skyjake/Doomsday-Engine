@@ -23,16 +23,20 @@
 #include "de/ChildWidgetOrganizer"
 #include "de/AtlasProceduralImage"
 #include "de/ui/Item"
+#include "de/App"
 
 #include <de/IndirectRule>
 
 namespace de {
+
+static String const VAR_SHOW_ANNOTATIONS("ui.showAnnotations");
 
 DENG_GUI_PIMPL(PopupMenuWidget)
 , DENG2_OBSERVES(ButtonWidget, StateChange)
 , DENG2_OBSERVES(ButtonWidget, Triggered)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+, DENG2_OBSERVES(Variable, Change)
 {
     class HeadingOverlayImage : public ProceduralImage
     {
@@ -97,10 +101,12 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         , maxItemWidth(0)
     {
         maxItemWidth = new IndirectRule;
+        App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() += this;
     }
 
     ~Instance()
     {
+        App::config(VAR_SHOW_ANNOTATIONS).audienceForChange() -= this;
         releaseRef(maxItemWidth);
         releaseRef(widestItem);
     }
@@ -161,6 +167,11 @@ DENG_GUI_PIMPL(PopupMenuWidget)
     {
         if(item.semantics().testFlag(ui::Item::Annotation))
         {
+            if(!App::config().getb(VAR_SHOW_ANNOTATIONS))
+            {
+                widget.hide();
+            }
+
             widget.margins().set("halfunit").setLeft("unit");
             widget.setFont("separator.annotation");
         }
@@ -275,6 +286,25 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         root().dispatchLatestMousePosition();
 
         self.requestGeometry();
+    }
+
+    void variableValueChanged(Variable &, Value const &newValue)
+    {
+        bool changed = false;
+
+        // Update widgets of annotation items.
+        self.items().forAll([this, &newValue, &changed] (ui::Item const &item) {
+            if(item.semantics().testFlag(ui::Item::Annotation)) {
+                self.menu().itemWidget<GuiWidget>(item).show(newValue.isTrue());
+                changed = true;
+            }
+            return LoopContinue;
+        });
+
+        if(changed)
+        {
+            self.menu().updateLayout();
+        }
     }
 };
 

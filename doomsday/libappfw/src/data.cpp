@@ -65,5 +65,15 @@ void Data::sort(SortMethod method)
     }
 }
 
+LoopResult Data::forAll(std::function<LoopResult (Item const &)> func) const
+{
+    for(DataPos pos = 0; pos < size(); ++pos)
+    {
+        if(auto result = func(at(pos)))
+            return result;
+    }
+    return LoopContinue;
+}
+
 } // namespace ui
 } // namespace de

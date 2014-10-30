@@ -44,10 +44,11 @@ public:
 
     void draw() const;
     void updateGeometry();
-    int handleEvent_Privileged(event_t const &ev);
+    int handleEvent_Privileged(event_t const &event);
     int handleCommand(menucommand_e command);
 
-    char const *controlName();
+    char const *controlName() const;
+    de::String bindContext() const;
 };
 
 } // namespace menu

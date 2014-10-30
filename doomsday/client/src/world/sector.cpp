@@ -18,8 +18,11 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/sector.h"
+
+#include <QtAlgorithms>
+#include <de/vector1.h>
+#include <de/Log>
 
 #include "world/map.h"
 #include "world/p_object.h"
@@ -28,68 +31,41 @@
 #include "Surface"
 #include "SectorCluster"
 
-#include <de/Log>
-#include <de/vector1.h>
-#include <QtAlgorithms>
-
 using namespace de;
 
 DENG2_PIMPL(Sector)
 , DENG2_OBSERVES(Plane, HeightChange)
 {
-    AABoxd aaBox;         ///< Bounding box for the whole sector (all clusters).
-    bool needAABoxUpdate;
+    AABoxd aaBox;                     ///< Bounding box for the whole sector (all clusters).
+    bool needAABoxUpdate = true;
 
-    ThinkerT<SoundEmitter> emitter; ///< Head of the sound emitter chain.
+    ThinkerT<SoundEmitter> emitter;   ///< Head of the sound emitter chain.
 
-    Planes planes;        ///< All owned planes.
-    Sides sides;          ///< All referencing line sides (not owned).
-    mobj_t *mobjList;     ///< All mobjs "in" the sector (not owned).
+    Planes planes;                    ///< All owned planes.
+    Sides sides;                      ///< All referencing line sides (not owned).
+    mobj_t *mobjList = nullptr;       ///< All mobjs "in" the sector (not owned).
 
-    float lightLevel;     ///< Ambient light level.
-    Vector3f lightColor;  ///< Ambient light color.
+    float lightLevel = 0;             ///< Ambient light level.
+    Vector3f lightColor;              ///< Ambient light color.
 
-    int validCount;
+    int validCount = 0;
 
 #ifdef __CLIENT__
-    coord_t roughArea;    ///< Approximated. @c <0 means an update is needed.
-    bool needRoughAreaUpdate;
+    coord_t roughArea = 0;            ///< Approximated. @c <0 means an update is needed.
+    bool needRoughAreaUpdate = true;
 #endif
 
-    Instance(Public *i)
-        : Base               (i)
-        , needAABoxUpdate    (true)
-        , mobjList           (0)
-        , lightLevel         (0)
-        , lightColor         (Vector3f(0, 0, 0))
-        , validCount         (0)
-#ifdef __CLIENT__
-        , roughArea          (0)
-        , needRoughAreaUpdate(true)
-#endif
-    {
-        //de::zap(emitter);
-    }
-
-    ~Instance()
-    {
-        qDeleteAll(planes);
-    }
+    Instance(Public *i) : Base(i) {}
+    ~Instance() { qDeleteAll(planes); }
 
     void notifyLightLevelChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i)
-        {
-            i->sectorLightLevelChanged(self);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(LightLevelChange, i) i->sectorLightLevelChanged(self);
     }
 
     void notifyLightColorChanged()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i)
-        {
-            i->sectorLightColorChanged(self);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(LightColorChange, i) i->sectorLightColorChanged(self);
     }
 
     /**
@@ -104,7 +80,7 @@ DENG2_PIMPL(Sector)
         aaBox.clear();
         bool haveGeometry = false;
 
-        self.map().forAllClusters(thisPublic, [&] (SectorCluster &cluster)
+        self.map().forAllClusters(thisPublic, [this, &haveGeometry] (SectorCluster &cluster)
         {
             if(haveGeometry)
             {
@@ -151,7 +127,7 @@ DENG2_PIMPL(Sector)
      */
     void updateDependentSurfaceSoundEmitterOrigins()
     {
-        foreach(LineSide *side, sides)
+        for(LineSide *side : sides)
         {
             side->updateAllSoundEmitterOrigins();
             side->back().updateAllSoundEmitterOrigins();
@@ -166,7 +142,7 @@ DENG2_PIMPL(Sector)
 
 #ifdef __CLIENT__
         // A plane move means we must re-apply missing material fixes.
-        foreach(LineSide *side, sides)
+        for(LineSide *side : sides)
         {
             side->fixMissingMaterials();
             side->back().fixMissingMaterials();
@@ -240,11 +216,11 @@ void Sector::unlink(mobj_t *mobj)
         mobj->sNext->sPrev = mobj->sPrev;
 
     // Not linked any more.
-    mobj->sNext = 0;
-    mobj->sPrev = 0;
+    mobj->sNext = nullptr;
+    mobj->sPrev = nullptr;
 
     // Ensure this has been completely unlinked.
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
     {
         DENG2_ASSERT(iter != mobj);
@@ -257,7 +233,7 @@ void Sector::link(mobj_t *mobj)
     if(!mobj) return;
 
     // Ensure this isn't already linked.
-#ifdef DENG_DEBUG
+#ifdef DENG2_DEBUG
     for(mobj_t *iter = d->mobjList; iter; iter = iter->sNext)
     {
         DENG2_ASSERT(iter != mobj);
@@ -312,7 +288,7 @@ Plane const &Sector::plane(int planeIndex) const
 
 bool Sector::hasSkyMaskedPlane() const
 {
-    foreach(Plane *plane, d->planes)
+    for(Plane *plane : d->planes)
     {
         if(plane->surface().hasSkyMaskedMaterial())
             return true;
@@ -331,7 +307,7 @@ void Sector::buildSides()
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    foreach(Line *line, map().lines())
+    for(Line *line : map().lines())
     {
         if(line->frontSectorPtr() == this || line->backSectorPtr()  == this)
             ++count;
@@ -342,7 +318,7 @@ void Sector::buildSides()
     d->sides.reserve(count);
 #endif
 
-    foreach(Line *line, map().lines())
+    for(Line *line : map().lines())
     {
         if(line->frontSectorPtr() == this)
         {
@@ -402,16 +378,16 @@ void Sector::chainSoundEmitters()
     SoundEmitter &root = d->emitter;
 
     // Clear the root of the emitter chain.
-    root.thinker.next = root.thinker.prev = 0;
+    root.thinker.next = root.thinker.prev = nullptr;
 
     // Link plane surface emitters:
-    foreach(Plane *plane, d->planes)
+    for(Plane *plane : d->planes)
     {
         linkSoundEmitter(root, plane->soundEmitter());
     }
 
     // Link wall surface emitters:
-    foreach(LineSide *side, d->sides)
+    for(LineSide *side : d->sides)
     {
         if(side->hasSections())
         {

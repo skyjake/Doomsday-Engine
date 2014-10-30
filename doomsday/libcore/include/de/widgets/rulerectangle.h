@@ -71,6 +71,16 @@ public:
 
     RuleRectangle &setSize(Rule const &width, Rule const &height);
 
+    RuleRectangle &setMidAnchorX(Rule const &middle);
+
+    /**
+     * Sets the AnchorY rule to @a middle and Y anchor point to 0.5. This is
+     * equivalent to first calling setInput() and then setAnchorPoint().
+     *
+     * @param middle  Rule for the Y anchor.
+     */
+    RuleRectangle &setMidAnchorY(Rule const &middle);
+
     /**
      * Sets the outputs of another rule rectangle as the inputs of this one.
      *

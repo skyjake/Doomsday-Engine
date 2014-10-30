@@ -34,9 +34,6 @@
 #include "menu/page.h"
 #include "menu/widgets/lineeditwidget.h"
 
-static int cvarLastSlot  = -1; ///< @c -1= Not yet loaded/saved in this game session.
-static int cvarQuickSlot = -1; ///< @c -1= Not yet chosen/determined.
-
 using namespace de;
 using namespace common;
 using namespace menu;
@@ -385,8 +382,15 @@ void SaveSlots::updateAll()
     }
 }
 
+namespace {
+int cvarLastSlot;  ///< @c -1= Not yet loaded/saved in this game session.
+int cvarQuickSlot; ///< @c -1= Not yet chosen/determined.
+}
+
 void SaveSlots::consoleRegister() // static
 {
-    C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, 0, 0);
+    cvarLastSlot  = -1;
+    cvarQuickSlot = -1;
+    C_VAR_INT("game-save-last-slot",    &cvarLastSlot,  CVF_NO_MIN|CVF_NO_MAX|CVF_NO_ARCHIVE|CVF_READ_ONLY, -1, 0);
     C_VAR_INT("game-save-quick-slot",   &cvarQuickSlot, CVF_NO_MAX|CVF_NO_ARCHIVE, -1, 0);
 }

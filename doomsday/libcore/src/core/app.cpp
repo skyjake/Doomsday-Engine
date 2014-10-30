@@ -519,12 +519,22 @@ NativePath App::nativeHomePath()
     return (d->cachedHomePath = nativeHome);
 }
 
-Archive &App::persistentData()
+Archive const &App::persistentData()
+{
+    Archive const *persist = DENG2_APP->d->persistentData;
+    if(!persist)
+    {
+        throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
+    }
+    return *persist;
+}
+    
+Archive &App::mutablePersistentData()
 {
     Archive *persist = DENG2_APP->d->persistentData;
     if(!persist)
     {
-        throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
+        throw PersistentDataNotAvailable("App::mutablePersistentData", "Persistent data is disabled");
     }
     return *persist;
 }

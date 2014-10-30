@@ -280,26 +280,7 @@ public Font::RichFormat::IStyle
         {
             DENG2_GUARD(_wrappedEntries);
             if(_wrappedEntries.isEmpty()) return 0;
-            //if(_wrappedEntries.first()->drawable.isBeingWrapped()) return 0;
             return _wrappedEntries.takeFirst();
-        }
-
-        /**
-         * Pauses the sink so that it doesn't produce cached entries any more.
-         * This will allow the widget to catch up.
-         */
-        void setPaused(bool pause)
-        {
-            if(_paused != pause)
-            {
-                _paused = pause;
-                if(!_paused) beginWorkOnNext();
-            }
-        }
-        
-        bool isPaused() const
-        {
-            return _paused;
         }
 
         /**
@@ -307,7 +288,7 @@ public Font::RichFormat::IStyle
          */
         void beginWorkOnNext()
         {
-            if(isPaused() || !d->formatter) return; // Must have a formatter.
+            if(!d->formatter) return; // Must have a formatter.
 
             DENG2_GUARD(this);
 
@@ -335,7 +316,6 @@ public Font::RichFormat::IStyle
         int _maxEntries;
         int _next;
         int _width;
-        bool _paused { false };
 
         struct WrappedEntries : public QList<CacheEntry *>, public Lockable {};
         WrappedEntries _wrappedEntries; ///< New entries possibly created in background threads.
@@ -545,12 +525,9 @@ public Font::RichFormat::IStyle
     {
         self.modifyContentHeight(delta);
 
-        // Adjust visible offset so it remains fixed in relation to
-        // existing entries.
-        if(self.scrollPositionY().animation().target() > 0)
-        {
-            self.scrollPositionY().shift(delta);
-        }
+        // TODO: If content height changes below the visible range, we should adjust
+        // the current scroll position so that the entries don't change position
+        // inside the view.
     }
 
     void fetchNewCachedEntries()
@@ -563,20 +540,17 @@ public Font::RichFormat::IStyle
 
     void rewrapCache()
     {
-        int startFrom = cache.size() - 1;
-        if(visibleRange >= 0)
-        {
-            startFrom = min(startFrom, visibleRange.end + 1);
-        }
+        int startFrom = max(0, visibleRange.start);
 
-        // Resize all the existing entries, starting from the latest visible entry.
-        for(int idx = startFrom; idx >= 0; --idx)
+        // Resize entries starting from the first visible entry, continue down to the
+        // most recent entry.
+        for(int idx = startFrom; idx < cache.size(); ++idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
 
-        // Resize the rest of the items (below the visible range).
-        for(int idx = startFrom + 1; idx < cache.size(); ++idx)
+        // Resize the rest of the items (above the visible range).
+        for(int idx = startFrom - 1; idx >= 0; --idx)
         {
             cache[idx]->rewrap(contentWidth());
         }
@@ -586,7 +560,7 @@ public Font::RichFormat::IStyle
     {
         if(visibleRange < 0) return;
 
-        int len = de::max(10, visibleRange.size()/2);
+        int len = de::max(10, visibleRange.size());
 
         // Excess entries before the visible range.
         int excess = visibleRange.start - len;
@@ -735,12 +709,6 @@ public Font::RichFormat::IStyle
 
                 if(entryAtlasLayoutChanged || entryAtlasFull)
                 {
-                    if(entryAtlasFull)
-                    {
-                        // We're full at the moment so let's delay adding any new
-                        // entries for a while.
-                        sink.setPaused(true);
-                    }
                     goto nextAttempt;
                 }
             }
@@ -763,7 +731,7 @@ nextAttempt:
         // available for drawing.
         if(heightDelta)
         {
-            modifyContentHeight(heightDelta);
+            modifyContentHeight(heightDelta);            
             if(needHeightNotify && heightDelta > 0)
             {
                 emit self.contentHeightIncreased(heightDelta);
@@ -772,11 +740,6 @@ nextAttempt:
 
         // We don't need to keep all entries ready for drawing immediately.
         releaseExcessComposedEntries();
-
-        if(contentOffset.done())
-        {
-            sink.setPaused(false);
-        }
     }
 
     bool isVisible() const

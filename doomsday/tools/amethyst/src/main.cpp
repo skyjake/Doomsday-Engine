@@ -22,18 +22,18 @@
 #include <QDebug>
 
 #ifndef _WIN32
-void messagePrinter(QtMsgType type, const char* msg)
+void messagePrinter(QtMsgType type, const QMessageLogContext &, const QString &msg)
 {
     switch(type)
     {
     case QtDebugMsg:
     case QtWarningMsg:
     case QtCriticalMsg:
-        fwprintf(stderr, L"%s\n", msg);
+        fwprintf(stderr, L"%s\n", msg.toLatin1().constData());
         break;
 
     case QtFatalMsg:
-        fwprintf(stderr, L"Fatal Error: %s\n", msg);
+        fwprintf(stderr, L"Fatal Error: %s\n", msg.toLatin1().constData());
         abort();
     }
 }
@@ -69,7 +69,7 @@ void printUsage(void)
 int main(int argc, char **argv)
 {
 #ifndef _WIN32
-    qInstallMsgHandler(messagePrinter);
+    qInstallMessageHandler(messagePrinter);
 #endif
     QCoreApplication a(argc, argv); // event loop never started
 

@@ -19,6 +19,7 @@
  
 #include "de/Config"
 #include "de/App"
+#include "de/Package"
 #include "de/Archive"
 #include "de/Refuge"
 #include "de/Log"
@@ -126,6 +127,16 @@ void Config::read()
         {
             LOG_MSG("%s is newer than %s, rerunning the script")
                     << d->configPath << d->refuge.path();
+            shouldRunScript = true;
+        }
+
+        // Check the container, too.
+        if(!shouldRunScript &&
+           Package::containerOfFileModifiedAt(scriptFile) > d->refuge.lastWrittenAt())
+        {
+            LOG_MSG("Package '%s' is newer than %s, rerunning the script")
+                    << Package::identifierForContainerOfFile(scriptFile)
+                    << d->refuge.path();
             shouldRunScript = true;
         }
     }

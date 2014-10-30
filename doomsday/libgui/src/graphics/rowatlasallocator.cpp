@@ -1,6 +1,20 @@
 /** @file rowatlasallocator.cpp  Row-based atlas allocator.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * The row allocator works according to the following principles:
+ *
+ * - In the beginning, there is a single row that spans the height of the entire atlas.
+ *   The row contains a single empty segment.
+ * - If a row is completely empty, the empty space below will be split into a new empty
+ *   row when the first allocation is made on the line. The first allocation also
+ *   determines the initial height of the row.
+ * - The height of a row may expand if there is empty space below.
+ * - All the empty spaces are kept ordered from narrow to wide, so that when a new
+ *   allocation is needed, the smallest suitable space can be picked.
+ * - Each row is a doubly-linked list containing the used and free regions.
+ * - If there are two adjacent free regions on a row, they will be merged into a larger
+ *   empty space. Similarly empty rows are merged together.
+ *
+ * @authors Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -19,96 +33,426 @@
 #include "de/RowAtlasAllocator"
 
 #include <QList>
+#include <set>
 
 namespace de {
 
+template <typename Type>
+void linkAfter(Type *where, Type *object)
+{
+    object->next = where->next;
+    object->prev = where;
+
+    if(where->next) where->next->prev = object;
+    where->next = object;
+}
+
+template <typename Type>
+void unlink(Type *object)
+{
+    if(object->prev) object->prev->next = object->next;
+    if(object->next) object->next->prev = object->prev;
+    object->next = object->prev = nullptr;
+}
+
+/// The allocations are only optimized if less than 70% of the area is being utilized.
+static float const OPTIMIZATION_USAGE_THRESHOLD = .7f;
+
 DENG2_PIMPL(RowAtlasAllocator)
 {
-    typedef QList<Rectanglei> RectList;
+    struct Rows
+    {
+        struct Row;
+
+        /**
+         * Each row is composed of one or more used or empty slots.
+         */
+        struct Slot
+        {
+            Slot *next = nullptr;
+            Slot *prev = nullptr;
+            Row *row;
+
+            Id id { Id::None }; ///< Id of allocation here, or Id::None if free.
+            int x = 0;          ///< Left edge of the slot.
+            duint width = 0;    ///< Width of the slot.
+            dsize usedArea = 0;
+
+            Slot(Row *owner) : row(owner) {}
+
+            bool isEmpty() const
+            {
+                return id.isNone();
+            }
+
+            /**
+             * Take an empty slot into use. The remaining empty space is split off
+             * into a new slot.
+             *
+             * @param allocId  Allocation identifier.
+             * @param widthWithMargin  Needed width.
+             *
+             * @return If an empty slot was created, it is returned. Otherwise @c nullptr.
+             */
+            Slot *allocateAndSplit(Id const &allocId, duint widthWithMargin)
+            {
+                DENG2_ASSERT(isEmpty());
+                DENG2_ASSERT(width >= widthWithMargin);
+
+                int const remainder = width - widthWithMargin;
+
+                id    = allocId;
+                width = widthWithMargin;
+
+                if(remainder > 0)
+                {
+                    Slot *split = new Slot(row);
+                    linkAfter(this, split);
+                    split->x = x + width;
+                    split->width = remainder;
+                    return split;
+                }
+                return nullptr;
+            }
+
+            Slot *mergeWithNext()
+            {
+                DENG2_ASSERT(isEmpty());
+                if(!next || !next->isEmpty()) return nullptr;
+
+                Slot *merged = next;
+                unlink(merged);
+                width += merged->width;
+                return merged; // Caller gets ownership.
+            }
+
+            Slot *mergeWithPrevious()
+            {
+                DENG2_ASSERT(isEmpty());
+                if(!prev || !prev->isEmpty()) return nullptr;
+
+                Slot *merged = prev;
+                unlink(merged);
+                if(row->first == merged)
+                {
+                    row->first = this;
+                }
+
+                x -= merged->width;
+                width += merged->width;
+                return merged; // Caller gets ownership.
+            }
+
+            struct SortByWidth {
+                bool operator () (Slot const *a, Slot const *b) {
+                    if(a->width == b->width) return a < b;
+                    return a->width > b->width;
+                }
+            };
+        };
+
+        struct Row
+        {
+            Row *next = nullptr;
+            Row *prev = nullptr;
+
+            int y = 0;       ///< Top edge of the row.
+            duint height = 0;
+            Slot *first;    ///< There's always at least one empty slot.
+
+            Row() : first(new Slot(this)) {}
+
+            ~Row()
+            {
+                // Delete all the slots.
+                Slot *next;
+                for(Slot *s = first; s; s = next)
+                {
+                    next = s->next;
+                    delete s;
+                }
+            }
+
+            bool isEmpty() const
+            {
+                return first->isEmpty() && !first->next;
+            }
+
+            bool isTallEnough(duint heightWithMargin) const
+            {
+                if(height >= heightWithMargin) return true;
+                // The row might be able to expand.
+                if(next && next->isEmpty())
+                {
+                    return (height + next->height) >= heightWithMargin;
+                }
+                return false;
+            }
+
+            Row *split(duint newHeight)
+            {
+                DENG2_ASSERT(isEmpty());
+                DENG2_ASSERT(newHeight <= height);
+
+                duint const remainder = height - newHeight;
+                height = newHeight;
+                if(remainder > 0)
+                {
+                    Row *below = new Row;
+                    linkAfter(this, below);
+                    below->y = y + height;
+                    below->height = remainder;
+                    return below;
+                }
+                return nullptr;
+            }
+
+            void grow(duint newHeight)
+            {
+                DENG2_ASSERT(newHeight > height);
+                DENG2_ASSERT(next);
+                DENG2_ASSERT(next->isEmpty());
+
+                duint delta = newHeight - height;
+                height += delta;
+                next->y += delta;
+                next->height -= delta;
+            }
+        };
+
+        Row *top; ///< Always at least one row exists.
+        std::set<Slot *, Slot::SortByWidth> vacant; // not owned
+        QHash<Id, Slot *> slotsById; // not owned
+
+        dsize usedArea = 0; ///< Total allocated pixels.
+        Instance *d;
+
+        Rows(Instance *inst) : d(inst)
+        {
+            top = new Row;
+
+            /*
+             * Set up one big row, excluding the margins. This is all the space that
+             * we will be using; it will be chopped up and merged back together, but
+             * space will not be added or removed. Margin is reserved on the top/left
+             * edge; individual slots reserve it on the right, rows reserve it in the
+             * bottom.
+             */
+            top->y            = d->margin;
+            top->height       = d->size.y - d->margin;
+            top->first->x     = d->margin;
+            top->first->width = d->size.x - d->margin;
+
+            addVacant(top->first);
+        }
+
+        ~Rows()
+        {
+            Row *next;
+            for(Row *r = top; r; r = next)
+            {
+                next = r->next;
+                delete r;
+            }
+        }
+
+        void addVacant(Slot *slot)
+        {
+            DENG2_ASSERT(slot->isEmpty());            
+            vacant.insert(slot);            
+            DENG2_ASSERT(*vacant.find(slot) == slot);
+        }
+
+        void removeVacant(Slot *slot)
+        {
+            DENG2_ASSERT(vacant.find(slot) != vacant.end());
+            vacant.erase(slot);            
+            DENG2_ASSERT(vacant.find(slot) == vacant.end());
+        }
+
+        Slot *findBestVacancy(Atlas::Size const &size) const
+        {
+            Slot *best = nullptr;
+
+            // Look through the vacancies starting with the widest one. Statistically
+            // there are more narrow empty slots than wide ones.
+            for(Slot *s : vacant)
+            {
+                if(s->width >= size.x + d->margin)
+                {
+                    if(s->row->isTallEnough(size.y + d->margin))
+                    {
+                        best = s;
+                    }
+                }
+                else
+                {
+                    // Too narrow, the rest is also too narrow.
+                    break;
+                }
+            }
+
+            return best;
+        }
+
+        /**
+         * Allocate a slot for the specified size. The area used by the slot may be
+         * larger than the requested size.
+         *
+         * @param size  Dimensions of area to allocate.
+         * @param rect  Allocated rectangle is returned here.
+         * @param id    Id for the new slot.
+         *
+         * @return Allocated slot, or @c nullptr.
+         */
+        Slot *alloc(Atlas::Size const &size, Rectanglei &rect, Id::Type id = Id::None)
+        {
+            Slot *slot = findBestVacancy(size);
+            if(!slot) return nullptr;
+
+            DENG2_ASSERT(slot->isEmpty());
+
+            // This slot will be taken into use.
+            removeVacant(slot);
+
+            Atlas::Size const needed = size + Atlas::Size(d->margin, d->margin);
+
+            // The first allocation determines the initial row height. The remainder
+            // is split into a new empty row (if something remains).
+            if(slot->row->isEmpty())
+            {
+                if(Row *addedRow = slot->row->split(needed.y))
+                {
+                    // Give this new row the correct width.
+                    addedRow->first->x = d->margin;
+                    addedRow->first->width = d->size.x - d->margin;
+
+                    addVacant(addedRow->first);
+                }
+            }
+
+            // The row may expand if needed.
+            if(slot->row->height < needed.y)
+            {
+                slot->row->grow(needed.y);
+            }
+
+            // Got a place, mark it down.
+            if(Slot *addedSlot = slot->allocateAndSplit(id? Id(id) : Id(), needed.x))
+            {
+                addVacant(addedSlot);
+            }
+            slotsById.insert(slot->id, slot);
+            rect = Rectanglei::fromSize(Vector2i(slot->x, slot->row->y), size);
+            slot->usedArea = size.x * size.y;
+            usedArea += slot->usedArea;
+
+            DENG2_ASSERT(usedArea <= d->size.x * d->size.y);
+            DENG2_ASSERT(vacant.find(slot) == vacant.end());
+            DENG2_ASSERT(!slot->isEmpty());
+
+            return slot;
+        }
+
+        void mergeLeft(Slot *slot)
+        {
+            if(Slot *removed = slot->mergeWithPrevious())
+            {
+                removeVacant(removed);
+                delete removed;
+            }
+        }
+
+        void mergeRight(Slot *slot)
+        {
+            if(Slot *removed = slot->mergeWithNext())
+            {
+                removeVacant(removed);
+                delete removed;
+            }
+        }
+
+        void mergeAbove(Row *row)
+        {
+            DENG2_ASSERT(row->isEmpty());
+            if(row->prev && row->prev->isEmpty())
+            {
+                Row *merged = row->prev;
+                unlink(merged);
+                if(top == merged)
+                {
+                    top = row;
+                }
+                row->y -= merged->height;
+                row->height += merged->height;
+
+                removeVacant(merged->first);
+                delete merged;
+            }
+        }
+
+        void mergeBelow(Row *row)
+        {
+            DENG2_ASSERT(row->isEmpty());
+            if(row->next && row->next->isEmpty())
+            {
+                Row *merged = row->next;
+                unlink(merged);
+                row->height += merged->height;
+
+                removeVacant(merged->first);
+                delete merged;
+            }
+        }
+
+        void release(Id const &id)
+        {
+            DENG2_ASSERT(slotsById.contains(id));
+
+            // Make the slot vacant again.
+            Slot *slot = slotsById.take(id);
+            slot->id = Id::None;
+
+            DENG2_ASSERT(slot->usedArea > 0);
+            DENG2_ASSERT(usedArea >= slot->usedArea);
+
+            usedArea -= slot->usedArea;
+
+            mergeLeft(slot);
+            mergeRight(slot);
+
+            addVacant(slot);
+
+            // Empty rows will merge together.
+            if(slot->row->isEmpty())
+            {
+                mergeAbove(slot->row);
+                mergeBelow(slot->row);
+            }
+        }
+    };
 
     Atlas::Size size;
-    int margin;
+    int margin { 0 };
     Allocations allocs;
-    RectList unused;
-    Vector2i rover;
-    int rowHeight;
+    std::unique_ptr<Rows> rows;
 
-    Instance(Public *i) : Base(i), margin(0), rowHeight(0)
+    Instance(Public *i)
+        : Base(i)
+        , rows(new Rows(this))
     {}
-
-    bool allocUsingRover(Atlas::Size const &allocSize, Rectanglei &rect)
-    {
-        int const w = allocSize.x;
-        int const h = allocSize.y;
-        int availHoriz = size.x - rover.x - margin;
-        int availVert  = size.y - rover.y - margin;
-
-        // The margin will be left as a gap between regions.
-
-        if(availHoriz >= w && availVert >= h)
-        {
-            // Fits on the current row.
-            rect = Rectanglei::fromSize(rover, allocSize);
-            rowHeight = de::max(rowHeight, h + margin);
-        }
-        else if(availVert - rowHeight >= h)
-        {
-            // There is room below.
-            if(availHoriz >= 8 && rowHeight > margin)
-            {
-                // This row is full; mark the unused space at the end of the row.
-                unused.append(Rectanglei::fromSize(rover, Atlas::Size(availHoriz, rowHeight - margin)));
-            }
-
-            // Move to the next row.
-            rover.x = margin;
-            rover.y += rowHeight;
-
-            rect = Rectanglei::fromSize(rover, allocSize);
-            rowHeight = h + margin;
-        }
-        else
-        {
-            // Rover appears to be near the bottom right corner.
-            return false;
-        }
-
-        // Advance the rover.
-        rover.x += w + margin;
-
-        return true;
-    }
-
-    bool reuseUnusedSpace(Atlas::Size const &allocSize, Rectanglei &rect)
-    {
-        DENG2_FOR_EACH(RectList, i, unused)
-        {
-            if(i->width() >= allocSize.x && i->height() >= allocSize.y)
-            {
-                // This region of available space is big enough for us.
-                rect = Rectanglei::fromSize(i->topLeft, allocSize);
-                unused.erase(i);
-                return true;
-            }
-        }
-        return false;
-    }
 
     struct ContentSize {
         Id::Type id;
-        int width;
-        int height;
+        Atlas::Size size;
 
-        ContentSize(Id const &allocId, Vector2ui const &size)
-            : id(allocId), width(size.x), height(size.y) {}
-
-        // Sort descending.
+        ContentSize(Id const &allocId, Vector2ui const &sz) : id(allocId), size(sz) {}
         bool operator < (ContentSize const &other) const {
-            if(height == other.height) {
+            if(size.y == other.size.y) {
                 // Secondary sorting by descending width.
-                return width > other.width;
+                return size.x > other.size.x;
             }
-            return height > other.height;
+            return size.y > other.size.y;
         }
     };
 
@@ -123,56 +467,26 @@ DENG2_PIMPL(RowAtlasAllocator)
         qSort(descending);
 
         Allocations optimal;
-        rover = Vector2i(margin, margin);
-        rowHeight = 0;
-        unused.clear();
+        std::unique_ptr<Rows> revised(new Rows(this));
 
-        /*
-         * Attempt to optimize space usage by placing the longest allocations
-         * possible on each row. This will never produce a worse layout than
-         * the previous one -- we will always succeed in placing all the
-         * allocations (more) optimally.
-         */
-        while(!descending.isEmpty())
+        for(auto const &ct : descending)
         {
-            int availHoriz = size.x - rover.x - margin;
-            bool moveOn = false;
-
-            // If the narrowest allocation doesn't fit on this row, we have to
-            // move on to the next row.
-            if(descending.back().width > availHoriz)
+            Rectanglei optRect;
+            if(!revised->alloc(ct.size, optRect, ct.id))
             {
-                moveOn = true;
+                return false; // Ugh, can't actually fit these.
             }
-
-            // Find the longest alloc that fits.
-            DENG2_FOR_EACH(QList<ContentSize>, i, descending)
-            {
-                if(!moveOn && i->width > availHoriz)
-                {
-                    // We'll try the next longest instead.
-                    continue;
-                }
-
-                // We've found the longest suitable one.
-                Rectanglei optRect;
-                if(!allocUsingRover(allocs[i->id].size(), optRect))
-                {
-                    // Failed to optimize: maybe the new total size is smaller
-                    // than what we had before.
-                    return false;
-                }
-                optimal[i->id] = optRect;
-
-                // This rectangle has been defragmented.
-                descending.erase(i);
-                break;
-            }
+            optimal[ct.id] = optRect;
         }
 
-        // Use the new layout.
         allocs = optimal;
+        rows.reset(revised.release());
         return true;
+    }
+
+    float usage() const
+    {
+        return float(rows->usedArea) / float(size.x * size.y);
     }
 };
 
@@ -183,40 +497,34 @@ void RowAtlasAllocator::setMetrics(Atlas::Size const &totalSize, int margin)
 {
     d->size   = totalSize;
     d->margin = margin;
+
+    DENG2_ASSERT(d->allocs.isEmpty());
+    d->rows.reset(new Instance::Rows(d));
 }
 
 void RowAtlasAllocator::clear()
 {
+    d->rows.reset(new Instance::Rows(d));
     d->allocs.clear();
-    d->unused.clear();
-
-    d->rover     = Vector2i(d->margin, d->margin);
-    d->rowHeight = 0;
 }
 
 Id RowAtlasAllocator::allocate(Atlas::Size const &size, Rectanglei &rect)
 {
-    // The rover proceeds along rows.
-    if(!d->allocUsingRover(size, rect))
+    if(auto *slot = d->rows->alloc(size, rect))
     {
-        // Rover ran out of space.
-        if(!d->reuseUnusedSpace(size, rect))
-        {
-            // We're completely tapped out.
-            return 0;
-        }
+        d->allocs[slot->id] = rect;
+        return slot->id;
     }
 
-    Id newId;
-    d->allocs[newId] = rect;
-    return newId;
+    // Couldn't find a suitable place.
+    return 0;
 }
 
 void RowAtlasAllocator::release(Id const &id)
 {
     DENG2_ASSERT(d->allocs.contains(id));
 
-    d->unused.append(d->allocs[id]);
+    d->rows->release(id);
     d->allocs.remove(id);
 }
 
@@ -248,6 +556,10 @@ RowAtlasAllocator::Allocations RowAtlasAllocator::allocs() const
 
 bool RowAtlasAllocator::optimize()
 {
+    // Optimization is not attempted unless there is a significant portion of
+    // unused space.
+    if(d->usage() >= OPTIMIZATION_USAGE_THRESHOLD) return false;
+
     return d->optimize();
 }
 

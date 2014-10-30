@@ -1,6 +1,10 @@
 AMETHYST CHANGELOG
 ==================
 
+1.1.2 (Oct 2014)
+----------------
+* Updated for Qt 5.
+
 1.1.1 (Jan 2012)
 ----------------
 + If macro "CR_NL" defined, \n is output as \r\n.

@@ -23,7 +23,7 @@
 #ifndef DENG_WORLD_BSP_PARTITIONER_H
 #define DENG_WORLD_BSP_PARTITIONER_H
 
-#include <de/Error>
+#include <QSet>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -43,9 +43,6 @@ static coord_t const SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
 static coord_t const DIST_EPSILON        = 1.0 / 128.0;
-
-/// Smallest difference between two angles before being considered equal (in degrees).
-static coord_t const ANG_EPSILON         = 1.0 / 1024.0;
 
 /**
  * World map binary space partitioner (BSP).
@@ -94,18 +91,10 @@ public:
      *               ensure that the mesh remains accessible until the build
      *               process has completed (ownership is unaffected).
      *
-     * @return  Root tree node of the resultant BSP; otherwise @c 0 if no usable
-     *          tree data was produced.
+     * @return  Root tree node of the resultant BSP; otherwise @c nullptr if no
+     *          usable tree data was produced.
      */
     BspTree *makeBspTree(LineSet const &lines, Mesh &mesh);
-
-    /**
-     * Retrieve a pointer to the root BinaryTree node for the constructed BSP.
-     * Even if construction fails this will return a valid node.
-     *
-     * The only time upon which @c 0 is returned is when called before @ref build()
-     */
-    BspTree *root() const;
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build

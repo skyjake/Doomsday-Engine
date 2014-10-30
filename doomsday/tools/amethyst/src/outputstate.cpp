@@ -62,7 +62,7 @@ String OutputState::filledLine(const QStringList& /*completedLines*/)
     while(_pos < contextLen && line.size() <= width)
     {
         QChar c = (*source)[_pos++];
-        switch(c.toAscii())
+        switch(c.toLatin1())
         {
         case OutputContext::CtrlAlign:
             c = (*source)[_pos++];
@@ -204,7 +204,7 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
     while(_pos < contextLen)
     {
         QChar c = (*source)[_pos++];
-        switch(c.toAscii())
+        switch(c.toLatin1())
         {
         case OutputContext::CtrlAlign:
         case OutputContext::CtrlFill:
@@ -236,13 +236,13 @@ void OutputState::rawOutput(String& currentLine, String& linePrefix, QStringList
         case OutputContext::CtrlAnchorPrepend:
         case OutputContext::CtrlAnchorAppend:
         {
-            bool prepend = (c.toAscii() == OutputContext::CtrlAnchorPrepend);
+            bool prepend = (c.toLatin1() == OutputContext::CtrlAnchorPrepend);
             QString str;
             // Get the entire anchor string from the source.
             forever
             {
                 c = (*source)[_pos++];
-                if(c.toAscii() == OutputContext::CtrlAnchorAppend || c.toAscii() == OutputContext::CtrlAnchorPrepend)
+                if(c.toLatin1() == OutputContext::CtrlAnchorAppend || c.toLatin1() == OutputContext::CtrlAnchorPrepend)
                     break;
                 str += c;
             }

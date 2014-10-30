@@ -1,6 +1,7 @@
 /** @file inputsystem.h  Input subsystem.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,6 +37,12 @@ public:
 
     // System.
     void timeChanged(de::Clock const &);
+
+public:
+    /**
+     * Register the console commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

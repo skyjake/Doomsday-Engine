@@ -310,6 +310,20 @@ RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setMidAnchorX(Rule const &middle)
+{
+    setInput(Rule::AnchorX, middle);
+    d->normalizedAnchorX->set(.5f);
+    return *this;
+}
+
+RuleRectangle &RuleRectangle::setMidAnchorY(Rule const &middle)
+{
+    setInput(Rule::AnchorY, middle);
+    d->normalizedAnchorY->set(.5f);
+    return *this;
+}
+
 RuleRectangle &RuleRectangle::clearInput(Rule::Semantic inputRule)
 {
     d->clearInputRule(inputRule);

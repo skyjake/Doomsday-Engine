@@ -38,9 +38,6 @@
 #include <QVarLengthArray>
 #include <QtAlgorithms>
 
-/// Smallest difference between two angles before being considered equal (in degrees).
-static coord_t const ANG_EPSILON = 1.0 / 1024.0;
-
 namespace de {
 namespace bsp {
 
@@ -158,10 +155,10 @@ struct Continuity
     void debugPrint() const
     {
         LOGDEV_MAP_MSG("Continuity %p (sector:%i, coverage:%f, discord:%i)")
-            << this
-            << (sector? sector->indexInArchive() : -1)
-            << coverage
-            << discordSegments;
+                << this
+                << (sector? sector->indexInArchive() : -1)
+                << coverage
+                << discordSegments;
 
         for(OrderedSegment const *oseg : orderedSegs)
         {
@@ -265,7 +262,7 @@ DENG2_PIMPL_NOREF(ConvexSubspaceProxy)
             {
                 OrderedSegment const &a = orderedSegments.at(i);
                 OrderedSegment const &b = orderedSegments.at(i+1);
-                if(a.fromAngle + ANG_EPSILON < b.fromAngle)
+                if(a.fromAngle < b.fromAngle)
                 {
                     orderedSegments.swap(i, i + 1);
                     swappedAny = true;
@@ -337,7 +334,7 @@ void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegment
     if(numSegmentsAdded < newSegments.size())
     {
         LOG_DEBUG("ConvexSubspaceProxy pruned %i duplicate segments")
-            << (newSegments.size() - numSegmentsAdded);
+                << (newSegments.size() - numSegmentsAdded);
     }
 #endif
 }
@@ -494,10 +491,10 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     leaf.setSector(continuities.first().sector);
 
 /*#ifdef DENG_DEBUG
-    LOG_INFO("\nConvexSubspace %s BSP sector:%i (%i continuities)")
-        << d->findCenter().asText()
-        << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
-        << continuities.count();
+    LOG_INFO("ConvexSubspace %s BSP sector:%i (%i continuities)")
+            << d->findCenter().asText()
+            << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
+            << continuities.count();
 
     for(Continuity const &conty : continuities)
     {

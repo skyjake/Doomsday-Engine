@@ -66,7 +66,9 @@ public:
         ModulateColor
     };
 
-    void useInfoStyle();
+    void useInfoStyle(bool yes = true);
+
+    void useNormalStyle() { useInfoStyle(false); }
 
     bool isUsingInfoStyle() const;
 

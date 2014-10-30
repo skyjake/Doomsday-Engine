@@ -125,7 +125,7 @@ struct Section
     Surface surface;
     ThinkerT<SoundEmitter> soundEmitter;
 
-    Section(Line::Side &side) : surface(dynamic_cast<MapElement &>(side))
+    Section(Line::Side &side) : surface(side)
     {
         //zap(soundEmitter);
     }

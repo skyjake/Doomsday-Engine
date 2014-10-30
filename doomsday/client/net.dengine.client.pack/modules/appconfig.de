@@ -46,6 +46,9 @@ def setDefaults(d)
         audio    = Log.WARNING
         input    = Log.WARNING
         network  = Log.WARNING
+        
+        # Alert notification dismissed after 3 minutes by default.
+        autoHide = 3 * 60
     end
     
     # Input defaults.

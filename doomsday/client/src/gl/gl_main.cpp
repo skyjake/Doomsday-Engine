@@ -73,9 +73,6 @@ void GL_SetGamma();
 extern int maxnumnodes;
 extern dd_bool fillOutlines;
 
-int     defResX = 640, defResY = 480, defBPP = 32;
-int     defFullscreen = true;
-
 int     numTexUnits = 1;
 dd_bool envModAdd; // TexEnv: modulate and add is available.
 int     test3dfx = 0;
@@ -135,10 +132,6 @@ void GL_Register()
     // * video
     C_VAR_BYTE2("vid-vsync",             &vsyncEnabled,     0, 0, 1, videoVsyncChanged);
     C_VAR_BYTE2("vid-fsaa",              &fsaaEnabled,      0, 0, 1, videoFSAAChanged);
-    C_VAR_INT  ("vid-res-x",             &defResX,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 320, 0);
-    C_VAR_INT  ("vid-res-y",             &defResY,          CVF_NO_MAX | CVF_READ_ONLY | CVF_NO_ARCHIVE, 240, 0);
-    C_VAR_INT  ("vid-bpp",               &defBPP,           CVF_READ_ONLY | CVF_NO_ARCHIVE, 16, 32);
-    C_VAR_INT  ("vid-fullscreen",        &defFullscreen,    CVF_READ_ONLY | CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 4);
     C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 2.5f);
     C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -1, 1);
