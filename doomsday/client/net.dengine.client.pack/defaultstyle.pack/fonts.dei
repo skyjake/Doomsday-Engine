@@ -116,8 +116,13 @@ group separator {
         size $: gui.scale(self.size, 0.5)
     }
     font label inherits default {
+        condition: Version.OS == 'macx'
         size $: gui.scale(self.size, 0.7)
         transform: uppercase
+    }
+    font label inherits small {
+        condition: Version.OS != 'macx'
+        weight: bold
     }
     font annotation inherits small {}    
 }
