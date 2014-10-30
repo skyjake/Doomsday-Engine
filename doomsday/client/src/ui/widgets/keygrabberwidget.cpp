@@ -81,7 +81,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             Str_Init(&name);
 
             ddevent_t ev;
-            DD_ConvertEvent(event, &ev);
+            I_ConvertEvent(event, &ev);
 
             B_AppendEventToString(&ev, &name);
 

@@ -20,19 +20,411 @@
 #ifndef CLIENT_CORE_INPUT_H
 #define CLIENT_CORE_INPUT_H
 
-#define NUMKKEYS            256
-
-#include <de/ddstring.h>
 #include <de/smoother.h>
+#include <de/Error>
 #include <de/Event>
+#include <de/String>
 
 #include "api_event.h"
 
-#ifdef DENG2_DEBUG
-#  include <de/point.h> // For the debug visual.
-#endif
+// Binding association flags:
+#define IDAF_EXPIRED    0x1  /** The state has expired. The device is considered to remain
+                                 in default state until the flag gets cleared (which happens when
+                                 the real device state returns to its default). */
+#define IDAF_TRIGGERED  0x2  /** The state has been triggered. This is cleared when someone checks
+                                 the device state. (Only for toggles.) */
 
-// Input devices:
+// Binding association. How the device control relates to binding contexts.
+struct inputdevassoc_t
+{
+    struct bcontext_s *bContext;
+    struct bcontext_s *prevBContext;
+    int flags;
+};
+
+class InputDeviceAxisControl;
+class InputDeviceButtonControl;
+class InputDeviceHatControl;
+
+/**
+ * Base class for modelling a "physical" input device.
+ *
+ * @ingroup ui
+ */
+class InputDevice
+{
+public:
+    /// Referenced control is missing. @ingroup errors
+    DENG2_ERROR(MissingControlError);
+
+    /**
+     * Base class for all controls.
+     */
+    class Control
+    {
+    public:
+        /// No InputDevice is associated with the control. @ingroup errors
+        DENG2_ERROR(MissingDeviceError);
+
+    public:
+        explicit Control(InputDevice *device = nullptr);
+        virtual ~Control() {}
+
+        DENG2_AS_IS_METHODS()
+
+        /**
+         * Reset the control back to its default state. Note that any attributed
+         * property values (name, device and binding association) are unaffected.
+         *
+         * The default implementation does nothing.
+         */
+        virtual void reset() {}
+
+        /**
+         * Returns the symbolic name of the control.
+         */
+        de::String name() const;
+
+        /**
+         * Change the symbolic name of the control to @a newName.
+         */
+        void setName(de::String const &newName);
+
+        /**
+         * Compose the full symbolic name of the control including the device name
+         * (if one is attributed), for example:
+         *
+         * <device-name>-<name> => "mouse-x"
+         */
+        de::String fullName() const;
+
+        /**
+         * Returns information about the control as styled text.
+         */
+        virtual de::String description() const = 0;
+
+        /**
+         * Returns the InputDevice attributed to the control.
+         *
+         * @see hasDevice(), setDevice()
+         */
+        InputDevice &device() const;
+
+        /**
+         * Returns @c true if an InputDevice is attributed to the control.
+         *
+         * @see device(), setDevice()
+         */
+        bool hasDevice() const;
+
+        /**
+         * Change the attributed InputDevice to @a newDevice.
+         *
+         * @param newDevice  InputDevice to attribute. Ownership is unaffected.
+         *
+         * @see hasDevice(), device()
+         */
+        void setDevice(InputDevice *newDevice);
+
+        /**
+         * Provides access to the binding association data of the control.
+         */
+        inputdevassoc_t &association();
+        inputdevassoc_t const &association() const;
+
+        /**
+         * Register the console commands and variables of the control.
+         */
+        virtual void consoleRegister() {}
+
+    private:
+        InputDevice *_device;
+        de::String _name;        ///< Symbolic
+        inputdevassoc_t _assoc;  ///< Binding association.
+    };
+
+public:
+    /**
+     * @note InputDevices are not @em active by default. Call @ref activate() once
+     * device configuration has been completed.
+     *
+     * @param name  Symbolic name of the device.
+     */
+    InputDevice(de::String const &name);
+    virtual ~InputDevice();
+
+    /**
+     * Returns @c true if the device is presently active.
+     * @todo Document "active" status.
+     */
+    bool isActive() const;
+
+    /**
+     * Change the active status of this device.
+     *
+     * @see isActive()
+     */
+    void activate(bool yes = true);
+    inline void deactivate() { activate(false); }
+
+    /**
+     * Returns the symbolic name of the device.
+     */
+    de::String name() const;
+
+    /**
+     * Returns the title of the device, intended for human-readable descriptions.
+     *
+     * @see setTitle()
+     */
+    de::String title() const;
+
+    /**
+     * Change the title of the device, intended for human-readable descriptions,
+     * to @a newTitle.
+     */
+    void setTitle(de::String const &newTitle);
+
+    /**
+     * Returns information about the device as styled text.
+     */
+    de::String description() const;
+
+    /**
+     * Reset the state of all controls to their "initial" positions (i.e., buttons
+     * in the up positions, axes at center, etc...).
+     */
+    void reset();
+
+    void clearAllControlContextAssociations();
+
+    /**
+     * Translate a symbolic axis @a name to the associated unique axis id.
+     *
+     * @return  Index of the named axis control if found, otherwise @c -1.
+     */
+    de::dint toAxisId(de::String const &name) const;
+
+    /**
+     * Lookup an axis control by unique @a id.
+     *
+     * @param id  Unique id of the axis control.
+     *
+     * @return  Axis control associated with the given @id.
+     */
+    InputDeviceAxisControl &axis(de::dint id) const;
+
+    /**
+     * Add an @a axis control to the input device.
+     *
+     * @param axis  Axis control to add. Ownership is given to the device.
+     */
+    void addAxis(InputDeviceAxisControl *axis);
+
+    /**
+     * Returns the number of axis controls of the device.
+     */
+    de::dint axisCount() const;
+
+    /**
+     * Translate a symbolic key @a name to the associated unique key id.
+     *
+     * @return  Index of the named key control if found, otherwise @c -1.
+     */
+    de::dint toButtonId(de::String const &name) const;
+
+    /**
+     * Lookup a button control by unique @a id.
+     *
+     * @param id  Unique id of the button control.
+     *
+     * @return  Button control associated with the given @id.
+     */
+    InputDeviceButtonControl &button(de::dint id) const;
+
+    void initButtons(de::dint count);
+
+    /**
+     * Returns the number of button controls of the device.
+     */
+    de::dint buttonCount() const;
+
+    /**
+     * Lookup a hat control by unique @a id.
+     *
+     * @param id  Unique id of the hat control.
+     *
+     * @return  Hat control associated with the given @id.
+     */
+    InputDeviceHatControl &hat(de::dint id) const;
+
+    void initHats(de::dint count);
+
+    /**
+     * Returns the number of hat controls of the device.
+     */
+    de::dint hatCount() const;
+
+    /**
+     * Register the console commands and variables for this device and all controls.
+     */
+    void consoleRegister();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+typedef InputDevice::Control InputDeviceControl;
+
+// Input device axis flags for use with cvars:
+#define IDA_DISABLED    0x1  ///< Axis is always zero.
+#define IDA_INVERT      0x2  ///< Real input data should be inverted.
+#define IDA_RAW         0x4  ///< Do not smooth the input values; always use latest received value.
+
+/**
+ * Models an axis control on a "physical" input device (e.g., mouse along one axis).
+ *
+ * @ingroup ui
+ */
+class InputDeviceAxisControl : public InputDeviceControl
+{
+public:
+    enum Type {
+        Stick,   ///< Joysticks, gamepads
+        Pointer  ///< Mouse
+    };
+
+public:
+    /**
+     * @param name  Symbolic name of the axis.
+     * @param type  Logical axis type.
+     */
+    InputDeviceAxisControl(de::String const &name, Type type);
+    virtual ~InputDeviceAxisControl();
+
+    Type type() const;
+    void setRawInput(bool yes = true);
+
+    bool isActive() const;
+    bool isInverted() const;
+
+    /**
+     * Returns the current position of the axis.
+     */
+    de::ddouble position() const;
+    void setPosition(de::ddouble newPosition);
+
+    /**
+     * Update the position of the axis control from a "real" position.
+     *
+     * @param newPosition  New position to be applied (maybe filtered, normalized, etc...).
+     */
+    void applyRealPosition(de::dfloat newPosition);
+
+    de::dfloat translateRealPosition(de::dfloat rawPosition) const;
+
+    /**
+     * Returns the current dead zone (0..1) limit for the axis.
+     */
+    de::dfloat deadZone() const;
+    void setDeadZone(de::dfloat newDeadZone);
+
+    /**
+     * Returns the current position scaling factor (applied to "real" positions).
+     */
+    de::dfloat scale() const;
+    void setScale(de::dfloat newScale);
+
+    /**
+     * When the state of the control last changed, in milliseconds since app init.
+     */
+    de::duint time() const;
+
+    void update(timespan_t ticLength);
+    void clearContextAssociation();
+
+    de::String description() const;
+    void reset();
+    void consoleRegister();
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+/**
+ * Models a button control on a "physical" input device (e.g., key on a keyboard).
+ *
+ * @ingroup ui
+ */
+class InputDeviceButtonControl : public InputDeviceControl
+{
+public:
+    explicit InputDeviceButtonControl(de::String const &name = "");
+    virtual ~InputDeviceButtonControl();
+
+    /**
+     * Returns @c true if the button is currently in the down (i.e., pressed) state.
+     */
+    bool isDown() const;
+
+    /**
+     * Change the "down" state of the button.
+     */
+    void setDown(bool yes);
+
+    /**
+     * When the state of the control last changed, in milliseconds since app init.
+     */
+    de::duint time() const;
+
+    void clearContextAssociation();
+
+    de::String description() const;
+    void reset();
+
+private:
+    bool _isDown = false; ///< @c true= currently depressed.
+    de::duint _time = 0;
+};
+
+/**
+ * Models a hat control on a "physical" input device (such as that found on joysticks).
+ *
+ * @ingroup ui
+ */
+class InputDeviceHatControl : public InputDeviceControl
+{
+public:
+    explicit InputDeviceHatControl(de::String const &name = "");
+    virtual ~InputDeviceHatControl();
+
+    /**
+     * Returns the current position of the hat.
+     */
+    de::dint position() const;
+
+    /**
+     * @param newPosition  @c -1= centered.
+     */
+    void setPosition(de::dint newPosition);
+
+    /**
+     * When the state of the control last changed, in milliseconds since app init.
+     */
+    de::duint time() const;
+
+    void clearContextAssociation();
+
+    de::String description() const;
+
+private:
+    de::dint _pos   = -1;  ///< Current position. @c -1= centered.
+    de::duint _time = 0;   ///< Timestamp of the latest change.
+};
+
+// -----------------------------------------------------------------------------------
+
+// Input device identifiers:
 enum
 {
     IDEV_KEYBOARD,
@@ -43,15 +435,6 @@ enum
     IDEV_JOY4,
     IDEV_HEAD_TRACKER,
     NUM_INPUT_DEVICES  ///< Theoretical maximum.
-};
-
-// Input device control types:
-enum inputdev_controltype_t
-{
-    IDC_KEY,
-    IDC_AXIS,
-    IDC_HAT,
-    NUM_INPUT_DEVICE_CONTROL_TYPES
 };
 
 enum ddeventtype_t
@@ -126,114 +509,69 @@ struct ddevent_t
 #define IS_MOUSE_UP(evp)               ((evp)->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
 #define IS_MOUSE_MOTION(evp)           ((evp)->device == IDEV_MOUSE && (evp)->type == E_AXIS)
 
-// Binding association. How the device axis/key/etc. relates to binding contexts.
-struct inputdevassoc_t
-{
-    struct bcontext_s *bContext;
-    struct bcontext_s *prevBContext;
-    int flags;
-};
-
-// Association flags.
-#define IDAF_EXPIRED    0x1  /** The state has expired. The device is considered to remain
-                                 in default state until the flag gets cleared (which happens when
-                                 the real device state returns to its default). */
-#define IDAF_TRIGGERED  0x2  /** The state has been triggered. This is cleared when someone checks
-                                 the device state. (Only for toggles.) */
-
-// Input device axis types:
-enum
-{
-    IDAT_STICK,   ///< Joysticks, gamepads
-    IDAT_POINTER  ///< Mouse
-};
-
-// Input device axis flags:
-#define IDA_DISABLED    0x1  ///< Axis is always zero.
-#define IDA_INVERT      0x2  ///< Real input data should be inverted.
-#define IDA_RAW         0x4  ///< Do not smooth the input values; always use latest received value.
-
-struct inputdevaxis_t
-{
-    char name[20];          ///< Symbolic name of the axis.
-    int type;               ///< Type of the axis (pointer or stick).
-    int flags;
-    coord_t position;       ///< Current translated position of the axis (-1..1) including any filtering.
-    coord_t realPosition;   ///< The actual latest position of the axis (-1..1).
-    float scale;            ///< Scaling factor for real input values.
-    float deadZone;         ///< Dead zone, in (0..1) range.
-    coord_t sharpPosition;  ///< Current sharp (accumulated) position, entered into the Smoother.
-    Smoother *smoother;     ///< Smoother for the input values.
-    coord_t prevSmoothPos;  ///< Previous evaluated smooth position (needed for producing deltas).
-    uint time;              ///< Timestamp for the latest update that changed the position.
-    inputdevassoc_t assoc;  ///< Binding association.
-};
-
-struct inputdevkey_t
-{
-    char isDown;            ///< True/False for each key.
-    uint time;
-    inputdevassoc_t assoc;  ///< Binding association.
-    char const *name;       ///< Symbolic name.
-};
-
-struct inputdevhat_t
-{
-    int pos;                ///< Position of each hat, -1 if centered.
-    uint time;              ///< Timestamp for each hat for the latest change.
-    inputdevassoc_t assoc;  ///< Binding association.
-};
-
-// Input device flags:
-#define ID_ACTIVE 0x1       ///< The input device is active.
-
-struct inputdev_t
-{
-    char niceName[40];     ///< Human-friendly name of the device.
-    char name[20];         ///< Symbolic name of the device.
-    int flags;
-    uint numAxes;          ///< Number of axes in this input device.
-    inputdevaxis_t *axes;
-    uint numKeys;          ///< Number of keys for this input device.
-    inputdevkey_t *keys;
-    uint numHats;          ///< Number of hats.
-    inputdevhat_t *hats;
-};
-
-extern int repWait1, repWait2;
-extern dd_bool shiftDown, altDown;
-
 void I_ConsoleRegister();
+
+/**
+ * Initialize the virtual input devices.
+ *
+ * @note There need not be actual physical devices available in order to use
+ * these state tables.
+ */
+void I_InitAllDevices();
+
+/**
+ * Free the memory allocated for the input devices.
+ */
+void I_ShutdownAllDevices();
+
+void I_ResetAllDevices();
+
+void I_ClearAllDeviceContextAssociations();
+
+/**
+ * Lookup an InputDevice by it's unique @a id.
+ */
+InputDevice &I_Device(int id);
+
+/**
+ * Lookup an InputDevice by it's unique @a id.
+ *
+ * @return  Pointer to the associated InputDevice; otherwise @c nullptr.
+ */
+InputDevice *I_DevicePtr(int id);
 
 /**
  * Initializes the key mappings to the default values.
  */
-void DD_InitInput();
-
-dd_bool DD_IgnoreInput(dd_bool ignore);
+void I_InitKeyMappings();
 
 /**
  * Checks the current keyboard state, generates input events based on pressed/held
  * keys and posts them.
  */
-void DD_ReadKeyboard();
+void I_ReadKeyboard();
 
 /**
  * Checks the current mouse state (axis, buttons and wheel).
  * Generates events and mickeys and posts them.
  */
-void DD_ReadMouse();
+void I_ReadMouse();
 
 /**
  * Checks the current joystick state (axis, sliders, hat and buttons).
  * Generates events and posts them. Axis clamps and dead zone is done
  * here.
  */
-void DD_ReadJoystick();
+void I_ReadJoystick();
 
-void DD_ReadHeadTracker();
+void I_ReadHeadTracker();
 
-void DD_PostEvent(ddevent_t *ev);
+/**
+ * Clear the input event queue.
+ */
+void I_ClearEvents();
+
+bool I_IgnoreEvents(bool yes = true);
 
 /**
  * Process all incoming input for the given timestamp.
@@ -242,21 +580,16 @@ void DD_PostEvent(ddevent_t *ev);
  * This gets called at least 35 times per second. Usually more frequently
  * than that.
  */
-void DD_ProcessEvents(timespan_t ticLength);
+void I_ProcessEvents(timespan_t ticLength);
 
-void DD_ProcessSharpEvents(timespan_t ticLength);
-
-/**
- * Clear the input event queue.
- */
-void DD_ClearEvents();
+void I_ProcessSharpEvents(timespan_t ticLength);
 
 /**
- * Apply all active modifiers to the key.
+ * @param ev  A copy is made.
  */
-byte DD_ModKey(byte key);
+void I_PostEvent(ddevent_t *ev);
 
-bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
+bool I_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
 
 /**
  * Converts a libcore Event into an old-fashioned ddevent_t.
@@ -264,145 +597,22 @@ bool DD_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
  * @param event    Event instance.
  * @param ddEvent  ddevent_t instance.
  */
-void DD_ConvertEvent(de::Event const &event, ddevent_t *ddEvent);
-
-/**
- * Initialize the virtual input device state table.
- *
- * @note There need not be actual physical devices available in order to use
- * these state tables.
- */
-void I_InitVirtualInputDevices();
-
-/**
- * Free the memory allocated for the input devices.
- */
-void I_ShutdownInputDevices();
-
-void I_ClearDeviceContextAssociations();
-
-void I_DeviceReset(uint ident);
-
-void I_ResetAllDevices();
-
-dd_bool I_ShiftDown();
-
-enum InputDeviceGetMode {
-    ActiveOrInactiveInputDevice,
-    OnlyActiveInputDevice
-};
-
-/**
- * Retrieve a pointer to the input device state by identifier.
- *
- * @param ident  Input device identifier (index; @c IDEV_*).
- * @param mode   Finding behavior.
- *
- * @return  Ptr to the input device state OR @c nullptr.
- */
-inputdev_t *I_GetDevice(uint ident, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
-
-/**
- * Retrieve a pointer to the input device state by name.
- *
- * @param name  Input device name.
- * @param mode  Finding behavior.
- *
- * @return  Ptr to the input device state OR @c nullptr.
- */
-inputdev_t *I_GetDeviceByName(char const *name, InputDeviceGetMode mode = ActiveOrInactiveInputDevice);
-
-/**
- * Retrieve the user-friendly, print-ready, name for the device associated with
- * unique identifier @a ident.
- *
- * @return  String containing the name for this device. Always valid. This string
- *          should never be free'd by the caller.
- */
-ddstring_t const *I_DeviceNameStr(uint ident);
-
-float I_TransformAxis(inputdev_t *dev, uint axis, float rawPos);
-
-/**
- * Check through the axes registered for the given device, see if there is
- * one identified by the given name.
- *
- * @return  @c false, if the string is invalid.
- */
-dd_bool I_ParseDeviceAxis(char const *str, uint *deviceID, uint *axis);
-
-/**
- * Retrieve the index of a device's axis by name.
- *
- * @param device  Ptr to input device info, to get the axis index from.
- * @param name    Ptr to string containing the name to be searched for.
- *
- * @return  Index of the device axis named; or -1, if not found.
- */
-int I_GetAxisByName(inputdev_t *device, char const *name);
-
-/**
- * Retrieve a ptr to the device axis specified by id.
- *
- * @param device  Ptr to input device info, to get the axis ptr from.
- * @param id      Axis index, to search for.
- *
- * @return  Ptr to the device axis OR @c nullptr, if not found.
- */
-inputdevaxis_t *I_GetAxisByID(inputdev_t *device, uint id);
-
-/**
- * Retrieve the index of a device's key by name.
- *
- * @param device  Ptr to input device info, to get the key index from.
- * @param name    Ptr to string containing the name to be searched for.
- *
- * @return  Index of the device key named; or -1, if not found.
- */
-int I_GetKeyByName(inputdev_t *device, char const *name);
-
-/**
- * Retrieve a ptr to the device key specified by id.
- *
- * @param device  Ptr to input device info, to get the key ptr from.
- * @param id      Key index, to search for.
- *
- * @return  Ptr to the device key OR @c nullptr, if not found.
- */
-inputdevkey_t *I_GetKeyByID(inputdev_t *device, uint id);
-
-/**
- * @return  The key state from the downKeys array.
- */
-dd_bool I_IsKeyDown(inputdev_t *device, uint id);
-
-/**
- * Retrieve a ptr to the device hat specified by id.
- *
- * @param device  Ptr to input device info, to get the hat ptr from.
- * @param id      Hat index, to search for.
- *
- * @return  Ptr to the device hat OR @c nullptr, if not found.
- */
-inputdevhat_t *I_GetHatByID(inputdev_t *device, uint id);
-
-/**
- * Change between normal and UI mousing modes.
- */
-void I_SetUIMouseMode(dd_bool on);
+void I_ConvertEvent(de::Event const &event, ddevent_t *ddEvent);
 
 /**
  * Update the input device state table.
  */
 void I_TrackInput(ddevent_t *ev);
 
+bool I_ShiftDown();
+
 #ifdef DENG2_DEBUG
 /**
  * Render a visual representation of the current state of all input devices.
  */
-void Rend_AllInputDeviceStateVisuals();
+void Rend_DrawInputDeviceVisuals();
 #else
-#  define Rend_AllInputDeviceStateVisuals()
+#  define Rend_DrawInputDeviceVisuals()
 #endif
 
 #endif // CLIENT_CORE_INPUT_H

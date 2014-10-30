@@ -53,9 +53,9 @@ void B_DestroyAllContexts()
     bindContextCount = 0;
 }
 
-void B_UpdateDeviceStateAssociations()
+void B_UpdateAllDeviceStateAssociations()
 {
-    I_ClearDeviceContextAssociations();
+    I_ClearAllDeviceContextAssociations();
 
     // We need to iterate through all the device bindings in all context.
     for(int i = 0; i < bindContextCount; ++i)
@@ -69,36 +69,39 @@ void B_UpdateDeviceStateAssociations()
         // Mark all event bindings in the context.
         for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            inputdev_t *dev = I_GetDevice(eb->device);
+            InputDevice &dev = I_Device(eb->device);
 
             switch(eb->type)
             {
-            case E_TOGGLE:
-                if(!dev->keys[eb->id].assoc.bContext)
+            case E_TOGGLE: {
+                InputDeviceButtonControl &button = dev.button(eb->id);
+                if(!button.association().bContext)
                 {
-                    dev->keys[eb->id].assoc.bContext = bc;
+                    button.association().bContext = bc;
                 }
-                break;
+                break; }
 
-            case E_AXIS:
-                if(!dev->axes[eb->id].assoc.bContext)
+            case E_AXIS: {
+                InputDeviceAxisControl &axis = dev.axis(eb->id);
+                if(!axis.association().bContext)
                 {
-                    dev->axes[eb->id].assoc.bContext = bc;
+                    axis.association().bContext = bc;
                 }
-                break;
+                break; }
 
-            case E_ANGLE:
-                if(!dev->hats[eb->id].assoc.bContext)
+            case E_ANGLE: {
+                InputDeviceHatControl &hat = dev.hat(eb->id);
+                if(!hat.association().bContext)
                 {
-                    dev->hats[eb->id].assoc.bContext = bc;
+                    hat.association().bContext = bc;
                 }
-                break;
+                break; }
 
             case E_SYMBOLIC:
                 break;
 
             default:
-                App_Error("B_UpdateDeviceStateAssociations: Invalid value eb->type: %i.", (int) eb->type);
+                App_Error("B_UpdateAllDeviceStateAssociations: Invalid value eb->type: %i.", (int) eb->type);
                 break;
             }
         }
@@ -110,34 +113,36 @@ void B_UpdateDeviceStateAssociations()
             for(int k = 0; k < DDMAXPLAYERS; ++k)
             for(dbinding_t *db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k]; db = db->next)
             {
-                inputdev_t *dev = I_GetDevice(db->device);
-                DENG2_ASSERT(dev);
+                InputDevice &dev = I_Device(db->device);
 
                 switch(db->type)
                 {
-                case CBD_TOGGLE:
-                    if(!dev->keys[db->id].assoc.bContext)
+                case CBD_TOGGLE: {
+                    InputDeviceButtonControl &button = dev.button(db->id);
+                    if(!button.association().bContext)
                     {
-                        dev->keys[db->id].assoc.bContext = bc;
+                        button.association().bContext = bc;
                     }
-                    break;
+                    break; }
 
-                case CBD_AXIS:
-                    if(!dev->axes[db->id].assoc.bContext)
+                case CBD_AXIS: {
+                    InputDeviceAxisControl &axis = dev.axis(db->id);
+                    if(!axis.association().bContext)
                     {
-                        dev->axes[db->id].assoc.bContext = bc;
+                        axis.association().bContext = bc;
                     }
-                    break;
+                    break; }
 
-                case CBD_ANGLE:
-                    if(!dev->hats[db->id].assoc.bContext)
+                case CBD_ANGLE: {
+                    InputDeviceHatControl &hat = dev.hat(db->id);
+                    if(!hat.association().bContext)
                     {
-                        dev->hats[db->id].assoc.bContext = bc;
+                        hat.association().bContext = bc;
                     }
-                    break;
+                    break; }
 
                 default:
-                    App_Error("B_UpdateDeviceStateAssociations: Invalid value db->type: %i.", (int) db->type);
+                    App_Error("B_UpdateAllDeviceStateAssociations: Invalid value db->type: %i.", (int) db->type);
                     break;
                 }
             }
@@ -147,14 +152,14 @@ void B_UpdateDeviceStateAssociations()
         // relevant states.
         if(bc->flags & BCF_ACQUIRE_KEYBOARD)
         {
-            inputdev_t *dev = I_GetDevice(IDEV_KEYBOARD);
-            DENG2_ASSERT(dev);
+            InputDevice &dev = I_Device(IDEV_KEYBOARD);
 
-            for(uint k = 0; k < dev->numKeys; ++k)
+            for(int k = 0; k < dev.buttonCount(); ++k)
             {
-                if(!dev->keys[k].assoc.bContext)
+                InputDeviceButtonControl &button = dev.button(k);
+                if(!button.association().bContext)
                 {
-                    dev->keys[k].assoc.bContext = bc;
+                    button.association().bContext = bc;
                 }
             }
         }
@@ -163,28 +168,31 @@ void B_UpdateDeviceStateAssociations()
         {
             for(int k = 0; k < NUM_INPUT_DEVICES; ++k)
             {
-                inputdev_t *dev = I_GetDevice(k, OnlyActiveInputDevice);
-                if(!dev) continue;
+                InputDevice *dev = I_DevicePtr(k);
+                if(!dev || !dev->isActive()) continue;
 
-                for(uint m = 0; m < dev->numKeys; ++m)
+                for(int m = 0; m < dev->buttonCount(); ++m)
                 {
-                    if(!dev->keys[m].assoc.bContext)
+                    InputDeviceButtonControl &button = dev->button(m);
+                    if(!button.association().bContext)
                     {
-                        dev->keys[m].assoc.bContext = bc;
+                        button.association().bContext = bc;
                     }
                 }
-                for(uint m = 0; m < dev->numAxes; ++m)
+                for(int m = 0; m < dev->axisCount(); ++m)
                 {
-                    if(!dev->axes[m].assoc.bContext)
+                    InputDeviceAxisControl &axis = dev->axis(m);
+                    if(!axis.association().bContext)
                     {
-                        dev->axes[m].assoc.bContext = bc;
+                        axis.association().bContext = bc;
                     }
                 }
-                for(uint m = 0; m < dev->numHats; ++m)
+                for(int m = 0; m < dev->hatCount(); ++m)
                 {
-                    if(!dev->hats[m].assoc.bContext)
+                    InputDeviceHatControl &hat = dev->hat(m);
+                    if(!hat.association().bContext)
                     {
-                        dev->hats[m].assoc.bContext = bc;
+                        hat.association().bContext = bc;
                     }
                 }
             }
@@ -195,40 +203,42 @@ void B_UpdateDeviceStateAssociations()
     // the devices and see if any of the states need to be expired.
     for(int i = 0; i < NUM_INPUT_DEVICES; ++i)
     {
-        inputdev_t *dev = I_GetDevice(i);
-        DENG2_ASSERT(dev);
+        InputDevice &dev = I_Device(i);
 
-        // Keys.
-        for(int k = 0; k < (int)dev->numKeys; ++k)
+        for(int k = 0; k < dev.buttonCount(); ++k)
         {
-            if(dev->keys[k].assoc.bContext != dev->keys[k].assoc.prevBContext &&
-               dev->keys[k].isDown)
+            InputDeviceButtonControl &button = dev.button(k);
+            inputdevassoc_t &assoc = button.association();
+
+            if(assoc.bContext != assoc.prevBContext && button.isDown())
             {
                 // No longer valid.
-                dev->keys[k].assoc.flags |= IDAF_EXPIRED;
-                dev->keys[k].assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
+                assoc.flags |= IDAF_EXPIRED;
+                assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
             }
         }
 
-        // Axes.
-        for(int k = 0; k < (int)dev->numAxes; ++k)
+        for(int k = 0; k < dev.axisCount(); ++k)
         {
-            if(dev->axes[k].assoc.bContext != dev->axes[k].assoc.prevBContext &&
-               dev->axes[k].position != 0)
+            InputDeviceAxisControl &axis = dev.axis(k);
+            inputdevassoc_t &assoc = axis.association();
+
+            if(assoc.bContext != assoc.prevBContext && axis.position() != 0)
             {
                 // No longer valid.
-                dev->axes[k].assoc.flags |= IDAF_EXPIRED;
+                assoc.flags |= IDAF_EXPIRED;
             }
         }
 
-        // Hats.
-        for(int k = 0; k < (int)dev->numHats; ++k)
+        for(int k = 0; k < dev.hatCount(); ++k)
         {
-            if(dev->hats[k].assoc.bContext != dev->hats[k].assoc.prevBContext &&
-               dev->hats[k].pos >= 0)
+            InputDeviceHatControl &hat = dev.hat(k);
+            inputdevassoc_t &assoc = hat.association();
+
+            if(assoc.bContext != assoc.prevBContext && hat.position() >= 0)
             {
                 // No longer valid.
-                dev->hats[k].assoc.flags |= IDAF_EXPIRED;
+                assoc.flags |= IDAF_EXPIRED;
             }
         }
     }
@@ -307,7 +317,7 @@ void B_ActivateContext(bcontext_t *bc, dd_bool doActivate)
     bc->flags &= ~BCF_ACTIVE;
     if(doActivate) bc->flags |= BCF_ACTIVE;
 
-    B_UpdateDeviceStateAssociations();
+    B_UpdateAllDeviceStateAssociations();
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
@@ -322,7 +332,7 @@ void B_AcquireKeyboard(bcontext_t *bc, dd_bool doAcquire)
     bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
     if(doAcquire) bc->flags |= BCF_ACQUIRE_KEYBOARD;
 
-    B_UpdateDeviceStateAssociations();
+    B_UpdateAllDeviceStateAssociations();
 }
 
 void B_AcquireAll(bcontext_t *bc, dd_bool doAcquire)
@@ -332,7 +342,7 @@ void B_AcquireAll(bcontext_t *bc, dd_bool doAcquire)
     bc->flags &= ~BCF_ACQUIRE_ALL;
     if(doAcquire) bc->flags |= BCF_ACQUIRE_ALL;
 
-    B_UpdateDeviceStateAssociations();
+    B_UpdateAllDeviceStateAssociations();
 }
 
 void B_SetContextFallbackForDDEvents(char const *name, int (*ddResponderFunc)(ddevent_t const *))
@@ -535,7 +545,7 @@ de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
 Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
-    bool validGameEvent = DD_ConvertEvent(event, &ev);
+    bool validGameEvent = I_ConvertEvent(event, &ev);
 
     for(int i = 0; i < bindContextCount; ++i)
     {

@@ -30,7 +30,7 @@ typedef struct evbinding_s {
     int bid;                   ///< Binding identifier.
     char *command;             ///< Command to execute.
 
-    uint device;               ///< Which device?
+    int device;                ///< Which device?
     ddeventtype_t type;        ///< Type of event.
     int id;                    ///< Identifier.
     ebstate_t state;
@@ -67,7 +67,10 @@ void B_DestroyCommandBinding(evbinding_t *eb);
  */
 void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str);
 
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device);
+/**
+ * @param device  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
+ */
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device);
 
 /**
  * Checks if the event matches the binding's conditions, and if so, returns an

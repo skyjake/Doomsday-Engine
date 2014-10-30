@@ -99,9 +99,9 @@ void I_Register(void);
  *
  * @return @c true, if successful.
  */
-dd_bool I_Init(void);
+dd_bool I_InitInterfaces(void);
 
-void I_Shutdown(void);
+void I_ShutdownInterfaces(void);
 
 /**
  * Submits a new key event for preprocessing. The event has likely just been

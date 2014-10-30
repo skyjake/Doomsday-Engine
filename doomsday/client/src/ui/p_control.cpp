@@ -321,7 +321,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         ev.symbolic.id = playerNum;
         ev.symbolic.name = Str_Text(symbolicName);
 
-        DD_PostEvent(&ev);
+        I_PostEvent(&ev);
 
         Str_Delete(symbolicName);
     }
@@ -352,13 +352,14 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     if(!binds) return false;
 
     // There must be bindings to active input devices.
-    bool gotActiveDevices = false;
     for(dbinding_t *cb = binds->next; cb != binds; cb = cb->next)
     {
-        if(I_GetDevice(cb->device, OnlyActiveInputDevice))
-            gotActiveDevices = true;
+        if(InputDevice *dev = I_DevicePtr(cb->device))
+        {
+            if(dev->isActive()) return true;
+        }
     }
-    return gotActiveDevices;
+    return false;
 
 #else
     DENG_UNUSED(playerNum);

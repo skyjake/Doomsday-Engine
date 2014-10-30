@@ -453,7 +453,7 @@ DENG2_PIMPL(ClientWindow)
 
         if(!hasFocus)
         {
-            DD_ClearEvents();
+            I_ClearEvents();
             I_ResetAllDevices();
             canvas.trapMouse(false);
         }
@@ -469,7 +469,7 @@ DENG2_PIMPL(ClientWindow)
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
-        DD_PostEvent(&ev);
+        I_PostEvent(&ev);
     }
 
     void updateFpsNotification(float fps)

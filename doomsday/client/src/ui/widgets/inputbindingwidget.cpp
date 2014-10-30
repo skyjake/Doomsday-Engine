@@ -209,7 +209,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
 
             AutoStr *name = AutoStr_New();
             ddevent_t ev;
-            DD_ConvertEvent(event, &ev);
+            I_ConvertEvent(event, &ev);
             B_AppendEventToString(&ev, name);
 
             String desc = Str_Text(name);

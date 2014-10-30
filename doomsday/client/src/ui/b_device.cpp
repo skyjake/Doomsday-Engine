@@ -263,8 +263,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         if(skip) continue;
 
         // Get the device.
-        inputdev_t *dev = I_GetDevice(cb->device, OnlyActiveInputDevice);
-        if(!dev) continue; // Not available.
+        InputDevice *dev = I_DevicePtr(cb->device);
+        if(!dev || !dev->isActive()) continue; // Not available.
 
         float devicePos = 0;
         float deviceOffset = 0;
@@ -272,65 +272,69 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
 
         switch(cb->type)
         {
-        case CBD_TOGGLE:
-            if(controlClass && dev->keys[cb->id].assoc.bContext != controlClass)
+        case CBD_TOGGLE: {
+            InputDeviceButtonControl *button = &dev->button(cb->id);
+
+            if(controlClass && button->association().bContext != controlClass)
                 continue; // Shadowed by a more important active class.
 
             // Expired?
-            if(dev->keys[cb->id].assoc.flags & IDAF_EXPIRED)
+            if(button->association().flags & IDAF_EXPIRED)
                 break;
 
-            devicePos = (dev->keys[cb->id].isDown ||
-                         (allowTriggered && (dev->keys[cb->id].assoc.flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
-            deviceTime = dev->keys[cb->id].time;
+            devicePos = (button->isDown() ||
+                         (allowTriggered && (button->association().flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
+            deviceTime = button->time();
 
             // We've checked it, so clear the flag.
-            dev->keys[cb->id].assoc.flags &= ~IDAF_TRIGGERED;
-            break;
+            button->association().flags &= ~IDAF_TRIGGERED;
+            break; }
 
         case CBD_AXIS: {
-            inputdevaxis_t *axis = &dev->axes[cb->id];
+            InputDeviceAxisControl *axis = &dev->axis(cb->id);
 
-            if(controlClass && axis->assoc.bContext != controlClass)
+            if(controlClass && axis->association().bContext != controlClass)
             {
-                if(!B_FindDeviceBinding(axis->assoc.bContext, cb->device, CBD_AXIS, cb->id))
+                if(!B_FindDeviceBinding(axis->association().bContext, cb->device, CBD_AXIS, cb->id))
                 {
                     // The overriding context doesn't bind to the axis, though.
-                    if(axis->type == IDAT_POINTER)
+                    if(axis->type() == InputDeviceAxisControl::Pointer)
                     {
                         // Reset the relative accumulation.
-                        axis->position = 0;
+                        axis->setPosition(0);
                     }
                 }
                 continue; // Shadowed by a more important active class.
             }
 
             // Expired?
-            if(axis->assoc.flags & IDAF_EXPIRED)
+            if(axis->association().flags & IDAF_EXPIRED)
                 break;
 
-            if(axis->type == IDAT_POINTER)
+            if(axis->type() == InputDeviceAxisControl::Pointer)
             {
-                deviceOffset = axis->position;
-                axis->position = 0;
+                deviceOffset = axis->position();
+                axis->setPosition(0);
             }
             else
             {
-                devicePos = axis->position;
+                devicePos = axis->position();
             }
-            deviceTime = axis->time;
+            deviceTime = axis->time();
             break; }
 
-        case CBD_ANGLE:
-            if(controlClass && dev->hats[cb->id].assoc.bContext != controlClass)
+        case CBD_ANGLE: {
+            InputDeviceHatControl *hat = &dev->hat(cb->id);
+
+            if(controlClass && hat->association().bContext != controlClass)
                 continue; // Shadowed by a more important active class.
 
-            if(dev->hats[cb->id].assoc.flags & IDAF_EXPIRED)
+            if(hat->association().flags & IDAF_EXPIRED)
                 break;
 
-            devicePos  = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
-            deviceTime = dev->hats[cb->id].time;
-            break;
+            devicePos  = (hat->position() == cb->angle? 1.0f : 0.0f);
+            deviceTime = hat->time();
+            break; }
 
         default:
             App_Error("B_EvaluateDeviceBindingList: Invalid value cb->type: %i.", cb->type);

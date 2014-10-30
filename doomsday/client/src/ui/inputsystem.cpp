@@ -68,16 +68,16 @@ DENG2_PIMPL(InputSystem)
         App::scriptSystem().addNativeModule("Input", binder.module());
 
         // Initialize the system.
-        DD_InitInput();
-        I_Init();
-        I_InitVirtualInputDevices();
+        I_InitInterfaces();
+        I_InitKeyMappings();
+        I_InitAllDevices();
     }
 
     ~Instance()
     {
         // Shutdown.
-        I_ShutdownInputDevices();
-        I_Shutdown();
+        I_ShutdownAllDevices();
+        I_ShutdownInterfaces();
     }
 };
 

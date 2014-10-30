@@ -345,11 +345,11 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     if(eb->device != event->device) return nullptr;
     if(eb->type != event->type) return nullptr;
 
-    inputdev_t *dev = nullptr;
+    InputDevice *dev = nullptr;
     if(event->type != E_SYMBOLIC)
     {
-        dev = I_GetDevice(eb->device, OnlyActiveInputDevice);
-        if(!dev)
+        dev = I_DevicePtr(eb->device);
+        if(!dev || !dev->isActive())
         {
             // The device is not active, there is no way this could get executed.
             return nullptr;
@@ -366,12 +366,12 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
 
         if(respectHigherAssociatedContexts)
         {
-            if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
+            if(eventClass && dev->button(eb->id).association().bContext != eventClass)
                 return nullptr; // Shadowed by a more important active class.
         }
 
         // We're checking it, so clear the triggered flag.
-        dev->keys[eb->id].assoc.flags &= ~IDAF_TRIGGERED;
+        dev->button(eb->id).association().flags &= ~IDAF_TRIGGERED;
 
         // Is the state as required?
         switch(eb->state)
@@ -410,13 +410,13 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
         if(eb->id != event->axis.id)
             return nullptr;
 
-        if(eventClass && dev->axes[eb->id].assoc.bContext != eventClass)
+        if(eventClass && dev->axis(eb->id).association().bContext != eventClass)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
         if(!B_CheckAxisPos(eb->state, eb->pos,
-                           I_TransformAxis(I_GetDevice(event->device),
-                                           event->axis.id, event->axis.pos)))
+                           I_Device(event->device).axis(event->axis.id)
+                               .translateRealPosition(event->axis.pos)))
             return nullptr;
         break;
 
@@ -426,7 +426,7 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
         if(eb->id != event->angle.id)
             return nullptr;
 
-        if(eventClass && dev->hats[eb->id].assoc.bContext != eventClass)
+        if(eventClass && dev->hat(eb->id).association().bContext != eventClass)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -496,15 +496,16 @@ void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
     }
 }
 
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device)
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device)
 {
     DENG2_ASSERT(listRoot);
     if(command && command[0])
     {
         for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
         {
-            if(!qstricmp(i->command, command) &&
-               (device >= NUM_INPUT_DEVICES || i->device == device))
+            if(qstricmp(i->command, command)) continue;
+
+            if((device < 0 || device >= NUM_INPUT_DEVICES) || i->device == device)
             {
                 return i;
             }

@@ -65,7 +65,7 @@ dd_bool B_ParseKeyId(char const *desc, int *id);
 
 dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
 
-dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id);
+dd_bool B_ParseJoystickTypeAndId(int device, char const *desc, ddeventtype_t *type, int *id);
 
 dd_bool B_ParseAnglePosition(char const *desc, float *pos);
 
@@ -82,7 +82,7 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, struct bcontext_s
 
 dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
 
-void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t *str);
+void B_AppendDeviceDescToString(int device, ddeventtype_t type, int id, ddstring_t *str);
 
 void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str);
 

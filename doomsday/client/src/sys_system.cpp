@@ -132,7 +132,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
 #ifdef __CLIENT__
     GL_Shutdown();
-    DD_ClearEvents();
+    I_ClearEvents();
 #endif
 
     DD_DestroyGames();

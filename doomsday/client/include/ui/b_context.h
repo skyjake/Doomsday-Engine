@@ -56,7 +56,7 @@ typedef struct bcontext_s {
  *
  * Called automatically whenever a context is activated or deactivated.
  */
-void B_UpdateDeviceStateAssociations();
+void B_UpdateAllDeviceStateAssociations();
 
 /**
  * Creates a new binding context. The new context has the highest priority
