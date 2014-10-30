@@ -26,6 +26,8 @@
 #include "ui/b_main.h"
 #include "CommandAction"
 
+#include <de/Log>
+
 void B_InitCommandBindingList(evbinding_t *listRoot)
 {
     DENG2_ASSERT(listRoot);
