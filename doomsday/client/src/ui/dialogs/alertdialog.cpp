@@ -129,6 +129,11 @@ DENG_GUI_PIMPL(AlertDialog)
 
     ~Instance()
     {
+        if(!notification->parentWidget())
+        {
+            GuiWidget::destroy(notification);
+        }
+        
         App::config(VAR_AUTOHIDE).audienceForChange() -= this;
     }
 

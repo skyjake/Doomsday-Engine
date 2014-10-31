@@ -199,7 +199,11 @@ DENG2_OBSERVES(App, StartupComplete)
     ~Instance()
     {
         //if(settingsDlg) delete settingsDlg;
-
+        if(!status->parentWidget())
+        {
+            GuiWidget::destroy(status);
+        }
+        
         // Delete the ongoing download.
         if(download) delete download;
     }
