@@ -189,7 +189,6 @@ public:
      */
     static void destroy(GuiWidget *widget);
 
-    GuiRootWidget &root();
     GuiRootWidget &root() const;
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
@@ -297,7 +296,7 @@ public:
     void deinitialize();
     void viewResized();
     void update();
-    void draw() /*final*/;
+    void draw() final;
     bool handleEvent(Event const &event);
 
     /**
@@ -460,6 +459,20 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(GuiWidget::Attributes)
 
+template <typename WidgetType>
+struct GuiWidgetDeleter {
+    void operator () (WidgetType *w) {
+        GuiWidget::destroy(w);
+    }
+};
+    
+template <typename WidgetType>
+class UniqueWidgetPtr : public std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>> {
+public:
+    UniqueWidgetPtr(WidgetType *w = nullptr)
+        : std::unique_ptr<WidgetType, GuiWidgetDeleter<WidgetType>>(w) {}
+};
+    
 } // namespace de
 
 #endif // LIBAPPFW_GUIWIDGET_H

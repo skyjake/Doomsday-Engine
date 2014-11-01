@@ -374,16 +374,11 @@ void GuiWidget::destroy(GuiWidget *widget)
     delete widget;
 }
 
-GuiRootWidget &GuiWidget::root()
-{
-    return static_cast<GuiRootWidget &>(Widget::root());
-}
-
 GuiRootWidget &GuiWidget::root() const
 {
     return static_cast<GuiRootWidget &>(Widget::root());
 }
-
+    
 Widget::Children GuiWidget::childWidgets() const
 {
     return Widget::children();
