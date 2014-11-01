@@ -20,6 +20,7 @@
 #include "ui/widgets/cvarsliderwidget.h"
 #include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/keygrabberwidget.h"
+#include "ui/inputdeviceaxiscontrol.h"
 #include "clientapp.h"
 #include "api_console.h"
 

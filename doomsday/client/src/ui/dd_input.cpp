@@ -21,16 +21,16 @@
 #include "de_platform.h" // strdup macro
 #include "ui/dd_input.h"
 
-#include <QList>
-#include <QtAlgorithms>
+//#include <QList>
+//#include <QtAlgorithms>
 #include <de/concurrency.h>
 #include <de/ddstring.h>
 #include <de/memory.h>
-#include <de/smoother.h>
+//#include <de/smoother.h>
 #include <de/timer.h> // SECONDSPERTIC
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <de/Block>
+//#include <de/Block>
 #include <de/KeyEvent>
 
 #include "dd_def.h"
@@ -45,6 +45,10 @@
 #include "ui/clientwindowsystem.h"
 #include "ui/joystick.h"
 #include "ui/infine/finale.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/inputdevicebuttoncontrol.h"
+#include "ui/inputdevicehatcontrol.h"
 #include "ui/sys_input.h"
 #include "ui/ui_main.h"
 
@@ -56,757 +60,6 @@
 #endif
 
 using namespace de;
-
-DENG2_PIMPL_NOREF(InputDeviceAxisControl)
-{
-    Type type = Pointer;
-    dint flags = 0;
-
-    ddouble position     = 0;      ///< Current translated position (-1..1) including any filtering.
-    ddouble realPosition = 0;      ///< The actual latest position (-1..1).
-
-    dfloat scale    = 1;           ///< Scaling factor for real input values.
-    dfloat deadZone = 0;           ///< Dead zone in (0..1) range.
-
-    ddouble sharpPosition = 0;     ///< Current sharp (accumulated) position, entered into the Smoother.
-    Smoother *smoother = nullptr;  ///< Smoother for the input values (owned).
-    ddouble prevSmoothPos = 0;     ///< Previous evaluated smooth position (needed for producing deltas).
-
-    duint time = 0;                ///< Timestamp of the last position update.
-
-    Instance()
-    {
-        Smoother_SetMaximumPastNowDelta(smoother = Smoother_New(), 2 * SECONDSPERTIC);
-    }
-
-    ~Instance()
-    {
-        Smoother_Delete(smoother);
-    }
-
-#if 0
-    static float filter(int grade, float *accumulation, float ticLength)
-    {
-        DENG2_ASSERT(accumulation);
-        int dir     = de::sign(*accumulation);
-        float avail = fabs(*accumulation);
-        // Determine the target velocity.
-        float target = avail * (MAX_AXIS_FILTER - de::clamp(1, grade, 39));
-
-        /*
-        // test: clamp
-        if(target < -.7) target = -.7;
-        else if(target > .7) target = .7;
-        else target = 0;
-        */
-
-        // Determine the amount of mickeys to send. It depends on the
-        // current mouse velocity, and how much time has passed.
-        float used = target * ticLength;
-
-        // Don't go past the available motion.
-        if(used > avail)
-        {
-            *accumulation = nullptr;
-            used = avail;
-        }
-        else
-        {
-            if(*accumulation > nullptr)
-                *accumulation -= used;
-            else
-                *accumulation += used;
-        }
-
-        // This is the new (filtered) axis position.
-        return dir * used;
-    }
-#endif
-};
-
-InputDeviceAxisControl::InputDeviceAxisControl(String const &name, Type type) : d(new Instance)
-{
-    setName(name);
-    d->type = type;
-}
-
-InputDeviceAxisControl::~InputDeviceAxisControl()
-{}
-
-InputDeviceAxisControl::Type InputDeviceAxisControl::type() const
-{
-    return d->type;
-}
-
-void InputDeviceAxisControl::setRawInput(bool yes)
-{
-    if(yes) d->flags |= IDA_RAW;
-    else    d->flags &= ~IDA_RAW;
-}
-
-bool InputDeviceAxisControl::isActive() const
-{
-    return (d->flags & IDA_DISABLED) == 0;
-}
-
-bool InputDeviceAxisControl::isInverted() const
-{
-    return (d->flags & IDA_INVERT) != 0;
-}
-
-void InputDeviceAxisControl::update(timespan_t ticLength)
-{
-    Smoother_Advance(d->smoother, ticLength);
-
-    if(d->type == Stick)
-    {
-        if(d->flags & IDA_RAW)
-        {
-            // The axis is supposed to be unfiltered.
-            d->position = d->realPosition;
-        }
-        else
-        {
-            // Absolute positions are straightforward to evaluate.
-            Smoother_EvaluateComponent(d->smoother, 0, &d->position);
-        }
-    }
-    else if(d->type == Pointer)
-    {
-        if(d->flags & IDA_RAW)
-        {
-            // The axis is supposed to be unfiltered.
-            d->position    += d->realPosition;
-            d->realPosition = 0;
-        }
-        else
-        {
-            // Apply smoothing by converting back into a delta.
-            coord_t smoothPos = d->prevSmoothPos;
-            Smoother_EvaluateComponent(d->smoother, 0, &smoothPos);
-            d->position     += smoothPos - d->prevSmoothPos;
-            d->prevSmoothPos = smoothPos;
-        }
-    }
-
-    // We can clear the expiration now that an updated value is available.
-    setBindContextAssociation(Expired, UnsetFlags);
-}
-
-ddouble InputDeviceAxisControl::position() const
-{
-    return d->position;
-}
-
-void InputDeviceAxisControl::setPosition(ddouble newPosition)
-{
-    d->position = newPosition;
-}
-
-void InputDeviceAxisControl::applyRealPosition(dfloat pos)
-{
-    dfloat const oldRealPos  = d->realPosition;
-    dfloat const transformed = translateRealPosition(pos);
-
-    // The unfiltered position.
-    d->realPosition = transformed;
-
-    if(oldRealPos != d->realPosition)
-    {
-        // Mark down the time of the change.
-        d->time = DD_LatestRunTicsStartTime();
-    }
-
-    if(d->type == Stick)
-    {
-        d->sharpPosition = d->realPosition;
-    }
-    else // Cumulative.
-    {
-        // Convert the delta to an absolute position for smoothing.
-        d->sharpPosition += d->realPosition;
-    }
-
-    Smoother_AddPosXY(d->smoother, DD_LatestRunTicsStartTime(), d->sharpPosition, 0);
-}
-
-dfloat InputDeviceAxisControl::translateRealPosition(dfloat realPos) const
-{
-    // An inactive axis is always zero.
-    if(!isActive()) return 0;
-
-    // Apply scaling, deadzone and clamping.
-    float outPos = realPos * d->scale;
-    if(d->type == Stick) // Only stick axes are dead-zoned and clamped.
-    {
-        if(fabs(outPos) <= d->deadZone)
-        {
-            outPos = 0;
-        }
-        else
-        {
-            outPos -= d->deadZone * de::sign(outPos);  // Remove the dead zone.
-            outPos *= 1.0f/(1.0f - d->deadZone);       // Normalize.
-            outPos = de::clamp(-1.0f, outPos, 1.0f);
-        }
-    }
-
-    if(isInverted())
-    {
-        // Invert the axis position.
-        outPos = -outPos;
-    }
-
-    return outPos;
-}
-
-dfloat InputDeviceAxisControl::deadZone() const
-{
-    return d->deadZone;
-}
-
-void InputDeviceAxisControl::setDeadZone(dfloat newDeadZone)
-{
-    d->deadZone = newDeadZone;
-}
-
-dfloat InputDeviceAxisControl::scale() const
-{
-    return d->scale;
-}
-
-void InputDeviceAxisControl::setScale(dfloat newScale)
-{
-    d->scale = newScale;
-}
-
-duint InputDeviceAxisControl::time() const
-{
-    return d->time;
-}
-
-String InputDeviceAxisControl::description() const
-{
-    QStringList flags;
-    if(!isActive()) flags << "disabled";
-    if(isInverted()) flags << "inverted";
-    String flagsAsText = flags.join("|");
-
-    return String(_E(b) "%1 " _E(.) "(Axis-%2)\n"
-                  //_E(l) "Filter: "    _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Dead Zone: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Scale: "     _E(.)_E(i) "%4\n" _E(.)
-                  _E(l) "Flags: "     _E(.)_E(i) "%5")
-               .arg(fullName())
-               .arg(d->type == Stick? "Stick" : "Pointer")
-               //.arg(d->filter)
-               .arg(d->deadZone)
-               .arg(d->scale)
-               .arg(flagsAsText);
-}
-
-bool InputDeviceAxisControl::inDefaultState() const
-{
-    return d->position == 0; // Centered?
-}
-
-void InputDeviceAxisControl::reset()
-{
-    if(d->type == Pointer)
-    {
-        // Clear the accumulation.
-        d->position      = 0;
-        d->sharpPosition = 0;
-        d->prevSmoothPos = 0;
-    }
-    Smoother_Clear(d->smoother);
-}
-
-void InputDeviceAxisControl::consoleRegister()
-{
-    DENG2_ASSERT(hasDevice() && !name().isEmpty());
-    String controlName = String("input-%1-%2").arg(device().name()).arg(name());
-
-    Block scale = (controlName + "-scale").toUtf8();
-    C_VAR_FLOAT(scale.constData(), &d->scale, CVF_NO_MAX, 0, 0);
-
-    Block flags = (controlName + "-flags").toUtf8();
-    C_VAR_INT(flags.constData(), &d->flags, 0, 0, 7);
-
-    if(d->type == Stick)
-    {
-        Block deadzone = (controlName + "-deadzone").toUtf8();
-        C_VAR_FLOAT(deadzone.constData(), &d->deadZone, 0, 0, 1);
-    }
-}
-
-InputDeviceButtonControl::InputDeviceButtonControl(String const &name)
-{
-    setName(name);
-}
-
-InputDeviceButtonControl::~InputDeviceButtonControl()
-{}
-
-bool InputDeviceButtonControl::isDown() const
-{
-    return _isDown;
-}
-
-void InputDeviceButtonControl::setDown(bool yes)
-{
-    bool const oldDown = _isDown;
-
-    _isDown = yes;
-
-    if(_isDown != oldDown)
-    {
-        // Remember when the change occurred.
-        _time = Timer_RealMilliseconds();
-    }
-
-    if(_isDown)
-    {
-        // This will get cleared after the state is checked by someone.
-        setBindContextAssociation(Triggered);
-    }
-    else
-    {
-        // We can clear the expiration when the key is released.
-        setBindContextAssociation(Triggered, UnsetFlags);
-    }
-
-}
-
-String InputDeviceButtonControl::description() const
-{
-    return String(_E(b) "%1 " _E(.) "(Button)").arg(fullName());
-}
-
-bool InputDeviceButtonControl::inDefaultState() const
-{
-    return !_isDown; // Not depressed?
-}
-
-void InputDeviceButtonControl::reset()
-{
-    if(_isDown)
-    {
-        setBindContextAssociation(Expired);
-    }
-    else
-    {
-        _isDown = false;
-        _time   = 0;
-        setBindContextAssociation(Triggered | Expired, UnsetFlags);
-    }
-}
-
-duint InputDeviceButtonControl::time() const
-{
-    return _time;
-}
-
-InputDeviceHatControl::InputDeviceHatControl(String const &name)
-{
-    setName(name);
-}
-
-InputDeviceHatControl::~InputDeviceHatControl()
-{}
-
-dint InputDeviceHatControl::position() const
-{
-    return _pos;
-}
-
-void InputDeviceHatControl::setPosition(dint newPosition)
-{
-    _pos  = newPosition;
-    _time = Timer_RealMilliseconds(); // Remember when the change occured.
-
-    // We can clear the expiration when centered.
-    if(_pos < 0)
-    {
-        setBindContextAssociation(Expired, UnsetFlags);
-    }
-}
-
-duint InputDeviceHatControl::time() const
-{
-    return _time;
-}
-
-String InputDeviceHatControl::description() const
-{
-    return String(_E(b) "%1 " _E(.) "(Hat)").arg(fullName());
-}
-
-bool InputDeviceHatControl::inDefaultState() const
-{
-    return _pos < 0; // Centered?
-}
-
-// --------------------------------------------------------------------------------
-
-DENG2_PIMPL_NOREF(InputDevice::Control)
-{
-    String name;  ///< Symbolic
-    InputDevice *device = nullptr;
-    BindContextAssociation flags { DefaultFlags };
-    bcontext_t *bindContext     = nullptr;
-    bcontext_t *prevBindContext = nullptr;
-};
-
-InputDevice::Control::Control(InputDevice *device) : d(new Instance)
-{
-    setDevice(device);
-}
-
-InputDevice::Control::~Control()
-{}
-
-String InputDevice::Control::name() const
-{
-    return d->name;
-}
-
-void InputDevice::Control::setName(String const &newName)
-{
-    d->name = newName;
-}
-
-String InputDevice::Control::fullName() const
-{
-    String desc;
-    if(hasDevice()) desc += device().name() + "-";
-    desc += (d->name.isEmpty()? "<unnamed>" : d->name);
-    return desc;
-}
-
-InputDevice &InputDevice::Control::device() const
-{
-    if(d->device) return *d->device;
-    /// @throw MissingDeviceError  Missing InputDevice attribution.
-    throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
-}
-
-bool InputDevice::Control::hasDevice() const
-{
-    return d->device != nullptr;
-}
-
-void InputDevice::Control::setDevice(InputDevice *newDevice)
-{
-    d->device = newDevice;
-}
-
-bcontext_t *InputDevice::Control::bindContext() const
-{
-    return d->bindContext;
-}
-
-void InputDevice::Control::setBindContext(bcontext_t *newContext)
-{
-    d->bindContext = newContext;
-}
-
-InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
-{
-    return d->flags;
-}
-
-void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
-{
-    applyFlagOperation(d->flags, flagsToChange, op);
-}
-
-void InputDevice::Control::clearBindContextAssociation()
-{
-    d->prevBindContext = d->bindContext;
-    d->bindContext     = nullptr;
-    setBindContextAssociation(Triggered, UnsetFlags);
-}
-
-void InputDevice::Control::expireBindContextAssociationIfChanged()
-{
-    // No change?
-    if(d->bindContext == d->prevBindContext) return;
-
-    // No longer valid.
-    setBindContextAssociation(Expired);
-    setBindContextAssociation(Triggered, UnsetFlags); // Not any more.
-}
-
-DENG2_PIMPL(InputDevice)
-{
-    bool active = false;  ///< Initially inactive.
-    String title;         ///< Human-friendly title.
-    String name;          ///< Symbolic name.
-
-    typedef QList<InputDeviceAxisControl *> Axes;
-    Axes axes;
-
-    typedef QList<InputDeviceButtonControl *> Buttons;
-    Buttons buttons;
-
-    typedef QList<InputDeviceHatControl *> Hats;
-    Hats hats;
-
-    Instance(Public *i) : Base(i) {}
-
-    ~Instance()
-    {
-        qDeleteAll(hats);
-        qDeleteAll(buttons);
-        qDeleteAll(axes);
-    }
-
-    DENG2_PIMPL_AUDIENCE(ActiveChange)
-};
-
-DENG2_AUDIENCE_METHOD(InputDevice, ActiveChange)
-
-InputDevice::InputDevice(String const &name) : d(new Instance(this))
-{
-    DENG2_ASSERT(!name.isEmpty());
-    d->name = name;
-}
-
-InputDevice::~InputDevice()
-{}
-
-bool InputDevice::isActive() const
-{
-    return d->active;
-}
-
-void InputDevice::activate(bool yes)
-{
-    if(d->active != yes)
-    {
-        d->active = yes;
-
-        // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->inputDeviceActiveChanged(*this);
-    }
-}
-
-String InputDevice::name() const
-{
-    return d->name;
-}
-
-String InputDevice::title() const
-{
-    return (d->title.isEmpty()? d->name : d->title);
-}
-
-void InputDevice::setTitle(String const &newTitle)
-{
-    d->title = newTitle;
-}
-
-String InputDevice::description() const
-{
-    String desc = String(_E(b) "%1").arg(name());
-    if(!d->title.isEmpty())
-    {
-        desc += String(_E(.) " - " _E(b) "%1" _E(.)).arg(d->title);
-    }
-    desc += String(" (%1)").arg(isActive()? "active" : " inactive");
-
-    if(axisCount())
-    {
-        desc += String("\n %1 axes:").arg(axisCount());
-        int idx = 0;
-        for(InputDeviceAxisControl *axis : d->axes)
-        {
-            desc += String("\n  %1: ").arg(idx++) + axis->description();
-        }
-    }
-
-    if(buttonCount())
-    {
-        desc += String("\n %1 buttons:").arg(buttonCount());
-        int idx = 0;
-        for(InputDeviceButtonControl *button : d->buttons)
-        {
-            desc += String("\n  %1: ").arg(idx++) + button->description();
-        }
-    }
-
-    if(hatCount())
-    {
-        desc += String("\n %1 hats:").arg(hatCount());
-        int idx = 0;
-        for(InputDeviceHatControl *hat : d->hats)
-        {
-            desc += String("\n  %1: ").arg(idx++) + hat->description();
-        }
-    }
-
-    return desc;
-}
-
-void InputDevice::reset()
-{
-    LOG_AS("InputDevice");
-    LOG_INPUT_VERBOSE("Reseting %s") << title();
-
-    for(Control *axis : d->axes)
-    {
-        axis->reset();
-    }
-    for(Control *button : d->buttons)
-    {
-        button->reset();
-    }
-    for(Control *hat : d->hats)
-    {
-        hat->reset();
-    }
-
-    if(!d->name.compareWithCase("key"))
-    {
-        extern bool shiftDown, altDown;
-
-        altDown = shiftDown = false;
-    }
-}
-
-LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)
-{
-    for(Control *axis : d->axes)
-    {
-        if(auto result = func(*axis)) return result;
-    }
-    for(Control *button : d->buttons)
-    {
-        if(auto result = func(*button)) return result;
-    }
-    for(Control *hat : d->hats)
-    {
-        if(auto result = func(*hat)) return result;
-    }
-    return LoopContinue;
-}
-
-void InputDevice::consoleRegister()
-{
-    for(Control *axis : d->axes)
-    {
-        axis->consoleRegister();
-    }
-    for(Control *button : d->buttons)
-    {
-        button->consoleRegister();
-    }
-    for(Control *hat : d->hats)
-    {
-        hat->consoleRegister();
-    }
-}
-
-dint InputDevice::toAxisId(String const &name) const
-{
-    if(!name.isEmpty())
-    {
-        for(int i = 0; i < d->axes.count(); ++i)
-        {
-            if(!d->axes.at(i)->name().compareWithoutCase(name))
-                return i;
-        }
-    }
-    return -1;
-}
-
-dint InputDevice::toButtonId(String const &name) const
-{
-    if(!name.isEmpty())
-    {
-        for(int i = 0; i < d->buttons.count(); ++i)
-        {
-            if(!d->buttons.at(i)->name().compareWithoutCase(name))
-                return i;
-        }
-    }
-    return -1;
-}
-
-bool InputDevice::hasAxis(de::dint id) const
-{
-    return (id >= 0 && id < d->axes.count());
-}
-
-InputDeviceAxisControl &InputDevice::axis(dint id) const
-{
-    if(hasAxis(id)) return *d->axes.at(id);
-    /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
-}
-
-void InputDevice::addAxis(InputDeviceAxisControl *axis)
-{
-    if(!axis) return;
-    d->axes.append(axis);
-    axis->setDevice(this);
-}
-
-int InputDevice::axisCount() const
-{
-    return d->axes.count();
-}
-
-bool InputDevice::hasButton(de::dint id) const
-{
-    return (id >= 0 && id < d->buttons.count());
-}
-
-InputDeviceButtonControl &InputDevice::button(dint id) const
-{
-    if(hasButton(id)) return *d->buttons.at(id);
-    /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
-}
-
-void InputDevice::addButton(InputDeviceButtonControl *button)
-{
-    if(!button) return;
-    d->buttons.append(button);
-    button->setDevice(this);
-}
-
-int InputDevice::buttonCount() const
-{
-    return d->buttons.count();
-}
-
-bool InputDevice::hasHat(de::dint id) const
-{
-    return (id >= 0 && id < d->hats.count());
-}
-
-InputDeviceHatControl &InputDevice::hat(dint id) const
-{
-    if(hasHat(id)) return *d->hats.at(id);
-    /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
-}
-
-void InputDevice::addHat(InputDeviceHatControl *hat)
-{
-    if(!hat) return;
-    d->hats.append(hat);
-    hat->setDevice(this);
-}
-
-int InputDevice::hatCount() const
-{
-    return d->hats.count();
-}
-
-// -------------------------------------------------------------------------
 
 #define DEFAULT_JOYSTICK_DEADZONE  .05f  ///< 5%
 
@@ -1188,7 +441,7 @@ static void clearQueue(eventqueue_t *q)
 /**
  * Poll all event sources (i.e., input devices) and post events.
  */
-static void postEventsFromInputDevices()
+static void postEventsForAllDevices()
 {
 #ifdef __CLIENT__
     // On the client may have have input devices.
@@ -1208,7 +461,7 @@ bool I_IgnoreEvents(bool yes)
     if(!yes)
     {
         // Clear all the event buffers.
-        postEventsFromInputDevices();
+        postEventsForAllDevices();
         I_ClearEvents();
     }
     return oldIgnoreInput;
@@ -1433,9 +686,9 @@ static void updateAllDeviceAxes(timespan_t ticLength)
 /**
  * Send all the events of the given timestamp down the responder chain.
  */
-static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, dd_bool updateAxes)
+static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, bool updateAxes)
 {
-    dd_bool const callGameResponders = App_GameLoaded();
+    bool const callGameResponders = App_GameLoaded();
 
     ddevent_t *ddev;
     while((ddev = nextFromQueue(q)))
@@ -1455,7 +708,9 @@ static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, dd_bool update
             // intended for grabbing events when creating bindings in the
             // Controls menu.
             if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
+            {
                 continue;
+            }
         }
 
         // The bindings responder.
@@ -1463,7 +718,9 @@ static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, dd_bool update
 
         // The "fallback" responder. Gets the event if no one else is interested.
         if(validGameEvent && callGameResponders && gx.FallbackResponder)
+        {
             gx.FallbackResponder(&ev);
+        }
     }
 
     if(updateAxes)
@@ -1476,7 +733,7 @@ static void dispatchEvents(eventqueue_t *q, timespan_t ticLength, dd_bool update
 void I_ProcessEvents(timespan_t ticLength)
 {
     // Poll all event sources (i.e., input devices) and post events.
-    postEventsFromInputDevices();
+    postEventsForAllDevices();
 
     // Dispatch all accumulated events down the responder chain.
     dispatchEvents(&queue, ticLength, !useSharpInputEvents);
@@ -2457,7 +1714,7 @@ void Rend_DrawInputDeviceVisuals()
 }
 #endif // DENG2_DEBUG
 
-D_CMD(ListInputDevices)
+D_CMD(ListAllDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
     LOG_INPUT_MSG(_E(b) "Input Devices:");
@@ -2471,7 +1728,6 @@ D_CMD(ListInputDevices)
 D_CMD(ReleaseMouse)
 {
     DENG2_UNUSED3(src, argc, argv);
-
     if(WindowSystem::mainExists())
     {
         ClientWindowSystem::main().canvas().trapMouse(false);
@@ -2485,17 +1741,16 @@ void I_ConsoleRegister()
     // Cvars
     C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
 
+    // Ccmds
+    C_CMD("listinputdevices",   "",     ListAllDevices);
+    C_CMD("releasemouse",       "",     ReleaseMouse);
+    //C_CMD_FLAGS("setaxis",      "s",    AxisPrintConfig,  CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis",      "ss",   AxisChangeOption, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis",      "sss",  AxisChangeValue,  CMDF_NO_DEDICATED);
+
 #ifdef DENG2_DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state",   &devRendJoyState,   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-input-key-state",   &devRendKeyState,   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
 #endif
-
-    // Ccmds
-    C_CMD("listinputdevices",   "", ListInputDevices);
-    C_CMD("releasemouse",       "", ReleaseMouse);
-
-    //C_CMD_FLAGS("setaxis", "s",      AxisPrintConfig, CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis", "ss",     AxisChangeOption, CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis", "sss",    AxisChangeValue, CMDF_NO_DEDICATED);
 }

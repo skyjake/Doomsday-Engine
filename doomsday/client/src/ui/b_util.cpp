@@ -28,6 +28,10 @@
 
 #include "ui/b_main.h"
 #include "ui/b_context.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/inputdevicebuttoncontrol.h"
+#include "ui/inputdevicehatcontrol.h"
 #include "network/net_main.h" // netGame
 
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state)

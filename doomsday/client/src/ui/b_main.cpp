@@ -31,6 +31,8 @@
 #include "ui/b_command.h"
 #include "ui/b_context.h"
 #include "ui/p_control.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
 #include "ui/ui_main.h"
 
 int symbolicEchoMode = false;

@@ -24,6 +24,10 @@
 #include <de/vector1.h>
 #include "world/p_players.h" // P_ConsoleToLocal
 #include "ui/b_main.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/inputdevicebuttoncontrol.h"
+#include "ui/inputdevicehatcontrol.h"
 #include "CommandAction"
 
 #include <de/Log>

@@ -24,6 +24,10 @@
 #include "dd_main.h"
 #include "ui/b_main.h"
 #include "ui/b_context.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/inputdevicebuttoncontrol.h"
+#include "ui/inputdevicehatcontrol.h"
 
 using namespace de;
 

@@ -36,6 +36,7 @@
 #ifdef __CLIENT__
 #  include "ui/b_main.h"
 #  include "ui/b_device.h"
+#  include "ui/inputdevice.h"
 #endif
 #include "ui/p_control.h"
 
