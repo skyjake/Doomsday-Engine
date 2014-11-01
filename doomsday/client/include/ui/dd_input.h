@@ -25,6 +25,7 @@
 #include <de/smoother.h>
 #include <de/Error>
 #include <de/Event>
+#include <de/Observers>
 #include <de/String>
 
 #include "api_event.h"
@@ -45,6 +46,9 @@ class InputDevice
 public:
     /// Referenced control is missing. @ingroup errors
     DENG2_ERROR(MissingControlError);
+
+    /// Notified when the active state of the device changes.
+    DENG2_DEFINE_AUDIENCE2(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
 
     /**
      * Base class for all controls.

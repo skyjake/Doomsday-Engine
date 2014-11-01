@@ -561,7 +561,11 @@ DENG2_PIMPL(InputDevice)
         qDeleteAll(buttons);
         qDeleteAll(axes);
     }
+
+    DENG2_PIMPL_AUDIENCE(ActiveChange)
 };
+
+DENG2_AUDIENCE_METHOD(InputDevice, ActiveChange)
 
 InputDevice::InputDevice(String const &name) : d(new Instance(this))
 {
@@ -579,7 +583,13 @@ bool InputDevice::isActive() const
 
 void InputDevice::activate(bool yes)
 {
-    d->active = yes;
+    if(d->active != yes)
+    {
+        d->active = yes;
+
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->inputDeviceActiveChanged(*this);
+    }
 }
 
 String InputDevice::name() const
@@ -644,15 +654,15 @@ void InputDevice::reset()
     LOG_AS("InputDevice");
     LOG_INPUT_VERBOSE("Reseting %s") << title();
 
-    for(InputDeviceAxisControl *axis : d->axes)
+    for(Control *axis : d->axes)
     {
         axis->reset();
     }
-    for(InputDeviceButtonControl *button : d->buttons)
+    for(Control *button : d->buttons)
     {
         button->reset();
     }
-    for(InputDeviceHatControl *hat : d->hats)
+    for(Control *hat : d->hats)
     {
         hat->reset();
     }
@@ -684,9 +694,17 @@ LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)>
 
 void InputDevice::consoleRegister()
 {
-    for(InputDeviceAxisControl *axis : d->axes)
+    for(Control *axis : d->axes)
     {
         axis->consoleRegister();
+    }
+    for(Control *button : d->buttons)
+    {
+        button->consoleRegister();
+    }
+    for(Control *hat : d->hats)
+    {
+        hat->consoleRegister();
     }
 }
 
@@ -977,7 +995,7 @@ static InputDevice *addDevice(InputDevice *device)
             {
                 if(!otherDevice->name().compareWithoutCase(device->name()))
                 {
-                    throw Error("InputSystem::addInputDevice", "Multiple devices with name:" + device->name() + " cannot coexist");
+                    throw Error("InputSystem::addDevice", "Multiple devices with name:" + device->name() + " cannot coexist");
                 }
             }
 
