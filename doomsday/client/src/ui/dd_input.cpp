@@ -752,15 +752,11 @@ InputDeviceButtonControl &InputDevice::button(dint id) const
     throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
 }
 
-void InputDevice::initButtons(int count)
+void InputDevice::addButton(InputDeviceButtonControl *button)
 {
-    DENG2_ASSERT(d->buttons.isEmpty());
-    for(int i = 0; i < count; ++i)
-    {
-        auto *button = new InputDeviceButtonControl;
-        d->buttons.append(button);
-        button->setDevice(this);
-    }
+    if(!button) return;
+    d->buttons.append(button);
+    button->setDevice(this);
 }
 
 int InputDevice::buttonCount() const
@@ -780,15 +776,11 @@ InputDeviceHatControl &InputDevice::hat(dint id) const
     throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
 }
 
-void InputDevice::initHats(int count)
+void InputDevice::addHat(InputDeviceHatControl *hat)
 {
-    DENG2_ASSERT(d->hats.isEmpty());
-    for(int i = 0; i < count; ++i)
-    {
-        auto *hat = new InputDeviceHatControl;
-        d->hats.append(hat);
-        hat->setDevice(this);
-    }
+    if(!hat) return;
+    d->hats.append(hat);
+    hat->setDevice(this);
 }
 
 int InputDevice::hatCount() const
@@ -866,24 +858,31 @@ static byte devRendMouseState; ///< cvar
 static byte devRendJoyState;   ///< cvar
 #endif
 
-void I_InitAllDevices()
+static InputDevice *makeKeyboard(String const &name, String const &title = "")
 {
-    // Allow re-init.
-    I_ShutdownAllDevices();
+    InputDevice *keyboard = new InputDevice(name);
 
-    // The keyboard is always assumed to be present.
-    // DDKEYs are used as key indices.
-    InputDevice *keyboard;
-    devices.append(keyboard = new InputDevice("key"));
-    keyboard->activate();
-    keyboard->setTitle("Keyboard");
-    keyboard->initButtons(256);
+    keyboard->setTitle(title);
 
-    // The mouse may not be active.
-    InputDevice *mouse;
-    devices.append(mouse = new InputDevice("mouse"));
-    mouse->setTitle("Mouse");
-    mouse->initButtons(IMB_MAXBUTTONS);
+    // DDKEYs are used as button indices.
+    for(int i = 0; i < 256; ++i)
+    {
+        keyboard->addButton(new InputDeviceButtonControl);
+    }
+
+    return keyboard;
+}
+
+static InputDevice *makeMouse(String const &name, String const &title = "")
+{
+    InputDevice *mouse = new InputDevice(name);
+
+    mouse->setTitle(title);
+
+    for(int i = 0; i < IMB_MAXBUTTONS; ++i)
+    {
+        mouse->addButton(new InputDeviceButtonControl);
+    }
 
     // Some of the mouse buttons have symbolic names.
     mouse->button(IMB_LEFT       ).setName("left");
@@ -905,65 +904,112 @@ void I_InitAllDevices()
     //axis->setFilter(1); // On by default.
     axis->setScale(1.f/1000);
 
-    // Register console variables for the axis settings.
-    mouse->consoleRegister();
+    return mouse;
+}
 
-    if(Mouse_IsPresent())
-        mouse->activate();
+static InputDevice *makeJoystick(String const &name, String const &title = "")
+{
+    InputDevice *joy = new InputDevice(name);
 
-    // TODO: Add support for several joysticks.
+    joy->setTitle(title);
+
+    for(int i = 0; i < IJOY_MAXBUTTONS; ++i)
     {
-        InputDevice *joy;
-        devices.append(joy = new InputDevice("joy"));
-        joy->setTitle("Joystick");
-        joy->initButtons(IJOY_MAXBUTTONS);
-
-        for(int i = 0; i < IJOY_MAXAXES; ++i)
-        {
-            char name[32];
-            if(i < 4)
-            {
-                strcpy(name, i == 0? "x" : i == 1? "y" : i == 2? "z" : "w");
-            }
-            else
-            {
-                sprintf(name, "axis%02i", i + 1);
-            }
-            joy->addAxis(axis = new InputDeviceAxisControl(name, InputDeviceAxisControl::Stick));
-            axis->setScale(1.0f / IJOY_AXISMAX);
-            axis->setDeadZone(DEFAULT_JOYSTICK_DEADZONE);
-        }
-
-        // Register console variables for the axis settings.
-        joy->consoleRegister();
-
-        joy->initHats(IJOY_MAXHATS);
-
-        // The joystick may not be active.
-        if(Joystick_IsPresent())
-            joy->activate();
-
-        devices.append(new InputDevice("joy2"));
-        devices.append(new InputDevice("joy3"));
-        devices.append(new InputDevice("joy4"));
+        joy->addButton(new InputDeviceButtonControl);
     }
 
-    // Set up a head tracking device.
+    for(int i = 0; i < IJOY_MAXAXES; ++i)
     {
-        InputDevice *head;
-        devices.append(head = new InputDevice("head"));
-        head->setTitle("Head Tracker");
+        char name[32];
+        if(i < 4)
+        {
+            strcpy(name, i == 0? "x" : i == 1? "y" : i == 2? "z" : "w");
+        }
+        else
+        {
+            sprintf(name, "axis%02i", i + 1);
+        }
+        auto *axis = new InputDeviceAxisControl(name, InputDeviceAxisControl::Stick);
+        joy->addAxis(axis);
+        axis->setScale(1.0f / IJOY_AXISMAX);
+        axis->setDeadZone(DEFAULT_JOYSTICK_DEADZONE);
+    }
 
-        head->addAxis(axis = new InputDeviceAxisControl("yaw", InputDeviceAxisControl::Stick));
-        axis->setRawInput();
+    for(int i = 0; i < IJOY_MAXHATS; ++i)
+    {
+        joy->addHat(new InputDeviceHatControl);
+    }
 
-        head->addAxis(axis = new InputDeviceAxisControl("pitch", InputDeviceAxisControl::Stick));
-        axis->setRawInput();
+    return joy;
+}
 
-        head->addAxis(axis = new InputDeviceAxisControl("roll", InputDeviceAxisControl::Stick));
-        axis->setRawInput();
+static InputDevice *makeHeadTracker(String const &name, String const &title)
+{
+    InputDevice *head = new InputDevice(name);
 
-        head->consoleRegister();
+    head->setTitle(title);
+
+    auto *axis = new InputDeviceAxisControl("yaw", InputDeviceAxisControl::Stick);
+    head->addAxis(axis);
+    axis->setRawInput();
+
+    head->addAxis(axis = new InputDeviceAxisControl("pitch", InputDeviceAxisControl::Stick));
+    axis->setRawInput();
+
+    head->addAxis(axis = new InputDeviceAxisControl("roll", InputDeviceAxisControl::Stick));
+    axis->setRawInput();
+
+    return head;
+}
+
+/**
+ * @param device  InputDevice to add.
+ * @return  Same as @a device for caller convenience.
+ */
+static InputDevice *addDevice(InputDevice *device)
+{
+    if(device)
+    {
+        if(!devices.contains(device))
+        {
+            // Ensure the name is unique.
+            for(InputDevice *otherDevice : devices)
+            {
+                if(!otherDevice->name().compareWithoutCase(device->name()))
+                {
+                    throw Error("InputSystem::addInputDevice", "Multiple devices with name:" + device->name() + " cannot coexist");
+                }
+            }
+
+            // Add this device to the collection.
+            devices.append(device);
+        }
+    }
+    return device;
+}
+
+void I_InitAllDevices()
+{
+    // Allow re-init.
+    I_ShutdownAllDevices();
+
+    addDevice(makeKeyboard("key", "Keyboard"))->activate(); // A keyboard is assumed to always be present.
+
+    addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
+
+    addDevice(makeJoystick("joy", "Joystick"))->activate(Joystick_IsPresent()); // A joystick may not be present.
+
+    /// @todo: Add support for multiple joysticks (just some generics, for now).
+    addDevice(new InputDevice("joy2"));
+    addDevice(new InputDevice("joy3"));
+    addDevice(new InputDevice("joy4"));
+
+    addDevice(makeHeadTracker("head", "Head Tracker")); // Head trackers are activated later.
+
+    // Register console variables for the controls of all devices.
+    for(InputDevice *device : devices)
+    {
+        device->consoleRegister();
     }
 }
 
@@ -998,14 +1044,6 @@ LoopResult I_ForAllDevices(std::function<LoopResult (InputDevice &)> func)
         if(auto result = func(*device)) return result;
     }
     return LoopContinue;
-}
-
-void I_ResetAllDevices()
-{
-    for(InputDevice *dev : devices)
-    {
-        dev->reset();
-    }
 }
 
 bool I_ShiftDown()
@@ -1061,18 +1099,6 @@ void I_TrackInput(ddevent_t *ev)
     else if(ev->type == E_ANGLE)
     {
         dev->hat(ev->angle.id).setPosition(ev->angle.pos);
-    }
-}
-
-void I_ClearAllDeviceContextAssociations()
-{
-    for(InputDevice *dev : devices)
-    {
-        dev->forAllControls([] (InputDeviceControl &control)
-        {
-            control.clearBindContextAssociation();
-            return LoopContinue;
-        });
     }
 }
 

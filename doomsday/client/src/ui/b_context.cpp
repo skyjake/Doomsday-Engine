@@ -55,9 +55,18 @@ void B_DestroyAllContexts()
 
 void B_UpdateAllDeviceStateAssociations()
 {
-    I_ClearAllDeviceContextAssociations();
+    // Clear all existing associations.
+    I_ForAllDevices([] (InputDevice &device)
+    {
+        device.forAllControls([] (InputDeviceControl &control)
+        {
+            control.clearBindContextAssociation();
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
 
-    // We need to iterate through all the device bindings in all context.
+    // We need to iterate through all the device bindings in all contexts.
     for(int i = 0; i < bindContextCount; ++i)
     {
         bcontext_t *bc = bindContexts[i];
@@ -279,7 +288,11 @@ void B_ActivateContext(bcontext_t *bc, dd_bool doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        I_ResetAllDevices();
+        I_ForAllDevices([] (InputDevice &device)
+        {
+            device.reset();
+            return LoopContinue;
+        });
     }
 }
 

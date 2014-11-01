@@ -454,7 +454,12 @@ DENG2_PIMPL(ClientWindow)
         if(!hasFocus)
         {
             I_ClearEvents();
-            I_ResetAllDevices();
+            I_ForAllDevices([] (InputDevice &device)
+            {
+                device.reset();
+                return LoopContinue;
+            });
+
             canvas.trapMouse(false);
         }
         else if(self.isFullScreen() && !taskBar->isOpen())

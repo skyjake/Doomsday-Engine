@@ -299,7 +299,12 @@ public:
      */
     InputDeviceButtonControl &button(de::dint id) const;
 
-    void initButtons(de::dint count);
+    /**
+     * Add a @a button control to the input device.
+     *
+     * @param button  Button control to add. Ownership is given to the device.
+     */
+    void addButton(InputDeviceButtonControl *button);
 
     /**
      * Returns the number of button controls of the device.
@@ -320,7 +325,12 @@ public:
      */
     InputDeviceHatControl &hat(de::dint id) const;
 
-    void initHats(de::dint count);
+    /**
+     * Add a @a hat control to the input device.
+     *
+     * @param hat  Hat control to add. Ownership is given to the device.
+     */
+    void addHat(InputDeviceHatControl *hat);
 
     /**
      * Returns the number of hat controls of the device.
@@ -585,10 +595,6 @@ void I_InitAllDevices();
  * Free the memory allocated for the input devices.
  */
 void I_ShutdownAllDevices();
-
-void I_ResetAllDevices();
-
-void I_ClearAllDeviceContextAssociations();
 
 /**
  * Lookup an InputDevice by it's unique @a id.
