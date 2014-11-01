@@ -152,7 +152,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     {
         *type = E_TOGGLE;
         *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(*id >= 0 && *id < I_Device(IDEV_MOUSE).buttonCount())
+        if(I_Device(IDEV_MOUSE).hasButton(*id))
             return true;
 
         LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
@@ -168,26 +168,25 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     return false;
 }
 
-dd_bool B_ParseDeviceAxisTypeAndId(int device, char const *desc, ddeventtype_t *type, int *id)
+dd_bool B_ParseDeviceAxisTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
 {
     DENG2_ASSERT(desc && type && id);
-    InputDevice &dev = I_Device(device);
 
     *type = E_AXIS;
-    *id   = dev.toAxisId(desc);
+    *id   = device.toAxisId(desc);
     if(*id >= 0) return true;
 
-    LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << dev.name();
+    LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << device.name();
     return false;
 }
 
-dd_bool B_ParseJoystickTypeAndId(int device, char const *desc, ddeventtype_t *type, int *id)
+dd_bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
 {
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
         *type = E_TOGGLE;
         *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(*id >= 0 && *id < I_Device(device).buttonCount())
+        if(device.hasButton(*id))
             return true;
 
         LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
@@ -197,7 +196,7 @@ dd_bool B_ParseJoystickTypeAndId(int device, char const *desc, ddeventtype_t *ty
     {
         *type = E_ANGLE;
         *id   = strtoul(desc + 3, nullptr, 10) - 1;
-        if(*id >= 0 && *id < I_Device(device).hatCount())
+        if(device.hasHat(*id))
             return true;
 
         LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
@@ -319,7 +318,7 @@ dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         ddeventtype_t type;
-        if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
+        if(!B_ParseJoystickTypeAndId(I_Device(cond->device), Str_Text(str), &type, &cond->id))
         {
             return false;
         }
@@ -466,25 +465,23 @@ dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b)
             a->flags.multiplayer == b->flags.multiplayer);
 }
 
-void B_AppendDeviceDescToString(int device, ddeventtype_t type, int id, ddstring_t *str)
+void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str)
 {
-    InputDevice &dev = I_Device(device);
-
     if(type != E_SYMBOLIC)
     {
         // Name of the device.
-        Str_Append(str, dev.name().toUtf8().constData());
+        Str_Append(str, device.name().toUtf8().constData());
         Str_Append(str, "-");
     }
 
     switch(type)
     {
     case E_TOGGLE:
-        if(!dev.button(id).name().isEmpty())
+        if(!device.button(id).name().isEmpty())
         {
-            Str_Append(str, dev.button(id).name().toUtf8().constData());
+            Str_Append(str, device.button(id).name().toUtf8().constData());
         }
-        else if(device == IDEV_KEYBOARD)
+        else if(&device == I_DevicePtr(IDEV_KEYBOARD))
         {
             char const *name = B_ShortNameForKey(id);
             if(name)
@@ -499,7 +496,7 @@ void B_AppendDeviceDescToString(int device, ddeventtype_t type, int id, ddstring
         break;
 
     case E_AXIS:
-        Str_Append(str, dev.axis(id).name().toUtf8().constData());
+        Str_Append(str, device.axis(id).name().toUtf8().constData());
         break;
 
     case E_ANGLE:
@@ -567,7 +564,7 @@ void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str)
     }
     else
     {
-        B_AppendDeviceDescToString(cond->device,
+        B_AppendDeviceDescToString(I_Device(cond->device),
                                    (  cond->type == SCT_TOGGLE_STATE? E_TOGGLE
                                     : cond->type == SCT_AXIS_BEYOND ? E_AXIS
                                     : E_ANGLE),
@@ -598,7 +595,7 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
 {
     DENG2_ASSERT(ev);
 
-    B_AppendDeviceDescToString(ev->device, ev->type,
+    B_AppendDeviceDescToString(I_Device(ev->device), ev->type,
                                (  ev->type == E_TOGGLE  ? ev->toggle.id
                                 : ev->type == E_AXIS    ? ev->axis.id
                                 : ev->type == E_ANGLE   ? ev->angle.id

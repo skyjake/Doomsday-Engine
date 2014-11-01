@@ -154,45 +154,6 @@ bool InputDeviceAxisControl::isInverted() const
     return (d->flags & IDA_INVERT) != 0;
 }
 
-String InputDeviceAxisControl::description() const
-{
-    QStringList flags;
-    if(!isActive()) flags << "disabled";
-    if(isInverted()) flags << "inverted";
-    String flagsAsText = flags.join("|");
-
-    return String(_E(b) "%1 " _E(.) "(Axis-%2)\n"
-                  //_E(l) "Filter: "    _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Dead Zone: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Scale: "     _E(.)_E(i) "%4\n" _E(.)
-                  _E(l) "Flags: "     _E(.)_E(i) "%5")
-               .arg(fullName())
-               .arg(d->type == Stick? "Stick" : "Pointer")
-               //.arg(d->filter)
-               .arg(d->deadZone)
-               .arg(d->scale)
-               .arg(flagsAsText);
-}
-
-void InputDeviceAxisControl::reset()
-{
-    if(d->type == Pointer)
-    {
-        // Clear the accumulation.
-        d->position      = 0;
-        d->sharpPosition = 0;
-        d->prevSmoothPos = 0;
-    }
-    Smoother_Clear(d->smoother);
-}
-
-void InputDeviceAxisControl::clearContextAssociation()
-{
-    inputdevassoc_t &assoc = association();
-    assoc.prevBContext = assoc.bContext;
-    assoc.bContext     = nullptr;
-}
-
 void InputDeviceAxisControl::update(timespan_t ticLength)
 {
     Smoother_Advance(d->smoother, ticLength);
@@ -229,7 +190,7 @@ void InputDeviceAxisControl::update(timespan_t ticLength)
     }
 
     // We can clear the expiration now that an updated value is available.
-    association().flags &= ~IDAF_EXPIRED;
+    setBindContextAssociation(Expired, UnsetFlags);
 }
 
 ddouble InputDeviceAxisControl::position() const
@@ -324,6 +285,43 @@ duint InputDeviceAxisControl::time() const
     return d->time;
 }
 
+String InputDeviceAxisControl::description() const
+{
+    QStringList flags;
+    if(!isActive()) flags << "disabled";
+    if(isInverted()) flags << "inverted";
+    String flagsAsText = flags.join("|");
+
+    return String(_E(b) "%1 " _E(.) "(Axis-%2)\n"
+                  //_E(l) "Filter: "    _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Dead Zone: " _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Scale: "     _E(.)_E(i) "%4\n" _E(.)
+                  _E(l) "Flags: "     _E(.)_E(i) "%5")
+               .arg(fullName())
+               .arg(d->type == Stick? "Stick" : "Pointer")
+               //.arg(d->filter)
+               .arg(d->deadZone)
+               .arg(d->scale)
+               .arg(flagsAsText);
+}
+
+bool InputDeviceAxisControl::inDefaultState() const
+{
+    return d->position == 0; // Centered?
+}
+
+void InputDeviceAxisControl::reset()
+{
+    if(d->type == Pointer)
+    {
+        // Clear the accumulation.
+        d->position      = 0;
+        d->sharpPosition = 0;
+        d->prevSmoothPos = 0;
+    }
+    Smoother_Clear(d->smoother);
+}
+
 void InputDeviceAxisControl::consoleRegister()
 {
     DENG2_ASSERT(hasDevice() && !name().isEmpty());
@@ -370,12 +368,12 @@ void InputDeviceButtonControl::setDown(bool yes)
     if(_isDown)
     {
         // This will get cleared after the state is checked by someone.
-        association().flags |= IDAF_TRIGGERED;
+        setBindContextAssociation(Triggered);
     }
     else
     {
         // We can clear the expiration when the key is released.
-        association().flags &= ~IDAF_EXPIRED;
+        setBindContextAssociation(Triggered, UnsetFlags);
     }
 
 }
@@ -385,26 +383,23 @@ String InputDeviceButtonControl::description() const
     return String(_E(b) "%1 " _E(.) "(Button)").arg(fullName());
 }
 
+bool InputDeviceButtonControl::inDefaultState() const
+{
+    return !_isDown; // Not depressed?
+}
+
 void InputDeviceButtonControl::reset()
 {
     if(_isDown)
     {
-        association().flags |= IDAF_EXPIRED;
+        setBindContextAssociation(Expired);
     }
     else
     {
         _isDown = false;
         _time   = 0;
-        association().flags &= ~(IDAF_TRIGGERED | IDAF_EXPIRED);
+        setBindContextAssociation(Triggered | Expired, UnsetFlags);
     }
-}
-
-void InputDeviceButtonControl::clearContextAssociation()
-{
-    inputdevassoc_t &assoc = association();
-    assoc.prevBContext = assoc.bContext;
-    assoc.bContext     = nullptr;
-    assoc.flags       &= ~IDAF_TRIGGERED;
 }
 
 duint InputDeviceButtonControl::time() const
@@ -433,21 +428,8 @@ void InputDeviceHatControl::setPosition(dint newPosition)
     // We can clear the expiration when centered.
     if(_pos < 0)
     {
-        association().flags &= ~IDAF_EXPIRED;
+        setBindContextAssociation(Expired, UnsetFlags);
     }
-}
-
-String InputDeviceHatControl::description() const
-{
-    return String(_E(b) "%1 " _E(.) "(Hat)").arg(fullName());
-}
-
-
-void InputDeviceHatControl::clearContextAssociation()
-{
-    inputdevassoc_t &assoc = association();
-    assoc.prevBContext = assoc.bContext;
-    assoc.bContext     = nullptr;
 }
 
 duint InputDeviceHatControl::time() const
@@ -455,55 +437,105 @@ duint InputDeviceHatControl::time() const
     return _time;
 }
 
-InputDevice::Control::Control(InputDevice *device)
-    : _device(device)
+String InputDeviceHatControl::description() const
 {
-    de::zap(_assoc);
+    return String(_E(b) "%1 " _E(.) "(Hat)").arg(fullName());
 }
+
+bool InputDeviceHatControl::inDefaultState() const
+{
+    return _pos < 0; // Centered?
+}
+
+// --------------------------------------------------------------------------------
+
+DENG2_PIMPL_NOREF(InputDevice::Control)
+{
+    String name;  ///< Symbolic
+    InputDevice *device = nullptr;
+    BindContextAssociation flags { DefaultFlags };
+    bcontext_t *bindContext     = nullptr;
+    bcontext_t *prevBindContext = nullptr;
+};
+
+InputDevice::Control::Control(InputDevice *device) : d(new Instance)
+{
+    setDevice(device);
+}
+
+InputDevice::Control::~Control()
+{}
 
 String InputDevice::Control::name() const
 {
-    return _name;
+    return d->name;
 }
 
 void InputDevice::Control::setName(String const &newName)
 {
-    _name = newName;
+    d->name = newName;
 }
 
 String InputDevice::Control::fullName() const
 {
     String desc;
     if(hasDevice()) desc += device().name() + "-";
-    desc += (_name.isEmpty()? "<unnamed>" : _name);
+    desc += (d->name.isEmpty()? "<unnamed>" : d->name);
     return desc;
 }
 
 InputDevice &InputDevice::Control::device() const
 {
-    if(_device) return *_device;
+    if(d->device) return *d->device;
     /// @throw MissingDeviceError  Missing InputDevice attribution.
     throw MissingDeviceError("InputDevice::Control::device", "No InputDevice is attributed");
 }
 
 bool InputDevice::Control::hasDevice() const
 {
-    return _device != 0;
+    return d->device != nullptr;
 }
 
 void InputDevice::Control::setDevice(InputDevice *newDevice)
 {
-    _device = newDevice;
+    d->device = newDevice;
 }
 
-inputdevassoc_t &InputDeviceControl::association()
+bcontext_t *InputDevice::Control::bindContext() const
 {
-    return _assoc;
+    return d->bindContext;
 }
 
-inputdevassoc_t const &InputDeviceControl::association() const
+void InputDevice::Control::setBindContext(bcontext_t *newContext)
 {
-    return _assoc;
+    d->bindContext = newContext;
+}
+
+InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAssociation() const
+{
+    return d->flags;
+}
+
+void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
+{
+    applyFlagOperation(d->flags, flagsToChange, op);
+}
+
+void InputDevice::Control::clearBindContextAssociation()
+{
+    d->prevBindContext = d->bindContext;
+    d->bindContext     = nullptr;
+    setBindContextAssociation(Triggered, UnsetFlags);
+}
+
+void InputDevice::Control::expireBindContextAssociationIfChanged()
+{
+    // No change?
+    if(d->bindContext == d->prevBindContext) return;
+
+    // No longer valid.
+    setBindContextAssociation(Expired);
+    setBindContextAssociation(Triggered, UnsetFlags); // Not any more.
 }
 
 DENG2_PIMPL(InputDevice)
@@ -612,13 +644,13 @@ void InputDevice::reset()
     LOG_AS("InputDevice");
     LOG_INPUT_VERBOSE("Reseting %s") << title();
 
-    for(InputDeviceButtonControl *button : d->buttons)
-    {
-        button->reset();
-    }
     for(InputDeviceAxisControl *axis : d->axes)
     {
         axis->reset();
+    }
+    for(InputDeviceButtonControl *button : d->buttons)
+    {
+        button->reset();
     }
     for(InputDeviceHatControl *hat : d->hats)
     {
@@ -633,20 +665,21 @@ void InputDevice::reset()
     }
 }
 
-void InputDevice::clearAllControlContextAssociations()
+LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)
 {
-    for(InputDeviceButtonControl *button : d->buttons)
+    for(Control *axis : d->axes)
     {
-        button->clearContextAssociation();
+        if(auto result = func(*axis)) return result;
     }
-    for(InputDeviceAxisControl *axis : d->axes)
+    for(Control *button : d->buttons)
     {
-        axis->clearContextAssociation();
+        if(auto result = func(*button)) return result;
     }
-    for(InputDeviceHatControl *hat : d->hats)
+    for(Control *hat : d->hats)
     {
-        hat->clearContextAssociation();
+        if(auto result = func(*hat)) return result;
     }
+    return LoopContinue;
 }
 
 void InputDevice::consoleRegister()
@@ -683,12 +716,14 @@ dint InputDevice::toButtonId(String const &name) const
     return -1;
 }
 
+bool InputDevice::hasAxis(de::dint id) const
+{
+    return (id >= 0 && id < d->axes.count());
+}
+
 InputDeviceAxisControl &InputDevice::axis(dint id) const
 {
-    if(id >= 0 && id < d->axes.count())
-    {
-        return *d->axes.at(id);
-    }
+    if(hasAxis(id)) return *d->axes.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
 }
@@ -705,12 +740,14 @@ int InputDevice::axisCount() const
     return d->axes.count();
 }
 
+bool InputDevice::hasButton(de::dint id) const
+{
+    return (id >= 0 && id < d->buttons.count());
+}
+
 InputDeviceButtonControl &InputDevice::button(dint id) const
 {
-    if(id >= 0 && id < d->buttons.count())
-    {
-        return *d->buttons.at(id);
-    }
+    if(hasButton(id)) return *d->buttons.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
 }
@@ -731,12 +768,14 @@ int InputDevice::buttonCount() const
     return d->buttons.count();
 }
 
+bool InputDevice::hasHat(de::dint id) const
+{
+    return (id >= 0 && id < d->hats.count());
+}
+
 InputDeviceHatControl &InputDevice::hat(dint id) const
 {
-    if(id >= 0 && id < d->hats.count())
-    {
-        return *d->hats.at(id);
-    }
+    if(hasHat(id)) return *d->hats.at(id);
     /// @throw MissingControlError  The given id is invalid.
     throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
 }
@@ -952,6 +991,15 @@ InputDevice *I_DevicePtr(int id)
     return nullptr;
 }
 
+LoopResult I_ForAllDevices(std::function<LoopResult (InputDevice &)> func)
+{
+    for(InputDevice *device : devices)
+    {
+        if(auto result = func(*device)) return result;
+    }
+    return LoopContinue;
+}
+
 void I_ResetAllDevices()
 {
     for(InputDevice *dev : devices)
@@ -1020,7 +1068,11 @@ void I_ClearAllDeviceContextAssociations()
 {
     for(InputDevice *dev : devices)
     {
-        dev->clearAllControlContextAssociations();
+        dev->forAllControls([] (InputDeviceControl &control)
+        {
+            control.clearBindContextAssociation();
+            return LoopContinue;
+        });
     }
 }
 
@@ -1322,9 +1374,15 @@ bool I_ConvertEvent(ddevent_t const *ddEvent, event_t *ev)
 static void updateAllDeviceAxes(timespan_t ticLength)
 {
     for(InputDevice *dev : devices)
-    for(int i = 0; i < dev->axisCount(); ++i)
     {
-        dev->axis(i).update(ticLength);
+        dev->forAllControls([&ticLength] (InputDeviceControl &control)
+        {
+            if(auto *axis = control.maybeAs<InputDeviceAxisControl>())
+            {
+                axis->update(ticLength);
+            }
+            return LoopContinue;
+        });
     }
 }
 
@@ -1709,11 +1767,10 @@ static void endDrawStateForVisual(Point2Raw const *origin)
     FR_PopAttrib();
 }
 
-void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw const *_origin,
+void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw const *_origin,
     RectRaw *geometry)
 {
 #define BORDER 4
-    DENG2_ASSERT(device);
 
     float const upColor[] = { .3f, .3f, .3f, .6f };
     float const downColor[] = { .3f, .3f, 1, .6f };
@@ -1726,7 +1783,7 @@ void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw c
         geometry->size.width = geometry->size.height = 0;
     }
 
-    InputDeviceButtonControl const &button = device->button(buttonID);
+    InputDeviceButtonControl const &button = device.button(buttonID);
 
     Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
@@ -1742,7 +1799,7 @@ void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw c
         // Use the symbolic name.
         buttonLabel = button.name().toUtf8().constData();
     }
-    else if(device == I_DevicePtr(IDEV_KEYBOARD))
+    else if(&device == I_DevicePtr(IDEV_KEYBOARD))
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.
@@ -1788,7 +1845,7 @@ void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw c
     glDisable(GL_TEXTURE_2D);
 
     // Mark expired?
-    if(button.association().flags & IDAF_EXPIRED)
+    if(button.bindContextAssociation() & InputDeviceControl::Expired)
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
@@ -1801,7 +1858,7 @@ void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw c
     }
 
     // Mark triggered?
-    if(button.association().flags & IDAF_TRIGGERED)
+    if(button.bindContextAssociation() & InputDeviceControl::Triggered)
     {
         int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
@@ -1827,36 +1884,32 @@ void Rend_RenderButtonStateVisual(InputDevice *device, int buttonID, Point2Raw c
 #undef BORDER
 }
 
-void Rend_RenderAxisStateVisual(InputDevice *device, int /*axisID*/, Point2Raw const *origin,
+void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, Point2Raw const *origin,
     RectRaw *geometry)
 {
-    DENG2_ASSERT(device);
-
     if(geometry)
     {
         geometry->origin.x = geometry->origin.y = 0;
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevaxis_t const &axis = device->axis(axisID);
+    //inputdevaxis_t const &axis = device.axis(axisID);
 
     initDrawStateForVisual(origin);
 
     endDrawStateForVisual(origin);
 }
 
-void Rend_RenderHatStateVisual(InputDevice *device, int /*hatID*/, Point2Raw const *origin,
+void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, Point2Raw const *origin,
     RectRaw *geometry)
 {
-    DENG2_ASSERT(device);
-
     if(geometry)
     {
         geometry->origin.x = geometry->origin.y = 0;
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevhat_t const &hat = device->hat(hatID);
+    //inputdevhat_t const &hat = device.hat(hatID);
 
     initDrawStateForVisual(origin);
 
@@ -1891,7 +1944,7 @@ struct inputdev_layout_t
     uint numGroups;
 };
 
-static void drawControlGroup(InputDevice *device, inputdev_layout_controlgroup_t const *group,
+static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t const *group,
     Point2Raw *_origin, RectRaw *retGeometry)
 {
 #define SPACING  2
@@ -1902,7 +1955,7 @@ static void drawControlGroup(InputDevice *device, inputdev_layout_controlgroup_t
         retGeometry->size.width = retGeometry->size.height = 0;
     }
 
-    if(!device || !group) return;
+    if(!group) return;
 
     Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
@@ -1916,11 +1969,9 @@ static void drawControlGroup(InputDevice *device, inputdev_layout_controlgroup_t
 
         switch(ctrl->type)
         {
-        case IDC_KEY: Rend_RenderButtonStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
-
         case IDC_AXIS: Rend_RenderAxisStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
-
-        case IDC_HAT: Rend_RenderHatStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
+        case IDC_KEY:  Rend_RenderButtonStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
+        case IDC_HAT:  Rend_RenderHatStateVisual(device, ctrl->id, &origin, &ctrlGeom); break;
 
         default:
             App_Error("drawControlGroup: Unknown inputdev_controltype_t: %i.", (int)ctrl->type);
@@ -1954,7 +2005,7 @@ static void drawControlGroup(InputDevice *device, inputdev_layout_controlgroup_t
 /**
  * Render a visual representation of the current state of the specified device.
  */
-void Rend_RenderInputDeviceStateVisual(InputDevice *device, inputdev_layout_t const *layout,
+void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t const *layout,
     Point2Raw const *origin, Size2Raw *retVisualDimensions)
 {
 #define SPACING  2
@@ -1968,7 +2019,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice *device, inputdev_layout_t co
     }
 
     if(novideo || isDedicated) return; // Not for us.
-    if(!device || !layout) return;
+    if(!layout) return;
 
     // Init render state.
     FR_SetFont(fontFixed);
@@ -1982,12 +2033,12 @@ void Rend_RenderInputDeviceStateVisual(InputDevice *device, inputdev_layout_t co
     Rect *visualGeom = nullptr;
 
     // Draw device name first.
-    if(!device->title().isEmpty())
+    if(!device.title().isEmpty())
     {
         Size2Raw size;
 
         glEnable(GL_TEXTURE_2D);
-        Block const fullName(device->title().toUtf8());
+        Block const fullName(device.title().toUtf8());
         FR_DrawText(fullName.constData(), nullptr/*no offset*/);
         glDisable(GL_TEXTURE_2D);
 
@@ -2339,19 +2390,19 @@ void Rend_DrawInputDeviceVisuals()
 
     if(devRendKeyState)
     {
-        Rend_RenderInputDeviceStateVisual(I_DevicePtr(IDEV_KEYBOARD), &keyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_Device(IDEV_KEYBOARD), &keyLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if(devRendMouseState)
     {
-        Rend_RenderInputDeviceStateVisual(I_DevicePtr(IDEV_MOUSE), &mouseLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_Device(IDEV_MOUSE), &mouseLayout, &origin, &dimensions);
         origin.y += dimensions.height + SPACING;
     }
 
     if(devRendJoyState)
     {
-        Rend_RenderInputDeviceStateVisual(I_DevicePtr(IDEV_JOY1), &joyLayout, &origin, &dimensions);
+        Rend_RenderInputDeviceStateVisual(I_Device(IDEV_JOY1), &joyLayout, &origin, &dimensions);
     }
 
     glMatrixMode(GL_PROJECTION);

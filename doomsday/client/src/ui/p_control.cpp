@@ -336,9 +336,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
 {
 #ifdef __CLIENT__
-    struct bcontext_s* bc = 0;
-    struct dbinding_s* binds = 0;
-    playercontrol_t* pc = P_PlayerControlById(control);
+    playercontrol_t *pc = P_PlayerControlById(control);
 
     // Check that this is really a numeric control.
     DENG_ASSERT(pc);
@@ -348,7 +346,8 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    bcontext_t *bc           = nullptr;
+    struct dbinding_s *binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     if(!binds) return false;
 
     // There must be bindings to active input devices.
@@ -369,28 +368,26 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
 }
 
 #undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
+DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset)
 {
 #ifdef __CLIENT__
-    float tmp;
-    struct bcontext_s* bc = 0;
-    struct dbinding_s* binds = 0;
-    int localNum;
-    playercontrol_t* pc = P_PlayerControlById(control);
+    playercontrol_t *pc = P_PlayerControlById(control);
 
     // Check that this is really a numeric control.
     DENG_ASSERT(pc);
     DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
 
     // Ignore NULLs.
+    float tmp;
     if(!pos) pos = &tmp;
     if(!relativeOffset) relativeOffset = &tmp;
 
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    localNum = P_ConsoleToLocal(playerNum);
-    binds = B_GetControlDeviceBindings(localNum, control, &bc);
+    int localNum             = P_ConsoleToLocal(playerNum);
+    bcontext_t *bc           = nullptr;
+    struct dbinding_s *binds = B_GetControlDeviceBindings(localNum, control, &bc);
     B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.

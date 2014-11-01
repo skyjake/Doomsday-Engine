@@ -39,14 +39,15 @@ typedef struct controlbinding_s {
                                            higher-priority contexts override it. */
 #define BCF_ACQUIRE_ALL         0x08  ///< Context will acquire all unacquired states.
 
-typedef struct bcontext_s {
+struct bcontext_t
+{
     char *name;  ///< Name of the binding context.
     byte flags;
     evbinding_t commandBinds;  ///< List of command bindings.
     controlbinding_t controlBinds;
     int (*ddFallbackResponder)(ddevent_t const *ddev);
     int (*fallbackResponder)(event_t *event);
-} bcontext_t;
+};
 
 /**
  * Marks all device states with the highest-priority binding context to

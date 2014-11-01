@@ -75,25 +75,25 @@ void B_UpdateAllDeviceStateAssociations()
             {
             case E_TOGGLE: {
                 InputDeviceButtonControl &button = dev.button(eb->id);
-                if(!button.association().bContext)
+                if(!button.hasBindContext())
                 {
-                    button.association().bContext = bc;
+                    button.setBindContext(bc);
                 }
                 break; }
 
             case E_AXIS: {
                 InputDeviceAxisControl &axis = dev.axis(eb->id);
-                if(!axis.association().bContext)
+                if(!axis.hasBindContext())
                 {
-                    axis.association().bContext = bc;
+                    axis.setBindContext(bc);
                 }
                 break; }
 
             case E_ANGLE: {
                 InputDeviceHatControl &hat = dev.hat(eb->id);
-                if(!hat.association().bContext)
+                if(!hat.hasBindContext())
                 {
-                    hat.association().bContext = bc;
+                    hat.setBindContext(bc);
                 }
                 break; }
 
@@ -119,25 +119,25 @@ void B_UpdateAllDeviceStateAssociations()
                 {
                 case CBD_TOGGLE: {
                     InputDeviceButtonControl &button = dev.button(db->id);
-                    if(!button.association().bContext)
+                    if(!button.hasBindContext())
                     {
-                        button.association().bContext = bc;
+                        button.setBindContext(bc);
                     }
                     break; }
 
                 case CBD_AXIS: {
                     InputDeviceAxisControl &axis = dev.axis(db->id);
-                    if(!axis.association().bContext)
+                    if(!axis.hasBindContext())
                     {
-                        axis.association().bContext = bc;
+                        axis.setBindContext(bc);
                     }
                     break; }
 
                 case CBD_ANGLE: {
                     InputDeviceHatControl &hat = dev.hat(db->id);
-                    if(!hat.association().bContext)
+                    if(!hat.hasBindContext())
                     {
-                        hat.association().bContext = bc;
+                        hat.setBindContext(bc);
                     }
                     break; }
 
@@ -152,96 +152,54 @@ void B_UpdateAllDeviceStateAssociations()
         // relevant states.
         if(bc->flags & BCF_ACQUIRE_KEYBOARD)
         {
-            InputDevice &dev = I_Device(IDEV_KEYBOARD);
-
-            for(int k = 0; k < dev.buttonCount(); ++k)
+            InputDevice &device = I_Device(IDEV_KEYBOARD);
+            if(device.isActive())
             {
-                InputDeviceButtonControl &button = dev.button(k);
-                if(!button.association().bContext)
+                device.forAllControls([&bc] (InputDeviceControl &control)
                 {
-                    button.association().bContext = bc;
-                }
+                    if(!control.hasBindContext())
+                    {
+                        control.setBindContext(bc);
+                    }
+                    return LoopContinue;
+                });
             }
         }
 
         if(bc->flags & BCF_ACQUIRE_ALL)
         {
-            for(int k = 0; k < NUM_INPUT_DEVICES; ++k)
+            I_ForAllDevices([&bc] (InputDevice &device)
             {
-                InputDevice *dev = I_DevicePtr(k);
-                if(!dev || !dev->isActive()) continue;
-
-                for(int m = 0; m < dev->buttonCount(); ++m)
+                if(device.isActive())
                 {
-                    InputDeviceButtonControl &button = dev->button(m);
-                    if(!button.association().bContext)
+                    device.forAllControls([&bc] (InputDeviceControl &control)
                     {
-                        button.association().bContext = bc;
-                    }
+                        if(!control.hasBindContext())
+                        {
+                            control.setBindContext(bc);
+                        }
+                        return LoopContinue;
+                    });
                 }
-                for(int m = 0; m < dev->axisCount(); ++m)
-                {
-                    InputDeviceAxisControl &axis = dev->axis(m);
-                    if(!axis.association().bContext)
-                    {
-                        axis.association().bContext = bc;
-                    }
-                }
-                for(int m = 0; m < dev->hatCount(); ++m)
-                {
-                    InputDeviceHatControl &hat = dev->hat(m);
-                    if(!hat.association().bContext)
-                    {
-                        hat.association().bContext = bc;
-                    }
-                }
-            }
+                return LoopContinue;
+            });
         }
     }
 
     // Now that we know what are the updated context associations, let's check
     // the devices and see if any of the states need to be expired.
-    for(int i = 0; i < NUM_INPUT_DEVICES; ++i)
+    I_ForAllDevices([] (InputDevice &device)
     {
-        InputDevice &dev = I_Device(i);
-
-        for(int k = 0; k < dev.buttonCount(); ++k)
+        device.forAllControls([] (InputDeviceControl &control)
         {
-            InputDeviceButtonControl &button = dev.button(k);
-            inputdevassoc_t &assoc = button.association();
-
-            if(assoc.bContext != assoc.prevBContext && button.isDown())
+            if(!control.inDefaultState())
             {
-                // No longer valid.
-                assoc.flags |= IDAF_EXPIRED;
-                assoc.flags &= ~IDAF_TRIGGERED; // Not any more.
+                control.expireBindContextAssociationIfChanged();
             }
-        }
-
-        for(int k = 0; k < dev.axisCount(); ++k)
-        {
-            InputDeviceAxisControl &axis = dev.axis(k);
-            inputdevassoc_t &assoc = axis.association();
-
-            if(assoc.bContext != assoc.prevBContext && axis.position() != 0)
-            {
-                // No longer valid.
-                assoc.flags |= IDAF_EXPIRED;
-            }
-        }
-
-        for(int k = 0; k < dev.hatCount(); ++k)
-        {
-            InputDeviceHatControl &hat = dev.hat(k);
-            inputdevassoc_t &assoc = hat.association();
-
-            if(assoc.bContext != assoc.prevBContext && hat.position() >= 0)
-            {
-                // No longer valid.
-                assoc.flags |= IDAF_EXPIRED;
-            }
-        }
-    }
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
 }
 
 static void B_SetContextCount(int count)

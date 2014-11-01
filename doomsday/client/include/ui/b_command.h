@@ -24,6 +24,8 @@
 #include "b_util.h"
 #include "dd_input.h"
 
+struct bcontext_t;
+
 typedef struct evbinding_s {
     struct evbinding_s *prev;  ///< Previous in list of bindings.
     struct evbinding_s *next;  ///< Next in list of bindings.
@@ -86,6 +88,6 @@ evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *comma
  * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
  */
 de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-                                        struct bcontext_s *eventClass, bool respectHigherAssociatedContexts);
+                                        bcontext_t *eventClass, bool respectHigherAssociatedContexts);
 
 #endif // CLIENT_INPUTSYSTEM_EVENTBINDING_H

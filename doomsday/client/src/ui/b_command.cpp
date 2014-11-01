@@ -28,6 +28,8 @@
 
 #include <de/Log>
 
+using namespace de;
+
 void B_InitCommandBindingList(evbinding_t *listRoot)
 {
     DENG2_ASSERT(listRoot);
@@ -135,7 +137,7 @@ static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(eb->device, Str_Text(str), &eb->type, &eb->id))
+        if(!B_ParseJoystickTypeAndId(I_Device(eb->device), Str_Text(str), &eb->type, &eb->id))
         {
             return false;
         }
@@ -337,10 +339,10 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
     }
 }
 
-de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-    struct bcontext_s *eventClass, bool respectHigherAssociatedContexts)
+Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
+    bcontext_t *bindContext, bool respectHigherAssociatedContexts)
 {
-    DENG2_ASSERT(eb);
+    DENG2_ASSERT(eb && bindContext);
 
     if(eb->device != event->device) return nullptr;
     if(eb->type != event->type) return nullptr;
@@ -355,23 +357,24 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
             return nullptr;
         }
     }
+    DENG2_ASSERT(dev);
 
     switch(event->type)
     {
-    case E_TOGGLE:
-        DENG2_ASSERT(dev && eventClass);
-
+    case E_TOGGLE: {
         if(eb->id != event->toggle.id)
             return nullptr;
 
+        InputDeviceButtonControl &button = dev->button(eb->id);
+
         if(respectHigherAssociatedContexts)
         {
-            if(eventClass && dev->button(eb->id).association().bContext != eventClass)
+            if(button.bindContext() != bindContext)
                 return nullptr; // Shadowed by a more important active class.
         }
 
         // We're checking it, so clear the triggered flag.
-        dev->button(eb->id).association().flags &= ~IDAF_TRIGGERED;
+        button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
 
         // Is the state as required?
         switch(eb->state)
@@ -402,15 +405,13 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
 
         default: return nullptr;
         }
-        break;
+        break; }
 
     case E_AXIS:
-        DENG2_ASSERT(dev && eventClass);
-
         if(eb->id != event->axis.id)
             return nullptr;
 
-        if(eventClass && dev->axis(eb->id).association().bContext != eventClass)
+        if(bindContext && dev->axis(eb->id).bindContext() != bindContext)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -421,12 +422,10 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
         break;
 
     case E_ANGLE:
-        DENG2_ASSERT(dev && eventClass);
-
         if(eb->id != event->angle.id)
             return nullptr;
 
-        if(eventClass && dev->hat(eb->id).association().bContext != eventClass)
+        if(bindContext && dev->hat(eb->id).bindContext() != bindContext)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -454,7 +453,7 @@ de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     Str_Reserve(&command, strlen(eb->command));
     B_SubstituteInCommand(eb->command, event, eb, &command);
 
-    de::Action *act = new CommandAction(Str_Text(&command), CMDS_BIND);
+    Action *act = new CommandAction(Str_Text(&command), CMDS_BIND);
 
     Str_Free(&command);
     return act;
@@ -465,7 +464,7 @@ void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
     DENG2_ASSERT(eb && str);
 
     Str_Clear(str);
-    B_AppendDeviceDescToString(eb->device, eb->type, eb->id, str);
+    B_AppendDeviceDescToString(I_Device(eb->device), eb->type, eb->id, str);
 
     switch(eb->type)
     {

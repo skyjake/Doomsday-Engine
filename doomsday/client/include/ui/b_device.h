@@ -22,6 +22,8 @@
 
 #include "b_util.h"
 
+struct bcontext_t;
+
 typedef enum cbdevtype_e {
     CBD_TOGGLE = E_TOGGLE,
     CBD_AXIS   = E_AXIS,
@@ -65,7 +67,7 @@ void B_DestroyDeviceBinding(dbinding_t *cb);
 void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str);
 
 void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
-    float *relativeOffset, struct bcontext_s *controlClass, dd_bool allowTriggered);
+    float *relativeOffset, bcontext_t *controlClass, dd_bool allowTriggered);
 
 #endif // CLIENT_INPUTSYSTEM_DEVICEBINDING_H
 

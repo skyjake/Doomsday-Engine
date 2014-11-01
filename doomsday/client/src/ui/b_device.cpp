@@ -25,6 +25,8 @@
 #include "ui/b_main.h"
 #include "ui/b_context.h"
 
+using namespace de;
+
 #define EVTYPE_TO_CBDTYPE(evt)  ((evt) == E_AXIS? CBD_AXIS : (evt) == E_TOGGLE? CBD_TOGGLE : CBD_ANGLE)
 #define CBDTYPE_TO_EVTYPE(cbt)  ((cbt) == CBD_AXIS? E_AXIS : (cbt) == CBD_TOGGLE? E_TOGGLE : E_ANGLE)
 
@@ -108,7 +110,7 @@ dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(cb->device, Str_Text(str), &type, &cb->id))
+        if(!B_ParseJoystickTypeAndId(I_Device(cb->device), Str_Text(str), &type, &cb->id))
         {
             return false;
         }
@@ -275,27 +277,27 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         case CBD_TOGGLE: {
             InputDeviceButtonControl *button = &dev->button(cb->id);
 
-            if(controlClass && button->association().bContext != controlClass)
+            if(controlClass && button->bindContext() != controlClass)
                 continue; // Shadowed by a more important active class.
 
             // Expired?
-            if(button->association().flags & IDAF_EXPIRED)
+            if(button->bindContextAssociation() & InputDeviceControl::Expired)
                 break;
 
             devicePos = (button->isDown() ||
-                         (allowTriggered && (button->association().flags & IDAF_TRIGGERED))? 1.0f : 0.0f);
+                         (allowTriggered && (button->bindContextAssociation() & InputDeviceControl::Triggered))? 1.0f : 0.0f);
             deviceTime = button->time();
 
             // We've checked it, so clear the flag.
-            button->association().flags &= ~IDAF_TRIGGERED;
+            button->setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
             break; }
 
         case CBD_AXIS: {
             InputDeviceAxisControl *axis = &dev->axis(cb->id);
 
-            if(controlClass && axis->association().bContext != controlClass)
+            if(controlClass && axis->bindContext() != controlClass)
             {
-                if(!B_FindDeviceBinding(axis->association().bContext, cb->device, CBD_AXIS, cb->id))
+                if(!B_FindDeviceBinding(axis->bindContext(), cb->device, CBD_AXIS, cb->id))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type() == InputDeviceAxisControl::Pointer)
@@ -307,8 +309,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
                 continue; // Shadowed by a more important active class.
             }
 
-            // Expired?
-            if(axis->association().flags & IDAF_EXPIRED)
+            if(axis->bindContextAssociation() & InputDeviceControl::Expired)
                 break;
 
             if(axis->type() == InputDeviceAxisControl::Pointer)
@@ -326,10 +327,10 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         case CBD_ANGLE: {
             InputDeviceHatControl *hat = &dev->hat(cb->id);
 
-            if(controlClass && hat->association().bContext != controlClass)
+            if(controlClass && hat->bindContext() != controlClass)
                 continue; // Shadowed by a more important active class.
 
-            if(hat->association().flags & IDAF_EXPIRED)
+            if(hat->bindContextAssociation() & InputDeviceControl::Expired)
                 break;
 
             devicePos  = (hat->position() == cb->angle? 1.0f : 0.0f);
@@ -392,7 +393,7 @@ void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str)
     Str_Clear(str);
 
     // Name of the device and the key/axis/hat.
-    B_AppendDeviceDescToString(b->device, CBDTYPE_TO_EVTYPE(b->type), b->id, str);
+    B_AppendDeviceDescToString(I_Device(b->device), CBDTYPE_TO_EVTYPE(b->type), b->id, str);
 
     if(b->type == CBD_ANGLE)
     {

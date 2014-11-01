@@ -23,6 +23,8 @@
 #include <de/types.h>
 #include "dd_input.h"
 
+struct bcontext_t;
+
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
 #define UI_BINDING_CONTEXT_NAME         "deui"
@@ -69,7 +71,7 @@ struct evbinding_s *B_BindCommand(char const *eventDesc, char const *command);
 
 struct dbinding_s *B_BindControl(char const *controlDesc, char const *device);
 
-struct dbinding_s *B_GetControlDeviceBindings(int localNum, int control, struct bcontext_s **bContext);
+struct dbinding_s *B_GetControlDeviceBindings(int localNum, int control, bcontext_t **bContext);
 
 bool B_UnbindCommand(char const *command);
 

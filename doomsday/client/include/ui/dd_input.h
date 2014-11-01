@@ -20,6 +20,8 @@
 #ifndef CLIENT_CORE_INPUT_H
 #define CLIENT_CORE_INPUT_H
 
+#include <functional>
+#include <QFlags>
 #include <de/smoother.h>
 #include <de/Error>
 #include <de/Event>
@@ -27,20 +29,7 @@
 
 #include "api_event.h"
 
-// Binding association flags:
-#define IDAF_EXPIRED    0x1  /** The state has expired. The device is considered to remain
-                                 in default state until the flag gets cleared (which happens when
-                                 the real device state returns to its default). */
-#define IDAF_TRIGGERED  0x2  /** The state has been triggered. This is cleared when someone checks
-                                 the device state. (Only for toggles.) */
-
-// Binding association. How the device control relates to binding contexts.
-struct inputdevassoc_t
-{
-    struct bcontext_s *bContext;
-    struct bcontext_s *prevBContext;
-    int flags;
-};
+struct bcontext_t;
 
 class InputDeviceAxisControl;
 class InputDeviceButtonControl;
@@ -66,11 +55,34 @@ public:
         /// No InputDevice is associated with the control. @ingroup errors
         DENG2_ERROR(MissingDeviceError);
 
+        /**
+         * How the control state relates to binding contexts.
+         */
+        enum BindContextAssociationFlag {
+            /// The state has expired. The control is considered to remain in default
+            /// state until the flag gets cleared (which happens when the real control
+            /// state returns to its default).
+            Expired      = 0x1,
+
+            /// The state has been triggered. This is cleared when someone checks
+            /// the control state. (Only for toggles).
+            Triggered    = 0x2,
+
+            DefaultFlags = 0
+        };
+        Q_DECLARE_FLAGS(BindContextAssociation, BindContextAssociationFlag)
+
     public:
         explicit Control(InputDevice *device = nullptr);
-        virtual ~Control() {}
+        virtual ~Control();
 
         DENG2_AS_IS_METHODS()
+
+        /**
+         * Returns @c true if the control is presently in its default state.
+         * (e.g., button is not pressed, axis is at center, etc...).
+         */
+        virtual bool inDefaultState() const = 0;
 
         /**
          * Reset the control back to its default state. Note that any attributed
@@ -127,10 +139,44 @@ public:
         void setDevice(InputDevice *newDevice);
 
         /**
-         * Provides access to the binding association data of the control.
+         * Returns the bcontext_t attributed to the control; otherwise @c nullptr.
+         *
+         * @see hasBindContext(), setBindContext()
          */
-        inputdevassoc_t &association();
-        inputdevassoc_t const &association() const;
+        bcontext_t *bindContext() const;
+
+        /**
+         * Returns @c true of a bcontext_t is attributed to the control.
+         *
+         * @see bindContext(), setBindContext()
+         */
+        inline bool hasBindContext() const { return bindContext() != nullptr; }
+
+        /**
+         * Change the attributed bcontext_t to @a newContext.
+         *
+         * @param newContext  bcontext_t to attribute. Ownership is unaffected.
+         *
+         * @see hasBindContext(), bindContext()
+         */
+        void setBindContext(bcontext_t *newContext);
+
+        /**
+         * Returns the BindContextAssociation flags for the control.
+         */
+        BindContextAssociation bindContextAssociation() const;
+
+        /**
+         * Change the BindContextAssociation flags for the control.
+         *
+         * @param flagsToChange  Association flags to change.
+         * @param op             Logical operation to perform.
+         */
+        void setBindContextAssociation(BindContextAssociation const &flagsToChange,
+                                       de::FlagOp op = de::SetFlags);
+
+        void clearBindContextAssociation();
+        void expireBindContextAssociationIfChanged();
 
         /**
          * Register the console commands and variables of the control.
@@ -138,9 +184,7 @@ public:
         virtual void consoleRegister() {}
 
     private:
-        InputDevice *_device;
-        de::String _name;        ///< Symbolic
-        inputdevassoc_t _assoc;  ///< Binding association.
+        DENG2_PRIVATE(d)
     };
 
 public:
@@ -196,7 +240,10 @@ public:
      */
     void reset();
 
-    void clearAllControlContextAssociations();
+    /**
+     * Iterate through all the controls of the device.
+     */
+    de::LoopResult forAllControls(std::function<de::LoopResult (Control &)> func);
 
     /**
      * Translate a symbolic axis @a name to the associated unique axis id.
@@ -204,6 +251,11 @@ public:
      * @return  Index of the named axis control if found, otherwise @c -1.
      */
     de::dint toAxisId(de::String const &name) const;
+
+    /**
+     * Returns @c true if @a id is a known axis control.
+     */
+    bool hasAxis(de::dint id) const;
 
     /**
      * Lookup an axis control by unique @a id.
@@ -234,6 +286,11 @@ public:
     de::dint toButtonId(de::String const &name) const;
 
     /**
+     * Returns @c true if @a id is a known button control.
+     */
+    bool hasButton(de::dint id) const;
+
+    /**
      * Lookup a button control by unique @a id.
      *
      * @param id  Unique id of the button control.
@@ -248,6 +305,11 @@ public:
      * Returns the number of button controls of the device.
      */
     de::dint buttonCount() const;
+
+    /**
+     * Returns @c true if @a id is a known hat control.
+     */
+    bool hasHat(de::dint id) const;
 
     /**
      * Lookup a hat control by unique @a id.
@@ -273,6 +335,8 @@ public:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(InputDevice::Control::BindContextAssociation)
 
 typedef InputDevice::Control InputDeviceControl;
 
@@ -341,9 +405,9 @@ public:
     de::duint time() const;
 
     void update(timespan_t ticLength);
-    void clearContextAssociation();
 
     de::String description() const;
+    bool inDefaultState() const;
     void reset();
     void consoleRegister();
 
@@ -377,9 +441,8 @@ public:
      */
     de::duint time() const;
 
-    void clearContextAssociation();
-
     de::String description() const;
+    bool inDefaultState() const;
     void reset();
 
 private:
@@ -413,9 +476,8 @@ public:
      */
     de::duint time() const;
 
-    void clearContextAssociation();
-
     de::String description() const;
+    bool inDefaultState() const;
 
 private:
     de::dint _pos   = -1;  ///< Current position. @c -1= centered.
@@ -539,6 +601,11 @@ InputDevice &I_Device(int id);
  * @return  Pointer to the associated InputDevice; otherwise @c nullptr.
  */
 InputDevice *I_DevicePtr(int id);
+
+/**
+ * Iterate through all the InputDevices.
+ */
+de::LoopResult I_ForAllDevices(std::function<de::LoopResult (InputDevice &)> func);
 
 /**
  * Initializes the key mappings to the default values.
