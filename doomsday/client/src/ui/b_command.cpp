@@ -505,7 +505,7 @@ void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
     }
 }
 
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device)
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device)
 {
     DENG2_ASSERT(listRoot);
     if(command && command[0])
@@ -514,7 +514,7 @@ evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *comma
         {
             if(qstricmp(i->command, command)) continue;
 
-            if((device < 0 || device >= NUM_INPUT_DEVICES) || i->device == device)
+            if(device >= NUM_INPUT_DEVICES || i->device == device)
             {
                 return i;
             }

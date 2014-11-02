@@ -64,6 +64,14 @@ DENG2_PIMPL(Font)
         updateMetrics();
     }
 
+    ~Instance()
+    {
+        releaseRef(heightRule);
+        releaseRef(ascentRule);
+        releaseRef(descentRule);
+        releaseRef(lineSpacingRule);
+    }
+
     void createRules()
     {
         heightRule      = new ConstantRule(0);

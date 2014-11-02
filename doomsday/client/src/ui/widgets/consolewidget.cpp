@@ -51,7 +51,6 @@ DENG2_OBSERVES(Variable, Change)
     GuiWidget *buttons = nullptr;
     ButtonWidget *button = nullptr;
     ButtonWidget *promptButton = nullptr;
-    LabelWidget *promptText = nullptr;
     PopupMenuWidget *logMenu = nullptr;
     PopupMenuWidget *promptMenu = nullptr;
     ConsoleCommandWidget *cmdLine = nullptr;
@@ -201,9 +200,7 @@ DENG2_OBSERVES(Variable, Change)
         }
 
         // Update the prompt to reflect the mode.
-        promptText->set(Background(Background::Rounded,
-                                   style().colors().colorf(yes? "altaccent" : "text"), 6));
-        promptText->setText(yes? _E(l)_E(F) "DS" : _E(l) "Cmd");
+        promptButton->setText(yes? _E(b)_E(F) "$" : ">");
 
         // Bottom of the console must follow the active command line height.
         self.rule().setInput(Rule::Bottom, next->rule().top() - style().rules().rule("unit"));
@@ -300,19 +297,9 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     // Button for opening the console prompt menu.
     d->promptButton = new ButtonWidget;
     d->promptButton->addEventHandler(new Instance::RightClick(d));
-    d->promptButton->add(d->promptText = new LabelWidget);
-    d->promptText->setFont("small");
-    d->promptText->margins().set("");
-    auto const &unit = style().rules().rule("unit");
-    auto const &small = style().fonts().font("small").height();
-    d->promptText->rule()
-            .setMidAnchorY(d->promptButton->rule().midY())
-            .setInput(Rule::Height,  small + style().rules().rule("dialog.gap")*2)
-            .setInput(Rule::Left,    d->promptButton->rule().left()  + unit)
-            .setInput(Rule::Right,   d->promptButton->rule().right() - unit);
 
     d->promptButton->rule()
-            .setInput(Rule::Width,  style().rules().rule("console.prompt.width"))
+            .setInput(Rule::Width,  d->promptButton->rule().height())
             .setInput(Rule::Height, d->buttons->rule().height())
             .setInput(Rule::Left,   d->button->rule().right())
             .setInput(Rule::Top,    d->buttons->rule().top());

@@ -145,8 +145,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         }
     };
 
-    Instance(Public *i)
-        : Base(i)
+    Instance(Public *i) : Base(i)
     {
         App::app().audienceForStartupComplete() += this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() += this;

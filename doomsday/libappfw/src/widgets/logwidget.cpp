@@ -382,6 +382,7 @@ public Font::RichFormat::IStyle
     ~Instance()
     {
         LogBuffer::get().removeSink(sink);
+        DENG2_ASSERT(cache.isEmpty());
     }
 
     void clear()
@@ -392,8 +393,8 @@ public Font::RichFormat::IStyle
 
     void clearCache()
     {
-        entryAtlas->clear();
-        cache.clear(); // Ongoing text wrapping cancelled automatically.
+        qDeleteAll(cache); // Ongoing text wrapping cancelled automatically.
+        cache.clear();
     }
 
     void updateStyle()
@@ -489,6 +490,7 @@ public Font::RichFormat::IStyle
 
         delete entryAtlas;
         entryAtlas = 0;
+        scrollTex = Id::None;
 
         contents.clear();
         background.clear();

@@ -41,19 +41,6 @@ public:
     Counted();
 
     /**
-     * Converts the reference-counted object to a delegated one. Delegated
-     * reference counting means that references held to and released from the
-     * object actually are held to/released from the delegate target.
-     *
-     * @note The reference count of this object is ignored (set to zero). This
-     * object must then be deleted directly rathen than via releasing (as
-     * releasing would actually attempt to release the delegate target).
-     *
-     * @param delegate  Delegate target.
-     */
-    void setDelegate(Counted const *delegate);
-
-    /**
      * Acquires a reference to the reference-counted object. Use the
      * template to get the correct type of pointer from a derived class.
      *
@@ -102,8 +89,6 @@ public:
     mutable dint _refCount;
 
 private:
-    Counted const *_delegate;
-
     template <typename Type>
     friend Type *refless(Type *counted);
 

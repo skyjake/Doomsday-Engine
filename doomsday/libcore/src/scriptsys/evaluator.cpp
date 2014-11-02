@@ -90,6 +90,7 @@ DENG2_PIMPL(Evaluator)
         foreach(ScopedResult const &i, results)
         {
             delete i.result;
+            delete i.scope;
         }
         results.clear();
     }

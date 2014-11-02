@@ -48,10 +48,10 @@ DENG_GUI_PIMPL(TutorialWidget)
     };
 
     Step current;
-    MessageDialog *dlg;
+    MessageDialog *dlg = nullptr;
     LabelWidget *highlight;
-    NotificationAreaWidget *notifs; ///< Fake notifications just for an example.
-    LabelWidget *exampleAlert;
+    NotificationAreaWidget *notifs = nullptr; ///< Fake notifications just for an example.
+    UniqueWidgetPtr<LabelWidget> exampleAlert;
     QTimer flashing;
     bool taskBarInitiallyOpen;
     Untrapper untrapper;
@@ -59,21 +59,16 @@ DENG_GUI_PIMPL(TutorialWidget)
     Instance(Public *i)
         : Base(i)
         , current(Welcome)
-        , dlg(0)
-        , notifs(0)
-        , exampleAlert(0)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
     {
         // Create an example alert (lookalike).
         /// @todo There could be a class for an alert notification widget. -jk
-        exampleAlert = new LabelWidget;
+        exampleAlert.reset(new LabelWidget);
         exampleAlert->setSizePolicy(ui::Expand, ui::Expand);
         exampleAlert->setImage(style().images().image("alert"));
         exampleAlert->setOverrideImageSize(style().fonts().font("default").height().value());
         exampleAlert->setImageColor(style().colors().colorf("accent"));
-        exampleAlert->hide();
-        self.add(exampleAlert);
 
         // Highlight rectangle.
         self.add(highlight = new LabelWidget);
@@ -203,7 +198,7 @@ DENG_GUI_PIMPL(TutorialWidget)
             notifs = new NotificationAreaWidget("tutorial-notifications");
             notifs->useDefaultPlacement(ClientWindow::main().game().rule());
             root().addOnTop(notifs);
-            notifs->showChild(exampleAlert);
+            notifs->showChild(*exampleAlert);
 
             dlg->title().setText(tr("Notifications"));
             dlg->message().setText(tr("The notification area shows the current notifications. "

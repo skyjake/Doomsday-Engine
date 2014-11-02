@@ -42,7 +42,7 @@ Asset::Asset(Asset const &other) : d(new Instance(*other.d))
 
 Asset::~Asset()
 {
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->assetDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->assetBeingDeleted(*this);
 }
 
 void Asset::setState(State s)
@@ -168,7 +168,7 @@ AssetGroup::Members const &AssetGroup::all() const
     return d->deps;
 }
 
-void AssetGroup::assetDeleted(Asset &asset)
+void AssetGroup::assetBeingDeleted(Asset &asset)
 {
     if(has(asset))
     {

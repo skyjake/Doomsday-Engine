@@ -359,7 +359,7 @@ DENG2_OBSERVES(Asset, Deletion)
         self.setState(Ready);
     }
 
-    void assetDeleted(Asset &asset)
+    void assetBeingDeleted(Asset &asset)
     {
         if(texture == &asset)
         {

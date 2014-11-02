@@ -38,9 +38,9 @@ public:
     DENG2_ERROR(DeserializationError);
 
 public:
-    Statement() : _next(0) {}
+    Statement();
 
-    virtual ~Statement() {}
+    virtual ~Statement();
 
     virtual void execute(Context &context) const = 0;
 

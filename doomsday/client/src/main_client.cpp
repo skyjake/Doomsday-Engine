@@ -54,35 +54,37 @@
  */
 int main(int argc, char** argv)
 {
-    ClientApp clientApp(argc, argv);
+    int exitCode = 0;
+    {
+        ClientApp clientApp(argc, argv);
 
-    /**
-     * @todo Translations are presently disabled because lupdate can't seem to
-     * parse tr strings from inside private implementation classes. Workaround
-     * or fix is needed?
-     */
+        /**
+         * @todo Translations are presently disabled because lupdate can't seem to
+         * parse tr strings from inside private implementation classes. Workaround
+         * or fix is needed?
+         */
 #if 0
-    // Load the current locale's translation.
-    QTranslator translator;
-    translator.load(QString("client_") + QLocale::system().name());
-    clientApp.installTranslator(&translator);
+        // Load the current locale's translation.
+        QTranslator translator;
+        translator.load(QString("client_") + QLocale::system().name());
+        clientApp.installTranslator(&translator);
 #endif
 
-    try
-    {
-        clientApp.initialize();
-        return clientApp.execLoop();
-    }
-    catch(de::Error const &er)
-    {
-        qWarning() << "App init failed:\n" << er.asText();
-        QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
-        return -1;
+        try
+        {
+            clientApp.initialize();
+            exitCode = clientApp.execLoop();
+        }
+        catch(de::Error const &er)
+        {
+            qWarning() << "App init failed:\n" << er.asText();
+            QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + er.asText());
+            return -1;
+        }
     }
 
-#ifdef DENG2_DEBUG
     // Check that all reference-counted objects have been deleted.
     DENG2_ASSERT(de::Counted::totalCount == 0);
-#endif
-    return 0;
+
+    return exitCode;
 }

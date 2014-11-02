@@ -54,9 +54,9 @@ public:
     DENG2_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
 
     /**
-     * Notified when the asset is destroyed.
+     * Notified when the asset is being destroyed.
      */
-    DENG2_DEFINE_AUDIENCE2(Deletion, void assetDeleted(Asset &))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void assetBeingDeleted(Asset &))
 
 public:
     Asset(State initialState = NotReady);
@@ -134,7 +134,7 @@ public:
     Members const &all() const;
 
     // Observes contained Assets.
-    void assetDeleted(Asset &);
+    void assetBeingDeleted(Asset &);
     void assetStateChanged(Asset &);
 
 private:
