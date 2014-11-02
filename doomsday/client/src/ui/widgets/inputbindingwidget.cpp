@@ -39,7 +39,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
     String defaultEvent;
     String command;
     QStringList contexts;
-    uint device;
+    int device;
     bool useModifiers;
 
     Instance(Public *i)
