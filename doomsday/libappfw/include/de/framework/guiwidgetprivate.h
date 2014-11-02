@@ -40,28 +40,20 @@ class Style;
  */
 template <typename PublicType>
 class GuiWidgetPrivate : public Private<PublicType>,
-                         DENG2_OBSERVES(Atlas, Reposition)
+                         DENG2_OBSERVES(Atlas, Reposition),
+                         DENG2_OBSERVES(Asset, Deletion)
 {
 public:
     typedef GuiWidgetPrivate<PublicType> Base; // shadows Private<>::Base
 
 public:
-    GuiWidgetPrivate(PublicType &i)
-        : Private<PublicType>(i),
-          _observingAtlas(0)
-    {}
+    GuiWidgetPrivate(PublicType &i) : Private<PublicType>(i) {}
 
-    GuiWidgetPrivate(PublicType *i)
-        : Private<PublicType>(i),
-          _observingAtlas(0)
-    {}
+    GuiWidgetPrivate(PublicType *i) : Private<PublicType>(i) {}
 
     virtual ~GuiWidgetPrivate()
     {
-        if(_observingAtlas)
-        {
-            _observingAtlas->audienceForReposition() -= this;
-        }
+        forgetRootAtlas();
 
         /**
          * Ensure that the derived's class's glDeinit() method has been
@@ -74,6 +66,16 @@ public:
         DENG2_ASSERT(!Base::self.isInitialized());
     }
 
+    void forgetRootAtlas()
+    {
+        if(_observingAtlas)
+        {
+            _observingAtlas->audienceForReposition() -= this;
+            _observingAtlas->audienceForDeletion()   -= this;
+            _observingAtlas = nullptr;
+        }
+    }
+
     void observeRootAtlas() const
     {
         if(!_observingAtlas)
@@ -81,6 +83,7 @@ public:
             // Automatically start observing the root atlas.
             _observingAtlas = &root().atlas();
             _observingAtlas->audienceForReposition() += this;
+            _observingAtlas->audienceForDeletion()   += this;
         }
     }
 
@@ -126,8 +129,16 @@ public:
         }
     }
 
+    void assetBeingDeleted(Asset &a)
+    {
+        if(_observingAtlas == &a)
+        {
+            _observingAtlas = nullptr;
+        }
+    }
+
 private:
-    mutable AtlasTexture *_observingAtlas;
+    mutable AtlasTexture *_observingAtlas = nullptr;
 };
 
 #define DENG_GUI_PIMPL(ClassName) \
