@@ -153,28 +153,22 @@ private:
     ButtonWidget *_clickable;
 };
 
-DENG2_PIMPL(Updater),
-DENG2_OBSERVES(App, StartupComplete)
+DENG2_PIMPL(Updater)
+, DENG2_OBSERVES(App, StartupComplete)
 {
-    QNetworkAccessManager *network;
-    DownloadDialog *download;
-    UpdaterStatusWidget *status;
+    QNetworkAccessManager *network = nullptr;
+    DownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
+    UniqueWidgetPtr<UpdaterStatusWidget> status;
+    UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
     bool alwaysShowNotification;
-    UpdateAvailableDialog *availableDlg; ///< If currently open (not owned).
-    bool savingSuggested;
+    bool savingSuggested = false;
 
     VersionInfo latestVersion;
     QString latestPackageUri;
     QString latestPackageUri2; // fallback location
     QString latestLogUri;
 
-    Instance(Public *up)
-        : Base(up),
-          network(0),
-          download(0),
-          status(0),
-          availableDlg(0),
-          savingSuggested(false)
+    Instance(Public *i) : Base(i)
     {
         network = new QNetworkAccessManager(thisPublic);
 
@@ -194,18 +188,6 @@ DENG2_OBSERVES(App, StartupComplete)
             }
         }
         st.setPathToDeleteAtStartup("");
-    }
-
-    ~Instance()
-    {
-        //if(settingsDlg) delete settingsDlg;
-        if(!status->parentWidget())
-        {
-            GuiWidget::destroy(status);
-        }
-        
-        // Delete the ongoing download.
-        if(download) delete download;
     }
 
     void setupUI()
@@ -286,7 +268,7 @@ DENG2_OBSERVES(App, StartupComplete)
 
     void showNotification(bool show)
     {
-        ClientWindow::main().notifications().showOrHide(status, show);
+        ClientWindow::main().notifications().showOrHide(*status, show);
     }
 
     void showCheckingNotification()
@@ -426,7 +408,7 @@ DENG2_OBSERVES(App, StartupComplete)
 
     void startDownload()
     {
-        DENG2_ASSERT(download == 0);
+        DENG2_ASSERT(!download);
 
         // The notification provides access to the download dialog.
         showDownloadNotification();

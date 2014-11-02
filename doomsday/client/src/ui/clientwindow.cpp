@@ -92,7 +92,7 @@ DENG2_PIMPL(ClientWindow)
     bool cursorHasBeenHidden;
 
     // FPS notifications.
-    LabelWidget *fpsCounter;
+    UniqueWidgetPtr<LabelWidget> fpsCounter;
     float oldFps;
 
     /// @todo Switch dynamically between VR and plain.
@@ -120,7 +120,6 @@ DENG2_PIMPL(ClientWindow)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
         , cursorHasBeenHidden(false)
-        , fpsCounter(0)
         , oldFps(0)
         , contentXf(*i)
     {
@@ -218,7 +217,7 @@ DENG2_PIMPL(ClientWindow)
         root.add(alerts);
 
         // FPS counter for the notification area.
-        fpsCounter = new LabelWidget;
+        fpsCounter.reset(new LabelWidget);
         fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
         fpsCounter->setAlignment(ui::AlignRight);
 
@@ -474,7 +473,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateFpsNotification(float fps)
     {       
-        notifications->showOrHide(fpsCounter, self.isFPSCounterVisible());
+        notifications->showOrHide(*fpsCounter, self.isFPSCounterVisible());
 
         if(!fequal(oldFps, fps))
         {

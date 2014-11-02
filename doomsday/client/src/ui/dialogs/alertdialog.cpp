@@ -83,7 +83,7 @@ DENG_GUI_PIMPL(AlertDialog)
         }
     };
 
-    ButtonWidget *notification;
+    UniqueWidgetPtr<ButtonWidget> notification;
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
@@ -100,7 +100,7 @@ DENG_GUI_PIMPL(AlertDialog)
         , clearOnDismiss(false)
         , maxCount(100)
     {
-        notification = new ButtonWidget;
+        notification.reset(new ButtonWidget);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
@@ -129,11 +129,6 @@ DENG_GUI_PIMPL(AlertDialog)
 
     ~Instance()
     {
-        if(!notification->parentWidget())
-        {
-            GuiWidget::destroy(notification);
-        }
-        
         App::config(VAR_AUTOHIDE).audienceForChange() -= this;
     }
 
@@ -251,7 +246,7 @@ DENG_GUI_PIMPL(AlertDialog)
         // Change color to indicate new alerts.
         notification->setImageColor(style().colors().colorf("accent"));
 
-        notifs().showOrHide(notification, true);
+        notifs().showOrHide(*notification, true);
 
         // Restart the autohiding timer.
         if(autoHideAfterSeconds() > 0)

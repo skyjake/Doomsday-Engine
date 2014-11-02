@@ -208,6 +208,7 @@ DENG2_PIMPL(ClientApp)
         Sys_Shutdown();
         DD_Shutdown();
 
+        updater.reset();
         delete worldSys;
         //delete infineSys;
         delete winSys;
