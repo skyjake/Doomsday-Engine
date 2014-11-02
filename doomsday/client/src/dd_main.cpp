@@ -1552,6 +1552,10 @@ bool App_ChangeGame(Game &game, bool allowReload)
         R_InitSvgs();
 
 #ifdef __CLIENT__
+        ClientApp::inputSystem().initAllDevices();
+#endif
+
+#ifdef __CLIENT__
         R_InitViewWindow();
 #endif
 

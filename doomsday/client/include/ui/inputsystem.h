@@ -60,6 +60,8 @@ public:
      */
     de::LoopResult forAllDevices(std::function<de::LoopResult (InputDevice &)> func) const;
 
+    void initAllDevices();
+
     /**
      * Returns @c true if the shift key of the keyboard is thought to be down.
      * @todo: Refactor away

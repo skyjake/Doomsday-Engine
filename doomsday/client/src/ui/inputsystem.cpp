@@ -307,29 +307,18 @@ DENG2_PIMPL(InputSystem)
 
         // Initialize system APIs.
         I_InitInterfaces();
-
-        // Initialize devices.
-        addDevice(makeKeyboard("key", "Keyboard"))->activate(); // A keyboard is assumed to always be present.
-
-        addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
-
-        addDevice(makeJoystick("joy", "Joystick"))->activate(Joystick_IsPresent()); // A joystick may not be present.
-
-        /// @todo: Add support for multiple joysticks (just some generics, for now).
-        addDevice(new InputDevice("joy2"));
-        addDevice(new InputDevice("joy3"));
-        addDevice(new InputDevice("joy4"));
-
-        addDevice(makeHeadTracker("head", "Head Tracker")); // Head trackers are activated later.
-
-        // Register console variables for the controls of all devices.
-        for(InputDevice *device : devices) device->consoleRegister();
     }
 
     ~Instance()
     {
-        qDeleteAll(devices);
+        clearAllDevices();
         I_ShutdownInterfaces();
+    }
+
+    void clearAllDevices()
+    {
+        qDeleteAll(devices);
+        devices.clear();
     }
 
     /**
@@ -705,7 +694,9 @@ DENG2_PIMPL(InputSystem)
 };
 
 InputSystem::InputSystem() : d(new Instance(this))
-{}
+{
+    initAllDevices();
+}
 
 void InputSystem::timeChanged(Clock const &)
 {}
@@ -740,6 +731,28 @@ LoopResult InputSystem::forAllDevices(std::function<LoopResult (InputDevice &)> 
         if(auto result = func(*device)) return result;
     }
     return LoopContinue;
+}
+
+void InputSystem::initAllDevices()
+{
+    d->clearAllDevices();
+
+    // Initialize devices.
+    d->addDevice(makeKeyboard("key", "Keyboard"))->activate(); // A keyboard is assumed to always be present.
+
+    d->addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
+
+    d->addDevice(makeJoystick("joy", "Joystick"))->activate(Joystick_IsPresent()); // A joystick may not be present.
+
+    /// @todo: Add support for multiple joysticks (just some generics, for now).
+    d->addDevice(new InputDevice("joy2"));
+    d->addDevice(new InputDevice("joy3"));
+    d->addDevice(new InputDevice("joy4"));
+
+    d->addDevice(makeHeadTracker("head", "Head Tracker")); // Head trackers are activated later.
+
+    // Register console variables for the controls of all devices.
+    for(InputDevice *device : d->devices) device->consoleRegister();
 }
 
 void InputSystem::trackEvent(ddevent_t *ev)
