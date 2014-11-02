@@ -111,7 +111,10 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->widgetBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i)
+    {
+        i->widgetBeingDeleted(*this);
+    }
 }
 
 Id Widget::id() const

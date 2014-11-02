@@ -90,7 +90,7 @@ namespace internal
     /// deleted.
     class CurrentTarget : DENG2_OBSERVES(Asset, Deletion) {
         GLTarget *_target;
-        void assetDeleted(Asset &asset) {
+        void assetBeingDeleted(Asset &asset) {
             if(&asset == _target) {
                 LOG_AS("GLState");
                 LOGDEV_GL_NOTE("Current target destroyed, clearing pointer");
