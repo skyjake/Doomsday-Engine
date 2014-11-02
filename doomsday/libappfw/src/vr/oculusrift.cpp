@@ -539,12 +539,7 @@ bool OculusRift::isHMDConnected() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     if(d->isReady()) return true;
-    ovrHmd dev = ovrHmd_Create(0);
-    if(dev)
-    {
-        ovrHmd_Destroy(dev);
-        return true;
-    }
+    return ovrHmd_Detect() > 0;
 #endif
     return false;
 }
