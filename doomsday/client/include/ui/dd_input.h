@@ -69,7 +69,7 @@ enum ddevent_axistype_t
  */
 struct ddevent_t
 {
-    uint device;         ///< e.g. IDEV_KEYBOARD
+    int device;          ///< e.g. IDEV_KEYBOARD
     ddeventtype_t type;  ///< E_TOGGLE, E_AXIS, E_ANGLE, or E_SYMBOLIC
     union {
         struct {

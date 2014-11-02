@@ -213,7 +213,7 @@ dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc)
     return cb;
 }
 
-dbinding_t *B_FindDeviceBinding(bcontext_t *context, uint device, cbdevtype_t bindType, int id)
+dbinding_t *B_FindDeviceBinding(bcontext_t *context, int device, cbdevtype_t bindType, int id)
 {
     if(!context) return nullptr;
 

@@ -40,7 +40,7 @@ typedef struct dbinding_s {
     struct dbinding_s *prev;
 
     int bid;
-    uint device;
+    int device;
     cbdevtype_t type;
     int id;
     float angle;
