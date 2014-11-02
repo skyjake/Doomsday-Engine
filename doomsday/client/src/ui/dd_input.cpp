@@ -78,7 +78,7 @@ static char defaultShiftTable[96] = // Contains characters 32 to 127.
 static void initKeyMappingsOnce()
 {
     // Already been here?
-    if(shiftKeyMappings[1] != 1) return;
+    if(shiftKeyMappings[1] == 1) return;
 
     /// @todo does not belong at this level.
     for(int i = 0; i < 256; ++i)

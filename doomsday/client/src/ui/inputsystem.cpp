@@ -409,7 +409,6 @@ DENG2_PIMPL(InputSystem)
      */
     void postEventsForAllDevices()
     {
-        // On the client may have have input devices.
         readKeyboard();
         readMouse();
         readJoystick();
@@ -862,17 +861,15 @@ void InputSystem::postEvent(ddevent_t *ev)
 #endif
 }
 
-void InputSystem::convertEvent(de::Event const &event, ddevent_t *ddEvent) // static
+void InputSystem::convertEvent(Event const &event, ddevent_t *ddEvent) // static
 {
     DENG2_ASSERT(ddEvent);
-    using de::KeyEvent;
-
     de::zapPtr(ddEvent);
 
     switch(event.type())
     {
-    case de::Event::KeyPress:
-    case de::Event::KeyRelease: {
+    case Event::KeyPress:
+    case Event::KeyRelease: {
         KeyEvent const &kev = event.as<KeyEvent>();
 
         ddEvent->device       = IDEV_KEYBOARD;
@@ -981,7 +978,7 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
 
         default:
 #ifdef DENG2_DEBUG
-            App_Error("InputSystem::convertEvent: Unknown deviceID in ddevent_t");
+            App_Error("InputSystem::convertEvent: Unknown device ID in ddevent_t");
 #endif
             return false;
         }
