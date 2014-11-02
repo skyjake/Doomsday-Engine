@@ -57,28 +57,27 @@ static byte devRendKeyState;
 static byte devRendMouseState;
 
 #define MAX_KEYMAPPINGS  256
-static byte altKeyMappings[MAX_KEYMAPPINGS];
-static byte shiftKeyMappings[MAX_KEYMAPPINGS];
-
-static char defaultShiftTable[96] = // Contains characters 32 to 127.
-{
-/* 32 */    ' ', 0, 0, 0, 0, 0, 0, '"',
-/* 40 */    0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
-/* 50 */    '@', '#', '$', '%', '^', '&', '*', '(', 0, ':',
-/* 60 */    0, '+', 0, 0, 0, 'a', 'b', 'c', 'd', 'e',
-/* 70 */    'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
-/* 80 */    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-/* 90 */    'z', '{', '|', '}', 0, 0, '~', 'A', 'B', 'C',
-/* 100 */   'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-/* 110 */   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-/* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
-};
+static uchar shiftKeyMappings[MAX_KEYMAPPINGS];
 
 // Initialize key mapping table.
 static void initKeyMappingsOnce()
 {
     // Already been here?
     if(shiftKeyMappings[1] == 1) return;
+
+    uchar defaultShiftTable[96] = // Contains characters 32 to 127.
+    {
+    /* 32 */    ' ', 0, 0, 0, 0, 0, 0, '"',
+    /* 40 */    0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
+    /* 50 */    '@', '#', '$', '%', '^', '&', '*', '(', 0, ':',
+    /* 60 */    0, '+', 0, 0, 0, 'a', 'b', 'c', 'd', 'e',
+    /* 70 */    'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o',
+    /* 80 */    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+    /* 90 */    'z', '{', '|', '}', 0, 0, '~', 'A', 'B', 'C',
+    /* 100 */   'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    /* 110 */   'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
+    /* 120 */   'X', 'Y', 'Z', 0, 0, 0, 0, 0
+    };
 
     /// @todo does not belong at this level.
     for(int i = 0; i < 256; ++i)
@@ -87,7 +86,6 @@ static void initKeyMappingsOnce()
             shiftKeyMappings[i] = defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
         else
             shiftKeyMappings[i] = i;
-        altKeyMappings[i] = i;
     }
 }
 
@@ -124,44 +122,45 @@ static void endDrawStateForVisual(Point2Raw const *origin)
 /**
  * Apply all active modifiers to the key.
  */
-static byte modKey(byte key)
+static uchar modKey(int ddkey)
 {
-    extern bool shiftDown, altDown;
+    extern bool shiftDown;
 
     initKeyMappingsOnce();
 
     if(shiftDown)
-        key = shiftKeyMappings[key];
-    if(altDown)
-        key = altKeyMappings[key];
-
-    if(key >= DDKEY_NUMPAD7 && key <= DDKEY_NUMPAD0)
     {
-        byte numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
-        return numPadKeys[key - DDKEY_NUMPAD7];
+        DENG2_ASSERT(ddkey >= 0 && ddkey < MAX_KEYMAPPINGS);
+        ddkey = shiftKeyMappings[ddkey];
     }
-    else if(key == DDKEY_DIVIDE)
+
+    if(ddkey >= DDKEY_NUMPAD7 && ddkey <= DDKEY_NUMPAD0)
+    {
+        static uchar const numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
+        return numPadKeys[ddkey - DDKEY_NUMPAD7];
+    }
+    else if(ddkey == DDKEY_DIVIDE)
     {
         return '/';
     }
-    else if(key == DDKEY_SUBTRACT)
+    else if(ddkey == DDKEY_SUBTRACT)
     {
         return '-';
     }
-    else if(key == DDKEY_ADD)
+    else if(ddkey == DDKEY_ADD)
     {
         return '+';
     }
-    else if(key == DDKEY_DECIMAL)
+    else if(ddkey == DDKEY_DECIMAL)
     {
         return '.';
     }
-    else if(key == DDKEY_MULTIPLY)
+    else if(ddkey == DDKEY_MULTIPLY)
     {
         return '*';
     }
 
-    return key;
+    return uchar(ddkey);
 }
 
 void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw const *_origin,
@@ -186,45 +185,40 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    ddstring_t label; Str_InitStd(&label);
-
     // Compose the label.
-    char const *buttonLabel = nullptr;
-    char buttonLabelBuf[2];
+    String label;
     if(!button.name().isEmpty())
     {
         // Use the symbolic name.
-        buttonLabel = button.name().toUtf8().constData();
+        label = button.name();
     }
     else if(&device == ClientApp::inputSystem().devicePtr(IDEV_KEYBOARD))
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.
-        byte asciiCode = modKey((byte)buttonID);
+        uchar asciiCode = modKey(buttonID);
         if(asciiCode > 32 && asciiCode < 127)
         {
-            buttonLabelBuf[0] = asciiCode;
-            buttonLabelBuf[1] = '\0';
-            buttonLabel = buttonLabelBuf;
+            label = String("%1").arg(QChar(asciiCode));
         }
 
         // Is there symbolic name in the bindings system?
-        if(!buttonLabel)
+        if(label.isEmpty())
         {
-            buttonLabel = B_ShortNameForKey(buttonID, false/*do not force lowercase*/);
+            label = B_ShortNameForKey(buttonID, false/*do not force lowercase*/);
         }
     }
 
-    if(buttonLabel)
-        Str_Append(&label, buttonLabel);
-    else
-        Str_Appendf(&label, "#%03u", buttonID);
+    if(label.isEmpty())
+    {
+        label = String("#%1").arg(buttonID, 3, 10, QChar('0'));
+    }
 
     initDrawStateForVisual(&origin);
 
     // Calculate the size of the visual according to the dimensions of the text.
     Size2Raw textSize;
-    FR_TextSize(&textSize, Str_Text(&label));
+    FR_TextSize(&textSize, label.toUtf8().constData());
 
     // Enlarge by BORDER pixels.
     Rectanglei textGeom = Rectanglei::fromSize(Vector2i(0, 0),
@@ -238,7 +232,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     // Draw the text.
     glEnable(GL_TEXTURE_2D);
     Point2Raw const textOffset(BORDER, BORDER);
-    FR_DrawText(Str_Text(&label), &textOffset);
+    FR_DrawText(label.toUtf8().constData(), &textOffset);
     glDisable(GL_TEXTURE_2D);
 
     // Mark expired?
@@ -268,8 +262,6 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     }
 
     endDrawStateForVisual(&origin);
-
-    Str_Free(&label);
 
     if(geometry)
     {
