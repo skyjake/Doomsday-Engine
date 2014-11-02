@@ -17,6 +17,7 @@
  */
 
 #include "WidgetActions"
+#include "clientapp.h"
 #include "ui/b_main.h"
 #include "ui/b_context.h"
 
@@ -41,7 +42,7 @@ WidgetActions::WidgetActions() : d(new Instance(this))
 bool WidgetActions::tryEvent(Event const &event, String const &context)
 {
     ddevent_t ddev;
-    DD_ConvertEvent(event, &ddev);
+    InputSystem::convertEvent(event, &ddev);
     if(context.isEmpty())
     {
         // Check all enabled contexts.
@@ -78,8 +79,8 @@ bool WidgetActions::tryEvent(ddevent_t const *ev)
 void WidgetActions::trackInput(Event const &event)
 {
     ddevent_t ddev;
-    DD_ConvertEvent(event, &ddev);
-    I_TrackInput(&ddev);
+    InputSystem::convertEvent(event, &ddev);
+    ClientApp::inputSystem().trackEvent(&ddev);
 }
 
 void WidgetActions::activateContext(String const &context, bool yes)

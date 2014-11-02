@@ -53,12 +53,18 @@
 #include "ui/widgets/gameselectionwidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
+#include "ui/inputdevice.h"
 #include "CommandAction"
 #include "ui/mouse_qt.h"
 #include "dd_main.h"
 #include "render/vr.h"
 
 using namespace de;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
@@ -452,8 +458,13 @@ DENG2_PIMPL(ClientWindow)
 
         if(!hasFocus)
         {
-            DD_ClearEvents();
-            I_ResetAllDevices();
+            inputSys().clearEvents();
+            inputSys().forAllDevices([] (InputDevice &device)
+            {
+                device.reset();
+                return LoopContinue;
+            });
+
             canvas.trapMouse(false);
         }
         else if(self.isFullScreen() && !taskBar->isOpen())
@@ -468,7 +479,7 @@ DENG2_PIMPL(ClientWindow)
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
-        DD_PostEvent(&ev);
+        inputSys().postEvent(&ev);
     }
 
     void updateFpsNotification(float fps)

@@ -31,6 +31,8 @@
 #include "ui/b_command.h"
 #include "ui/b_context.h"
 #include "ui/p_control.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
 #include "ui/ui_main.h"
 
 int symbolicEchoMode = false;
@@ -121,6 +123,11 @@ static keyname_t const keyNames[] = {
     { 0, nullptr}
 };
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
 /**
  * Binding context fallback for the "global" context.
  *
@@ -134,7 +141,7 @@ static int globalContextFallback(ddevent_t const *ddev)
     if(App_GameLoaded())
     {
         event_t ev;
-        if(DD_ConvertEvent(ddev, &ev))
+        if(InputSystem::convertEvent(ddev, &ev))
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting). Note that if the event is eaten here,
@@ -326,7 +333,7 @@ evbinding_t *B_BindCommand(char const *eventDesc, char const *command)
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other binding.
         B_DeleteMatching(bc, b, nullptr);
-        B_UpdateDeviceStateAssociations();
+        B_UpdateAllDeviceStateAssociations();
     }
 
     return b;
@@ -395,7 +402,7 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
     B_DeleteMatching(bc, nullptr, devBin);
-    B_UpdateDeviceStateAssociations();
+    B_UpdateAllDeviceStateAssociations();
 
     return devBin;
 }
@@ -439,7 +446,7 @@ dd_bool B_Responder(ddevent_t *ev)
         // Axis events need a bit of filtering.
         if(ev->type == E_AXIS)
         {
-            float pos = I_TransformAxis(I_GetDevice(ev->device), ev->axis.id, ev->axis.pos);
+            float pos = inputSys().device(ev->device).axis(ev->axis.id).translateRealPosition(ev->axis.pos);
             if((ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
                (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
@@ -459,7 +466,7 @@ dd_bool B_Responder(ddevent_t *ev)
         echo.symbolic.name = Str_Text(&name);
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
-        DD_PostEvent(&echo);
+        inputSys().postEvent(&echo);
         Str_Free(&name);
 
         return true;

@@ -23,12 +23,24 @@
 #include "de_console.h"
 #include "dd_main.h"
 #include "de_misc.h"
+#include "clientapp.h"
 
 #include "ui/b_util.h"
 
 #include "ui/b_main.h"
 #include "ui/b_context.h"
+#include "ui/inputdevice.h"
+#include "ui/inputdeviceaxiscontrol.h"
+#include "ui/inputdevicebuttoncontrol.h"
+#include "ui/inputdevicehatcontrol.h"
 #include "network/net_main.h" // netGame
+
+using namespace de;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
 {
@@ -140,7 +152,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     DENG2_ASSERT(desc && type && id);
 
     // Maybe it's one of the named buttons?
-    *id = I_GetKeyByName(I_GetDevice(IDEV_MOUSE), desc);
+    *id = inputSys().device(IDEV_MOUSE).toButtonId(desc);
     if(*id >= 0)
     {
         *type = E_TOGGLE;
@@ -152,7 +164,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     {
         *type = E_TOGGLE;
         *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(*id >= 0 && uint(*id) < I_GetDevice(IDEV_MOUSE)->numKeys)
+        if(inputSys().device(IDEV_MOUSE).hasButton(*id))
             return true;
 
         LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
@@ -161,33 +173,32 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
 
     // Must be an axis, then.
     *type = E_AXIS;
-    *id   = I_GetAxisByName(I_GetDevice(IDEV_MOUSE), desc);
+    *id   = inputSys().device(IDEV_MOUSE).toAxisId(desc);
     if(*id >= 0) return true;
 
     LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
     return false;
 }
 
-dd_bool B_ParseDeviceAxisTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id)
+dd_bool B_ParseDeviceAxisTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
 {
     DENG2_ASSERT(desc && type && id);
-    inputdev_t *dev = I_GetDevice(device);
 
     *type = E_AXIS;
-    *id   = I_GetAxisByName(dev, desc);
+    *id   = device.toAxisId(desc);
     if(*id >= 0) return true;
 
-    LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << dev->name;
+    LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << device.name();
     return false;
 }
 
-dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id)
+dd_bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
 {
     if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
     {
         *type = E_TOGGLE;
         *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(*id >= 0 && uint(*id) < I_GetDevice(device)->numKeys)
+        if(device.hasButton(*id))
             return true;
 
         LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
@@ -197,7 +208,7 @@ dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *t
     {
         *type = E_ANGLE;
         *id   = strtoul(desc + 3, nullptr, 10) - 1;
-        if(*id >= 0 && uint(*id) < I_GetDevice(device)->numHats)
+        if(device.hasHat(*id))
             return true;
 
         LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
@@ -319,7 +330,7 @@ dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         ddeventtype_t type;
-        if(!B_ParseJoystickTypeAndId(cond->device, Str_Text(str), &type, &cond->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(cond->device), Str_Text(str), &type, &cond->id))
         {
             return false;
         }
@@ -407,8 +418,7 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *conte
     DENG2_ASSERT(cond);
     dd_bool const fulfilled = !cond->flags.negate;
 
-    inputdev_t *dev = I_GetDevice(cond->device);
-    DENG2_ASSERT(dev);
+    InputDevice &dev = inputSys().device(cond->device);
 
     switch(cond->type)
     {
@@ -433,7 +443,7 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *conte
         break;
 
     case SCT_TOGGLE_STATE: {
-        int isDown = (dev->keys[cond->id].isDown != 0);
+        bool isDown = dev.button(cond->id).isDown();
         if(( isDown && cond->state == EBTOG_DOWN) ||
            (!isDown && cond->state == EBTOG_UP))
         {
@@ -442,12 +452,12 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *conte
         break; }
 
     case SCT_AXIS_BEYOND:
-        if(B_CheckAxisPos(cond->state, cond->pos, dev->axes[cond->id].position))
+        if(B_CheckAxisPos(cond->state, cond->pos, dev.axis(cond->id).position()))
             return fulfilled;
         break;
 
     case SCT_ANGLE_AT:
-        if(dev->hats[cond->id].pos == cond->pos)
+        if(dev.hat(cond->id).position() == cond->pos)
             return fulfilled;
         break;
     }
@@ -467,26 +477,23 @@ dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b)
             a->flags.multiplayer == b->flags.multiplayer);
 }
 
-void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t *str)
+void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str)
 {
-    inputdev_t *dev = I_GetDevice(device);
-    DENG2_ASSERT(dev);
-
     if(type != E_SYMBOLIC)
     {
         // Name of the device.
-        Str_Append(str, dev->name);
+        Str_Append(str, device.name().toUtf8().constData());
         Str_Append(str, "-");
     }
 
     switch(type)
     {
     case E_TOGGLE:
-        if(dev->keys[id].name)
+        if(!device.button(id).name().isEmpty())
         {
-            Str_Append(str, dev->keys[id].name);
+            Str_Append(str, device.button(id).name().toUtf8().constData());
         }
-        else if(device == IDEV_KEYBOARD)
+        else if(&device == inputSys().devicePtr(IDEV_KEYBOARD))
         {
             char const *name = B_ShortNameForKey(id);
             if(name)
@@ -496,12 +503,12 @@ void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstrin
         }
         else
         {
-            Str_Appendf(str, "button%i",id + 1);
+            Str_Appendf(str, "button%i", id + 1);
         }
         break;
 
     case E_AXIS:
-        Str_Append(str, dev->axes[id].name);
+        Str_Append(str, device.axis(id).name().toUtf8().constData());
         break;
 
     case E_ANGLE:
@@ -569,7 +576,7 @@ void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str)
     }
     else
     {
-        B_AppendDeviceDescToString(cond->device,
+        B_AppendDeviceDescToString(inputSys().device(cond->device),
                                    (  cond->type == SCT_TOGGLE_STATE? E_TOGGLE
                                     : cond->type == SCT_AXIS_BEYOND ? E_AXIS
                                     : E_ANGLE),
@@ -600,7 +607,7 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
 {
     DENG2_ASSERT(ev);
 
-    B_AppendDeviceDescToString(ev->device, ev->type,
+    B_AppendDeviceDescToString(inputSys().device(ev->device), ev->type,
                                (  ev->type == E_TOGGLE  ? ev->toggle.id
                                 : ev->type == E_AXIS    ? ev->axis.id
                                 : ev->type == E_ANGLE   ? ev->angle.id

@@ -24,13 +24,15 @@
 #include "b_util.h"
 #include "dd_input.h"
 
+struct bcontext_t;
+
 typedef struct evbinding_s {
     struct evbinding_s *prev;  ///< Previous in list of bindings.
     struct evbinding_s *next;  ///< Next in list of bindings.
     int bid;                   ///< Binding identifier.
     char *command;             ///< Command to execute.
 
-    uint device;               ///< Which device?
+    int device;                ///< Which device?
     ddeventtype_t type;        ///< Type of event.
     int id;                    ///< Identifier.
     ebstate_t state;
@@ -67,7 +69,10 @@ void B_DestroyCommandBinding(evbinding_t *eb);
  */
 void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str);
 
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, uint device);
+/**
+ * @param device  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
+ */
+evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device);
 
 /**
  * Checks if the event matches the binding's conditions, and if so, returns an
@@ -83,6 +88,6 @@ evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *comma
  * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
  */
 de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-                                        struct bcontext_s *eventClass, bool respectHigherAssociatedContexts);
+                                        bcontext_t *eventClass, bool respectHigherAssociatedContexts);
 
 #endif // CLIENT_INPUTSYSTEM_EVENTBINDING_H

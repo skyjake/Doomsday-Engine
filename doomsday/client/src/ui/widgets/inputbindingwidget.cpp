@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/inputbindingwidget.h"
+#include "clientapp.h"
 #include "ui/b_main.h"
 #include "ui/b_context.h"
 #include <de/AuxButtonWidget>
@@ -209,7 +210,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
 
             AutoStr *name = AutoStr_New();
             ddevent_t ev;
-            DD_ConvertEvent(event, &ev);
+            InputSystem::convertEvent(event, &ev);
             B_AppendEventToString(&ev, name);
 
             String desc = Str_Text(name);

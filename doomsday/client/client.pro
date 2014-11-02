@@ -379,6 +379,10 @@ DENG_HEADERS += \
     include/ui/infine/finaletextwidget.h \
     include/ui/infine/finalewidget.h \
     include/ui/infine/infinesystem.h \
+    include/ui/inputdevice.h \
+    include/ui/inputdeviceaxiscontrol.h \
+    include/ui/inputdevicebuttoncontrol.h \
+    include/ui/inputdevicehatcontrol.h \
     include/ui/progress.h \
     include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
@@ -702,6 +706,10 @@ SOURCES += \
     src/ui/infine/finaletextwidget.cpp \
     src/ui/infine/finalewidget.cpp \
     src/ui/infine/infinesystem.cpp \
+    src/ui/inputdevice.cpp \
+    src/ui/inputdeviceaxiscontrol.cpp \
+    src/ui/inputdevicebuttoncontrol.cpp \
+    src/ui/inputdevicehatcontrol.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \

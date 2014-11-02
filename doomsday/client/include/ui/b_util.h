@@ -23,8 +23,12 @@
 #include "dd_types.h"
 #include "dd_input.h"
 
+struct bcontext_t;
+class InputDevice;
+
 // Event Binding Toggle State
-typedef enum ebstate_e {
+enum ebstate_t
+{
     EBTOG_UNDEFINED,
     EBTOG_DOWN,
     EBTOG_REPEAT,
@@ -34,18 +38,20 @@ typedef enum ebstate_e {
     EBAXIS_BEYOND,
     EBAXIS_BEYOND_POSITIVE,
     EBAXIS_BEYOND_NEGATIVE
-} ebstate_t;
+};
 
-typedef enum stateconditiontype_e {
+enum stateconditiontype_t
+{
     SCT_STATE,          ///< Related to the state of the engine.
     SCT_TOGGLE_STATE,   ///< Toggle is in a specific state.
     SCT_MODIFIER_STATE, ///< Modifier is in a specific state.
     SCT_AXIS_BEYOND,    ///< Axis is past a specific position.
     SCT_ANGLE_AT        ///< Angle is pointing to a specific direction.
-} stateconditiontype_t;
+};
 
 // Device state condition.
-typedef struct statecondition_s {
+struct statecondition_t
+{
     uint device;                ///< Which device?
     stateconditiontype_t type;
     int id;                     ///< Toggle/axis/angle identifier in the device.
@@ -55,7 +61,7 @@ typedef struct statecondition_s {
         uint negate:1;          ///< Test the inverse (e.g., not in a specific state).
         uint multiplayer:1;     ///< Only for multiplayer.
     } flags;
-} statecondition_t;
+};
 
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
 
@@ -65,7 +71,7 @@ dd_bool B_ParseKeyId(char const *desc, int *id);
 
 dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
 
-dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id);
+dd_bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id);
 
 dd_bool B_ParseAnglePosition(char const *desc, float *pos);
 
@@ -78,11 +84,11 @@ dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-dd_bool B_CheckCondition(statecondition_t *cond, int localNum, struct bcontext_s *context);
+dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *context);
 
 dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
 
-void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t *str);
+void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str);
 
 void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str);
 

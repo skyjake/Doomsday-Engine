@@ -1,7 +1,7 @@
-/** @file
+/** @file p_control.cpp  Player Controls.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,12 +17,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * Player Controls.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #ifdef WIN32_MSVC
 #  pragma warning (disable:4100) // lots of unused arguments
 #endif
@@ -37,15 +31,19 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "dd_main.h"
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 
 #include "world/p_players.h"
 #ifdef __CLIENT__
 #  include "ui/b_main.h"
 #  include "ui/b_device.h"
+#  include "ui/inputdevice.h"
 #endif
 #include "ui/p_control.h"
 
-// MACROS ------------------------------------------------------------------
+using namespace de;
 
 /*
 // Number of triggered impulses buffered into each player's control state
@@ -55,7 +53,6 @@
 
 #define SLOW_TURN_TIME  (6.0f / 35)
 */
-// TYPES -------------------------------------------------------------------
 
 /**
  * The control descriptors contain a mapping between symbolic control
@@ -112,19 +109,10 @@ typedef struct controlcounter_s {
     doubleclick_t doubleClicks[DDMAXPLAYERS];
 } controlcounter_t;
 
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 D_CMD(ListPlayerControls);
 D_CMD(ClearControlAccumulation);
 D_CMD(Impulse);
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 /*
 // Control class names - [singular, plural].
 const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
@@ -133,14 +121,10 @@ const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
     {{"Impulse"}, {"Impulses"}}
 };*/
 
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
 static playercontrol_t* playerControls;
 static controlcounter_t** controlCounts;
 static int playerControlCount;
 static int doubleClickThresholdMilliseconds = 300;
-
-// CODE --------------------------------------------------------------------
 
 static playercontrol_t* P_AllocPlayerControl(void)
 {
@@ -294,7 +278,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     if(newState == db->previousClickState &&
        nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))
     {
-        Str *symbolicName = Str_NewStd();
+        ddstring_s *symbolicName = Str_NewStd();
 
         db->triggered = true;
 
@@ -321,7 +305,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         ev.symbolic.id = playerNum;
         ev.symbolic.name = Str_Text(symbolicName);
 
-        DD_PostEvent(&ev);
+        ClientApp::inputSystem().postEvent(&ev);
 
         Str_Delete(symbolicName);
     }
@@ -336,9 +320,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
 {
 #ifdef __CLIENT__
-    struct bcontext_s* bc = 0;
-    struct dbinding_s* binds = 0;
-    playercontrol_t* pc = P_PlayerControlById(control);
+    playercontrol_t *pc = P_PlayerControlById(control);
 
     // Check that this is really a numeric control.
     DENG_ASSERT(pc);
@@ -348,17 +330,19 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    bcontext_t *bc           = nullptr;
+    struct dbinding_s *binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     if(!binds) return false;
 
     // There must be bindings to active input devices.
-    bool gotActiveDevices = false;
     for(dbinding_t *cb = binds->next; cb != binds; cb = cb->next)
     {
-        if(I_GetDevice(cb->device, OnlyActiveInputDevice))
-            gotActiveDevices = true;
+        if(InputDevice *dev = ClientApp::inputSystem().devicePtr(cb->device))
+        {
+            if(dev->isActive()) return true;
+        }
     }
-    return gotActiveDevices;
+    return false;
 
 #else
     DENG_UNUSED(playerNum);
@@ -368,28 +352,26 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
 }
 
 #undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
+DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset)
 {
 #ifdef __CLIENT__
-    float tmp;
-    struct bcontext_s* bc = 0;
-    struct dbinding_s* binds = 0;
-    int localNum;
-    playercontrol_t* pc = P_PlayerControlById(control);
+    playercontrol_t *pc = P_PlayerControlById(control);
 
     // Check that this is really a numeric control.
     DENG_ASSERT(pc);
     DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
 
     // Ignore NULLs.
+    float tmp;
     if(!pos) pos = &tmp;
     if(!relativeOffset) relativeOffset = &tmp;
 
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    localNum = P_ConsoleToLocal(playerNum);
-    binds = B_GetControlDeviceBindings(localNum, control, &bc);
+    int localNum             = P_ConsoleToLocal(playerNum);
+    bcontext_t *bc           = nullptr;
+    struct dbinding_s *binds = B_GetControlDeviceBindings(localNum, control, &bc);
     B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.
@@ -478,10 +460,9 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int control)
 #endif
 }
 
-void P_ImpulseByName(int playerNum, const char* control)
+void P_ImpulseByName(int playerNum, char const *control)
 {
-    playercontrol_t* pc = P_PlayerControlByName(control);
-    if(pc)
+    if(playercontrol_t *pc = P_PlayerControlByName(control))
     {
         P_Impulse(playerNum, pc->id);
     }
@@ -490,26 +471,27 @@ void P_ImpulseByName(int playerNum, const char* control)
 void P_ControlTicker(timespan_t time)
 {
     // Check for triggered double-clicks, and generate the appropriate impulses.
-
 }
 
 #ifdef __CLIENT__
 D_CMD(ClearControlAccumulation)
 {
-    int     i, p;
-    playercontrol_t* pc;
-
-    I_ResetAllDevices();
-
-    for(i = 0; i < playerControlCount; ++i)
+    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
     {
-        pc = &playerControls[i];
-        for(p = 0; p < DDMAXPLAYERS; ++p)
+        device.reset();
+        return LoopContinue;
+    });
+
+    for(int i = 0; i < playerControlCount; ++i)
+    {
+        playercontrol_t *pc = &playerControls[i];
+        for(int p = 0; p < DDMAXPLAYERS; ++p)
         {
             if(pc->type == CTLT_NUMERIC)
-                P_GetControlState(p, pc->id, NULL, NULL);
+                P_GetControlState(p, pc->id, nullptr, nullptr);
             else if(pc->type == CTLT_IMPULSE)
                 P_GetImpulseControlState(p, pc->id);
+
             // Also clear the double click state.
             P_GetControlDoubleClick(p, pc->id);
         }

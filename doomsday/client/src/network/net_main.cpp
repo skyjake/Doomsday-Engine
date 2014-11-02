@@ -740,7 +740,7 @@ void Net_Drawer()
     Rend_DrawLightModMatrix();
 
     // Draw the input device debug display.
-    Rend_AllInputDeviceStateVisuals();
+    Rend_DrawInputDeviceVisuals();
 
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();

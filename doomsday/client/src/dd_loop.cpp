@@ -38,6 +38,7 @@
 #endif
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "ui/busyvisual.h"
 #  include "ui/clientwindow.h"
 #endif
@@ -407,11 +408,11 @@ void Loop_RunTics(void)
 
 #ifdef __CLIENT__
         // Process input events.
-        DD_ProcessEvents(ticLength);
+        ClientApp::inputSystem().processEvents(ticLength);
         if(!processSharpEventsAfterTickers)
         {
             // We are allowed to process sharp events before tickers.
-            DD_ProcessSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(ticLength);
         }
 #endif
 
@@ -422,7 +423,7 @@ void Loop_RunTics(void)
         if(processSharpEventsAfterTickers)
         {
             // This is done after tickers for compatibility with ye olde game logic.
-            DD_ProcessSharpEvents(ticLength);
+            ClientApp::inputSystem().processSharpEvents(ticLength);
         }
 #endif
 

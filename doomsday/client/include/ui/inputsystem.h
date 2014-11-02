@@ -20,8 +20,13 @@
 #ifndef CLIENT_INPUTSYSTEM_H
 #define CLIENT_INPUTSYSTEM_H
 
+#include <functional>
+#include <de/types.h>
 #include <de/System>
+#include "dd_input.h" // ddevent_t
 #include "SettingsRegister"
+
+class InputDevice;
 
 /**
  * Input devices and events. @ingroup ui
@@ -37,6 +42,71 @@ public:
 
     // System.
     void timeChanged(de::Clock const &);
+
+    /**
+     * Lookup an InputDevice by it's unique @a id.
+     */
+    InputDevice &device(int id) const;
+
+    /**
+     * Lookup an InputDevice by it's unique @a id.
+     *
+     * @return  Pointer to the associated InputDevice; otherwise @c nullptr.
+     */
+    InputDevice *devicePtr(int id) const;
+
+    /**
+     * Iterate through all the InputDevices.
+     */
+    de::LoopResult forAllDevices(std::function<de::LoopResult (InputDevice &)> func) const;
+
+    void initAllDevices();
+
+    /**
+     * Returns @c true if the shift key of the keyboard is thought to be down.
+     * @todo: Refactor away
+     */
+    bool shiftDown() const;
+
+public: /// Event processing --------------------------------------------------
+    /**
+     * Clear the input event queue.
+     */
+    void clearEvents();
+
+    bool ignoreEvents(bool yes = true);
+
+    /**
+     * @param ev  A copy is made.
+     */
+    void postEvent(ddevent_t *ev);
+
+    /**
+     * Process all incoming input for the given timestamp.
+     * This is called only in the main thread, and also from the busy loop.
+     *
+     * This gets called at least 35 times per second. Usually more frequently
+     * than that.
+     */
+    void processEvents(timespan_t ticLength);
+
+    void processSharpEvents(timespan_t ticLength);
+
+    /**
+     * Update the input devices.
+     */
+    void trackEvent(ddevent_t *ev);
+
+public:
+    static bool convertEvent(ddevent_t const *ddEvent, event_t *ev);
+
+    /**
+     * Converts a libcore Event into an old-fashioned ddevent_t.
+     *
+     * @param event    Event instance.
+     * @param ddEvent  ddevent_t instance.
+     */
+    static void convertEvent(de::Event const &event, ddevent_t *ddEvent);
 
 public:
     /**
