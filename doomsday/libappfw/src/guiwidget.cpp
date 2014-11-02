@@ -370,8 +370,20 @@ GuiWidget::GuiWidget(String const &name) : Widget(name), d(new Instance(this))
 
 void GuiWidget::destroy(GuiWidget *widget)
 {
-    widget->deinitialize();
-    delete widget;
+    if(widget)
+    {
+        widget->deinitialize();
+        delete widget;
+    }
+}
+
+void GuiWidget::destroyLater(GuiWidget *widget)
+{
+    if(widget)
+    {
+        widget->deinitialize();
+        widget->guiDeleteLater();
+    }
 }
 
 GuiRootWidget &GuiWidget::root() const

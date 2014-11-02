@@ -189,6 +189,14 @@ public:
      */
     static void destroy(GuiWidget *widget);
 
+    /**
+     * Deletes a widget at a later point in time. However, the widget is immediately
+     * deinitialized.
+     *
+     * @param widget  Widget to deinitialize now and destroy layer.
+     */
+    static void destroyLater(GuiWidget *widget);
+
     GuiRootWidget &root() const;
     Widget::Children childWidgets() const;
     Widget *parentWidget() const;
