@@ -683,6 +683,7 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 
 static internal::Logs &theLogs()
 {
+    if(logsPtr.get()) return *logsPtr;
     static Lockable lock;
     DENG2_GUARD(lock);
     if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
