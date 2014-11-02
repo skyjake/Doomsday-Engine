@@ -34,7 +34,6 @@ DENG2_PIMPL(RelayWidget)
 
     void setTarget(GuiWidget *w)
     {
-        qDebug() << thisPublic << "target set to" << w;
         if(target) target->audienceForDeletion() -= this;
         target = w;
         if(target) target->audienceForDeletion() += this;
