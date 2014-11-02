@@ -18,6 +18,7 @@
 
 #include "de/NotificationAreaWidget"
 #include "de/SequentialLayout"
+#include "de/RelayWidget"
 
 #include <de/Drawable>
 #include <de/Matrix>
@@ -31,100 +32,33 @@ namespace de {
 static TimeDelta const ANIM_SPAN = .5;
 
 DENG_GUI_PIMPL(NotificationAreaWidget)
-, DENG2_OBSERVES(Widget, ChildAddition)
-, DENG2_OBSERVES(Widget, ChildRemoval)
 , DENG2_OBSERVES(Widget, Deletion)
 {
     ScalarRule *shift;
+    QMap<GuiWidget *, RelayWidget *> shown;
 
-    typedef QMap<GuiWidget *, Widget *> OldParents;
-    OldParents oldParents;
     QTimer dismissTimer;
     QList<GuiWidget *> pendingDismiss;
 
-    // GL objects:
-    typedef DefaultVertexBuf VertexBuf;
-    Drawable drawable;
-    GLUniform uMvpMatrix;
-    GLUniform uColor;
-
-    Instance(Public *i)
-        : Base(i),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4),
-          uColor    ("uColor",     GLUniform::Vec4)
+    Instance(Public *i) : Base(i)
     {
-        self.audienceForChildAddition() += this;
-        self.audienceForChildRemoval() += this;
-
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN.asMilliSeconds());
         QObject::connect(&dismissTimer, SIGNAL(timeout()), thisPublic, SLOT(dismiss()));
 
         shift = new ScalarRule(0);
-        updateStyle();
     }
 
     ~Instance()
     {
-        // Give current notifications back to their old parents.
-        DENG2_FOR_EACH_CONST(OldParents, i, oldParents)
+        qDebug() << this << "~NotificationArea" << shown.size() << self.childCount();
+        foreach(GuiWidget *w, shown.keys())
         {
-            dismissChild(*i.key());
-            i.value()->audienceForDeletion() -= this;
+            qDebug() << "leaving audience of" << w;
+            DENG2_ASSERT(w->audienceForDeletion().contains(this));
+            w->audienceForDeletion() -= this;
         }
-
         releaseRef(shift);
-    }
-
-    void widgetBeingDeleted(Widget &widget)
-    {
-        // Is this one of the old parents?
-        QMutableMapIterator<GuiWidget *, Widget *> iter(oldParents);
-        while(iter.hasNext())
-        {
-            iter.next();
-            if(iter.value() == &widget)
-            {
-                GuiWidget *notif = iter.key();
-                iter.remove();
-
-                // The old parent is gone, so its notifications should also be deleted.
-                dismissChild(*notif);
-                notif->guiDeleteLater();
-            }
-        }
-    }
-
-    void updateStyle()
-    {
-        //self.
-        //self.set(Background(self.style().colors().colorf("background")));
-    }
-
-    void glInit()
-    {
-        drawable.addBuffer(new VertexBuf);
-
-        shaders().build(drawable.program(), "generic.color_ucolor")
-                << uMvpMatrix << uColor;
-    }
-
-    void glDeinit()
-    {
-        drawable.clear();
-    }
-
-    void updateGeometry()
-    {
-        Rectanglei pos;
-        if(self.hasChangedPlace(pos) || self.geometryRequested())
-        {
-            self.requestGeometry(false);
-
-            VertexBuf::Builder verts;
-            self.glMakeGeometry(verts);
-            drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
-        }
     }
 
     void updateChildLayout()
@@ -137,14 +71,15 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         bool first = true;
         foreach(Widget *child, self.childWidgets())
         {
-            GuiWidget &w = child->as<GuiWidget>();
+            GuiWidget *w = child->as<RelayWidget>().target();
+            DENG2_ASSERT(w != nullptr);
             if(!first)
             {
                 layout << gap;
             }
             first = false;
 
-            layout << w;
+            layout << *w;
         }
 
         // Update the total size of the notification area.
@@ -153,30 +88,45 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     void show()
     {
-        //self.setOpacity(1, ANIM_SPAN);
         shift->set(0, ANIM_SPAN);
         shift->setStyle(Animation::EaseOut);
+        self.show();
     }
 
     void hide(TimeDelta const &span = ANIM_SPAN)
     {
-        //self.setOpacity(0, span);
         shift->set(self.rule().height() + style().rules().rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
     }
 
+    void removeChild(GuiWidget &notif)
+    {
+        DENG2_ASSERT(shown.contains(&notif));
+        auto *relay = shown.take(&notif);
+        /*
+         * Can't destroy the relay immediately because both the relay and we are
+         * observing the notification for deletion and we don't know if the relay
+         * will still be notified after this.
+         */
+        self.remove(*relay);
+        GuiWidget::destroyLater(relay);
+        
+        if(!self.childCount())
+        {
+            self.hide();
+        }
+        updateChildLayout();
+    }
+    
     void dismissChild(GuiWidget &notif)
     {
-        notif.hide();
-        self.remove(notif);
+        DENG2_ASSERT(notif.audienceForDeletion().contains(this));
+        notif.audienceForDeletion() -= this;
+        
+        removeChild(notif);
 
-        if(oldParents.contains(&notif))
-        {
-            Widget *oldParent = oldParents[&notif];
-            oldParent->add(&notif);
-            oldParent->audienceForDeletion() -= this;
-            oldParents.remove(&notif);            
-        }
+        notif.deinitialize();
+        notif.setRoot(nullptr);
     }
 
     void performPendingDismiss()
@@ -191,22 +141,11 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         pendingDismiss.clear();
     }
 
-    void widgetChildAdded(Widget &child)
+    void widgetBeingDeleted(Widget &notif)
     {
-        // Set a background for all notifications.
-        child.as<GuiWidget>().set(Background(style().colors().colorf("background")));
-
-        updateChildLayout();
-        self.show();
-    }
-
-    void widgetChildRemoved(Widget &)
-    {
-        updateChildLayout();
-        if(!self.childCount())
-        {
-            self.hide();
-        }
+        GuiWidget *w = static_cast<GuiWidget *>(&notif);
+        pendingDismiss.removeAll(w);
+        removeChild(*w);
     }
 };
 
@@ -232,11 +171,9 @@ Rule const &NotificationAreaWidget::shift()
     return *d->shift;
 }
 
-void NotificationAreaWidget::showChild(GuiWidget *notif)
+void NotificationAreaWidget::showChild(GuiWidget &notif)
 {
-    DENG2_ASSERT(notif != 0);
-
-    if(isChildShown(*notif))
+    if(isChildShown(notif))
     {
         // Already in the notification area.
         return;
@@ -245,14 +182,17 @@ void NotificationAreaWidget::showChild(GuiWidget *notif)
     // Cancel a pending dismissal.
     d->performPendingDismiss();
 
-    if(notif->parentWidget())
-    {
-        d->oldParents.insert(notif, notif->parentWidget());
-        notif->parentWidget()->audienceForDeletion() += d;
-        notif->parentWidget()->remove(*notif);
-    }
-    add(notif);
-    notif->show();
+    notif.setRoot(&root());
+    notif.audienceForDeletion() += d;
+
+    // Set a background for all notifications.
+    notif.set(Background(style().colors().colorf("background")));
+
+    auto *relay = new RelayWidget(&notif);
+    d->shown.insert(&notif, relay);
+    relay->initialize();
+    add(relay);
+    d->updateChildLayout();
     d->show();
 }
 
@@ -290,32 +230,7 @@ bool NotificationAreaWidget::isChildShown(GuiWidget &notif) const
     {
         return false;
     }
-    return notif.parentWidget() == this;
-}
-
-void NotificationAreaWidget::viewResized()
-{
-    GuiWidget::viewResized();
-
-    d->uMvpMatrix = root().projMatrix2D();
-}
-
-void NotificationAreaWidget::drawContent()
-{
-    d->updateGeometry();
-
-    d->uColor = Vector4f(1, 1, 1, visibleOpacity());
-    d->drawable.draw();
-}
-
-void NotificationAreaWidget::glInit()
-{
-    d->glInit();
-}
-
-void NotificationAreaWidget::glDeinit()
-{
-    d->glDeinit();
+    return d->shown.contains(&notif);
 }
 
 } // namespace de

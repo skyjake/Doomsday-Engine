@@ -70,6 +70,7 @@ publicHeaders(root, \
     include/de/PopupWidget \
     include/de/ProceduralImage \
     include/de/ProgressWidget \
+    include/de/RelayWidget \
     include/de/ScriptCommandWidget \
     include/de/ScrollAreaWidget \
     include/de/SequentialLayout \
@@ -170,6 +171,7 @@ publicHeaders(widgets, \
     include/de/widgets/popupmenuwidget.h \
     include/de/widgets/popupwidget.h \
     include/de/widgets/progresswidget.h \
+    include/de/widgets/relaywidget.h \
     include/de/widgets/scriptcommandwidget.h \
     include/de/widgets/scrollareawidget.h \
     include/de/widgets/sliderwidget.h \
@@ -233,6 +235,7 @@ SOURCES += \
     src/widgets/popupmenuwidget.cpp \
     src/widgets/popupwidget.cpp \
     src/widgets/progresswidget.cpp \
+    src/widgets/relaywidget.cpp \
     src/widgets/scriptcommandwidget.cpp \
     src/widgets/scrollareawidget.cpp \
     src/widgets/sliderwidget.cpp \
