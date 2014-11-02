@@ -1549,10 +1549,6 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Con_InitDatabases();
         consoleRegister();
 
-#ifdef __CLIENT__
-        I_InitAllDevices();
-#endif
-
         R_InitSvgs();
 
 #ifdef __CLIENT__
@@ -1699,7 +1695,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
          * @note Only necessary here because we might not have been able to use
          *       busy mode (which would normally do this for us on end).
          */
-        I_ClearEvents();
+        ClientApp::inputSystem().clearEvents();
 
         if(!App_GameLoaded())
         {
@@ -2468,7 +2464,7 @@ int DD_GetInteger(int ddvalue)
     {
 #ifdef __CLIENT__
     case DD_SHIFT_DOWN:
-        return int(I_ShiftDown());
+        return int(ClientApp::inputSystem().shiftDown());
 
     case DD_WINDOW_WIDTH:
         return DENG_GAMEVIEW_WIDTH;

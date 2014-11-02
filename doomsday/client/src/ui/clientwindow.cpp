@@ -61,6 +61,11 @@
 
 using namespace de;
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
 , DENG2_OBSERVES(Canvas, FocusChange)
@@ -454,8 +459,8 @@ DENG2_PIMPL(ClientWindow)
 
         if(!hasFocus)
         {
-            I_ClearEvents();
-            I_ForAllDevices([] (InputDevice &device)
+            inputSys().clearEvents();
+            inputSys().forAllDevices([] (InputDevice &device)
             {
                 device.reset();
                 return LoopContinue;
@@ -475,7 +480,7 @@ DENG2_PIMPL(ClientWindow)
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
-        I_PostEvent(&ev);
+        inputSys().postEvent(&ev);
     }
 
     void updateFpsNotification(float fps)

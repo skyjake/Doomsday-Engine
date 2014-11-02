@@ -23,6 +23,7 @@
 #include "de_console.h"
 #include "dd_main.h"
 #include "de_misc.h"
+#include "clientapp.h"
 
 #include "ui/b_util.h"
 
@@ -33,6 +34,13 @@
 #include "ui/inputdevicebuttoncontrol.h"
 #include "ui/inputdevicehatcontrol.h"
 #include "network/net_main.h" // netGame
+
+using namespace de;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
 {
@@ -144,7 +152,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     DENG2_ASSERT(desc && type && id);
 
     // Maybe it's one of the named buttons?
-    *id = I_Device(IDEV_MOUSE).toButtonId(desc);
+    *id = inputSys().device(IDEV_MOUSE).toButtonId(desc);
     if(*id >= 0)
     {
         *type = E_TOGGLE;
@@ -156,7 +164,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     {
         *type = E_TOGGLE;
         *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(I_Device(IDEV_MOUSE).hasButton(*id))
+        if(inputSys().device(IDEV_MOUSE).hasButton(*id))
             return true;
 
         LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
@@ -165,7 +173,7 @@ dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
 
     // Must be an axis, then.
     *type = E_AXIS;
-    *id   = I_Device(IDEV_MOUSE).toAxisId(desc);
+    *id   = inputSys().device(IDEV_MOUSE).toAxisId(desc);
     if(*id >= 0) return true;
 
     LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
@@ -322,7 +330,7 @@ dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         ddeventtype_t type;
-        if(!B_ParseJoystickTypeAndId(I_Device(cond->device), Str_Text(str), &type, &cond->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(cond->device), Str_Text(str), &type, &cond->id))
         {
             return false;
         }
@@ -410,7 +418,7 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *conte
     DENG2_ASSERT(cond);
     dd_bool const fulfilled = !cond->flags.negate;
 
-    InputDevice &dev = I_Device(cond->device);
+    InputDevice &dev = inputSys().device(cond->device);
 
     switch(cond->type)
     {
@@ -485,7 +493,7 @@ void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, i
         {
             Str_Append(str, device.button(id).name().toUtf8().constData());
         }
-        else if(&device == I_DevicePtr(IDEV_KEYBOARD))
+        else if(&device == inputSys().devicePtr(IDEV_KEYBOARD))
         {
             char const *name = B_ShortNameForKey(id);
             if(name)
@@ -568,7 +576,7 @@ void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str)
     }
     else
     {
-        B_AppendDeviceDescToString(I_Device(cond->device),
+        B_AppendDeviceDescToString(inputSys().device(cond->device),
                                    (  cond->type == SCT_TOGGLE_STATE? E_TOGGLE
                                     : cond->type == SCT_AXIS_BEYOND ? E_AXIS
                                     : E_ANGLE),
@@ -599,7 +607,7 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
 {
     DENG2_ASSERT(ev);
 
-    B_AppendDeviceDescToString(I_Device(ev->device), ev->type,
+    B_AppendDeviceDescToString(inputSys().device(ev->device), ev->type,
                                (  ev->type == E_TOGGLE  ? ev->toggle.id
                                 : ev->type == E_AXIS    ? ev->axis.id
                                 : ev->type == E_ANGLE   ? ev->angle.id

@@ -21,6 +21,7 @@
 
 #include <de/memory.h>
 #include <de/timer.h>
+#include "clientapp.h"
 #include "dd_main.h"
 #include "ui/b_main.h"
 #include "ui/b_context.h"
@@ -38,6 +39,11 @@ byte zeroControlUponConflict = true;
 
 static float stageThreshold = 6.f/35;
 static float stageFactor    = .5f;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 static dbinding_t *B_AllocDeviceBinding()
 {
@@ -114,7 +120,7 @@ dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(I_Device(cb->device), Str_Text(str), &type, &cb->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(cb->device), Str_Text(str), &type, &cb->id))
         {
             return false;
         }
@@ -269,7 +275,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         if(skip) continue;
 
         // Get the device.
-        InputDevice *dev = I_DevicePtr(cb->device);
+        InputDevice *dev = inputSys().devicePtr(cb->device);
         if(!dev || !dev->isActive()) continue; // Not available.
 
         float devicePos = 0;
@@ -397,7 +403,7 @@ void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str)
     Str_Clear(str);
 
     // Name of the device and the key/axis/hat.
-    B_AppendDeviceDescToString(I_Device(b->device), CBDTYPE_TO_EVTYPE(b->type), b->id, str);
+    B_AppendDeviceDescToString(inputSys().device(b->device), CBDTYPE_TO_EVTYPE(b->type), b->id, str);
 
     if(b->type == CBD_ANGLE)
     {

@@ -34,6 +34,9 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -132,7 +135,7 @@ void Sys_Shutdown(void)
     S_Shutdown();
 #ifdef __CLIENT__
     GL_Shutdown();
-    I_ClearEvents();
+    ClientApp::inputSystem().clearEvents();
 #endif
 
     DD_DestroyGames();

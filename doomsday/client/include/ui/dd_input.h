@@ -24,8 +24,6 @@
 #include <de/String>
 #include "api_event.h"
 
-class InputDevice;
-
 // Input device identifiers:
 enum
 {
@@ -112,102 +110,6 @@ struct ddevent_t
 #define IS_MOUSE_MOTION(evp)           ((evp)->device == IDEV_MOUSE && (evp)->type == E_AXIS)
 
 void I_ConsoleRegister();
-
-/**
- * Initialize the virtual input devices.
- *
- * @note There need not be actual physical devices available in order to use
- * these state tables.
- */
-void I_InitAllDevices();
-
-/**
- * Free the memory allocated for the input devices.
- */
-void I_ShutdownAllDevices();
-
-/**
- * Lookup an InputDevice by it's unique @a id.
- */
-InputDevice &I_Device(int id);
-
-/**
- * Lookup an InputDevice by it's unique @a id.
- *
- * @return  Pointer to the associated InputDevice; otherwise @c nullptr.
- */
-InputDevice *I_DevicePtr(int id);
-
-/**
- * Iterate through all the InputDevices.
- */
-de::LoopResult I_ForAllDevices(std::function<de::LoopResult (InputDevice &)> func);
-
-/**
- * Initializes the key mappings to the default values.
- */
-void I_InitKeyMappings();
-
-/**
- * Checks the current keyboard state, generates input events based on pressed/held
- * keys and posts them.
- */
-void I_ReadKeyboard();
-
-/**
- * Checks the current mouse state (axis, buttons and wheel).
- * Generates events and mickeys and posts them.
- */
-void I_ReadMouse();
-
-/**
- * Checks the current joystick state (axis, sliders, hat and buttons).
- * Generates events and posts them. Axis clamps and dead zone is done
- * here.
- */
-void I_ReadJoystick();
-
-void I_ReadHeadTracker();
-
-/**
- * Clear the input event queue.
- */
-void I_ClearEvents();
-
-bool I_IgnoreEvents(bool yes = true);
-
-/**
- * Process all incoming input for the given timestamp.
- * This is called only in the main thread, and also from the busy loop.
- *
- * This gets called at least 35 times per second. Usually more frequently
- * than that.
- */
-void I_ProcessEvents(timespan_t ticLength);
-
-void I_ProcessSharpEvents(timespan_t ticLength);
-
-/**
- * @param ev  A copy is made.
- */
-void I_PostEvent(ddevent_t *ev);
-
-bool I_ConvertEvent(ddevent_t const *ddEvent, event_t *ev);
-
-/**
- * Converts a libcore Event into an old-fashioned ddevent_t.
- *
- * @param event    Event instance.
- * @param ddEvent  ddevent_t instance.
- */
-void I_ConvertEvent(de::Event const &event, ddevent_t *ddEvent);
-
-/**
- * Update the input device state table.
- */
-void I_TrackInput(ddevent_t *ev);
-
-bool I_ShiftDown();
 
 #ifdef DENG2_DEBUG
 /**

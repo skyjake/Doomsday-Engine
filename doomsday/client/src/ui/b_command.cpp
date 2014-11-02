@@ -22,6 +22,7 @@
 
 #include <de/memory.h>
 #include <de/vector1.h>
+#include "clientapp.h"
 #include "world/p_players.h" // P_ConsoleToLocal
 #include "ui/b_main.h"
 #include "ui/inputdevice.h"
@@ -33,6 +34,11 @@
 #include <de/Log>
 
 using namespace de;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 void B_InitCommandBindingList(evbinding_t *listRoot)
 {
@@ -141,7 +147,7 @@ static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(I_Device(eb->device), Str_Text(str), &eb->type, &eb->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(eb->device), Str_Text(str), &eb->type, &eb->id))
         {
             return false;
         }
@@ -354,7 +360,7 @@ Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     InputDevice *dev = nullptr;
     if(event->type != E_SYMBOLIC)
     {
-        dev = I_DevicePtr(eb->device);
+        dev = inputSys().devicePtr(eb->device);
         if(!dev || !dev->isActive())
         {
             // The device is not active, there is no way this could get executed.
@@ -420,7 +426,7 @@ Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
 
         // Is the position as required?
         if(!B_CheckAxisPos(eb->state, eb->pos,
-                           I_Device(event->device).axis(event->axis.id)
+                           inputSys().device(event->device).axis(event->axis.id)
                                .translateRealPosition(event->axis.pos)))
             return nullptr;
         break;
@@ -468,7 +474,7 @@ void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
     DENG2_ASSERT(eb && str);
 
     Str_Clear(str);
-    B_AppendDeviceDescToString(I_Device(eb->device), eb->type, eb->id, str);
+    B_AppendDeviceDescToString(inputSys().device(eb->device), eb->type, eb->id, str);
 
     switch(eb->type)
     {

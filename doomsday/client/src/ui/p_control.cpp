@@ -31,6 +31,9 @@
 #include "de_system.h"
 #include "de_graphics.h"
 #include "dd_main.h"
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 
 #include "world/p_players.h"
 #ifdef __CLIENT__
@@ -302,7 +305,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         ev.symbolic.id = playerNum;
         ev.symbolic.name = Str_Text(symbolicName);
 
-        I_PostEvent(&ev);
+        ClientApp::inputSystem().postEvent(&ev);
 
         Str_Delete(symbolicName);
     }
@@ -334,7 +337,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // There must be bindings to active input devices.
     for(dbinding_t *cb = binds->next; cb != binds; cb = cb->next)
     {
-        if(InputDevice *dev = I_DevicePtr(cb->device))
+        if(InputDevice *dev = ClientApp::inputSystem().devicePtr(cb->device))
         {
             if(dev->isActive()) return true;
         }
@@ -473,7 +476,7 @@ void P_ControlTicker(timespan_t time)
 #ifdef __CLIENT__
 D_CMD(ClearControlAccumulation)
 {
-    I_ForAllDevices([] (InputDevice &device)
+    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
     {
         device.reset();
         return LoopContinue;

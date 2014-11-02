@@ -267,7 +267,7 @@ static void preBusySetup(int initialMode)
         Con_TransitionConfigure();
     }
 
-    busyWasIgnoringInput = I_IgnoreEvents();
+    busyWasIgnoringInput = ClientApp::inputSystem().ignoreEvents();
 
     // Load any resources needed beforehand.
     //BusyVisual_PrepareResources();
@@ -290,7 +290,7 @@ static void postBusyCleanup()
 {
 #ifdef __CLIENT__
     // Discard input events so that any and all accumulated input events are ignored.
-    I_IgnoreEvents(busyWasIgnoringInput);
+    ClientApp::inputSystem().ignoreEvents(busyWasIgnoringInput);
     DD_ResetTimer();
 
     //BusyVisual_ReleaseTextures();
@@ -471,8 +471,8 @@ void BusyMode_Loop(void)
     timespan_t oldTime;
 
     // Post and discard all input events.
-    I_ProcessEvents(0);
-    I_ProcessSharpEvents(0);
+    ClientApp::inputSystem().processEvents(0);
+    ClientApp::inputSystem().processSharpEvents(0);
 
     if(canUpload)
     {

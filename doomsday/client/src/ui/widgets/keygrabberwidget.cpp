@@ -17,6 +17,7 @@
  */
 
 #include "ui/widgets/keygrabberwidget.h"
+#include "clientapp.h"
 #include "ui/dd_input.h"
 #include "ui/b_util.h"
 
@@ -81,7 +82,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             Str_Init(&name);
 
             ddevent_t ev;
-            I_ConvertEvent(event, &ev);
+            InputSystem::convertEvent(event, &ev);
 
             B_AppendEventToString(&ev, &name);
 

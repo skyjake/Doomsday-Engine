@@ -24,6 +24,7 @@
 #include "dd_input.h"
 
 struct bcontext_t;
+class InputDevice;
 
 // Event Binding Toggle State
 enum ebstate_t

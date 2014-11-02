@@ -123,6 +123,11 @@ static keyname_t const keyNames[] = {
     { 0, nullptr}
 };
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
 /**
  * Binding context fallback for the "global" context.
  *
@@ -136,7 +141,7 @@ static int globalContextFallback(ddevent_t const *ddev)
     if(App_GameLoaded())
     {
         event_t ev;
-        if(I_ConvertEvent(ddev, &ev))
+        if(InputSystem::convertEvent(ddev, &ev))
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting). Note that if the event is eaten here,
@@ -441,7 +446,7 @@ dd_bool B_Responder(ddevent_t *ev)
         // Axis events need a bit of filtering.
         if(ev->type == E_AXIS)
         {
-            float pos = I_Device(ev->device).axis(ev->axis.id).translateRealPosition(ev->axis.pos);
+            float pos = inputSys().device(ev->device).axis(ev->axis.id).translateRealPosition(ev->axis.pos);
             if((ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
                (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
@@ -461,7 +466,7 @@ dd_bool B_Responder(ddevent_t *ev)
         echo.symbolic.name = Str_Text(&name);
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
-        I_PostEvent(&echo);
+        inputSys().postEvent(&echo);
         Str_Free(&name);
 
         return true;

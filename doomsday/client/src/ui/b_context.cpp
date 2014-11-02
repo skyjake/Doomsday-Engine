@@ -25,6 +25,7 @@
 #include <cstring>
 #include <de/memory.h>
 #include <de/Log>
+#include "clientapp.h"
 #include "dd_main.h"
 #include "m_misc.h"
 #include "ui/b_main.h"
@@ -38,6 +39,11 @@ using namespace de;
 
 static int bindContextCount;
 static bcontext_t **bindContexts;
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
 
 void B_DestroyAllContexts()
 {
@@ -60,7 +66,7 @@ void B_DestroyAllContexts()
 void B_UpdateAllDeviceStateAssociations()
 {
     // Clear all existing associations.
-    I_ForAllDevices([] (InputDevice &device)
+    inputSys().forAllDevices([] (InputDevice &device)
     {
         device.forAllControls([] (InputDeviceControl &control)
         {
@@ -82,7 +88,7 @@ void B_UpdateAllDeviceStateAssociations()
         // Mark all event bindings in the context.
         for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
         {
-            InputDevice &dev = I_Device(eb->device);
+            InputDevice &dev = inputSys().device(eb->device);
 
             switch(eb->type)
             {
@@ -126,7 +132,7 @@ void B_UpdateAllDeviceStateAssociations()
             for(int k = 0; k < DDMAXPLAYERS; ++k)
             for(dbinding_t *db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k]; db = db->next)
             {
-                InputDevice &dev = I_Device(db->device);
+                InputDevice &dev = inputSys().device(db->device);
 
                 switch(db->type)
                 {
@@ -165,7 +171,7 @@ void B_UpdateAllDeviceStateAssociations()
         // relevant states.
         if(bc->flags & BCF_ACQUIRE_KEYBOARD)
         {
-            InputDevice &device = I_Device(IDEV_KEYBOARD);
+            InputDevice &device = inputSys().device(IDEV_KEYBOARD);
             if(device.isActive())
             {
                 device.forAllControls([&bc] (InputDeviceControl &control)
@@ -181,7 +187,7 @@ void B_UpdateAllDeviceStateAssociations()
 
         if(bc->flags & BCF_ACQUIRE_ALL)
         {
-            I_ForAllDevices([&bc] (InputDevice &device)
+            inputSys().forAllDevices([&bc] (InputDevice &device)
             {
                 if(device.isActive())
                 {
@@ -201,7 +207,7 @@ void B_UpdateAllDeviceStateAssociations()
 
     // Now that we know what are the updated context associations, let's check
     // the devices and see if any of the states need to be expired.
-    I_ForAllDevices([] (InputDevice &device)
+    inputSys().forAllDevices([] (InputDevice &device)
     {
         device.forAllControls([] (InputDeviceControl &control)
         {
@@ -292,7 +298,7 @@ void B_ActivateContext(bcontext_t *bc, dd_bool doActivate)
 
     if(bc->flags & BCF_ACQUIRE_ALL)
     {
-        I_ForAllDevices([] (InputDevice &device)
+        inputSys().forAllDevices([] (InputDevice &device)
         {
             device.reset();
             return LoopContinue;
@@ -520,7 +526,7 @@ de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
 Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
-    bool validGameEvent = I_ConvertEvent(event, &ev);
+    bool validGameEvent = InputSystem::convertEvent(event, &ev);
 
     for(int i = 0; i < bindContextCount; ++i)
     {

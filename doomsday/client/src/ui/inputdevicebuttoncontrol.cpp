@@ -19,7 +19,7 @@
  */
 
 #include "ui/inputdevicebuttoncontrol.h"
-#include <de/timer.h> // SECONDSPERTIC
+#include <de/timer.h> // Timer_RealMilliseconds()
 
 using namespace de;
 

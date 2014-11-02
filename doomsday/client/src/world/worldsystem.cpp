@@ -646,7 +646,7 @@ DENG2_PIMPL(WorldSystem)
         R_ResetViewer();
 
         // Clear any input events that might have accumulated during setup.
-        I_ClearEvents();
+        ClientApp::inputSystem().clearEvents();
 
         // Inform the timing system to suspend the starting of the clock.
         firstFrameAfterLoad = true;
