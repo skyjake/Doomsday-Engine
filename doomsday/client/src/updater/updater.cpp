@@ -192,7 +192,7 @@ DENG2_PIMPL(Updater)
 
     void setupUI()
     {
-        status = new UpdaterStatusWidget;        
+        status.reset(new UpdaterStatusWidget);
     }
 
     QString composeCheckUri()
