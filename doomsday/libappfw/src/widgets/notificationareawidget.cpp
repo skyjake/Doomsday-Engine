@@ -51,10 +51,8 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
 
     ~Instance()
     {
-        qDebug() << this << "~NotificationArea" << shown.size() << self.childCount();
         foreach(GuiWidget *w, shown.keys())
         {
-            qDebug() << "leaving audience of" << w;
             DENG2_ASSERT(w->audienceForDeletion().contains(this));
             w->audienceForDeletion() -= this;
         }
