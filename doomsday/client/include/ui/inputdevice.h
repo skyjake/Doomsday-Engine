@@ -26,7 +26,7 @@
 #include <de/Observers>
 #include <de/String>
 
-struct bcontext_t;
+class BindContext;
 
 /// @todo remove:
 class InputDeviceAxisControl;
@@ -141,27 +141,27 @@ public:
         void setDevice(InputDevice *newDevice);
 
         /**
-         * Returns the bcontext_t attributed to the control; otherwise @c nullptr.
+         * Returns the BindContext attributed to the control; otherwise @c nullptr.
          *
          * @see hasBindContext(), setBindContext()
          */
-        bcontext_t *bindContext() const;
+        BindContext *bindContext() const;
 
         /**
-         * Returns @c true of a bcontext_t is attributed to the control.
+         * Returns @c true of a BindContext is attributed to the control.
          *
          * @see bindContext(), setBindContext()
          */
         inline bool hasBindContext() const { return bindContext() != nullptr; }
 
         /**
-         * Change the attributed bcontext_t to @a newContext.
+         * Change the attributed BindContext to @a newContext.
          *
-         * @param newContext  bcontext_t to attribute. Ownership is unaffected.
+         * @param newContext  BindContext to attribute. Ownership is unaffected.
          *
          * @see hasBindContext(), bindContext()
          */
-        void setBindContext(bcontext_t *newContext);
+        void setBindContext(BindContext *newContext);
 
         /**
          * Returns the BindContextAssociation flags for the control.

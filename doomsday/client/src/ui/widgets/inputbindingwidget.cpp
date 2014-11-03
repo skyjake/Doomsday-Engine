@@ -39,13 +39,10 @@ DENG_GUI_PIMPL(InputBindingWidget)
     String defaultEvent;
     String command;
     QStringList contexts;
-    int device;
-    bool useModifiers;
+    int device = IDEV_KEYBOARD;
+    bool useModifiers = false;
 
-    Instance(Public *i)
-        : Base(i)
-        , device(IDEV_KEYBOARD)
-        , useModifiers(false)
+    Instance(Public *i) : Base(i)
     {
         //self.setTextLineAlignment(ui::AlignLeft);
         self.setSizePolicy(ui::Fixed, ui::Expand);
@@ -97,10 +94,10 @@ DENG_GUI_PIMPL(InputBindingWidget)
         // Check all the contexts associated with this widget.
         foreach(QString bcName, contexts)
         {
-            bcontext_t const *bc = B_ContextByName(bcName.toLatin1());
-            evbinding_t const *com = B_FindCommandBinding(&bc->commandBinds,
-                                                          command.toLatin1(), device);
-            if(com)
+            BindContext const *bc = B_ContextByName(bcName);
+            if(!bc) continue;
+
+            if(evbinding_t const *com = bc->findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 AutoStr *str = AutoStr_New();

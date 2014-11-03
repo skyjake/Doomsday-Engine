@@ -23,7 +23,7 @@
 #include "dd_types.h"
 #include "dd_input.h"
 
-struct bcontext_t;
+class BindContext;
 class InputDevice;
 
 // Event Binding Toggle State
@@ -84,7 +84,7 @@ dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-dd_bool B_CheckCondition(statecondition_t *cond, int localNum, bcontext_t *context);
+dd_bool B_CheckCondition(statecondition_t *cond, int localNum, BindContext *context);
 
 dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
 

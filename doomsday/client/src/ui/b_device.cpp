@@ -213,23 +213,6 @@ dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc)
     return cb;
 }
 
-dbinding_t *B_FindDeviceBinding(bcontext_t *context, int device, cbdevtype_t bindType, int id)
-{
-    if(!context) return nullptr;
-
-    for(controlbinding_t *cb = context->controlBinds.next; cb != &context->controlBinds; cb = cb->next)
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(dbinding_t *d = cb->deviceBinds[i].next; d != &cb->deviceBinds[i]; d = d->next)
-    {
-        if(d->device == device && d->type == bindType && d->id == id)
-        {
-            return d;
-        }
-    }
-
-    return nullptr;
-}
-
 void B_DestroyDeviceBinding(dbinding_t *cb)
 {
     if(!cb) return;
@@ -247,7 +230,7 @@ void B_DestroyDeviceBinding(dbinding_t *cb)
 }
 
 void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
-    float *relativeOffset, bcontext_t *controlClass, dd_bool allowTriggered)
+    float *relativeOffset, BindContext *controlClass, dd_bool allowTriggered)
 {
     DENG2_ASSERT(pos && relativeOffset);
 
@@ -307,7 +290,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
 
             if(controlClass && axis->bindContext() != controlClass)
             {
-                if(!B_FindDeviceBinding(axis->bindContext(), cb->device, CBD_AXIS, cb->id))
+                if(!axis->bindContext()->findDeviceBinding(cb->device, CBD_AXIS, cb->id))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type() == InputDeviceAxisControl::Pointer)

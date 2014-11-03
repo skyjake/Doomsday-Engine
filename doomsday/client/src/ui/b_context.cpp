@@ -29,6 +29,7 @@
 #include "dd_main.h"
 #include "m_misc.h"
 #include "ui/b_main.h"
+#include "ui/b_command.h"
 #include "ui/p_control.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
@@ -38,7 +39,7 @@
 using namespace de;
 
 static int bindContextCount;
-static bcontext_t **bindContexts;
+static BindContext **bindContexts;
 
 static inline InputSystem &inputSys()
 {
@@ -63,6 +64,7 @@ void B_DestroyAllContexts()
     bindContextCount = 0;
 }
 
+/// @todo: Most of this logic belongs in BindContext.
 void B_UpdateAllDeviceStateAssociations()
 {
     // Clear all existing associations.
@@ -79,40 +81,40 @@ void B_UpdateAllDeviceStateAssociations()
     // We need to iterate through all the device bindings in all contexts.
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
+        BindContext *bc = bindContexts[i];
 
         // Skip inactive contexts.
-        if(!(bc->flags & BCF_ACTIVE))
+        if(!bc->isActive())
             continue;
 
         // Mark all event bindings in the context.
-        for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        bc->forAllCommandBindings([&bc] (evbinding_t &cb)
         {
-            InputDevice &dev = inputSys().device(eb->device);
+            InputDevice &device = inputSys().device(cb.device);
 
-            switch(eb->type)
+            switch(cb.type)
             {
             case E_TOGGLE: {
-                InputDeviceButtonControl &button = dev.button(eb->id);
-                if(!button.hasBindContext())
+                InputDeviceControl &ctrl = device.button(cb.id);
+                if(!ctrl.hasBindContext())
                 {
-                    button.setBindContext(bc);
+                    ctrl.setBindContext(bc);
                 }
                 break; }
 
             case E_AXIS: {
-                InputDeviceAxisControl &axis = dev.axis(eb->id);
-                if(!axis.hasBindContext())
+                InputDeviceControl &ctrl = device.axis(cb.id);
+                if(!ctrl.hasBindContext())
                 {
-                    axis.setBindContext(bc);
+                    ctrl.setBindContext(bc);
                 }
                 break; }
 
             case E_ANGLE: {
-                InputDeviceHatControl &hat = dev.hat(eb->id);
-                if(!hat.hasBindContext())
+                InputDeviceControl &ctrl = device.hat(cb.id);
+                if(!ctrl.hasBindContext())
                 {
-                    hat.setBindContext(bc);
+                    ctrl.setBindContext(bc);
                 }
                 break; }
 
@@ -120,56 +122,58 @@ void B_UpdateAllDeviceStateAssociations()
                 break;
 
             default:
-                App_Error("B_UpdateAllDeviceStateAssociations: Invalid value eb->type: %i.", (int) eb->type);
+                DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid eb.type");
                 break;
             }
-        }
+            return LoopContinue;
+        });
 
         // All controls in the context.
-        for(controlbinding_t *conBin = bc->controlBinds.next; conBin != &bc->controlBinds; conBin = conBin->next)
+        bc->forAllControlBindings([&bc] (controlbinding_t &cb)
         {
             // Associate all the device bindings.
             for(int k = 0; k < DDMAXPLAYERS; ++k)
-            for(dbinding_t *db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k]; db = db->next)
+            for(dbinding_t *db = cb.deviceBinds[k].next; db != &cb.deviceBinds[k]; db = db->next)
             {
-                InputDevice &dev = inputSys().device(db->device);
+                InputDevice &device = inputSys().device(db->device);
 
                 switch(db->type)
                 {
                 case CBD_TOGGLE: {
-                    InputDeviceButtonControl &button = dev.button(db->id);
-                    if(!button.hasBindContext())
+                    InputDeviceControl &ctrl = device.button(db->id);
+                    if(!ctrl.hasBindContext())
                     {
-                        button.setBindContext(bc);
+                        ctrl.setBindContext(bc);
                     }
                     break; }
 
                 case CBD_AXIS: {
-                    InputDeviceAxisControl &axis = dev.axis(db->id);
-                    if(!axis.hasBindContext())
+                    InputDeviceControl &ctrl = device.axis(db->id);
+                    if(!ctrl.hasBindContext())
                     {
-                        axis.setBindContext(bc);
+                        ctrl.setBindContext(bc);
                     }
                     break; }
 
                 case CBD_ANGLE: {
-                    InputDeviceHatControl &hat = dev.hat(db->id);
-                    if(!hat.hasBindContext())
+                    InputDeviceControl &ctrl = device.hat(db->id);
+                    if(!ctrl.hasBindContext())
                     {
-                        hat.setBindContext(bc);
+                        ctrl.setBindContext(bc);
                     }
                     break; }
 
                 default:
-                    App_Error("B_UpdateAllDeviceStateAssociations: Invalid value db->type: %i.", (int) db->type);
+                    DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid db->type");
                     break;
                 }
             }
-        }
+            return LoopContinue;
+        });
 
         // If the context have made a broad device acquisition, mark all
         // relevant states.
-        if(bc->flags & BCF_ACQUIRE_KEYBOARD)
+        if(bc->willAcquireKeyboard())
         {
             InputDevice &device = inputSys().device(IDEV_KEYBOARD);
             if(device.isActive())
@@ -185,7 +189,7 @@ void B_UpdateAllDeviceStateAssociations()
             }
         }
 
-        if(bc->flags & BCF_ACQUIRE_ALL)
+        if(bc->willAcquireAll())
         {
             inputSys().forAllDevices([&bc] (InputDevice &device)
             {
@@ -223,11 +227,11 @@ void B_UpdateAllDeviceStateAssociations()
 
 static void B_SetContextCount(int count)
 {
-    bindContexts     = (bcontext_t **) M_Realloc(bindContexts, sizeof(*bindContexts) * count);
+    bindContexts     = (BindContext **) M_Realloc(bindContexts, sizeof(*bindContexts) * count);
     bindContextCount = count;
 }
 
-static void B_InsertContext(bcontext_t *bc, int contextIdx)
+static void B_InsertContext(BindContext *bc, int contextIdx)
 {
     DENG2_ASSERT(bc);
 
@@ -236,12 +240,12 @@ static void B_InsertContext(bcontext_t *bc, int contextIdx)
     {
         // We need to make room for this new binding context.
         std::memmove(&bindContexts[contextIdx + 1], &bindContexts[contextIdx],
-                     sizeof(bcontext_t *) * (bindContextCount - 1 - contextIdx));
+                     sizeof(BindContext *) * (bindContextCount - 1 - contextIdx));
     }
     bindContexts[contextIdx] = bc;
 }
 
-static void B_RemoveContext(bcontext_t *bc)
+static void B_RemoveContext(BindContext *bc)
 {
     if(!bc) return;
 
@@ -250,53 +254,137 @@ static void B_RemoveContext(bcontext_t *bc)
     if(contextIdx >= 0)
     {
         std::memmove(&bindContexts[contextIdx], &bindContexts[contextIdx + 1],
-                     sizeof(bcontext_t *) * (bindContextCount - 1 - contextIdx));
+                     sizeof(BindContext *) * (bindContextCount - 1 - contextIdx));
 
         B_SetContextCount(bindContextCount - 1);
     }
 }
 
-bcontext_t *B_NewContext(char const *name)
+// Binding Context Flags:
+#define BCF_ACTIVE              0x01  ///< Context is only used when it is active.
+#define BCF_PROTECTED           0x02  ///< Context cannot be (de)activated by plugins.
+#define BCF_ACQUIRE_KEYBOARD    0x04  /**  Context has acquired all keyboard states, unless
+                                           higher-priority contexts override it. */
+#define BCF_ACQUIRE_ALL         0x08  ///< Context will acquire all unacquired states.
+
+DENG2_PIMPL(BindContext)
 {
-    bcontext_t *bc = (bcontext_t *) M_Calloc(sizeof(bcontext_t));
-    bc->name = strdup(name);
-    B_InitCommandBindingList(&bc->commandBinds);
-    B_InitControlBindingList(&bc->controlBinds);
-    B_InsertContext(bc, 0);
-    return bc;
+    byte flags = 0;
+    String name;                    ///< Symbolic.
+    evbinding_t commandBinds;       ///< List of command bindings.
+    controlbinding_t controlBinds;
+
+    DDFallbackResponderFunc ddFallbackResponder = nullptr;
+    FallbackResponderFunc fallbackResponder     = nullptr;
+
+    Instance(Public *i) : Base(i)
+    {
+        B_InitCommandBindingList(&commandBinds);
+        B_InitControlBindingList(&controlBinds);
+    }
+
+    controlbinding_t *newControlBinding()
+    {
+        controlbinding_t *conBin = (controlbinding_t *) M_Calloc(sizeof(*conBin));
+        conBin->bid = B_NewIdentifier();
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            B_InitDeviceBindingList(&conBin->deviceBinds[i]);
+        }
+
+        // Link it in.
+        conBin->next = &controlBinds;
+        conBin->prev = controlBinds.prev;
+        controlBinds.prev->next = conBin;
+        controlBinds.prev = conBin;
+
+        return conBin;
+    }
+
+    /**
+     * Creates a new event-command binding.
+     *
+     * @param desc       Descriptor of the event.
+     * @param command    Command that will be executed by the binding.
+     *
+     * @return  New binding, or @c nullptr if there was an error.
+     */
+    evbinding_t *newCommandBinding(char const *desc, char const *command)
+    {
+        DENG2_ASSERT(command && command[0]);
+
+        evbinding_t *eb = B_AllocCommandBinding();
+        DENG2_ASSERT(eb);
+
+        // Parse the description of the event.
+        if(!B_ParseEventDescriptor(eb, desc))
+        {
+            // Error in parsing, failure to create binding.
+            B_DestroyCommandBinding(eb);
+            return nullptr;
+        }
+
+        // The command string.
+        eb->command = strdup(command);
+
+        // Link it into the list.
+        eb->next = &commandBinds;
+        eb->prev = commandBinds.prev;
+        commandBinds.prev->next = eb;
+        commandBinds.prev = eb;
+
+        return eb;
+    }
+};
+
+BindContext::BindContext(String const &name) : d(new Instance(this))
+{
+    setName(name);
 }
 
-void B_DestroyContext(bcontext_t *bc)
+BindContext::~BindContext()
 {
-    if(!bc) return;
-
-    B_RemoveContext(bc);
-    M_Free(bc->name);
-    B_ClearContext(bc);
-    M_Free(bc);
+    clearAllBindings();
 }
 
-void B_ClearContext(bcontext_t *bc)
+bool BindContext::isActive() const
 {
-    DENG2_ASSERT(bc);
-    B_DestroyCommandBindingList(&bc->commandBinds);
-    B_DestroyControlBindingList(&bc->controlBinds);
+    return (d->flags & BCF_ACTIVE) != 0;
 }
 
-void B_ActivateContext(bcontext_t *bc, dd_bool doActivate)
+bool BindContext::isProtected() const
 {
-    if(!bc) return;
+    return (d->flags & BCF_PROTECTED) != 0;
+}
 
+void BindContext::setProtected(bool yes)
+{
+    if(yes) d->flags |= BCF_PROTECTED;
+    else    d->flags &= ~BCF_PROTECTED;
+}
+
+String BindContext::name() const
+{
+    return d->name;
+}
+
+void BindContext::setName(String const &newName)
+{
+    d->name = newName;
+}
+
+void BindContext::activate(bool yes)
+{
     LOG_INPUT_VERBOSE("%s binding context '%s'")
-            << (doActivate? "Activating" : "Deactivating")
-            << bc->name;
+            << (yes? "Activating" : "Deactivating")
+            << d->name;
 
-    bc->flags &= ~BCF_ACTIVE;
-    if(doActivate) bc->flags |= BCF_ACTIVE;
+    d->flags &= ~BCF_ACTIVE;
+    if(yes) d->flags |= BCF_ACTIVE;
 
     B_UpdateAllDeviceStateAssociations();
 
-    if(bc->flags & BCF_ACQUIRE_ALL)
+    if(d->flags & BCF_ACQUIRE_ALL)
     {
         inputSys().forAllDevices([] (InputDevice &device)
         {
@@ -306,55 +394,447 @@ void B_ActivateContext(bcontext_t *bc, dd_bool doActivate)
     }
 }
 
-void B_AcquireKeyboard(bcontext_t *bc, dd_bool doAcquire)
+void BindContext::acquireKeyboard(bool yes)
 {
-    DENG2_ASSERT(bc);
-
-    bc->flags &= ~BCF_ACQUIRE_KEYBOARD;
-    if(doAcquire) bc->flags |= BCF_ACQUIRE_KEYBOARD;
+    d->flags &= ~BCF_ACQUIRE_KEYBOARD;
+    if(yes) d->flags |= BCF_ACQUIRE_KEYBOARD;
 
     B_UpdateAllDeviceStateAssociations();
 }
 
-void B_AcquireAll(bcontext_t *bc, dd_bool doAcquire)
+void BindContext::acquireAll(bool yes)
 {
-    DENG2_ASSERT(bc);
-
-    bc->flags &= ~BCF_ACQUIRE_ALL;
-    if(doAcquire) bc->flags |= BCF_ACQUIRE_ALL;
+    d->flags &= ~BCF_ACQUIRE_ALL;
+    if(yes) d->flags |= BCF_ACQUIRE_ALL;
 
     B_UpdateAllDeviceStateAssociations();
 }
 
-void B_SetContextFallbackForDDEvents(char const *name, int (*ddResponderFunc)(ddevent_t const *))
+bool BindContext::willAcquireAll() const
 {
-    if(bcontext_t *ctx = B_ContextByName(name))
-    {
-        ctx->ddFallbackResponder = ddResponderFunc;
-    }
+    return (d->flags & BCF_ACQUIRE_ALL) != 0;
 }
 
-void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+bool BindContext::willAcquireKeyboard() const
 {
-    if(bcontext_t *ctx = B_ContextByName(name))
-    {
-        ctx->fallbackResponder = responderFunc;
-    }
+    return (d->flags & BCF_ACQUIRE_KEYBOARD) != 0;
 }
 
-bcontext_t *B_ContextByName(char const *name)
+void BindContext::setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc)
 {
-    for(int i = 0; i < bindContextCount; ++i)
+    d->ddFallbackResponder = newResponderFunc;
+}
+
+void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
+{
+    d->fallbackResponder = newResponderFunc;
+}
+
+int BindContext::tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent)
+{
+    if(d->ddFallbackResponder)
     {
-        if(!strcasecmp(name, bindContexts[i]->name))
+        if(int result = d->ddFallbackResponder(&event))
+            return result;
+    }
+    if(validGameEvent && d->fallbackResponder)
+    {
+        if(int result = d->fallbackResponder(&ev))
+            return result;
+    }
+    return 0;
+}
+
+void BindContext::clearAllBindings()
+{
+    B_DestroyCommandBindingList(&d->commandBinds);
+    B_DestroyControlBindingList(&d->controlBinds);
+}
+
+void BindContext::deleteMatching(evbinding_t *eventBinding, dbinding_t *deviceBinding)
+{
+    dbinding_t *devb = nullptr;
+    evbinding_t *evb = nullptr;
+
+    while(findMatchingBinding(eventBinding, deviceBinding, &evb, &devb))
+    {
+        // Only either evb or devb is returned as non-NULL.
+        int bid = (evb? evb->bid : (devb? devb->bid : 0));
+        if(bid)
         {
-            return bindContexts[i];
+            LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
+                    << bid << (eventBinding? eventBinding->bid : deviceBinding->bid);
+            deleteBinding(bid);
+        }
+    }
+}
+
+evbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command)
+{
+    DENG2_ASSERT(eventDesc && command);
+
+    evbinding_t *b = d->newCommandBinding(eventDesc, command);
+    if(b)
+    {
+        /// @todo: In interactive binding mode, should ask the user if the
+        /// replacement is ok. For now, just delete the other binding.
+        deleteMatching(b, nullptr);
+        B_UpdateAllDeviceStateAssociations();
+    }
+
+    return b;
+}
+
+evbinding_t *BindContext::findCommandBinding(char const *command, int device) const
+{
+    if(command && command[0])
+    {
+        for(evbinding_t *i = d->commandBinds.next; i != &d->commandBinds; i = i->next)
+        {
+            if(qstricmp(i->command, command)) continue;
+
+            if((device < 0 || device >= NUM_INPUT_DEVICES) || i->device == device)
+            {
+                return i;
+            }
         }
     }
     return nullptr;
 }
 
-bcontext_t *B_ContextByPos(int pos)
+controlbinding_t *BindContext::findControlBinding(int control) const
+{
+    for(controlbinding_t *i = d->controlBinds.next; i != &d->controlBinds; i = i->next)
+    {
+        if(i->control == control)
+            return i;
+    }
+    return nullptr;
+}
+
+controlbinding_t *BindContext::getControlBinding(int control)
+{
+    controlbinding_t *b = findControlBinding(control);
+    if(!b)
+    {
+        // Create a new one.
+        b = d->newControlBinding();
+        b->control = control;
+    }
+    return b;
+}
+
+dbinding_t *BindContext::findDeviceBinding(int device, cbdevtype_t bindType, int id)
+{
+    for(controlbinding_t *cb = d->controlBinds.next; cb != &d->controlBinds; cb = cb->next)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dbinding_t *d = cb->deviceBinds[i].next; d != &cb->deviceBinds[i]; d = d->next)
+    {
+        if(d->device == device && d->type == bindType && d->id == id)
+        {
+            return d;
+        }
+    }
+    return nullptr;
+}
+
+BindContext *B_NewContext(char const *name)
+{
+    BindContext *bc = new BindContext(name);
+    B_InsertContext(bc, 0);
+    return bc;
+}
+
+bool BindContext::deleteBinding(int bid)
+{
+    // Check if it is one of the command bindings.
+    for(evbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
+    {
+        if(eb->bid == bid)
+        {
+            B_DestroyCommandBinding(eb);
+            return true;
+        }
+    }
+
+    // How about one of the control bindings?
+    for(controlbinding_t *conBin = d->controlBinds.next; conBin != &d->controlBinds; conBin = conBin->next)
+    {
+        if(conBin->bid == bid)
+        {
+            B_DestroyControlBinding(conBin);
+            return true;
+        }
+
+        // It may also be a device binding.
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            for(dbinding_t *db = conBin->deviceBinds[i].next; db != &conBin->deviceBinds[i]; db = db->next)
+            {
+                if(db->bid == bid)
+                {
+                    B_DestroyDeviceBinding(db);
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+Action *BindContext::actionForEvent(ddevent_t const *event, bool respectHigherAssociatedContexts) const
+{
+    // See if the command bindings will have it.
+    for(evbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
+    {
+        if(Action *act = EventBinding_ActionForEvent(eb, event, this, respectHigherAssociatedContexts))
+        {
+            return act;
+        }
+    }
+    return nullptr;
+}
+
+static bool B_AreConditionsEqual(int count1, statecondition_t const *conds1,
+                                 int count2, statecondition_t const *conds2)
+{
+    //DENG2_ASSERT(conds1 && conds2);
+
+    // Quick test (assumes there are no duplicated conditions).
+    if(count1 != count2) return false;
+
+    for(int i = 0; i < count1; ++i)
+    {
+        bool found = false;
+        for(int k = 0; k < count2; ++k)
+        {
+            if(B_EqualConditions(conds1 + i, conds2 + k))
+            {
+                found = true;
+                break;
+            }
+        }
+        if(!found) return false;
+    }
+
+    return true;
+}
+
+bool BindContext::findMatchingBinding(evbinding_t *match1, dbinding_t *match2,
+    evbinding_t **evResult, dbinding_t **dResult)
+{
+    DENG2_ASSERT(evResult && dResult);
+
+    *evResult = nullptr;
+    *dResult  = nullptr;
+
+    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    {
+        if(match1 && match1->bid != e->bid)
+        {
+            if(B_AreConditionsEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
+               match1->device == e->device && match1->id == e->id &&
+               match1->type == e->type && match1->state == e->state)
+            {
+                *evResult = e;
+                return true;
+            }
+        }
+        if(match2)
+        {
+            if(B_AreConditionsEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
+               match2->device == e->device && match2->id == e->id &&
+               match2->type == (cbdevtype_t) e->type)
+            {
+                *evResult = e;
+                return true;
+            }
+        }
+    }
+
+    for(controlbinding_t *c = d->controlBinds.next; c != &d->controlBinds; c = c->next)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(dbinding_t *d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
+    {
+        if(match1)
+        {
+            if(B_AreConditionsEqual(match1->numConds, match1->conds, d->numConds, d->conds) &&
+               match1->device == d->device && match1->id == d->id &&
+               match1->type == (ddeventtype_t) d->type)
+            {
+                *dResult = d;
+                return true;
+            }
+        }
+
+        if(match2 && match2->bid != d->bid)
+        {
+            if(B_AreConditionsEqual(match2->numConds, match2->conds, d->numConds, d->conds) &&
+               match2->device == d->device && match2->id == d->id &&
+               match2->type == d->type)
+            {
+                *dResult = d;
+                return true;
+            }
+        }
+    }
+
+    // Nothing found.
+    return false;
+}
+
+LoopResult BindContext::forAllCommandBindings(std::function<de::LoopResult (evbinding_t &)> func) const
+{
+    for(evbinding_t *cb = d->commandBinds.next; cb != &d->commandBinds; cb = cb->next)
+    {
+        if(auto result = func(*cb)) return result;
+    }
+    return LoopContinue;
+}
+
+LoopResult BindContext::forAllControlBindings(std::function<de::LoopResult (controlbinding_t &)> func) const
+{
+    for(controlbinding_t *cb = d->controlBinds.next; cb != &d->controlBinds; cb = cb->next)
+    {
+        if(auto result = func(*cb)) return result;
+    }
+    return LoopContinue;
+}
+
+void BindContext::printAllBindings() const
+{
+#define BIDFORMAT "[%3i]"
+
+    AutoStr *str = AutoStr_NewStd();
+
+    LOG_INPUT_MSG(_E(b)"Context \"%s\" (%s):")
+            << d->name << (isActive()? "active" : "inactive");
+
+    // Commands.
+    int count = 0;
+    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next, count++) {}
+
+    if(count)
+    {
+        LOG_INPUT_MSG("  %i event bindings:") << count;
+    }
+
+    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    {
+        B_EventBindingToString(e, str);
+        LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
+                << e->bid << Str_Text(str) << e->command;
+    }
+
+    // Controls.
+    count = 0;
+    for(controlbinding_t *c = d->controlBinds.next; c != &d->controlBinds; c = c->next, count++) {}
+
+    if(count)
+    {
+        LOG_INPUT_MSG("  %i control bindings") << count;
+    }
+
+    for(controlbinding_t *c = d->controlBinds.next; c != &d->controlBinds; c = c->next)
+    {
+        char const *controlName = P_PlayerControlById(c->control)->name;
+
+        LOG_INPUT_MSG(_E(D) "  Control \"%s\" " BIDFORMAT ":") << controlName << c->bid;
+
+        for(int k = 0; k < DDMAXPLAYERS; ++k)
+        {
+            count = 0;
+            for(dbinding_t *d = c->deviceBinds[k].next; d != &c->deviceBinds[k];
+                d = d->next, count++) {}
+
+            if(!count)
+            {
+                continue;
+            }
+
+            LOG_INPUT_MSG("    Local player %i has %i device bindings for \"%s\":")
+                    << k + 1 << count << controlName;
+
+            for(dbinding_t *d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
+            {
+                B_DeviceBindingToString(d, str);
+                LOG_INPUT_MSG("    " BIDFORMAT " %s") << d->bid << Str_Text(str);
+            }
+        }
+    }
+
+#undef BIDFORMAT
+}
+
+void BindContext::writeToFile(FILE *file) const
+{
+    DENG2_ASSERT(file);
+    AutoStr *str = AutoStr_NewStd();
+
+    // Commands.
+    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    {
+        B_EventBindingToString(e, str);
+        fprintf(file, "bindevent \"%s:%s\" \"", d->name.toUtf8().constData(), Str_Text(str));
+        M_WriteTextEsc(file, e->command);
+        fprintf(file, "\"\n");
+    }
+
+    // Controls.
+    for(controlbinding_t *cb = d->controlBinds.next; cb != &d->controlBinds; cb = cb->next)
+    {
+        char const *controlName = P_PlayerControlById(cb->control)->name;
+
+        for(int k = 0; k < DDMAXPLAYERS; ++k)
+        for(dbinding_t *db = cb->deviceBinds[k].next; db != &cb->deviceBinds[k]; db = db->next)
+        {
+            B_DeviceBindingToString(db, str);
+            fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1,
+                    controlName, Str_Text(str));
+        }
+    }
+}
+
+// ------------------------------------------------------------------------------
+
+void B_DestroyContext(BindContext *bc)
+{
+    if(!bc) return;
+    B_RemoveContext(bc);
+    delete bc;
+}
+
+void B_SetContextFallbackForDDEvents(char const *name, int (*ddResponderFunc)(ddevent_t const *))
+{
+    if(BindContext *ctx = B_ContextByName(name))
+    {
+        ctx->setDDFallbackResponder(ddResponderFunc);
+    }
+}
+
+void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+{
+    if(BindContext *ctx = B_ContextByName(name))
+    {
+        ctx->setFallbackResponder(responderFunc);
+    }
+}
+
+BindContext *B_ContextByName(String const &name)
+{
+    for(int i = 0; i < bindContextCount; ++i)
+    {
+        BindContext const *context = bindContexts[i];
+        if(!context->name().compareWithoutCase(name))
+        {
+            return const_cast<BindContext *>(context);
+        }
+    }
+    return nullptr;
+}
+
+BindContext *B_ContextByPos(int pos)
 {
     if(pos >= 0 && pos < bindContextCount)
     {
@@ -368,7 +848,7 @@ int B_ContextCount()
     return bindContextCount;
 }
 
-int B_GetContextPos(bcontext_t *bc)
+int B_GetContextPos(BindContext *bc)
 {
     if(bc)
     {
@@ -381,55 +861,10 @@ int B_GetContextPos(bcontext_t *bc)
     return -1;
 }
 
-void B_ReorderContext(bcontext_t *bc, int pos)
+void B_ReorderContext(BindContext *bc, int pos)
 {
     B_RemoveContext(bc);
     B_InsertContext(bc, pos);
-}
-
-controlbinding_t *B_NewControlBinding(bcontext_t *bc)
-{
-    DENG2_ASSERT(bc);
-
-    controlbinding_t *conBin = (controlbinding_t *) M_Calloc(sizeof(*conBin));
-    conBin->bid = B_NewIdentifier();
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        B_InitDeviceBindingList(&conBin->deviceBinds[i]);
-    }
-
-    // Link it in.
-    conBin->next = &bc->controlBinds;
-    conBin->prev = bc->controlBinds.prev;
-    bc->controlBinds.prev->next = conBin;
-    bc->controlBinds.prev = conBin;
-
-    return conBin;
-}
-
-controlbinding_t *B_FindControlBinding(bcontext_t *bc, int control)
-{
-    if(bc)
-    {
-        for(controlbinding_t *i = bc->controlBinds.next; i != &bc->controlBinds; i = i->next)
-        {
-            if(i->control == control)
-                return i;
-        }
-    }
-    return nullptr;
-}
-
-controlbinding_t *B_GetControlBinding(bcontext_t *bc, int control)
-{
-    controlbinding_t *b = B_FindControlBinding(bc, control);
-    if(!b)
-    {
-        // Create a new one.
-        b = B_NewControlBinding(bc);
-        b->control = control;
-    }
-    return b;
 }
 
 void B_DestroyControlBinding(controlbinding_t *conBin)
@@ -468,61 +903,6 @@ void B_DestroyControlBindingList(controlbinding_t *listRoot)
     }
 }
 
-dd_bool B_DeleteBinding(bcontext_t *bc, int bid)
-{
-    DENG2_ASSERT(bc);
-
-    // Check if it is one of the command bindings.
-    for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
-    {
-        if(eb->bid == bid)
-        {
-            B_DestroyCommandBinding(eb);
-            return true;
-        }
-    }
-
-    // How about one of the control bindings?
-    for(controlbinding_t *conBin = bc->controlBinds.next; conBin != &bc->controlBinds; conBin = conBin->next)
-    {
-        if(conBin->bid == bid)
-        {
-            B_DestroyControlBinding(conBin);
-            return true;
-        }
-
-        // It may also be a device binding.
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            for(dbinding_t *db = conBin->deviceBinds[i].next; db != &conBin->deviceBinds[i]; db = db->next)
-            {
-                if(db->bid == bid)
-                {
-                    B_DestroyDeviceBinding(db);
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
-}
-
-de::Action *BindContext_ActionForEvent(bcontext_t *bc, ddevent_t const *event,
-                                       bool respectHigherAssociatedContexts)
-{
-    DENG2_ASSERT(bc);
-    // See if the command bindings will have it.
-    for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
-    {
-        if(de::Action *act = EventBinding_ActionForEvent(eb, event, bc, respectHigherAssociatedContexts))
-        {
-            return act;
-        }
-    }
-    return nullptr;
-}
-
 Action *B_ActionForEvent(ddevent_t const *event)
 {
     event_t ev;
@@ -530,11 +910,11 @@ Action *B_ActionForEvent(ddevent_t const *event)
 
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
-        if(!(bc->flags & BCF_ACTIVE))
+        BindContext *bc = bindContexts[i];
+        if(!bc->isActive())
             continue;
 
-        if(de::Action *act = BindContext_ActionForEvent(bc, event, true))
+        if(Action *act = bc->actionForEvent(event))
         {
             return act;
         }
@@ -546,10 +926,7 @@ Action *B_ActionForEvent(ddevent_t const *event)
          */
 
         // Try the fallback responders.
-        if(bc->ddFallbackResponder && bc->ddFallbackResponder(event))
-            return nullptr; // fallback responder executed something
-
-        if(validGameEvent && bc->fallbackResponder && bc->fallbackResponder(&ev))
+        if(bc->tryFallbackResponders(*event, ev, validGameEvent))
             return nullptr; // fallback responder executed something
     }
 
@@ -565,11 +942,11 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
     int numFound = 0;
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
-        for(evbinding_t *eb = bc->commandBinds.next; eb != &bc->commandBinds; eb = eb->next)
+        BindContext *bc = bindContexts[i];
+        bc->forAllCommandBindings([&bc, &numFound, &str, &cmd, &result] (evbinding_t &eb)
         {
-            if(strcmp(eb->command, cmd))
-                continue;
+            if(strcmp(eb.command, cmd))
+                return LoopContinue;
 
             // It's here!
             if(numFound)
@@ -577,9 +954,10 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
                 Str_Append(&result, " ");
             }
             numFound++;
-            B_EventBindingToString(eb, &str);
-            Str_Appendf(&result, "%i@%s:%s", eb->bid, bc->name, Str_Text(&str));
-        }
+            B_EventBindingToString(&eb, &str);
+            Str_Appendf(&result, "%i@%s:%s", eb.bid, bc->name().toUtf8().constData(), Str_Text(&str));
+            return LoopContinue;
+        });
     }
 
     // Copy the result to the return buffer.
@@ -605,15 +983,15 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     int numFound = 0;
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
-        for(controlbinding_t *cb = bc->controlBinds.next; cb != &bc->controlBinds; cb = cb->next)
+        BindContext *bc = bindContexts[i];
+        bc->forAllControlBindings([&bc, &controlName, &inverse, &localPlayer, &numFound, &result, &str] (controlbinding_t &cb)
         {
-            char const *name = P_PlayerControlById(cb->control)->name;
+            char const *name = P_PlayerControlById(cb.control)->name;
 
             if(strcmp(name, controlName))
-                continue; // Wrong control.
+                return LoopContinue; // Wrong control.
 
-            for(dbinding_t *db = cb->deviceBinds[localPlayer].next; db != &cb->deviceBinds[localPlayer]; db = db->next)
+            for(dbinding_t *db = cb.deviceBinds[localPlayer].next; db != &cb.deviceBinds[localPlayer]; db = db->next)
             {
                 if(inverse == BFCI_BOTH ||
                    (inverse == BFCI_ONLY_NON_INVERSE && !(db->flags & CBDF_INVERSE)) ||
@@ -627,10 +1005,11 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     numFound++;
 
                     B_DeviceBindingToString(db, &str);
-                    Str_Appendf(&result, "%i@%s:%s", db->bid, bc->name, Str_Text(&str));
+                    Str_Appendf(&result, "%i@%s:%s", db->bid, bc->name().toUtf8().constData(), Str_Text(&str));
                 }
             }
-        }
+            return LoopContinue;
+        });
     }
 
     // Copy the result to the return buffer.
@@ -642,206 +1021,29 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     return numFound;
 }
 
-dd_bool B_AreConditionsEqual(int count1, statecondition_t const *conds1,
-                             int count2, statecondition_t const *conds2)
-{
-    //DENG2_ASSERT(conds1 && conds2);
-
-    // Quick test (assumes there are no duplicated conditions).
-    if(count1 != count2) return false;
-
-    for(int i = 0; i < count1; ++i)
-    {
-        dd_bool found = false;
-        for(int k = 0; k < count2; ++k)
-        {
-            if(B_EqualConditions(conds1 + i, conds2 + k))
-            {
-                found = true;
-                break;
-            }
-        }
-        if(!found) return false;
-    }
-
-    return true;
-}
-
-dd_bool B_FindMatchingBinding(bcontext_t *bc, evbinding_t *match1, dbinding_t *match2,
-    evbinding_t **evResult, dbinding_t **dResult)
-{
-    DENG2_ASSERT(bc && evResult && dResult);
-
-    *evResult = nullptr;
-    *dResult  = nullptr;
-
-    for(evbinding_t *e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
-    {
-        if(match1 && match1->bid != e->bid)
-        {
-            if(B_AreConditionsEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
-               match1->device == e->device && match1->id == e->id &&
-               match1->type == e->type && match1->state == e->state)
-            {
-                *evResult = e;
-                return true;
-            }
-        }
-        if(match2)
-        {
-            if(B_AreConditionsEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
-               match2->device == e->device && match2->id == e->id &&
-               match2->type == (cbdevtype_t) e->type)
-            {
-                *evResult = e;
-                return true;
-            }
-        }
-    }
-
-    for(controlbinding_t *c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(dbinding_t *d = c->deviceBinds[i].next; d != &c->deviceBinds[i]; d = d->next)
-    {
-        if(match1)
-        {
-            if(B_AreConditionsEqual(match1->numConds, match1->conds, d->numConds, d->conds) &&
-               match1->device == d->device && match1->id == d->id &&
-               match1->type == (ddeventtype_t) d->type)
-            {
-                *dResult = d;
-                return true;
-            }
-        }
-
-        if(match2 && match2->bid != d->bid)
-        {
-            if(B_AreConditionsEqual(match2->numConds, match2->conds, d->numConds, d->conds) &&
-               match2->device == d->device && match2->id == d->id &&
-               match2->type == d->type)
-            {
-                *dResult = d;
-                return true;
-            }
-        }
-    }
-
-    // Nothing found.
-    return false;
-}
-
 void B_PrintContexts()
 {
     LOG_INPUT_MSG("%i binding contexts defined:") << bindContextCount;
 
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
+        BindContext *bc = bindContexts[i];
         LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
                 << i
-                << (bc->flags & BCF_ACTIVE? _E(b) : _E(w))
-                << bc->name
-                << (bc->flags & BCF_ACTIVE? "active" : "inactive");
+                << (bc->isActive()? _E(b) : _E(w))
+                << bc->name()
+                << (bc->isActive()? "active" : "inactive");
     }
 }
 
 void B_PrintAllBindings()
 {
-#define BIDFORMAT "[%3i]"
-
     LOG_INPUT_MSG("%i binding contexts defined") << bindContextCount;
 
-    AutoStr *str = AutoStr_NewStd();
     for(int i = 0; i < bindContextCount; ++i)
     {
-        bcontext_t *bc = bindContexts[i];
-
-        LOG_INPUT_MSG(_E(b)"Context \"%s\" (%s):")
-                << bc->name << (bc->flags & BCF_ACTIVE? "active" : "inactive");
-
-        // Commands.
-        int count = 0;
-        for(evbinding_t *e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next, count++) {}
-
-        if(count)
-        {
-            LOG_INPUT_MSG("  %i event bindings:") << count;
-        }
-
-        for(evbinding_t *e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
-        {
-            B_EventBindingToString(e, str);
-            LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
-                    << e->bid << Str_Text(str) << e->command;
-        }
-
-        // Controls.
-        count = 0;
-        for(controlbinding_t *c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next, count++) {}
-
-        if(count)
-        {
-            LOG_INPUT_MSG("  %i control bindings") << count;
-        }
-
-        for(controlbinding_t *c = bc->controlBinds.next; c != &bc->controlBinds; c = c->next)
-        {
-            char const *controlName = P_PlayerControlById(c->control)->name;
-
-            LOG_INPUT_MSG(_E(D) "  Control \"%s\" " BIDFORMAT ":") << controlName << c->bid;
-
-            for(int k = 0; k < DDMAXPLAYERS; ++k)
-            {
-                count = 0;
-                for(dbinding_t *d = c->deviceBinds[k].next; d != &c->deviceBinds[k];
-                    d = d->next, count++) {}
-
-                if(!count)
-                {
-                    continue;
-                }
-
-                LOG_INPUT_MSG("    Local player %i has %i device bindings for \"%s\":")
-                        << k + 1 << count << controlName;
-
-                for(dbinding_t *d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
-                {
-                    B_DeviceBindingToString(d, str);
-                    LOG_INPUT_MSG("    " BIDFORMAT " %s") << d->bid << Str_Text(str);
-                }
-            }
-        }
-    }
-
-#undef BIDFORMAT
-}
-
-void B_WriteContextToFile(bcontext_t const *bc, FILE *file)
-{
-    DENG2_ASSERT(bc && file);
-    AutoStr *str = AutoStr_NewStd();
-
-    // Commands.
-    for(evbinding_t *e = bc->commandBinds.next; e != &bc->commandBinds; e = e->next)
-    {
-        B_EventBindingToString(e, str);
-        fprintf(file, "bindevent \"%s:%s\" \"", bc->name, Str_Text(str));
-        M_WriteTextEsc(file, e->command);
-        fprintf(file, "\"\n");
-    }
-
-    // Controls.
-    for(controlbinding_t *cb = bc->controlBinds.next; cb != &bc->controlBinds; cb = cb->next)
-    {
-        char const *controlName = P_PlayerControlById(cb->control)->name;
-
-        for(int k = 0; k < DDMAXPLAYERS; ++k)
-        for(dbinding_t *db = cb->deviceBinds[k].next; db != &cb->deviceBinds[k]; db = db->next)
-        {
-            B_DeviceBindingToString(db, str);
-            fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1,
-                    controlName, Str_Text(str));
-        }
+        BindContext *bc = bindContexts[i];
+        bc->printAllBindings();
     }
 }
 

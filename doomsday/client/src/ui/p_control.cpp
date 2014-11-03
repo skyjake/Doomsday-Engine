@@ -330,7 +330,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    bcontext_t *bc           = nullptr;
+    BindContext *bc           = nullptr;
     struct dbinding_s *binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
     if(!binds) return false;
 
@@ -370,7 +370,7 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, flo
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
     int localNum             = P_ConsoleToLocal(playerNum);
-    bcontext_t *bc           = nullptr;
+    BindContext *bc           = nullptr;
     struct dbinding_s *binds = B_GetControlDeviceBindings(localNum, control, &bc);
     B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 

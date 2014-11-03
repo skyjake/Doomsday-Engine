@@ -36,8 +36,8 @@ DENG2_PIMPL_NOREF(InputDevice::Control)
     String name;  ///< Symbolic
     InputDevice *device = nullptr;
     BindContextAssociation flags { DefaultFlags };
-    bcontext_t *bindContext     = nullptr;
-    bcontext_t *prevBindContext = nullptr;
+    BindContext *bindContext     = nullptr;
+    BindContext *prevBindContext = nullptr;
 };
 
 InputDevice::Control::Control(InputDevice *device) : d(new Instance)
@@ -83,12 +83,12 @@ void InputDevice::Control::setDevice(InputDevice *newDevice)
     d->device = newDevice;
 }
 
-bcontext_t *InputDevice::Control::bindContext() const
+BindContext *InputDevice::Control::bindContext() const
 {
     return d->bindContext;
 }
 
-void InputDevice::Control::setBindContext(bcontext_t *newContext)
+void InputDevice::Control::setBindContext(BindContext *newContext)
 {
     d->bindContext = newContext;
 }

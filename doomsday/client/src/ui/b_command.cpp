@@ -57,10 +57,7 @@ void B_DestroyCommandBindingList(evbinding_t *listRoot)
     }
 }
 
-/**
- * Allocates a new command binding and gives it a unique identifier.
- */
-static evbinding_t *B_AllocCommandBinding()
+evbinding_t *B_AllocCommandBinding()
 {
     evbinding_t *eb = (evbinding_t *) M_Calloc(sizeof(evbinding_t));
     eb->bid = B_NewIdentifier();
@@ -201,16 +198,7 @@ static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
     return true;
 }
 
-/**
- * Parses a textual descriptor of the conditions for triggering an event-command binding.
- * eventparams{+cond}*
- *
- * @param eb  The results of the parsing are stored here.
- * @param desc  Descriptor containing event information and possible additional conditions.
- *
- * @return  @c true, if successful; otherwise @c false.
- */
-static dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
+dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
 {
     AutoStr *str = AutoStr_NewStd();
 
@@ -239,34 +227,6 @@ static dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
 
     // Success.
     return true;
-}
-
-evbinding_t *B_NewCommandBinding(evbinding_t *bindsList, char const *desc,
-                                 char const *command)
-{
-    DENG2_ASSERT(bindsList && command && command[0]);
-
-    evbinding_t *eb = B_AllocCommandBinding();
-    DENG2_ASSERT(eb);
-
-    // Parse the description of the event.
-    if(!B_ParseEventDescriptor(eb, desc))
-    {
-        // Error in parsing, failure to create binding.
-        B_DestroyCommandBinding(eb);
-        return nullptr;
-    }
-
-    // The command string.
-    eb->command = strdup(command);
-
-    // Link it into the list.
-    eb->next = bindsList;
-    eb->prev = bindsList->prev;
-    bindsList->prev->next = eb;
-    bindsList->prev = eb;
-
-    return eb;
 }
 
 void B_DestroyCommandBinding(evbinding_t *eb)
@@ -350,7 +310,7 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
 }
 
 Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-    bcontext_t *bindContext, bool respectHigherAssociatedContexts)
+    BindContext const *bindContext, bool respectHigherAssociatedContexts)
 {
     DENG2_ASSERT(eb && bindContext);
 
@@ -503,22 +463,4 @@ void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
         Str_Append(str, " + ");
         B_AppendConditionToString(&eb->conds[i], str);
     }
-}
-
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device)
-{
-    DENG2_ASSERT(listRoot);
-    if(command && command[0])
-    {
-        for(evbinding_t *i = listRoot->next; i != listRoot; i = i->next)
-        {
-            if(qstricmp(i->command, command)) continue;
-
-            if((device < 0 || device >= NUM_INPUT_DEVICES) || i->device == device)
-            {
-                return i;
-            }
-        }
-    }
-    return nullptr;
 }

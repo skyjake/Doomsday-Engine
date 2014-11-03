@@ -24,7 +24,7 @@
 #include "b_util.h"
 #include "dd_input.h"
 
-struct bcontext_t;
+class BindContext;
 
 typedef struct evbinding_s {
     struct evbinding_s *prev;  ///< Previous in list of bindings.
@@ -48,15 +48,9 @@ void B_InitCommandBindingList(evbinding_t *listRoot);
 void B_DestroyCommandBindingList(evbinding_t *listRoot);
 
 /**
- * Creates a new event-command binding.
- *
- * @param bindsList  List of bindings where the binding will be added.
- * @param desc       Descriptor of the event.
- * @param command    Command that will be executed by the binding.
- *
- * @return  New binding, or @c nullptr if there was an error.
+ * Allocates a new command binding and gives it a unique identifier.
  */
-evbinding_t *B_NewCommandBinding(evbinding_t *listRoot, char const *desc, char const *command);
+evbinding_t *B_AllocCommandBinding();
 
 /**
  * Destroys command binding @eb.
@@ -70,9 +64,15 @@ void B_DestroyCommandBinding(evbinding_t *eb);
 void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str);
 
 /**
- * @param device  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
+ * Parses a textual descriptor of the conditions for triggering an event-command binding.
+ * eventparams{+cond}*
+ *
+ * @param eb  The results of the parsing are stored here.
+ * @param desc  Descriptor containing event information and possible additional conditions.
+ *
+ * @return  @c true, if successful; otherwise @c false.
  */
-evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *command, int device);
+dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc);
 
 /**
  * Checks if the event matches the binding's conditions, and if so, returns an
@@ -88,6 +88,6 @@ evbinding_t *B_FindCommandBinding(evbinding_t const *listRoot, char const *comma
  * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
  */
 de::Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
-                                        bcontext_t *eventClass, bool respectHigherAssociatedContexts);
+                                        BindContext const *context, bool respectHigherAssociatedContexts);
 
 #endif // CLIENT_INPUTSYSTEM_EVENTBINDING_H

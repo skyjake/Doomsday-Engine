@@ -49,12 +49,10 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
         return tryEvent(&ddev);
     }
 
-    // Check a specific binding context for an action (regardless of its
-    // activation status).
-    bcontext_t *bc = B_ContextByName(context.toLatin1());
-    if(bc)
+    // Check a specific binding context for an action (regardless of its activation status).
+    if(BindContext *bc = B_ContextByName(context))
     {
-        AutoRef<Action> act(BindContext_ActionForEvent(bc, &ddev, false));
+        AutoRef<Action> act(bc->actionForEvent(&ddev, false));
         if(act.get())
         {
             act->trigger();
@@ -85,8 +83,8 @@ void WidgetActions::trackInput(Event const &event)
 
 void WidgetActions::activateContext(String const &context, bool yes)
 {
-    if(bcontext_t *bc = B_ContextByName(context.toLatin1()))
+    if(BindContext *bc = B_ContextByName(context))
     {
-        B_ActivateContext(bc, yes);
+        bc->activate(yes);
     }
 }

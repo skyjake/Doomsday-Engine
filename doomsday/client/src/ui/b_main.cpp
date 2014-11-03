@@ -35,6 +35,8 @@
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/ui_main.h"
 
+using namespace de;
+
 int symbolicEchoMode = false;
 
 static int bindingIdCounter;
@@ -172,26 +174,26 @@ void B_Init()
     B_NewContext("map");
     B_NewContext("map-freepan");
     B_NewContext("finale"); // uses a fallback responder to handle script events
-    B_AcquireAll(B_NewContext("menu"), true);
+    B_NewContext("menu")->acquireAll();
     B_NewContext("gameui");
     B_NewContext("shortcut");
-    B_AcquireKeyboard(B_NewContext("chat"), true);
-    B_AcquireAll(B_NewContext("message"), true);
+    B_NewContext("chat")->acquireKeyboard();
+    B_NewContext("message")->acquireAll();
 
     // Binding context for the console.
-    bcontext_t *bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->flags |= BCF_PROTECTED;  // Only we can (de)activate.
-    B_AcquireKeyboard(bc, true); // Console takes over all keyboard events.
+    BindContext *bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
+    bc->setProtected();    // Only we can (de)activate.
+    bc->acquireKeyboard(); // Console takes over all keyboard events.
 
     // UI doesn't let anything past it.
-    B_AcquireAll(bc = B_NewContext(UI_BINDING_CONTEXT_NAME), true);
+    B_NewContext(UI_BINDING_CONTEXT_NAME)->acquireAll();
 
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
     bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
-    bc->flags |= BCF_PROTECTED;
-    bc->ddFallbackResponder = globalContextFallback;
-    B_ActivateContext(bc, true);
+    bc->setProtected();
+    bc->setDDFallbackResponder(globalContextFallback);
+    bc->activate();
 
 /*
     B_BindCommand("joy-hat-angle3", "print {angle 3}");
@@ -230,17 +232,18 @@ void B_InitialContextActivations()
     // Disable all contexts.
     for(int i = 0; i < B_ContextCount(); ++i)
     {
-        B_ActivateContext(B_ContextByPos(i), false);
+        BindContext *context = B_ContextByPos(i);
+        context->deactivate();
     }
 
     // These are the contexts active by default.
-    B_ActivateContext(B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME), true);
-    B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
+    B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME)->activate();
+    B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME)->activate();
 
     /*
     if(Con_IsActive())
     {
-        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
+        B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME)->activate();
     }
     */
 }
@@ -279,7 +282,7 @@ int B_NewIdentifier()
     return id;
 }
 
-char const *B_ParseContext(char const *desc, bcontext_t **bc)
+char const *B_ParseContext(char const *desc, BindContext **bc)
 {
     DENG2_ASSERT(desc && bc);
     *bc = 0;
@@ -297,46 +300,19 @@ char const *B_ParseContext(char const *desc, bcontext_t **bc)
     return desc;
 }
 
-void B_DeleteMatching(bcontext_t *bc, evbinding_t *eventBinding, dbinding_t *deviceBinding)
-{
-    dbinding_t *devb = nullptr;
-    evbinding_t *evb = nullptr;
-
-    while(B_FindMatchingBinding(bc, eventBinding, deviceBinding, &evb, &devb))
-    {
-        // Only either evb or devb is returned as non-NULL.
-        int bid = (evb? evb->bid : (devb? devb->bid : 0));
-        if(bid)
-        {
-            LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
-                    << bid << (eventBinding? eventBinding->bid : deviceBinding->bid);
-            B_DeleteBinding(bc, bid);
-        }
-    }
-}
-
 evbinding_t *B_BindCommand(char const *eventDesc, char const *command)
 {
-    DENG2_ASSERT(eventDesc && command);
+    DENG2_ASSERT(eventDesc);
 
     // The context may be included in the descriptor.
-    bcontext_t *bc;
+    BindContext *bc;
     eventDesc = B_ParseContext(eventDesc, &bc);
     if(!bc)
     {
         bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
 
-    evbinding_t *b = B_NewCommandBinding(&bc->commandBinds, eventDesc, command);
-    if(b)
-    {
-        /// @todo: In interactive binding mode, should ask the user if the
-        /// replacement is ok. For now, just delete the other binding.
-        B_DeleteMatching(bc, b, nullptr);
-        B_UpdateAllDeviceStateAssociations();
-    }
-
-    return b;
+    return bc->bindCommand(eventDesc, command);
 }
 
 dbinding_t *B_BindControl(char const *controlDesc, char const *device)
@@ -370,20 +346,20 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
         return nullptr;
     }
 
-    bcontext_t *bc = B_ContextByName(control->bindContextName);
+    BindContext *bc = B_ContextByName(control->bindContextName);
     if(!bc)
     {
         bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
     }
 
     LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
-            << control->name << bc->name << localNum << device;
+            << control->name << bc->name() << localNum << device;
 
-    controlbinding_t *conBin = B_FindControlBinding(bc, control->id);
-    dd_bool justCreated      = false;
+    controlbinding_t *conBin = bc->findControlBinding(control->id);
+    bool justCreated         = false;
     if(!conBin)
     {
-        conBin      = B_GetControlBinding(bc, control->id);
+        conBin      = bc->getControlBinding(control->id);
         justCreated = true;
     }
 
@@ -401,25 +377,25 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
 
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
-    B_DeleteMatching(bc, nullptr, devBin);
+    bc->deleteMatching(nullptr, devBin);
     B_UpdateAllDeviceStateAssociations();
 
     return devBin;
 }
 
-dbinding_t *B_GetControlDeviceBindings(int localNum, int control, bcontext_t **bContext)
+dbinding_t *B_GetControlDeviceBindings(int localNum, int control, BindContext **bContext)
 {
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return nullptr;
 
     playercontrol_t *pc = P_PlayerControlById(control);
-    bcontext_t *bc      = B_ContextByName(pc->bindContextName);
+    BindContext *bc     = B_ContextByName(pc->bindContextName);
 
     if(bContext) *bContext = bc;
 
     if(bc)
     {
-        return &B_GetControlBinding(bc, control)->deviceBinds[localNum];
+        return &bc->getControlBinding(control)->deviceBinds[localNum];
     }
 
     return nullptr;
@@ -429,7 +405,8 @@ dd_bool B_Delete(int bid)
 {
     for(int i = 0; i < B_ContextCount(); ++i)
     {
-        if(B_DeleteBinding(B_ContextByPos(i), bid))
+        BindContext *context = B_ContextByPos(i);
+        if(context->deleteBinding(bid))
             return true;
     }
     return false;
@@ -522,22 +499,23 @@ void B_WriteToFile(FILE *file)
 
     for(int i = 0; i < B_ContextCount(); ++i)
     {
-        B_WriteContextToFile(B_ContextByPos(i), file);
+        BindContext *context = B_ContextByPos(i);
+        context->writeToFile(file);
     }
 }
 
 bool B_UnbindCommand(char const *command)
 {
-    dd_bool deleted = false;
+    bool deleted = false;
     for(int i = 0; i < B_ContextCount(); ++i)
     {
-        bcontext_t *bc = B_ContextByPos(i);
-        while(evbinding_t *ev = B_FindCommandBinding(&bc->commandBinds, command, NUM_INPUT_DEVICES))
+        BindContext *context = B_ContextByPos(i);
+        while(evbinding_t *ev = context->findCommandBinding(command, NUM_INPUT_DEVICES))
         {
-            deleted |= B_DeleteBinding(bc, ev->bid);
+            deleted |= context->deleteBinding(ev->bid);
         }
     }
-    return CPP_BOOL(deleted);
+    return deleted;
 }
 
 #undef DD_GetKeyCode
@@ -598,8 +576,9 @@ D_CMD(ClearBindings)
 
     for(int i = 0; i < B_ContextCount(); ++i)
     {
-        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << B_ContextByPos(i)->name;
-        B_ClearContext(B_ContextByPos(i));
+        BindContext *context = B_ContextByPos(i);
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << context->name();
+        context->clearAllBindings();
     }
 
     // We can restart the id counter, all the old bindings were destroyed.
@@ -638,8 +617,8 @@ D_CMD(ActivateBindingContext)
 {
     DENG2_UNUSED2(src, argc);
 
-    dd_bool doActivate = !stricmp(argv[0], "activatebcontext");
-    bcontext_t *bc     = B_ContextByName(argv[1]);
+    bool doActivate = !stricmp(argv[0], "activatebcontext");
+    BindContext *bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
@@ -647,14 +626,14 @@ D_CMD(ActivateBindingContext)
         return false;
     }
 
-    if(bc->flags & BCF_PROTECTED)
+    if(bc->isProtected())
     {
         LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
-                << bc->name << (doActivate? "activated" : "deactivated");
+                << bc->name() << (doActivate? "activated" : "deactivated");
         return false;
     }
 
-    B_ActivateContext(bc, doActivate);
+    bc->activate(doActivate);
     return true;
 }
 
