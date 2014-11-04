@@ -229,21 +229,21 @@ void B_Init()
 
 void B_InitialContextActivations()
 {
-    // Disable all contexts.
-    for(int i = 0; i < B_ContextCount(); ++i)
+    // Deactivate all contexts.
+    B_ForAllContexts([] (BindContext &bc)
     {
-        BindContext *context = B_ContextByPos(i);
-        context->deactivate();
-    }
+        bc.deactivate();
+        return LoopContinue;
+    });
 
     // These are the contexts active by default.
-    B_ContextByName(GLOBAL_BINDING_CONTEXT_NAME)->activate();
-    B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME)->activate();
+    B_Context(GLOBAL_BINDING_CONTEXT_NAME).activate();
+    B_Context(DEFAULT_BINDING_CONTEXT_NAME).activate();
 
     /*
     if(Con_IsActive())
     {
-        B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME)->activate();
+        B_Context(CONSOLE_BINDING_CONTEXT_NAME).activate();
     }
     */
 }
@@ -295,7 +295,7 @@ char const *B_ParseContext(char const *desc, BindContext **bc)
 
     AutoStr *str = AutoStr_NewStd();
     desc = Str_CopyDelim(str, desc, ':');
-    *bc = B_ContextByName(Str_Text(str));
+    *bc = B_ContextPtr(Str_Text(str));
 
     return desc;
 }
@@ -309,7 +309,7 @@ evbinding_t *B_BindCommand(char const *eventDesc, char const *command)
     eventDesc = B_ParseContext(eventDesc, &bc);
     if(!bc)
     {
-        bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
+        bc = B_ContextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
 
     return bc->bindCommand(eventDesc, command);
@@ -346,11 +346,12 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
         return nullptr;
     }
 
-    BindContext *bc = B_ContextByName(control->bindContextName);
+    BindContext *bc = B_ContextPtr(control->bindContextName);
     if(!bc)
     {
-        bc = B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME);
+        bc = B_ContextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
+    DENG2_ASSERT(bc);
 
     LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
             << control->name << bc->name() << localNum << device;
@@ -389,7 +390,7 @@ dbinding_t *B_GetControlDeviceBindings(int localNum, int control, BindContext **
         return nullptr;
 
     playercontrol_t *pc = P_PlayerControlById(control);
-    BindContext *bc     = B_ContextByName(pc->bindContextName);
+    BindContext *bc     = B_ContextPtr(pc->bindContextName);
 
     if(bContext) *bContext = bc;
 
@@ -403,12 +404,10 @@ dbinding_t *B_GetControlDeviceBindings(int localNum, int control, BindContext **
 
 dd_bool B_Delete(int bid)
 {
-    for(int i = 0; i < B_ContextCount(); ++i)
+    B_ForAllContexts([&bid] (BindContext &bc)
     {
-        BindContext *context = B_ContextByPos(i);
-        if(context->deleteBinding(bid))
-            return true;
-    }
+        return bc.deleteBinding(bid);
+    });
     return false;
 }
 
@@ -494,28 +493,30 @@ int B_KeyForShortName(char const *key)
 
 void B_WriteToFile(FILE *file)
 {
+    DENG2_ASSERT(file);
+
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
 
-    for(int i = 0; i < B_ContextCount(); ++i)
+    B_ForAllContexts([&file] (BindContext &bc)
     {
-        BindContext *context = B_ContextByPos(i);
-        context->writeToFile(file);
-    }
+        bc.writeToFile(file);
+        return LoopContinue;
+    });
 }
 
 bool B_UnbindCommand(char const *command)
 {
-    bool deleted = false;
-    for(int i = 0; i < B_ContextCount(); ++i)
+    bool didDelete = false;
+    B_ForAllContexts([&command, &didDelete] (BindContext &bc)
     {
-        BindContext *context = B_ContextByPos(i);
-        while(evbinding_t *ev = context->findCommandBinding(command, NUM_INPUT_DEVICES))
+        while(evbinding_t *ev = bc.findCommandBinding(command, NUM_INPUT_DEVICES))
         {
-            deleted |= context->deleteBinding(ev->bid);
+            didDelete |= bc.deleteBinding(ev->bid);
         }
-    }
-    return deleted;
+        return LoopContinue;
+    });
+    return didDelete;
 }
 
 #undef DD_GetKeyCode
@@ -551,14 +552,28 @@ D_CMD(BindControlToDevice)
 D_CMD(ListBindingContexts)
 {
     DENG2_UNUSED3(src, argc, argv);
-    B_PrintContexts();
+    LOG_INPUT_MSG("%i binding contexts defined:") << B_ContextCount();
+    int idx = 0;
+    B_ForAllContexts([&idx] (BindContext &bc)
+    {
+        LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
+                << (idx++) << (bc.isActive()? _E(b) : _E(w))
+                << bc.name()
+                << (bc.isActive()? "active" : "inactive");
+        return LoopContinue;
+    });
     return true;
 }
 
 D_CMD(ListBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
-    B_PrintAllBindings();
+    LOG_INPUT_MSG("%i binding contexts defined") << B_ContextCount();
+    B_ForAllContexts([] (BindContext &bc)
+    {
+        bc.printAllBindings();
+        return LoopContinue;
+    });
     return true;
 }
 
@@ -574,12 +589,12 @@ D_CMD(ClearBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    for(int i = 0; i < B_ContextCount(); ++i)
+    B_ForAllContexts([] (BindContext &bc)
     {
-        BindContext *context = B_ContextByPos(i);
-        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << context->name();
-        context->clearAllBindings();
-    }
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << bc.name();
+        bc.clearAllBindings();
+        return LoopContinue;
+    });
 
     // We can restart the id counter, all the old bindings were destroyed.
     bindingIdCounter = 0;
@@ -617,23 +632,24 @@ D_CMD(ActivateBindingContext)
 {
     DENG2_UNUSED2(src, argc);
 
-    bool doActivate = !stricmp(argv[0], "activatebcontext");
-    BindContext *bc = B_ContextByName(argv[1]);
+    bool const doActivate = !stricmp(argv[0], "activatebcontext");
+    String const context  = argv[1];
 
-    if(!bc)
+    if(!B_HasContext(context))
     {
-        LOG_INPUT_WARNING("Binding context '%s' does not exist") << argv[1];
+        LOG_INPUT_WARNING("Binding context '%s' does not exist") << context;
         return false;
     }
 
-    if(bc->isProtected())
+    BindContext &bc = B_Context(context);
+    if(bc.isProtected())
     {
         LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
-                << bc->name() << (doActivate? "activated" : "deactivated");
+                << bc.name() << (doActivate? "activated" : "deactivated");
         return false;
     }
 
-    bc->activate(doActivate);
+    bc.activate(doActivate);
     return true;
 }
 

@@ -25,7 +25,8 @@
 #include "b_command.h"
 #include "b_device.h"
 
-struct controlbinding_t {
+struct controlbinding_t
+{
     controlbinding_t *next;
     controlbinding_t *prev;
     int bid;      ///< Unique identifier.
@@ -133,21 +134,15 @@ private:
     DENG2_PRIVATE(d)
 };
 
-/**
- * Marks all device states with the highest-priority binding context to which they have
- * a connection via device bindings. This ensures that if a high-priority context is
- * using a particular device state, lower-priority contexts will not be using the same
- * state for their own controls.
- *
- * Called automatically whenever a context is activated or deactivated.
- */
-void B_UpdateAllDeviceStateAssociations();
+// ------------------------------------------------------------------------------
 
-/**
- * Creates a new binding context. The new context has the highest priority
- * of all existing contexts, and is inactive.
- */
-BindContext *B_NewContext(char const *name);
+void B_DestroyControlBinding(controlbinding_t *conBin);
+
+void B_InitControlBindingList(controlbinding_t *listRoot);
+
+void B_DestroyControlBindingList(controlbinding_t *listRoot);
+
+// ------------------------------------------------------------------------------
 
 /**
  * Destroy all binding contexts and the bindings within the contexts.
@@ -155,25 +150,23 @@ BindContext *B_NewContext(char const *name);
  */
 void B_DestroyAllContexts();
 
-void B_SetContextFallbackForDDEvents(char const *name, int (*ddResponderFunc)(ddevent_t const *));
-
-BindContext *B_ContextByPos(int pos);
-
-BindContext *B_ContextByName(de::String const &name);
-
 int B_ContextCount();
 
-int B_GetContextPos(BindContext *bc);
+bool B_HasContext(de::String const &name);
 
-void B_ReorderContext(BindContext *bc, int pos);
+BindContext &B_Context(de::String const &name);
 
-void B_DestroyContext(BindContext *bc);
+BindContext *B_ContextPtr(de::String const &name);
 
-void B_DestroyControlBinding(controlbinding_t *conBin);
+BindContext &B_ContextAt(int position);
 
-void B_InitControlBindingList(controlbinding_t *listRoot);
+int B_ContextPositionOf(BindContext *bc);
 
-void B_DestroyControlBindingList(controlbinding_t *listRoot);
+/**
+ * Creates a new binding context. The new context has the highest priority
+ * of all existing contexts, and is inactive.
+ */
+BindContext *B_NewContext(de::String const &name);
 
 /**
  * Finds the action bound to a given event, iterating through all enabled
@@ -185,8 +178,19 @@ void B_DestroyControlBindingList(controlbinding_t *listRoot);
  */
 de::Action *B_ActionForEvent(ddevent_t const *event);
 
-void B_PrintContexts();
+/**
+ * Marks all device states with the highest-priority binding context to which they have
+ * a connection via device bindings. This ensures that if a high-priority context is
+ * using a particular device state, lower-priority contexts will not be using the same
+ * state for their own controls.
+ *
+ * Called automatically whenever a context is activated or deactivated.
+ */
+void B_UpdateAllDeviceStateAssociations();
 
-void B_PrintAllBindings();
+/**
+ * Iterate through all the BindContexts from highest to lowest priority.
+ */
+de::LoopResult B_ForAllContexts(std::function<de::LoopResult (BindContext &)> func);
 
 #endif // CLIENT_INPUTSYSTEM_BINDCONTEXT_H

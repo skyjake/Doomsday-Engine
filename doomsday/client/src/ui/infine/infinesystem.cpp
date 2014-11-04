@@ -146,8 +146,9 @@ void InFineSystem::initBindingContext() // static
     if(inited) return;
 
     inited = true;
-    B_SetContextFallbackForDDEvents("finale", de::function_cast<int (*)(ddevent_t const *)>(gx.FinaleResponder));
-    B_ContextByName("finale")->activate(); // always on
+    BindContext &context = B_Context("finale");
+    context.setDDFallbackResponder(de::function_cast<int (*)(ddevent_t const *)>(gx.FinaleResponder));
+    context.activate(); // always on
 }
 
 void InFineSystem::deinitBindingContext() // static
@@ -155,8 +156,9 @@ void InFineSystem::deinitBindingContext() // static
     // Not yet initialized?
     if(!inited) return;
 
-    B_SetContextFallbackForDDEvents("finale", nullptr);
-    B_ContextByName("finale")->deactivate();
+    BindContext &context = B_Context("finale");
+    context.setDDFallbackResponder(nullptr);
+    context.deactivate();
     inited = false;
 }
 #endif // __CLIENT__

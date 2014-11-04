@@ -43,6 +43,7 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
 {
     ddevent_t ddev;
     InputSystem::convertEvent(event, &ddev);
+
     if(context.isEmpty())
     {
         // Check all enabled contexts.
@@ -50,9 +51,9 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
     }
 
     // Check a specific binding context for an action (regardless of its activation status).
-    if(BindContext *bc = B_ContextByName(context))
+    if(B_HasContext(context))
     {
-        AutoRef<Action> act(bc->actionForEvent(&ddev, false));
+        AutoRef<Action> act(B_Context(context).actionForEvent(&ddev, false));
         if(act.get())
         {
             act->trigger();
@@ -83,8 +84,8 @@ void WidgetActions::trackInput(Event const &event)
 
 void WidgetActions::activateContext(String const &context, bool yes)
 {
-    if(BindContext *bc = B_ContextByName(context))
+    if(B_HasContext(context))
     {
-        bc->activate(yes);
+        B_Context(context).activate(yes);
     }
 }

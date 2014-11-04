@@ -94,14 +94,13 @@ DENG_GUI_PIMPL(InputBindingWidget)
         // Check all the contexts associated with this widget.
         foreach(QString bcName, contexts)
         {
-            BindContext const *bc = B_ContextByName(bcName);
-            if(!bc) continue;
+            if(!B_HasContext(bcName)) continue;
 
-            if(evbinding_t const *com = bc->findCommandBinding(command.toLatin1(), device))
+            if(evbinding_t const *cb = B_Context(bcName).findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 AutoStr *str = AutoStr_New();
-                B_EventBindingToString(com, str);
+                B_EventBindingToString(cb, str);
                 text = prettyKey(Str_Text(str));
                 break;
             }

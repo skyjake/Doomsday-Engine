@@ -23,6 +23,8 @@
 #include "ui/b_context.h"
 
 #include <cstring>
+#include <QList>
+#include <QtAlgorithms>
 #include <de/memory.h>
 #include <de/Log>
 #include "clientapp.h"
@@ -38,226 +40,9 @@
 
 using namespace de;
 
-static int bindContextCount;
-static BindContext **bindContexts;
-
 static inline InputSystem &inputSys()
 {
     return ClientApp::inputSystem();
-}
-
-void B_DestroyAllContexts()
-{
-    if(bindContexts)
-    {
-        // Do not use the global bindContextCount to control the loop; it is
-        // changed as a sideeffect of B_DestroyContext() and also, the
-        // bindContexts array itself is shifted back to idx 0 afterwards.
-        int const numBindClasses = bindContextCount;
-        for(int i = 0; i < numBindClasses; ++i)
-        {
-            B_DestroyContext(bindContexts[0]);
-        }
-        M_Free(bindContexts);
-    }
-    bindContexts     = nullptr;
-    bindContextCount = 0;
-}
-
-/// @todo: Most of this logic belongs in BindContext.
-void B_UpdateAllDeviceStateAssociations()
-{
-    // Clear all existing associations.
-    inputSys().forAllDevices([] (InputDevice &device)
-    {
-        device.forAllControls([] (InputDeviceControl &control)
-        {
-            control.clearBindContextAssociation();
-            return LoopContinue;
-        });
-        return LoopContinue;
-    });
-
-    // We need to iterate through all the device bindings in all contexts.
-    for(int i = 0; i < bindContextCount; ++i)
-    {
-        BindContext *bc = bindContexts[i];
-
-        // Skip inactive contexts.
-        if(!bc->isActive())
-            continue;
-
-        // Mark all event bindings in the context.
-        bc->forAllCommandBindings([&bc] (evbinding_t &cb)
-        {
-            InputDevice &device = inputSys().device(cb.device);
-
-            switch(cb.type)
-            {
-            case E_TOGGLE: {
-                InputDeviceControl &ctrl = device.button(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_AXIS: {
-                InputDeviceControl &ctrl = device.axis(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_ANGLE: {
-                InputDeviceControl &ctrl = device.hat(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_SYMBOLIC:
-                break;
-
-            default:
-                DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid eb.type");
-                break;
-            }
-            return LoopContinue;
-        });
-
-        // All controls in the context.
-        bc->forAllControlBindings([&bc] (controlbinding_t &cb)
-        {
-            // Associate all the device bindings.
-            for(int k = 0; k < DDMAXPLAYERS; ++k)
-            for(dbinding_t *db = cb.deviceBinds[k].next; db != &cb.deviceBinds[k]; db = db->next)
-            {
-                InputDevice &device = inputSys().device(db->device);
-
-                switch(db->type)
-                {
-                case CBD_TOGGLE: {
-                    InputDeviceControl &ctrl = device.button(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case CBD_AXIS: {
-                    InputDeviceControl &ctrl = device.axis(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case CBD_ANGLE: {
-                    InputDeviceControl &ctrl = device.hat(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                default:
-                    DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid db->type");
-                    break;
-                }
-            }
-            return LoopContinue;
-        });
-
-        // If the context have made a broad device acquisition, mark all
-        // relevant states.
-        if(bc->willAcquireKeyboard())
-        {
-            InputDevice &device = inputSys().device(IDEV_KEYBOARD);
-            if(device.isActive())
-            {
-                device.forAllControls([&bc] (InputDeviceControl &control)
-                {
-                    if(!control.hasBindContext())
-                    {
-                        control.setBindContext(bc);
-                    }
-                    return LoopContinue;
-                });
-            }
-        }
-
-        if(bc->willAcquireAll())
-        {
-            inputSys().forAllDevices([&bc] (InputDevice &device)
-            {
-                if(device.isActive())
-                {
-                    device.forAllControls([&bc] (InputDeviceControl &control)
-                    {
-                        if(!control.hasBindContext())
-                        {
-                            control.setBindContext(bc);
-                        }
-                        return LoopContinue;
-                    });
-                }
-                return LoopContinue;
-            });
-        }
-    }
-
-    // Now that we know what are the updated context associations, let's check
-    // the devices and see if any of the states need to be expired.
-    inputSys().forAllDevices([] (InputDevice &device)
-    {
-        device.forAllControls([] (InputDeviceControl &control)
-        {
-            if(!control.inDefaultState())
-            {
-                control.expireBindContextAssociationIfChanged();
-            }
-            return LoopContinue;
-        });
-        return LoopContinue;
-    });
-}
-
-static void B_SetContextCount(int count)
-{
-    bindContexts     = (BindContext **) M_Realloc(bindContexts, sizeof(*bindContexts) * count);
-    bindContextCount = count;
-}
-
-static void B_InsertContext(BindContext *bc, int contextIdx)
-{
-    DENG2_ASSERT(bc);
-
-    B_SetContextCount(bindContextCount + 1);
-    if(contextIdx < bindContextCount - 1)
-    {
-        // We need to make room for this new binding context.
-        std::memmove(&bindContexts[contextIdx + 1], &bindContexts[contextIdx],
-                     sizeof(BindContext *) * (bindContextCount - 1 - contextIdx));
-    }
-    bindContexts[contextIdx] = bc;
-}
-
-static void B_RemoveContext(BindContext *bc)
-{
-    if(!bc) return;
-
-    int contextIdx = B_GetContextPos(bc);
-
-    if(contextIdx >= 0)
-    {
-        std::memmove(&bindContexts[contextIdx], &bindContexts[contextIdx + 1],
-                     sizeof(BindContext *) * (bindContextCount - 1 - contextIdx));
-
-        B_SetContextCount(bindContextCount - 1);
-    }
 }
 
 // Binding Context Flags:
@@ -538,13 +323,6 @@ dbinding_t *BindContext::findDeviceBinding(int device, cbdevtype_t bindType, int
     return nullptr;
 }
 
-BindContext *B_NewContext(char const *name)
-{
-    BindContext *bc = new BindContext(name);
-    B_InsertContext(bc, 0);
-    return bc;
-}
-
 bool BindContext::deleteBinding(int bid)
 {
     // Check if it is one of the command bindings.
@@ -798,73 +576,20 @@ void BindContext::writeToFile(FILE *file) const
 
 // ------------------------------------------------------------------------------
 
-void B_DestroyContext(BindContext *bc)
+void B_InitControlBindingList(controlbinding_t *listRoot)
 {
-    if(!bc) return;
-    B_RemoveContext(bc);
-    delete bc;
+    DENG2_ASSERT(listRoot);
+    de::zapPtr(listRoot);
+    listRoot->next = listRoot->prev = listRoot;
 }
 
-void B_SetContextFallbackForDDEvents(char const *name, int (*ddResponderFunc)(ddevent_t const *))
+void B_DestroyControlBindingList(controlbinding_t *listRoot)
 {
-    if(BindContext *ctx = B_ContextByName(name))
+    DENG2_ASSERT(listRoot);
+    while(listRoot->next != listRoot)
     {
-        ctx->setDDFallbackResponder(ddResponderFunc);
+        B_DestroyControlBinding(listRoot->next);
     }
-}
-
-void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
-{
-    if(BindContext *ctx = B_ContextByName(name))
-    {
-        ctx->setFallbackResponder(responderFunc);
-    }
-}
-
-BindContext *B_ContextByName(String const &name)
-{
-    for(int i = 0; i < bindContextCount; ++i)
-    {
-        BindContext const *context = bindContexts[i];
-        if(!context->name().compareWithoutCase(name))
-        {
-            return const_cast<BindContext *>(context);
-        }
-    }
-    return nullptr;
-}
-
-BindContext *B_ContextByPos(int pos)
-{
-    if(pos >= 0 && pos < bindContextCount)
-    {
-        return bindContexts[pos];
-    }
-    return nullptr;
-}
-
-int B_ContextCount()
-{
-    return bindContextCount;
-}
-
-int B_GetContextPos(BindContext *bc)
-{
-    if(bc)
-    {
-        for(int i = 0; i < bindContextCount; ++i)
-        {
-            if(bindContexts[i] == bc)
-                return i;
-        }
-    }
-    return -1;
-}
-
-void B_ReorderContext(BindContext *bc, int pos)
-{
-    B_RemoveContext(bc);
-    B_InsertContext(bc, pos);
 }
 
 void B_DestroyControlBinding(controlbinding_t *conBin)
@@ -887,20 +612,70 @@ void B_DestroyControlBinding(controlbinding_t *conBin)
     M_Free(conBin);
 }
 
-void B_InitControlBindingList(controlbinding_t *listRoot)
+// ------------------------------------------------------------------------------
+
+typedef QList<BindContext *> BindContexts;
+static BindContexts bindContexts; ///< Ordered from highest to lowest priority.
+
+void B_DestroyAllContexts()
 {
-    DENG2_ASSERT(listRoot);
-    de::zapPtr(listRoot);
-    listRoot->next = listRoot->prev = listRoot;
+    if(bindContexts.isEmpty()) return;
+
+    qDeleteAll(bindContexts);
+    bindContexts.clear();
 }
 
-void B_DestroyControlBindingList(controlbinding_t *listRoot)
+int B_ContextCount()
 {
-    DENG2_ASSERT(listRoot);
-    while(listRoot->next != listRoot)
+    return bindContexts.count();
+}
+
+bool B_HasContext(String const &name)
+{
+    return B_ContextPtr(name) != nullptr;
+}
+
+BindContext &B_Context(String const &name)
+{
+    if(BindContext *bc = B_ContextPtr(name))
     {
-        B_DestroyControlBinding(listRoot->next);
+        return *bc;
     }
+    throw Error("B_Context", "Unknown binding context name:" + name);
+}
+
+/// @todo: Optimize O(n) search...
+BindContext *B_ContextPtr(de::String const &name)
+{
+    for(BindContext const *bc : bindContexts)
+    {
+        if(!bc->name().compareWithoutCase(name))
+        {
+            return const_cast<BindContext *>(bc);
+        }
+    }
+    return nullptr;
+}
+
+BindContext &B_ContextAt(int position)
+{
+    if(position >= 0 && position < bindContexts.count())
+    {
+        return *bindContexts.at(position);
+    }
+    throw Error("B_ContextAt", "Invalid position:" + String::number(position));
+}
+
+int B_ContextPositionOf(BindContext *bc)
+{
+    return (bc? bindContexts.indexOf(bc) : -1);
+}
+
+BindContext *B_NewContext(String const &name)
+{
+    BindContext *bc = new BindContext(name);
+    bindContexts.prepend(bc);
+    return bc;
 }
 
 Action *B_ActionForEvent(ddevent_t const *event)
@@ -908,11 +683,9 @@ Action *B_ActionForEvent(ddevent_t const *event)
     event_t ev;
     bool validGameEvent = InputSystem::convertEvent(event, &ev);
 
-    for(int i = 0; i < bindContextCount; ++i)
+    for(BindContext *bc : bindContexts)
     {
-        BindContext *bc = bindContexts[i];
-        if(!bc->isActive())
-            continue;
+        if(!bc->isActive()) continue;
 
         if(Action *act = bc->actionForEvent(event))
         {
@@ -927,22 +700,24 @@ Action *B_ActionForEvent(ddevent_t const *event)
 
         // Try the fallback responders.
         if(bc->tryFallbackResponders(*event, ev, validGameEvent))
+        {
             return nullptr; // fallback responder executed something
+        }
     }
 
     return nullptr; // Nobody had a binding for this event.
 }
 
+/// @todo: Don't format a string - just collect pointers.
 int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
 {
     DENG2_ASSERT(cmd && buf);
-    ddstring_t result; Str_Init(&result);
-    ddstring_t str; Str_Init(&str);
+    AutoStr *result = AutoStr_NewStd();
+    AutoStr *str    = AutoStr_NewStd();
 
     int numFound = 0;
-    for(int i = 0; i < bindContextCount; ++i)
+    for(BindContext const *bc : bindContexts)
     {
-        BindContext *bc = bindContexts[i];
         bc->forAllCommandBindings([&bc, &numFound, &str, &cmd, &result] (evbinding_t &eb)
         {
             if(strcmp(eb.command, cmd))
@@ -951,24 +726,23 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
             // It's here!
             if(numFound)
             {
-                Str_Append(&result, " ");
+                Str_Append(result, " ");
             }
             numFound++;
-            B_EventBindingToString(&eb, &str);
-            Str_Appendf(&result, "%i@%s:%s", eb.bid, bc->name().toUtf8().constData(), Str_Text(&str));
+            B_EventBindingToString(&eb, str);
+            Str_Appendf(result, "%i@%s:%s", eb.bid, bc->name().toUtf8().constData(), Str_Text(str));
             return LoopContinue;
         });
     }
 
     // Copy the result to the return buffer.
     std::memset(buf, 0, bufSize);
-    strncpy(buf, Str_Text(&result), bufSize - 1);
+    strncpy(buf, Str_Text(result), bufSize - 1);
 
-    Str_Free(&result);
-    Str_Free(&str);
     return numFound;
 }
 
+/// @todo: Don't format a string - just collect pointers.
 int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     char *buf, size_t bufSize)
 {
@@ -977,13 +751,12 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
         return 0;
 
-    ddstring_t result; Str_Init(&result);
-    ddstring_t str; Str_Init(&str);
+    AutoStr *result = AutoStr_NewStd();
+    AutoStr *str    = AutoStr_NewStd();
 
     int numFound = 0;
-    for(int i = 0; i < bindContextCount; ++i)
+    for(BindContext *bc : bindContexts)
     {
-        BindContext *bc = bindContexts[i];
         bc->forAllControlBindings([&bc, &controlName, &inverse, &localPlayer, &numFound, &result, &str] (controlbinding_t &cb)
         {
             char const *name = P_PlayerControlById(cb.control)->name;
@@ -1000,12 +773,12 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     // It's here!
                     if(numFound)
                     {
-                        Str_Append(&result, " ");
+                        Str_Append(result, " ");
                     }
                     numFound++;
 
-                    B_DeviceBindingToString(db, &str);
-                    Str_Appendf(&result, "%i@%s:%s", db->bid, bc->name().toUtf8().constData(), Str_Text(&str));
+                    B_DeviceBindingToString(db, str);
+                    Str_Appendf(result, "%i@%s:%s", db->bid, bc->name().toUtf8().constData(), Str_Text(str));
                 }
             }
             return LoopContinue;
@@ -1014,36 +787,182 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
 
     // Copy the result to the return buffer.
     std::memset(buf, 0, bufSize);
-    strncpy(buf, Str_Text(&result), bufSize - 1);
+    strncpy(buf, Str_Text(result), bufSize - 1);
 
-    Str_Free(&result);
-    Str_Free(&str);
     return numFound;
 }
 
-void B_PrintContexts()
+/// @todo: Most of this logic belongs in BindContext.
+void B_UpdateAllDeviceStateAssociations()
 {
-    LOG_INPUT_MSG("%i binding contexts defined:") << bindContextCount;
-
-    for(int i = 0; i < bindContextCount; ++i)
+    // Clear all existing associations.
+    inputSys().forAllDevices([] (InputDevice &device)
     {
-        BindContext *bc = bindContexts[i];
-        LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
-                << i
-                << (bc->isActive()? _E(b) : _E(w))
-                << bc->name()
-                << (bc->isActive()? "active" : "inactive");
+        device.forAllControls([] (InputDeviceControl &control)
+        {
+            control.clearBindContextAssociation();
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+
+    // Mark all bindings in all contexts.
+    for(BindContext *bc : bindContexts)
+    {
+        // Skip inactive contexts.
+        if(!bc->isActive())
+            continue;
+
+        bc->forAllCommandBindings([&bc] (evbinding_t &cb)
+        {
+            InputDevice &device = inputSys().device(cb.device);
+
+            switch(cb.type)
+            {
+            case E_TOGGLE: {
+                InputDeviceControl &ctrl = device.button(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_AXIS: {
+                InputDeviceControl &ctrl = device.axis(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_ANGLE: {
+                InputDeviceControl &ctrl = device.hat(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_SYMBOLIC:
+                break;
+
+            default:
+                DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid eb.type");
+                break;
+            }
+            return LoopContinue;
+        });
+
+        bc->forAllControlBindings([&bc] (controlbinding_t &cb)
+        {
+            // Associate all the device bindings.
+            for(int k = 0; k < DDMAXPLAYERS; ++k)
+            for(dbinding_t *db = cb.deviceBinds[k].next; db != &cb.deviceBinds[k]; db = db->next)
+            {
+                InputDevice &device = inputSys().device(db->device);
+
+                switch(db->type)
+                {
+                case CBD_TOGGLE: {
+                    InputDeviceControl &ctrl = device.button(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case CBD_AXIS: {
+                    InputDeviceControl &ctrl = device.axis(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case CBD_ANGLE: {
+                    InputDeviceControl &ctrl = device.hat(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                default:
+                    DENG2_ASSERT(!"B_UpdateAllDeviceStateAssociations: Invalid db->type");
+                    break;
+                }
+            }
+            return LoopContinue;
+        });
+
+        // If the context have made a broad device acquisition, mark all relevant states.
+        if(bc->willAcquireKeyboard())
+        {
+            InputDevice &device = inputSys().device(IDEV_KEYBOARD);
+            if(device.isActive())
+            {
+                device.forAllControls([&bc] (InputDeviceControl &control)
+                {
+                    if(!control.hasBindContext())
+                    {
+                        control.setBindContext(bc);
+                    }
+                    return LoopContinue;
+                });
+            }
+        }
+
+        if(bc->willAcquireAll())
+        {
+            inputSys().forAllDevices([&bc] (InputDevice &device)
+            {
+                if(device.isActive())
+                {
+                    device.forAllControls([&bc] (InputDeviceControl &control)
+                    {
+                        if(!control.hasBindContext())
+                        {
+                            control.setBindContext(bc);
+                        }
+                        return LoopContinue;
+                    });
+                }
+                return LoopContinue;
+            });
+        }
     }
+
+    // Now that we know what are the updated context associations, let's check the devices
+    // and see if any of the states need to be expired.
+    inputSys().forAllDevices([] (InputDevice &device)
+    {
+        device.forAllControls([] (InputDeviceControl &control)
+        {
+            if(!control.inDefaultState())
+            {
+                control.expireBindContextAssociationIfChanged();
+            }
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
 }
 
-void B_PrintAllBindings()
+LoopResult B_ForAllContexts(std::function<LoopResult (BindContext &)> func)
 {
-    LOG_INPUT_MSG("%i binding contexts defined") << bindContextCount;
-
-    for(int i = 0; i < bindContextCount; ++i)
+    for(BindContext *bc : bindContexts)
     {
-        BindContext *bc = bindContexts[i];
-        bc->printAllBindings();
+        if(auto result = func(*bc)) return result;
+    }
+    return LoopContinue;
+}
+
+#undef B_SetContextFallback
+void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+{
+    if(B_HasContext(name))
+    {
+        B_Context(name).setFallbackResponder(responderFunc);
     }
 }
 
