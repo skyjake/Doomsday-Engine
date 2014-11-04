@@ -40,7 +40,7 @@ static inline InputSystem &inputSys()
     return ClientApp::inputSystem();
 }
 
-void B_InitCommandBindingList(evbinding_t *listRoot)
+void B_InitCommandBindingList(cbinding_t *listRoot)
 {
     DENG2_ASSERT(listRoot);
     de::zapPtr(listRoot);
@@ -48,7 +48,7 @@ void B_InitCommandBindingList(evbinding_t *listRoot)
     listRoot->prev = listRoot;
 }
 
-void B_DestroyCommandBindingList(evbinding_t *listRoot)
+void B_DestroyCommandBindingList(cbinding_t *listRoot)
 {
     DENG2_ASSERT(listRoot);
     while(listRoot->next != listRoot)
@@ -57,9 +57,9 @@ void B_DestroyCommandBindingList(evbinding_t *listRoot)
     }
 }
 
-evbinding_t *B_AllocCommandBinding()
+cbinding_t *B_AllocCommandBinding()
 {
-    evbinding_t *eb = (evbinding_t *) M_Calloc(sizeof(evbinding_t));
+    cbinding_t *eb = (cbinding_t *) M_Calloc(sizeof(cbinding_t));
     eb->bid = B_NewIdentifier();
     return eb;
 }
@@ -69,7 +69,7 @@ evbinding_t *B_AllocCommandBinding()
  *
  * @return  Pointer to the new condition, which should be filled with the condition parameters.
  */
-static statecondition_t *B_AllocCommandBindingCondition(evbinding_t *eb)
+static statecondition_t *B_AllocCommandBindingCondition(cbinding_t *eb)
 {
     DENG2_ASSERT(eb);
     eb->conds = (statecondition_t *) M_Realloc(eb->conds, ++eb->numConds * sizeof(statecondition_t));
@@ -80,7 +80,7 @@ static statecondition_t *B_AllocCommandBindingCondition(evbinding_t *eb)
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
+static dd_bool B_ParseEvent(cbinding_t *eb, char const *desc)
 {
     DENG2_ASSERT(eb);
     LOG_AS("B_ParseEvent");
@@ -198,7 +198,7 @@ static dd_bool B_ParseEvent(evbinding_t *eb, char const *desc)
     return true;
 }
 
-dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
+dd_bool B_ParseEventDescriptor(cbinding_t *eb, char const *desc)
 {
     AutoStr *str = AutoStr_NewStd();
 
@@ -229,7 +229,7 @@ dd_bool B_ParseEventDescriptor(evbinding_t *eb, char const *desc)
     return true;
 }
 
-void B_DestroyCommandBinding(evbinding_t *eb)
+void B_DestroyCommandBinding(cbinding_t *eb)
 {
     if(!eb) return;
 
@@ -261,7 +261,7 @@ void B_DestroyCommandBinding(evbinding_t *eb)
  * @param out      String with placeholders replaced.
  */
 static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
-                                  evbinding_t * /*eb*/, ddstring_t *out)
+                                  cbinding_t * /*eb*/, ddstring_t *out)
 {
     DENG2_ASSERT(command && event && out);
 
@@ -309,7 +309,7 @@ static void B_SubstituteInCommand(char const *command, ddevent_t const *event,
     }
 }
 
-Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
+Action *CommandBinding_ActionForEvent(cbinding_t *eb, ddevent_t const *event,
     BindContext const *bindContext, bool respectHigherAssociatedContexts)
 {
     DENG2_ASSERT(eb && bindContext);
@@ -429,7 +429,7 @@ Action *EventBinding_ActionForEvent(evbinding_t *eb, ddevent_t const *event,
     return act;
 }
 
-void B_EventBindingToString(evbinding_t const *eb, ddstring_t *str)
+void CommandBinding_ToString(cbinding_t const *eb, ddstring_t *str)
 {
     DENG2_ASSERT(eb && str);
 

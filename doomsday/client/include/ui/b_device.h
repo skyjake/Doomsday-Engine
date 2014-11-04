@@ -24,20 +24,22 @@
 
 class BindContext;
 
-typedef enum cbdevtype_e {
+enum cbdevtype_t
+{
     CBD_TOGGLE = E_TOGGLE,
     CBD_AXIS   = E_AXIS,
     CBD_ANGLE  = E_ANGLE,
     NUM_CBD_TYPES
-} cbdevtype_t;
+};
 
 // Flags for control-device bindings.
 #define CBDF_INVERSE        0x1
 #define CBDF_TIME_STAGED    0x2
 
-typedef struct dbinding_s {
-    struct dbinding_s *next;
-    struct dbinding_s *prev;
+struct dbinding_t
+{
+    dbinding_t *next;
+    dbinding_t *prev;
 
     int bid;
     int device;
@@ -48,7 +50,7 @@ typedef struct dbinding_s {
 
     int numConds;
     statecondition_t *conds;  ///< Additional conditions.
-} dbinding_t;
+};
 
 extern byte zeroControlUponConflict;
 
@@ -58,13 +60,13 @@ void B_DestroyDeviceBindingList(dbinding_t *listRoot);
 
 dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc);
 
-void B_DestroyDeviceBinding(dbinding_t *cb);
+void B_DestroyDeviceBinding(dbinding_t *db);
 
 /**
  * Does the opposite of the B_Parse* methods for a device binding, including the
  * state conditions.
  */
-void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str);
+void DeviceBinding_ToString(dbinding_t const *db, ddstring_t *str);
 
 void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
     float *relativeOffset, BindContext *controlClass, dd_bool allowTriggered);

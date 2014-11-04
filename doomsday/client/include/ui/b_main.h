@@ -24,6 +24,8 @@
 #include "dd_input.h"
 
 class BindContext;
+struct dbinding_t;
+struct cbinding_t;
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -67,11 +69,11 @@ void B_BindDefaults();
 
 void B_BindGameDefaults();
 
-struct evbinding_s *B_BindCommand(char const *eventDesc, char const *command);
+cbinding_t *B_BindCommand(char const *eventDesc, char const *command);
 
-struct dbinding_s *B_BindControl(char const *controlDesc, char const *device);
+dbinding_t *B_BindControl(char const *controlDesc, char const *device);
 
-struct dbinding_s *B_GetControlDeviceBindings(int localNum, int control, BindContext **bContext);
+dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **context);
 
 bool B_UnbindCommand(char const *command);
 

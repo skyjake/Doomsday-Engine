@@ -29,16 +29,17 @@ struct controlbinding_t
 {
     controlbinding_t *next;
     controlbinding_t *prev;
+
     int bid;      ///< Unique identifier.
     int control;  ///< Identifier of the player control.
     dbinding_t deviceBinds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
 };
 
-typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 typedef int (*FallbackResponderFunc)(event_t *);
+typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 
 /**
- * Binding context.
+ * Contextualized grouping of input system and windowing event bindings.
  *
  * @ingroup ui
  */
@@ -48,14 +49,42 @@ public:
     explicit BindContext(de::String const &name);
     ~BindContext();
 
+    /**
+     * Returns @c true if the context is @em active, meaning, bindings in the context are
+     * in effect and their associated effect(s) will be executed if triggered.
+     *
+     * @see activate(), deactivate()
+     */
     bool isActive() const;
+
+    /**
+     * Returns @c true if the context is @em protected, meaning, it should not be manually
+     * (de)activated directly, by the end user.
+     *
+     * @see protect()
+     */
     bool isProtected() const;
 
-    void setProtected(bool yes = true);
+    /**
+     * Change the @em protected state of th context.
+     *
+     * @param yes  @c true= protected.
+     * @see isProtected()
+     */
+    void protect(bool yes = true);
 
+    /**
+     * Returns the symbolic name of the context.
+     */
     de::String name() const;
     void setName(de::String const &newName);
 
+    /**
+     * (De)activate the context, causing re-evaluation of the binding context stack.
+     * The effective bindings for events may change as a result of calling this.
+     *
+     * @param yes  @c true activate if inactive, and vice versa.
+     */
     void activate(bool yes = true);
     inline void deactivate(bool yes = true) { activate(!yes); }
 
@@ -68,11 +97,7 @@ public:
     void printAllBindings() const;
     void writeToFile(FILE *file) const;
 
-    int tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent);
-    void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);
-    void setFallbackResponder(FallbackResponderFunc newResponderFunc);
-
-public: // --------------------------------------------------------------------------
+public: // Binding management: ------------------------------------------------------
 
     void clearAllBindings();
 
@@ -87,24 +112,24 @@ public: // ---------------------------------------------------------------------
      * Looks through context @a bc and looks for a binding that matches either
      * @a match1 or @a match2.
      */
-    bool findMatchingBinding(evbinding_t *match1, dbinding_t *match2,
-                             evbinding_t **evResult, dbinding_t **dResult);
+    bool findMatchingBinding(cbinding_t *match1, dbinding_t *match2,
+                             cbinding_t **evResult, dbinding_t **dResult);
 
-    void deleteMatching(evbinding_t *eventBinding, dbinding_t *deviceBinding);
+    void deleteMatching(cbinding_t *eventBinding, dbinding_t *deviceBinding);
 
     // ---
 
-    evbinding_t *bindCommand(char const *eventDesc, char const *command);
+    cbinding_t *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * @param device  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
      */
-    evbinding_t *findCommandBinding(char const *command, int device) const;
+    cbinding_t *findCommandBinding(char const *command, int device) const;
 
     /**
      * Iterate through all the evbinding_ts of the context.
      */
-    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (evbinding_t &)> func) const;
+    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (cbinding_t &)> func) const;
 
     // ---
 
@@ -117,7 +142,7 @@ public: // ---------------------------------------------------------------------
      */
     de::LoopResult forAllControlBindings(std::function<de::LoopResult (controlbinding_t &)> func) const;
 
-public: // --------------------------------------------------------------------------
+public: // Triggering: --------------------------------------------------------------
 
     /**
      * Finds the action bound to a given event.
@@ -129,6 +154,14 @@ public: // ---------------------------------------------------------------------
      */
     de::Action *actionForEvent(ddevent_t const *event,
                                bool respectHigherAssociatedContexts = true) const;
+
+    /**
+     * @todo Conceptually the fallback responders don't belong: instead of "responding"
+     * (immediately performing a reaction), we should be returning an Action instance. -jk
+     */
+    int tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent);
+    void setFallbackResponder(FallbackResponderFunc newResponderFunc);
+    void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);
 
 private:
     DENG2_PRIVATE(d)

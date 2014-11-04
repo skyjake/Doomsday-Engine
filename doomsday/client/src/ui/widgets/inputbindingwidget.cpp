@@ -96,11 +96,11 @@ DENG_GUI_PIMPL(InputBindingWidget)
         {
             if(!B_HasContext(bcName)) continue;
 
-            if(evbinding_t const *cb = B_Context(bcName).findCommandBinding(command.toLatin1(), device))
+            if(cbinding_t const *cb = B_Context(bcName).findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 AutoStr *str = AutoStr_New();
-                B_EventBindingToString(cb, str);
+                CommandBinding_ToString(cb, str);
                 text = prettyKey(Str_Text(str));
                 break;
             }

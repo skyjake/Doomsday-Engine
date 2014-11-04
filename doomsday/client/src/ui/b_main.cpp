@@ -182,7 +182,7 @@ void B_Init()
 
     // Binding context for the console.
     BindContext *bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->setProtected();    // Only we can (de)activate.
+    bc->protect();    // Only we can (de)activate.
     bc->acquireKeyboard(); // Console takes over all keyboard events.
 
     // UI doesn't let anything past it.
@@ -191,7 +191,7 @@ void B_Init()
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
     bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
-    bc->setProtected();
+    bc->protect();
     bc->setDDFallbackResponder(globalContextFallback);
     bc->activate();
 
@@ -300,7 +300,7 @@ char const *B_ParseContext(char const *desc, BindContext **bc)
     return desc;
 }
 
-evbinding_t *B_BindCommand(char const *eventDesc, char const *command)
+cbinding_t *B_BindCommand(char const *eventDesc, char const *command)
 {
     DENG2_ASSERT(eventDesc);
 
@@ -357,7 +357,7 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
             << control->name << bc->name() << localNum << device;
 
     controlbinding_t *conBin = bc->findControlBinding(control->id);
-    bool justCreated         = false;
+    bool justCreated          = false;
     if(!conBin)
     {
         conBin      = bc->getControlBinding(control->id);
@@ -384,7 +384,7 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
     return devBin;
 }
 
-dbinding_t *B_GetControlDeviceBindings(int localNum, int control, BindContext **bContext)
+dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bContext)
 {
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return nullptr;
@@ -510,7 +510,7 @@ bool B_UnbindCommand(char const *command)
     bool didDelete = false;
     B_ForAllContexts([&command, &didDelete] (BindContext &bc)
     {
-        while(evbinding_t *ev = bc.findCommandBinding(command, NUM_INPUT_DEVICES))
+        while(cbinding_t *ev = bc.findCommandBinding(command, NUM_INPUT_DEVICES))
         {
             didDelete |= bc.deleteBinding(ev->bid);
         }
@@ -527,10 +527,10 @@ DENG_EXTERN_C int DD_GetKeyCode(char const *key)
     return (code ? code : key[0]);
 }
 
-D_CMD(BindEventToCommand)
+D_CMD(BindCommandToEvent)
 {
     DENG2_UNUSED2(src, argc);
-    if(evbinding_t *b = B_BindCommand(argv[1], argv[2]))
+    if(cbinding_t *b = B_BindCommand(argv[1], argv[2]))
     {
         LOG_INPUT_VERBOSE("Binding %i created") << b->bid;
         return true;
@@ -538,7 +538,7 @@ D_CMD(BindEventToCommand)
     return false;
 }
 
-D_CMD(BindControlToDevice)
+D_CMD(BindControl)
 {
     DENG2_UNUSED2(src, argc);
     if(dbinding_t *b = B_BindControl(argv[1], argv[2]))
@@ -659,14 +659,14 @@ void B_ConsoleRegister()
 
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED | CMDF_DED | CMDF_CLIENT)
 
-    C_CMD_FLAGS("bindevent",            "ss",       BindEventToCommand, PROTECTED_FLAGS);
-    C_CMD_FLAGS("bindcontrol",          "ss",       BindControlToDevice, PROTECTED_FLAGS);
-    C_CMD_FLAGS("listbcontexts",        nullptr,    ListBindingContexts, PROTECTED_FLAGS);
-    C_CMD_FLAGS("listbindings",         nullptr,    ListBindings, PROTECTED_FLAGS);
-    C_CMD_FLAGS("clearbindings",        "",         ClearBindings, PROTECTED_FLAGS);
-    //C_CMD_FLAGS("clearbcontexts",       "",         ClearBindingContexts, PROTECTED_FLAGS);
-    C_CMD_FLAGS("delbind",              "i",        DeleteBindingById, PROTECTED_FLAGS);
-    C_CMD_FLAGS("defaultbindings",      "",         DefaultBindings, PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindevent",            "ss",       BindCommandToEvent,     PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindcontrol",          "ss",       BindControl,            PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbcontexts",        nullptr,    ListBindingContexts,    PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,           PROTECTED_FLAGS);
+    C_CMD_FLAGS("clearbindings",        "",         ClearBindings,          PROTECTED_FLAGS);
+    //C_CMD_FLAGS("clearbcontexts",       "",         ClearBindingContexts,   PROTECTED_FLAGS);
+    C_CMD_FLAGS("delbind",              "i",        DeleteBindingById,      PROTECTED_FLAGS);
+    C_CMD_FLAGS("defaultbindings",      "",         DefaultBindings,        PROTECTED_FLAGS);
     C_CMD_FLAGS("activatebcontext",     "s",        ActivateBindingContext, PROTECTED_FLAGS);
     C_CMD_FLAGS("deactivatebcontext",   "s",        ActivateBindingContext, PROTECTED_FLAGS);
 

@@ -379,7 +379,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
     *pos = de::clamp(-1.0f, *pos, 1.0f);
 }
 
-void B_DeviceBindingToString(dbinding_t const *b, ddstring_t *str)
+void DeviceBinding_ToString(dbinding_t const *b, ddstring_t *str)
 {
     DENG2_ASSERT(b && str);
 

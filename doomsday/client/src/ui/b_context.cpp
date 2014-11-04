@@ -55,8 +55,8 @@ static inline InputSystem &inputSys()
 DENG2_PIMPL(BindContext)
 {
     byte flags = 0;
-    String name;                    ///< Symbolic.
-    evbinding_t commandBinds;       ///< List of command bindings.
+    String name;                     ///< Symbolic.
+    cbinding_t commandBinds;     ///< List of command bindings.
     controlbinding_t controlBinds;
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
@@ -94,11 +94,11 @@ DENG2_PIMPL(BindContext)
      *
      * @return  New binding, or @c nullptr if there was an error.
      */
-    evbinding_t *newCommandBinding(char const *desc, char const *command)
+    cbinding_t *newCommandBinding(char const *desc, char const *command)
     {
         DENG2_ASSERT(command && command[0]);
 
-        evbinding_t *eb = B_AllocCommandBinding();
+        cbinding_t *eb = B_AllocCommandBinding();
         DENG2_ASSERT(eb);
 
         // Parse the description of the event.
@@ -142,7 +142,7 @@ bool BindContext::isProtected() const
     return (d->flags & BCF_PROTECTED) != 0;
 }
 
-void BindContext::setProtected(bool yes)
+void BindContext::protect(bool yes)
 {
     if(yes) d->flags |= BCF_PROTECTED;
     else    d->flags &= ~BCF_PROTECTED;
@@ -236,10 +236,10 @@ void BindContext::clearAllBindings()
     B_DestroyControlBindingList(&d->controlBinds);
 }
 
-void BindContext::deleteMatching(evbinding_t *eventBinding, dbinding_t *deviceBinding)
+void BindContext::deleteMatching(cbinding_t *eventBinding, dbinding_t *deviceBinding)
 {
     dbinding_t *devb = nullptr;
-    evbinding_t *evb = nullptr;
+    cbinding_t *evb = nullptr;
 
     while(findMatchingBinding(eventBinding, deviceBinding, &evb, &devb))
     {
@@ -254,11 +254,11 @@ void BindContext::deleteMatching(evbinding_t *eventBinding, dbinding_t *deviceBi
     }
 }
 
-evbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command)
+cbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command)
 {
     DENG2_ASSERT(eventDesc && command);
 
-    evbinding_t *b = d->newCommandBinding(eventDesc, command);
+    cbinding_t *b = d->newCommandBinding(eventDesc, command);
     if(b)
     {
         /// @todo: In interactive binding mode, should ask the user if the
@@ -270,11 +270,11 @@ evbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command
     return b;
 }
 
-evbinding_t *BindContext::findCommandBinding(char const *command, int device) const
+cbinding_t *BindContext::findCommandBinding(char const *command, int device) const
 {
     if(command && command[0])
     {
-        for(evbinding_t *i = d->commandBinds.next; i != &d->commandBinds; i = i->next)
+        for(cbinding_t *i = d->commandBinds.next; i != &d->commandBinds; i = i->next)
         {
             if(qstricmp(i->command, command)) continue;
 
@@ -326,7 +326,7 @@ dbinding_t *BindContext::findDeviceBinding(int device, cbdevtype_t bindType, int
 bool BindContext::deleteBinding(int bid)
 {
     // Check if it is one of the command bindings.
-    for(evbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
+    for(cbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
     {
         if(eb->bid == bid)
         {
@@ -364,9 +364,9 @@ bool BindContext::deleteBinding(int bid)
 Action *BindContext::actionForEvent(ddevent_t const *event, bool respectHigherAssociatedContexts) const
 {
     // See if the command bindings will have it.
-    for(evbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
+    for(cbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
     {
-        if(Action *act = EventBinding_ActionForEvent(eb, event, this, respectHigherAssociatedContexts))
+        if(Action *act = CommandBinding_ActionForEvent(eb, event, this, respectHigherAssociatedContexts))
         {
             return act;
         }
@@ -399,15 +399,15 @@ static bool B_AreConditionsEqual(int count1, statecondition_t const *conds1,
     return true;
 }
 
-bool BindContext::findMatchingBinding(evbinding_t *match1, dbinding_t *match2,
-    evbinding_t **evResult, dbinding_t **dResult)
+bool BindContext::findMatchingBinding(cbinding_t *match1, dbinding_t *match2,
+    cbinding_t **evResult, dbinding_t **dResult)
 {
     DENG2_ASSERT(evResult && dResult);
 
     *evResult = nullptr;
     *dResult  = nullptr;
 
-    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    for(cbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
     {
         if(match1 && match1->bid != e->bid)
         {
@@ -462,9 +462,9 @@ bool BindContext::findMatchingBinding(evbinding_t *match1, dbinding_t *match2,
     return false;
 }
 
-LoopResult BindContext::forAllCommandBindings(std::function<de::LoopResult (evbinding_t &)> func) const
+LoopResult BindContext::forAllCommandBindings(std::function<de::LoopResult (cbinding_t &)> func) const
 {
-    for(evbinding_t *cb = d->commandBinds.next; cb != &d->commandBinds; cb = cb->next)
+    for(cbinding_t *cb = d->commandBinds.next; cb != &d->commandBinds; cb = cb->next)
     {
         if(auto result = func(*cb)) return result;
     }
@@ -491,16 +491,16 @@ void BindContext::printAllBindings() const
 
     // Commands.
     int count = 0;
-    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next, count++) {}
+    for(cbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next, count++) {}
 
     if(count)
     {
         LOG_INPUT_MSG("  %i event bindings:") << count;
     }
 
-    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    for(cbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
     {
-        B_EventBindingToString(e, str);
+        CommandBinding_ToString(e, str);
         LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
                 << e->bid << Str_Text(str) << e->command;
     }
@@ -536,7 +536,7 @@ void BindContext::printAllBindings() const
 
             for(dbinding_t *d = c->deviceBinds[k].next; d != &c->deviceBinds[k]; d = d->next)
             {
-                B_DeviceBindingToString(d, str);
+                DeviceBinding_ToString(d, str);
                 LOG_INPUT_MSG("    " BIDFORMAT " %s") << d->bid << Str_Text(str);
             }
         }
@@ -551,9 +551,9 @@ void BindContext::writeToFile(FILE *file) const
     AutoStr *str = AutoStr_NewStd();
 
     // Commands.
-    for(evbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    for(cbinding_t *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
     {
-        B_EventBindingToString(e, str);
+        CommandBinding_ToString(e, str);
         fprintf(file, "bindevent \"%s:%s\" \"", d->name.toUtf8().constData(), Str_Text(str));
         M_WriteTextEsc(file, e->command);
         fprintf(file, "\"\n");
@@ -567,7 +567,7 @@ void BindContext::writeToFile(FILE *file) const
         for(int k = 0; k < DDMAXPLAYERS; ++k)
         for(dbinding_t *db = cb->deviceBinds[k].next; db != &cb->deviceBinds[k]; db = db->next)
         {
-            B_DeviceBindingToString(db, str);
+            DeviceBinding_ToString(db, str);
             fprintf(file, "bindcontrol local%i-%s \"%s\"\n", k + 1,
                     controlName, Str_Text(str));
         }
@@ -645,7 +645,7 @@ BindContext &B_Context(String const &name)
 }
 
 /// @todo: Optimize O(n) search...
-BindContext *B_ContextPtr(de::String const &name)
+BindContext *B_ContextPtr(String const &name)
 {
     for(BindContext const *bc : bindContexts)
     {
@@ -692,16 +692,10 @@ Action *B_ActionForEvent(ddevent_t const *event)
             return act;
         }
 
-        /**
-         * @todo Conceptually the fallback responders don't belong: instead of
-         * "responding" (immediately performing a reaction), we should be
-         * returning an Action instance. -jk
-         */
-
         // Try the fallback responders.
         if(bc->tryFallbackResponders(*event, ev, validGameEvent))
         {
-            return nullptr; // fallback responder executed something
+            return nullptr; // fallback responder executed something.
         }
     }
 
@@ -712,13 +706,14 @@ Action *B_ActionForEvent(ddevent_t const *event)
 int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
 {
     DENG2_ASSERT(cmd && buf);
+
     AutoStr *result = AutoStr_NewStd();
     AutoStr *str    = AutoStr_NewStd();
 
     int numFound = 0;
     for(BindContext const *bc : bindContexts)
     {
-        bc->forAllCommandBindings([&bc, &numFound, &str, &cmd, &result] (evbinding_t &eb)
+        bc->forAllCommandBindings([&bc, &numFound, &str, &cmd, &result] (cbinding_t &eb)
         {
             if(strcmp(eb.command, cmd))
                 return LoopContinue;
@@ -729,7 +724,7 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
                 Str_Append(result, " ");
             }
             numFound++;
-            B_EventBindingToString(&eb, str);
+            CommandBinding_ToString(&eb, str);
             Str_Appendf(result, "%i@%s:%s", eb.bid, bc->name().toUtf8().constData(), Str_Text(str));
             return LoopContinue;
         });
@@ -777,7 +772,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     }
                     numFound++;
 
-                    B_DeviceBindingToString(db, str);
+                    DeviceBinding_ToString(db, str);
                     Str_Appendf(result, "%i@%s:%s", db->bid, bc->name().toUtf8().constData(), Str_Text(str));
                 }
             }
@@ -813,7 +808,7 @@ void B_UpdateAllDeviceStateAssociations()
         if(!bc->isActive())
             continue;
 
-        bc->forAllCommandBindings([&bc] (evbinding_t &cb)
+        bc->forAllCommandBindings([&bc] (cbinding_t &cb)
         {
             InputDevice &device = inputSys().device(cb.device);
 
@@ -898,10 +893,10 @@ void B_UpdateAllDeviceStateAssociations()
         // If the context have made a broad device acquisition, mark all relevant states.
         if(bc->willAcquireKeyboard())
         {
-            InputDevice &device = inputSys().device(IDEV_KEYBOARD);
-            if(device.isActive())
+            InputDevice &keyboard = inputSys().device(IDEV_KEYBOARD);
+            if(keyboard.isActive())
             {
-                device.forAllControls([&bc] (InputDeviceControl &control)
+                keyboard.forAllControls([&bc] (InputDeviceControl &control)
                 {
                     if(!control.hasBindContext())
                     {

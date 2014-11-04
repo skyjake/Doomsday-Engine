@@ -331,7 +331,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
     BindContext *bc           = nullptr;
-    struct dbinding_s *binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    dbinding_t *binds = B_GetControlBindings(P_ConsoleToLocal(playerNum), control, &bc);
     if(!binds) return false;
 
     // There must be bindings to active input devices.
@@ -371,7 +371,7 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, flo
     // P_ConsoleToLocal() is called here.
     int localNum             = P_ConsoleToLocal(playerNum);
     BindContext *bc           = nullptr;
-    struct dbinding_s *binds = B_GetControlDeviceBindings(localNum, control, &bc);
+    dbinding_t *binds = B_GetControlBindings(localNum, control, &bc);
     B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.
