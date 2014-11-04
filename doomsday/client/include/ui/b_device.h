@@ -1,4 +1,4 @@
-/** @file b_device.h  Input system, control => device binding.
+/** @file b_device.h  Input system, control => impulse binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -17,33 +17,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_DEVICEBINDING_H
-#define CLIENT_INPUTSYSTEM_DEVICEBINDING_H
+#ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
+#define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
 #include "b_util.h"
 
 class BindContext;
 
-enum cbdevtype_t
+enum ibcontroltype_t
 {
-    CBD_TOGGLE = E_TOGGLE,
-    CBD_AXIS   = E_AXIS,
-    CBD_ANGLE  = E_ANGLE,
+    IBD_TOGGLE = E_TOGGLE,
+    IBD_AXIS   = E_AXIS,
+    IBD_ANGLE  = E_ANGLE,
     NUM_CBD_TYPES
 };
 
-// Flags for control-device bindings.
-#define CBDF_INVERSE        0x1
-#define CBDF_TIME_STAGED    0x2
+// Flags for impulse bindings.
+#define IBDF_INVERSE        0x1
+#define IBDF_TIME_STAGED    0x2
 
-struct dbinding_t
+struct ImpulseBinding
 {
-    dbinding_t *next;
-    dbinding_t *prev;
+    ImpulseBinding *next;
+    ImpulseBinding *prev;
 
     int bid;
     int device;
-    cbdevtype_t type;
+    ibcontroltype_t type;
     int id;
     float angle;
     uint flags;
@@ -54,22 +54,22 @@ struct dbinding_t
 
 extern byte zeroControlUponConflict;
 
-void B_InitDeviceBindingList(dbinding_t *listRoot);
+void B_DestroyImpulseBinding(ImpulseBinding *db);
 
-void B_DestroyDeviceBindingList(dbinding_t *listRoot);
+void B_InitImpulseBindingList(ImpulseBinding *listRoot);
 
-dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc);
+void B_DestroyImpulseBindingList(ImpulseBinding *listRoot);
 
-void B_DestroyDeviceBinding(dbinding_t *db);
+ImpulseBinding *B_NewImpulseBinding(ImpulseBinding *listRoot, char const *ctrlDesc);
 
 /**
  * Does the opposite of the B_Parse* methods for a device binding, including the
  * state conditions.
  */
-void DeviceBinding_ToString(dbinding_t const *db, ddstring_t *str);
+void ImpulseBinding_ToString(ImpulseBinding const *ib, ddstring_t *str);
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
-    float *relativeOffset, BindContext *controlClass, dd_bool allowTriggered);
+void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float *pos,
+    float *relativeOffset, BindContext *context, dd_bool allowTriggered);
 
-#endif // CLIENT_INPUTSYSTEM_DEVICEBINDING_H
+#endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 

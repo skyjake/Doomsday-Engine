@@ -26,10 +26,10 @@
 
 class BindContext;
 
-struct cbinding_t
+struct CommandBinding
 {
-    cbinding_t *prev;          ///< Previous in list of bindings.
-    cbinding_t *next;          ///< Next in list of bindings.
+    CommandBinding *prev;      ///< Previous in list of bindings.
+    CommandBinding *next;      ///< Next in list of bindings.
 
     int bid;                   ///< Binding identifier.
     char *command;             ///< Command to execute.
@@ -45,24 +45,24 @@ struct cbinding_t
     statecondition_t *conds;   ///< Additional conditions.
 };
 
-void B_InitCommandBindingList(cbinding_t *listRoot);
-
-void B_DestroyCommandBindingList(cbinding_t *listRoot);
-
 /**
  * Allocates a new command binding and gives it a unique identifier.
  */
-cbinding_t *B_AllocCommandBinding();
+CommandBinding *B_AllocCommandBinding();
 
 /**
  * Destroys command binding @cb.
  */
-void B_DestroyCommandBinding(cbinding_t *cb);
+void B_DestroyCommandBinding(CommandBinding *cb);
+
+void B_InitCommandBindingList(CommandBinding *listRoot);
+
+void B_DestroyCommandBindingList(CommandBinding *listRoot);
 
 /**
  * Does the opposite of the B_Parse* methods for event descriptor, including the state conditions.
  */
-void CommandBinding_ToString(cbinding_t const *cb, ddstring_t *str);
+void CommandBinding_ToString(CommandBinding const *cb, ddstring_t *str);
 
 /**
  * Parses a textual descriptor of the conditions for triggering an event-command binding.
@@ -73,7 +73,7 @@ void CommandBinding_ToString(cbinding_t const *cb, ddstring_t *str);
  *
  * @return  @c true, if successful; otherwise @c false.
  */
-dd_bool B_ParseEventDescriptor(cbinding_t *cb, char const *desc);
+dd_bool B_ParseEventDescriptor(CommandBinding *cb, char const *desc);
 
 /**
  * Checks if the event matches the binding's conditions, and if so, returns an
@@ -88,7 +88,7 @@ dd_bool B_ParseEventDescriptor(cbinding_t *cb, char const *desc);
  *
  * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
  */
-de::Action *CommandBinding_ActionForEvent(cbinding_t *cb, ddevent_t const *event,
+de::Action *CommandBinding_ActionForEvent(CommandBinding *cb, ddevent_t const *event,
     BindContext const *context, bool respectHigherAssociatedContexts);
 
 #endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H

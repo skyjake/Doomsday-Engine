@@ -32,21 +32,21 @@ typedef int (*FallbackResponderFunc)(event_t *);
 typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 // todo ends
 
-struct controlbinding_t
+struct controlbindgroup_t
 {
-    controlbinding_t *next;
-    controlbinding_t *prev;
+    controlbindgroup_t *next;
+    controlbindgroup_t *prev;
 
     int bid;      ///< Unique identifier.
     int control;  ///< Identifier of the player control.
-    dbinding_t deviceBinds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
+    ImpulseBinding binds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
 };
 
-void B_DestroyControlBinding(controlbinding_t *conBin);
+void B_DestroyControlBindGroup(controlbindgroup_t *bg);
 
-void B_InitControlBindingList(controlbinding_t *listRoot);
+void B_InitControlBindGroupList(controlbindgroup_t *listRoot);
 
-void B_DestroyControlBindingList(controlbinding_t *listRoot);
+void B_DestroyControlBindGroupList(controlbindgroup_t *listRoot);
 
 // ------------------------------------------------------------------------------
 
@@ -86,7 +86,7 @@ public:
      * Returns @c true if the context is @em protected, meaning, it should not be
      * manually (de)activated by the end user, directly.
      *
-     * @see protect()
+     * @see protect(), unprotect()
      */
     bool isProtected() const;
 
@@ -94,9 +94,11 @@ public:
      * Change the @em protected state of the context.
      *
      * @param yes  @c true= protected.
+     *
      * @see isProtected()
      */
     void protect(bool yes = true);
+    inline void unprotect(bool yes = true) { protect(!yes); }
 
     /**
      * Returns the symbolic name of the context.
@@ -120,7 +122,7 @@ public:
     bool willAcquireAll() const;
 
     void printAllBindings() const;
-    void writeToFile(FILE *file) const;
+    void writeAllBindingsTo(FILE *file) const;
 
 public: // Binding management: ------------------------------------------------------
 
@@ -131,40 +133,40 @@ public: // Binding management: -------------------------------------------------
      */
     bool deleteBinding(int bid);
 
-    dbinding_t *findDeviceBinding(int device, cbdevtype_t bindType, int id);
+    ImpulseBinding *findImpulseBinding(int device, ibcontroltype_t bindType, int id);
 
     /**
      * Looks through the context for a binding that matches either @a match1 or @a match2.
      */
-    bool findMatchingBinding(cbinding_t *match1, dbinding_t *match2,
-                             cbinding_t **evResult, dbinding_t **dResult);
+    bool findMatchingBinding(CommandBinding *match1, ImpulseBinding *match2,
+                             CommandBinding **evResult, ImpulseBinding **dResult);
 
-    void deleteMatching(cbinding_t *commandBind, dbinding_t *controlBind);
+    void deleteMatching(CommandBinding *commandBind, ImpulseBinding *impulseBind);
 
     // ---
 
-    cbinding_t *bindCommand(char const *eventDesc, char const *command);
+    CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * @param deviceId  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
      */
-    cbinding_t *findCommandBinding(char const *command, int deviceId = -1) const;
+    CommandBinding *findCommandBinding(char const *command, int deviceId = -1) const;
 
     /**
      * Iterate through all the evbinding_ts of the context.
      */
-    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (cbinding_t &)> func) const;
+    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (CommandBinding &)> func) const;
 
     // ---
 
-    controlbinding_t *findControlBinding(int control) const;
+    controlbindgroup_t *findControlBindGroup(int control) const;
 
-    controlbinding_t *getControlBinding(int control);
+    controlbindgroup_t *getControlBindGroup(int control);
 
     /**
      * Iterate through all the evbinding_ts of the context.
      */
-    de::LoopResult forAllControlBindings(std::function<de::LoopResult (controlbinding_t &)> func) const;
+    de::LoopResult forAllControlBindGroups(std::function<de::LoopResult (controlbindgroup_t &)> func) const;
 
 public: // Triggering: --------------------------------------------------------------
 
@@ -190,6 +192,5 @@ public: // Triggering: ---------------------------------------------------------
 private:
     DENG2_PRIVATE(d)
 };
-
 
 #endif // CLIENT_INPUTSYSTEM_BINDCONTEXT_H

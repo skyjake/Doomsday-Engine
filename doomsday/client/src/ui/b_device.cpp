@@ -1,4 +1,4 @@
-/** @file b_device.cpp  Input system, control => device binding.
+/** @file b_device.cpp  Input system, control => impulse binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
@@ -32,8 +32,8 @@
 
 using namespace de;
 
-#define EVTYPE_TO_CBDTYPE(evt)  ((evt) == E_AXIS? CBD_AXIS : (evt) == E_TOGGLE? CBD_TOGGLE : CBD_ANGLE)
-#define CBDTYPE_TO_EVTYPE(cbt)  ((cbt) == CBD_AXIS? E_AXIS : (cbt) == CBD_TOGGLE? E_TOGGLE : E_ANGLE)
+#define EVTYPE_TO_IBDTYPE(evt)  ((evt) == E_AXIS? IBD_AXIS : (evt) == E_TOGGLE? IBD_TOGGLE : IBD_ANGLE)
+#define IBDTYPE_TO_EVTYPE(cbt)  ((cbt) == IBD_AXIS? E_AXIS : (cbt) == IBD_TOGGLE? E_TOGGLE : E_ANGLE)
 
 byte zeroControlUponConflict = true;
 
@@ -45,45 +45,44 @@ static inline InputSystem &inputSys()
     return ClientApp::inputSystem();
 }
 
-static dbinding_t *B_AllocDeviceBinding()
+static ImpulseBinding *B_AllocImpulseBinding()
 {
-    dbinding_t *cb = (dbinding_t *) M_Calloc(sizeof(*cb));
+    ImpulseBinding *cb = (ImpulseBinding *) M_Calloc(sizeof(*cb));
     cb->bid = B_NewIdentifier();
     return cb;
 }
 
 /**
- * Allocates a device state condition within a device binding.
+ * Allocates a control state condition within an impulse binding.
  *
  * @return  Pointer to the new condition, which should be filled with the condition parameters.
  */
-static statecondition_t *B_AllocDeviceBindingCondition(dbinding_t *b)
+static statecondition_t *B_AllocControlBindingCondition(ImpulseBinding *ib)
 {
-    b->conds = (statecondition_t *) M_Realloc(b->conds, ++b->numConds * sizeof(*b->conds));
-    de::zap(b->conds[b->numConds - 1]);
-    return &b->conds[b->numConds - 1];
+    ib->conds = (statecondition_t *) M_Realloc(ib->conds, ++ib->numConds * sizeof(*ib->conds));
+    de::zap(ib->conds[ib->numConds - 1]);
+    return &ib->conds[ib->numConds - 1];
 }
 
-void B_InitDeviceBindingList(dbinding_t *listRoot)
+void B_InitImpulseBindingList(ImpulseBinding *listRoot)
 {
     DENG2_ASSERT(listRoot);
     de::zapPtr(listRoot);
     listRoot->next = listRoot->prev = listRoot;
 }
 
-void B_DestroyDeviceBindingList(dbinding_t *listRoot)
+void B_DestroyImpulseBindingList(ImpulseBinding *listRoot)
 {
     if(!listRoot) return;
     while(listRoot->next != listRoot)
     {
-        B_DestroyDeviceBinding(listRoot->next);
+        B_DestroyImpulseBinding(listRoot->next);
     }
 }
 
-dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
+static dd_bool parseControl(ImpulseBinding *ib, char const *desc)
 {
-    DENG2_ASSERT(cb && desc);
-    LOG_AS("B_ParseEvent");
+    DENG2_ASSERT(ib && desc);
 
     AutoStr *str = AutoStr_NewStd();
     ddeventtype_t type;
@@ -92,45 +91,45 @@ dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "key"))
     {
-        cb->device = IDEV_KEYBOARD;
-        cb->type   = CBD_TOGGLE;
+        ib->device = IDEV_KEYBOARD;
+        ib->type   = IBD_TOGGLE;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseKeyId(Str_Text(str), &cb->id))
+        if(!B_ParseKeyId(Str_Text(str), &ib->id))
         {
             return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
-        cb->device = IDEV_MOUSE;
+        ib->device = IDEV_MOUSE;
 
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cb->id))
+        if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &ib->id))
         {
             return false;
         }
-        cb->type = EVTYPE_TO_CBDTYPE(type);
+        ib->type = EVTYPE_TO_IBDTYPE(type);
     }
     else if(!Str_CompareIgnoreCase(str, "joy") ||
             !Str_CompareIgnoreCase(str, "head"))
     {
-        cb->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
+        ib->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(inputSys().device(cb->device), Str_Text(str), &type, &cb->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(ib->device), Str_Text(str), &type, &ib->id))
         {
             return false;
         }
-        cb->type = EVTYPE_TO_CBDTYPE(type);
+        ib->type = EVTYPE_TO_IBDTYPE(type);
 
         // Hats include the angle.
         if(type == E_ANGLE)
         {
             desc = Str_CopyDelim(str, desc, '-');
-            if(!B_ParseAnglePosition(Str_Text(str), &cb->angle))
+            if(!B_ParseAnglePosition(Str_Text(str), &ib->angle))
             {
                 return false;
             }
@@ -143,11 +142,11 @@ dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(!Str_CompareIgnoreCase(str, "inverse"))
         {
-            cb->flags |= CBDF_INVERSE;
+            ib->flags |= IBDF_INVERSE;
         }
         else if(!Str_CompareIgnoreCase(str, "staged"))
         {
-            cb->flags |= CBDF_TIME_STAGED;
+            ib->flags |= IBDF_TIME_STAGED;
         }
         else
         {
@@ -159,15 +158,17 @@ dd_bool B_ParseDevice(dbinding_t *cb, char const *desc)
     return true;
 }
 
-dd_bool B_ParseDeviceDescriptor(dbinding_t *cb, char const *desc)
+dd_bool B_ParseControlDescriptor(ImpulseBinding *ib, char const *desc)
 {
-    DENG2_ASSERT(cb && desc);
+    DENG2_ASSERT(ib && desc);
+    LOG_AS("B_ParseControl");
+
     AutoStr *str = AutoStr_NewStd();
 
     // The first part specifies the device state.
     desc = Str_CopyDelim(str, desc, '+');
 
-    if(!B_ParseDevice(cb, Str_Text(str)))
+    if(!parseControl(ib, Str_Text(str)))
     {
         // Failure in parsing the device.
         return false;
@@ -179,10 +180,10 @@ dd_bool B_ParseDeviceDescriptor(dbinding_t *cb, char const *desc)
         // A new condition.
         desc = Str_CopyDelim(str, desc, '+');
 
-        statecondition_t *cond = B_AllocDeviceBindingCondition(cb);
+        statecondition_t *cond = B_AllocControlBindingCondition(ib);
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
-            // Failure parusing the condition.
+            // Failure parsing the condition.
             return false;
         }
     }
@@ -191,45 +192,45 @@ dd_bool B_ParseDeviceDescriptor(dbinding_t *cb, char const *desc)
     return true;
 }
 
-dbinding_t *B_NewDeviceBinding(dbinding_t *listRoot, char const *deviceDesc)
+ImpulseBinding *B_NewImpulseBinding(ImpulseBinding *listRoot, char const *ctrlDesc)
 {
     DENG2_ASSERT(listRoot);
-    dbinding_t *cb = B_AllocDeviceBinding();
+    ImpulseBinding *ib = B_AllocImpulseBinding();
 
     // Parse the description of the event.
-    if(!B_ParseDeviceDescriptor(cb, deviceDesc))
+    if(!B_ParseControlDescriptor(ib, ctrlDesc))
     {
         // Error in parsing, failure to create binding.
-        B_DestroyDeviceBinding(cb);
+        B_DestroyImpulseBinding(ib);
         return nullptr;
     }
 
     // Link it into the list.
-    cb->next = listRoot;
-    cb->prev = listRoot->prev;
-    listRoot->prev->next = cb;
-    listRoot->prev = cb;
+    ib->next = listRoot;
+    ib->prev = listRoot->prev;
+    listRoot->prev->next = ib;
+    listRoot->prev = ib;
 
-    return cb;
+    return ib;
 }
 
-void B_DestroyDeviceBinding(dbinding_t *cb)
+void B_DestroyImpulseBinding(ImpulseBinding *ib)
 {
-    if(!cb) return;
-    DENG2_ASSERT(cb->bid != 0);
+    if(!ib) return;
+    DENG2_ASSERT(ib->bid != 0);
 
     // Unlink first, if linked.
-    if(cb->prev)
+    if(ib->prev)
     {
-        cb->prev->next = cb->next;
-        cb->next->prev = cb->prev;
+        ib->prev->next = ib->next;
+        ib->next->prev = ib->prev;
     }
 
-    M_Free(cb->conds);
-    M_Free(cb);
+    M_Free(ib->conds);
+    M_Free(ib);
 }
 
-void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
+void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float *pos,
     float *relativeOffset, BindContext *context, dd_bool allowTriggered)
 {
     DENG2_ASSERT(pos && relativeOffset);
@@ -243,13 +244,13 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
     dd_bool conflicted[NUM_CBD_TYPES]   = { false, false, false };
     dd_bool appliedState[NUM_CBD_TYPES] = { false, false, false };
 
-    for(dbinding_t *cb = listRoot->next; cb != listRoot; cb = cb->next)
+    for(ImpulseBinding *ib = listRoot->next; ib != listRoot; ib = ib->next)
     {
         // If this binding has conditions, they may prevent using it.
         dd_bool skip = false;
-        for(int i = 0; i < cb->numConds; ++i)
+        for(int i = 0; i < ib->numConds; ++i)
         {
-            if(!B_CheckCondition(&cb->conds[i], localNum, context))
+            if(!B_CheckCondition(&ib->conds[i], localNum, context))
             {
                 skip = true;
                 break;
@@ -258,17 +259,17 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         if(skip) continue;
 
         // Get the device.
-        InputDevice *dev = inputSys().devicePtr(cb->device);
+        InputDevice *dev = inputSys().devicePtr(ib->device);
         if(!dev || !dev->isActive()) continue; // Not available.
 
         float devicePos = 0;
         float deviceOffset = 0;
         uint deviceTime = 0;
 
-        switch(cb->type)
+        switch(ib->type)
         {
-        case CBD_TOGGLE: {
-            InputDeviceButtonControl *button = &dev->button(cb->id);
+        case IBD_TOGGLE: {
+            InputDeviceButtonControl *button = &dev->button(ib->id);
 
             if(context && button->bindContext() != context)
                 continue; // Shadowed by a more important active context.
@@ -285,12 +286,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
             button->setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
             break; }
 
-        case CBD_AXIS: {
-            InputDeviceAxisControl *axis = &dev->axis(cb->id);
+        case IBD_AXIS: {
+            InputDeviceAxisControl *axis = &dev->axis(ib->id);
 
             if(context && axis->bindContext() != context)
             {
-                if(!axis->bindContext()->findDeviceBinding(cb->device, CBD_AXIS, cb->id))
+                if(!axis->bindContext()->findImpulseBinding(ib->device, IBD_AXIS, ib->id))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type() == InputDeviceAxisControl::Pointer)
@@ -317,8 +318,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
             deviceTime = axis->time();
             break; }
 
-        case CBD_ANGLE: {
-            InputDeviceHatControl *hat = &dev->hat(cb->id);
+        case IBD_ANGLE: {
+            InputDeviceHatControl *hat = &dev->hat(ib->id);
 
             if(context && hat->bindContext() != context)
                 continue; // Shadowed by a more important active class.
@@ -326,22 +327,22 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
             if(hat->bindContextAssociation() & InputDeviceControl::Expired)
                 break;
 
-            devicePos  = (hat->position() == cb->angle? 1.0f : 0.0f);
+            devicePos  = (hat->position() == ib->angle? 1.0f : 0.0f);
             deviceTime = hat->time();
             break; }
 
         default:
-            App_Error("B_EvaluateDeviceBindingList: Invalid value cb->type: %i.", cb->type);
+            DENG2_ASSERT(!"B_EvaluateImpulseBindingList: Invalid ib->type.");
             break;
         }
 
         // Apply further modifications based on flags.
-        if(cb->flags & CBDF_INVERSE)
+        if(ib->flags & IBDF_INVERSE)
         {
             devicePos = -devicePos;
             deviceOffset = -deviceOffset;
         }
-        if(cb->flags & CBDF_TIME_STAGED)
+        if(ib->flags & IBDF_TIME_STAGED)
         {
             if(nowTime - deviceTime < stageThreshold * 1000)
             {
@@ -355,14 +356,14 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         // Is this state contributing to the outcome?
         if(!de::fequal(devicePos, 0.f))
         {
-            if(appliedState[cb->type])
+            if(appliedState[ib->type])
             {
                 // Another binding already influenced this; we have a conflict.
-                conflicted[cb->type] = true;
+                conflicted[ib->type] = true;
             }
 
             // We've found one effective binding that influences this control.
-            appliedState[cb->type] = true;
+            appliedState[ib->type] = true;
         }
     }
 
@@ -379,34 +380,34 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
     *pos = de::clamp(-1.0f, *pos, 1.0f);
 }
 
-void DeviceBinding_ToString(dbinding_t const *b, ddstring_t *str)
+void ImpulseBinding_ToString(ImpulseBinding const *ib, ddstring_t *str)
 {
-    DENG2_ASSERT(b && str);
+    DENG2_ASSERT(ib && str);
 
     Str_Clear(str);
 
-    // Name of the device and the key/axis/hat.
-    B_AppendDeviceDescToString(inputSys().device(b->device), CBDTYPE_TO_EVTYPE(b->type), b->id, str);
+    // Name of the control-device and the key/axis/hat.
+    B_AppendControlDescToString(inputSys().device(ib->device), IBDTYPE_TO_EVTYPE(ib->type), ib->id, str);
 
-    if(b->type == CBD_ANGLE)
+    if(ib->type == IBD_ANGLE)
     {
-        B_AppendAnglePositionToString(b->angle, str);
+        B_AppendAnglePositionToString(ib->angle, str);
     }
 
     // Additional flags.
-    if(b->flags & CBDF_TIME_STAGED)
+    if(ib->flags & IBDF_TIME_STAGED)
     {
         Str_Append(str, "-staged");
     }
-    if(b->flags & CBDF_INVERSE)
+    if(ib->flags & IBDF_INVERSE)
     {
         Str_Append(str, "-inverse");
     }
 
     // Append any state conditions.
-    for(int i = 0; i < b->numConds; ++i)
+    for(int i = 0; i < ib->numConds; ++i)
     {
         Str_Append(str, " + ");
-        B_AppendConditionToString(&b->conds[i], str);
+        B_AppendConditionToString(&ib->conds[i], str);
     }
 }

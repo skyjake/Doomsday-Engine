@@ -432,8 +432,8 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, BindContext *cont
         {
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
-            dbinding_t *binds = &context->getControlBinding(cond->id)->deviceBinds[localNum];
-            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context, false /*no triggered*/);
+            ImpulseBinding *binds = &context->getControlBindGroup(cond->id)->binds[localNum];
+            B_EvaluateImpulseBindingList(localNum, binds, &pos, &relative, context, false /*no triggered*/);
             if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
                (cond->state == EBTOG_UP && fabs(pos) < .5))
             {
@@ -477,7 +477,7 @@ dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b)
             a->flags.multiplayer == b->flags.multiplayer);
 }
 
-void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str)
+void B_AppendControlDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str)
 {
     if(type != E_SYMBOLIC)
     {
@@ -576,7 +576,7 @@ void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str)
     }
     else
     {
-        B_AppendDeviceDescToString(inputSys().device(cond->device),
+        B_AppendControlDescToString(inputSys().device(cond->device),
                                    (  cond->type == SCT_TOGGLE_STATE? E_TOGGLE
                                     : cond->type == SCT_AXIS_BEYOND ? E_AXIS
                                     : E_ANGLE),
@@ -607,7 +607,7 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
 {
     DENG2_ASSERT(ev);
 
-    B_AppendDeviceDescToString(inputSys().device(ev->device), ev->type,
+    B_AppendControlDescToString(inputSys().device(ev->device), ev->type,
                                (  ev->type == E_TOGGLE  ? ev->toggle.id
                                 : ev->type == E_AXIS    ? ev->axis.id
                                 : ev->type == E_ANGLE   ? ev->angle.id

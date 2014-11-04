@@ -159,7 +159,7 @@ void B_BindGameDefaults()
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 
-dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bContext)
+ImpulseBinding *B_GetControlBindings(int localNum, int control, BindContext **bContext)
 {
     if(localNum < 0 || localNum >= DDMAXPLAYERS)
         return nullptr;
@@ -171,7 +171,7 @@ dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bConte
 
     if(bc)
     {
-        return &bc->getControlBinding(control)->deviceBinds[localNum];
+        return &bc->getControlBindGroup(control)->binds[localNum];
     }
 
     return nullptr;

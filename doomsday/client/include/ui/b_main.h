@@ -24,7 +24,7 @@
 #include "dd_input.h"
 
 class BindContext;
-struct dbinding_t;
+struct ImpulseBinding;
 
 void B_Init();
 
@@ -37,6 +37,6 @@ void B_BindDefaults();
 
 void B_BindGameDefaults();
 
-dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **context);
+ImpulseBinding *B_GetControlBindings(int localNum, int control, BindContext **context);
 
 #endif // CLIENT_INPUTSYSTEM_BINDINGS_H

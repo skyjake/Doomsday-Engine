@@ -779,7 +779,7 @@ DENG2_PIMPL(InputSystem)
             if(!bc->isActive())
                 continue;
 
-            bc->forAllCommandBindings([&_self, &bc] (cbinding_t &bind)
+            bc->forAllCommandBindings([&_self, &bc] (CommandBinding &bind)
             {
                 InputDevice &dev = _self.device(bind.device);
 
@@ -819,17 +819,17 @@ DENG2_PIMPL(InputSystem)
                 return LoopContinue;
             });
 
-            bc->forAllControlBindings([&_self, &bc] (controlbinding_t &conBin)
+            bc->forAllControlBindGroups([&_self, &bc] (controlbindgroup_t &conBin)
             {
                 // Associate all the device bindings.
                 for(int i = 0; i < DDMAXPLAYERS; ++i)
-                for(dbinding_t *bind = conBin.deviceBinds[i].next; bind != &conBin.deviceBinds[i]; bind = bind->next)
+                for(ImpulseBinding *bind = conBin.binds[i].next; bind != &conBin.binds[i]; bind = bind->next)
                 {
                     InputDevice &dev = _self.device(bind->device);
 
                     switch(bind->type)
                     {
-                    case CBD_TOGGLE: {
+                    case IBD_TOGGLE: {
                         InputDeviceControl &ctrl = dev.button(bind->id);
                         if(!ctrl.hasBindContext())
                         {
@@ -837,7 +837,7 @@ DENG2_PIMPL(InputSystem)
                         }
                         break; }
 
-                    case CBD_AXIS: {
+                    case IBD_AXIS: {
                         InputDeviceControl &ctrl = dev.axis(bind->id);
                         if(!ctrl.hasBindContext())
                         {
@@ -845,7 +845,7 @@ DENG2_PIMPL(InputSystem)
                         }
                         break; }
 
-                    case CBD_ANGLE: {
+                    case IBD_ANGLE: {
                         InputDeviceControl &ctrl = dev.hat(bind->id);
                         if(!ctrl.hasBindContext())
                         {
@@ -897,8 +897,8 @@ DENG2_PIMPL(InputSystem)
             }
         }
 
-        // Now that we know what are the updated context associations, let's check the devices
-        // and see if any of the states need to be expired.
+        // Now that we know what are the updated context associations, let's check
+        // the devices and see if any of the states need to be expired.
         for(InputDevice *device : devices)
         {
             device->forAllControls([] (InputDeviceControl &control)
@@ -923,7 +923,7 @@ DENG2_PIMPL(InputSystem)
         for(int i = 0; i < devices.count(); ++i)
         {
             InputDevice *device = devices.at(i);
-            /// @todo: Really exclude non-named devices? -ds
+            /// @todo: Really exclude named devices? -ds
             //int const deviceId = i;
 
             if(bc.willAcquireAll())//|| bc.willAcquire(deviceId))
@@ -1395,7 +1395,7 @@ static char const *parseContext(char const *desc, String &context)
     return desc;
 }
 
-cbinding_t *InputSystem::bindCommand(char const *eventDesc, char const *command)
+CommandBinding *InputSystem::bindCommand(char const *eventDesc, char const *command)
 {
     DENG2_ASSERT(eventDesc && command);
     LOG_AS("InputSystem");
@@ -1419,7 +1419,7 @@ bool InputSystem::unbindCommand(char const *command)
     bool didDelete = false;
     for(BindContext *bc : d->contexts)
     {
-        while(cbinding_t *bind = bc->findCommandBinding(command))
+        while(CommandBinding *bind = bc->findCommandBinding(command))
         {
             didDelete |= bc->deleteBinding(bind->bid);
         }
@@ -1427,15 +1427,15 @@ bool InputSystem::unbindCommand(char const *command)
     return didDelete;
 }
 
-dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *deviceDesc)
+ImpulseBinding *InputSystem::bindImpulse(char const *impulseDesc, char const *ctrlDesc)
 {
-    DENG2_ASSERT(controlDesc && deviceDesc);
+    DENG2_ASSERT(impulseDesc && ctrlDesc);
     LOG_AS("InputSystem");
 
     // The control description may begin with the local player number.
     int localNum    = 0;
     AutoStr *str    = AutoStr_NewStd();
-    char const *ptr = Str_CopyDelim(str, controlDesc, '-');
+    char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
     if(!strncasecmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
         localNum = strtoul(Str_Text(str) + 5, nullptr, 10) - 1;
@@ -1446,11 +1446,11 @@ dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *device
         }
 
         // Skip past it.
-        controlDesc = ptr;
+        impulseDesc = ptr;
     }
 
     // The next part must be the control name.
-    controlDesc = Str_CopyDelim(str, controlDesc, '-');
+    impulseDesc = Str_CopyDelim(str, impulseDesc, '-');
     playercontrol_t *control = P_PlayerControlByName(Str_Text(str));
     if(!control)
     {
@@ -1466,23 +1466,23 @@ dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *device
     DENG2_ASSERT(bc);
 
     LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
-            << control->name << bc->name() << localNum << deviceDesc;
+            << control->name << bc->name() << localNum << ctrlDesc;
 
-    controlbinding_t *cbin = bc->findControlBinding(control->id);
+    controlbindgroup_t *group = bc->findControlBindGroup(control->id);
     bool justCreated = false;
-    if(!cbin)
+    if(!group)
     {
-        cbin        = bc->getControlBinding(control->id);
+        group       = bc->getControlBindGroup(control->id);
         justCreated = true;
     }
 
-    dbinding_t *bind = B_NewDeviceBinding(&cbin->deviceBinds[localNum], deviceDesc);
+    ImpulseBinding *bind = B_NewImpulseBinding(&group->binds[localNum], ctrlDesc);
     if(!bind)
     {
         // Failure in the parsing.
         if(justCreated)
         {
-            B_DestroyControlBinding(cbin);
+            B_DestroyControlBindGroup(group);
         }
         return nullptr;
     }
@@ -1515,7 +1515,7 @@ void InputSystem::writeAllBindingsTo(FILE *file)
 
     for(BindContext *bc : d->contexts)
     {
-        bc->writeToFile(file);
+        bc->writeAllBindingsTo(file);
     };
 }
 
@@ -1531,7 +1531,7 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
     int numFound = 0;
     isys.forAllContexts([&] (BindContext &context)
     {
-        context.forAllCommandBindings([&] (cbinding_t &bind)
+        context.forAllCommandBindings([&] (CommandBinding &bind)
         {
             if(strcmp(bind.command, cmd))
                 return LoopContinue;
@@ -1572,18 +1572,18 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     int numFound = 0;
     isys.forAllContexts([&] (BindContext &context)
     {
-        context.forAllControlBindings([&] (controlbinding_t &bind)
+        context.forAllControlBindGroups([&] (controlbindgroup_t &bind)
         {
             char const *name = P_PlayerControlById(bind.control)->name;
 
             if(strcmp(name, controlName))
                 return LoopContinue; // Wrong control.
 
-            for(dbinding_t *db = bind.deviceBinds[localPlayer].next; db != &bind.deviceBinds[localPlayer]; db = db->next)
+            for(ImpulseBinding *db = bind.binds[localPlayer].next; db != &bind.binds[localPlayer]; db = db->next)
             {
                 if(inverse == BFCI_BOTH ||
-                   (inverse == BFCI_ONLY_NON_INVERSE && !(db->flags & CBDF_INVERSE)) ||
-                   (inverse == BFCI_ONLY_INVERSE && (db->flags & CBDF_INVERSE)))
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(db->flags & IBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE && (db->flags & IBDF_INVERSE)))
                 {
                     // It's here!
                     if(numFound)
@@ -1592,7 +1592,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     }
                     numFound++;
 
-                    DeviceBinding_ToString(db, str);
+                    ImpulseBinding_ToString(db, str);
                     Str_Appendf(result, "%i@%s:%s", db->bid, context.name().toUtf8().constData(), Str_Text(str));
                 }
             }
@@ -1645,7 +1645,7 @@ D_CMD(ReleaseMouse)
 D_CMD(BindCommand)
 {
     DENG2_UNUSED2(src, argc);
-    if(cbinding_t *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
+    if(CommandBinding *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
     {
         LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
         return true;
@@ -1653,10 +1653,10 @@ D_CMD(BindCommand)
     return false;
 }
 
-D_CMD(BindControl)
+D_CMD(BindImpulse)
 {
     DENG2_UNUSED2(src, argc);
-    if(dbinding_t *bind = ClientApp::inputSystem().bindControl(argv[1], argv[2]))
+    if(ImpulseBinding *bind = ClientApp::inputSystem().bindImpulse(argv[2], argv[1]))
     {
         LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
         return true;
@@ -1664,7 +1664,7 @@ D_CMD(BindControl)
     return false;
 }
 
-D_CMD(ListBindingContexts)
+D_CMD(ListContexts)
 {
     DENG2_UNUSED3(src, argc, argv);
     InputSystem &isys = ClientApp::inputSystem();
@@ -1683,7 +1683,7 @@ D_CMD(ListBindingContexts)
 }
 
 /*
-D_CMD(ClearBindingContexts)
+D_CMD(ClearContexts)
 {
     ClientApp::inputSystem().clearAllContexts();
     return true;
@@ -1720,7 +1720,7 @@ D_CMD(ClearBindings)
     return true;
 }
 
-D_CMD(DeleteBindingById)
+D_CMD(RemoveBinding)
 {
     DENG2_UNUSED2(src, argc);
 
@@ -1747,7 +1747,7 @@ D_CMD(DefaultBindings)
     return true;
 }
 
-D_CMD(ActivateBindingContext)
+D_CMD(ActivateContext)
 {
     DENG2_UNUSED2(src, argc);
     InputSystem &isys = ClientApp::inputSystem();
@@ -1777,23 +1777,23 @@ void InputSystem::consoleRegister() // static
 {
 #define PROTECTED_FLAGS     (CMDF_NO_DEDICATED | CMDF_DED | CMDF_CLIENT)
 
-    // Cvars
+    // Variables:
     C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
     C_VAR_BYTE("input-sharp",                &useSharpInputEvents, 0, 0, 1);
 
-    // Ccmds
+    // Commands:
+    C_CMD_FLAGS("activatebcontext",     "s",        ActivateContext,    PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindevent",            "ss",       BindCommand,        PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindcontrol",          "ss",       BindImpulse,        PROTECTED_FLAGS);
+    //C_CMD_FLAGS("clearbcontexts",       "",         ClearContexts,      PROTECTED_FLAGS);
+    C_CMD_FLAGS("clearbindings",        "",         ClearBindings,      PROTECTED_FLAGS);
+    C_CMD_FLAGS("deactivatebcontext",   "s",        ActivateContext,    PROTECTED_FLAGS);
+    C_CMD_FLAGS("defaultbindings",      "",         DefaultBindings,    PROTECTED_FLAGS);
+    C_CMD_FLAGS("delbind",              "i",        RemoveBinding,      PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbcontexts",        nullptr,    ListContexts,       PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,       PROTECTED_FLAGS);
     C_CMD      ("listinputdevices",     "",         ListAllDevices);
     C_CMD      ("releasemouse",         "",         ReleaseMouse);
-    C_CMD_FLAGS("activatebcontext",     "s",        ActivateBindingContext, PROTECTED_FLAGS);
-    C_CMD_FLAGS("bindevent",            "ss",       BindCommand,            PROTECTED_FLAGS);
-    C_CMD_FLAGS("bindcontrol",          "ss",       BindControl,            PROTECTED_FLAGS);
-    C_CMD_FLAGS("clearbindings",        "",         ClearBindings,          PROTECTED_FLAGS);
-    //C_CMD_FLAGS("clearbcontexts",       "",         ClearBindingContexts,   PROTECTED_FLAGS);
-    C_CMD_FLAGS("deactivatebcontext",   "s",        ActivateBindingContext, PROTECTED_FLAGS);
-    C_CMD_FLAGS("listbcontexts",        nullptr,    ListBindingContexts,    PROTECTED_FLAGS);
-    C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,           PROTECTED_FLAGS);
-    C_CMD_FLAGS("defaultbindings",      "",         DefaultBindings,        PROTECTED_FLAGS);
-    C_CMD_FLAGS("delbind",              "i",        DeleteBindingById,      PROTECTED_FLAGS);
     //C_CMD_FLAGS("setaxis",            "s",        AxisPrintConfig,  CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "sss",      AxisChangeValue,  CMDF_NO_DEDICATED);

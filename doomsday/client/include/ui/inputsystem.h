@@ -30,8 +30,8 @@
 
 class BindContext;
 class InputDevice;
-struct cbinding_t;
-struct dbinding_t;
+struct CommandBinding;
+struct ImpulseBinding;
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -133,17 +133,18 @@ public: // Binding (context) management --------------------------------------
      *
      * @return  Resultant command binding.
      */
-    cbinding_t *bindCommand(char const *eventDesc, char const *command);
+    CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
     bool unbindCommand(char const *command);
 
     /**
-     * Try to make a new (player) control binding.
+     * Try to make a new (player) impulse binding.
      *
-     * @param controlDesc  ?
-     * @param deviceDesc   ?
+     * @param ctrlDesc     Textual descriptor for the input device control event.
+     * @param impulseDesc  Player impulse which the binding will execute when
+     *                     triggered, if a binding is created.
      */
-    dbinding_t *bindControl(char const *controlDesc, char const *deviceDesc);
+    ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
 
     /**
      * Try to remove the one unique binding associated with @a id.

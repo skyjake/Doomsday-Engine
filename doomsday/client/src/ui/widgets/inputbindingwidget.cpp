@@ -101,7 +101,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
         {
             if(!inputSys().hasContext(bcName)) continue;
 
-            if(cbinding_t const *cb = inputSys().context(bcName).findCommandBinding(command.toLatin1(), device))
+            if(CommandBinding const *cb = inputSys().context(bcName).findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 AutoStr *str = AutoStr_New();

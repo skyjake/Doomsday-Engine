@@ -88,7 +88,7 @@ dd_bool B_CheckCondition(statecondition_t *cond, int localNum, BindContext *cont
 
 dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
 
-void B_AppendDeviceDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str);
+void B_AppendControlDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str);
 
 void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str);
 
