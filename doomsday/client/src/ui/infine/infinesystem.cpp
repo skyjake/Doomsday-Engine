@@ -26,6 +26,9 @@
 #include "de_base.h"
 #include "ui/infine/infinesystem.h"
 
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
 #include "ui/b_context.h"
 #include "ui/infine/finale.h"
 #include "ui/infine/finaleinterpreter.h"
@@ -146,7 +149,7 @@ void InFineSystem::initBindingContext() // static
     if(inited) return;
 
     inited = true;
-    BindContext &context = B_Context("finale");
+    BindContext &context = ClientApp::inputSystem().context("finale");
     context.setDDFallbackResponder(de::function_cast<int (*)(ddevent_t const *)>(gx.FinaleResponder));
     context.activate(); // always on
 }
@@ -156,7 +159,7 @@ void InFineSystem::deinitBindingContext() // static
     // Not yet initialized?
     if(!inited) return;
 
-    BindContext &context = B_Context("finale");
+    BindContext &context = ClientApp::inputSystem().context("finale");
     context.setDDFallbackResponder(nullptr);
     context.deactivate();
     inited = false;

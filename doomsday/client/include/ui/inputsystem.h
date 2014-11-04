@@ -22,10 +22,13 @@
 
 #include <functional>
 #include <de/types.h>
+#include <de/Action>
+#include <de/Error>
 #include <de/System>
 #include "dd_input.h" // ddevent_t
 #include "SettingsRegister"
 
+class BindContext;
 class InputDevice;
 
 /**
@@ -68,7 +71,7 @@ public:
      */
     bool shiftDown() const;
 
-public: /// Event processing --------------------------------------------------
+public: // Event processing --------------------------------------------------
     /**
      * Clear the input event queue.
      */
@@ -107,6 +110,75 @@ public:
      * @param ddEvent  ddevent_t instance.
      */
     static void convertEvent(de::Event const &event, ddevent_t *ddEvent);
+
+public: // Bindings ----------------------------------------------------------
+
+    /// Required/referenced binding context is missing. @ingroup errors
+    DENG2_ERROR(MissingContextError);
+
+    /**
+     * Destroy all binding contexts and the bindings within the contexts.
+     */
+    void clearAllContexts();
+
+    /**
+     * Returns the total number of binding contexts in the system.
+     */
+    int contextCount() const;
+
+    /**
+     * Returns @c true if the symbolic @a name references a known context.
+     */
+    bool hasContext(de::String const &name) const;
+
+    /**
+     * Lookup a binding context by symbolic @a name.
+     */
+    BindContext &context(de::String const &name) const;
+    BindContext *contextPtr(de::String const &name) const;
+
+    /**
+     * Lookup a binding context by stack @a position.
+     */
+    BindContext &contextAt(int position) const;
+
+    /**
+     * Returns the stack position of the specified binding @a context.
+     */
+    int contextPositionOf(BindContext *context) const;
+
+    /**
+     * Creates a new binding context. The new context has the highest priority
+     * of all existing contexts, and is inactive.
+     */
+    BindContext *newContext(de::String const &name);
+
+    /**
+     * Finds the action bound to a given event, iterating through all enabled
+     * binding contexts.
+     *
+     * @param event  Event to match against.
+     *
+     * @return Action instance (caller gets ownership), or @c nullptr if not found.
+     */
+    de::Action *actionForEvent(ddevent_t const &event) const;
+
+    /**
+     * Iterate through all the BindContexts from highest to lowest priority.
+     */
+    de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
+
+    /**
+     * Marks all device states with the highest-priority binding context to which they have
+     * a connection via device bindings. This ensures that if a high-priority context is
+     * using a particular device state, lower-priority contexts will not be using the same
+     * state for their own controls.
+     *
+     * Called automatically whenever a context is activated or deactivated.
+     *
+     * @todo make private.
+     */
+    void updateAllDeviceStateAssociations();
 
 public:
     /**

@@ -230,7 +230,7 @@ void B_DestroyDeviceBinding(dbinding_t *cb)
 }
 
 void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
-    float *relativeOffset, BindContext *controlClass, dd_bool allowTriggered)
+    float *relativeOffset, BindContext *context, dd_bool allowTriggered)
 {
     DENG2_ASSERT(pos && relativeOffset);
 
@@ -249,7 +249,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         dd_bool skip = false;
         for(int i = 0; i < cb->numConds; ++i)
         {
-            if(!B_CheckCondition(&cb->conds[i], localNum, controlClass))
+            if(!B_CheckCondition(&cb->conds[i], localNum, context))
             {
                 skip = true;
                 break;
@@ -270,8 +270,8 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         case CBD_TOGGLE: {
             InputDeviceButtonControl *button = &dev->button(cb->id);
 
-            if(controlClass && button->bindContext() != controlClass)
-                continue; // Shadowed by a more important active class.
+            if(context && button->bindContext() != context)
+                continue; // Shadowed by a more important active context.
 
             // Expired?
             if(button->bindContextAssociation() & InputDeviceControl::Expired)
@@ -288,7 +288,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         case CBD_AXIS: {
             InputDeviceAxisControl *axis = &dev->axis(cb->id);
 
-            if(controlClass && axis->bindContext() != controlClass)
+            if(context && axis->bindContext() != context)
             {
                 if(!axis->bindContext()->findDeviceBinding(cb->device, CBD_AXIS, cb->id))
                 {
@@ -320,7 +320,7 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t *listRoot, float *pos,
         case CBD_ANGLE: {
             InputDeviceHatControl *hat = &dev->hat(cb->id);
 
-            if(controlClass && hat->bindContext() != controlClass)
+            if(context && hat->bindContext() != context)
                 continue; // Shadowed by a more important active class.
 
             if(hat->bindContextAssociation() & InputDeviceControl::Expired)

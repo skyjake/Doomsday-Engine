@@ -23,6 +23,21 @@
 
 using namespace de;
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
+/**
+ * @todo: Should not have authority to manipulate bindings.
+ *
+ * Logically an "event" in this context is @em not an object. It is instead a description
+ * of a situation that has occured, which, should therefore be represented as a Record and
+ * and so an "event" (object) cannot be "bound" to anything.
+ *
+ * The event descriptors can be managed far more optimally (perhaps within a Register) which
+ * synthesizes an event Record on request. -ds
+ */
 DENG2_PIMPL(WidgetActions)
 {
     Instance(Public *i) : Base(i)
@@ -51,9 +66,9 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
     }
 
     // Check a specific binding context for an action (regardless of its activation status).
-    if(B_HasContext(context))
+    if(inputSys().hasContext(context))
     {
-        AutoRef<Action> act(B_Context(context).actionForEvent(&ddev, false));
+        AutoRef<Action> act(inputSys().context(context).actionForEvent(&ddev, false));
         if(act.get())
         {
             act->trigger();
@@ -66,7 +81,8 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
 
 bool WidgetActions::tryEvent(ddevent_t const *ev)
 {
-    AutoRef<Action> act(B_ActionForEvent(ev));
+    DENG2_ASSERT(ev);
+    AutoRef<Action> act(inputSys().actionForEvent(*ev));
     if(act.get())
     {
         act->trigger();
@@ -84,8 +100,8 @@ void WidgetActions::trackInput(Event const &event)
 
 void WidgetActions::activateContext(String const &context, bool yes)
 {
-    if(B_HasContext(context))
+    if(inputSys().hasContext(context))
     {
-        B_Context(context).activate(yes);
+        inputSys().context(context).activate(yes);
     }
 }

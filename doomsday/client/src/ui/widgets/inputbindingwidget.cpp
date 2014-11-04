@@ -33,6 +33,11 @@ using namespace de;
 #  define CONTROL_CHAR  DENG2_CHAR_CONTROL_KEY
 #endif
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
 DENG_GUI_PIMPL(InputBindingWidget)
 , DENG2_OBSERVES(ButtonWidget, Press)
 {
@@ -94,9 +99,9 @@ DENG_GUI_PIMPL(InputBindingWidget)
         // Check all the contexts associated with this widget.
         foreach(QString bcName, contexts)
         {
-            if(!B_HasContext(bcName)) continue;
+            if(!inputSys().hasContext(bcName)) continue;
 
-            if(cbinding_t const *cb = B_Context(bcName).findCommandBinding(command.toLatin1(), device))
+            if(cbinding_t const *cb = inputSys().context(bcName).findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
                 AutoStr *str = AutoStr_New();

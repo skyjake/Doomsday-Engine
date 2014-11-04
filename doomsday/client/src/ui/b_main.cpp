@@ -1,5 +1,7 @@
 /** @file b_main.cpp  Event and device state bindings system.
  *
+ * @todo Pretty much everything in this file belongs in InputSystem.
+ *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -125,11 +127,6 @@ static keyname_t const keyNames[] = {
     { 0, nullptr}
 };
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 /**
  * Binding context fallback for the "global" context.
  *
@@ -162,35 +159,37 @@ static int globalContextFallback(ddevent_t const *ddev)
 /// @note Called once on init.
 void B_Init()
 {
+    InputSystem &isys = ClientApp::inputSystem();
+
     // In dedicated mode we have fewer binding contexts available.
 
     // The contexts are defined in reverse order, with the context of lowest
     // priority defined first.
 
-    B_NewContext(DEFAULT_BINDING_CONTEXT_NAME);
+    isys.newContext(DEFAULT_BINDING_CONTEXT_NAME);
 
     // Game contexts.
     /// @todo Game binding context setup obviously belong to the game plugin, so shouldn't be here.
-    B_NewContext("map");
-    B_NewContext("map-freepan");
-    B_NewContext("finale"); // uses a fallback responder to handle script events
-    B_NewContext("menu")->acquireAll();
-    B_NewContext("gameui");
-    B_NewContext("shortcut");
-    B_NewContext("chat")->acquireKeyboard();
-    B_NewContext("message")->acquireAll();
+    isys.newContext("map");
+    isys.newContext("map-freepan");
+    isys.newContext("finale"); // uses a fallback responder to handle script events
+    isys.newContext("menu")->acquireAll();
+    isys.newContext("gameui");
+    isys.newContext("shortcut");
+    isys.newContext("chat")->acquireKeyboard();
+    isys.newContext("message")->acquireAll();
 
     // Binding context for the console.
-    BindContext *bc = B_NewContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->protect();    // Only we can (de)activate.
+    BindContext *bc = isys.newContext(CONSOLE_BINDING_CONTEXT_NAME);
+    bc->protect();         // Only we can (de)activate.
     bc->acquireKeyboard(); // Console takes over all keyboard events.
 
     // UI doesn't let anything past it.
-    B_NewContext(UI_BINDING_CONTEXT_NAME)->acquireAll();
+    isys.newContext(UI_BINDING_CONTEXT_NAME)->acquireAll();
 
     // Top-level context that is always active and overrides every other context.
     // To be used only for system-level functionality.
-    bc = B_NewContext(GLOBAL_BINDING_CONTEXT_NAME);
+    bc = isys.newContext(GLOBAL_BINDING_CONTEXT_NAME);
     bc->protect();
     bc->setDDFallbackResponder(globalContextFallback);
     bc->activate();
@@ -229,21 +228,23 @@ void B_Init()
 
 void B_InitialContextActivations()
 {
+    InputSystem &isys = ClientApp::inputSystem();
+
     // Deactivate all contexts.
-    B_ForAllContexts([] (BindContext &bc)
+    isys.forAllContexts([] (BindContext &bc)
     {
         bc.deactivate();
         return LoopContinue;
     });
 
     // These are the contexts active by default.
-    B_Context(GLOBAL_BINDING_CONTEXT_NAME).activate();
-    B_Context(DEFAULT_BINDING_CONTEXT_NAME).activate();
+    isys.context(GLOBAL_BINDING_CONTEXT_NAME).activate();
+    isys.context(DEFAULT_BINDING_CONTEXT_NAME).activate();
 
     /*
     if(Con_IsActive())
     {
-        B_Context(CONSOLE_BINDING_CONTEXT_NAME).activate();
+        isys.context(CONSOLE_BINDING_CONTEXT_NAME).activate();
     }
     */
 }
@@ -269,7 +270,7 @@ void B_BindGameDefaults()
 
 void B_Shutdown()
 {
-    B_DestroyAllContexts();
+    ClientApp::inputSystem().clearAllContexts();
 }
 
 int B_NewIdentifier()
@@ -295,7 +296,7 @@ char const *B_ParseContext(char const *desc, BindContext **bc)
 
     AutoStr *str = AutoStr_NewStd();
     desc = Str_CopyDelim(str, desc, ':');
-    *bc = B_ContextPtr(Str_Text(str));
+    *bc = ClientApp::inputSystem().contextPtr(Str_Text(str));
 
     return desc;
 }
@@ -309,7 +310,7 @@ cbinding_t *B_BindCommand(char const *eventDesc, char const *command)
     eventDesc = B_ParseContext(eventDesc, &bc);
     if(!bc)
     {
-        bc = B_ContextPtr(DEFAULT_BINDING_CONTEXT_NAME);
+        bc = ClientApp::inputSystem().contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
 
     return bc->bindCommand(eventDesc, command);
@@ -319,6 +320,7 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
 {
     DENG2_ASSERT(controlDesc && device);
     LOG_AS("B_BindControl");
+    InputSystem &isys = ClientApp::inputSystem();
 
     // The control description may begin with the local player number.
     int localNum    = 0;
@@ -346,10 +348,10 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
         return nullptr;
     }
 
-    BindContext *bc = B_ContextPtr(control->bindContextName);
+    BindContext *bc = isys.contextPtr(control->bindContextName);
     if(!bc)
     {
-        bc = B_ContextPtr(DEFAULT_BINDING_CONTEXT_NAME);
+        bc = isys.contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
     DENG2_ASSERT(bc);
 
@@ -379,7 +381,7 @@ dbinding_t *B_BindControl(char const *controlDesc, char const *device)
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
     bc->deleteMatching(nullptr, devBin);
-    B_UpdateAllDeviceStateAssociations();
+    isys.updateAllDeviceStateAssociations();
 
     return devBin;
 }
@@ -390,7 +392,7 @@ dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bConte
         return nullptr;
 
     playercontrol_t *pc = P_PlayerControlById(control);
-    BindContext *bc     = B_ContextPtr(pc->bindContextName);
+    BindContext *bc     = ClientApp::inputSystem().contextPtr(pc->bindContextName);
 
     if(bContext) *bContext = bc;
 
@@ -404,7 +406,7 @@ dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bConte
 
 dd_bool B_Delete(int bid)
 {
-    B_ForAllContexts([&bid] (BindContext &bc)
+    ClientApp::inputSystem().forAllContexts([&bid] (BindContext &bc)
     {
         return bc.deleteBinding(bid);
     });
@@ -414,6 +416,7 @@ dd_bool B_Delete(int bid)
 dd_bool B_Responder(ddevent_t *ev)
 {
     DENG2_ASSERT(ev);
+    InputSystem &isys = ClientApp::inputSystem();
 
     if(symbolicEchoMode &&
        ev->type != E_SYMBOLIC && ev->type != E_FOCUS)
@@ -422,7 +425,7 @@ dd_bool B_Responder(ddevent_t *ev)
         // Axis events need a bit of filtering.
         if(ev->type == E_AXIS)
         {
-            float pos = inputSys().device(ev->device).axis(ev->axis.id).translateRealPosition(ev->axis.pos);
+            float pos = isys.device(ev->device).axis(ev->axis.id).translateRealPosition(ev->axis.pos);
             if((ev->axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
                (ev->axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
@@ -442,7 +445,7 @@ dd_bool B_Responder(ddevent_t *ev)
         echo.symbolic.name = Str_Text(&name);
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
-        inputSys().postEvent(&echo);
+        isys.postEvent(&echo);
         Str_Free(&name);
 
         return true;
@@ -498,7 +501,7 @@ void B_WriteToFile(FILE *file)
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
 
-    B_ForAllContexts([&file] (BindContext &bc)
+    ClientApp::inputSystem().forAllContexts([&file] (BindContext &bc)
     {
         bc.writeToFile(file);
         return LoopContinue;
@@ -508,7 +511,7 @@ void B_WriteToFile(FILE *file)
 bool B_UnbindCommand(char const *command)
 {
     bool didDelete = false;
-    B_ForAllContexts([&command, &didDelete] (BindContext &bc)
+    ClientApp::inputSystem().forAllContexts([&command, &didDelete] (BindContext &bc)
     {
         while(cbinding_t *ev = bc.findCommandBinding(command, NUM_INPUT_DEVICES))
         {
@@ -552,9 +555,11 @@ D_CMD(BindControl)
 D_CMD(ListBindingContexts)
 {
     DENG2_UNUSED3(src, argc, argv);
-    LOG_INPUT_MSG("%i binding contexts defined:") << B_ContextCount();
+    InputSystem &isys = ClientApp::inputSystem();
+
+    LOG_INPUT_MSG("%i binding contexts defined:") << isys.contextCount();
     int idx = 0;
-    B_ForAllContexts([&idx] (BindContext &bc)
+    isys.forAllContexts([&idx] (BindContext &bc)
     {
         LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
                 << (idx++) << (bc.isActive()? _E(b) : _E(w))
@@ -568,8 +573,10 @@ D_CMD(ListBindingContexts)
 D_CMD(ListBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
-    LOG_INPUT_MSG("%i binding contexts defined") << B_ContextCount();
-    B_ForAllContexts([] (BindContext &bc)
+    InputSystem &isys = ClientApp::inputSystem();
+
+    LOG_INPUT_MSG("%i binding contexts defined") << isys.contextCount();
+    isys.forAllContexts([] (BindContext &bc)
     {
         bc.printAllBindings();
         return LoopContinue;
@@ -589,7 +596,7 @@ D_CMD(ClearBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    B_ForAllContexts([] (BindContext &bc)
+    ClientApp::inputSystem().forAllContexts([] (BindContext &bc)
     {
         LOG_INPUT_VERBOSE("Clearing binding context '%s'") << bc.name();
         bc.clearAllBindings();
@@ -631,17 +638,18 @@ D_CMD(DefaultBindings)
 D_CMD(ActivateBindingContext)
 {
     DENG2_UNUSED2(src, argc);
+    InputSystem &isys = ClientApp::inputSystem();
 
     bool const doActivate = !stricmp(argv[0], "activatebcontext");
     String const context  = argv[1];
 
-    if(!B_HasContext(context))
+    if(!isys.hasContext(context))
     {
         LOG_INPUT_WARNING("Binding context '%s' does not exist") << context;
         return false;
     }
 
-    BindContext &bc = B_Context(context);
+    BindContext &bc = isys.context(context);
     if(bc.isProtected())
     {
         LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")

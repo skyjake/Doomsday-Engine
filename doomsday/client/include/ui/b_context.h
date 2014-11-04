@@ -21,6 +21,7 @@
 #define CLIENT_INPUTSYSTEM_BINDCONTEXT_H
 
 #include <functional>
+#include <de/Action>
 #include "dd_share.h"
 #include "b_command.h"
 #include "b_device.h"
@@ -35,8 +36,17 @@ struct controlbinding_t
     dbinding_t deviceBinds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
 };
 
+/// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);
 typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
+
+void B_DestroyControlBinding(controlbinding_t *conBin);
+
+void B_InitControlBindingList(controlbinding_t *listRoot);
+
+void B_DestroyControlBindingList(controlbinding_t *listRoot);
+
+// ------------------------------------------------------------------------------
 
 /**
  * Contextualized grouping of input system and windowing event bindings.
@@ -46,12 +56,15 @@ typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 class BindContext
 {
 public:
+    /**
+     * @param name  Symbolic name for the context.
+     */
     explicit BindContext(de::String const &name);
     ~BindContext();
 
     /**
      * Returns @c true if the context is @em active, meaning, bindings in the context are
-     * in effect and their associated effect(s) will be executed if triggered.
+     * in effect and their associated action(s) will be executed if triggered.
      *
      * @see activate(), deactivate()
      */
@@ -66,7 +79,7 @@ public:
     bool isProtected() const;
 
     /**
-     * Change the @em protected state of th context.
+     * Change the @em protected state of the context.
      *
      * @param yes  @c true= protected.
      * @see isProtected()
@@ -83,7 +96,7 @@ public:
      * (De)activate the context, causing re-evaluation of the binding context stack.
      * The effective bindings for events may change as a result of calling this.
      *
-     * @param yes  @c true activate if inactive, and vice versa.
+     * @param yes  @c true= activate if inactive, and vice versa.
      */
     void activate(bool yes = true);
     inline void deactivate(bool yes = true) { activate(!yes); }
@@ -167,63 +180,5 @@ private:
     DENG2_PRIVATE(d)
 };
 
-// ------------------------------------------------------------------------------
-
-void B_DestroyControlBinding(controlbinding_t *conBin);
-
-void B_InitControlBindingList(controlbinding_t *listRoot);
-
-void B_DestroyControlBindingList(controlbinding_t *listRoot);
-
-// ------------------------------------------------------------------------------
-
-/**
- * Destroy all binding contexts and the bindings within the contexts.
- * To be called at shutdown time.
- */
-void B_DestroyAllContexts();
-
-int B_ContextCount();
-
-bool B_HasContext(de::String const &name);
-
-BindContext &B_Context(de::String const &name);
-
-BindContext *B_ContextPtr(de::String const &name);
-
-BindContext &B_ContextAt(int position);
-
-int B_ContextPositionOf(BindContext *bc);
-
-/**
- * Creates a new binding context. The new context has the highest priority
- * of all existing contexts, and is inactive.
- */
-BindContext *B_NewContext(de::String const &name);
-
-/**
- * Finds the action bound to a given event, iterating through all enabled
- * binding contexts.
- *
- * @param event  Event to match against.
- *
- * @return Action instance (caller gets ownership), or @c nullptr if not found.
- */
-de::Action *B_ActionForEvent(ddevent_t const *event);
-
-/**
- * Marks all device states with the highest-priority binding context to which they have
- * a connection via device bindings. This ensures that if a high-priority context is
- * using a particular device state, lower-priority contexts will not be using the same
- * state for their own controls.
- *
- * Called automatically whenever a context is activated or deactivated.
- */
-void B_UpdateAllDeviceStateAssociations();
-
-/**
- * Iterate through all the BindContexts from highest to lowest priority.
- */
-de::LoopResult B_ForAllContexts(std::function<de::LoopResult (BindContext &)> func);
 
 #endif // CLIENT_INPUTSYSTEM_BINDCONTEXT_H

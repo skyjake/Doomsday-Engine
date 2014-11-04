@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#define DENG_NO_API_MACROS_BINDING
+
 #include "de_platform.h" // strdup macro
 #include "ui/inputsystem.h"
 
@@ -37,6 +39,8 @@
 
 #include "ui/dd_input.h"
 #include "ui/b_main.h"
+#include "ui/b_context.h"
+#include "ui/p_control.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/inputdevice.h"
@@ -288,6 +292,9 @@ DENG2_PIMPL(InputSystem)
     typedef QList<InputDevice *> Devices;
     Devices devices;
 
+    typedef QList<BindContext *> BindContexts;
+    BindContexts contexts;  ///< Ordered from highest to lowest priority.
+
     Instance(Public *i) : Base(i)
     {
         // Initialize settings.
@@ -311,6 +318,7 @@ DENG2_PIMPL(InputSystem)
 
     ~Instance()
     {
+        self.clearAllContexts();
         clearAllDevices();
         I_ShutdownInterfaces();
     }
@@ -1008,12 +1016,360 @@ bool InputSystem::shiftDown() const
 {
     return ::shiftDown;
 }
+void InputSystem::clearAllContexts()
+{
+    if(d->contexts.isEmpty()) return;
+
+    qDeleteAll(d->contexts);
+    d->contexts.clear();
+}
+
+int InputSystem::contextCount() const
+{
+    return d->contexts.count();
+}
+
+bool InputSystem::hasContext(String const &name) const
+{
+    return contextPtr(name) != nullptr;
+}
+
+BindContext &InputSystem::context(String const &name) const
+{
+    if(BindContext *bc = contextPtr(name))
+    {
+        return *bc;
+    }
+    /// @throw MissingContextError  Specified name is unknown.
+    throw MissingContextError("InputSystem::context", "Unknown binding context name:" + name);
+}
+
+/// @todo: Optimize O(n) search...
+BindContext *InputSystem::contextPtr(String const &name) const
+{
+    for(BindContext const *bc : d->contexts)
+    {
+        if(!bc->name().compareWithoutCase(name))
+        {
+            return const_cast<BindContext *>(bc);
+        }
+    }
+    return nullptr;
+}
+
+BindContext &InputSystem::contextAt(int position) const
+{
+    if(position >= 0 && position < d->contexts.count())
+    {
+        return *d->contexts.at(position);
+    }
+    /// @throw MissingContextError  Specified position is invalid.
+    throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::number(position));
+}
+
+int InputSystem::contextPositionOf(BindContext *bc) const
+{
+    return (bc? d->contexts.indexOf(bc) : -1);
+}
+
+BindContext *InputSystem::newContext(String const &name)
+{
+    BindContext *bc = new BindContext(name);
+    d->contexts.prepend(bc);
+    return bc;
+}
+
+Action *InputSystem::actionForEvent(ddevent_t const &event) const
+{
+    event_t ev;
+    bool validGameEvent = InputSystem::convertEvent(&event, &ev);
+
+    for(BindContext *bc : d->contexts)
+    {
+        if(!bc->isActive()) continue;
+
+        if(Action *act = bc->actionForEvent(&event))
+        {
+            return act;
+        }
+
+        // Try the fallback responders.
+        if(bc->tryFallbackResponders(event, ev, validGameEvent))
+        {
+            return nullptr; // fallback responder executed something.
+        }
+    }
+
+    return nullptr; // Nobody had a binding for this event.
+}
+
+/// @todo: Most of this logic belongs in BindContext.
+void InputSystem::updateAllDeviceStateAssociations()
+{
+    // Clear all existing associations.
+    for(InputDevice *device : d->devices)
+    {
+        device->forAllControls([] (InputDeviceControl &control)
+        {
+            control.clearBindContextAssociation();
+            return LoopContinue;
+        });
+    }
+
+    // Mark all bindings in all contexts.
+    for(BindContext *bc : d->contexts)
+    {
+        // Skip inactive contexts.
+        if(!bc->isActive())
+            continue;
+
+        bc->forAllCommandBindings([this, &bc] (cbinding_t &cb)
+        {
+            InputDevice &dev = device(cb.device);
+
+            switch(cb.type)
+            {
+            case E_TOGGLE: {
+                InputDeviceControl &ctrl = dev.button(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_AXIS: {
+                InputDeviceControl &ctrl = dev.axis(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_ANGLE: {
+                InputDeviceControl &ctrl = dev.hat(cb.id);
+                if(!ctrl.hasBindContext())
+                {
+                    ctrl.setBindContext(bc);
+                }
+                break; }
+
+            case E_SYMBOLIC:
+                break;
+
+            default:
+                DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid eb.type");
+                break;
+            }
+            return LoopContinue;
+        });
+
+        bc->forAllControlBindings([this, &bc] (controlbinding_t &cb)
+        {
+            // Associate all the device bindings.
+            for(int k = 0; k < DDMAXPLAYERS; ++k)
+            for(dbinding_t *db = cb.deviceBinds[k].next; db != &cb.deviceBinds[k]; db = db->next)
+            {
+                InputDevice &dev = device(db->device);
+
+                switch(db->type)
+                {
+                case CBD_TOGGLE: {
+                    InputDeviceControl &ctrl = dev.button(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case CBD_AXIS: {
+                    InputDeviceControl &ctrl = dev.axis(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case CBD_ANGLE: {
+                    InputDeviceControl &ctrl = dev.hat(db->id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                default:
+                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid db->type");
+                    break;
+                }
+            }
+            return LoopContinue;
+        });
+
+        // If the context have made a broad device acquisition, mark all relevant states.
+        if(bc->willAcquireKeyboard())
+        {
+            InputDevice &keyboard = device(IDEV_KEYBOARD);
+            if(keyboard.isActive())
+            {
+                keyboard.forAllControls([&bc] (InputDeviceControl &control)
+                {
+                    if(!control.hasBindContext())
+                    {
+                        control.setBindContext(bc);
+                    }
+                    return LoopContinue;
+                });
+            }
+        }
+
+        if(bc->willAcquireAll())
+        {
+            for(InputDevice *device : d->devices)
+            {
+                if(device->isActive())
+                {
+                    device->forAllControls([&bc] (InputDeviceControl &control)
+                    {
+                        if(!control.hasBindContext())
+                        {
+                            control.setBindContext(bc);
+                        }
+                        return LoopContinue;
+                    });
+                }
+            };
+        }
+    }
+
+    // Now that we know what are the updated context associations, let's check the devices
+    // and see if any of the states need to be expired.
+    for(InputDevice *device : d->devices)
+    {
+        device->forAllControls([] (InputDeviceControl &control)
+        {
+            if(!control.inDefaultState())
+            {
+                control.expireBindContextAssociationIfChanged();
+            }
+            return LoopContinue;
+        });
+    };
+}
+
+LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)> func) const
+{
+    for(BindContext *bc : d->contexts)
+    {
+        if(auto result = func(*bc)) return result;
+    }
+    return LoopContinue;
+}
+
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
+/// @todo: Don't format a string - just collect pointers.
+int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
+{
+    DENG2_ASSERT(cmd && buf);
+
+    AutoStr *result = AutoStr_NewStd();
+    AutoStr *str    = AutoStr_NewStd();
+
+    int numFound = 0;
+    inputSys().forAllContexts([&] (BindContext &context)
+    {
+        context.forAllCommandBindings([&] (cbinding_t &bind)
+        {
+            if(strcmp(bind.command, cmd))
+                return LoopContinue;
+
+            // It's here!
+            if(numFound)
+            {
+                Str_Append(result, " ");
+            }
+            numFound++;
+            CommandBinding_ToString(&bind, str);
+            Str_Appendf(result, "%i@%s:%s", bind.bid, context.name().toUtf8().constData(), Str_Text(str));
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+
+    // Copy the result to the return buffer.
+    std::memset(buf, 0, bufSize);
+    strncpy(buf, Str_Text(result), bufSize - 1);
+
+    return numFound;
+}
+
+/// @todo: Don't format a string - just collect pointers.
+int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
+    char *buf, size_t bufSize)
+{
+    DENG2_ASSERT(controlName && buf);
+
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
+        return 0;
+
+    AutoStr *result = AutoStr_NewStd();
+    AutoStr *str    = AutoStr_NewStd();
+
+    int numFound = 0;
+    inputSys().forAllContexts([&] (BindContext &context)
+    {
+        context.forAllControlBindings([&] (controlbinding_t &bind)
+        {
+            char const *name = P_PlayerControlById(bind.control)->name;
+
+            if(strcmp(name, controlName))
+                return LoopContinue; // Wrong control.
+
+            for(dbinding_t *db = bind.deviceBinds[localPlayer].next; db != &bind.deviceBinds[localPlayer]; db = db->next)
+            {
+                if(inverse == BFCI_BOTH ||
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(db->flags & CBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE && (db->flags & CBDF_INVERSE)))
+                {
+                    // It's here!
+                    if(numFound)
+                    {
+                        Str_Append(result, " ");
+                    }
+                    numFound++;
+
+                    DeviceBinding_ToString(db, str);
+                    Str_Appendf(result, "%i@%s:%s", db->bid, context.name().toUtf8().constData(), Str_Text(str));
+                }
+            }
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+
+    // Copy the result to the return buffer.
+    std::memset(buf, 0, bufSize);
+    strncpy(buf, Str_Text(result), bufSize - 1);
+
+    return numFound;
+}
+
+void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+{
+    if(inputSys().hasContext(name))
+    {
+        inputSys().context(name).setFallbackResponder(responderFunc);
+    }
+}
 
 D_CMD(ListAllDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
     LOG_INPUT_MSG(_E(b) "Input Devices:");
-    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
+    inputSys().forAllDevices([] (InputDevice &device)
     {
         LOG_INPUT_MSG("") << device.description();
         return LoopContinue;
@@ -1048,3 +1404,15 @@ void InputSystem::consoleRegister() // static
 
     I_ConsoleRegister();
 }
+
+// b_main.c
+DENG_EXTERN_C int DD_GetKeyCode(char const *key);
+
+DENG_DECLARE_API(B) =
+{
+    { DE_API_BINDING },
+    B_SetContextFallback,
+    B_BindingsForCommand,
+    B_BindingsForControl,
+    DD_GetKeyCode
+};
