@@ -18,7 +18,7 @@
  */
 
 #include "de_platform.h" // strdup macro
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 
 #include <cstring>
 #include <de/memory.h>
@@ -357,12 +357,12 @@ bool BindContext::deleteBinding(int bid)
     return false;
 }
 
-Action *BindContext::actionForEvent(ddevent_t const *event, bool respectHigherAssociatedContexts) const
+Action *BindContext::actionForEvent(ddevent_t const &event, bool respectHigherAssociatedContexts) const
 {
     // See if the command bindings will have it.
     for(cbinding_t *eb = d->commandBinds.next; eb != &d->commandBinds; eb = eb->next)
     {
-        if(Action *act = CommandBinding_ActionForEvent(eb, event, this, respectHigherAssociatedContexts))
+        if(Action *act = CommandBinding_ActionForEvent(eb, &event, this, respectHigherAssociatedContexts))
         {
             return act;
         }

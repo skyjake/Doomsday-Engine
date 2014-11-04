@@ -1,4 +1,4 @@
-/** @file b_context.h  Input system binding contexts.
+/** @file bindcontext.h  Input system binding context.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -165,7 +165,7 @@ public: // Triggering: ---------------------------------------------------------
      *
      * @return Action instance (caller gets ownership), or @c nullptr if not found.
      */
-    de::Action *actionForEvent(ddevent_t const *event,
+    de::Action *actionForEvent(ddevent_t const &event,
                                bool respectHigherAssociatedContexts = true) const;
 
     /**

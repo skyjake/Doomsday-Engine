@@ -31,7 +31,7 @@
 #include "dd_def.h"
 #include "clientapp.h"
 #include "ui/b_command.h"
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 #include "ui/p_control.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"

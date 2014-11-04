@@ -19,7 +19,7 @@
 #include "ui/widgets/inputbindingwidget.h"
 #include "clientapp.h"
 #include "ui/b_main.h"
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 #include <de/AuxButtonWidget>
 #include <de/charsymbols.h>
 

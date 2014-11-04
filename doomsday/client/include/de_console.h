@@ -38,7 +38,7 @@
 #  include "ui/progress.h"
 #  include "ui/widgetactions.h"
 #  include "ui/b_main.h"
-#  include "ui/b_context.h"
+#  include "ui/bindcontext.h"
 #endif
 
 #include "api_console.h"

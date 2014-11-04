@@ -19,7 +19,7 @@
 #include "WidgetActions"
 #include "clientapp.h"
 #include "ui/b_main.h"
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 
 using namespace de;
 
@@ -68,7 +68,7 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
     // Check a specific binding context for an action (regardless of its activation status).
     if(inputSys().hasContext(context))
     {
-        AutoRef<Action> act(inputSys().context(context).actionForEvent(&ddev, false));
+        AutoRef<Action> act(inputSys().context(context).actionForEvent(ddev, false));
         if(act.get())
         {
             act->trigger();

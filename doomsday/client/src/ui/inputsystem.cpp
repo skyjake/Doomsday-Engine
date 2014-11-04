@@ -39,7 +39,7 @@
 
 #include "ui/dd_input.h"
 #include "ui/b_main.h"
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 #include "ui/p_control.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
@@ -1088,7 +1088,7 @@ Action *InputSystem::actionForEvent(ddevent_t const &event) const
     {
         if(!bc->isActive()) continue;
 
-        if(Action *act = bc->actionForEvent(&event))
+        if(Action *act = bc->actionForEvent(event))
         {
             return act;
         }

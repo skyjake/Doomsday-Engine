@@ -349,10 +349,10 @@ DENG_HEADERS += \
     include/sys_system.h \
     include/tab_anorms.h \
     include/ui/b_command.h \
-    include/ui/b_context.h \
     include/ui/b_device.h \
     include/ui/b_main.h \
     include/ui/b_util.h \
+    include/ui/bindcontext.h \
     include/ui/busyvisual.h \
     include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
@@ -676,10 +676,10 @@ SOURCES += \
     src/sys_system.cpp \
     src/tab_tables.c \
     src/ui/b_command.cpp \
-    src/ui/b_context.cpp \
     src/ui/b_device.cpp \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
+    src/ui/bindcontext.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \

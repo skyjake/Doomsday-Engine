@@ -24,7 +24,7 @@
 #include "clientapp.h"
 #include "dd_main.h"
 #include "ui/b_main.h"
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"

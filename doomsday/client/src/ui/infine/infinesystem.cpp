@@ -29,7 +29,7 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
-#include "ui/b_context.h"
+#include "ui/bindcontext.h"
 #include "ui/infine/finale.h"
 #include "ui/infine/finaleinterpreter.h"
 
