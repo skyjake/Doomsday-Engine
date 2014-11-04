@@ -1427,12 +1427,12 @@ bool InputSystem::unbindCommand(char const *command)
     return didDelete;
 }
 
-ImpulseBinding *InputSystem::bindImpulse(char const *impulseDesc, char const *ctrlDesc)
+ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
 {
-    DENG2_ASSERT(impulseDesc && ctrlDesc);
+    DENG2_ASSERT(ctrlDesc && impulseDesc);
     LOG_AS("InputSystem");
 
-    // The control description may begin with the local player number.
+    // The impulse description may begin with the local player number.
     int localNum    = 0;
     AutoStr *str    = AutoStr_NewStd();
     char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
@@ -1449,30 +1449,30 @@ ImpulseBinding *InputSystem::bindImpulse(char const *impulseDesc, char const *ct
         impulseDesc = ptr;
     }
 
-    // The next part must be the control name.
+    // The next part must be the impulse name.
     impulseDesc = Str_CopyDelim(str, impulseDesc, '-');
-    playercontrol_t *control = P_PlayerControlByName(Str_Text(str));
-    if(!control)
+    playercontrol_t *impulse = P_PlayerControlByName(Str_Text(str));
+    if(!impulse)
     {
-        LOG_INPUT_WARNING("Player control \"%s\" not defined") << Str_Text(str);
+        LOG_INPUT_WARNING("Player impulse \"%s\" not defined") << Str_Text(str);
         return nullptr;
     }
 
-    BindContext *bc = contextPtr(control->bindContextName);
+    BindContext *bc = contextPtr(impulse->bindContextName);
     if(!bc)
     {
         bc = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
     DENG2_ASSERT(bc);
 
-    LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
-            << control->name << bc->name() << localNum << ctrlDesc;
+    LOG_INPUT_VERBOSE("Impulse '%s' in context '%s' of local player %i to be bound to '%s'")
+            << impulse->name << bc->name() << localNum << ctrlDesc;
 
-    controlbindgroup_t *group = bc->findControlBindGroup(control->id);
+    controlbindgroup_t *group = bc->findControlBindGroup(impulse->id);
     bool justCreated = false;
     if(!group)
     {
-        group       = bc->getControlBindGroup(control->id);
+        group       = bc->getControlBindGroup(impulse->id);
         justCreated = true;
     }
 
