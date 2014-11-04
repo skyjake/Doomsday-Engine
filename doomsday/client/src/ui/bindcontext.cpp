@@ -120,7 +120,11 @@ DENG2_PIMPL(BindContext)
 
         return eb;
     }
+
+    DENG2_PIMPL_AUDIENCE(ActiveChange)
 };
+
+DENG2_AUDIENCE_METHOD(BindContext, ActiveChange)
 
 BindContext::BindContext(String const &name) : d(new Instance(this))
 {
@@ -159,6 +163,8 @@ void BindContext::setName(String const &newName)
 
 void BindContext::activate(bool yes)
 {
+    bool const oldActive = d->active;
+
     LOG_INPUT_VERBOSE("%s binding context '%s'")
             << (yes? "Activating" : "Deactivating")
             << d->name;
@@ -175,12 +181,20 @@ void BindContext::activate(bool yes)
             return LoopContinue;
         });
     }
+
+    if(oldActive != d->active)
+    {
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
+    }
 }
 
-void BindContext::acquireKeyboard(bool yes)
+void BindContext::acquire(int deviceId, bool yes)
 {
-    if(yes) d->acquireDevices.insert(IDEV_KEYBOARD);
-    else    d->acquireDevices.remove(IDEV_KEYBOARD);
+    DENG2_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
+
+    if(yes) d->acquireDevices.insert(deviceId);
+    else    d->acquireDevices.remove(deviceId);
 
     inputSys().updateAllDeviceStateAssociations();
 }
@@ -192,15 +206,16 @@ void BindContext::acquireAll(bool yes)
     inputSys().updateAllDeviceStateAssociations();
 }
 
+bool BindContext::willAcquire(int deviceId) const
+{
+    /// @todo: What about acquireAllDevices? (Ambiguous naming/usage).
+    return d->acquireDevices.contains(deviceId);
+}
+
+
 bool BindContext::willAcquireAll() const
 {
     return d->acquireAllDevices;
-}
-
-bool BindContext::willAcquireKeyboard() const
-{
-    /// @todo: What about acquireAllDevices? (Ambiguous naming/usage).
-    return d->acquireDevices.contains(IDEV_KEYBOARD);
 }
 
 void BindContext::setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc)
@@ -268,7 +283,7 @@ cbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command)
     return b;
 }
 
-cbinding_t *BindContext::findCommandBinding(char const *command, int device) const
+cbinding_t *BindContext::findCommandBinding(char const *command, int deviceId) const
 {
     if(command && command[0])
     {
@@ -276,7 +291,7 @@ cbinding_t *BindContext::findCommandBinding(char const *command, int device) con
         {
             if(qstricmp(i->command, command)) continue;
 
-            if((device < 0 || device >= NUM_INPUT_DEVICES) || i->device == device)
+            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || i->device == deviceId)
             {
                 return i;
             }

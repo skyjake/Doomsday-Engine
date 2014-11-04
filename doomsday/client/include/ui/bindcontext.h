@@ -22,9 +22,15 @@
 
 #include <functional>
 #include <de/Action>
+#include <de/Observers>
 #include "dd_share.h"
 #include "b_command.h"
 #include "b_device.h"
+
+/// @todo: Move to public API
+typedef int (*FallbackResponderFunc)(event_t *);
+typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
+// todo ends
 
 struct controlbinding_t
 {
@@ -35,10 +41,6 @@ struct controlbinding_t
     int control;  ///< Identifier of the player control.
     dbinding_t deviceBinds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
 };
-
-/// @todo: Move to public API
-typedef int (*FallbackResponderFunc)(event_t *);
-typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 
 void B_DestroyControlBinding(controlbinding_t *conBin);
 
@@ -56,6 +58,10 @@ void B_DestroyControlBindingList(controlbinding_t *listRoot);
 class BindContext
 {
 public:
+    /// Notified when the active state of the context changes.
+    DENG2_DEFINE_AUDIENCE2(ActiveChange, void bindContextActiveChanged(BindContext &context))
+
+public:
     /**
      * @param name  Symbolic name for the context.
      */
@@ -63,16 +69,16 @@ public:
     ~BindContext();
 
     /**
-     * Returns @c true if the context is @em active, meaning, bindings in the context are
-     * in effect and their associated action(s) will be executed if triggered.
+     * Returns @c true if the context is @em active, meaning, bindings in the context
+     * are in effect and their associated action(s) will be executed if triggered.
      *
      * @see activate(), deactivate()
      */
     bool isActive() const;
 
     /**
-     * Returns @c true if the context is @em protected, meaning, it should not be manually
-     * (de)activated directly, by the end user.
+     * Returns @c true if the context is @em protected, meaning, it should not be
+     * manually (de)activated by the end user, directly.
      *
      * @see protect()
      */
@@ -101,11 +107,11 @@ public:
     void activate(bool yes = true);
     inline void deactivate(bool yes = true) { activate(!yes); }
 
-    void acquireAll(bool yex = true);
-    void acquireKeyboard(bool yes = true);
+    void acquire(int deviceId, bool yes = true);
+    void acquireAll(bool yes = true);
 
+    bool willAcquire(int deviceId) const;
     bool willAcquireAll() const;
-    bool willAcquireKeyboard() const;
 
     void printAllBindings() const;
     void writeToFile(FILE *file) const;
@@ -122,22 +128,21 @@ public: // Binding management: -------------------------------------------------
     dbinding_t *findDeviceBinding(int device, cbdevtype_t bindType, int id);
 
     /**
-     * Looks through context @a bc and looks for a binding that matches either
-     * @a match1 or @a match2.
+     * Looks through the context for a binding that matches either @a match1 or @a match2.
      */
     bool findMatchingBinding(cbinding_t *match1, dbinding_t *match2,
                              cbinding_t **evResult, dbinding_t **dResult);
 
-    void deleteMatching(cbinding_t *eventBinding, dbinding_t *deviceBinding);
+    void deleteMatching(cbinding_t *commandBind, dbinding_t *controlBind);
 
     // ---
 
     cbinding_t *bindCommand(char const *eventDesc, char const *command);
 
     /**
-     * @param device  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
+     * @param deviceId  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
      */
-    cbinding_t *findCommandBinding(char const *command, int device) const;
+    cbinding_t *findCommandBinding(char const *command, int deviceId = -1) const;
 
     /**
      * Iterate through all the evbinding_ts of the context.

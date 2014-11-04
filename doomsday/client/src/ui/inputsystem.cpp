@@ -1272,7 +1272,7 @@ void InputSystem::updateAllDeviceStateAssociations()
         });
 
         // If the context have made a broad device acquisition, mark all relevant states.
-        if(bc->willAcquireKeyboard())
+        if(bc->willAcquire(IDEV_KEYBOARD))
         {
             InputDevice &keyboard = device(IDEV_KEYBOARD);
             if(keyboard.isActive())
@@ -1366,12 +1366,14 @@ cbinding_t *InputSystem::bindCommand(char const *eventDesc, char const *command)
 bool InputSystem::unbindCommand(char const *command)
 {
     DENG2_ASSERT(command);
+    LOG_AS("InputSystem");
+
     bool didDelete = false;
     for(BindContext *bc : d->contexts)
     {
-        while(cbinding_t *ev = bc->findCommandBinding(command, NUM_INPUT_DEVICES))
+        while(cbinding_t *bind = bc->findCommandBinding(command))
         {
-            didDelete |= bc->deleteBinding(ev->bid);
+            didDelete |= bc->deleteBinding(bind->bid);
         }
     };
     return didDelete;
@@ -1418,36 +1420,36 @@ dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *device
     LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
             << control->name << bc->name() << localNum << deviceDesc;
 
-    controlbinding_t *conBin = bc->findControlBinding(control->id);
-    bool justCreated         = false;
-    if(!conBin)
+    controlbinding_t *cbin = bc->findControlBinding(control->id);
+    bool justCreated = false;
+    if(!cbin)
     {
-        conBin      = bc->getControlBinding(control->id);
+        cbin        = bc->getControlBinding(control->id);
         justCreated = true;
     }
 
-    dbinding_t *devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], deviceDesc);
-    if(!devBin)
+    dbinding_t *bind = B_NewDeviceBinding(&cbin->deviceBinds[localNum], deviceDesc);
+    if(!bind)
     {
         // Failure in the parsing.
         if(justCreated)
         {
-            B_DestroyControlBinding(conBin);
+            B_DestroyControlBinding(cbin);
         }
-        conBin = nullptr;
         return nullptr;
     }
 
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
-    bc->deleteMatching(nullptr, devBin);
+    bc->deleteMatching(nullptr, bind);
     updateAllDeviceStateAssociations();
 
-    return devBin;
+    return bind;
 }
 
 bool InputSystem::removeBinding(int id)
 {
+    LOG_AS("InputSystem");
     for(BindContext *bc : d->contexts)
     {
         if(bool result = bc->deleteBinding(id)) return result;
@@ -1458,6 +1460,7 @@ bool InputSystem::removeBinding(int id)
 void InputSystem::writeAllBindingsTo(FILE *file)
 {
     DENG2_ASSERT(file);
+    LOG_AS("InputSystem");
 
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");

@@ -88,13 +88,13 @@ void B_Init()
     isys.newContext("menu")->acquireAll();
     isys.newContext("gameui");
     isys.newContext("shortcut");
-    isys.newContext("chat")->acquireKeyboard();
+    isys.newContext("chat")->acquire(IDEV_KEYBOARD);
     isys.newContext("message")->acquireAll();
 
     // Binding context for the console.
     BindContext *bc = isys.newContext(CONSOLE_BINDING_CONTEXT_NAME);
-    bc->protect();         // Only we can (de)activate.
-    bc->acquireKeyboard(); // Console takes over all keyboard events.
+    bc->protect();              // Only we can (de)activate.
+    bc->acquire(IDEV_KEYBOARD); // Console takes over all keyboard events.
 
     // UI doesn't let anything past it.
     isys.newContext(UI_BINDING_CONTEXT_NAME)->acquireAll();
