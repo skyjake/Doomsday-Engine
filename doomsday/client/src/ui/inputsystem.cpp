@@ -781,12 +781,12 @@ DENG2_PIMPL(InputSystem)
 
             bc->forAllCommandBindings([&_self, &bc] (CommandBinding &bind)
             {
-                InputDevice &dev = _self.device(bind.device);
+                InputDevice &dev = _self.device(bind.deviceId);
 
                 switch(bind.type)
                 {
                 case E_TOGGLE: {
-                    InputDeviceControl &ctrl = dev.button(bind.id);
+                    InputDeviceControl &ctrl = dev.button(bind.controlId);
                     if(!ctrl.hasBindContext())
                     {
                         ctrl.setBindContext(bc);
@@ -794,7 +794,7 @@ DENG2_PIMPL(InputSystem)
                     break; }
 
                 case E_AXIS: {
-                    InputDeviceControl &ctrl = dev.axis(bind.id);
+                    InputDeviceControl &ctrl = dev.axis(bind.controlId);
                     if(!ctrl.hasBindContext())
                     {
                         ctrl.setBindContext(bc);
@@ -802,7 +802,7 @@ DENG2_PIMPL(InputSystem)
                     break; }
 
                 case E_ANGLE: {
-                    InputDeviceControl &ctrl = dev.hat(bind.id);
+                    InputDeviceControl &ctrl = dev.hat(bind.controlId);
                     if(!ctrl.hasBindContext())
                     {
                         ctrl.setBindContext(bc);
@@ -819,18 +819,18 @@ DENG2_PIMPL(InputSystem)
                 return LoopContinue;
             });
 
-            bc->forAllControlBindGroups([&_self, &bc] (controlbindgroup_t &conBin)
+            bc->forAllControlBindGroups([&_self, &bc] (controlbindgroup_t &group)
             {
                 // Associate all the device bindings.
                 for(int i = 0; i < DDMAXPLAYERS; ++i)
-                for(ImpulseBinding *bind = conBin.binds[i].next; bind != &conBin.binds[i]; bind = bind->next)
+                for(ImpulseBinding *bind = group.binds[i].next; bind != &group.binds[i]; bind = bind->next)
                 {
-                    InputDevice &dev = _self.device(bind->device);
+                    InputDevice &dev = _self.device(bind->deviceId);
 
                     switch(bind->type)
                     {
                     case IBD_TOGGLE: {
-                        InputDeviceControl &ctrl = dev.button(bind->id);
+                        InputDeviceControl &ctrl = dev.button(bind->controlId);
                         if(!ctrl.hasBindContext())
                         {
                             ctrl.setBindContext(bc);
@@ -838,7 +838,7 @@ DENG2_PIMPL(InputSystem)
                         break; }
 
                     case IBD_AXIS: {
-                        InputDeviceControl &ctrl = dev.axis(bind->id);
+                        InputDeviceControl &ctrl = dev.axis(bind->controlId);
                         if(!ctrl.hasBindContext())
                         {
                             ctrl.setBindContext(bc);
@@ -846,7 +846,7 @@ DENG2_PIMPL(InputSystem)
                         break; }
 
                     case IBD_ANGLE: {
-                        InputDeviceControl &ctrl = dev.hat(bind->id);
+                        InputDeviceControl &ctrl = dev.hat(bind->controlId);
                         if(!ctrl.hasBindContext())
                         {
                             ctrl.setBindContext(bc);
@@ -1421,7 +1421,7 @@ bool InputSystem::unbindCommand(char const *command)
     {
         while(CommandBinding *bind = bc->findCommandBinding(command))
         {
-            didDelete |= bc->deleteBinding(bind->bid);
+            didDelete |= bc->deleteBinding(bind->id);
         }
     };
     return didDelete;
@@ -1543,7 +1543,7 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
             }
             numFound++;
             CommandBinding_ToString(&bind, str);
-            Str_Appendf(result, "%i@%s:%s", bind.bid, context.name().toUtf8().constData(), Str_Text(str));
+            Str_Appendf(result, "%i@%s:%s", bind.id, context.name().toUtf8().constData(), Str_Text(str));
             return LoopContinue;
         });
         return LoopContinue;
@@ -1574,7 +1574,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     {
         context.forAllControlBindGroups([&] (controlbindgroup_t &bind)
         {
-            char const *name = P_PlayerControlById(bind.control)->name;
+            char const *name = P_PlayerControlById(bind.impulseId)->name;
 
             if(strcmp(name, controlName))
                 return LoopContinue; // Wrong control.
@@ -1593,7 +1593,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     numFound++;
 
                     ImpulseBinding_ToString(db, str);
-                    Str_Appendf(result, "%i@%s:%s", db->bid, context.name().toUtf8().constData(), Str_Text(str));
+                    Str_Appendf(result, "%i@%s:%s", db->id, context.name().toUtf8().constData(), Str_Text(str));
                 }
             }
             return LoopContinue;
@@ -1647,7 +1647,7 @@ D_CMD(BindCommand)
     DENG2_UNUSED2(src, argc);
     if(CommandBinding *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
     {
-        LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
+        LOG_INPUT_VERBOSE("Binding %i created") << bind->id;
         return true;
     }
     return false;
@@ -1658,7 +1658,7 @@ D_CMD(BindImpulse)
     DENG2_UNUSED2(src, argc);
     if(ImpulseBinding *bind = ClientApp::inputSystem().bindImpulse(argv[2], argv[1]))
     {
-        LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
+        LOG_INPUT_VERBOSE("Binding %i created") << bind->id;
         return true;
     }
     return false;

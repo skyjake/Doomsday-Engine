@@ -331,13 +331,13 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
     BindContext *bc           = nullptr;
-    ImpulseBinding *binds = B_GetControlBindings(P_ConsoleToLocal(playerNum), control, &bc);
+    ImpulseBinding *binds = B_GetImpulseBindings(P_ConsoleToLocal(playerNum), control, &bc);
     if(!binds) return false;
 
     // There must be bindings to active input devices.
     for(ImpulseBinding *cb = binds->next; cb != binds; cb = cb->next)
     {
-        if(InputDevice *dev = ClientApp::inputSystem().devicePtr(cb->device))
+        if(InputDevice *dev = ClientApp::inputSystem().devicePtr(cb->deviceId))
         {
             if(dev->isActive()) return true;
         }
@@ -371,7 +371,7 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, flo
     // P_ConsoleToLocal() is called here.
     int localNum             = P_ConsoleToLocal(playerNum);
     BindContext *bc           = nullptr;
-    ImpulseBinding *binds = B_GetControlBindings(localNum, control, &bc);
+    ImpulseBinding *binds = B_GetImpulseBindings(localNum, control, &bc);
     B_EvaluateImpulseBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
 
     // Mark for double-clicks.

@@ -252,11 +252,11 @@ void BindContext::deleteMatching(CommandBinding *eventBinding, ImpulseBinding *d
     while(findMatchingBinding(eventBinding, deviceBinding, &evb, &devb))
     {
         // Only either evb or devb is returned as non-NULL.
-        int bid = (evb? evb->bid : (devb? devb->bid : 0));
+        int bid = (evb? evb->id : (devb? devb->id : 0));
         if(bid)
         {
             LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
-                    << bid << (eventBinding? eventBinding->bid : deviceBinding->bid);
+                    << bid << (eventBinding? eventBinding->id : deviceBinding->id);
             deleteBinding(bid);
         }
     }
@@ -288,7 +288,7 @@ CommandBinding *BindContext::findCommandBinding(char const *command, int deviceI
         {
             if(qstricmp(i->command, command)) continue;
 
-            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || i->device == deviceId)
+            if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || i->deviceId == deviceId)
             {
                 return i;
             }
@@ -301,7 +301,7 @@ controlbindgroup_t *BindContext::findControlBindGroup(int control) const
 {
     for(controlbindgroup_t *i = d->impulseBinds.next; i != &d->impulseBinds; i = i->next)
     {
-        if(i->control == control)
+        if(i->impulseId == control)
             return i;
     }
     return nullptr;
@@ -314,7 +314,7 @@ controlbindgroup_t *BindContext::getControlBindGroup(int control)
     {
         // Create a new one.
         b = d->newControlBindGroup();
-        b->control = control;
+        b->impulseId = control;
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, b, false/*not-command*/);
@@ -328,7 +328,7 @@ ImpulseBinding *BindContext::findImpulseBinding(int device, ibcontroltype_t bind
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     for(ImpulseBinding *bind = group->binds[i].next; bind != &group->binds[i]; bind = bind->next)
     {
-        if(bind->device == device && bind->type == bindType && bind->id == id)
+        if(bind->deviceId == device && bind->type == bindType && bind->controlId == id)
         {
             return bind;
         }
@@ -341,7 +341,7 @@ bool BindContext::deleteBinding(int bid)
     // Check if it is one of the command bindings.
     for(CommandBinding *bind = d->commandBinds.next; bind != &d->commandBinds; bind = bind->next)
     {
-        if(bind->bid == bid)
+        if(bind->id == bid)
         {
             B_DestroyCommandBinding(bind);
             return true;
@@ -361,7 +361,7 @@ bool BindContext::deleteBinding(int bid)
         {
             for(ImpulseBinding *bind = group->binds[i].next; bind != &group->binds[i]; bind = bind->next)
             {
-                if(bind->bid == bid)
+                if(bind->id == bid)
                 {
                     B_DestroyImpulseBinding(bind);
                     return true;
@@ -421,10 +421,10 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
 
     for(CommandBinding *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
     {
-        if(match1 && match1->bid != e->bid)
+        if(match1 && match1->id != e->id)
         {
             if(conditionsAreEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
-               match1->device == e->device && match1->id == e->id &&
+               match1->deviceId == e->deviceId && match1->controlId == e->controlId &&
                match1->type == e->type && match1->state == e->state)
             {
                 *evResult = e;
@@ -434,7 +434,7 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
         if(match2)
         {
             if(conditionsAreEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
-               match2->device == e->device && match2->id == e->id &&
+               match2->deviceId == e->deviceId && match2->controlId == e->controlId &&
                match2->type == (ibcontroltype_t) e->type)
             {
                 *evResult = e;
@@ -450,7 +450,7 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
         if(match1)
         {
             if(conditionsAreEqual(match1->numConds, match1->conds, bind->numConds, bind->conds) &&
-               match1->device == bind->device && match1->id == bind->id &&
+               match1->deviceId == bind->deviceId && match1->controlId == bind->controlId &&
                match1->type == (ddeventtype_t) bind->type)
             {
                 *dResult = bind;
@@ -458,10 +458,10 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
             }
         }
 
-        if(match2 && match2->bid != bind->bid)
+        if(match2 && match2->id != bind->id)
         {
             if(conditionsAreEqual(match2->numConds, match2->conds, bind->numConds, bind->conds) &&
-               match2->device == bind->device && match2->id == bind->id &&
+               match2->deviceId == bind->deviceId && match2->controlId == bind->controlId &&
                match2->type == bind->type)
             {
                 *dResult = bind;
@@ -514,7 +514,7 @@ void BindContext::printAllBindings() const
     {
         CommandBinding_ToString(e, str);
         LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
-                << e->bid << Str_Text(str) << e->command;
+                << e->id << Str_Text(str) << e->command;
     }
 
     // Impulses.
@@ -528,7 +528,7 @@ void BindContext::printAllBindings() const
 
     for(controlbindgroup_t *group = d->impulseBinds.next; group != &d->impulseBinds; group = group->next)
     {
-        char const *controlName = P_PlayerControlById(group->control)->name;
+        char const *controlName = P_PlayerControlById(group->impulseId)->name;
 
         LOG_INPUT_MSG(_E(D) "  Control \"%s\" " BIDFORMAT ":") << controlName << group->bid;
 
@@ -549,7 +549,7 @@ void BindContext::printAllBindings() const
             for(ImpulseBinding *bind = group->binds[k].next; bind != &group->binds[k]; bind = bind->next)
             {
                 ImpulseBinding_ToString(bind, str);
-                LOG_INPUT_MSG("    " BIDFORMAT " %s") << bind->bid << Str_Text(str);
+                LOG_INPUT_MSG("    " BIDFORMAT " %s") << bind->id << Str_Text(str);
             }
         }
     }
@@ -574,7 +574,7 @@ void BindContext::writeAllBindingsTo(FILE *file) const
     // Impulses.
     for(controlbindgroup_t *group = d->impulseBinds.next; group != &d->impulseBinds; group = group->next)
     {
-        char const *controlName = P_PlayerControlById(group->control)->name;
+        char const *controlName = P_PlayerControlById(group->impulseId)->name;
 
         for(int i = 0; i < DDMAXPLAYERS; ++i)
         for(ImpulseBinding *bind = group->binds[i].next; bind != &group->binds[i]; bind = bind->next)
@@ -603,22 +603,22 @@ void B_DestroyControlBindGroupList(controlbindgroup_t *listRoot)
     }
 }
 
-void B_DestroyControlBindGroup(controlbindgroup_t *conBin)
+void B_DestroyControlBindGroup(controlbindgroup_t *g)
 {
-    if(!conBin) return;
+    if(!g) return;
 
-    DENG2_ASSERT(conBin->bid != 0);
+    DENG2_ASSERT(g->bid != 0);
 
     // Unlink first, if linked.
-    if(conBin->prev)
+    if(g->prev)
     {
-        conBin->prev->next = conBin->next;
-        conBin->next->prev = conBin->prev;
+        g->prev->next = g->next;
+        g->next->prev = g->prev;
     }
 
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        B_DestroyImpulseBindingList(&conBin->binds[i]);
+        B_DestroyImpulseBindingList(&g->binds[i]);
     }
-    M_Free(conBin);
+    M_Free(g);
 }

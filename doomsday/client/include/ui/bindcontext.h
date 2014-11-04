@@ -32,13 +32,14 @@ typedef int (*FallbackResponderFunc)(event_t *);
 typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 // todo ends
 
+/// @todo Is this even necessary? -ds
 struct controlbindgroup_t
 {
     controlbindgroup_t *next;
     controlbindgroup_t *prev;
 
-    int bid;      ///< Unique identifier.
-    int control;  ///< Identifier of the player control.
+    int bid;        ///< Unique identifier.
+    int impulseId;
     ImpulseBinding binds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
 };
 
@@ -51,7 +52,7 @@ void B_DestroyControlBindGroupList(controlbindgroup_t *listRoot);
 // ------------------------------------------------------------------------------
 
 /**
- * Contextualized grouping of input system and windowing event bindings.
+ * Contextualized grouping of input (and windowing system) event bindings.
  *
  * @ingroup ui
  */
@@ -153,7 +154,7 @@ public: // Binding management: -------------------------------------------------
     CommandBinding *findCommandBinding(char const *command, int deviceId = -1) const;
 
     /**
-     * Iterate through all the evbinding_ts of the context.
+     * Iterate through all the CommandBindings of the context.
      */
     de::LoopResult forAllCommandBindings(std::function<de::LoopResult (CommandBinding &)> func) const;
 
@@ -164,7 +165,7 @@ public: // Binding management: -------------------------------------------------
     controlbindgroup_t *getControlBindGroup(int control);
 
     /**
-     * Iterate through all the evbinding_ts of the context.
+     * Iterate through all the controlbindgroup_ts of the context.
      */
     de::LoopResult forAllControlBindGroups(std::function<de::LoopResult (controlbindgroup_t &)> func) const;
 

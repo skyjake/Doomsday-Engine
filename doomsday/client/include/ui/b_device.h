@@ -41,10 +41,10 @@ struct ImpulseBinding
     ImpulseBinding *next;
     ImpulseBinding *prev;
 
-    int bid;
-    int device;
-    ibcontroltype_t type;
     int id;
+    int deviceId;
+    ibcontroltype_t type;
+    int controlId;
     float angle;
     uint flags;
 

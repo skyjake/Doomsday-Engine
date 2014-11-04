@@ -60,7 +60,7 @@ void B_DestroyCommandBindingList(CommandBinding *listRoot)
 CommandBinding *B_AllocCommandBinding()
 {
     CommandBinding *eb = (CommandBinding *) M_Calloc(sizeof(CommandBinding));
-    eb->bid = B_NewIdentifier();
+    eb->id = B_NewIdentifier();
     return eb;
 }
 
@@ -91,13 +91,13 @@ static dd_bool B_ParseEvent(CommandBinding *eb, char const *desc)
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "key"))
     {
-        eb->device = IDEV_KEYBOARD;
+        eb->deviceId = IDEV_KEYBOARD;
         // Keyboards only have toggles (as far as we know).
         eb->type = E_TOGGLE;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseKeyId(Str_Text(str), &eb->id))
+        if(!B_ParseKeyId(Str_Text(str), &eb->controlId))
         {
             return false;
         }
@@ -111,11 +111,11 @@ static dd_bool B_ParseEvent(CommandBinding *eb, char const *desc)
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
-        eb->device = IDEV_MOUSE;
+        eb->deviceId = IDEV_MOUSE;
 
         // Next comes a button or axis name.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseMouseTypeAndId(Str_Text(str), &eb->type, &eb->id))
+        if(!B_ParseMouseTypeAndId(Str_Text(str), &eb->type, &eb->controlId))
         {
             return false;
         }
@@ -140,11 +140,11 @@ static dd_bool B_ParseEvent(CommandBinding *eb, char const *desc)
     else if(!Str_CompareIgnoreCase(str, "joy") ||
             !Str_CompareIgnoreCase(str, "head"))
     {
-        eb->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
+        eb->deviceId = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(inputSys().device(eb->device), Str_Text(str), &eb->type, &eb->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(eb->deviceId), Str_Text(str), &eb->type, &eb->controlId))
         {
             return false;
         }
@@ -177,7 +177,7 @@ static dd_bool B_ParseEvent(CommandBinding *eb, char const *desc)
     {
         // A symbolic event.
         eb->type         = E_SYMBOLIC;
-        eb->device       = 0;
+        eb->deviceId       = 0;
         eb->symbolicName = strdup(desc);
         desc = nullptr;
     }
@@ -233,7 +233,7 @@ void B_DestroyCommandBinding(CommandBinding *eb)
 {
     if(!eb) return;
 
-    DENG2_ASSERT(eb->bid != 0);
+    DENG2_ASSERT(eb->id != 0);
 
     // Unlink first, if linked.
     if(eb->prev)
@@ -314,13 +314,13 @@ Action *CommandBinding_ActionForEvent(CommandBinding *eb, ddevent_t const *event
 {
     DENG2_ASSERT(eb && bindContext);
 
-    if(eb->device != event->device) return nullptr;
+    if(eb->deviceId != event->device) return nullptr;
     if(eb->type != event->type) return nullptr;
 
     InputDevice *dev = nullptr;
     if(event->type != E_SYMBOLIC)
     {
-        dev = inputSys().devicePtr(eb->device);
+        dev = inputSys().devicePtr(eb->deviceId);
         if(!dev || !dev->isActive())
         {
             // The device is not active, there is no way this could get executed.
@@ -332,10 +332,10 @@ Action *CommandBinding_ActionForEvent(CommandBinding *eb, ddevent_t const *event
     switch(event->type)
     {
     case E_TOGGLE: {
-        if(eb->id != event->toggle.id)
+        if(eb->controlId != event->toggle.id)
             return nullptr;
 
-        InputDeviceButtonControl &button = dev->button(eb->id);
+        InputDeviceButtonControl &button = dev->button(eb->controlId);
 
         if(respectHigherAssociatedContexts)
         {
@@ -378,10 +378,10 @@ Action *CommandBinding_ActionForEvent(CommandBinding *eb, ddevent_t const *event
         break; }
 
     case E_AXIS:
-        if(eb->id != event->axis.id)
+        if(eb->controlId != event->axis.id)
             return nullptr;
 
-        if(bindContext && dev->axis(eb->id).bindContext() != bindContext)
+        if(bindContext && dev->axis(eb->controlId).bindContext() != bindContext)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -392,10 +392,10 @@ Action *CommandBinding_ActionForEvent(CommandBinding *eb, ddevent_t const *event
         break;
 
     case E_ANGLE:
-        if(eb->id != event->angle.id)
+        if(eb->controlId != event->angle.id)
             return nullptr;
 
-        if(bindContext && dev->hat(eb->id).bindContext() != bindContext)
+        if(bindContext && dev->hat(eb->controlId).bindContext() != bindContext)
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -434,7 +434,7 @@ void CommandBinding_ToString(CommandBinding const *eb, ddstring_t *str)
     DENG2_ASSERT(eb && str);
 
     Str_Clear(str);
-    B_AppendControlDescToString(inputSys().device(eb->device), eb->type, eb->id, str);
+    B_AppendControlDescToString(inputSys().device(eb->deviceId), eb->type, eb->controlId, str);
 
     switch(eb->type)
     {

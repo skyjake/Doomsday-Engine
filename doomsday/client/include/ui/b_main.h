@@ -37,6 +37,6 @@ void B_BindDefaults();
 
 void B_BindGameDefaults();
 
-ImpulseBinding *B_GetControlBindings(int localNum, int control, BindContext **context);
+ImpulseBinding *B_GetImpulseBindings(int localNum, int control, BindContext **context);
 
 #endif // CLIENT_INPUTSYSTEM_BINDINGS_H

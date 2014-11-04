@@ -28,21 +28,21 @@ class BindContext;
 
 struct CommandBinding
 {
-    CommandBinding *prev;      ///< Previous in list of bindings.
-    CommandBinding *next;      ///< Next in list of bindings.
+    CommandBinding *prev;     ///< Previous in list of bindings.
+    CommandBinding *next;     ///< Next in list of bindings.
 
-    int bid;                   ///< Binding identifier.
-    char *command;             ///< Command to execute.
+    int id;                   ///< Unique identifier.
+    char *command;            ///< Command to execute.
 
-    int device;                ///< Which device?
-    ddeventtype_t type;        ///< Type of event.
-    int id;                    ///< Identifier.
+    int deviceId;             ///< Which device?
+    ddeventtype_t type;       ///< Type of event.
+    int controlId;            ///< Which control?
     ebstate_t state;
     float pos;
-    char *symbolicName;        ///< Name of a symbolic event.
+    char *symbolicName;       ///< Name of a symbolic event.
 
     int numConds;
-    statecondition_t *conds;   ///< Additional conditions.
+    statecondition_t *conds;  ///< Additional conditions.
 };
 
 /**

@@ -48,7 +48,7 @@ static inline InputSystem &inputSys()
 static ImpulseBinding *B_AllocImpulseBinding()
 {
     ImpulseBinding *cb = (ImpulseBinding *) M_Calloc(sizeof(*cb));
-    cb->bid = B_NewIdentifier();
+    cb->id = B_NewIdentifier();
     return cb;
 }
 
@@ -91,22 +91,22 @@ static dd_bool parseControl(ImpulseBinding *ib, char const *desc)
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "key"))
     {
-        ib->device = IDEV_KEYBOARD;
+        ib->deviceId = IDEV_KEYBOARD;
         ib->type   = IBD_TOGGLE;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseKeyId(Str_Text(str), &ib->id))
+        if(!B_ParseKeyId(Str_Text(str), &ib->controlId))
         {
             return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
-        ib->device = IDEV_MOUSE;
+        ib->deviceId = IDEV_MOUSE;
 
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &ib->id))
+        if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &ib->controlId))
         {
             return false;
         }
@@ -115,11 +115,11 @@ static dd_bool parseControl(ImpulseBinding *ib, char const *desc)
     else if(!Str_CompareIgnoreCase(str, "joy") ||
             !Str_CompareIgnoreCase(str, "head"))
     {
-        ib->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
+        ib->deviceId = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // Next part defined button, axis, or hat.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseJoystickTypeAndId(inputSys().device(ib->device), Str_Text(str), &type, &ib->id))
+        if(!B_ParseJoystickTypeAndId(inputSys().device(ib->deviceId), Str_Text(str), &type, &ib->controlId))
         {
             return false;
         }
@@ -217,7 +217,7 @@ ImpulseBinding *B_NewImpulseBinding(ImpulseBinding *listRoot, char const *ctrlDe
 void B_DestroyImpulseBinding(ImpulseBinding *ib)
 {
     if(!ib) return;
-    DENG2_ASSERT(ib->bid != 0);
+    DENG2_ASSERT(ib->id != 0);
 
     // Unlink first, if linked.
     if(ib->prev)
@@ -259,7 +259,7 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
         if(skip) continue;
 
         // Get the device.
-        InputDevice *dev = inputSys().devicePtr(ib->device);
+        InputDevice *dev = inputSys().devicePtr(ib->deviceId);
         if(!dev || !dev->isActive()) continue; // Not available.
 
         float devicePos = 0;
@@ -269,7 +269,7 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
         switch(ib->type)
         {
         case IBD_TOGGLE: {
-            InputDeviceButtonControl *button = &dev->button(ib->id);
+            InputDeviceButtonControl *button = &dev->button(ib->controlId);
 
             if(context && button->bindContext() != context)
                 continue; // Shadowed by a more important active context.
@@ -287,11 +287,11 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
             break; }
 
         case IBD_AXIS: {
-            InputDeviceAxisControl *axis = &dev->axis(ib->id);
+            InputDeviceAxisControl *axis = &dev->axis(ib->controlId);
 
             if(context && axis->bindContext() != context)
             {
-                if(!axis->bindContext()->findImpulseBinding(ib->device, IBD_AXIS, ib->id))
+                if(!axis->bindContext()->findImpulseBinding(ib->deviceId, IBD_AXIS, ib->controlId))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type() == InputDeviceAxisControl::Pointer)
@@ -319,7 +319,7 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
             break; }
 
         case IBD_ANGLE: {
-            InputDeviceHatControl *hat = &dev->hat(ib->id);
+            InputDeviceHatControl *hat = &dev->hat(ib->controlId);
 
             if(context && hat->bindContext() != context)
                 continue; // Shadowed by a more important active class.
@@ -387,7 +387,7 @@ void ImpulseBinding_ToString(ImpulseBinding const *ib, ddstring_t *str)
     Str_Clear(str);
 
     // Name of the control-device and the key/axis/hat.
-    B_AppendControlDescToString(inputSys().device(ib->device), IBDTYPE_TO_EVTYPE(ib->type), ib->id, str);
+    B_AppendControlDescToString(inputSys().device(ib->deviceId), IBDTYPE_TO_EVTYPE(ib->type), ib->controlId, str);
 
     if(ib->type == IBD_ANGLE)
     {
