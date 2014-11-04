@@ -39,8 +39,6 @@
 
 using namespace de;
 
-int symbolicEchoMode = false;
-
 /**
  * Binding context fallback for the "global" context.
  *
@@ -177,12 +175,4 @@ dbinding_t *B_GetControlBindings(int localNum, int control, BindContext **bConte
     }
 
     return nullptr;
-}
-
-#undef DD_GetKeyCode
-DENG_EXTERN_C int DD_GetKeyCode(char const *key)
-{
-    DENG2_ASSERT(key);
-    int code = B_KeyForShortName(key);
-    return (code ? code : key[0]);
 }

@@ -22,17 +22,21 @@
 
 #include <cstring>
 #include <de/memory.h>
+#include <QSet>
 #include <de/Log>
 #include "clientapp.h"
-#include "dd_main.h"
-#include "m_misc.h"
+#include "m_misc.h" // M_WriteTextEsc
+
 #include "ui/b_main.h"
 #include "ui/b_command.h"
 #include "ui/p_control.h"
 #include "ui/inputdevice.h"
+
+/// @todo: remove
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
 #include "ui/inputdevicehatcontrol.h"
+// todo ends
 
 using namespace de;
 
@@ -41,18 +45,18 @@ static inline InputSystem &inputSys()
     return ClientApp::inputSystem();
 }
 
-// Binding Context Flags:
-#define BCF_ACTIVE              0x01  ///< Context is only used when it is active.
-#define BCF_PROTECTED           0x02  ///< Context cannot be (de)activated by plugins.
-#define BCF_ACQUIRE_KEYBOARD    0x04  /**  Context has acquired all keyboard states, unless
-                                           higher-priority contexts override it. */
-#define BCF_ACQUIRE_ALL         0x08  ///< Context will acquire all unacquired states.
-
 DENG2_PIMPL(BindContext)
 {
-    byte flags = 0;
-    String name;                    ///< Symbolic.
-    cbinding_t commandBinds;        ///< List of command bindings.
+    bool active  = false;  ///< @c true= Bindings are active.
+    bool protect = false;  ///< @c true= Prevent explicit end user (de)activation.
+    String name;           ///< Symbolic.
+
+    // Acquired device states, unless higher-priority contexts override.
+    typedef QSet<int> DeviceIds;
+    DeviceIds acquireDevices;
+    bool acquireAllDevices = false;  ///< @c true= will ignore @var acquireDevices.
+
+    cbinding_t commandBinds;
     controlbinding_t controlBinds;
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
@@ -130,18 +134,17 @@ BindContext::~BindContext()
 
 bool BindContext::isActive() const
 {
-    return (d->flags & BCF_ACTIVE) != 0;
+    return d->active;
 }
 
 bool BindContext::isProtected() const
 {
-    return (d->flags & BCF_PROTECTED) != 0;
+    return d->protect;
 }
 
 void BindContext::protect(bool yes)
 {
-    if(yes) d->flags |= BCF_PROTECTED;
-    else    d->flags &= ~BCF_PROTECTED;
+    d->protect = yes;
 }
 
 String BindContext::name() const
@@ -160,12 +163,11 @@ void BindContext::activate(bool yes)
             << (yes? "Activating" : "Deactivating")
             << d->name;
 
-    d->flags &= ~BCF_ACTIVE;
-    if(yes) d->flags |= BCF_ACTIVE;
+    d->active = yes;
 
     inputSys().updateAllDeviceStateAssociations();
 
-    if(d->flags & BCF_ACQUIRE_ALL)
+    if(d->acquireAllDevices)
     {
         inputSys().forAllDevices([] (InputDevice &device)
         {
@@ -177,28 +179,28 @@ void BindContext::activate(bool yes)
 
 void BindContext::acquireKeyboard(bool yes)
 {
-    d->flags &= ~BCF_ACQUIRE_KEYBOARD;
-    if(yes) d->flags |= BCF_ACQUIRE_KEYBOARD;
+    if(yes) d->acquireDevices.insert(IDEV_KEYBOARD);
+    else    d->acquireDevices.remove(IDEV_KEYBOARD);
 
     inputSys().updateAllDeviceStateAssociations();
 }
 
 void BindContext::acquireAll(bool yes)
 {
-    d->flags &= ~BCF_ACQUIRE_ALL;
-    if(yes) d->flags |= BCF_ACQUIRE_ALL;
+    d->acquireAllDevices = yes;
 
     inputSys().updateAllDeviceStateAssociations();
 }
 
 bool BindContext::willAcquireAll() const
 {
-    return (d->flags & BCF_ACQUIRE_ALL) != 0;
+    return d->acquireAllDevices;
 }
 
 bool BindContext::willAcquireKeyboard() const
 {
-    return (d->flags & BCF_ACQUIRE_KEYBOARD) != 0;
+    /// @todo: What about acquireAllDevices? (Ambiguous naming/usage).
+    return d->acquireDevices.contains(IDEV_KEYBOARD);
 }
 
 void BindContext::setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc)

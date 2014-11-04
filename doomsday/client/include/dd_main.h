@@ -61,7 +61,9 @@ extern GETGAMEAPI GetGameAPI;
 
 extern int gameDataFormat;
 
+#ifdef __CLIENT__
 extern int symbolicEchoMode;
+#endif
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);

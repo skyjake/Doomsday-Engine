@@ -63,8 +63,6 @@ struct statecondition_t
     } flags;
 };
 
-char const *B_ParseContext(char const *desc, BindContext **bc);
-
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
 
 dd_bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);

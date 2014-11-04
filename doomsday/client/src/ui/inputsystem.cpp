@@ -1068,13 +1068,10 @@ bool InputSystem::shiftDown() const
 void InputSystem::initialContextActivations()
 {
     // Deactivate all contexts.
-    for(BindContext *bc : d->contexts)
-    {
-        bc->deactivate();
-    };
+    for(BindContext *bc : d->contexts) bc->deactivate();
 
     // These are the contexts active by default.
-    context(GLOBAL_BINDING_CONTEXT_NAME).activate();
+    context(GLOBAL_BINDING_CONTEXT_NAME ).activate();
     context(DEFAULT_BINDING_CONTEXT_NAME).activate();
 
     /*
@@ -1755,8 +1752,12 @@ void InputSystem::consoleRegister() // static
 #undef PROTECTED_FLAGS
 }
 
-// b_main.c
-DENG_EXTERN_C int DD_GetKeyCode(char const *key);
+DENG_EXTERN_C int DD_GetKeyCode(char const *key)
+{
+    DENG2_ASSERT(key);
+    int code = B_KeyForShortName(key);
+    return (code ? code : key[0]);
+}
 
 DENG_DECLARE_API(B) =
 {

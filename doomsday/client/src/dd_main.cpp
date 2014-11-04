@@ -177,6 +177,10 @@ finaleid_t titleFinale;
 
 int gameDataFormat; // Use a game-specifc data format where applicable.
 
+#ifdef __CLIENT__
+int symbolicEchoMode = false; // Mutable via public API.
+#endif
+
 static void registerResourceFileTypes()
 {
     FileType *ftype;
