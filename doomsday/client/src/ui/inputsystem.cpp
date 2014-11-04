@@ -284,6 +284,9 @@ static eventqueue_t sharpQueue;
 static byte useSharpInputEvents = true; ///< cvar
 
 DENG2_PIMPL(InputSystem)
+, DENG2_OBSERVES(BindContext, ActiveChange)
+, DENG2_OBSERVES(BindContext, AcquireDeviceChange)
+, DENG2_OBSERVES(BindContext, BindingAddition)
 {
     Binder binder;
     SettingsRegister settings;
@@ -709,8 +712,8 @@ DENG2_PIMPL(InputSystem)
     /// @todo Does not belong at this level.
     void readHeadTracker()
     {
-        // These values are for the input subsystem and gameplay. The renderer will check the head
-        // orientation independently, with as little latency as possible.
+        // These values are for the input subsystem and gameplay. The renderer will
+        // check the head orientation independently, with as little latency as possible.
 
         // If a head tracking device is connected, the device is marked active.
         if(!DD_GetInteger(DD_USING_HEAD_TRACKING))
@@ -745,6 +748,199 @@ DENG2_PIMPL(InputSystem)
         ev.axis.id  = 2; // Roll.
         ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
         self.postEvent(&ev);
+    }
+
+    /**
+     * Mark all device states with the highest-priority binding context to which they
+     * have a connection via device bindings. This ensures that if a high-priority context
+     * is using a particular device state, lower-priority contexts will not be using the
+     * same state for their own controls.
+     *
+     * Called automatically whenever a context is activated or deactivated.
+     */
+    void updateAllDeviceStateAssociations()
+    {
+        auto &_self = self;
+
+        // Clear all existing associations.
+        for(InputDevice *device : devices)
+        {
+            device->forAllControls([] (InputDeviceControl &control)
+            {
+                control.clearBindContextAssociation();
+                return LoopContinue;
+            });
+        }
+
+        // Mark all bindings in all contexts.
+        for(BindContext *bc : contexts)
+        {
+            // Skip inactive contexts.
+            if(!bc->isActive())
+                continue;
+
+            bc->forAllCommandBindings([&_self, &bc] (cbinding_t &bind)
+            {
+                InputDevice &dev = _self.device(bind.device);
+
+                switch(bind.type)
+                {
+                case E_TOGGLE: {
+                    InputDeviceControl &ctrl = dev.button(bind.id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case E_AXIS: {
+                    InputDeviceControl &ctrl = dev.axis(bind.id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case E_ANGLE: {
+                    InputDeviceControl &ctrl = dev.hat(bind.id);
+                    if(!ctrl.hasBindContext())
+                    {
+                        ctrl.setBindContext(bc);
+                    }
+                    break; }
+
+                case E_SYMBOLIC:
+                    break;
+
+                default:
+                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid eb.type");
+                    break;
+                }
+                return LoopContinue;
+            });
+
+            bc->forAllControlBindings([&_self, &bc] (controlbinding_t &conBin)
+            {
+                // Associate all the device bindings.
+                for(int i = 0; i < DDMAXPLAYERS; ++i)
+                for(dbinding_t *bind = conBin.deviceBinds[i].next; bind != &conBin.deviceBinds[i]; bind = bind->next)
+                {
+                    InputDevice &dev = _self.device(bind->device);
+
+                    switch(bind->type)
+                    {
+                    case CBD_TOGGLE: {
+                        InputDeviceControl &ctrl = dev.button(bind->id);
+                        if(!ctrl.hasBindContext())
+                        {
+                            ctrl.setBindContext(bc);
+                        }
+                        break; }
+
+                    case CBD_AXIS: {
+                        InputDeviceControl &ctrl = dev.axis(bind->id);
+                        if(!ctrl.hasBindContext())
+                        {
+                            ctrl.setBindContext(bc);
+                        }
+                        break; }
+
+                    case CBD_ANGLE: {
+                        InputDeviceControl &ctrl = dev.hat(bind->id);
+                        if(!ctrl.hasBindContext())
+                        {
+                            ctrl.setBindContext(bc);
+                        }
+                        break; }
+
+                    default:
+                        DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid db->type");
+                        break;
+                    }
+                }
+                return LoopContinue;
+            });
+
+            // If the context have made a broad device acquisition, mark all relevant states.
+            if(bc->willAcquire(IDEV_KEYBOARD))
+            {
+                InputDevice &keyboard = self.device(IDEV_KEYBOARD);
+                if(keyboard.isActive())
+                {
+                    keyboard.forAllControls([&bc] (InputDeviceControl &control)
+                    {
+                        if(!control.hasBindContext())
+                        {
+                            control.setBindContext(bc);
+                        }
+                        return LoopContinue;
+                    });
+                }
+            }
+
+            if(bc->willAcquireAll())
+            {
+                for(InputDevice *device : devices)
+                {
+                    if(device->isActive())
+                    {
+                        device->forAllControls([&bc] (InputDeviceControl &control)
+                        {
+                            if(!control.hasBindContext())
+                            {
+                                control.setBindContext(bc);
+                            }
+                            return LoopContinue;
+                        });
+                    }
+                };
+            }
+        }
+
+        // Now that we know what are the updated context associations, let's check the devices
+        // and see if any of the states need to be expired.
+        for(InputDevice *device : devices)
+        {
+            device->forAllControls([] (InputDeviceControl &control)
+            {
+                if(!control.inDefaultState())
+                {
+                    control.expireBindContextAssociationIfChanged();
+                }
+                return LoopContinue;
+            });
+        };
+    }
+
+    /**
+     * When the active state of a binding context changes we'll re-evaluate the
+     * effective bindings to avoid wasting time by looking them up repeatedly.
+     */
+    void bindContextActiveChanged(BindContext &bc)
+    {
+        updateAllDeviceStateAssociations();
+
+        for(int i = 0; i < devices.count(); ++i)
+        {
+            InputDevice *device = devices.at(i);
+            /// @todo: Really exclude non-named devices? -ds
+            //int const deviceId = i;
+
+            if(bc.willAcquireAll())//|| bc.willAcquire(deviceId))
+            {
+                device->reset();
+            }
+        }
+    }
+
+    void bindContextAcquireDeviceChanged(BindContext &)
+    {
+        updateAllDeviceStateAssociations();
+    }
+
+    void bindContextBindingAdded(BindContext &, void * /*binding*/, bool /*isCommand*/)
+    {
+        updateAllDeviceStateAssociations();
     }
 };
 
@@ -1142,6 +1338,11 @@ BindContext *InputSystem::newContext(String const &name)
 {
     BindContext *bc = new BindContext(name);
     d->contexts.prepend(bc);
+
+    bc->audienceForActiveChange()        += d;
+    bc->audienceForAcquireDeviceChange() += d;
+    bc->audienceForBindingAddition()     += d;
+
     return bc;
 }
 
@@ -1167,159 +1368,6 @@ Action *InputSystem::actionForEvent(ddevent_t const &event) const
     }
 
     return nullptr; // Nobody had a binding for this event.
-}
-
-/// @todo: Most of this logic belongs in BindContext.
-void InputSystem::updateAllDeviceStateAssociations()
-{
-    // Clear all existing associations.
-    for(InputDevice *device : d->devices)
-    {
-        device->forAllControls([] (InputDeviceControl &control)
-        {
-            control.clearBindContextAssociation();
-            return LoopContinue;
-        });
-    }
-
-    // Mark all bindings in all contexts.
-    for(BindContext *bc : d->contexts)
-    {
-        // Skip inactive contexts.
-        if(!bc->isActive())
-            continue;
-
-        bc->forAllCommandBindings([this, &bc] (cbinding_t &cb)
-        {
-            InputDevice &dev = device(cb.device);
-
-            switch(cb.type)
-            {
-            case E_TOGGLE: {
-                InputDeviceControl &ctrl = dev.button(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_AXIS: {
-                InputDeviceControl &ctrl = dev.axis(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_ANGLE: {
-                InputDeviceControl &ctrl = dev.hat(cb.id);
-                if(!ctrl.hasBindContext())
-                {
-                    ctrl.setBindContext(bc);
-                }
-                break; }
-
-            case E_SYMBOLIC:
-                break;
-
-            default:
-                DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid eb.type");
-                break;
-            }
-            return LoopContinue;
-        });
-
-        bc->forAllControlBindings([this, &bc] (controlbinding_t &cb)
-        {
-            // Associate all the device bindings.
-            for(int k = 0; k < DDMAXPLAYERS; ++k)
-            for(dbinding_t *db = cb.deviceBinds[k].next; db != &cb.deviceBinds[k]; db = db->next)
-            {
-                InputDevice &dev = device(db->device);
-
-                switch(db->type)
-                {
-                case CBD_TOGGLE: {
-                    InputDeviceControl &ctrl = dev.button(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case CBD_AXIS: {
-                    InputDeviceControl &ctrl = dev.axis(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case CBD_ANGLE: {
-                    InputDeviceControl &ctrl = dev.hat(db->id);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                default:
-                    DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid db->type");
-                    break;
-                }
-            }
-            return LoopContinue;
-        });
-
-        // If the context have made a broad device acquisition, mark all relevant states.
-        if(bc->willAcquire(IDEV_KEYBOARD))
-        {
-            InputDevice &keyboard = device(IDEV_KEYBOARD);
-            if(keyboard.isActive())
-            {
-                keyboard.forAllControls([&bc] (InputDeviceControl &control)
-                {
-                    if(!control.hasBindContext())
-                    {
-                        control.setBindContext(bc);
-                    }
-                    return LoopContinue;
-                });
-            }
-        }
-
-        if(bc->willAcquireAll())
-        {
-            for(InputDevice *device : d->devices)
-            {
-                if(device->isActive())
-                {
-                    device->forAllControls([&bc] (InputDeviceControl &control)
-                    {
-                        if(!control.hasBindContext())
-                        {
-                            control.setBindContext(bc);
-                        }
-                        return LoopContinue;
-                    });
-                }
-            };
-        }
-    }
-
-    // Now that we know what are the updated context associations, let's check the devices
-    // and see if any of the states need to be expired.
-    for(InputDevice *device : d->devices)
-    {
-        device->forAllControls([] (InputDeviceControl &control)
-        {
-            if(!control.inDefaultState())
-            {
-                control.expireBindContextAssociationIfChanged();
-            }
-            return LoopContinue;
-        });
-    };
 }
 
 LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)> func) const
@@ -1442,7 +1490,7 @@ dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *device
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
     bc->deleteMatching(nullptr, bind);
-    updateAllDeviceStateAssociations();
+    //updateAllDeviceStateAssociations();
 
     return bind;
 }

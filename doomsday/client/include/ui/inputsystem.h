@@ -215,18 +215,6 @@ public: // Binding (context) management --------------------------------------
     de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
 
     /**
-     * Marks all device states with the highest-priority binding context to which they have
-     * a connection via device bindings. This ensures that if a high-priority context is
-     * using a particular device state, lower-priority contexts will not be using the same
-     * state for their own controls.
-     *
-     * Called automatically whenever a context is activated or deactivated.
-     *
-     * @todo make private.
-     */
-    void updateAllDeviceStateAssociations();
-
-    /**
      * Write all bindings in all contexts to a text (cfg) file. Outputs console commands.
      */
     void writeAllBindingsTo(FILE *file);

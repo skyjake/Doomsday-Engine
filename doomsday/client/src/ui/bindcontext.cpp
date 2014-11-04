@@ -68,63 +68,65 @@ DENG2_PIMPL(BindContext)
         B_InitControlBindingList(&controlBinds);
     }
 
-    controlbinding_t *newControlBinding()
-    {
-        controlbinding_t *conBin = (controlbinding_t *) M_Calloc(sizeof(*conBin));
-        conBin->bid = B_NewIdentifier();
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        {
-            B_InitDeviceBindingList(&conBin->deviceBinds[i]);
-        }
-
-        // Link it in.
-        conBin->next = &controlBinds;
-        conBin->prev = controlBinds.prev;
-        controlBinds.prev->next = conBin;
-        controlBinds.prev = conBin;
-
-        return conBin;
-    }
-
     /**
-     * Creates a new event-command binding.
+     * Construct a new event => command binding.
      *
-     * @param desc       Descriptor of the event.
-     * @param command    Command that will be executed by the binding.
+     * @param eventDesc  Event descriptor.
+     * @param commands   Command(s) to be executed when triggered.
      *
      * @return  New binding, or @c nullptr if there was an error.
      */
-    cbinding_t *newCommandBinding(char const *desc, char const *command)
+    cbinding_t *newCommandBinding(char const *eventDesc, char const *commands)
     {
-        DENG2_ASSERT(command && command[0]);
+        DENG2_ASSERT(commands && commands[0]);
 
-        cbinding_t *eb = B_AllocCommandBinding();
-        DENG2_ASSERT(eb);
+        cbinding_t *b = B_AllocCommandBinding();
+        DENG2_ASSERT(b);
 
-        // Parse the description of the event.
-        if(!B_ParseEventDescriptor(eb, desc))
+        if(!B_ParseEventDescriptor(b, eventDesc))
         {
-            // Error in parsing, failure to create binding.
-            B_DestroyCommandBinding(eb);
+            // Failed parsing - we cannot continue.
+            B_DestroyCommandBinding(b);
             return nullptr;
         }
 
-        // The command string.
-        eb->command = strdup(command);
+        b->command = strdup(commands); // make a copy.
 
-        // Link it into the list.
-        eb->next = &commandBinds;
-        eb->prev = commandBinds.prev;
-        commandBinds.prev->next = eb;
-        commandBinds.prev = eb;
+        // Link it in.
+        b->next = &commandBinds;
+        b->prev = commandBinds.prev;
+        commandBinds.prev->next = b;
+        commandBinds.prev = b;
 
-        return eb;
+        return b;
+    }
+
+    controlbinding_t *newControlBinding()
+    {
+        controlbinding_t *b = (controlbinding_t *) M_Calloc(sizeof(*b));
+        b->bid = B_NewIdentifier();
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            B_InitDeviceBindingList(&b->deviceBinds[i]);
+        }
+
+        // Link it in.
+        b->next = &controlBinds;
+        b->prev = controlBinds.prev;
+        controlBinds.prev->next = b;
+        controlBinds.prev = b;
+
+        return b;
     }
 
     DENG2_PIMPL_AUDIENCE(ActiveChange)
+    DENG2_PIMPL_AUDIENCE(AcquireDeviceChange)
+    DENG2_PIMPL_AUDIENCE(BindingAddition)
 };
 
 DENG2_AUDIENCE_METHOD(BindContext, ActiveChange)
+DENG2_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
+DENG2_AUDIENCE_METHOD(BindContext, BindingAddition)
 
 BindContext::BindContext(String const &name) : d(new Instance(this))
 {
@@ -163,47 +165,40 @@ void BindContext::setName(String const &newName)
 
 void BindContext::activate(bool yes)
 {
-    bool const oldActive = d->active;
+    if(d->active == yes) return;
 
-    LOG_INPUT_VERBOSE("%s binding context '%s'")
-            << (yes? "Activating" : "Deactivating")
-            << d->name;
-
+    LOG_AS("BindContext");
+    LOG_INPUT_VERBOSE("%s '%s'") << (yes? "Activating" : "Deactivating") << d->name;
     d->active = yes;
 
-    inputSys().updateAllDeviceStateAssociations();
-
-    if(d->acquireAllDevices)
-    {
-        inputSys().forAllDevices([] (InputDevice &device)
-        {
-            device.reset();
-            return LoopContinue;
-        });
-    }
-
-    if(oldActive != d->active)
-    {
-        // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
-    }
+    // Notify interested parties.
+    DENG2_FOR_AUDIENCE2(ActiveChange, i) i->bindContextActiveChanged(*this);
 }
 
 void BindContext::acquire(int deviceId, bool yes)
 {
     DENG2_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
+    int const countBefore = d->acquireDevices.count();
 
     if(yes) d->acquireDevices.insert(deviceId);
     else    d->acquireDevices.remove(deviceId);
 
-    inputSys().updateAllDeviceStateAssociations();
+    if(countBefore != d->acquireDevices.count())
+    {
+        // Notify interested parties:
+        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+    }
 }
 
 void BindContext::acquireAll(bool yes)
 {
-    d->acquireAllDevices = yes;
+    if(d->acquireAllDevices != yes)
+    {
+        d->acquireAllDevices = yes;
 
-    inputSys().updateAllDeviceStateAssociations();
+        // Notify interested parties:
+        DENG2_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+    }
 }
 
 bool BindContext::willAcquire(int deviceId) const
@@ -277,7 +272,9 @@ cbinding_t *BindContext::bindCommand(char const *eventDesc, char const *command)
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other binding.
         deleteMatching(b, nullptr);
-        inputSys().updateAllDeviceStateAssociations();
+
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, b, true/*is-command*/);
     }
 
     return b;
@@ -318,6 +315,9 @@ controlbinding_t *BindContext::getControlBinding(int control)
         // Create a new one.
         b = d->newControlBinding();
         b->control = control;
+
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, b, false/*not-command*/);
     }
     return b;
 }

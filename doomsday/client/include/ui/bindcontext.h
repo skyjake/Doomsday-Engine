@@ -61,6 +61,12 @@ public:
     /// Notified when the active state of the context changes.
     DENG2_DEFINE_AUDIENCE2(ActiveChange, void bindContextActiveChanged(BindContext &context))
 
+    /// Notified when the list of devices to acquire changes.
+    DENG2_DEFINE_AUDIENCE2(AcquireDeviceChange, void bindContextAcquireDeviceChanged(BindContext &context))
+
+    /// Notified whenever a new binding is made in this context.
+    DENG2_DEFINE_AUDIENCE2(BindingAddition, void bindContextBindingAdded(BindContext &context, void *binding, bool isCommand))
+
 public:
     /**
      * @param name  Symbolic name for the context.
