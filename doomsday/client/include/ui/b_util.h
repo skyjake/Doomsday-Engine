@@ -63,6 +63,8 @@ struct statecondition_t
     } flags;
 };
 
+char const *B_ParseContext(char const *desc, BindContext **bc);
+
 dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
 
 dd_bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);
@@ -109,6 +111,17 @@ void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str);
  * @param str  The event in textual format is appended here.
  */
 void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str);
+
+/**
+ * @return  Never returns zero, as that is reserved for list roots.
+ */
+int B_NewIdentifier();
+
+void B_ResetIdentifiers();
+
+char const *B_ShortNameForKey(int ddKey, dd_bool forceLowercase = true);
+
+int B_KeyForShortName(char const *key);
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

@@ -1513,7 +1513,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         B_BindDefaults();
-        B_InitialContextActivations();
+        ClientApp::inputSystem().initialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
         App_WorldSystem().reset();

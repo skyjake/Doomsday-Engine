@@ -39,6 +39,7 @@
 
 #include "ui/dd_input.h"
 #include "ui/b_main.h"
+#include "ui/b_util.h"
 #include "ui/bindcontext.h"
 #include "ui/p_control.h"
 #include "ui/clientwindow.h"
@@ -166,7 +167,7 @@ static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
-    if(B_BindCommand(eventDesc.toLatin1(), command.toLatin1()))
+    if(ClientApp::inputSystem().bindCommand(eventDesc.toLatin1(), command.toLatin1()))
     {
         // Success.
         return new NumberValue(true);
@@ -356,6 +357,50 @@ DENG2_PIMPL(InputSystem)
     }
 
     /**
+     * Checks to see if we need to respond to the given input event and if so,
+     * executes any actions associated with the event.
+     *
+     * @param event  Description of the event.
+     *
+     * @return  @c true if an action was executed.
+     */
+    bool handleEventBindings(ddevent_t const &ev)
+    {
+        if(symbolicEchoMode &&
+           ev.type != E_SYMBOLIC && ev.type != E_FOCUS)
+        {
+            // Make an echo.
+            // Axis events need a bit of filtering.
+            if(ev.type == E_AXIS)
+            {
+                float pos = self.device(ev.device).axis(ev.axis.id).translateRealPosition(ev.axis.pos);
+                if((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
+                   (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
+                {
+                    // Not significant enough for an echo.
+                    return ClientApp::widgetActions().tryEvent(&ev);
+                }
+            }
+
+            AutoStr *name = AutoStr_FromTextStd("echo-");
+            B_AppendEventToString(&ev, name);
+
+            ddevent_t echo; de::zap(echo);
+            echo.device = ev.device;
+            echo.type   = E_SYMBOLIC;
+            echo.symbolic.id   = 0;
+            echo.symbolic.name = Str_Text(name);
+
+            LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
+            self.postEvent(&echo);
+
+            return true;
+        }
+
+        return ClientApp::widgetActions().tryEvent(&ev);
+    }
+
+    /**
      * Send all the events of the given timestamp down the responder chain.
      */
     void dispatchEvents(eventqueue_t *q, timespan_t ticLength, bool updateAxes)
@@ -386,7 +431,10 @@ DENG2_PIMPL(InputSystem)
             }
 
             // The bindings responder.
-            if(B_Responder(ddev)) continue;
+            if(handleEventBindings(*ddev))
+            {
+                continue;
+            }
 
             // The "fallback" responder. Gets the event if no one else is interested.
             if(validGameEvent && callGameResponders && gx.FallbackResponder)
@@ -1016,6 +1064,27 @@ bool InputSystem::shiftDown() const
 {
     return ::shiftDown;
 }
+
+void InputSystem::initialContextActivations()
+{
+    // Deactivate all contexts.
+    for(BindContext *bc : d->contexts)
+    {
+        bc->deactivate();
+    };
+
+    // These are the contexts active by default.
+    context(GLOBAL_BINDING_CONTEXT_NAME).activate();
+    context(DEFAULT_BINDING_CONTEXT_NAME).activate();
+
+    /*
+    if(Con_IsActive())
+    {
+        context(CONSOLE_BINDING_CONTEXT_NAME).activate();
+    }
+    */
+}
+
 void InputSystem::clearAllContexts()
 {
     if(d->contexts.isEmpty()) return;
@@ -1265,21 +1334,154 @@ LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)>
     return LoopContinue;
 }
 
-static inline InputSystem &inputSys()
+static char const *parseContext(char const *desc, String &context)
 {
-    return ClientApp::inputSystem();
+    if(!desc || !strchr(desc, ':'))
+    {
+        // No context defined.
+        context = "";
+        return desc;
+    }
+
+    AutoStr *str = AutoStr_NewStd();
+    desc = Str_CopyDelim(str, desc, ':');
+    context = Str_Text(str);
+
+    return desc;
+}
+
+cbinding_t *InputSystem::bindCommand(char const *eventDesc, char const *command)
+{
+    DENG2_ASSERT(eventDesc && command);
+    LOG_AS("InputSystem");
+
+    // The event descriptor may begin with a symbolic binding context name.
+    String name;
+    eventDesc = parseContext(eventDesc, name);
+
+    if(BindContext *bc = contextPtr(name.isEmpty()? DEFAULT_BINDING_CONTEXT_NAME : name))
+    {
+        return bc->bindCommand(eventDesc, command);
+    }
+    return nullptr;
+}
+
+bool InputSystem::unbindCommand(char const *command)
+{
+    DENG2_ASSERT(command);
+    bool didDelete = false;
+    for(BindContext *bc : d->contexts)
+    {
+        while(cbinding_t *ev = bc->findCommandBinding(command, NUM_INPUT_DEVICES))
+        {
+            didDelete |= bc->deleteBinding(ev->bid);
+        }
+    };
+    return didDelete;
+}
+
+dbinding_t *InputSystem::bindControl(char const *controlDesc, char const *deviceDesc)
+{
+    DENG2_ASSERT(controlDesc && deviceDesc);
+    LOG_AS("InputSystem");
+
+    // The control description may begin with the local player number.
+    int localNum    = 0;
+    AutoStr *str    = AutoStr_NewStd();
+    char const *ptr = Str_CopyDelim(str, controlDesc, '-');
+    if(!strncasecmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
+    {
+        localNum = strtoul(Str_Text(str) + 5, nullptr, 10) - 1;
+        if(localNum < 0 || localNum >= DDMAXPLAYERS)
+        {
+            LOG_INPUT_WARNING("Local player number %i is invalid") << localNum;
+            return nullptr;
+        }
+
+        // Skip past it.
+        controlDesc = ptr;
+    }
+
+    // The next part must be the control name.
+    controlDesc = Str_CopyDelim(str, controlDesc, '-');
+    playercontrol_t *control = P_PlayerControlByName(Str_Text(str));
+    if(!control)
+    {
+        LOG_INPUT_WARNING("Player control \"%s\" not defined") << Str_Text(str);
+        return nullptr;
+    }
+
+    BindContext *bc = contextPtr(control->bindContextName);
+    if(!bc)
+    {
+        bc = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
+    }
+    DENG2_ASSERT(bc);
+
+    LOG_INPUT_VERBOSE("Control '%s' in context '%s' of local player %i to be bound to '%s'")
+            << control->name << bc->name() << localNum << deviceDesc;
+
+    controlbinding_t *conBin = bc->findControlBinding(control->id);
+    bool justCreated         = false;
+    if(!conBin)
+    {
+        conBin      = bc->getControlBinding(control->id);
+        justCreated = true;
+    }
+
+    dbinding_t *devBin = B_NewDeviceBinding(&conBin->deviceBinds[localNum], deviceDesc);
+    if(!devBin)
+    {
+        // Failure in the parsing.
+        if(justCreated)
+        {
+            B_DestroyControlBinding(conBin);
+        }
+        conBin = nullptr;
+        return nullptr;
+    }
+
+    /// @todo: In interactive binding mode, should ask the user if the
+    /// replacement is ok. For now, just delete the other binding.
+    bc->deleteMatching(nullptr, devBin);
+    updateAllDeviceStateAssociations();
+
+    return devBin;
+}
+
+bool InputSystem::removeBinding(int id)
+{
+    for(BindContext *bc : d->contexts)
+    {
+        if(bool result = bc->deleteBinding(id)) return result;
+    }
+    return false;
+}
+
+void InputSystem::writeAllBindingsTo(FILE *file)
+{
+    DENG2_ASSERT(file);
+
+    // Start with a clean slate when restoring the bindings.
+    fprintf(file, "clearbindings\n\n");
+
+    for(BindContext *bc : d->contexts)
+    {
+        bc->writeToFile(file);
+    };
 }
 
 /// @todo: Don't format a string - just collect pointers.
 int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
 {
     DENG2_ASSERT(cmd && buf);
+    InputSystem &isys = ClientApp::inputSystem();
 
     AutoStr *result = AutoStr_NewStd();
     AutoStr *str    = AutoStr_NewStd();
 
     int numFound = 0;
-    inputSys().forAllContexts([&] (BindContext &context)
+    isys.forAllContexts([&] (BindContext &context)
     {
         context.forAllCommandBindings([&] (cbinding_t &bind)
         {
@@ -1311,6 +1513,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     char *buf, size_t bufSize)
 {
     DENG2_ASSERT(controlName && buf);
+    InputSystem &isys = ClientApp::inputSystem();
 
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
         return 0;
@@ -1319,7 +1522,7 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     AutoStr *str    = AutoStr_NewStd();
 
     int numFound = 0;
-    inputSys().forAllContexts([&] (BindContext &context)
+    isys.forAllContexts([&] (BindContext &context)
     {
         context.forAllControlBindings([&] (controlbinding_t &bind)
         {
@@ -1359,17 +1562,20 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
 
 void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
 {
-    if(inputSys().hasContext(name))
+    InputSystem &isys = ClientApp::inputSystem();
+    if(isys.hasContext(name))
     {
-        inputSys().context(name).setFallbackResponder(responderFunc);
+        isys.context(name).setFallbackResponder(responderFunc);
     }
 }
 
 D_CMD(ListAllDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
+    InputSystem &isys = ClientApp::inputSystem();
+
     LOG_INPUT_MSG(_E(b) "Input Devices:");
-    inputSys().forAllDevices([] (InputDevice &device)
+    isys.forAllDevices([] (InputDevice &device)
     {
         LOG_INPUT_MSG("") << device.description();
         return LoopContinue;
@@ -1388,21 +1594,165 @@ D_CMD(ReleaseMouse)
     return false;
 }
 
+D_CMD(BindCommand)
+{
+    DENG2_UNUSED2(src, argc);
+    if(cbinding_t *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
+    {
+        LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
+        return true;
+    }
+    return false;
+}
+
+D_CMD(BindControl)
+{
+    DENG2_UNUSED2(src, argc);
+    if(dbinding_t *bind = ClientApp::inputSystem().bindControl(argv[1], argv[2]))
+    {
+        LOG_INPUT_VERBOSE("Binding %i created") << bind->bid;
+        return true;
+    }
+    return false;
+}
+
+D_CMD(ListBindingContexts)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    InputSystem &isys = ClientApp::inputSystem();
+
+    LOG_INPUT_MSG("%i binding contexts defined:") << isys.contextCount();
+    int idx = 0;
+    isys.forAllContexts([&idx] (BindContext &bc)
+    {
+        LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
+                << (idx++) << (bc.isActive()? _E(b) : _E(w))
+                << bc.name()
+                << (bc.isActive()? "active" : "inactive");
+        return LoopContinue;
+    });
+    return true;
+}
+
+/*
+D_CMD(ClearBindingContexts)
+{
+    ClientApp::inputSystem().clearAllContexts();
+    return true;
+}
+*/
+
+D_CMD(ListBindings)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    InputSystem &isys = ClientApp::inputSystem();
+
+    LOG_INPUT_MSG("%i binding contexts defined") << isys.contextCount();
+    isys.forAllContexts([] (BindContext &bc)
+    {
+        bc.printAllBindings();
+        return LoopContinue;
+    });
+    return true;
+}
+
+D_CMD(ClearBindings)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    ClientApp::inputSystem().forAllContexts([] (BindContext &bc)
+    {
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << bc.name();
+        bc.clearAllBindings();
+        return LoopContinue;
+    });
+
+    // We can restart the id counter, all the old bindings were destroyed.
+    B_ResetIdentifiers();
+    return true;
+}
+
+D_CMD(DeleteBindingById)
+{
+    DENG2_UNUSED2(src, argc);
+
+    int bid = strtoul(argv[1], nullptr, 10);
+    if(ClientApp::inputSystem().removeBinding(bid))
+    {
+        LOG_INPUT_MSG("Binding %i deleted") << bid;
+    }
+    else
+    {
+        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << bid;
+    }
+
+    return true;
+}
+
+D_CMD(DefaultBindings)
+{
+    DENG2_UNUSED3(src, argc, argv);
+
+    B_BindDefaults();
+    B_BindGameDefaults();
+
+    return true;
+}
+
+D_CMD(ActivateBindingContext)
+{
+    DENG2_UNUSED2(src, argc);
+    InputSystem &isys = ClientApp::inputSystem();
+
+    bool const doActivate = !stricmp(argv[0], "activatebcontext");
+    String const context  = argv[1];
+
+    if(!isys.hasContext(context))
+    {
+        LOG_INPUT_WARNING("Binding context '%s' does not exist") << context;
+        return false;
+    }
+
+    BindContext &bc = isys.context(context);
+    if(bc.isProtected())
+    {
+        LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
+                << bc.name() << (doActivate? "activated" : "deactivated");
+        return false;
+    }
+
+    bc.activate(doActivate);
+    return true;
+}
+
 void InputSystem::consoleRegister() // static
 {
-    B_ConsoleRegister(); // for control bindings
+#define PROTECTED_FLAGS     (CMDF_NO_DEDICATED | CMDF_DED | CMDF_CLIENT)
 
     // Cvars
-    C_VAR_BYTE("input-sharp", &useSharpInputEvents, 0, 0, 1);
+    C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
+    C_VAR_BYTE("input-sharp",                &useSharpInputEvents, 0, 0, 1);
 
     // Ccmds
-    C_CMD("listinputdevices",   "",     ListAllDevices);
-    C_CMD("releasemouse",       "",     ReleaseMouse);
-    //C_CMD_FLAGS("setaxis",      "s",    AxisPrintConfig,  CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis",      "ss",   AxisChangeOption, CMDF_NO_DEDICATED);
-    //C_CMD_FLAGS("setaxis",      "sss",  AxisChangeValue,  CMDF_NO_DEDICATED);
+    C_CMD      ("listinputdevices",     "",         ListAllDevices);
+    C_CMD      ("releasemouse",         "",         ReleaseMouse);
+    C_CMD_FLAGS("activatebcontext",     "s",        ActivateBindingContext, PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindevent",            "ss",       BindCommand,            PROTECTED_FLAGS);
+    C_CMD_FLAGS("bindcontrol",          "ss",       BindControl,            PROTECTED_FLAGS);
+    C_CMD_FLAGS("clearbindings",        "",         ClearBindings,          PROTECTED_FLAGS);
+    //C_CMD_FLAGS("clearbcontexts",       "",         ClearBindingContexts,   PROTECTED_FLAGS);
+    C_CMD_FLAGS("deactivatebcontext",   "s",        ActivateBindingContext, PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbcontexts",        nullptr,    ListBindingContexts,    PROTECTED_FLAGS);
+    C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,           PROTECTED_FLAGS);
+    C_CMD_FLAGS("defaultbindings",      "",         DefaultBindings,        PROTECTED_FLAGS);
+    C_CMD_FLAGS("delbind",              "i",        DeleteBindingById,      PROTECTED_FLAGS);
+    //C_CMD_FLAGS("setaxis",            "s",        AxisPrintConfig,  CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
+    //C_CMD_FLAGS("setaxis",            "sss",      AxisChangeValue,  CMDF_NO_DEDICATED);
 
     I_ConsoleRegister();
+
+#undef PROTECTED_FLAGS
 }
 
 // b_main.c

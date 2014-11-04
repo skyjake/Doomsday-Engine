@@ -45,6 +45,7 @@
 #include "ui/inputdevicehatcontrol.h"
 #include "ui/sys_input.h"
 #include "ui/ui_main.h"
+#include "ui/b_util.h"
 
 #include <de/point.h>
 #include "de_graphics.h"

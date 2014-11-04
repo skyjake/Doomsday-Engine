@@ -19,6 +19,7 @@
 #include "WidgetActions"
 #include "clientapp.h"
 #include "ui/b_main.h"
+#include "ui/inputsystem.h"
 #include "ui/bindcontext.h"
 
 using namespace de;
@@ -47,7 +48,7 @@ DENG2_PIMPL(WidgetActions)
 
     ~Instance()
     {
-        B_Shutdown();
+        inputSys().clearAllContexts();
     }
 };
 

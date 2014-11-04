@@ -114,14 +114,14 @@ DENG_GUI_PIMPL(InputBindingWidget)
         self.setText(_E(b) + text);
     }
 
-    void bind(String const &eventDesc)
+    void bindCommand(String const &eventDesc)
     {
-        B_UnbindCommand(command.toLatin1());
+        inputSys().unbindCommand(command.toLatin1());
 
         foreach(QString bcName, contexts)
         {
             String ev = String("%1:%2").arg(bcName, eventDesc);
-            B_BindCommand(ev.toLatin1(), command.toLatin1());
+            inputSys().bindCommand(ev.toLatin1(), command.toLatin1());
         }
     }
 
@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
         else
         {
             // The reset button.
-            bind(defaultEvent);
+            bindCommand(defaultEvent);
             updateLabel();
         }
     }
@@ -247,7 +247,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
                 }
             }
 
-            d->bind(desc);
+            d->bindCommand(desc);
             d->updateLabel();
             d->unfocus();
             return true;

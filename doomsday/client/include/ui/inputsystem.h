@@ -30,6 +30,13 @@
 
 class BindContext;
 class InputDevice;
+struct cbinding_t;
+struct dbinding_t;
+
+#define DEFAULT_BINDING_CONTEXT_NAME    "game"
+#define CONSOLE_BINDING_CONTEXT_NAME    "console"
+#define UI_BINDING_CONTEXT_NAME         "deui"
+#define GLOBAL_BINDING_CONTEXT_NAME     "global"
 
 /**
  * Input devices and events. @ingroup ui
@@ -63,6 +70,10 @@ public:
      */
     de::LoopResult forAllDevices(std::function<de::LoopResult (InputDevice &)> func) const;
 
+    /**
+     * (Re)initialize the input device models, returning all controls to their
+     * default states.
+     */
     void initAllDevices();
 
     /**
@@ -111,10 +122,45 @@ public:
      */
     static void convertEvent(de::Event const &event, ddevent_t *ddEvent);
 
-public: // Bindings ----------------------------------------------------------
+public: // Binding (context) management --------------------------------------
+
+    /**
+     * Try to make a new command binding.
+     *
+     * @param eventDesc  Textual descriptor for the event.
+     * @param command    Console command(s) which the binding will execute when
+     *                   triggered, if a binding is created.
+     *
+     * @return  Resultant command binding.
+     */
+    cbinding_t *bindCommand(char const *eventDesc, char const *command);
+
+    bool unbindCommand(char const *command);
+
+    /**
+     * Try to make a new (player) control binding.
+     *
+     * @param controlDesc  ?
+     * @param deviceDesc   ?
+     */
+    dbinding_t *bindControl(char const *controlDesc, char const *deviceDesc);
+
+    /**
+     * Try to remove the one unique binding associated with @a id.
+     *
+     * @return  @c true if that binding was removed.
+     */
+    bool removeBinding(int id);
+
+    // ---
 
     /// Required/referenced binding context is missing. @ingroup errors
     DENG2_ERROR(MissingContextError);
+
+    /**
+     * Enable the contexts for the initial state.
+     */
+    void initialContextActivations();
 
     /**
      * Destroy all binding contexts and the bindings within the contexts.
@@ -179,6 +225,11 @@ public: // Bindings ----------------------------------------------------------
      * @todo make private.
      */
     void updateAllDeviceStateAssociations();
+
+    /**
+     * Write all bindings in all contexts to a text (cfg) file. Outputs console commands.
+     */
+    void writeAllBindingsTo(FILE *file);
 
 public:
     /**

@@ -35,6 +35,7 @@
 #include <doomsday/filesys/fs_util.h>
 
 #ifdef __CLIENT__
+#  include "clientapp.h"
 #  include "ui/b_main.h"
 #endif
 
@@ -197,7 +198,7 @@ static bool writeBindingsState(Path const &filePath)
                 << NativePath(filePath).pretty();
 
         writeHeaderComment(file);
-        B_WriteToFile(file);
+        ClientApp::inputSystem().writeAllBindingsTo(file);
         fclose(file);
         return true;
     }

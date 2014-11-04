@@ -638,3 +638,144 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str)
     default: break;
     }
 }
+
+static int bindingIdCounter;
+
+int B_NewIdentifier()
+{
+    int id = 0;
+    while(!id)
+    {
+        id = ++bindingIdCounter;
+    }
+    return id;
+}
+
+void B_ResetIdentifiers()
+{
+    bindingIdCounter = 0;
+}
+
+struct keyname_t
+{
+    int key;           ///< DDKEY
+    char const *name;
+};
+static keyname_t const keyNames[] = {
+    { DDKEY_PAUSE,       "pause" },
+    { DDKEY_ESCAPE,      "escape" },
+    { DDKEY_ESCAPE,      "esc" },
+    { DDKEY_RIGHTARROW,  "right" },
+    { DDKEY_LEFTARROW,   "left" },
+    { DDKEY_UPARROW,     "up" },
+    { DDKEY_DOWNARROW,   "down" },
+    { DDKEY_RETURN,      "return" },
+    { DDKEY_TAB,         "tab" },
+    { DDKEY_RSHIFT,      "shift" },
+    { DDKEY_RCTRL,       "ctrl" },
+    { DDKEY_RCTRL,       "control" },
+    { DDKEY_RALT,        "alt" },
+    { DDKEY_INS,         "insert" },
+    { DDKEY_INS,         "ins" },
+    { DDKEY_DEL,         "delete" },
+    { DDKEY_DEL,         "del" },
+    { DDKEY_PGUP,        "pageup" },
+    { DDKEY_PGUP,        "pgup" },
+    { DDKEY_PGDN,        "pagedown" },
+    { DDKEY_PGDN,        "pgdown" },
+    { DDKEY_PGDN,        "pgdn" },
+    { DDKEY_HOME,        "home" },
+    { DDKEY_END,         "end" },
+    { DDKEY_BACKSPACE,   "backspace" },
+    { DDKEY_BACKSPACE,   "bkspc" },
+    { '/',               "slash" },
+    { DDKEY_BACKSLASH,   "backslash" },
+    { '[',               "sqbracketleft" },
+    { ']',               "sqbracketright" },
+    { '+',               "plus" },
+    { '-',               "minus" },
+    { '+',               "plus" },
+    { '=',               "equals" },
+    { ' ',               "space" },
+    { ';',               "semicolon" },
+    { ',',               "comma" },
+    { '.',               "period" },
+    { '\'',              "apostrophe" },
+    { DDKEY_F10,         "f10" },
+    { DDKEY_F11,         "f11" },
+    { DDKEY_F12,         "f12" },
+    { DDKEY_F1,          "f1" },
+    { DDKEY_F2,          "f2" },
+    { DDKEY_F3,          "f3" },
+    { DDKEY_F4,          "f4" },
+    { DDKEY_F5,          "f5" },
+    { DDKEY_F6,          "f6" },
+    { DDKEY_F7,          "f7" },
+    { DDKEY_F8,          "f8" },
+    { DDKEY_F9,          "f9" },
+    { '`',               "tilde" },
+    { DDKEY_NUMLOCK,     "numlock" },
+    { DDKEY_CAPSLOCK,    "capslock" },
+    { DDKEY_SCROLL,      "scrlock" },
+    { DDKEY_NUMPAD0,     "pad0" },
+    { DDKEY_NUMPAD1,     "pad1" },
+    { DDKEY_NUMPAD2,     "pad2" },
+    { DDKEY_NUMPAD3,     "pad3" },
+    { DDKEY_NUMPAD4,     "pad4" },
+    { DDKEY_NUMPAD5,     "pad5" },
+    { DDKEY_NUMPAD6,     "pad6" },
+    { DDKEY_NUMPAD7,     "pad7" },
+    { DDKEY_NUMPAD8,     "pad8" },
+    { DDKEY_NUMPAD9,     "pad9" },
+    { DDKEY_DECIMAL,     "decimal" },
+    { DDKEY_DECIMAL,     "padcomma" },
+    { DDKEY_SUBTRACT,    "padminus" },
+    { DDKEY_ADD,         "padplus" },
+    { DDKEY_PRINT,       "print" },
+    { DDKEY_PRINT,       "prtsc" },
+    { DDKEY_ENTER,       "enter" },
+    { DDKEY_DIVIDE,      "divide" },
+    { DDKEY_MULTIPLY,    "multiply" },
+    { DDKEY_SECTION,     "section" },
+    { 0, nullptr}
+};
+
+char const *B_ShortNameForKey(int ddKey, dd_bool forceLowercase)
+{
+    static char nameBuffer[40];
+
+    for(uint idx = 0; keyNames[idx].key; ++idx)
+    {
+        if(ddKey == keyNames[idx].key)
+            return keyNames[idx].name;
+    }
+
+    if(isalnum(ddKey))
+    {
+        // Printable character, fabricate a single-character name.
+        nameBuffer[0] = forceLowercase? tolower(ddKey) : ddKey;
+        nameBuffer[1] = 0;
+        return nameBuffer;
+    }
+
+    return nullptr;
+}
+
+int B_KeyForShortName(char const *key)
+{
+    DENG2_ASSERT(key);
+
+    for(uint idx = 0; keyNames[idx].key; ++idx)
+    {
+        if(!stricmp(key, keyNames[idx].name))
+            return keyNames[idx].key;
+    }
+
+    if(strlen(key) == 1 && isalnum(key[0]))
+    {
+        // ASCII char.
+        return tolower(key[0]);
+    }
+
+    return 0;
+}
