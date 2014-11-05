@@ -92,7 +92,7 @@ static dd_bool parseControl(ImpulseBinding *ib, char const *desc)
     if(!Str_CompareIgnoreCase(str, "key"))
     {
         ib->deviceId = IDEV_KEYBOARD;
-        ib->type   = IBD_TOGGLE;
+        ib->type     = IBD_TOGGLE;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
@@ -262,33 +262,25 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
         InputDevice *dev = inputSys().devicePtr(ib->deviceId);
         if(!dev || !dev->isActive()) continue; // Not available.
 
+        // Get the control.
+        InputDeviceControl *ctrl = nullptr;
+        switch(ib->type)
+        {
+        case IBD_TOGGLE: ctrl = &dev->button(ib->controlId); break;
+        case IBD_AXIS:   ctrl = &dev->axis(ib->controlId);   break;
+        case IBD_ANGLE:  ctrl = &dev->hat(ib->controlId);    break;
+
+        default:
+            DENG2_ASSERT(!"B_EvaluateImpulseBindingList: Invalid ib->type.");
+            break;
+        }
+
         float devicePos = 0;
         float deviceOffset = 0;
         uint deviceTime = 0;
 
-        switch(ib->type)
+        if(auto *axis = ctrl->maybeAs<InputDeviceAxisControl>())
         {
-        case IBD_TOGGLE: {
-            InputDeviceButtonControl *button = &dev->button(ib->controlId);
-
-            if(context && button->bindContext() != context)
-                continue; // Shadowed by a more important active context.
-
-            // Expired?
-            if(button->bindContextAssociation() & InputDeviceControl::Expired)
-                break;
-
-            devicePos = (button->isDown() ||
-                         (allowTriggered && (button->bindContextAssociation() & InputDeviceControl::Triggered))? 1.0f : 0.0f);
-            deviceTime = button->time();
-
-            // We've checked it, so clear the flag.
-            button->setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
-            break; }
-
-        case IBD_AXIS: {
-            InputDeviceAxisControl *axis = &dev->axis(ib->controlId);
-
             if(context && axis->bindContext() != context)
             {
                 if(!axis->bindContext()->findImpulseBinding(ib->deviceId, IBD_AXIS, ib->controlId))
@@ -303,43 +295,54 @@ void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float 
                 continue; // Shadowed by a more important active class.
             }
 
-            if(axis->bindContextAssociation() & InputDeviceControl::Expired)
-                break;
-
-            if(axis->type() == InputDeviceAxisControl::Pointer)
+            // Expired?
+            if(!(axis->bindContextAssociation() & InputDeviceControl::Expired))
             {
-                deviceOffset = axis->position();
-                axis->setPosition(0);
+                if(axis->type() == InputDeviceAxisControl::Pointer)
+                {
+                    deviceOffset = axis->position();
+                    axis->setPosition(0);
+                }
+                else
+                {
+                    devicePos = axis->position();
+                }
+                deviceTime = axis->time();
             }
-            else
+        }
+        if(auto *button = ctrl->maybeAs<InputDeviceButtonControl>())
+        {
+            if(context && button->bindContext() != context)
+                continue; // Shadowed by a more important active context.
+
+            // Expired?
+            if(!(button->bindContextAssociation() & InputDeviceControl::Expired))
             {
-                devicePos = axis->position();
+                devicePos  = (button->isDown() ||
+                              (allowTriggered && (button->bindContextAssociation() & InputDeviceControl::Triggered))? 1.0f : 0.0f);
+                deviceTime = button->time();
+
+                // We've checked it, so clear the flag.
+                button->setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
             }
-            deviceTime = axis->time();
-            break; }
-
-        case IBD_ANGLE: {
-            InputDeviceHatControl *hat = &dev->hat(ib->controlId);
-
+        }
+        if(auto *hat = ctrl->maybeAs<InputDeviceHatControl>())
+        {
             if(context && hat->bindContext() != context)
                 continue; // Shadowed by a more important active class.
 
-            if(hat->bindContextAssociation() & InputDeviceControl::Expired)
-                break;
-
-            devicePos  = (hat->position() == ib->angle? 1.0f : 0.0f);
-            deviceTime = hat->time();
-            break; }
-
-        default:
-            DENG2_ASSERT(!"B_EvaluateImpulseBindingList: Invalid ib->type.");
-            break;
+            // Expired?
+            if(!(hat->bindContextAssociation() & InputDeviceControl::Expired))
+            {
+                devicePos  = (hat->position() == ib->angle? 1.0f : 0.0f);
+                deviceTime = hat->time();
+            }
         }
 
         // Apply further modifications based on flags.
         if(ib->flags & IBDF_INVERSE)
         {
-            devicePos = -devicePos;
+            devicePos    = -devicePos;
             deviceOffset = -deviceOffset;
         }
         if(ib->flags & IBDF_TIME_STAGED)

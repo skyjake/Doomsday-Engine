@@ -50,6 +50,7 @@ public:
 
     /**
      * Base class for all controls.
+     * @todo Attribute a GUID, to simplify bookkeeping. -ds
      */
     class Control
     {
@@ -61,13 +62,13 @@ public:
          * How the control state relates to binding contexts.
          */
         enum BindContextAssociationFlag {
-            /// The state has expired. The control is considered to remain in default
-            /// state until the flag gets cleared (which happens when the real control
-            /// state returns to its default).
+            /// The state has expired. The control is considered to remain in
+            /// default state until the flag gets cleared (which happens when
+            /// the real control state returns to its default).
             Expired      = 0x1,
 
             /// The state has been triggered. This is cleared when someone checks
-            /// the control state. (Only for toggles).
+            /// the control state. (Only for buttons).
             Triggered    = 0x2,
 
             DefaultFlags = 0

@@ -783,39 +783,25 @@ DENG2_PIMPL(InputSystem)
             {
                 InputDevice &dev = _self.device(bind.deviceId);
 
+                InputDeviceControl *ctrl = nullptr;
                 switch(bind.type)
                 {
-                case E_TOGGLE: {
-                    InputDeviceControl &ctrl = dev.button(bind.controlId);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
+                case E_TOGGLE: ctrl = &dev.button(bind.controlId); break;
+                case E_AXIS:   ctrl = &dev.axis(bind.controlId);   break;
+                case E_ANGLE:  ctrl = &dev.hat(bind.controlId);    break;
 
-                case E_AXIS: {
-                    InputDeviceControl &ctrl = dev.axis(bind.controlId);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case E_ANGLE: {
-                    InputDeviceControl &ctrl = dev.hat(bind.controlId);
-                    if(!ctrl.hasBindContext())
-                    {
-                        ctrl.setBindContext(bc);
-                    }
-                    break; }
-
-                case E_SYMBOLIC:
-                    break;
+                case E_SYMBOLIC: break;
 
                 default:
                     DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid eb.type");
                     break;
                 }
+
+                if(ctrl && !ctrl->hasBindContext())
+                {
+                    ctrl->setBindContext(bc);
+                }
+
                 return LoopContinue;
             });
 
@@ -827,35 +813,21 @@ DENG2_PIMPL(InputSystem)
                 {
                     InputDevice &dev = _self.device(bind->deviceId);
 
+                    InputDeviceControl *ctrl = nullptr;
                     switch(bind->type)
                     {
-                    case IBD_TOGGLE: {
-                        InputDeviceControl &ctrl = dev.button(bind->controlId);
-                        if(!ctrl.hasBindContext())
-                        {
-                            ctrl.setBindContext(bc);
-                        }
-                        break; }
-
-                    case IBD_AXIS: {
-                        InputDeviceControl &ctrl = dev.axis(bind->controlId);
-                        if(!ctrl.hasBindContext())
-                        {
-                            ctrl.setBindContext(bc);
-                        }
-                        break; }
-
-                    case IBD_ANGLE: {
-                        InputDeviceControl &ctrl = dev.hat(bind->controlId);
-                        if(!ctrl.hasBindContext())
-                        {
-                            ctrl.setBindContext(bc);
-                        }
-                        break; }
+                    case IBD_TOGGLE: ctrl = &dev.button(bind->controlId); break;
+                    case IBD_AXIS:   ctrl = &dev.axis(bind->controlId);   break;
+                    case IBD_ANGLE:  ctrl = &dev.hat(bind->controlId);    break;
 
                     default:
                         DENG2_ASSERT(!"InputSystem::updateAllDeviceStateAssociations: Invalid db->type");
                         break;
+                    }
+
+                    if(ctrl && !ctrl->hasBindContext())
+                    {
+                        ctrl->setBindContext(bc);
                     }
                 }
                 return LoopContinue;
@@ -1186,7 +1158,7 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
             }
             else if(ddEvent->type == E_TOGGLE)
             {
-                ev->type = EV_MOUSE_BUTTON;
+                ev->type  = EV_MOUSE_BUTTON;
                 ev->data1 = ddEvent->toggle.id;
                 ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
                              : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
@@ -1201,7 +1173,7 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
             if(ddEvent->type == E_AXIS)
             {
                 int *data = &ev->data1;
-                ev->type = EV_JOY_AXIS;
+                ev->type  = EV_JOY_AXIS;
                 ev->state = (evstate_t) 0;
                 if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
                 {
@@ -1212,7 +1184,7 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
             }
             else if(ddEvent->type == E_TOGGLE)
             {
-                ev->type = EV_JOY_BUTTON;
+                ev->type  = EV_JOY_BUTTON;
                 ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
                              : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
                              : EVS_REPEAT );

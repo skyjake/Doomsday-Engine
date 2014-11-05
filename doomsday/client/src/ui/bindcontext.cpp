@@ -419,25 +419,28 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
     *evResult = nullptr;
     *dResult  = nullptr;
 
-    for(CommandBinding *e = d->commandBinds.next; e != &d->commandBinds; e = e->next)
+    for(CommandBinding *bind = d->commandBinds.next; bind != &d->commandBinds; bind = bind->next)
     {
-        if(match1 && match1->id != e->id)
+        if(match1 && match1->id != bind->id)
         {
-            if(conditionsAreEqual(match1->numConds, match1->conds, e->numConds, e->conds) &&
-               match1->deviceId == e->deviceId && match1->controlId == e->controlId &&
-               match1->type == e->type && match1->state == e->state)
+            if(conditionsAreEqual(match1->numConds, match1->conds, bind->numConds, bind->conds) &&
+               match1->deviceId  == bind->deviceId &&
+               match1->controlId == bind->controlId &&
+               match1->type      == bind->type &&
+               match1->state     == bind->state)
             {
-                *evResult = e;
+                *evResult = bind;
                 return true;
             }
         }
         if(match2)
         {
-            if(conditionsAreEqual(match2->numConds, match2->conds, e->numConds, e->conds) &&
-               match2->deviceId == e->deviceId && match2->controlId == e->controlId &&
-               match2->type == (ibcontroltype_t) e->type)
+            if(conditionsAreEqual(match2->numConds, match2->conds, bind->numConds, bind->conds) &&
+               match2->deviceId  == bind->deviceId &&
+               match2->controlId == bind->controlId &&
+               match2->type      == (ibcontroltype_t) bind->type)
             {
-                *evResult = e;
+                *evResult = bind;
                 return true;
             }
         }
@@ -450,8 +453,9 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
         if(match1)
         {
             if(conditionsAreEqual(match1->numConds, match1->conds, bind->numConds, bind->conds) &&
-               match1->deviceId == bind->deviceId && match1->controlId == bind->controlId &&
-               match1->type == (ddeventtype_t) bind->type)
+               match1->deviceId  == bind->deviceId &&
+               match1->controlId == bind->controlId &&
+               match1->type      == (ddeventtype_t) bind->type)
             {
                 *dResult = bind;
                 return true;
@@ -461,8 +465,9 @@ bool BindContext::findMatchingBinding(CommandBinding *match1, ImpulseBinding *ma
         if(match2 && match2->id != bind->id)
         {
             if(conditionsAreEqual(match2->numConds, match2->conds, bind->numConds, bind->conds) &&
-               match2->deviceId == bind->deviceId && match2->controlId == bind->controlId &&
-               match2->type == bind->type)
+               match2->deviceId  == bind->deviceId &&
+               match2->controlId == bind->controlId &&
+               match2->type      == bind->type)
             {
                 *dResult = bind;
                 return true;
