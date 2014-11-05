@@ -348,8 +348,6 @@ DENG_HEADERS += \
     include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
-    include/ui/b_command.h \
-    include/ui/b_device.h \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/bindcontext.h \
@@ -358,6 +356,7 @@ DENG_HEADERS += \
     include/ui/clientwindow.h \
     include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
+    include/ui/commandbinding.h \
     include/ui/dd_input.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
@@ -372,6 +371,7 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/impulsebinding.h \
     include/ui/infine/finale.h \
     include/ui/infine/finaleanimwidget.h \
     include/ui/infine/finaleinterpreter.h \
@@ -675,8 +675,6 @@ SOURCES += \
     src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
-    src/ui/b_command.cpp \
-    src/ui/b_device.cpp \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/bindcontext.cpp \
@@ -685,6 +683,7 @@ SOURCES += \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
+    src/ui/commandbinding.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
@@ -699,6 +698,7 @@ SOURCES += \
     src/ui/dialogs/vrsettingsdialog.cpp \
     src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
+    src/ui/impulsebinding.cpp \
     src/ui/infine/finale.cpp \
     src/ui/infine/finaleanimwidget.cpp \
     src/ui/infine/finaleinterpreter.cpp \

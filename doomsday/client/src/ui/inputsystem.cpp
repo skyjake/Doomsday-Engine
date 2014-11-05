@@ -449,11 +449,11 @@ DENG2_PIMPL(InputSystem)
         if(updateAxes)
         {
             // Input events have modified input device state: update the axis positions.
-            for(InputDevice *dev : devices)
+            for(InputDevice *device : devices)
             {
-                dev->forAllControls([&ticLength] (InputDeviceControl &control)
+                device->forAllControls([&ticLength] (InputDeviceControl &ctrl)
                 {
-                    if(auto *axis = control.maybeAs<InputDeviceAxisControl>())
+                    if(auto *axis = ctrl.maybeAs<InputDeviceAxisControl>())
                     {
                         axis->update(ticLength);
                     }
@@ -765,21 +765,21 @@ DENG2_PIMPL(InputSystem)
         // Clear all existing associations.
         for(InputDevice *device : devices)
         {
-            device->forAllControls([] (InputDeviceControl &control)
+            device->forAllControls([] (InputDeviceControl &ctrl)
             {
-                control.clearBindContextAssociation();
+                ctrl.clearBindContextAssociation();
                 return LoopContinue;
             });
         }
 
         // Mark all bindings in all contexts.
-        for(BindContext *bc : contexts)
+        for(BindContext *context : contexts)
         {
             // Skip inactive contexts.
-            if(!bc->isActive())
+            if(!context->isActive())
                 continue;
 
-            bc->forAllCommandBindings([&_self, &bc] (CommandBinding &bind)
+            context->forAllCommandBindings([&_self, &context] (CommandBinding &bind)
             {
                 InputDevice &dev = _self.device(bind.deviceId);
 
@@ -799,13 +799,13 @@ DENG2_PIMPL(InputSystem)
 
                 if(ctrl && !ctrl->hasBindContext())
                 {
-                    ctrl->setBindContext(bc);
+                    ctrl->setBindContext(context);
                 }
 
                 return LoopContinue;
             });
 
-            bc->forAllControlBindGroups([&_self, &bc] (controlbindgroup_t &group)
+            context->forAllControlBindGroups([&_self, &context] (controlbindgroup_t &group)
             {
                 // Associate all the device bindings.
                 for(int i = 0; i < DDMAXPLAYERS; ++i)
@@ -827,40 +827,40 @@ DENG2_PIMPL(InputSystem)
 
                     if(ctrl && !ctrl->hasBindContext())
                     {
-                        ctrl->setBindContext(bc);
+                        ctrl->setBindContext(context);
                     }
                 }
                 return LoopContinue;
             });
 
             // If the context have made a broad device acquisition, mark all relevant states.
-            if(bc->willAcquire(IDEV_KEYBOARD))
+            if(context->willAcquire(IDEV_KEYBOARD))
             {
                 InputDevice &keyboard = self.device(IDEV_KEYBOARD);
                 if(keyboard.isActive())
                 {
-                    keyboard.forAllControls([&bc] (InputDeviceControl &control)
+                    keyboard.forAllControls([&context] (InputDeviceControl &ctrl)
                     {
-                        if(!control.hasBindContext())
+                        if(!ctrl.hasBindContext())
                         {
-                            control.setBindContext(bc);
+                            ctrl.setBindContext(context);
                         }
                         return LoopContinue;
                     });
                 }
             }
 
-            if(bc->willAcquireAll())
+            if(context->willAcquireAll())
             {
                 for(InputDevice *device : devices)
                 {
                     if(device->isActive())
                     {
-                        device->forAllControls([&bc] (InputDeviceControl &control)
+                        device->forAllControls([&context] (InputDeviceControl &ctrl)
                         {
-                            if(!control.hasBindContext())
+                            if(!ctrl.hasBindContext())
                             {
-                                control.setBindContext(bc);
+                                ctrl.setBindContext(context);
                             }
                             return LoopContinue;
                         });
@@ -873,11 +873,11 @@ DENG2_PIMPL(InputSystem)
         // the devices and see if any of the states need to be expired.
         for(InputDevice *device : devices)
         {
-            device->forAllControls([] (InputDeviceControl &control)
+            device->forAllControls([] (InputDeviceControl &ctrl)
             {
-                if(!control.inDefaultState())
+                if(!ctrl.inDefaultState())
                 {
-                    control.expireBindContextAssociationIfChanged();
+                    ctrl.expireBindContextAssociationIfChanged();
                 }
                 return LoopContinue;
             });
@@ -888,7 +888,7 @@ DENG2_PIMPL(InputSystem)
      * When the active state of a binding context changes we'll re-evaluate the
      * effective bindings to avoid wasting time by looking them up repeatedly.
      */
-    void bindContextActiveChanged(BindContext &bc)
+    void bindContextActiveChanged(BindContext &context)
     {
         updateAllDeviceStateAssociations();
 
@@ -898,7 +898,7 @@ DENG2_PIMPL(InputSystem)
             /// @todo: Really exclude named devices? -ds
             //int const deviceId = i;
 
-            if(bc.willAcquireAll())//|| bc.willAcquire(deviceId))
+            if(context.willAcquireAll())//|| context.willAcquire(deviceId))
             {
                 device->reset();
             }
@@ -1125,7 +1125,6 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
         ev->data2 = (int)(((uint64_t) ddEvent->symbolic.name) >> 32); // high dword
 #else
         ASSERT_NOT_64BIT(ddEvent->symbolic.name);
-
         ev->data1 = (int) ddEvent->symbolic.name;
         ev->data2 = 0;
 #endif
@@ -1201,9 +1200,7 @@ bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
             return false;
 
         default:
-#ifdef DENG2_DEBUG
-            App_Error("InputSystem::convertEvent: Unknown device ID in ddevent_t");
-#endif
+            DENG2_ASSERT(!"InputSystem::convertEvent: Unknown device ID in ddevent_t");
             return false;
         }
     }
@@ -1236,7 +1233,7 @@ bool InputSystem::shiftDown() const
 void InputSystem::initialContextActivations()
 {
     // Deactivate all contexts.
-    for(BindContext *bc : d->contexts) bc->deactivate();
+    for(BindContext *context : d->contexts) context->deactivate();
 
     // These are the contexts active by default.
     context(GLOBAL_BINDING_CONTEXT_NAME ).activate();
@@ -1270,22 +1267,22 @@ bool InputSystem::hasContext(String const &name) const
 
 BindContext &InputSystem::context(String const &name) const
 {
-    if(BindContext *bc = contextPtr(name))
+    if(BindContext *context = contextPtr(name))
     {
-        return *bc;
+        return *context;
     }
     /// @throw MissingContextError  Specified name is unknown.
-    throw MissingContextError("InputSystem::context", "Unknown binding context name:" + name);
+    throw MissingContextError("InputSystem::context", "Unknown name:" + name);
 }
 
 /// @todo: Optimize O(n) search...
 BindContext *InputSystem::contextPtr(String const &name) const
 {
-    for(BindContext const *bc : d->contexts)
+    for(BindContext const *context : d->contexts)
     {
-        if(!bc->name().compareWithoutCase(name))
+        if(!context->name().compareWithoutCase(name))
         {
-            return const_cast<BindContext *>(bc);
+            return const_cast<BindContext *>(context);
         }
     }
     return nullptr;
@@ -1301,21 +1298,21 @@ BindContext &InputSystem::contextAt(int position) const
     throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::number(position));
 }
 
-int InputSystem::contextPositionOf(BindContext *bc) const
+int InputSystem::contextPositionOf(BindContext *context) const
 {
-    return (bc? d->contexts.indexOf(bc) : -1);
+    return (context? d->contexts.indexOf(context) : -1);
 }
 
 BindContext *InputSystem::newContext(String const &name)
 {
-    BindContext *bc = new BindContext(name);
-    d->contexts.prepend(bc);
+    BindContext *context = new BindContext(name);
+    d->contexts.prepend(context);
 
-    bc->audienceForActiveChange()        += d;
-    bc->audienceForAcquireDeviceChange() += d;
-    bc->audienceForBindingAddition()     += d;
+    context->audienceForActiveChange()        += d;
+    context->audienceForAcquireDeviceChange() += d;
+    context->audienceForBindingAddition()     += d;
 
-    return bc;
+    return context;
 }
 
 Action *InputSystem::actionForEvent(ddevent_t const &event) const
@@ -1323,30 +1320,30 @@ Action *InputSystem::actionForEvent(ddevent_t const &event) const
     event_t ev;
     bool validGameEvent = InputSystem::convertEvent(&event, &ev);
 
-    for(BindContext *bc : d->contexts)
+    for(BindContext *context : d->contexts)
     {
-        if(!bc->isActive()) continue;
+        if(!context->isActive()) continue;
 
-        if(Action *act = bc->actionForEvent(event))
+        if(Action *act = context->actionForEvent(event))
         {
             return act;
         }
 
         // Try the fallback responders.
-        if(bc->tryFallbackResponders(event, ev, validGameEvent))
+        if(context->tryFallbackResponders(event, ev, validGameEvent))
         {
             return nullptr; // fallback responder executed something.
         }
     }
 
-    return nullptr; // Nobody had a binding for this event.
+    return nullptr; // No binding for this event.
 }
 
 LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)> func) const
 {
-    for(BindContext *bc : d->contexts)
+    for(BindContext *context : d->contexts)
     {
-        if(auto result = func(*bc)) return result;
+        if(auto result = func(*context)) return result;
     }
     return LoopContinue;
 }
@@ -1376,9 +1373,9 @@ CommandBinding *InputSystem::bindCommand(char const *eventDesc, char const *comm
     String name;
     eventDesc = parseContext(eventDesc, name);
 
-    if(BindContext *bc = contextPtr(name.isEmpty()? DEFAULT_BINDING_CONTEXT_NAME : name))
+    if(BindContext *context = contextPtr(name.isEmpty()? DEFAULT_BINDING_CONTEXT_NAME : name))
     {
-        return bc->bindCommand(eventDesc, command);
+        return context->bindCommand(eventDesc, command);
     }
     return nullptr;
 }
@@ -1389,11 +1386,11 @@ bool InputSystem::unbindCommand(char const *command)
     LOG_AS("InputSystem");
 
     bool didDelete = false;
-    for(BindContext *bc : d->contexts)
+    for(BindContext *context : d->contexts)
     {
-        while(CommandBinding *bind = bc->findCommandBinding(command))
+        while(CommandBinding *bind = context->findCommandBinding(command))
         {
-            didDelete |= bc->deleteBinding(bind->id);
+            didDelete |= context->deleteBinding(bind->id);
         }
     };
     return didDelete;
@@ -1404,7 +1401,7 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
     DENG2_ASSERT(ctrlDesc && impulseDesc);
     LOG_AS("InputSystem");
 
-    // The impulse description may begin with the local player number.
+    // The impulse descriptor may begin with the local player number.
     int localNum    = 0;
     AutoStr *str    = AutoStr_NewStd();
     char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
@@ -1430,21 +1427,21 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
         return nullptr;
     }
 
-    BindContext *bc = contextPtr(impulse->bindContextName);
-    if(!bc)
+    BindContext *context = contextPtr(impulse->bindContextName);
+    if(!context)
     {
-        bc = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
+        context = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
     }
-    DENG2_ASSERT(bc);
+    DENG2_ASSERT(context);
 
     LOG_INPUT_VERBOSE("Impulse '%s' in context '%s' of local player %i to be bound to '%s'")
-            << impulse->name << bc->name() << localNum << ctrlDesc;
+            << impulse->name << context->name() << localNum << ctrlDesc;
 
-    controlbindgroup_t *group = bc->findControlBindGroup(impulse->id);
+    controlbindgroup_t *group = context->findControlBindGroup(impulse->id);
     bool justCreated = false;
     if(!group)
     {
-        group       = bc->getControlBindGroup(impulse->id);
+        group       = context->getControlBindGroup(impulse->id);
         justCreated = true;
     }
 
@@ -1461,7 +1458,7 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
 
     /// @todo: In interactive binding mode, should ask the user if the
     /// replacement is ok. For now, just delete the other binding.
-    bc->deleteMatching(nullptr, bind);
+    context->deleteMatching(nullptr, bind);
     //updateAllDeviceStateAssociations();
 
     return bind;
@@ -1470,9 +1467,9 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
 bool InputSystem::removeBinding(int id)
 {
     LOG_AS("InputSystem");
-    for(BindContext *bc : d->contexts)
+    for(BindContext *context : d->contexts)
     {
-        if(bool result = bc->deleteBinding(id)) return result;
+        if(bool result = context->deleteBinding(id)) return result;
     }
     return false;
 }
@@ -1485,16 +1482,13 @@ void InputSystem::writeAllBindingsTo(FILE *file)
     // Start with a clean slate when restoring the bindings.
     fprintf(file, "clearbindings\n\n");
 
-    for(BindContext *bc : d->contexts)
-    {
-        bc->writeAllBindingsTo(file);
-    };
+    for(BindContext *context : d->contexts) context->writeAllBindingsTo(file);
 }
 
 /// @todo: Don't format a string - just collect pointers.
-int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
+int B_BindingsForCommand(char const *command, char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(cmd && buf);
+    DENG2_ASSERT(command && outBuf);
     InputSystem &isys = ClientApp::inputSystem();
 
     AutoStr *result = AutoStr_NewStd();
@@ -1505,7 +1499,7 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
     {
         context.forAllCommandBindings([&] (CommandBinding &bind)
         {
-            if(strcmp(bind.command, cmd))
+            if(strcmp(bind.command, command))
                 return LoopContinue;
 
             // It's here!
@@ -1522,17 +1516,17 @@ int B_BindingsForCommand(char const *cmd, char *buf, size_t bufSize)
     });
 
     // Copy the result to the return buffer.
-    std::memset(buf, 0, bufSize);
-    strncpy(buf, Str_Text(result), bufSize - 1);
+    std::memset(outBuf, 0, outBufSize);
+    strncpy(outBuf, Str_Text(result), outBufSize - 1);
 
     return numFound;
 }
 
 /// @todo: Don't format a string - just collect pointers.
-int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
-    char *buf, size_t bufSize)
+int B_BindingsForControl(int localPlayer, char const *impulseName, int inverse,
+    char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(controlName && buf);
+    DENG2_ASSERT(impulseName && outBuf);
     InputSystem &isys = ClientApp::inputSystem();
 
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
@@ -1544,18 +1538,18 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     int numFound = 0;
     isys.forAllContexts([&] (BindContext &context)
     {
-        context.forAllControlBindGroups([&] (controlbindgroup_t &bind)
+        context.forAllControlBindGroups([&] (controlbindgroup_t &group)
         {
-            char const *name = P_PlayerControlById(bind.impulseId)->name;
+            char const *name = P_PlayerControlById(group.impulseId)->name;
 
-            if(strcmp(name, controlName))
+            if(strcmp(name, impulseName))
                 return LoopContinue; // Wrong control.
 
-            for(ImpulseBinding *db = bind.binds[localPlayer].next; db != &bind.binds[localPlayer]; db = db->next)
+            for(ImpulseBinding *bind = group.binds[localPlayer].next; bind != &group.binds[localPlayer]; bind = bind->next)
             {
                 if(inverse == BFCI_BOTH ||
-                   (inverse == BFCI_ONLY_NON_INVERSE && !(db->flags & IBDF_INVERSE)) ||
-                   (inverse == BFCI_ONLY_INVERSE && (db->flags & IBDF_INVERSE)))
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(bind->flags & IBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE     &&  (bind->flags & IBDF_INVERSE)))
                 {
                     // It's here!
                     if(numFound)
@@ -1564,8 +1558,8 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
                     }
                     numFound++;
 
-                    ImpulseBinding_ToString(db, str);
-                    Str_Appendf(result, "%i@%s:%s", db->id, context.name().toUtf8().constData(), Str_Text(str));
+                    ImpulseBinding_ToString(bind, str);
+                    Str_Appendf(result, "%i@%s:%s", bind->id, context.name().toUtf8().constData(), Str_Text(str));
                 }
             }
             return LoopContinue;
@@ -1574,8 +1568,8 @@ int B_BindingsForControl(int localPlayer, char const *controlName, int inverse,
     });
 
     // Copy the result to the return buffer.
-    std::memset(buf, 0, bufSize);
-    strncpy(buf, Str_Text(result), bufSize - 1);
+    std::memset(outBuf, 0, outBufSize);
+    strncpy(outBuf, Str_Text(result), outBufSize - 1);
 
     return numFound;
 }
@@ -1592,10 +1586,9 @@ void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
 D_CMD(ListAllDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
-    InputSystem &isys = ClientApp::inputSystem();
 
     LOG_INPUT_MSG(_E(b) "Input Devices:");
-    isys.forAllDevices([] (InputDevice &device)
+    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
     {
         LOG_INPUT_MSG("") << device.description();
         return LoopContinue;
@@ -1643,12 +1636,12 @@ D_CMD(ListContexts)
 
     LOG_INPUT_MSG("%i binding contexts defined:") << isys.contextCount();
     int idx = 0;
-    isys.forAllContexts([&idx] (BindContext &bc)
+    isys.forAllContexts([&idx] (BindContext &context)
     {
         LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
-                << (idx++) << (bc.isActive()? _E(b) : _E(w))
-                << bc.name()
-                << (bc.isActive()? "active" : "inactive");
+                << (idx++) << (context.isActive()? _E(b) : _E(w))
+                << context.name()
+                << (context.isActive()? "active" : "inactive");
         return LoopContinue;
     });
     return true;
@@ -1668,9 +1661,9 @@ D_CMD(ListBindings)
     InputSystem &isys = ClientApp::inputSystem();
 
     LOG_INPUT_MSG("%i binding contexts defined") << isys.contextCount();
-    isys.forAllContexts([] (BindContext &bc)
+    isys.forAllContexts([] (BindContext &context)
     {
-        bc.printAllBindings();
+        context.printAllBindings();
         return LoopContinue;
     });
     return true;
@@ -1680,10 +1673,10 @@ D_CMD(ClearBindings)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    ClientApp::inputSystem().forAllContexts([] (BindContext &bc)
+    ClientApp::inputSystem().forAllContexts([] (BindContext &context)
     {
-        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << bc.name();
-        bc.clearAllBindings();
+        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << context.name();
+        context.clearAllBindings();
         return LoopContinue;
     });
 
@@ -1696,14 +1689,14 @@ D_CMD(RemoveBinding)
 {
     DENG2_UNUSED2(src, argc);
 
-    int bid = strtoul(argv[1], nullptr, 10);
-    if(ClientApp::inputSystem().removeBinding(bid))
+    int id = strtoul(argv[1], nullptr, 10);
+    if(ClientApp::inputSystem().removeBinding(id))
     {
-        LOG_INPUT_MSG("Binding %i deleted") << bid;
+        LOG_INPUT_MSG("Binding %i deleted") << id;
     }
     else
     {
-        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << bid;
+        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << id;
     }
 
     return true;
@@ -1725,23 +1718,23 @@ D_CMD(ActivateContext)
     InputSystem &isys = ClientApp::inputSystem();
 
     bool const doActivate = !stricmp(argv[0], "activatebcontext");
-    String const context  = argv[1];
+    String const name     = argv[1];
 
-    if(!isys.hasContext(context))
+    if(!isys.hasContext(name))
     {
-        LOG_INPUT_WARNING("Binding context '%s' does not exist") << context;
+        LOG_INPUT_WARNING("Binding context '%s' does not exist") << name;
         return false;
     }
 
-    BindContext &bc = isys.context(context);
-    if(bc.isProtected())
+    BindContext &context = isys.context(name);
+    if(context.isProtected())
     {
         LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
-                << bc.name() << (doActivate? "activated" : "deactivated");
+                << context.name() << (doActivate? "activated" : "deactivated");
         return false;
     }
 
-    bc.activate(doActivate);
+    context.activate(doActivate);
     return true;
 }
 

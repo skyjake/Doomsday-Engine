@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/b_device.h"
+#include "ui/impulsebinding.h"
 
 #include <de/memory.h>
 #include <de/timer.h>
@@ -161,7 +161,7 @@ static dd_bool parseControl(ImpulseBinding *ib, char const *desc)
 dd_bool B_ParseControlDescriptor(ImpulseBinding *ib, char const *desc)
 {
     DENG2_ASSERT(ib && desc);
-    LOG_AS("B_ParseControl");
+    LOG_AS("B_ParseControlDescriptor");
 
     AutoStr *str = AutoStr_NewStd();
 

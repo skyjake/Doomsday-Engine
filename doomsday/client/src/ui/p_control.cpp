@@ -38,7 +38,7 @@
 #include "world/p_players.h"
 #ifdef __CLIENT__
 #  include "ui/b_main.h"
-#  include "ui/b_device.h"
+#  include "ui/impulsebinding.h"
 #  include "ui/inputdevice.h"
 #endif
 #include "ui/p_control.h"

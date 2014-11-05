@@ -30,7 +30,7 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "clientapp.h"
-#include "ui/b_command.h"
+#include "ui/commandbinding.h"
 #include "ui/bindcontext.h"
 #include "ui/p_control.h"
 #include "ui/inputdevice.h"

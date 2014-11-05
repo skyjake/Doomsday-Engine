@@ -18,7 +18,7 @@
  */
 
 #include "de_platform.h" // strdup macro
-#include "ui/b_command.h"
+#include "ui/commandbinding.h"
 
 #include <de/memory.h>
 #include <de/vector1.h>

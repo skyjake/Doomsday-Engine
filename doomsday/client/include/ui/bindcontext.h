@@ -24,8 +24,8 @@
 #include <de/Action>
 #include <de/Observers>
 #include "dd_share.h"
-#include "b_command.h"
-#include "b_device.h"
+#include "commandbinding.h"
+#include "impulsebinding.h"
 
 /// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);

@@ -28,7 +28,7 @@
 #include "m_misc.h" // M_WriteTextEsc
 
 #include "ui/b_main.h"
-#include "ui/b_command.h"
+#include "ui/commandbinding.h"
 #include "ui/p_control.h"
 #include "ui/inputdevice.h"
 

@@ -1,4 +1,4 @@
-/** @file b_device.h  Input system, control => impulse binding.
+/** @file impulsebinding.h  Input system, control => impulse binding.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
