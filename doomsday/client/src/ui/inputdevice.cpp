@@ -189,42 +189,43 @@ void InputDevice::setTitle(String const &newTitle)
     d->title = newTitle;
 }
 
+/// @todo: Device title should be updated to include the product name if known (joysticks).
 String InputDevice::description() const
 {
-    String desc = String(_E(b) "%1").arg(name());
+    String desc;
     if(!d->title.isEmpty())
     {
-        desc += String(_E(.) " - " _E(b) "%1" _E(.)).arg(d->title);
+        desc += String(_E(b) "%1" _E(.) " - ").arg(d->title);
     }
-    desc += String(" (%1)").arg(isActive()? "active" : " inactive");
+    desc += String(_E(b) "%1" _E(.) " (%2)").arg(name()).arg(isActive()? "active" : " inactive");
 
     if(axisCount())
     {
-        desc += String("\n %1 axes:").arg(axisCount());
+        desc += String("\n  %1 axes:").arg(axisCount());
         int idx = 0;
         for(InputDeviceAxisControl *axis : d->axes)
         {
-            desc += String("\n  %1: ").arg(idx++) + axis->description();
+            desc += String("\n    %1: ").arg(idx++) + axis->description();
         }
     }
 
     if(buttonCount())
     {
-        desc += String("\n %1 buttons:").arg(buttonCount());
+        desc += String("\n  %1 buttons:").arg(buttonCount());
         int idx = 0;
         for(InputDeviceButtonControl *button : d->buttons)
         {
-            desc += String("\n  %1: ").arg(idx++) + button->description();
+            desc += String("\n    %1: ").arg(idx++) + button->description();
         }
     }
 
     if(hatCount())
     {
-        desc += String("\n %1 hats:").arg(hatCount());
+        desc += String("\n  %1 hats:").arg(hatCount());
         int idx = 0;
         for(InputDeviceHatControl *hat : d->hats)
         {
-            desc += String("\n  %1: ").arg(idx++) + hat->description();
+            desc += String("\n    %1: ").arg(idx++) + hat->description();
         }
     }
 

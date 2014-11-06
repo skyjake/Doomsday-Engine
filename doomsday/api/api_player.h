@@ -1,4 +1,4 @@
-/** @file api_player.h Public API for players.
+/** @file api_player.h  Public API for players.
  * @ingroup playsim
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -31,7 +31,7 @@
  * @ingroup playsim
  */
 
-/// Built-in control identifiers. @ingroup player
+/// Built-in impulse identifiers. @ingroup player
 enum {
     CTL_WALK = 1,           ///< Forward/backwards.
     CTL_SIDESTEP = 2,       ///< Left/right sideways movement.
@@ -45,12 +45,20 @@ enum {
     CTL_FIRST_GAME_CONTROL = 1000
 };
 
-/// Control type.
-typedef enum controltype_e {
-    CTLT_NUMERIC,               ///< Control with a numeric value determined by current device state.
-    CTLT_NUMERIC_TRIGGERED,     ///< Numeric, but accepts triggered states as well.
-    CTLT_IMPULSE                ///< Always accepts triggered states.
-} controltype_t;
+/**
+ * Logical impulse types:
+ */
+typedef enum impulsetype_e {
+    IT_NUMERIC,            ///< A numeric value determined by current device-control state.
+    IT_NUMERIC_TRIGGERED,  ///< Numeric, but accepts triggered states as well.
+    IT_BOOLEAN             ///< Always accepts triggered states.
+} impulsetype_t;
+
+typedef impulsetype_t controltype_t;
+
+#define CTLT_NUMERIC           IT_NUMERIC
+#define CTLT_NUMERIC_TRIGGERED IT_NUMERIC_TRIGGERED
+#define CTLT_IMPULSE           IT_BOOLEAN
 
 /**
  * @defgroup playerFlags Player Flags
@@ -152,7 +160,7 @@ DENG_API_TYPEDEF(Player)
     /**
      * @return The name of player @a player.
      */
-    const char* (*GetPlayerName)(int player);
+    char const *(*GetPlayerName)(int player);
 
     /**
      * @return Client identifier for player @a player.
@@ -162,7 +170,7 @@ DENG_API_TYPEDEF(Player)
     /**
      * Provides access to the player's movement smoother.
      */
-    Smoother* (*GetSmoother)(int player);
+    Smoother *(*GetSmoother)(int player);
 
     /**
      * Gets the data of a player.
@@ -171,23 +179,50 @@ DENG_API_TYPEDEF(Player)
      *
      * @return Player data.
      */
-    ddplayer_t* (*GetPlayer)(int number);
-
-    void (*NewControl)(int id, controltype_t type, const char* name, const char* bindContext);
+    ddplayer_t *(*GetPlayer)(int number);
 
     /**
-     * Determines if a control has been bound to anything.
+     * Register a new impulse for controlling a player (e.g., shoot, walk, etc...).
+     *
+     * @param id           Unique identifier for the impulse.
+     * @param type         Logical impulse type (boolean, numeric...).
+     * @param name         A unique, symbolic name for the impulse, for use when
+     *                     binding to control events.
+     * @param bindContext  Symbolic name of the binding context in which the impulse
+     *                     is effective.
+     */
+    void (*NewControl)(int id, impulsetype_t type, char const *name, char const *bindContext);
+
+    /**
+     * Determines if an impulse has been bound to anything.
      *
      * @param playerNum  Console/player number.
-     * @param control    Control id.
+     * @param impulseId  Unique identifier of the impulse to lookup bindings for.
      */
-    int (*IsControlBound)(int playerNum, int control);
+    int (*IsControlBound)(int playerNum, int impulseId);
 
-    void (*GetControlState)(int playerNum, int control, float* pos, float* relativeOffset);
+    /**
+     * Lookup the current state of a non-boolean impulse for a player.
+     *
+     * @param playerNum  Console/player number.
+     * @param impulseId  Unique identifier of the impulse to lookup the state of.
+     * @param pos        Current pos/strength of the impulse is written here.
+     * @param relOffset  Base-relative offset of the impulse is written here.
+     */
+    void (*GetControlState)(int playerNum, int impulseId, float *pos, float *relOffset);
 
-    int (*GetImpulseControlState)(int playerNum, int control);
+    /**
+     * @return  Number of times a @em boolean impulse has been triggered since the last call.
+     */
+    int (*GetImpulseControlState)(int playerNum, int impulseId);
 
-    void (*Impulse)(int playerNum, int control);
+    /**
+     * Trigger a @em boolean impulse for a player.
+     *
+     * @param playerNum  Console/player number.
+     * @param impulseId  Unique identifier of the impulse to trigger.
+     */
+    void (*Impulse)(int playerNum, int impulseId);
 }
 DENG_API_T(Player);
 

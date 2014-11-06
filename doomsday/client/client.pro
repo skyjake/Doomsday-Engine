@@ -683,7 +683,6 @@ SOURCES += \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
-    src/ui/commandbinding.cpp \
     src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
@@ -698,7 +697,6 @@ SOURCES += \
     src/ui/dialogs/vrsettingsdialog.cpp \
     src/ui/dialogs/renderersettingsdialog.cpp \
     src/ui/editors/rendererappearanceeditor.cpp \
-    src/ui/impulsebinding.cpp \
     src/ui/infine/finale.cpp \
     src/ui/infine/finaleanimwidget.cpp \
     src/ui/infine/finaleinterpreter.cpp \

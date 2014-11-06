@@ -158,21 +158,3 @@ void B_BindGameDefaults()
     if(!App_GameLoaded()) return;
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
-
-ImpulseBinding *B_GetImpulseBindings(int localNum, int control, BindContext **bContext)
-{
-    if(localNum < 0 || localNum >= DDMAXPLAYERS)
-        return nullptr;
-
-    playercontrol_t *pc = P_PlayerControlById(control);
-    BindContext *bc     = ClientApp::inputSystem().contextPtr(pc->bindContextName);
-
-    if(bContext) *bContext = bc;
-
-    if(bc)
-    {
-        return &bc->getControlBindGroup(control)->binds[localNum];
-    }
-
-    return nullptr;
-}

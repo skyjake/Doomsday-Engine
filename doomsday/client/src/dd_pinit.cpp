@@ -163,7 +163,7 @@ void DD_ShutdownAll()
     }
 #endif
 
-    P_ControlShutdown();
+    P_ImpulseShutdown();
 #ifdef __SERVER__
     Sv_Shutdown();
 #endif

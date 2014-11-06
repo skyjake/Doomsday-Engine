@@ -23,7 +23,6 @@
 #include <functional>
 #include <de/Action>
 #include <de/Observers>
-#include "dd_share.h"
 #include "commandbinding.h"
 #include "impulsebinding.h"
 
@@ -32,24 +31,7 @@ typedef int (*FallbackResponderFunc)(event_t *);
 typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 // todo ends
 
-/// @todo Is this even necessary? -ds
-struct controlbindgroup_t
-{
-    controlbindgroup_t *next;
-    controlbindgroup_t *prev;
-
-    int bid;        ///< Unique identifier.
-    int impulseId;
-    ImpulseBinding binds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
-};
-
-void B_DestroyControlBindGroup(controlbindgroup_t *bg);
-
-void B_InitControlBindGroupList(controlbindgroup_t *listRoot);
-
-void B_DestroyControlBindGroupList(controlbindgroup_t *listRoot);
-
-// ------------------------------------------------------------------------------
+struct PlayerImpulse;
 
 /**
  * Contextualized grouping of input (and windowing system) event bindings.
@@ -122,34 +104,33 @@ public:
     bool willAcquire(int deviceId) const;
     bool willAcquireAll() const;
 
-    void printAllBindings() const;
-    void writeAllBindingsTo(FILE *file) const;
-
 public: // Binding management: ------------------------------------------------------
 
     void clearAllBindings();
 
     /**
+     * @param id  Unique identifier of the binding to delete.
      * @return  @c true if the binding was found and deleted.
      */
-    bool deleteBinding(int bid);
+    bool deleteBinding(int id);
 
-    ImpulseBinding *findImpulseBinding(int device, ibcontroltype_t bindType, int id);
+    /**
+     * Delete all other bindings matching either @a commandBind or @a impulseBind.
+     */
+    void deleteMatching(CommandBinding const *commandBind, ImpulseBinding const *impulseBind);
 
     /**
      * Looks through the context for a binding that matches either @a match1 or @a match2.
      */
-    bool findMatchingBinding(CommandBinding *match1, ImpulseBinding *match2,
-                             CommandBinding **evResult, ImpulseBinding **dResult);
+    bool findMatchingBinding(CommandBinding const *match1, ImpulseBinding const *match2,
+                             CommandBinding **cmdResult, ImpulseBinding **impResult) const;
 
-    void deleteMatching(CommandBinding *commandBind, ImpulseBinding *impulseBind);
-
-    // ---
+    // Commands ---------------------------------------------------------------------
 
     CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
     /**
-     * @param deviceId  Use @c < 0 || >= NUM_INPUT_DEVICES for wildcard search.
+     * @param deviceId  (@c < 0 || >= NUM_INPUT_DEVICES) for wildcard search.
      */
     CommandBinding *findCommandBinding(char const *command, int deviceId = -1) const;
 
@@ -158,16 +139,42 @@ public: // Binding management: -------------------------------------------------
      */
     de::LoopResult forAllCommandBindings(std::function<de::LoopResult (CommandBinding &)> func) const;
 
-    // ---
+    /**
+     * Returns the total number of command bindings in the context.
+     */
+    int commandBindingCount() const;
 
-    controlbindgroup_t *findControlBindGroup(int control) const;
-
-    controlbindgroup_t *getControlBindGroup(int control);
+    // Impulses ---------------------------------------------------------------------
 
     /**
-     * Iterate through all the controlbindgroup_ts of the context.
+     * @param ctrlDesc     Device-control descriptor.
+     * @param impulse      Player impulse to bind to.
+     * @param localPlayer  Local player number.
+     *
+     * @todo: Parse the the impulse descriptor here? -ds
      */
-    de::LoopResult forAllControlBindGroups(std::function<de::LoopResult (controlbindgroup_t &)> func) const;
+    ImpulseBinding *bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse,
+                                int localPlayer);
+
+    ImpulseBinding *findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const;
+
+    /**
+     * Iterate through all the ImpulseBindings of the context.
+     *
+     * @param localPlayer  (@c < 0 || >= DDMAXPLAYERS) for all local players.
+     */
+    de::LoopResult forAllImpulseBindings(int localPlayer, std::function<de::LoopResult (ImpulseBinding &)> func) const;
+
+    inline de::LoopResult forAllImpulseBindings(std::function<de::LoopResult (ImpulseBinding &)> func) const {
+        return forAllImpulseBindings(-1/*all local players*/, func);
+    }
+
+    /**
+     * Returns the total number of impulse bindings in the context.
+     *
+     * @param localPlayer  (@c < 0 || >= DDMAXPLAYERS) for all local players.
+     */
+    int impulseBindingCount(int localPlayer = -1) const;
 
 public: // Triggering: --------------------------------------------------------------
 
@@ -183,10 +190,10 @@ public: // Triggering: ---------------------------------------------------------
                                bool respectHigherAssociatedContexts = true) const;
 
     /**
-     * @todo Conceptually the fallback responders don't belong: instead of "responding"
+     * @todo: Conceptually the fallback responders don't belong; instead of "responding"
      * (immediately performing a reaction), we should be returning an Action instance. -jk
      */
-    int tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent);
+    int tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent) const;
     void setFallbackResponder(FallbackResponderFunc newResponderFunc);
     void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);
 

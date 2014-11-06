@@ -73,12 +73,6 @@ public:
      */
     void trackInput(de::Event const &event);
 
-    void activateContext(de::String const &context, bool yes = true);
-
-    void deactivateContext(de::String const &context) {
-        activateContext(context, false);
-    }
-
 private:
     DENG2_PRIVATE(d)
 };

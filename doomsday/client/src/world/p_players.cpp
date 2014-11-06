@@ -187,7 +187,7 @@ DENG_EXTERN_C ident_t Net_GetPlayerID(int player);
 DENG_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 // p_control.c
-DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, char const *name, char const *bindContext);
+DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name, char const *bindContext);
 DENG_EXTERN_C int P_IsControlBound(int playerNum, int control);
 DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset);
 DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control);

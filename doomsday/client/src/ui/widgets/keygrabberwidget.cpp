@@ -78,23 +78,16 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
                 return true;
             }
 
-            ddstring_t name;
-            Str_Init(&name);
-
             ddevent_t ev;
             InputSystem::convertEvent(event, &ev);
 
-            B_AppendEventToString(&ev, &name);
-
-            String info;
-            info = String("DD:%1 Qt:0x%2 Native:0x%3\n" _E(m) "%4")
-                    .arg(key->ddKey())
-                    .arg(key->qtKey(), 0, 16)
-                    .arg(key->nativeCode(), 0, 16)
-                    .arg(Str_Text(&name));
+            String info = String("DD:%1 Qt:0x%2 Native:0x%3\n" _E(m) "%4")
+                              .arg(key->ddKey())
+                              .arg(key->qtKey(), 0, 16)
+                              .arg(key->nativeCode(), 0, 16)
+                              .arg(B_EventToString(ev));
             setText(info);
 
-            Str_Free(&name);
             return true;
         }
 

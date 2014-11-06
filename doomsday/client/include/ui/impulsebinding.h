@@ -20,9 +20,8 @@
 #ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
+#include <QVector>
 #include "b_util.h"
-
-class BindContext;
 
 enum ibcontroltype_t
 {
@@ -32,44 +31,28 @@ enum ibcontroltype_t
     NUM_CBD_TYPES
 };
 
+#define EVTYPE_TO_IBDTYPE(evt)  ((evt) == E_AXIS? IBD_AXIS : (evt) == E_TOGGLE? IBD_TOGGLE : IBD_ANGLE)
+#define IBDTYPE_TO_EVTYPE(cbt)  ((cbt) == IBD_AXIS? E_AXIS : (cbt) == IBD_TOGGLE? E_TOGGLE : E_ANGLE)
+
 // Flags for impulse bindings.
 #define IBDF_INVERSE        0x1
 #define IBDF_TIME_STAGED    0x2
 
 struct ImpulseBinding
 {
-    ImpulseBinding *next;
-    ImpulseBinding *prev;
+    int id = 0;             ///< Unique identifier.
+    int impulseId;          ///< Identifier of the bound player impulse.
+    int localPlayer;        ///< Local player number.
 
-    int id;
-    int deviceId;
-    ibcontroltype_t type;
-    int controlId;
-    float angle;
-    uint flags;
+    int deviceId = 0;
+    ibcontroltype_t type = IBD_TOGGLE;
+    int controlId = 0;
+    float angle = 0;
+    uint flags = 0;
 
-    int numConds;
-    statecondition_t *conds;  ///< Additional conditions.
+    typedef QVector<statecondition_t> Conditions;
+    Conditions conditions;  ///< Additional conditions.
 };
-
-extern byte zeroControlUponConflict;
-
-void B_DestroyImpulseBinding(ImpulseBinding *db);
-
-void B_InitImpulseBindingList(ImpulseBinding *listRoot);
-
-void B_DestroyImpulseBindingList(ImpulseBinding *listRoot);
-
-ImpulseBinding *B_NewImpulseBinding(ImpulseBinding *listRoot, char const *ctrlDesc);
-
-/**
- * Does the opposite of the B_Parse* methods for a device binding, including the
- * state conditions.
- */
-void ImpulseBinding_ToString(ImpulseBinding const *ib, ddstring_t *str);
-
-void B_EvaluateImpulseBindingList(int localNum, ImpulseBinding *listRoot, float *pos,
-    float *relativeOffset, BindContext *context, dd_bool allowTriggered);
 
 #endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 

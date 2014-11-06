@@ -260,19 +260,25 @@ String InputDeviceAxisControl::description() const
     QStringList flags;
     if(!isActive()) flags << "disabled";
     if(isInverted()) flags << "inverted";
-    String flagsAsText = flags.join("|");
 
-    return String(_E(b) "%1 " _E(.) "(Axis-%2)\n"
-                  //_E(l) "Filter: "    _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Dead Zone: " _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Scale: "     _E(.)_E(i) "%4\n" _E(.)
-                  _E(l) "Flags: "     _E(.)_E(i) "%5")
+    String flagsString;
+    if(!flags.isEmpty())
+    {
+        String flagsAsText = flags.join("|");
+        flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%1").arg(flagsAsText);
+    }
+
+    return String(_E(b) "%1 " _E(.) "(Axis-%2)"
+                  //_E(l) " Filter :"    _E(.)_E(i) "%3" _E(.)
+                  _E(l) " Dead Zone :" _E(.)_E(i) "%3" _E(.)
+                  _E(l) " Scale :"     _E(.)_E(i) "%4" _E(.)
+                  "%5")
                .arg(fullName())
                .arg(d->type == Stick? "Stick" : "Pointer")
                //.arg(d->filter)
                .arg(d->deadZone)
                .arg(d->scale)
-               .arg(flagsAsText);
+               .arg(flagsString);
 }
 
 bool InputDeviceAxisControl::inDefaultState() const

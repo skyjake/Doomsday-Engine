@@ -100,13 +100,12 @@ DENG_GUI_PIMPL(InputBindingWidget)
         foreach(QString bcName, contexts)
         {
             if(!inputSys().hasContext(bcName)) continue;
+            BindContext const &context = inputSys().context(bcName);
 
-            if(CommandBinding const *cb = inputSys().context(bcName).findCommandBinding(command.toLatin1(), device))
+            if(CommandBinding const *bind = context.findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
-                AutoStr *str = AutoStr_New();
-                CommandBinding_ToString(cb, str);
-                text = prettyKey(Str_Text(str));
+                text = prettyKey(inputSys().composeBindsFor(*bind));
                 break;
             }
         }
@@ -209,12 +208,9 @@ bool InputBindingWidget::handleEvent(Event const &event)
                 return true;
             }
 
-            AutoStr *name = AutoStr_New();
             ddevent_t ev;
             InputSystem::convertEvent(event, &ev);
-            B_AppendEventToString(&ev, name);
-
-            String desc = Str_Text(name);
+            String desc = B_EventToString(ev);
 
             // Apply current modifiers as conditions.
             if(d->useModifiers)

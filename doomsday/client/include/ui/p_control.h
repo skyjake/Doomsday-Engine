@@ -1,7 +1,7 @@
-/** @file
+/** @file p_control.h  Player interaction impulse.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,37 +17,33 @@
  * http://www.gnu.org/licenses</small>
  */
 
-/**
- * p_control.h: Player Controls
- */
+#ifndef CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H
+#define CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H
 
-#ifndef __DOOMSDAY_PLAYER_CONTROL_H__
-#define __DOOMSDAY_PLAYER_CONTROL_H__
-
+#include <de/String>
 #include "api_player.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/**
+ * Describes a player interaction impulse.
+ */
+struct PlayerImpulse
+{
+    int id = 0;
+    impulsetype_t type = IT_NUMERIC;
+    bool isTriggerable = false;  ///< Accepts triggered states in addition to active ones.
+    de::String name;
+    de::String bindContextName;
+};
 
-typedef struct playercontrol_s {
-    int     id;
-    controltype_t type;
-    dd_bool isTriggerable; ///< Accepts triggered states in addition to active ones.
-    char*   name;
-    char*   bindContextName;
-} playercontrol_t;
+void P_ImpulseShutdown();
 
-void        P_ControlRegister(void);
-void        P_ControlShutdown(void);
-void        P_ControlTicker(timespan_t time);
+PlayerImpulse *P_ImpulseById(int id);
 
-playercontrol_t* P_PlayerControlById(int id);
-playercontrol_t* P_PlayerControlByName(const char* name);
-void        P_ImpulseByName(int playerNum, const char* control);
+PlayerImpulse *P_ImpulseByName(de::String const &name);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
+/**
+ * Register the console commands and cvars of the player controls subsystem.
+ */
+void P_ConsoleRegister();
 
-#endif
+#endif // CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H

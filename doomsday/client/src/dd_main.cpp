@@ -1513,7 +1513,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
         R_ClearViewData();
         R_DestroyContactLists();
-        P_ControlShutdown();
+        P_ImpulseShutdown();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         B_BindDefaults();
@@ -3284,7 +3284,7 @@ static void consoleRegister()
     GL_Register();
     UI_Register();
     Demo_Register();
-    P_ControlRegister();
+    P_ConsoleRegister();
     I_Register();
 #endif
 

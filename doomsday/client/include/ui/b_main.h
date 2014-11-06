@@ -23,9 +23,6 @@
 #include <de/types.h>
 #include "dd_input.h"
 
-class BindContext;
-struct ImpulseBinding;
-
 void B_Init();
 
 /**
@@ -36,7 +33,5 @@ void B_Shutdown();
 void B_BindDefaults();
 
 void B_BindGameDefaults();
-
-ImpulseBinding *B_GetImpulseBindings(int localNum, int control, BindContext **context);
 
 #endif // CLIENT_INPUTSYSTEM_BINDINGS_H

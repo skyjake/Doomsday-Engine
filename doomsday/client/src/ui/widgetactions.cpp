@@ -24,11 +24,6 @@
 
 using namespace de;
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 /**
  * @todo: Should not have authority to manipulate bindings.
  *
@@ -39,20 +34,11 @@ static inline InputSystem &inputSys()
  * The event descriptors can be managed far more optimally (perhaps within a Register) which
  * synthesizes an event Record on request. -ds
  */
-DENG2_PIMPL(WidgetActions)
+DENG2_PIMPL_NOREF(WidgetActions)
 {
-    Instance(Public *i) : Base(i)
-    {
-        B_Init();
-    }
-
-    ~Instance()
-    {
-        inputSys().clearAllContexts();
-    }
 };
 
-WidgetActions::WidgetActions() : d(new Instance(this))
+WidgetActions::WidgetActions() : d(new Instance)
 {}
 
 bool WidgetActions::tryEvent(Event const &event, String const &context)
@@ -67,9 +53,9 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
     }
 
     // Check a specific binding context for an action (regardless of its activation status).
-    if(inputSys().hasContext(context))
+    if(ClientApp::inputSystem().hasContext(context))
     {
-        AutoRef<Action> act(inputSys().context(context).actionForEvent(ddev, false));
+        AutoRef<Action> act(ClientApp::inputSystem().context(context).actionForEvent(ddev, false));
         if(act.get())
         {
             act->trigger();
@@ -83,7 +69,7 @@ bool WidgetActions::tryEvent(Event const &event, String const &context)
 bool WidgetActions::tryEvent(ddevent_t const *ev)
 {
     DENG2_ASSERT(ev);
-    AutoRef<Action> act(inputSys().actionForEvent(*ev));
+    AutoRef<Action> act(ClientApp::inputSystem().actionFor(*ev));
     if(act.get())
     {
         act->trigger();
@@ -97,12 +83,4 @@ void WidgetActions::trackInput(Event const &event)
     ddevent_t ddev;
     InputSystem::convertEvent(event, &ddev);
     ClientApp::inputSystem().trackEvent(&ddev);
-}
-
-void WidgetActions::activateContext(String const &context, bool yes)
-{
-    if(inputSys().hasContext(context))
-    {
-        inputSys().context(context).activate(yes);
-    }
 }

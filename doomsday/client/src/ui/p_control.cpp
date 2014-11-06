@@ -1,4 +1,4 @@
-/** @file p_control.cpp  Player Controls.
+/** @file p_control.cpp  Player interaction impulses.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -17,31 +17,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifdef WIN32_MSVC
-#  pragma warning (disable:4100) // lots of unused arguments
-#endif
+#include "ui/p_control.h"
 
-#define DENG_NO_API_MACROS_PLAYER
-
-#include <ctype.h>
+#include <QList>
+#include <QtAlgorithms>
 #include <de/memory.h>
-
-#include "de_console.h"
-#include "de_misc.h"
-#include "de_system.h"
-#include "de_graphics.h"
-#include "dd_main.h"
+#include <de/timer.h>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/var.h>
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #endif
 
+#include "api_player.h"
 #include "world/p_players.h"
+
 #ifdef __CLIENT__
-#  include "ui/b_main.h"
-#  include "ui/impulsebinding.h"
+#  include "ui/bindcontext.h"
 #  include "ui/inputdevice.h"
 #endif
-#include "ui/p_control.h"
 
 using namespace de;
 
@@ -85,162 +79,107 @@ typedef struct controlclass_s {
 } controlstate_t;
 */
 
-typedef enum doubleclickstate_s {
+enum DoubleClickState
+{
     DBCS_NONE,
     DBCS_POSITIVE,
     DBCS_NEGATIVE
-} doubleclickstate_t;
+};
 
 /**
  * Double-"clicks" actually mean double activations that occur within the double-click
- * threshold. This is to allow double-clicks also from the numeric controls.
+ * threshold. This is to allow double-clicks also from the numeric impulses.
  */
-typedef struct doubleclick_s {
-    dd_bool triggered;                      // True if double-click has been detected.
-    uint    previousClickTime;              // Previous time an activation occurred.
-    doubleclickstate_t lastState;           // State at the previous time the check was made.
-    doubleclickstate_t previousClickState;  // Previous click state. When duplicated, triggers
-                                            // the double click.
-} doubleclick_t;
+struct DoubleClick
+{
+    bool triggered;                       //< True if double-click has been detected.
+    uint previousClickTime;               //< Previous time an activation occurred.
+    DoubleClickState lastState;           //< State at the previous time the check was made.
+    DoubleClickState previousClickState;  /** Previous click state. When duplicated, triggers
+                                              the double click. */
+};
 
-typedef struct controlcounter_s {
-    int     control;
-    short   impulseCounts[DDMAXPLAYERS];
-    doubleclick_t doubleClicks[DDMAXPLAYERS];
-} controlcounter_t;
+struct ImpulseCounter
+{
+    int control;
+    short impulseCounts[DDMAXPLAYERS];
+    DoubleClick doubleClicks[DDMAXPLAYERS];
+};
 
-D_CMD(ListPlayerControls);
-D_CMD(ClearControlAccumulation);
-D_CMD(Impulse);
+/// @todo: Group by bind-context-name; add an impulseID => PlayerImpulse LUT -ds
+typedef QList<PlayerImpulse *> Impulses;
+static Impulses impulses;
 
-/*
-// Control class names - [singular, plural].
-const char *ctlClassNames[NUM_CONTROL_CLASSES][NUM_CONTROL_CLASSES] = {
-    {{"Axis"}, {"Axes"}},
-    {{"Toggle"}, {"Toggles"}},
-    {{"Impulse"}, {"Impulses"}}
-};*/
+static ImpulseCounter **counters;
 
-static playercontrol_t* playerControls;
-static controlcounter_t** controlCounts;
-static int playerControlCount;
 static int doubleClickThresholdMilliseconds = 300;
 
-static playercontrol_t* P_AllocPlayerControl(void)
+static PlayerImpulse *newImpulse()
 {
-    playerControls = (playercontrol_t *) M_Realloc(playerControls, sizeof(playercontrol_t) *
-                               ++playerControlCount);
-    controlCounts = (controlcounter_t **) M_Realloc(controlCounts, sizeof(controlcounter_t*) *
-                              playerControlCount);
-    memset(&playerControls[playerControlCount - 1], 0, sizeof(playercontrol_t));
-    controlCounts[playerControlCount - 1] = NULL;
-    return &playerControls[playerControlCount - 1];
+    PlayerImpulse *imp = new PlayerImpulse;
+    impulses.append(imp);
+
+    int const ctrlCount = impulses.count();
+    counters = (ImpulseCounter **) M_Realloc(counters, sizeof(*counters) * ctrlCount);
+    counters[ctrlCount - 1] = nullptr;
+
+    return imp;
 }
 
-/**
- * Register the console commands and cvars of the player controls subsystem.
- */
-void P_ControlRegister(void)
+void P_ImpulseShutdown()
 {
-    C_CMD("listcontrols",   "",     ListPlayerControls);
-    C_CMD("impulse",        NULL,   Impulse);
-
-#ifdef __CLIENT__
-    C_CMD("resetctlaccum",  "",     ClearControlAccumulation);
-#endif
-
-    C_VAR_INT("input-doubleclick-threshold", &doubleClickThresholdMilliseconds, 0, 0, 2000);
-}
-
-/**
- * This function is exported, so that plugins can register their controls.
- */
-DENG_EXTERN_C void P_NewPlayerControl(int id, controltype_t type, const char *name, const char* bindContext)
-{
-    playercontrol_t *pc = P_AllocPlayerControl();
-    pc->id = id;
-    pc->type = type;
-    pc->name = strdup(name);
-    pc->isTriggerable = (type == CTLT_NUMERIC_TRIGGERED || type == CTLT_IMPULSE);
-    pc->bindContextName = strdup(bindContext);
-    // Also allocate the impulse and double-click counters.
-    controlCounts[pc - playerControls] = (controlcounter_t *) M_Calloc(sizeof(controlcounter_t));
-}
-
-playercontrol_t* P_PlayerControlById(int id)
-{
-    int     i;
-
-    for(i = 0; i < playerControlCount; ++i)
+    for(int i = 0; i < impulses.count(); ++i)
     {
-        if(playerControls[i].id == id)
-            return playerControls + i;
+        M_Free(counters[i]);
     }
-    return NULL;
+    M_Free(counters); counters = nullptr;
+
+    qDeleteAll(impulses);
+    impulses.clear();
 }
 
-int P_PlayerControlIndexForId(int id)
+PlayerImpulse *P_ImpulseById(int id)
 {
-    playercontrol_t* pc = P_PlayerControlById(id);
-    if(!pc)
+    for(PlayerImpulse const *imp : impulses)
     {
-        return -1;
-    }
-    return pc - playerControls;
-}
-
-playercontrol_t* P_PlayerControlByName(const char* name)
-{
-    int     i;
-
-    for(i = 0; i < playerControlCount; ++i)
-    {
-        if(!strcasecmp(playerControls[i].name, name))
-            return playerControls + i;
-    }
-    return NULL;
-}
-
-void P_ControlShutdown(void)
-{
-    if(playerControls)
-    {
-        int i;
-        for(i = 0; i < playerControlCount; ++i)
+        if(imp->id == id)
         {
-            M_Free(playerControls[i].name);
-            M_Free(playerControls[i].bindContextName);
-            M_Free(controlCounts[i]);
+            return const_cast<PlayerImpulse *>(imp);
         }
-        playerControlCount = 0;
-        M_Free(playerControls);
     }
-    playerControls = 0;
-    if(controlCounts)
-        M_Free(controlCounts);
-    controlCounts = 0;
+    return nullptr;
+}
+
+PlayerImpulse *P_ImpulseByName(String const &name)
+{
+    if(!name.isEmpty())
+    {
+        for(PlayerImpulse const *imp : impulses)
+        {
+            if(!imp->name.compareWithoutCase(name))
+                return const_cast<PlayerImpulse *>(imp);
+        }
+    }
+    return nullptr;
 }
 
 #ifdef __CLIENT__
 /**
- * Updates the double-click state of a control and marks it as double-clicked
+ * Updates the double-click state of an impulse and marks it as double-clicked
  * when the double-click condition is met.
  *
  * @param playerNum  Player/console number.
- * @param control    Index of the control.
- * @param pos        State of the control.
+ * @param impulse    Index of the impulse.
+ * @param pos        State of the impulse.
  */
-void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
+void P_MaintainImpulseDoubleClicks(int playerNum, int impulse, float pos)
 {
-    doubleclickstate_t newState = DBCS_NONE;
-    uint nowTime = 0;
-    doubleclick_t* db = 0;
-
-    if(!controlCounts || !controlCounts[control])
+    if(!counters || !counters[impulse])
     {
         return;
     }
-    db = &controlCounts[control]->doubleClicks[playerNum];
+
+    DoubleClick *db = &counters[impulse]->doubleClicks[playerNum];
 
     if(doubleClickThresholdMilliseconds <= 0)
     {
@@ -251,6 +190,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
         return;
     }
 
+    DoubleClickState newState = DBCS_NONE;
     if(pos > .5)
     {
         newState = DBCS_POSITIVE;
@@ -261,8 +201,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     }
     else
     {
-        // Release.
-        db->lastState = newState;
+        db->lastState = newState; // Release.
         return;
     }
 
@@ -273,259 +212,114 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     }
 
     // We have an activation!
-    nowTime = Timer_RealMilliseconds();
+    uint nowTime = Timer_RealMilliseconds();
 
     if(newState == db->previousClickState &&
-       nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))
+       nowTime - db->previousClickTime < uint( de::clamp(0, doubleClickThresholdMilliseconds) ))
     {
-        ddstring_s *symbolicName = Str_NewStd();
-
         db->triggered = true;
 
+        // Compose the name of the symbolic event.
+        String symbolicName;
         switch(newState)
         {
-        case DBCS_POSITIVE: Str_Append(symbolicName, "control-doubleclick-positive-"); break;
-        case DBCS_NEGATIVE: Str_Append(symbolicName, "control-doubleclick-negative-"); break;
+        case DBCS_POSITIVE: symbolicName += "control-doubleclick-positive-"; break;
+        case DBCS_NEGATIVE: symbolicName += "control-doubleclick-negative-"; break;
 
         default: break;
         }
+        symbolicName += impulses.at(impulse)->name;
 
-        // Compose the name of the symbolic event.
-        Str_Append(symbolicName, playerControls[control].name);
-
-        LOG_AS("P_MaintainControlDoubleClicks");
-        LOG_INPUT_XVERBOSE("Triggered plr %i, ctl %i, "
-                          "state %i - threshold %i (%s)")
-                << playerNum << control << newState << nowTime - db->previousClickTime
-                << Str_Text(symbolicName);
+        LOG_AS("P_MaintainImpulseDoubleClicks");
+        LOG_INPUT_XVERBOSE("Triggered plr %i, imp %i, state %i - threshold %i (%s)")
+                << playerNum << impulse << newState << nowTime - db->previousClickTime
+                << symbolicName;
 
         ddevent_t ev; de::zap(ev);
         ev.device = uint(-1);
         ev.type   = E_SYMBOLIC;
-        ev.symbolic.id = playerNum;
-        ev.symbolic.name = Str_Text(symbolicName);
+        ev.symbolic.id   = playerNum;
+        ev.symbolic.name = symbolicName.toUtf8().constData();
 
         ClientApp::inputSystem().postEvent(&ev);
-
-        Str_Delete(symbolicName);
     }
 
-    db->previousClickTime = nowTime;
+    db->previousClickTime  = nowTime;
     db->previousClickState = newState;
-    db->lastState = newState;
-}
-#endif // __CLIENT__
-
-#undef P_IsControlBound
-DENG_EXTERN_C int P_IsControlBound(int playerNum, int control)
-{
-#ifdef __CLIENT__
-    playercontrol_t *pc = P_PlayerControlById(control);
-
-    // Check that this is really a numeric control.
-    DENG_ASSERT(pc);
-    DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
-    DENG_UNUSED(pc);
-
-    // Bindings are associated with the ordinal of the local player, not
-    // the actual console number (playerNum) being used. That is why
-    // P_ConsoleToLocal() is called here.
-    BindContext *bc           = nullptr;
-    ImpulseBinding *binds = B_GetImpulseBindings(P_ConsoleToLocal(playerNum), control, &bc);
-    if(!binds) return false;
-
-    // There must be bindings to active input devices.
-    for(ImpulseBinding *cb = binds->next; cb != binds; cb = cb->next)
-    {
-        if(InputDevice *dev = ClientApp::inputSystem().devicePtr(cb->deviceId))
-        {
-            if(dev->isActive()) return true;
-        }
-    }
-    return false;
-
-#else
-    DENG_UNUSED(playerNum);
-    DENG_UNUSED(control);
-    return 0;
-#endif
+    db->lastState          = newState;
 }
 
-#undef P_GetControlState
-DENG_EXTERN_C void P_GetControlState(int playerNum, int control, float *pos, float *relativeOffset)
+static int P_GetImpulseDoubleClick(int playerNum, int impulseId)
 {
-#ifdef __CLIENT__
-    playercontrol_t *pc = P_PlayerControlById(control);
-
-    // Check that this is really a numeric control.
-    DENG_ASSERT(pc);
-    DENG_ASSERT(pc->type == CTLT_NUMERIC || pc->type == CTLT_NUMERIC_TRIGGERED);
-
-    // Ignore NULLs.
-    float tmp;
-    if(!pos) pos = &tmp;
-    if(!relativeOffset) relativeOffset = &tmp;
-
-    // Bindings are associated with the ordinal of the local player, not
-    // the actual console number (playerNum) being used. That is why
-    // P_ConsoleToLocal() is called here.
-    int localNum             = P_ConsoleToLocal(playerNum);
-    BindContext *bc           = nullptr;
-    ImpulseBinding *binds = B_GetImpulseBindings(localNum, control, &bc);
-    B_EvaluateImpulseBindingList(localNum, binds, pos, relativeOffset, bc, pc->isTriggerable);
-
-    // Mark for double-clicks.
-    P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);
-#else
-    DENG_UNUSED(playerNum);
-    DENG_UNUSED(control);
-    DENG_UNUSED(pos);
-    DENG_UNUSED(relativeOffset);
-#endif
-}
-
-/**
- * @return  Number of times the impulse has been triggered since the last call.
- */
-#undef P_GetImpulseControlState
-DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int control)
-{
-    playercontrol_t* pc = P_PlayerControlById(control);
-    short *counter;
-    int count = 0;
-
-    assert(pc != 0);
-
-#if _DEBUG
-    // Check that this is really an impulse control.
-    assert(pc->type == CTLT_IMPULSE);
-#endif
-    if(!controlCounts[pc - playerControls])
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return 0;
 
-    counter = &controlCounts[pc - playerControls]->impulseCounts[playerNum];
-    count = *counter;
-    *counter = 0;
-    return count;
-}
+    PlayerImpulse *imp = P_ImpulseById(impulseId);
+    if(!imp) return 0;
 
-int P_GetControlDoubleClick(int playerNum, int control)
-{
-    playercontrol_t* pc = P_PlayerControlById(control);
-    doubleclick_t *doubleClick = 0;
-    int triggered = false;
-
-    if(!pc || playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return 0;
-
-    if(controlCounts[pc - playerControls])
+    bool triggered = false;
+    if(counters[impulses.indexOf(imp)])
     {
-        doubleClick = &controlCounts[pc - playerControls]->doubleClicks[playerNum];
+        DoubleClick *doubleClick = &counters[impulses.indexOf(imp)]->doubleClicks[playerNum];
         if(doubleClick->triggered)
         {
             triggered = true;
             doubleClick->triggered = false;
         }
     }
-    return triggered;
+
+    return int(triggered);
 }
 
-#undef P_Impulse
-DENG_EXTERN_C void P_Impulse(int playerNum, int control)
+D_CMD(ClearImpulseAccumulation)
 {
-    playercontrol_t* pc = P_PlayerControlById(control);
+    DENG2_UNUSED3(argv, argc, src);
 
-    DENG_ASSERT(pc);
-
-    LOG_AS("P_Impulse");
-
-    // Check that this is really an impulse control.
-    if(pc->type != CTLT_IMPULSE)
-    {
-        LOG_INPUT_WARNING("Control '%s' is not an impulse control") << pc->name;
-        return;
-    }
-
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return;
-
-    control = pc - playerControls;
-
-    controlCounts[control]->impulseCounts[playerNum]++;
-
-#ifdef __CLIENT__
-    // Mark for double clicks.
-    P_MaintainControlDoubleClicks(playerNum, control, 1);
-    P_MaintainControlDoubleClicks(playerNum, control, 0);
-#endif
-}
-
-void P_ImpulseByName(int playerNum, char const *control)
-{
-    if(playercontrol_t *pc = P_PlayerControlByName(control))
-    {
-        P_Impulse(playerNum, pc->id);
-    }
-}
-
-void P_ControlTicker(timespan_t time)
-{
-    // Check for triggered double-clicks, and generate the appropriate impulses.
-}
-
-#ifdef __CLIENT__
-D_CMD(ClearControlAccumulation)
-{
     ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
     {
         device.reset();
         return LoopContinue;
     });
 
-    for(int i = 0; i < playerControlCount; ++i)
+    for(PlayerImpulse *imp : impulses)
+    for(int p = 0; p < DDMAXPLAYERS; ++p)
     {
-        playercontrol_t *pc = &playerControls[i];
-        for(int p = 0; p < DDMAXPLAYERS; ++p)
+        if(imp->type == IT_NUMERIC)
         {
-            if(pc->type == CTLT_NUMERIC)
-                P_GetControlState(p, pc->id, nullptr, nullptr);
-            else if(pc->type == CTLT_IMPULSE)
-                P_GetImpulseControlState(p, pc->id);
-
-            // Also clear the double click state.
-            P_GetControlDoubleClick(p, pc->id);
+            P_GetControlState(p, imp->id, nullptr, nullptr);
         }
+        else if(imp->type == IT_BOOLEAN)
+        {
+            P_GetImpulseControlState(p, imp->id);
+        }
+
+        // Also clear the double click state.
+        P_GetImpulseDoubleClick(p, imp->id);
     }
+
     return true;
 }
 #endif
 
-/**
- * Prints a list of the registered control descriptors.
- */
-D_CMD(ListPlayerControls)
+/// @todo: Sort impulses by binding context.
+D_CMD(ListImpulses)
 {
-    LOG_MSG(_E(b) "Player Controls:");
-    LOG_MSG("%i controls have been defined") << playerControlCount;
+    DENG2_UNUSED3(argv, argc, src);
+    LOG_MSG("%i player impulses defined") << impulses.count();
 
-    for(int i = 0; i < playerControlCount; ++i)
+    for(PlayerImpulse const *imp : impulses)
     {
-        playercontrol_t *pc = &playerControls[i];
-
-        LOG_MSG("ID %i: " _E(>)_E(b) "%s " _E(.) "(%s) "
-                _E(l) "%s%s")
-                << pc->id
-                << pc->name
-                << pc->bindContextName
-                << (pc->isTriggerable? "triggerable " : "")
-                << (pc->type == CTLT_IMPULSE? "impulse" : "numeric");
+        LOG_MSG("ID %i: " _E(>)_E(b) "%s " _E(.) "(%s) " _E(l) "%s%s")
+                << imp->id << imp->name << imp->bindContextName
+                << (imp->isTriggerable? "triggerable " : "")
+                << (imp->type == IT_BOOLEAN? "boolean" : "numeric");
     }
     return true;
 }
 
 D_CMD(Impulse)
 {
-    int playerNum = consolePlayer;
+    DENG2_UNUSED(src);
 
     if(argc < 2 || argc > 3)
     {
@@ -533,11 +327,180 @@ D_CMD(Impulse)
                 << argv[0] << argv[0];
         return true;
     }
-    if(argc == 3)
+
+    int const playerNum = (argc == 3? P_LocalToConsole(String(argv[2]).toInt()) : consolePlayer);
+
+    if(PlayerImpulse *imp = P_ImpulseByName(argv[1]))
     {
-        // Convert the local player number to an actual player console.
-        playerNum = P_LocalToConsole(strtoul(argv[2], NULL, 10));
+        P_Impulse(playerNum, imp->id);
     }
-    P_ImpulseByName(playerNum, argv[1]);
+
     return true;
+}
+
+void P_ConsoleRegister()
+{
+    C_CMD("listcontrols",   "",         ListImpulses);
+    C_CMD("impulse",        nullptr,    Impulse);
+#ifdef __CLIENT__
+    C_CMD("resetctlaccum",  "",         ClearImpulseAccumulation);
+#endif
+
+    C_VAR_INT("input-doubleclick-threshold", &doubleClickThresholdMilliseconds, 0, 0, 2000);
+}
+
+#undef P_NewPlayerControl
+DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
+    char const *bindContext)
+{
+    DENG2_ASSERT(name && bindContext);
+    PlayerImpulse *imp = newImpulse();
+    imp->id              = id;
+    imp->type            = type;
+    imp->name            = name;
+    imp->isTriggerable   = (type == IT_NUMERIC_TRIGGERED || type == IT_BOOLEAN);
+    imp->bindContextName = bindContext;
+    // Also allocate the impulse and double-click counters.
+    counters[impulses.indexOf(imp)] = (ImpulseCounter *) M_Calloc(sizeof(ImpulseCounter));
+}
+
+#undef P_GetControlState
+DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
+    float *relativeOffset)
+{
+#ifdef __CLIENT__
+    InputSystem &isys = ClientApp::inputSystem();
+
+    // Ignore NULLs.
+    float tmp;
+    if(!pos) pos = &tmp;
+    if(!relativeOffset) relativeOffset = &tmp;
+
+    *pos = 0;
+    *relativeOffset = 0;
+
+    // ImpulseBindings are associated with local player numbers rather than
+    // the player console number - translate.
+    int localPlayer = P_ConsoleToLocal(playerNum);
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
+        return;
+
+    // Check that this is really a numeric control.
+    PlayerImpulse *imp = P_ImpulseById(impulseId);
+    DENG2_ASSERT(imp);
+    DENG2_ASSERT(imp->type == IT_NUMERIC || imp->type == IT_NUMERIC_TRIGGERED);
+
+    BindContext *context = isys.contextPtr(imp->bindContextName);
+    DENG2_ASSERT(context); // must surely exist by now?
+    if(!context) return;
+
+    B_EvaluateImpulseBindings(context, localPlayer, impulseId, pos, relativeOffset,
+                              imp->isTriggerable);
+
+    // Mark for double-clicks.
+    P_MaintainImpulseDoubleClicks(playerNum, impulses.indexOf(imp), *pos);
+
+#else
+    DENG2_UNUSED4(playerNum, impulseId, pos, relativeOffset);
+#endif
+}
+
+#undef P_IsControlBound
+DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
+{
+#ifdef __CLIENT__
+    InputSystem &isys = ClientApp::inputSystem();
+
+    // ImpulseBindings are associated with local player numbers rather than
+    // the player console number - translate.
+    int const localPlayer = P_ConsoleToLocal(playerNum);
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
+        return false;
+
+    // Check that this is really a numeric control.
+    PlayerImpulse const *imp = P_ImpulseById(impulseId);
+    DENG2_ASSERT(imp);
+    DENG2_ASSERT(imp->type == IT_NUMERIC || imp->type == IT_NUMERIC_TRIGGERED);
+
+    // There must be bindings to active input devices.
+    BindContext *context = isys.contextPtr(imp->bindContextName);
+    DENG2_ASSERT(context); // must surely exist by now?
+    if(!context) return false;
+
+    int found = context->forAllImpulseBindings(localPlayer, [&isys, &impulseId] (ImpulseBinding &bind)
+    {
+        // Wrong impulse?
+        if(bind.impulseId != impulseId) return LoopContinue;
+
+        if(InputDevice const *device = isys.devicePtr(bind.deviceId))
+        {
+            if(device->isActive())
+            {
+                return LoopAbort; // found a binding.
+            }
+        }
+        return LoopContinue;
+    });
+
+    return found;
+
+#else
+    DENG2_UNUSED2(playerNum, impulseId);
+    return 0;
+#endif
+}
+
+#undef P_GetImpulseControlState
+DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
+{
+    LOG_AS("P_GetImpulseControlState");
+
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+        return 0;
+
+    PlayerImpulse *imp = P_ImpulseById(impulseId);
+    if(!imp) return 0;
+
+    // Ensure this is really a boolean impulse.
+    if(imp->type != IT_BOOLEAN)
+    {
+        LOG_INPUT_WARNING("Impulse '%s' is not boolean") << imp->name;
+        return 0;
+    }
+
+    if(!counters[impulses.indexOf(imp)])
+        return 0;
+
+    short *counter = &counters[impulses.indexOf(imp)]->impulseCounts[playerNum];
+    int count = *counter;
+    *counter = 0;
+    return count;
+}
+
+#undef P_Impulse
+DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
+{
+    LOG_AS("P_Impulse");
+
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+        return;
+
+    PlayerImpulse *imp = P_ImpulseById(impulseId);
+    if(!imp) return;
+
+    // Ensure this is really a bool impulse.
+    if(imp->type != IT_BOOLEAN)
+    {
+        LOG_INPUT_WARNING("Impulse '%s' is not boolean") << imp->name;
+        return;
+    }
+
+    int const index = impulses.indexOf(imp);
+    counters[index]->impulseCounts[playerNum]++;
+
+#ifdef __CLIENT__
+    // Mark for double clicks.
+    P_MaintainImpulseDoubleClicks(playerNum, index, 1);
+    P_MaintainImpulseDoubleClicks(playerNum, index, 0);
+#endif
 }

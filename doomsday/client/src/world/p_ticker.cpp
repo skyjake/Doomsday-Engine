@@ -114,10 +114,10 @@ static void materialsTicker(timespan_t elapsed)
 
 void P_Ticker(timespan_t elapsed)
 {
-    P_ControlTicker(elapsed);
-
 #ifdef __CLIENT__
     materialsTicker(elapsed);
+#else
+    DENG2_UNUSED(elapsed);
 #endif
 
     if(!App_WorldSystem().hasMap()) return;

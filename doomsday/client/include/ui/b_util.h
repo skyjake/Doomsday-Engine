@@ -20,11 +20,13 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
+#include <QList>
 #include "dd_types.h"
 #include "dd_input.h"
 
 class BindContext;
 class InputDevice;
+struct ImpulseBinding;
 
 // Event Binding Toggle State
 enum ebstate_t
@@ -54,7 +56,7 @@ struct statecondition_t
 {
     uint device;                ///< Which device?
     stateconditiontype_t type;
-    int id;                     ///< Toggle/axis/angle identifier in the device.
+    int id;                     ///< device-control or impulse ID.
     ebstate_t state;
     float pos;                  ///< Axis position/angle condition.
     struct {
@@ -63,52 +65,55 @@ struct statecondition_t
     } flags;
 };
 
-dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
+bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
 
-dd_bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);
+bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);
 
-dd_bool B_ParseKeyId(char const *desc, int *id);
+bool B_ParseKeyId(char const *desc, int *id);
 
-dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
+bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
 
-dd_bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id);
+bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id);
 
-dd_bool B_ParseAnglePosition(char const *desc, float *pos);
+bool B_ParseAnglePosition(char const *desc, float *pos);
 
-dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc);
+bool B_ParseStateCondition(statecondition_t *cond, char const *desc);
 
-dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
+// ---------------------------------------------------------------------------------
+
+de::String B_ControlDescToString(InputDevice const &device, ddeventtype_t type, int id);
+
+de::String B_ToggleStateToString(ebstate_t state);
+
+de::String B_AxisPositionToString(ebstate_t state, float pos);
+
+de::String B_AnglePositionToString(float pos);
+
+de::String B_StateConditionToString(statecondition_t const &cond);
+
+de::String B_EventToString(ddevent_t const &ev);
+
+// ---------------------------------------------------------------------------------
+
+extern byte zeroControlUponConflict;
+
+bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
 
 /**
  * @param cond      State condition to check.
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-dd_bool B_CheckCondition(statecondition_t *cond, int localNum, BindContext *context);
+bool B_CheckCondition(statecondition_t const *cond, int localNum, BindContext *context);
 
-dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
+bool B_EqualConditions(statecondition_t const &a, statecondition_t const &b);
 
-void B_AppendControlDescToString(InputDevice const &device, ddeventtype_t type, int id, ddstring_t *str);
+void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
+    float *pos, float *relativeOffset, bool allowTriggered);
 
-void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str);
+char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
 
-void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t *str);
-
-void B_AppendAnglePositionToString(float pos, ddstring_t *str);
-
-/**
- * Converts a state condition to text string format and appends it to a string.
- *
- * @param cond  State condition.
- * @param str   The condition in textual format is appended here.
- */
-void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str);
-
-/**
- * @param ev   Event.
- * @param str  The event in textual format is appended here.
- */
-void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str);
+int B_KeyForShortName(char const *key);
 
 /**
  * @return  Never returns zero, as that is reserved for list roots.
@@ -116,10 +121,6 @@ void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str);
 int B_NewIdentifier();
 
 void B_ResetIdentifiers();
-
-char const *B_ShortNameForKey(int ddKey, dd_bool forceLowercase = true);
-
-int B_KeyForShortName(char const *key);
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

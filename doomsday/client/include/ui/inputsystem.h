@@ -26,6 +26,7 @@
 #include <de/Error>
 #include <de/System>
 #include "dd_input.h" // ddevent_t
+#include "ui/commandaction.h"
 #include "SettingsRegister"
 
 class BindContext;
@@ -111,7 +112,33 @@ public: // Event processing --------------------------------------------------
      */
     void trackEvent(ddevent_t *ev);
 
+    /**
+     * Finds the action bound to a given event, iterating through all enabled
+     * binding contexts.
+     *
+     * @param event  Event to match against.
+     *
+     * @return Action instance (caller gets ownership), or @c nullptr if not found.
+     */
+    de::Action *actionFor(ddevent_t const &event) const;
+
+    /**
+     * Checks if the event matches the binding's conditions, and if so, returns an
+     * action with the bound command.
+     *
+     * @param bind     CommandBinding.
+     * @param event    Event to match against.
+     * @param context  The bound binding context. If the bound state is associated with a
+                       higher-priority context, the binding cannot be executed.
+     * @param respectHigherAssociatedContexts  Bindings are shadowed by higher active contexts.
+     *
+     * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
+     */
+    de::Action *actionFor(CommandBinding const &bind, ddevent_t const &event,
+        BindContext const *context, bool respectHigherAssociatedContexts);
+
 public:
+
     static bool convertEvent(ddevent_t const *ddEvent, event_t *ev);
 
     /**
@@ -124,6 +151,12 @@ public:
 
 public: // Binding (context) management --------------------------------------
 
+    /// Base class for binding configuration errors. @ingroup errors
+    DENG2_ERROR(BindError);
+
+    /// Required/referenced binding context is missing. @ingroup errors
+    DENG2_ERROR(MissingContextError);
+
     /**
      * Try to make a new command binding.
      *
@@ -135,8 +168,6 @@ public: // Binding (context) management --------------------------------------
      */
     CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
-    bool unbindCommand(char const *command);
-
     /**
      * Try to make a new (player) impulse binding.
      *
@@ -146,6 +177,8 @@ public: // Binding (context) management --------------------------------------
      */
     ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
 
+    bool unbindCommand(char const *command);
+
     /**
      * Try to remove the one unique binding associated with @a id.
      *
@@ -154,9 +187,6 @@ public: // Binding (context) management --------------------------------------
     bool removeBinding(int id);
 
     // ---
-
-    /// Required/referenced binding context is missing. @ingroup errors
-    DENG2_ERROR(MissingContextError);
 
     /**
      * Enable the contexts for the initial state.
@@ -201,16 +231,6 @@ public: // Binding (context) management --------------------------------------
     BindContext *newContext(de::String const &name);
 
     /**
-     * Finds the action bound to a given event, iterating through all enabled
-     * binding contexts.
-     *
-     * @param event  Event to match against.
-     *
-     * @return Action instance (caller gets ownership), or @c nullptr if not found.
-     */
-    de::Action *actionForEvent(ddevent_t const &event) const;
-
-    /**
      * Iterate through all the BindContexts from highest to lowest priority.
      */
     de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
@@ -219,6 +239,46 @@ public: // Binding (context) management --------------------------------------
      * Write all bindings in all contexts to a text (cfg) file. Outputs console commands.
      */
     void writeAllBindingsTo(FILE *file);
+
+    // ---
+
+    /**
+     * Parse an event => command trigger descriptor and configure the given @a binding.
+     *
+     * eventparams{+cond}*
+     *
+     * @param binding    Command binding to configure.
+     * @param eventDesc  Descriptor for event information and any additional conditions.
+     * @param command    Console command to execute when triggered, if any.
+     * @param newId      @c true= assign a new unique identifier.
+     */
+    void configure(CommandBinding &binding, char const *eventDesc,
+                   char const *command = nullptr, bool newId = false);
+
+    /**
+     * Parse a device-control => player impulse trigger descriptor and configure the given
+     * @a binding.
+     *
+     * @param binding      Impulse binding to configure.
+     * @param ctrlDesc     Descriptor for control information and any additional conditions.
+     * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
+     * @param localPlayer  Local player number to execute the impulse for when triggered.
+     * @param newId        @c true= assign a new unique identifier.
+     */
+    void configure(ImpulseBinding &binding, char const *ctrlDesc,
+                   int impulseId, int localPlayer, bool newId = false);
+
+    /**
+     * Does the opposite of the B_Parse* methods for event descriptor, including the
+     * state conditions.
+     */
+    de::String composeBindsFor(CommandBinding const &binding);
+
+    /**
+     * Does the opposite of the B_Parse* methods for a device binding, including the
+     * state conditions.
+     */
+    de::String composeBindsFor(ImpulseBinding const &binding);
 
 public:
     /**

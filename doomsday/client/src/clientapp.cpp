@@ -50,6 +50,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
+#include "ui/b_main.h"
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
@@ -392,6 +393,7 @@ void ClientApp::initialize()
     // Create the input system.
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
+    B_Init();
     d->widgetActions.reset(new WidgetActions);
 
     //d->infineSys = new InFineSystem;
