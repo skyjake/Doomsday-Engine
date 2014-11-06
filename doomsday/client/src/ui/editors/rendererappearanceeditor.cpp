@@ -729,7 +729,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Left, area.left());
     d->close->rule()
             .setInput(Rule::Right,  area.right())
-            .setInput(Rule::Bottom, title->rule().bottom() - d->close->margins().bottom());
+            .setInput(Rule::Bottom, title->rule().bottom());
 
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
 
