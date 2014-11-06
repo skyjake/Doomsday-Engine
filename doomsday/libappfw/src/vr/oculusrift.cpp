@@ -704,8 +704,8 @@ Vector3f OculusRift::eyeOffset() const
 
 Matrix4f OculusRift::projection(float nearDist, float farDist) const
 {
-    DENG2_ASSERT(isReady());
 #ifdef DENG_HAVE_OCULUS_API
+    DENG2_ASSERT(isReady());
     return Matrix4f(ovrMatrix4f_Projection(d->fov[d->currentEye], nearDist, farDist,
                     true /* right-handed */).M[0]).transpose();
 #else

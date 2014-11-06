@@ -218,7 +218,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
                                     Vector2f const &viewPortSize,
                                     float nearClip, float farClip) const
 {
-    if(mode() == OculusRift)
+    if(mode() == OculusRift && oculusRift().isReady())
     {
         // OVR will calculate our projection matrix.
         float const mapUnits = d->mapUnitsPerMeter();
