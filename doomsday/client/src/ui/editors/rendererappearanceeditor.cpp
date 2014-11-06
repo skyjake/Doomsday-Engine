@@ -269,9 +269,9 @@ DENG2_OBSERVES(App, GameChange)
     Group *partGroup;
 
     Instance(Public *i)
-        : Base(i),
-          settings(ClientApp::renderSystem().appearanceSettings()),
-          firstColumnWidth(new IndirectRule)
+        : Base(i)
+        , settings(ClientApp::renderSystem().appearanceSettings())
+        , firstColumnWidth(new IndirectRule)
     {
         // The editor will close automatically when going to Ring Zero.
         App::app().audienceForGameChange() += this;
@@ -286,7 +286,9 @@ DENG2_OBSERVES(App, GameChange)
         container->add(close   = new ButtonWidget);
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
 
-        close->setText(tr("Close"));
+//        close->setText(tr("Close"));
+        close->setImage(style().images().image("close"));
+        close->setOverrideImageSize(style().fonts().font("title").height().valuei());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
 
         // Sky settings.
@@ -727,7 +729,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
             .setInput(Rule::Left, area.left());
     d->close->rule()
             .setInput(Rule::Right,  area.right())
-            .setInput(Rule::Top,    area.top());
+            .setInput(Rule::Bottom, title->rule().bottom());
 
     SequentialLayout layout(area.left(), title->rule().bottom(), Down);    
 

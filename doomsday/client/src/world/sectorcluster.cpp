@@ -1186,6 +1186,7 @@ void SectorCluster::applyBiasDigest(BiasDigest &allChanges)
 // Presently we define a 1:1 mapping to geometry vertices.
 static int countIlluminationPoints(MapElement &mapElement, int group)
 {
+    DENG2_UNUSED(group); // just assert
     switch(mapElement.type())
     {
     case DMU_SUBSPACE: {
