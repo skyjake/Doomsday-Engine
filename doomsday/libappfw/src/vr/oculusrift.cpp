@@ -30,7 +30,7 @@
 
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
-#  include <OVR_CAPI_GL.h> // shouldn't this be included by the SDK?
+#  include <OVR_CAPI_GL.h>
 using namespace OVR;
 #endif
 
@@ -62,10 +62,10 @@ DENG2_PIMPL(OculusRift)
     float fovXDegrees;
     ovrFrameTiming timing;
 #endif
-    Matrix4f eyeMatrix;
+    Matrix4f eyeMatrix[2];
     Vector3f pitchRollYaw;
     Vector3f headPosition;
-    Vector3f eyeOffset;
+    Vector3f eyeOffset[2];
     float aspect = 1.f;
 
     BaseWindow *window = nullptr;
@@ -73,6 +73,7 @@ DENG2_PIMPL(OculusRift)
 
     bool inited = false;
     bool frameOngoing = false;
+    bool needPoseUpdate = false;
     bool densityChanged = false;
     //Vector2f screenSize;
     //float lensSeparationDistance;
@@ -253,11 +254,11 @@ DENG2_PIMPL(OculusRift)
         // Set up the framebuffer and eye viewports.
         resizeFramebuffer();
 
-        ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
-
-        uint distortionCaps = ovrDistortionCap_Chromatic // TODO: make configurable?
-                            | ovrDistortionCap_TimeWarp
-                            | ovrDistortionCap_Overdrive;
+        uint distortionCaps = hmd->DistortionCaps &
+                ( ovrDistortionCap_Chromatic
+                | ovrDistortionCap_TimeWarp
+                | ovrDistortionCap_Vignette
+                | ovrDistortionCap_Overdrive );
 
         // Configure OpenGL.
         ovrGLConfig cfg;
@@ -272,6 +273,13 @@ DENG2_PIMPL(OculusRift)
         {
             LOG_GL_ERROR("Failed to configure Oculus Rift for rendering");
             return;
+        }
+
+        for(int i = 0; i < 2; ++i)
+        {
+            eyeOffset[i] = Vector3f(render[i].HmdToEyeViewOffset.x,
+                                    render[i].HmdToEyeViewOffset.y,
+                                    render[i].HmdToEyeViewOffset.z);
         }
 
         /*
@@ -307,6 +315,8 @@ DENG2_PIMPL(OculusRift)
         {
             LOG_GL_MSG("Using direct-to-HMD rendering mode");
         }*/
+
+        ovrHmd_AttachToWindow(hmd, window->nativeHandle(), NULL, NULL);
 
         moveWindow(HMDScreen);
 #endif
@@ -466,34 +476,39 @@ DENG2_PIMPL(OculusRift)
         }
     }
 
-    void updateEyePose()
+    void updateEyePoses()
     {
         if(!frameOngoing) return;
+        needPoseUpdate = false;
 
-        ovrPosef &pose = headPose[currentEye];
+        ovrVector3f hmdEyeOffsets[2] {
+            render[0].HmdToEyeViewOffset,
+            render[1].HmdToEyeViewOffset
+        };
 
         // Pose for the current eye.
-        pose = ovrHmd_GetEyePose(hmd, currentEye);
+        ovrHmd_GetEyePoses(hmd, 0, hmdEyeOffsets, headPose, nullptr);
 
-        pitchRollYaw = quaternionToPRYAngles(pose.Orientation);
+        pitchRollYaw = quaternionToPRYAngles(headPose[0].Orientation);
 
-        headPosition = Vector3f(pose.Position.x,
-                                pose.Position.y,
-                                pose.Position.z);
+        headPosition = Vector3f((headPose[0].Position.x + headPose[1].Position.x)/2,
+                                (headPose[0].Position.y + headPose[1].Position.y)/2,
+                                (headPose[0].Position.z + headPose[1].Position.z)/2);
 
-        eyeOffset = Vector3f(render[currentEye].ViewAdjust.x,
-                             render[currentEye].ViewAdjust.y,
-                             render[currentEye].ViewAdjust.z);
-
-        // TODO: Rotation directly from quaternion?
-
-        eyeMatrix = Matrix4f::translate(headPosition)
-                    *
-                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[1]), Vector3f(0, 0, 1)) *
-                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[0]), Vector3f(1, 0, 0)) *
-                    Matrix4f::rotate(-radianToDegree(pitchRollYaw[2]), Vector3f(0, 1, 0))
-                    *
-                    Matrix4f::translate(-eyeOffset);
+        for(int i = 0; i < 2; ++i)
+        {
+            // TODO: Rotate using provided quaternion.
+            // Note that Doomsday doesn't currently use this matrix!
+            eyeMatrix[i] = Matrix4f::translate(Vector3f(headPose[i].Position.x,
+                                                        headPose[i].Position.y,
+                                                        headPose[i].Position.z))
+                        *
+                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[1]), Vector3f(0, 0, 1)) *
+                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[0]), Vector3f(1, 0, 0)) *
+                        Matrix4f::rotate(-radianToDegree(pitchRollYaw[2]), Vector3f(0, 1, 0));
+                        //*
+                        //Matrix4f::translate(-eyeOffset[i]);
+        }
     }
 
     void beginFrame()
@@ -508,6 +523,7 @@ DENG2_PIMPL(OculusRift)
         }
 
         frameOngoing = true;
+        needPoseUpdate = true;
         timing = ovrHmd_BeginFrame(hmd, 0);
     }
 
@@ -583,7 +599,6 @@ void OculusRift::setCurrentEye(int index)
     if(d->hmd)
     {
         d->currentEye = d->hmd->EyeRenderOrder[index];
-        d->updateEyePose();
     }
 #else
     DENG2_UNUSED(index);
@@ -599,12 +614,6 @@ OculusRift::Eye OculusRift::currentEye() const
 #endif
 }
 
-/*
-float OculusRift::interpupillaryDistance() const
-{
-    return d->ipd;
-}*/
-
 Vector2ui OculusRift::resolution() const
 {
 #ifdef DENG_HAVE_OCULUS_API
@@ -614,31 +623,6 @@ Vector2ui OculusRift::resolution() const
     return Vector2ui();
 #endif
 }
-
-/*float OculusRift::aspect() const
-{
-    return 0.5f * d->screenSize.x / d->screenSize.y;
-}
-
-Vector2f OculusRift::screenSize() const
-{
-    return d->screenSize;
-}
-
-Vector4f OculusRift::chromAbParam() const
-{
-    return d->chromAbParam;
-}
-
-Vector4f OculusRift::hmdWarpParam() const
-{
-    return d->hmdWarpParam;
-}
-
-float OculusRift::lensSeparationDistance() const
-{
-    return d->lensSeparationDistance;
-}*/
 
 void OculusRift::setYawOffset(float yawRadians)
 {
@@ -675,67 +659,47 @@ bool OculusRift::isReady() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     return d->isReady();
-    /*DENG2_GUARD(d);
-    return d->inited && d->oculusDevice->isGood();*/
 #else
     return false;
 #endif
 }
 
-/*void OculusRift::allowUpdate()
-{
-    //d->headOrientationUpdateIsAllowed = true;
-}*/
-
-/*
-void OculusRift::update()
-{
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
-
-    if(d->headOrientationUpdateIsAllowed && isReady())
-    {
-        d->oculusDevice->update();
-        d->headOrientationUpdateIsAllowed = false;
-    }
-#endif
-}*/
-
 Vector3f OculusRift::headOrientation() const
 {
-    //if(d->frameOngoing) d->updateEyePose();
-
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->needPoseUpdate) d->updateEyePoses();
+#endif
     Vector3f pry = d->pitchRollYaw;
     pry.z = wrap(pry.z + d->yawOffset, -PIf, PIf);
     return pry;
-
-/*    Vector3f result;
-#ifdef DENG_HAVE_OCULUS_API
-    DENG2_GUARD(d);
-    if(isReady())
-    {
-        result[0] = d->oculusDevice->pitch;
-        result[1] = d->oculusDevice->roll;
-        result[2] = wrap(d->oculusDevice->yaw + d->yawOffset, -PIf, PIf);
-    }
-#endif
-    return result;*/
 }
 
 Matrix4f OculusRift::eyePose() const
 {
     DENG2_ASSERT(isReady());
-    return d->eyeMatrix;
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->needPoseUpdate) d->updateEyePoses();
+    return d->eyeMatrix[d->currentEye];
+#else
+    return Matrix4f();
+#endif
 }
 
 Vector3f OculusRift::headPosition() const
 {
+#ifdef DENG_HAVE_OCULUS_API
+    if(d->needPoseUpdate) d->updateEyePoses();
+#endif
     return d->headPosition;
 }
 
 Vector3f OculusRift::eyeOffset() const
 {
-    return d->eyeOffset;
+#ifdef DENG_HAVE_OCULUS_API
+    return d->eyeOffset[d->currentEye];
+#else
+    return Vector3f();
+#endif
 }
 
 Matrix4f OculusRift::projection(float nearDist, float farDist) const
@@ -760,37 +724,12 @@ float OculusRift::aspect() const
     return d->aspect;
 }
 
-/*
-Matrix4f OculusRift::headModelViewMatrix() const
-{
-    return d->eyeMatrix;
-    Vector3f const pry = headOrientation();
-    return Matrix4f::rotate(-radianToDegree(pry[1]), Vector3f(0, 0, 1)) *
-           Matrix4f::rotate(-radianToDegree(pry[0]), Vector3f(1, 0, 0)) *
-           Matrix4f::rotate(-radianToDegree(pry[2]), Vector3f(0, 1, 0));
-}
-*/
-
-/*
-float OculusRift::distortionScale() const
-{
-    float lensShift = d->screenSize.x * 0.25f - lensSeparationDistance() * 0.5f;
-    float lensViewportShift = 4.0f * lensShift / d->screenSize.x;
-    float fitRadius = fabs(-1 - lensViewportShift);
-    float rsq = fitRadius*fitRadius;
-    Vector4f k = hmdWarpParam();
-    float scale = (k[0] + k[1] * rsq + k[2] * rsq * rsq + k[3] * rsq * rsq * rsq);
-    return scale;
-}*/
-
 float OculusRift::fovX() const
 {
 #ifdef DENG_HAVE_OCULUS_API
     return d->fovXDegrees;
 #endif
     return 0;
-    /*float const w = 0.25 * d->screenSize.x * distortionScale();
-    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));*/
 }
 
 void OculusRift::moveWindowToScreen(Screen screen)
@@ -801,16 +740,5 @@ void OculusRift::moveWindowToScreen(Screen screen)
     DENG2_UNUSED(screen);
 #endif
 }
-
-#if 0
-float OculusRift::fovY() const
-{
-#ifdef DENG_HAVE_OCULUS_API
-#endif
-    return 0;
-    /*float const w = 0.5 * d->screenSize.y * distortionScale();
-    return de::radianToDegree(2.0 * atan(w / d->eyeToScreenDistance));*/
-}
-#endif
 
 } // namespace de
