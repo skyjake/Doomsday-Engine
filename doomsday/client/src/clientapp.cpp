@@ -216,7 +216,7 @@ DENG2_PIMPL(ClientApp)
         delete svLink;
         delete renderSys;
         delete resourceSys;
-		widgetActions.reset();
+        //widgetActions.reset();
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
