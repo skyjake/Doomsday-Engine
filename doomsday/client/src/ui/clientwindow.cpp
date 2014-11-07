@@ -66,6 +66,8 @@ static inline InputSystem &inputSys()
     return ClientApp::inputSystem();
 }
 
+static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
+
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
 , DENG2_OBSERVES(Canvas, FocusChange)
@@ -151,6 +153,11 @@ DENG2_PIMPL(ClientWindow)
 
         releaseRef(cursorX);
         releaseRef(cursorY);
+
+        if(thisPublic == mainWindow)
+        {
+            mainWindow = nullptr;
+        }
     }
 
     Widget &container()
@@ -736,6 +743,12 @@ ClientWindow::ClientWindow(String const &id)
 #endif
 
     d->setupUI();
+
+    // The first window is the main window.
+    if(!mainWindow)
+    {
+        mainWindow = this;
+    }
 }
 
 Vector2f ClientWindow::windowContentSize() const
@@ -1034,6 +1047,11 @@ void ClientWindow::updateRootSize()
 ClientWindow &ClientWindow::main()
 {
     return static_cast<ClientWindow &>(BaseWindow::main());
+}
+
+bool ClientWindow::mainExists()
+{
+    return mainWindow != nullptr;
 }
 
 void ClientWindow::toggleFPSCounter()
