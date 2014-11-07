@@ -122,7 +122,7 @@ public: // Event processing --------------------------------------------------
      * @param context  Name of the binding context. If empty, all contexts
      *                 all checked.
      *
-     * @return @c true if even was triggered, @c false otherwise.
+     * @return @c true if an action was triggered, @c false otherwise.
      */
     bool tryEvent(de::Event const &event, de::String const &context = "");
     bool tryEvent(ddevent_t const &event, de::String const &context = "");
@@ -142,7 +142,7 @@ public:
      *
      * @param event  Input event.
      *
-     * @todo make private.
+     * @todo make private (all widgets should belong to / own a BindContext).
      */
     void trackEvent(de::Event const &event);
     void trackEvent(ddevent_t const &event);
