@@ -1,7 +1,10 @@
-/** @file net_main.cpp
+/** @file net_main.cpp  Client/server networking.
+ *
+ * Player number zero is always the server. In single-player games there is only
+ * the server present.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,15 +19,6 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
-
-/**
- * Client/server networking.
- *
- * Player number zero is always the server.
- * In single-player games there is only the server present.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>             // for atoi()
 
@@ -47,6 +41,7 @@
 #  include "render/lightgrid.h"
 #  include "render/blockmapvisual.h"
 #  include "edit_bias.h"
+#  include "ui/inputdebug.h"
 #  include "ui/widgets/taskbarwidget.h"
 #endif
 
@@ -739,8 +734,8 @@ void Net_Drawer()
     // Draw the light range debug display.
     Rend_DrawLightModMatrix();
 
-    // Draw the input device debug display.
-    Rend_DrawInputDeviceVisuals();
+    // Draw the input debug display.
+    I_DebugDrawer();
 
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();

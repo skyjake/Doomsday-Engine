@@ -43,7 +43,7 @@
 #include "world/p_players.h"
 #include "world/thinkers.h"
 #include "Material"
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 #include "r_util.h"
 
 #include "api_map.h"

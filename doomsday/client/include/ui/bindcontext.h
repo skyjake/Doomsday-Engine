@@ -36,6 +36,14 @@ struct PlayerImpulse;
 /**
  * Contextualized grouping of input (and windowing system) event bindings.
  *
+ * @todo There should be one of these in every Widget that has bindable actions.
+ * When that's done, many of the existing binding contexts become obsolete. There
+ * should still be support for several alternative contexts within one widget,
+ * for instance depending on the mode of the widget (e.g., automap pan).
+ *
+ * @todo: Conceptually the fallback responders don't belong; instead of "responding"
+ * (immediately performing a reaction), we should be returning an Action instance. -jk
+ *
  * @ingroup ui
  */
 class BindContext
@@ -179,21 +187,13 @@ public: // Binding management: -------------------------------------------------
 public: // Triggering: --------------------------------------------------------------
 
     /**
-     * Finds the action bound to a given event.
+     * @param event                  Event to be tried.
+     * @param respectHigherContexts  Bindings shadowed by higher active contexts.
      *
-     * @param event                            Event to match against.
-     * @param respectHigherAssociatedContexts  Bindings shadowed by higher active contexts.
-     *
-     * @return Action instance (caller gets ownership), or @c nullptr if not found.
+     * @return  @c true if the event triggered an action or was eaten by a responder.
      */
-    de::Action *actionForEvent(ddevent_t const &event,
-                               bool respectHigherAssociatedContexts = true) const;
+    bool tryEvent(ddevent_t const &event, bool respectHigherContexts = true) const;
 
-    /**
-     * @todo: Conceptually the fallback responders don't belong; instead of "responding"
-     * (immediately performing a reaction), we should be returning an Action instance. -jk
-     */
-    int tryFallbackResponders(ddevent_t const &event, event_t &ev, bool validGameEvent) const;
     void setFallbackResponder(FallbackResponderFunc newResponderFunc);
     void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);
 

@@ -56,7 +56,7 @@
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "ui/infine/infinesystem.h"
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 #include "ui/progress.h"
 #include "ui/nativeui.h"
 

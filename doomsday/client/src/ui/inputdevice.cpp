@@ -235,8 +235,6 @@ String InputDevice::description() const
 void InputDevice::reset()
 {
     LOG_AS("InputDevice");
-    LOG_INPUT_VERBOSE("Reseting %s") << title();
-
     for(Control *axis : d->axes)
     {
         axis->reset();
@@ -256,6 +254,7 @@ void InputDevice::reset()
 
         altDown = shiftDown = false;
     }
+    LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " controls reset") << title();
 }
 
 LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)

@@ -118,6 +118,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/BiasIllum \
     include/BiasSource \
     include/BiasTracker \
+    include/BindContext \
     include/BitmapFont \
     include/BspLeaf \
     include/BspNode \
@@ -176,8 +177,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
-    include/WallSpec \
-    include/WidgetActions
+    include/WallSpec
 
 # Private headers.
 DENG_HEADERS += \
@@ -357,7 +357,7 @@ DENG_HEADERS += \
     include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
     include/ui/commandbinding.h \
-    include/ui/dd_input.h \
+    include/ui/ddevent.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
@@ -384,7 +384,6 @@ DENG_HEADERS += \
     include/ui/inputdevicebuttoncontrol.h \
     include/ui/inputdevicehatcontrol.h \
     include/ui/progress.h \
-    include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
@@ -412,7 +411,7 @@ DENG_HEADERS += \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
-    include/ui/p_control.h \
+    include/ui/playerimpulse.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
     include/ui/ui_main.h \
@@ -683,7 +682,6 @@ SOURCES += \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
-    src/ui/dd_input.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -704,6 +702,7 @@ SOURCES += \
     src/ui/infine/finaletextwidget.cpp \
     src/ui/infine/finalewidget.cpp \
     src/ui/infine/infinesystem.cpp \
+    src/ui/inputdebug.cpp \
     src/ui/inputdevice.cpp \
     src/ui/inputdeviceaxiscontrol.cpp \
     src/ui/inputdevicebuttoncontrol.cpp \
@@ -711,12 +710,11 @@ SOURCES += \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/p_control.cpp \
+    src/ui/playerimpulse.cpp \
     src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui_main.cpp \
-    src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \

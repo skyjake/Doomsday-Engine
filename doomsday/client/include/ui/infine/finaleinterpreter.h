@@ -22,7 +22,7 @@
 
 #include <de/Error>
 #include <de/String>
-#include "../dd_input.h" // ddevent_t
+#include "../ddevent.h"
 #include "api_infine.h"  // finaleid_t
 
 class FinaleWidget;

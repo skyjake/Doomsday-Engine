@@ -24,7 +24,7 @@
 #include <doomsday/console/exec.h>
 #include "clientapp.h"
 #include "dd_main.h"
-#include "ui/bindcontext.h"
+#include "BindContext"
 
 using namespace de;
 
@@ -85,7 +85,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
     if(hasFocus())
     {
         // Console bindings override normal event handling.
-        if(ClientApp::widgetActions().tryEvent(event, "console"))
+        if(ClientApp::inputSystem().tryEvent(event, "console"))
         {
             // Eaten by bindings.
             return true;

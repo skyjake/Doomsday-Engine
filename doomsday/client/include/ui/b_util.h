@@ -22,7 +22,7 @@
 
 #include <QList>
 #include "dd_types.h"
-#include "dd_input.h"
+#include "ddevent.h"
 
 class BindContext;
 class InputDevice;

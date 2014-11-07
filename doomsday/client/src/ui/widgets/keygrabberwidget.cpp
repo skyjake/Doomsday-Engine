@@ -18,7 +18,7 @@
 
 #include "ui/widgets/keygrabberwidget.h"
 #include "clientapp.h"
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/b_util.h"
 
 #include <de/KeyEvent>
@@ -79,7 +79,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             }
 
             ddevent_t ev;
-            InputSystem::convertEvent(event, &ev);
+            InputSystem::convertEvent(event, ev);
 
             String info = String("DD:%1 Qt:0x%2 Native:0x%3\n" _E(m) "%4")
                               .arg(key->ddKey())

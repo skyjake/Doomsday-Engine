@@ -112,7 +112,6 @@ DENG2_PIMPL(ClientApp)
     SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    QScopedPointer<WidgetActions> widgetActions;
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
@@ -216,7 +215,6 @@ DENG2_PIMPL(ClientApp)
         delete svLink;
         delete renderSys;
         delete resourceSys;
-        //widgetActions.reset();
         delete inputSys;
         delete menuBar;
         clientAppSingleton = 0;
@@ -395,7 +393,6 @@ void ClientApp::initialize()
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
     B_Init();
-    d->widgetActions.reset(new WidgetActions);
 
     //d->infineSys = new InFineSystem;
     //addSystem(*d->infineSys);
@@ -530,11 +527,6 @@ ClientWindowSystem &ClientApp::windowSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
-}
-
-WidgetActions &ClientApp::widgetActions()
-{
-    return *app().d->widgetActions;
 }
 
 Games &ClientApp::games()

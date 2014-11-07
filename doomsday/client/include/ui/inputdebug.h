@@ -1,6 +1,5 @@
-/** @file b_main.h  Event and device state bindings system.
+/** @file inputdebug.h  Input debug visualization.
  *
- * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -17,13 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_BINDINGS_H
-#define CLIENT_INPUTSYSTEM_BINDINGS_H
+#ifndef CLIENT_INPUTDEBUG_H
+#define CLIENT_INPUTDEBUG_H
 
-void B_Init();
+#include <de/libcore.h>
 
-void B_BindDefaults();
+#ifdef DENG2_DEBUG
 
-void B_BindGameDefaults();
+/**
+ * Render a visual representation of the current state of all input devices.
+ */
+void I_DebugDrawer();
 
-#endif // CLIENT_INPUTSYSTEM_BINDINGS_H
+/**
+ * Register the commands and variables of this module.
+ */
+void I_DebugDrawerConsoleRegister();
+
+#endif
+
+#endif // CLIENT_INPUTDEBUG_H

@@ -23,7 +23,7 @@
 #include <QVector>
 #include <de/String>
 #include "b_util.h"
-#include "dd_input.h"
+#include "ddevent.h"
 
 struct CommandBinding
 {
