@@ -1057,11 +1057,11 @@ bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
     return false;
 }
 
-bool InputSystem::tryEvent(Event const &event, String const &context)
+bool InputSystem::tryEvent(Event const &event, String const &namedContext)
 {
     ddevent_t ddev;
     convertEvent(event, ddev);
-    return tryEvent(ddev, context);
+    return tryEvent(ddev, namedContext);
 }
 
 void InputSystem::trackEvent(ddevent_t const &event)
@@ -1098,7 +1098,6 @@ void InputSystem::trackEvent(ddevent_t const &event)
     }
 
     // Update the state table.
-    /// @todo Offer the event to each control in turn.
     if(event.type == E_AXIS)
     {
         dev->axis(event.axis.id).applyRealPosition(event.axis.pos);
@@ -1950,23 +1949,13 @@ D_CMD(ActivateContext)
 D_CMD(BindCommand)
 {
     DENG2_UNUSED2(src, argc);
-    if(CommandBinding *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
-    {
-        LOG_INPUT_VERBOSE("Binding " _E(b) "%i" _E(.) " created") << bind->id;
-        return true;
-    }
-    return false;
+    return ClientApp::inputSystem().bindCommand(argv[1], argv[2]) != nullptr;
 }
 
 D_CMD(BindImpulse)
 {
     DENG2_UNUSED2(src, argc);
-    if(ImpulseBinding *bind = ClientApp::inputSystem().bindImpulse(argv[2], argv[1]))
-    {
-        LOG_INPUT_VERBOSE("Binding " _E(b) "%i" _E(.) " created") << bind->id;
-        return true;
-    }
-    return false;
+    return ClientApp::inputSystem().bindImpulse(argv[2], argv[1]) != nullptr;
 }
 
 D_CMD(ListBindings)
@@ -2039,7 +2028,6 @@ D_CMD(ClearBindings)
 
     ClientApp::inputSystem().forAllContexts([] (BindContext &context)
     {
-        LOG_INPUT_VERBOSE("Clearing binding context " _E(b) "'%s'") << context.name();
         context.clearAllBindings();
         return LoopContinue;
     });

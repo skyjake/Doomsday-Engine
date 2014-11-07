@@ -157,7 +157,7 @@ void BindContext::activate(bool yes)
     if(d->active == yes) return;
 
     LOG_AS("BindContext");
-    LOG_INPUT_VERBOSE("%s '%s'") << (yes? "Activating" : "Deactivating") << d->name;
+    LOG_INPUT_VERBOSE("%s " _E(b) "'%s'") << (yes? "Activating" : "Deactivating") << d->name;
     d->active = yes;
 
     // Notify interested parties.
@@ -213,10 +213,12 @@ void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
 
 void BindContext::clearAllBindings()
 {
+    LOG_AS("BindContext");
     qDeleteAll(d->commandBinds);
     d->commandBinds.clear();
     qDeleteAll(d->controlGroups);
     d->controlGroups.clear();
+    LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
 }
 
 void BindContext::deleteMatching(CommandBinding const *cmdBinding, ImpulseBinding const *impBinding)
@@ -253,8 +255,9 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
         /// replacement is ok. For now, just delete the other binding.
         deleteMatching(bind, nullptr);
 
-        LOG_INPUT_VERBOSE("Command \"%s\" now bound to \"%s\" in " _E(b) "'%s'")
-                << command << eventDesc << d->name;
+        LOG_INPUT_VERBOSE("Command \"%s\" now bound to \"%s\" in " _E(b) "'%s'"
+                          " with binding Id " _E(b) "%i")
+                << command << eventDesc << d->name << bind->id;
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, true/*is-command*/);
@@ -288,8 +291,9 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
         /// replacement is ok. For now, just delete the other binding.
         deleteMatching(nullptr, bind);
 
-        LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of local player %i now bound to \"%s\" in " _E(b) "'%s'")
-                << impulse.name << localPlayer << ctrlDesc << d->name;
+        LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'"
+                          " with binding Id " _E(b) "%i")
+                << impulse.name << (localPlayer + 1) << ctrlDesc << d->name << bind->id;
 
         /// @todo: Notify interested parties.
         //DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, false/*is-impulse*/);
