@@ -23,17 +23,16 @@
 
 #ifdef DENG2_DEBUG
 
-void I_DebugDrawerConsoleRegister();
-
 /**
  * Render a visual representation of the current state of all input devices.
  */
 void I_DebugDrawer();
 
-#else
-#  define I_ConsoleRegister()
+/**
+ * Register the commands and variables of this module.
+ */
+void I_DebugDrawerConsoleRegister();
 
-#  define I_DebugDrawer()
 #endif
 
 #endif // CLIENT_INPUTDEBUG_H
