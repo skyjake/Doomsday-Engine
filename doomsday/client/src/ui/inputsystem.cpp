@@ -1043,7 +1043,7 @@ bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
         // Try all active contexts in order.
         for(BindContext *context : d->contexts)
         {
-            return context->tryEvent(event);
+            if(context->tryEvent(event)) return true;
         }
         return false;
     }
