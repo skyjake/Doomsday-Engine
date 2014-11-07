@@ -42,6 +42,10 @@ struct ImpulseBinding;
 /**
  * Input devices and events. @ingroup ui
  *
+ * @todo Decentralize management of input bindings (effectively, combine BindContext
+ * with WidgetActions and use the Widget tree to navigate context hierarchy when both
+ * binding new actions and resolving bindings to actions).
+ *
  * @todo Input drivers belong in this system.
  */
 class InputSystem : public de::System
