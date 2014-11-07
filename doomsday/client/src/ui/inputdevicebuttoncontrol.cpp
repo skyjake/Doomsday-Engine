@@ -56,7 +56,7 @@ void InputDeviceButtonControl::setDown(bool yes)
     else
     {
         // We can clear the expiration when the key is released.
-        setBindContextAssociation(Triggered, UnsetFlags);
+        setBindContextAssociation(Expired, UnsetFlags);
     }
 
 }
