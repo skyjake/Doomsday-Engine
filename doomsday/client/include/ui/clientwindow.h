@@ -170,6 +170,7 @@ public:
     bool handleFallbackEvent(de::Event const &event);
 
     static ClientWindow &main();
+    static bool mainExists();
 
 protected:
     bool prepareForDraw();
