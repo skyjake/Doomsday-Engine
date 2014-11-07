@@ -18,8 +18,8 @@
 
 #include "ui/widgets/inputbindingwidget.h"
 #include "clientapp.h"
-#include "ui/b_main.h"
-#include "ui/bindcontext.h"
+#include "BindContext"
+//#include "ui/b_main.h"
 #include <de/AuxButtonWidget>
 #include <de/charsymbols.h>
 
@@ -217,7 +217,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
             }
 
             ddevent_t ev;
-            InputSystem::convertEvent(event, &ev);
+            InputSystem::convertEvent(event, ev);
             String desc = B_EventToString(ev);
 
             // Apply current modifiers as conditions.

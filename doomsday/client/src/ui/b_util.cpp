@@ -27,8 +27,8 @@
 
 #include "ui/b_util.h"
 
+#include "BindContext"
 #include "ui/b_main.h"
-#include "ui/bindcontext.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"

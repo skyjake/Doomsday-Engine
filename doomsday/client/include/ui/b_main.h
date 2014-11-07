@@ -20,15 +20,7 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDINGS_H
 #define CLIENT_INPUTSYSTEM_BINDINGS_H
 
-#include <de/types.h>
-#include "ddevent.h"
-
 void B_Init();
-
-/**
- * Deallocates memory for the commands and bindings.
- */
-void B_Shutdown();
 
 void B_BindDefaults();
 

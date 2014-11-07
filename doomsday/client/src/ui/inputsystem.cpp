@@ -39,10 +39,10 @@
 #include "render/vr.h"
 #include "world/p_players.h"
 
+#include "BindContext"
 #include "ui/ddevent.h"
 #include "ui/b_main.h"
 #include "ui/b_util.h"
-#include "ui/bindcontext.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/inputdebug.h"  // Debug visualization.
@@ -362,47 +362,40 @@ DENG2_PIMPL(InputSystem)
         return device;
     }
 
-    /**
-     * Checks to see if we need to respond to the given input event and if so,
-     * executes any actions associated with the event.
-     *
-     * @param event  Description of the event.
-     *
-     * @return  @c true if an action was executed.
-     */
-    bool handleEventBindings(ddevent_t const &ev)
+    void echoSymbolicEvent(ddevent_t const &ev)
     {
-        if(symbolicEchoMode &&
-           ev.type != E_SYMBOLIC && ev.type != E_FOCUS)
+        // Disabled?
+        if(!symbolicEchoMode) return;
+
+        // Some event types are never echoed.
+        if(ev.type == E_SYMBOLIC || ev.type == E_FOCUS) return;
+
+        // Input device axis controls can be pretty sensitive (or misconfigured)
+        // so we need to do some filtering to determine if it motion is strong
+        // enough for an echo.
+        if(ev.type == E_AXIS)
         {
-            // Make an echo.
-            // Axis events need a bit of filtering.
-            if(ev.type == E_AXIS)
+            InputDevice const &device = self.device(ev.device);
+            float const pos = device.axis(ev.axis.id).translateRealPosition(ev.axis.pos);
+
+            if((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
+               (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
-                float pos = self.device(ev.device).axis(ev.axis.id).translateRealPosition(ev.axis.pos);
-                if((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
-                   (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
-                {
-                    // Not significant enough for an echo.
-                    return ClientApp::widgetActions().tryEvent(&ev);
-                }
+                return; // Not significant enough.
             }
-
-            String const name = "echo-" + B_EventToString(ev);
-
-            ddevent_t echo; de::zap(echo);
-            echo.device = ev.device;
-            echo.type   = E_SYMBOLIC;
-            echo.symbolic.id   = 0;
-            echo.symbolic.name = name.toUtf8().constData();
-
-            LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
-            self.postEvent(&echo);
-
-            return true;
         }
 
-        return ClientApp::widgetActions().tryEvent(&ev);
+        // Echo the event.
+        String const name = "echo-" + B_EventToString(ev);
+
+        ddevent_t echo; de::zap(echo);
+        echo.device = ev.device;
+        echo.type   = E_SYMBOLIC;
+        echo.symbolic.id   = 0;
+        echo.symbolic.name = name.toUtf8().constData();
+
+        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
+        self.postEvent(&echo);
     }
 
     /**
@@ -416,13 +409,13 @@ DENG2_PIMPL(InputSystem)
         while((ddev = nextFromQueue(q)))
         {
             // Update the state of the input device tracking table.
-            self.trackEvent(ddev);
+            self.trackEvent(*ddev);
 
             if(ignoreInput && ddev->type != E_FOCUS)
                 continue;
 
             event_t ev;
-            bool validGameEvent = self.convertEvent(ddev, &ev);
+            bool validGameEvent = self.convertEvent(*ddev, ev);
 
             if(validGameEvent && callGameResponders)
             {
@@ -435,8 +428,12 @@ DENG2_PIMPL(InputSystem)
                 }
             }
 
-            // The bindings responder.
-            if(handleEventBindings(*ddev))
+            // Generate a symbolic event if echo mode enabled.
+            echoSymbolicEvent(*ddev);
+
+            // Try the binding system to see if we need to respond to the event
+            // and if so, trigger any associated actions.
+            if(self.tryEvent(*ddev))
             {
                 continue;
             }
@@ -965,57 +962,6 @@ void InputSystem::initAllDevices()
     for(InputDevice *device : d->devices) device->consoleRegister();
 }
 
-void InputSystem::trackEvent(ddevent_t *ev)
-{
-    DENG2_ASSERT(ev);
-
-    if(ev->type == E_FOCUS || ev->type == E_SYMBOLIC)
-        return; // Not a tracked device state.
-
-    InputDevice *dev = devicePtr(ev->device);
-    if(!dev || !dev->isActive()) return;
-
-    // Track the state of Shift and Alt.
-    if(IS_KEY_TOGGLE(ev))
-    {
-        if(ev->toggle.id == DDKEY_RSHIFT)
-        {
-            if(ev->toggle.state == ETOG_DOWN)
-                ::shiftDown = true;
-            else if(ev->toggle.state == ETOG_UP)
-                ::shiftDown = false;
-        }
-        else if(ev->toggle.id == DDKEY_RALT)
-        {
-            if(ev->toggle.state == ETOG_DOWN)
-            {
-                ::altDown = true;
-                //qDebug() << "Alt down";
-            }
-            else if(ev->toggle.state == ETOG_UP)
-            {
-                ::altDown = false;
-                //qDebug() << "Alt up";
-            }
-        }
-    }
-
-    // Update the state table.
-    /// @todo Offer the event to each control in turn.
-    if(ev->type == E_AXIS)
-    {
-        dev->axis(ev->axis.id).applyRealPosition(ev->axis.pos);
-    }
-    else if(ev->type == E_TOGGLE)
-    {
-        dev->button(ev->toggle.id).setDown(ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
-    }
-    else if(ev->type == E_ANGLE)
-    {
-        dev->hat(ev->angle.id).setPosition(ev->angle.pos);
-    }
-}
-
 bool InputSystem::ignoreEvents(bool yes)
 {
     bool const oldIgnoreInput = d->ignoreInput;
@@ -1072,128 +1018,6 @@ void InputSystem::postEvent(ddevent_t *ev)
 #endif
 }
 
-void InputSystem::convertEvent(Event const &event, ddevent_t *ddEvent) // static
-{
-    DENG2_ASSERT(ddEvent);
-    de::zapPtr(ddEvent);
-
-    switch(event.type())
-    {
-    case Event::KeyPress:
-    case Event::KeyRelease: {
-        KeyEvent const &kev = event.as<KeyEvent>();
-
-        ddEvent->device       = IDEV_KEYBOARD;
-        ddEvent->type         = E_TOGGLE;
-        ddEvent->toggle.id    = kev.ddKey();
-        ddEvent->toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
-        strcpy(ddEvent->toggle.text, kev.text().toLatin1());
-        break; }
-
-    default: break;
-    }
-}
-
-bool InputSystem::convertEvent(ddevent_t const *ddEvent, event_t *ev) // static
-{
-    DENG2_ASSERT(ddEvent && ev);
-    // Copy the essentials into a cutdown version for the game.
-    // Ensure the format stays the same for future compatibility!
-    //
-    /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
-    //
-    de::zapPtr(ev);
-    if(ddEvent->type == E_SYMBOLIC)
-    {
-        ev->type = EV_SYMBOLIC;
-#ifdef __64BIT__
-        ASSERT_64BIT(ddEvent->symbolic.name);
-        ev->data1 = (int)(((uint64_t) ddEvent->symbolic.name) & 0xffffffff); // low dword
-        ev->data2 = (int)(((uint64_t) ddEvent->symbolic.name) >> 32); // high dword
-#else
-        ASSERT_NOT_64BIT(ddEvent->symbolic.name);
-        ev->data1 = (int) ddEvent->symbolic.name;
-        ev->data2 = 0;
-#endif
-    }
-    else if(ddEvent->type == E_FOCUS)
-    {
-        ev->type  = EV_FOCUS;
-        ev->data1 = ddEvent->focus.gained;
-        ev->data2 = ddEvent->focus.inWindow;
-    }
-    else
-    {
-        switch(ddEvent->device)
-        {
-        case IDEV_KEYBOARD:
-            ev->type = EV_KEY;
-            if(ddEvent->type == E_TOGGLE)
-            {
-                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
-                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
-                             : EVS_REPEAT );
-                ev->data1 = ddEvent->toggle.id;
-            }
-            break;
-
-        case IDEV_MOUSE:
-            if(ddEvent->type == E_AXIS)
-            {
-                ev->type = EV_MOUSE_AXIS;
-            }
-            else if(ddEvent->type == E_TOGGLE)
-            {
-                ev->type  = EV_MOUSE_BUTTON;
-                ev->data1 = ddEvent->toggle.id;
-                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
-                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
-                             : EVS_REPEAT );
-            }
-            break;
-
-        case IDEV_JOY1:
-        case IDEV_JOY2:
-        case IDEV_JOY3:
-        case IDEV_JOY4:
-            if(ddEvent->type == E_AXIS)
-            {
-                int *data = &ev->data1;
-                ev->type  = EV_JOY_AXIS;
-                ev->state = (evstate_t) 0;
-                if(ddEvent->axis.id >= 0 && ddEvent->axis.id < 6)
-                {
-                    data[ddEvent->axis.id] = ddEvent->axis.pos;
-                }
-                /// @todo  The other dataN's must contain up-to-date information
-                /// as well. Read them from the current joystick status.
-            }
-            else if(ddEvent->type == E_TOGGLE)
-            {
-                ev->type  = EV_JOY_BUTTON;
-                ev->state = (  ddEvent->toggle.state == ETOG_UP  ? EVS_UP
-                             : ddEvent->toggle.state == ETOG_DOWN? EVS_DOWN
-                             : EVS_REPEAT );
-                ev->data1 = ddEvent->toggle.id;
-            }
-            else if(ddEvent->type == E_ANGLE)
-            {
-                ev->type = EV_POV;
-            }
-            break;
-
-        case IDEV_HEAD_TRACKER:
-            // No game-side equivalent exists.
-            return false;
-
-        default:
-            DENG2_ASSERT(!"InputSystem::convertEvent: Unknown device ID in ddevent_t");
-            return false;
-        }
-    }
-    return true;
-}
-
 void InputSystem::processEvents(timespan_t ticLength)
 {
     // Poll all event sources (i.e., input devices) and post events.
@@ -1210,6 +1034,210 @@ void InputSystem::processSharpEvents(timespan_t ticLength)
     {
         d->dispatchEvents(&sharpQueue, DD_IsFrameTimeAdvancing()? SECONDSPERTIC : ticLength, true);
     }
+}
+
+bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
+{
+    if(namedContext.isEmpty())
+    {
+        // Try all active contexts in order.
+        for(BindContext *context : d->contexts)
+        {
+            return context->tryEvent(event);
+        }
+        return false;
+    }
+
+    // Check a specific binding context for an action (regardless of its activation status).
+    if(hasContext(namedContext))
+    {
+        return context(namedContext).tryEvent(event, false/*this context only*/);
+    }
+
+    return false;
+}
+
+bool InputSystem::tryEvent(Event const &event, String const &context)
+{
+    ddevent_t ddev;
+    convertEvent(event, ddev);
+    return tryEvent(ddev, context);
+}
+
+void InputSystem::trackEvent(ddevent_t const &event)
+{
+    if(event.type == E_FOCUS || event.type == E_SYMBOLIC)
+        return; // Not a tracked device state.
+
+    InputDevice *dev = devicePtr(event.device);
+    if(!dev || !dev->isActive()) return;
+
+    // Track the state of Shift and Alt.
+    if(event.device == IDEV_KEYBOARD && event.type == E_TOGGLE)
+    {
+        if(event.toggle.id == DDKEY_RSHIFT)
+        {
+            if(event.toggle.state == ETOG_DOWN)
+                ::shiftDown = true;
+            else if(event.toggle.state == ETOG_UP)
+                ::shiftDown = false;
+        }
+        else if(event.toggle.id == DDKEY_RALT)
+        {
+            if(event.toggle.state == ETOG_DOWN)
+            {
+                ::altDown = true;
+                //qDebug() << "Alt down";
+            }
+            else if(event.toggle.state == ETOG_UP)
+            {
+                ::altDown = false;
+                //qDebug() << "Alt up";
+            }
+        }
+    }
+
+    // Update the state table.
+    /// @todo Offer the event to each control in turn.
+    if(event.type == E_AXIS)
+    {
+        dev->axis(event.axis.id).applyRealPosition(event.axis.pos);
+    }
+    else if(event.type == E_TOGGLE)
+    {
+        dev->button(event.toggle.id).setDown(event.toggle.state == ETOG_DOWN || event.toggle.state == ETOG_REPEAT);
+    }
+    else if(event.type == E_ANGLE)
+    {
+        dev->hat(event.angle.id).setPosition(event.angle.pos);
+    }
+}
+
+void InputSystem::trackEvent(Event const &event)
+{
+    ddevent_t ddev;
+    convertEvent(event, ddev);
+    trackEvent(ddev);
+}
+
+void InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
+{
+    de::zap(to);
+    switch(from.type())
+    {
+    case Event::KeyPress:
+    case Event::KeyRelease: {
+        KeyEvent const &kev = from.as<KeyEvent>();
+
+        to.device       = IDEV_KEYBOARD;
+        to.type         = E_TOGGLE;
+        to.toggle.id    = kev.ddKey();
+        to.toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
+        strcpy(to.toggle.text, kev.text().toLatin1());
+        break; }
+
+    default: break;
+    }
+}
+
+bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
+{
+    // Copy the essentials into a cutdown version for the game.
+    // Ensure the format stays the same for future compatibility!
+    //
+    /// @todo This is probably broken! (DD_MICKEY_ACCURACY=1000 no longer used...)
+    //
+    de::zap(to);
+    if(from.type == E_SYMBOLIC)
+    {
+        to.type = EV_SYMBOLIC;
+#ifdef __64BIT__
+        ASSERT_64BIT(from.symbolic.name);
+        ev->data1 = (int)(((uint64_t) from.symbolic.name) & 0xffffffff); // low dword
+        ev->data2 = (int)(((uint64_t) from.symbolic.name) >> 32); // high dword
+#else
+        ASSERT_NOT_64BIT(from.symbolic.name);
+        to.data1 = (int) from.symbolic.name;
+        to.data2 = 0;
+#endif
+    }
+    else if(from.type == E_FOCUS)
+    {
+        to.type  = EV_FOCUS;
+        to.data1 = from.focus.gained;
+        to.data2 = from.focus.inWindow;
+    }
+    else
+    {
+        switch(from.device)
+        {
+        case IDEV_KEYBOARD:
+            to.type = EV_KEY;
+            if(from.type == E_TOGGLE)
+            {
+                to.state = (  from.toggle.state == ETOG_UP  ? EVS_UP
+                            : from.toggle.state == ETOG_DOWN? EVS_DOWN
+                            : EVS_REPEAT );
+                to.data1 = from.toggle.id;
+            }
+            break;
+
+        case IDEV_MOUSE:
+            if(from.type == E_AXIS)
+            {
+                to.type = EV_MOUSE_AXIS;
+            }
+            else if(from.type == E_TOGGLE)
+            {
+                to.type  = EV_MOUSE_BUTTON;
+                to.data1 = from.toggle.id;
+                to.state = (  from.toggle.state == ETOG_UP  ? EVS_UP
+                            : from.toggle.state == ETOG_DOWN? EVS_DOWN
+                            : EVS_REPEAT );
+            }
+            break;
+
+        case IDEV_JOY1:
+        case IDEV_JOY2:
+        case IDEV_JOY3:
+        case IDEV_JOY4:
+            if(from.type == E_AXIS)
+            {
+                int *data = &to.data1;
+
+                to.type  = EV_JOY_AXIS;
+                to.state = (evstate_t) 0;
+                if(from.axis.id >= 0 && from.axis.id < 6)
+                {
+                    data[from.axis.id] = from.axis.pos;
+                }
+                /// @todo  The other dataN's must contain up-to-date information
+                /// as well. Read them from the current joystick status.
+            }
+            else if(from.type == E_TOGGLE)
+            {
+                to.type  = EV_JOY_BUTTON;
+                to.state = (  from.toggle.state == ETOG_UP  ? EVS_UP
+                            : from.toggle.state == ETOG_DOWN? EVS_DOWN
+                            : EVS_REPEAT );
+                to.data1 = from.toggle.id;
+            }
+            else if(from.type == E_ANGLE)
+            {
+                to.type = EV_POV;
+            }
+            break;
+
+        case IDEV_HEAD_TRACKER:
+            // No game-side equivalent exists.
+            return false;
+
+        default:
+            DENG2_ASSERT(!"InputSystem::convertEvent: Unknown device ID in ddevent_t");
+            return false;
+        }
+    }
+    return true;
 }
 
 bool InputSystem::shiftDown() const
@@ -1359,209 +1387,6 @@ void InputSystem::writeAllBindingsTo(FILE *file)
             return LoopContinue;
         });
     }
-}
-
-// ---------------------------------------------------------------------------
-
-Action *InputSystem::actionFor(ddevent_t const &event) const
-{
-    event_t ev;
-    bool validGameEvent = InputSystem::convertEvent(&event, &ev);
-
-    for(BindContext *context : d->contexts)
-    {
-        if(!context->isActive()) continue;
-
-        if(Action *act = context->actionForEvent(event))
-        {
-            return act;
-        }
-
-        // Try the fallback responders.
-        if(context->tryFallbackResponders(event, ev, validGameEvent))
-        {
-            return nullptr; // fallback responder executed something.
-        }
-    }
-
-    return nullptr; // No binding for this event.
-}
-
-/**
- * Substitute placeholders in a command string. Placeholders consist of two characters,
- * the first being a %. Use %% to output a plain % character.
- *
- * - <code>%i</code>: id member of the event
- * - <code>%p</code>: (symbolic events only) local player number
- *
- * @param command  Original command string with the placeholders.
- * @param event    Event data.
- * @param out      String with placeholders replaced.
- */
-static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
-{
-    DENG2_ASSERT(out);
-    Block const str = command.toUtf8();
-    for(char const *ptr = str.constData(); *ptr; ptr++)
-    {
-        if(*ptr == '%')
-        {
-            // Escape.
-            ptr++;
-
-            // Must have another character in the placeholder.
-            if(!*ptr) break;
-
-            if(*ptr == 'i')
-            {
-                int id = 0;
-                switch(event.type)
-                {
-                case E_TOGGLE:   id = event.toggle.id;   break;
-                case E_AXIS:     id = event.axis.id;     break;
-                case E_ANGLE:    id = event.angle.id;    break;
-                case E_SYMBOLIC: id = event.symbolic.id; break;
-
-                default: break;
-                }
-                Str_Appendf(out, "%i", id);
-            }
-            else if(*ptr == 'p')
-            {
-                int id = 0;
-                if(event.type == E_SYMBOLIC)
-                {
-                    id = P_ConsoleToLocal(event.symbolic.id);
-                }
-                Str_Appendf(out, "%i", id);
-            }
-            else if(*ptr == '%')
-            {
-                Str_AppendChar(out, *ptr);
-            }
-            continue;
-        }
-
-        Str_AppendChar(out, *ptr);
-    }
-}
-
-Action *InputSystem::actionFor(CommandBinding const &bind, ddevent_t const &event,
-    BindContext const *bindContext, bool respectHigherAssociatedContexts)
-{
-    LOG_AS("InputSystem");
-
-    if(bind.deviceId != event.device) return nullptr;
-    if(bind.type     != event.type)   return nullptr;
-
-    InputDevice const *dev = nullptr;
-    if(event.type != E_SYMBOLIC)
-    {
-        dev = devicePtr(bind.deviceId);
-        if(!dev || !dev->isActive())
-        {
-            // The device is not active, there is no way this could get executed.
-            return nullptr;
-        }
-    }
-
-    switch(event.type)
-    {
-    case E_TOGGLE: {
-        if(bind.controlId != event.toggle.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        InputDeviceButtonControl &button = dev->button(bind.controlId);
-
-        if(respectHigherAssociatedContexts)
-        {
-            if(button.bindContext() != bindContext)
-                return nullptr; // Shadowed by a more important active class.
-        }
-
-        // We're checking it, so clear the triggered flag.
-        button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
-
-        // Is the state as required?
-        switch(bind.state)
-        {
-        case EBTOG_UNDEFINED:
-            // Passes no matter what.
-            break;
-
-        case EBTOG_DOWN:
-            if(event.toggle.state != ETOG_DOWN)
-                return nullptr;
-            break;
-
-        case EBTOG_UP:
-            if(event.toggle.state != ETOG_UP)
-                return nullptr;
-            break;
-
-        case EBTOG_REPEAT:
-            if(event.toggle.state != ETOG_REPEAT)
-                return nullptr;
-            break;
-
-        case EBTOG_PRESS:
-            if(event.toggle.state == ETOG_UP)
-                return nullptr;
-            break;
-
-        default: return nullptr;
-        }
-        break; }
-
-    case E_AXIS:
-        if(bind.controlId != event.axis.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        if(bindContext && dev->axis(bind.controlId).bindContext() != bindContext)
-            return nullptr; // Shadowed by a more important active class.
-
-        // Is the position as required?
-        if(!B_CheckAxisPos(bind.state, bind.pos,
-                           device(event.device).axis(event.axis.id)
-                               .translateRealPosition(event.axis.pos)))
-            return nullptr;
-        break;
-
-    case E_ANGLE:
-        if(bind.controlId != event.angle.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        if(bindContext && dev->hat(bind.controlId).bindContext() != bindContext)
-            return nullptr; // Shadowed by a more important active class.
-
-        // Is the position as required?
-        if(event.angle.pos != bind.pos)
-            return nullptr;
-        break;
-
-    case E_SYMBOLIC:
-        if(bind.symbolicName.compareWithCase(event.symbolic.name))
-            return nullptr;
-        break;
-
-    default: return nullptr;
-    }
-
-    // Any conditions on the current state of the input devices?
-    for(statecondition_t const &cond : bind.conditions)
-    {
-        if(!B_CheckCondition(&cond, 0, nullptr))
-            return nullptr;
-    }
-
-    // Substitute parameters in the command.
-    AutoStr *command = Str_Reserve(AutoStr_NewStd(), bind.command.length());
-    substituteInCommand(bind.command, event, command);
-
-    return new CommandAction(Str_Text(command), CMDS_BIND);
 }
 
 // ---------------------------------------------------------------------------

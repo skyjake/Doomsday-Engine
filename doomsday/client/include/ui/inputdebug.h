@@ -1,4 +1,4 @@
-/** @file inputedebug.h  Input debug visualization.
+/** @file inputdebug.h  Input debug visualization.
  *
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *

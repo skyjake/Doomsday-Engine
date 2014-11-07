@@ -42,10 +42,6 @@ struct ImpulseBinding;
 /**
  * Input devices and events. @ingroup ui
  *
- * @todo Decentralize management of input bindings (effectively, combine BindContext
- * with WidgetActions and use the Widget tree to navigate context hierarchy when both
- * binding new actions and resolving bindings to actions).
- *
  * @todo Input drivers belong in this system.
  */
 class InputSystem : public de::System
@@ -117,46 +113,39 @@ public: // Event processing --------------------------------------------------
     void processSharpEvents(timespan_t ticLength);
 
     /**
-     * Update the input devices.
+     * If an action has been defined for the event, trigger it.
+     *
+     * This is meant to be used as a way for Widgets to take advantage of the
+     * traditional bindings system for user-customizable actions.
+     *
+     * @param event    Event instance.
+     * @param context  Name of the binding context. If empty, all contexts
+     *                 all checked.
+     *
+     * @return @c true if even was triggered, @c false otherwise.
      */
-    void trackEvent(ddevent_t *ev);
-
-    /**
-     * Finds the action bound to a given event, iterating through all enabled
-     * binding contexts.
-     *
-     * @param event  Event to match against.
-     *
-     * @return Action instance (caller gets ownership), or @c nullptr if not found.
-     */
-    de::Action *actionFor(ddevent_t const &event) const;
-
-    /**
-     * Checks if the event matches the binding's conditions, and if so, returns an
-     * action with the bound command.
-     *
-     * @param bind     CommandBinding.
-     * @param event    Event to match against.
-     * @param context  The bound binding context. If the bound state is associated with a
-                       higher-priority context, the binding cannot be executed.
-     * @param respectHigherAssociatedContexts  Bindings are shadowed by higher active contexts.
-     *
-     * @return  Action to be triggered, or @c nullptr. Caller gets ownership.
-     */
-    de::Action *actionFor(CommandBinding const &bind, ddevent_t const &event,
-        BindContext const *context, bool respectHigherAssociatedContexts);
+    bool tryEvent(de::Event const &event, de::String const &context = "");
+    bool tryEvent(ddevent_t const &event, de::String const &context = "");
 
 public:
 
-    static bool convertEvent(ddevent_t const *ddEvent, event_t *ev);
+    static bool convertEvent(ddevent_t const &from, event_t &to);
+    static void convertEvent(de::Event const &from, ddevent_t &to);
 
     /**
-     * Converts a libcore Event into an old-fashioned ddevent_t.
+     * Updates virtual input device state.
      *
-     * @param event    Event instance.
-     * @param ddEvent  ddevent_t instance.
+     * Normally this is called automatically at the appropriate time, however
+     * if a widget eats an event before it is passed to the bindings system,
+     * it might still wish to call this to ensure subsequent bindings are
+     * correctly evaluated.
+     *
+     * @param event  Input event.
+     *
+     * @todo make private.
      */
-    static void convertEvent(de::Event const &event, ddevent_t *ddEvent);
+    void trackEvent(de::Event const &event);
+    void trackEvent(ddevent_t const &event);
 
 public: // Binding (context) management --------------------------------------
 

@@ -36,9 +36,8 @@
 
 #ifdef __CLIENT__
 #  include "ui/progress.h"
-#  include "ui/widgetactions.h"
 #  include "ui/b_main.h"
-#  include "ui/bindcontext.h"
+#  include "BindContext"
 #endif
 
 #include "api_console.h"

@@ -33,7 +33,7 @@
 #include "world/p_players.h"
 
 #ifdef __CLIENT__
-#  include "ui/bindcontext.h"
+#  include "BindContext"
 #  include "ui/inputdevice.h"
 #endif
 

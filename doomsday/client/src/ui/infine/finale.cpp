@@ -20,7 +20,7 @@
 #include <de/Log>
 #include "ui/infine/finale.h"
 
-#include "ui/bindcontext.h"
+#include "BindContext"
 #include "ui/infine/finaleinterpreter.h"
 #include "network/net_main.h"
 #ifdef __SERVER__

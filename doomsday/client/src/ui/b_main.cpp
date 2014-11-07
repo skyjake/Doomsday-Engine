@@ -19,23 +19,15 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h" // stricmp macro, etc...
 #include "ui/b_main.h"
 
-#include <cctype>
-#include <cmath>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include "dd_main.h"
+#include "dd_main.h" // App_GameLoaded
 #include "dd_def.h"
 #include "clientapp.h"
-#include "ui/commandbinding.h"
-#include "ui/bindcontext.h"
-#include "ui/playerimpulse.h"
-#include "ui/inputdevice.h"
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/ui_main.h"
+#include "BindContext"
 
 using namespace de;
 
@@ -52,7 +44,7 @@ static int globalContextFallback(ddevent_t const *ddev)
     if(App_GameLoaded())
     {
         event_t ev;
-        if(InputSystem::convertEvent(ddev, &ev))
+        if(InputSystem::convertEvent(*ddev, ev))
         {
             // The game's normal responder only returns true if the bindings can't
             // be used (like when chatting). Note that if the event is eaten here,
