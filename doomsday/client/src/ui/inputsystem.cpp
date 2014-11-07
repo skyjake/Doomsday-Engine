@@ -371,7 +371,7 @@ DENG2_PIMPL(InputSystem)
         if(ev.type == E_SYMBOLIC || ev.type == E_FOCUS) return;
 
         // Input device axis controls can be pretty sensitive (or misconfigured)
-        // so we need to do some filtering to determine if it motion is strong
+        // so we need to do some filtering to determine if the motion is strong
         // enough for an echo.
         if(ev.type == E_AXIS)
         {

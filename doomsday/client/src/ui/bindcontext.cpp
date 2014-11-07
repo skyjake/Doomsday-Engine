@@ -565,7 +565,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     if(!isActive()) return false;
 
     // Is this event bindable to an action?
-    if(event.type == EV_FOCUS)
+    if(event.type != EV_FOCUS)
     {
         // See if the command bindings will have it.
         for(CommandBinding const *bind : d->commandBinds)
