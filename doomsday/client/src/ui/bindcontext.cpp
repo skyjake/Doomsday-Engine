@@ -409,12 +409,17 @@ static bool conditionsAreEqual(QVector<statecondition_t> const &conds1,
     if(conds1.count() != conds2.count()) return false;
 
     for(statecondition_t const &a : conds1)
-    for(statecondition_t const &b : conds2)
     {
-        if(!B_EqualConditions(a, b))
+        bool found = false;
+        for(statecondition_t const &b : conds2)
         {
-            return false;
+            if(B_EqualConditions(a, b))
+            {
+                found = true;
+                break;
+            }
         }
+        if(!found) return false;
     }
 
     return true;
