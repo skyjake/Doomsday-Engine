@@ -28,7 +28,7 @@ enum ibcontroltype_t
     IBD_TOGGLE = E_TOGGLE,
     IBD_AXIS   = E_AXIS,
     IBD_ANGLE  = E_ANGLE,
-    NUM_CBD_TYPES
+    NUM_IBD_TYPES
 };
 
 #define EVTYPE_TO_IBDTYPE(evt)  ((evt) == E_AXIS? IBD_AXIS : (evt) == E_TOGGLE? IBD_TOGGLE : IBD_ANGLE)
@@ -41,8 +41,8 @@ enum ibcontroltype_t
 struct ImpulseBinding
 {
     int id = 0;             ///< Unique identifier.
-    int impulseId;          ///< Identifier of the bound player impulse.
-    int localPlayer;        ///< Local player number.
+    int impulseId = 0;      ///< Identifier of the bound player impulse.
+    int localPlayer = 0;    ///< Local player number.
 
     int deviceId = 0;
     ibcontroltype_t type = IBD_TOGGLE;

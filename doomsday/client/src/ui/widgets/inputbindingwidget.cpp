@@ -115,7 +115,15 @@ DENG_GUI_PIMPL(InputBindingWidget)
 
     void bindCommand(String const &eventDesc)
     {
-        inputSys().unbindCommand(command.toLatin1());
+        Block const cmd = command.toLatin1();
+        inputSys().forAllContexts([&cmd] (BindContext &context)
+        {
+            while(CommandBinding *bind = context.findCommandBinding(cmd.constData()))
+            {
+                context.deleteBinding(bind->id);
+            }
+            return LoopContinue;
+        });
 
         foreach(QString bcName, contexts)
         {

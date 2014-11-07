@@ -434,7 +434,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
     {
         if(match1 && match1->id != bind->id)
         {
-            if(conditionsAreEqual(match1->conds, bind->conds) &&
+            if(conditionsAreEqual(match1->conditions, bind->conditions) &&
                match1->deviceId  == bind->deviceId &&
                match1->controlId == bind->controlId &&
                match1->type      == bind->type &&
@@ -446,7 +446,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
         }
         if(match2)
         {
-            if(conditionsAreEqual(match2->conditions, bind->conds) &&
+            if(conditionsAreEqual(match2->conditions, bind->conditions) &&
                match2->deviceId  == bind->deviceId &&
                match2->controlId == bind->controlId &&
                match2->type      == (ibcontroltype_t) bind->type)
@@ -463,7 +463,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
     {
         if(match1)
         {
-            if(conditionsAreEqual(match1->conds, bind->conditions) &&
+            if(conditionsAreEqual(match1->conditions, bind->conditions) &&
                match1->deviceId  == bind->deviceId &&
                match1->controlId == bind->controlId &&
                match1->type      == (ddeventtype_t) bind->type)

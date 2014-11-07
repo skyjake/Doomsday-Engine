@@ -1562,7 +1562,7 @@ Action *InputSystem::actionFor(CommandBinding const &bind, ddevent_t const &even
     }
 
     // Any conditions on the current state of the input devices?
-    for(statecondition_t const &cond : bind.conds)
+    for(statecondition_t const &cond : bind.conditions)
     {
         if(!B_CheckCondition(&cond, 0, nullptr))
             return nullptr;
@@ -1633,22 +1633,6 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
     DENG2_ASSERT(context);
 
     return context->bindImpulse(ctrlDesc, *impulse, localNum);
-}
-
-bool InputSystem::unbindCommand(char const *command)
-{
-    DENG2_ASSERT(command);
-    LOG_AS("InputSystem");
-
-    bool didDelete = false;
-    for(BindContext *context : d->contexts)
-    {
-        while(CommandBinding *bind = context->findCommandBinding(command))
-        {
-            didDelete |= context->deleteBinding(bind->id);
-        }
-    };
-    return didDelete;
 }
 
 /// @todo: Don't format a string - just collect pointers.
@@ -1962,8 +1946,8 @@ void InputSystem::configure(CommandBinding &bind, char const *eventDesc,
         // A new condition.
         eventDesc = Str_CopyDelim(str, eventDesc, '+');
 
-        bind.conds.append(statecondition_t());
-        statecondition_t *cond = &bind.conds.last();
+        bind.conditions.append(statecondition_t());
+        statecondition_t *cond = &bind.conditions.last();
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
             throw BindError("InputSystem::configure", "Descriptor parse error");
@@ -2020,11 +2004,11 @@ String InputSystem::composeBindsFor(CommandBinding const &bind)
     case E_ANGLE:       str += B_AnglePositionToString(bind.pos);            break;
     case E_SYMBOLIC:    str += "-" + String(bind.symbolicName);              break;
 
-    default: DENG2_ASSERT(!"InputSystem::composeBindsFor: Unknown event type"); break;
+    default: DENG2_ASSERT(!"InputSystem::composeBindsFor: Unknown bind.type"); break;
     }
 
     // Append any state conditions.
-    for(statecondition_t const &cond : bind.conds)
+    for(statecondition_t const &cond : bind.conditions)
     {
         str += " + " + B_StateConditionToString(cond);
     }
@@ -2197,7 +2181,7 @@ D_CMD(ListBindings)
         // Impulses.
         if(int count = context.impulseBindingCount())
         {
-            LOG_INPUT_MSG("  %i impulse bindings") << count;
+            LOG_INPUT_MSG("  %i impulse bindings:") << count;
         }
         for(int pl = 0; pl < DDMAXPLAYERS; ++pl)
         context.forAllImpulseBindings(pl, [&isys, &pl] (ImpulseBinding &bind)

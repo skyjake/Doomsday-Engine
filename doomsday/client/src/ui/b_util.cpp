@@ -490,8 +490,8 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
     *relativeOffset = 0;
 
     uint const nowTime = Timer_RealMilliseconds();
-    bool conflicted[NUM_CBD_TYPES]; de::zap(conflicted);
-    bool appliedState[NUM_CBD_TYPES]; de::zap(appliedState);
+    bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
+    bool appliedState[NUM_IBD_TYPES]; de::zap(appliedState);
 
     context->forAllImpulseBindings(localNum, [&] (ImpulseBinding &bind)
     {
@@ -523,7 +523,7 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
         case IBD_AXIS:   ctrl = &device->axis(bind.controlId);   break;
         case IBD_ANGLE:  ctrl = &device->hat(bind.controlId);    break;
 
-        default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind control type"); break;
+        default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
 
         float devicePos = 0;
@@ -624,7 +624,7 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
 
     if(zeroControlUponConflict)
     {
-        for(int i = 0; i < NUM_CBD_TYPES; ++i)
+        for(int i = 0; i < NUM_IBD_TYPES; ++i)
         {
             if(conflicted[i])
                 *pos = 0;

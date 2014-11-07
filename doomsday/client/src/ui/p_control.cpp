@@ -417,7 +417,7 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
         return false;
 
-    // Check that this is really a numeric control.
+    // Ensure this is really a numeric impulse.
     PlayerImpulse const *imp = P_ImpulseById(impulseId);
     DENG2_ASSERT(imp);
     DENG2_ASSERT(imp->type == IT_NUMERIC || imp->type == IT_NUMERIC_TRIGGERED);
@@ -488,7 +488,7 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
     PlayerImpulse *imp = P_ImpulseById(impulseId);
     if(!imp) return;
 
-    // Ensure this is really a bool impulse.
+    // Ensure this is really a boolean impulse.
     if(imp->type != IT_BOOLEAN)
     {
         LOG_INPUT_WARNING("Impulse '%s' is not boolean") << imp->name;

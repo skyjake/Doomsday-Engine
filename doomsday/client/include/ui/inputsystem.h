@@ -174,10 +174,10 @@ public: // Binding (context) management --------------------------------------
      * @param ctrlDesc     Textual descriptor for the input device control event.
      * @param impulseDesc  Player impulse which the binding will execute when
      *                     triggered, if a binding is created.
+     *
+     * @return  Resultant impulse binding.
      */
     ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
-
-    bool unbindCommand(char const *command);
 
     /**
      * Try to remove the one unique binding associated with @a id.

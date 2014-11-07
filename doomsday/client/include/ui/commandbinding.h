@@ -35,10 +35,10 @@ struct CommandBinding
     int controlId = 0;              ///< Which control?
     ebstate_t state = EBTOG_UNDEFINED;
     float pos = 0;
-    de::String symbolicName;  ///< Name of a symbolic event.
+    de::String symbolicName;        ///< Name of a symbolic event.
 
     typedef QVector<statecondition_t> Conditions;
-    Conditions conds; ///< Additional conditions.
+    Conditions conditions;          ///< Additional conditions.
 };
 
 #endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H
