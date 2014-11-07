@@ -195,37 +195,37 @@ String InputDevice::description() const
     String desc;
     if(!d->title.isEmpty())
     {
-        desc += String(_E(b) "%1" _E(.) " - ").arg(d->title);
+        desc += String(_E(D)_E(b) "%1" _E(.)_E(.) " - ").arg(d->title);
     }
-    desc += String(_E(b) "%1" _E(.) " (%2)").arg(name()).arg(isActive()? "active" : " inactive");
+    desc += String(_E(b) "%1" _E(.)_E(l) " (%2)" _E(.)).arg(name()).arg(isActive()? "active" : "inactive");
 
-    if(axisCount())
+    if(int const count = axisCount())
     {
-        desc += String("\n  %1 axes:").arg(axisCount());
+        desc += String("\n  " _E(b) "%1 axes:" _E(.)).arg(count);
         int idx = 0;
-        for(InputDeviceAxisControl *axis : d->axes)
+        for(Control const *axis : d->axes)
         {
-            desc += String("\n    %1: ").arg(idx++) + axis->description();
+            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(axis->description());
         }
     }
 
-    if(buttonCount())
+    if(int const count = buttonCount())
     {
-        desc += String("\n  %1 buttons:").arg(buttonCount());
+        desc += String("\n  " _E(b) "%1 buttons:" _E(.)).arg(count);
         int idx = 0;
-        for(InputDeviceButtonControl *button : d->buttons)
+        for(Control const *button : d->buttons)
         {
-            desc += String("\n    %1: ").arg(idx++) + button->description();
+            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(button->description());
         }
     }
 
-    if(hatCount())
+    if(int const count = hatCount())
     {
-        desc += String("\n  %1 hats:").arg(hatCount());
+        desc += String("\n  " _E(b) "%1 hats:" _E(.)).arg(count);
         int idx = 0;
-        for(InputDeviceHatControl *hat : d->hats)
+        for(Control const *hat : d->hats)
         {
-            desc += String("\n    %1: ").arg(idx++) + hat->description();
+            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(hat->description());
         }
     }
 

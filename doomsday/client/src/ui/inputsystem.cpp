@@ -954,6 +954,11 @@ LoopResult InputSystem::forAllDevices(std::function<LoopResult (InputDevice &)> 
     return LoopContinue;
 }
 
+int InputSystem::deviceCount() const
+{
+    return d->devices.count();
+}
+
 void InputSystem::initAllDevices()
 {
     d->clearAllDevices();
@@ -2055,12 +2060,13 @@ bool InputSystem::removeBinding(int id)
     return false;
 }
 
-D_CMD(ListAllDevices)
+D_CMD(ListDevices)
 {
     DENG2_UNUSED3(src, argc, argv);
+    InputSystem &isys = ClientApp::inputSystem();
 
-    LOG_INPUT_MSG(_E(b) "Input Devices:");
-    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
+    LOG_INPUT_MSG(_E(b) "%i input devices initalized:") << isys.deviceCount();
+    isys.forAllDevices([] (InputDevice &device)
     {
         LOG_INPUT_MSG("") << device.description();
         return LoopContinue;
@@ -2084,11 +2090,11 @@ D_CMD(ListContexts)
     DENG2_UNUSED3(src, argc, argv);
     InputSystem &isys = ClientApp::inputSystem();
 
-    LOG_INPUT_MSG("%i binding contexts defined:") << isys.contextCount();
+    LOG_INPUT_MSG(_E(b) "%i binding contexts defined:") << isys.contextCount();
     int idx = 0;
     isys.forAllContexts([&idx] (BindContext &context)
     {
-        LOG_INPUT_MSG("[%3i] %s\"%s\"" _E(.) " (%s)")
+        LOG_INPUT_MSG("  [%2i] " _E(>) "%s%s" _E(.) _E(2) " (%s)")
                 << (idx++) << (context.isActive()? _E(b) : _E(w))
                 << context.name()
                 << (context.isActive()? "active" : "inactive");
@@ -2115,14 +2121,15 @@ D_CMD(ActivateContext)
 
     if(!isys.hasContext(name))
     {
-        LOG_INPUT_WARNING("Binding context '%s' does not exist") << name;
+        LOG_INPUT_WARNING("Unknown binding context '%s'") << name;
         return false;
     }
 
     BindContext &context = isys.context(name);
     if(context.isProtected())
     {
-        LOG_INPUT_ERROR("Binding context '%s' is protected and cannot be manually %s")
+        LOG_INPUT_ERROR("Binding context " _E(b) "'%s'" _E(.) " is " _E(2) "protected" _E(.)
+                        " and cannot be manually %s")
                 << context.name() << (doActivate? "activated" : "deactivated");
         return false;
     }
@@ -2136,7 +2143,7 @@ D_CMD(BindCommand)
     DENG2_UNUSED2(src, argc);
     if(CommandBinding *bind = ClientApp::inputSystem().bindCommand(argv[1], argv[2]))
     {
-        LOG_INPUT_VERBOSE("Binding %i created") << bind->id;
+        LOG_INPUT_VERBOSE("Binding " _E(b) "%i" _E(.) " created") << bind->id;
         return true;
     }
     return false;
@@ -2147,7 +2154,7 @@ D_CMD(BindImpulse)
     DENG2_UNUSED2(src, argc);
     if(ImpulseBinding *bind = ClientApp::inputSystem().bindImpulse(argv[2], argv[1]))
     {
-        LOG_INPUT_VERBOSE("Binding %i created") << bind->id;
+        LOG_INPUT_VERBOSE("Binding " _E(b) "%i" _E(.) " created") << bind->id;
         return true;
     }
     return false;
@@ -2155,33 +2162,49 @@ D_CMD(BindImpulse)
 
 D_CMD(ListBindings)
 {
-#define BIDFORMAT "[%3i]"
-
     DENG2_UNUSED3(src, argc, argv);
     InputSystem &isys = ClientApp::inputSystem();
 
-    LOG_INPUT_MSG("%i binding contexts defined") << isys.contextCount();
+    int totalBindCount = 0;
+    isys.forAllContexts([&totalBindCount] (BindContext &context)
+    {
+        totalBindCount += context.commandBindingCount() + context.impulseBindingCount();
+        return LoopContinue;
+    });
+
+    LOG_INPUT_MSG(_E(b) "Bindings");
+    LOG_INPUT_MSG("There are " _E(b) "%i" _E(.) " bindings, in " _E(b) "%i" _E(.) " contexts")
+            << totalBindCount << isys.contextCount();
+
     isys.forAllContexts([&isys] (BindContext &context)
     {
-        LOG_INPUT_MSG(_E(b)"Context \"%s\" (%s):")
-                << context.name() << (context.isActive()? "active" : "inactive");
+        int const cmdCount = context.commandBindingCount();
+        int const impCount = context.impulseBindingCount();
+
+        // Skip empty contexts.
+        if(cmdCount + impCount == 0) return LoopContinue;
+
+        LOG_INPUT_MSG(_E(D)_E(b) "%s" _E(.) " context: " _E(l) "(%i %s)")
+                << context.name()
+                << (cmdCount + impCount)
+                << (context.isActive()? "active" : "inactive");
 
         // Commands.
-        if(int count = context.commandBindingCount())
+        if(cmdCount)
         {
-            LOG_INPUT_MSG("  %i command bindings:") << count;
+            LOG_INPUT_MSG("  " _E(b) "%i command bindings:") << cmdCount;
         }
         context.forAllCommandBindings([&isys] (CommandBinding &bind)
         {
-            LOG_INPUT_MSG("  " BIDFORMAT " %s : " _E(>) "%s")
+            LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " %s")
                     << bind.id << isys.composeBindsFor(bind) << bind.command;
             return LoopContinue;
         });
 
         // Impulses.
-        if(int count = context.impulseBindingCount())
+        if(impCount)
         {
-            LOG_INPUT_MSG("  %i impulse bindings:") << count;
+            LOG_INPUT_MSG("  " _E(b) "%i impulse bindings:") << impCount;
         }
         for(int pl = 0; pl < DDMAXPLAYERS; ++pl)
         context.forAllImpulseBindings(pl, [&isys, &pl] (ImpulseBinding &bind)
@@ -2189,7 +2212,7 @@ D_CMD(ListBindings)
             PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
             DENG2_ASSERT(impulse);
 
-            LOG_INPUT_MSG("    " BIDFORMAT " %s : " _E(>) "player %i %s")
+            LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
                     << bind.id << isys.composeBindsFor(bind) << (pl + 1) << impulse->name;
 
             return LoopContinue;
@@ -2199,8 +2222,6 @@ D_CMD(ListBindings)
     });
 
     return true;
-
-#undef BIDFORMAT
 }
 
 D_CMD(ClearBindings)
@@ -2209,7 +2230,7 @@ D_CMD(ClearBindings)
 
     ClientApp::inputSystem().forAllContexts([] (BindContext &context)
     {
-        LOG_INPUT_VERBOSE("Clearing binding context '%s'") << context.name();
+        LOG_INPUT_VERBOSE("Clearing binding context " _E(b) "'%s'") << context.name();
         context.clearAllBindings();
         return LoopContinue;
     });
@@ -2226,11 +2247,11 @@ D_CMD(RemoveBinding)
     int id = strtoul(argv[1], nullptr, 10);
     if(ClientApp::inputSystem().removeBinding(id))
     {
-        LOG_INPUT_MSG("Binding %i deleted") << id;
+        LOG_INPUT_MSG("Binding " _E(b) "%i" _E(.) " deleted") << id;
     }
     else
     {
-        LOG_INPUT_ERROR("Cannot delete binding %i: not found") << id;
+        LOG_INPUT_ERROR("Unknown binding #%i") << id;
     }
 
     return true;
@@ -2265,7 +2286,7 @@ void InputSystem::consoleRegister() // static
     C_CMD_FLAGS("delbind",              "i",        RemoveBinding,      PROTECTED_FLAGS);
     C_CMD_FLAGS("listbcontexts",        nullptr,    ListContexts,       PROTECTED_FLAGS);
     C_CMD_FLAGS("listbindings",         nullptr,    ListBindings,       PROTECTED_FLAGS);
-    C_CMD      ("listinputdevices",     "",         ListAllDevices);
+    C_CMD      ("listinputdevices",     "",         ListDevices);
     C_CMD      ("releasemouse",         "",         ReleaseMouse);
     //C_CMD_FLAGS("setaxis",            "s",        AxisPrintConfig,  CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);

@@ -305,14 +305,14 @@ D_CMD(ClearImpulseAccumulation)
 D_CMD(ListImpulses)
 {
     DENG2_UNUSED3(argv, argc, src);
-    LOG_MSG("%i player impulses defined") << impulses.count();
+    LOG_MSG(_E(b) "%i player impulses defined:") << impulses.count();
 
     for(PlayerImpulse const *imp : impulses)
     {
-        LOG_MSG("ID %i: " _E(>)_E(b) "%s " _E(.) "(%s) " _E(l) "%s%s")
+        LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) "(%s) " _E(2) "%s%s")
                 << imp->id << imp->name << imp->bindContextName
-                << (imp->isTriggerable? "triggerable " : "")
-                << (imp->type == IT_BOOLEAN? "boolean" : "numeric");
+                << (imp->type == IT_BOOLEAN? "boolean" : "numeric")
+                << (imp->isTriggerable? ", triggerable" : "");
     }
     return true;
 }

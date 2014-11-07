@@ -267,7 +267,7 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
         /// replacement is ok. For now, just delete the other binding.
         deleteMatching(bind, nullptr);
 
-        LOG_INPUT_VERBOSE("Command \"%s\" now bound to \"%s\" in '%s'")
+        LOG_INPUT_VERBOSE("Command \"%s\" now bound to \"%s\" in " _E(b) "'%s'")
                 << command << eventDesc << d->name;
 
         // Notify interested parties.
@@ -302,7 +302,7 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
         /// replacement is ok. For now, just delete the other binding.
         deleteMatching(nullptr, bind);
 
-        LOG_INPUT_VERBOSE("Impulse '%s' of local player %i now bound to \"%s\" in '%s'")
+        LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of local player %i now bound to \"%s\" in " _E(b) "'%s'")
                 << impulse.name << localPlayer << ctrlDesc << d->name;
 
         /// @todo: Notify interested parties.

@@ -72,6 +72,11 @@ public:
     de::LoopResult forAllDevices(std::function<de::LoopResult (InputDevice &)> func) const;
 
     /**
+     * Returns the total number of InputDevices initialized.
+     */
+    int deviceCount() const;
+
+    /**
      * (Re)initialize the input device models, returning all controls to their
      * default states.
      */
