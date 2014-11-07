@@ -519,8 +519,8 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
         InputDeviceControl *ctrl = nullptr;
         switch(bind.type)
         {
-        case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
         case IBD_AXIS:   ctrl = &device->axis(bind.controlId);   break;
+        case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
         case IBD_ANGLE:  ctrl = &device->hat(bind.controlId);    break;
 
         default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;

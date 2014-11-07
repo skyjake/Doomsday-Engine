@@ -190,8 +190,7 @@ void BindContext::acquireAll(bool yes)
 
 bool BindContext::willAcquire(int deviceId) const
 {
-    /// @todo: What about acquireAllDevices? (Ambiguous naming/usage).
-    return d->acquireDevices.contains(deviceId);
+    return d->acquireAllDevices || d->acquireDevices.contains(deviceId);
 }
 
 
@@ -240,7 +239,7 @@ void BindContext::deleteMatching(CommandBinding const *cmdBinding, ImpulseBindin
 
     while(findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
     {
-        // Only either foundImp or foundCmd is returned as non-NULL.
+        // Only either foundCmd or foundImp is returned as non-NULL.
         int bindId = (foundCmd? foundCmd->id : (foundImp? foundImp->id : 0));
         if(bindId)
         {
@@ -291,8 +290,8 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
         std::unique_ptr<ImpulseBinding> newBind(new ImpulseBinding);
         inputSys().configure(*newBind, ctrlDesc, impulse.id, localPlayer); // Don't assign a new ID.
 
-        ImpulseBinding *bind      = newBind.get();
-        ControlGroup &group = *d->findControlGroup(impulse.id, true/*create if missing*/);
+        ImpulseBinding *bind = newBind.get();
+        ControlGroup &group  = *d->findControlGroup(impulse.id, true/*create if missing*/);
         group.binds[localPlayer].append(newBind.release());
 
         /// @todo: fix local player binding id management.
@@ -376,7 +375,7 @@ bool BindContext::deleteBinding(int id)
             ImpulseBinding *bind = group->binds[i].at(k);
             if(bind->id == id)
             {
-                group->binds[k].removeAt(k);
+                group->binds[i].removeAt(k);
                 delete bind;
                 return true;
             }
@@ -388,12 +387,16 @@ bool BindContext::deleteBinding(int id)
 
 Action *BindContext::actionForEvent(ddevent_t const &event, bool respectHigherAssociatedContexts) const
 {
-    // See if the command bindings will have it.
-    for(CommandBinding const *bind : d->commandBinds)
+    // Is this a bindable event?
+    if(event.type != EV_FOCUS)
     {
-        if(Action *act = inputSys().actionFor(*bind, event, this, respectHigherAssociatedContexts))
+        // See if the command bindings will have it.
+        for(CommandBinding const *bind : d->commandBinds)
         {
-            return act;
+            if(Action *act = inputSys().actionFor(*bind, event, this, respectHigherAssociatedContexts))
+            {
+                return act;
+            }
         }
     }
     return nullptr;
@@ -406,17 +409,12 @@ static bool conditionsAreEqual(QVector<statecondition_t> const &conds1,
     if(conds1.count() != conds2.count()) return false;
 
     for(statecondition_t const &a : conds1)
+    for(statecondition_t const &b : conds2)
     {
-        bool found = false;
-        for(statecondition_t const &b : conds2)
+        if(!B_EqualConditions(a, b))
         {
-            if(B_EqualConditions(a, b))
-            {
-                found = true;
-                break;
-            }
+            return false;
         }
-        if(!found) return false;
     }
 
     return true;

@@ -449,7 +449,7 @@ DENG2_PIMPL(InputSystem)
 
         if(updateAxes)
         {
-            // Input events have modified input device state: update the axis positions.
+            // An event may have modified device-control state: update the axis positions.
             for(InputDevice *device : devices)
             {
                 device->forAllControls([&ticLength] (InputDeviceControl &ctrl)
@@ -832,12 +832,14 @@ DENG2_PIMPL(InputSystem)
             });
 
             // If the context have made a broad device acquisition, mark all relevant states.
-            if(context->willAcquire(IDEV_KEYBOARD))
+            for(int i = 0; i < devices.count(); ++i)
             {
-                InputDevice &keyboard = self.device(IDEV_KEYBOARD);
-                if(keyboard.isActive())
+                InputDevice *device = devices.at(i);
+                int const deviceId = i;
+
+                if(device->isActive() && context->willAcquire(deviceId))
                 {
-                    keyboard.forAllControls([&context] (InputDeviceControl &ctrl)
+                    device->forAllControls([&context] (InputDeviceControl &ctrl)
                     {
                         if(!ctrl.hasBindContext())
                         {
@@ -846,25 +848,7 @@ DENG2_PIMPL(InputSystem)
                         return LoopContinue;
                     });
                 }
-            }
-
-            if(context->willAcquireAll())
-            {
-                for(InputDevice *device : devices)
-                {
-                    if(device->isActive())
-                    {
-                        device->forAllControls([&context] (InputDeviceControl &ctrl)
-                        {
-                            if(!ctrl.hasBindContext())
-                            {
-                                ctrl.setBindContext(context);
-                            }
-                            return LoopContinue;
-                        });
-                    }
-                };
-            }
+            };
         }
 
         // Now that we know what are the updated context associations, let's check
@@ -893,10 +877,9 @@ DENG2_PIMPL(InputSystem)
         for(int i = 0; i < devices.count(); ++i)
         {
             InputDevice *device = devices.at(i);
-            /// @todo: Really exclude named devices? -ds
-            //int const deviceId = i;
+            int const deviceId  = i;
 
-            if(context.willAcquireAll())//|| context.willAcquire(deviceId))
+            if(context.willAcquire(deviceId))
             {
                 device->reset();
             }
