@@ -19,7 +19,7 @@
 
 #include "ui/p_control.h"
 
-#include <QList>
+#include <QMap>
 #include <QtAlgorithms>
 #include <de/memory.h>
 #include <de/timer.h>
@@ -39,200 +39,67 @@
 
 using namespace de;
 
-/*
-// Number of triggered impulses buffered into each player's control state
-// table.  The buffer is emptied when a ticcmd is built.
-#define MAX_IMPULSES    8
-#define MAX_DESCRIPTOR_LENGTH 20
-
-#define SLOW_TURN_TIME  (6.0f / 35)
-*/
-
-/**
- * The control descriptors contain a mapping between symbolic control
- * names and the identifier numbers.
- */
-/*
-typedef struct controldesc_s {
-    char    name[MAX_DESCRIPTOR_LENGTH + 1];
-} controldesc_t;
-
-typedef struct controlclass_s {
-    uint    count;
-    controldesc_t *desc;
-} controlclass_t;
-*/
-/**
- * Each player has his own control state table.
- */
-/*typedef struct controlstate_s {
-    // The axes are updated whenever their values are needed,
-    // i.e. during the call to P_BuildCommand.
-    controlaxis_t *axes;
-
-    // The toggles are modified via console commands.
-    controltoggle_t *toggles;
-
-    // The triggered impulses are stored into a ring buffer.
-    uint    head, tail;
-    impulse_t impulses[MAX_IMPULSES];
-} controlstate_t;
-*/
-
-enum DoubleClickState
-{
-    DBCS_NONE,
-    DBCS_POSITIVE,
-    DBCS_NEGATIVE
-};
-
-/**
- * Double-"clicks" actually mean double activations that occur within the double-click
- * threshold. This is to allow double-clicks also from the numeric impulses.
- */
-struct DoubleClick
-{
-    bool triggered;                       //< True if double-click has been detected.
-    uint previousClickTime;               //< Previous time an activation occurred.
-    DoubleClickState lastState;           //< State at the previous time the check was made.
-    DoubleClickState previousClickState;  /** Previous click state. When duplicated, triggers
-                                              the double click. */
-};
-
-struct ImpulseCounter
-{
-    int control;
-    short impulseCounts[DDMAXPLAYERS];
-    DoubleClick doubleClicks[DDMAXPLAYERS];
-};
-
-/// @todo: Group by bind-context-name; add an impulseID => PlayerImpulse LUT -ds
-typedef QList<PlayerImpulse *> Impulses;
-static Impulses impulses;
-
-static ImpulseCounter **counters;
-
-static int doubleClickThresholdMilliseconds = 300;
-
-static PlayerImpulse *newImpulse()
-{
-    PlayerImpulse *imp = new PlayerImpulse;
-    impulses.append(imp);
-
-    int const ctrlCount = impulses.count();
-    counters = (ImpulseCounter **) M_Realloc(counters, sizeof(*counters) * ctrlCount);
-    counters[ctrlCount - 1] = nullptr;
-
-    return imp;
-}
-
-void P_ImpulseShutdown()
-{
-    for(int i = 0; i < impulses.count(); ++i)
-    {
-        M_Free(counters[i]);
-    }
-    M_Free(counters); counters = nullptr;
-
-    qDeleteAll(impulses);
-    impulses.clear();
-}
-
-PlayerImpulse *P_ImpulseById(int id)
-{
-    for(PlayerImpulse const *imp : impulses)
-    {
-        if(imp->id == id)
-        {
-            return const_cast<PlayerImpulse *>(imp);
-        }
-    }
-    return nullptr;
-}
-
-PlayerImpulse *P_ImpulseByName(String const &name)
-{
-    if(!name.isEmpty())
-    {
-        for(PlayerImpulse const *imp : impulses)
-        {
-            if(!imp->name.compareWithoutCase(name))
-                return const_cast<PlayerImpulse *>(imp);
-        }
-    }
-    return nullptr;
-}
-
 #ifdef __CLIENT__
-/**
- * Updates the double-click state of an impulse and marks it as double-clicked
- * when the double-click condition is met.
- *
- * @param playerNum  Player/console number.
- * @param impulse    Index of the impulse.
- * @param pos        State of the impulse.
- */
-void P_MaintainImpulseDoubleClicks(int playerNum, int impulse, float pos)
+static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
+
+void PlayerImpulse::maintainDoubleClicks(int playerNum, float pos)
 {
-    if(!counters || !counters[impulse])
-    {
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
-    }
 
-    DoubleClick *db = &counters[impulse]->doubleClicks[playerNum];
-
-    if(doubleClickThresholdMilliseconds <= 0)
+    DoubleClick &db = doubleClicks[playerNum];
+    if(pimpDoubleClickThreshold <= 0)
     {
         // Let's not waste time here.
-        db->triggered = false;
-        db->previousClickTime = 0;
-        db->previousClickState = DBCS_NONE;
+        db.triggered          = false;
+        db.previousClickTime  = 0;
+        db.previousClickState = DoubleClick::None;
         return;
     }
 
-    DoubleClickState newState = DBCS_NONE;
+    DoubleClick::State newState = DoubleClick::None;
     if(pos > .5)
     {
-        newState = DBCS_POSITIVE;
+        newState = DoubleClick::Positive;
     }
     else if(pos < -.5)
     {
-        newState = DBCS_NEGATIVE;
+        newState = DoubleClick::Negative;
     }
     else
     {
-        db->lastState = newState; // Release.
+        db.lastState = newState; // Release.
         return;
     }
 
     // But has it actually changed?
-    if(newState == db->lastState)
+    if(newState == db.lastState)
     {
         return;
     }
 
     // We have an activation!
-    uint nowTime = Timer_RealMilliseconds();
+    uint const nowTime = Timer_RealMilliseconds();
 
-    if(newState == db->previousClickState &&
-       nowTime - db->previousClickTime < uint( de::clamp(0, doubleClickThresholdMilliseconds) ))
+    if(newState == db.previousClickState &&
+       nowTime - db.previousClickTime < uint( de::clamp(0, pimpDoubleClickThreshold) ))
     {
-        db->triggered = true;
+        db.triggered = true;
 
         // Compose the name of the symbolic event.
         String symbolicName;
         switch(newState)
         {
-        case DBCS_POSITIVE: symbolicName += "control-doubleclick-positive-"; break;
-        case DBCS_NEGATIVE: symbolicName += "control-doubleclick-negative-"; break;
+        case DoubleClick::Positive: symbolicName += "control-doubleclick-positive-"; break;
+        case DoubleClick::Negative: symbolicName += "control-doubleclick-negative-"; break;
 
         default: break;
         }
-        symbolicName += impulses.at(impulse)->name;
+        symbolicName += name;
 
-        LOG_AS("P_MaintainImpulseDoubleClicks");
+        LOG_AS("PlayerImpulse::maintainDoubleClicks");
         LOG_INPUT_XVERBOSE("Triggered plr %i, imp %i, state %i - threshold %i (%s)")
-                << playerNum << impulse << newState << nowTime - db->previousClickTime
+                << playerNum << id << newState << nowTime - db.previousClickTime
                 << symbolicName;
 
         ddevent_t ev; de::zap(ev);
@@ -244,75 +111,81 @@ void P_MaintainImpulseDoubleClicks(int playerNum, int impulse, float pos)
         ClientApp::inputSystem().postEvent(&ev);
     }
 
-    db->previousClickTime  = nowTime;
-    db->previousClickState = newState;
-    db->lastState          = newState;
+    db.previousClickTime  = nowTime;
+    db.previousClickState = newState;
+    db.lastState          = newState;
 }
 
-static int P_GetImpulseDoubleClick(int playerNum, int impulseId)
+int PlayerImpulse::takeDoubleClick(int playerNum)
 {
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return 0;
 
-    PlayerImpulse *imp = P_ImpulseById(impulseId);
-    if(!imp) return 0;
-
     bool triggered = false;
-    if(counters[impulses.indexOf(imp)])
+    DoubleClick &db = doubleClicks[playerNum];
+    if(db.triggered)
     {
-        DoubleClick *doubleClick = &counters[impulses.indexOf(imp)]->doubleClicks[playerNum];
-        if(doubleClick->triggered)
-        {
-            triggered = true;
-            doubleClick->triggered = false;
-        }
+        triggered = true;
+        db.triggered = false;
     }
 
     return int(triggered);
 }
 
-D_CMD(ClearImpulseAccumulation)
+void PlayerImpulse::consoleRegister() // static
 {
-    DENG2_UNUSED3(argv, argc, src);
-
-    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
-    {
-        device.reset();
-        return LoopContinue;
-    });
-
-    for(PlayerImpulse *imp : impulses)
-    for(int p = 0; p < DDMAXPLAYERS; ++p)
-    {
-        if(imp->type == IT_NUMERIC)
-        {
-            P_GetControlState(p, imp->id, nullptr, nullptr);
-        }
-        else if(imp->type == IT_BOOLEAN)
-        {
-            P_GetImpulseControlState(p, imp->id);
-        }
-
-        // Also clear the double click state.
-        P_GetImpulseDoubleClick(p, imp->id);
-    }
-
-    return true;
+    C_VAR_INT("input-doubleclick-threshold", &pimpDoubleClickThreshold, 0, 0, 2000);
 }
 #endif
 
-/// @todo: Sort impulses by binding context.
+typedef QMap<int, PlayerImpulse *> Impulses; // ID lookup
+static Impulses impulses;
+typedef QMap<String, PlayerImpulse *> ImpulsesByName; // Name lookup
+static ImpulsesByName impulsesByName;
+
+static void addImpulse(PlayerImpulse *imp)
+{
+    if(!imp) return;
+    impulses.insert(imp->id, imp);
+    impulsesByName.insert(imp->name.toLower(), imp);
+}
+
+void P_ImpulseShutdown()
+{
+    qDeleteAll(impulses);
+    impulses.clear();
+    impulsesByName.clear();
+}
+
+PlayerImpulse *P_ImpulseById(int id)
+{
+    auto found = impulses.find(id);
+    if(found != impulses.end()) return *found;
+    return nullptr;
+}
+
+PlayerImpulse *P_ImpulseByName(String const &name)
+{
+    if(!name.isEmpty())
+    {
+        auto found = impulsesByName.find(name.toLower());
+        if(found != impulsesByName.end()) return *found;
+    }
+    return nullptr;
+}
+
+/// @todo: Group impulses by binding context.
 D_CMD(ListImpulses)
 {
     DENG2_UNUSED3(argv, argc, src);
     LOG_MSG(_E(b) "%i player impulses defined:") << impulses.count();
 
-    for(PlayerImpulse const *imp : impulses)
+    for(PlayerImpulse const *imp : impulsesByName)
     {
         LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) "(%s) " _E(2) "%s%s")
                 << imp->id << imp->name << imp->bindContextName
                 << (imp->type == IT_BOOLEAN? "boolean" : "numeric")
-                << (imp->isTriggerable? ", triggerable" : "");
+                << (imp->isTriggerable()? ", triggerable" : "");
     }
     return true;
 }
@@ -338,15 +211,47 @@ D_CMD(Impulse)
     return true;
 }
 
+#ifdef __CLIENT__
+D_CMD(ClearImpulseAccumulation)
+{
+    DENG2_UNUSED3(argv, argc, src);
+
+    ClientApp::inputSystem().forAllDevices([] (InputDevice &device)
+    {
+        device.reset();
+        return LoopContinue;
+    });
+
+    for(PlayerImpulse *imp : impulses)
+    for(int p = 0; p < DDMAXPLAYERS; ++p)
+    {
+        if(imp->type == IT_NUMERIC)
+        {
+            P_GetControlState(p, imp->id, nullptr, nullptr);
+        }
+        else if(imp->type == IT_BOOLEAN)
+        {
+            P_GetImpulseControlState(p, imp->id);
+        }
+
+        // Also clear the double click state.
+        imp->takeDoubleClick(p);
+    }
+
+    return true;
+}
+#endif
+
 void P_ConsoleRegister()
 {
     C_CMD("listcontrols",   "",         ListImpulses);
     C_CMD("impulse",        nullptr,    Impulse);
-#ifdef __CLIENT__
-    C_CMD("resetctlaccum",  "",         ClearImpulseAccumulation);
-#endif
 
-    C_VAR_INT("input-doubleclick-threshold", &doubleClickThresholdMilliseconds, 0, 0, 2000);
+#ifdef __CLIENT__
+    C_CMD("resetctlaccum", "", ClearImpulseAccumulation);
+
+    PlayerImpulse::consoleRegister();
+#endif
 }
 
 #undef P_NewPlayerControl
@@ -354,14 +259,24 @@ DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *na
     char const *bindContext)
 {
     DENG2_ASSERT(name && bindContext);
-    PlayerImpulse *imp = newImpulse();
-    imp->id              = id;
-    imp->type            = type;
-    imp->name            = name;
-    imp->isTriggerable   = (type == IT_NUMERIC_TRIGGERED || type == IT_BOOLEAN);
-    imp->bindContextName = bindContext;
-    // Also allocate the impulse and double-click counters.
-    counters[impulses.indexOf(imp)] = (ImpulseCounter *) M_Calloc(sizeof(ImpulseCounter));
+    LOG_AS("P_NewPlayerControl");
+
+    // Ensure the given id is unique.
+    if(PlayerImpulse const *existing = P_ImpulseById(id))
+    {
+        LOG_INPUT_WARNING("Id: %i is already in use by impulse '%s' - Won't replace")
+                << id << existing->name;
+        return;
+    }
+    // Ensure the given name is unique.
+    if(PlayerImpulse const *existing = P_ImpulseByName(name))
+    {
+        LOG_INPUT_WARNING("Name: '%s' is already in use by impulse Id: %i - Won't replace")
+                << name << existing->id;
+        return;
+    }
+
+    addImpulse(new PlayerImpulse(id, type, name, bindContext));
 }
 
 #undef P_GetControlState
@@ -395,10 +310,10 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
     if(!context) return;
 
     B_EvaluateImpulseBindings(context, localPlayer, impulseId, pos, relativeOffset,
-                              imp->isTriggerable);
+                              imp->isTriggerable());
 
     // Mark for double-clicks.
-    P_MaintainImpulseDoubleClicks(playerNum, impulses.indexOf(imp), *pos);
+    imp->maintainDoubleClicks(playerNum, *pos);
 
 #else
     DENG2_UNUSED4(playerNum, impulseId, pos, relativeOffset);
@@ -468,10 +383,7 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
         return 0;
     }
 
-    if(!counters[impulses.indexOf(imp)])
-        return 0;
-
-    short *counter = &counters[impulses.indexOf(imp)]->impulseCounts[playerNum];
+    short *counter = &imp->booleanCounts[playerNum];
     int count = *counter;
     *counter = 0;
     return count;
@@ -495,12 +407,11 @@ DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
         return;
     }
 
-    int const index = impulses.indexOf(imp);
-    counters[index]->impulseCounts[playerNum]++;
+    imp->booleanCounts[playerNum]++;
 
 #ifdef __CLIENT__
     // Mark for double clicks.
-    P_MaintainImpulseDoubleClicks(playerNum, index, 1);
-    P_MaintainImpulseDoubleClicks(playerNum, index, 0);
+    imp->maintainDoubleClicks(playerNum, 1);
+    imp->maintainDoubleClicks(playerNum, 0);
 #endif
 }
