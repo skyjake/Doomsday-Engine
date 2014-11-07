@@ -1,7 +1,6 @@
-/** @file dd_input.cpp  Platform-independent input subsystem.
+/** @file inputdebug.cpp  Input debug visualizer.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,11 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h" // strdup macro
-
 #ifdef DENG2_DEBUG
 
-#include "ui/dd_input.h"
+#include "de_platform.h" // strdup macro
+#include "ui/inputdebug.h"
 
 #include <de/concurrency.h>
 #include <de/ddstring.h>
@@ -471,7 +469,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
 #undef SPACING
 }
 
-void Rend_DrawInputDeviceVisuals()
+void I_DebugDrawer()
 {
 #define SPACING      2
 #define NUMITEMS(x)  (sizeof(x) / sizeof((x)[0]))
@@ -801,13 +799,12 @@ void Rend_DrawInputDeviceVisuals()
 #undef NUMITEMS
 #undef SPACING
 }
-#endif // DENG2_DEBUG
 
-void I_ConsoleRegister()
+void I_DebugDrawerConsoleRegister()
 {
-#ifdef DENG2_DEBUG
     C_VAR_BYTE("rend-dev-input-joy-state",   &devRendJoyState,   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-input-key-state",   &devRendKeyState,   CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-input-mouse-state", &devRendMouseState, CVF_NO_ARCHIVE, 0, 1);
-#endif
 }
+
+#endif // DENG2_DEBUG

@@ -1,4 +1,4 @@
-/** @file dd_input.h  Input Subsystem.
+/** @file ddevent.h  Input system event.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_CORE_INPUT_H
-#define CLIENT_CORE_INPUT_H
+#ifndef CLIENT_INPUTSYSTEM_DDEVENT_H
+#define CLIENT_INPUTSYSTEM_DDEVENT_H
 
 #include <de/Event>
 #include <de/String>
@@ -109,15 +109,4 @@ struct ddevent_t
 #define IS_MOUSE_UP(evp)               ((evp)->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
 #define IS_MOUSE_MOTION(evp)           ((evp)->device == IDEV_MOUSE && (evp)->type == E_AXIS)
 
-void I_ConsoleRegister();
-
-#ifdef DENG2_DEBUG
-/**
- * Render a visual representation of the current state of all input devices.
- */
-void Rend_DrawInputDeviceVisuals();
-#else
-#  define Rend_DrawInputDeviceVisuals()
-#endif
-
-#endif // CLIENT_CORE_INPUT_H
+#endif // CLIENT_INPUTSYSTEM_DDEVENT_H

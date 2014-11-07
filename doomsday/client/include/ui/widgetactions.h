@@ -1,6 +1,7 @@
 /** @file widgetactions.h  User actions bound to widgets.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -24,7 +25,7 @@
 #include <de/Event>
 #include <de/GuiWidget>
 
-#include "dd_input.h"
+#include "ddevent.h"
 
 /**
  * User actions bound to widgets. Traditionally called the bindings and binding

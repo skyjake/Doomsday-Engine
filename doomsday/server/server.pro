@@ -208,7 +208,7 @@ DENG_HEADERS += \
     $$SRC/include/ui/infine/finalepagewidget.h \
     $$SRC/include/ui/infine/finaletextwidget.h \
     $$SRC/include/ui/infine/finalewidget.h \
-    $$SRC/include/ui/p_control.h \
+    $$SRC/include/ui/playerimpulse.h \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/convexsubspaceproxy.h \
@@ -359,7 +359,7 @@ SOURCES += \
     $$SRC/src/ui/infine/finaletextwidget.cpp \
     $$SRC/src/ui/infine/finalewidget.cpp \
     $$SRC/src/ui/infine/infinesystem.cpp \
-    $$SRC/src/ui/p_control.cpp \
+    $$SRC/src/ui/playerimpulse.cpp \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \

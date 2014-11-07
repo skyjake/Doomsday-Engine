@@ -1,7 +1,7 @@
 /** @file inputsystem.cpp  Input subsystem.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -39,17 +39,18 @@
 #include "render/vr.h"
 #include "world/p_players.h"
 
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/b_main.h"
 #include "ui/b_util.h"
 #include "ui/bindcontext.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/inputdebug.h"  // Debug visualization.
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
 #include "ui/inputdevicehatcontrol.h"
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 #include "ui/sys_input.h"
 
 #include "sys_system.h" // novideo
@@ -2275,7 +2276,7 @@ void InputSystem::consoleRegister() // static
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "sss",      AxisChangeValue,  CMDF_NO_DEDICATED);
 
-    I_ConsoleRegister();
+    I_DebugDrawerConsoleRegister();
 
 #undef PROTECTED_FLAGS
 }

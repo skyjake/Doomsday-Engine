@@ -32,7 +32,7 @@
 #include "clientapp.h"
 #include "ui/commandbinding.h"
 #include "ui/bindcontext.h"
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/ui_main.h"

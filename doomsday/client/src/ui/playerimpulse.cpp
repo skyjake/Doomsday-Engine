@@ -1,4 +1,4 @@
-/** @file p_control.cpp  Player interaction impulses.
+/** @file playerimpulse.cpp  Player interaction impulses.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 
 #include <QMap>
 #include <QtAlgorithms>

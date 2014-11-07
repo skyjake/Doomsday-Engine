@@ -1,7 +1,6 @@
-/** @file
+/** @file inputedebug.h  Input debug visualization.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,35 +16,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#ifndef CLIENT_INPUTDEBUG_H
+#define CLIENT_INPUTDEBUG_H
+
+#include <de/libcore.h>
+
+#ifdef DENG2_DEBUG
+
+void I_DebugDrawerConsoleRegister();
+
 /**
- * de_play.h: Game World Events (Playsim)
+ * Render a visual representation of the current state of all input devices.
  */
+void I_DebugDrawer();
 
-#ifndef __DOOMSDAY_PLAYSIM__
-#define __DOOMSDAY_PLAYSIM__
+#else
+#  define I_ConsoleRegister()
 
-#include "api_thinker.h"
-#include "BspNode"
-#ifdef __CLIENT__
-#  include "Contact"
+#  define I_DebugDrawer()
 #endif
-#include "Generator"
-#include "Line"
-#include "Plane"
-#include "Polyobj"
-#include "Sector"
-#include "Surface"
-#include "Vertex"
-#include "world/dmuargs.h"
-#include "world/linesighttest.h"
-#include "world/p_object.h"
-#include "world/p_ticker.h"
-#include "world/p_players.h"
-#include "world/thinkers.h"
-#include "Material"
-#include "ui/playerimpulse.h"
-#include "r_util.h"
 
-#include "api_map.h"
-
-#endif
+#endif // CLIENT_INPUTDEBUG_H

@@ -21,7 +21,7 @@
 #define CLIENT_INPUTSYSTEM_BINDINGS_H
 
 #include <de/types.h>
-#include "dd_input.h"
+#include "ddevent.h"
 
 void B_Init();
 

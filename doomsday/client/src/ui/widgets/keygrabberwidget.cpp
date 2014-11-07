@@ -18,7 +18,7 @@
 
 #include "ui/widgets/keygrabberwidget.h"
 #include "clientapp.h"
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/b_util.h"
 
 #include <de/KeyEvent>

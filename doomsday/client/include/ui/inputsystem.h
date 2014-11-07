@@ -1,7 +1,7 @@
 /** @file inputsystem.h  Input subsystem.
  *
- * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,7 +25,7 @@
 #include <de/Action>
 #include <de/Error>
 #include <de/System>
-#include "dd_input.h" // ddevent_t
+#include "ddevent.h"
 #include "ui/commandaction.h"
 #include "SettingsRegister"
 

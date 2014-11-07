@@ -26,7 +26,7 @@
 #include "clientapp.h"
 
 #include "ui/inputdevice.h"
-#include "ui/p_control.h"
+#include "ui/playerimpulse.h"
 
 /// @todo: remove
 #include "ui/inputdeviceaxiscontrol.h"
