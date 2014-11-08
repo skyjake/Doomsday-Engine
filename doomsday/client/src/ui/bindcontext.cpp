@@ -22,11 +22,13 @@
 #include <QList>
 #include <QSet>
 #include <QtAlgorithms>
+#include <de/Action>
 #include <de/Log>
 #include "clientapp.h"
 
 #include "world/p_players.h" // P_ConsoleToLocal
 
+#include "ui/commandaction.h"
 #include "ui/inputdevice.h"
 #include "ui/playerimpulse.h"
 

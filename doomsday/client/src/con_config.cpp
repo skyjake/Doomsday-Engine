@@ -1,7 +1,7 @@
 /** @file con_config.cpp  Config file IO.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,15 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
 #include "con_config.h"
 
-#include "dd_main.h"
-#include "dd_def.h"
-#include "m_misc.h"
-
-#include "Games"
-
+#include <cctype>
+#include <de/Log>
+#include <de/Path>
 #include <doomsday/help.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/var.h>
@@ -34,14 +30,17 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 
+#include "dd_main.h"
+#include "dd_def.h"
+#include "m_misc.h"
+
+#include "Games"
+
 #ifdef __CLIENT__
 #  include "clientapp.h"
-#  include "ui/b_main.h"
+#  include "BindContext"
+#  include "ui/playerimpulse.h"
 #endif
-
-#include <de/Log>
-#include <de/Path>
-#include <cctype>
 
 using namespace de;
 
@@ -194,11 +193,43 @@ static bool writeBindingsState(Path const &filePath)
 
     if(FILE *file = fopen(filePath.toUtf8().constData(), "wt"))
     {
+        InputSystem &isys = ClientApp::inputSystem();
+
         LOG_SCR_VERBOSE("Writing bindings to \"%s\"...")
                 << NativePath(filePath).pretty();
 
         writeHeaderComment(file);
-        ClientApp::inputSystem().writeAllBindingsTo(file);
+
+        // Start with a clean slate when restoring the bindings.
+        fprintf(file, "clearbindings\n\n");
+
+        isys.forAllContexts([&isys, &file] (BindContext &context)
+        {
+            // Commands.
+            context.forAllCommandBindings([&isys, &context, &file] (CommandBinding &bind)
+            {
+                fprintf(file, "bindevent \"%s:%s\" \"", context.name().toUtf8().constData(),
+                               isys.composeBindsFor(bind).toUtf8().constData());
+                M_WriteTextEsc(file, bind.command.toUtf8().constData());
+                fprintf(file, "\"\n");
+                return LoopContinue;
+            });
+
+            // Impulses.
+            context.forAllImpulseBindings([&isys, &context, &file] (ImpulseBinding &bind)
+            {
+                PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+                DENG2_ASSERT(impulse);
+
+                fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
+                              bind.localPlayer + 1, impulse->name.toUtf8().constData(),
+                              isys.composeBindsFor(bind).toUtf8().constData());
+                return LoopContinue;
+            });
+
+            return LoopContinue;
+        });
+
         fclose(file);
         return true;
     }

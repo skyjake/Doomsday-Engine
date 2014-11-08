@@ -964,10 +964,11 @@ void InputSystem::initAllDevices()
 
 bool InputSystem::ignoreEvents(bool yes)
 {
+    LOG_AS("InputSystem");
     bool const oldIgnoreInput = d->ignoreInput;
 
     d->ignoreInput = yes;
-    LOG_INPUT_VERBOSE("Ignoring input: %b") << yes;
+    LOG_INPUT_VERBOSE("Ignoring events: %b") << yes;
     if(!yes)
     {
         // Clear all the event buffers.
@@ -1352,40 +1353,6 @@ static char const *parseContext(char const *desc, String &context)
     context = Str_Text(str);
 
     return desc;
-}
-
-void InputSystem::writeAllBindingsTo(FILE *file)
-{
-    DENG2_ASSERT(file);
-    LOG_AS("InputSystem");
-
-    // Start with a clean slate when restoring the bindings.
-    fprintf(file, "clearbindings\n\n");
-
-    for(BindContext const *context : d->contexts)
-    {
-        // Commands.
-        context->forAllCommandBindings([this, &context, &file] (CommandBinding &bind)
-        {
-            fprintf(file, "bindevent \"%s:%s\" \"", context->name().toUtf8().constData(),
-                           composeBindsFor(bind).toUtf8().constData());
-            M_WriteTextEsc(file, bind.command.toUtf8().constData());
-            fprintf(file, "\"\n");
-            return LoopContinue;
-        });
-
-        // Impulses.
-        context->forAllImpulseBindings([this, &context, &file] (ImpulseBinding &bind)
-        {
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
-            DENG2_ASSERT(impulse);
-
-            fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
-                          bind.localPlayer + 1, impulse->name.toUtf8().constData(),
-                          composeBindsFor(bind).toUtf8().constData());
-            return LoopContinue;
-        });
-    }
 }
 
 // ---------------------------------------------------------------------------

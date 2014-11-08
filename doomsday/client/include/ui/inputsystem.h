@@ -21,12 +21,9 @@
 #define CLIENT_INPUTSYSTEM_H
 
 #include <functional>
-#include <de/types.h>
-#include <de/Action>
 #include <de/Error>
 #include <de/System>
 #include "ddevent.h"
-#include "ui/commandaction.h"
 #include "SettingsRegister"
 
 class BindContext;
@@ -175,22 +172,25 @@ public: // Binding (context) management --------------------------------------
     /**
      * Try to make a new command binding.
      *
-     * @param eventDesc  Textual descriptor for the event.
+     * @param eventDesc  Textual descriptor for the event, with the relevant
+     *                   context for the would-be binding encoded.
      * @param command    Console command(s) which the binding will execute when
      *                   triggered, if a binding is created.
      *
-     * @return  Resultant command binding.
+     * @return  Resultant command binding if any.
      */
     CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * Try to make a new (player) impulse binding.
      *
-     * @param ctrlDesc     Textual descriptor for the input device control event.
+     * @param ctrlDesc     Textual descriptor for the device-control event.
      * @param impulseDesc  Player impulse which the binding will execute when
-     *                     triggered, if a binding is created.
+     *                     triggered, if a binding is created. Impulses are
+     *                     associated with a context, which determines where
+     *                     the binding will be linked, if a binding is created.
      *
-     * @return  Resultant impulse binding.
+     * @return  Resultant impulse binding if any.
      */
     ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
 
@@ -249,11 +249,6 @@ public: // Binding (context) management --------------------------------------
      * Iterate through all the BindContexts from highest to lowest priority.
      */
     de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
-
-    /**
-     * Write all bindings in all contexts to a text (cfg) file. Outputs console commands.
-     */
-    void writeAllBindingsTo(FILE *file);
 
     // ---
 

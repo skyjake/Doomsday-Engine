@@ -21,7 +21,6 @@
 #define CLIENT_INPUTSYSTEM_BINDCONTEXT_H
 
 #include <functional>
-#include <de/Action>
 #include <de/Observers>
 #include "commandbinding.h"
 #include "impulsebinding.h"

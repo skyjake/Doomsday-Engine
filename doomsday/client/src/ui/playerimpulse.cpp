@@ -44,6 +44,8 @@ static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 
 void PlayerImpulse::maintainDoubleClicks(int playerNum, float pos)
 {
+    LOG_AS("PlayerImpulse");
+
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
 
@@ -97,9 +99,8 @@ void PlayerImpulse::maintainDoubleClicks(int playerNum, float pos)
         }
         symbolicName += name;
 
-        LOG_AS("PlayerImpulse::maintainDoubleClicks");
         LOG_INPUT_XVERBOSE("Triggered plr %i, imp %i, state %i - threshold %i (%s)")
-                << playerNum << id << newState << nowTime - db.previousClickTime
+                << playerNum << id << newState << (nowTime - db.previousClickTime)
                 << symbolicName;
 
         ddevent_t ev; de::zap(ev);
