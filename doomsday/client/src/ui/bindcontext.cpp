@@ -450,12 +450,13 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
 static Action *commandActionFor(BindContext const &context, CommandBinding const &bind,
     ddevent_t const &event, bool respectHigherContexts)
 {
-    if(bind.deviceId != event.device) return nullptr;
-    if(bind.type     != event.type)   return nullptr;
+    if(bind.type != event.type)   return nullptr;
 
     InputDevice const *dev = nullptr;
     if(event.type != E_SYMBOLIC)
     {
+        if(bind.deviceId != event.device) return nullptr;
+
         dev = inputSys().devicePtr(bind.deviceId);
         if(!dev || !dev->isActive())
         {

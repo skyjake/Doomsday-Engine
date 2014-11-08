@@ -136,7 +136,7 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
             db.triggered = true;
 
             // Compose the name of the symbolic event.
-            String symbolicName = "sym-";
+            String symbolicName;
             switch(newState)
             {
             case DoubleClick::Positive: symbolicName += "control-doubleclick-positive-"; break;
@@ -152,13 +152,14 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
                     << name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
                     << symbolicName;
 
+            Block symbolicNameUtf8 = symbolicName.toUtf8();
             ddevent_t ev; de::zap(ev);
             ev.device = uint(-1);
             ev.type   = E_SYMBOLIC;
             ev.symbolic.id   = playerNum;
-            ev.symbolic.name = symbolicName.toUtf8().constData();
+            ev.symbolic.name = symbolicNameUtf8.constData();
 
-            inputSys().postEvent(&ev);
+            inputSys().postEvent(&ev); // makes a copy.
         }
 
         db.previousClickTime  = nowTime;
