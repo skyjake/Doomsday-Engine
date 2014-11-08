@@ -1975,7 +1975,9 @@ void InputSystem::consoleRegister() // static
     //C_CMD_FLAGS("setaxis",            "ss",       AxisChangeOption, CMDF_NO_DEDICATED);
     //C_CMD_FLAGS("setaxis",            "sss",      AxisChangeValue,  CMDF_NO_DEDICATED);
 
+#ifdef DENG2_DEBUG
     I_DebugDrawerConsoleRegister();
+#endif
 
 #undef PROTECTED_FLAGS
 }

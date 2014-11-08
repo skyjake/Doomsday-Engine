@@ -21,31 +21,56 @@
 #include "de/Parser"
 #include "de/File"
 
-using namespace de;
+namespace de {
 
-Script::Script()
+DENG2_PIMPL_NOREF(Script)
+{
+    Compound compound;
+
+    /// File path where the script was loaded. Will be visible in the namespace
+    /// of the process executing the script.
+    String path;
+};
+
+Script::Script() : d(new Instance)
 {}
 
-Script::Script(String const &source)
+Script::Script(String const &source) : d(new Instance)
 {
     Parser().parse(source, *this);
 }
 
-Script::Script(File const &file) : _path(file.path())
+Script::Script(File const &file) : d(new Instance)
 {
+    d->path = file.path();
     Parser().parse(String::fromUtf8(Block(file)), *this);
 }
 
-Script::~Script()
-{}
-
 void Script::parse(String const &source)
 {
-    _compound.clear();
+    d->compound.clear();
     Parser().parse(source, *this);
+}
+
+void Script::setPath(String const &path)
+{
+    d->path = path;
+}
+
+String const &Script::path() const
+{
+    return d->path;
 }
 
 Statement const *Script::firstStatement() const
 {
-    return _compound.firstStatement();
+    return d->compound.firstStatement();
 }
+
+Compound &Script::compound()
+{
+    return d->compound;
+}
+
+} // namespace de
+

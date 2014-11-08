@@ -65,8 +65,6 @@ public:
      */
     Script(File const &file);
 
-    virtual ~Script();
-
     /**
      * Parses a source into statements, replacing any statements currently
      * in the Script. The user must ensure that the script is not currently
@@ -82,9 +80,9 @@ public:
      *
      * @param path  Path.
      */
-    void setPath(String const &path) { _path = path; }
+    void setPath(String const &path);
 
-    String const &path() const { return _path; }
+    String const &path() const;
 
     /// Returns the statement that begins the script. This is where
     /// a process begins the execution of a script.
@@ -92,16 +90,10 @@ public:
 
     /// Returns a modifiable reference to the main statement compound
     /// of the script.
-    Compound &compound() {
-        return _compound;
-    }
+    Compound &compound();
 
 private:
-    Compound _compound;
-
-    /// File path where the script was loaded. Will be visible in the namespace
-    /// of the process executing the script.
-    String _path;
+    DENG2_PRIVATE(d)
 };
 
 } // namespace de

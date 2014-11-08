@@ -416,7 +416,7 @@ dint String::compareWithoutCase(String const &str) const
 
 dint String::compareWithoutCase(const String &str, int n) const
 {
-    return left(n).compare(str.left(n), Qt::CaseInsensitive);
+    return leftRef(n).compare(str.leftRef(n), Qt::CaseInsensitive);
 }
 
 int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity) const
@@ -439,7 +439,7 @@ int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivit
 
 dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)
 {
-    return QString(a, int(count)).compare(QString(b, int(count)), Qt::CaseSensitive);
+    return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
 }
 
 void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)
