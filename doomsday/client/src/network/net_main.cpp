@@ -734,13 +734,15 @@ void Net_Drawer()
     // Draw the light range debug display.
     Rend_DrawLightModMatrix();
 
+# ifdef DENG2_DEBUG
     // Draw the input debug display.
     I_DebugDrawer();
+# endif
 
     // Draw the demo recording overlay.
     Net_DrawDemoOverlay();
 
-# ifdef _DEBUG
+# ifdef DENG2_DEBUG
     Z_DebugDrawer();
 # endif
 #endif // __CLIENT__
