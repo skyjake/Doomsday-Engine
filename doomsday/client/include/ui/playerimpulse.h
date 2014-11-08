@@ -26,13 +26,13 @@
 /**
  * Describes a player interaction impulse.
  *
- * @todo Is "take" is the wrong verb in this context?
+ * @todo Is "take" the wrong verb in this context?
  * Player impulses are acted upon by the player Brain (on game side). Does it make
  * sense for a "brain" to "consume" an impulse? (Also note established convention
  * in Qt containers for removing an element from the container). Perhaps we need
  * another abstraction here? -ds
  *
- * @todo cleanup client/server confusion. On server side, each player will have a
+ * @todo Cleanup client/server confusion. On server side, each player will have a
  * local model of a remote human player's impulses. However, Double-clicks can be
  * handled entirely on client side. -ds
  */
@@ -53,7 +53,7 @@ public:
     int id() const;
 
     /**
-     * Returns the symbolic name of the impulse. This name is used for resolving
+     * Returns the symbolic name of the impulse. This name is used when resolving
      * or generating textual binding descriptors.
      */
     de::String name() const;

@@ -127,16 +127,16 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
             return;
         }
 
-        // We have an activation!
-        uint const nowTime = Timer_RealMilliseconds();
+        // We have an potential activation!
+        uint const threshold = uint( de::max(0, pimpDoubleClickThreshold) );
+        uint const nowTime   = Timer_RealMilliseconds();
 
-        if(newState == db.previousClickState &&
-           nowTime - db.previousClickTime < uint( de::clamp(0, pimpDoubleClickThreshold) ))
+        if(newState == db.previousClickState && nowTime - db.previousClickTime < threshold)
         {
             db.triggered = true;
 
             // Compose the name of the symbolic event.
-            String symbolicName;
+            String symbolicName = "sym-";
             switch(newState)
             {
             case DoubleClick::Positive: symbolicName += "control-doubleclick-positive-"; break;
@@ -147,14 +147,15 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
             symbolicName += name;
 
             int const localPlayer = P_ConsoleToLocal(playerNum);
+            DENG2_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s")
-                    << name << localPlayer << newState << (nowTime - db.previousClickTime)
+                    << name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
                     << symbolicName;
 
             ddevent_t ev; de::zap(ev);
             ev.device = uint(-1);
             ev.type   = E_SYMBOLIC;
-            ev.symbolic.id   = localPlayer;
+            ev.symbolic.id   = playerNum;
             ev.symbolic.name = symbolicName.toUtf8().constData();
 
             inputSys().postEvent(&ev);
@@ -266,32 +267,31 @@ int PlayerImpulse::takeBoolean(int playerNum)
 
 #ifdef __CLIENT__
 
-void PlayerImpulse::takeNumeric(int playerNum, float *pos, float *relativeOffset)
+void PlayerImpulse::takeNumeric(int playerNum, float *pos, float *relOffset)
 {
-    // Ensure this is really a numeric control.
+    // Ensure this is really a numeric impulse.
     DENG2_ASSERT(type == IT_NUMERIC || type == IT_NUMERIC_TRIGGERED);
     LOG_AS("PlayerImpulse");
 
-    // Ignore NULLs.
-    float tmp;
-    if(!pos) pos = &tmp;
-    if(!relativeOffset) relativeOffset = &tmp;
-
-    *pos = 0;
-    *relativeOffset = 0;
+    if(pos) *pos = 0;
+    if(relOffset) *relOffset = 0;
 
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return;
 
-    if(BindContext *context = inputSys().contextPtr(d->bindContextName))
+    if(BindContext *bindContext = inputSys().contextPtr(d->bindContextName))
     {
         // ImpulseBindings are associated with local player numbers rather than
         // the player console number - translate.
-        B_EvaluateImpulseBindings(context, P_ConsoleToLocal(playerNum), d->id,
-                                  pos, relativeOffset, isTriggerable());
+        float position, relative;
+        B_EvaluateImpulseBindings(bindContext, P_ConsoleToLocal(playerNum), d->id,
+                                  &position, &relative, isTriggerable());
 
         // Mark for double-clicks.
-        d->maintainDoubleClicks(playerNum, *pos);
+        d->maintainDoubleClicks(playerNum, position);
+
+        if(pos) *pos = position;
+        if(relOffset) *relOffset = relative;
     }
 }
 
@@ -421,10 +421,10 @@ D_CMD(Impulse)
         return true;
     }
 
-    int const localPlayer = (argc == 3? String(argv[2]).toInt() : 0);
+    int const playerNum = (argc == 3? String(argv[2]).toInt() : 0);
     if(PlayerImpulse *imp = P_ImpulseByName(argv[1]))
     {
-        imp->triggerBoolean(localPlayer);
+        imp->triggerBoolean(playerNum);
     }
 
     return true;
