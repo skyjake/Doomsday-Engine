@@ -264,7 +264,7 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
 
         return bind;
     }
-    catch(InputSystem::BindError const &)
+    catch(InputSystem::ConfigureError const &)
     {}
     return nullptr;
 }
@@ -300,7 +300,7 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
 
         return bind;
     }
-    catch(InputSystem::BindError const &)
+    catch(InputSystem::ConfigureError const &)
     {}
     return nullptr;
 }

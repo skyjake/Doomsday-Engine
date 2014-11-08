@@ -1448,87 +1448,6 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
     return context->bindImpulse(ctrlDesc, *impulse, localNum);
 }
 
-/// @todo: Don't format a string - just collect pointers.
-static int getCommandBindings(String const &command, char *outBuf, size_t outBufSize)
-{
-    DENG2_ASSERT(outBuf);
-    if(command.isEmpty()) return 0;
-    if(!outBufSize) return 0;
-
-    InputSystem &isys = ClientApp::inputSystem();
-
-    String out;
-    int found = 0;
-    isys.forAllContexts([&] (BindContext &context)
-    {
-        context.forAllCommandBindings([&] (CommandBinding &bind)
-        {
-            if(!bind.command.compareWithCase(command))
-            {
-                if(found) out += " ";
-
-                out += String::number(bind.id) + "@" + context.name() + ":" + isys.composeBindsFor(bind);
-                found++;
-            }
-            return LoopContinue;
-        });
-        return LoopContinue;
-    });
-
-    // Copy the result to the return buffer.
-    std::memset(outBuf, 0, outBufSize);
-    strncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
-
-    return found;
-}
-
-/// @todo: Don't format a string - just collect pointers.
-static int getImpulseBindings(int localPlayer, char const *impulseName, int inverse,
-    char *outBuf, size_t outBufSize)
-{
-    DENG2_ASSERT(impulseName && outBuf);
-    InputSystem &isys = ClientApp::inputSystem();
-
-    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
-        return 0;
-
-    if(!outBufSize) return 0;
-
-    String out;
-    int found = 0;
-    isys.forAllContexts([&] (BindContext &context)
-    {
-        context.forAllImpulseBindings(localPlayer, [&] (ImpulseBinding &bind)
-        {
-            DENG2_ASSERT(bind.localPlayer == localPlayer);
-
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
-            DENG2_ASSERT(impulse);
-
-            if(!impulse->name.compareWithoutCase(impulseName))
-            {
-                if(inverse == BFCI_BOTH ||
-                   (inverse == BFCI_ONLY_NON_INVERSE && !(bind.flags & IBDF_INVERSE)) ||
-                   (inverse == BFCI_ONLY_INVERSE     &&  (bind.flags & IBDF_INVERSE)))
-                {
-                    if(found) out += " ";
-
-                    out += String::number(bind.id) + "@" + context.name() + ":" + isys.composeBindsFor(bind);
-                    found++;
-                }
-            }
-            return LoopContinue;
-        });
-        return LoopContinue;
-    });
-
-    // Copy the result to the return buffer.
-    std::memset(outBuf, 0, outBufSize);
-    strncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
-
-    return found;
-}
-
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
@@ -1750,7 +1669,7 @@ void InputSystem::configure(CommandBinding &bind, char const *eventDesc,
 
     if(!configureCommandBinding(bind, Str_Text(str), command))
     {
-        throw BindError("InputSystem::configure", "Descriptor parse error");
+        throw ConfigureError("InputSystem::configure", "Descriptor parse error");
     }
 
     // Any conditions?
@@ -1763,7 +1682,7 @@ void InputSystem::configure(CommandBinding &bind, char const *eventDesc,
         statecondition_t *cond = &bind.conditions.last();
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
-            throw BindError("InputSystem::configure", "Descriptor parse error");
+            throw ConfigureError("InputSystem::configure", "Descriptor parse error");
         }
     }
 
@@ -1784,7 +1703,7 @@ void InputSystem::configure(ImpulseBinding &bind, char const *ctrlDesc, int impu
 
     if(!configureImpulseBinding(bind, Str_Text(str), impulseId, localPlayer))
     {
-        throw BindError("InputSystem::configure", "Descriptor parse error");
+        throw ConfigureError("InputSystem::configure", "Descriptor parse error");
     }
 
     // Any conditions?
@@ -1797,7 +1716,7 @@ void InputSystem::configure(ImpulseBinding &bind, char const *ctrlDesc, int impu
         statecondition_t *cond = &bind.conditions.last();
         if(!B_ParseStateCondition(cond, Str_Text(str)))
         {
-            throw BindError("InputSystem::configure", "Descriptor parse error");
+            throw ConfigureError("InputSystem::configure", "Descriptor parse error");
         }
     }
 
@@ -2103,17 +2022,90 @@ DENG_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(e
     }
 }
 
-DENG_EXTERN_C int B_BindingsForCommand(char const *command, char *outBuf, size_t outBufSize)
+DENG_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(command && outBuf);
-    return getCommandBindings(command, outBuf, outBufSize);
+    DENG2_ASSERT(commandCString && outBuf);
+    String const command = commandCString;
+
+    *outBuf = 0;
+
+    if(command.isEmpty()) return 0;
+    if(!outBufSize) return 0;
+
+    InputSystem &isys = ClientApp::inputSystem();
+
+    String out;
+    int numFound = 0;
+    isys.forAllContexts([&] (BindContext &context)
+    {
+        context.forAllCommandBindings([&] (CommandBinding &bind)
+        {
+            if(!bind.command.compareWithCase(command))
+            {
+                if(numFound) out += " "; // Separator.
+
+                out += String::number(bind.id) + "@" + context.name() + ":" + isys.composeBindsFor(bind);
+                numFound++;
+            }
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+
+    // Copy the result to the return buffer.
+    std::memset(outBuf, 0, outBufSize);
+    strncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+
+    return numFound;
 }
 
-DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseName, int inverse,
+DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCString, int inverse,
     char *outBuf, size_t outBufSize)
 {
-    DENG2_ASSERT(impulseName && outBuf);
-    return getImpulseBindings(localPlayer, impulseName, inverse, outBuf, outBufSize);
+    DENG2_ASSERT(impulseNameCString && outBuf);
+    String const impulseName = impulseNameCString;
+
+    *outBuf = 0;
+
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS) return 0;
+    if(impulseName.isEmpty()) return 0;
+    if(!outBufSize) return 0;
+
+    InputSystem &isys = ClientApp::inputSystem();
+
+    String out;
+    int numFound = 0;
+    isys.forAllContexts([&] (BindContext &context)
+    {
+        context.forAllImpulseBindings(localPlayer, [&] (ImpulseBinding &bind)
+        {
+            DENG2_ASSERT(bind.localPlayer == localPlayer);
+
+            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+            DENG2_ASSERT(impulse);
+
+            if(!impulse->name.compareWithoutCase(impulseName))
+            {
+                if(inverse == BFCI_BOTH ||
+                   (inverse == BFCI_ONLY_NON_INVERSE && !(bind.flags & IBDF_INVERSE)) ||
+                   (inverse == BFCI_ONLY_INVERSE     &&  (bind.flags & IBDF_INVERSE)))
+                {
+                    if(numFound) out += " ";
+
+                    out += String::number(bind.id) + "@" + context.name() + ":" + isys.composeBindsFor(bind);
+                    numFound++;
+                }
+            }
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
+
+    // Copy the result to the return buffer.
+    std::memset(outBuf, 0, outBufSize);
+    strncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+
+    return numFound;
 }
 
 DENG_EXTERN_C int DD_GetKeyCode(char const *key)

@@ -40,9 +40,26 @@ struct ImpulseBinding;
 #define GLOBAL_BINDING_CONTEXT_NAME     "global"
 
 /**
- * Input devices and events. @ingroup ui
+ * Input devices, binding context stack and event tracking.
+ *
+ * @par Bindings
+ *
+ * Bindings are Record-like objects (todo) which describe an event => action
+ * trigger relationship. The event being a specific observable state scenario
+ * (such as a keypress on a keyboard) and the trigger, a more abstract action
+ * that can be "bound" to it (such as executing a console command).
+ *
+ * However, it is important to note this relationship is modelled from the
+ * @em action's perspective, rather than that of the event. This is to support
+ * stronger decoupling of the origin from any possible action.
+ *
+ * Once configured (@see configure()), bindings may be freely moved between
+ * contexts, assuming it makes sense to do so. The bindings themselves do not
+ * reference the context in which they might reside.
  *
  * @todo Input drivers belong in this system.
+ *
+ * @ingroup ui
  */
 class InputSystem : public de::System
 {
@@ -150,7 +167,7 @@ public:
 public: // Binding (context) management --------------------------------------
 
     /// Base class for binding configuration errors. @ingroup errors
-    DENG2_ERROR(BindError);
+    DENG2_ERROR(ConfigureError);
 
     /// Required/referenced binding context is missing. @ingroup errors
     DENG2_ERROR(MissingContextError);
@@ -249,6 +266,10 @@ public: // Binding (context) management --------------------------------------
      * @param eventDesc  Descriptor for event information and any additional conditions.
      * @param command    Console command to execute when triggered, if any.
      * @param newId      @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
      */
     void configure(CommandBinding &binding, char const *eventDesc,
                    char const *command = nullptr, bool newId = false);
@@ -262,6 +283,10 @@ public: // Binding (context) management --------------------------------------
      * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
      * @param localPlayer  Local player number to execute the impulse for when triggered.
      * @param newId        @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
      */
     void configure(ImpulseBinding &binding, char const *ctrlDesc,
                    int impulseId, int localPlayer, bool newId = false);
