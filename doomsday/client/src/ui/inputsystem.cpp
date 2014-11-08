@@ -964,10 +964,11 @@ void InputSystem::initAllDevices()
 
 bool InputSystem::ignoreEvents(bool yes)
 {
+    LOG_AS("InputSystem");
     bool const oldIgnoreInput = d->ignoreInput;
 
     d->ignoreInput = yes;
-    LOG_INPUT_VERBOSE("Ignoring input: %b") << yes;
+    LOG_INPUT_VERBOSE("Ignoring events: %b") << yes;
     if(!yes)
     {
         // Clear all the event buffers.
@@ -1354,40 +1355,6 @@ static char const *parseContext(char const *desc, String &context)
     return desc;
 }
 
-void InputSystem::writeAllBindingsTo(FILE *file)
-{
-    DENG2_ASSERT(file);
-    LOG_AS("InputSystem");
-
-    // Start with a clean slate when restoring the bindings.
-    fprintf(file, "clearbindings\n\n");
-
-    for(BindContext const *context : d->contexts)
-    {
-        // Commands.
-        context->forAllCommandBindings([this, &context, &file] (CommandBinding &bind)
-        {
-            fprintf(file, "bindevent \"%s:%s\" \"", context->name().toUtf8().constData(),
-                           composeBindsFor(bind).toUtf8().constData());
-            M_WriteTextEsc(file, bind.command.toUtf8().constData());
-            fprintf(file, "\"\n");
-            return LoopContinue;
-        });
-
-        // Impulses.
-        context->forAllImpulseBindings([this, &context, &file] (ImpulseBinding &bind)
-        {
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
-            DENG2_ASSERT(impulse);
-
-            fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
-                          bind.localPlayer + 1, impulse->name.toUtf8().constData(),
-                          composeBindsFor(bind).toUtf8().constData());
-            return LoopContinue;
-        });
-    }
-}
-
 // ---------------------------------------------------------------------------
 
 CommandBinding *InputSystem::bindCommand(char const *eventDesc, char const *command)
@@ -1437,7 +1404,7 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
         return nullptr;
     }
 
-    BindContext *context = contextPtr(impulse->bindContextName);
+    BindContext *context = contextPtr(impulse->bindContextName());
     DENG2_ASSERT(context); // Should be known by now?
     if(!context)
     {
@@ -1926,11 +1893,11 @@ D_CMD(ListBindings)
         for(int pl = 0; pl < DDMAXPLAYERS; ++pl)
         context.forAllImpulseBindings(pl, [&isys, &pl] (ImpulseBinding &bind)
         {
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+            PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
             DENG2_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
-                    << bind.id << isys.composeBindsFor(bind) << (pl + 1) << impulse->name;
+                    << bind.id << isys.composeBindsFor(bind) << (pl + 1) << impulse->name();
 
             return LoopContinue;
         });
@@ -2083,10 +2050,10 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
         {
             DENG2_ASSERT(bind.localPlayer == localPlayer);
 
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+            PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
             DENG2_ASSERT(impulse);
 
-            if(!impulse->name.compareWithoutCase(impulseName))
+            if(!impulse->name().compareWithoutCase(impulseName))
             {
                 if(inverse == BFCI_BOTH ||
                    (inverse == BFCI_ONLY_NON_INVERSE && !(bind.flags & IBDF_INVERSE)) ||

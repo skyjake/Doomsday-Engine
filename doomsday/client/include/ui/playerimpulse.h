@@ -25,76 +25,98 @@
 
 /**
  * Describes a player interaction impulse.
+ *
+ * @todo Is "take" is the wrong verb in this context?
+ * Player impulses are acted upon by the player Brain (on game side). Does it make
+ * sense for a "brain" to "consume" an impulse? (Also note established convention
+ * in Qt containers for removing an element from the container). Perhaps we need
+ * another abstraction here? -ds
+ *
+ * @todo cleanup client/server confusion. On server side, each player will have a
+ * local model of a remote human player's impulses. However, Double-clicks can be
+ * handled entirely on client side. -ds
  */
-struct PlayerImpulse
+class PlayerImpulse
 {
-    int id;
+public:
     impulsetype_t type;
-    de::String name;
-    de::String bindContextName;
 
-    short booleanCounts[DDMAXPLAYERS];
+public:
+    PlayerImpulse(int id, impulsetype_t type, de::String const &name,
+                  de::String bindContextName);
+
+    bool isTriggerable() const;
+
+    /**
+     * Returns the unique identifier of the impulse.
+     */
+    int id() const;
+
+    /**
+     * Returns the symbolic name of the impulse. This name is used for resolving
+     * or generating textual binding descriptors.
+     */
+    de::String name() const;
+
+    /**
+     * Returns the symbolic name of the attributed binding context.
+     */
+    de::String bindContextName() const;
 
 #ifdef __CLIENT__
     /**
-     * Double-"clicks" actually mean double activations that occur within the double-click
-     * threshold. This is to allow double-clicks also from the numeric impulses.
+     * Returns @c true if one or more ImpulseBindings exist in @em any bindContext.
+     *
+     * @param playerNum  Console/player number.
      */
-    struct DoubleClick
-    {
-        enum State
-        {
-            None,
-            Positive,
-            Negative
-        };
-
-        bool triggered = false;           //< True if double-click has been detected.
-        uint previousClickTime = 0;       //< Previous time an activation occurred.
-        State lastState = None;           //< State at the previous time the check was made.
-        State previousClickState = None;  /** Previous click state. When duplicated, triggers
-                                              the double click. */
-    } doubleClicks[DDMAXPLAYERS];
+    bool haveBindingsFor(int playerNum) const;
 #endif
 
-    PlayerImpulse(int id, impulsetype_t type, de::String const &name, de::String bindContextName)
-        : id             (id)
-        , type           (type)
-        , name           (name)
-        , bindContextName(bindContextName)
-    {
-        de::zap(booleanCounts);
-    }
+public:
+    /**
+     * @param playerNum  Console/player number.
+     */
+    void triggerBoolean(int playerNum);
 
     /**
-     * Returns @c true if the impulse is triggerable.
+     * @param playerNum  Console/player number.
      */
-    inline bool isTriggerable() const {
-        return (type == IT_NUMERIC_TRIGGERED || type == IT_BOOLEAN);
-    }
+    int takeBoolean(int playerNum);
 
 #ifdef __CLIENT__
     /**
-     * Updates the double-click state of an impulse and marks it as double-clicked
-     * when the double-click condition is met.
-     *
-     * @param playerNum  Player/console number.
-     * @param pos        State of the impulse.
+     * @param playerNum  Console/player number.
+     * @param pos
+     * @param relOffset
      */
-    void maintainDoubleClicks(int playerNum, float pos);
+    void takeNumeric(int playerNum, float *pos = nullptr, float *relOffset = nullptr);
 
+    /**
+     * @param playerNum  Console/player number.
+     */
     int takeDoubleClick(int playerNum);
+
+    /**
+     * @param playerNum  Console/player number. Use @c < 0 || >= DDMAXPLAYERS for all.
+     */
+    void clearAccumulation(int playerNum = -1 /*all local players*/);
+
+public:
 
     /**
      * Register the console commands and variables of this module.
      */
     static void consoleRegister();
+
 #endif
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 void P_ImpulseShutdown();
 
-PlayerImpulse *P_ImpulseById(int id);
+PlayerImpulse *P_ImpulsePtr(int id);
 
 PlayerImpulse *P_ImpulseByName(de::String const &name);
 

@@ -21,12 +21,9 @@
 #define CLIENT_INPUTSYSTEM_H
 
 #include <functional>
-#include <de/types.h>
-#include <de/Action>
 #include <de/Error>
 #include <de/System>
 #include "ddevent.h"
-#include "ui/commandaction.h"
 #include "SettingsRegister"
 
 class BindContext;
@@ -173,24 +170,27 @@ public: // Binding (context) management --------------------------------------
     DENG2_ERROR(MissingContextError);
 
     /**
-     * Try to make a new command binding.
+     * Try to make a new (console) command binding.
      *
-     * @param eventDesc  Textual descriptor for the event.
+     * @param eventDesc  Textual descriptor for the event, with the relevant
+     *                   context for the would-be binding encoded.
      * @param command    Console command(s) which the binding will execute when
      *                   triggered, if a binding is created.
      *
-     * @return  Resultant command binding.
+     * @return  Resultant command binding if any.
      */
     CommandBinding *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * Try to make a new (player) impulse binding.
      *
-     * @param ctrlDesc     Textual descriptor for the input device control event.
+     * @param ctrlDesc     Textual descriptor for the device-control event.
      * @param impulseDesc  Player impulse which the binding will execute when
-     *                     triggered, if a binding is created.
+     *                     triggered, if a binding is created. Impulses are
+     *                     associated with a context, which determines where
+     *                     the binding will be linked, if a binding is created.
      *
-     * @return  Resultant impulse binding.
+     * @return  Resultant impulse binding if any.
      */
     ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
 
@@ -214,14 +214,15 @@ public: // Binding (context) management --------------------------------------
     void clearAllContexts();
 
     /**
-     * Returns the total number of binding contexts in the system.
-     */
-    int contextCount() const;
-
-    /**
      * Returns @c true if the symbolic @a name references a known context.
      */
     bool hasContext(de::String const &name) const;
+
+    /**
+     * Creates a new binding context. The new context has the highest priority
+     * of all existing contexts, and is inactive.
+     */
+    BindContext *newContext(de::String const &name);
 
     /**
      * Lookup a binding context by symbolic @a name.
@@ -240,20 +241,14 @@ public: // Binding (context) management --------------------------------------
     int contextPositionOf(BindContext *context) const;
 
     /**
-     * Creates a new binding context. The new context has the highest priority
-     * of all existing contexts, and is inactive.
-     */
-    BindContext *newContext(de::String const &name);
-
-    /**
      * Iterate through all the BindContexts from highest to lowest priority.
      */
     de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
 
     /**
-     * Write all bindings in all contexts to a text (cfg) file. Outputs console commands.
+     * Returns the total number of binding contexts in the system.
      */
-    void writeAllBindingsTo(FILE *file);
+    int contextCount() const;
 
     // ---
 

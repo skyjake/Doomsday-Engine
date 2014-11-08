@@ -465,12 +465,12 @@ DENG2_PIMPL(ClientWindow)
 
         if(!hasFocus)
         {
-            inputSys().clearEvents();
             inputSys().forAllDevices([] (InputDevice &device)
             {
                 device.reset();
                 return LoopContinue;
             });
+            inputSys().clearEvents();
 
             canvas.trapMouse(false);
         }
@@ -485,7 +485,7 @@ DENG2_PIMPL(ClientWindow)
         ev.device         = uint(-1);
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
-        ev.focus.inWindow = 1; /// @todo Ask WindowSystem for an identifier number.
+        ev.focus.inWindow = 1;         /// @todo Ask WindowSystem for an identifier number.
         inputSys().postEvent(&ev);
     }
 
