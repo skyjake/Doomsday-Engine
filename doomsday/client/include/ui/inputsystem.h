@@ -170,7 +170,7 @@ public: // Binding (context) management --------------------------------------
     DENG2_ERROR(MissingContextError);
 
     /**
-     * Try to make a new command binding.
+     * Try to make a new (console) command binding.
      *
      * @param eventDesc  Textual descriptor for the event, with the relevant
      *                   context for the would-be binding encoded.
@@ -214,14 +214,15 @@ public: // Binding (context) management --------------------------------------
     void clearAllContexts();
 
     /**
-     * Returns the total number of binding contexts in the system.
-     */
-    int contextCount() const;
-
-    /**
      * Returns @c true if the symbolic @a name references a known context.
      */
     bool hasContext(de::String const &name) const;
+
+    /**
+     * Creates a new binding context. The new context has the highest priority
+     * of all existing contexts, and is inactive.
+     */
+    BindContext *newContext(de::String const &name);
 
     /**
      * Lookup a binding context by symbolic @a name.
@@ -240,15 +241,14 @@ public: // Binding (context) management --------------------------------------
     int contextPositionOf(BindContext *context) const;
 
     /**
-     * Creates a new binding context. The new context has the highest priority
-     * of all existing contexts, and is inactive.
-     */
-    BindContext *newContext(de::String const &name);
-
-    /**
      * Iterate through all the BindContexts from highest to lowest priority.
      */
     de::LoopResult forAllContexts(std::function<de::LoopResult (BindContext &)> func) const;
+
+    /**
+     * Returns the total number of binding contexts in the system.
+     */
+    int contextCount() const;
 
     // ---
 

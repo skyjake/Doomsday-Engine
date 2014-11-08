@@ -206,7 +206,7 @@ static bool writeBindingsState(Path const &filePath)
         isys.forAllContexts([&isys, &file] (BindContext &context)
         {
             // Commands.
-            context.forAllCommandBindings([&isys, &context, &file] (CommandBinding &bind)
+            context.forAllCommandBindings([&isys, &file, &context] (CommandBinding &bind)
             {
                 fprintf(file, "bindevent \"%s:%s\" \"", context.name().toUtf8().constData(),
                                isys.composeBindsFor(bind).toUtf8().constData());
@@ -216,13 +216,13 @@ static bool writeBindingsState(Path const &filePath)
             });
 
             // Impulses.
-            context.forAllImpulseBindings([&isys, &context, &file] (ImpulseBinding &bind)
+            context.forAllImpulseBindings([&isys, &file, &context] (ImpulseBinding &bind)
             {
-                PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+                PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
                 DENG2_ASSERT(impulse);
 
                 fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
-                              bind.localPlayer + 1, impulse->name.toUtf8().constData(),
+                              bind.localPlayer + 1, impulse->name().toUtf8().constData(),
                               isys.composeBindsFor(bind).toUtf8().constData());
                 return LoopContinue;
             });

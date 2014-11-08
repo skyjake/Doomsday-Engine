@@ -1404,7 +1404,7 @@ ImpulseBinding *InputSystem::bindImpulse(char const *ctrlDesc, char const *impul
         return nullptr;
     }
 
-    BindContext *context = contextPtr(impulse->bindContextName);
+    BindContext *context = contextPtr(impulse->bindContextName());
     DENG2_ASSERT(context); // Should be known by now?
     if(!context)
     {
@@ -1893,11 +1893,11 @@ D_CMD(ListBindings)
         for(int pl = 0; pl < DDMAXPLAYERS; ++pl)
         context.forAllImpulseBindings(pl, [&isys, &pl] (ImpulseBinding &bind)
         {
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+            PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
             DENG2_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
-                    << bind.id << isys.composeBindsFor(bind) << (pl + 1) << impulse->name;
+                    << bind.id << isys.composeBindsFor(bind) << (pl + 1) << impulse->name();
 
             return LoopContinue;
         });
@@ -2048,10 +2048,10 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
         {
             DENG2_ASSERT(bind.localPlayer == localPlayer);
 
-            PlayerImpulse const *impulse = P_ImpulseById(bind.impulseId);
+            PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
             DENG2_ASSERT(impulse);
 
-            if(!impulse->name.compareWithoutCase(impulseName))
+            if(!impulse->name().compareWithoutCase(impulseName))
             {
                 if(inverse == BFCI_BOTH ||
                    (inverse == BFCI_ONLY_NON_INVERSE && !(bind.flags & IBDF_INVERSE)) ||

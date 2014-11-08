@@ -280,10 +280,10 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
     try
     {
         std::unique_ptr<ImpulseBinding> newBind(new ImpulseBinding);
-        inputSys().configure(*newBind, ctrlDesc, impulse.id, localPlayer); // Don't assign a new ID.
+        inputSys().configure(*newBind, ctrlDesc, impulse.id(), localPlayer); // Don't assign a new ID.
 
         ImpulseBinding *bind = newBind.get();
-        ControlGroup &group  = *d->findControlGroup(impulse.id, true/*create if missing*/);
+        ControlGroup &group  = *d->findControlGroup(impulse.id(), true/*create if missing*/);
         group.binds[localPlayer].append(newBind.release());
 
         /// @todo: fix local player binding id management.
@@ -295,7 +295,7 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
-                << impulse.name << (localPlayer + 1) << ctrlDesc << d->name << bind->id;
+                << impulse.name() << (localPlayer + 1) << ctrlDesc << d->name << bind->id;
 
         /// @todo: Notify interested parties.
         //DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, false/*is-impulse*/);
