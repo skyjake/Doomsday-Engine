@@ -437,9 +437,24 @@ int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivit
     return count;
 }
 
-dint String::compareWithCase(QChar const *a, QChar const *b, dsize count)
+dint String::compareWithCase(QChar const *a, QChar const *b, dsize count) // static
 {
     return QString(a).leftRef(count).compare(QString(b).leftRef(count), Qt::CaseSensitive);
+}
+
+bool String::equals(QChar const *a, QChar const *b, dsize count) // static
+{
+    while(count--)
+    {
+        // Both strings the same length?
+        if(a->isNull() && b->isNull()) break;
+        // Mismatch?
+        if(*a != *b) return false;
+        // Advance.
+        a++;
+        b++;
+    }
+    return true;
 }
 
 void String::skipSpace(String::const_iterator &i, String::const_iterator const &end)
