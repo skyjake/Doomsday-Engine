@@ -386,15 +386,16 @@ DENG2_PIMPL(InputSystem)
         }
 
         // Echo the event.
-        String const name = "echo-" + B_EventToString(ev);
+        String name = "echo-" + B_EventToString(ev);
 
+        Block const nameUtf8 = name.toUtf8();
         ddevent_t echo; de::zap(echo);
-        echo.device = ev.device;
+        echo.device = uint(-1);
         echo.type   = E_SYMBOLIC;
         echo.symbolic.id   = 0;
-        echo.symbolic.name = name.toUtf8().constData();
+        echo.symbolic.name = nameUtf8.constData();
 
-        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << echo.symbolic.name;
+        LOG_INPUT_XVERBOSE("Symbolic echo: %s") << name;
         self.postEvent(&echo);
     }
 

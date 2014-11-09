@@ -40,21 +40,6 @@
 
 using namespace de;
 
-/// @todo: Is this even necessary? -ds
-struct ControlGroup
-{
-    int bindId    = 0;             ///< Unique identifier.
-    int impulseId = 0;
-    typedef QList<ImpulseBinding *> Bindings;
-    Bindings binds[DDMAXPLAYERS];  ///< Separate bindings for each local player.
-
-    ~ControlGroup() {
-        for(int i = 0; i < DDMAXPLAYERS; ++i) {
-            qDeleteAll(binds[i]);
-        }
-    }
-};
-
 static inline InputSystem &inputSys()
 {
     return ClientApp::inputSystem();
@@ -69,46 +54,18 @@ DENG2_PIMPL(BindContext)
     // Acquired device states, unless higher-priority contexts override.
     typedef QSet<int> DeviceIds;
     DeviceIds acquireDevices;
-    bool acquireAllDevices = false;  ///< @c true= will ignore @var acquireDevices.
+    bool acquireAllDevices = false; ///< @c true= will ignore @var acquireDevices.
 
     typedef QList<CommandBinding *> CommandBindings;
     CommandBindings commandBinds;
 
-    typedef QList<ControlGroup *> ControlGroups;
-    ControlGroups controlGroups;
+    typedef QList<ImpulseBinding *> ImpulseBindings;
+    ImpulseBindings impulseBinds[DDMAXPLAYERS];  ///< Group bindings for each local player.
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
     FallbackResponderFunc fallbackResponder     = nullptr;
 
     Instance(Public *i) : Base(i) {}
-
-    ControlGroup *findControlGroup(int impulseId, bool canCreate = false)
-    {
-        for(ControlGroup *group : controlGroups)
-        {
-            if(group->impulseId == impulseId)
-                return group;
-        }
-
-        if(!canCreate) return nullptr;
-
-        // Create a new one.
-        ControlGroup *group = new ControlGroup;
-        group->bindId    = B_NewIdentifier();
-        group->impulseId = impulseId;
-        controlGroups.append(group);
-
-        // Notify interested parties.
-        DENG2_FOR_PUBLIC_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*thisPublic, group, false/*not-command*/);
-
-        return group;
-    }
-
-    void removeControlGroup(ControlGroup *group)
-    {
-        DENG2_ASSERT(controlGroups.contains(group));
-        controlGroups.removeOne(group);
-    }
 
     DENG2_PIMPL_AUDIENCE(ActiveChange)
     DENG2_PIMPL_AUDIENCE(AcquireDeviceChange)
@@ -218,8 +175,11 @@ void BindContext::clearAllBindings()
     LOG_AS("BindContext");
     qDeleteAll(d->commandBinds);
     d->commandBinds.clear();
-    qDeleteAll(d->controlGroups);
-    d->controlGroups.clear();
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        qDeleteAll(d->impulseBinds[i]);
+        d->impulseBinds[i].clear();
+    }
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
 }
 
@@ -254,7 +214,7 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
         d->commandBinds.prepend(newBind.release());
 
         /// @todo: In interactive binding mode, should ask the user if the
-        /// replacement is ok. For now, just delete the other binding.
+        /// replacement is ok. For now, just delete the other bindings.
         deleteMatching(bind, nullptr);
 
         LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to " _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.)
@@ -280,25 +240,21 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
     try
     {
         std::unique_ptr<ImpulseBinding> newBind(new ImpulseBinding);
-        inputSys().configure(*newBind, ctrlDesc, impulse.id(), localPlayer); // Don't assign a new ID.
+        inputSys().configure(*newBind, ctrlDesc, impulse.id(), localPlayer, true/*assign an ID*/);
 
         ImpulseBinding *bind = newBind.get();
-        ControlGroup &group  = *d->findControlGroup(impulse.id(), true/*create if missing*/);
-        group.binds[localPlayer].append(newBind.release());
-
-        /// @todo: fix local player binding id management.
-        bind->id = group.bindId;
+        d->impulseBinds[localPlayer].append(newBind.release());
 
         /// @todo: In interactive binding mode, should ask the user if the
-        /// replacement is ok. For now, just delete the other binding.
+        /// replacement is ok. For now, just delete the other bindings.
         deleteMatching(nullptr, bind);
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
                 << impulse.name() << (localPlayer + 1) << ctrlDesc << d->name << bind->id;
 
-        /// @todo: Notify interested parties.
-        //DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, false/*is-impulse*/);
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, false/*is-impulse*/);
 
         return bind;
     }
@@ -326,9 +282,8 @@ CommandBinding *BindContext::findCommandBinding(char const *command, int deviceI
 
 ImpulseBinding *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
-    for(ControlGroup *group : d->controlGroups)
     for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(ImpulseBinding *bind : group->binds[i])
+    for(ImpulseBinding *bind : d->impulseBinds[i])
     {
         if(bind->deviceId == deviceId && bind->type == bindType && bind->controlId == controlId)
         {
@@ -353,25 +308,15 @@ bool BindContext::deleteBinding(int id)
     }
 
     // How about one of the impulse bindings?
-    for(ControlGroup *group : d->controlGroups)
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(int k = 0; k < d->impulseBinds[i].count(); ++k)
     {
-        if(group->bindId == id)
+        ImpulseBinding *bind = d->impulseBinds[i].at(k);
+        if(bind->id == id)
         {
-            d->removeControlGroup(group);
-            delete group;
+            d->impulseBinds[i].removeAt(k);
+            delete bind;
             return true;
-        }
-
-        for(int i = 0; i < DDMAXPLAYERS; ++i)
-        for(int k = 0; k < group->binds[i].count(); ++k)
-        {
-            ImpulseBinding *bind = group->binds[i].at(k);
-            if(bind->id == id)
-            {
-                group->binds[i].removeAt(k);
-                delete bind;
-                return true;
-            }
         }
     }
 
@@ -636,7 +581,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
     *cmdResult = nullptr;
     *impResult = nullptr;
 
-    for(CommandBinding *bind : d->commandBinds)
+    for(CommandBinding const *bind : d->commandBinds)
     {
         if(match1 && match1->id != bind->id)
         {
@@ -646,7 +591,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
                match1->type      == bind->type &&
                match1->state     == bind->state)
             {
-                *cmdResult = bind;
+                *cmdResult = const_cast<CommandBinding *>(bind);
                 return true;
             }
         }
@@ -657,15 +602,14 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
                match2->controlId == bind->controlId &&
                match2->type      == (ibcontroltype_t) bind->type)
             {
-                *cmdResult = bind;
+                *cmdResult = const_cast<CommandBinding *>(bind);
                 return true;
             }
         }
     }
 
-    for(ControlGroup *group : d->controlGroups)
     for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(ImpulseBinding *bind : group->binds[i])
+    for(ImpulseBinding const *bind : d->impulseBinds[i])
     {
         if(match1)
         {
@@ -674,7 +618,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
                match1->controlId == bind->controlId &&
                match1->type      == (ddeventtype_t) bind->type)
             {
-                *impResult = bind;
+                *impResult = const_cast<ImpulseBinding *>(bind);
                 return true;
             }
         }
@@ -686,7 +630,7 @@ bool BindContext::findMatchingBinding(CommandBinding const *match1, ImpulseBindi
                match2->controlId == bind->controlId &&
                match2->type      == bind->type)
             {
-                *impResult = bind;
+                *impResult = const_cast<ImpulseBinding *>(bind);
                 return true;
             }
         }
@@ -709,12 +653,11 @@ LoopResult BindContext::forAllCommandBindings(
 LoopResult BindContext::forAllImpulseBindings(int localPlayer,
     std::function<de::LoopResult (ImpulseBinding &)> func) const
 {
-    for(ControlGroup *group : d->controlGroups)
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
-            for(ImpulseBinding *bind : group->binds[i])
+            for(ImpulseBinding *bind : d->impulseBinds[i])
             {
                 if(auto result = func(*bind)) return result;
             }
@@ -731,12 +674,11 @@ int BindContext::commandBindingCount() const
 int BindContext::impulseBindingCount(int localPlayer) const
 {
     int count = 0;
-    for(ControlGroup const *group : d->controlGroups)
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
         if((localPlayer < 0 || localPlayer >= DDMAXPLAYERS) || localPlayer == i)
         {
-            count += group->binds[i].count();
+            count += d->impulseBinds[i].count();
         }
     }
     return count;
