@@ -387,8 +387,7 @@ DENG2_PIMPL(InputSystem)
 
     void echoSymbolicEvent(ddevent_t const &ev)
     {
-        // Disabled?
-        if(!symbolicEchoMode) return;
+        DENG2_ASSERT(symbolicEchoMode);
 
         // Some event types are never echoed.
         if(ev.type == E_SYMBOLIC || ev.type == E_FOCUS) return;
@@ -439,21 +438,29 @@ DENG2_PIMPL(InputSystem)
                 continue;
 
             event_t ev;
-            bool validGameEvent = self.convertEvent(*ddev, ev);
+            bool validGameEvent = false;
+            if(callGameResponders)
+            {
+                // Events must first be converted for the game responders.
+                validGameEvent = self.convertEvent(*ddev, ev);
+            }
 
-            if(validGameEvent && callGameResponders)
+            if(callGameResponders && validGameEvent && gx.PrivilegedResponder)
             {
                 // Does the game's special responder use this event? This is
                 // intended for grabbing events when creating bindings in the
                 // Controls menu.
-                if(gx.PrivilegedResponder && gx.PrivilegedResponder(&ev))
+                if(gx.PrivilegedResponder(&ev))
                 {
                     continue;
                 }
             }
 
-            // Generate a symbolic event if echo mode enabled.
-            echoSymbolicEvent(*ddev);
+            if(symbolicEchoMode)
+            {
+                echoSymbolicEvent(*ddev);
+                continue;
+            }
 
             // Try the binding system to see if we need to respond to the event
             // and if so, trigger any associated actions.
@@ -462,8 +469,9 @@ DENG2_PIMPL(InputSystem)
                 continue;
             }
 
-            // The "fallback" responder. Gets the event if no one else is interested.
-            if(validGameEvent && callGameResponders && gx.FallbackResponder)
+            // Try the "fallback" responder, which, gets the event if no one else
+            // is interested.
+            if(callGameResponders && validGameEvent && gx.FallbackResponder)
             {
                 gx.FallbackResponder(&ev);
             }
