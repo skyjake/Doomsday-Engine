@@ -17,18 +17,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <cmath>
-
-#include "de_platform.h"
-#include "de_console.h"
-#include "dd_main.h"
-#include "de_misc.h"
+#include "ui/b_util.h"
+#include <de/timer.h>
 #include "clientapp.h"
 
-#include "ui/b_util.h"
-
 #include "BindContext"
-#include "ui/b_main.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
@@ -51,27 +44,27 @@ bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
 {
     DENG2_ASSERT(toggleName && state);
 
-    if(!strlen(toggleName) || !strcasecmp(toggleName, "down"))
+    if(!qstrlen(toggleName) || !qstricmp(toggleName, "down"))
     {
         *state = EBTOG_DOWN; // this is the default, if omitted
         return true;
     }
-    if(!strcasecmp(toggleName, "undefined"))
+    if(!qstricmp(toggleName, "undefined"))
     {
         *state = EBTOG_UNDEFINED;
         return true;
     }
-    if(!strcasecmp(toggleName, "repeat"))
+    if(!qstricmp(toggleName, "repeat"))
     {
         *state = EBTOG_REPEAT;
         return true;
     }
-    if(!strcasecmp(toggleName, "press"))
+    if(!qstricmp(toggleName, "press"))
     {
         *state = EBTOG_PRESS;
         return true;
     }
-    if(!strcasecmp(toggleName, "up"))
+    if(!qstricmp(toggleName, "up"))
     {
         *state = EBTOG_UP;
         return true;
@@ -85,28 +78,28 @@ bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos)
 {
     DENG2_ASSERT(desc && state && pos);
 
-    if(!strncasecmp(desc, "within", 6) && strlen(desc) > 6)
+    if(!qstrnicmp(desc, "within", 6) && qstrlen(desc) > 6)
     {
         *state = EBAXIS_WITHIN;
-        *pos = strtod(desc + 6, nullptr);
+        *pos   = String((desc + 6)).toFloat();
         return true;
     }
-    if(!strncasecmp(desc, "beyond", 6) && strlen(desc) > 6)
+    if(!qstrnicmp(desc, "beyond", 6) && qstrlen(desc) > 6)
     {
         *state = EBAXIS_BEYOND;
-        *pos = strtod(desc + 6, nullptr);
+        *pos   = String((desc + 6)).toFloat();
         return true;
     }
-    if(!strncasecmp(desc, "pos", 3) && strlen(desc) > 3)
+    if(!qstrnicmp(desc, "pos", 3) && qstrlen(desc) > 3)
     {
         *state = EBAXIS_BEYOND_POSITIVE;
-        *pos = strtod(desc + 3, nullptr);
+        *pos   = String((desc + 3)).toFloat();
         return true;
     }
-    if(!strncasecmp(desc, "neg", 3) && strlen(desc) > 3)
+    if(!qstrnicmp(desc, "neg", 3) && qstrlen(desc) > 3)
     {
         *state = EBAXIS_BEYOND_NEGATIVE;
-        *pos = -strtod(desc + 3, nullptr);
+        *pos   = -String((desc + 3)).toFloat();
         return true;
     }
 
@@ -117,7 +110,7 @@ bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos)
 dd_bool B_ParseModifierId(char const *desc, int *id)
 {
     DENG2_ASSERT(desc && id);
-    *id = strtoul(desc, nullptr, 10) - 1 + CTL_MODIFIER_1;
+    *id = String(desc).toInt() - 1 + CTL_MODIFIER_1;
     return (*id >= CTL_MODIFIER_1 && *id <= CTL_MODIFIER_4);
 }
 
@@ -127,17 +120,17 @@ bool B_ParseKeyId(char const *desc, int *id)
     LOG_AS("B_ParseKeyId");
 
     // The possibilies: symbolic key name, or "codeNNN".
-    if(!strncasecmp(desc, "code", 4) && strlen(desc) == 7)
+    if(!qstrnicmp(desc, "code", 4) && qstrlen(desc) == 7)
     {
         // Hexadecimal?
         if(desc[4] == 'x' || desc[4] == 'X')
         {
-            *id = strtoul(desc + 5, nullptr, 16);
+            *id = String((desc + 5)).toInt(nullptr, 16);
             return true;
         }
 
         // Decimal.
-        *id = strtoul(desc + 4, nullptr, 10);
+        *id = String((desc + 4)).toInt();
         if(*id > 0 && *id <= 255) return true;
 
         LOGDEV_INPUT_WARNING("Key code %i out of range") << *id;
@@ -155,9 +148,10 @@ bool B_ParseKeyId(char const *desc, int *id)
 bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
 {
     DENG2_ASSERT(desc && type && id);
+    InputDevice const &mouse = inputSys().device(IDEV_MOUSE);
 
     // Maybe it's one of the named buttons?
-    *id = inputSys().device(IDEV_MOUSE).toButtonId(desc);
+    *id = mouse.toButtonId(desc);
     if(*id >= 0)
     {
         *type = E_TOGGLE;
@@ -165,23 +159,23 @@ bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
     }
 
     // Perhaps a generic button?
-    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
+    if(!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
     {
         *type = E_TOGGLE;
-        *id   = strtoul(desc + 6, nullptr, 10) - 1;
-        if(inputSys().device(IDEV_MOUSE).hasButton(*id))
+        *id   = String((desc + 6)).toInt() - 1;
+        if(mouse.hasButton(*id))
             return true;
 
-        LOG_INPUT_WARNING("Mouse button %i does not exist") << *id;
+        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << mouse.title() << *id;
         return false;
     }
 
     // Must be an axis, then.
     *type = E_AXIS;
-    *id   = inputSys().device(IDEV_MOUSE).toAxisId(desc);
+    *id   = mouse.toAxisId(desc);
     if(*id >= 0) return true;
 
-    LOG_INPUT_WARNING("Mouse axis \"%s\" does not exist") << desc;
+    LOG_INPUT_WARNING("\"%s\" axis \"%s\" does not exist") << mouse.title() << desc;
     return false;
 }
 
@@ -199,27 +193,27 @@ dd_bool B_ParseDeviceAxisTypeAndId(InputDevice const &device, char const *desc, 
 
 bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
 {
-    if(!strncasecmp(desc, "button", 6) && strlen(desc) > 6)
+    if(!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
     {
         *type = E_TOGGLE;
-        *id   = strtoul(desc + 6, nullptr, 10) - 1;
+        *id   = String((desc + 6)).toInt() - 1;
         if(device.hasButton(*id))
             return true;
 
-        LOG_INPUT_WARNING("Joystick button %i does not exist") << *id;
+        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << device.title() << *id;
         return false;
     }
-    if(!strncasecmp(desc, "hat", 3) && strlen(desc) > 3)
+    if(!qstrnicmp(desc, "hat", 3) && qstrlen(desc) > 3)
     {
         *type = E_ANGLE;
-        *id   = strtoul(desc + 3, nullptr, 10) - 1;
+        *id   = String((desc + 3)).toInt() - 1;
         if(device.hasHat(*id))
             return true;
 
-        LOG_INPUT_WARNING("Joystick hat %i does not exist") << *id;
+        LOG_INPUT_WARNING("\"%s\" hat %i does not exist") << device.title() << *id;
         return false;
     }
-    if(!strcasecmp(desc, "hat"))
+    if(!qstricmp(desc, "hat"))
     {
         *type = E_ANGLE;
         *id   = 0;
@@ -233,14 +227,14 @@ bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeve
 bool B_ParseAnglePosition(char const *desc, float *pos)
 {
     DENG2_ASSERT(desc && pos);
-    if(!strcasecmp(desc, "center"))
+    if(!qstricmp(desc, "center"))
     {
         *pos = -1;
         return true;
     }
-    if(!strncasecmp(desc, "angle", 5) && strlen(desc) > 5)
+    if(!qstrnicmp(desc, "angle", 5) && qstrlen(desc) > 5)
     {
-        *pos = strtod(desc + 5, nullptr);
+        *pos = String((desc + 5)).toFloat();
         return true;
     }
     LOG_INPUT_WARNING("Angle position \"%s\" is invalid") << desc;
@@ -249,9 +243,10 @@ bool B_ParseAnglePosition(char const *desc, float *pos)
 
 bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
 {
-    AutoStr *str = AutoStr_NewStd();
+    DENG2_ASSERT(cond && desc);
 
     // First, we expect to encounter a device name.
+    AutoStr *str = AutoStr_NewStd();
     desc = Str_CopyDelim(str, desc, '-');
 
     if(!Str_CompareIgnoreCase(str, "multiplayer"))
@@ -635,24 +630,27 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
     *pos = de::clamp(-1.0f, *pos, 1.0f);
 }
 
-String B_ControlDescToString(InputDevice const &device, ddeventtype_t type, int id)
+String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
 {
+    InputDevice *device = nullptr;
     String str;
-
     if(type != E_SYMBOLIC)
     {
+        device = &inputSys().device(deviceId);
         // Name of the device.
-        str += device.name() + "-";
+        str += device->name() + "-";
     }
 
     switch(type)
     {
-    case E_TOGGLE:
-        if(!device.button(id).name().isEmpty())
+    case E_TOGGLE: {
+        DENG2_ASSERT(device);
+        InputDeviceButtonControl &button = device->button(id);
+        if(!button.name().isEmpty())
         {
-            str += device.button(id).name();
+            str += button.name();
         }
-        else if(&device == inputSys().devicePtr(IDEV_KEYBOARD))
+        else if(device == inputSys().devicePtr(IDEV_KEYBOARD))
         {
             char const *name = B_ShortNameForKey(id);
             if(name)
@@ -668,13 +666,17 @@ String B_ControlDescToString(InputDevice const &device, ddeventtype_t type, int 
         {
             str += "button" + String::number(id + 1);
         }
+        break; }
+
+    case E_AXIS:
+        DENG2_ASSERT(device);
+        str += device->axis(id).name();
         break;
 
-    case E_AXIS:     str += device.axis(id).name();         break;
     case E_ANGLE:    str += "hat" + String::number(id + 1); break;
     case E_SYMBOLIC: str += "sym";                          break;
 
-    default: DENG2_ASSERT(!"B_DeviceDescToString: Invalid event type"); break;
+    default: DENG2_ASSERT(!"B_ControlDescToString: Invalid event type"); break;
     }
 
     return str;
@@ -728,7 +730,7 @@ String B_StateConditionToString(statecondition_t const &cond)
     }
     else
     {
-        str += B_ControlDescToString(inputSys().device(cond.device),
+        str += B_ControlDescToString(cond.device,
                                      (  cond.type == SCT_TOGGLE_STATE? E_TOGGLE
                                       : cond.type == SCT_AXIS_BEYOND ? E_AXIS
                                       : E_ANGLE), cond.id);
@@ -758,7 +760,7 @@ String B_StateConditionToString(statecondition_t const &cond)
 
 String B_EventToString(ddevent_t const &ev)
 {
-    String str = B_ControlDescToString(inputSys().device(ev.device), ev.type,
+    String str = B_ControlDescToString(ev.device, ev.type,
                                        (  ev.type == E_TOGGLE  ? ev.toggle.id
                                         : ev.type == E_AXIS    ? ev.axis.id
                                         : ev.type == E_ANGLE   ? ev.angle.id
@@ -785,23 +787,6 @@ String B_EventToString(ddevent_t const &ev)
     }
 
     return str;
-}
-
-static int bindingIdCounter;
-
-int B_NewIdentifier()
-{
-    int id = 0;
-    while(!id)
-    {
-        id = ++bindingIdCounter;
-    }
-    return id;
-}
-
-void B_ResetIdentifiers()
-{
-    bindingIdCounter = 0;
 }
 
 struct keyname_t
@@ -915,11 +900,11 @@ int B_KeyForShortName(char const *key)
 
     for(uint idx = 0; keyNames[idx].key; ++idx)
     {
-        if(!stricmp(key, keyNames[idx].name))
+        if(!qstricmp(key, keyNames[idx].name))
             return keyNames[idx].key;
     }
 
-    if(strlen(key) == 1 && isalnum(key[0]))
+    if(qstrlen(key) == 1 && isalnum(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);

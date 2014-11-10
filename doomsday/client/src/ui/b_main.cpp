@@ -21,9 +21,6 @@
 
 #include "ui/b_main.h"
 
-#include <doomsday/console/exec.h>
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
 #include "dd_main.h" // App_GameLoaded
 #include "dd_def.h"
 #include "clientapp.h"
@@ -125,28 +122,7 @@ void B_Init()
     */
 
     // Bind all the defaults for the engine only.
-    B_BindDefaults();
+    isys.bindDefaults();
 
     isys.initialContextActivations();
-}
-
-void B_BindDefaults()
-{
-    InputSystem &isys = ClientApp::inputSystem();
-
-    // Engine's highest priority context: opening control panel, opening the console.
-    isys.bindCommand("global:key-f11-down + key-alt-down", "releasemouse");
-    isys.bindCommand("global:key-f11-down", "togglefullscreen");
-    isys.bindCommand("global:key-tilde-down + key-shift-up", "taskbar");
-
-    // Console bindings (when open).
-    isys.bindCommand("console:key-tilde-down + key-shift-up", "taskbar"); // without this, key would be entered into command line
-
-    // Bias editor.
-}
-
-void B_BindGameDefaults()
-{
-    if(!App_GameLoaded()) return;
-    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }

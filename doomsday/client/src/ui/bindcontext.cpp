@@ -54,7 +54,7 @@ DENG2_PIMPL(BindContext)
     // Acquired device states, unless higher-priority contexts override.
     typedef QSet<int> DeviceIds;
     DeviceIds acquireDevices;
-    bool acquireAllDevices = false; ///< @c true= will ignore @var acquireDevices.
+    bool acquireAllDevices = false;  ///< @c true= will ignore @var acquireDevices.
 
     typedef QList<CommandBinding *> CommandBindings;
     CommandBindings commandBinds;
@@ -208,7 +208,7 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
     try
     {
         std::unique_ptr<CommandBinding> newBind(new CommandBinding);
-        inputSys().configure(*newBind, eventDesc, command, true/*assign an ID*/);
+        inputSys().configure(*newBind, eventDesc, command);
 
         CommandBinding *bind = newBind.get();
         d->commandBinds.prepend(newBind.release());
@@ -240,7 +240,7 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
     try
     {
         std::unique_ptr<ImpulseBinding> newBind(new ImpulseBinding);
-        inputSys().configure(*newBind, ctrlDesc, impulse.id(), localPlayer, true/*assign an ID*/);
+        inputSys().configure(*newBind, ctrlDesc, impulse.id(), localPlayer);
 
         ImpulseBinding *bind = newBind.get();
         d->impulseBinds[localPlayer].append(newBind.release());
@@ -267,13 +267,13 @@ CommandBinding *BindContext::findCommandBinding(char const *command, int deviceI
 {
     if(command && command[0])
     {
-        for(CommandBinding *bind : d->commandBinds)
+        for(CommandBinding const *bind : d->commandBinds)
         {
             if(bind->command.compareWithoutCase(command)) continue;
 
             if((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind->deviceId == deviceId)
             {
-                return bind;
+                return const_cast<CommandBinding *>(bind);
             }
         }
     }
@@ -283,11 +283,11 @@ CommandBinding *BindContext::findCommandBinding(char const *command, int deviceI
 ImpulseBinding *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(ImpulseBinding *bind : d->impulseBinds[i])
+    for(ImpulseBinding const *bind : d->impulseBinds[i])
     {
         if(bind->deviceId == deviceId && bind->type == bindType && bind->controlId == controlId)
         {
-            return bind;
+            return const_cast<ImpulseBinding *>(bind);
         }
     }
     return nullptr;
@@ -517,7 +517,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     if(!isActive()) return false;
 
     // Is this event bindable to an action?
-    if(event.type != EV_FOCUS)
+    if(event.type != E_FOCUS)
     {
         // See if the command bindings will have it.
         for(CommandBinding const *bind : d->commandBinds)

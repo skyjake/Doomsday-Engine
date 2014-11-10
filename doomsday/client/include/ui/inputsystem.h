@@ -68,7 +68,12 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
-    /**
+public: // Input devices -----------------------------------------------------
+
+    /// Required/referenced input device is missing. @ingroup errors
+    DENG2_ERROR(MissingDeviceError);
+
+    /*
      * Lookup an InputDevice by it's unique @a id.
      */
     InputDevice &device(int id) const;
@@ -144,7 +149,7 @@ public: // Event processing --------------------------------------------------
 public:
 
     static bool convertEvent(ddevent_t const &from, event_t &to);
-    static void convertEvent(de::Event const &from, ddevent_t &to);
+    static bool convertEvent(de::Event const &from, ddevent_t &to);
 
     /**
      * Updates virtual input device state.
@@ -168,6 +173,10 @@ public: // Binding (context) management --------------------------------------
 
     /// Required/referenced binding context is missing. @ingroup errors
     DENG2_ERROR(MissingContextError);
+
+    void bindDefaults();
+
+    void bindGameDefaults();
 
     /**
      * Try to make a new (console) command binding.
@@ -200,6 +209,11 @@ public: // Binding (context) management --------------------------------------
      * @return  @c true if that binding was removed.
      */
     bool removeBinding(int id);
+
+    /**
+     * Remove all bindings in all contexts.
+     */
+    void removeAllBindings();
 
     // ---
 
@@ -257,17 +271,17 @@ public: // Binding (context) management --------------------------------------
      *
      * eventparams{+cond}*
      *
-     * @param binding    Command binding to configure.
-     * @param eventDesc  Descriptor for event information and any additional conditions.
-     * @param command    Console command to execute when triggered, if any.
-     * @param newId      @c true= assign a new unique identifier.
+     * @param binding      Command binding to configure.
+     * @param eventDesc    Descriptor for event information and any additional conditions.
+     * @param command      Console command to execute when triggered, if any.
+     * @param assignNewId  @c true= assign a new unique identifier.
      *
      * @throws ConfigureError on failure. At which point @a binding should be considered
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
     void configure(CommandBinding &binding, char const *eventDesc,
-                   char const *command = nullptr, bool newId = false);
+                   char const *command = nullptr, bool assignNewId = true);
 
     /**
      * Parse a device-control => player impulse trigger descriptor and configure the given
@@ -277,14 +291,14 @@ public: // Binding (context) management --------------------------------------
      * @param ctrlDesc     Descriptor for control information and any additional conditions.
      * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
      * @param localPlayer  Local player number to execute the impulse for when triggered.
-     * @param newId        @c true= assign a new unique identifier.
+     * @param assignNewId  @c true= assign a new unique identifier.
      *
      * @throws ConfigureError on failure. At which point @a binding should be considered
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
     void configure(ImpulseBinding &binding, char const *ctrlDesc,
-                   int impulseId, int localPlayer, bool newId = false);
+                   int impulseId, int localPlayer, bool assignNewId = true);
 
     /**
      * Does the opposite of the B_Parse* methods for event descriptor, including the

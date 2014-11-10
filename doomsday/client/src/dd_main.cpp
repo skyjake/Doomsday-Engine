@@ -1230,7 +1230,7 @@ static int DD_ActivateGameWorker(void *context)
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
-        B_BindGameDefaults();
+        ClientApp::inputSystem().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
         Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
@@ -1516,7 +1516,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         P_ImpulseShutdown();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
-        B_BindDefaults();
+        ClientApp::inputSystem().bindDefaults();
         ClientApp::inputSystem().initialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).

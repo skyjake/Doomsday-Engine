@@ -28,7 +28,7 @@ class BindContext;
 class InputDevice;
 struct ImpulseBinding;
 
-// Event Binding Toggle State
+// Event Binding State
 enum ebstate_t
 {
     EBTOG_UNDEFINED,
@@ -81,7 +81,7 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc);
 
 // ---------------------------------------------------------------------------------
 
-de::String B_ControlDescToString(InputDevice const &device, ddeventtype_t type, int id);
+de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
 
 de::String B_ToggleStateToString(ebstate_t state);
 
@@ -114,13 +114,6 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
 char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
 
 int B_KeyForShortName(char const *key);
-
-/**
- * @return  Never returns zero, as that is reserved for list roots.
- */
-int B_NewIdentifier();
-
-void B_ResetIdentifiers();
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
