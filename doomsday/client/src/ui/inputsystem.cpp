@@ -1374,24 +1374,6 @@ LoopResult InputSystem::forAllContexts(std::function<LoopResult (BindContext &)>
     return LoopContinue;
 }
 
-static char const *parseContext(String &context, char const *desc)
-{
-    DENG2_ASSERT(desc);
-
-    if(!strchr(desc, ':'))
-    {
-        // No context defined.
-        context = "";
-        return desc;
-    }
-
-    AutoStr *str = AutoStr_NewStd();
-    desc = Str_CopyDelim(str, desc, ':');
-    context = Str_Text(str);
-
-    return desc;
-}
-
 // ---------------------------------------------------------------------------
 
 void InputSystem::bindDefaults()
@@ -1411,6 +1393,24 @@ void InputSystem::bindGameDefaults()
 {
     if(!App_GameLoaded()) return;
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
+}
+
+static char const *parseContext(String &context, char const *desc)
+{
+    DENG2_ASSERT(desc);
+
+    if(!strchr(desc, ':'))
+    {
+        // No context defined.
+        context = "";
+        return desc;
+    }
+
+    AutoStr *str = AutoStr_NewStd();
+    desc = Str_CopyDelim(str, desc, ':');
+    context = Str_Text(str);
+
+    return desc;
 }
 
 CommandBinding *InputSystem::bindCommand(char const *eventDesc, char const *command)

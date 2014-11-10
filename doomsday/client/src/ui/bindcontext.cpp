@@ -213,13 +213,13 @@ CommandBinding *BindContext::bindCommand(char const *eventDesc, char const *comm
         CommandBinding *bind = newBind.get();
         d->commandBinds.prepend(newBind.release());
 
-        /// @todo: In interactive binding mode, should ask the user if the
-        /// replacement is ok. For now, just delete the other bindings.
-        deleteMatching(bind, nullptr);
-
         LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to " _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
                 << command << eventDesc << d->name << bind->id;
+
+        /// @todo: In interactive binding mode, should ask the user if the
+        /// replacement is ok. For now, just delete the other bindings.
+        deleteMatching(bind, nullptr);
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, true/*is-command*/);
@@ -245,13 +245,13 @@ ImpulseBinding *BindContext::bindImpulse(char const *ctrlDesc,
         ImpulseBinding *bind = newBind.get();
         d->impulseBinds[localPlayer].append(newBind.release());
 
-        /// @todo: In interactive binding mode, should ask the user if the
-        /// replacement is ok. For now, just delete the other bindings.
-        deleteMatching(nullptr, bind);
-
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
                 << impulse.name() << (localPlayer + 1) << ctrlDesc << d->name << bind->id;
+
+        /// @todo: In interactive binding mode, should ask the user if the
+        /// replacement is ok. For now, just delete the other bindings.
+        deleteMatching(nullptr, bind);
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind, false/*is-impulse*/);
