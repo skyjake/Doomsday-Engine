@@ -22,8 +22,8 @@
 
 #include <functional>
 #include <de/Observers>
-#include "commandbinding.h"
-#include "impulsebinding.h"
+#include <de/Record>
+#include "ui/impulsebinding.h" // ibcontroltype_t
 
 /// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);
@@ -55,7 +55,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(AcquireDeviceChange, void bindContextAcquireDeviceChanged(BindContext &context))
 
     /// Notified whenever a new binding is made in this context.
-    DENG2_DEFINE_AUDIENCE2(BindingAddition, void bindContextBindingAdded(BindContext &context, void *binding, bool isCommand))
+    DENG2_DEFINE_AUDIENCE2(BindingAddition, void bindContextBindingAdded(BindContext &context, de::Record &binding, bool isCommand))
 
 public:
     /**
@@ -124,27 +124,35 @@ public: // Binding management: -------------------------------------------------
     /**
      * Delete all other bindings matching either @a commandBind or @a impulseBind.
      */
-    void deleteMatching(CommandBinding const *commandBind, ImpulseBinding const *impulseBind);
+    void deleteMatching(de::Record const *commandBind, de::Record const *impulseBind);
 
     /**
-     * Looks through the context for a binding that matches either @a match1 or @a match2.
+     * Look through the context for a binding that matches either of @a matchCmd or
+     * @a matchImp.
+     *
+     * @param matchCmd   CommandBinding record to match, if any.
+     * @param matchImp   ImpulseBinding record to match, if any.
+     * @param cmdResult  The address of any matching CommandBinding is written here.
+     * @param impResult  The address of any matching ImpulseBinding is written here.
+     *
+     * @return  @c true if a match is found.
      */
-    bool findMatchingBinding(CommandBinding const *match1, ImpulseBinding const *match2,
-                             CommandBinding **cmdResult, ImpulseBinding **impResult) const;
+    bool findMatchingBinding(de::Record const *matchCmd, de::Record const *matchImp,
+                             de::Record **cmdResult, de::Record **impResult) const;
 
     // Commands ---------------------------------------------------------------------
 
-    CommandBinding *bindCommand(char const *eventDesc, char const *command);
+    de::Record *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * @param deviceId  (@c < 0 || >= NUM_INPUT_DEVICES) for wildcard search.
      */
-    CommandBinding *findCommandBinding(char const *command, int deviceId = -1) const;
+    de::Record *findCommandBinding(char const *command, int deviceId = -1) const;
 
     /**
      * Iterate through all the CommandBindings of the context.
      */
-    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (CommandBinding &)> func) const;
+    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (de::Record &)> func) const;
 
     /**
      * Returns the total number of command bindings in the context.
@@ -160,19 +168,19 @@ public: // Binding management: -------------------------------------------------
      *
      * @todo: Parse the the impulse descriptor here? -ds
      */
-    ImpulseBinding *bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse,
-                                int localPlayer);
+    de::Record *bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse,
+                            int localPlayer);
 
-    ImpulseBinding *findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const;
+    de::Record *findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const;
 
     /**
      * Iterate through all the ImpulseBindings of the context.
      *
      * @param localPlayer  (@c < 0 || >= DDMAXPLAYERS) for all local players.
      */
-    de::LoopResult forAllImpulseBindings(int localPlayer, std::function<de::LoopResult (ImpulseBinding &)> func) const;
+    de::LoopResult forAllImpulseBindings(int localPlayer, std::function<de::LoopResult (de::Record &)> func) const;
 
-    inline de::LoopResult forAllImpulseBindings(std::function<de::LoopResult (ImpulseBinding &)> func) const {
+    inline de::LoopResult forAllImpulseBindings(std::function<de::LoopResult (de::Record &)> func) const {
         return forAllImpulseBindings(-1/*all local players*/, func);
     }
 

@@ -129,4 +129,9 @@ void RecordAccessor::setAccessedRecord(Record const &rec)
     _rec = &rec;
 }
 
+void RecordAccessor::setAccessedRecord(Record const *rec)
+{
+    _rec = rec;
+}
+
 } // namespace de

@@ -22,14 +22,13 @@
 
 #include <functional>
 #include <de/Error>
+#include <de/Record>
 #include <de/System>
 #include "ddevent.h"
 #include "SettingsRegister"
 
 class BindContext;
 class InputDevice;
-struct CommandBinding;
-struct ImpulseBinding;
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -41,10 +40,10 @@ struct ImpulseBinding;
  *
  * @par Bindings
  *
- * Bindings are Record-like objects (todo) which describe an event => action
- * trigger relationship. The event being a specific observable state scenario
- * (such as a keypress on a keyboard) and the trigger, a more abstract action
- * that can be "bound" to it (such as executing a console command).
+ * Bindings are Record structures which describe an event => action trigger
+ * relationship. The event being a specific observable state scenario (such as
+ * a keypress on a keyboard) and the trigger, a more abstract action that can
+ * be "bound" to it (such as executing a console command).
  *
  * However, it is important to note this relationship is modelled from the
  * @em action's perspective, rather than that of the event. This is to support
@@ -186,9 +185,9 @@ public: // Binding (context) management --------------------------------------
      * @param command    Console command(s) which the binding will execute when
      *                   triggered, if a binding is created.
      *
-     * @return  Resultant command binding if any.
+     * @return  Resultant command binding Record if any.
      */
-    CommandBinding *bindCommand(char const *eventDesc, char const *command);
+    de::Record *bindCommand(char const *eventDesc, char const *command);
 
     /**
      * Try to make a new (player) impulse binding.
@@ -199,9 +198,9 @@ public: // Binding (context) management --------------------------------------
      *                     associated with a context, which determines where
      *                     the binding will be linked, if a binding is created.
      *
-     * @return  Resultant impulse binding if any.
+     * @return  Resultant impulse binding Record if any.
      */
-    ImpulseBinding *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
+    de::Record *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
 
     /**
      * Try to remove the one unique binding associated with @a id.
@@ -271,7 +270,7 @@ public: // Binding (context) management --------------------------------------
      *
      * eventparams{+cond}*
      *
-     * @param binding      Command binding to configure.
+     * @param binding      Command binding Record to configure.
      * @param eventDesc    Descriptor for event information and any additional conditions.
      * @param command      Console command to execute when triggered, if any.
      * @param assignNewId  @c true= assign a new unique identifier.
@@ -280,14 +279,14 @@ public: // Binding (context) management --------------------------------------
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
-    void configure(CommandBinding &binding, char const *eventDesc,
-                   char const *command = nullptr, bool assignNewId = true);
+    void configureCommandBinding(de::Record &binding, char const *eventDesc,
+        char const *command = nullptr, bool assignNewId = true);
 
     /**
      * Parse a device-control => player impulse trigger descriptor and configure the given
      * @a binding.
      *
-     * @param binding      Impulse binding to configure.
+     * @param binding      Impulse binding Record to configure.
      * @param ctrlDesc     Descriptor for control information and any additional conditions.
      * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
      * @param localPlayer  Local player number to execute the impulse for when triggered.
@@ -297,20 +296,8 @@ public: // Binding (context) management --------------------------------------
      * to be in an undefined state. The caller may choose to clear and then reconfigure
      * it using another descriptor.
      */
-    void configure(ImpulseBinding &binding, char const *ctrlDesc,
-                   int impulseId, int localPlayer, bool assignNewId = true);
-
-    /**
-     * Does the opposite of the B_Parse* methods for event descriptor, including the
-     * state conditions.
-     */
-    de::String composeBindsFor(CommandBinding const &binding);
-
-    /**
-     * Does the opposite of the B_Parse* methods for a device binding, including the
-     * state conditions.
-     */
-    de::String composeBindsFor(ImpulseBinding const &binding);
+    void configureImpulseBinding(de::Record &binding, char const *ctrlDesc,
+        int impulseId, int localPlayer, bool assignNewId = true);
 
 public:
     /**

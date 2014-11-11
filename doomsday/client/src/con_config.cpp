@@ -40,6 +40,8 @@
 #  include "clientapp.h"
 #  include "BindContext"
 #  include "ui/playerimpulse.h"
+#  include "ui/commandbinding.h"
+#  include "ui/impulsebinding.h"
 #endif
 
 using namespace de;
@@ -206,24 +208,27 @@ static bool writeBindingsState(Path const &filePath)
         isys.forAllContexts([&isys, &file] (BindContext &context)
         {
             // Commands.
-            context.forAllCommandBindings([&isys, &file, &context] (CommandBinding &bind)
+            context.forAllCommandBindings([&file, &context] (Record &rec)
             {
+                CommandBinding bind(rec);
                 fprintf(file, "bindevent \"%s:%s\" \"", context.name().toUtf8().constData(),
-                               isys.composeBindsFor(bind).toUtf8().constData());
-                M_WriteTextEsc(file, bind.command.toUtf8().constData());
+                               bind.composeDescriptor().toUtf8().constData());
+                M_WriteTextEsc(file, bind.gets("command").toUtf8().constData());
                 fprintf(file, "\"\n");
                 return LoopContinue;
             });
 
             // Impulses.
-            context.forAllImpulseBindings([&isys, &file, &context] (ImpulseBinding &bind)
+            context.forAllImpulseBindings([&file, &context] (Record &rec)
             {
-                PlayerImpulse const *impulse = P_ImpulsePtr(bind.impulseId);
+                ImpulseBinding bind(rec);
+                PlayerImpulse const *impulse = P_ImpulsePtr(bind.geti("impulseId"));
                 DENG2_ASSERT(impulse);
 
                 fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
-                              bind.localPlayer + 1, impulse->name().toUtf8().constData(),
-                              isys.composeBindsFor(bind).toUtf8().constData());
+                              bind.geti("localPlayer") + 1,
+                              impulse->name().toUtf8().constData(),
+                              bind.composeDescriptor().toUtf8().constData());
                 return LoopContinue;
             });
 

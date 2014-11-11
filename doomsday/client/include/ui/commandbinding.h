@@ -20,25 +20,26 @@
 #ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 #define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 
-#include <QVector>
 #include <de/String>
 #include "b_util.h"
 #include "ddevent.h"
 
-struct CommandBinding
+class CommandBinding : public Binding
 {
-    int id = 0;                     ///< Unique identifier.
-    de::String command;             ///< Command to execute.
+public:
+    CommandBinding()                            : Binding() {}
+    CommandBinding(CommandBinding const &other) : Binding(other) {}
+    CommandBinding(de::Record &d)               : Binding(d) {}
+    CommandBinding(de::Record const &d)         : Binding(d) {}
 
-    int deviceId = 0;               ///< Which device?
-    ddeventtype_t type = E_TOGGLE;  ///< Type of event.
-    int controlId = 0;              ///< Which control?
-    ebstate_t state = EBTOG_UNDEFINED;
-    float pos = 0;
-    de::String symbolicName;        ///< Name of a symbolic event.
+    CommandBinding &operator = (de::Record const *d) {
+        *static_cast<Binding *>(this) = d;
+        return *this;
+    }
 
-    typedef QVector<statecondition_t> Conditions;
-    Conditions conditions;          ///< Additional conditions.
+    void resetToDefaults();
+
+    de::String composeDescriptor();
 };
 
 #endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H

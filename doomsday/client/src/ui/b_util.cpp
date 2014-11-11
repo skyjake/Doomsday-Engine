@@ -22,6 +22,8 @@
 #include "clientapp.h"
 
 #include "BindContext"
+#include "ui/commandbinding.h"
+#include "ui/impulsebinding.h"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
@@ -40,33 +42,131 @@ static inline InputSystem &inputSys()
     return ClientApp::inputSystem();
 }
 
-bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
+Record &Binding::def()
 {
-    DENG2_ASSERT(toggleName && state);
+    return const_cast<Record &>(accessedRecord());
+}
+
+Record const &Binding::def() const
+{
+    return accessedRecord();
+}
+
+Binding::operator bool() const
+{
+    return accessedRecordPtr() != 0;
+}
+
+void CommandBinding::resetToDefaults()
+{
+    def().addNumber("id", 0);  ///< Unique identifier.
+
+    def().addNumber("deviceId", -1);
+    def().addNumber("controlId", -1);
+    def().addNumber("type", int(E_TOGGLE));  ///< Type of event.
+    def().addText  ("symbolicName", "");
+    def().addNumber("test", int(Condition::None));
+    def().addNumber("pos", 0);
+
+    def().addText  ("command", "");  ///< Command to execute.
+}
+
+String CommandBinding::composeDescriptor()
+{
+    LOG_AS("CommandBinding");
+    if(!*this) return "";
+
+    String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
+    switch(geti("type"))
+    {
+    case E_TOGGLE:      str += B_ButtonStateToString(Condition::ControlTest(geti("test"))); break;
+    case E_AXIS:        str += B_AxisPositionToString(Condition::ControlTest(geti("test")), getf("pos")); break;
+    case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
+    case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
+
+    default: DENG2_ASSERT(!"CommandBinding::composeBinds: Unknown bind.type"); break;
+    }
+
+    // Append any state conditions.
+    for(BindingCondition const &cond : conditions)
+    {
+        str += " + " + B_ConditionToString(cond);
+    }
+
+    return str;
+}
+
+void ImpulseBinding::resetToDefaults()
+{
+    def().addNumber("id", 0);                  ///< Unique identifier.
+
+    def().addNumber("impulseId", 0);           ///< Identifier of the bound player impulse.
+    def().addNumber("localPlayer", -1);        ///< Local player number.
+
+    def().addNumber("deviceId", -1);
+    def().addNumber("controlId", -1);
+    def().addNumber("type", int(IBD_TOGGLE));  ///< Type of event.
+    def().addNumber("angle", 0);
+    def().addNumber("flags", 0);
+}
+
+String ImpulseBinding::composeDescriptor()
+{
+    LOG_AS("ImpulseBinding");
+    if(!*this) return "";
+
+    String str = B_ControlDescToString(geti("deviceId"), IBDTYPE_TO_EVTYPE(geti("type")), geti("controlId"));
+    if(geti("type") == IBD_ANGLE)
+    {
+        str += B_HatAngleToString(getf("angle"));
+    }
+
+    // Additional flags.
+    if(geti("flags") & IBDF_TIME_STAGED)
+    {
+        str += "-staged";
+    }
+    if(geti("flags") & IBDF_INVERSE)
+    {
+        str += "-inverse";
+    }
+
+    // Append any state conditions.
+    for(BindingCondition const &cond : conditions)
+    {
+        str += " + " + B_ConditionToString(cond);
+    }
+
+    return str;
+}
+
+bool B_ParseButtonState(BindingCondition::ControlTest &test, char const *toggleName)
+{
+    DENG2_ASSERT(toggleName);
 
     if(!qstrlen(toggleName) || !qstricmp(toggleName, "down"))
     {
-        *state = EBTOG_DOWN; // this is the default, if omitted
+        test = BindingCondition::ButtonStateDown; // this is the default, if omitted
         return true;
     }
     if(!qstricmp(toggleName, "undefined"))
     {
-        *state = EBTOG_UNDEFINED;
+        test = BindingCondition::ButtonStateAny;
         return true;
     }
     if(!qstricmp(toggleName, "repeat"))
     {
-        *state = EBTOG_REPEAT;
+        test = BindingCondition::ButtonStateRepeat;
         return true;
     }
     if(!qstricmp(toggleName, "press"))
     {
-        *state = EBTOG_PRESS;
+        test = BindingCondition::ButtonStateDownOrRepeat;
         return true;
     }
     if(!qstricmp(toggleName, "up"))
     {
-        *state = EBTOG_UP;
+        test = BindingCondition::ButtonStateUp;
         return true;
     }
 
@@ -74,32 +174,32 @@ bool B_ParseToggleState(char const *toggleName, ebstate_t *state)
     return false; // Not recognized.
 }
 
-bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos)
+bool B_ParseAxisPosition(BindingCondition::ControlTest &test, float &pos, char const *desc)
 {
-    DENG2_ASSERT(desc && state && pos);
+    DENG2_ASSERT(desc);
 
     if(!qstrnicmp(desc, "within", 6) && qstrlen(desc) > 6)
     {
-        *state = EBAXIS_WITHIN;
-        *pos   = String((desc + 6)).toFloat();
+        test = BindingCondition::AxisPositionWithin;
+        pos  = String((desc + 6)).toFloat();
         return true;
     }
     if(!qstrnicmp(desc, "beyond", 6) && qstrlen(desc) > 6)
     {
-        *state = EBAXIS_BEYOND;
-        *pos   = String((desc + 6)).toFloat();
+        test = BindingCondition::AxisPositionBeyond;
+        pos  = String((desc + 6)).toFloat();
         return true;
     }
     if(!qstrnicmp(desc, "pos", 3) && qstrlen(desc) > 3)
     {
-        *state = EBAXIS_BEYOND_POSITIVE;
-        *pos   = String((desc + 3)).toFloat();
+        test = BindingCondition::AxisPositionBeyondPositive;
+        pos  = String((desc + 3)).toFloat();
         return true;
     }
     if(!qstrnicmp(desc, "neg", 3) && qstrlen(desc) > 3)
     {
-        *state = EBAXIS_BEYOND_NEGATIVE;
-        *pos   = -String((desc + 3)).toFloat();
+        test = BindingCondition::AxisPositionBeyondNegative;
+        pos  = -String((desc + 3)).toFloat();
         return true;
     }
 
@@ -107,16 +207,16 @@ bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos)
     return false;
 }
 
-dd_bool B_ParseModifierId(char const *desc, int *id)
+bool B_ParseModifierId(int &id, char const *desc)
 {
-    DENG2_ASSERT(desc && id);
-    *id = String(desc).toInt() - 1 + CTL_MODIFIER_1;
-    return (*id >= CTL_MODIFIER_1 && *id <= CTL_MODIFIER_4);
+    DENG2_ASSERT(desc);
+    id = String(desc).toInt() - 1 + CTL_MODIFIER_1;
+    return (id >= CTL_MODIFIER_1 && id <= CTL_MODIFIER_4);
 }
 
-bool B_ParseKeyId(char const *desc, int *id)
+bool B_ParseKeyId(int &id, char const *desc)
 {
-    DENG2_ASSERT(desc && id);
+    DENG2_ASSERT(desc);
     LOG_AS("B_ParseKeyId");
 
     // The possibilies: symbolic key name, or "codeNNN".
@@ -125,125 +225,127 @@ bool B_ParseKeyId(char const *desc, int *id)
         // Hexadecimal?
         if(desc[4] == 'x' || desc[4] == 'X')
         {
-            *id = String((desc + 5)).toInt(nullptr, 16);
+            id = String((desc + 5)).toInt(nullptr, 16);
             return true;
         }
 
         // Decimal.
-        *id = String((desc + 4)).toInt();
-        if(*id > 0 && *id <= 255) return true;
+        id = String((desc + 4)).toInt();
+        if(id > 0 && id <= 255) return true;
 
-        LOGDEV_INPUT_WARNING("Key code %i out of range") << *id;
+        LOGDEV_INPUT_WARNING("Key code %i out of range") << id;
         return false;
     }
 
     // Symbolic key name.
-    *id = B_KeyForShortName(desc);
-    if(*id) return true;
+    id = B_KeyForShortName(desc);
+    if(id) return true;
 
     LOG_INPUT_WARNING("Unknown key \"%s\"") << desc;
     return false;
 }
 
-bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id)
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
 {
-    DENG2_ASSERT(desc && type && id);
+    DENG2_ASSERT(desc);
     InputDevice const &mouse = inputSys().device(IDEV_MOUSE);
 
     // Maybe it's one of the named buttons?
-    *id = mouse.toButtonId(desc);
-    if(*id >= 0)
+    id = mouse.toButtonId(desc);
+    if(id >= 0)
     {
-        *type = E_TOGGLE;
+        type = E_TOGGLE;
         return true;
     }
 
     // Perhaps a generic button?
     if(!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
     {
-        *type = E_TOGGLE;
-        *id   = String((desc + 6)).toInt() - 1;
-        if(mouse.hasButton(*id))
+        type = E_TOGGLE;
+        id   = String((desc + 6)).toInt() - 1;
+        if(mouse.hasButton(id))
             return true;
 
-        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << mouse.title() << *id;
+        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << mouse.title() << id;
         return false;
     }
 
     // Must be an axis, then.
-    *type = E_AXIS;
-    *id   = mouse.toAxisId(desc);
-    if(*id >= 0) return true;
+    type = E_AXIS;
+    id   = mouse.toAxisId(desc);
+    if(id >= 0) return true;
 
     LOG_INPUT_WARNING("\"%s\" axis \"%s\" does not exist") << mouse.title() << desc;
     return false;
 }
 
-dd_bool B_ParseDeviceAxisTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
+bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const &device, char const *desc)
 {
-    DENG2_ASSERT(desc && type && id);
+    DENG2_ASSERT(desc);
 
-    *type = E_AXIS;
-    *id   = device.toAxisId(desc);
-    if(*id >= 0) return true;
+    type = E_AXIS;
+    id   = device.toAxisId(desc);
+    if(id >= 0) return true;
 
     LOG_INPUT_WARNING("Axis \"%s\" is not defined in device '%s'") << desc << device.name();
     return false;
 }
 
-bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id)
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc)
 {
+    InputDevice &device = inputSys().device(deviceId);
+
     if(!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
     {
-        *type = E_TOGGLE;
-        *id   = String((desc + 6)).toInt() - 1;
-        if(device.hasButton(*id))
+        type = E_TOGGLE;
+        id   = String((desc + 6)).toInt() - 1;
+        if(device.hasButton(id))
             return true;
 
-        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << device.title() << *id;
+        LOG_INPUT_WARNING("\"%s\" button %i does not exist") << device.title() << id;
         return false;
     }
     if(!qstrnicmp(desc, "hat", 3) && qstrlen(desc) > 3)
     {
-        *type = E_ANGLE;
-        *id   = String((desc + 3)).toInt() - 1;
-        if(device.hasHat(*id))
+        type = E_ANGLE;
+        id   = String((desc + 3)).toInt() - 1;
+        if(device.hasHat(id))
             return true;
 
-        LOG_INPUT_WARNING("\"%s\" hat %i does not exist") << device.title() << *id;
+        LOG_INPUT_WARNING("\"%s\" hat %i does not exist") << device.title() << id;
         return false;
     }
     if(!qstricmp(desc, "hat"))
     {
-        *type = E_ANGLE;
-        *id   = 0;
+        type = E_ANGLE;
+        id   = 0;
         return true;
     }
 
     // Try to find the axis.
-    return B_ParseDeviceAxisTypeAndId(device, desc, type, id);
+    return B_ParseDeviceAxisTypeAndId(type, id, device, desc);
 }
 
-bool B_ParseAnglePosition(char const *desc, float *pos)
+bool B_ParseHatAngle(float &pos, char const *desc)
 {
-    DENG2_ASSERT(desc && pos);
+    DENG2_ASSERT(desc);
     if(!qstricmp(desc, "center"))
     {
-        *pos = -1;
+        pos = -1;
         return true;
     }
     if(!qstrnicmp(desc, "angle", 5) && qstrlen(desc) > 5)
     {
-        *pos = String((desc + 5)).toFloat();
+        pos = String((desc + 5)).toFloat();
         return true;
     }
     LOG_INPUT_WARNING("Angle position \"%s\" is invalid") << desc;
     return false;
 }
 
-bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
+bool B_ParseBindingCondition(BindingCondition &cond, char const *desc)
 {
-    DENG2_ASSERT(cond && desc);
+    DENG2_ASSERT(desc);
 
     // First, we expect to encounter a device name.
     AutoStr *str = AutoStr_NewStd();
@@ -252,55 +354,55 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
     if(!Str_CompareIgnoreCase(str, "multiplayer"))
     {
         // This is only intended for multiplayer games.
-        cond->type = SCT_STATE;
-        cond->flags.multiplayer = true;
+        cond.type = BindingCondition::GlobalState;
+        cond.multiplayer = true;
     }
     else if(!Str_CompareIgnoreCase(str, "modifier"))
     {
-        cond->device = 0; // not used
-        cond->type = SCT_MODIFIER_STATE;
+        cond.type   = BindingCondition::ModifierState;
+        cond.device = -1; // not used
 
         // Parse the modifier number.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseModifierId(Str_Text(str), &cond->id))
+        if(!B_ParseModifierId(cond.id, Str_Text(str)))
         {
             return false;
         }
 
         // The final part of a modifier is the state.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseToggleState(Str_Text(str), &cond->state))
+        if(!B_ParseButtonState(cond.test, Str_Text(str)))
         {
             return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "key"))
     {
-        cond->device = IDEV_KEYBOARD;
-        cond->type = SCT_TOGGLE_STATE;
+        cond.type   = BindingCondition::ButtonState;
+        cond.device = IDEV_KEYBOARD;
 
         // Parse the key.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseKeyId(Str_Text(str), &cond->id))
+        if(!B_ParseKeyId(cond.id, Str_Text(str)))
         {
             return false;
         }
 
         // The final part of a key event is the state of the key toggle.
         desc = Str_CopyDelim(str, desc, '-');
-        if(!B_ParseToggleState(Str_Text(str), &cond->state))
+        if(!B_ParseButtonState(cond.test, Str_Text(str)))
         {
             return false;
         }
     }
     else if(!Str_CompareIgnoreCase(str, "mouse"))
     {
-        cond->device = IDEV_MOUSE;
+        cond.device = IDEV_MOUSE;
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         ddeventtype_t type;
-        if(!B_ParseMouseTypeAndId(Str_Text(str), &type, &cond->id))
+        if(!B_ParseMouseTypeAndId(type, cond.id, Str_Text(str)))
         {
             return false;
         }
@@ -308,16 +410,16 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(type == E_TOGGLE)
         {
-            cond->type = SCT_TOGGLE_STATE;
-            if(!B_ParseToggleState(Str_Text(str), &cond->state))
+            cond.type = BindingCondition::ButtonState;
+            if(!B_ParseButtonState(cond.test, Str_Text(str)))
             {
                 return false;
             }
         }
         else if(type == E_AXIS)
         {
-            cond->type = SCT_AXIS_BEYOND;
-            if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
+            cond.type = BindingCondition::AxisState;
+            if(!B_ParseAxisPosition(cond.test, cond.pos, Str_Text(str)))
             {
                 return false;
             }
@@ -325,12 +427,12 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
     }
     else if(!Str_CompareIgnoreCase(str, "joy") || !Str_CompareIgnoreCase(str, "head"))
     {
-        cond->device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
+        cond.device = (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER);
 
         // What is being targeted?
         desc = Str_CopyDelim(str, desc, '-');
         ddeventtype_t type;
-        if(!B_ParseJoystickTypeAndId(inputSys().device(cond->device), Str_Text(str), &type, &cond->id))
+        if(!B_ParseJoystickTypeAndId(type, cond.id, cond.device, Str_Text(str)))
         {
             return false;
         }
@@ -338,24 +440,24 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         desc = Str_CopyDelim(str, desc, '-');
         if(type == E_TOGGLE)
         {
-            cond->type = SCT_TOGGLE_STATE;
-            if(!B_ParseToggleState(Str_Text(str), &cond->state))
+            cond.type = BindingCondition::ButtonState;
+            if(!B_ParseButtonState(cond.test, Str_Text(str)))
             {
                 return false;
             }
         }
         else if(type == E_AXIS)
         {
-            cond->type = SCT_AXIS_BEYOND;
-            if(!B_ParseAxisPosition(Str_Text(str), &cond->state, &cond->pos))
+            cond.type = BindingCondition::AxisState;
+            if(!B_ParseAxisPosition(cond.test, cond.pos, Str_Text(str)))
             {
                 return false;
             }
         }
         else // Angle.
         {
-            cond->type = SCT_ANGLE_AT;
-            if(!B_ParseAnglePosition(Str_Text(str), &cond->pos))
+            cond.type = BindingCondition::HatState;
+            if(!B_ParseHatAngle(cond.pos, Str_Text(str)))
             {
                 return false;
             }
@@ -367,12 +469,13 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
         return false;
     }
 
-    // Check for valid toggle states.
-    if(cond->type == SCT_TOGGLE_STATE)
+    // Check for valid button state tests.
+    if(cond.type == BindingCondition::ButtonState)
     {
-        if(cond->state != EBTOG_UP && cond->state != EBTOG_DOWN)
+        if(cond.test != BindingCondition::ButtonStateUp &&
+           cond.test != BindingCondition::ButtonStateDown)
         {
-            LOG_INPUT_WARNING("\"%s\": Toggle condition can only be 'up' or 'down'") << desc;
+            LOG_INPUT_WARNING("\"%s\": Button condition can only be 'up' or 'down'") << desc;
             return false;
         }
     }
@@ -381,7 +484,7 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
     desc = Str_CopyDelim(str, desc, '-');
     if(!Str_CompareIgnoreCase(str, "not"))
     {
-        cond->flags.negate = true;
+        cond.negate = true;
     }
 
     // Anything left that wasn't used?
@@ -391,20 +494,20 @@ bool B_ParseStateCondition(statecondition_t *cond, char const *desc)
     return false;
 }
 
-bool B_CheckAxisPos(ebstate_t test, float testPos, float pos)
+bool B_CheckAxisPosition(BindingCondition::ControlTest test, float testPos, float pos)
 {
     switch(test)
     {
-    case EBAXIS_WITHIN:
+    case BindingCondition::AxisPositionWithin:
         return !((pos > 0 && pos > testPos) || (pos < 0 && pos < -testPos));
 
-    case EBAXIS_BEYOND:
+    case BindingCondition::AxisPositionBeyond:
         return ((pos > 0 && pos >= testPos) || (pos < 0 && pos <= -testPos));
 
-    case EBAXIS_BEYOND_POSITIVE:
+    case BindingCondition::AxisPositionBeyondPositive:
         return !(pos < testPos);
 
-    case EBAXIS_BEYOND_NEGATIVE:
+    case BindingCondition::AxisPositionBeyondNegative:
         return !(pos > -testPos);
 
     default: break;
@@ -413,65 +516,73 @@ bool B_CheckAxisPos(ebstate_t test, float testPos, float pos)
     return false;
 }
 
-bool B_CheckCondition(statecondition_t const *cond, int localNum, BindContext *context)
+bool B_CheckCondition(BindingCondition const *cond, int localNum, BindContext *context)
 {
     DENG2_ASSERT(cond);
-    bool const fulfilled      = !cond->flags.negate;
-    InputDevice const &device = inputSys().device(cond->device);
+    bool const fulfilled = !cond->negate;
 
     switch(cond->type)
     {
-    case SCT_STATE:
-        if(cond->flags.multiplayer && netGame)
+    case BindingCondition::GlobalState:
+        if(cond->multiplayer && netGame)
             return fulfilled;
         break;
 
-    case SCT_MODIFIER_STATE:
+    case BindingCondition::AxisState: {
+        InputDeviceAxisControl const &axis = inputSys().device(cond->device).axis(cond->id);
+        if(B_CheckAxisPosition(cond->test, cond->pos, axis.position()))
+        {
+            return fulfilled;
+        }
+        break; }
+
+    case BindingCondition::ButtonState: {
+        InputDeviceButtonControl const &button = inputSys().device(cond->device).button(cond->id);
+        bool isDown = button.isDown();
+        if(( isDown && cond->test == BindingCondition::ButtonStateDown) ||
+           (!isDown && cond->test == BindingCondition::ButtonStateUp))
+        {
+            return fulfilled;
+        }
+        break; }
+
+    case BindingCondition::HatState: {
+        InputDeviceHatControl const &hat = inputSys().device(cond->device).hat(cond->id);
+        if(hat.position() == cond->pos)
+        {
+            return fulfilled;
+        }
+        break; }
+
+    case BindingCondition::ModifierState:
         if(context)
         {
             // Evaluate the current state of the modifier (in this context).
             float pos = 0, relative = 0;
             B_EvaluateImpulseBindings(context, localNum, cond->id, &pos, &relative, false /*no triggered*/);
-            if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
-               (cond->state == EBTOG_UP && fabs(pos) < .5))
+            if((cond->test == BindingCondition::ButtonStateDown && fabs(pos) > .5) ||
+               (cond->test == BindingCondition::ButtonStateUp && fabs(pos) < .5))
             {
                 return fulfilled;
             }
         }
         break;
 
-    case SCT_TOGGLE_STATE: {
-        bool isDown = device.button(cond->id).isDown();
-        if(( isDown && cond->state == EBTOG_DOWN) ||
-           (!isDown && cond->state == EBTOG_UP))
-        {
-            return fulfilled;
-        }
-        break; }
-
-    case SCT_AXIS_BEYOND:
-        if(B_CheckAxisPos(cond->state, cond->pos, device.axis(cond->id).position()))
-            return fulfilled;
-        break;
-
-    case SCT_ANGLE_AT:
-        if(device.hat(cond->id).position() == cond->pos)
-            return fulfilled;
-        break;
+    default: DENG2_ASSERT(!"B_CheckCondition: Unknown cond->type"); break;
     }
 
     return !fulfilled;
 }
 
-bool B_EqualConditions(statecondition_t const &a, statecondition_t const &b)
+bool B_EqualConditions(BindingCondition const &a, BindingCondition const &b)
 {
-    return (a.device == b.device &&
-            a.type   == b.type &&
+    return (a.type   == b.type &&
+            a.test   == b.test &&
+            a.device == b.device &&
             a.id     == b.id &&
-            a.state  == b.state &&
             de::fequal(a.pos, b.pos) &&
-            a.flags.negate      == b.flags.negate &&
-            a.flags.multiplayer == b.flags.multiplayer);
+            a.negate      == b.negate &&
+            a.multiplayer == b.multiplayer);
 }
 
 /// @todo: Belongs in BindContext? -ds
@@ -488,14 +599,15 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
     bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
     bool appliedState[NUM_IBD_TYPES]; de::zap(appliedState);
 
-    context->forAllImpulseBindings(localNum, [&] (ImpulseBinding &bind)
+    context->forAllImpulseBindings(localNum, [&] (Record &rec)
     {
         // Wrong impulse?
-        if(bind.impulseId != impulseId) return LoopContinue;
+        ImpulseBinding bind(rec);
+        if(bind.geti("impulseId") != impulseId) return LoopContinue;
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        for(statecondition_t const &cond : bind.conditions)
+        for(BindingCondition const &cond : bind.conditions)
         {
             if(!B_CheckCondition(&cond, localNum, context))
             {
@@ -506,17 +618,17 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
         if(skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = inputSys().devicePtr(bind.deviceId);
+        InputDevice const *device = inputSys().devicePtr(bind.geti("deviceId"));
         if(!device || !device->isActive())
             return LoopContinue; // Not available.
 
         // Get the control.
         InputDeviceControl *ctrl = nullptr;
-        switch(bind.type)
+        switch(bind.geti("type"))
         {
-        case IBD_AXIS:   ctrl = &device->axis(bind.controlId);   break;
-        case IBD_TOGGLE: ctrl = &device->button(bind.controlId); break;
-        case IBD_ANGLE:  ctrl = &device->hat(bind.controlId);    break;
+        case IBD_AXIS:   ctrl = &device->axis  (bind.geti("controlId")); break;
+        case IBD_TOGGLE: ctrl = &device->button(bind.geti("controlId")); break;
+        case IBD_ANGLE:  ctrl = &device->hat   (bind.geti("controlId")); break;
 
         default: DENG2_ASSERT(!"B_EvaluateImpulseBindings: Invalid bind.type"); break;
         }
@@ -529,7 +641,7 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
         {
             if(context && axis->bindContext() != context)
             {
-                if(axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.deviceId, IBD_AXIS, bind.controlId))
+                if(axis->hasBindContext() && !axis->bindContext()->findImpulseBinding(bind.geti("deviceId"), IBD_AXIS, bind.geti("controlId")))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type() == InputDeviceAxisControl::Pointer)
@@ -580,18 +692,18 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
             // Expired?
             if(!(hat->bindContextAssociation() & InputDeviceControl::Expired))
             {
-                devicePos  = (hat->position() == bind.angle? 1.0f : 0.0f);
+                devicePos  = (hat->position() == bind.getf("angle")? 1.0f : 0.0f);
                 deviceTime = hat->time();
             }
         }
 
         // Apply further modifications based on flags.
-        if(bind.flags & IBDF_INVERSE)
+        if(bind.geti("flags") & IBDF_INVERSE)
         {
             devicePos    = -devicePos;
             deviceOffset = -deviceOffset;
         }
-        if(bind.flags & IBDF_TIME_STAGED)
+        if(bind.geti("flags") & IBDF_TIME_STAGED)
         {
             if(nowTime - deviceTime < STAGE_THRESHOLD * 1000)
             {
@@ -605,14 +717,14 @@ void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId
         // Is this state contributing to the outcome?
         if(!de::fequal(devicePos, 0.f))
         {
-            if(appliedState[bind.type])
+            if(appliedState[bind.geti("type")])
             {
                 // Another binding already influenced this; we have a conflict.
-                conflicted[bind.type] = true;
+                conflicted[bind.geti("type")] = true;
             }
 
             // We've found one effective binding that influences this control.
-            appliedState[bind.type] = true;
+            appliedState[bind.geti("type")] = true;
         }
         return LoopContinue;
     });
@@ -682,75 +794,85 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
     return str;
 }
 
-String B_ToggleStateToString(ebstate_t state)
+String B_ButtonStateToString(BindingCondition::ControlTest test)
 {
-    switch(state)
+    switch(test)
     {
-    case EBTOG_UNDEFINED: return "-undefined";
-    case EBTOG_DOWN:      return "-down";
-    case EBTOG_REPEAT:    return "-repeat";
-    case EBTOG_PRESS:     return "-press";
-    case EBTOG_UP:        return "-up";
+    case BindingCondition::ButtonStateAny:          return "-undefined";
+    case BindingCondition::ButtonStateDown:         return "-down";
+    case BindingCondition::ButtonStateRepeat:       return "-repeat";
+    case BindingCondition::ButtonStateDownOrRepeat: return "-press";
+    case BindingCondition::ButtonStateUp:           return "-up";
 
-    default: return "";
+    default:
+        DENG2_ASSERT(!"B_ButtonStateToString: Unknown test");
+        return "";
     }
 }
 
-String B_AxisPositionToString(ebstate_t state, float pos)
+String B_AxisPositionToString(BindingCondition::ControlTest test, float pos)
 {
-    switch(state)
+    switch(test)
     {
-    case EBAXIS_WITHIN:          return String("-within%1").arg(pos);
-    case EBAXIS_BEYOND:          return String("-beyond%1").arg(pos);
-    case EBAXIS_BEYOND_POSITIVE: return String("-pos%1"   ).arg(pos);
+    case BindingCondition::AxisPositionWithin:         return String("-within%1").arg(pos);
+    case BindingCondition::AxisPositionBeyond:         return String("-beyond%1").arg(pos);
+    case BindingCondition::AxisPositionBeyondPositive: return String("-pos%1"   ).arg(pos);
+    case BindingCondition::AxisPositionBeyondNegative: return String("-neg%1").arg(-pos);
 
-    default: return String("-neg%1").arg(-pos);
+    default:
+        DENG2_ASSERT(!"B_AxisPositionToString: Unknown test");
+        return "";
     }
 }
 
-String B_AnglePositionToString(float pos)
+String B_HatAngleToString(float pos)
 {
     return (pos < 0? "-center" : String("-angle") + String::number(pos));
 }
 
-String B_StateConditionToString(statecondition_t const &cond)
+String B_ConditionToString(BindingCondition const &cond)
 {
     String str;
 
-    if(cond.type == SCT_STATE)
+    if(cond.type == BindingCondition::GlobalState)
     {
-        if(cond.flags.multiplayer)
+        if(cond.multiplayer)
         {
             str += "multiplayer";
         }
     }
-    else if(cond.type == SCT_MODIFIER_STATE)
+    else if(cond.type == BindingCondition::ModifierState)
     {
         str += "modifier-" + String::number(cond.id - CTL_MODIFIER_1 + 1);
     }
     else
     {
         str += B_ControlDescToString(cond.device,
-                                     (  cond.type == SCT_TOGGLE_STATE? E_TOGGLE
-                                      : cond.type == SCT_AXIS_BEYOND ? E_AXIS
+                                     (  cond.type == BindingCondition::ButtonState? E_TOGGLE
+                                      : cond.type == BindingCondition::AxisState? E_AXIS
                                       : E_ANGLE), cond.id);
     }
 
-    if(cond.type == SCT_TOGGLE_STATE || cond.type == SCT_MODIFIER_STATE)
+    switch(cond.type)
     {
-        str += B_ToggleStateToString(cond.state);
-    }
-    else if(cond.type == SCT_AXIS_BEYOND)
-    {
-        str += B_AxisPositionToString(cond.state, cond.pos);
-    }
-    else if(cond.type == SCT_ANGLE_AT)
-    {
-        str += B_AnglePositionToString(cond.pos);
+    case BindingCondition::ButtonState:
+    case BindingCondition::ModifierState:
+        str += B_ButtonStateToString(cond.test);
+        break;
+
+    case BindingCondition::AxisState:
+        str += B_AxisPositionToString(cond.test, cond.pos);
+        break;
+
+    case BindingCondition::HatState:
+        str += B_HatAngleToString(cond.pos);
+        break;
+
+    default: break;
     }
 
     // Flags.
-    if(cond.flags.negate)
+    if(cond.negate)
     {
         str += "-not";
     }
@@ -770,17 +892,17 @@ String B_EventToString(ddevent_t const &ev)
     switch(ev.type)
     {
     case E_TOGGLE:
-        str += B_ToggleStateToString(  ev.toggle.state == ETOG_DOWN? EBTOG_DOWN
-                                     : ev.toggle.state == ETOG_UP  ? EBTOG_UP
-                                     : EBTOG_REPEAT);
+        str += B_ButtonStateToString(  ev.toggle.state == ETOG_DOWN? BindingCondition::ButtonStateDown
+                                     : ev.toggle.state == ETOG_UP  ? BindingCondition::ButtonStateUp
+                                     : BindingCondition::ButtonStateUp);
         break;
 
     case E_AXIS:
-        str += B_AxisPositionToString((ev.axis.pos >= 0? EBAXIS_BEYOND_POSITIVE : EBAXIS_BEYOND_NEGATIVE),
+        str += B_AxisPositionToString((ev.axis.pos >= 0? BindingCondition::AxisPositionBeyondPositive : BindingCondition::AxisPositionBeyondNegative),
                                       ev.axis.pos);
         break;
 
-    case E_ANGLE:    str += B_AnglePositionToString(ev.angle.pos); break;
+    case E_ANGLE:    str += B_HatAngleToString(ev.angle.pos); break;
     case E_SYMBOLIC: str += "-" + String(ev.symbolic.name);        break;
 
     default: break;

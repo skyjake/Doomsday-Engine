@@ -20,7 +20,7 @@
 #ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
-#include <QVector>
+#include <de/String>
 #include "b_util.h"
 
 enum ibcontroltype_t
@@ -38,20 +38,22 @@ enum ibcontroltype_t
 #define IBDF_INVERSE        0x1
 #define IBDF_TIME_STAGED    0x2
 
-struct ImpulseBinding
+class ImpulseBinding : public Binding
 {
-    int id = 0;             ///< Unique identifier.
-    int impulseId = 0;      ///< Identifier of the bound player impulse.
-    int localPlayer = 0;    ///< Local player number.
+public:
+    ImpulseBinding()                            : Binding() {}
+    ImpulseBinding(ImpulseBinding const &other) : Binding(other) {}
+    ImpulseBinding(de::Record &d)               : Binding(d) {}
+    ImpulseBinding(de::Record const &d)         : Binding(d) {}
 
-    int deviceId = 0;
-    ibcontroltype_t type = IBD_TOGGLE;
-    int controlId = 0;
-    float angle = 0;
-    uint flags = 0;
+    ImpulseBinding &operator = (de::Record const *d) {
+        *static_cast<Binding *>(this) = d;
+        return *this;
+    }
 
-    typedef QVector<statecondition_t> Conditions;
-    Conditions conditions;  ///< Additional conditions.
+    void resetToDefaults();
+
+    de::String composeDescriptor();
 };
 
 #endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H

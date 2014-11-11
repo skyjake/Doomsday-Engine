@@ -20,93 +20,140 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
-#include <QList>
+#include <QVector>
+#include <de/RecordAccessor>
 #include "dd_types.h"
 #include "ddevent.h"
 
 class BindContext;
-class InputDevice;
-struct ImpulseBinding;
 
-// Event Binding State
-enum ebstate_t
+class Binding : public de::RecordAccessor
 {
-    EBTOG_UNDEFINED,
-    EBTOG_DOWN,
-    EBTOG_REPEAT,
-    EBTOG_PRESS,
-    EBTOG_UP,
-    EBAXIS_WITHIN,
-    EBAXIS_BEYOND,
-    EBAXIS_BEYOND_POSITIVE,
-    EBAXIS_BEYOND_NEGATIVE
+public:
+    /**
+     * Describes a single trigger condition.
+     */
+    struct Condition
+    {
+        enum Type
+        {
+            Invalid,
+
+            GlobalState,    ///< Related to the high-level application/game state.
+
+            AxisState,      ///< An axis control is in a specific position.
+            ButtonState,    ///< A button control is in a specific state.
+            HatState,       ///< A hat control is pointing in a specific direction.
+            ModifierState,  ///< A control modifier is in a specific state.
+        };
+        Type type { Invalid };
+
+        enum ControlTest
+        {
+            None,
+
+            AxisPositionWithin,
+            AxisPositionBeyond,
+            AxisPositionBeyondPositive,
+            AxisPositionBeyondNegative,
+
+            ButtonStateAny,
+            ButtonStateDown,
+            ButtonStateRepeat,
+            ButtonStateDownOrRepeat,
+            ButtonStateUp
+        };
+        ControlTest test { None };
+
+        int device       = -1;     ///< The relevant input device; otherwise @c -1
+        int id           = -1;     ///< device-control / impulse ID; otherwise @c -1.
+        float pos        = 0;      ///< Axis-position / hat-angle; otherwise @c 0.
+        bool negate      = false;  ///< Test the inverse (e.g., not in a specific state).
+        bool multiplayer = false;  ///< Only for multiplayer.
+    };
+    typedef QVector<Condition> Conditions;
+    Conditions conditions;         ///< Additional conditions.
+
+public:
+    Binding()                     : RecordAccessor(0) {}
+    Binding(Binding const &other) : RecordAccessor(other) {}
+    Binding(de::Record &d)        : RecordAccessor(d) {}
+    Binding(de::Record const &d)  : RecordAccessor(d) {}
+
+    virtual ~Binding() {}
+
+    Binding &operator = (de::Record const *d) {
+        setAccessedRecord(d);
+        return *this;
+    }
+
+    de::Record &def();
+    de::Record const &def() const;
+
+    /**
+     * Determines if this binding accessor points to a record.
+     */
+    operator bool() const;
+
+    /**
+     * Inserts the default members into the binding. All bindings are required to
+     * implement this, as it is automatically called when configuring a binding.
+     */
+    virtual void resetToDefaults() = 0;
+
+    /**
+     * Generates a textual descriptor for the binding, including any state conditions.
+     */
+    virtual de::String composeDescriptor() = 0;
 };
 
-enum stateconditiontype_t
-{
-    SCT_STATE,          ///< Related to the state of the engine.
-    SCT_TOGGLE_STATE,   ///< Toggle is in a specific state.
-    SCT_MODIFIER_STATE, ///< Modifier is in a specific state.
-    SCT_AXIS_BEYOND,    ///< Axis is past a specific position.
-    SCT_ANGLE_AT        ///< Angle is pointing to a specific direction.
-};
+typedef Binding::Condition BindingCondition;
+typedef Binding::Conditions BindingConditions;
 
-// Device state condition.
-struct statecondition_t
-{
-    uint device;                ///< Which device?
-    stateconditiontype_t type;
-    int id;                     ///< device-control or impulse ID.
-    ebstate_t state;
-    float pos;                  ///< Axis position/angle condition.
-    struct {
-        uint negate:1;          ///< Test the inverse (e.g., not in a specific state).
-        uint multiplayer:1;     ///< Only for multiplayer.
-    } flags;
-};
+bool B_ParseAxisPosition(BindingCondition::ControlTest &test, float &pos, char const *desc);
 
-bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
+bool B_ParseButtonState(BindingCondition::ControlTest &test, char const *desc);
 
-bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);
+bool B_ParseHatAngle(float &angle, char const *desc);
 
-bool B_ParseKeyId(char const *desc, int *id);
+bool B_ParseBindingCondition(BindingCondition &cond, char const *desc);
 
-bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
+// ---
 
-bool B_ParseJoystickTypeAndId(InputDevice const &device, char const *desc, ddeventtype_t *type, int *id);
+de::String B_AxisPositionToString(BindingCondition::ControlTest test, float pos);
 
-bool B_ParseAnglePosition(char const *desc, float *pos);
+de::String B_ButtonStateToString(BindingCondition::ControlTest test);
 
-bool B_ParseStateCondition(statecondition_t *cond, char const *desc);
+de::String B_HatAngleToString(float angle);
 
-// ---------------------------------------------------------------------------------
-
-de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
-
-de::String B_ToggleStateToString(ebstate_t state);
-
-de::String B_AxisPositionToString(ebstate_t state, float pos);
-
-de::String B_AnglePositionToString(float pos);
-
-de::String B_StateConditionToString(statecondition_t const &cond);
+de::String B_ConditionToString(BindingCondition const &cond);
 
 de::String B_EventToString(ddevent_t const &ev);
 
-// ---------------------------------------------------------------------------------
+// ---
 
-extern byte zeroControlUponConflict;
-
-bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
+bool B_CheckAxisPosition(BindingCondition::ControlTest test, float testPos, float pos);
 
 /**
  * @param cond      State condition to check.
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-bool B_CheckCondition(statecondition_t const *cond, int localNum, BindContext *context);
+bool B_CheckCondition(BindingCondition const *cond, int localNum, BindContext *context);
 
-bool B_EqualConditions(statecondition_t const &a, statecondition_t const &b);
+bool B_EqualConditions(BindingCondition const &a, BindingCondition const &b);
+
+// ---------------------------------------------------------------------------------
+
+extern byte zeroControlUponConflict;
+
+bool B_ParseKeyId(int &id, char const *desc);
+
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc);
+
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc);
+
+de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
 
 void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered);

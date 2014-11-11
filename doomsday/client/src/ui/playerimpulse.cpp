@@ -214,12 +214,12 @@ bool PlayerImpulse::haveBindingsFor(int playerNum) const
     BindContext *bindContext = isys.contextPtr(d->bindContextName);
     if(!bindContext) return false;
 
-    int found = bindContext->forAllImpulseBindings(localPlayer, [this, &isys] (ImpulseBinding &bind)
+    int found = bindContext->forAllImpulseBindings(localPlayer, [this, &isys] (Record &bind)
     {
         // Wrong impulse?
-        if(bind.impulseId != d->id) return LoopContinue;
+        if(bind.geti("impulseId") != d->id) return LoopContinue;
 
-        if(InputDevice const *device = isys.devicePtr(bind.deviceId))
+        if(InputDevice const *device = isys.devicePtr(bind.geti("deviceId")))
         {
             if(device->isActive())
             {

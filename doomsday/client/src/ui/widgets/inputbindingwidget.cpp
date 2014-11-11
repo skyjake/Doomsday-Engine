@@ -17,11 +17,13 @@
  */
 
 #include "ui/widgets/inputbindingwidget.h"
+
+#include <de/charsymbols.h>
+#include <de/AuxButtonWidget>
 #include "clientapp.h"
 #include "BindContext"
-//#include "ui/b_main.h"
-#include <de/AuxButtonWidget>
-#include <de/charsymbols.h>
+#include "ui/commandbinding.h"
+// #include "ui/impulsebinding.h"
 
 using namespace de;
 
@@ -102,10 +104,11 @@ DENG_GUI_PIMPL(InputBindingWidget)
             if(!inputSys().hasContext(bcName)) continue;
             BindContext const &context = inputSys().context(bcName);
 
-            if(CommandBinding const *bind = context.findCommandBinding(command.toLatin1(), device))
+            if(Record const *rec = context.findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
-                text = prettyKey(inputSys().composeBindsFor(*bind));
+                CommandBinding bind(*rec);
+                text = prettyKey(bind.composeDescriptor());
                 break;
             }
         }
@@ -118,9 +121,9 @@ DENG_GUI_PIMPL(InputBindingWidget)
         Block const cmd = command.toLatin1();
         inputSys().forAllContexts([&cmd] (BindContext &context)
         {
-            while(CommandBinding *bind = context.findCommandBinding(cmd.constData()))
+            while(Record *bind = context.findCommandBinding(cmd.constData()))
             {
-                context.deleteBinding(bind->id);
+                context.deleteBinding(bind->geti("id"));
             }
             return LoopContinue;
         });
