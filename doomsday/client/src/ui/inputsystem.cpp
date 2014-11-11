@@ -1192,8 +1192,8 @@ bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
         to.type = EV_SYMBOLIC;
 #ifdef __64BIT__
         ASSERT_64BIT(from.symbolic.name);
-        ev->data1 = (int)(((uint64_t) from.symbolic.name) & 0xffffffff); // low dword
-        ev->data2 = (int)(((uint64_t) from.symbolic.name) >> 32);        // high dword
+        to.data1 = (int)(((uint64_t) from.symbolic.name) & 0xffffffff); // low dword
+        to.data2 = (int)(((uint64_t) from.symbolic.name) >> 32);        // high dword
 #else
         ASSERT_NOT_64BIT(from.symbolic.name);
         to.data1 = (int) from.symbolic.name;
