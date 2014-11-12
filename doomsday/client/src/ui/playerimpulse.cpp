@@ -289,7 +289,7 @@ void ImpulseAccumulator::consoleRegister() // static
 
 bool PlayerImpulse::haveBindingsFor(int localPlayer) const
 {
-    LOG_AS("Impulse");
+    LOG_AS("PlayerImpulse");
 
     if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
         return false;
