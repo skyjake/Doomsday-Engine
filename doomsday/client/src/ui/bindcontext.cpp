@@ -311,8 +311,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
     return nullptr;
 }
 
-Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse,
-    int localPlayer)
+Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse, int localPlayer)
 {
     DENG2_ASSERT(ctrlDesc);
     DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
@@ -322,12 +321,12 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
         std::unique_ptr<Record> newBind(new Record);
         ImpulseBinding bind(*newBind.get());
 
-        bind.configure(ctrlDesc, impulse.id(), localPlayer); // Assign a new unique identifier.
+        bind.configure(ctrlDesc, impulse.id, localPlayer); // Assign a new unique identifier.
         d->impulseBinds[localPlayer].append(newBind.release());
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
-                << impulse.name() << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti("id");
+                << impulse.name << (localPlayer + 1) << bind.composeDescriptor() << d->name << bind.geti("id");
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.

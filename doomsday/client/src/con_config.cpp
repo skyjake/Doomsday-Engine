@@ -227,7 +227,7 @@ static bool writeBindingsState(Path const &filePath)
 
                 fprintf(file, "bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
-                              impulse->name().toUtf8().constData(),
+                              impulse->name.toUtf8().constData(),
                               bind.composeDescriptor().toUtf8().constData());
                 return LoopContinue;
             });

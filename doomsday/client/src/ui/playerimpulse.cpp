@@ -23,7 +23,6 @@
 
 #include <QMap>
 #include <QtAlgorithms>
-#include <de/memory.h>
 #include <de/timer.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -53,18 +52,21 @@ static inline InputSystem &inputSys()
 static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 #endif
 
-DENG2_PIMPL_NOREF(PlayerImpulse)
+DENG2_PIMPL_NOREF(ImpulseAccumulator)
 {
-    int id;
-    String name;
-    String bindContextName;
+    int impulseId = 0;
+    AccumulatorType type = Analog;
+    bool expireBeforeSharpTick = false;
 
-    short booleanCounts[DDMAXPLAYERS];
+    int playerNum = 0;
+
+    short binaryAccum = 0;
 
 #ifdef __CLIENT__
     /**
-     * Double-"clicks" actually mean double activations that occur within the double-click
-     * threshold. This is to allow double-clicks also from the numeric impulses.
+     * Double-"clicks" actually mean double activations that occur within the
+     * double-click threshold. This is to allow double-clicks also from the
+     * analog impulses.
      */
     struct DoubleClick
     {
@@ -80,24 +82,16 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
         State lastState = None;           //< State at the previous time the check was made.
         State previousClickState = None;  /** Previous click state. When duplicated, triggers
                                               the double click. */
-    } doubleClicks[DDMAXPLAYERS];
-#endif
+    } db;
 
-    Instance() { de::zap(booleanCounts); }
-
-#ifdef __CLIENT__
     /**
-     * Track the double-click state of the impulse and generate a symbolic
-     * input event if the trigger conditions are met.
+     * Track the double-click state of the impulse and generate a bindable
+     * symbolic event if the trigger conditions are met.
      *
-     * @param playerNum  Console/player number.
-     * @param pos        State of the impulse.
+     * @param pos  State of the impulse.
      */
-    void maintainDoubleClicks(int playerNum, float pos)
+    void maintainDoubleClick(float pos)
     {
-        DENG2_ASSERT(playerNum >= 0 && playerNum < DDMAXPLAYERS);
-
-        DoubleClick &db = doubleClicks[playerNum];
         if(pimpDoubleClickThreshold <= 0)
         {
             // Let's not waste time here.
@@ -136,6 +130,9 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
         {
             db.triggered = true;
 
+            PlayerImpulse *impulse = P_ImpulsePtr(impulseId);
+            DENG2_ASSERT(impulse);
+
             // Compose the name of the symbolic event.
             String symbolicName;
             switch(newState)
@@ -145,12 +142,12 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
 
             default: break;
             }
-            symbolicName += name;
+            symbolicName += impulse->name;
 
             int const localPlayer = P_ConsoleToLocal(playerNum);
             DENG2_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s")
-                    << name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
+                    << impulse->name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
                     << symbolicName;
 
             Block symbolicNameUtf8 = symbolicName.toUtf8();
@@ -167,58 +164,149 @@ DENG2_PIMPL_NOREF(PlayerImpulse)
         db.previousClickState = newState;
         db.lastState          = newState;
     }
+
+    void clearDoubleClick()
+    {
+        db.triggered = false;
+    }
 #endif
 };
 
-PlayerImpulse::PlayerImpulse(int id, impulsetype_t type, String const &name, String bindContextName)
-    : type(type), d(new Instance)
+ImpulseAccumulator::ImpulseAccumulator(int impulseId, AccumulatorType type, bool expireBeforeSharpTick)
+    : d(new Instance)
 {
-    d->id   = id;
-    d->name = name;
-    d->bindContextName = bindContextName;
+    d->impulseId             = impulseId;
+    d->type                  = type;
+    d->expireBeforeSharpTick = expireBeforeSharpTick;
 }
 
-bool PlayerImpulse::isTriggerable() const
+void ImpulseAccumulator::setPlayerNum(int newPlayerNum)
 {
-    return (type == IT_NUMERIC_TRIGGERED || type == IT_BOOLEAN);
+    d->playerNum = newPlayerNum;
 }
 
-int PlayerImpulse::id() const
+int ImpulseAccumulator::impulseId() const
 {
-    return d->id;
+    return d->impulseId;
 }
 
-String PlayerImpulse::name() const
+ImpulseAccumulator::AccumulatorType ImpulseAccumulator::type() const
 {
-    return d->name;
+    return d->type;
 }
 
-String PlayerImpulse::bindContextName() const
+bool ImpulseAccumulator::expireBeforeSharpTick() const
 {
-    return d->bindContextName;
+    return d->expireBeforeSharpTick;
+}
+
+void ImpulseAccumulator::receiveBinary()
+{
+    // Ensure this is really a binary accumulator.
+    DENG2_ASSERT(d->type == Binary);
+    LOG_AS("ImpulseAccumulator");
+
+    d->binaryAccum++;
+
+#ifdef __CLIENT__
+    // Mark for double click.
+    d->maintainDoubleClick(1);
+    d->maintainDoubleClick(0);
+#endif
+}
+
+int ImpulseAccumulator::takeBinary()
+{
+    // Ensure this is really a binary accumulator.
+    DENG2_ASSERT(d->type == Binary);
+    LOG_AS("ImpulseAccumulator");
+    short *counter = &d->binaryAccum;
+    int count = *counter;
+    *counter = 0;
+    return count;
 }
 
 #ifdef __CLIENT__
-bool PlayerImpulse::haveBindingsFor(int playerNum) const
+
+void ImpulseAccumulator::takeAnalog(float *pos, float *relOffset)
 {
-    // Ensure this is really a numeric impulse.
-    DENG2_ASSERT(type == IT_NUMERIC || type == IT_NUMERIC_TRIGGERED);
-    LOG_AS("PlayerImpulse");
+    // Ensure this is really an analog accumulator.
+    DENG2_ASSERT(d->type == Analog);
+    LOG_AS("ImpulseAccumulator");
 
-    InputSystem &isys = ClientApp::inputSystem();
+    if(pos) *pos = 0;
+    if(relOffset) *relOffset = 0;
 
-    // ImpulseBindings are associated with local player numbers rather than
-    // the player console number - translate.
-    int const localPlayer = P_ConsoleToLocal(playerNum);
-    if(localPlayer < 0) return false;
+    PlayerImpulse *impulse = P_ImpulsePtr(d->impulseId);
+    DENG2_ASSERT(impulse);
 
-    BindContext *bindContext = isys.contextPtr(d->bindContextName);
-    if(!bindContext) return false;
-
-    int found = bindContext->forAllImpulseBindings(localPlayer, [this, &isys] (Record &bind)
+    if(BindContext *bindContext = inputSys().contextPtr(impulse->bindContextName))
     {
+        // Impulse bindings are associated with local player numbers rather than
+        // the player console number - translate.
+        float position, relative;
+        B_EvaluateImpulseBindings(bindContext, P_ConsoleToLocal(d->playerNum), d->impulseId,
+                                  &position, &relative, d->expireBeforeSharpTick);
+
+        // Mark for double-clicks.
+        d->maintainDoubleClick(position);
+
+        if(pos) *pos = position;
+        if(relOffset) *relOffset = relative;
+    }
+}
+
+void ImpulseAccumulator::clearAll()
+{
+    LOG_AS("ImpulseAccumulator");
+    switch(d->type)
+    {
+    case Analog:
+        if(!d->expireBeforeSharpTick)
+        {
+            takeAnalog();
+        }
+        break;
+
+    case Binary:
+        takeBinary();
+        break;
+
+    default: DENG2_ASSERT(!"ImpulseAccumulator::clearAll: Unknown type");
+    }
+
+    // Also clear the double click state.
+    d->clearDoubleClick();
+}
+
+void ImpulseAccumulator::consoleRegister() // static
+{
+    LOG_AS("ImpulseAccumulator");
+    C_VAR_INT("input-doubleclick-threshold", &pimpDoubleClickThreshold, 0, 0, 2000);
+}
+
+// -------------------------------------------------------------------------------
+
+bool PlayerImpulse::haveBindingsFor(int localPlayer) const
+{
+    LOG_AS("Impulse");
+
+    if(localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
+        return false;
+
+    InputSystem &isys        = ClientApp::inputSystem();
+    BindContext *bindContext = isys.contextPtr(bindContextName);
+    if(!bindContext)
+    {
+        LOG_INPUT_WARNING("Unknown binding context '%s'") << bindContextName;
+        return false;
+    }
+
+    int found = bindContext->forAllImpulseBindings(localPlayer, [this, &isys] (Record &rec)
+    {
+        ImpulseBinding bind(rec);
         // Wrong impulse?
-        if(bind.geti("impulseId") != d->id) return LoopContinue;
+        if(bind.geti("impulseId") != id) return LoopContinue;
 
         if(InputDevice const *device = isys.devicePtr(bind.geti("deviceId")))
         {
@@ -234,146 +322,57 @@ bool PlayerImpulse::haveBindingsFor(int playerNum) const
 }
 #endif // __CLIENT__
 
-void PlayerImpulse::triggerBoolean(int playerNum)
+typedef QMap<int, PlayerImpulse *> Impulses; // ID lookup.
+static Impulses impulses;
+
+typedef QMap<String, PlayerImpulse *> ImpulseNameMap; // Name lookup
+static ImpulseNameMap impulsesByName;
+
+typedef QMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
+static ImpulseAccumulators accumulators[DDMAXPLAYERS];
+
+static PlayerImpulse *addImpulse(int id, impulsetype_t type, String name, String bindContextName)
 {
-    // Ensure this is really a boolean impulse.
-    DENG2_ASSERT(type == IT_BOOLEAN);
-    LOG_AS("PlayerImpulse");
+    auto *imp = new PlayerImpulse;
 
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return;
+    imp->id   = id;
+    imp->type = type;
+    imp->name = name;
+    imp->bindContextName = bindContextName;
 
-    d->booleanCounts[playerNum]++;
+    impulses.insert(imp->id, imp);
+    impulsesByName.insert(imp->name.toLower(), imp);
 
-#ifdef __CLIENT__
-    // Mark for double clicks.
-    d->maintainDoubleClicks(playerNum, 1);
-    d->maintainDoubleClicks(playerNum, 0);
-#endif
-}
-
-int PlayerImpulse::takeBoolean(int playerNum)
-{
-    // Ensure this is really a boolean impulse.
-    DENG2_ASSERT(type == IT_BOOLEAN);
-    LOG_AS("PlayerImpulse");
-
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return 0;
-
-    short *counter = &d->booleanCounts[playerNum];
-    int count = *counter;
-    *counter = 0;
-    return count;
-}
-
-#ifdef __CLIENT__
-
-void PlayerImpulse::takeNumeric(int playerNum, float *pos, float *relOffset)
-{
-    // Ensure this is really a numeric impulse.
-    DENG2_ASSERT(type == IT_NUMERIC || type == IT_NUMERIC_TRIGGERED);
-    LOG_AS("PlayerImpulse");
-
-    if(pos) *pos = 0;
-    if(relOffset) *relOffset = 0;
-
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return;
-
-    if(BindContext *bindContext = inputSys().contextPtr(d->bindContextName))
-    {
-        // ImpulseBindings are associated with local player numbers rather than
-        // the player console number - translate.
-        float position, relative;
-        B_EvaluateImpulseBindings(bindContext, P_ConsoleToLocal(playerNum), d->id,
-                                  &position, &relative, isTriggerable());
-
-        // Mark for double-clicks.
-        d->maintainDoubleClicks(playerNum, position);
-
-        if(pos) *pos = position;
-        if(relOffset) *relOffset = relative;
-    }
-}
-
-int PlayerImpulse::takeDoubleClick(int playerNum)
-{
-    LOG_AS("PlayerImpulse");
-
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return 0;
-
-    bool triggered = false;
-    Instance::DoubleClick &db = d->doubleClicks[playerNum];
-    if(db.triggered)
-    {
-        triggered = true;
-        db.triggered = false;
-    }
-
-    return int(triggered);
-}
-
-void PlayerImpulse::clearAccumulation(int playerNum)
-{
-    LOG_AS("PlayerImpulse");
-
-    bool const haveNamedPlayer = (playerNum < 0 || playerNum >= DDMAXPLAYERS);
-    if(haveNamedPlayer)
-    {
-        switch(type)
-        {
-        case IT_NUMERIC: takeNumeric(playerNum); break;
-        case IT_BOOLEAN: takeBoolean(playerNum); break;
-
-        case IT_NUMERIC_TRIGGERED: break;
-
-        default: DENG2_ASSERT(!"PlayerImpulse::clearAccumulation: Unknown type");
-        }
-        // Also clear the double click state.
-        takeDoubleClick(playerNum);
-        return;
-    }
-
-    // Clear accumulation for all local players.
+    // Generate impulse accumulators for each player.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        switch(type)
-        {
-        case IT_NUMERIC: takeNumeric(i); break;
-        case IT_BOOLEAN: takeBoolean(i); break;
-
-        case IT_NUMERIC_TRIGGERED: break;
-
-        default: DENG2_ASSERT(!"PlayerImpulse::clearAccumulation: Unknown type");
-        }
-        // Also clear the double click state.
-        takeDoubleClick(i);
+        ImpulseAccumulator::AccumulatorType accumType = (type == IT_BINARY? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
+        auto *accum = new ImpulseAccumulator(imp->id, accumType, type != IT_ANALOG);
+        accum->setPlayerNum(i);
+        accumulators[i].insert(accum->impulseId(), accum);
     }
+
+    return imp;
 }
 
-void PlayerImpulse::consoleRegister() // static
+static ImpulseAccumulator *accumulator(int impulseId, int playerNum)
 {
-    LOG_AS("PlayerImpulse");
-    C_VAR_INT("input-doubleclick-threshold", &pimpDoubleClickThreshold, 0, 0, 2000);
-}
-#endif
+    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
+        return nullptr;
 
-typedef QMap<int, PlayerImpulse *> Impulses; // ID lookup
-static Impulses impulses;
-typedef QMap<String, PlayerImpulse *> ImpulsesByName; // Name lookup
-static ImpulsesByName impulsesByName;
+    if(!accumulators[playerNum].contains(impulseId))
+        return nullptr;
 
-static void addImpulse(PlayerImpulse *imp)
-{
-    if(!imp) return;
-    impulses.insert(imp->id(), imp);
-    impulsesByName.insert(imp->name().toLower(), imp);
+    return accumulators[playerNum][impulseId];
 }
 
 void P_ImpulseShutdown()
 {
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        qDeleteAll(accumulators[i]);
+        accumulators[i].clear();
+    }
     qDeleteAll(impulses);
     impulses.clear();
     impulsesByName.clear();
@@ -405,9 +404,9 @@ D_CMD(ListImpulses)
     for(PlayerImpulse const *imp : impulsesByName)
     {
         LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) "(%s) " _E(2) "%s%s")
-                << imp->id() << imp->name() << imp->bindContextName()
-                << (imp->type == IT_BOOLEAN? "boolean" : "numeric")
-                << (imp->isTriggerable()? ", triggerable" : "");
+                << imp->id << imp->name << imp->bindContextName
+                << (imp->type == IT_BINARY? "binary" : "analog")
+                << (IMPULSETYPE_IS_TRIGGERABLE(imp->type)? ", triggerable" : "");
     }
     return true;
 }
@@ -423,10 +422,13 @@ D_CMD(Impulse)
         return true;
     }
 
-    int const playerNum = (argc == 3? String(argv[2]).toInt() : 0);
     if(PlayerImpulse *imp = P_ImpulseByName(argv[1]))
     {
-        imp->triggerBoolean(playerNum);
+        int const playerNum = (argc == 3? String(argv[2]).toInt() : 0);
+        if(ImpulseAccumulator *accum = accumulator(imp->id, playerNum))
+        {
+            accum->receiveBinary();
+        }
     }
 
     return true;
@@ -443,16 +445,18 @@ D_CMD(ClearImpulseAccumulation)
         return LoopContinue;
     });
 
-    for(PlayerImpulse *imp : impulses)
+    // For all players.
+    for(int i = 0; i < DDMAXPLAYERS; ++i)
+    for(ImpulseAccumulator *accum : accumulators[i])
     {
-        imp->clearAccumulation(); // for all local players.
+        accum->clearAll();
     }
 
     return true;
 }
 #endif
 
-void P_ConsoleRegister()
+void P_ImpulseConsoleRegister()
 {
     C_CMD("listcontrols",   "",         ListImpulses);
     C_CMD("impulse",        nullptr,    Impulse);
@@ -460,32 +464,32 @@ void P_ConsoleRegister()
 #ifdef __CLIENT__
     C_CMD("resetctlaccum", "", ClearImpulseAccumulation);
 
-    PlayerImpulse::consoleRegister();
+    ImpulseAccumulator::consoleRegister();
 #endif
 }
 
 DENG_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
-    char const *bindContext)
+    char const *bindContextName)
 {
-    DENG2_ASSERT(name && bindContext);
+    DENG2_ASSERT(name && bindContextName);
     LOG_AS("P_NewPlayerControl");
 
     // Ensure the given id is unique.
     if(PlayerImpulse const *existing = P_ImpulsePtr(id))
     {
         LOG_INPUT_WARNING("Id: %i is already in use by impulse '%s' - Won't replace")
-                << id << existing->name();
+                << id << existing->name;
         return;
     }
     // Ensure the given name is unique.
     if(PlayerImpulse const *existing = P_ImpulseByName(name))
     {
         LOG_INPUT_WARNING("Name: '%s' is already in use by impulse Id: %i - Won't replace")
-                << name << existing->id();
+                << name << existing->id;
         return;
     }
 
-    addImpulse(new PlayerImpulse(id, type, name, bindContext));
+    addImpulse(id, type, name, bindContextName);
 }
 
 DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
@@ -493,12 +497,14 @@ DENG_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 #ifdef __CLIENT__
     LOG_AS("P_IsControlBound");
 
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return false;
+    // Impulse bindings are associated with local player numbers rather than
+    // the player console number - translate.
+    int const localPlayer = P_ConsoleToLocal(playerNum);
+    if(localPlayer < 0) return false;
 
     if(PlayerImpulse const *imp = P_ImpulsePtr(impulseId))
     {
-        return imp->haveBindingsFor(playerNum);
+        return imp->haveBindingsFor(localPlayer);
     }
     return false;
 
@@ -520,12 +526,10 @@ DENG_EXTERN_C void P_GetControlState(int playerNum, int impulseId, float *pos,
     *pos = 0;
     *relativeOffset = 0;
 
-    if(PlayerImpulse *imp = P_ImpulsePtr(impulseId))
+    if(ImpulseAccumulator *accum = accumulator(impulseId, playerNum))
     {
-        imp->takeNumeric(playerNum, pos, relativeOffset);
-        return;
+        accum->takeAnalog(pos, relativeOffset);
     }
-
 #else
     DENG2_UNUSED4(playerNum, impulseId, pos, relativeOffset);
 #endif
@@ -535,38 +539,32 @@ DENG_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
 {
     LOG_AS("P_GetImpulseControlState");
 
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return 0;
+    ImpulseAccumulator *accum = accumulator(impulseId, playerNum);
+    if(!accum) return 0;
 
-    PlayerImpulse *imp = P_ImpulsePtr(impulseId);
-    if(!imp) return 0;
-
-    // Ensure this is really a boolean impulse.
-    if(imp->type != IT_BOOLEAN)
+    // Ensure this is really a binary accumulator.
+    if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("Impulse '%s' is not boolean") << imp->name();
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
         return 0;
     }
 
-    return imp->takeBoolean(playerNum);
+    return accum->takeBinary();
 }
 
 DENG_EXTERN_C void P_Impulse(int playerNum, int impulseId)
 {
     LOG_AS("P_Impulse");
 
-    if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
-        return;
+    ImpulseAccumulator *accum = accumulator(impulseId, playerNum);
+    if(!accum) return;
 
-    PlayerImpulse *imp = P_ImpulsePtr(impulseId);
-    if(!imp) return;
-
-    // Ensure this is really a boolean impulse.
-    if(imp->type != IT_BOOLEAN)
+    // Ensure this is really a binary accumulator.
+    if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("Impulse '%s' is not boolean") << imp->name();
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
         return;
     }
 
-    imp->triggerBoolean(playerNum);
+    accum->receiveBinary();
 }

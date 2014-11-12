@@ -1341,6 +1341,14 @@ int InputSystem::contextPositionOf(BindContext *context) const
 
 BindContext *InputSystem::newContext(String const &name)
 {
+    // Ensure the given name is unique.
+    if(hasContext(name))
+    {
+        LOG_AS("InputSystem::newContext");
+        LOG_INPUT_WARNING("Name '%s' is not unique - Won't replace") << name;
+        return nullptr;
+    }
+
     BindContext *context = new BindContext(name);
     d->contexts.prepend(context);
 
@@ -1446,7 +1454,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
         return nullptr;
     }
 
-    BindContext *context = contextPtr(impulse->bindContextName());
+    BindContext *context = contextPtr(impulse->bindContextName);
     if(!context)
     {
         context = contextPtr(DEFAULT_BINDING_CONTEXT_NAME);
@@ -1622,7 +1630,7 @@ D_CMD(ListBindings)
             DENG2_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
-                    << bind.geti("id") << bind.composeDescriptor() << (pl + 1) << impulse->name();
+                    << bind.geti("id") << bind.composeDescriptor() << (pl + 1) << impulse->name;
 
             return LoopContinue;
         });
@@ -1672,7 +1680,7 @@ void InputSystem::consoleRegister() // static
 
     // Variables:
     C_VAR_BYTE("input-conflict-zerocontrol", &zeroControlUponConflict, 0, 0, 1);
-    C_VAR_BYTE("input-sharp",                &useSharpInputEvents, 0, 0, 1);
+    C_VAR_BYTE("input-sharp",                &useSharpInputEvents,     0, 0, 1);
 
     // Commands:
     C_CMD_FLAGS("activatebcontext",     "s",        ActivateContext,    PROTECTED_FLAGS);
@@ -1771,7 +1779,7 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
             PlayerImpulse const *impulse = P_ImpulsePtr(bind.geti("impulseId"));
             DENG2_ASSERT(impulse);
 
-            if(!impulse->name().compareWithoutCase(impulseName))
+            if(!impulse->name.compareWithoutCase(impulseName))
             {
                 if(inverse == BFCI_BOTH ||
                    (inverse == BFCI_ONLY_NON_INVERSE && !(bind.geti("flags") & IBDF_INVERSE)) ||

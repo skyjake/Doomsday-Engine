@@ -17,89 +17,64 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H
-#define CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H
+#ifndef CLIENT_PLAY_PLAYERIMPULSE_H
+#define CLIENT_PLAY_PLAYERIMPULSE_H
 
 #include <de/String>
 #include "api_player.h"
 
 /**
- * Describes a player interaction impulse.
+ * Receives player interaction impulses and normalizes them for later consumption
+ * by the player Brain (on game side).
  *
- * @todo Is "take" the wrong verb in this context?
- * Player impulses are acted upon by the player Brain (on game side). Does it make
- * sense for a "brain" to "consume" an impulse? (Also note established convention
- * in Qt containers for removing an element from the container). Perhaps we need
- * another abstraction here? -ds
+ * @todo The player Brain should have ownership of it's ImpulseAccumulators.
  *
  * @todo Cleanup client/server confusion. On server side, each player will have a
  * local model of a remote human player's impulses. However, Double-clicks can be
  * handled entirely on client side. -ds
+ *
+ * @ingroup playsim
  */
-class PlayerImpulse
+class ImpulseAccumulator
 {
 public:
-    impulsetype_t type;
+    enum AccumulatorType
+    {
+        Analog,
+        Binary
+    };
 
 public:
-    PlayerImpulse(int id, impulsetype_t type, de::String const &name,
-                  de::String bindContextName);
-
-    bool isTriggerable() const;
+    /**
+     * @param expireBeforeSharpTick  If the source of the accumulation has changed
+     * state when a sharp tick occurs, the accumulation will expire automatically.
+     * For example, if the key bound to "attack" is not held down when a sharp tick
+     * occurs, it should not considered active even though it has been pressed and
+     * released since the previous sharp tick.
+     */
+    ImpulseAccumulator(int impulseId, AccumulatorType type, bool expireBeforeSharpTick);
 
     /**
      * Returns the unique identifier of the impulse.
      */
-    int id() const;
+    int impulseId() const;
 
-    /**
-     * Returns the symbolic name of the impulse. This name is used when resolving
-     * or generating textual binding descriptors.
-     */
-    de::String name() const;
+    AccumulatorType type() const;
 
-    /**
-     * Returns the symbolic name of the attributed binding context.
-     */
-    de::String bindContextName() const;
+    bool expireBeforeSharpTick() const;
 
-#ifdef __CLIENT__
-    /**
-     * Returns @c true if one or more ImpulseBindings exist in @em any bindContext.
-     *
-     * @param playerNum  Console/player number.
-     */
-    bool haveBindingsFor(int playerNum) const;
-#endif
+    void setPlayerNum(int newPlayerNum);
 
-public:
-    /**
-     * @param playerNum  Console/player number.
-     */
-    void triggerBoolean(int playerNum);
+    // ---
 
-    /**
-     * @param playerNum  Console/player number.
-     */
-    int takeBoolean(int playerNum);
+    void receiveBinary();
+
+    int takeBinary();
 
 #ifdef __CLIENT__
-    /**
-     * @param playerNum  Console/player number.
-     * @param pos
-     * @param relOffset
-     */
-    void takeNumeric(int playerNum, float *pos = nullptr, float *relOffset = nullptr);
+    void takeAnalog(float *pos = nullptr, float *relOffset = nullptr);
 
-    /**
-     * @param playerNum  Console/player number.
-     */
-    int takeDoubleClick(int playerNum);
-
-    /**
-     * @param playerNum  Console/player number. Use @c < 0 || >= DDMAXPLAYERS for all.
-     */
-    void clearAccumulation(int playerNum = -1 /*all local players*/);
+    void clearAll();
 
 public:
 
@@ -114,6 +89,29 @@ private:
     DENG2_PRIVATE(d)
 };
 
+/**
+ * Describes a player interaction impulse.
+ *
+ * @ingroup playsim
+ */
+struct PlayerImpulse
+{
+    int id = 0;
+    impulsetype_t type;
+    de::String name;             ///< Symbolic. Used when resolving or generating textual binding descriptors.
+    de::String bindContextName;  ///< Symbolic name of the associated binding context.
+
+#ifdef __CLIENT__
+    /**
+     * Returns @c true if one or more bindings for this impulse exist, for the
+     * given @a localPlayer number in the associated BindContext.
+     *
+     * @param localPlayer  Local player number.
+     */
+    bool haveBindingsFor(int playerNumber) const;
+#endif
+};
+
 void P_ImpulseShutdown();
 
 PlayerImpulse *P_ImpulsePtr(int id);
@@ -121,8 +119,8 @@ PlayerImpulse *P_ImpulsePtr(int id);
 PlayerImpulse *P_ImpulseByName(de::String const &name);
 
 /**
- * Register the console commands and cvars of the player controls subsystem.
+ * Register the console commands and variables of this module.
  */
-void P_ConsoleRegister();
+void P_ImpulseConsoleRegister();
 
-#endif // CLIENT_INPUTSYSTEM_PLAYERIMPULSE_H
+#endif // CLIENT_PLAY_PLAYERIMPULSE_H

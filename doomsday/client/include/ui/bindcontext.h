@@ -30,7 +30,7 @@ typedef int (*FallbackResponderFunc)(event_t *);
 typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
 // todo ends
 
-class PlayerImpulse;
+struct PlayerImpulse;
 
 /**
  * Contextualized grouping of input (and windowing system) event bindings.

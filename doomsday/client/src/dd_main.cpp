@@ -3284,7 +3284,7 @@ static void consoleRegister()
     GL_Register();
     UI_Register();
     Demo_Register();
-    P_ConsoleRegister();
+    P_ImpulseConsoleRegister();
     I_Register();
 #endif
 

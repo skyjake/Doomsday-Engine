@@ -231,6 +231,10 @@ public: // Binding (context) management --------------------------------------
     /**
      * Creates a new binding context. The new context has the highest priority
      * of all existing contexts, and is inactive.
+     *
+     * @param name  A unique, symbolic name for the bind context.
+     *
+     * @return  Resultant BindContext. Owernship is retaied.
      */
     BindContext *newContext(de::String const &name);
 
