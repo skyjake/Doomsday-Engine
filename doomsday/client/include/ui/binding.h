@@ -20,7 +20,6 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_H
 #define CLIENT_INPUTSYSTEM_BINDING_H
 
-#include <QVector>
 #include <de/Error>
 #include <de/RecordAccessor>
 
