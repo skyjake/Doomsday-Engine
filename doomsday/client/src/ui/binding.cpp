@@ -1,4 +1,4 @@
-/** @file commandbinding.h  Command binding record accessor.
+/** @file binding.h  Base class for binding record accessors.
  *
  * @authors Copyright © 2009-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -16,35 +16,21 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+#include "ui/binding.h"
 
-#ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
-#define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
+using namespace de;
 
-#include <de/String>
-#include "Binding"
-#include "ddevent.h"
-
-/**
- * Utility for handling event => command binding records.
- *
- * @ingroup ui
- */
-class CommandBinding : public Binding
+Record &Binding::def()
 {
-public:
-    CommandBinding()                            : Binding() {}
-    CommandBinding(CommandBinding const &other) : Binding(other) {}
-    CommandBinding(de::Record &d)               : Binding(d) {}
-    CommandBinding(de::Record const &d)         : Binding(d) {}
+    return const_cast<Record &>(accessedRecord());
+}
 
-    CommandBinding &operator = (de::Record const *d) {
-        *static_cast<Binding *>(this) = d;
-        return *this;
-    }
+Record const &Binding::def() const
+{
+    return accessedRecord();
+}
 
-    void resetToDefaults();
-
-    de::String composeDescriptor();
-};
-
-#endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H
+Binding::operator bool() const
+{
+    return accessedRecordPtr() != 0;
+}

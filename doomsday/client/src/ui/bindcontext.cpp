@@ -28,9 +28,10 @@
 
 #include "world/p_players.h" // P_ConsoleToLocal
 
-#include "ui/commandaction.h"
-#include "ui/commandbinding.h"
-#include "ui/impulsebinding.h"
+#include "CommandAction"
+#include "CommandBinding"
+#include "ImpulseBinding"
+#include "ui/b_util.h"
 #include "ui/inputdevice.h"
 #include "ui/playerimpulse.h"
 

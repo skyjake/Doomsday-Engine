@@ -39,9 +39,9 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "BindContext"
+#  include "CommandBinding"
+#  include "ImpulseBinding"
 #  include "ui/playerimpulse.h"
-#  include "ui/commandbinding.h"
-#  include "ui/impulsebinding.h"
 #endif
 
 using namespace de;

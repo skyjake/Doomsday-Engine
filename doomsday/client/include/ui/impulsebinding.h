@@ -1,4 +1,4 @@
-/** @file impulsebinding.h  Input system, control => impulse binding.
+/** @file impulsebinding.h  Impulse binding record accessor.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -21,7 +21,8 @@
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
 #include <de/String>
-#include "b_util.h"
+#include "Binding"
+#include "ddevent.h"
 
 enum ibcontroltype_t
 {
@@ -38,6 +39,11 @@ enum ibcontroltype_t
 #define IBDF_INVERSE        0x1
 #define IBDF_TIME_STAGED    0x2
 
+/**
+ * Utility for handling event => command binding records.
+ *
+ * @ingroup ui
+ */
 class ImpulseBinding : public Binding
 {
 public:

@@ -23,7 +23,7 @@
 #include <functional>
 #include <de/Observers>
 #include <de/Record>
-#include "ui/impulsebinding.h" // ibcontroltype_t
+#include "ImpulseBinding" // ibcontroltype_t
 
 /// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);

@@ -119,10 +119,12 @@ DENG_CONVENIENCE_HEADERS += \
     include/BiasSource \
     include/BiasTracker \
     include/BindContext \
+    include/Binding \
     include/BitmapFont \
     include/BspLeaf \
     include/BspNode \
     include/CommandAction \
+    include/CommandBinding \
     include/CompositeBitmapFont \
     include/Contact \
     include/ContactSpreader \
@@ -143,6 +145,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
+    include/ImpulseBinding \
     include/Interceptor \
     include/LightDecoration \
     include/Line \
@@ -351,6 +354,7 @@ DENG_HEADERS += \
     include/ui/b_main.h \
     include/ui/b_util.h \
     include/ui/bindcontext.h \
+    include/ui/binding.h \
     include/ui/busyvisual.h \
     include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
@@ -677,11 +681,14 @@ SOURCES += \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
     src/ui/bindcontext.cpp \
+    src/ui/binding.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
+    src/ui/commandbinding.cpp \
+    src/ui/impulsebinding.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \

@@ -22,8 +22,8 @@
 #include "clientapp.h"
 
 #include "BindContext"
-#include "ui/commandbinding.h"
-#include "ui/impulsebinding.h"
+#include "CommandBinding"
+#include "ImpulseBinding"
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
@@ -40,104 +40,6 @@ static float STAGE_FACTOR    = .5f;
 static inline InputSystem &inputSys()
 {
     return ClientApp::inputSystem();
-}
-
-Record &Binding::def()
-{
-    return const_cast<Record &>(accessedRecord());
-}
-
-Record const &Binding::def() const
-{
-    return accessedRecord();
-}
-
-Binding::operator bool() const
-{
-    return accessedRecordPtr() != 0;
-}
-
-void CommandBinding::resetToDefaults()
-{
-    def().addNumber("id", 0);  ///< Unique identifier.
-
-    def().addNumber("deviceId", -1);
-    def().addNumber("controlId", -1);
-    def().addNumber("type", int(E_TOGGLE));  ///< Type of event.
-    def().addText  ("symbolicName", "");
-    def().addNumber("test", int(Condition::None));
-    def().addNumber("pos", 0);
-
-    def().addText  ("command", "");  ///< Command to execute.
-}
-
-String CommandBinding::composeDescriptor()
-{
-    LOG_AS("CommandBinding");
-    if(!*this) return "";
-
-    String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
-    switch(geti("type"))
-    {
-    case E_TOGGLE:      str += B_ButtonStateToString(Condition::ControlTest(geti("test"))); break;
-    case E_AXIS:        str += B_AxisPositionToString(Condition::ControlTest(geti("test")), getf("pos")); break;
-    case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
-    case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
-
-    default: DENG2_ASSERT(!"CommandBinding::composeBinds: Unknown bind.type"); break;
-    }
-
-    // Append any state conditions.
-    for(BindingCondition const &cond : conditions)
-    {
-        str += " + " + B_ConditionToString(cond);
-    }
-
-    return str;
-}
-
-void ImpulseBinding::resetToDefaults()
-{
-    def().addNumber("id", 0);                  ///< Unique identifier.
-
-    def().addNumber("impulseId", 0);           ///< Identifier of the bound player impulse.
-    def().addNumber("localPlayer", -1);        ///< Local player number.
-
-    def().addNumber("deviceId", -1);
-    def().addNumber("controlId", -1);
-    def().addNumber("type", int(IBD_TOGGLE));  ///< Type of event.
-    def().addNumber("angle", 0);
-    def().addNumber("flags", 0);
-}
-
-String ImpulseBinding::composeDescriptor()
-{
-    LOG_AS("ImpulseBinding");
-    if(!*this) return "";
-
-    String str = B_ControlDescToString(geti("deviceId"), IBDTYPE_TO_EVTYPE(geti("type")), geti("controlId"));
-    if(geti("type") == IBD_ANGLE)
-    {
-        str += B_HatAngleToString(getf("angle"));
-    }
-
-    // Additional flags.
-    if(geti("flags") & IBDF_TIME_STAGED)
-    {
-        str += "-staged";
-    }
-    if(geti("flags") & IBDF_INVERSE)
-    {
-        str += "-inverse";
-    }
-
-    // Append any state conditions.
-    for(BindingCondition const &cond : conditions)
-    {
-        str += " + " + B_ConditionToString(cond);
-    }
-
-    return str;
 }
 
 bool B_ParseButtonState(BindingCondition::ControlTest &test, char const *toggleName)

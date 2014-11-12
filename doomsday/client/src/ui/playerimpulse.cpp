@@ -36,6 +36,7 @@
 
 #ifdef __CLIENT__
 #  include "BindContext"
+#  include "ui/b_util.h"
 #  include "ui/inputdevice.h"
 #endif
 

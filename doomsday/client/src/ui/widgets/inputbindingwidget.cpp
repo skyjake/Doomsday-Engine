@@ -22,8 +22,9 @@
 #include <de/AuxButtonWidget>
 #include "clientapp.h"
 #include "BindContext"
-#include "ui/commandbinding.h"
-// #include "ui/impulsebinding.h"
+#include "CommandBinding"
+// #include "ImpulseBinding"
+#include "ui/b_util.h"
 
 using namespace de;
 

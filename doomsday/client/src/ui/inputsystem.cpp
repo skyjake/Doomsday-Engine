@@ -41,13 +41,13 @@
 #include "world/p_players.h"
 
 #include "BindContext"
+#include "CommandBinding"
+#include "ImpulseBinding"
 #include "ui/ddevent.h"
 #include "ui/b_main.h"
 #include "ui/b_util.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
-#include "ui/commandbinding.h"
-#include "ui/impulsebinding.h"
 #include "ui/inputdebug.h"  // Debug visualization.
 #include "ui/inputdevice.h"
 #include "ui/inputdeviceaxiscontrol.h"
