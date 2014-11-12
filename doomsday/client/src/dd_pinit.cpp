@@ -163,7 +163,7 @@ void DD_ShutdownAll()
     }
 #endif
 
-    P_ImpulseShutdown();
+    P_ClearPlayerImpulses();
 #ifdef __SERVER__
     Sv_Shutdown();
 #endif

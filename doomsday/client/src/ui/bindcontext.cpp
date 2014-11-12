@@ -25,10 +25,11 @@
 #include <de/Log>
 #include "clientapp.h"
 
+#include "world/impulseaccumulator.h"
+
 #include "CommandBinding"
 #include "ImpulseBinding"
 #include "ui/inputdevice.h"
-#include "ui/playerimpulse.h"
 
 using namespace de;
 

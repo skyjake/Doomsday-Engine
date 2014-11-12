@@ -415,7 +415,6 @@ DENG_HEADERS += \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
-    include/ui/playerimpulse.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
     include/ui/ui_main.h \
@@ -448,6 +447,7 @@ DENG_HEADERS += \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
+    include/world/impulseaccumulator.h \
     include/world/interceptor.h \
     include/world/line.h \
     include/world/lineblockmap.h \
@@ -717,7 +717,6 @@ SOURCES += \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/playerimpulse.cpp \
     src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
@@ -773,6 +772,7 @@ SOURCES += \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
+    src/world/impulseaccumulator.cpp \
     src/world/interceptor.cpp \
     src/world/line.cpp \
     src/world/lineblockmap.cpp \

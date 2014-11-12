@@ -1,4 +1,4 @@
-/** @file playerimpulse.h  Player interaction impulse.
+/** @file impulseaccumulator.h  Player impulse accumulation.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -17,21 +17,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_PLAY_PLAYERIMPULSE_H
-#define CLIENT_PLAY_PLAYERIMPULSE_H
+#ifndef CLIENT_PLAY_IMPULSEACCUMULATOR_H
+#define CLIENT_PLAY_IMPULSEACCUMULATOR_H
 
 #include <de/String>
-#include "api_player.h"
+#include "api_player.h" // impulsetype_t
 
 /**
  * Receives player interaction impulses and normalizes them for later consumption
  * by the player Brain (on game side).
  *
  * @todo The player Brain should have ownership of it's ImpulseAccumulators.
- *
- * @todo Cleanup client/server confusion. On server side, each player will have a
- * local model of a remote human player's impulses. However, Double-clicks can be
- * handled entirely on client side. -ds
  *
  * @ingroup playsim
  */
@@ -82,7 +78,6 @@ public:
      * Register the console commands and variables of this module.
      */
     static void consoleRegister();
-
 #endif
 
 private:
@@ -97,30 +92,9 @@ private:
 struct PlayerImpulse
 {
     int id = 0;
-    impulsetype_t type;
-    de::String name;             ///< Symbolic. Used when resolving or generating textual binding descriptors.
-    de::String bindContextName;  ///< Symbolic name of the associated binding context.
-
-#ifdef __CLIENT__
-    /**
-     * Returns @c true if one or more bindings for this impulse exist, for the
-     * given @a localPlayer number in the associated BindContext.
-     *
-     * @param localPlayer  Local player number.
-     */
-    bool haveBindingsFor(int playerNumber) const;
-#endif
+    impulsetype_t type = IT_ANALOG;
+    de::String name;                ///< Symbolic. Used when resolving or generating textual binding descriptors.
+    de::String bindContextName;     ///< Symbolic name of the associated binding context.
 };
 
-void P_ImpulseShutdown();
-
-PlayerImpulse *P_ImpulsePtr(int id);
-
-PlayerImpulse *P_ImpulseByName(de::String const &name);
-
-/**
- * Register the console commands and variables of this module.
- */
-void P_ImpulseConsoleRegister();
-
-#endif // CLIENT_PLAY_PLAYERIMPULSE_H
+#endif // CLIENT_PLAY_IMPULSEACCUMULATOR_H

@@ -56,7 +56,6 @@
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "ui/infine/infinesystem.h"
-#include "ui/playerimpulse.h"
 #include "ui/progress.h"
 #include "ui/nativeui.h"
 
@@ -1513,7 +1512,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
         R_ClearViewData();
         R_DestroyContactLists();
-        P_ImpulseShutdown();
+        P_ClearPlayerImpulses();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
         ClientApp::inputSystem().bindDefaults();
@@ -3284,7 +3283,7 @@ static void consoleRegister()
     GL_Register();
     UI_Register();
     Demo_Register();
-    P_ImpulseConsoleRegister();
+    P_ConsoleRegister();
     I_Register();
 #endif
 

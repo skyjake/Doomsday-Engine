@@ -38,10 +38,13 @@
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
+
+#  include "world/impulseaccumulator.h"
+#  include "world/p_players.h"
+
 #  include "BindContext"
 #  include "CommandBinding"
 #  include "ImpulseBinding"
-#  include "ui/playerimpulse.h"
 #endif
 
 using namespace de;
@@ -222,7 +225,7 @@ static bool writeBindingsState(Path const &filePath)
             context.forAllImpulseBindings([&file, &context] (Record &rec)
             {
                 ImpulseBinding bind(rec);
-                PlayerImpulse const *impulse = P_ImpulsePtr(bind.geti("impulseId"));
+                PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
                 DENG2_ASSERT(impulse);
 
                 fprintf(file, "bindcontrol local%i-%s \"%s\"\n",

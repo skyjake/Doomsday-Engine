@@ -1,7 +1,7 @@
-/** @file p_players.h World player entities.
+/** @file p_players.h  World player entities.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -59,6 +59,21 @@ float P_ShortToLookDir(short s);
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
 
+#include <de/String>
+
+struct PlayerImpulse;
+
+void P_ClearPlayerImpulses();
+
+PlayerImpulse *P_PlayerImpulsePtr(int id);
+
+PlayerImpulse *P_PlayerImpulseByName(de::String const &name);
+
+/**
+ * Register the console commands and variables of this module.
+ */
+void P_ConsoleRegister();
+
+#endif // __cplusplus
 #endif // DENG_WORLD_P_PLAYERS_H

@@ -196,10 +196,13 @@ DENG_API_TYPEDEF(Player)
     void (*NewControl)(int id, impulsetype_t type, char const *name, char const *bindContext);
 
     /**
-     * Determines if an impulse has been bound to anything.
+     * Determines if one or more bindings exist for a player and impulse Id in
+     * the associated binding context.
      *
      * @param playerNum  Console/player number.
      * @param impulseId  Unique identifier of the impulse to lookup bindings for.
+     *
+     * @return  @c true if one or more bindings exist.
      */
     int (*IsControlBound)(int playerNum, int impulseId);
 

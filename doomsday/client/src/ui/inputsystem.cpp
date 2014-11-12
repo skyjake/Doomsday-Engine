@@ -38,6 +38,8 @@
 #include "m_misc.h"  // M_WriteTextEsc
 
 #include "render/vr.h"
+
+#include "world/impulseaccumulator.h"
 #include "world/p_players.h"
 
 #include "BindContext"
@@ -52,7 +54,6 @@
 #include "ui/inputdeviceaxiscontrol.h"
 #include "ui/inputdevicebuttoncontrol.h"
 #include "ui/inputdevicehatcontrol.h"
-#include "ui/playerimpulse.h"
 #include "ui/sys_input.h"
 
 #include "sys_system.h" // novideo
@@ -1447,7 +1448,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
 
     // The next part must be the impulse name.
     impulseDesc = Str_CopyDelim(str, impulseDesc, '-');
-    PlayerImpulse const *impulse = P_ImpulseByName(Str_Text(str));
+    PlayerImpulse const *impulse = P_PlayerImpulseByName(Str_Text(str));
     if(!impulse)
     {
         LOG_INPUT_WARNING("Player impulse \"%s\" not defined") << Str_Text(str);
@@ -1626,7 +1627,7 @@ D_CMD(ListBindings)
         context.forAllImpulseBindings(pl, [&pl] (Record &rec)
         {
             ImpulseBinding bind(rec);
-            PlayerImpulse const *impulse = P_ImpulsePtr(bind.geti("impulseId"));
+            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
             DENG2_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
@@ -1776,7 +1777,7 @@ DENG_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameC
             ImpulseBinding bind(rec);
             DENG2_ASSERT(bind.geti("localPlayer") == localPlayer);
 
-            PlayerImpulse const *impulse = P_ImpulsePtr(bind.geti("impulseId"));
+            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
             DENG2_ASSERT(impulse);
 
             if(!impulse->name.compareWithoutCase(impulseName))
