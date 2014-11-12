@@ -18,6 +18,8 @@
  */
 
 #include "ui/binding.h"
+
+#include <de/RecordValue>
 #include "ui/b_util.h" // B_EqualConditions
 
 using namespace de;
@@ -39,16 +41,68 @@ Binding::operator bool() const
     return accessedRecordPtr() != 0;
 }
 
+void Binding::resetToDefaults()
+{
+    def().addNumber("id", 0);  ///< Unique identifier.
+    def().addArray("condition", new ArrayValue);
+}
+
+Record &Binding::addCondition()
+{
+    Record *cond = new Record;
+
+    cond->addNumber("type", Invalid);
+    cond->addNumber("test", None);
+    cond->addNumber("device", -1);
+    cond->addNumber("id", -1);
+    cond->addNumber("pos", 0);
+    cond->addBoolean("negate", false);
+    cond->addBoolean("multiplayer", false);
+
+    def()["condition"].value<ArrayValue>()
+            .add(new RecordValue(cond, RecordValue::OwnsRecord));
+
+    return *cond;
+}
+
+int Binding::conditionCount() const
+{
+    return int(geta("condition").size());
+}
+
+bool Binding::hasCondition(int index) const
+{
+    return index >= 0 && index < conditionCount();
+}
+
+Record &Binding::condition(int index)
+{
+    return *def().geta("condition")[index].as<RecordValue>().record();
+}
+
+Record const &Binding::condition(int index) const
+{
+    return *geta("condition")[index].as<RecordValue>().record();
+}
+
 bool Binding::equalConditions(Binding const &other) const
 {
     // Quick test (assumes there are no duplicated conditions).
-    if(conditions.count() != other.conditions.count()) return false;
-
-    for(BindingCondition const &a : conditions)
+    if(def()["condition"].value<ArrayValue>().elements().count() != other.geta("condition").elements().count())
     {
+        return false;
+    }
+
+    ArrayValue const &conds = def().geta("condition");
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
+    {
+        Record const &a = *(*i)->as<RecordValue>().record();
+
         bool found = false;
-        for(BindingCondition const &b : other.conditions)
+        ArrayValue const &conds2 = other.geta("condition");
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds2.elements())
         {
+            Record const &b = *(*i)->as<RecordValue>().record();
             if(B_EqualConditions(a, b))
             {
                 found = true;

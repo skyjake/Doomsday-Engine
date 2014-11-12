@@ -22,13 +22,14 @@
 
 #include <de/str.hh>
 #include <de/Log>
+#include <de/RecordValue>
 #include "ui/b_util.h"
 
 using namespace de;
 
 void ImpulseBinding::resetToDefaults()
 {
-    def().addNumber("id", 0);                  ///< Unique identifier.
+    Binding::resetToDefaults();
 
     def().addNumber("deviceId", -1);
     def().addNumber("controlId", -1);
@@ -62,9 +63,10 @@ String ImpulseBinding::composeDescriptor()
     }
 
     // Append any state conditions.
-    for(BindingCondition const &cond : conditions)
+    ArrayValue const &conds = def().geta("condition");
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        str += " + " + B_ConditionToString(cond);
+        str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
 
     return str;
@@ -178,14 +180,13 @@ void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPla
     }
 
     // Any conditions?
-    conditions.clear();
+    def()["condition"].value<ArrayValue>().clear();
     while(ctrlDesc)
     {
         // A new condition.
         ctrlDesc = Str_CopyDelim(str, ctrlDesc, '+');
 
-        conditions.append(BindingCondition());
-        BindingCondition &cond = conditions.last();
+        Record &cond = addCondition();
         if(!B_ParseBindingCondition(cond, Str_Text(str)))
         {
             throw ConfigureError("ImpulseBinding::configure", "Descriptor parse error");

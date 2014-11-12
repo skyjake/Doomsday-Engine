@@ -32,52 +32,36 @@
 class Binding : public de::RecordAccessor
 {
 public:
-    /**
-     * Describes a single trigger condition.
-     */
-    struct Condition
-    {
-        enum Type
-        {
-            Invalid,
-
-            GlobalState,    ///< Related to the high-level application/game state.
-
-            AxisState,      ///< An axis control is in a specific position.
-            ButtonState,    ///< A button control is in a specific state.
-            HatState,       ///< A hat control is pointing in a specific direction.
-            ModifierState,  ///< A control modifier is in a specific state.
-        };
-        Type type { Invalid };
-
-        enum ControlTest
-        {
-            None,
-
-            AxisPositionWithin,
-            AxisPositionBeyond,
-            AxisPositionBeyondPositive,
-            AxisPositionBeyondNegative,
-
-            ButtonStateAny,
-            ButtonStateDown,
-            ButtonStateRepeat,
-            ButtonStateDownOrRepeat,
-            ButtonStateUp
-        };
-        ControlTest test { None };
-
-        int device       = -1;     ///< The relevant input device; otherwise @c -1
-        int id           = -1;     ///< device-control / impulse ID; otherwise @c -1.
-        float pos        = 0;      ///< Axis-position / hat-angle; otherwise @c 0.
-        bool negate      = false;  ///< Test the inverse (e.g., not in a specific state).
-        bool multiplayer = false;  ///< Only for multiplayer.
-    };
-    typedef QVector<Condition> Conditions;
-    Conditions conditions;         ///< Additional conditions.
-
     /// Base class for binding configuration errors. @ingroup errors
     DENG2_ERROR(ConfigureError);
+
+    enum ConditionType
+    {
+        Invalid,
+
+        GlobalState,    ///< Related to the high-level application/game state.
+
+        AxisState,      ///< An axis control is in a specific position.
+        ButtonState,    ///< A button control is in a specific state.
+        HatState,       ///< A hat control is pointing in a specific direction.
+        ModifierState,  ///< A control modifier is in a specific state.
+    };
+
+    enum ControlTest
+    {
+        None,
+
+        AxisPositionWithin,
+        AxisPositionBeyond,
+        AxisPositionBeyondPositive,
+        AxisPositionBeyondNegative,
+
+        ButtonStateAny,
+        ButtonStateDown,
+        ButtonStateRepeat,
+        ButtonStateDownOrRepeat,
+        ButtonStateUp
+    };
 
 public:
     Binding()                     : RecordAccessor(0) {}
@@ -103,13 +87,22 @@ public:
     /**
      * Inserts the default members into the binding. All bindings are required to
      * implement this, as it is automatically called when configuring a binding.
+     *
+     * All bindings share some common members, so derived classes are required to
+     * call this before inserting their own members.
      */
-    virtual void resetToDefaults() = 0;
+    virtual void resetToDefaults();
 
     /**
      * Generates a textual descriptor for the binding, including any state conditions.
      */
     virtual de::String composeDescriptor() = 0;
+
+    de::Record &addCondition();
+    int conditionCount() const;
+    bool hasCondition(int index) const;
+    de::Record &condition(int index);
+    de::Record const &condition(int index) const;
 
     /**
      * Compare the binding conditions with @a other and return @c true if equivalent.
@@ -127,8 +120,5 @@ public:
      */
     static void resetIdentifiers();
 };
-
-typedef Binding::Condition BindingCondition;
-typedef Binding::Conditions BindingConditions;
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_H

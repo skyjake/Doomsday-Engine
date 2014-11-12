@@ -22,6 +22,7 @@
 #include <de/str.hh>
 #include <de/Block>
 #include <de/Log>
+#include <de/RecordValue>
 #include "CommandAction"
 #include "clientapp.h"
 
@@ -41,13 +42,13 @@ static InputSystem &inputSys()
 
 void CommandBinding::resetToDefaults()
 {
-    def().addNumber("id", 0);  ///< Unique identifier.
+    Binding::resetToDefaults();
 
     def().addNumber("deviceId", -1);
     def().addNumber("controlId", -1);
     def().addNumber("type", int(E_TOGGLE));  ///< Type of event.
     def().addText  ("symbolicName", "");
-    def().addNumber("test", int(Condition::None));
+    def().addNumber("test", int(None));
     def().addNumber("pos", 0);
 
     def().addText  ("command", "");  ///< Command to execute.
@@ -61,8 +62,8 @@ String CommandBinding::composeDescriptor()
     String str = B_ControlDescToString(geti("deviceId"), ddeventtype_t(geti("type")), geti("controlId"));
     switch(geti("type"))
     {
-    case E_TOGGLE:      str += B_ButtonStateToString(Condition::ControlTest(geti("test"))); break;
-    case E_AXIS:        str += B_AxisPositionToString(Condition::ControlTest(geti("test")), getf("pos")); break;
+    case E_TOGGLE:      str += B_ButtonStateToString(ControlTest(geti("test"))); break;
+    case E_AXIS:        str += B_AxisPositionToString(ControlTest(geti("test")), getf("pos")); break;
     case E_ANGLE:       str += B_HatAngleToString(getf("pos")); break;
     case E_SYMBOLIC:    str += "-" + gets("symbolicName"); break;
 
@@ -70,9 +71,10 @@ String CommandBinding::composeDescriptor()
     }
 
     // Append any state conditions.
-    for(BindingCondition const &cond : conditions)
+    ArrayValue const &conds = def().geta("condition");
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        str += " + " + B_ConditionToString(cond);
+        str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
     }
 
     return str;
@@ -110,7 +112,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
 
         // The final part of a key event is the state of the key toggle.
         eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+        Binding::ControlTest test = Binding::ControlTest::None;
         ok = B_ParseButtonState(test, Str_Text(str));
         if(!ok) return false;
 
@@ -135,7 +137,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         switch(bind.geti("type"))
         {
         case E_TOGGLE: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            Binding::ControlTest test = Binding::ControlTest::None;
             ok = B_ParseButtonState(test, Str_Text(str));
             if(!ok) return false;
 
@@ -143,7 +145,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             break; }
 
         case E_AXIS: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            Binding::ControlTest test = Binding::ControlTest::None;
             float pos;
             ok = B_ParseAxisPosition(test, pos, Str_Text(str));
             if(!ok) return false;
@@ -175,7 +177,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
         switch(bind.geti("type"))
         {
         case E_TOGGLE: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            Binding::ControlTest test = Binding::ControlTest::None;
             ok = B_ParseButtonState(test, Str_Text(str));
             if(!ok) return false;
 
@@ -183,7 +185,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
             break; }
 
         case E_AXIS: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            Binding::ControlTest test = Binding::ControlTest::None;
             float pos;
             ok = B_ParseAxisPosition(test, pos, Str_Text(str));
             if(!ok) return false;
@@ -244,14 +246,13 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
     }
 
     // Any conditions?
-    conditions.clear();
+    def()["condition"].value<ArrayValue>().clear();
     while(eventDesc)
     {
         // A new condition.
         eventDesc = Str_CopyDelim(str, eventDesc, '+');
 
-        conditions.append(BindingCondition());
-        BindingCondition &cond = conditions.last();
+        Record &cond = addCondition();
         if(!B_ParseBindingCondition(cond, Str_Text(str)))
         {
             throw ConfigureError("CommandBinding::configure", "Descriptor parse error");
@@ -360,28 +361,28 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
         button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
 
         // Is the state as required?
-        switch(Condition::ControlTest(geti("test")))
+        switch(ControlTest(geti("test")))
         {
-        case Condition::ButtonStateAny:
+        case ButtonStateAny:
             // Passes no matter what.
             break;
 
-        case Condition::ButtonStateDown:
+        case ButtonStateDown:
             if(event.toggle.state != ETOG_DOWN)
                 return nullptr;
             break;
 
-        case Condition::ButtonStateUp:
+        case ButtonStateUp:
             if(event.toggle.state != ETOG_UP)
                 return nullptr;
             break;
 
-        case Condition::ButtonStateRepeat:
+        case ButtonStateRepeat:
             if(event.toggle.state != ETOG_REPEAT)
                 return nullptr;
             break;
 
-        case Condition::ButtonStateDownOrRepeat:
+        case ButtonStateDownOrRepeat:
             if(event.toggle.state == ETOG_UP)
                 return nullptr;
             break;
@@ -399,7 +400,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
-        if(!B_CheckAxisPosition(Condition::ControlTest(geti("test")), getf("pos"),
+        if(!B_CheckAxisPosition(ControlTest(geti("test")), getf("pos"),
                                 inputSys().device(event.device).axis(event.axis.id)
                                     .translateRealPosition(event.axis.pos)))
             return nullptr;
@@ -427,9 +428,10 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     }
 
     // Any conditions on the current state of the input devices?
-    for(BindingCondition const &cond : conditions)
+    ArrayValue const &conds = def().geta("condition");
+    DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
-        if(!B_CheckCondition(&cond, 0, nullptr))
+        if(!B_CheckCondition((*i)->as<RecordValue>().record(), 0, nullptr))
             return nullptr;
     }
 

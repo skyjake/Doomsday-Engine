@@ -20,44 +20,45 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
+#include <de/Record>
 #include "dd_types.h"
 #include "ddevent.h"
 #include "Binding"
 
 class BindContext;
 
-bool B_ParseAxisPosition(BindingCondition::ControlTest &test, float &pos, char const *desc);
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc);
 
-bool B_ParseButtonState(BindingCondition::ControlTest &test, char const *desc);
+bool B_ParseButtonState(Binding::ControlTest &test, char const *desc);
 
 bool B_ParseHatAngle(float &angle, char const *desc);
 
-bool B_ParseBindingCondition(BindingCondition &cond, char const *desc);
+bool B_ParseBindingCondition(de::Record &cond, char const *desc);
 
 // ---
 
-de::String B_AxisPositionToString(BindingCondition::ControlTest test, float pos);
+de::String B_AxisPositionToString(Binding::ControlTest test, float pos);
 
-de::String B_ButtonStateToString(BindingCondition::ControlTest test);
+de::String B_ButtonStateToString(Binding::ControlTest test);
 
 de::String B_HatAngleToString(float angle);
 
-de::String B_ConditionToString(BindingCondition const &cond);
+de::String B_ConditionToString(de::Record const &cond);
 
 de::String B_EventToString(ddevent_t const &ev);
 
 // ---
 
-bool B_CheckAxisPosition(BindingCondition::ControlTest test, float testPos, float pos);
+bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
 
 /**
  * @param cond      State condition to check.
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-bool B_CheckCondition(BindingCondition const *cond, int localNum, BindContext *context);
+bool B_CheckCondition(de::Record const *cond, int localNum, BindContext *context);
 
-bool B_EqualConditions(BindingCondition const &a, BindingCondition const &b);
+bool B_EqualConditions(de::Record const &a, de::Record const &b);
 
 // ---------------------------------------------------------------------------------
 
