@@ -79,6 +79,192 @@ String CommandBinding::composeDescriptor()
 }
 
 /**
+ * Parse the main part of the event descriptor, with no conditions included.
+ */
+static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const *command)
+{
+    DENG2_ASSERT(eventDesc);
+    //InputSystem &isys = ClientApp::inputSystem();
+
+    bind.resetToDefaults();
+    // Take a copy of the command string.
+    bind.def().set("command", String(command));
+
+    // Parse the event descriptor.
+    AutoStr *str = AutoStr_NewStd();
+
+    // First, we expect to encounter a device name.
+    eventDesc = Str_CopyDelim(str, eventDesc, '-');
+    if(!Str_CompareIgnoreCase(str, "key"))
+    {
+        bind.def().set("deviceId", IDEV_KEYBOARD);
+        bind.def().set("type", int(E_TOGGLE)); // Keyboards only have toggles (as far as we know).
+
+        // Parse the key.
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        int controlId = 0;
+        bool ok = B_ParseKeyId(controlId, Str_Text(str));
+        if(!ok) return false;
+
+        bind.def().set("controlId", controlId);
+
+        // The final part of a key event is the state of the key toggle.
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+        ok = B_ParseButtonState(test, Str_Text(str));
+        if(!ok) return false;
+
+        bind.def().set("test", int(test));
+    }
+    else if(!Str_CompareIgnoreCase(str, "mouse"))
+    {
+        bind.def().set("deviceId", IDEV_MOUSE);
+
+        // Next comes a button or axis name.
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        ddeventtype_t type = E_TOGGLE;
+        int controlId = 0;
+        bool ok = B_ParseMouseTypeAndId(type, controlId, Str_Text(str));
+        if(!ok) return false;
+
+        bind.def().set("type", type);
+        bind.def().set("controlId", controlId);
+
+        // The last part determines the toggle state or the axis position.
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        switch(bind.geti("type"))
+        {
+        case E_TOGGLE: {
+            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            ok = B_ParseButtonState(test, Str_Text(str));
+            if(!ok) return false;
+
+            bind.def().set("test", int(test));
+            break; }
+
+        case E_AXIS: {
+            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            float pos;
+            ok = B_ParseAxisPosition(test, pos, Str_Text(str));
+            if(!ok) return false;
+
+            bind.def().set("test", int(test));
+            bind.def().set("pos", pos);
+            break; }
+
+        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type"); break;
+        }
+    }
+    else if(!Str_CompareIgnoreCase(str, "joy") ||
+            !Str_CompareIgnoreCase(str, "head"))
+    {
+        bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
+
+        // Next part defined button, axis, or hat.
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        ddeventtype_t type = E_TOGGLE;
+        int controlId = 0;
+        bool ok = B_ParseJoystickTypeAndId(type, controlId, bind.geti("deviceId"), Str_Text(str));
+        if(!ok) return false;
+
+        bind.def().set("type", type);
+        bind.def().set("controlId", controlId);
+
+        // What is the state of the toggle, axis, or hat?
+        eventDesc = Str_CopyDelim(str, eventDesc, '-');
+        switch(bind.geti("type"))
+        {
+        case E_TOGGLE: {
+            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            ok = B_ParseButtonState(test, Str_Text(str));
+            if(!ok) return false;
+
+            bind.def().set("test", int(test));
+            break; }
+
+        case E_AXIS: {
+            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
+            float pos;
+            ok = B_ParseAxisPosition(test, pos, Str_Text(str));
+            if(!ok) return false;
+
+            bind.def().set("test", int(test));
+            bind.def().set("pos", pos);
+            break; }
+
+        case E_ANGLE: {
+            float pos;
+            ok = B_ParseHatAngle(pos, Str_Text(str));
+            if(!ok) return false;
+
+            bind.def().set("pos", pos);
+            break; }
+
+        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type") break;
+        }
+    }
+    else if(!Str_CompareIgnoreCase(str, "sym"))
+    {
+        // A symbolic event.
+        bind.def().set("type", int(E_SYMBOLIC));
+        bind.def().set("deviceId", -1);
+        bind.def().set("symbolicName", eventDesc);
+
+        eventDesc = nullptr;
+    }
+    else
+    {
+        LOG_INPUT_WARNING("Unknown device \"%s\"") << Str_Text(str);
+        return false;
+    }
+
+    // Anything left that wasn't used?
+    if(eventDesc)
+    {
+        LOG_INPUT_WARNING("Unrecognized \"%s\"") << eventDesc;
+        return false;
+    }
+
+    // No errors detected.
+    return true;
+}
+
+void CommandBinding::configure(char const *eventDesc, char const *command, bool assignNewId)
+{
+    DENG2_ASSERT(eventDesc);
+    LOG_AS("CommandBinding");
+
+    // The first part specifies the event condition.
+    AutoStr *str = AutoStr_NewStd();
+    eventDesc = Str_CopyDelim(str, eventDesc, '+');
+
+    if(!doConfigure(*this, Str_Text(str), command))
+    {
+        throw ConfigureError("CommandBinding::configure", "Descriptor parse error");
+    }
+
+    // Any conditions?
+    conditions.clear();
+    while(eventDesc)
+    {
+        // A new condition.
+        eventDesc = Str_CopyDelim(str, eventDesc, '+');
+
+        conditions.append(BindingCondition());
+        BindingCondition &cond = conditions.last();
+        if(!B_ParseBindingCondition(cond, Str_Text(str)))
+        {
+            throw ConfigureError("CommandBinding::configure", "Descriptor parse error");
+        }
+    }
+
+    if(assignNewId)
+    {
+        def().set("id", newIdentifier());
+    }
+}
+
+/**
  * Substitute placeholders in a command string. Placeholders consist of two characters,
  * the first being a %. Use %% to output a plain % character.
  *

@@ -44,7 +44,6 @@
 #include "CommandBinding"
 #include "ImpulseBinding"
 #include "ui/ddevent.h"
-#include "ui/b_main.h"
 #include "ui/b_util.h"
 #include "ui/clientwindow.h"
 #include "ui/clientwindowsystem.h"
@@ -307,8 +306,6 @@ DENG2_PIMPL(InputSystem)
     typedef QList<BindContext *> BindContexts;
     BindContexts contexts;  ///< Ordered from highest to lowest priority.
 
-    int bindingIdCounter = 0;
-
     Instance(Public *i) : Base(i)
     {
         // Initialize settings.
@@ -337,22 +334,6 @@ DENG2_PIMPL(InputSystem)
 
         // Shutdown system APIs.
         I_ShutdownInterfaces();
-    }
-
-    void resetIdentifiers()
-    {
-        bindingIdCounter = 0;
-    }
-
-    /// @return  Never returns zero, as that is reserved for list roots.
-    int newIdentifier()
-    {
-        int id = 0;
-        while(!id)
-        {
-            id = ++bindingIdCounter;
-        }
-        return id;
     }
 
     void clearAllDevices()
@@ -1307,7 +1288,7 @@ void InputSystem::clearAllContexts()
     d->contexts.clear();
 
     // We can restart the id counter, all the old bindings were removed.
-    d->resetIdentifiers();
+    Binding::resetIdentifiers();
 }
 
 int InputSystem::contextCount() const
@@ -1475,325 +1456,6 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
     return context->bindImpulse(ctrlDesc, *impulse, localPlayer);
 }
 
-/**
- * Parse the main part of the event descriptor, with no conditions included.
- */
-static bool configure(CommandBinding &bind, char const *eventDesc, char const *command)
-{
-    DENG2_ASSERT(eventDesc);
-    //InputSystem &isys = ClientApp::inputSystem();
-
-    bind.resetToDefaults();
-    // Take a copy of the command string.
-    bind.def().set("command", String(command));
-
-    // Parse the event descriptor.
-    AutoStr *str = AutoStr_NewStd();
-
-    // First, we expect to encounter a device name.
-    eventDesc = Str_CopyDelim(str, eventDesc, '-');
-    if(!Str_CompareIgnoreCase(str, "key"))
-    {
-        bind.def().set("deviceId", IDEV_KEYBOARD);
-        bind.def().set("type", int(E_TOGGLE)); // Keyboards only have toggles (as far as we know).
-
-        // Parse the key.
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        int controlId = 0;
-        bool ok = B_ParseKeyId(controlId, Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("controlId", controlId);
-
-        // The final part of a key event is the state of the key toggle.
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
-        ok = B_ParseButtonState(test, Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("test", int(test));
-    }
-    else if(!Str_CompareIgnoreCase(str, "mouse"))
-    {
-        bind.def().set("deviceId", IDEV_MOUSE);
-
-        // Next comes a button or axis name.
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        ddeventtype_t type = E_TOGGLE;
-        int controlId = 0;
-        bool ok = B_ParseMouseTypeAndId(type, controlId, Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("type", type);
-        bind.def().set("controlId", controlId);
-
-        // The last part determines the toggle state or the axis position.
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        switch(bind.geti("type"))
-        {
-        case E_TOGGLE: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
-            ok = B_ParseButtonState(test, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("test", int(test));
-            break; }
-
-        case E_AXIS: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
-            float pos;
-            ok = B_ParseAxisPosition(test, pos, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("test", int(test));
-            bind.def().set("pos", pos);
-            break; }
-
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type"); break;
-        }
-    }
-    else if(!Str_CompareIgnoreCase(str, "joy") ||
-            !Str_CompareIgnoreCase(str, "head"))
-    {
-        bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
-
-        // Next part defined button, axis, or hat.
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        ddeventtype_t type = E_TOGGLE;
-        int controlId = 0;
-        bool ok = B_ParseJoystickTypeAndId(type, controlId, bind.geti("deviceId"), Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("type", type);
-        bind.def().set("controlId", controlId);
-
-        // What is the state of the toggle, axis, or hat?
-        eventDesc = Str_CopyDelim(str, eventDesc, '-');
-        switch(bind.geti("type"))
-        {
-        case E_TOGGLE: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
-            ok = B_ParseButtonState(test, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("test", int(test));
-            break; }
-
-        case E_AXIS: {
-            BindingCondition::ControlTest test = BindingCondition::ControlTest::None;
-            float pos;
-            ok = B_ParseAxisPosition(test, pos, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("test", int(test));
-            bind.def().set("pos", pos);
-            break; }
-
-        case E_ANGLE: {
-            float pos;
-            ok = B_ParseHatAngle(pos, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("pos", pos);
-            break; }
-
-        default: DENG2_ASSERT(!"InputSystem::configure: Invalid bind.type") break;
-        }
-    }
-    else if(!Str_CompareIgnoreCase(str, "sym"))
-    {
-        // A symbolic event.
-        bind.def().set("type", int(E_SYMBOLIC));
-        bind.def().set("deviceId", -1);
-        bind.def().set("symbolicName", eventDesc);
-
-        eventDesc = nullptr;
-    }
-    else
-    {
-        LOG_INPUT_WARNING("Unknown device \"%s\"") << Str_Text(str);
-        return false;
-    }
-
-    // Anything left that wasn't used?
-    if(eventDesc)
-    {
-        LOG_INPUT_WARNING("Unrecognized \"%s\"") << eventDesc;
-        return false;
-    }
-
-    // No errors detected.
-    return true;
-}
-
-static bool configure(ImpulseBinding &bind, char const *ctrlDesc, int impulseId, int localPlayer)
-{
-    DENG2_ASSERT(ctrlDesc);
-    //InputSystem &isys = ClientApp::inputSystem();
-
-    bind.resetToDefaults();
-    bind.def().set("impulseId", impulseId);
-    bind.def().set("localPlayer", localPlayer);
-
-    // Parse the control descriptor.
-    AutoStr *str = AutoStr_NewStd();
-
-    // First, the device name.
-    ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-    if(!Str_CompareIgnoreCase(str, "key"))
-    {
-        bind.def().set("deviceId", IDEV_KEYBOARD);
-        bind.def().set("type", int(IBD_TOGGLE));
-
-        // Next part defined button.
-        ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-
-        int keyId;
-        bool ok = B_ParseKeyId(keyId, Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("controlId", keyId);
-    }
-    else if(!Str_CompareIgnoreCase(str, "mouse"))
-    {
-        bind.def().set("deviceId", IDEV_MOUSE);
-
-        ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-
-        ddeventtype_t type;
-        int controlId = 0;
-        bool ok = B_ParseMouseTypeAndId(type, controlId, Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("controlId", controlId);
-        bind.def().set("type", int(EVTYPE_TO_IBDTYPE(type)));
-    }
-    else if(!Str_CompareIgnoreCase(str, "joy") ||
-            !Str_CompareIgnoreCase(str, "head"))
-    {
-        bind.def().set("deviceId", (!Str_CompareIgnoreCase(str, "joy")? IDEV_JOY1 : IDEV_HEAD_TRACKER));
-
-        // Next part defined button, axis, or hat.
-        ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-
-        ddeventtype_t type;
-        int controlId = 0;
-        bool ok = B_ParseJoystickTypeAndId(type, controlId, bind.geti("deviceId"), Str_Text(str));
-        if(!ok) return false;
-
-        bind.def().set("controlId", controlId);
-        bind.def().set("type", int(EVTYPE_TO_IBDTYPE(type)));
-
-        // Hats include the angle.
-        if(type == E_ANGLE)
-        {
-            ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-
-            float angle;
-            ok = B_ParseHatAngle(angle, Str_Text(str));
-            if(!ok) return false;
-
-            bind.def().set("angle", angle);
-        }
-    }
-
-    // Finally, there may be some flags at the end.
-    while(ctrlDesc)
-    {
-        ctrlDesc = Str_CopyDelim(str, ctrlDesc, '-');
-        if(!Str_CompareIgnoreCase(str, "inverse"))
-        {
-            bind.def().set("flags", bind.geti("flags") | IBDF_INVERSE);
-        }
-        else if(!Str_CompareIgnoreCase(str, "staged"))
-        {
-            bind.def().set("flags", bind.geti("flags") | IBDF_TIME_STAGED);
-        }
-        else
-        {
-            LOG_INPUT_WARNING("Unrecognized \"%s\"") << ctrlDesc;
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void InputSystem::configureCommandBinding(Record &rec, char const *eventDesc,
-    char const *command, bool assignNewId)
-{
-    DENG2_ASSERT(eventDesc);
-    LOG_AS("InputSystem");
-
-    // The first part specifies the event condition.
-    AutoStr *str = AutoStr_NewStd();
-    eventDesc = Str_CopyDelim(str, eventDesc, '+');
-
-    CommandBinding bind(rec);
-    if(!configure(bind, Str_Text(str), command))
-    {
-        throw ConfigureError("InputSystem::configureCommandBinding", "Descriptor parse error");
-    }
-
-    // Any conditions?
-    bind.conditions.clear();
-    while(eventDesc)
-    {
-        // A new condition.
-        eventDesc = Str_CopyDelim(str, eventDesc, '+');
-
-        bind.conditions.append(BindingCondition());
-        BindingCondition &cond = bind.conditions.last();
-        if(!B_ParseBindingCondition(cond, Str_Text(str)))
-        {
-            throw ConfigureError("InputSystem::configureCommandBinding", "Descriptor parse error");
-        }
-    }
-
-    if(assignNewId)
-    {
-        bind.def().set("id", d->newIdentifier());
-    }
-}
-
-void InputSystem::configureImpulseBinding(Record &rec, char const *ctrlDesc, int impulseId,
-    int localPlayer, bool assignNewId)
-{
-    DENG2_ASSERT(ctrlDesc);
-    DENG2_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
-    LOG_AS("InputSystem");
-
-    // The first part specifies the device-control condition.
-    AutoStr *str = AutoStr_NewStd();
-    ctrlDesc = Str_CopyDelim(str, ctrlDesc, '+');
-
-    ImpulseBinding bind(rec);
-    if(!configure(bind, Str_Text(str), impulseId, localPlayer))
-    {
-        throw ConfigureError("InputSystem::configureImpulseBinding", "Descriptor parse error");
-    }
-
-    // Any conditions?
-    bind.conditions.clear();
-    while(ctrlDesc)
-    {
-        // A new condition.
-        ctrlDesc = Str_CopyDelim(str, ctrlDesc, '+');
-
-        bind.conditions.append(BindingCondition());
-        BindingCondition &cond = bind.conditions.last();
-        if(!B_ParseBindingCondition(cond, Str_Text(str)))
-        {
-            throw ConfigureError("InputSystem::configureImpulseBinding", "Descriptor parse error");
-        }
-    }
-
-    if(assignNewId)
-    {
-        bind.def().set("id", d->newIdentifier());
-    }
-}
-
 bool InputSystem::removeBinding(int id)
 {
     LOG_AS("InputSystem");
@@ -1812,7 +1474,7 @@ void InputSystem::removeAllBindings()
     };
 
     // We can restart the id counter, all the old bindings were removed.
-    d->resetIdentifiers();
+    Binding::resetIdentifiers();
 }
 
 D_CMD(ListDevices)

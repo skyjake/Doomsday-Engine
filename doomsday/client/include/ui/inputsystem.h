@@ -167,9 +167,6 @@ public:
 
 public: // Binding (context) management --------------------------------------
 
-    /// Base class for binding configuration errors. @ingroup errors
-    DENG2_ERROR(ConfigureError);
-
     /// Required/referenced binding context is missing. @ingroup errors
     DENG2_ERROR(MissingContextError);
 
@@ -262,42 +259,6 @@ public: // Binding (context) management --------------------------------------
      * Returns the total number of binding contexts in the system.
      */
     int contextCount() const;
-
-    // ---
-
-    /**
-     * Parse an event => command trigger descriptor and configure the given @a binding.
-     *
-     * eventparams{+cond}*
-     *
-     * @param binding      Command binding Record to configure.
-     * @param eventDesc    Descriptor for event information and any additional conditions.
-     * @param command      Console command to execute when triggered, if any.
-     * @param assignNewId  @c true= assign a new unique identifier.
-     *
-     * @throws ConfigureError on failure. At which point @a binding should be considered
-     * to be in an undefined state. The caller may choose to clear and then reconfigure
-     * it using another descriptor.
-     */
-    void configureCommandBinding(de::Record &binding, char const *eventDesc,
-        char const *command = nullptr, bool assignNewId = true);
-
-    /**
-     * Parse a device-control => player impulse trigger descriptor and configure the given
-     * @a binding.
-     *
-     * @param binding      Impulse binding Record to configure.
-     * @param ctrlDesc     Descriptor for control information and any additional conditions.
-     * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
-     * @param localPlayer  Local player number to execute the impulse for when triggered.
-     * @param assignNewId  @c true= assign a new unique identifier.
-     *
-     * @throws ConfigureError on failure. At which point @a binding should be considered
-     * to be in an undefined state. The caller may choose to clear and then reconfigure
-     * it using another descriptor.
-     */
-    void configureImpulseBinding(de::Record &binding, char const *ctrlDesc,
-        int impulseId, int localPlayer, bool assignNewId = true);
 
 public:
     /**

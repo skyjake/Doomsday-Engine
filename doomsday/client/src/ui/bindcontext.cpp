@@ -32,11 +32,6 @@
 
 using namespace de;
 
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-
 DENG2_PIMPL(BindContext)
 {
     bool active  = false;  ///< @c true= Bindings are active.
@@ -63,10 +58,10 @@ DENG2_PIMPL(BindContext)
      * Look through the context for a binding that matches either of @a matchCmd or
      * @a matchImp.
      *
-     * @param matchCmd   CommandBinding record to match, if any.
-     * @param matchImp   ImpulseBinding record to match, if any.
-     * @param cmdResult  The address of any matching CommandBinding is written here.
-     * @param impResult  The address of any matching ImpulseBinding is written here.
+     * @param matchCmd   Command binding record to match, if any.
+     * @param matchImp   Impulse binding record to match, if any.
+     * @param cmdResult  The address of any matching command binding is written here.
+     * @param impResult  The address of any matching impulse binding is written here.
      *
      * @return  @c true if a match is found.
      */
@@ -150,7 +145,7 @@ DENG2_PIMPL(BindContext)
     }
 
     /**
-     * Delete all other bindings matching either @a commandBind or @a impulseBind.
+     * Delete all other bindings matching either @a cmdBinding or @a impBinding.
      */
     void deleteMatching(Record const *cmdBinding, Record const *impBinding)
     {
@@ -293,25 +288,25 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
     try
     {
         std::unique_ptr<Record> newBind(new Record);
-        inputSys().configureCommandBinding(*newBind, eventDesc, command);
+        CommandBinding bind(*newBind.get());
 
-        Record *bind = newBind.get();
+        bind.configure(eventDesc, command); // Assign a new unique identifier.
         d->commandBinds.prepend(newBind.release());
 
         LOG_INPUT_VERBOSE("Command " _E(b) "\"%s\"" _E(.) " now bound to " _E(b) "\"%s\"" _E(.) " in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
-                << command << eventDesc << d->name << bind->geti("id");
+                << command << eventDesc << d->name << bind.geti("id");
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
-        d->deleteMatching(bind, nullptr);
+        d->deleteMatching(&bind.def(), nullptr);
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, *bind, true/*is-command*/);
+        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
 
-        return bind;
+        return &bind.def();
     }
-    catch(InputSystem::ConfigureError const &)
+    catch(Binding::ConfigureError const &)
     {}
     return nullptr;
 }
@@ -325,25 +320,25 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
     try
     {
         std::unique_ptr<Record> newBind(new Record);
-        inputSys().configureImpulseBinding(*newBind, ctrlDesc, impulse.id(), localPlayer);
+        ImpulseBinding bind(*newBind.get());
 
-        Record *bind = newBind.get();
+        bind.configure(ctrlDesc, impulse.id(), localPlayer); // Assign a new unique identifier.
         d->impulseBinds[localPlayer].append(newBind.release());
 
         LOG_INPUT_VERBOSE("Impulse " _E(b) "'%s'" _E(.) " of player%i now bound to \"%s\" in " _E(b) "'%s'" _E(.)
                           " with binding Id " _E(b) "%i")
-                << impulse.name() << (localPlayer + 1) << ctrlDesc << d->name << bind->geti("id");
+                << impulse.name() << (localPlayer + 1) << ctrlDesc << d->name << bind.geti("id");
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
-        d->deleteMatching(nullptr, bind);
+        d->deleteMatching(nullptr, &bind.def());
 
         // Notify interested parties.
-        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, *bind, false/*is-impulse*/);
+        DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
 
-        return bind;
+        return &bind.def();
     }
-    catch(InputSystem::ConfigureError const &)
+    catch(Binding::ConfigureError const &)
     {}
     return nullptr;
 }

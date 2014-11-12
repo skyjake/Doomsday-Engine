@@ -21,6 +21,7 @@
 #define CLIENT_INPUTSYSTEM_BINDING_H
 
 #include <QVector>
+#include <de/Error>
 #include <de/RecordAccessor>
 
 /**
@@ -75,6 +76,9 @@ public:
     typedef QVector<Condition> Conditions;
     Conditions conditions;         ///< Additional conditions.
 
+    /// Base class for binding configuration errors. @ingroup errors
+    DENG2_ERROR(ConfigureError);
+
 public:
     Binding()                     : RecordAccessor(0) {}
     Binding(Binding const &other) : RecordAccessor(other) {}
@@ -111,6 +115,17 @@ public:
      * Compare the binding conditions with @a other and return @c true if equivalent.
      */
     bool equalConditions(Binding const &other) const;
+
+public:
+    /**
+     * Returns a new unique identifier. Never returns zero (not a valid Id).
+     */
+    static int newIdentifier();
+
+    /**
+     * Reset the unique identifier allocator, so that the next Id is @c 1.
+     */
+    static void resetIdentifiers();
 };
 
 typedef Binding::Condition BindingCondition;

@@ -22,6 +22,8 @@
 
 using namespace de;
 
+static int idCounter = 0;
+
 Record &Binding::def()
 {
     return const_cast<Record &>(accessedRecord());
@@ -57,4 +59,16 @@ bool Binding::equalConditions(Binding const &other) const
     }
 
     return true;
+}
+
+void Binding::resetIdentifiers() // static
+{
+    idCounter = 0;
+}
+
+int Binding::newIdentifier() // static
+{
+    int id = 0;
+    while(!id) { id = ++idCounter; }
+    return id;
 }

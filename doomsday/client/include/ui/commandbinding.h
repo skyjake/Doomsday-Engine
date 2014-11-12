@@ -50,6 +50,21 @@ public:
     de::String composeDescriptor();
 
     /**
+     * Parse an event => command trigger descriptor and configure the given @a binding.
+     *
+     * eventparams{+cond}*
+     *
+     * @param eventDesc    Descriptor for event information and any additional conditions.
+     * @param command      Console command to execute when triggered, if any.
+     * @param assignNewId  @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
+     */
+    void configure(char const *eventDesc, char const *command = nullptr, bool assignNewId = true);
+
+    /**
      * Evaluate the given @a event according to the binding configuration, and if all
      * binding conditions pass - attempt to generate an Action.
      *

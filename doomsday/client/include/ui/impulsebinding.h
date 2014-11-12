@@ -60,6 +60,21 @@ public:
     void resetToDefaults();
 
     de::String composeDescriptor();
+
+    /**
+     * Parse a device-control => player impulse trigger descriptor and configure the given
+     * @a binding.
+     *
+     * @param ctrlDesc     Descriptor for control information and any additional conditions.
+     * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
+     * @param localPlayer  Local player number to execute the impulse for when triggered.
+     * @param assignNewId  @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
+     */
+    void configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId = true);
 };
 
 #endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
