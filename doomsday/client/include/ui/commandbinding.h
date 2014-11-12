@@ -50,7 +50,7 @@ public:
     de::String composeDescriptor();
 
     /**
-     * Parse an event => command trigger descriptor and configure the given @a binding.
+     * Parse an event => command trigger descriptor and (re)configure the binding.
      *
      * eventparams{+cond}*
      *

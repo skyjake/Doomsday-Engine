@@ -62,8 +62,8 @@ public:
     de::String composeDescriptor();
 
     /**
-     * Parse a device-control => player impulse trigger descriptor and configure the given
-     * @a binding.
+     * Parse a device-control => player impulse trigger descriptor and (re)configure the
+     * binding.
      *
      * @param ctrlDesc     Descriptor for control information and any additional conditions.
      * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
