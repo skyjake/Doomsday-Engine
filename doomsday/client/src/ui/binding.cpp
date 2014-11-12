@@ -16,7 +16,9 @@
  * General Public License along with this program; if not, see:
  * http://www.gnu.org/licenses</small>
  */
+
 #include "ui/binding.h"
+#include "ui/b_util.h" // B_EqualConditions
 
 using namespace de;
 
@@ -33,4 +35,26 @@ Record const &Binding::def() const
 Binding::operator bool() const
 {
     return accessedRecordPtr() != 0;
+}
+
+bool Binding::equalConditions(Binding const &other) const
+{
+    // Quick test (assumes there are no duplicated conditions).
+    if(conditions.count() != other.conditions.count()) return false;
+
+    for(BindingCondition const &a : conditions)
+    {
+        bool found = false;
+        for(BindingCondition const &b : other.conditions)
+        {
+            if(B_EqualConditions(a, b))
+            {
+                found = true;
+                break;
+            }
+        }
+        if(!found) return false;
+    }
+
+    return true;
 }

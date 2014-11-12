@@ -106,6 +106,11 @@ public:
      * Generates a textual descriptor for the binding, including any state conditions.
      */
     virtual de::String composeDescriptor() = 0;
+
+    /**
+     * Compare the binding conditions with @a other and return @c true if equivalent.
+     */
+    bool equalConditions(Binding const &other) const;
 };
 
 typedef Binding::Condition BindingCondition;

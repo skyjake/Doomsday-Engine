@@ -121,25 +121,6 @@ public: // Binding management: -------------------------------------------------
      */
     bool deleteBinding(int id);
 
-    /**
-     * Delete all other bindings matching either @a commandBind or @a impulseBind.
-     */
-    void deleteMatching(de::Record const *commandBind, de::Record const *impulseBind);
-
-    /**
-     * Look through the context for a binding that matches either of @a matchCmd or
-     * @a matchImp.
-     *
-     * @param matchCmd   CommandBinding record to match, if any.
-     * @param matchImp   ImpulseBinding record to match, if any.
-     * @param cmdResult  The address of any matching CommandBinding is written here.
-     * @param impResult  The address of any matching ImpulseBinding is written here.
-     *
-     * @return  @c true if a match is found.
-     */
-    bool findMatchingBinding(de::Record const *matchCmd, de::Record const *matchImp,
-                             de::Record **cmdResult, de::Record **impResult) const;
-
     // Commands ---------------------------------------------------------------------
 
     de::Record *bindCommand(char const *eventDesc, char const *command);

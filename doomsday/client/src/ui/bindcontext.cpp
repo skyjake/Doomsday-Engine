@@ -1,4 +1,4 @@
-/** @file bindcontext.cpp  Input system binding contexts.
+/** @file bindcontext.cpp  Input system, binding context.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -27,7 +27,6 @@
 
 #include "CommandBinding"
 #include "ImpulseBinding"
-#include "ui/b_util.h" // B_EqualConditions
 #include "ui/inputdevice.h"
 #include "ui/playerimpulse.h"
 
@@ -59,6 +58,117 @@ DENG2_PIMPL(BindContext)
     FallbackResponderFunc fallbackResponder     = nullptr;
 
     Instance(Public *i) : Base(i) {}
+
+    /**
+     * Look through the context for a binding that matches either of @a matchCmd or
+     * @a matchImp.
+     *
+     * @param matchCmd   CommandBinding record to match, if any.
+     * @param matchImp   ImpulseBinding record to match, if any.
+     * @param cmdResult  The address of any matching CommandBinding is written here.
+     * @param impResult  The address of any matching ImpulseBinding is written here.
+     *
+     * @return  @c true if a match is found.
+     */
+    bool findMatchingBinding(Record const *matchCmdRec, Record const *matchImpRec,
+        Record **cmdResult, Record **impResult) const
+    {
+        DENG2_ASSERT(cmdResult && impResult);
+
+        *cmdResult = nullptr;
+        *impResult = nullptr;
+
+        if(!matchCmdRec && !matchImpRec) return false;
+
+        CommandBinding matchCmd;
+        if(matchCmdRec) matchCmd = matchCmdRec;
+
+        ImpulseBinding matchImp;
+        if(matchImpRec) matchImp = matchImpRec;
+
+        for(Record const *rec : commandBinds)
+        {
+            CommandBinding bind(*rec);
+
+            if(matchCmd && matchCmd.geti("id") != rec->geti("id"))
+            {
+                if(matchCmd.geti("type")      == bind.geti("type") &&
+                   matchCmd.geti("test")      == bind.geti("test") &&
+                   matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
+                   matchCmd.geti("controlId") == bind.geti("controlId") &&
+                   matchCmd.equalConditions(bind))
+                {
+                    *cmdResult = const_cast<Record *>(rec);
+                    return true;
+                }
+            }
+            if(matchImp)
+            {
+                if(matchImp.geti("type")      == bind.geti("type") &&
+                   matchImp.geti("deviceId")  == bind.geti("deviceId") &&
+                   matchImp.geti("controlId") == bind.geti("controlId") &&
+                   matchImp.equalConditions(bind))
+                {
+                    *cmdResult = const_cast<Record *>(rec);
+                    return true;
+                }
+            }
+        }
+
+        for(int i = 0; i < DDMAXPLAYERS; ++i)
+        for(Record const *rec : impulseBinds[i])
+        {
+            ImpulseBinding bind(*rec);
+
+            if(matchCmd)
+            {
+                if(matchCmd.geti("type")      == bind.geti("type") &&
+                   matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
+                   matchCmd.geti("controlId") == bind.geti("controlId") &&
+                   matchCmd.equalConditions(bind))
+                {
+                    *impResult = const_cast<Record *>(rec);
+                    return true;
+                }
+            }
+
+            if(matchImp && matchImp.geti("id") != bind.geti("id"))
+            {
+                if(matchImp.geti("type")      == bind.geti("type") &&
+                   matchImp.geti("deviceId")  == bind.geti("deviceId") &&
+                   matchImp.geti("controlId") == bind.geti("controlId") &&
+                   matchImp.equalConditions(bind))
+                {
+                    *impResult = const_cast<Record *>(rec);
+                    return true;
+                }
+            }
+        }
+
+        // Nothing found.
+        return false;
+    }
+
+    /**
+     * Delete all other bindings matching either @a commandBind or @a impulseBind.
+     */
+    void deleteMatching(Record const *cmdBinding, Record const *impBinding)
+    {
+        Record *foundCmd = nullptr;
+        Record *foundImp = nullptr;
+
+        while(findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
+        {
+            // Only either foundCmd or foundImp is returned as non-NULL.
+            int bindId = (foundCmd? foundCmd->geti("id") : (foundImp? foundImp->geti("id") : 0));
+            if(bindId)
+            {
+                LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
+                        << bindId << (cmdBinding? cmdBinding->geti("id") : impBinding->geti("id"));
+                self.deleteBinding(bindId);
+            }
+        }
+    }
 
     DENG2_PIMPL_AUDIENCE(ActiveChange)
     DENG2_PIMPL_AUDIENCE(AcquireDeviceChange)
@@ -176,24 +286,6 @@ void BindContext::clearAllBindings()
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
 }
 
-void BindContext::deleteMatching(Record const *cmdBinding, Record const *impBinding)
-{
-    Record *foundCmd = nullptr;
-    Record *foundImp = nullptr;
-
-    while(findMatchingBinding(cmdBinding, impBinding, &foundCmd, &foundImp))
-    {
-        // Only either foundCmd or foundImp is returned as non-NULL.
-        int bindId = (foundCmd? foundCmd->geti("id") : (foundImp? foundImp->geti("id") : 0));
-        if(bindId)
-        {
-            LOG_INPUT_VERBOSE("Deleting binding %i, it has been overridden by binding %i")
-                    << bindId << (cmdBinding? cmdBinding->geti("id") : impBinding->geti("id"));
-            deleteBinding(bindId);
-        }
-    }
-}
-
 Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 {
     DENG2_ASSERT(eventDesc && command && command[0]);
@@ -212,7 +304,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
-        deleteMatching(bind, nullptr);
+        d->deleteMatching(bind, nullptr);
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, *bind, true/*is-command*/);
@@ -244,7 +336,7 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
 
         /// @todo: In interactive binding mode, should ask the user if the
         /// replacement is ok. For now, just delete the other bindings.
-        deleteMatching(nullptr, bind);
+        d->deleteMatching(nullptr, bind);
 
         // Notify interested parties.
         DENG2_FOR_AUDIENCE2(BindingAddition, i) i->bindContextBindingAdded(*this, *bind, false/*is-impulse*/);
@@ -359,108 +451,6 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
         }
     }
 
-    return false;
-}
-
-static bool conditionsAreEqual(QVector<BindingCondition> const &conds1,
-                               QVector<BindingCondition> const &conds2)
-{
-    // Quick test (assumes there are no duplicated conditions).
-    if(conds1.count() != conds2.count()) return false;
-
-    for(BindingCondition const &a : conds1)
-    {
-        bool found = false;
-        for(BindingCondition const &b : conds2)
-        {
-            if(B_EqualConditions(a, b))
-            {
-                found = true;
-                break;
-            }
-        }
-        if(!found) return false;
-    }
-
-    return true;
-}
-
-bool BindContext::findMatchingBinding(Record const *matchCmdRec, Record const *matchImpRec,
-    Record **cmdResult, Record **impResult) const
-{
-    DENG2_ASSERT(cmdResult && impResult);
-
-    *cmdResult = nullptr;
-    *impResult = nullptr;
-
-    if(!matchCmdRec && !matchImpRec) return false;
-
-    CommandBinding matchCmd;
-    if(matchCmdRec) matchCmd = matchCmdRec;
-
-    ImpulseBinding matchImp;
-    if(matchImpRec) matchImp = matchImpRec;
-
-    for(Record const *rec : d->commandBinds)
-    {
-        CommandBinding bind(*rec);
-
-        if(matchCmd && matchCmd.geti("id") != rec->geti("id"))
-        {
-            if(matchCmd.geti("type")      == bind.geti("type") &&
-               matchCmd.geti("test")      == bind.geti("test") &&
-               matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
-               matchCmd.geti("controlId") == bind.geti("controlId") &&
-               conditionsAreEqual(matchCmd.conditions, bind.conditions))
-            {
-                *cmdResult = const_cast<Record *>(rec);
-                return true;
-            }
-        }
-        if(matchImp)
-        {
-            if(matchImp.geti("type")      == bind.geti("type") &&
-               matchImp.geti("deviceId")  == bind.geti("deviceId") &&
-               matchImp.geti("controlId") == bind.geti("controlId") &&
-               conditionsAreEqual(matchImp.conditions, bind.conditions))
-            {
-                *cmdResult = const_cast<Record *>(rec);
-                return true;
-            }
-        }
-    }
-
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(Record const *rec : d->impulseBinds[i])
-    {
-        ImpulseBinding bind(*rec);
-
-        if(matchCmd)
-        {
-            if(matchCmd.geti("type")      == bind.geti("type") &&
-               matchCmd.geti("deviceId")  == bind.geti("deviceId") &&
-               matchCmd.geti("controlId") == bind.geti("controlId") &&
-               conditionsAreEqual(matchCmd.conditions, bind.conditions))
-            {
-                *impResult = const_cast<Record *>(rec);
-                return true;
-            }
-        }
-
-        if(matchImp && matchImp.geti("id") != bind.geti("id"))
-        {
-            if(matchImp.geti("type")      == bind.geti("type") &&
-               matchImp.geti("deviceId")  == bind.geti("deviceId") &&
-               matchImp.geti("controlId") == bind.geti("controlId") &&
-               conditionsAreEqual(matchImp.conditions, bind.conditions))
-            {
-                *impResult = const_cast<Record *>(rec);
-                return true;
-            }
-        }
-    }
-
-    // Nothing found.
     return false;
 }
 
