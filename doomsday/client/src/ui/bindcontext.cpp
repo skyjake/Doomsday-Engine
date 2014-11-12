@@ -25,10 +25,9 @@
 #include <de/Log>
 #include "clientapp.h"
 
-#include "CommandAction"
 #include "CommandBinding"
 #include "ImpulseBinding"
-#include "ui/b_util.h"
+#include "ui/b_util.h" // B_EqualConditions
 #include "ui/inputdevice.h"
 #include "ui/playerimpulse.h"
 
