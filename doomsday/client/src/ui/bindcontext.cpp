@@ -22,11 +22,8 @@
 #include <QList>
 #include <QSet>
 #include <QtAlgorithms>
-#include <de/Action>
 #include <de/Log>
 #include "clientapp.h"
-
-#include "world/p_players.h" // P_ConsoleToLocal
 
 #include "CommandAction"
 #include "CommandBinding"
@@ -34,12 +31,6 @@
 #include "ui/b_util.h"
 #include "ui/inputdevice.h"
 #include "ui/playerimpulse.h"
-
-/// @todo: remove
-#include "ui/inputdeviceaxiscontrol.h"
-#include "ui/inputdevicebuttoncontrol.h"
-#include "ui/inputdevicehatcontrol.h"
-// todo ends
 
 using namespace de;
 
@@ -330,192 +321,6 @@ bool BindContext::deleteBinding(int id)
     return false;
 }
 
-/**
- * Substitute placeholders in a command string. Placeholders consist of two characters,
- * the first being a %. Use %% to output a plain % character.
- *
- * - <code>%i</code>: id member of the event
- * - <code>%p</code>: (symbolic events only) local player number
- *
- * @param command  Original command string with the placeholders.
- * @param event    Event data.
- * @param out      String with placeholders replaced.
- */
-static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
-{
-    DENG2_ASSERT(out);
-    Block const str = command.toUtf8();
-    for(char const *ptr = str.constData(); *ptr; ptr++)
-    {
-        if(*ptr == '%')
-        {
-            // Escape.
-            ptr++;
-
-            // Must have another character in the placeholder.
-            if(!*ptr) break;
-
-            if(*ptr == 'i')
-            {
-                int id = 0;
-                switch(event.type)
-                {
-                case E_TOGGLE:   id = event.toggle.id;   break;
-                case E_AXIS:     id = event.axis.id;     break;
-                case E_ANGLE:    id = event.angle.id;    break;
-                case E_SYMBOLIC: id = event.symbolic.id; break;
-
-                default: break;
-                }
-                Str_Appendf(out, "%i", id);
-            }
-            else if(*ptr == 'p')
-            {
-                int id = 0;
-                if(event.type == E_SYMBOLIC)
-                {
-                    id = P_ConsoleToLocal(event.symbolic.id);
-                }
-                Str_Appendf(out, "%i", id);
-            }
-            else if(*ptr == '%')
-            {
-                Str_AppendChar(out, *ptr);
-            }
-            continue;
-        }
-
-        Str_AppendChar(out, *ptr);
-    }
-}
-
-/**
- * Evaluate the given binding and event pair and attempt to generate an Action.
- *
- * @param context                Context in which @a bind exists.
- * @param bind                   Binding to match against.
- * @param event                  Event to match against.
- * @param respectHigherContexts  Bindings are shadowed by higher active contexts.
- *
- * @return Action instance (caller gets ownership), or @c nullptr if no matching.
- */
-static Action *commandActionFor(BindContext const &context, CommandBinding const &bind,
-    ddevent_t const &event, bool respectHigherContexts)
-{
-    if(bind.geti("type") != event.type)   return nullptr;
-
-    InputDevice const *dev = nullptr;
-    if(event.type != E_SYMBOLIC)
-    {
-        if(bind.geti("deviceId") != event.device) return nullptr;
-
-        dev = inputSys().devicePtr(bind.geti("deviceId"));
-        if(!dev || !dev->isActive())
-        {
-            // The device is not active, there is no way this could get executed.
-            return nullptr;
-        }
-    }
-
-    switch(event.type)
-    {
-    case E_TOGGLE: {
-        if(bind.geti("controlId") != event.toggle.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        InputDeviceButtonControl &button = dev->button(bind.geti("controlId"));
-
-        if(respectHigherContexts)
-        {
-            if(button.bindContext() != &context)
-                return nullptr; // Shadowed by a more important active class.
-        }
-
-        // We're checking it, so clear the triggered flag.
-        button.setBindContextAssociation(InputDeviceControl::Triggered, UnsetFlags);
-
-        // Is the state as required?
-        switch(BindingCondition::ControlTest(bind.geti("test")))
-        {
-        case BindingCondition::ButtonStateAny:
-            // Passes no matter what.
-            break;
-
-        case BindingCondition::ButtonStateDown:
-            if(event.toggle.state != ETOG_DOWN)
-                return nullptr;
-            break;
-
-        case BindingCondition::ButtonStateUp:
-            if(event.toggle.state != ETOG_UP)
-                return nullptr;
-            break;
-
-        case BindingCondition::ButtonStateRepeat:
-            if(event.toggle.state != ETOG_REPEAT)
-                return nullptr;
-            break;
-
-        case BindingCondition::ButtonStateDownOrRepeat:
-            if(event.toggle.state == ETOG_UP)
-                return nullptr;
-            break;
-
-        default: return nullptr;
-        }
-        break; }
-
-    case E_AXIS:
-        if(bind.geti("controlId") != event.axis.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        if(dev->axis(bind.geti("controlId")).bindContext() != &context)
-            return nullptr; // Shadowed by a more important active class.
-
-        // Is the position as required?
-        if(!B_CheckAxisPosition(BindingCondition::ControlTest(bind.geti("test")), bind.getf("pos"),
-                                inputSys().device(event.device).axis(event.axis.id)
-                                    .translateRealPosition(event.axis.pos)))
-            return nullptr;
-        break;
-
-    case E_ANGLE:
-        if(bind.geti("controlId") != event.angle.id)
-            return nullptr;
-
-        DENG2_ASSERT(dev);
-        if(dev->hat(bind.geti("controlId")).bindContext() != &context)
-            return nullptr; // Shadowed by a more important active class.
-
-        // Is the position as required?
-        if(event.angle.pos != bind.getf("pos"))
-            return nullptr;
-        break;
-
-    case E_SYMBOLIC:
-        if(bind.gets("symbolicName").compareWithCase(event.symbolic.name))
-            return nullptr;
-        break;
-
-    default: return nullptr;
-    }
-
-    // Any conditions on the current state of the input devices?
-    for(BindingCondition const &cond : bind.conditions)
-    {
-        if(!B_CheckCondition(&cond, 0, nullptr))
-            return nullptr;
-    }
-
-    // Substitute parameters in the command.
-    AutoStr *command = Str_Reserve(AutoStr_NewStd(), bind.gets("command").length());
-    substituteInCommand(bind.gets("command"), event, command);
-
-    return new CommandAction(Str_Text(command), CMDS_BIND);
-}
-
 bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) const
 {
     LOG_AS("BindContext");
@@ -530,7 +335,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
         for(Record const *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
-            AutoRef<Action> act(commandActionFor(*this, bind, event, respectHigherContexts));
+            AutoRef<Action> act(bind.makeAction(event, *this, respectHigherContexts));
             if(act.get())
             {
                 act->trigger();

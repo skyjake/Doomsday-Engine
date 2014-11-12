@@ -40,7 +40,7 @@ enum ibcontroltype_t
 #define IBDF_TIME_STAGED    0x2
 
 /**
- * Utility for handling event => command binding records.
+ * Utility for handling input-device-control => impulse binding records.
  *
  * @ingroup ui
  */

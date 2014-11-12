@@ -20,9 +20,12 @@
 #ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 #define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 
+#include <de/Action>
 #include <de/String>
 #include "Binding"
 #include "ddevent.h"
+
+class BindContext;
 
 /**
  * Utility for handling event => command binding records.
@@ -45,6 +48,18 @@ public:
     void resetToDefaults();
 
     de::String composeDescriptor();
+
+    /**
+     * Evaluate the given binding and event pair and attempt to generate an Action.
+     *
+     * @param event                  Event to match against.
+     * @param context                Context in which the binding exists.
+     * @param respectHigherContexts  Bindings are shadowed by higher active contexts.
+     *
+     * @return Action instance (caller gets ownership), or @c nullptr if no matching.
+     */
+    de::Action *makeAction(ddevent_t const &event, BindContext const &context,
+                           bool respectHigherContexts) const;
 };
 
 #endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H
