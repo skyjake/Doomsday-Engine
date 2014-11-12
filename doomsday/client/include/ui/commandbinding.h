@@ -50,7 +50,8 @@ public:
     de::String composeDescriptor();
 
     /**
-     * Evaluate the given binding and event pair and attempt to generate an Action.
+     * Evaluate the given @a event according to the binding configuration, and if all
+     * binding conditions pass - attempt to generate an Action.
      *
      * @param event                  Event to match against.
      * @param context                Context in which the binding exists.
