@@ -104,11 +104,20 @@ BaseGuiApp::BaseGuiApp(int &argc, char **argv)
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
+    
+    double dpiFactor = 1.0;
 
 #ifdef DENG2_QT_5_0_OR_NEWER
-    // The device pixel ratio.
-    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", devicePixelRatio());
+    dpiFactor = devicePixelRatio();
 #endif
+
+    // The "-dpi" option overrides the detected DPI factor.
+    if(auto dpi = commandLine().check("-dpi", 1))
+    {
+        dpiFactor = dpi.params.at(0).toDouble();
+    }
+
+    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", dpiFactor);
 
     d->uiState.reset(new PersistentState("UIState"));
 }
