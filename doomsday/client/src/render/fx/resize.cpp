@@ -35,8 +35,8 @@ static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 
 DENG2_PIMPL(Resize)
 {
-    Variable const &pixelDensity;
-    Variable const &resizeFactor;
+    mutable Variable const *pixelDensity = nullptr;
+    mutable Variable const *resizeFactor = nullptr;
 
     GLFramebuffer framebuf;
     Drawable frame;
@@ -45,21 +45,29 @@ DENG2_PIMPL(Resize)
 
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Instance(Public *i)
-        : Base(i)
-        , pixelDensity { App::config("render.pixelDensity") }
-        , resizeFactor { App::config("render.fx.resize.factor") }
-    {}
+    Instance(Public *i) : Base(i) {}
 
     GuiRootWidget &root() const
     {
         return ClientWindow::main().game().root();
     }
 
+    void getConfig() const
+    {
+        if(!pixelDensity)
+        {
+            // Config variables.
+            pixelDensity = &App::config("render.pixelDensity");
+            resizeFactor = &App::config("render.fx.resize.factor");  
+        }
+    }
+
     float factor() const
     {
-        double const rf = (resizeFactor > 0? 1.0 / resizeFactor : 1.0);
-        return FACTOR_RANGE.clamp(pixelDensity * rf);
+        getConfig();
+    
+        double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
+        return FACTOR_RANGE.clamp(*pixelDensity * rf);
     }
 
     /// Determines if the post-processing shader will be applied.
@@ -71,9 +79,9 @@ DENG2_PIMPL(Resize)
 
         return !fequal(factor(), 1.f);
     }
-
+    
     void glInit()
-    {
+    {    
         framebuf.glInit();
 
         uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
