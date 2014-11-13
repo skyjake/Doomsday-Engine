@@ -48,12 +48,18 @@ static int pimpDoubleClickThreshold = 300; ///< Milliseconds, cvar
 DENG2_PIMPL_NOREF(ImpulseAccumulator)
 {
     int impulseId = 0;
+    int playerNum = 0;
     AccumulatorType type = Analog;
     bool expireBeforeSharpTick = false;
 
-    int playerNum = 0;
-
     short binaryAccum = 0;
+
+    inline PlayerImpulse &getImpulse() const
+    {
+        auto *impulse = P_PlayerImpulsePtr(impulseId);
+        DENG2_ASSERT(impulse);
+        return *impulse;
+    }
 
 #ifdef __CLIENT__
     /**
@@ -123,8 +129,7 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
         {
             db.triggered = true;
 
-            PlayerImpulse *impulse = P_PlayerImpulsePtr(impulseId);
-            DENG2_ASSERT(impulse);
+            PlayerImpulse const &impulse = getImpulse();
 
             // Compose the name of the symbolic event.
             String symbolicName;
@@ -135,12 +140,12 @@ DENG2_PIMPL_NOREF(ImpulseAccumulator)
 
             default: break;
             }
-            symbolicName += impulse->name;
+            symbolicName += impulse.name;
 
             int const localPlayer = P_ConsoleToLocal(playerNum);
             DENG2_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s")
-                    << impulse->name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
+                    << impulse.name << (localPlayer + 1) << newState << (nowTime - db.previousClickTime)
                     << symbolicName;
 
             Block symbolicNameUtf8 = symbolicName.toUtf8();
@@ -230,10 +235,7 @@ void ImpulseAccumulator::takeAnalog(float *pos, float *relOffset)
     if(pos) *pos = 0;
     if(relOffset) *relOffset = 0;
 
-    PlayerImpulse *impulse = P_PlayerImpulsePtr(d->impulseId);
-    DENG2_ASSERT(impulse);
-
-    if(BindContext *bindContext = inputSys().contextPtr(impulse->bindContextName))
+    if(BindContext *bindContext = inputSys().contextPtr(d->getImpulse().bindContextName))
     {
         // Impulse bindings are associated with local player numbers rather than
         // the player console number - translate.

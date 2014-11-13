@@ -22,6 +22,9 @@
 #include "world/p_players.h"
 
 #include <QMap>
+#ifdef __CLIENT__
+#  include <QList>
+#endif
 #include <QtAlgorithms>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -270,18 +273,41 @@ PlayerImpulse *P_PlayerImpulseByName(String const &name)
     return nullptr;
 }
 
-/// @todo: Group impulses by binding context.
 D_CMD(ListImpulses)
 {
     DENG2_UNUSED3(argv, argc, src);
-    LOG_MSG(_E(b) "%i player impulses defined:") << impulses.count();
 
-    for(PlayerImpulse const *imp : impulsesByName)
+    // Group the defined impulses by binding context.
+    typedef QList<PlayerImpulse *> ImpulseList;
+    QMap<String, ImpulseList> contextGroups;
+    for(PlayerImpulse *imp : impulsesByName)
     {
-        LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) "(%s) " _E(2) "%s%s")
-                << imp->id << imp->name << imp->bindContextName
-                << (imp->type == IT_BINARY? "binary" : "analog")
-                << (IMPULSETYPE_IS_TRIGGERABLE(imp->type)? ", triggerable" : "");
+        if(!contextGroups.contains(imp->bindContextName))
+        {
+            contextGroups.insert(imp->bindContextName, ImpulseList());
+        }
+        contextGroups[imp->bindContextName].append(imp);
+    }
+
+    LOG_INPUT_MSG(_E(b) "Player impulses");
+    LOG_INPUT_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
+            << impulses.count() << contextGroups.count();
+
+    for(auto const &group : contextGroups)
+    {
+        if(group.isEmpty()) continue;
+
+        LOG_MSG(_E(D)_E(b) "%s" _E(.) " context: " _E(l) "(%i)")
+                << group.first()->bindContextName
+                << group.count();
+
+        for(PlayerImpulse const *imp : group)
+        {
+            LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) _E(2) "%s%s")
+                    << imp->id << imp->name
+                    << (imp->type == IT_BINARY? "binary" : "analog")
+                    << (IMPULSETYPE_IS_TRIGGERABLE(imp->type)? ", triggerable" : "");
+        }
     }
     return true;
 }
@@ -337,16 +363,15 @@ void P_ConsoleRegister()
     C_CMD("impulse",        nullptr,    Impulse);
 
 #ifdef __CLIENT__
-    C_CMD("resetctlaccum", "", ClearImpulseAccumulation);
+    C_CMD("resetctlaccum",  "",         ClearImpulseAccumulation);
 
     ImpulseAccumulator::consoleRegister();
 #endif
 }
 
-#undef DD_GetPlayer
 DENG_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 {
-    return (ddplayer_t *) &ddPlayers[number].shared;
+    return &ddPlayers[number].shared;
 }
 
 // net_main.c
