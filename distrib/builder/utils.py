@@ -181,6 +181,7 @@ def count_word(word, inText):
 def mac_os_version():
     """Determines the Mac OS version."""
     ver = platform.mac_ver()[0]
+    if not ver: return None
     if ver.count('.') == 1: # "10.9"
         return ver
     return ver[:ver.rindex('.')] # "10.9.3"
