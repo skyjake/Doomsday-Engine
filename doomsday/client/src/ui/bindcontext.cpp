@@ -25,7 +25,7 @@
 #include <de/Log>
 #include "clientapp.h"
 
-#include "world/impulseaccumulator.h"
+#include "world/p_players.h"
 
 #include "CommandBinding"
 #include "ImpulseBinding"

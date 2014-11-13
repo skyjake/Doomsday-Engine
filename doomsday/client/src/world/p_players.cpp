@@ -21,10 +21,8 @@
 
 #include "world/p_players.h"
 
+#include <QList>
 #include <QMap>
-#ifdef __CLIENT__
-#  include <QList>
-#endif
 #include <QtAlgorithms>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -102,17 +100,13 @@ static ImpulseAccumulator *accumulator(int impulseId, int playerNum)
     return accumulators[playerNum][impulseId];
 }
 
-/**
- * Determine which console is used by the given local player. Local players
- * are numbered starting from zero.
- */
 int P_LocalToConsole(int localPlayer)
 {
     int count = 0;
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        int console = (i + consolePlayer) % DDMAXPLAYERS;
-        player_t *plr = &ddPlayers[console];
+        int console      = (i + consolePlayer) % DDMAXPLAYERS;
+        player_t *plr    = &ddPlayers[console];
         ddplayer_t *ddpl = &plr->shared;
 
         if(ddpl->flags & DDPF_LOCAL)
@@ -126,10 +120,6 @@ int P_LocalToConsole(int localPlayer)
     return -1;
 }
 
-/**
- * Determine the local player number used by a particular console. Local
- * players are numbered starting from zero.
- */
 int P_ConsoleToLocal(int playerNum)
 {
     int i, count = 0;
@@ -164,9 +154,6 @@ int P_ConsoleToLocal(int playerNum)
     return -1;
 }
 
-/**
- * Given a ptr to ddplayer_t, return it's logical index.
- */
 int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 {
     if(ddpl)
@@ -179,7 +166,7 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
     return -1;
 }
 
-dd_bool P_IsInVoid(player_t *player)
+bool P_IsInVoid(player_t *player)
 {
     if(!player) return false;
     ddplayer_t *ddpl = &player->shared;
@@ -289,8 +276,8 @@ D_CMD(ListImpulses)
         contextGroups[imp->bindContextName].append(imp);
     }
 
-    LOG_INPUT_MSG(_E(b) "Player impulses");
-    LOG_INPUT_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
+    LOG_MSG(_E(b) "Player impulses");
+    LOG_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
             << impulses.count() << contextGroups.count();
 
     for(auto const &group : contextGroups)

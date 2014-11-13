@@ -39,7 +39,6 @@
 
 #include "render/vr.h"
 
-#include "world/impulseaccumulator.h"
 #include "world/p_players.h"
 
 #include "BindContext"

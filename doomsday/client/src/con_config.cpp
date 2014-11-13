@@ -39,7 +39,6 @@
 #ifdef __CLIENT__
 #  include "clientapp.h"
 
-#  include "world/impulseaccumulator.h"
 #  include "world/p_players.h"
 
 #  include "BindContext"

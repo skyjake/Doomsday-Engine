@@ -21,7 +21,6 @@
 #define CLIENT_PLAY_IMPULSEACCUMULATOR_H
 
 #include <de/String>
-#include "api_player.h" // impulsetype_t
 
 /**
  * Receives player interaction impulses and normalizes them for later consumption
@@ -82,19 +81,6 @@ public:
 
 private:
     DENG2_PRIVATE(d)
-};
-
-/**
- * Describes a player interaction impulse.
- *
- * @ingroup playsim
- */
-struct PlayerImpulse
-{
-    int id = 0;
-    impulsetype_t type = IT_ANALOG;
-    de::String name;                ///< Symbolic. Used when resolving or generating textual binding descriptors.
-    de::String bindContextName;     ///< Symbolic name of the associated binding context.
 };
 
 #endif // CLIENT_PLAY_IMPULSEACCUMULATOR_H
