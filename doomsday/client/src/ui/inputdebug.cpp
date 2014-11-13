@@ -17,10 +17,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef DENG2_DEBUG
-
 #include "de_platform.h" // strdup macro
 #include "ui/inputdebug.h"
+
+#ifdef DENG2_DEBUG
 
 #include <de/concurrency.h>
 #include <de/ddstring.h>

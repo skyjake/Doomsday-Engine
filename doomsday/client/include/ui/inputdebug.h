@@ -33,6 +33,7 @@ void I_DebugDrawer();
  */
 void I_DebugDrawerConsoleRegister();
 
-#endif
+#endif // DENG2_DEBUG
 
 #endif // CLIENT_INPUTDEBUG_H
+
