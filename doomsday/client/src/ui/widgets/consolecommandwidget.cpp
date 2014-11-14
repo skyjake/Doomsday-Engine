@@ -17,13 +17,14 @@
  */
 
 #include "ui/widgets/consolecommandwidget.h"
-#include "dd_main.h"
-#include "clientapp.h"
 
+#include <de/App>
+#include <de/KeyEvent>
 #include <doomsday/console/knownword.h>
 #include <doomsday/console/exec.h>
-#include <de/KeyEvent>
-#include <de/App>
+#include "clientapp.h"
+#include "dd_main.h"
+#include "BindContext"
 
 using namespace de;
 
@@ -68,13 +69,13 @@ ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
 void ConsoleCommandWidget::focusGained()
 {
     CommandWidget::focusGained();
-    ClientApp::widgetActions().activateContext("console");
+    ClientApp::inputSystem().context("console").activate();
 }
 
 void ConsoleCommandWidget::focusLost()
 {
     CommandWidget::focusLost();
-    ClientApp::widgetActions().deactivateContext("console");
+    ClientApp::inputSystem().context("console").deactivate();
 }
 
 bool ConsoleCommandWidget::handleEvent(Event const &event)
@@ -84,7 +85,7 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
     if(hasFocus())
     {
         // Console bindings override normal event handling.
-        if(ClientApp::widgetActions().tryEvent(event, "console"))
+        if(ClientApp::inputSystem().tryEvent(event, "console"))
         {
             // Eaten by bindings.
             return true;

@@ -30,7 +30,9 @@ ArrayExpression::ArrayExpression()
 {}
 
 ArrayExpression::~ArrayExpression()
-{}
+{
+    clear();
+}
 
 void ArrayExpression::clear()
 {

@@ -1,8 +1,7 @@
-/** @file joystick_win32.cpp Joystick input for Windows. 
- * @ingroup input
+/** @file joystick_win32.cpp  Joystick input for Windows.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -152,8 +151,11 @@ dd_bool Joystick_Init()
         hr = didJoy->SetProperty(DIPROP_RANGE, DIPropRange(DIPH_BYOFFSET, joyProp[i], IJOY_AXISMIN, IJOY_AXISMAX));
         if(FAILED(hr))
         {
-            LOGDEV_INPUT_VERBOSE("Failed to set axis '%s' range (0x%x: %s)")
-                    << axisName[i] << hr << DirectInput_ErrorMsg(hr);
+            if(hr != DIERR_NOTFOUND)
+            {
+                LOGDEV_INPUT_VERBOSE("Failed to set axis '%s' range (0x%x: %s)")
+                        << axisName[i] << hr << DirectInput_ErrorMsg(hr);
+            }
         }
     }
 
@@ -161,16 +163,22 @@ dd_bool Joystick_Init()
     hr = didJoy->SetProperty(DIPROP_DEADZONE, DIPropDWord(DIPH_DEVICE));
     if(FAILED(hr))
     {
-        LOGDEV_INPUT_WARNING("Failed to set dead zone (0x%x: %s)")
-                << hr << DirectInput_ErrorMsg(hr);
+        if(hr != DIERR_NOTFOUND)
+        {
+            LOGDEV_INPUT_WARNING("Failed to set dead zone (0x%x: %s)")
+                    << hr << DirectInput_ErrorMsg(hr);
+        }
     }
 
     // Set absolute mode.
     hr = didJoy->SetProperty(DIPROP_AXISMODE, DIPropDWord(DIPH_DEVICE, 0, DIPROPAXISMODE_ABS));
     if(FAILED(hr))
     {
-        LOGDEV_INPUT_WARNING("Failed to set absolute axis mode (0x%x: %s)")
-                << hr << DirectInput_ErrorMsg(hr);
+        if(hr != DIERR_NOTFOUND)
+        {
+            LOGDEV_INPUT_WARNING("Failed to set absolute axis mode (0x%x: %s)")
+                    << hr << DirectInput_ErrorMsg(hr);
+        }
     }
 
     // Acquire it.

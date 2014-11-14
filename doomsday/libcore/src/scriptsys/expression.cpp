@@ -30,6 +30,9 @@
 
 using namespace de;
 
+Expression::Expression()
+{}
+
 Expression::~Expression()
 {}
 

@@ -295,6 +295,22 @@ public:
     static dint compareWithCase(QChar const *a, QChar const *b, dsize count);
 
     /**
+     * Checks if two strings are the same (case sensitive), up to @a count characters.
+     * If the strings are longer than @a count, the remainder will be ignored in the
+     * check.
+     *
+     * No deep copying occurs in this method.
+     *
+     * @param a      Null-terminated string.
+     * @param b      Null-terminated string.
+     * @param count  Maximum number of characters to check.
+     *
+     * @return @c true, if the strings are equal (excluding the part that is longer
+     * than @a count).
+     */
+    static bool equals(QChar const *a, QChar const *b, dsize count);
+
+    /**
      * Advances the iterator until a nonspace character is encountered.
      *
      * @param i  Iterator to advance.

@@ -94,11 +94,17 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
         }
     };
 
-    ButtonWidget *title; // not owned
-    GuiWidget *container; ///< Held here while not part of the widget tree.
+    ButtonWidget *title  = nullptr; // not owned
+    GuiWidget *container = nullptr; ///< Held here while not part of the widget tree.
     DialogContentStylist stylist;    
-
-    Instance() : title(0), container(0) {}
+    
+    ~Instance()
+    {
+        stylist.clear(); // References the container.
+        
+        // We have ownership of the content when the fold is closed.
+        delete container;
+    }
 };
 
 FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new Instance)

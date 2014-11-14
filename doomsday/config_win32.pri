@@ -36,6 +36,11 @@ deng_msvc {
     QMAKE_RC = $$QMAKE_RC /I \"$$DENG_API_DIR\"
 
     deng_debug: QMAKE_RC = $$QMAKE_RC /d _DEBUG
+    
+    !deng_debug:deng_debuginfo {
+        QMAKE_CFLAGS += -Z7 -DEBUG
+        QMAKE_CXXFLAGS += -Z7 -DEBUG
+    }
 }
 deng_mingw {
     QMAKE_RC = $$QMAKE_RC --include-dir=\"$$DENG_API_DIR\"

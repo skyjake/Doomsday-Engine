@@ -118,10 +118,13 @@ DENG_CONVENIENCE_HEADERS += \
     include/BiasIllum \
     include/BiasSource \
     include/BiasTracker \
+    include/BindContext \
+    include/Binding \
     include/BitmapFont \
     include/BspLeaf \
     include/BspNode \
     include/CommandAction \
+    include/CommandBinding \
     include/CompositeBitmapFont \
     include/Contact \
     include/ContactSpreader \
@@ -142,6 +145,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/HueCircle \
     include/HueCircleVisual \
     include/IHPlane \
+    include/ImpulseBinding \
     include/Interceptor \
     include/LightDecoration \
     include/Line \
@@ -176,8 +180,7 @@ DENG_CONVENIENCE_HEADERS += \
     include/TriangleStripBuilder \
     include/Vertex \
     include/WallEdge \
-    include/WallSpec \
-    include/WidgetActions
+    include/WallSpec
 
 # Private headers.
 DENG_HEADERS += \
@@ -348,17 +351,17 @@ DENG_HEADERS += \
     include/settingsregister.h \
     include/sys_system.h \
     include/tab_anorms.h \
-    include/ui/b_command.h \
-    include/ui/b_context.h \
-    include/ui/b_device.h \
     include/ui/b_main.h \
     include/ui/b_util.h \
+    include/ui/bindcontext.h \
+    include/ui/binding.h \
     include/ui/busyvisual.h \
     include/ui/clientrootwidget.h \
     include/ui/clientwindow.h \
     include/ui/clientwindowsystem.h \
     include/ui/commandaction.h \
-    include/ui/dd_input.h \
+    include/ui/commandbinding.h \
+    include/ui/ddevent.h \
     include/ui/dialogs/aboutdialog.h \
     include/ui/dialogs/alertdialog.h \
     include/ui/dialogs/audiosettingsdialog.h \
@@ -372,6 +375,7 @@ DENG_HEADERS += \
     include/ui/dialogs/videosettingsdialog.h \
     include/ui/dialogs/vrsettingsdialog.h \
     include/ui/editors/rendererappearanceeditor.h \
+    include/ui/impulsebinding.h \
     include/ui/infine/finale.h \
     include/ui/infine/finaleanimwidget.h \
     include/ui/infine/finaleinterpreter.h \
@@ -379,8 +383,11 @@ DENG_HEADERS += \
     include/ui/infine/finaletextwidget.h \
     include/ui/infine/finalewidget.h \
     include/ui/infine/infinesystem.h \
+    include/ui/inputdevice.h \
+    include/ui/inputdeviceaxiscontrol.h \
+    include/ui/inputdevicebuttoncontrol.h \
+    include/ui/inputdevicehatcontrol.h \
     include/ui/progress.h \
-    include/ui/widgetactions.h \
     include/ui/widgets/busywidget.h \
     include/ui/widgets/consolecommandwidget.h \
     include/ui/widgets/consolewidget.h \
@@ -408,7 +415,6 @@ DENG_HEADERS += \
     include/ui/joystick.h \
     include/ui/mouse_qt.h \
     include/ui/nativeui.h \
-    include/ui/p_control.h \
     include/ui/styledlogsinkformatter.h \
     include/ui/sys_input.h \
     include/ui/ui_main.h \
@@ -441,6 +447,7 @@ DENG_HEADERS += \
     include/world/grabbable.h \
     include/world/hand.h \
     include/world/huecircle.h \
+    include/world/impulseaccumulator.h \
     include/world/interceptor.h \
     include/world/line.h \
     include/world/lineblockmap.h \
@@ -672,17 +679,17 @@ SOURCES += \
     src/settingsregister.cpp \
     src/sys_system.cpp \
     src/tab_tables.c \
-    src/ui/b_command.cpp \
-    src/ui/b_context.cpp \
-    src/ui/b_device.cpp \
     src/ui/b_main.cpp \
     src/ui/b_util.cpp \
+    src/ui/bindcontext.cpp \
+    src/ui/binding.cpp \
     src/ui/busyvisual.cpp \
     src/ui/clientrootwidget.cpp \
     src/ui/clientwindow.cpp \
     src/ui/clientwindowsystem.cpp \
     src/ui/commandaction.cpp \
-    src/ui/dd_input.cpp \
+    src/ui/commandbinding.cpp \
+    src/ui/impulsebinding.cpp \
     src/ui/dialogs/aboutdialog.cpp \
     src/ui/dialogs/alertdialog.cpp \
     src/ui/dialogs/audiosettingsdialog.cpp \
@@ -703,15 +710,18 @@ SOURCES += \
     src/ui/infine/finaletextwidget.cpp \
     src/ui/infine/finalewidget.cpp \
     src/ui/infine/infinesystem.cpp \
+    src/ui/inputdebug.cpp \
+    src/ui/inputdevice.cpp \
+    src/ui/inputdeviceaxiscontrol.cpp \
+    src/ui/inputdevicebuttoncontrol.cpp \
+    src/ui/inputdevicehatcontrol.cpp \
     src/ui/inputsystem.cpp \
     src/ui/mouse_qt.cpp \
     src/ui/nativeui.cpp \
-    src/ui/p_control.cpp \
     src/ui/progress.cpp \
     src/ui/styledlogsinkformatter.cpp \
     src/ui/sys_input.cpp \
     src/ui/ui_main.cpp \
-    src/ui/widgetactions.cpp \
     src/ui/widgets/busywidget.cpp \
     src/ui/widgets/consolecommandwidget.cpp \
     src/ui/widgets/consolewidget.cpp \
@@ -763,6 +773,7 @@ SOURCES += \
     src/world/grabbable.cpp \
     src/world/hand.cpp \
     src/world/huecircle.cpp \
+    src/world/impulseaccumulator.cpp \
     src/world/interceptor.cpp \
     src/world/line.cpp \
     src/world/lineblockmap.cpp \

@@ -25,7 +25,7 @@ IndirectRule::IndirectRule() : _source(0)
 
 IndirectRule::~IndirectRule()
 {
-    unsetSource();
+    independentOf(_source);
 }
 
 void IndirectRule::setSource(Rule const &rule)

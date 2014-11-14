@@ -124,6 +124,8 @@ public:
 
     bool hasRoot() const;
     RootWidget &root() const;
+    void setRoot(RootWidget *root);
+
     bool hasFocus() const;
 
     void show(bool doShow = true);

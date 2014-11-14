@@ -161,11 +161,18 @@
  * Debug utility for dumping the current backtrace using qDebug.
  */
 #    define DENG2_PRINT_BACKTRACE() { \
-    void *callstack[128]; \
-    int i, frames = backtrace(callstack, 128); \
-    char** strs = backtrace_symbols(callstack, frames); \
-    for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
-    free(strs); }
+        void *callstack[128]; \
+        int i, frames = backtrace(callstack, 128); \
+        char** strs = backtrace_symbols(callstack, frames); \
+        for(i = 0; i < frames; ++i) qDebug("%s", strs[i]); \
+        free(strs); }
+#    define DENG2_BACKTRACE(n, out) { \
+        void *callstack[n]; \
+        int i, frames = backtrace(callstack, n); \
+        char** strs = backtrace_symbols(callstack, frames); \
+        out = ""; \
+        for(i = 0; i < frames; ++i) { out.append(strs[i]); out.append('\n'); } \
+        free(strs); }
 #  endif
 #endif
 

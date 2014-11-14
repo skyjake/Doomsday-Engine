@@ -146,6 +146,15 @@ public:
 
     ScrollAreaWidget &area();
 
+    /**
+     * Sets the rule for the minimum width of the dialog. The default is that the
+     * dialog is at least as wide as the content area, or all the button widths
+     * summed together.
+     *
+     * @param minWidth  Custom minimum width for the dialog.
+     */
+    void setMinimumContentWidth(Rule const &minWidth);
+
     MenuWidget &buttonsMenu();
 
     /**

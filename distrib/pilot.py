@@ -78,6 +78,8 @@ def main():
             checkForTasks()
     except Exception, x:
         # Unexpected problem!
+	import traceback
+	traceback.print_exc()
         print APP_NAME + ':', x
     finally:
         endPilotInstance()

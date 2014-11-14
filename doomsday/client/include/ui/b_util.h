@@ -20,89 +20,64 @@
 #ifndef CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 #define CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 
+#include <de/Record>
 #include "dd_types.h"
-#include "dd_input.h"
+#include "ddevent.h"
+#include "Binding"
 
-// Event Binding Toggle State
-typedef enum ebstate_e {
-    EBTOG_UNDEFINED,
-    EBTOG_DOWN,
-    EBTOG_REPEAT,
-    EBTOG_PRESS,
-    EBTOG_UP,
-    EBAXIS_WITHIN,
-    EBAXIS_BEYOND,
-    EBAXIS_BEYOND_POSITIVE,
-    EBAXIS_BEYOND_NEGATIVE
-} ebstate_t;
+class BindContext;
 
-typedef enum stateconditiontype_e {
-    SCT_STATE,          ///< Related to the state of the engine.
-    SCT_TOGGLE_STATE,   ///< Toggle is in a specific state.
-    SCT_MODIFIER_STATE, ///< Modifier is in a specific state.
-    SCT_AXIS_BEYOND,    ///< Axis is past a specific position.
-    SCT_ANGLE_AT        ///< Angle is pointing to a specific direction.
-} stateconditiontype_t;
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc);
 
-// Device state condition.
-typedef struct statecondition_s {
-    uint device;                ///< Which device?
-    stateconditiontype_t type;
-    int id;                     ///< Toggle/axis/angle identifier in the device.
-    ebstate_t state;
-    float pos;                  ///< Axis position/angle condition.
-    struct {
-        uint negate:1;          ///< Test the inverse (e.g., not in a specific state).
-        uint multiplayer:1;     ///< Only for multiplayer.
-    } flags;
-} statecondition_t;
+bool B_ParseButtonState(Binding::ControlTest &test, char const *desc);
 
-dd_bool B_ParseToggleState(char const *toggleName, ebstate_t *state);
+bool B_ParseHatAngle(float &angle, char const *desc);
 
-dd_bool B_ParseAxisPosition(char const *desc, ebstate_t *state, float *pos);
+bool B_ParseBindingCondition(de::Record &cond, char const *desc);
 
-dd_bool B_ParseKeyId(char const *desc, int *id);
+// ---
 
-dd_bool B_ParseMouseTypeAndId(char const *desc, ddeventtype_t *type, int *id);
+de::String B_AxisPositionToString(Binding::ControlTest test, float pos);
 
-dd_bool B_ParseJoystickTypeAndId(uint device, char const *desc, ddeventtype_t *type, int *id);
+de::String B_ButtonStateToString(Binding::ControlTest test);
 
-dd_bool B_ParseAnglePosition(char const *desc, float *pos);
+de::String B_HatAngleToString(float angle);
 
-dd_bool B_ParseStateCondition(statecondition_t *cond, char const *desc);
+de::String B_ConditionToString(de::Record const &cond);
 
-dd_bool B_CheckAxisPos(ebstate_t test, float testPos, float pos);
+de::String B_EventToString(ddevent_t const &ev);
+
+// ---
+
+bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos);
 
 /**
  * @param cond      State condition to check.
  * @param localNum  Local player number.
  * @param context   Relevant binding context, if any (may be @c nullptr).
  */
-dd_bool B_CheckCondition(statecondition_t *cond, int localNum, struct bcontext_s *context);
+bool B_CheckCondition(de::Record const *cond, int localNum, BindContext *context);
 
-dd_bool B_EqualConditions(statecondition_t const *a, statecondition_t const *b);
+bool B_EqualConditions(de::Record const &a, de::Record const &b);
 
-void B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t *str);
+// ---------------------------------------------------------------------------------
 
-void B_AppendToggleStateToString(ebstate_t state, ddstring_t *str);
+extern byte zeroControlUponConflict;
 
-void B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t *str);
+bool B_ParseKeyId(int &id, char const *desc);
 
-void B_AppendAnglePositionToString(float pos, ddstring_t *str);
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc);
 
-/**
- * Converts a state condition to text string format and appends it to a string.
- *
- * @param cond  State condition.
- * @param str   The condition in textual format is appended here.
- */
-void B_AppendConditionToString(statecondition_t const *cond, ddstring_t *str);
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc);
 
-/**
- * @param ev   Event.
- * @param str  The event in textual format is appended here.
- */
-void B_AppendEventToString(ddevent_t const *ev, ddstring_t *str);
+de::String B_ControlDescToString(int deviceId, ddeventtype_t type, int id);
+
+void B_EvaluateImpulseBindings(BindContext *context, int localNum, int impulseId,
+    float *pos, float *relativeOffset, bool allowTriggered);
+
+char const *B_ShortNameForKey(int ddKey, bool forceLowercase = true);
+
+int B_KeyForShortName(char const *key);
 
 #endif // CLIENT_INPUTSYSTEM_BINDING_UTILITIES_H
 

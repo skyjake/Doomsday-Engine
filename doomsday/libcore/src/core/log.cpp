@@ -47,16 +47,14 @@ namespace internal {
  * The logs table is lockable so that multiple threads can access their logs at
  * the same time.
  */
-class Logs : public QMap<QThread *, Log *>, public Lockable
+class Logs : public std::map<QThread *, Log *>, public Lockable
 {
 public:
     Logs() {}
     ~Logs() {
         DENG2_GUARD(this);
         // The logs are owned by the logs table.
-        foreach(Log *log, values()) {
-            delete log;
-        }
+        for(auto log : *this) delete log.second;
     }
 };
 
@@ -685,6 +683,9 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
 
 static internal::Logs &theLogs()
 {
+    if(logsPtr.get()) return *logsPtr;
+    static Lockable lock;
+    DENG2_GUARD(lock);
     if(!logsPtr.get()) logsPtr.reset(new internal::Logs);
     return *logsPtr;
 }
@@ -697,17 +698,17 @@ Log &Log::threadLog()
 
     // Each thread has its own log.
     QThread *thread = QThread::currentThread();
-    internal::Logs::const_iterator found = logs.constFind(thread);
-    if(found == logs.constEnd())
+    auto found = logs.find(thread);
+    if(found == logs.end())
     {
         // Create a new log.
         Log* theLog = new Log;
-        logs.insert(thread, theLog);
+        logs[thread] = theLog;
         return *theLog;
     }
     else
     {
-        return *found.value();
+        return *found->second;
     }
 }
 
@@ -718,11 +719,11 @@ void Log::disposeThreadLog()
     DENG2_GUARD(logs);
 
     QThread *thread = QThread::currentThread();
-    internal::Logs::iterator found = logs.find(thread);
+    auto found = logs.find(thread);
     if(found != logs.end())
     {
-        delete found.value();
-        logs.remove(found.key());
+        delete found->second;
+        logs.erase(found);
     }
 }
 

@@ -19,20 +19,27 @@
 #ifndef LIBAPPFW_NOTIFICATIONAREAWIDGET_H
 #define LIBAPPFW_NOTIFICATIONAREAWIDGET_H
 
-#include "../GuiWidget"
+#include "../RelayWidget"
 
 namespace de {
 
 /**
  * Notification area.
  *
- * Children of the widget are expected to size themselves and allow unrestricted,
- * automatical positioning inside the area. Children can be added and removed
+ * Notification widgets are expected to size themselves and allow unrestricted,
+ * automatical positioning inside the area. Notifications can be added and removed
  * dynamically. The notification area is dismissed if there are no visible notifications.
  *
+ * Notification widgets should not be part of the normal widget tree (no add/remove
+ * called). Internally, NotificationAreaWidget uses RelayWidget to link the notifications
+ * to the widget tree.
+ *
  * The client window owns an instance of NotificationAreaWidget. Other widgets and
- * subsystems are expected to give ownership of their notifications to the window's
- * NotificationAreaWidget.
+ * subsystems are expected to retain ownership of their notifications, and delete them
+ * when the widget/subsystem is destroyed/shut down.
+ *
+ * Owners of notifications can use the UniqueWidgePtr template to automatically
+ * delete their notification widgets.
  */
 class LIBAPPFW_PUBLIC NotificationAreaWidget : public GuiWidget
 {
@@ -51,37 +58,30 @@ public:
     Rule const &shift();
 
     /**
-     * Adds a notification to the notification area. The NotificationAreaWidget
-     * takes ownership of @a notif (the latter is made a child).
+     * Adds a notification to the notification area. If the notification widget is
+     * destroyed while visible, it will simply disappear from the notification area.
+     * Widgets are initialized before showing.
      *
      * @param notif  Notification widget.
      */
-    void showChild(GuiWidget *notif);
+    void showChild(GuiWidget &notif);
 
     /**
-     * Hides a notification. The widget is hidden and gets returned to its
-     * original parent, if there was one.
+     * Hides a notification. The widget is deinitialized when dismissed (could be
+     * after a delay if the entire notification area is animated away).
      *
      * @param notif  Notification widget.
      */
     void hideChild(GuiWidget &notif);
 
-    void showOrHide(GuiWidget *notif, bool doShow) {
-        if(doShow) showChild(notif); else hideChild(*notif);
+    void showOrHide(GuiWidget &notif, bool doShow) {
+        if(doShow) showChild(notif); else hideChild(notif);
     }
 
     bool isChildShown(GuiWidget &notif) const;
 
-    // Events.
-    void viewResized();
-    void drawContent();
-
 public slots:
     void dismiss();
-
-protected:
-    void glInit();
-    void glDeinit();
 
 private:
     DENG2_PRIVATE(d)

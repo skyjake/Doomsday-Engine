@@ -83,12 +83,12 @@ DENG_GUI_PIMPL(AlertDialog)
         }
     };
 
-    ButtonWidget *notification;
+    UniqueWidgetPtr<ButtonWidget> notification;
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
     QTimer hideTimer; ///< Automatically hides the notification.
-    ChoiceWidget *hideTimes;
+    ChoiceWidget *autohideTimes;
     DialogContentStylist stylist;
 
     dsize maxCount;
@@ -100,7 +100,7 @@ DENG_GUI_PIMPL(AlertDialog)
         , clearOnDismiss(false)
         , maxCount(100)
     {
-        notification = new ButtonWidget;
+        notification.reset(new ButtonWidget);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
         notification->setOverrideImageSize(style().fonts().font("default").height().value());
@@ -246,7 +246,7 @@ DENG_GUI_PIMPL(AlertDialog)
         // Change color to indicate new alerts.
         notification->setImageColor(style().colors().colorf("accent"));
 
-        notifs().showOrHide(notification, true);
+        notifs().showOrHide(*notification, true);
 
         // Restart the autohiding timer.
         if(autoHideAfterSeconds() > 0)
@@ -275,17 +275,17 @@ DENG_GUI_PIMPL(AlertDialog)
         return false;
     }
 
-    void updateHideTimeSelection()
+    void updateAutohideTimeSelection()
     {
         int const time = autoHideAfterSeconds();
-        ui::DataPos pos = hideTimes->items().findData(time);
+        ui::DataPos pos = autohideTimes->items().findData(time);
         if(pos != ui::Data::InvalidPos)
         {
-            hideTimes->setSelected(pos);
+            autohideTimes->setSelected(pos);
         }
         else
         {
-            hideTimes->setSelected(hideTimes->items().findData(0));
+            autohideTimes->setSelected(autohideTimes->items().findData(0));
         }
     }
 };
@@ -309,25 +309,30 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Instance(this))
 
     auto *lab = LabelWidget::newWithText(tr("Hide After:"), this);
 
-    add(d->hideTimes = new ChoiceWidget);
-    d->hideTimes->items()
+    add(d->autohideTimes = new ChoiceWidget);
+    d->autohideTimes->items()
             << new ChoiceItem(tr("1 min"),   60)
             << new ChoiceItem(tr("3 mins"),  3 * 60)
             << new ChoiceItem(tr("5 mins"),  5 * 60)
             << new ChoiceItem(tr("10 mins"), 10 * 60)
             << new ChoiceItem(tr("Never"),   0);
-    d->updateHideTimeSelection();
+    d->updateAutohideTimeSelection();
     
     lab->rule()
-        .setInput(Rule::Left,    gearButton.rule().right())
-        .setInput(Rule::AnchorY, gearButton.rule().midY())
-        .setAnchorPoint(Vector2f(0, .5f));
+        .setInput(Rule::Left, gearButton.rule().right())
+        .setMidAnchorY(gearButton.rule().midY());
     
-    d->hideTimes->rule()
+    d->autohideTimes->rule()
         .setInput(Rule::Left, lab->rule().right())
         .setInput(Rule::Top,  lab->rule().top());
 
-    connect(d->hideTimes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(hideTimeChanged()));
+    // Tell the dialog about the additional space requirements.
+    setMinimumContentWidth(extraButtonsMenu().rule().width() +
+                           buttonsMenu().rule().width() +
+                           lab->rule().width() +
+                           d->autohideTimes->rule().width());
+
+    connect(d->autohideTimes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(autohideTimeChanged()));
 }
 
 void AlertDialog::newAlert(String const &message, Level level)
@@ -370,9 +375,9 @@ void AlertDialog::hideNotification()
     d->hideNotification();
 }
 
-void AlertDialog::hideTimeChanged()
+void AlertDialog::autohideTimeChanged()
 {
-    App::config().set(VAR_AUTOHIDE, d->hideTimes->selectedItem().data().toInt());
+    App::config().set(VAR_AUTOHIDE, d->autohideTimes->selectedItem().data().toInt());
 }
 
 void AlertDialog::finish(int result)

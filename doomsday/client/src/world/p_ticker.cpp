@@ -1,7 +1,7 @@
 /** @file p_ticker.cpp Timed world events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -118,9 +118,10 @@ static void materialsTicker(timespan_t elapsed)
 
 void P_Ticker(timespan_t elapsed)
 {
-    P_ControlTicker(elapsed);
 #ifdef __CLIENT__
     materialsTicker(elapsed);
+#else
+    DENG2_UNUSED(elapsed);
 #endif
     App_WorldSystem().tick(elapsed);
 }

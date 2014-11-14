@@ -547,7 +547,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
     if(isOpen() && event.isKey() && event.as<KeyEvent>().isModifier())
     {
         // However, let the bindings system know about the modifier state.
-        ClientApp::widgetActions().trackInput(event);
+        ClientApp::inputSystem().trackEvent(event);
         return true;
     }
 

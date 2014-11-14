@@ -56,7 +56,6 @@
 #include "world/worldsystem.h"
 #include "world/map.h"
 #include "ui/infine/infinesystem.h"
-#include "ui/p_control.h"
 #include "ui/progress.h"
 #include "ui/nativeui.h"
 
@@ -176,6 +175,10 @@ char *startupFiles = (char *) ""; // ignore warning
 finaleid_t titleFinale;
 
 int gameDataFormat; // Use a game-specifc data format where applicable.
+
+#ifdef __CLIENT__
+int symbolicEchoMode = false; // Mutable via public API.
+#endif
 
 static void registerResourceFileTypes()
 {
@@ -1229,7 +1232,7 @@ static int DD_ActivateGameWorker(void *context)
 
 #ifdef __CLIENT__
         // Apply default control bindings for this game.
-        B_BindGameDefaults();
+        ClientApp::inputSystem().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
         Con_ParseCommands(App_CurrentGame().bindingConfig(), CPCF_ALLOW_SAVE_BINDINGS);
@@ -1512,11 +1515,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
 #ifdef __CLIENT__
         R_ClearViewData();
         R_DestroyContactLists();
-        P_ControlShutdown();
+        P_ClearPlayerImpulses();
 
         Con_Execute(CMDS_DDAY, "clearbindings", true, false);
-        B_BindDefaults();
-        B_InitialContextActivations();
+        ClientApp::inputSystem().bindDefaults();
+        ClientApp::inputSystem().initialContextActivations();
 #endif
         // Reset the world back to it's initial state (unload the map, reset players, etc...).
         App_WorldSystem().reset();
@@ -1552,11 +1555,11 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Con_InitDatabases();
         consoleRegister();
 
-#ifdef __CLIENT__
-        I_InitVirtualInputDevices();
-#endif
-
         R_InitSvgs();
+
+#ifdef __CLIENT__
+        ClientApp::inputSystem().initAllDevices();
+#endif
 
 #ifdef __CLIENT__
         R_InitViewWindow();
@@ -1702,7 +1705,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
          * @note Only necessary here because we might not have been able to use
          *       busy mode (which would normally do this for us on end).
          */
-        DD_ClearEvents();
+        ClientApp::inputSystem().clearEvents();
 
         if(!App_GameLoaded())
         {
@@ -2471,7 +2474,7 @@ int DD_GetInteger(int ddvalue)
     {
 #ifdef __CLIENT__
     case DD_SHIFT_DOWN:
-        return I_ShiftDown();
+        return int(ClientApp::inputSystem().shiftDown());
 
     case DD_WINDOW_WIDTH:
         return DENG_GAMEVIEW_WIDTH;
@@ -3286,7 +3289,7 @@ static void consoleRegister()
     GL_Register();
     UI_Register();
     Demo_Register();
-    P_ControlRegister();
+    P_ConsoleRegister();
     I_Register();
 #endif
 

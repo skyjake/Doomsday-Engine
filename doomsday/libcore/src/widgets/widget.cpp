@@ -28,7 +28,8 @@ DENG2_PIMPL(Widget)
 {
     Id id;
     String name;
-    Widget *parent;
+    Widget *parent = nullptr;
+    RootWidget *manualRoot = nullptr;
     Behaviors behavior;
     String focusNext;
     String focusPrev;
@@ -41,7 +42,7 @@ DENG2_PIMPL(Widget)
     Children children;
     NamedChildren index;
 
-    Instance(Public *i, String const &n) : Base(i), name(n), parent(0)
+    Instance(Public *i, String const &n) : Base(i), name(n)
     {}
 
     ~Instance()
@@ -59,6 +60,25 @@ DENG2_PIMPL(Widget)
             delete w;
         }
         index.clear();
+    }
+
+    RootWidget *findRoot() const
+    {
+        if(manualRoot)
+        {
+            return manualRoot;
+        }
+        Widget const *w = thisPublic;
+        while(w->parent())
+        {
+            w = w->parent();
+            if(w->d->manualRoot) return w->d->manualRoot;
+        }
+        if(w->is<RootWidget>())
+        {
+            return const_cast<RootWidget *>(&w->as<RootWidget>());
+        }
+        return nullptr;
     }
 
     DENG2_PIMPL_AUDIENCE(Deletion)
@@ -91,7 +111,10 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DENG2_FOR_AUDIENCE2(Deletion, i) i->widgetBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i)
+    {
+        i->widgetBeingDeleted(*this);
+    }
 }
 
 Id Widget::id() const
@@ -143,27 +166,21 @@ DotPath Widget::path() const
 
 bool Widget::hasRoot() const
 {
-    Widget const *w = this;
-    // Root widgets do not have a parent.
-    while(w->parent())
-    {
-        w = w->parent();
-    }
-    return w->is<RootWidget>();
+    return d->findRoot() != nullptr;
 }
 
 RootWidget &Widget::root() const
 {
-    Widget const *w = this;
-    while(w->parent())
+    if(auto *rw = d->findRoot())
     {
-        w = w->parent();
-    }
-    if(w->is<RootWidget>())
-    {
-        return const_cast<RootWidget &>(w->as<RootWidget>());
+        return *rw;
     }
     throw NotFoundError("Widget::root", "No root widget found");
+}
+
+void Widget::setRoot(RootWidget *root)
+{
+    d->manualRoot = root;
 }
 
 bool Widget::hasFocus() const

@@ -34,6 +34,12 @@
 
 using namespace de;
 
+Statement::Statement() : _next(nullptr)
+{}
+
+Statement::~Statement()
+{}
+
 Statement *Statement::constructFrom(Reader &reader)
 {
     SerialId id;

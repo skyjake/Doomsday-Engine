@@ -49,7 +49,7 @@ struct game_s;
 extern int verbose;
 //extern FILE* outFile; // Output file for console messages.
 
-extern char* startupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
+extern char *startupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
 extern int isDedicated;
 
@@ -60,6 +60,10 @@ extern GETGAMEAPI GetGameAPI;
 #endif
 
 extern int gameDataFormat;
+
+#ifdef __CLIENT__
+extern int symbolicEchoMode;
+#endif
 
 int DD_EarlyInit(void);
 void DD_FinishInitializationAfterWindowReady(void);

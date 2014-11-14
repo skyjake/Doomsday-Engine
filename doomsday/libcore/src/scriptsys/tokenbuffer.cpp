@@ -28,40 +28,38 @@ using namespace de;
 // Default size of one allocation pool.
 static duint const POOL_SIZE = 1024;
 
-String const Token::PARENTHESIS_OPEN = "(";
+String const Token::PARENTHESIS_OPEN  = "(";
 String const Token::PARENTHESIS_CLOSE = ")";
-String const Token::BRACKET_OPEN = "[";
-String const Token::BRACKET_CLOSE = "]";
-String const Token::CURLY_OPEN = "{";
-String const Token::CURLY_CLOSE = "}";
-String const Token::COLON(":");
-String const Token::COMMA(",");
-String const Token::SEMICOLON(";");
+String const Token::BRACKET_OPEN      = "[";
+String const Token::BRACKET_CLOSE     = "]";
+String const Token::CURLY_OPEN        = "{";
+String const Token::CURLY_CLOSE       = "}";
+String const Token::COLON             = ":";
+String const Token::COMMA             = ",";
+String const Token::SEMICOLON         = ";";
 
 bool Token::equals(QChar const *str) const
 {
-    if(size() < (int) qchar_strlen(str))
-    {
-        // No possibility of a match.
-        return false;
-    }
-    return !String::compareWithCase(str, _begin, size());
+    dsize length = qchar_strlen(str);
+    if(length != dsize(size())) return false;
+    return String::equals(str, _begin, size());
 }
 
 bool Token::beginsWith(QChar const *str) const
 {
-    int length = int(qchar_strlen(str));
-    if(length > size())
+    dsize length = qchar_strlen(str);
+    if(length > dsize(size()))
     {
-        // No way.
+        // We are shorter than the required beginning string.
         return false;
     }
-    return !String::compareWithCase(str, _begin, length);
+    return String::equals(str, _begin, length);
 }
 
 String Token::asText() const
 {
-    return "'" + QString(_begin, _end - _begin) + "' (on line " + QString::number(_line) + ")";
+    return String(typeToText(_type)) + " '" + QString(_begin, _end - _begin) +
+           "' (on line " + QString::number(_line) + ")";
 }
 
 String Token::str() const

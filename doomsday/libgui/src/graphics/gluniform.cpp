@@ -180,7 +180,7 @@ DENG2_PIMPL(GLUniform)
         }
     }
 
-    void assetDeleted(Asset &asset)
+    void assetBeingDeleted(Asset &asset)
     {
         if(type == Sampler2D)
         {

@@ -98,6 +98,7 @@ public ChildWidgetOrganizer::IFilter
     bool animatingGlow;
     QScopedPointer<Untrapper> untrapper;
     DialogContentStylist stylist;
+    IndirectRule *minWidth;
 
     Instance(Public *i, Flags const &dialogFlags)
         : Base(i)
@@ -108,6 +109,8 @@ public ChildWidgetOrganizer::IFilter
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
+        minWidth = new IndirectRule;
+
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
         glow.setValue(normalGlow);
@@ -182,7 +185,8 @@ public ChildWidgetOrganizer::IFilter
         // A blank container widget acts as the popup content parent.
         container->rule().setInput(Rule::Width, OperatorRule::maximum(
                                        area->rule().width(),
-                                       buttons->rule().width() + extraButtons->rule().width()));
+                                       buttons->rule().width() + extraButtons->rule().width(),
+                                       *minWidth));
 
         if(flags.testFlag(WithHeading))
         {
@@ -201,6 +205,7 @@ public ChildWidgetOrganizer::IFilter
 
     ~Instance()
     {
+        releaseRef(minWidth);
         releaseRef(acceptAction);
     }
 
@@ -430,6 +435,11 @@ LabelWidget &DialogWidget::heading()
 ScrollAreaWidget &DialogWidget::area()
 {
     return *d->area;
+}
+
+void DialogWidget::setMinimumContentWidth(Rule const &minWidth)
+{
+    d->minWidth->setSource(minWidth);
 }
 
 MenuWidget &DialogWidget::buttonsMenu()

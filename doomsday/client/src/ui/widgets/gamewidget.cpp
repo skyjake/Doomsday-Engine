@@ -1,6 +1,7 @@
 /** @file gamewidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,7 +21,7 @@
 
 #include "ui/widgets/gamewidget.h"
 #include "clientapp.h"
-#include "ui/dd_input.h"
+#include "ui/ddevent.h"
 #include "ui/ui_main.h"
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"

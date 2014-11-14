@@ -50,6 +50,7 @@
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
 #include "ui/inputsystem.h"
+#include "ui/b_main.h"
 #include "ui/sys_input.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/clientwindow.h"
@@ -111,7 +112,6 @@ DENG2_PIMPL(ClientApp)
     SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    QScopedPointer<WidgetActions> widgetActions;
     RenderSystem *renderSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
@@ -208,6 +208,7 @@ DENG2_PIMPL(ClientApp)
         Sys_Shutdown();
         DD_Shutdown();
 
+        updater.reset();
         delete worldSys;
         //delete infineSys;
         delete winSys;
@@ -391,7 +392,7 @@ void ClientApp::initialize()
     // Create the input system.
     d->inputSys = new InputSystem;
     addSystem(*d->inputSys);
-    d->widgetActions.reset(new WidgetActions);
+    B_Init();
 
     //d->infineSys = new InFineSystem;
     //addSystem(*d->infineSys);
@@ -526,11 +527,6 @@ ClientWindowSystem &ClientApp::windowSystem()
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(a.d->winSys != 0);
     return *a.d->winSys;
-}
-
-WidgetActions &ClientApp::widgetActions()
-{
-    return *app().d->widgetActions;
 }
 
 Games &ClientApp::games()

@@ -89,6 +89,8 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
+    Expression();
+    
     virtual ~Expression();
 
     virtual void push(Evaluator &evaluator, Value *scope = 0) const;

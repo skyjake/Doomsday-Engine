@@ -17,10 +17,14 @@
  */
 
 #include "ui/widgets/inputbindingwidget.h"
-#include "ui/b_main.h"
-#include "ui/b_context.h"
-#include <de/AuxButtonWidget>
+
 #include <de/charsymbols.h>
+#include <de/AuxButtonWidget>
+#include "clientapp.h"
+#include "BindContext"
+#include "CommandBinding"
+// #include "ImpulseBinding"
+#include "ui/b_util.h"
 
 using namespace de;
 
@@ -32,19 +36,21 @@ using namespace de;
 #  define CONTROL_CHAR  DENG2_CHAR_CONTROL_KEY
 #endif
 
+static inline InputSystem &inputSys()
+{
+    return ClientApp::inputSystem();
+}
+
 DENG_GUI_PIMPL(InputBindingWidget)
 , DENG2_OBSERVES(ButtonWidget, Press)
 {
     String defaultEvent;
     String command;
     QStringList contexts;
-    uint device;
-    bool useModifiers;
+    int device = IDEV_KEYBOARD;
+    bool useModifiers = false;
 
-    Instance(Public *i)
-        : Base(i)
-        , device(IDEV_KEYBOARD)
-        , useModifiers(false)
+    Instance(Public *i) : Base(i)
     {
         //self.setTextLineAlignment(ui::AlignLeft);
         self.setSizePolicy(ui::Fixed, ui::Expand);
@@ -96,15 +102,14 @@ DENG_GUI_PIMPL(InputBindingWidget)
         // Check all the contexts associated with this widget.
         foreach(QString bcName, contexts)
         {
-            bcontext_t const *bc = B_ContextByName(bcName.toLatin1());
-            evbinding_t const *com = B_FindCommandBinding(&bc->commandBinds,
-                                                          command.toLatin1(), device);
-            if(com)
+            if(!inputSys().hasContext(bcName)) continue;
+            BindContext const &context = inputSys().context(bcName);
+
+            if(Record const *rec = context.findCommandBinding(command.toLatin1(), device))
             {
                 // This'll do.
-                AutoStr *str = AutoStr_New();
-                B_EventBindingToString(com, str);
-                text = prettyKey(Str_Text(str));
+                CommandBinding bind(*rec);
+                text = prettyKey(bind.composeDescriptor());
                 break;
             }
         }
@@ -112,14 +117,22 @@ DENG_GUI_PIMPL(InputBindingWidget)
         self.setText(_E(b) + text);
     }
 
-    void bind(String const &eventDesc)
+    void bindCommand(String const &eventDesc)
     {
-        B_UnbindCommand(command.toLatin1());
+        Block const cmd = command.toLatin1();
+        inputSys().forAllContexts([&cmd] (BindContext &context)
+        {
+            while(Record *bind = context.findCommandBinding(cmd.constData()))
+            {
+                context.deleteBinding(bind->geti("id"));
+            }
+            return LoopContinue;
+        });
 
         foreach(QString bcName, contexts)
         {
             String ev = String("%1:%2").arg(bcName, eventDesc);
-            B_BindCommand(ev.toLatin1(), command.toLatin1());
+            inputSys().bindCommand(ev.toLatin1(), command.toLatin1());
         }
     }
 
@@ -139,7 +152,7 @@ DENG_GUI_PIMPL(InputBindingWidget)
         else
         {
             // The reset button.
-            bind(defaultEvent);
+            bindCommand(defaultEvent);
             updateLabel();
         }
     }
@@ -207,12 +220,9 @@ bool InputBindingWidget::handleEvent(Event const &event)
                 return true;
             }
 
-            AutoStr *name = AutoStr_New();
             ddevent_t ev;
-            DD_ConvertEvent(event, &ev);
-            B_AppendEventToString(&ev, name);
-
-            String desc = Str_Text(name);
+            InputSystem::convertEvent(event, ev);
+            String desc = B_EventToString(ev);
 
             // Apply current modifiers as conditions.
             if(d->useModifiers)
@@ -245,7 +255,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
                 }
             }
 
-            d->bind(desc);
+            d->bindCommand(desc);
             d->updateLabel();
             d->unfocus();
             return true;

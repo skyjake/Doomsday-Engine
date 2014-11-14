@@ -179,12 +179,12 @@ DENG2_OBSERVES(ui::Item, Change     )
 
     void dataItemRemoved(ui::Data::Pos, ui::Item &item)
     {
-        Mapping::const_iterator found = mapping.constFind(&item);
+        Mapping::iterator found = mapping.find(&item);
         if(found != mapping.constEnd())
         {
             found.key()->audienceForChange() -= this;
             deleteWidget(found.value());
-            mapping.remove(found.key());
+            mapping.erase(found);
         }
     }
 
