@@ -208,7 +208,6 @@ DENG_HEADERS += \
     $$SRC/include/ui/infine/finalepagewidget.h \
     $$SRC/include/ui/infine/finaletextwidget.h \
     $$SRC/include/ui/infine/finalewidget.h \
-    $$SRC/include/ui/playerimpulse.h \
     $$SRC/include/world/dmuargs.h \
     $$SRC/include/world/blockmap.h \
     $$SRC/include/world/bsp/convexsubspaceproxy.h \
@@ -223,6 +222,7 @@ DENG_HEADERS += \
     $$SRC/include/world/convexsubspace.h \
     $$SRC/include/world/entitydatabase.h \
     $$SRC/include/world/entitydef.h \
+    $$SRC/include/world/impulseaccumulator.h \
     $$SRC/include/world/interceptor.h \
     $$SRC/include/world/line.h \
     $$SRC/include/world/lineblockmap.h \
@@ -359,7 +359,6 @@ SOURCES += \
     $$SRC/src/ui/infine/finaletextwidget.cpp \
     $$SRC/src/ui/infine/finalewidget.cpp \
     $$SRC/src/ui/infine/infinesystem.cpp \
-    $$SRC/src/ui/playerimpulse.cpp \
     $$SRC/src/world/api_map.cpp \
     $$SRC/src/world/api_mapedit.cpp \
     $$SRC/src/world/blockmap.cpp \
@@ -375,6 +374,7 @@ SOURCES += \
     $$SRC/src/world/dmuargs.cpp \
     $$SRC/src/world/entitydatabase.cpp \
     $$SRC/src/world/entitydef.cpp \
+    $$SRC/src/world/impulseaccumulator.cpp \
     $$SRC/src/world/interceptor.cpp \
     $$SRC/src/world/line.cpp \
     $$SRC/src/world/lineblockmap.cpp \

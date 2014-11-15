@@ -80,6 +80,7 @@ public:
 
 protected:
     void setAccessedRecord(Record const &rec);
+    void setAccessedRecord(Record const *rec);
 
 private:
     Record const *_rec;

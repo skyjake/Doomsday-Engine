@@ -95,16 +95,20 @@ def prepare_work_dir():
 def mac_os_version():
     """Determines the Mac OS version."""
     return builder.utils.mac_os_version()
+    
+    
+def mac_os_8_or_later():
+    return mac_os_version() in ['10.8', '10.9', '10.10', '10.11']
 
 
 def mac_target_ext():
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return '.dmg'
+    if mac_os_8_or_later(): return '.dmg'
     if mac_os_version() == '10.6': return '_mac10_6.dmg'
     return '_32bit.dmg'
     
     
 def mac_osx_suffix():
-    if mac_os_version() == '10.8' or mac_os_version() == '10.9': return 'macx8'
+    if mac_os_8_or_later(): return 'macx8'
     if mac_os_version() == '10.6': return 'macx6'
     return 'macx'
 
@@ -208,12 +212,6 @@ def mac_release():
     MAC_WORK_DIR = os.path.abspath(os.path.join(DOOMSDAY_DIR, '../macx_release_build'))
     remkdir(MAC_WORK_DIR)
     os.chdir(MAC_WORK_DIR)
-
-    # Choose the appropriate compiler.
-    #if mac_os_version() == '10.8' or mac_os_version() == '10.9':
-    #    mkspec = 'unsupported/macx-clang'
-    #else:
-    #    mkspec = 'macx-g++'
         
     if os.system('PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH qmake -r CONFIG+=release DENG_BUILD=%s ' % (DOOMSDAY_BUILD_NUMBER) +
                  '../doomsday/doomsday.pro && PATH=`qmake-qt5 -query QT_INSTALL_BINS`:$PATH make -j2 -w'):

@@ -1,4 +1,4 @@
-/** @file impulsebinding.h  Input system, control => impulse binding.
+/** @file impulsebinding.h  Impulse binding record accessor.
  *
  * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
@@ -20,8 +20,9 @@
 #ifndef CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 #define CLIENT_INPUTSYSTEM_IMPULSEBINDING_H
 
-#include <QVector>
-#include "b_util.h"
+#include <de/String>
+#include "Binding"
+#include "ddevent.h"
 
 enum ibcontroltype_t
 {
@@ -38,20 +39,42 @@ enum ibcontroltype_t
 #define IBDF_INVERSE        0x1
 #define IBDF_TIME_STAGED    0x2
 
-struct ImpulseBinding
+/**
+ * Utility for handling input-device-control => impulse binding records.
+ *
+ * @ingroup ui
+ */
+class ImpulseBinding : public Binding
 {
-    int id = 0;             ///< Unique identifier.
-    int impulseId = 0;      ///< Identifier of the bound player impulse.
-    int localPlayer = 0;    ///< Local player number.
+public:
+    ImpulseBinding()                            : Binding() {}
+    ImpulseBinding(ImpulseBinding const &other) : Binding(other) {}
+    ImpulseBinding(de::Record &d)               : Binding(d) {}
+    ImpulseBinding(de::Record const &d)         : Binding(d) {}
 
-    int deviceId = 0;
-    ibcontroltype_t type = IBD_TOGGLE;
-    int controlId = 0;
-    float angle = 0;
-    uint flags = 0;
+    ImpulseBinding &operator = (de::Record const *d) {
+        *static_cast<Binding *>(this) = d;
+        return *this;
+    }
 
-    typedef QVector<statecondition_t> Conditions;
-    Conditions conditions;  ///< Additional conditions.
+    void resetToDefaults();
+
+    de::String composeDescriptor();
+
+    /**
+     * Parse a device-control => player impulse trigger descriptor and (re)configure the
+     * binding.
+     *
+     * @param ctrlDesc     Descriptor for control information and any additional conditions.
+     * @param impulseId    Identifier of the player impulse to execute when triggered, if any.
+     * @param localPlayer  Local player number to execute the impulse for when triggered.
+     * @param assignNewId  @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
+     */
+    void configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId = true);
 };
 
 #endif // CLIENT_INPUTSYSTEM_IMPULSEBINDING_H

@@ -1,6 +1,6 @@
-/** @file commandbinding.h  Input system, event => command binding.
+/** @file commandbinding.h  Command binding record accessor.
  *
- * @authors Copyright © 2009-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2009-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -20,25 +20,62 @@
 #ifndef CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 #define CLIENT_INPUTSYSTEM_COMMANDBINDING_H
 
-#include <QVector>
+#include <de/Action>
 #include <de/String>
-#include "b_util.h"
+#include "Binding"
 #include "ddevent.h"
 
-struct CommandBinding
+class BindContext;
+
+/**
+ * Utility for handling event => command binding records.
+ *
+ * @ingroup ui
+ */
+class CommandBinding : public Binding
 {
-    int id = 0;                     ///< Unique identifier.
-    de::String command;             ///< Command to execute.
+public:
+    CommandBinding()                            : Binding() {}
+    CommandBinding(CommandBinding const &other) : Binding(other) {}
+    CommandBinding(de::Record &d)               : Binding(d) {}
+    CommandBinding(de::Record const &d)         : Binding(d) {}
 
-    int deviceId = 0;               ///< Which device?
-    ddeventtype_t type = E_TOGGLE;  ///< Type of event.
-    int controlId = 0;              ///< Which control?
-    ebstate_t state = EBTOG_UNDEFINED;
-    float pos = 0;
-    de::String symbolicName;        ///< Name of a symbolic event.
+    CommandBinding &operator = (de::Record const *d) {
+        *static_cast<Binding *>(this) = d;
+        return *this;
+    }
 
-    typedef QVector<statecondition_t> Conditions;
-    Conditions conditions;          ///< Additional conditions.
+    void resetToDefaults();
+
+    de::String composeDescriptor();
+
+    /**
+     * Parse an event => command trigger descriptor and (re)configure the binding.
+     *
+     * eventparams{+cond}*
+     *
+     * @param eventDesc    Descriptor for event information and any additional conditions.
+     * @param command      Console command to execute when triggered, if any.
+     * @param assignNewId  @c true= assign a new unique identifier.
+     *
+     * @throws ConfigureError on failure. At which point @a binding should be considered
+     * to be in an undefined state. The caller may choose to clear and then reconfigure
+     * it using another descriptor.
+     */
+    void configure(char const *eventDesc, char const *command = nullptr, bool assignNewId = true);
+
+    /**
+     * Evaluate the given @a event according to the binding configuration, and if all
+     * binding conditions pass - attempt to generate an Action.
+     *
+     * @param event                  Event to match against.
+     * @param context                Context in which the binding exists.
+     * @param respectHigherContexts  Bindings are shadowed by higher active contexts.
+     *
+     * @return Action instance (caller gets ownership), or @c nullptr if no matching.
+     */
+    de::Action *makeAction(ddevent_t const &event, BindContext const &context,
+                           bool respectHigherContexts) const;
 };
 
 #endif // CLIENT_INPUTSYSTEM_COMMANDBINDING_H

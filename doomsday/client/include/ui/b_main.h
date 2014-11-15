@@ -22,8 +22,4 @@
 
 void B_Init();
 
-void B_BindDefaults();
-
-void B_BindGameDefaults();
-
 #endif // CLIENT_INPUTSYSTEM_BINDINGS_H

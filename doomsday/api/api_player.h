@@ -49,16 +49,18 @@ enum {
  * Logical impulse types:
  */
 typedef enum impulsetype_e {
-    IT_NUMERIC,            ///< A numeric value determined by current device-control state.
-    IT_NUMERIC_TRIGGERED,  ///< Numeric, but accepts triggered states as well.
-    IT_BOOLEAN             ///< Always accepts triggered states.
+    IT_ANALOG,            ///< A numeric value determined by current device-control state.
+    IT_ANALOG_TRIGGERED,  ///< Analog, but accepts triggered states as well.
+    IT_BINARY             ///< Always accepts triggered states.
 } impulsetype_t;
+
+#define IMPULSETYPE_IS_TRIGGERABLE(t) ((t) == IT_ANALOG_TRIGGERED || (t) == IT_BINARY)
 
 typedef impulsetype_t controltype_t;
 
-#define CTLT_NUMERIC           IT_NUMERIC
-#define CTLT_NUMERIC_TRIGGERED IT_NUMERIC_TRIGGERED
-#define CTLT_IMPULSE           IT_BOOLEAN
+#define CTLT_NUMERIC           IT_ANALOG
+#define CTLT_NUMERIC_TRIGGERED IT_ANALOG_TRIGGERED
+#define CTLT_IMPULSE           IT_BINARY
 
 /**
  * @defgroup playerFlags Player Flags
@@ -194,10 +196,13 @@ DENG_API_TYPEDEF(Player)
     void (*NewControl)(int id, impulsetype_t type, char const *name, char const *bindContext);
 
     /**
-     * Determines if an impulse has been bound to anything.
+     * Determines if one or more bindings exist for a player and impulse Id in
+     * the associated binding context.
      *
      * @param playerNum  Console/player number.
      * @param impulseId  Unique identifier of the impulse to lookup bindings for.
+     *
+     * @return  @c true if one or more bindings exist.
      */
     int (*IsControlBound)(int playerNum, int impulseId);
 
