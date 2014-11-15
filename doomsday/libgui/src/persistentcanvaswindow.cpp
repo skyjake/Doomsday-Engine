@@ -586,7 +586,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
         if(!self.isVisible())
         {
-            // Change size immediately.
+            // Update geometry for windowed mode right away.
             queue << Task(newState.windowRect);
         }
 
@@ -662,7 +662,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             queue << Task(Task::NotifyModeChange, .1);
         }
 
-        if(trapped /*|| newState.isFullscreen()*/)
+        if(trapped)
         {
             queue << Task(Task::TrapMouse);
         }
@@ -670,7 +670,16 @@ DENG2_PIMPL(PersistentCanvasWindow)
         state.fullSize = newState.fullSize;
         state.flags    = newState.flags;
 
-        checkQueue();
+        if(self.isVisible())
+        {
+            // Carry out queued operations after dropping back to the event loop.
+            QTimer::singleShot(10, thisPublic, SLOT(performQueuedTasks()));
+        }
+        else
+        {
+            // Not visible yet so we can do anything we want.
+            checkQueue();
+        }
     }
 
     void checkQueue()
@@ -836,7 +845,19 @@ void PersistentCanvasWindow::show(bool yes)
     {
         if(d->state.isFullscreen())
         {
-            showFullScreen();
+#ifdef WIN32
+            /*
+             * On Windows, changes to windows appear to be carried out immediately.
+             * Without this delay, sometimes (randomly) the Qt desktop widget would
+             * not have been updated to the correct size after a display mode change.
+             * (Likely due to the behavior of the event loop on Windows; the desktop
+             * widget would or would not get the resize event depending on how the
+             * events play out during engine startup and main window setup.)
+             */
+            QTimer::singleShot(100, this, SLOT(showFullScreen()));
+#else
+            showFullscreen();
+#endif
         }
         else if(d->state.isMaximized())
         {
