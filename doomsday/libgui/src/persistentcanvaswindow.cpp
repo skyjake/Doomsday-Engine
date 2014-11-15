@@ -856,7 +856,7 @@ void PersistentCanvasWindow::show(bool yes)
              */
             QTimer::singleShot(100, this, SLOT(showFullScreen()));
 #else
-            showFullscreen();
+            showFullScreen();
 #endif
         }
         else if(d->state.isMaximized())
