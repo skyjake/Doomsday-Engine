@@ -810,10 +810,13 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-    LOG_DEBUG("Window is about to close, executing 'quit'");
+	if(!BusyMode_Active())
+	{
+		LOG_DEBUG("Window is about to close, executing 'quit'");
 
-    /// @todo autosave and quit?
-    Con_Execute(CMDS_DDAY, "quit", true, false);
+		/// @todo autosave and quit?
+		Con_Execute(CMDS_DDAY, "quit", true, false);
+	}
 
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
