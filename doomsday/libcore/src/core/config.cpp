@@ -66,6 +66,12 @@ DENG2_PIMPL_NOREF(Config)
         catch(...)
         {}
     }
+
+    void write()
+    {
+        if(configPath.isEmpty()) return;
+        refuge.write();
+    }
 };
 
 Config::Config(Path const &path) : RecordAccessor(0), d(new Instance(path))
@@ -173,9 +179,7 @@ void Config::read()
 
 void Config::write() const
 {
-    if(d->configPath.isEmpty()) return;
-
-    d->refuge.write();
+    d->write();
 }
 
 Record &Config::names()
