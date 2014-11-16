@@ -58,13 +58,6 @@ static ImpulseNameMap impulsesByName;
 typedef QMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
 static ImpulseAccumulators accumulators[DDMAXPLAYERS];
 
-#ifdef __CLIENT__
-static inline InputSystem &inputSys()
-{
-    return ClientApp::inputSystem();
-}
-#endif
-
 static PlayerImpulse *addImpulse(int id, impulsetype_t type, String name, String bindContextName)
 {
     auto *imp = new PlayerImpulse;
