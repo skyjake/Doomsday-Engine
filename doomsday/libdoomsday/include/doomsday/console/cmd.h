@@ -98,4 +98,24 @@ LIBDOOMSDAY_PUBLIC void Con_PrintCommandUsage(ccmd_t const *ccmd, bool allOverlo
  */
 LIBDOOMSDAY_PUBLIC de::String Con_CmdUsageAsStyledText(ccmd_t const *ccmd);
 
+/**
+ * Defines a console command that behaves like a console variable but accesses
+ * the data of a de::Config variable.
+ *
+ * The purpose of this mechanism is to provide a backwards compatible way to
+ * access config variables.
+ *
+ * @note In the future, when the console uses Doomsday Script for executing commands,
+ * this kind of mapping should be much easier since one can just create a reference to
+ * the real variable and access it pretty much normally.
+ *
+ * @param consoleName     Name of the console command ("cvar").
+ * @param opts            Type template when setting the value (using the
+ *                        ccmdtemplate_t argument template format).
+ * @param configVariable  Name of the de::Config variable.
+ */
+LIBDOOMSDAY_PUBLIC void Con_AddMappedConfigVariable(char const *consoleName,
+                                                    char const *opts,
+                                                    de::String const &configVariable);
+
 #endif // LIBDOOMSDAY_CONSOLE_CMD_H

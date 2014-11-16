@@ -24,6 +24,8 @@
 #include <de/memoryzone.h>
 #include <de/c_wrapper.h>
 #include <de/Log>
+#include <de/App>
+#include <QMap>
 
 using namespace de;
 
@@ -34,6 +36,8 @@ static blockset_t *ccmdBlockSet;
 
 /// Running total of the number of uniquely-named commands.
 static uint numUniqueNamedCCmds;
+
+static QMap<String, String> mappedConfigVariables;
 
 void Con_InitCommands()
 {
@@ -396,4 +400,47 @@ String Con_CmdAsStyledText(ccmd_t *cmd)
     {
         return String(_E(b) "%1" _E(.)).arg(cmd->name);
     }
+}
+
+D_CMD(MappedConfigVariable)
+{
+    DENG_UNUSED(src);
+
+    // Look up the variable.
+    auto const found = mappedConfigVariables.constFind(argv[0]);
+    DENG2_ASSERT(found != mappedConfigVariables.constEnd()); // mapping must be defined
+
+    Variable &var = App::config().names()[found.value()];
+
+    if(argc == 1)
+    {
+        // No argumnets, just print the current value.
+        LOG_SCR_MSG(_E(b) "%s" _E(.) " = " _E(>) "%s " _E(l)_E(C) "[Config.%s]")
+                << argv[0]
+                << var.value().asText()
+                << found.value();
+    }
+    else if(argc > 1)
+    {
+        // Retain the current type of the Config variable (numeric or text).
+        if(var.value().maybeAs<TextValue>())
+        {
+            var.set(new TextValue(argv[1]));
+        }
+        else
+        {
+            var.set(new NumberValue(String(argv[1]).toDouble()));
+        }
+    }
+    return true;
+}
+
+void Con_AddMappedConfigVariable(char const *consoleName, char const *opts, String const &configVariable)
+{
+    DENG2_ASSERT(!mappedConfigVariables.contains(consoleName)); // redefining not handled
+
+    mappedConfigVariables.insert(consoleName, configVariable);
+
+    C_CMD(consoleName, "",   MappedConfigVariable);
+    C_CMD(consoleName, opts, MappedConfigVariable);
 }
