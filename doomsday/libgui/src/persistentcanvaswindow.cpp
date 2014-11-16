@@ -194,8 +194,10 @@ DENG2_PIMPL(PersistentCanvasWindow)
             config.set(configName("maximize"),   isMaximized());
             config.set(configName("fullscreen"), isFullscreen());
             config.set(configName("colorDepth"), colorDepthBits);
-            config.set(configName("fsaa"),       isAntialiased());
-            config.set(configName("vsync"),      isVSync());
+
+            // FSAA and vsync are saved as part of the Config.
+            //config.set(configName("fsaa"),       isAntialiased());
+            //config.set(configName("vsync"),      isVSync());
         }
 
         void restoreFromConfig()

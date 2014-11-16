@@ -17,7 +17,6 @@
  */
 
 #include "ui/dialogs/videosettingsdialog.h"
-#include "ui/widgets/cvartogglewidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/clientwindow.h"
 #include "CommandAction"
@@ -48,8 +47,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ToggleWidget *fullscreen;
     ToggleWidget *maximized;
     ToggleWidget *centered;
-    CVarToggleWidget *fsaa;
-    CVarToggleWidget *vsync;
+    VariableToggleWidget *fsaa;
+    VariableToggleWidget *vsync;
     ChoiceWidget *modes;
     ButtonWidget *windowButton;
 #ifdef USE_COLOR_DEPTH_CHOICE
@@ -66,8 +65,8 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         area.add(fullscreen   = new ToggleWidget);
         area.add(maximized    = new ToggleWidget);
         area.add(centered     = new ToggleWidget);
-        area.add(fsaa         = new CVarToggleWidget("vid-fsaa"));
-        area.add(vsync        = new CVarToggleWidget("vid-vsync"));
+        area.add(fsaa         = new VariableToggleWidget(App::config("window.main.fsaa")));
+        area.add(vsync        = new VariableToggleWidget(App::config("window.main.vsync")));
         area.add(modes        = new ChoiceWidget);
         area.add(windowButton = new ButtonWidget);
 #ifdef USE_COLOR_DEPTH_CHOICE
@@ -91,9 +90,6 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         centered->setActive(win.isCentered());
 
         windowButton->enable(!win.isFullScreen() && !win.isMaximized());
-
-        fsaa->updateFromCVar();
-        vsync->updateFromCVar();
 
         // Select the current resolution/size in the mode list.
         Canvas::Size current = win.fullscreenSize();
