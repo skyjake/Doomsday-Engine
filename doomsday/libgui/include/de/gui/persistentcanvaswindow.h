@@ -95,6 +95,8 @@ public:
      */
     PersistentCanvasWindow(String const &id);
 
+    String id() const;
+
     /**
      * Returns @c true iff the window is currently centered.
      */

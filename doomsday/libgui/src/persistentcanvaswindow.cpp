@@ -791,6 +791,11 @@ PersistentCanvasWindow::PersistentCanvasWindow(String const &id)
     }
 }
 
+String PersistentCanvasWindow::id() const
+{
+    return d->id;
+}
+
 void PersistentCanvasWindow::saveToConfig()
 {
     try
