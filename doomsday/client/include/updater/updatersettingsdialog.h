@@ -40,6 +40,11 @@ public:
 
     UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
 
+    /**
+     * Determines whether settings have changed.
+     */
+    bool settingsHaveChanged() const;
+
 public slots:
     void apply();
     void applyAndCheckNow();
