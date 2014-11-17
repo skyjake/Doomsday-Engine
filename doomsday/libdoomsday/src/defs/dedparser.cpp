@@ -1955,6 +1955,46 @@ DENG2_PIMPL(DEDParser)
                     }
                     delete otherMap;
 
+                    if(!skip && ISTOKEN("if"))
+                    {
+                        bool negate = false;
+                        bool testCustom = false;
+                        forever
+                        {
+                            ReadToken();
+                            if(ISTOKEN("{"))
+                            {
+                                //UnreadToken(token);
+                                break;
+                            }
+
+                            if(!testCustom)
+                            {
+                                if(ISTOKEN("not"))
+                                {
+                                    negate = !negate;
+                                }
+                                else if(ISTOKEN("custom"))
+                                {
+                                    testCustom = true;
+                                }
+                                else RV_END
+                            }
+                            else RV_END
+                        }
+
+                        if(testCustom)
+                        {
+                            skip = (source->custom != negate);
+                        }
+                        else
+                        {
+                            setError("Expected condition expression to follow 'if'.");
+                            retVal = false;
+                            goto ded_end_read;
+                        }
+                    }
+
                     if(!skip)
                     {
                         DENG2_ASSERT(idx >= 0);
