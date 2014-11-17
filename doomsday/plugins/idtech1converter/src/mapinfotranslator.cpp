@@ -20,9 +20,10 @@
  */
 
 #include "mapinfotranslator.h"
+
 #include <cstdio>
-#include <sstream>
 #include <cstring>
+#include <sstream>
 #include <map>
 #include <QMultiMap>
 #include <de/game/game.h>
@@ -74,6 +75,8 @@ namespace internal {
         }
 
         void resetToDefaults() {
+            addBoolean("custom", false);
+
             // Add all expected fields with their default values.
             addText   ("id", "");
             addNumber ("cdTrack", 0);
@@ -92,6 +95,8 @@ namespace internal {
         }
 
         void resetToDefaults() {
+            addBoolean("custom", false);
+
             // Add all expected fields with their default values.
             addNumber ("cdTrack", 1);
             addBoolean("doubleSky", false);
@@ -126,6 +131,8 @@ namespace internal {
         }
 
         void resetToDefaults() {
+            addBoolean("custom", false);
+
             // Add all expected fields with their default values.
             addText("id", "");            // Unknown.
             addText("menuHelpInfo", "");  // None.
@@ -255,6 +262,8 @@ namespace internal {
         typedef QMap<String, String> MusicMappings;
         MusicMappings musicMap;
 
+        bool sourceIsCustom = false;
+
         MapInfoParser(HexDefs &db) : db(db), defaultMap(0)
         {
             // Init the music id mappings.
@@ -277,13 +286,15 @@ namespace internal {
             delete defaultMap; defaultMap = 0;
         }
 
-        void parse(AutoStr const &buffer, de::String /*sourceFile*/)
+        void parse(AutoStr const &buffer, String /*sourceFile*/, bool sourceIsCustom)
         {
             LOG_AS("MapInfoParser");
 
             // Nothing to parse?
             if(Str_IsEmpty(&buffer))
                 return;
+
+            this->sourceIsCustom = sourceIsCustom;
 
             lexer.parse(&buffer);
             while(lexer.readToken())
@@ -306,6 +317,7 @@ namespace internal {
                             music->set("id", songId);
                         }
                         music->set("cdTrack", (int)lexer.readNumber());
+                        if(sourceIsCustom) music->set("custom", true);
                         continue;
                     }
                 }
@@ -460,6 +472,7 @@ namespace internal {
             String const id = String::number(db.episodeInfos.size() + 1);
             EpisodeInfo *info = &db.episodeInfos[id.toStdString()];
 
+            if(sourceIsCustom) info->set("custom", true);
             info->set("id", id);
             info->set("startMap", mapUri.compose());
 
@@ -665,6 +678,8 @@ namespace internal {
                 }
                 info->set("title", title);
             }
+
+            if(sourceIsCustom) info->set("custom", true);
 
             // Process optional tokens.
             while(lexer.readToken())
@@ -1290,6 +1305,205 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
         }
 #endif*/
     }
+
+    void translate(String &output, bool custom)
+    {
+        QTextStream os(&output);
+
+        os << "# Translated definitions from:";
+        // List the files we translated in input order (for debug).
+        for(int i = 0; i < translatedFiles.size(); ++i)
+        {
+            String sourceFile = translatedFiles[i];
+            os << "\n# " + QString("%1: %2").arg(i).arg(NativePath(sourceFile).pretty());
+        }
+
+        // Output the header block.
+        os << "\n\nHeader { Version = 6; }";
+
+        // Output episode defs.
+        int episodeIdx = 0;
+        for(auto const pair : defs.episodeInfos)
+        {
+            EpisodeInfo const &info = pair.second;
+
+            de::Uri startMapUri(info.gets("startMap"), RC_NULL);
+            if(startMapUri.path().isEmpty()) continue;
+
+            String episodeId = String::number(episodeIdx + 1);
+            // Find all the hubs for this episode.
+            MapInfos mapInfos = buildHubMapInfoTable(episodeId);
+
+            bool episodeIsCustom = info.getb("custom");
+            // If one of the maps is custom then so too is the episode.
+            if(!episodeIsCustom)
+            {
+                for(MapInfo const *mapInfo : mapInfos)
+                {
+                    if(mapInfo->getb("custom"))
+                    {
+                        episodeIsCustom = true;
+                        break;
+                    }
+                }
+            }
+            if(custom != episodeIsCustom) continue;
+
+            os << "\n\nEpisode {"
+               << "\n  ID = \"" + episodeId + "\";"
+               << "\n  Title = \"" + info.gets("title") + "\";"
+               << "\n  Start Map = \"" + toMapId(startMapUri) + "\";";
+            String menuHelpInfo = info.gets("menuHelpInfo");
+            if(!menuHelpInfo.isEmpty())
+            {
+                os << "\n  Menu Help Info = \"" + menuHelpInfo + "\";";
+            }
+            de::Uri menuImageUri(info.gets("menuImage"), RC_NULL);
+            if(!menuImageUri.path().isEmpty())
+            {
+                os << "\n  Menu Image = \"" + menuImageUri.compose() + "\";";
+            }
+            String menuShortcut = info.gets("menuShortcut");
+            if(!menuShortcut.isEmpty())
+            {
+                os << "\n  Menu Shortcut = \"" + menuShortcut + "\";";
+            }
+
+            QList<int> hubs = mapInfos.uniqueKeys();
+            for(int hub : hubs)
+            {
+                QList<MapInfo *> const mapInfosForHub = mapInfos.values(hub);
+                if(mapInfosForHub.isEmpty()) continue;
+
+                // Extra whitespace between hubs, for neatness.
+                os << "\n";
+
+                // #0 is not actually a hub.
+                if(hub != 0)
+                {
+                    // Begin the hub definition.
+                    os << "\n  Hub {"
+                       << "\n    ID = \"" + String::number(hub) + "\";";
+                }
+
+                // Output each map for this hub (in reverse insertion order).
+                int n = mapInfosForHub.size();
+                while(n-- > 0)
+                {
+                    MapInfo const *mapInfo = mapInfosForHub.at(n);
+                    de::Uri mapUri(mapInfo->gets("id"), RC_NULL);
+                    if(!mapUri.path().isEmpty())
+                    {
+                        os << "\n    Map {"
+                           << "\n      ID = \"" + toMapId(mapUri) + "\";";
+                        de::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
+                        if(!nextMapUri.path().isEmpty())
+                        {
+                            os << "\n      Exit { ID = \"next\"; Target Map = \"" + toMapId(nextMapUri) + "\"; }";
+                        }
+                        de::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
+                        if(!secretNextMapUri.path().isEmpty())
+                        {
+                            os << "\n      Exit { ID = \"secret\"; Target Map = \"" + toMapId(secretNextMapUri) + "\"; }";
+                        }
+                        os << "\n      Warp Number = " + String::number(mapInfo->geti("warpTrans")) + ";";
+                        os << "\n    }";
+                    }
+                }
+
+                // #0 is not actually a hub.
+                if(hub != 0)
+                {
+                    // End the hub definition.
+                    os << "\n  }";
+                }
+            }
+            os << "\n} # Episode '" << episodeId << "'";
+
+            episodeIdx += 1;
+        }
+
+        GameInfo gameInfo;
+        DD_GameInfo(&gameInfo);
+
+        // Output mapinfo defs.
+        for(auto const pair : defs.mapInfos)
+        {
+            MapInfo const &info = pair.second;
+            if(custom != info.getb("custom")) continue;
+
+            de::Uri mapUri(info.gets("id"), RC_NULL);
+            if(mapUri.path().isEmpty()) continue;
+
+            String const mapId = toMapId(mapUri);
+
+            bool const doubleSky = info.getb("doubleSky");
+
+            os << "\n\nMap Info {"
+               << "\n  ID = \"" + mapId + "\";"
+               << "\n  Title = \"" + info.gets("title") + "\";"
+               << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
+               << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
+            de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
+            if(!titleImageUri.path().isEmpty())
+            {
+                os << "\n  Title image = \"" + titleImageUri.compose() + "\";";
+            }
+            dfloat parTime = info.getf("par");
+            if(parTime > 0)
+            {
+                os << "\n  Par time = " + String::number(parTime) + ";";
+            }
+            QStringList allFlags;
+            if(info.getb("lightning"))      allFlags << "lightning";
+            if(info.getb("nointermission")) allFlags << "nointermission";
+            if(!allFlags.isEmpty())
+            {
+                os << "\n  Flags = " + allFlags.join(" | ") + ";";
+            }
+            de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
+            if(!skyLayer1MaterialUri.path().isEmpty())
+            {
+                os << "\n  Sky Layer 1 {"
+                   << "\n    Flags = enable;"
+                   << "\n    Material = \"" + skyLayer1MaterialUri.compose() + "\";";
+                dfloat scrollDelta = info.getf(doubleSky? "sky2ScrollDelta" : "sky1ScrollDelta") * 35 /*TICSPERSEC*/;
+                if(!de::fequal(scrollDelta, 0))
+                {
+                    os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
+                }
+                os << "\n  }";
+            }
+            de::Uri skyLayer2MaterialUri(info.gets(doubleSky? "sky1Material" : "sky2Material"), RC_NULL);
+            if(!skyLayer2MaterialUri.path().isEmpty())
+            {
+                os << "\n  Sky Layer 2 {";
+                if(doubleSky)
+                {
+                    os << "\n    Flags = enable | mask;";
+                }
+                os << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
+                dfloat scrollDelta = info.getf(doubleSky? "sky1ScrollDelta" : "sky2ScrollDelta") * 35 /*TICSPERSEC*/;
+                if(!de::fequal(scrollDelta, 0))
+                {
+                    os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
+                }
+                os << "\n  }";
+            }
+            os << "\n}";
+        }
+
+        // Output music modification defs for the non-map musics.
+        for(auto const pair : defs.musics)
+        {
+            Music const &music = pair.second;
+            if(custom != music.getb("custom")) continue;
+
+            os << "\n\nMusic Mods \"" + music.gets("id") + "\" {"
+               << "\n  CD Track = " + String::number(music.geti("cdTrack")) + ";"
+               << "\n}";
+        }
+    }
 };
 
 MapInfoTranslator::MapInfoTranslator() : d(new Instance)
@@ -1301,7 +1515,7 @@ void MapInfoTranslator::reset()
     d->translatedFiles.clear();
 }
 
-void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, bool /*sourceIsCustom*/)
+void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, bool sourceIsCustom)
 {
     LOG_AS("MapInfoTranslator");
 
@@ -1318,7 +1532,7 @@ void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, 
         }
 
         MapInfoParser parser(d->defs);
-        parser.parse(definitions, sourcePath);
+        parser.parse(definitions, sourcePath, sourceIsCustom);
     }
     catch(MapInfoParser::ParseError const &er)
     {
@@ -1326,201 +1540,16 @@ void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, 
     }
 }
 
-String MapInfoTranslator::translate()
+void MapInfoTranslator::translate(String &translated, String &translatedCustom)
 {
     LOG_AS("MapInfoTranslator");
 
     // Perform necessary preprocessing (must be done before translation).
     d->preprocess();
-
-    String text;
-    QTextStream os(&text);
-
-    os << "# Translated definitions from:";
-    // List the files we translated in input order (for debug).
-    for(int i = 0; i < d->translatedFiles.size(); ++i)
-    {
-        String sourceFile = d->translatedFiles[i];
-        os << "\n# " + QString("%1: %2").arg(i).arg(NativePath(sourceFile).pretty());
-    }
-
-    // Output the header block.
-    os << "\n\nHeader { Version = 6; }";
-
-    // Output episode defs.
-    int episodeIdx = 0;
-    for(HexDefs::EpisodeInfos::const_iterator i = d->defs.episodeInfos.begin(); i != d->defs.episodeInfos.end(); ++i)
-    {
-        EpisodeInfo const &info = i->second;
-
-        de::Uri startMapUri(info.gets("startMap"), RC_NULL);
-        if(startMapUri.path().isEmpty()) continue;
-
-        String episodeId = String::number(episodeIdx + 1);
-
-        os << "\n\nEpisode {"
-           << "\n  ID = \"" + episodeId + "\";"
-           << "\n  Title = \"" + info.gets("title") + "\";"
-           << "\n  Start Map = \"" + toMapId(startMapUri) + "\";";
-        String menuHelpInfo = info.gets("menuHelpInfo");
-        if(!menuHelpInfo.isEmpty())
-        {
-            os << "\n  Menu Help Info = \"" + menuHelpInfo + "\";";
-        }
-        de::Uri menuImageUri(info.gets("menuImage"), RC_NULL);
-        if(!menuImageUri.path().isEmpty())
-        {
-            os << "\n  Menu Image = \"" + menuImageUri.compose() + "\";";
-        }
-        String menuShortcut = info.gets("menuShortcut");
-        if(!menuShortcut.isEmpty())
-        {
-            os << "\n  Menu Shortcut = \"" + menuShortcut + "\";";
-        }
-
-        // Find all the hubs for this episode.
-        Instance::MapInfos mapInfos = d->buildHubMapInfoTable(episodeId);
-        QList<int> hubs = mapInfos.uniqueKeys();
-        foreach(int hub, hubs)
-        {
-            QList<MapInfo *> const mapInfosForHub = mapInfos.values(hub);
-            if(mapInfosForHub.isEmpty()) continue;
-
-            // Extra whitespace between hubs, for neatness.
-            os << "\n";
-
-            // #0 is not actually a hub.
-            if(hub != 0)
-            {
-                // Begin the hub definition.
-                os << "\n  Hub {"
-                   << "\n    ID = \"" + String::number(hub) + "\";";
-            }
-
-            // Output each map for this hub (in reverse insertion order).
-            int n = mapInfosForHub.size();
-            while(n-- > 0)
-            {
-                MapInfo const *mapInfo = mapInfosForHub.at(n);
-                de::Uri mapUri(mapInfo->gets("id"), RC_NULL);
-                if(!mapUri.path().isEmpty())
-                {
-                    os << "\n    Map {"
-                       << "\n      ID = \"" + toMapId(mapUri) + "\";";
-                    de::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
-                    if(!nextMapUri.path().isEmpty())
-                    {
-                        os << "\n      Exit { ID = \"next\"; Target Map = \"" + toMapId(nextMapUri) + "\"; }";
-                    }
-                    de::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
-                    if(!secretNextMapUri.path().isEmpty())
-                    {
-                        os << "\n      Exit { ID = \"secret\"; Target Map = \"" + toMapId(secretNextMapUri) + "\"; }";
-                    }
-                    os << "\n      Warp Number = " + String::number(mapInfo->geti("warpTrans")) + ";";
-                    os << "\n    }";
-                }
-            }
-
-            // #0 is not actually a hub.
-            if(hub != 0)
-            {
-                // End the hub definition.
-                os << "\n  }";
-            }
-        }
-        os << "\n} # Episode '" << episodeId << "'";
-
-        episodeIdx += 1;
-    }
-
-    GameInfo gameInfo;
-    DD_GameInfo(&gameInfo);
-
-    // Output mapinfo defs.
-    for(HexDefs::MapInfos::const_iterator i = d->defs.mapInfos.begin(); i != d->defs.mapInfos.end(); ++i)
-    {
-        MapInfo const &info = i->second;
-
-        de::Uri mapUri(info.gets("id"), RC_NULL);
-        if(mapUri.path().isEmpty()) continue;
-
-        bool const doubleSky = info.getb("doubleSky");
-
-        os << "\n\nMap Info {"
-           << "\n  ID = \"" + toMapId(mapUri) + "\";"
-           << "\n  Title = \"" + info.gets("title") + "\";"
-           << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
-           << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
-        /// @todo Must revise Hexen Music def interpretation.
-        //   << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";";
-        de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
-        if(!titleImageUri.path().isEmpty())
-        {
-            os << "\n  Title image = \"" + titleImageUri.compose() + "\";";
-        }
-        if(!info.gets("songLump").isEmpty())
-        {
-            os << "\n  Music = \"" + info.gets("songLump") + "\";";
-        }
-        dfloat parTime = info.getf("par");
-        if(parTime > 0)
-        {
-            os << "\n  Par time = " + String::number(parTime) + ";";
-        }
-        QStringList allFlags;
-        if(info.getb("lightning"))      allFlags << "lightning";
-        if(info.getb("nointermission")) allFlags << "nointermission";
-        if(!allFlags.isEmpty())
-        {
-            os << "\n Flags = " + allFlags.join(" | ") + ";";
-        }
-        de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
-        if(!skyLayer1MaterialUri.path().isEmpty())
-        {
-            os << "\n  Sky Layer 1 {"
-               << "\n    Flags = enable;"
-               << "\n    Material = \"" + skyLayer1MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf(doubleSky? "sky2ScrollDelta" : "sky1ScrollDelta") * 35 /*TICSPERSEC*/;
-            if(!de::fequal(scrollDelta, 0))
-            {
-                os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
-            }
-            os << "\n  }";
-        }
-        de::Uri skyLayer2MaterialUri(info.gets(doubleSky? "sky1Material" : "sky2Material"), RC_NULL);
-        if(!skyLayer2MaterialUri.path().isEmpty())
-        {
-            os << "\n  Sky Layer 2 {";
-            if(doubleSky)
-            {
-                os << "\n    Flags = enable | mask;";
-            }
-            os << "\n    Material = \"" + skyLayer2MaterialUri.compose() + "\";";
-            dfloat scrollDelta = info.getf(doubleSky? "sky1ScrollDelta" : "sky2ScrollDelta") * 35 /*TICSPERSEC*/;
-            if(!de::fequal(scrollDelta, 0))
-            {
-                os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
-            }
-            os << "\n  }";
-        }
-        os << "\n}";
-    }
-
-    // Output music defs.
-    /// @todo Must revise Hexen Music def interpretation (no Music defs exist yet).
-    for(HexDefs::Musics::const_iterator i = d->defs.musics.begin(); i != d->defs.musics.end(); ++i)
-    {
-        Music const &music = i->second;
-
-        os << "\n\nMusic Mods \"" + music.gets("id") + "\" {"
-           << "\n  CD Track = " + String::number(music.geti("cdTrack")) + ";"
-           << "\n}";
-    }
+    d->translate(translated, false/*not custom*/);
+    d->translate(translatedCustom, true/*custom*/);
 
     reset(); // The definition database was modified.
-
-    return text;
 }
 
 } // namespace idtech1

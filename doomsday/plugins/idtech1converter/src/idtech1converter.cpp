@@ -83,8 +83,11 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
-static String convertMapInfos(QList<QString> const &pathsInLoadOrder)
+static void convertMapInfos(QList<QString> const &pathsInLoadOrder, String &xlat, String &xlatCustom)
 {
+    xlat.clear();
+    xlatCustom.clear();
+
     MapInfoTranslator translator;
 
     bool haveTranslation = false;
@@ -99,9 +102,9 @@ static String convertMapInfos(QList<QString> const &pathsInLoadOrder)
             haveTranslation = true;
         }
     }
-    if(!haveTranslation) return "";
+    if(!haveTranslation) return;
 
-    return translator.translate() + "\n"; // End with a newline, for neatness sake.
+    translator.translate(xlat, xlatCustom);
 }
 
 /**
@@ -114,7 +117,10 @@ int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
     DENG2_ASSERT(context);
     auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
     QStringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
-    Str_Set(&parm.result, convertMapInfos(allPathsInLoadOrder).toUtf8().constData());
+    String xlat, xlatCustom;
+    convertMapInfos(allPathsInLoadOrder, xlat, xlatCustom);
+    Str_Set(&parm.translated, xlat.toUtf8().constData());
+    Str_Set(&parm.translatedCustom, xlatCustom.toUtf8().constData());
     return true;
 }
 
