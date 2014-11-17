@@ -1,4 +1,4 @@
-/** @file defs/finale.cpp  Finale definition accessor.
+/** @file finale.cpp  Finale definition accessor.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -28,6 +28,8 @@ namespace defn {
 
 void Finale::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText("id", "");
     def().addText("before", "");

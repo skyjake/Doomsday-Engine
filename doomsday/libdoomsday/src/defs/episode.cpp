@@ -1,4 +1,4 @@
-/** @file defs/episode.cpp  Episode definition accessor.
+/** @file episode.cpp  Episode definition accessor.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -28,6 +28,8 @@ namespace defn {
 
 void Episode::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText("id", "");
     def().addText("startMap", "Maps:"); // URI. Unknown.
@@ -42,6 +44,8 @@ void Episode::resetToDefaults()
 Record &Episode::addHub()
 {
     Record *hub = new Record;
+
+    hub->addBoolean("custom", false);
 
     hub->addText ("id", "");
     hub->addArray("map", new ArrayValue);

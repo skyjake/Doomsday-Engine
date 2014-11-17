@@ -29,6 +29,8 @@ namespace defn {
 
 void MapInfo::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText  ("id", "");
     def().addText  ("title", "Untitled");

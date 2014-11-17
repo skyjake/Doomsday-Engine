@@ -28,6 +28,8 @@ namespace defn {
 
 void Sky::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText  ("id", "");
     def().addNumber("flags", 0);
@@ -45,6 +47,8 @@ void Sky::resetToDefaults()
 Record &Sky::addLayer()
 {
     Record *layer = new Record;
+
+    layer->addBoolean("custom", false);
 
     layer->addNumber("flags", 0);
     layer->addText  ("material", "");
@@ -81,6 +85,8 @@ Record const &Sky::layer(int index) const
 Record &Sky::addModel()
 {
     Record *model = new Record;
+
+    model->addBoolean("custom", false);
 
     model->addText  ("id", "");
     model->addNumber("layer", -1);

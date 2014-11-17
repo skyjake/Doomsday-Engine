@@ -133,7 +133,7 @@ using namespace de;
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
-#define RV_END          { setError("Unknown label.", label); retVal = false; goto ded_end_read; }
+#define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
 
 static struct xgclass_s *xgClassLinks;
 
@@ -161,7 +161,8 @@ DENG2_PIMPL(DEDParser)
         dd_bool     atEnd;
         int         lineNumber;
         String      fileName;
-        int         version; // v6 does not require semicolons.
+        int         version;  ///< v6 does not require semicolons.
+        bool        custom;   ///< @c true= source is a user supplied add-on.
     };
 
     typedef dedsource_s dedsource_t;
@@ -178,7 +179,7 @@ DENG2_PIMPL(DEDParser)
         zap(unreadToken);
     }
 
-    void DED_InitReader(char const *buffer, String fileName)
+    void DED_InitReader(char const *buffer, String fileName, bool sourceIsCustom)
     {
         if(source && source - sourceStack >= MAX_RECUR_DEPTH)
         {
@@ -202,6 +203,7 @@ DENG2_PIMPL(DEDParser)
         source->lineNumber = 1;
         source->fileName   = fileName;
         source->version    = DED_VERSION;
+        source->custom     = sourceIsCustom;
     }
 
     void DED_CloseReader()
@@ -764,7 +766,7 @@ DENG2_PIMPL(DEDParser)
         return value == expected;
     }
 
-    int readData(char const *buffer, String sourceFile)
+    int readData(char const *buffer, String sourceFile, bool sourceIsCustom)
     {
         char  dummy[128], label[128], tmp[256];
         int   dummyInt, idx, retVal = true;
@@ -788,7 +790,7 @@ DENG2_PIMPL(DEDParser)
         int   bCopyNext = 0;
 
         // Get the next entry from the source stack.
-        DED_InitReader(buffer, sourceFile);
+        DED_InitReader(buffer, sourceFile, sourceIsCustom);
 
         // For including other files -- we must know where we are.
         String sourceFileDir = sourceFile.fileNamePath();
@@ -925,8 +927,9 @@ DENG2_PIMPL(DEDParser)
                 if(qstrlen(id))
                 {
                     ded->addFlag(id, value);
-                    // Sanity check.
-                    DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
+                    Record &flag = ded->flags.find("id", id);
+                    DENG2_ASSERT(flag.geti("value") == value); // Sanity check.
+                    if(source->custom) flag.set("custom", true);
                 }
             }
 
@@ -979,8 +982,9 @@ DENG2_PIMPL(DEDParser)
                 {
                     ded->episodes.copy(prevEpisodeDefIdx, *epsd);
                 }
-                defn::Episode mainDef(*epsd);
+                if(source->custom) epsd->set("custom", true);
 
+                defn::Episode mainDef(*epsd);
                 int hub = 0;
                 int notHubMap = 0;
                 FINDBEGIN;
@@ -1007,6 +1011,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         DENG_ASSERT(hub < mainDef.hubCount());
                         hubRec = &mainDef.hub(hub);
+                        if(source->custom) hubRec->set("custom", true);
 
                         int map = 0;
                         FINDBEGIN;
@@ -1026,6 +1031,7 @@ DENG2_PIMPL(DEDParser)
                                 }
                                 DENG_ASSERT(map < int(hubRec->geta("map").size()));
                                 Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
+                                if(source->custom) mapRec.set("custom", true);
 
                                 int exit = 0;
                                 FINDBEGIN;
@@ -1045,6 +1051,7 @@ DENG2_PIMPL(DEDParser)
                                         }
                                         DENG_ASSERT(exit < mgNodeDef.exitCount());
                                         Record &exitRec = mgNodeDef.exit(exit);
+                                        if(source->custom) exitRec.set("custom", true);
 
                                         FINDBEGIN;
                                         forever
@@ -1079,6 +1086,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
                         Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
+                        if(source->custom) mapRec.set("custom", true);
 
                         int exit = 0;
                         FINDBEGIN;
@@ -1098,6 +1106,7 @@ DENG2_PIMPL(DEDParser)
                                 }
                                 DENG_ASSERT(exit < mgNodeDef.exitCount());
                                 Record &exitRec = mgNodeDef.exit(exit);
+                                if(source->custom) exitRec.set("custom", true);
 
                                 FINDBEGIN;
                                 forever
@@ -1623,9 +1632,10 @@ DENG2_PIMPL(DEDParser)
 
                     if(bCopyNext) ded->models.copy(prevModelDefIdx, mdl);
                 }
+                if(source->custom) mdl.set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     RV_STR("ID", mdl["id"])
@@ -1785,6 +1795,7 @@ DENG2_PIMPL(DEDParser)
                 {
                     ded->musics.copy(prevMusicDefIdx, *music);
                 }
+                if(source->custom) music->set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -1825,6 +1836,7 @@ DENG2_PIMPL(DEDParser)
                     //Record *prevSky = &ded->skies[prevSkyDefIdx];
                     ded->skies.copy(prevSkyDefIdx, sky);
                 }
+                if(source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -1839,6 +1851,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         defn::Sky mainDef(sky);
                         Record &layerDef = mainDef.layer(atoi(label+6) - 1);
+                        if(source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -1874,6 +1887,7 @@ DENG2_PIMPL(DEDParser)
                         DENG_ASSERT(model < mainDef.modelCount());
 
                         Record &mdlDef = mainDef.model(model);
+                        if(source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -1902,9 +1916,17 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Map")) // Info
             {
+                ReadToken();
+                if(!ISTOKEN("Info"))
+                {
+                    setError("Unknown token 'Map" + String(token) + "'.");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+
                 bool bModify = false;
                 Record dummyMi;
-                Record *mi = 0;
+                Record *mi = nullptr;
                 int model = 0;
 
                 ReadToken();
@@ -1916,29 +1938,35 @@ DENG2_PIMPL(DEDParser)
                 }
                 else if(!bCopyNext)
                 {
-                    de::Uri *otherMap = 0;
+                    de::Uri *otherMap = nullptr;
+                    bool skip = false;
 
                     READURI(&otherMap, "Maps");
                     ReadToken();
 
                     idx = ded->getMapInfoNum(*otherMap);
-                    if(idx >= 0)
-                    {
-                        mi = &ded->mapInfos[idx];
-                        bModify = true;
-                    }
-                    else
+                    if(idx < 0)
                     {
                         LOG_RES_WARNING("Ignoring unknown Map \"%s\" in %s on line #%i")
                                 << otherMap->asText()
                                 << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
+                        skip = true;
+                    }
+                    delete otherMap;
 
+                    if(!skip)
+                    {
+                        DENG2_ASSERT(idx >= 0);
+                        mi = &ded->mapInfos[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
                         // We'll read into a dummy definition.
                         defn::MapInfo(dummyMi).resetToDefaults();
                         mi = &dummyMi;
                     }
-                    delete otherMap;
                 }
                 else
                 {
@@ -1953,8 +1981,11 @@ DENG2_PIMPL(DEDParser)
                     // Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
                     ded->mapInfos.copy(prevMapInfoDefIdx, *mi);
                 }
+                if(source->custom) mi->set("custom", true);
 
                 Record &sky = mi->subrecord("sky");
+                if(source->custom) sky.set("custom", true);
+
                 FINDBEGIN;
                 forever
                 {
@@ -2002,6 +2033,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         defn::Sky skyDef(sky);
                         Record &layerDef = skyDef.layer(atoi(label+10) - 1);
+                        if(source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -2037,6 +2069,7 @@ DENG2_PIMPL(DEDParser)
                         DENG_ASSERT(model < skyDef.modelCount());
 
                         Record &mdlDef = skyDef.model(model);
+                        if(source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
                         forever
@@ -2486,6 +2519,7 @@ DENG2_PIMPL(DEDParser)
                 // New finales are appended to the end of the list.
                 idx = ded->addFinale();
                 Record &fin = ded->finales[idx];
+                if(source->custom) fin.set("custom", true);
 
                 FINDBEGIN;
                 forever
@@ -2975,23 +3009,13 @@ DENG2_PIMPL(DEDParser)
         strncpy(token, "", MAX_TOKEN_LEN);
     }
 
-    void setError(char const *str, char const *more = 0)
+    void setError(String const &str)
     {
         extern char dedReadError[512];
-        if(more)
-        {
-            sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
-                    source? source->fileName.toUtf8().constData() : "?",
-                    source? source->lineNumber : 0,
-                    str, more);
-        }
-        else
-        {
-            sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
-                    source? source->fileName.toUtf8().constData() : "?",
-                    source? source->lineNumber : 0,
-                    str);
-        }
+        sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
+                source? source->fileName.toUtf8().constData() : "?",
+                source->lineNumber, // source? source->lineNumber : 0,
+                str.toUtf8().constData());
     }
 };
 
@@ -3000,7 +3024,7 @@ DEDParser::DEDParser(ded_t *ded) : d(new Instance(this))
     d->ded = ded;
 }
 
-int DEDParser::parse(char const *buffer, String sourceFile)
+int DEDParser::parse(char const *buffer, String sourceFile, bool sourceIsCustom)
 {
-    return d->readData(buffer, sourceFile);
+    return d->readData(buffer, sourceFile, sourceIsCustom);
 }

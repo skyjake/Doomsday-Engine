@@ -37,10 +37,12 @@ LIBDOOMSDAY_PUBLIC int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum);
  * Reads definitions from the given buffer.
  * The definition is being loaded from @a _sourcefile (DED or WAD).
  *
- * @param buffer        The data to be read, must be null-terminated.
- * @param _sourceFile   Just FYI.
+ * @param buffer          The data to be read, must be null-terminated.
+ * @param sourceFile      Just FYI.
+ * @param sourceIsCustom  @c true= source is a user supplied add-on.
  */
-LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String _sourceFile);
+LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String sourceFile,
+    bool sourceIsCustom);
 
 /**
  * @return  @c true, if the file was successfully loaded.

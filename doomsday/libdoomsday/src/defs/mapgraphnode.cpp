@@ -1,4 +1,4 @@
-/** @file defs/mapgraphnode.cpp  MapGraphNode definition accessor.
+/** @file mapgraphnode.cpp  MapGraphNode definition accessor.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
@@ -28,6 +28,8 @@ namespace defn {
 
 void MapGraphNode::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText  ("id", "");
     def().addNumber("warpNumber", 0);
@@ -37,6 +39,8 @@ void MapGraphNode::resetToDefaults()
 Record &MapGraphNode::addExit()
 {
     Record *exit = new Record;
+
+    exit->addBoolean("custom", false);
 
     exit->addText("id", "");
     exit->addText("targetMap", "");
