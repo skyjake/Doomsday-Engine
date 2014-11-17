@@ -235,7 +235,11 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
         if(isNumber && lumpIndex.hasLump(lumpNum))
         {
             File1 &lump = lumpIndex.lump(lumpNum);
-            if(isCustom) *isCustom = lump.hasCustom();
+            if(isCustom)
+            {
+                /// @todo Custom status for contained files is not inherited from the container?
+                *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+            }
 
             // Ignore zero-length lumps.
             if(!lump.size()) return 0;
@@ -261,7 +265,11 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
             return 0;
 
         File1 &lump = lumpIndex[lumpIndex.findLast(String(lumpName) + ".lmp")];
-        if(isCustom) *isCustom = lump.hasCustom();
+        if(isCustom)
+        {
+            /// @todo Custom status for contained files is not inherited from the container?
+            *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+        }
 
         // Ignore zero-length lumps.
         if(!lump.size()) return 0;
@@ -281,7 +289,12 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
     {
         QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(Str_Text(path), "rb"));
 
-        if(isCustom) *isCustom = hndl->file().hasCustom();
+        if(isCustom)
+        {
+            /// @todo Custom status for contained files is not inherited from the container?
+            File1 &file = hndl->file();
+            *isCustom = (file.isContained()? file.container().hasCustom() : file.hasCustom());
+        }
 
         // Ignore zero-length lumps.
         AutoStr *string = nullptr;
