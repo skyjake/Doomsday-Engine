@@ -515,7 +515,12 @@ void GLTarget::glBind() const
     }
     else
     {
-        DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+        //DENG2_ASSERT(!d->fbo || glIsFramebuffer(d->fbo));
+		if(d->fbo && !glIsFramebuffer(d->fbo))
+		{
+			qDebug() << "GLTarget: WARNING! Attempting to bind FBO" << d->fbo 
+				     << "that is not a valid OpenGL FBO";
+		}
 
         //qDebug() << "GLTarget: binding FBO" << d->fbo;
         glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
