@@ -41,8 +41,11 @@ public:
      * Translate the current MAPINFO data set into DED syntax. Note that the internal
      * state of the definition database is modified in the process and will therefore
      * be reset automatically once translation has completed.
+     *
+     * @param translated        Definitions from non-custom sources are written here.
+     * @param translatedCustom  Definitions from custom sources are written here.
      */
-    de::String translate();
+    void translate(de::String &translated, de::String &translatedCustom);
 
 private:
     DENG2_PRIVATE(d)

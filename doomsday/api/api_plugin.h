@@ -96,7 +96,8 @@ typedef struct {
 /// Parameters for HOOK_MAPINFO_CONVERT
 typedef struct {
     Str paths; // ';' delimited
-    Str result;
+    Str translated;
+    Str translatedCustom;
 } ddhook_mapinfo_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1

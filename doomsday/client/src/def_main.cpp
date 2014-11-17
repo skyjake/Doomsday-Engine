@@ -626,29 +626,32 @@ static QStringList allMapInfoUrns()
 /**
  * @param mapInfoUrns  MAPINFO definitions to translate, in load order.
  */
-static String translateMapInfos(QStringList const &mapInfoUrns)
+static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, String &xlatCustom)
 {
-    String translated;
+    xlat.clear();
+    xlatCustom.clear();
+
     String delimitedPaths = mapInfoUrns.join(";");
-    if(!delimitedPaths.isEmpty())
+    if(delimitedPaths.isEmpty()) return;
+
+    ddhook_mapinfo_convert_t parm;
+    Str_InitStd(&parm.paths);
+    Str_InitStd(&parm.translated);
+    Str_InitStd(&parm.translatedCustom);
+    try
     {
-        ddhook_mapinfo_convert_t parm;
-        Str_InitStd(&parm.paths);
-        Str_InitStd(&parm.result);
-        try
+        Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
+        if(DD_CallHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
         {
-            Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
-            if(DD_CallHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
-            {
-                translated = Str_Text(&parm.result);
-            }
+            xlat       = Str_Text(&parm.translated);
+            xlatCustom = Str_Text(&parm.translatedCustom);
         }
-        catch(...)
-        {}
-        Str_Free(&parm.result);
-        Str_Free(&parm.paths);
     }
-    return translated;
+    catch(...)
+    {}
+    Str_Free(&parm.translatedCustom);
+    Str_Free(&parm.translated);
+    Str_Free(&parm.paths);
 }
 
 static void readAllDefinitions()
@@ -678,11 +681,22 @@ static void readAllDefinitions()
         QStringList mapInfoUrns = allMapInfoUrns();
         if(!mapInfoUrns.isEmpty())
         {
-            String translatedDefs = translateMapInfos(mapInfoUrns);
-            if(!translatedDefs.isEmpty())
+            String xlat, xlatCustom;
+            translateMapInfos(mapInfoUrns, xlat, xlatCustom);
+
+            if(!xlat.isEmpty())
             {
-                qDebug() << "[TranslatedMapInfos]\n" << translatedDefs;
-                if(!DED_ReadData(&defs, translatedDefs.toUtf8().constData(), "[TranslatedMapInfos]"))
+                qDebug() << "[TranslatedMapInfos] custom:false\n" << xlat;
+                if(!DED_ReadData(&defs, xlat.toUtf8().constData(), "[TranslatedMapInfos]"))
+                {
+                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                }
+            }
+
+            if(!xlatCustom.isEmpty())
+            {
+                qDebug() << "[TranslatedMapInfos] custom:true\n" << xlatCustom;
+                if(!DED_ReadData(&defs, xlatCustom.toUtf8().constData(), "[TranslatedMapInfos]"))
                 {
                     App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
                 }
