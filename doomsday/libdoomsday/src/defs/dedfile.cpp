@@ -18,21 +18,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "doomsday/defs/dedparser.h"
+#include "doomsday/defs/dedfile.h"
 
 #include <de/App>
 #include <de/Log>
-#include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 
 using namespace de;
 
-char dedReadError[512];
+static char dedReadError[512];
 
-void DED_SetError(char const *str)
+void DED_SetError(String const &message)
 {
-    strncpy(dedReadError, str, sizeof(dedReadError));
+    String msg = "Error: " + message + ".";
+    strncpy(dedReadError, msg.toUtf8().constData(), sizeof(dedReadError));
 }
 
 void Def_ReadProcessDED(ded_t *defs, String sourcePath)
@@ -95,7 +96,7 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
-    DED_SetError("Bad lump number.");
+    DED_SetError("Bad lump number");
     return false;
 }
 
@@ -126,7 +127,7 @@ int DED_Read(ded_t *ded, String path)
     catch(FS1::NotFoundError const &)
     {} // Ignore.
 
-    DED_SetError("File could not be opened for reading.");
+    DED_SetError("File could not be opened for reading");
     return false;
 }
 

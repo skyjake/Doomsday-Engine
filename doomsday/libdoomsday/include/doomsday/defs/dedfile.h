@@ -49,7 +49,7 @@ LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String s
  */
 int DED_Read(ded_t *ded, de::String path);
 
-void DED_SetError(char const *str);
+void DED_SetError(de::String const &message);
 
 LIBDOOMSDAY_PUBLIC char const *DED_Error();
 

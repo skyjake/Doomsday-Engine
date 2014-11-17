@@ -218,6 +218,17 @@ DENG2_PIMPL(DEDParser)
         }
     }
 
+    String readPosAsText()
+    {
+        return "\"" + (source? source->fileName : "[buffered-data]") + "\""
+               " on line #" + String::number(source? source->lineNumber : 0);
+    }
+
+    void setError(String const &message)
+    {
+        DED_SetError("In " + readPosAsText() + "\n  " + message);
+    }
+
     /**
      * Reads a single character from the input file. Increments the line
      * number counter if necessary.
@@ -502,7 +513,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing integer value.");
+            setError("Missing integer value");
             return false;
         }
 
@@ -518,7 +529,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing integer value.");
+            setError("Missing integer value");
             return false;
         }
 
@@ -545,7 +556,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing float value.");
+            setError("Missing float value");
             return false;
         }
 
@@ -587,7 +598,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing flags value.");
+            setError("Missing flags value");
             return false;
         }
         if(ISTOKEN("0"))
@@ -715,7 +726,7 @@ DENG2_PIMPL(DEDParser)
             ReadToken();
             if(source->atEnd)
             {
-                setError("Unexpected end of file.");
+                setError("Unexpected end of file");
                 return false;
             }
             if(ISTOKEN("}")) // End block.
@@ -727,7 +738,7 @@ DENG2_PIMPL(DEDParser)
             {
                 if(source->version <= 5)
                 {
-                    setError("Label without value.");
+                    setError("Label without value");
                     return false;
                 }
                 continue; // Semicolons are optional in v6.
@@ -972,7 +983,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1174,7 +1185,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1275,7 +1286,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1445,7 +1456,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1477,7 +1488,7 @@ DENG2_PIMPL(DEDParser)
 
                         if(layer >= DED_MAX_MATERIAL_LAYERS)
                         {
-                            setError("Too many Material layers.");
+                            setError("Too many Material layers");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1540,7 +1551,7 @@ DENG2_PIMPL(DEDParser)
 
                         if(light == DED_MAX_MATERIAL_DECORATIONS)
                         {
-                            setError("Too many lights in material.");
+                            setError("Too many lights in material");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1785,7 +1796,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1874,7 +1885,7 @@ DENG2_PIMPL(DEDParser)
                         if(model == 32/*MAX_SKY_MODELS*/)
                         {
                             // Too many!
-                            setError("Too many Sky models.");
+                            setError("Too many Sky models");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1919,7 +1930,7 @@ DENG2_PIMPL(DEDParser)
                 ReadToken();
                 if(!ISTOKEN("Info"))
                 {
-                    setError("Unknown token 'Map" + String(token) + "'.");
+                    setError("Unknown token 'Map" + String(token) + "'");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1939,23 +1950,25 @@ DENG2_PIMPL(DEDParser)
                 else if(!bCopyNext)
                 {
                     de::Uri *otherMap = nullptr;
-                    bool skip = false;
-
                     READURI(&otherMap, "Maps");
                     ReadToken();
 
                     idx = ded->getMapInfoNum(*otherMap);
-                    if(idx < 0)
+                    if(idx >= 0)
+                    {
+                        mi = &ded->mapInfos[idx];
+                        bModify = true;
+                    }
+                    else
                     {
                         LOG_RES_WARNING("Ignoring unknown Map \"%s\" in %s on line #%i")
                                 << otherMap->asText()
                                 << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
-                        skip = true;
                     }
                     delete otherMap;
 
-                    if(!skip && ISTOKEN("if"))
+                    if(mi && ISTOKEN("if"))
                     {
                         bool negate = false;
                         bool testCustom = false;
@@ -1964,7 +1977,6 @@ DENG2_PIMPL(DEDParser)
                             ReadToken();
                             if(ISTOKEN("{"))
                             {
-                                //UnreadToken(token);
                                 break;
                             }
 
@@ -1985,23 +1997,20 @@ DENG2_PIMPL(DEDParser)
 
                         if(testCustom)
                         {
-                            skip = (source->custom != negate);
+                            if(mi->getb("custom") != negate)
+                            {
+                                mi = nullptr; // skip
+                            }
                         }
                         else
                         {
-                            setError("Expected condition expression to follow 'if'.");
+                            setError("Expected condition expression to follow 'if'");
                             retVal = false;
                             goto ded_end_read;
                         }
                     }
 
-                    if(!skip)
-                    {
-                        DENG2_ASSERT(idx >= 0);
-                        mi = &ded->mapInfos[idx];
-                        bModify = true;
-                    }
-                    else
+                    if(!mi)
                     {
                         // We'll read into a dummy definition.
                         defn::MapInfo(dummyMi).resetToDefaults();
@@ -2010,7 +2019,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -2096,7 +2105,7 @@ DENG2_PIMPL(DEDParser)
                         if(model == 32/*MAX_SKY_MODELS*/)
                         {
                             // Too many!
-                            setError("Too many Sky models.");
+                            setError("Too many Sky models");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -2162,7 +2171,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         else
                         {
-                            setError("Syntax error in Text value.");
+                            setError("Syntax error in Text value");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -2236,7 +2245,7 @@ DENG2_PIMPL(DEDParser)
                             int ascii = atoi(label);
                             if(ascii < 0 || ascii > 255)
                             {
-                                setError("Invalid ascii code.");
+                                setError("Invalid ascii code");
                                 retVal = false;
                                 goto ded_end_read;
                             }
@@ -2280,7 +2289,7 @@ DENG2_PIMPL(DEDParser)
                     READLABEL_NOBREAK;
                     if(strchr(label, '|'))
                     {
-                        setError("Value labels can not include '|' characters (ASCII 124).");
+                        setError("Value labels can not include '|' characters (ASCII 124)");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -2307,7 +2316,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         else
                         {
-                            setError("Syntax error in Value string.");
+                            setError("Syntax error in Value string");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -2350,7 +2359,7 @@ DENG2_PIMPL(DEDParser)
                     else
                     {
                         // Only the above characters are allowed.
-                        setError("Illegal token.");
+                        setError("Illegal token");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -2630,7 +2639,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         if(sub == DED_DECOR_NUM_LIGHTS)
                         {
-                            setError("Too many lights in decoration.");
+                            setError("Too many lights in decoration");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -3047,15 +3056,6 @@ DENG2_PIMPL(DEDParser)
 
         // Reset state for continuing.
         strncpy(token, "", MAX_TOKEN_LEN);
-    }
-
-    void setError(String const &str)
-    {
-        extern char dedReadError[512];
-        sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
-                source? source->fileName.toUtf8().constData() : "?",
-                source->lineNumber, // source? source->lineNumber : 0,
-                str.toUtf8().constData());
     }
 };
 
