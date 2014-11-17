@@ -20,15 +20,19 @@ Map Info {
 }
 
 Include "flags.ded";
+Include "values.ded";
 Include "fonts.ded";
 Include "objects.ded";
 Include "sprites.ded";
+Include "text.ded";
+Include "finales.ded";
+
+# MAPINFO interoperability patches
+Include "patchmapinfo.ded";
+
 Include "materials.ded";
 Include "anim.ded";
 Include "audio.ded";
 Include "special.ded";
 Include "lights.ded";
 Include "skies.ded";
-Include "finales.ded";
-Include "text.ded";
-Include "values.ded";

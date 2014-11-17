@@ -7,6 +7,9 @@
 # Include common definitions for games playable with jDoom.
 Include "jdoom.ded";
 
+# MAPINFO interoperability patches
+Include "doom1/patchmapinfo.ded";
+
 Include "chex/anim.ded";
 Include "chex/skies.ded";
 Include "chex/objects.ded";

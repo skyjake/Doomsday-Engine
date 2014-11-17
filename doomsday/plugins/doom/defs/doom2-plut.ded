@@ -7,6 +7,9 @@
 # Include common definitions for games playable with jDoom.
 Include "jdoom.ded";
 
+# MAPINFO interoperability patches
+Include "doom2/patchmapinfo.ded";
+
 Include "doom1/anim.ded";
 Include "doom2/anim.ded";
 Include "doom2-plut/anim.ded";
