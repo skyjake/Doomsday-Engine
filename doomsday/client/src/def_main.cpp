@@ -687,8 +687,7 @@ static void readAllDefinitions()
             if(!xlat.isEmpty())
             {
                 qDebug() << "[TranslatedMapInfos] custom:false\n" << xlat;
-                if(!DED_ReadData(&defs, xlat.toUtf8().constData(),
-                                 "[TranslatedMapInfos]", false /*not custom*/))
+                if(!DED_ReadData(&defs, xlat.toUtf8().constData(), "[TranslatedMapInfos]"))
                 {
                     App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
                 }
@@ -697,8 +696,7 @@ static void readAllDefinitions()
             if(!xlatCustom.isEmpty())
             {
                 qDebug() << "[TranslatedMapInfos] custom:true\n" << xlatCustom;
-                if(!DED_ReadData(&defs, xlatCustom.toUtf8().constData(),
-                                 "[TranslatedMapInfos]", true /*custom*/))
+                if(!DED_ReadData(&defs, xlatCustom.toUtf8().constData(), "[TranslatedMapInfos]"))
                 {
                     App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
                 }

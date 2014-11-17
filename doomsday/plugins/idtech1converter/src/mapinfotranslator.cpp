@@ -1436,14 +1436,14 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
             String const mapId = toMapId(mapUri);
 
+            bool const doubleSky = info.getb("doubleSky");
+
             String const musicId = mapId + "_music";
             os << "\n\nMusic {"
                << "\n  ID = \"" + musicId + "\";"
                << "\n  Lump = \"" + info.gets("music") + "\";"
                << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
                << "\n}";
-
-            bool const doubleSky = info.getb("doubleSky");
 
             os << "\n\nMap Info {"
                << "\n  ID = \"" + mapId + "\";"
