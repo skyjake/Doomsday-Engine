@@ -325,7 +325,7 @@ static String symbolicDescriptor(event_t const &event)
 #ifndef __64BIT__
         String symbol = (char const *) event.data1;
 #else
-        String symbol = (char const *)( (duint32(event.data2) << 32) | duint32(event.data1) );
+        String symbol = (char const *)( (duint64(event.data2) << 32) | duint64(event.data1) );
 #endif
         if(symbol.beginsWith("echo-"))
         {
