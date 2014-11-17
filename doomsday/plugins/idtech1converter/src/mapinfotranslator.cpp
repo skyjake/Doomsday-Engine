@@ -104,6 +104,7 @@ namespace internal {
             addNumber ("hub", 0);
             addText   ("id", "Maps:");        // URI. Unknown.
             addBoolean("lightning", false);
+            addText   ("music", "");
             addBoolean("nointermission", false);
             addText   ("nextMap", "");        // URI. None. (If scheme is "@wt" then the path is a warp trans number).
             addNumber ("par", 0);
@@ -112,7 +113,6 @@ namespace internal {
             addNumber ("sky1ScrollDelta", 0);
             addText   ("sky2Material", defaultSkyMaterial());
             addNumber ("sky2ScrollDelta", 0);
-            addText   ("songLump", "");
             addText   ("title", "Untitled");
             addText   ("titleImage", "");     // URI. None.
             addNumber ("warpTrans", 0);
@@ -893,8 +893,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "music")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.music is not supported.");
-                    lexer.readString();
+                    info->set("music", Str_Text(lexer.readString()));
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "next"))
@@ -1437,6 +1436,13 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
             String const mapId = toMapId(mapUri);
 
+            String const musicId = mapId + "_music";
+            os << "\n\nMusic {"
+               << "\n  ID = \"" + musicId + "\";"
+               << "\n  Lump = \"" + info.gets("music") + "\";"
+               << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
+               << "\n}";
+
             bool const doubleSky = info.getb("doubleSky");
 
             os << "\n\nMap Info {"
@@ -1444,6 +1450,7 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
                << "\n  Title = \"" + info.gets("title") + "\";"
                << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
                << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
+               << "\n  Music = \"" + musicId + "\";";
             de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())
             {
