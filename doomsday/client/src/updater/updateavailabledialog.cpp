@@ -216,8 +216,11 @@ void UpdateAvailableDialog::editSettings()
         // The Gear button will soon be deleted, so we'll need to detach from it.
         st->detachAnchor();
 
-        d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
-        d->showProgress(true, SHOW_ANIM_SPAN);
-        emit checkAgain();
+        if(st->settingsHaveChanged())
+        {
+            d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
+            d->showProgress(true, SHOW_ANIM_SPAN);
+            emit checkAgain();
+        }
     }
 }

@@ -41,8 +41,8 @@ DENG2_PIMPL(ClientWindowSystem)
         self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
         settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
-                .define(SettingsRegister::IntCVar,        "vid-fsaa", 0)
-                .define(SettingsRegister::IntCVar,        "vid-vsync", 1)
+                .define(SettingsRegister::ConfigVariable, "window.main.fsaa")
+                .define(SettingsRegister::ConfigVariable, "window.main.vsync")
                 .define(SettingsRegister::ConfigVariable, "render.pixelDensity");
     }
 };

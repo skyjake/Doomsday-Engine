@@ -181,6 +181,24 @@ DENG2_PIMPL(GLState)
         return GL_ZERO;
     }
 
+    static gl::Blend fromGlBFunc(GLenum e)
+    {
+        switch(e)
+        {
+        case GL_ZERO: return gl::Zero;
+        case GL_ONE: return gl::One;
+        case GL_SRC_COLOR: return gl::SrcColor;
+        case GL_ONE_MINUS_SRC_COLOR: return gl::OneMinusSrcColor;
+        case GL_SRC_ALPHA: return gl::SrcAlpha;
+        case GL_ONE_MINUS_SRC_ALPHA: return gl::OneMinusSrcAlpha;
+        case GL_DST_COLOR: return gl::DestColor;
+        case GL_ONE_MINUS_DST_COLOR: return gl::OneMinusDestColor;
+        case GL_DST_ALPHA: return gl::DestAlpha;
+        case GL_ONE_MINUS_DST_ALPHA: return gl::OneMinusDestAlpha;
+        }
+        return gl::Zero;
+    }
+
     void glApply(Property prop)
     {
         switch(prop)
@@ -643,6 +661,40 @@ void GLState::apply() const
         }
         currentProps = d->props;
     }
+
+#if 0
+    // Verify that the state is correct.
+    for(int i = 0; i < d->props.elements().size(); ++i)
+    {
+        auto const &elem = d->props.elements().at(i);
+        int val;
+        switch(elem.id)
+        {
+        case Blend:
+            glGetIntegerv(GL_BLEND, &val);
+            DENG2_ASSERT(!val == !d->props.asBool(elem.id));
+            break;
+
+        case BlendFuncSrc:
+            glGetIntegerv(GL_BLEND_SRC_RGB, &val);
+            DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
+            break;
+
+        case BlendFuncDest:
+            glGetIntegerv(GL_BLEND_DST_RGB, &val);
+            DENG2_ASSERT(d->fromGlBFunc(val) == d->props.asUInt(elem.id));
+            break;
+
+        case BlendOp:
+            glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
+            val = (val == GL_FUNC_ADD? gl::Add :
+                   val == GL_FUNC_SUBTRACT? gl::Subtract :
+                   val == GL_FUNC_REVERSE_SUBTRACT? gl::ReverseSubtract : 0);
+            DENG2_ASSERT(val == d->props.asUInt(elem.id));
+            break;
+        }
+    }
+#endif
 }
 
 void GLState::considerNativeStateUndefined()

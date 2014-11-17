@@ -85,8 +85,8 @@ DENG2_PIMPL(VRWindowTransform)
         vrCfg.enableFrustumShift(false);
 
         // Use a little bit of multisampling to smooth out the magnified jagged edges.
-        // Note: Independent of the vid-fsaa setting because this is beneficial even when
-        // vid-fsaa is disabled.
+        // Note: Independent of the window FSAA setting because this is beneficial even
+        // when FSAA is disabled.
         unwarpedFB.setSampleCount(1); //vrCfg.riftFramebufferSampleCount());
 
         // Set render target to offscreen temporarily.

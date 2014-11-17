@@ -89,33 +89,10 @@ static float oldgamma, oldcontrast, oldbright;
 
 static int fogModeDefault = 0;
 
-static byte fsaaEnabled   = true; // default value also specified in CanvasWindow
-static byte vsyncEnabled  = true;
-
 static viewport_t currentView;
-
-static void videoFSAAChanged()
-{
-    if(novideo || !WindowSystem::mainExists()) return;
-    ClientWindow::main().updateCanvasFormat();
-}
-
-static void videoVsyncChanged()
-{
-    if(novideo || !WindowSystem::mainExists()) return;
-
-#ifdef WIN32
-    ClientWindow::main().updateCanvasFormat();
-#else
-    GL_SetVSync(Con_GetByte("vid-vsync") != 0);
-#endif
-}
 
 void GL_Register()
 {
-    // Update values from saved Config.
-    fsaaEnabled = App::config().getb("window.fsaa", true);
-
     // Cvars
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
@@ -130,11 +107,12 @@ void GL_Register()
     C_VAR_INT  ("rend-mobj-smooth-turn", &useSRVOAngle,     0, 0, 1);
 
     // * video
-    C_VAR_BYTE2("vid-vsync",             &vsyncEnabled,     0, 0, 1, videoVsyncChanged);
-    C_VAR_BYTE2("vid-fsaa",              &fsaaEnabled,      0, 0, 1, videoFSAAChanged);
     C_VAR_FLOAT("vid-gamma",             &vid_gamma,        0, 0.1f, 4);
     C_VAR_FLOAT("vid-contrast",          &vid_contrast,     0, 0, 2.5f);
     C_VAR_FLOAT("vid-bright",            &vid_bright,       0, -1, 1);
+
+    Con_AddMappedConfigVariable("vid-vsync", "i", "window.main.vsync");
+    Con_AddMappedConfigVariable("vid-fsaa",  "i", "window.main.fsaa");
 
     // Ccmds
     C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
@@ -338,7 +316,7 @@ dd_bool GL_EarlyInit()
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
 
-    GL_SetVSync(true); // will be overridden from vid-vsync
+    GL_SetVSync(App::config().getb("window.main.vsync"));
 
     initGLOk = true;
     return true;

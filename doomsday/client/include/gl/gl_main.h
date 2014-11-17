@@ -180,18 +180,17 @@ void GL_ShutdownRefresh();
 void GL_ModulateTexture(int mode);
 
 /**
- * Enables or disables vsync. Changes the value of the vid-vsync variable.
- * May cause the OpenGL surface to be recreated.
+ * Enables or disables vsync. May cause the OpenGL surface to be recreated.
  *
  * @param on  @c true to enable vsync, @c false to disable.
  */
 void GL_SetVSync(dd_bool on);
 
 /**
- * Enables or disables multisampling when FSAA is available (vid-fsaa 1). You
- * cannot enable multisampling if vid-fsaa is 0. Never causes the GL surface or
- * pixel format to be modified; can be called at any time during the rendering
- * of a frame.
+ * Enables or disables multisampling when FSAA is available. You cannot enable
+ * multisampling if FSAA has not been enabled in the Canvas. Never causes the GL surface
+ * or pixel format to be modified; can be called at any time during the rendering of a
+ * frame.
  *
  * @param on  @c true to enable multisampling, @c false to disable.
  */

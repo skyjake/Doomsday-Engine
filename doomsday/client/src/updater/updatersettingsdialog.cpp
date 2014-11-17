@@ -56,6 +56,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
     ChoiceWidget *paths;
     ToggleWidget *autoDown;
     ToggleWidget *deleteAfter;
+    bool didApply = false;
 
     Instance(Public *i, Mode mode) : Base(i)
     {
@@ -217,9 +218,15 @@ UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
     heading().setText(tr("Updater Settings"));
 }
 
+bool UpdaterSettingsDialog::settingsHaveChanged() const
+{
+    return d->didApply;
+}
+
 void UpdaterSettingsDialog::apply()
 {
     d->apply();
+    d->didApply = true;
 }
 
 void UpdaterSettingsDialog::applyAndCheckNow()

@@ -357,6 +357,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
             << new ui::Item(ui::Item::Annotation, tr("Running a command or script causes the log to scroll down to the latest entry."))
             << new ui::VariableToggleItem(tr("Entry Metadata"), App::config("log.showMetadata"))
             << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each new entry is printed."))
+            << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(tr("Log Filter & Alerts..."), ui::Right, makePopup<LogSettingsDialog>);
 
     add(d->logMenu);

@@ -186,7 +186,7 @@ void VRSettingsDialog::autoConfigForOculusRift()
     /// @todo This would be a good use case for cvar overriding. -jk
 
     Con_SetInteger("rend-vr-mode", VRConfig::OculusRift);
-    Con_SetInteger("vid-fsaa", 0);
+    App::config().set("window.main.fsaa", false);
     Con_SetFloat  ("vid-gamma", 1.176f);
     Con_SetFloat  ("vid-contrast", 1.186f);
     Con_SetFloat  ("vid-bright", .034f);

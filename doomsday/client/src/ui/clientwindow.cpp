@@ -70,9 +70,10 @@ static ClientWindow *mainWindow = nullptr; // The main window, set after fully c
 
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(MouseEventSource, MouseStateChange)
-, DENG2_OBSERVES(Canvas, FocusChange)
-, DENG2_OBSERVES(App,    GameChange)
-, DENG2_OBSERVES(App,    StartupComplete)
+, DENG2_OBSERVES(Canvas,   FocusChange)
+, DENG2_OBSERVES(App,      GameChange)
+, DENG2_OBSERVES(App,      StartupComplete)
+, DENG2_OBSERVES(Variable, Change)
 {
     bool needMainInit;
     bool needRecreateCanvas;
@@ -141,10 +142,20 @@ DENG2_PIMPL(ClientWindow)
 
         // Listen to input.
         self.canvas().audienceForMouseStateChange() += this;
+
+        foreach(String s, configVariableNames())
+        {
+            App::config(s).audienceForChange() += this;
+        }
     }
 
     ~Instance()
     {
+        foreach(String s, configVariableNames())
+        {
+            App::config(s).audienceForChange() -= this;
+        }
+
         App::app().audienceForGameChange() -= this;
         App::app().audienceForStartupComplete() -= this;
 
@@ -158,6 +169,13 @@ DENG2_PIMPL(ClientWindow)
         {
             mainWindow = nullptr;
         }
+    }
+
+    StringList configVariableNames() const
+    {
+        return StringList()
+                << self.configName("fsaa")
+                << self.configName("vsync");
     }
 
     Widget &container()
@@ -500,6 +518,23 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
+    void variableValueChanged(Variable &variable, Value const &newValue)
+    {
+        if(variable.name() == "fsaa")
+        {
+            self.updateCanvasFormat();
+        }
+        else if(variable.name() == "vsync")
+        {
+#ifdef WIN32
+            self.updateCanvasFormat();
+            DENG2_UNUSED(newValue);
+#else
+            GL_SetVSync(newValue.isTrue());
+#endif
+        }
+    }
+
     void installSidebar(SidebarLocation location, GuiWidget *widget)
     {
         // Get rid of the old sidebar.
@@ -810,10 +845,13 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-    LOG_DEBUG("Window is about to close, executing 'quit'");
+	if(!BusyMode_Active())
+	{
+		LOG_DEBUG("Window is about to close, executing 'quit'");
 
-    /// @todo autosave and quit?
-    Con_Execute(CMDS_DDAY, "quit", true, false);
+		/// @todo autosave and quit?
+		Con_Execute(CMDS_DDAY, "quit", true, false);
+	}
 
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
@@ -934,7 +972,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
 
 #ifdef WIN32
-    if(CommandLine_Exists("-novsync") || !Con_GetByte("vid-vsync"))
+    if(CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
         fmt.setSwapInterval(0);
     }
@@ -944,10 +982,8 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
 #endif
 
-    // The value of the "vid-fsaa" variable is written to this settings
-    // key when the value of the variable changes.
     int sampleCount = 1;
-    bool configured = de::App::config().getb("window.fsaa");
+    bool configured = App::config().getb("window.main.fsaa");
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
         LOG_GL_VERBOSE("Multisampling off");
@@ -1033,9 +1069,6 @@ void ClientWindow::drawGameContent()
 void ClientWindow::updateCanvasFormat()
 {
     d->needRecreateCanvas = true;
-
-    // Save the relevant format settings.
-    App::config().set("window.fsaa", Con_GetByte("vid-fsaa") != 0);
 }
 
 void ClientWindow::updateRootSize()
