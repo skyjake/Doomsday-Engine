@@ -528,6 +528,7 @@ DENG2_PIMPL(ClientWindow)
         {
 #ifdef WIN32
             self.updateCanvasFormat();
+            DENG2_UNUSED(newValue);
 #else
             GL_SetVSync(newValue.isTrue());
 #endif
@@ -971,7 +972,7 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
 
 #ifdef WIN32
-    if(CommandLine_Exists("-novsync") || !App::config().getb(configName("vsync")))
+    if(CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
         fmt.setSwapInterval(0);
     }
@@ -982,7 +983,7 @@ bool ClientWindow::setDefaultGLFormat() // static
 #endif
 
     int sampleCount = 1;
-    bool configured = de::App::config().getb("window.main.fsaa");
+    bool configured = App::config().getb("window.main.fsaa");
     if(CommandLine_Exists("-nofsaa") || !configured)
     {
         LOG_GL_VERBOSE("Multisampling off");
