@@ -117,6 +117,8 @@ de::String Sys_GLDescription()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
+    auto const &limits = de::GLInfo::limits();
+
     de::String str;
     QTextStream os(&str);
 
@@ -151,16 +153,10 @@ de::String Sys_GLDescription()
         os << _E(Ta) "  Variable texture anisotropy unavailable.";
     }*/
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    os << TABBED("Maximum texture size:", iVal);
-
-//#ifdef GL_EXT_framebuffer_multisample
-	//if(de::GLInfo::extensions().EXT_framebuffer_multisample)
-	{
-		glGetIntegerv(GL_MAX_SAMPLES_EXT, &iVal);
-		os << TABBED("Maximum samples:", iVal);
-	}
-//#endif
+    os << TABBED("Maximum texture size:", limits.maxTexSize);
+    os << TABBED("Maximum color texture samples:", limits.maxColorTexSamples);
+    os << TABBED("Maximum depth texture samples:", limits.maxDepthTexSamples);
+    os << TABBED("Maximum samples:", limits.maxSamples);
 
     GLfloat fVals[2];
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
@@ -435,7 +431,7 @@ dd_bool Sys_GLCheckError()
         GLenum error = glGetError();
         if(error != GL_NO_ERROR)
         {
-            LOGDEV_GL_ERROR("OpenGL error: 0x%x") << error;
+            LOGDEV_GL_ERROR("OpenGL error: %x %s") << error << LIBGUI_GL_ERROR_STR(error);
         }
     }
 #endif
