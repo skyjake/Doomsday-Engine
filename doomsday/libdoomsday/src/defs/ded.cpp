@@ -54,11 +54,11 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 ded_s::ded_s()
     : flags   (names.addRecord("flags"))
     , episodes(names.addRecord("episodes"))
-    , finales (names.addRecord("finales"))
-    , mapInfos(names.addRecord("mapInfos"))
     , models  (names.addRecord("models"))
-    , musics  (names.addRecord("musics"))
     , skies   (names.addRecord("skies"))
+    , musics  (names.addRecord("musics"))
+    , mapInfos(names.addRecord("mapInfos"))
+    , finales (names.addRecord("finales"))
 {
     flags.addLookupKey("id");
     episodes.addLookupKey("id");

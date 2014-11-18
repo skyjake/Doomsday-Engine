@@ -160,7 +160,7 @@ void X_PreInit()
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     //cfg.fastMonsters = false;
-    cfg.netEpisode = "";
+    cfg.netEpisode = (char *) "";
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8; // Use the default color by default.

@@ -60,7 +60,7 @@ namespace internal {
 
     static inline String toMapId(de::Uri const &mapUri)
     {
-        return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path();
+        return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path().toString();
     }
 
     class Music : public de::Record

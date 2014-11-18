@@ -587,7 +587,7 @@ static QStringList allMapInfoUrns()
     bool ignoreNonCustom = false;
     try
     {
-        String &mainMapInfo = App_FileSystem().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        String mainMapInfo = App_FileSystem().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
         if(!mainMapInfo.isEmpty())
         {
             foundPaths << mainMapInfo;

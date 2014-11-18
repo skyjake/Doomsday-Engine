@@ -159,8 +159,8 @@ void SliderWidget::draw() const
 
     if(cfg.menuShadow > 0)
     {
-        float const from[] = { 2, 1 + HEIGHT / 2 };
-        float const to[]   = { MNDATA_SLIDER_SLOTS * WIDTH - 2, 1 + HEIGHT / 2 };
+        float const from[] = { 2, float(1 + HEIGHT / 2) };
+        float const to[]   = { float(MNDATA_SLIDER_SLOTS * WIDTH - 2), float(1 + HEIGHT / 2) };
         M_DrawGlowBar(from, to, HEIGHT * 1.1f, true, true, true, 0, 0, 0, mnRendState->pageAlpha * mnRendState->textShadow);
     }
 
