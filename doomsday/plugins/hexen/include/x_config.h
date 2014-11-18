@@ -29,6 +29,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "doomsday.h"
 #include "h2def.h"
 #include "hu_lib.h"
 
@@ -184,8 +185,11 @@ typedef struct {
     byte            inludeScaleMode;
     int             inludePatchReplaceMode;
 
-    byte            netMap, netClass, netColor, netSkill;
-    byte            netEpisode; // Unused in Hexen.
+    // Network:
+    char *          netEpisode;
+    Uri *           netMap;
+
+    byte            netClass, netColor, netSkill;
     byte            netDeathmatch, netNoMonsters, netRandomClass;
     byte            netJumping;
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.

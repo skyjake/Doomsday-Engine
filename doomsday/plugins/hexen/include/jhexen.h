@@ -37,7 +37,7 @@
 #include "../../hexen/include/acfnlink.h"
 #include "../../hexen/include/acscript.h"
 #include "../../hexen/include/g_game.h"
-#include "../../hexen/include/in_lude.h"
+#include "../../hexen/include/intermission.h"
 #include "../../hexen/include/m_cheat.h"
 #include "../../hexen/include/m_random.h"
 #include "../../hexen/include/p_enemy.h"

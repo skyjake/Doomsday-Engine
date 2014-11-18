@@ -80,10 +80,6 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
-
 DENG_EXTERN_C game_export_t gx;
 
 //

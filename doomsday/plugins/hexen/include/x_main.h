@@ -27,8 +27,6 @@
 
 #include "h2def.h"
 
-DENG_EXTERN_C int verbose;
-
 DENG_EXTERN_C float turboMul; // Multiplier for turbo.
 
 DENG_EXTERN_C gamemode_t gameMode;

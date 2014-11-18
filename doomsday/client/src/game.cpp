@@ -44,6 +44,7 @@ DENG2_PIMPL(Game)
 
     Path mainConfig;     ///< Config file name (e.g., "configs/doom/game.cfg").
     Path bindingConfig;  ///< Control binding file name (set automatically).
+    Path mainMapInfo;    ///< Base relative path to the main MAPINFO definition data.
 
     String legacySavegameNameExp;
     String legacySavegameSubfolder;
@@ -66,12 +67,13 @@ DENG2_PIMPL(Game)
 };
 
 Game::Game(String const &identityKey, Path const &configDir, String const &title, String const &author,
-    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder)
+    String const &legacySavegameNameExp_, String const &legacySavegameSubfolder, String const &mainMapInfo)
     : game::Game(identityKey)
     , d(new Instance(*this, identityKey, configDir, title, author))
 {
     d->legacySavegameNameExp   = legacySavegameNameExp_;
     d->legacySavegameSubfolder = legacySavegameSubfolder;
+    d->mainMapInfo             = mainMapInfo;
 }
 
 Game::~Game()
@@ -213,6 +215,11 @@ Path const &Game::bindingConfig() const
     return d->bindingConfig;
 }
 
+Path const &Game::mainMapInfo() const
+{
+    return d->mainMapInfo;
+}
+
 String Game::title() const
 {
     return d->title;
@@ -258,8 +265,9 @@ bool Game::isRequiredFile(File1 &file)
 Game *Game::fromDef(GameDef const &def)
 {
     return new Game(def.identityKey, NativePath(def.configDir).expand().withSeparators('/'),
-                    def.defaultTitle, def.defaultAuthor, def.legacySavegameNameExp,
-                    def.legacySavegameSubfolder);
+                    def.defaultTitle, def.defaultAuthor,
+                    def.legacySavegameNameExp, def.legacySavegameSubfolder,
+                    def.mainMapInfo);
 }
 
 void Game::printBanner(Game const &game)

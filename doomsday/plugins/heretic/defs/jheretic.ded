@@ -26,6 +26,15 @@ Music {
   ID = "None";
 }
 
+# The default definition, used for any maps without a map info definition.
+Map Info {
+  ID = "*";
+  Author = "Unknown";
+  Music = "e1m1";
+  Gravity = 1;
+  Sky = "sky1";
+}
+
 Include "flags.ded";
 Include "fonts.ded";
 Include "objects.ded";

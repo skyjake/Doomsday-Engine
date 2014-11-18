@@ -71,27 +71,32 @@ int G_RegisterGames(int hookType, int param, void* data)
     GameDef const deathkingsDef = {
         "hexen-dk", CONFIGDIR,
         "Hexen: Deathkings of the Dark Citadel", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"
     };
     GameDef const hexenDef = {
         "hexen", CONFIGDIR,
         "Hexen", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
     };
     GameDef const hexenDemoDef = {
         "hexen-demo", CONFIGDIR,
         "Hexen 4-map Demo", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
     };
     GameDef const hexenBetaDemoDef = {
         "hexen-betademo", CONFIGDIR,
         "Hexen 4-map Beta Demo", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
     };
     GameDef const hexenV10Def = {
         "hexen-v10", CONFIGDIR,
         "Hexen v1.0", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

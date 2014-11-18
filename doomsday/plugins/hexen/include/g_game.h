@@ -32,34 +32,44 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+#include "h2def.h"
 #include "gamerules.h"
-#include "p_mobj.h"
+#include "intermission.h"
 #include "x_player.h"
 
 DENG_EXTERN_C player_t players[MAXPLAYERS];
 
-DENG_EXTERN_C uint nextMapEntrance;
 DENG_EXTERN_C dd_bool paused;
 DENG_EXTERN_C dd_bool precache;
 DENG_EXTERN_C dd_bool customPal;
 DENG_EXTERN_C dd_bool briefDisabled;
 
 #ifdef __cplusplus
-extern de::Uri nextMapUri;
+
+extern wbstartstruct_t wmInfo;
 
 extern "C" {
 #endif
 
+void G_ConsoleRegister(void);
+void G_CommonPreInit(void);
+void G_CommonPostInit(void);
+
+/**
+ * To be called post-game initialization, to examine the command line to determine if
+ * a new game session should be started automatically, or, begin the title loop.
+ */
+void G_AutoStartOrBeginTitleLoop(void);
+
 void G_CommonShutdown(void);
 
 void R_InitRefresh(void);
+
 void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap);
+
 void Mobj_UpdateTranslationClassAndMap(mobj_t *mo);
 
 void G_QuitGame(void);
-
-void G_CommonPreInit(void);
-void G_CommonPostInit(void);
 
 int G_GetInteger(int id);
 void *G_GetVariable(int id);

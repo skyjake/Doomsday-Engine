@@ -71,17 +71,20 @@ int G_RegisterGames(int hookType, int param, void* data)
     GameDef const hereticExtDef = {
         "heretic-ext", CONFIGDIR,
         "Heretic: Shadow of the Serpent Riders", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/heretic-ext.mapinfo"
     };
     GameDef const hereticDef = {
         "heretic", CONFIGDIR,
         "Heretic Registered", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name)/heretic.mapinfo"
     };
     GameDef const hereticShareDef = {
         "heretic-share", CONFIGDIR,
         "Heretic Shareware", "Raven Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
+        "$(App.DataPath)/$(GamePlugin.Name).heretic-share.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);

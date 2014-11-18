@@ -24,6 +24,7 @@
 #include <cctype>
 #include "animdefs.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "hu_chat.h"
 #include "hu_log.h"
 #include "hu_menu.h"
@@ -128,7 +129,7 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        S_MapMusic(0/*current map*/);
+        S_MapMusic(COMMON_GAMESESSION->mapUri());
 #endif
         break;
 

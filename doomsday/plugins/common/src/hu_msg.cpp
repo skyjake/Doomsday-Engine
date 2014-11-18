@@ -132,7 +132,7 @@ static void drawMessage()
 {
 #define LEADING             (0)
 
-    short textFlags = menu::MN_MergeMenuEffectWithDrawTextFlags(0);
+    short textFlags = Hu_MenuMergeEffectWithDrawTextFlags(0);
     Point2Raw origin( SCREENWIDTH/2, SCREENHEIGHT/2);
     char const *questionString = "";
 

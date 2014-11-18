@@ -24,47 +24,17 @@
 #include <cstring>
 #include <cctype>
 #include <cstdio>
+
 #include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/inputbindingwidget.h"
+#include "menu/widgets/labelwidget.h"
 
 using namespace de;
 
 namespace common {
 namespace menu {
 
-// Control config flags.
-#define CCF_NON_INVERSE         0x1
-#define CCF_INVERSE             0x2
-#define CCF_STAGED              0x4
-#define CCF_REPEAT              0x8
-#define CCF_SIDESTEP_MODIFIER   0x10
-#define CCF_MULTIPLAYER         0x20
-
-#define SMALL_SCALE             .75f
-
-// Binding iteration flags
-#define MIBF_IGNORE_REPEATS     0x1
-
-enum bindingitertype_t
-{
-    MIBT_KEY,
-    MIBT_MOUSE,
-    MIBT_JOY
-};
-
-struct bindingdrawerdata_t
-{
-    Point2Raw origin;
-    float alpha;
-};
-
-struct controlconfig_t
-{
-    char const *text;
-    char const *bindContext;
-    char const *controlName;
-    char const *command;
-    int flags;
-};
 static controlconfig_t controlConfig[] =
 {
     { "Movement", 0, 0, 0, 0 },
@@ -247,359 +217,60 @@ static controlconfig_t controlConfig[] =
     { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
-static void deleteBinding(bindingitertype_t /*type*/, int bid, char const * /*name*/, dd_bool /*isInverse*/, void * /*data*/)
-{
-    DD_Executef(true, "delbind %i", bid);
-}
+static void Hu_MenuDrawControlsPage(Page const &page, Vector2i const &offset);
 
-int Hu_MenuActivateBindingsGrab(Widget * /*ob*/, Widget::mn_actionid_t /*action*/, void * /*parameters*/)
+void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 {
-     // Start grabbing for this control.
+    // Start grabbing for this control.
     DD_SetInteger(DD_SYMBOLIC_ECHO, true);
-    return 0;
 }
 
 void Hu_MenuInitControlsPage()
 {
-#if __JDOOM__ || __JDOOM64__
-    Point2Raw const pageOrigin(32, 40);
-#elif __JHERETIC__
-    Point2Raw const pageOrigin(32, 40);
-#elif __JHEXEN__
-    Point2Raw const pageOrigin(32, 40);
-#endif
-    int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
-
-    LOGDEV_VERBOSE("Hu_MenuInitControlsPage: Creating controls items");
-
-    int textCount = 0;
-    int bindingsCount = 0;
-    for(int i = 0; i < configCount; ++i)
-    {
-        controlconfig_t *binds = &controlConfig[i];
-        if(!binds->command && !binds->controlName)
-        {
-            ++textCount;
-        }
-        else
-        {
-            ++textCount;
-            ++bindingsCount;
-        }
-    }
-
-    Page *page = Hu_MenuNewPage("ControlOptions", &pageOrigin, 0, Hu_MenuPageTicker, Hu_MenuDrawControlsPage, NULL, NULL);
+    Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
-    page->setPreviousPage(Hu_MenuFindPageByName("Options"));
+    page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     int group = 0;
+    int const configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     for(int i = 0; i < configCount; ++i)
     {
         controlconfig_t *binds = &controlConfig[i];
+
+        char const *labelText = binds->text;
+        if(labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
+        {
+            labelText = GET_TXT(PTR2INT(labelText));
+        }
 
         if(!binds->command && !binds->controlName)
         {
             // Inert.
-            LabelWidget *txt = new LabelWidget;
-            txt->text          = binds->text;
-            txt->_pageColorIdx = MENU_COLOR2;
-
-            // A new group begins;
-            txt->setGroup(++group);
-
-            page->_widgets << txt;
+            page->addWidget(new LabelWidget(labelText))
+                    .setGroup(++group)
+                    .setColor(MENU_COLOR2);
         }
         else
         {
+            page->addWidget(new LabelWidget(labelText))
+                    .setGroup(group);
 
-            LabelWidget *labelOb = new LabelWidget;
-            labelOb->text = binds->text;
-            labelOb->setGroup(group);
+            InputBindingWidget *binding = new InputBindingWidget;
+            binding->binds = binds;
+            binding->setGroup(group);
+            binding->setAction(Widget::Activated,   Hu_MenuActivateBindingsGrab);
+            binding->setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
-            page->_widgets << labelOb;
-
-            InputBindingWidget *bindingsOb = new InputBindingWidget;
-            bindingsOb->binds = binds;
-            bindingsOb->setGroup(group);
-            bindingsOb->actions[Widget::MNA_ACTIVE].callback = Hu_MenuActivateBindingsGrab;
-            bindingsOb->actions[Widget::MNA_FOCUS ].callback = Hu_MenuDefaultFocusAction;
-
-            page->_widgets << bindingsOb;
+            page->addWidget(binding);
         }
     }
 }
 
-static void drawSmallText(char const *string, int x, int y, float alpha)
+static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vector2i const & /*offset*/)
 {
-    int height = FR_TextHeight(string);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    DGL_Translatef(x, y + height/2, 0);
-    DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
-    DGL_Translatef(-x, -y - height/2, 0);
-
-    FR_SetColorAndAlpha(1, 1, 1, alpha);
-    FR_DrawTextXY3(string, x, y, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-static void drawBinding(bindingitertype_t type, int /*bid*/, const char *name,
-    dd_bool isInverse, void *context)
-{
-#define BIND_GAP                (2)
-
-#if __JHERETIC__
-    static float const bgRGB[] = { 0, .5f, 0 };
-#elif __JHEXEN__
-    static float const bgRGB[] = { .5f, 0, 0 };
-#else
-    static float const bgRGB[] = { 0, 0, 0 };
-#endif
-
-    bindingdrawerdata_t *d = (bindingdrawerdata_t *)context;
-
-    FR_SetFont(FID(GF_FONTA));
-
-    if(type == MIBT_KEY)
-    {
-        int const width  = FR_TextWidth(name);
-        int const height = FR_TextHeight(name);
-
-        DGL_SetNoMaterial();
-        DGL_DrawRectf2Color(d->origin.x, d->origin.y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], d->alpha * .6f);
-
-        DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(name, d->origin.x + 1, d->origin.y, d->alpha);
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        d->origin.x += width * SMALL_SCALE + 2 + BIND_GAP;
-    }
-    else
-    {
-        char buf[256];
-        sprintf(buf, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
-
-        int const width  = FR_TextWidth(buf);
-        ///int const height = FR_TextHeight(temp);
-
-        DGL_Enable(DGL_TEXTURE_2D);
-        drawSmallText(buf, d->origin.x, d->origin.y, d->alpha);
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        d->origin.x += width * SMALL_SCALE + BIND_GAP;
-    }
-
-#undef BIND_GAP
-}
-
-static char const *findInString(char const *str, char const *token, int n)
-{
-    int tokenLen = strlen(token);
-    char const *at = strstr(str, token);
-
-    // Not there at all?
-    if(!at) return 0;
-
-    if(at - str <= n - tokenLen)
-    {
-        return at;
-    }
-
-    // Past the end.
-    return 0;
-}
-
-static void iterateBindings(controlconfig_t const *binds, char const *bindings, int flags, void *data,
-    void (*callback)(bindingitertype_t type, int bid, char const *ev, dd_bool isInverse, void *data))
-{
-    DENG2_ASSERT(binds != 0);
-
-    char const *ptr = strchr(bindings, ':');
-    char const *begin, *end, *end2, *k, *bindingStart, *bindingEnd;
-    char buf[80], *b;
-    dd_bool isInverse;
-    int bid;
-
-    std::memset(buf, 0, sizeof(buf));
-
-    while(ptr)
-    {
-        // Read the binding identifier.
-        for(k = ptr; k > bindings && *k != '@'; --k);
-
-        if(*k == '@')
-        {
-            for(begin = k - 1; begin > bindings && isdigit(*(begin - 1)); --begin) {}
-            bid = strtol(begin, NULL, 10);
-        }
-        else
-        {
-            // No identifier??
-            bid = 0;
-        }
-
-        // Find the end of the entire binding.
-        bindingStart = k + 1;
-        bindingEnd = strchr(bindingStart, '@');
-        if(!bindingEnd)
-        {
-            // Then point to the end of the string.
-            bindingEnd = strchr(k + 1, 0);
-        }
-
-        ptr++;
-        end = strchr(ptr, '-');
-        if(!end)
-            return;
-
-        end++;
-        b = buf;
-        while(*end && *end != ' ' && *end != '-' && *end != '+')
-        {
-            *b++ = *end++;
-        }
-        *b = 0;
-
-        end2 = strchr(end, ' ');
-        if(!end2)
-            end = end + strlen(end); // Then point to the end.
-        else
-            end = end2;
-
-        if(!findInString(bindingStart, "modifier-1-down", bindingEnd - bindingStart) &&
-           (!(flags & MIBF_IGNORE_REPEATS) || !findInString(ptr, "-repeat", end - ptr)))
-        {
-            isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
-
-            if(!strncmp(ptr, "key", 3) || strstr(ptr, "-button") ||
-               !strncmp(ptr, "mouse-left", 10) || !strncmp(ptr, "mouse-middle", 12) ||
-               !strncmp(ptr, "mouse-right", 11))
-            {
-                if(((binds->flags & CCF_INVERSE) && isInverse) ||
-                   ((binds->flags & CCF_NON_INVERSE) && !isInverse) ||
-                   !(binds->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
-                {
-                    callback(!strncmp(ptr, "key", 3)? MIBT_KEY :
-                             !strncmp(ptr, "mouse", 5)? MIBT_MOUSE : MIBT_JOY, bid, buf,
-                             isInverse, data);
-                }
-            }
-            else
-            {
-                if(!(binds->flags & (CCF_INVERSE | CCF_NON_INVERSE)) || (binds->flags & CCF_INVERSE))
-                {
-                    isInverse = !isInverse;
-                }
-                if(!strncmp(ptr, "joy", 3))
-                {
-                    callback(MIBT_JOY, bid, buf, isInverse, data);
-                }
-                else if(!strncmp(ptr, "mouse", 5))
-                {
-                    callback(MIBT_MOUSE, bid, buf, isInverse, data);
-                }
-            }
-        }
-
-        ptr = end;
-        while(*ptr == ' ') { ptr++; }
-
-        ptr = strchr(ptr, ':');
-    }
-}
-
-InputBindingWidget::InputBindingWidget()
-    : Widget()
-    , binds(0)
-{
-    Widget::_pageFontIdx  = MENU_FONT1;
-    Widget::_pageColorIdx = MENU_COLOR1;
-    Widget::cmdResponder  = InputBindingWidget_CommandResponder;
-}
-
-void InputBindingWidget::draw(Point2Raw const *origin)
-{
-    bindingdrawerdata_t draw;
-    char buf[1024];
-
-    if(binds->controlName)
-    {
-        B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
-    }
-    else
-    {
-        B_BindingsForCommand(binds->command, buf, sizeof(buf));
-    }
-    draw.origin.x = origin->x;
-    draw.origin.y = origin->y;
-    draw.alpha = mnRendState->pageAlpha;
-    iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
-}
-
-int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e cmd)
-{
-    controlconfig_t *binds = static_cast<InputBindingWidget *>(ob)->binds;
-    switch(cmd)
-    {
-    case MCMD_DELETE: {
-        char buf[1024];
-
-        S_LocalSound(SFX_MENU_CANCEL, NULL);
-        if(binds->controlName)
-        {
-            B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
-        }
-        else
-        {
-            B_BindingsForCommand(binds->command, buf, sizeof(buf));
-        }
-
-        iterateBindings(binds, buf, 0, NULL, deleteBinding);
-
-        // If deleting the menuselect binding, automatically rebind it Return;
-        // otherwise the user would be stuck without a way to make further bindings.
-        if(binds->command && !strcmp(binds->command, "menuselect"))
-        {
-            DD_Execute(true, "bindevent menu:key-return menuselect");
-        }
-        return true; }
-
-    case MCMD_SELECT:
-        S_LocalSound(SFX_MENU_CYCLE, NULL);
-        ob->_flags |= MNF_ACTIVE;
-        if(ob->hasAction(Widget::MNA_ACTIVE))
-        {
-            ob->execAction(Widget::MNA_ACTIVE, NULL);
-            return true;
-        }
-        break;
-
-    default: break;
-    }
-
-    return false; // Not eaten.
-}
-
-void InputBindingWidget::updateGeometry(Page * /*page*/)
-{
-    // @todo calculate visible dimensions properly!
-    Rect_SetWidthHeight(_geometry, 60, 10 * SMALL_SCALE);
-}
-
-/**
- * Hu_MenuDrawControlsPage
- */
-void Hu_MenuDrawControlsPage(Page * /*page*/, Point2Raw const * /*offset*/)
-{
-    Point2Raw origin;
-    origin.x = SCREENWIDTH/2;
-    origin.y = (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale);
-    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin.x, origin.y);
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin);
 }
 
 void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
@@ -610,155 +281,15 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     FR_LoadDefaultAttrib();
     FR_SetLeading(0);
     FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
-    FR_DrawTextXY3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
+    FR_DrawTextXY3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
-    FR_DrawTextXY3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, MN_MergeMenuEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
+    FR_DrawTextXY3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-/**
- * Read the symbolic descriptor from the given @a event.
- */
-static String symbolicDescriptor(event_t const &event)
-{
-    if(event.type == EV_SYMBOLIC)
-    {
-#ifndef __64BIT__
-        String symbol = (char const *) event.data1;
-#else
-        String symbol = (char const *)( (duint64(event.data2) << 32) | duint64(event.data1) );
-#endif
-        if(symbol.beginsWith("echo-"))
-        {
-            return symbol.substr(5);
-        }
-    }
-    return ""; // No symbolic descriptor.
-}
-
-int InputBindingWidget::handleEvent_Privileged(event_t *ev)
-{
-    DENG2_ASSERT(ev);
-    LOG_AS("InputBindingWidget");
-
-    // Only handle events when active.
-    if(!isActive()) return false;
-
-    // We're only interested in events with an echoed, symbolic descriptor.
-    String symbol = symbolicDescriptor(*ev);
-    if(symbol.isEmpty()) return false;
-
-    // We're interested in key or button down events.
-    if(symbol.beginsWith("key-") && !symbol.endsWith("-down"))
-    {
-       return false;
-    }
-
-    String const context = bindContext();
-
-    // The Delete key in the Menu context is reserved for deleting bindings
-    if((!context.compareWithCase("menu") || !context.compareWithCase("shortcut")) &&
-       !symbol.compareWithCase("key-delete-down"))
-    {
-        return false;
-    }
-
-    String cmd;
-    if(binds->command)
-    {
-        cmd = String("bindevent {%1:%2%3} {%4}")
-                  .arg(context)
-                  .arg(symbol)
-                  .arg(binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "")
-                  .arg(binds->command);
-
-        // Check for repeats.
-        if((binds->flags & CCF_REPEAT) && symbol.endsWith("-down"))
-        {
-            cmd += String("; bindevent {%1:%2-repeat} {%3}")
-                       .arg(context)
-                       .arg(symbol.left(symbol.length() - 5))
-                       .arg(binds->command);
-        }
-    }
-    else if(binds->controlName)
-    {
-        String stateFlags;
-
-        // Extract the symbolic key/button name (exclude the state part).
-        int const endOfName = symbol.indexOf('-', symbol.indexOf('-') + 1);
-        if(endOfName < 0)
-        {
-            throw Error("InputBindingWidget::handleEvent_Privileged", "Invalid symbol:" + symbol);
-        }
-        String const name = symbol.left(endOfName);
-
-        // Staged?
-        if(binds->flags & CCF_STAGED)
-        {
-            // Staging is for keys and buttons.
-            if(name.beginsWith("key-") || name.indexOf("-button") >= 0 ||
-               !name.compareWithCase("mouse-left") || !name.compareWithCase("mouse-middle") ||
-               !name.compareWithCase("mouse-right"))
-            {
-                stateFlags += "-staged";
-            }
-        }
-
-        // Inverted?
-        bool inv = (binds->flags & CCF_INVERSE) != 0;
-        if(symbol.substr(endOfName).beginsWith("-neg"))
-        {
-            inv = !inv;
-        }
-        if(inv)
-        {
-            stateFlags += "-inverse";
-        }
-
-        cmd = String("bindcontrol {%1} {%2%3%4}")
-                  .arg(binds->controlName)
-                  .arg(name)
-                  .arg(stateFlags)
-                  .arg((binds->flags & CCF_SIDESTEP_MODIFIER)? " + modifier-1-up" : "");
-
-        if(binds->flags & CCF_SIDESTEP_MODIFIER)
-        {
-            cmd += String("; bindcontrol sidestep {%1%2 + modifier-1-down}")
-                       .arg(name)
-                       .arg(stateFlags);
-        }
-    }
-
-    LOGDEV_INPUT_MSG("PrivilegedResponder: ") << cmd;
-    DD_Execute(true, cmd.toUtf8().constData());
-
-    // We've finished the grab.
-    Widget::_flags &= ~MNF_ACTIVE;
-    DD_SetInteger(DD_SYMBOLIC_ECHO, false);
-    S_LocalSound(SFX_MENU_ACCEPT, nullptr);
-    return true;
-}
-
-char const *InputBindingWidget::controlName() const
-{
-    DENG2_ASSERT(binds);
-    // Map to a text definition?
-    if(PTR2INT(binds->text) > 0 && PTR2INT(binds->text) < NUMTEXT)
-    {
-        return GET_TXT(PTR2INT(binds->text));
-    }
-    return binds->text;
-}
-
-String InputBindingWidget::bindContext() const
-{
-    DENG2_ASSERT(binds);
-    return (binds->bindContext? binds->bindContext : "game");
-}
-
 } // namespace menu
 } // namespace common
+

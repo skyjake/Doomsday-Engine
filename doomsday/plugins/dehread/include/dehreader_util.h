@@ -27,12 +27,11 @@
 
 #include <QString>
 #include <QStringList>
+#include <doomsday/defs/mapinfo.h>
 #include "dehreader.h"
 
 /// @return Newly composed map URI.
 de::Uri composeMapUri(int episode, int map);
-
-int mapInfoDefForUri(de::Uri const &uri, ded_mapinfo_t **def = 0);
 
 int valueDefForPath(de::String const &id, ded_value_t **def = 0);
 

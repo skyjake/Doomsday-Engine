@@ -21,15 +21,18 @@
 #include "common.h"
 #include "saveslots.h"
 
-#include "g_common.h"
-#include "gamesession.h"
-#include "hu_menu.h"
+#include <map>
+#include <utility>
 #include <de/App>
 #include <de/Folder>
 #include <de/Observers>
 #include <de/Writer>
-#include <map>
-#include <utility>
+#include "g_common.h"
+#include "gamesession.h"
+
+#include "hu_menu.h"
+#include "menu/page.h"
+#include "menu/widgets/lineeditwidget.h"
 
 using namespace de;
 using namespace common;
@@ -87,10 +90,10 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
     {
         if(!menuWidgetId) return;
 
-        Page *page = Hu_MenuFindPageByName(pageName);
-        if(!page) return; // Not initialized yet?
+        if(!Hu_MenuHasPage(pageName)) return; // Not initialized yet?
 
-        Widget *wi = page->findObject(0, menuWidgetId);
+        Page &page = Hu_MenuPage(pageName);
+        Widget *wi = page.tryFindWidget(menuWidgetId);
         if(!wi)
         {
             LOG_DEBUG("Failed locating menu widget with id ") << menuWidgetId;
@@ -98,21 +101,21 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         }
         LineEditWidget &edit = wi->as<LineEditWidget>();
 
-        wi->setFlags(FO_SET, MNF_DISABLED);
+        wi->setFlags(Widget::Disabled);
         if(status == Loadable)
         {
-            edit.setText(MNEDIT_STF_NO_ACTION, session->metadata().gets("userDescription", "").toUtf8().constData());
-            wi->setFlags(FO_CLEAR, MNF_DISABLED);
+            edit.setText(session->metadata().gets("userDescription", ""));
+            wi->setFlags(Widget::Disabled, UnsetFlags);
         }
         else
         {
-            edit.setText(MNEDIT_STF_NO_ACTION, "");
+            edit.setText("");
         }
 
-        if(Hu_MenuIsActive() && Hu_MenuActivePage() == page)
+        if(Hu_MenuIsActive() && Hu_MenuPagePtr() == &page)
         {
             // Re-open the active page to update focus if necessary.
-            Hu_MenuSetActivePage2(page, true);
+            Hu_MenuSetPage(&page, true);
         }
     }
 

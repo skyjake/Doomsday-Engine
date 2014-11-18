@@ -37,7 +37,6 @@ HEADERS += \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
     $$common_inc/m_argv.h \
-    $$common_inc/mapinfo.h \
     $$common_inc/mapstatereader.h \
     $$common_inc/mapstatewriter.h \
     $$common_inc/mobj.h \
@@ -72,7 +71,25 @@ HEADERS += \
     $$common_inc/saveslots.h \
     $$common_inc/thingarchive.h \
     $$common_inc/thinkerinfo.h \
-    $$common_inc/x_hair.h
+    $$common_inc/x_hair.h \
+    $$common_inc/menu/page.h \
+    $$common_inc/menu/widgets/buttonwidget.h \
+    $$common_inc/menu/widgets/coloreditwidget.h \
+    $$common_inc/menu/widgets/cvarcoloreditwidget.h \
+    $$common_inc/menu/widgets/cvarinlinelistwidget.h \
+    $$common_inc/menu/widgets/cvarlineeditwidget.h \
+    $$common_inc/menu/widgets/cvarsliderwidget.h \
+    $$common_inc/menu/widgets/cvartextualsliderwidget.h \
+    $$common_inc/menu/widgets/cvartogglewidget.h \
+    $$common_inc/menu/widgets/inlinelistwidget.h \
+    $$common_inc/menu/widgets/inputbindingwidget.h \
+    $$common_inc/menu/widgets/labelwidget.h \
+    $$common_inc/menu/widgets/lineeditwidget.h \
+    $$common_inc/menu/widgets/listwidget.h \
+    $$common_inc/menu/widgets/mobjpreviewwidget.h \
+    $$common_inc/menu/widgets/rectwidget.h \
+    $$common_inc/menu/widgets/sliderwidget.h \
+    $$common_inc/menu/widgets/widget.h
 
 SOURCES += \
     $$common_src/am_map.c \
@@ -84,7 +101,7 @@ SOURCES += \
     $$common_src/dmu_lib.cpp \
     $$common_src/fi_lib.cpp \
     $$common_src/g_controls.c \
-    $$common_src/g_defs.c \
+    $$common_src/g_defs.cpp \
     $$common_src/g_eventsequence.cpp \
     $$common_src/g_game.cpp \
     $$common_src/g_update.cpp \
@@ -102,7 +119,6 @@ SOURCES += \
     $$common_src/hu_pspr.c \
     $$common_src/hu_stuff.cpp \
     $$common_src/m_ctrl.cpp \
-    $$common_src/mapinfo.cpp \
     $$common_src/mapstatereader.cpp \
     $$common_src/mapstatewriter.cpp \
     $$common_src/mobj.cpp \
@@ -137,4 +153,22 @@ SOURCES += \
     $$common_src/saveslots.cpp \
     $$common_src/thingarchive.cpp \
     $$common_src/thinkerinfo.cpp \
-    $$common_src/x_hair.c
+    $$common_src/x_hair.c \
+    $$common_src/menu/page.cpp \
+    $$common_src/menu/widgets/coloreditwidget.cpp \
+    $$common_src/menu/widgets/cvarcoloreditwidget.cpp \
+    $$common_src/menu/widgets/cvarinlinelistwidget.cpp \
+    $$common_src/menu/widgets/cvarlineeditwidget.cpp \
+    $$common_src/menu/widgets/cvarsliderwidget.cpp \
+    $$common_src/menu/widgets/cvartextualsliderwidget.cpp \
+    $$common_src/menu/widgets/cvartogglewidget.cpp \
+    $$common_src/menu/widgets/buttonwidget.cpp \
+    $$common_src/menu/widgets/inlinelistwidget.cpp \
+    $$common_src/menu/widgets/inputbindingwidget.cpp \
+    $$common_src/menu/widgets/labelwidget.cpp \
+    $$common_src/menu/widgets/lineeditwidget.cpp \
+    $$common_src/menu/widgets/listwidget.cpp \
+    $$common_src/menu/widgets/mobjpreviewwidget.cpp \
+    $$common_src/menu/widgets/rectwidget.cpp \
+    $$common_src/menu/widgets/sliderwidget.cpp \
+    $$common_src/menu/widgets/widget.cpp

@@ -1,9 +1,9 @@
 /** @file gl_main.cpp GL-Graphics Subsystem
  * @ingroup gl
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
- * @authors Copyright &copy; 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -52,6 +52,7 @@
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/App>
+#include <doomsday/filesys/fs_main.h>
 
 D_CMD(Fog);
 D_CMD(SetBPP);
@@ -555,6 +556,37 @@ void GL_ProjectionMatrix()
     glLoadMatrixf(GL_GetProjectionMatrix().values());
 }
 
+void GL_SetupFogFromMapInfo(Record const *mapInfo)
+{
+    if(!mapInfo || !(mapInfo->geti("flags") & MIF_FOG))
+    {
+        R_SetupFogDefaults();
+    }
+    else
+    {
+        float fogColor[3];
+        Vector3f(mapInfo->get("fogColor")).decompose(fogColor);
+        R_SetupFog(mapInfo->getf("fogStart"), mapInfo->getf("fogEnd"), mapInfo->getf("fogDensity"), fogColor);
+    }
+
+    String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");
+    if(!fadeTable.isEmpty())
+    {
+        LumpIndex const &lumps = App_FileSystem().nameIndex();
+        int lumpNum = lumps.findLast(fadeTable + ".lmp");
+        if(lumpNum == lumps.findLast("COLORMAP.lmp"))
+        {
+            // We don't want fog in this case.
+            GL_UseFog(false);
+        }
+        // Probably fog ... don't use fullbright sprites.
+        else if(lumpNum == lumps.findLast("FOGMAP.lmp"))
+        {
+            GL_UseFog(true);
+        }
+    }
+}
+
 #undef GL_UseFog
 DENG_EXTERN_C void GL_UseFog(int yes)
 {
@@ -615,26 +647,19 @@ void GL_TotalRestore()
     UI_LoadFonts();
     //Con_Resize();
 
-    /// @todo fixme: Should this use the default MapInfo def if none found? -ds
-    ded_mapinfo_t *mapInfo = 0;
+    // Restore the fog settings.
+    Record const *mapInfo = 0;
     if(App_WorldSystem().hasMap())
     {
-        if(MapDef *mapDef = App_WorldSystem().map().def())
+        Map &map = App_WorldSystem().map();
+        mapInfo = defs.mapInfos.tryFind("id", map.def()->composeUri());
+        if(!mapInfo)
         {
-            de::Uri const mapUri = mapDef->composeUri();
-            mapInfo = defs.getMapInfo(&mapUri);
+            // Use the default def instead.
+            mapInfo = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")));
         }
     }
-
-    // Restore map's fog settings.
-    if(!mapInfo || !(mapInfo->flags & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        R_SetupFog(mapInfo->fogStart, mapInfo->fogEnd, mapInfo->fogDensity, mapInfo->fogColor);
-    }
+    GL_SetupFogFromMapInfo(mapInfo);
 
 #if _DEBUG
     Z_CheckHeap();

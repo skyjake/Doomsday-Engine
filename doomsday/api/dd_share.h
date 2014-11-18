@@ -150,7 +150,7 @@ enum {
     DD_GOTFRAME,
     DD_PLAYBACK,
     DD_NUMSOUNDS,
-    DD_NUMMUSIC,
+    DD_UNUSED18, // DD_NUMMUSIC,
     DD_UNUSED12, // DD_NUMLUMPS
     DD_CLIENT_PAUSED,
     DD_WEAPON_OFFSET_SCALE_Y, ///< 1000x
@@ -167,32 +167,30 @@ enum {
 
 /// General constants (not to be used with Get/Set).
 enum {
-    DD_NEW = -2,
-    DD_SKY = -1,
     DD_DISABLE,
     DD_ENABLE,
-    DD_MASK,
+    DD_UNUSED22, // DD_MASK
     DD_YES,
     DD_NO,
-    DD_MATERIAL,
-    DD_OFFSET,
-    DD_HEIGHT,
+    DD_UNUSED23, // DD_MATERIAL
+    DD_UNUSED24, // DD_OFFSET
+    DD_UNUSED25, // DD_HEIGHT
     DD_UNUSED2,
     DD_UNUSED3,
-    DD_COLOR_LIMIT,
+    DD_UNUSED26, // DD_COLOR_LIMIT
     DD_PRE,
     DD_POST,
     DD_PLUGIN_VERSION_SHORT,
     DD_PLUGIN_VERSION_LONG,
-    DD_HORIZON,
+    DD_UNUSED27, // DD_HORIZON
     DD_OLD_GAME_ID,
     DD_DEF_MOBJ,
     DD_DEF_MOBJ_BY_NAME,
     DD_DEF_STATE,
     DD_DEF_SPRITE,
     DD_DEF_SOUND,
-    DD_DEF_MUSIC,
-    DD_DEF_MAP_INFO,
+    DD_UNUSED14, // DD_DEF_MUSIC
+    DD_UNUSED13, // DD_DEF_MAP_INFO
     DD_DEF_TEXT,
     DD_DEF_VALUE,
     DD_DEF_VALUE_BY_INDEX,
@@ -200,16 +198,16 @@ enum {
     DD_DEF_SECTOR_TYPE,
     DD_PSPRITE_BOB_X,
     DD_PSPRITE_BOB_Y,
-    DD_DEF_FINALE_AFTER,
-    DD_DEF_FINALE_BEFORE,
-    DD_DEF_FINALE,
+    DD_UNUSED19, // DD_DEF_FINALE_AFTER
+    DD_UNUSED20, // DD_DEF_FINALE_BEFORE
+    DD_UNUSED21, // DD_DEF_FINALE
     DD_RENDER_RESTART_PRE,
     DD_RENDER_RESTART_POST,
     DD_DEF_SOUND_BY_NAME,
     DD_DEF_SOUND_LUMPNAME,
-    DD_ID,
+    DD_UNUSED16, // DD_ID
     DD_LUMP,
-    DD_CD_TRACK,
+    DD_UNUSED17, // DD_CD_TRACK
     DD_SPRITE,
     DD_FRAME,
     DD_GAME_CONFIG, ///< String: dm/co-op, jumping, etc.
@@ -218,10 +216,10 @@ enum {
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
     DD_DEF_ACTION,
-    DD_DEF_MUSIC_CDTRACK,
+    DD_UNUSED15, // DD_DEF_MUSIC_CDTRACK
 
     // Non-integer/special values for Set/Get
-    DD_UNUSED9, // DD_TRANSLATIONTABLES_ADDRESS,
+    DD_UNUSED9, // DD_TRANSLATIONTABLES_ADDRESS
     DD_UNUSED4, // DD_TRACE_ADDRESS
     DD_SPRITE_REPLACEMENT, ///< Sprite <-> model replacement.
     DD_ACTION_LINK, ///< State action routine addresses.
@@ -258,7 +256,8 @@ enum {
     DD_TM_CEILING_Z,            ///< output from P_CheckPosition
     DD_SHIFT_DOWN,
     DD_GAME_RECOMMENDS_SAVING,  ///< engine asks whether game should be saved (e.g., when upgrading) (game's GetInteger)
-    DD_NOTIFY_GAME_SAVED        ///< savegame was written
+    DD_NOTIFY_GAME_SAVED,       ///< savegame was written
+    DD_DEFS                     ///< engine definition database (DED)
 };
 
 //------------------------------------------------------------------------
@@ -342,7 +341,8 @@ enum {
     DMU_SURFACE,
     DMU_MATERIAL,
     DMU_SUBSPACE,
-    DMU_LAST_ELEMENT_TYPE_ID = DMU_SUBSPACE,
+    DMU_SKY,
+    DMU_LAST_ELEMENT_TYPE_ID = DMU_SKY,
 
     /*
      * Selection methods:
@@ -447,6 +447,18 @@ enum {
 /// Suppress the relative back sector and consider this as one-sided for the
 /// purposes of rendering and line of sight tests.
 #define SDF_SUPPRESS_BACK_SECTOR    0x0020
+///@}
+
+/**
+ * @defgroup skyLayerFlags Sky Flags
+ * @ingroup dmu apiFlags
+ * For use with P_Set/Get(DMU_SKY, n, DMU_FLAGS).
+ */
+
+/// @addtogroup skyFlags
+///@{
+#define SKYF_LAYER0_ENABLED     0x00000100  ///< Layer 0 is enabled.
+#define SKYF_LAYER1_ENABLED     0x00010000  ///< Layer 1 is enabled.
 ///@}
 
 /**

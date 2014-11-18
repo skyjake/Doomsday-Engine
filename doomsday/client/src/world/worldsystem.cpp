@@ -46,12 +46,14 @@
 #  include "Hand"
 #  include "HueCircle"
 
+#  include "gl/gl_main.h"
+
 #  include "Lumobj"
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
-#  include "render/sky.h"
+#  include "render/skydrawable.h"
 #  include "render/vlight.h"
 #endif
 
@@ -59,6 +61,8 @@
 #  include "server/sv_pool.h"
 #endif
 
+#include "world/p_ticker.h"
+#include "world/sky.h"
 #include "world/thinkers.h"
 
 #include <doomsday/console/cmd.h>
@@ -280,13 +284,15 @@ namespace de {
 
 DENG2_PIMPL(WorldSystem)
 {
-    Map *map;                   ///< Current map.
-    timespan_t time;            ///< World-wide time.
+    Map *map = nullptr;          ///< Current map.
+    timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
-    QScopedPointer<Hand> hand;  ///< For map editing/manipulation.
+    std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
+    SkyDrawable::Animator skyAnimator;
 #endif
 
-    Instance(Public *i) : Base(i), map(0), time(0) {}
+    Instance(Public *i) : Base(i)
+    {}
 
     void notifyMapChange()
     {
@@ -459,25 +465,25 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        ded_mapinfo_t *mapInfo = 0;
+        defn::MapInfo mapInfo;
 
         if(MapDef *mapDef = map->def())
         {
-            Uri const mapUri = mapDef->composeUri();
-            mapInfo = defs.getMapInfo(&mapUri);
+            int idx = defs.getMapInfoNum(mapDef->composeUri());
+            if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 
         if(!mapInfo)
         {
             // Use the default def instead.
-            Uri const defaultMapUri("Maps", Path("*"));
-            mapInfo = defs.getMapInfo(&defaultMapUri);
+            int idx = defs.getMapInfoNum(Uri("Maps", Path("*")));
+            if(idx >= 0) mapInfo = defs.mapInfos[idx];
         }
 
         if(mapInfo)
         {
-            map->_globalGravity     = mapInfo->gravity;
-            map->_ambientLightLevel = mapInfo->ambient * 255;
+            map->_globalGravity     = mapInfo.getf("gravity");
+            map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
         }
         else
         {
@@ -490,13 +496,22 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         // Reconfigure the sky.
-        ded_sky_t *skyDef = 0;
+        defn::Sky skyDef;
         if(mapInfo)
         {
-            skyDef = Def_GetSky(mapInfo->skyID);
-            if(!skyDef) skyDef = &mapInfo->sky;
+            if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
+            {
+                skyDef = *def;
+            }
+            else
+            {
+                skyDef = mapInfo.subrecord("sky");
+            }
         }
-        theSky->configure(skyDef);
+        map->sky().configure(&skyDef);
+
+        // Set up the SkyDrawable to get its config from the map's Sky.
+        skyAnimator.setSky(&ClientApp::renderSystem().sky().configure(&map->sky()));
 #endif
 
         // Init the thinker lists (public and private).
@@ -585,6 +600,8 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
 #ifdef __CLIENT__
+        GL_SetupFogFromMapInfo(mapInfo.accessedRecordPtr());
+
         map->initLightGrid();
         map->initSkyFix();
         map->buildMaterialLists();
@@ -593,6 +610,8 @@ DENG2_PIMPL(WorldSystem)
         // Precaching from 100 to 200.
         Con_SetProgress(100);
         Time begunPrecacheAt;
+        // Sky models usually have big skins.
+        ClientApp::renderSystem().sky().cacheAssets();
         App_ResourceSystem().cacheForCurrentMap();
         App_ResourceSystem().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
@@ -618,9 +637,13 @@ DENG2_PIMPL(WorldSystem)
          */
 
         // Run any commands specified in MapInfo.
-        if(mapInfo && mapInfo->execute)
+        if(mapInfo)
         {
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
+            String execute = mapInfo.gets("execute");
+            if(!execute.isEmpty())
+            {
+                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+            }
         }
 
         // Run the special map setup command, which the user may alias to do
@@ -862,11 +885,32 @@ timespan_t WorldSystem::time() const
     return d->time;
 }
 
+void WorldSystem::tick(timespan_t elapsed)
+{
 #ifdef __CLIENT__
+    d->skyAnimator.advanceTime(elapsed);
+#else
+    DENG2_UNUSED(elapsed);
+#endif
+
+    if(DD_IsSharpTick() && d->map)
+    {
+        // Check all mobjs (always public).
+        d->map->thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
+                                   P_MobjTicker);
+    }
+}
+
+#ifdef __CLIENT__
+SkyDrawable::Animator &WorldSystem::skyAnimator() const
+{
+    return d->skyAnimator;
+}
+
 Hand &WorldSystem::hand(coord_t *distance) const
 {
     // Time to create the hand?
-    if(d->hand.isNull())
+    if(!d->hand)
     {
         d->hand.reset(new Hand());
         audienceForFrameEnd += *d->hand;
@@ -890,7 +934,7 @@ void WorldSystem::beginFrame(bool resetNextViewer)
 
 void WorldSystem::endFrame()
 {
-    if(d->map && !d->hand.isNull())
+    if(d->map && d->hand)
     {
         d->updateHandOrigin();
 

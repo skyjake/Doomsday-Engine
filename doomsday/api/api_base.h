@@ -57,6 +57,9 @@ typedef struct gamedef_s {
      */
     char const *legacySavegameNameExp;
     char const *legacySavegameSubfolder;
+
+    /// Primary MAPINFO definition dat, if any (translated during game init).
+    char const *mainMapInfo;
 } GameDef;
 
 /**

@@ -20,11 +20,23 @@
  */
 
 #include "idtech1converter.h"
-#include <de/Error>
+#include "mapinfotranslator.h"
+#include <doomsday/filesys/lumpindex.h>
+#include <de/App>
 #include <de/Log>
 
 using namespace de;
 using namespace idtech1;
+
+static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0)
+{
+    dd_bool _isCustom;
+    ddstring_t sourcePath;
+    AutoStr *string = M_ReadFileIntoString(Str_Set(Str_InitStd(&sourcePath), path.toUtf8().constData()), &_isCustom);
+    if(isCustom) *isCustom = _isCustom;
+    Str_Free(&sourcePath);
+    return string;
+}
 
 /**
  * This function will be called when Doomsday is asked to load a map that is not
@@ -52,7 +64,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
         // Attempt a conversion...
         try
         {
-            QScopedPointer<MapImporter> map(new MapImporter(recognizer));
+            std::unique_ptr<MapImporter> map(new MapImporter(recognizer));
 
             // The archived map data was read successfully.
             // Transfer to the engine via the runtime map editing interface.
@@ -71,13 +83,55 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
+static void convertMapInfos(QList<QString> const &pathsInLoadOrder, String &xlat, String &xlatCustom)
+{
+    xlat.clear();
+    xlatCustom.clear();
+
+    MapInfoTranslator translator;
+
+    bool haveTranslation = false;
+    for(String const &sourcePath : pathsInLoadOrder)
+    {
+        if(sourcePath.isEmpty()) continue;
+
+        bool sourceIsCustom;
+        if(AutoStr *definitions = readFileIntoString(sourcePath, &sourceIsCustom))
+        {
+            translator.merge(*definitions, sourcePath, sourceIsCustom);
+            haveTranslation = true;
+        }
+    }
+    if(!haveTranslation) return;
+
+    translator.translate(xlat, xlatCustom);
+}
+
+/**
+ * This function will be called when Doomsday needs to translate a MAPINFO definition set.
+ * @return  @c true if successful (always).
+ */
+int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
+{
+    LOG_AS("IdTech1Converter");
+    DENG2_ASSERT(context);
+    auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
+    QStringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
+    String xlat, xlatCustom;
+    convertMapInfos(allPathsInLoadOrder, xlat, xlatCustom);
+    Str_Set(&parm.translated, xlat.toUtf8().constData());
+    Str_Set(&parm.translatedCustom, xlatCustom.toUtf8().constData());
+    return true;
+}
+
 /**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
 extern "C" void DP_Initialize()
 {
-    Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
+    Plug_AddHook(HOOK_MAP_CONVERT,     ConvertMapHook);
+    Plug_AddHook(HOOK_MAPINFO_CONVERT, ConvertMapInfoHook);
 }
 
 /**
@@ -91,8 +145,8 @@ extern "C" char const *deng_LibraryType()
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(F);
-DENG_DECLARE_API(Material);
 DENG_DECLARE_API(Map);
+DENG_DECLARE_API(Material);
 DENG_DECLARE_API(MPE);
 DENG_DECLARE_API(Plug);
 DENG_DECLARE_API(Uri);
@@ -100,8 +154,8 @@ DENG_DECLARE_API(Uri);
 DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_BASE, Base);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
-    DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP, Map);
+    DENG_GET_API(DE_API_MATERIALS, Material);
     DENG_GET_API(DE_API_MAP_EDIT, MPE);
     DENG_GET_API(DE_API_PLUGIN, Plug);
     DENG_GET_API(DE_API_URI, Uri);

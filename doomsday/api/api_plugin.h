@@ -56,6 +56,11 @@ enum {
     HOOK_FINALE_EVAL_IF = 9,        ///< Called to evaluate an IF conditional statement.
     HOOK_VIEWPORT_RESHAPE = 10,     ///< Called when viewport dimensions change.
     HOOK_SAVEGAME_CONVERT = 11,     ///< Called when a legacy savegame needs converting.
+    HOOK_GAME_INIT = 12,            /**< Called when initializing a loaded game. This occurs
+                                         once all startup resources are loaded but @em before
+                                         parsing of definitions and processing game data.
+                                         This is a suitable time for game data conversion. */
+    HOOK_MAPINFO_CONVERT = 13,      ///< Called when map definition data needs converting.
     NUM_HOOK_TYPES
 };
 
@@ -87,6 +92,13 @@ typedef struct {
     Str outputPath;
     Str fallbackGameId;
 } ddhook_savegame_convert_t;
+
+/// Parameters for HOOK_MAPINFO_CONVERT
+typedef struct {
+    Str paths; // ';' delimited
+    Str translated;
+    Str translatedCustom;
+} ddhook_mapinfo_convert_t;
 
 DENG_API_TYPEDEF(Plug) // v1
 {

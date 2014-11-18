@@ -682,7 +682,7 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gameMapUri.path().toUtf8().constData(),
+                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
@@ -704,28 +704,6 @@ D_CMD(CheatWhere)
     App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
                           plrMo->height, plrMo->radius);
 
-    return true;
-}
-
-/**
- * Exit the current map and go to the intermission.
- */
-D_CMD(CheatLeaveMap)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    // Only the server operator can end the map this way.
-    if(IS_NETGAME && !IS_NETWORK_SERVER)
-        return false;
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_CHAT, NULL);
-        App_Log(DE2_LOG_MAP | DE2_LOG_ERROR, "Can only exit a map when in a game!");
-        return true;
-    }
-
-    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
     return true;
 }
 

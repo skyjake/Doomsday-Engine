@@ -63,12 +63,6 @@
 #define SLOPEBITS       11
 #define DBITS           (FRACBITS-SLOPEBITS)
 
-#if defined(WIN32)
-#define close _close
-#define read _read
-#define write _write
-#endif
-
 using namespace de;
 
 static size_t FileReader(char const* name, char** buffer);
@@ -221,20 +215,6 @@ int M_BoxOnLineSide2(const AABoxd* box, double const linePoint[], double const l
 #undef NORMALIZE
 }
 
-DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
-{
-    int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-    size_t count;
-
-    if(handle == -1)
-        return false;
-
-    count = write(handle, source, length);
-    close(handle);
-
-    return (count >= length);
-}
-
 /**
  * Read a file into a buffer allocated using M_Malloc().
  */
@@ -247,6 +227,36 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 {
     if(isCustom) *isCustom = false;
 
+    if(Str_StartsWith(path, "LumpIndex:"))
+    {
+        bool isNumber;
+        lumpnum_t const lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
+        LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+        if(isNumber && lumpIndex.hasLump(lumpNum))
+        {
+            File1 &lump = lumpIndex.lump(lumpNum);
+            if(isCustom)
+            {
+                /// @todo Custom status for contained files is not inherited from the container?
+                *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+            }
+
+            // Ignore zero-length lumps.
+            if(!lump.size()) return 0;
+
+            // Ensure the resulting string is terminated.
+            AutoStr *string = Str_PartAppend(AutoStr_NewStd(), (char const *)lump.cache(), 0, lump.size());
+            lump.unlock();
+
+            if(Str_IsEmpty(string))
+                return 0;
+
+            return string;
+        }
+
+        return 0;
+    }
+
     if(Str_StartsWith(path, "Lumps:"))
     {
         char const *lumpName       = Str_Text(path) + 6;
@@ -255,7 +265,11 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
             return 0;
 
         File1 &lump = lumpIndex[lumpIndex.findLast(String(lumpName) + ".lmp")];
-        if(isCustom) *isCustom = lump.hasCustom();
+        if(isCustom)
+        {
+            /// @todo Custom status for contained files is not inherited from the container?
+            *isCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+        }
 
         // Ignore zero-length lumps.
         if(!lump.size()) return 0;
@@ -270,6 +284,41 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
         return string;
     }
 
+    // Try the virtual file system.
+    try
+    {
+        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(Str_Text(path), "rb"));
+
+        if(isCustom)
+        {
+            /// @todo Custom status for contained files is not inherited from the container?
+            File1 &file = hndl->file();
+            *isCustom = (file.isContained()? file.container().hasCustom() : file.hasCustom());
+        }
+
+        // Ignore zero-length lumps.
+        AutoStr *string = nullptr;
+        if(size_t lumpLength = hndl->length())
+        {
+            // Read in the whole thing and ensure the resulting string is terminated.
+            Block buffer;
+            buffer.resize(lumpLength);
+            hndl->read((uint8_t *)buffer.data(), lumpLength);
+            string = Str_PartAppend(AutoStr_NewStd(), buffer.constData(), 0, lumpLength);
+        }
+
+        App_FileSystem().releaseFile(hndl->file());
+
+        if(!string || Str_IsEmpty(string))
+            return 0;
+
+        return string;
+    }
+    catch(FS1::NotFoundError const &)
+    {} // Ignore this error.
+
+
+    // Perhaps a local file known to the native file system?
     char *readBuf = 0;
     if(size_t bytesRead = M_ReadFile(Str_Text(path), &readBuf))
     {
@@ -286,6 +335,12 @@ DENG_EXTERN_C AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isC
 
     return 0;
 }
+
+#if defined(WIN32)
+#define close _close
+#define read _read
+#define write _write
+#endif
 
 static size_t FileReader(const char* name, char** buffer)
 {
@@ -364,6 +419,20 @@ static size_t FileReader(const char* name, char** buffer)
     *buffer = buf;
 
     return length;
+}
+
+DENG_EXTERN_C dd_bool M_WriteFile(const char* name, const char* source, size_t length)
+{
+    int handle = open(name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
+    size_t count;
+
+    if(handle == -1)
+        return false;
+
+    count = write(handle, source, length);
+    close(handle);
+
+    return (count >= length);
 }
 
 void M_WriteCommented(FILE *file, const char* text)

@@ -23,14 +23,15 @@
 #include <de/App>
 #include <de/ArrayValue>
 #include <de/NumberValue>
+#include <de/RecordValue>
 #include <de/Time>
 #include <de/ZipArchive>
 #include <de/game/SavedSession>
+#include <doomsday/defs/episode.h>
 #include "d_netsv.h"
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_inventory.h"
-#include "mapinfo.h"
 #include "mapstatewriter.h"
 #include "p_inventory.h"
 #include "p_map.h"
@@ -83,6 +84,23 @@ namespace internal
         SV_CloseFile();
         return data;
     }
+
+    /**
+     * Lookup the briefing Finale for the current episode, map (if any).
+     */
+    static Record const *finaleBriefing(de::Uri const &mapUri)
+    {
+        if(::briefDisabled) return 0;
+
+        // In a networked game the server will schedule the brief.
+        if(IS_CLIENT || Get(DD_PLAYBACK)) return 0;
+
+        // If we're already in the INFINE state, don't start a finale.
+        if(G_GameState() == GS_INFINE) return 0;
+
+        // Is there such a finale definition?
+        return Defs().finales.tryFind("before", mapUri.compose());
+    }
 }
 
 using namespace internal;
@@ -93,10 +111,17 @@ static String const internalSavePath = "/home/cache/internal.save";
 
 DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 {
-    GameRuleset rules; ///< current ruleset
-    bool inProgress;   ///< @c true= session is in progress / internal.save exists.
+    String episodeId;
+    GameRuleset rules;
+    bool inProgress = false;  ///< @c true= session is in progress / internal.save exists.
 
-    Instance(Public *i) : Base(i), inProgress(false)
+    de::Uri mapUri;
+    uint mapEntryPoint = 0;   ///< Player entry point, for reborn.
+
+    bool rememberVisitedMaps = false;
+    QSet<de::Uri> visitedMaps;
+
+    Instance(Public *i) : Base(i)
     {
         DENG2_ASSERT(singleton == 0);
         singleton = thisPublic;
@@ -118,6 +143,52 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Session::removeSaved(internalSavePath);
     }
 
+    void resetStateForNewSession()
+    {
+        // Perform necessary prep.
+        cleanupInternalSave();
+
+        G_StopDemo();
+
+        // Close the menu if open.
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+
+        // If there are any InFine scripts running, they must be stopped.
+        FI_StackClear();
+
+        // Ignore a game action possibly set by script stop hooks; this is a completely new session.
+        G_SetGameAction(GA_NONE);
+
+        if(!IS_CLIENT)
+        {
+            for(int i = 0; i < MAXPLAYERS; ++i)
+            {
+                player_t *plr = &players[i];
+                if(!plr->plr->inGame) continue;
+
+                // Force players to be initialized upon first map load.
+                plr->playerState = PST_REBORN;
+#if __JHEXEN__
+                plr->worldTimer  = 0;
+#else
+                plr->didSecret   = false;
+#endif
+            }
+        }
+
+        M_ResetRandom();
+    }
+
+    void setEpisode(String const &newEpisodeId)
+    {
+        DENG2_ASSERT(!inProgress);
+
+        episodeId = newEpisodeId;
+
+        // Update the game status cvar.
+        Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+    }
+
     /**
      * Returns SessionMetadata for the game configuration in progress.
      */
@@ -127,22 +198,32 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         SessionMetadata meta;
 
+        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
         meta.set("gameIdentityKey", Session::gameId());
+        meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
-        meta.set("mapUri",          ::gameMapUri.compose());
+        meta.set("mapUri",          mapUri.compose());
         meta.set("mapTime",         ::mapTime);
 
         meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
 
-        ArrayValue *array = new ArrayValue;
+        ArrayValue *playersArray = new ArrayValue;
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
             bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
-            *array << NumberValue(playerIsPresent, NumberValue::Boolean);
+            *playersArray << NumberValue(playerIsPresent, NumberValue::Boolean);
         }
-        meta.set("players", array); // Takes ownership.
+        meta.set("players", playersArray); // Takes ownership.
 
-        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
+        if(rememberVisitedMaps)
+        {
+            ArrayValue *visitedMapsArray = new ArrayValue;
+            foreach(de::Uri const &visitedMap, visitedMaps)
+            {
+                *visitedMapsArray << TextValue(visitedMap.compose());
+            }
+            meta.set("visitedMaps", visitedMapsArray); // Takes ownership.
+        }
 
         return meta;
     }
@@ -188,7 +269,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        mapsFolder.replaceFile(gameMapUri.path() + "State")
+        mapsFolder.replaceFile(mapUri.path() + "State")
                 << serializeCurrentMapState();
 
         saved->flush(); // No need to populate; FS2 Files already in sync with source data.
@@ -206,7 +287,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         if(fast == oldFast) return;
         oldFast = fast;
 
-        /// @fixme Kludge: Assumes the original values speed values haven't been modified!
+        /// @fixme Kludge: Assumes the original speed values haven't been modified!
         for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
         {
             STATES[i].tics = fast? 1 : 2;
@@ -397,17 +478,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             for(int i = 0; i < MAXPLAYERS; ++i)
             {
-                player_t *plr = players + i;
-                if(plr->plr->inGame)
-                {
-                    // Force players to be initialized upon first map load.
-                    plr->playerState = PST_REBORN;
+                player_t *plr = &players[i];
+                if(!plr->plr->inGame) continue;
+
+                // Force players to be initialized upon first map load.
+                plr->playerState = PST_REBORN;
 #if __JHEXEN__
-                    plr->worldTimer = 0;
+                plr->worldTimer  = 0;
 #else
-                    plr->didSecret = false;
+                plr->didSecret   = false;
 #endif
-                }
             }
         }
 
@@ -429,10 +509,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
-        GameRuleset *newRules;
+        std::unique_ptr<GameRuleset> newRules;
         try
         {
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"));
+            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules")));
         }
         catch(Record::NotFoundError const &)
         {
@@ -444,11 +524,23 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     << saved.path();
 
             // Use the current rules as our basis.
-            newRules = GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules);
+            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules));
         }
-        rules = *newRules;
+        rules = *newRules; // make a copy
         applyCurrentRules();
-        delete newRules; newRules = 0;
+        setEpisode(metadata.gets("episode"));
+
+        // Does the metadata include a visited maps breakdown?
+        visitedMaps.clear();
+        rememberVisitedMaps = metadata.has("visitedMaps");
+        if(rememberVisitedMaps)
+        {
+            ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
+            foreach(Value const *value, vistedMapsArray.elements())
+            {
+                visitedMaps << de::Uri(value->as<TextValue>(), RC_NULL);
+            }
+        }
 
 #if __JHEXEN__
         // Deserialize the world ACS state.
@@ -461,34 +553,50 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         inProgress = true;
 
         setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
-        //::gameMapEntrance = mapEntrance; // not saved??
+        //mapEntryPoint = ??; // not saved??
 
         reloadMap();
 #if !__JHEXEN__
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String const gameMapUriAsText = ::gameMapUri.compose();
-        makeMapStateReader(saved, gameMapUriAsText)->read(gameMapUriAsText);
+        String const mapUriAsText = mapUri.compose();
+        makeMapStateReader(saved, mapUriAsText)->read(mapUriAsText);
     }
 
-    void setMap(de::Uri const &mapUri)
+    void setMap(de::Uri const &newMapUri)
     {
         DENG2_ASSERT(inProgress);
 
-        ::gameMapUri = mapUri;
-        // Check that the map truly exists.
-        if(!P_MapExists(::gameMapUri.compose().toUtf8().constData()))
+        mapUri = newMapUri;
+        if(rememberVisitedMaps)
         {
-            ::gameMapUri = G_ComposeMapUri(0, 0); // Should exist always?
+            visitedMaps << mapUri;
         }
 
-        // Determine the episode for the map (should come from MapInfo).
-        ::gameEpisode = G_EpisodeNumberFor(::gameMapUri);
-
         // Update game status cvars:
-        Con_SetInteger2("map-episode", (unsigned)::gameEpisode,        SVF_WRITE_OVERRIDE);
-        Con_SetInteger2("map-id",      (unsigned)G_CurrentMapNumber(), SVF_WRITE_OVERRIDE);
+        Con_SetUri2("map-id", reinterpret_cast<uri_s const *>(&mapUri), SVF_WRITE_OVERRIDE);
+
+        String hubId;
+        if(Record const *hubRec = defn::Episode(*self.episodeDef()).tryFindHubByMapId(mapUri.compose()))
+        {
+            hubId = hubRec->gets("id");
+        }
+        Con_SetString2("map-hub", hubId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+        String mapAuthor = G_MapAuthor(mapUri);
+        if(mapAuthor.isEmpty()) mapAuthor = "Unknown";
+        Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+
+        String mapTitle = G_MapTitle(mapUri);
+        if(mapTitle.isEmpty()) mapTitle = "Unknown";
+        Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+    }
+
+    inline void setMapAndEntryPoint(de::Uri const &newMapUri, uint newMapEntryPoint)
+    {
+        setMap(newMapUri);
+        mapEntryPoint = newMapEntryPoint;
     }
 
     /**
@@ -504,7 +612,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Pause_End();
 
         // Close open HUDs.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
             ST_CloseAll(i, true/*fast*/);
         }
@@ -515,9 +623,9 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Are we playing a briefing? (No, if we've already visited this map).
         if(revisit)
         {
-            briefDisabled = true;
+            ::briefDisabled = true;
         }
-        char const *briefing = G_InFineBriefing(); // current map
+        Record const *briefing = finaleBriefing(mapUri);
 
         // Restart the map music?
         if(!briefing)
@@ -539,11 +647,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             //S_StartMusic("chess", true); // Waiting-for-map-load song
 #endif
 
-            S_MapMusic(&gameMapUri);
+            S_MapMusic(mapUri);
             S_PauseMusic(true);
         }
 
-        P_SetupMap(gameMapUri);
+        P_SetupMap(mapUri);
 
         if(revisit)
         {
@@ -552,14 +660,13 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             targetPlayerAddrs = 0; // player mobj redirection...
 #endif
 
+            String const mapUriAsText = mapUri.compose();
             SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
-            String const gameMapUriAsText = ::gameMapUri.compose();
-            std::unique_ptr<SavedSession::MapStateReader> reader(
-                        makeMapStateReader(saved, gameMapUriAsText));
-            reader->read(gameMapUriAsText);
+            std::unique_ptr<SavedSession::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
+            reader->read(mapUriAsText);
         }
 
-        if(!G_StartFinale(briefing, 0, FIMODE_BEFORE, 0))
+        if(!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
         {
             // No briefing; begin the map.
             HU_WakeWidgets(-1/* all players */);
@@ -599,9 +706,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
     /**
      * @param playerBackup  Player state backup.
-     * @param mapEntrance   Logical entry point number used to enter the map.
      */
-    void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS], uint mapEntrance)
+    void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
         DENG2_ASSERT(playerBackup != 0);
 
@@ -670,7 +776,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             }
             else
             {
-                if(playerstart_t const *start = P_GetPlayerStart(mapEntrance, i, false))
+                if(playerstart_t const *start = P_GetPlayerStart(mapEntryPoint, i, false))
                 {
                     mapspot_t const *spot = &mapSpots[start->spot];
                     P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
@@ -701,7 +807,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     }
                 }
 
-                plr->ammo[AT_BLUEMANA].owned = 25; /// @todo values.ded
+                plr->ammo[AT_BLUEMANA].owned  = 25; /// @todo values.ded
                 plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
 
                 // Bring up the best weapon.
@@ -750,8 +856,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 #endif // __JHEXEN__
 };
 
-GameSession::GameSession()
-    : d(new Instance(this))
+GameSession::GameSession() : d(new Instance(this))
 {}
 
 GameSession::~GameSession()
@@ -789,6 +894,106 @@ bool GameSession::savingPossible()
     if(PST_DEAD == player->playerState) return false;
 
     return true;
+}
+
+Record *GameSession::episodeDef()
+{
+    if(hasBegun())
+    {
+        /// @todo cache this result?
+        return Defs().episodes.tryFind("id", d->episodeId);
+    }
+    return 0;
+}
+
+String GameSession::episodeId()
+{
+    return hasBegun()? d->episodeId : "";
+}
+
+Record *GameSession::mapGraphNodeDef()
+{
+    if(Record const *episode = episodeDef())
+    {
+        return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
+    }
+    return 0;
+}
+
+Record *GameSession::mapInfo()
+{
+    return Defs().mapInfos.tryFind("id", mapUri().compose());
+}
+
+de::Uri GameSession::mapUri()
+{
+    return hasBegun()? d->mapUri : de::Uri();
+}
+
+uint GameSession::mapEntryPoint()
+{
+    return d->mapEntryPoint;
+}
+
+GameSession::VisitedMaps GameSession::allVisitedMaps()
+{
+    if(hasBegun() && d->rememberVisitedMaps)
+    {
+        return d->visitedMaps.toList();
+    }
+    return VisitedMaps();
+}
+
+de::Uri GameSession::mapUriForNamedExit(String name)
+{
+    LOG_AS("GameSession");
+    if(Record const *mgNode = mapGraphNodeDef())
+    {
+        // Build a lookup table mapping exit ids to exit records.
+        QMap<String, Record const *> exits;
+        for(Value const *value : mgNode->geta("exit").elements())
+        {
+            Record const &exit = value->as<RecordValue>().dereference();
+            String id = exit.gets("id");
+            if(!id.isEmpty())
+            {
+                exits.insert(id, &exit);
+            }
+        }
+        //qDebug() << "map exits" << exits;
+
+        // Locate the named exit record.
+        Record const *chosenExit = 0;
+        if(exits.count() > 1)
+        {
+            auto found = exits.constFind(name.toLower());
+            if(found != exits.constEnd())
+            {
+                chosenExit = found.value();
+            }
+            else
+            {
+                LOG_SCR_WARNING("Episode '%s' map \"%s\" defines no Exit with ID '%s'")
+                        << d->episodeId << d->mapUri << name;
+            }
+        }
+        else if(exits.count() == 1)
+        {
+            chosenExit = exits.first();
+            String chosenExitId = chosenExit->gets("id");
+            if(chosenExitId != name.toLower())
+            {
+                LOGDEV_SCR_NOTE("Exit ID:%s chosen instead of '%s'")
+                        << chosenExitId << name;
+            }
+        }
+
+        if(chosenExit)
+        {
+            return de::Uri(chosenExit->gets("targetMap"), RC_NULL);
+        }
+    }
+    return de::Uri();
 }
 
 GameRuleset const &GameSession::rules() const
@@ -835,16 +1040,17 @@ void GameSession::endAndBeginTitle()
 {
     end();
 
-    if(char const *script = G_InFine("title"))
+    if(Record const *finale = Defs().finales.tryFind("id", "title"))
     {
-        G_StartFinale(script, FF_LOCAL, FIMODE_NORMAL, "title");
+        G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, "title");
         return;
     }
     /// @throw Error A title script must always be defined.
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &newRules)
+void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
+    de::Uri const &mapUri, uint mapEntryPoint)
 {
     if(hasBegun())
     {
@@ -852,48 +1058,33 @@ void GameSession::begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset con
         throw InProgressError("GameSession::begin", "The game session has already begun");
     }
 
-    LOG_MSG("Game begins...");
-
-    // Perform necessary prep.
-    d->cleanupInternalSave();
-
-    G_StopDemo();
-
-    // Close the menu if open.
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // If there are any InFine scripts running, they must be stopped.
-    FI_StackClear();
-
-    // Ignore a game action possibly set by script stop hooks; this is a completely new session.
-    G_SetGameAction(GA_NONE);
-
-    if(!IS_CLIENT)
+    // Ensure the episode id is good.
+    if(!Defs().episodes.has("id", episodeId))
     {
-        for(uint i = 0; i < MAXPLAYERS; ++i)
-        {
-            player_t *plr = players + i;
-            if(plr->plr->inGame)
-            {
-                // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
-#if __JHEXEN__
-                plr->worldTimer  = 0;
-#else
-                plr->didSecret   = false;
-#endif
-            }
-        }
+        throw Error("GameSession::begin", "Episode '" + episodeId + "' is not known");
     }
 
-    M_ResetRandom();
+    // Ensure the map truly exists.
+    if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+    {
+        throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
+    }
 
-    d->rules = newRules;
+    LOG_MSG("Game begins...");
+
+    d->resetStateForNewSession();
+
+    // Configure the new session.
+    d->rules = newRules; // make a copy
     d->applyCurrentRules();
-    d->inProgress = true;
-    d->setMap(mapUri);
-    ::gameMapEntrance = mapEntrance;
+    d->setEpisode(episodeId);
 
+    d->visitedMaps.clear();
+    d->rememberVisitedMaps = true;
+
+    // Begin the session.
+    d->inProgress = true;
+    d->setMapAndEntryPoint(mapUri, mapEntryPoint);
     d->reloadMap();
 
     // Create the internal .save session package.
@@ -926,13 +1117,25 @@ void GameSession::reloadMap()
     else
     {
         // Restart the session entirely.
-        briefDisabled = true; // We won't brief again.
+        bool oldBriefDisabled = ::briefDisabled;
+
+        ::briefDisabled = true; // We won't brief again.
+
         end();
-        begin(::gameMapUri, ::gameMapEntrance, d->rules);
+        d->resetStateForNewSession();
+
+        // Begin the session.
+        d->inProgress = true;
+        d->reloadMap();
+
+        // Create the internal .save session package.
+        d->updateSavedSession(internalSavePath, d->metadata());
+
+        ::briefDisabled = oldBriefDisabled;
     }
 }
 
-void GameSession::leaveMap()
+void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 {
     if(!hasBegun())
     {
@@ -940,14 +1143,14 @@ void GameSession::leaveMap()
         throw InProgressError("GameSession::leaveMap", "No game session is in progress");
     }
 
+    // Ensure the map truly exists.
+    if(!P_MapExists(nextMapUri.compose().toUtf8().constData()))
+    {
+        throw Error("GameSession::leaveMap", "Map \"" + nextMapUri.asText() + "\" does not exist");
+    }
+
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
-
-    // Check that the map truly exists.
-    if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
-    {
-        ::nextMapUri = G_ComposeMapUri(0, 0); // Should exist always?
-    }
 
 #if __JHEXEN__
     // Take a copy of the player objects (they will be cleared in the process
@@ -972,10 +1175,12 @@ void GameSession::leaveMap()
 
         // Are we entering a new hub?
 #if __JHEXEN__
-        if(hexDefs.getMapInfo(0/*current map*/)->geti("hub") != hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
+        defn::Episode epsd(*episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(d->mapUri.compose());
+        if(!currentHub || currentHub != epsd.tryFindHubByMapId(nextMapUri.compose()))
 #endif
         {
-            // Clear all saved map states in the old hub.
+            // Clear all saved map states in the current hub.
             Folder::Contents contents = mapsFolder.contents();
             DENG2_FOR_EACH_CONST(Folder::Contents, i, contents)
             {
@@ -985,7 +1190,7 @@ void GameSession::leaveMap()
 #if __JHEXEN__
         else
         {
-            File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
+            File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
             outFile << serializeCurrentMapState(true /*exclude players*/);
             // We'll flush whole package soon.
         }
@@ -1000,9 +1205,9 @@ void GameSession::leaveMap()
     if(!IS_CLIENT)
     {
         // Force players to be initialized upon first map load.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
+        for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            player_t *plr = players + i;
+            player_t *plr = &players[i];
             if(plr->plr->inGame)
             {
                 plr->playerState = PST_REBORN;
@@ -1017,11 +1222,10 @@ void GameSession::leaveMap()
 #endif
 
     // Change the current map.
-    d->setMap(nextMapUri);
-    ::gameMapEntrance = ::nextMapEntrance;
+    d->setMapAndEntryPoint(nextMapUri, nextMapEntryPoint);
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / gameMapUri.path());
+    bool const revisit = saved && saved->hasState(String("maps") / d->mapUri.path());
 
     d->reloadMap(revisit);
 
@@ -1032,21 +1236,21 @@ void GameSession::leaveMap()
         // First visit; destroy all freshly spawned players (??).
         for(int i = 0; i < MAXPLAYERS; ++i)
         {
-            ddplayer_t *ddplr = players[i].plr;
-            if(ddplr->inGame)
+            player_t *plr = &players[i];
+            if(plr->plr->inGame)
             {
-                P_MobjRemove(ddplr->mo, true);
+                P_MobjRemove(plr->plr->mo, true);
             }
         }
     }
 
-    d->restorePlayersInHub(playerBackup, nextMapEntrance);
+    d->restorePlayersInHub(playerBackup);
 
     // Restore the random class rule.
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter().runDeferredTasks(gameMapUri);
+    Game_ACScriptInterpreter().runDeferredTasks(d->mapUri);
 #endif
 
     if(saved)
@@ -1069,12 +1273,10 @@ void GameSession::leaveMap()
         Folder &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
-        File &outFile = mapsFolder.replaceFile(gameMapUri.path() + "State");
+        File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
         outFile << serializeCurrentMapState();
 
-        // Write all changes to the package.
-        saved->flush();
-
+        saved->flush(); // Write all changes to the package.
         saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
     }
 }
@@ -1127,7 +1329,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         // Notify the engine that the game was saved.
         /// @todo After the engine has the primary responsibility of saving the game,
         /// this notification is unnecessary.
-        Plug_Notify(DD_NOTIFY_GAME_SAVED, NULL);
+        Plug_Notify(DD_NOTIFY_GAME_SAVED, nullptr);
     }
     catch(Error const &er)
     {
@@ -1168,23 +1370,19 @@ String GameSession::savedUserDescription(String const &saveName)
 
 namespace {
 int gsvRuleSkill;
-int gsvEpisode;
-int gsvMap;
-#if __JHEXEN__
-int gsvHub;
-#endif
+char *gsvEpisode = (char *)"";
+uri_s *gsvMap;
+char *gsvHub = (char *)"";
 }
 
 void GameSession::consoleRegister() //static
 {
 #define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
 
-    C_VAR_INT("game-skill",  &gsvRuleSkill, READONLYCVAR, 0, 0);
-    C_VAR_INT("map-episode", &gsvEpisode,   READONLYCVAR, 0, 0);
-#if __JHEXEN__
-    C_VAR_INT("map-hub",     &gsvHub,       READONLYCVAR, 0, 0);
-#endif
-    C_VAR_INT("map-id",      &gsvMap,       READONLYCVAR, 0, 0);
+    C_VAR_INT    ("game-skill",     &gsvRuleSkill,  READONLYCVAR, 0, 0);
+    C_VAR_CHARPTR("map-episode",    &gsvEpisode,    READONLYCVAR, 0, 0);
+    C_VAR_CHARPTR("map-hub",        &gsvHub,        READONLYCVAR, 0, 0);
+    C_VAR_URIPTR ("map-id",         &gsvMap,        READONLYCVAR, 0, 0);
 
 #undef READONLYCVAR
 }

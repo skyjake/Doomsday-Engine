@@ -30,6 +30,7 @@
 
 #include "jdoom64.h"
 
+#include "gamesession.h"
 #include "d_net.h"
 #include "g_common.h"
 #include "player.h"
@@ -166,7 +167,7 @@ void printDebugInfo(player_t *plr)
 
     char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gameMapUri.path().toUtf8().constData(),
+                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
@@ -600,26 +601,5 @@ D_CMD(CheatWhere)
 {
     DENG2_UNUSED3(src, argc, argv);
     printDebugInfo(&players[CONSOLEPLAYER]);
-    return true;
-}
-
-/**
- * Exit the current map and go to the intermission.
- */
-D_CMD(CheatLeaveMap)
-{
-    DENG2_UNUSED3(src, argc, argv);
-
-    if(!cheatsEnabled())
-        return false;
-
-    if(G_GameState() != GS_MAP)
-    {
-        S_LocalSound(SFX_OOF, NULL);
-        App_Log(DE2_LOG_ERROR | DE2_LOG_MAP, "Can only exit a map when in a game!");
-        return true;
-    }
-
-    G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
     return true;
 }

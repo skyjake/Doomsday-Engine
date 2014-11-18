@@ -27,34 +27,25 @@
 namespace common {
 namespace menu {
 
-void Hu_MenuInitControlsPage(void);
-void Hu_MenuDrawControlsPage(Page *page, Point2Raw const *origin);
-void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
+// Control config flags.
+#define CCF_NON_INVERSE         0x1
+#define CCF_INVERSE             0x2
+#define CCF_STAGED              0x4
+#define CCF_REPEAT              0x8
+#define CCF_SIDESTEP_MODIFIER   0x10
+#define CCF_MULTIPLAYER         0x20
 
-struct controlconfig_t;
-
-/**
- * Bindings visualizer widget.
- */
-struct InputBindingWidget : public Widget
+struct controlconfig_t
 {
-public:
-    controlconfig_t *binds;
-
-public:
-    InputBindingWidget();
-    virtual ~InputBindingWidget() {}
-
-    void draw(Point2Raw const *origin);
-    void updateGeometry(Page *page);
-
-    int handleEvent_Privileged(event_t *ev);
-
-    char const *controlName() const;
-    de::String bindContext() const;
+    char const *text;
+    char const *bindContext;
+    char const *controlName;
+    char const *command;
+    int flags;
 };
 
-int InputBindingWidget_CommandResponder(Widget *ob, menucommand_e command);
+void Hu_MenuInitControlsPage();
+void Hu_MenuControlGrabDrawer(char const *niceName, float alpha);
 
 } // namespace menu
 } // namespace common

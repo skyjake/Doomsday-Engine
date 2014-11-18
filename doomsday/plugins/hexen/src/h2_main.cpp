@@ -22,26 +22,24 @@
 
 #include "jhexen.h"
 
+#include <cstring>
+#include <de/App>
 #include "am_map.h"
 #include "d_netsv.h"
 #include "g_common.h"
 #include "g_defs.h"
 #include "gamesession.h"
+#include "hu_menu.h"
 #include "m_argv.h"
-#include "mapinfo.h"
 #include "p_inventory.h"
 #include "p_map.h"
 #include "player.h"
 #include "p_saveg.h"
 #include "p_sound.h"
-
 #include "saveslots.h"
-#include <cstring>
 
 using namespace de;
 using namespace common;
-
-int verbose;
 
 float turboMul; // Multiplier for turbo.
 
@@ -162,6 +160,7 @@ void X_PreInit()
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     //cfg.fastMonsters = false;
+    cfg.netEpisode = "";
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8; // Use the default color by default.
@@ -297,9 +296,7 @@ void X_PreInit()
 
 void X_PostInit()
 {
-    bool autoStart = false;
-    de::Uri startMapUri;
-    playerclass_t startPlayerClass = PCLASS_NONE;
+    CommandLine &cmdLine = DENG2_APP->commandLine();
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -310,54 +307,44 @@ void X_PostInit()
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
 
-    // Game parameters.
-    /* None */
-
     // Defaults for skill, episode and map.
     ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
-    // Game mode specific settings.
-    /* None */
+    ::cfg.netDeathmatch = cmdLine.check("-deathmatch")? true : false;
 
-    ::cfg.netDeathmatch = CommandLine_Exists("-deathmatch");
+    ::defaultGameRules.noMonsters    = cmdLine.check("-nomonsters")? true : false;
+    ::defaultGameRules.randomClasses = cmdLine.check("-randclass") ? true : false;
 
-    ::defaultGameRules.noMonsters    = CommandLine_Check("-nomonsters")? true : false;
-    ::defaultGameRules.randomClasses = CommandLine_Exists("-randclass")? true : false;
-
-    // Turbo movement option.
-    int p = CommandLine_Check("-turbo");
+    // Change the turbo multiplier?
     ::turboMul = 1.0f;
-    if(p)
+    if(int arg = cmdLine.check("-turbo"))
     {
         int scale = 200;
-        if(p < CommandLine_Count() - 1)
+        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
         {
-            scale = atoi(CommandLine_At(p + 1));
+            scale = cmdLine.at(arg + 1).toInt();
         }
-        de::clamp(10, scale, 400);
+        scale = de::clamp(10, scale, 400);
 
-        App_Log(DE2_MAP_NOTE, "Turbo scale: %i%%", scale);
+        LOG_NOTE("Turbo scale: %i%%") << scale;
         ::turboMul = scale / 100.f;
-    }
-
-    if((p = CommandLine_CheckWith("-scripts", 1)) != 0)
-    {
-        ::sc_FileScripts = true;
-        ::sc_ScriptsDir = CommandLine_At(p + 1);
     }
 
     // Process sound definitions.
     SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 
     // Process sound sequence scripts.
-    SndSeqParser(::sc_FileScripts? Str_Appendf(AutoStr_New(), "%sSNDSEQ.txt", ::sc_ScriptsDir)
-                                 : AutoStr_FromText("Lumps:SNDSEQ"));
+    String scriptPath("Lumps:SNDSEQ");
+    if(int arg = cmdLine.check("-scripts", 1))
+    {
+        scriptPath = cmdLine.at(arg + 1) + "SNDSEQ.txt";
+    }
+    SndSeqParser(AutoStr_FromTextStd(scriptPath.toUtf8().constData()));
 
     // Load a saved game?
-    p = CommandLine_CheckWith("-loadgame", 1);
-    if(p != 0)
+    if(int arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(CommandLine_At(p + 1)))
+        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
         {
             if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
@@ -367,82 +354,38 @@ void X_PostInit()
         }
     }
 
-    if((p = CommandLine_CheckWith("-skill", 1)) != 0)
+    // Change the default skill mode?
+    if(int arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = atoi(CommandLine_At(p + 1));
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
-        autoStart = true;
+        int skillNumber = cmdLine.at(arg + 1).toInt();
+        ::defaultGameRules.skill = skillmode_t( skillNumber > 0? skillNumber - 1 : skillNumber );
     }
 
-    if((p = CommandLine_Check("-class")) != 0)
+    // Change the default player class?
+    playerclass_t defPlayerClass = PCLASS_NONE;
+    if(int arg = cmdLine.check("-class", 1))
     {
-        playerclass_t pClass = (playerclass_t)atoi(CommandLine_At(p + 1));
-        if(!VALID_PLAYER_CLASS(pClass))
-        {
-            App_Log(DE2_LOG_WARNING, "Invalid player class id=%d specified with -class", (int)pClass);
-        }
-        else if(!PCLASS_INFO(pClass)->userSelectable)
-        {
-            App_Log(DE2_LOG_WARNING, "Non-user-selectable player class id=%d specified with -class", (int)pClass);
-        }
-        else
-        {
-            startPlayerClass = pClass;
-        }
-    }
-
-    if(startPlayerClass != PCLASS_NONE)
-    {
-        App_Log(DE2_LOG_NOTE, "Player Class: '%s'", PCLASS_INFO(startPlayerClass)->niceName);
-        ::cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
-        autoStart = true;
-    }
-
-    // Check for command line warping.
-    p = CommandLine_Check("-warp");
-    if(p && p < CommandLine_Count() - 1)
-    {
-        autoStart = true;
-
         bool isNumber;
-        int mapNumber = String(CommandLine_At(p + 1)).toInt(&isNumber);
-        if(!isNumber)
+        playerclass_t pClass = playerclass_t( cmdLine.at(arg + 1).toInt(&isNumber) );
+        if(isNumber && VALID_PLAYER_CLASS(pClass))
         {
-            // It must be a URI, then.
-            char *args[1] = { const_cast<char *>(CommandLine_At(p + 1)) };
-            startMapUri = de::Uri::fromUserInput(args, 1);
-            if(startMapUri.scheme().isEmpty())
-                startMapUri.setScheme("Maps");
+            if(!PCLASS_INFO(pClass)->userSelectable)
+            {
+                LOG_WARNING("Non-user-selectable player class '%i' specified with -class") << int( pClass );
+            }
         }
         else
         {
-            startMapUri = P_TranslateMap(mapNumber - 1);
+            LOG_WARNING("Invalid player class '%i' specified with -class") << int( pClass );
         }
     }
-
-    if(startMapUri.path().isEmpty())
+    if(defPlayerClass != PCLASS_NONE)
     {
-        startMapUri = P_TranslateMap(0);
+        ::cfg.playerClass[CONSOLEPLAYER] = defPlayerClass;
+        LOG_NOTE("Player Class: '%s'") << PCLASS_INFO(defPlayerClass)->niceName;
     }
 
-    // Are we autostarting?
-    if(autoStart)
-    {
-        App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
-                              startMapUri.asText().toUtf8().constData(),
-                              ::defaultGameRules.skill);
-    }
-
-    // Validate episode and map.
-    if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
-    {
-        G_SetGameActionNewSession(startMapUri, 0/*default*/, ::defaultGameRules);
-    }
-    else
-    {
-        // Start up intro loop.
-        COMMON_GAMESESSION->endAndBeginTitle();
-    }
+    G_AutoStartOrBeginTitleLoop();
 }
 
 void X_Shutdown()

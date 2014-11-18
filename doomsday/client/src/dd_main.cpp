@@ -5,7 +5,7 @@
  * @todo Much of this should be refactored and merged into the App classes.
  * @todo The rest should be split into smaller, perhaps domain-specific files.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -736,11 +736,8 @@ D_CMD(Tutorial)
 void DD_StartTitle()
 {
 #ifdef __CLIENT__
-    ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE, "background", &fin))
-    {
-        return;
-    }
+    Record const *finale = defs.finales.tryFind("id", "background");
+    if(!finale) return;
 
     ddstring_t setupCmds; Str_Init(&setupCmds);
 
@@ -759,7 +756,7 @@ void DD_StartTitle()
         Str_Appendf(&setupCmds, "precolor %i %f %f %f\n", i, color->red, color->green, color->blue);
     }
 
-    titleFinale = FI_Execute2(fin.script, FF_LOCAL, Str_Text(&setupCmds));
+    titleFinale = FI_Execute2(finale->gets("script").toUtf8().constData(), FF_LOCAL, Str_Text(&setupCmds));
     Str_Free(&setupCmds);
 #endif
 }
@@ -1196,13 +1193,19 @@ static int DD_ActivateGameWorker(void *context)
     }
 
     // Now that resources have been located we can begin to initialize the game.
-    if(App_GameLoaded() && gx.PreInit)
+    if(App_GameLoaded())
     {
-        DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+        // Any game initialization hooks?
+        DD_CallHooks(HOOK_GAME_INIT, 0, 0);
 
-        DD_SetActivePluginId(App_CurrentGame().pluginId());
-        gx.PreInit(App_Games().id(App_CurrentGame()));
-        DD_SetActivePluginId(0);
+        if(gx.PreInit)
+        {
+            DENG2_ASSERT(App_CurrentGame().pluginId() != 0);
+
+            DD_SetActivePluginId(App_CurrentGame().pluginId());
+            gx.PreInit(App_Games().id(App_CurrentGame()));
+            DD_SetActivePluginId(0);
+        }
     }
 
     if(parms.initiatedBusyMode)
@@ -2438,7 +2441,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {0, 0},
 #endif
     {&defs.sounds.count.num, 0},
-    {&defs.music.count.num, 0},
+    {0, 0},
     {0, 0},
 #ifdef __CLIENT__
     {&clientPaused, &clientPaused},
@@ -2494,10 +2497,10 @@ int DD_GetInteger(int ddvalue)
         {
             if(MapDef *mapDef = App_WorldSystem().map().def())
             {
-                de::Uri const mapUri = mapDef->composeUri();
-                if(ded_mapinfo_t *mapInfo = defs.getMapInfo(&mapUri))
+                int idx = defs.getMapInfoNum(mapDef->composeUri());
+                if(idx >= 0)
                 {
-                    return Def_GetMusicNum(mapInfo->music);
+                    return Def_GetMusicNum(defs.mapInfos[idx].gets("music").toUtf8().constData());
                 }
             }
         }
@@ -2609,6 +2612,9 @@ void *DD_GetVariable(int ddvalue)
         static timespan_t fracTic;
         fracTic = gameTime * TICSPERSEC;
         return &fracTic; }
+
+    case DD_DEFS:
+        return &defs;
 
     default: break;
     }

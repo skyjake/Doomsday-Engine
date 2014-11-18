@@ -160,13 +160,10 @@ int             Def_GetActionNum(char const *id);
 spritenum_t     Def_GetSpriteNum(char const *name);
 
 int             Def_GetModelNum(const char* id);
-ded_music_t*    Def_GetMusic(char const *id);
 int             Def_GetMusicNum(const char* id);
 int             Def_GetSoundNum(const char* id);
 ded_value_t*    Def_GetValueById(const char* id);
 ded_value_t*    Def_GetValueByUri(const Uri* uri);
-ded_mapinfo_t*  Def_GetMapInfo(const Uri* uri);
-ded_sky_t*      Def_GetSky(const char* id);
 ded_material_t* Def_GetMaterial(const char* uri);
 ded_compositefont_t* Def_GetCompositeFont(const char* uri);
 ded_light_t*    Def_GetLightDef(int spr, int frame);

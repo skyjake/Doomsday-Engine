@@ -342,10 +342,10 @@ desc = Current map id.
 desc = Current map name.
 
 [map-episode]
-desc = Current episode.
+desc = Current episode id.
 
-[map-mission]
-desc = Current mission.
+[map-hub]
+desc = Current hub id.
 
 [game-music]
 desc = Currently playing music (id).

@@ -22,19 +22,19 @@
 
 #include "jdoom.h"
 
+#include <de/App>
+#include "am_map.h"
 #include "d_netsv.h"
+#include "doomv9mapstatereader.h"
+#include "g_defs.h"
 #include "gamesession.h"
+#include "hu_menu.h"
 #include "m_argv.h"
 #include "p_map.h"
-#include "doomv9mapstatereader.h"
-#include "am_map.h"
-#include "g_defs.h"
 #include "saveslots.h"
 
 using namespace de;
 using namespace common;
-
-int verbose;
 
 float turboMul; // Multiplier for turbo.
 
@@ -184,7 +184,7 @@ void D_PreInit()
     cfg.menuSlam = false;
     cfg.menuShortcutsEnabled = true;
     cfg.menuGameSaveSuggestDescription = true;
-    cfg.menuEffectFlags = MEF_TEXT_TYPEIN|MEF_TEXT_SHADOW|MEF_TEXT_GLITTER;
+    cfg.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
     cfg.menuTextFlashColor[0] = .7f;
     cfg.menuTextFlashColor[1] = .9f;
     cfg.menuTextFlashColor[2] = 1;
@@ -261,7 +261,7 @@ void D_PreInit()
     cfg.slidingCorpses = false;
     //cfg.fastMonsters = false;
     cfg.netJumping = true;
-    cfg.netEpisode = 0;
+    cfg.netEpisode = "";
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;
@@ -387,21 +387,17 @@ void D_PreInit()
 
 void D_PostInit()
 {
-    bool autoStart = false;
-    de::Uri startMapUri;
+    CommandLine &cmdLine = DENG2_APP->commandLine();
 
     /// @todo Kludge: Border background is different in DOOM2.
     /// @todo Do this properly!
     ::borderGraphics[0] = (::gameModeBits & GM_ANY_DOOM2)? "Flats:GRNROCK" : "Flats:FLOOR7_2";
 
-    // Common post init routine
     G_CommonPostInit();
 
-    // Initialize ammo info.
     P_InitAmmoInfo();
-
-    // Initialize weapon info.
     P_InitWeaponInfo();
+    IN_Init();
 
     // Game parameters.
     ::monsterInfight = GetDefInt("AI|Infight", 0);
@@ -409,44 +405,53 @@ void D_PostInit()
     // Get skill / episode / map from parms.
     ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
-    if(CommandLine_Check("-altdeath"))
-        ::cfg.netDeathmatch = 2;
-    else if(CommandLine_Check("-deathmatch"))
-        ::cfg.netDeathmatch = 1;
-
-    // Apply these rules.
-    ::defaultGameRules.noMonsters      = CommandLine_Check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
-    ::defaultGameRules.fast            = CommandLine_Check("-fast")? true : false;
-
-    int p = CommandLine_Check("-timer");
-    if(p && p < myargc - 1 && ::defaultGameRules.deathmatch)
+    if(cmdLine.check("-altdeath"))
     {
-        int time = atoi(CommandLine_At(p + 1));
-        App_Log(DE2_LOG_NOTE, "Maps will end after %d %s", time, time == 1? "minute" : "minutes");
+        ::cfg.netDeathmatch = 2;
+    }
+    else if(cmdLine.check("-deathmatch"))
+    {
+        ::cfg.netDeathmatch = 1;
     }
 
-    // Turbo option.
-    p = CommandLine_Check("-turbo");
+    // Apply these rules.
+    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
+    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
+    ::defaultGameRules.fast            = cmdLine.check("-fast")      ? true : false;
+
+    if(::defaultGameRules.deathmatch)
+    {
+        if(int arg = cmdLine.check("-timer", 1))
+        {
+            bool isNumber;
+            int mins = cmdLine.at(arg + 1).toInt(&isNumber);
+            if(isNumber)
+            {
+                LOG_NOTE("Maps will end after %i %s")
+                        << mins << (mins == 1? "minute" : "minutes");
+            }
+        }
+    }
+
+    // Change the turbo multiplier?
     ::turboMul = 1.0f;
-    if(p)
+    if(int arg = cmdLine.check("-turbo"))
     {
         int scale = 200;
-        if(p < myargc - 1)
+        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
         {
-            scale = atoi(CommandLine_At(p + 1));
+            scale = cmdLine.at(arg + 1).toInt();
         }
         scale = de::clamp(10, scale, 400);
 
-        App_Log(DE2_MAP_NOTE, "Turbo scale: %i%%", scale);
+        LOG_NOTE("Turbo scale: %i%%") << scale;
         ::turboMul = scale / 100.f;
     }
 
     // Load a saved game?
-    p = CommandLine_Check("-loadgame");
-    if(p && p < myargc - 1)
+    if(int arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(CommandLine_At(p + 1)))
+        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
         {
             if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
@@ -456,82 +461,18 @@ void D_PostInit()
         }
     }
 
-    p = CommandLine_Check("-skill");
-    if(p && p < myargc - 1)
+    // Change the default skill mode?
+    if(int arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = atoi(CommandLine_At(p + 1));
+        int skillNumber = cmdLine.at(arg + 1).toInt();
         ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
-        autoStart = true;
     }
 
-    p = CommandLine_Check("-episode");
-    if(p && p < myargc - 1)
-    {
-        int episodeNumber = atoi(CommandLine_At(p + 1));
-
-        startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber, 0);
-        autoStart = true;
-    }
-
-    p = CommandLine_Check("-warp");
-    if(p && p < myargc - 1)
-    {
-        autoStart = true;
-
-        bool isNumber;
-        String(CommandLine_At(p + 1)).toInt(&isNumber);
-        if(!isNumber)
-        {
-            // It must be a URI, then.
-            char *args[1] = { const_cast<char *>(CommandLine_At(p + 1)) };
-            startMapUri = de::Uri::fromUserInput(args, 1);
-            if(startMapUri.scheme().isEmpty())
-                startMapUri.setScheme("Maps");
-        }
-        else
-        {
-            if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
-            {
-                int mapNumber = String(CommandLine_At(p + 1)).toInt();
-                startMapUri = G_ComposeMapUri(0, mapNumber > 0? mapNumber - 1 : mapNumber);
-            }
-            else if(p < myargc - 2)
-            {
-                int episodeNumber = String(CommandLine_At(p + 1)).toInt();
-                int mapNumber     = String(CommandLine_At(p + 2)).toInt();
-
-                startMapUri = G_ComposeMapUri(episodeNumber > 0? episodeNumber - 1 : episodeNumber,
-                                              mapNumber > 0? mapNumber - 1 : mapNumber);
-            }
-        }
-    }
-
-    if(startMapUri.path().isEmpty())
-    {
-        startMapUri = G_ComposeMapUri(0, 0);
-    }
-
-    // Are we autostarting?
-    if(autoStart)
-    {
-        App_Log(DE2_LOG_NOTE, "Autostart in Map %s, Skill %d",
-                              startMapUri.asText().toUtf8().constData(),
-                              ::defaultGameRules.skill);
-    }
-
-    // Validate episode and map.
-    if((autoStart || IS_NETGAME) && P_MapExists(startMapUri.compose().toUtf8().constData()))
-    {
-        G_SetGameActionNewSession(startMapUri, 0/*default*/, ::defaultGameRules);
-    }
-    else
-    {
-        COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
-    }
+    G_AutoStartOrBeginTitleLoop();
 }
 
 void D_Shutdown()
 {
-    WI_Shutdown();
+    IN_Shutdown();
     G_CommonShutdown();
 }
