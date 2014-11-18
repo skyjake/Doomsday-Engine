@@ -124,6 +124,7 @@ public:
     dfloat maxAnisotropy() const;
     dfloat maxLevel() const;
 
+    bool isMultisampled() const;
     bool isCubeMap() const;
 
     /**
@@ -161,7 +162,7 @@ public:
 
     void setUndefinedContent(gl::CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level = 0);
 
-    void setDepthStencilContent(Size const &size);
+    void setDepthStencilContent(Size const &size, int sampleCount = 0);
 
     /**
      * Sets the image content of the texture at a particular level. The format

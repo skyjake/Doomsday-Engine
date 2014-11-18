@@ -153,6 +153,11 @@ DENG2_PIMPL_NOREF(GLInfo)
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,  (GLint *) &lim.maxTexSize);
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, (GLint *) &lim.maxTexUnits);
+        glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES,
+                                            (GLint *) &lim.maxColorTexSamples);
+        glGetIntegerv(GL_MAX_DEPTH_TEXTURE_SAMPLES,
+                                            (GLint *) &lim.maxDepthTexSamples);
+        glGetIntegerv(GL_MAX_SAMPLES,       (GLint *) &lim.maxSamples);
 
         if(ext.EXT_texture_filter_anisotropic)
         {

@@ -66,6 +66,9 @@ public:
         int maxTexFilterAniso;
         int maxTexSize; ///< Texels.
         int maxTexUnits;
+        int maxColorTexSamples;
+        int maxDepthTexSamples;
+        int maxSamples;
     };
 
     GLInfo();

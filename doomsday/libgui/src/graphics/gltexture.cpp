@@ -189,14 +189,24 @@ DENG2_PIMPL(GLTexture)
                  glFormat.format == GL_DEPTH_STENCIL? GL_DEPTH24_STENCIL8 :
                                                       glFormat.format);
 
-        /*qDebug() << "glTexImage2D:" << name << (isCube()? glFace(face) : texTarget)
-                << level << internalFormat << size.x << size.y << 0
-                << glFormat.format << glFormat.type << data;*/
-
         if(data) glPixelStorei(GL_UNPACK_ALIGNMENT, glFormat.rowAlignment);
-        glTexImage2D(isCube()? glFace(face) : texTarget,
-                     level, internalFormat, size.x, size.y, 0,
-                     glFormat.format, glFormat.type, data);
+
+        if(!glFormat.samples)
+        {
+            /*qDebug() << "glTexImage2D:" << name << (isCube()? glFace(face) : texTarget)
+                    << level << internalFormat << size.x << size.y << 0
+                    << glFormat.format << glFormat.type << data;*/
+
+            glTexImage2D(isCube()? glFace(face) : texTarget,
+                         level, internalFormat, size.x, size.y, 0,
+                         glFormat.format, glFormat.type, data);
+        }
+        else
+        {            
+            DENG2_ASSERT(texTarget == GL_TEXTURE_2D_MULTISAMPLE);
+            glTexImage2DMultisample(texTarget, glFormat.samples, glFormat.format,
+                                    size.x, size.y, false);
+        }
 
         LIBGUI_ASSERT_GL_OK();
     }
@@ -305,6 +315,11 @@ dfloat GLTexture::maxLevel() const
     return d->maxLevel;
 }
 
+bool GLTexture::isMultisampled() const
+{
+    return d->texTarget == GL_TEXTURE_2D_MULTISAMPLE;
+}
+
 bool GLTexture::isCubeMap() const
 {
     return d->isCube();
@@ -354,7 +369,9 @@ void GLTexture::setUndefinedImage(CubeFace face, GLTexture::Size const &size,
 
 void GLTexture::setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level)
 {
-    d->texTarget = GL_TEXTURE_2D;
+    d->release();
+
+    d->texTarget = (glFormat.samples > 0? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D);
     d->size = size;
     d->format = Image::Unknown;
 
@@ -380,9 +397,9 @@ void GLTexture::setUndefinedContent(CubeFace face, Size const &size, GLPixelForm
     setState(Ready);
 }
 
-void GLTexture::setDepthStencilContent(Size const &size)
+void GLTexture::setDepthStencilContent(Size const &size, int samples)
 {
-    setUndefinedContent(size, GLPixelFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8));
+    setUndefinedContent(size, GLPixelFormat(GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0, samples));
 }
 
 void GLTexture::setImage(Image const &image, int level)

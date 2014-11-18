@@ -168,10 +168,12 @@ DENG2_OBSERVES(Asset, Deletion)
     {
         DENG2_ASSERT(tex.isReady());
 
-        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i) => attachment %i")
-                << fbo << tex.glName() << level << attachmentToId(attachment);
+        LOG_GL_XVERBOSE("FBO %i: glTex %i (level %i, ms:%b) => attachment %i")
+                << fbo << tex.glName() << level << tex.isMultisampled() << attachmentToId(attachment);
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, tex.glName(), level);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
+                               tex.isMultisampled()? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D,
+                               tex.glName(), level);
         LIBGUI_ASSERT_GL_OK();
 
         bufTextures[attachmentToId(attachment)] = &tex;
@@ -622,11 +624,6 @@ void GLTarget::updateFromProxy()
 
 void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filtering) const
 {
-    //qDebug() << "GLTarget: blit from" << d->fbo << "to" << dest.glName();
-
-    /*DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
-    if(!GLInfo::extensions().EXT_framebuffer_blit) return;*/
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);

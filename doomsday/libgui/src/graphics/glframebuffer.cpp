@@ -40,8 +40,6 @@ DENG2_PIMPL(GLFramebuffer)
     GLTexture color;
     GLTexture depthStencil;
 
-    GLTarget multisampleTarget;
-
     Drawable bufSwap;
     GLUniform uMvpMatrix;
     GLUniform uBufTex;
@@ -57,14 +55,11 @@ DENG2_PIMPL(GLFramebuffer)
         , uColor    ("uColor",     GLUniform::Vec4)
     {
         pDefaultSampleCount.audienceForChange() += this;
-        //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
 
     ~Instance()
     {
         pDefaultSampleCount.audienceForChange() -= this;
-        //DENG2_GUI_APP->audienceForGLContextChange -= this;
-
         release();
     }
 
@@ -95,7 +90,13 @@ DENG2_PIMPL(GLFramebuffer)
 
     void alloc()
     {
-        // Prepare the fallback blit method.
+        /// @todo Create a separate program for stereo swaps that don't require MS.
+
+        /// @todo Generate the shader on the fly with the correct number of samples
+        /// and a fixed size/UV coords. Needs to be generated whenever the configuration
+        /// changes.
+
+        // Prepare the multisample-resolving blit.
         VBuf *buf = new VBuf;
         bufSwap.addBuffer(buf);
         bufSwap.program().build(
@@ -109,23 +110,32 @@ DENG2_PIMPL(GLFramebuffer)
                   "  gl_Position = uMvpMatrix * aVertex; "
                   "  vUV = aUV; }"),
             // Fragment shader:
-            Block("#version 330\nuniform sampler2D uTex; "
+            Block("#version 330\n"
+                  "uniform sampler2DMS uTex; " // multisampled (assume 4)
                   "uniform highp vec4 uColor; "
                   "in highp vec2 vUV; "
                   "out highp vec4 FragColor; "
                   "void main(void) { "
-                  "  FragColor = uColor * texture(uTex, vUV); }"))
+                  "  ivec2 texSize = textureSize(uTex); "
+                  "  ivec2 texUv = ivec2(int(texSize.x * vUV.s), int(texSize.y * vUV.t)); "
+                  "  FragColor = uColor * 0.25 * "
+                  "  ( texelFetch(uTex, texUv, 0)"
+                  "  + texelFetch(uTex, texUv, 1)"
+                  "  + texelFetch(uTex, texUv, 2)"
+                  "  + texelFetch(uTex, texUv, 3) );"
+                  "}"))
                 << uMvpMatrix
                 << uBufTex
                 << uColor;
 
         buf->setVertices(gl::TriangleStrip,
-                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1)),
+                         VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1),
+                                                  Rectanglef(0, 1, 1, -1)),
                          gl::Static);
 
         uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
-        uBufTex = color;
-        uColor = Vector4f(1, 1, 1, 1);
+        uColor     = Vector4f(1, 1, 1, 1);
+        uBufTex    = color;
     }
 
     void release()
@@ -134,22 +144,25 @@ DENG2_PIMPL(GLFramebuffer)
         color.clear();
         depthStencil.clear();
         target.configure();
-        multisampleTarget.configure();
     }
 
     void reconfigure()
     {
         if(!self.isReady() || size == Size()) return;
 
+        int const glSamples = (isMultisampled()? sampleCount() : 0);
+
         LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
-                << size.asText() << sampleCount();
+                << size.asText() << glSamples;
 
         // Configure textures for the framebuffer.
-        color.setUndefinedImage(size, colorFormat);
+        GLPixelFormat fmt = Image::glFormat(colorFormat);
+        fmt.samples = glSamples;
+        color.setUndefinedContent(size, fmt);
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
-        depthStencil.setDepthStencilContent(size);
+        depthStencil.setDepthStencilContent(size, glSamples);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
 
@@ -170,31 +183,6 @@ DENG2_PIMPL(GLFramebuffer)
         }
 
         target.clear(GLTarget::ColorDepthStencil);
-
-        if(isMultisampled())
-        {
-            try
-            {
-                // Set up the multisampled target with suitable renderbuffers.
-                multisampleTarget.configure(size, GLTarget::ColorDepthStencil, sampleCount());
-                multisampleTarget.clear(GLTarget::ColorDepthStencil);
-
-                // Actual drawing occurs in the multisampled target that is then
-                // blitted to the main target.
-                target.setProxy(&multisampleTarget);
-            }
-            catch(GLTarget::ConfigError const &er)
-            {
-                LOG_GL_WARNING("Multisampling not supported: %s") << er.asText();
-                _samples = 1;
-                goto noMultisampling;
-            }
-        }
-        else
-        {
-noMultisampling:
-            multisampleTarget.configure();
-        }
     }
 
     void resize(Size const &newSize)
@@ -208,10 +196,6 @@ noMultisampling:
 
     void drawSwap()
     {
-        if(isMultisampled())
-        {
-            target.updateFromProxy();
-        }
         bufSwap.draw();
     }
 
@@ -227,22 +211,14 @@ noMultisampling:
         switch(swapMode)
         {
         case gl::SwapMonoBuffer:
-            //if(GLInfo::extensions().EXT_framebuffer_blit)
+            if(isMultisampled())
             {
-                if(isMultisampled())
-                {
-                    multisampleTarget.blit(defaultTarget); // resolve multisampling to system backbuffer
-                }
-                else
-                {
-                    target.blit(defaultTarget);  // copy to system backbuffer
-                }
-            }
-            /*else
-            {
-                // Fallback: draw the back buffer texture to the main framebuffer.
                 drawSwap();
-            }*/
+            }
+            else
+            {
+                target.blit(defaultTarget);  // copy to system backbuffer
+            }
             canvas.QGLWidget::swapBuffers();
             break;
 

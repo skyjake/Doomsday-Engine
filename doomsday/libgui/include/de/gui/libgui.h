@@ -49,10 +49,19 @@
 #  define LIBGUI_ASSERT_GL(cond) DENG2_ASSERT(cond)
 #endif
 
+#define LIBGUI_GL_ERROR_STR(code) \
+    ((code) == GL_NO_ERROR?          "GL_NO_ERROR" : \
+     (code) == GL_INVALID_ENUM?      "GL_INVALID_ENUM" : \
+     (code) == GL_INVALID_VALUE?     "GL_INVALID_VALUE" : \
+     (code) == GL_INVALID_OPERATION? "GL_INVALID_OPERATION" : \
+     (code) == GL_OUT_OF_MEMORY?     "GL_OUT_OF_MEMORY" : \
+     (code) == GL_INVALID_FRAMEBUFFER_OPERATION? "GL_INVALID_FRAMEBUFFER_OPERATION" : "")
+
 #ifndef NDEBUG
 #  define LIBGUI_ASSERT_GL_OK() {GLuint _er = GL_NO_ERROR; do { \
     _er = glGetError(); if(_er != GL_NO_ERROR) { \
-    LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x", __LINE__, _er); \
+    LogBuffer_Flush(); qWarning(__FILE__":%i: OpenGL error: 0x%x %s", __LINE__, _er, \
+                                LIBGUI_GL_ERROR_STR(_er)); \
     LIBGUI_ASSERT_GL(!"OpenGL operation failed"); }} while(_er != GL_NO_ERROR);}
 #else
 #  define LIBGUI_ASSERT_GL_OK()

@@ -30,11 +30,14 @@ struct LIBGUI_PUBLIC GLPixelFormat {
     duint format;
     duint type;
     duint rowAlignment;
+    int samples;
 
-    GLPixelFormat(duint glFormat, duint glDataType = 0, duint glRowAlignment = 0)
+    GLPixelFormat(duint glFormat, duint glDataType = 0, duint glRowAlignment = 0,
+                  int sampleCount = 0)
         : format(glFormat)
         , type(glDataType)
-        , rowAlignment(glRowAlignment) {}
+        , rowAlignment(glRowAlignment)
+        , samples(sampleCount) {}
 };
 
 } // namespace de
