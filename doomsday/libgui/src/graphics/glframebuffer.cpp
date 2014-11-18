@@ -85,11 +85,6 @@ DENG2_PIMPL(GLFramebuffer)
 
     bool isMultisampled() const
     {
-        if(!GLInfo::extensions().EXT_framebuffer_multisample)
-        {
-            // Not supported.
-            return false;
-        }
         return sampleCount() > 1;
     }
 
@@ -103,20 +98,23 @@ DENG2_PIMPL(GLFramebuffer)
         // Prepare the fallback blit method.
         VBuf *buf = new VBuf;
         bufSwap.addBuffer(buf);
-        bufSwap.program().build(// Vertex shader:
-                                Block("uniform highp mat4 uMvpMatrix; "
-                                      "attribute highp vec4 aVertex; "
-                                      "attribute highp vec2 aUV; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) {"
-                                          "gl_Position = uMvpMatrix * aVertex; "
-                                          "vUV = aUV; }"),
-                                // Fragment shader:
-                                Block("uniform sampler2D uTex; "
-                                      "uniform highp vec4 uColor; "
-                                      "varying highp vec2 vUV; "
-                                      "void main(void) { "
-                                          "gl_FragColor = uColor * texture2D(uTex, vUV); }"))
+        bufSwap.program().build(
+            // Vertex shader:
+            Block("#version 330\n"
+                  "uniform highp mat4 uMvpMatrix; "
+                  "in highp vec4 aVertex; "
+                  "in highp vec2 aUV; "
+                  "out highp vec2 vUV; "
+                  "void main(void) {"
+                  "  gl_Position = uMvpMatrix * aVertex; "
+                  "  vUV = aUV; }"),
+            // Fragment shader:
+            Block("#version 330\nuniform sampler2D uTex; "
+                  "uniform highp vec4 uColor; "
+                  "in highp vec2 vUV; "
+                  "out highp vec4 FragColor; "
+                  "void main(void) { "
+                  "  FragColor = uColor * texture(uTex, vUV); }"))
                 << uMvpMatrix
                 << uBufTex
                 << uColor;
@@ -229,7 +227,7 @@ noMultisampling:
         switch(swapMode)
         {
         case gl::SwapMonoBuffer:
-            if(GLInfo::extensions().EXT_framebuffer_blit)
+            //if(GLInfo::extensions().EXT_framebuffer_blit)
             {
                 if(isMultisampled())
                 {
@@ -240,11 +238,11 @@ noMultisampling:
                     target.blit(defaultTarget);  // copy to system backbuffer
                 }
             }
-            else
+            /*else
             {
                 // Fallback: draw the back buffer texture to the main framebuffer.
                 drawSwap();
-            }
+            }*/
             canvas.QGLWidget::swapBuffers();
             break;
 
@@ -288,19 +286,21 @@ void GLFramebuffer::glInit()
     LOG_AS("GLFramebuffer");
 
     // Check for some integral OpenGL functionality.
-    if(!GLInfo::extensions().ARB_framebuffer_object)
+    /*if(!GLInfo::extensions().ARB_framebuffer_object)
     {
         LOG_GL_WARNING("Required GL_ARB_framebuffer_object is missing!");
     }
     if(!GLInfo::extensions().EXT_packed_depth_stencil)
     {
         LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
-    }
+    }*/
 
     d->alloc();
     setState(Ready);
 
     d->reconfigure();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GLFramebuffer::glDeinit()

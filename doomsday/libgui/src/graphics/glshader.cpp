@@ -162,6 +162,8 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
         Block log(logSize);
         glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
+        qDebug() << "FAILED TO COMPILE:\n" << src.constData();
+
         throw CompilerError("GLShader::compile",
                             "Compilation of " + String(d->type == Fragment? "fragment" : "vertex") +
                             " shader failed:\n" + log);

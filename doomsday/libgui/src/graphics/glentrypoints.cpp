@@ -27,7 +27,6 @@
 
 #ifdef LIBGUI_FETCH_GL_1_3
 PFNGLACTIVETEXTUREPROC            glActiveTexture;
-PFNGLBLENDEQUATIONPROC            glBlendEquation;
 PFNGLCLIENTACTIVETEXTUREPROC      glClientActiveTexture;
 PFNGLMULTITEXCOORD2FPROC          glMultiTexCoord2f;
 PFNGLMULTITEXCOORD2FVPROC         glMultiTexCoord2fv;
@@ -43,7 +42,10 @@ PFNGLBINDATTRIBLOCATIONPROC       glBindAttribLocation;
 PFNGLBINDBUFFERPROC               glBindBuffer;
 PFNGLBINDFRAMEBUFFERPROC          glBindFramebuffer;
 PFNGLBINDRENDERBUFFERPROC         glBindRenderbuffer;
+PFNGLBINDVERTEXARRAYPROC          glBindVertexArray;
+PFNGLBLENDEQUATIONPROC            glBlendEquation;
 PFNGLBLENDFUNCSEPARATEPROC        glBlendFuncSeparate;
+PFNGLBLITFRAMEBUFFERPROC          glBlitFramebuffer;
 PFNGLBUFFERDATAPROC               glBufferData;
 
 PFNGLCHECKFRAMEBUFFERSTATUSPROC   glCheckFramebufferStatus;
@@ -56,6 +58,7 @@ PFNGLDELETEFRAMEBUFFERSPROC       glDeleteFramebuffers;
 PFNGLDELETEPROGRAMPROC            glDeleteProgram;
 PFNGLDELETERENDERBUFFERSPROC      glDeleteRenderbuffers;
 PFNGLDELETESHADERPROC             glDeleteShader;
+PFNGLDELETEVERTEXARRAYSPROC       glDeleteVertexArrays;
 PFNGLDETACHSHADERPROC             glDetachShader;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 
@@ -68,12 +71,14 @@ PFNGLGENBUFFERSPROC               glGenBuffers;
 PFNGLGENFRAMEBUFFERSPROC          glGenFramebuffers;
 PFNGLGENERATEMIPMAPPROC           glGenerateMipmap;
 PFNGLGENRENDERBUFFERSPROC         glGenRenderbuffers;
+PFNGLGENVERTEXARRAYSPROC          glGenVertexArrays;
 PFNGLGETATTRIBLOCATIONPROC        glGetAttribLocation;
 PFNGLGETPROGRAMINFOLOGPROC        glGetProgramInfoLog;
 PFNGLGETPROGRAMIVPROC             glGetProgramiv;
 PFNGLGETSHADERINFOLOGPROC         glGetShaderInfoLog;
 PFNGLGETSHADERIVPROC              glGetShaderiv;
 PFNGLGETSHADERSOURCEPROC          glGetShaderSource;
+PFNGLGETSTRINGIPROC               glGetStringi;
 PFNGLGETUNIFORMLOCATIONPROC       glGetUniformLocation;
 
 PFNGLISBUFFERPROC                 glIsBuffer;
@@ -83,6 +88,7 @@ PFNGLISPROGRAMPROC                glIsProgram;
 PFNGLLINKPROGRAMPROC              glLinkProgram;
 
 PFNGLRENDERBUFFERSTORAGEPROC      glRenderbufferStorage;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample;
 
 PFNGLSHADERSOURCEPROC             glShaderSource;
 
@@ -100,9 +106,6 @@ PFNGLUSEPROGRAMPROC               glUseProgram;
 PFNGLVERTEXATTRIBPOINTERPROC      glVertexAttribPointer;
 
 // Extensions:
-
-PFNGLBLITFRAMEBUFFEREXTPROC                         glBlitFramebufferEXT;
-PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC          glRenderbufferStorageMultisampleEXT;
 
 #ifdef GL_ARB_draw_instanced
 PFNGLDRAWARRAYSINSTANCEDARBPROC                     glDrawArraysInstancedARB;
@@ -136,7 +139,6 @@ void getAllOpenGLEntryPoints()
 
 #ifdef LIBGUI_FETCH_GL_1_3
     GET_PROC(glActiveTexture);
-    GET_PROC(glBlendEquation);
     GET_PROC(glClientActiveTexture);
     GET_PROC(glMultiTexCoord2f);
     GET_PROC(glMultiTexCoord2fv);
@@ -152,7 +154,10 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glBindBuffer);
     GET_PROC(glBindFramebuffer);
     GET_PROC(glBindRenderbuffer);
+    GET_PROC(glBindVertexArray);
+    GET_PROC(glBlendEquation);
     GET_PROC(glBlendFuncSeparate);
+    GET_PROC(glBlitFramebuffer);
     GET_PROC(glBufferData);
 
     GET_PROC(glCheckFramebufferStatus);
@@ -165,6 +170,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glDeleteProgram);
     GET_PROC(glDeleteRenderbuffers);
     GET_PROC(glDeleteShader);
+    GET_PROC(glDeleteVertexArrays);
     GET_PROC(glDetachShader);
     GET_PROC(glDisableVertexAttribArray);
 
@@ -177,12 +183,14 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glGenFramebuffers);
     GET_PROC(glGenerateMipmap);
     GET_PROC(glGenRenderbuffers);
+    GET_PROC(glGenVertexArrays);
     GET_PROC(glGetAttribLocation);
     GET_PROC(glGetProgramInfoLog);
     GET_PROC(glGetProgramiv);
     GET_PROC(glGetShaderInfoLog);
     GET_PROC(glGetShaderiv);
     GET_PROC(glGetShaderSource);
+    GET_PROC(glGetStringi);
     GET_PROC(glGetUniformLocation);
 
     GET_PROC(glIsBuffer);
@@ -192,6 +200,7 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glLinkProgram);
 
     GET_PROC(glRenderbufferStorage);
+    GET_PROC(glRenderbufferStorageMultisample);
 
     GET_PROC(glShaderSource);
 
@@ -209,9 +218,6 @@ void getAllOpenGLEntryPoints()
     GET_PROC(glVertexAttribPointer);
 
     // Extensions:
-
-    GET_PROC_EXT(glBlitFramebufferEXT);
-    GET_PROC_EXT(glRenderbufferStorageMultisampleEXT);
 
 #ifdef GL_ARB_draw_instanced
     GET_PROC_EXT(glDrawArraysInstancedARB);

@@ -876,7 +876,7 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 	d->updateFSAAMode();
 
     // Update the capability flags.
-	GL_state.features.multisample = GLFramebuffer::defaultMultisampling();// canvas.format().sampleBuffers();
+	GL_state.features.multisample = GLFramebuffer::defaultMultisampling() > 1;// canvas.format().sampleBuffers();
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
@@ -904,8 +904,15 @@ void ClientWindow::canvasGLReady(Canvas &canvas)
 
 void ClientWindow::canvasGLInit(Canvas &)
 {
+    LIBGUI_ASSERT_GL_OK();
+
     Sys_GLConfigureDefaultState();
+
+    LIBGUI_ASSERT_GL_OK();
+
     GL_Init2DState();
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void ClientWindow::preDraw()
@@ -971,8 +978,8 @@ bool ClientWindow::setDefaultGLFormat() // static
 
     // Configure the GL settings for all subsequently created canvases.
     QGLFormat fmt;
-    fmt.setProfile(QGLFormat::CompatibilityProfile);
-    fmt.setVersion(2, 1);
+    fmt.setProfile(QGLFormat::CoreProfile);
+    fmt.setVersion(3, 3);
     fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
     fmt.setStencil(false);
     //fmt.setDepthBufferSize(16);

@@ -20,6 +20,7 @@
 #include <de/GuiApp>
 #include <de/LogBuffer>
 #include <QDebug>
+#include <QGLFormat>
 
 #include "testwindow.h"
 
@@ -32,6 +33,12 @@ int main(int argc, char **argv)
         GuiApp app(argc, argv);
         app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems(App::DisablePlugins);
+
+        QGLFormat fmt;
+        fmt.setProfile(QGLFormat::CoreProfile);
+        fmt.setVersion(3, 3);
+        QGLFormat::setDefaultFormat(fmt);
+        GLFramebuffer::setDefaultMultisampling(4);
 
         TestWindow win;
         win.show();

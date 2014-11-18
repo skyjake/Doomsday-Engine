@@ -184,16 +184,17 @@ DENG2_OBSERVES(Bank, Load)
 
         ob.program().build(
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform highp mat4 uMvpMatrix;\n"
                         "uniform highp vec4 uColor;\n"
                         "uniform highp float uTime;\n"
 
-                        "attribute highp vec4 aVertex;\n"
-                        "attribute highp vec2 aUV;\n"
-                        "attribute highp vec4 aColor;\n"
+                        "in highp vec4 aVertex;\n"
+                        "in highp vec2 aUV;\n"
+                        "in highp vec4 aColor;\n"
 
-                        "varying highp vec2 vUV;\n"
-                        "varying highp vec4 vColor;\n"
+                        "out highp vec2 vUV;\n"
+                        "out highp vec4 vColor;\n"
 
                         "void main(void) {\n"
                         "  gl_Position = uMvpMatrix * aVertex;\n"
@@ -202,15 +203,18 @@ DENG2_OBSERVES(Bank, Load)
                             "sin(uTime), cos(uTime)*0.5) * uColor;\n"
                         "}\n"),
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform sampler2D uTex;\n"
 
-                        "varying highp vec2 vUV;\n"
-                        "varying highp vec4 vColor;\n"
+                        "in highp vec2 vUV;\n"
+                        "in highp vec4 vColor;\n"
+
+                        "out highp vec4 FragColor;\n"
 
                         "void main(void) {\n"
-                        "  highp vec4 color = texture2D(uTex, vUV);\n"
+                        "  highp vec4 color = texture(uTex, vUV);\n"
                         "  if(color.a < 0.05) discard;\n"
-                        "  gl_FragColor = color * vColor;\n"
+                        "  FragColor = color * vColor;\n"
                         "}"))
                 << uMvpMatrix
                 << uColor << uTime
@@ -232,19 +236,22 @@ DENG2_OBSERVES(Bank, Load)
 
         atlasOb.program().build(
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform highp mat4 uMvpMatrix;\n"
-                        "attribute highp vec4 aVertex;\n"
-                        "attribute highp vec2 aUV;\n"
-                        "varying highp vec2 vUV;\n"
+                        "in highp vec4 aVertex;\n"
+                        "in highp vec2 aUV;\n"
+                        "out highp vec2 vUV;\n"
                         "void main(void) {\n"
                         "  gl_Position = uMvpMatrix * aVertex;\n"
                         "  vUV = aUV;\n"
                         "}\n"),
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform sampler2D uTex;\n"
-                        "varying highp vec2 vUV;\n"
+                        "in highp vec2 vUV;\n"
+                        "out highp vec4 FragColor;\n"
                         "void main(void) {\n"
-                        "  gl_FragColor = texture2D(uTex, vUV);\n"
+                        "  FragColor = texture(uTex, vUV);\n"
                         "}\n"))
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
@@ -253,21 +260,22 @@ DENG2_OBSERVES(Bank, Load)
 
         modelProgram.build(
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform highp mat4 uMvpMatrix;\n"
                         "uniform highp vec4 uColor;\n"
                         "uniform highp mat4 uBoneMatrices[64];\n"
 
-                        "attribute highp vec4 aVertex;\n"
-                        "attribute highp vec3 aNormal;\n"
-                        "attribute highp vec2 aUV;\n"
-                        "attribute highp vec4 aBounds;\n"
-                        "attribute highp vec4 aColor;\n"
-                        "attribute highp vec4 aBoneIDs;\n"
-                        "attribute highp vec4 aBoneWeights;\n"
+                        "in highp vec4 aVertex;\n"
+                        "in highp vec3 aNormal;\n"
+                        "in highp vec2 aUV;\n"
+                        "in highp vec4 aBounds;\n"
+                        "in highp vec4 aColor;\n"
+                        "in highp vec4 aBoneIDs;\n"
+                        "in highp vec4 aBoneWeights;\n"
 
-                        "varying highp vec2 vUV;\n"
-                        "varying highp vec4 vColor;\n"
-                        "varying highp vec3 vNormal;\n"
+                        "out highp vec2 vUV;\n"
+                        "out highp vec4 vColor;\n"
+                        "out highp vec3 vNormal;\n"
 
                         "void main(void) {\n"
                         "  highp mat4 bone =\n"
@@ -282,11 +290,13 @@ DENG2_OBSERVES(Bank, Load)
                         "  vNormal = (bone * vec4(aNormal, 0.0)).xyz;\n"
                         "}\n"),
                     ByteRefArray::fromCStr(
+                        "#version 330\n"
                         "uniform sampler2D uTex;\n"
-                        "varying highp vec2 vUV;\n"
-                        "varying highp vec3 vNormal;\n"
+                        "in highp vec2 vUV;\n"
+                        "in highp vec3 vNormal;\n"
+                        "out highp vec4 FragColor;\n"
                         "void main(void) {\n"
-                        "  gl_FragColor = texture2D(uTex, vUV) * "
+                        "  FragColor = texture(uTex, vUV) * "
                             "vec4(vec3((vNormal.x + 1.0) / 2.0), 1.0);"
                         "}\n"))
                 << uMvpMatrix

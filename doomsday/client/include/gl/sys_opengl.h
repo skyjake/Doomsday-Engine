@@ -128,7 +128,6 @@ extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 #endif
 
 #if defined(LIBGUI_USE_GLENTRYPOINTS)
-extern PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT;
 extern PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT;
 extern PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT;
 #endif

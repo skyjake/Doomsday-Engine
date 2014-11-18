@@ -104,6 +104,10 @@ defineTest(deployLibrary) {
         export(target.path)
     }
     deng_sdk {
+        win32 {
+            DESTDIR = $$DENG_SDK_LIB_DIR
+            export(DESTDIR)
+        }
         INSTALLS *= target
         target.path = $$DENG_SDK_LIB_DIR
         export(target.path)

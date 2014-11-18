@@ -121,14 +121,15 @@ LIBGUI_VERTEX_FORMAT_SPEC(Vertex3NormalTangentTex, 14 * sizeof(float))
 
 DENG2_PIMPL(GLBuffer)
 {
-    GLuint name;
-    GLuint idxName;
-    dsize count;
-    dsize idxCount;
-    Primitive prim;
+    GLuint name = 0;
+    GLuint idxName = 0;
+    GLuint vaoName = 0;
+    dsize count = 0;
+    dsize idxCount = 0;
+    Primitive prim = Points;
     AttribSpecs specs;
 
-    Instance(Public *i) : Base(i), name(0), idxName(0), count(0), idxCount(0), prim(Points)
+    Instance(Public *i) : Base(i)
     {
         specs.first = 0;
         specs.second = 0;
@@ -145,6 +146,10 @@ DENG2_PIMPL(GLBuffer)
         if(!name)
         {
             glGenBuffers(1, &name);
+        }
+        if(!vaoName)
+        {
+            glGenVertexArrays(1, &vaoName);
         }
     }
 
@@ -163,6 +168,11 @@ DENG2_PIMPL(GLBuffer)
             glDeleteBuffers(1, &name);
             name = 0;
             count = 0;
+        }
+        if(vaoName)
+        {
+            glDeleteVertexArrays(1, &vaoName);
+            vaoName = 0;
         }
     }
 
@@ -340,6 +350,8 @@ void GLBuffer::draw(duint first, dint count) const
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
 
+    glBindVertexArray(d->vaoName);
+
     glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -369,6 +381,8 @@ void GLBuffer::draw(duint first, dint count) const
     }
 
     d->enableArrays(false);
+
+    glBindVertexArray(0);
 }
 
 void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint count) const
@@ -382,6 +396,8 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
 
     // Mark the current target changed.
     GLState::current().target().markAsChanged();
+
+    glBindVertexArray(d->vaoName);
 
     glBindBuffer(GL_ARRAY_BUFFER, d->name);
     d->enableArrays(true);
@@ -421,6 +437,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
     d->enableArrays(false);
     instanceAttribs.d->enableArrays(false);
 
+    glBindVertexArray(0);
 #endif
 }
 

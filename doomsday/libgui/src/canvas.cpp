@@ -191,6 +191,7 @@ DENG2_PIMPL(Canvas)
     {
         framebuf.setColorFormat(Image::RGB_888);
         framebuf.resize(currentSize);
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void glInit()
@@ -243,8 +244,6 @@ Canvas::Canvas(CanvasWindow* parent, QGLWidget* shared)
     : QGLWidget(parent, shared), d(new Instance(this, parent))
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
-    LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLFramebuffer::defaultMultisampling() > 1);
 
     // We will be doing buffer swaps manually (for timing purposes).
     setAutoBufferSwap(false);
@@ -353,8 +352,11 @@ void Canvas::initializeGL()
     LOG_AS("Canvas");
     LOGDEV_GL_NOTE("Notifying GL init (during paint)");
 
+    LIBGUI_ASSERT_GL_OK();
+
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();
+    LIBGUI_ASSERT_GL_OK();
 #endif
     GLInfo::glInit();
 
@@ -416,6 +418,8 @@ void Canvas::showEvent(QShowEvent* ev)
 void Canvas::notifyReady()
 {
     if(d->readyNotified) return;
+
+    LIBGUI_ASSERT_GL_OK();
 
     d->readyNotified = true;
 

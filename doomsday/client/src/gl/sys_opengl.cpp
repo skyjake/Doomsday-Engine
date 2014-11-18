@@ -49,7 +49,6 @@ PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
 #endif
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
-PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT = NULL;
 PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
 PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
 #endif
@@ -67,25 +66,14 @@ static void initialize(void)
         GL_state.features.texFilterAniso = false;
     }
 
-    if(!ext.ARB_texture_non_power_of_two ||
+    if(//!ext.ARB_texture_non_power_of_two ||
        CommandLine_Exists("-notexnonpow2") ||
        CommandLine_Exists("-notexnonpowtwo"))
     {
         GL_state.features.texNonPowTwo = false;
     }
 
-    if(ext.EXT_blend_subtract)
-    {
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
-        if(!glBlendEquationEXT)
-            GL_state.features.blendSubtract = false;
-#endif
-    }
-    else
-    {
-        GL_state.features.blendSubtract = false;
-    }
+    GL_state.features.blendSubtract = true;
 
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
@@ -158,13 +146,21 @@ de::String Sys_GLDescription()
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
         os << TABBED("Maximum texture anisotropy:", iVal);
     }
-    else
+    /*else
     {
         os << _E(Ta) "  Variable texture anisotropy unavailable.";
-    }
+    }*/
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
     os << TABBED("Maximum texture size:", iVal);
+
+//#ifdef GL_EXT_framebuffer_multisample
+	//if(de::GLInfo::extensions().EXT_framebuffer_multisample)
+	{
+		glGetIntegerv(GL_MAX_SAMPLES_EXT, &iVal);
+		os << TABBED("Maximum samples:", iVal);
+	}
+//#endif
 
     GLfloat fVals[2];
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);

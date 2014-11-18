@@ -4,41 +4,47 @@ group generic {
     # matrix.
     shader color_ucolor {
         vertex = "
+            #version 330
             uniform highp mat4 uMvpMatrix;
             uniform highp vec4 uColor;
-            attribute highp vec4 aVertex;
-            attribute highp vec4 aColor;
-            varying highp vec4 vColor;
+            in highp vec4 aVertex;
+            in highp vec4 aColor;
+            out highp vec4 vColor;
             
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
                 vColor = uColor * aColor;
             }"
         fragment = "
-            varying highp vec4 vColor;
+            #version 330
+            in highp vec4 vColor;
+            out highp vec4 FragColor;
             
             void main(void) {
-                gl_FragColor = vColor;
+                FragColor = vColor;
             }"
     }
     
     shader texture {
         vertex = "
+            #version 330
             uniform highp mat4 uMvpMatrix;
-            attribute highp vec4 aVertex;
-            attribute highp vec2 aUV;
-            varying highp vec2 vUV;
+            in highp vec4 aVertex;
+            in highp vec2 aUV;
+            out highp vec2 vUV;
         
             void main(void) {
                 gl_Position = uMvpMatrix * aVertex;
                 vUV = aUV;
             }"
         fragment = "
+            #version 330
             uniform sampler2D uTex;
-            varying highp vec2 vUV;
+            in highp vec2 vUV;
+            out highp vec4 FragColor;
 
             void main(void) {
-                gl_FragColor = texture2D(uTex, vUV);
+                FragColor = texture(uTex, vUV);
             }"        
     }
     
@@ -47,12 +53,13 @@ group generic {
         # combined model-view-projection matrix.
         shader color {
             vertex = "
+                #version 330
                 uniform highp mat4 uMvpMatrix;
-                attribute highp vec4 aVertex;
-                attribute highp vec2 aUV;
-                attribute highp vec4 aColor;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in highp vec4 aVertex;
+                in highp vec2 aUV;
+                in highp vec4 aColor;
+                out highp vec2 vUV;
+                out highp vec4 vColor;
             
                 void main(void) {
                     gl_Position = uMvpMatrix * aVertex;
@@ -60,12 +67,14 @@ group generic {
                     vColor = aColor;
                 }"
             fragment = "
+                #version 330
                 uniform sampler2D uTex;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in highp vec2 vUV;
+                in highp vec4 vColor;
+                out highp vec4 FragColor;
 
                 void main(void) {
-                    gl_FragColor = vColor * texture2D(uTex, vUV);
+                    FragColor = vColor * texture(uTex, vUV);
                 }"
         }
     
@@ -74,13 +83,14 @@ group generic {
         # combined model-view-projection matrix.
         shader color_ucolor {
             vertex = "
+                #version 330
                 uniform highp mat4 uMvpMatrix;
                 uniform highp vec4 uColor;
-                attribute highp vec4 aVertex;
-                attribute highp vec2 aUV;
-                attribute highp vec4 aColor;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in highp vec4 aVertex;
+                in highp vec2 aUV;
+                in highp vec4 aColor;
+                out highp vec2 vUV;
+                out highp vec4 vColor;
             
                 void main(void) {
                     gl_Position = uMvpMatrix * aVertex;
@@ -88,12 +98,14 @@ group generic {
                     vColor = aColor * uColor;
                 }"
             fragment = "
+                #version 330
                 uniform sampler2D uTex;
-                varying highp vec2 vUV;
-                varying highp vec4 vColor;
+                in highp vec2 vUV;
+                in highp vec4 vColor;
+                out highp vec4 FragColor;
 
                 void main(void) {
-                    gl_FragColor = vColor * texture2D(uTex, vUV);
+                    FragColor = vColor * texture(uTex, vUV);
                 }"
         }
     }

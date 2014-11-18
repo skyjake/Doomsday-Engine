@@ -198,12 +198,14 @@ DENG2_OBSERVES(Asset, Deletion)
             else
 #endif
             {
-                LOG_GL_VERBOSE("FBO %i: renderbuffer %ix%i is multisampled with %i samples => attachment %i")
-                        << fbo << size.x << size.y << sampleCount
-                        << attachmentToId(attachment);
+                LOG_GL_VERBOSE("FBO %i: renderbuffer %i (%ix%i) is multisampled with %i samples => attachment %i (type %x)")
+                        << fbo << renderBufs[id] << size.x << size.y << sampleCount
+                        << attachmentToId(attachment) << type;
 
-                DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
-                glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+                //DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_multisample);
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, sampleCount, type, size.x, size.y);
+
+				LIBGUI_ASSERT_GL_OK();
             }
         }
         else
@@ -523,8 +525,7 @@ void GLTarget::glBind() const
 		}
 
         //qDebug() << "GLTarget: binding FBO" << d->fbo;
-        glBindFramebuffer(GLInfo::extensions().EXT_framebuffer_blit?
-                              GL_DRAW_FRAMEBUFFER_EXT : GL_FRAMEBUFFER, d->fbo);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, d->fbo);
         LIBGUI_ASSERT_GL_OK();
     }
 }
@@ -623,29 +624,29 @@ void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filteri
 {
     //qDebug() << "GLTarget: blit from" << d->fbo << "to" << dest.glName();
 
-    DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
-    if(!GLInfo::extensions().EXT_framebuffer_blit) return;
+    /*DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
+    if(!GLInfo::extensions().EXT_framebuffer_blit) return;*/
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, d->fbo);
     LIBGUI_ASSERT_GL_OK();
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
     Flags common = d->flags & dest.flags() & attachments;
 
-    glBlitFramebufferEXT(0, 0, size().x, size().y,
-                         0, 0, dest.size().x, dest.size().y,
-                         (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
-                         (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
-                         (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0),
-                         filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
+    glBlitFramebuffer(0, 0, size().x, size().y,
+                      0, 0, dest.size().x, dest.size().y,
+                      (common.testFlag(Color)?   GL_COLOR_BUFFER_BIT   : 0) |
+                      (common.testFlag(Depth)?   GL_DEPTH_BUFFER_BIT   : 0) |
+                      (common.testFlag(Stencil)? GL_STENCIL_BUFFER_BIT : 0),
+                      filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, 0);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
     dest.markAsChanged();
 

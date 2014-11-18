@@ -86,6 +86,14 @@ DENG2_PIMPL_NOREF(GLInfo)
 
     bool query(char const *ext)
     {
+        bool gotIt = extQuery(ext);
+        LIBGUI_ASSERT_GL_OK();
+        qDebug() << ext << gotIt;
+        return gotIt;
+    }
+
+    bool extQuery(char const *ext)
+    {
         DENG2_ASSERT(ext);
 
 #ifdef WIN32
@@ -100,7 +108,13 @@ DENG2_PIMPL_NOREF(GLInfo)
             return true;
 #endif
 
-        return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
+        for(int i = 0; ; ++i)
+        {
+            GLubyte const *supported = glGetStringi(GL_EXTENSIONS, i);
+            if(glGetError() == GL_INVALID_VALUE) break;
+            if(!strcmp(ext, (char const *) supported)) return true;
+        }
+        return false; // return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
     }
 
     void init()
@@ -109,17 +123,17 @@ DENG2_PIMPL_NOREF(GLInfo)
 
         // Extensions.
         ext.ARB_draw_instanced             = query("GL_ARB_draw_instanced");
-        ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
+        //ext.ARB_framebuffer_object         = query("GL_ARB_framebuffer_object");
         ext.ARB_instanced_arrays           = query("GL_ARB_instanced_arrays");
-        ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
-        ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
+        //ext.ARB_texture_env_combine        = query("GL_ARB_texture_env_combine") || query("GL_EXT_texture_env_combine");
+        //ext.ARB_texture_non_power_of_two   = query("GL_ARB_texture_non_power_of_two");
 
-        ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
-        ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
-        ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
-        ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
+        //ext.EXT_blend_subtract             = query("GL_EXT_blend_subtract");
+        //ext.EXT_framebuffer_blit           = query("GL_EXT_framebuffer_blit");
+        //ext.EXT_framebuffer_multisample    = query("GL_EXT_framebuffer_multisample");
+        //ext.EXT_packed_depth_stencil       = query("GL_EXT_packed_depth_stencil");
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
-        ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
+        //ext.EXT_texture_filter_anisotropic = query("GL_EXT_texture_filter_anisotropic");
 
         ext.ATI_texture_env_combine3       = query("GL_ATI_texture_env_combine3");
         ext.NV_framebuffer_multisample_coverage
@@ -155,6 +169,8 @@ DENG2_PIMPL_NOREF(GLInfo)
         }
 
         inited = true;
+
+        LIBGUI_ASSERT_GL_OK();
     }
 };
 
@@ -180,8 +196,9 @@ GLInfo::Limits const &GLInfo::limits()
 
 bool GLInfo::isFramebufferMultisamplingSupported()
 {
+    return true;/*
     return extensions().EXT_framebuffer_multisample &&
-           extensions().EXT_framebuffer_blit;
+           extensions().EXT_framebuffer_blit;*/
 }
 
 } // namespace de
