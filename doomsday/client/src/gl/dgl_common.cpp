@@ -323,6 +323,8 @@ void GL_ModulateTexture(int mode)
 
 void GL_SetVSync(dd_bool on)
 {
+	if(CommandLine_Exists("-novsync")) on = false;
+
     // Outside the main thread we'll need to defer the call.
     if(!Sys_InMainThread())
     {

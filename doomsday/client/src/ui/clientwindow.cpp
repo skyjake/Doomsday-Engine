@@ -522,18 +522,31 @@ DENG2_PIMPL(ClientWindow)
     {
         if(variable.name() == "fsaa")
         {
-            self.updateCanvasFormat();
+			updateFSAAMode();
         }
         else if(variable.name() == "vsync")
         {
-#ifdef WIN32
-            self.updateCanvasFormat();
-            DENG2_UNUSED(newValue);
-#else
             GL_SetVSync(newValue.isTrue());
-#endif
         }
     }
+
+	void updateFSAAMode()
+	{
+		int sampleCount = 1;
+		bool configured = App::config().getb(self.configName("fsaa"));
+		if(CommandLine_Exists("-nofsaa") || !configured)
+		{
+			LOG_GL_VERBOSE("Multisampling off");
+		}
+		else
+		{
+			sampleCount = 4; // four samples is fine?
+			LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
+		}
+		// All GLFramebuffer instances using default multisampling will automatically
+		// switch to the new setting.
+		GLFramebuffer::setDefaultMultisampling(sampleCount);
+	}
 
     void installSidebar(SidebarLocation location, GuiWidget *widget)
     {
@@ -860,8 +873,10 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
+	d->updateFSAAMode();
+
     // Update the capability flags.
-    GL_state.features.multisample = canvas.format().sampleBuffers();
+	GL_state.features.multisample = GLFramebuffer::defaultMultisampling();// canvas.format().sampleBuffers();
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
@@ -971,6 +986,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
+	/*
 #ifdef WIN32
     if(CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
@@ -994,6 +1010,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
+	*/
 
     if(fmt != QGLFormat::defaultFormat())
     {
