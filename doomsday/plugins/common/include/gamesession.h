@@ -36,8 +36,8 @@ namespace common {
  * preferences. Additionally, the user may configure the game so that the internal backing store
  * is periodically (e.g., when the map changes) copied to a new "autosave" automatically.
  *
- * The "scope" of a continous game session progression depends on the configuration of the World
- * and the Maps within it. Upon leaving one map and entering another, if both are attributed to
+ * The "scope" of a continous game session progression depends on the configuration of the Episode
+ * and the maps within it. Upon leaving one map and entering another, if both are attributed to
  * the same logical "hub" then the current state of the map is written to the backing store so
  * that it may be reloaded later if the player(s) decide to revisit. However, if the new map is
  * in another hub, or no hub is defined, then all saved map progress for current hub is discarded.
@@ -49,18 +49,63 @@ namespace common {
 class GameSession : public de::game::Session
 {
 public:
+    typedef QList<de::Uri> VisitedMaps;
+
+public:
     GameSession();
     virtual ~GameSession();
-
-    /// Returns the singleton instance.
-    static GameSession &gameSession();
-
-    /// Register the commands and variables of this module.
-    static void consoleRegister();
 
     bool hasBegun();
     bool savingPossible();
     bool loadingPossible();
+
+    /**
+     * Returns the current Episode definition for the game session in progress. If the session
+     * has not yet begun then @c nullptr is returned.
+     */
+    de::Record *episodeDef();
+
+    /**
+     * Returns the current episode id for the game session in progress. If the session has not
+     * yet begun then a zero-length string is returned.
+     */
+    de::String episodeId();
+
+    /**
+     * Returns the current MapGraphNode definition for the game session in progress. If the
+     * session has not yet begun then @c nullptr is returned.
+     */
+    de::Record *mapGraphNodeDef();
+
+    /**
+     * Returns the current MapInfo definition for the game session in progress. If the session
+     * has not yet begun, or no definition exists for the current map then @c nullptr is returned.
+     */
+    de::Record *mapInfo();
+
+    /**
+     * Returns the current map URI for the game session in progress. If the session has not
+     * yet begun then an empty URI is returned.
+     */
+    de::Uri mapUri();
+
+    /**
+     * Returns the player entry point for the current map, for the game session in progress.
+     * The entry point determines where players will be reborn.
+     */
+    uint mapEntryPoint();
+
+    /**
+     * Returns a list of all the maps that have been visited, for the game session in progress.
+     * @note Older versions of the saved session format did not record this information (it may
+     * be empty).
+     */
+    VisitedMaps allVisitedMaps();
+
+    /**
+     * Resolves a named exit according to the map progression.
+     */
+    de::Uri mapUriForNamedExit(de::String name);
 
     /**
      * Returns the current ruleset for the game session.
@@ -68,8 +113,8 @@ public:
     GameRuleset const &rules() const;
 
     /**
-     * To be called when a new game begins to effect the game rules. Note that some
-     * of the rules may be overridden here (e.g., in a networked game).
+     * To be called when a new game begins to effect the game rules. Note that some of the rules
+     * may be overridden here (e.g., in a networked game).
      *
      * @todo Prevent this outright if the game session is already in progress!
      */
@@ -97,13 +142,15 @@ public:
      * Configure and begin a new game session. Note that a @em new session cannot @em begin if
      * one already @ref hasBegun() (if so, the session must be ended first).
      *
-     * @param mapUri       Map identifier.
-     * @param mapEntrance  Logical map entry point number.
-     * @param rules        Game rules to apply.
+     * @param rules          Game rules to apply.
+     * @param episodeId      Episode identifier.
+     * @param mapUri         Map identifier.
+     * @param mapEntryPoint  Map entry point number, for player reborn.
      *
      * @throws InProgressError if the session has already begun.
      */
-    void begin(de::Uri const &mapUri, uint mapEntrance, GameRuleset const &rules);
+    void begin(GameRuleset const &rules, de::String const &episodeId, de::Uri const &mapUri,
+               uint mapEntryPoint = 0);
 
     /**
      * Reload the @em current map, automatically loading any saved progress from the backing
@@ -114,9 +161,12 @@ public:
 
     /**
      * Leave the @em current map (automatically saving progress to the backing store) and then
-     * load up the next map according to the defined game progression.
+     * load up the next map specified.
+     *
+     * @param nextMapUri         Map identifier.
+     * @param nextMapEntryPoint  Map entry point number, for player reborn.
      */
-    void leaveMap();
+    void leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0);
 
     /**
      * Convenient method of looking up the user description of the game session in progress.
@@ -164,6 +214,13 @@ public: // Saved session management --------------------------------------------
      * @return  User description of the named session or a zero-length string if not found.
      */
     de::String savedUserDescription(de::String const &saveName);
+
+public:
+    /// Returns the singleton instance.
+    static GameSession &gameSession();
+
+    /// Register the commands and variables of this module.
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

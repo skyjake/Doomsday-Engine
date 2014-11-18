@@ -1,7 +1,7 @@
 /** @file def_main.cpp  Definitions Subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -44,6 +44,7 @@
 
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
+#include <doomsday/defs/sky.h>
 #include <de/App>
 #include <de/NativePath>
 #include <QTextStream>
@@ -217,11 +218,6 @@ int Def_GetSoundNum(const char* id)
     return defs.getSoundNum(id);
 }
 
-ded_music_t* Def_GetMusic(char const *id)
-{
-    return defs.getMusic(id);
-}
-
 int Def_GetMusicNum(const char* id)
 {
     return defs.getMusicNum(id);
@@ -273,15 +269,17 @@ ded_value_t* Def_GetValueByUri(struct uri_s const *_uri)
     return defs.getValueByUri(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
+#if 0
 ded_mapinfo_t* Def_GetMapInfo(struct uri_s const *_uri)
 {
-    return defs.getMapInfo(reinterpret_cast<de::Uri const *>(_uri));
+    return defs.getMapInfoNum(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
 ded_sky_t* Def_GetSky(char const* id)
 {
     return defs.getSky(id);
 }
+#endif
 
 ded_compositefont_t* Def_GetCompositeFont(const char* uri)
 {
@@ -578,6 +576,84 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
     }
 }
 
+/**
+ * Returns a URN list (in load order) for all lumps whose name matches the pattern "MAPINFO.lmp".
+ */
+static QStringList allMapInfoUrns()
+{
+    QStringList foundPaths;
+
+    // The game's main MAPINFO definitions should be processed first.
+    bool ignoreNonCustom = false;
+    try
+    {
+        String mainMapInfo = App_FileSystem().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        if(!mainMapInfo.isEmpty())
+        {
+            foundPaths << mainMapInfo;
+            ignoreNonCustom = true;
+        }
+    }
+    catch(FS1::NotFoundError &)
+    {} // Ignore this error.
+
+    // Process all other lumps named MAPINFO.lmp
+    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex::FoundIndices foundLumps;
+    lumpIndex.findAll("MAPINFO.lmp", foundLumps);
+    for(auto const &lumpNumber : foundLumps)
+    {
+        // Ignore MAPINFO definition data in IWADs?
+        if(ignoreNonCustom)
+        {
+            File1 const &file = lumpIndex[lumpNumber];
+            /// @todo Custom status for contained files is not inherited from the container?
+            if(file.isContained())
+            {
+                if(!file.container().hasCustom())
+                    continue;
+            }
+            else if(!file.hasCustom())
+                continue;
+        }
+
+        foundPaths << String("LumpIndex:%1").arg(lumpNumber);
+    }
+
+    return foundPaths;
+}
+
+/**
+ * @param mapInfoUrns  MAPINFO definitions to translate, in load order.
+ */
+static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, String &xlatCustom)
+{
+    xlat.clear();
+    xlatCustom.clear();
+
+    String delimitedPaths = mapInfoUrns.join(";");
+    if(delimitedPaths.isEmpty()) return;
+
+    ddhook_mapinfo_convert_t parm;
+    Str_InitStd(&parm.paths);
+    Str_InitStd(&parm.translated);
+    Str_InitStd(&parm.translatedCustom);
+    try
+    {
+        Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
+        if(DD_CallHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
+        {
+            xlat       = Str_Text(&parm.translated);
+            xlatCustom = Str_Text(&parm.translatedCustom);
+        }
+    }
+    catch(...)
+    {}
+    Str_Free(&parm.translatedCustom);
+    Str_Free(&parm.translated);
+    Str_Free(&parm.paths);
+}
+
 static void readAllDefinitions()
 {
     de::Time begunAt;
@@ -597,12 +673,40 @@ static void readAllDefinitions()
     readDefinitionFile(App::packageLoader().package("net.dengine.base").root()
                        .locate<File const>("defs/doomsday.ded").path());
 
-    /*
-     * Now any definition files required by the game on load.
-     */
     if(App_GameLoaded())
     {
-        Game::Manifests const& gameResources = App_CurrentGame().manifests();
+        de::Game &game = App_CurrentGame();
+
+        // Some games use definitions that are translated to DED.
+        QStringList mapInfoUrns = allMapInfoUrns();
+        if(!mapInfoUrns.isEmpty())
+        {
+            String xlat, xlatCustom;
+            translateMapInfos(mapInfoUrns, xlat, xlatCustom);
+
+            if(!xlat.isEmpty())
+            {
+                qDebug() << "[TranslatedMapInfos] custom:false\n" << xlat;
+                if(!DED_ReadData(&defs, xlat.toUtf8().constData(),
+                                 "[TranslatedMapInfos]", false /*not custom*/))
+                {
+                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                }
+            }
+
+            if(!xlatCustom.isEmpty())
+            {
+                qDebug() << "[TranslatedMapInfos] custom:true\n" << xlatCustom;
+                if(!DED_ReadData(&defs, xlatCustom.toUtf8().constData(),
+                                 "[TranslatedMapInfos]", true /*custom*/))
+                {
+                    App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
+                }
+            }
+        }
+
+        // Now any startup definition files required by the game.
+        Game::Manifests const &gameResources = game.manifests();
         int packageIdx = 0;
         for(Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
             i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
@@ -618,29 +722,25 @@ static void readAllDefinitions()
 
             readDefinitionFile(path);
         }
-    }
 
-    /*
-     * Next up are definition files in the games' /auto directory.
-     */
-    if(!CommandLine_Exists("-noauto") && App_GameLoaded())
-    {
-        FS1::PathList foundPaths;
-        if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
+        // Next are definition files in the games' /auto directory.
+        if(!CommandLine_Exists("-noauto"))
         {
-            foreach(FS1::PathListItem const &found, foundPaths)
+            FS1::PathList foundPaths;
+            if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
             {
-                // Ignore directories.
-                if(found.attrib & A_SUBDIR) continue;
+                foreach(FS1::PathListItem const &found, foundPaths)
+                {
+                    // Ignore directories.
+                    if(found.attrib & A_SUBDIR) continue;
 
-                readDefinitionFile(found.path);
+                    readDefinitionFile(found.path);
+                }
             }
         }
     }
 
-    /*
-     * Next up are any definition files specified on the command line.
-     */
+    // Next are any definition files specified on the command line.
     AutoStr *buf = AutoStr_NewStd();
     for(int p = 0; p < CommandLine_Count(); ++p)
     {
@@ -664,9 +764,8 @@ static void readAllDefinitions()
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 
-    /*
-     * Last up are any DD_DEFNS definition lumps from loaded add-ons.
-     */
+    // Last are DD_DEFNS definition lumps from loaded add-ons.
+    /// @todo Shouldn't these be processed before definitions on the command line?
     Def_ReadLumpDefs();
 
     LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
@@ -1429,28 +1528,24 @@ void Def_Read()
     }
 
     // Music.
-    for(int i = 0; i < defs.music.size(); ++i)
+    for(int i = 0; i < defs.musics.size(); ++i)
     {
-        ded_music_t *mus = &defs.music[i];
+        Record *mus = &defs.musics[i];
         // Make sure duplicate defs overwrite the earliest.
-        ded_music_t *earliest = &defs.music[Def_GetMusicNum(mus->id)];
+        Record *earliest = &defs.musics[Def_GetMusicNum(mus->gets("id").toUtf8().constData())];
 
         if(earliest == mus) continue;
 
-        strcpy(earliest->lumpName, mus->lumpName);
-        earliest->cdTrack = mus->cdTrack;
+        earliest->set("lumpName", mus->gets("lumpName"));
+        earliest->set("cdTrack",  mus->geti("cdTrack"));
 
-        if(mus->path)
+        if(!mus->gets("path").isEmpty())
         {
-            if(earliest->path)
-                *earliest->path = *mus->path;
-            else
-                earliest->path = new de::Uri(*mus->path);
+            earliest->set("path", mus->gets("path"));
         }
-        else if(earliest->path)
+        else if(!earliest->gets("path").isEmpty())
         {
-            delete earliest->path;
-            earliest->path = 0;
+            earliest->set("path", "");
         }
     }
 
@@ -1540,30 +1635,33 @@ void Def_Read()
     }
 
     // Map infos.
-    for(int i = 0; i < defs.mapInfo.size(); ++i)
+    for(int i = 0; i < defs.mapInfos.size(); ++i)
     {
-        ded_mapinfo_t *mi = &defs.mapInfo[i];
+        Record &mi = defs.mapInfos[i];
 
         /**
          * Historically, the map info flags field was used for sky flags,
          * here we copy those flags to the embedded sky definition for
          * backward-compatibility.
          */
-        if(mi->flags & MIF_DRAW_SPHERE)
-            mi->sky.flags |= SIF_DRAW_SPHERE;
+        if(mi.geti("flags") & MIF_DRAW_SPHERE)
+        {
+            mi.set("sky.flags", mi.geti("sky.flags") | SIF_DRAW_SPHERE);
+        }
     }
 
     // Log a summary of the definition database.
     LOG_RES_MSG(_E(b) "Definitions:");
     de::String str;
     QTextStream os(&str);
+    os << defCountMsg(defs.episodes.size(), "episodes");
     os << defCountMsg(defs.groups.size(), "animation groups");
     os << defCountMsg(defs.compositeFonts.size(), "composite fonts");
     os << defCountMsg(defs.details.size(), "detail textures");
     os << defCountMsg(defs.finales.size(), "finales");
     os << defCountMsg(defs.lights.size(), "lights");
     os << defCountMsg(defs.lineTypes.size(), "line types");
-    os << defCountMsg(defs.mapInfo.size(), "map infos");
+    os << defCountMsg(defs.mapInfos.size(), "map infos");
 
     int nonAutoGeneratedCount = 0;
     for(int i = 0; i < defs.materials.size(); ++i)
@@ -1577,7 +1675,7 @@ void Def_Read()
     os << defCountMsg(defs.ptcGens.size(), "particle generators");
     os << defCountMsg(defs.skies.size(), "skies");
     os << defCountMsg(defs.sectorTypes.size(), "sector types");
-    os << defCountMsg(defs.music.size(), "songs");
+    os << defCountMsg(defs.musics.size(), "songs");
     os << defCountMsg(runtimeDefs.sounds.size(), "sound effects");
     os << defCountMsg(runtimeDefs.sprNames.size(), "sprite names");
     os << defCountMsg(runtimeDefs.states.size(), "states");
@@ -1931,10 +2029,8 @@ void Def_CopySectorType(sectortype_t* s, ded_sectortype_t* def)
     LOOPi(2) s->ceilInterval[i] = def->ceilInterval[i];
 }
 
-int Def_Get(int type, const char* id, void* out)
+int Def_Get(int type, char const *id, void *out)
 {
-    int i;
-
     switch(type)
     {
     case DD_DEF_MOBJ:
@@ -1958,50 +2054,18 @@ int Def_Get(int type, const char* id, void* out)
     case DD_DEF_SOUND_BY_NAME:
         return defs.getSoundNumForName(id);
 
-    case DD_DEF_SOUND_LUMPNAME:
-        i = *((long*) id);
+    case DD_DEF_SOUND_LUMPNAME: {
+        int i = *((long *) id);
         if(i < 0 || i >= runtimeDefs.sounds.size())
             return false;
         strcpy((char*)out, runtimeDefs.sounds[i].lumpName);
-        return true;
-
-    case DD_DEF_MUSIC:
-        return Def_GetMusicNum(id);
-
-    case DD_DEF_MUSIC_CDTRACK:
-        if(ded_music_t *music = Def_GetMusic(id))
-        {
-            return music->cdTrack;
-        }
-        return false;
-
-    case DD_DEF_MAP_INFO: {
-        ddmapinfo_t *mout;
-        struct uri_s *mapUri = Uri_NewWithPath2(id, RC_NULL);
-        ded_mapinfo_t *map   = Def_GetMapInfo(mapUri);
-
-        Uri_Delete(mapUri);
-        if(!map) return false;
-
-        mout = (ddmapinfo_t *) out;
-        mout->name       = map->name;
-        mout->author     = map->author;
-        mout->music      = Def_GetMusicNum(map->music);
-        mout->flags      = map->flags;
-        mout->ambient    = map->ambient;
-        mout->gravity    = map->gravity;
-        mout->parTime    = map->parTime;
-        mout->fogStart   = map->fogStart;
-        mout->fogEnd     = map->fogEnd;
-        mout->fogDensity = map->fogDensity;
-        memcpy(mout->fogColor, map->fogColor, sizeof(mout->fogColor));
         return true; }
 
     case DD_DEF_TEXT:
         if(id && id[0])
         {
             // Read backwards to allow patching.
-            for(i = defs.text.size() - 1; i >= 0; i--)
+            for(int i = defs.text.size() - 1; i >= 0; i--)
             {
                 if(stricmp(defs.text[i].id, id)) continue;
                 if(out) *(char**) out = defs.text[i].text;
@@ -2034,90 +2098,32 @@ int Def_Get(int type, const char* id, void* out)
         if(out) *(char**) out = 0;
         return false; }
 
-    case DD_DEF_FINALE: { // Find InFine script by ID.
-        finalescript_t* fin = (finalescript_t*) out;
-        for(i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(stricmp(defs.finales[i].id, id)) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            return true;
-        }
-        return false; }
-
-    case DD_DEF_FINALE_BEFORE: {
-        finalescript_t *fin = (finalescript_t *) out;
-        de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(!defs.finales[i].before || *defs.finales[i].before != *uri) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            delete uri;
-            return true;
-        }
-        delete uri;
-        return false; }
-
-    case DD_DEF_FINALE_AFTER: {
-        finalescript_t *fin = (finalescript_t *) out;
-        de::Uri *uri = new de::Uri(id, RC_NULL);
-        for(i = defs.finales.size() - 1; i >= 0; i--)
-        {
-            if(!defs.finales[i].after || *defs.finales[i].after != *uri) continue;
-
-            if(fin)
-            {
-                fin->before = (uri_s *)defs.finales[i].before;
-                fin->after  = (uri_s *)defs.finales[i].after;
-                fin->script = defs.finales[i].script;
-            }
-            delete uri;
-            return true;
-        }
-        delete uri;
-        return false; }
-
     case DD_DEF_LINE_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.lineTypes.size() - 1; i >= 0; i--)
+        for(int i = defs.lineTypes.size() - 1; i >= 0; i--)
         {
             if(defs.lineTypes[i].id != typeId) continue;
             if(out) Def_CopyLineType((linetype_t*)out, &defs.lineTypes[i]);
             return true;
         }
-        return false;
-      }
+        return false; }
+
     case DD_DEF_SECTOR_TYPE: {
         int typeId = strtol(id, (char **)NULL, 10);
-        for(i = defs.sectorTypes.size() - 1; i >= 0; i--)
+        for(int i = defs.sectorTypes.size() - 1; i >= 0; i--)
         {
             if(defs.sectorTypes[i].id != typeId) continue;
             if(out) Def_CopySectorType((sectortype_t*)out, &defs.sectorTypes[i]);
             return true;
         }
-        return false;
-      }
-    default:
-        return false;
+        return false; }
+
+    default: return false;
     }
 }
 
-int Def_Set(int type, int index, int value, const void* ptr)
+int Def_Set(int type, int index, int value, void const *ptr)
 {
-    ded_music_t* musdef = 0;
-    int i;
-
     LOG_AS("Def_Set");
 
     switch(type)
@@ -2189,57 +2195,13 @@ int Def_Set(int type, int index, int value, const void* ptr)
             }
             break;
 
-        default:
-            break;
+        default: break;
         }
         break;
 
-    case DD_DEF_MUSIC:
-        if(index == DD_NEW)
-        {
-            // We should create a new music definition.
-            i = DED_AddMusic(&defs, "");    // No ID is known at this stage.
-            musdef = &defs.music[i];
-        }
-        else if(index >= 0 && index < defs.music.size())
-        {
-            musdef = &defs.music[index];
-        }
-        else
-        {
-            DENG_ASSERT(!"Def_Set: Music index is invalid");
-            return false;
-        }
-
-        // Which key to set?
-        switch(value)
-        {
-        case DD_ID:
-            if(ptr)
-                strcpy(musdef->id, (char const*) ptr);
-            break;
-
-        case DD_LUMP:
-            if(ptr)
-                strcpy(musdef->lumpName, (char const*) ptr);
-            break;
-
-        case DD_CD_TRACK:
-            musdef->cdTrack = *(int *) ptr;
-            break;
-
-        default:
-            break;
-        }
-
-        // If the def was just created, return its index.
-        if(index == DD_NEW)
-            return defs.music.indexOf(musdef);
-        break;
-
-    default:
-        return false;
+    default: return false;
     }
+
     return true;
 }
 

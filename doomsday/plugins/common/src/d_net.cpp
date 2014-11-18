@@ -1,7 +1,7 @@
 /** @file d_net.cpp  Common code related to net games.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -25,11 +25,11 @@
 #include "gamesession.h"
 #include "player.h"
 #include "hu_menu.h"
-#include "mapinfo.h"
 #include "p_mapsetup.h"
 #include "p_start.h"
 #include "fi_lib.h"
 
+using namespace de;
 using namespace common;
 
 D_CMD(SetColor);
@@ -42,8 +42,8 @@ static void D_NetMessageEx(int player, char const *msg, dd_bool playSound);
 
 float netJumpPower = 9;
 
-static Writer *netWriter;
-static Reader *netReader;
+static writer_s *netWriter;
+static reader_s *netReader;
 
 static void notifyAllowCheatsChange()
 {
@@ -67,6 +67,13 @@ void D_NetConsoleRegister()
     C_CMD        ("endcycle",   "",     MapCycle);
     C_CMD        ("message",    "s",    LocalMessage);
 
+    if(IS_DEDICATED)
+    {
+        C_VAR_CHARPTR("server-game-episode",                    &cfg.netEpisode,                        0, 0, 0);
+        C_VAR_URIPTR ("server-game-map",                        &cfg.netMap,                            0, 0, 0);
+    }
+
+    /// @todo "server-*" cvars should only be registered by dedicated servers.
     //if(IS_DEDICATED) return;
 
 #if !__JHEXEN__
@@ -81,11 +88,7 @@ void D_NetConsoleRegister()
 #else
     C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 1);
 #endif
-#if __JDOOM__ || __JHERETIC__
-    C_VAR_BYTE   ("server-game-episode",                    &cfg.netEpisode,                        CVF_NO_MAX, 0, 0);
-#endif
     C_VAR_BYTE   ("server-game-jump",                       &cfg.netJumping,                        0, 0, 1);
-    C_VAR_BYTE   ("server-game-map",                        &cfg.netMap,                            CVF_NO_MAX, 0, 0);
     C_VAR_CHARPTR("server-game-mapcycle",                   &mapCycle,                              0, 0, 0);
     C_VAR_BYTE   ("server-game-mapcycle-noexit",            &mapCycleNoExit,                        0, 0, 1);
 #if __JHERETIC__
@@ -135,7 +138,7 @@ void D_NetConsoleRegister()
 #endif
 }
 
-Writer *D_NetWrite()
+writer_s *D_NetWrite()
 {
     if(netWriter)
     {
@@ -145,7 +148,7 @@ Writer *D_NetWrite()
     return netWriter;
 }
 
-Reader *D_NetRead(byte const *buffer, size_t len)
+reader_s *D_NetRead(byte const *buffer, size_t len)
 {
     // Get rid of the old reader.
     if(netReader)
@@ -179,19 +182,14 @@ int D_NetServerStarted(int before)
 #endif
     P_ResetPlayerRespawnClasses();
 
-#if __JHEXEN__ // Map numbers need to be translated.
-    de::Uri netMapUri = P_TranslateMap(::cfg.netMap);
-#elif __JDOOM64__
-    de::Uri netMapUri = G_ComposeMapUri(0, ::cfg.netMap);
-#else
-    de::Uri netMapUri = G_ComposeMapUri(::cfg.netEpisode, ::cfg.netMap);
-#endif
+    String const episodeId = Con_GetString("server-game-episode");
+    de::Uri const mapUri   = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
 
-    GameRuleset netRules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
-    netRules.skill = skillmode_t(cfg.netSkill);
+    GameRuleset rules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
+    rules.skill = skillmode_t(cfg.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(netMapUri, 0/*default*/, netRules);
+    COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     return true;
@@ -420,7 +418,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
 
 void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
-    Reader *reader = D_NetRead((byte *)data, length);
+    reader_s *reader = D_NetRead((byte *)data, length);
 
     //
     // Server events.

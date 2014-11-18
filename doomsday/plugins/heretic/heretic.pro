@@ -43,8 +43,8 @@ HEADERS += \
     include/h_think.h \
     include/h_type.h \
     include/hereticv13mapstatereader.h \
-    include/in_lude.h \
     include/info.h \
+    include/intermission.h \
     include/jheretic.h \
     include/m_cheat.h \
     include/m_random.h \
@@ -73,7 +73,7 @@ SOURCES += \
     src/h_main.cpp \
     src/h_refresh.cpp \
     src/hereticv13mapstatereader.cpp \
-    src/in_lude.cpp \
+    src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \

@@ -35,21 +35,6 @@ de::Uri composeMapUri(int episode, int map)
     }
 }
 
-int mapInfoDefForUri(de::Uri const &uri, ded_mapinfo_t **def)
-{
-    if(!uri.path().isEmpty())
-    for(int i = ded->mapInfo.size() - 1; i >= 0; i--)
-    {
-        ded_mapinfo_t &info = ded->mapInfo[i];
-        if(info.uri && *info.uri == uri)
-        {
-            if(def) *def = &info;
-            return i;
-        }
-    }
-    return -1; // Not found.
-}
-
 int valueDefForPath(String const &id, ded_value_t **def)
 {
     if(!id.isEmpty())

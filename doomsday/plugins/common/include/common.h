@@ -45,13 +45,11 @@
 #endif
 
 #include "gamerules.h"
+#include "g_defs.h"
 #include "pause.h"
 #ifdef __cplusplus
 #  include <doomsday/filesys/lumpindex.h>
 #endif
-
-DENG_EXTERN_C dd_bool sc_FileScripts;
-DENG_EXTERN_C char const *sc_ScriptsDir;
 
 #ifdef __cplusplus
 extern "C" {

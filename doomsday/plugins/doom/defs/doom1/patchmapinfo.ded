@@ -1,0 +1,61 @@
+#
+# MAPINFO / DED interoperability patches for DOOM
+#
+
+Header { Version = 6; }
+
+#
+# Music and Sky mods: doom1, doom1-ultimate, doom1-share
+#
+Map Info mods "E1M1" if not custom { Music = "e1m1"; Sky = "sky1"; }
+Map Info mods "E1M2" if not custom { Music = "e1m2"; Sky = "sky1"; }
+Map Info mods "E1M3" if not custom { Music = "e1m3"; Sky = "sky1"; }
+Map Info mods "E1M4" if not custom { Music = "e1m4"; Sky = "sky1"; }
+Map Info mods "E1M5" if not custom { Music = "e1m5"; Sky = "sky1"; }
+
+# The rest of this file is skipped if Chex
+SkipIf Not chex;
+
+Map Info mods "E1M6" if not custom { Music = "e1m6"; Sky = "sky1"; }
+Map Info mods "E1M7" if not custom { Music = "e1m7"; Sky = "sky1"; }
+Map Info mods "E1M8" if not custom { Music = "e1m8"; Sky = "sky1"; }
+Map Info mods "E1M9" if not custom { Music = "e1m9"; Sky = "sky1"; }
+
+# The rest of this file is skipped if DOOM1 Shareware
+SkipIf doom1-share;
+
+# Episode 2:
+Map Info mods "E2M1" if not custom { Music = "e2m1"; Sky = "sky2"; }
+Map Info mods "E2M2" if not custom { Music = "e2m2"; Sky = "sky2"; }
+Map Info mods "E2M3" if not custom { Music = "e2m3"; Sky = "sky2"; }
+Map Info mods "E2M4" if not custom { Music = "e2m4"; Sky = "sky2"; }
+Map Info mods "E2M5" if not custom { Music = "e2m5"; Sky = "sky2"; }
+Map Info mods "E2M6" if not custom { Music = "e2m6"; Sky = "sky2"; }
+Map Info mods "E2M7" if not custom { Music = "e2m7"; Sky = "sky2"; }
+Map Info mods "E2M8" if not custom { Music = "e2m8"; Sky = "sky2"; }
+Map Info mods "E2M9" if not custom { Music = "e2m9"; Sky = "sky2"; }
+
+# Episode 3:
+Map Info mods "E3M1" if not custom { Music = "e3m1"; Sky = "sky3"; }
+Map Info mods "E3M2" if not custom { Music = "e3m2"; Sky = "sky3"; }
+Map Info mods "E3M3" if not custom { Music = "e3m3"; Sky = "sky3"; }
+Map Info mods "E3M4" if not custom { Music = "e3m4"; Sky = "sky3"; }
+Map Info mods "E3M5" if not custom { Music = "e3m5"; Sky = "sky3"; }
+Map Info mods "E3M6" if not custom { Music = "e3m6"; Sky = "sky3"; }
+Map Info mods "E3M7" if not custom { Music = "e3m7"; Sky = "sky3"; }
+Map Info mods "E3M8" if not custom { Music = "e3m8"; Sky = "sky3"; }
+Map Info mods "E3M9" if not custom { Music = "e3m9"; Sky = "sky3"; }
+
+# The rest of this file is skipped if not DOOM1 Ultimate.
+SkipIf Not doom1-ultimate;
+
+# Episode 4:
+Map Info mods "E4M1" if not custom { Music = "e3m4"; Sky = "sky4"; }
+Map Info mods "E4M2" if not custom { Music = "e3m2"; Sky = "sky4"; }
+Map Info mods "E4M3" if not custom { Music = "e3m3"; Sky = "sky4"; }
+Map Info mods "E4M4" if not custom { Music = "e1m5"; Sky = "sky4"; }
+Map Info mods "E4M5" if not custom { Music = "e2m7"; Sky = "sky4"; }
+Map Info mods "E4M6" if not custom { Music = "e2m4"; Sky = "sky4"; }
+Map Info mods "E4M7" if not custom { Music = "e2m6"; Sky = "sky4"; }
+Map Info mods "E4M8" if not custom { Music = "e2m5"; Sky = "sky4"; }
+Map Info mods "E4M9" if not custom { Music = "e1m9"; Sky = "sky4"; }

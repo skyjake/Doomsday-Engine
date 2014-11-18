@@ -39,7 +39,6 @@
 #include "render/rend_font.h"
 #include "render/rend_dynlight.h"
 #include "render/rendpoly.h"
-#include "render/sky.h"
 #include "render/billboard.h"
 #include "render/cameralensfx.h"
 #include "render/vissprite.h"

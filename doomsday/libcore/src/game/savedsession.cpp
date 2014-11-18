@@ -108,13 +108,36 @@ void SavedSession::Metadata::parse(String const &source)
         {
             set("mapUri", String("Maps:") + gets("mapUri"));
         }
+
+        // Ensure the episode is known. Earlier versions of the savegame format did not save
+        // this info explicitly. The assumption was that the episode was inferred by / encoded
+        // in the map URI. If the episode is not present in the metadata then we'll assume it
+        // is encoded in the map URI and extract it.
+        if(!has("episode"))
+        {
+            String const mapUriPath = gets("mapUri").substr(5);
+            if(mapUriPath.beginsWith("MAP", Qt::CaseInsensitive))
+            {
+                set("episode", "1");
+            }
+            else if(mapUriPath.at(0).toLower() == 'e' && mapUriPath.at(2).toLower() == 'm')
+            {
+                set("episode", mapUriPath.substr(1, 1));
+            }
+            else
+            {
+                // Hmm, very odd...
+                throw Error("SavedSession::metadata::parse", "Failed to extract episode id from map URI \"" + gets("mapUri") + "\"");
+            }
+        }
+
         // Ensure we have a valid description.
         if(gets("userDescription").isEmpty())
         {
             set("userDescription", "UNNAMED");
         }
     }
-    catch(de::Error const &er)
+    catch(Error const &er)
     {
         LOG_WARNING(er.asText());
     }
@@ -147,13 +170,15 @@ String SavedSession::Metadata::asStyledText() const
     }
 
     return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Session id: "  _E(.)_E(i) "%3\n" _E(.)
-                  _E(D) "Current map:\n" _E(.) "%4\n"
-                  _E(D) "Game rules:\n" _E(.) "%5")
+                  _E(l) "IdentityKey: "  _E(.)_E(i) "%2 "  _E(.)
+                  _E(l) "Session id: "   _E(.)_E(i) "%3\n" _E(.)
+                  _E(l) "Episode: "      _E(.)_E(i) "%4\n" _E(.)
+                  _E(D) "Current map:\n" _E(.) "%5\n"
+                  _E(D) "Game rules:\n"  _E(.) "%6")
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))
              .arg(geti("sessionId", 0))
+             .arg(gets("episode"))
              .arg(currentMapText)
              .arg(gameRulesText);
 }
@@ -171,17 +196,30 @@ String SavedSession::Metadata::asTextWithInfoSyntax() const
     os.setCodec("UTF-8");
 
     if(has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
+    if(has("episode"))         os << "\nepisode: "         << gets("episode");
     if(has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
     if(has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
     if(has("players"))
     {
-        ArrayValue const &array = geta("players");
         os << "\nplayers <";
-        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, array.elements())
+        ArrayValue const &playersArray = geta("players");
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, playersArray.elements())
         {
             Value const *value = *i;
-            if(i != array.elements().begin()) os << ", ";
+            if(i != playersArray.elements().begin()) os << ", ";
             os << (value->as<NumberValue>().isTrue()? "True" : "False");
+        }
+        os << ">";
+    }
+    if(has("visitedMaps"))
+    {
+        os << "\nvisitedMaps <";
+        ArrayValue const &visitedMapsArray = geta("visitedMaps");
+        DENG2_FOR_EACH_CONST(ArrayValue::Elements, i, visitedMapsArray.elements())
+        {
+            Value const *value = *i;
+            if(i != visitedMapsArray.elements().begin()) os << ", ";
+            os << "\"" << String(value->as<TextValue>()) << "\"";
         }
         os << ">";
     }

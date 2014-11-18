@@ -32,9 +32,10 @@ HEADERS += \
     include/dstrings.h \
     include/g_game.h \
     include/h2def.h \
-    include/in_lude.h \
+    include/intermission.h \
     include/info.h \
     include/jhexen.h \
+    include/lightninganimator.h \
     include/m_cheat.h \
     include/m_random.h \
     include/p_enemy.h \
@@ -75,7 +76,8 @@ SOURCES += \
     src/h2_main.cpp \
     src/hconsole.cpp \
     src/hrefresh.cpp \
-    src/in_lude.cpp \
+    src/intermission.cpp \
+    src/lightninganimator.cpp \
     src/m_cheat.cpp \
     src/m_random.c \
     src/p_enemy.c \

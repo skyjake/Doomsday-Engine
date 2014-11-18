@@ -1,7 +1,7 @@
 /** @file p_sound.cpp  id Tech 1 sound playback functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
@@ -23,50 +23,37 @@
 #include "common.h"
 #include "p_sound.h"
 
+#include <de/Log>
 #include "dmu_lib.h"
-#include "hexlex.h"
-#include "mapinfo.h"
 #ifdef __JHEXEN__
 #  include "g_common.h"
+#  include "hexlex.h"
 #endif
-
-#include <de/Log>
 
 using namespace de;
-using namespace common;
 
-void S_MapMusic(de::Uri const *mapUri)
+void S_MapMusic(de::Uri const &mapUri)
 {
-    if(!mapUri) mapUri = &gameMapUri;
-
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    {
 #ifdef __JHEXEN__
-    MapInfo const *mapInfo = hexDefs.getMapInfo(mapUri);
-    int const cdTrack = mapInfo->geti("cdTrack");
-    String const lump = mapInfo->gets("songLump").compareWithoutCase("DEFSONG")? mapInfo->gets("songLump") : "";
+        // Update the 'currentmap' music definition.
+        String const songId = "currentmap";
 
-    LOG_RES_VERBOSE("S_MapMusic: %s lump: %s") << mapUri->compose() << lump;
-
-    // Update the 'currentmap' music definition.
-    int const defIndex = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    Def_Set(DD_DEF_MUSIC, defIndex, DD_LUMP,     lump.toUtf8().constData());
-    Def_Set(DD_DEF_MUSIC, defIndex, DD_CD_TRACK, &cdTrack);
-
-    if(S_StartMusic("currentmap", true))
-    {
-        // Set the game status cvar for the map music.
-        Con_SetInteger2("map-music", defIndex, SVF_WRITE_OVERRIDE);
-    }
+        Record &music = Defs().musics.find("id", songId);
+        music.set("lumpName", mapInfo->gets("songLump"));
+        music.set("cdTrack", mapInfo->geti("cdTrack", 0));
 #else
-    ddmapinfo_t ddMapInfo;
-    if(Def_Get(DD_DEF_MAP_INFO, mapUri->compose().toUtf8().constData(), &ddMapInfo))
-    {
-        if(S_StartMusicNum(ddMapInfo.music, true))
+        String const songId  = mapInfo->gets("music");
+#endif
+
+        int const songNumber = Defs().getMusicNum(songId.toUtf8().constData());
+        if(S_StartMusicNum(songNumber, true))
         {
             // Set the game status cvar for the map music.
-            Con_SetInteger2("map-music", ddMapInfo.music, SVF_WRITE_OVERRIDE);
+            Con_SetInteger2("map-music", songNumber, SVF_WRITE_OVERRIDE);
         }
     }
-#endif
 }
 
 void S_SectorSound(Sector *sec, int id)
@@ -82,8 +69,8 @@ void S_SectorStopSounds(Sector *sec)
     if(!sec) return;
 
     // Stop other sounds playing from origins in this sector.
-    /// @todo Add a compatibility option allowing origins to work independently?
-    S_StopSound2(0, (mobj_t*) P_GetPtrp(sec, DMU_EMITTER), SSF_ALL_SECTOR);
+    /// @todo Add a compatibility option allowing emitters to work independently?
+    S_StopSound2(0, (mobj_t *) P_GetPtrp(sec, DMU_EMITTER), SSF_ALL_SECTOR);
 }
 
 void S_PlaneSound(Plane *pln, int id)
@@ -131,8 +118,7 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    de::Uri mapUri = G_ComposeMapUri(0, mapNumber - 1);
-                    if(MapInfo *mapInfo = hexDefs.getMapInfo(&mapUri))
+                    if(Record *mapInfo = Defs().mapInfos.tryFind("id", G_ComposeMapUri(0, mapNumber - 1).compose()))
                     {
                         mapInfo->set("songLump", Str_Text(lumpName));
                     }

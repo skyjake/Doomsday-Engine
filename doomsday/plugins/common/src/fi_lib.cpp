@@ -21,6 +21,7 @@
 #include "common.h"
 #include "fi_lib.h"
 
+#include <doomsday/defs/episode.h>
 #include "p_sound.h"
 #include "p_tick.h"
 #include "hu_log.h"
@@ -30,10 +31,10 @@
 #include "gamesession.h"
 #include "r_common.h"
 #include "d_net.h"
-#include "mapinfo.h"
 
 #include <cstring>
 
+using namespace de;
 using namespace common;
 
 struct fi_state_conditions_t
@@ -69,37 +70,32 @@ static uint finaleStackSize;
 static fi_state_t *finaleStack;
 static fi_state_t remoteFinaleState; // For the client.
 
-static void initStateConditions(fi_state_t *s)
+static void initStateConditions(fi_state_t &s)
 {
     // Set the presets.
-    s->conditions.secret = false;
+    s.conditions.secret = false;
 #if !__JHEXEN__
-    s->conditions.leave_hub = false;
+    s.conditions.leave_hub = false;
 #endif
 
     // Only the server is able to figure out the truth values of all the conditions.
     if(IS_CLIENT) return;
 
 #if __JHEXEN__
-    s->conditions.secret = false;
+    s.conditions.secret = false;
 #else
-    s->conditions.secret = secretExit;
+    s.conditions.secret = ::secretExit;
 #endif
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(MapInfo *curMapInfo = hexDefs.getMapInfo(0/*current map*/))
+    if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
     {
-        s->conditions.leave_hub = true;
-        if(!nextMapUri.path().isEmpty())
-        {
-            if(curMapInfo->geti("hub") == hexDefs.getMapInfo(&nextMapUri)->geti("hub"))
-            {
-                s->conditions.leave_hub = false;
-            }
-        }
+        defn::Episode epsd(*episodeDef);
+        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+        s.conditions.leave_hub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
-    App_Log(DE2_DEV_SCR_VERBOSE, "Infine state condition: leave_hub=%i", s->conditions.leave_hub);
+    LOGDEV_SCR_VERBOSE("Infine state condition: leave_hub=%i") << s.conditions.leave_hub;
 #endif
 }
 
@@ -169,7 +165,7 @@ static fi_state_t *stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_
         // Source ID not provided.
         de::zap(s->defId);
     }
-    initStateConditions(s);
+    initStateConditions(*s);
 
     return s;
 }
@@ -178,7 +174,7 @@ static void NetSv_SendFinaleState(fi_state_t *s)
 {
     DENG2_ASSERT(s != 0);
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
 
     // First the flags.
     Writer_WriteByte(writer, s->mode);
@@ -193,7 +189,7 @@ static void NetSv_SendFinaleState(fi_state_t *s)
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_FINALE_STATE, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetCl_UpdateFinaleState(Reader *msg)
+void NetCl_UpdateFinaleState(reader_s *msg)
 {
     DENG2_ASSERT(msg != 0);
 
@@ -208,13 +204,12 @@ void NetCl_UpdateFinaleState(Reader *msg)
     for(int i = 0; i < numConds; ++i)
     {
         byte cond = Reader_ReadByte(msg);
-        if(i == 0) s->conditions.secret = cond;
+        if(i == 0) s->conditions.secret    = cond;
         if(i == 1) s->conditions.leave_hub = cond;
     }
 
-    App_Log(DE2_DEV_SCR_MSG,
-            "NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hud=%i",
-            s->finaleId, s->mode, s->conditions.secret, s->conditions.leave_hub);
+    LOGDEV_SCR_MSG("NetCl_FinaleState: Updated finale %i: mode %i, secret=%i, leave_hub=%i")
+            << s->finaleId << s->mode << s->conditions.secret << s->conditions.leave_hub;
 }
 
 void FI_StackInit()
@@ -388,9 +383,8 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
 
     if(IS_CLIENT && s == &remoteFinaleState)
     {
-        App_Log(DE2_DEV_SCR_MSG, "Hook_FinaleScriptStop: Clientside script stopped, clearing remote state");
+        LOGDEV_SCR_MSG("Hook_FinaleScriptStop: Clientside script stopped, clearing remote state");
         de::zap(remoteFinaleState);
-
         return true;
     }
 
@@ -399,9 +393,9 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
         // Finale was not initiated by us...
         return true;
     }
-    gamestate_t initialGamestate = s->initialGamestate;
 
-    finale_mode_t mode = s->mode;
+    finale_mode_t mode           = s->mode;
+    gamestate_t initialGamestate = s->initialGamestate;
 
     // Should we go back to NULL?
     if(finaleStackSize > 1)
@@ -434,8 +428,8 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
     }
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
-        // Its time to start the map; que music and begin!
-        S_MapMusic(0/*current map*/);
+        // Its time to start the map; cue music and begin!
+        S_MapMusic(COMMON_GAMESESSION->mapUri());
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
         Pause_End(); // skip forced period
@@ -608,18 +602,21 @@ D_CMD(StartFinale)
 {
     DENG2_UNUSED2(src, argc);
 
-    // Only one active overlay allowed.
+    String scriptId = argv[1];
+
+    // Only one active overlay is allowed.
     if(FI_StackActive()) return false;
 
-    ddfinale_t fin;
-    if(!Def_Get(DD_DEF_FINALE, argv[1], &fin))
+    if(Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
-        App_Log(DE2_SCR_ERROR, "Script '%s' is not defined.", argv[1]);
-        return false;
+        G_SetGameAction(GA_NONE);
+        FI_StackExecute(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_OVERLAY);
+        return true;
     }
-    G_SetGameAction(GA_NONE);
-    FI_StackExecute(fin.script, FF_LOCAL, FIMODE_OVERLAY);
-    return true;
+
+    LOG_SCR_ERROR("Script '%s' is not defined") << scriptId;
+    return false;
+
 }
 
 D_CMD(StopFinale)

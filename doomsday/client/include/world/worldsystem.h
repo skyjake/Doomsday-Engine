@@ -38,6 +38,8 @@
 #include <de/System>
 
 #ifdef __CLIENT__
+#  include "render/skydrawable.h"
+
 class Hand;
 #endif
 
@@ -74,10 +76,6 @@ public:
     // System.
     void timeChanged(de::Clock const &);
 
-    /**
-     * To be called to register the commands and variables of this module.
-     */
-    static void consoleRegister();
 
     /**
      * To be called to reset the world back to the initial state. Any currently
@@ -131,6 +129,8 @@ public:
      */
     timespan_t time() const;
 
+    void tick(timespan_t elapsed);
+
 #ifdef __CLIENT__
     /**
      * To be called at the beginning of a render frame, so that we can prepare for
@@ -143,6 +143,8 @@ public:
      * that must be completed after view(s) have been drawn.
      */
     void endFrame();
+
+    SkyDrawable::Animator &skyAnimator() const;
 
     /**
      * Returns the hand of the "user" in the world. Used for manipulating elements
@@ -163,6 +165,12 @@ public:
     bool isPointInVoid(de::Vector3d const &pos) const;
 
 #endif // __CLIENT__
+
+public:
+    /**
+     * To be called to register the commands and variables of this module.
+     */
+    static void consoleRegister();
 
 private:
     DENG2_PRIVATE(d)

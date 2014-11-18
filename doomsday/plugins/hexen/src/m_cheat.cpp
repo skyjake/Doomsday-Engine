@@ -26,6 +26,7 @@
 
 #include "d_net.h"
 #include "g_common.h"
+#include "gamesession.h"
 #include "player.h"
 #include "am_map.h"
 #include "hu_msg.h"
@@ -660,7 +661,7 @@ D_CMD(CheatWhere)
 
     char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gameMapUri.path().toUtf8().constData(),
+                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 

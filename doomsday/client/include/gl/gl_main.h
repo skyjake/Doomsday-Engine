@@ -196,6 +196,11 @@ void GL_SetVSync(dd_bool on);
  */
 void GL_SetMultisample(dd_bool on);
 
+/**
+ * Reconfigure GL fog according to the setup defined in the specified @a mapInfo definition.
+ */
+void GL_SetupFogFromMapInfo(de::Record const *mapInfo);
+
 //void GL_BlendOp(int op);
 
 dd_bool GL_NewList(DGLuint list, int mode);

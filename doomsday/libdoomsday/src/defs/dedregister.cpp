@@ -358,3 +358,12 @@ Record const &DEDRegister::find(String const &key, String const &value) const
     }
     return *rec;
 }
+
+DictionaryValue const &DEDRegister::lookup(String const &key) const
+{
+    if(!d->keys.contains(key))
+    {
+        throw UndefinedKeyError("DEDRegister::lookup", "Key '" + key + "' not defined");
+    }
+    return d->lookup(key);
+}

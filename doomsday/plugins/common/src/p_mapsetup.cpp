@@ -31,7 +31,6 @@
 #include "g_common.h"
 #include "gamesession.h"
 #include "r_common.h"
-#include "mapinfo.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"
@@ -646,42 +645,6 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-/// @param mapInfo  Can be @c NULL.
-static void initFog(ddmapinfo_t *ddMapInfo)
-{
-    if(IS_DEDICATED) return;
-
-    if(!ddMapInfo || !(ddMapInfo->flags & MIF_FOG))
-    {
-        R_SetupFogDefaults();
-    }
-    else
-    {
-        R_SetupFog(ddMapInfo->fogStart, ddMapInfo->fogEnd, ddMapInfo->fogDensity, ddMapInfo->fogColor);
-    }
-
-#if __JHEXEN__
-    if(MapInfo const *mapInfo = hexDefs.getMapInfo(0/*current map*/))
-    {
-        int fadeTable = CentralLumpIndex().findLast(mapInfo->gets("fadeTable") + ".lmp");
-        if(fadeTable == CentralLumpIndex().findLast("COLORMAP.lmp"))
-        {
-            // We don't want fog in this case.
-            GL_UseFog(false);
-        }
-        else
-        {
-            // Probably fog ... don't use fullbright sprites
-            if(fadeTable == CentralLumpIndex().findLast("FOGMAP.lmp"))
-            {
-                // Tell the renderer to turn on the fog.
-                GL_UseFog(true);
-            }
-        }
-    }
-#endif
-}
-
 void P_SetupMap(de::Uri const &mapUri)
 {
     if(IS_DEDICATED)
@@ -726,11 +689,6 @@ void P_SetupMap(de::Uri const &mapUri)
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
     }
-
-    // Is MapInfo data available for this map?
-    ddmapinfo_t mapInfo;
-    bool const haveMapInfo = Def_Get(DD_DEF_MAP_INFO, mapUri.compose().toUtf8().constData(), &mapInfo);
-    initFog(haveMapInfo? &mapInfo : 0);
 
     // Make sure the game is paused for the requested period.
     Pause_MapStarted();
@@ -965,10 +923,6 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     P_SpawnAllSpecialThinkers();
     P_SpawnAllMaterialOriginScrollers();
 
-#if __JHEXEN__
-    P_InitSky(mapUri);
-#endif
-
     // Preload resources we'll likely need but which aren't present (usually) in the map.
     precacheResources();
 
@@ -1031,16 +985,25 @@ void P_ResetWorldState()
     static int firstFragReset = 1;
 #endif
 
-    nextMapUri.clear();
-
+    ::wmInfo.nextMap.clear();
+#if __JHEXEN__
+    ::wmInfo.nextMapEntryPoint = 0;
+#endif
 #if __JDOOM__ || __JDOOM64__
-    wmInfo.maxFrags = 0;
-    wmInfo.parTime = -1;
+    ::wmInfo.maxFrags = 0;
+    ::wmInfo.parTime = -1;
+#endif
+
+#if !__JHEXEN__
+    if(!IS_CLIENT)
+    {
+        ::totalKills = ::totalItems = ::totalSecret = 0;
+    }
 #endif
 
 #if __JDOOM__
-    delete theBossBrain;
-    theBossBrain = new BossBrain;
+    delete ::theBossBrain;
+    ::theBossBrain = new BossBrain;
 #endif
 
 #if __JHEXEN__
@@ -1048,24 +1011,17 @@ void P_ResetWorldState()
 #endif
 
 #if __JHERETIC__
-    maceSpotCount = 0;
-    maceSpots     = 0;
-    bossSpotCount = 0;
-    bossSpots     = 0;
+    ::maceSpotCount = 0;
+    ::maceSpots     = 0;
+    ::bossSpotCount = 0;
+    ::bossSpots     = 0;
 #endif
 
     P_PurgeDeferredSpawns();
 
-    if(!IS_CLIENT)
-    {
-#if !__JHEXEN__
-        totalKills = totalItems = totalSecret = 0;
-#endif
-    }
-
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t *plr = &players[i];
+        player_t *plr = &::players[i];
         ddplayer_t *ddplr = plr->plr;
 
         ddplr->mo = NULL;
@@ -1089,7 +1045,7 @@ void P_ResetWorldState()
     }
 
 #if __JDOOM__ || __JDOOM64__
-    bodyQueueSlot = 0;
+    ::bodyQueueSlot = 0;
 #endif
 
     P_DestroyPlayerStarts();

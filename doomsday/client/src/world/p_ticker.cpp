@@ -1,7 +1,7 @@
 /** @file p_ticker.cpp Timed world events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,15 +18,19 @@
  */
 
 #include "de_base.h"
+#include "world/p_ticker.h"
+
 #include "de_network.h"
 #include "de_render.h"
 #include "de_play.h"
 #include "de_misc.h"
-
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#  include "render/rendersystem.h"
+#  include "render/skydrawable.h"
+#endif
 #include "world/map.h"
-#include "world/thinkers.h"
-
-#include "render/sky.h"
+#include "world/sky.h"
 
 using namespace de;
 
@@ -119,20 +123,5 @@ void P_Ticker(timespan_t elapsed)
 #else
     DENG2_UNUSED(elapsed);
 #endif
-
-    if(!App_WorldSystem().hasMap()) return;
-
-    Map &map = App_WorldSystem().map();
-    if(!map.thinkers().isInited()) return; // Not initialized yet.
-
-    if(DD_IsSharpTick())
-    {
-#ifdef __CLIENT__
-        theSky->runTick();
-#endif
-
-        // Check all mobjs (always public).
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               P_MobjTicker);
-    }
+    App_WorldSystem().tick(elapsed);
 }

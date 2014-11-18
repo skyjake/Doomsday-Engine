@@ -407,7 +407,10 @@ desc = 1=Show door colors in automap.
 desc = Door glow thickness in the automap (with map-door-colors).
 
 [map-episode]
-desc = Current episode.
+desc = Current episode id.
+
+[map-hub]
+desc = Current hub id.
 
 [map-huddisplay]
 desc = 0=No HUD when in the automap 1=Current HUD display shown when in the automap 2=Always show Status Bar when in the automap
@@ -807,9 +810,6 @@ desc = 1=Show keys in HUD.
 
 [hud-status-weaponslots-ownedfix]
 desc = 1=Fix original DOOM behavior when drawing the statusbar owned weapon display.
-
-[map-mission]
-desc = Current mission.
 
 [menu-quitsound]
 desc = 1=Play a sound when quitting the game.

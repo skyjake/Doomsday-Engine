@@ -71,7 +71,13 @@ HEADERS += \
     include/doomsday/defs/dedparser.h \
     include/doomsday/defs/dedregister.h \
     include/doomsday/defs/dedtypes.h \
+    include/doomsday/defs/episode.h \
+    include/doomsday/defs/finale.h \
+    include/doomsday/defs/mapgraphnode.h \
+    include/doomsday/defs/mapinfo.h \
     include/doomsday/defs/model.h \
+    include/doomsday/defs/music.h \
+    include/doomsday/defs/sky.h \
     include/doomsday/dualstring.h \
     include/doomsday/filesys/file.h \
     include/doomsday/filesys/filehandle.h \
@@ -112,7 +118,13 @@ SOURCES += \
     src/defs/definition.cpp \
     src/defs/dedparser.cpp \
     src/defs/dedregister.cpp \
+    src/defs/episode.cpp \
+    src/defs/finale.cpp \
+    src/defs/mapgraphnode.cpp \
+    src/defs/mapinfo.cpp \
     src/defs/model.cpp \
+    src/defs/music.cpp \
+    src/defs/sky.cpp \
     src/dualstring.cpp \
     src/filesys/file.cpp \
     src/filesys/filehandle.cpp \

@@ -149,10 +149,6 @@ const char shiftXForm[] = {
 
 // Misc UI patches:
 patchid_t borderPatches[8];
-#if __JDOOM__ || __JDOOM64__
-patchid_t *pMapNames; // Name graphics for each map.
-uint pMapNamesSize;
-#endif
 #if __JHERETIC__ || __JHEXEN__
 patchid_t pInvItemBox;
 patchid_t pInvSelectBox;
@@ -257,50 +253,6 @@ static void declareGraphicPatches()
     m_pause = R_DeclarePatch("PAUSED");
 #endif
 
-    // Map name patches:
-#if __JDOOM__ || __JDOOM64__
-# if !__JDOOM64__
-    if(gameModeBits & GM_ANY_DOOM2)
-# endif
-    {
-        pMapNamesSize = 32;
-        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-
-        Str name; Str_InitStd(&name);
-        for(uint i = 0; i < pMapNamesSize; ++i)
-        {
-# if __JDOOM64__
-            Str_Appendf(Str_Clear(&name), "WILV%2.2u", i);
-# else // __JDOOM__
-            Str_Appendf(Str_Clear(&name), "CWILV%2.2u", i);
-# endif
-            pMapNames[i] = R_DeclarePatch(Str_Text(&name));
-        }
-        Str_Free(&name);
-    }
-# if !__JDOOM64__
-    else
-    {
-        const uint numEpisodes = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate? 4 : 3);
-        Str name; Str_InitStd(&name);
-
-        // Don't waste space - patches are loaded back to back
-        // ie no space in the array is left for E1M10
-        pMapNamesSize = 9 * 4;
-        pMapNames = (patchid_t *) Z_Malloc(sizeof(patchid_t) * pMapNamesSize, PU_GAMESTATIC, 0);
-        for(uint i = 0; i < numEpisodes; ++i)
-        {
-            for(uint k = 0; k < 9; ++k) // Number of maps per episode.
-            {
-                Str_Appendf(Str_Clear(&name), "WILV%2.2u", (i * 10) + k);
-                pMapNames[(i * 9) + k] = R_DeclarePatch(Str_Text(&name));
-            }
-        }
-        Str_Free(&name);
-    }
-# endif
-#endif
-
 #if __JHERETIC__ || __JHEXEN__
     pInvItemBox      = R_DeclarePatch("ARTIBOX");
     pInvSelectBox    = R_DeclarePatch("SELECTBO");
@@ -341,10 +293,6 @@ void Hu_LoadData()
 
 void Hu_UnloadData()
 {
-#if __JDOOM__ || __JDOOM64__
-    Z_Free(pMapNames); pMapNames = 0;
-#endif
-
     releaseFogTexture();
 }
 
@@ -756,7 +704,7 @@ static void drawMapMetaData(float x, float y, float alpha)
 {
 #define BORDER              2
 
-    de::String title = G_MapTitle(); // current map
+    de::String title = G_MapTitle(COMMON_GAMESESSION->mapUri());
     if(title.isEmpty()) title = "Unnamed";
 
     char buf[256];
@@ -1154,7 +1102,7 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
     return replacement;
 }
 
-char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, char const *text)
+de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId, de::String const &text)
 {
     if(mode != PRM_NONE)
     {
@@ -1165,10 +1113,10 @@ char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
             R_GetPatchInfo(patchId, &info);
             if(!info.flags.isCustom)
             {
-                if(!text || !text[0])
+                if(text.isEmpty())
                 {
                     // Look for a user replacement.
-                    text = Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD);
+                    return de::String(Hu_FindPatchReplacementString(patchId, PRF_NO_PWAD));
                 }
 
                 return text;
@@ -1180,17 +1128,17 @@ char const *Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId
         }
     }
 
-    return 0; // No replacement available/wanted.
+    return ""; // No replacement available/wanted.
 }
 
-void WI_DrawPatch(patchid_t patchId, char const *replacement, de::Vector2i const &origin,
+void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vector2i const &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
     Point2Raw const originAsPoint2Raw(origin.x, origin.y);
-    if(replacement && replacement[0])
+    if(!replacement.isEmpty())
     {
         // Use the replacement string.
-        FR_DrawText3(replacement, &originAsPoint2Raw, alignFlags, textFlags);
+        FR_DrawText3(replacement.toUtf8().constData(), &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
     // Use the original patch.
@@ -1352,10 +1300,10 @@ static void drawFogEffect(void)
 #undef mfd
 }
 
-void Hu_Drawer(void)
+void Hu_Drawer()
 {
-    dd_bool menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    dd_bool pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
+    bool const menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
+    bool const pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;
@@ -1440,18 +1388,26 @@ dd_bool Hu_IsStatusBarVisible(int player)
 int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
-    patchinfo_t patchInfo;
-    if(R_GetPatchInfo(G_MapTitlePatch()/*current map*/, &patchInfo))
+    de::Uri titleImage = G_MapTitleImage(COMMON_GAMESESSION->mapUri());
+    if(!titleImage.isEmpty())
     {
-        y = patchInfo.geometry.size.height + 2;
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchinfo_t info;
+            patchid_t patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            if(R_GetPatchInfo(patchId, &info))
+            {
+                y = info.geometry.size.height + 2;
+            }
+        }
     }
-    return MAX_OF(14, y);
+    return de::max(14, y);
 }
 #endif
 
 dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
+    de::String const author = G_MapAuthor(COMMON_GAMESESSION->mapUri(), CPP_BOOL(cfg.hideIWADAuthor));
     return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1470,8 +1426,9 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    de::String const title  = G_MapTitle(); // current map
-    de::String const author = G_MapAuthor(0/*current map*/, CPP_BOOL(cfg.hideIWADAuthor));
+    de::Uri const mapUri    = COMMON_GAMESESSION->mapUri();
+    de::String const title  = G_MapTitle(mapUri);
+    de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.hideIWADAuthor));
 
     float y = 0;
 
@@ -1483,8 +1440,16 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
 
 #if __JDOOM__ || __JDOOM64__
-    patchid_t patchId = G_MapTitlePatch(); // current map
-    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title.toUtf8().constData()),
+    patchid_t patchId = 0;
+    de::Uri const titleImage = G_MapTitleImage(mapUri);
+    if(!titleImage.isEmpty())
+    {
+        if(!titleImage.scheme().compareWithoutCase("Patches"))
+        {
+            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+        }
+    }
+    WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title),
                  de::Vector2i(), ALIGN_TOP, 0, DTF_ONLY_SHADOW);
 
     // Following line of text placed according to patch height.
@@ -1506,7 +1471,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(gameMapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(mapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
     else if(!author.isEmpty())
     {

@@ -408,7 +408,7 @@ public:
                     }
                     else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                     {
-                        LOG_WARNING("[Cheat] patches are not supported.");
+                        LOG_WARNING("DeHackEd [Cheat] patches are not supported.");
                         skipToNextSection();
                     }
                     else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // BEX
@@ -871,12 +871,12 @@ public:
             else if(!var.compareWithoutCase("Bits2")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits2\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits2 is not supported.");
             }
             else if(!var.compareWithoutCase("Bits3")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Bits3\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Bits3 is not supported.");
             }
             else if(!var.compareWithoutCase("Blood color")) // Eternity
             {
@@ -892,7 +892,7 @@ public:
                  * Orange              8
                  */
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Blood color\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Blood color is not supported.");
             }
             else if(!var.compareWithoutCase("ID #"))
             {
@@ -973,7 +973,7 @@ public:
                 //int const value = expr.toInt(0, 10, String::AllowSuffix);
                 //float const opacity = de::clamp(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
-                LOG_WARNING("Thing - \"Translucency\" patches are not supported.");
+                LOG_WARNING("DeHackEd Thing.Translucency is not supported.");
             }
             else if(!var.compareWithoutCase("Width"))
             {
@@ -1037,7 +1037,7 @@ public:
             else if(!var.compareWithoutCase("Particle event")) // Eternity
             {
                 /// @todo Support this extension.
-                LOG_WARNING("Frame - \"Particle event\" patches are not supported.");
+                LOG_WARNING("DeHackEd Frame.Particle event is not supported.");
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
@@ -1094,7 +1094,7 @@ public:
             }
             else if(var.beginsWith("Args", Qt::CaseInsensitive)) // Eternity
             {
-                LOG_WARNING("Frame - \"%s\" patches are not supported.") << var;
+                LOG_WARNING("DeHackEd Frame.%s is not supported.") << var;
             }
             else
             {
@@ -1159,7 +1159,7 @@ public:
 
             if(!var.compareWithoutCase("Offset")) // sound->id
             {
-                LOG_WARNING("Sound - \"Offset\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Offset is not supported.");
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
@@ -1183,7 +1183,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 1")) // sound->link
             {
-                LOG_WARNING("Sound - \"Zero 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 1 is not supported.");
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
@@ -1207,11 +1207,11 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 4")) // ??
             {
-                LOG_WARNING("Sound - \"Zero 4\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Zero 4 is not supported.");
             }
             else if(!var.compareWithoutCase("Neg. One 1")) // ??
             {
-                LOG_WARNING("Sound - \"Neg. One 1\" patches are not supported.");
+                LOG_WARNING("DeHackEd Sound.Neg. One 1 is not supported.");
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
@@ -1447,13 +1447,12 @@ public:
 
                     // Apply.
                     de::Uri const uri = composeMapUri(episode, map);
-                    ded_mapinfo_t *def;
-                    int idx = mapInfoDefForUri(uri, &def);
+                    int idx = ded->getMapInfoNum(uri);
                     if(idx >= 0)
                     {
-                        def->parTime = parTime;
+                        ded->mapInfos[idx].set("parTime", parTime);
                         LOG_DEBUG("MapInfo #%i \"%s\" parTime => %d")
-                                << idx << uri << def->parTime;
+                                << idx << uri << parTime;
                     }
                     else
                     {
@@ -1477,13 +1476,13 @@ public:
     void parseHelper() // Eternity
     {
         LOG_AS("parseHelper");
-        LOG_WARNING("[HELPER] patches are not supported.");
+        LOG_WARNING("DeHackEd [HELPER] patches are not supported.");
     }
 
     void parseSprites() // Eternity
     {
         LOG_AS("parseSprites");
-        LOG_WARNING("[SPRITES] patches are not supported.");
+        LOG_WARNING("DeHackEd [SPRITES] patches are not supported.");
     }
 
     void parseSounds() // Eternity
@@ -1749,7 +1748,7 @@ public:
 
         /// @todo Presently disabled because the engine can't handle remapping.
         DENG2_UNUSED(newName);
-        LOG_WARNING("Sprite name table remapping is not supported.");
+        LOG_WARNING("DeHackEd sprite name table remapping is not supported.");
         return true; // Pretend success.
 
 #if 0
@@ -1782,21 +1781,21 @@ public:
         /// @todo Why the restriction?
         if(findMusicLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("D_%1").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("D_%1").arg(newName ).toUtf8();
+        String origNamePref = String("D_%1").arg(origName);
+        String newNamePref = String("D_%1").arg(newName);
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
-        for(int i = 0; i < ded->music.size(); ++i)
+        for(int i = 0; i < ded->musics.size(); ++i)
         {
-            ded_music_t &music = ded->music[i];
-            if(qstricmp(music.lumpName, origNamePrefUtf8.constData())) continue;
+            Record &music = ded->musics[i];
+            if(music.gets("lumpName").compareWithoutCase(origNamePref)) continue;
 
-            qstrncpy(music.lumpName, newNamePrefUtf8.constData(), 9);
+            music.set("lumpName", newNamePref);
             numPatched++;
 
             LOG_DEBUG("Music #%i \"%s\" lumpName => \"%s\"")
-                    << i << music.id << music.lumpName;
+                    << i << music.gets("id") << music.gets("lumpName");
         }
         return (numPatched > 0);
     }

@@ -45,11 +45,12 @@
 #  include "network/net_demo.h" // playback
 #  include "render/rend_main.h" // Rend_MapSurfaceMaterialSpec
 #  include "render/billboard.h" // Rend_SpriteMaterialSpec
-#  include "render/sky.h"
+#  include "render/skydrawable.h"
 
 #  include "world/worldsystem.h"
 #  include "world/map.h"
 #  include "world/p_object.h"
+#  include "world/sky.h"
 #  include "world/thinkers.h"
 #  include "Sector"
 #  include "Surface"
@@ -3994,9 +3995,6 @@ void ResourceSystem::cacheForCurrentMap()
             }
         }
     }
-
-     // Sky models usually have big skins.
-    theSky->cacheDrawableAssets();
 
     // Precache model skins?
     if(useModels && precacheSkins)

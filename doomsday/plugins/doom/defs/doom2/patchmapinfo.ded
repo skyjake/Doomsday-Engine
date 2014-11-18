@@ -1,0 +1,87 @@
+#
+# MAPINFO / DED interoperability patches for DOOM 2
+#
+
+Header { Version = 6; }
+
+#
+# Sky mods: doom2, doom2-plut, doom2-tnt, hacx
+#
+Map Info mods "MAP01" if not custom { Sky = "sky1"; }
+Map Info mods "MAP02" if not custom { Sky = "sky1"; }
+Map Info mods "MAP03" if not custom { Sky = "sky1"; }
+Map Info mods "MAP04" if not custom { Sky = "sky1"; }
+Map Info mods "MAP05" if not custom { Sky = "sky1"; }
+Map Info mods "MAP06" if not custom { Sky = "sky1"; }
+Map Info mods "MAP07" if not custom { Sky = "sky1"; }
+Map Info mods "MAP08" if not custom { Sky = "sky1"; }
+Map Info mods "MAP09" if not custom { Sky = "sky1"; }
+Map Info mods "MAP10" if not custom { Sky = "sky1"; }
+Map Info mods "MAP11" if not custom { Sky = "sky1"; }
+
+# From MAP12 onwards, the sky changes to 'sky2'
+Map Info mods "MAP12" if not custom { Sky = "sky2"; }
+Map Info mods "MAP13" if not custom { Sky = "sky2"; }
+Map Info mods "MAP14" if not custom { Sky = "sky2"; }
+Map Info mods "MAP15" if not custom { Sky = "sky2"; }
+Map Info mods "MAP16" if not custom { Sky = "sky2"; }
+Map Info mods "MAP17" if not custom { Sky = "sky2"; }
+Map Info mods "MAP18" if not custom { Sky = "sky2"; }
+Map Info mods "MAP19" if not custom { Sky = "sky2"; }
+Map Info mods "MAP20" if not custom { Sky = "sky2"; }
+
+# From MAP21 onwards, the sky changes to 'sky3'
+Map Info mods "MAP21" if not custom { Sky = "sky3"; }
+Map Info mods "MAP22" if not custom { Sky = "sky3"; }
+Map Info mods "MAP23" if not custom { Sky = "sky3"; }
+Map Info mods "MAP24" if not custom { Sky = "sky3"; }
+Map Info mods "MAP25" if not custom { Sky = "sky3"; }
+Map Info mods "MAP26" if not custom { Sky = "sky3"; }
+Map Info mods "MAP27" if not custom { Sky = "sky3"; }
+Map Info mods "MAP28" if not custom { Sky = "sky3"; }
+Map Info mods "MAP29" if not custom { Sky = "sky3"; }
+Map Info mods "MAP30" if not custom { Sky = "sky3"; }
+Map Info mods "MAP31" if not custom { Sky = "sky3"; }
+Map Info mods "MAP32" if not custom { Sky = "sky3"; }
+
+#
+# Music mods: doom2, doom2-plut, doom2-tnt, hacx
+#
+Map Info mods "MAP01" if not custom { Music = "runnin"; }
+Map Info mods "MAP02" if not custom { Music = "stalks"; }
+Map Info mods "MAP03" if not custom { Music = "countd"; }
+Map Info mods "MAP04" if not custom { Music = "betwee"; }
+Map Info mods "MAP05" if not custom { Music = "doom";   }
+Map Info mods "MAP06" if not custom { Music = "the_da"; }
+Map Info mods "MAP07" if not custom { Music = "shawn";  }
+Map Info mods "MAP08" if not custom { Music = "ddtblu"; }
+Map Info mods "MAP09" if not custom { Music = "in_cit"; }
+Map Info mods "MAP10" if not custom { Music = "dead";   }
+Map Info mods "MAP11" if not custom { Music = "stlks2"; }
+Map Info mods "MAP12" if not custom { Music = "theda2"; }
+Map Info mods "MAP13" if not custom { Music = "doom2";  }
+Map Info mods "MAP14" if not custom { Music = "ddtbl2"; }
+Map Info mods "MAP15" if not custom { Music = "runni2"; }
+Map Info mods "MAP16" if not custom { Music = "dead2";  }
+Map Info mods "MAP17" if not custom { Music = "stlks3"; }
+Map Info mods "MAP18" if not custom { Music = "romero"; }
+Map Info mods "MAP19" if not custom { Music = "shawn2"; }
+Map Info mods "MAP20" if not custom { Music = "messag"; }
+Map Info mods "MAP21" if not custom { Music = "count2"; }
+
+Map Info mods "MAP31" if not custom { Music = "evil";   }
+
+# The rest of this file is skipped if HacX
+SkipIf hacx;
+
+Map Info mods "MAP22" if not custom { Music = "ddtbl3"; }
+Map Info mods "MAP23" if not custom { Music = "ampie";  }
+Map Info mods "MAP24" if not custom { Music = "theda3"; }
+Map Info mods "MAP25" if not custom { Music = "adrian"; }
+Map Info mods "MAP26" if not custom { Music = "messg2"; }
+Map Info mods "MAP27" if not custom { Music = "romer2"; }
+Map Info mods "MAP28" if not custom { Music = "tense";  }
+Map Info mods "MAP29" if not custom { Music = "shawn3"; }
+Map Info mods "MAP30" if not custom { Music = "openin"; }
+
+Map Info mods "MAP32" if not custom { Music = "ultima"; }

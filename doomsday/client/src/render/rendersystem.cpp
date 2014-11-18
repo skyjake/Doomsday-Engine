@@ -22,6 +22,7 @@
 #include "render/modelrenderer.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
+#include "render/skydrawable.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
@@ -89,6 +90,7 @@ uint Store::allocateVertices(uint count)
 DENG2_PIMPL(RenderSystem)
 {
     ModelRenderer models;
+    SkyDrawable sky;
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
@@ -277,6 +279,11 @@ ImageBank &RenderSystem::images()
 ModelRenderer &RenderSystem::modelRenderer()
 {
     return d->models;
+}
+
+SkyDrawable &RenderSystem::sky()
+{
+    return d->sky;
 }
 
 void RenderSystem::timeChanged(Clock const &)

@@ -103,6 +103,7 @@ struct mobj_s;
 struct plane_s;
 struct sector_s;
 struct side_s;
+struct sky_s;
 struct vertex_s;
 struct material_s;
 struct interceptor_s;
@@ -127,6 +128,8 @@ class Interceptor;
 class Line;
 class Material;
 class Sector;
+class Sky;
+
 #endif
 
 /**

@@ -18,7 +18,12 @@
  */
 
 #include "doomsday/defs/ded.h"
+#include "doomsday/defs/episode.h"
+#include "doomsday/defs/finale.h"
+#include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
+#include "doomsday/defs/music.h"
+#include "doomsday/defs/sky.h"
 
 #include <de/ArrayValue>
 #include <de/NumberValue>
@@ -47,12 +52,24 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
-    : flags (names.addRecord("flags"))
-    , models(names.addRecord("models"))
+    : flags   (names.addRecord("flags"))
+    , episodes(names.addRecord("episodes"))
+    , models  (names.addRecord("models"))
+    , skies   (names.addRecord("skies"))
+    , musics  (names.addRecord("musics"))
+    , mapInfos(names.addRecord("mapInfos"))
+    , finales (names.addRecord("finales"))
 {
     flags.addLookupKey("id");
+    episodes.addLookupKey("id");
+    finales.addLookupKey("id");
+    finales.addLookupKey("before");
+    finales.addLookupKey("after");
+    mapInfos.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
     models.addLookupKey("state");
+    musics.addLookupKey("id", DEDRegister::OnlyFirst);
+    skies.addLookupKey("id");
 
     clear();
 }
@@ -75,6 +92,27 @@ int ded_s::addFlag(String const &id, int value)
     return def.geti("__order__");
 }
 
+int ded_s::addEpisode()
+{
+    Record &def = episodes.append();
+    defn::Episode(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addFinale()
+{
+    Record &def = finales.append();
+    defn::Finale(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addMapInfo()
+{
+    Record &def = mapInfos.append();
+    defn::MapInfo(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
 int ded_s::addModel()
 {
     Record &def = models.append();
@@ -82,17 +120,32 @@ int ded_s::addModel()
     return def.geti("__order__");
 }
 
+int ded_s::addMusic()
+{
+    Record &def = musics.append();
+    defn::Music(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
+int ded_s::addSky()
+{
+    Record &def = skies.append();
+    defn::Sky(def).resetToDefaults();
+    return def.geti("__order__");
+}
+
 void ded_s::release()
 {
     flags.clear();
+    episodes.clear();
     mobjs.clear();
     states.clear();
     sprites.clear();
     lights.clear();
     models.clear();
     sounds.clear();
-    music.clear();
-    mapInfo.clear();
+    musics.clear();
+    mapInfos.clear();
     skies.clear();
     details.clear();
     materials.clear();
@@ -114,30 +167,6 @@ int DED_AddMobj(ded_t* ded, char const* idstr)
     ded_mobj_t *mo = ded->mobjs.append();
     strcpy(mo->id, idstr);
     return ded->mobjs.indexOf(mo);
-}
-
-int DED_AddSky(ded_t* ded, char const* id)
-{
-    ded_sky_t *sky = ded->skies.append();
-    int i;
-
-    strcpy(sky->id, id);
-    sky->height = DEFAULT_SKY_HEIGHT;
-    for(i = 0; i < NUM_SKY_LAYERS; ++i)
-    {
-        sky->layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
-        sky->layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
-    }
-    for(i = 0; i < NUM_SKY_MODELS; ++i)
-    {
-        sky->models[i].frameInterval = 1;
-        sky->models[i].color[0] = 1;
-        sky->models[i].color[1] = 1;
-        sky->models[i].color[2] = 1;
-        sky->models[i].color[3] = 1;
-    }
-
-    return ded->skies.indexOf(sky);
 }
 
 int DED_AddState(ded_t* ded, char const* id)
@@ -190,52 +219,6 @@ int DED_AddSound(ded_t* ded, char const* id)
     ded_sound_t* snd = ded->sounds.append();
     strcpy(snd->id, id);
     return ded->sounds.indexOf(snd);
-}
-
-int DED_AddMusic(ded_t* ded, char const* id)
-{
-    ded_music_t* mus = ded->music.append();
-    strcpy(mus->id, id);
-    return ded->music.indexOf(mus);
-}
-
-int DED_AddMapInfo(ded_t* ded, char const* uri)
-{
-    ded_mapinfo_t* inf = ded->mapInfo.append();
-    int i;
-
-    if(uri)
-    {
-        inf->uri = new de::Uri(uri, RC_NULL);
-        if(inf->uri->scheme().isEmpty())
-            inf->uri->setScheme("Maps");
-    }
-    inf->gravity = 1;
-    inf->parTime = -1; // unknown
-
-    inf->fogColor[0] = DEFAULT_FOG_COLOR_RED;
-    inf->fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
-    inf->fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    inf->fogDensity = DEFAULT_FOG_DENSITY;
-    inf->fogStart = DEFAULT_FOG_START;
-    inf->fogEnd = DEFAULT_FOG_END;
-
-    inf->sky.height = DEFAULT_SKY_HEIGHT;
-    for(i = 0; i < NUM_SKY_LAYERS; ++i)
-    {
-        inf->sky.layers[i].offset = DEFAULT_SKY_SPHERE_XOFFSET;
-        inf->sky.layers[i].colorLimit = DEFAULT_SKY_SPHERE_FADEOUT_LIMIT;
-    }
-    for(i = 0; i < NUM_SKY_MODELS; ++i)
-    {
-        inf->sky.models[i].frameInterval = 1;
-        inf->sky.models[i].color[0] = 1;
-        inf->sky.models[i].color[1] = 1;
-        inf->sky.models[i].color[2] = 1;
-        inf->sky.models[i].color[3] = 1;
-    }
-
-    return ded->mapInfo.indexOf(inf);
 }
 
 int DED_AddText(ded_t* ded, char const* id)
@@ -308,12 +291,6 @@ int DED_AddPtcGenStage(ded_ptcgen_t* gen)
     stage->hitSound.volume = 1;
 
     return gen->stages.indexOf(stage);
-}
-
-int DED_AddFinale(ded_t* ded)
-{
-    ded_finale_t* fin = ded->finales.append();
-    return ded->finales.indexOf(fin);
 }
 
 int DED_AddDecoration(ded_t* ded)
@@ -474,20 +451,6 @@ int ded_s::getStateNum(char const *id) const
     return idx;
 }
 
-/*
-ded_flag_t *ded_s::getFlag(char const *flag) const
-{
-    if(!flag || !flag[0]) return 0;
-
-    for(int i = flags.size() - 1; i >= 0; i--)
-    {
-        if(!qstricmp(flags[i].id, flag))
-            return &flags[i];
-    }
-
-    return 0;
-}*/
-
 int ded_s::evalFlags2(char const *ptr) const
 {
     LOG_AS("Def_EvalFlags");
@@ -514,6 +477,31 @@ int ded_s::evalFlags2(char const *ptr) const
     return value;
 }
 
+int ded_s::getEpisodeNum(String const &id) const
+{
+    if(Record const *def = episodes.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+}
+
+int ded_s::getMapInfoNum(de::Uri const &uri) const
+{
+    if(Record const *def = mapInfos.tryFind("id", uri.compose()))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+    /*for(int i = mapInfo.size() - 1; i >= 0; i--)
+    {
+        if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
+            return i;
+    }
+    return -1;*/
+}
+
 int ded_s::getModelNum(const char *id) const
 {
     if(Record const *def = models.tryFind("id", id))
@@ -531,6 +519,24 @@ int ded_s::getModelNum(const char *id) const
         } while(idx == -1 && ++i < (int)models.size());
     }
     return idx;*/
+}
+
+int ded_s::getSkyNum(char const *id) const
+{
+    if(Record const *def = skies.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+    /*if(!id || !id[0]) return -1;
+
+    for(int i = skies.size() - 1; i >= 0; i--)
+    {
+        if(!qstricmp(skies[i].id, id))
+            return i;
+    }
+    return -1;*/
 }
 
 int ded_s::getSoundNum(const char *id) const
@@ -558,30 +564,23 @@ int ded_s::getSoundNumForName(const char *name) const
     return 0;
 }
 
-ded_music_t *ded_s::getMusic(char const *id) const
-{
-    if(id && id[0] && music.size())
-    {
-        for(int i = 0; i < music.size(); ++i)
-        {
-            if(!qstricmp(music[i].id, id))
-                return &music[i];
-        }
-    }
-    return 0;
-}
-
 int ded_s::getMusicNum(const char* id) const
 {
-    int idx = -1;
-    if(id && id[0] && music.size())
+    if(Record const *def = musics.tryFind("id", id))
+    {
+        return def->geti("__order__");
+    }
+    return -1;
+
+    /*int idx = -1;
+    if(id && id[0] && musics.size())
     {
         int i = 0;
         do {
-            if(!qstricmp(music[i].id, id)) idx = i;
-        } while(idx == -1 && ++i < music.size());
+            if(!qstricmp(musics[i].id, id)) idx = i;
+        } while(idx == -1 && ++i < musics.size());
     }
-    return idx;
+    return idx;*/
 }
 
 ded_value_t* ded_s::getValueById(char const* id) const
@@ -601,30 +600,6 @@ ded_value_t* ded_s::getValueByUri(de::Uri const &uri) const
 {
     if(uri.scheme().compareWithoutCase("Values")) return 0;
     return getValueById(uri.pathCStr());
-}
-
-ded_mapinfo_t *ded_s::getMapInfo(de::Uri const *uri) const
-{
-    if(!uri) return 0;
-
-    for(int i = mapInfo.size() - 1; i >= 0; i--)
-    {
-        if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
-            return &mapInfo[i];
-    }
-    return 0;
-}
-
-ded_sky_t* ded_s::getSky(char const* id) const
-{
-    if(!id || !id[0]) return NULL;
-
-    for(int i = skies.size() - 1; i >= 0; i--)
-    {
-        if(!qstricmp(skies[i].id, id))
-            return &skies[i];
-    }
-    return 0;
 }
 
 ded_compositefont_t* ded_s::findCompositeFontDef(de::Uri const& uri) const

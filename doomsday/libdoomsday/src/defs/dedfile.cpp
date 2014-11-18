@@ -19,36 +19,38 @@
  */
 
 #include "doomsday/defs/dedfile.h"
+
+#include <de/App>
+#include <de/Log>
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
-#include <de/App>
-#include <de/Log>
 
 using namespace de;
 
-char dedReadError[512];
+static char dedReadError[512];
 
-void DED_SetError(char const *str)
+void DED_SetError(String const &message)
 {
-    strncpy(dedReadError, str, sizeof(dedReadError));
+    String msg = "Error: " + message + ".";
+    strncpy(dedReadError, msg.toUtf8().constData(), sizeof(dedReadError));
 }
 
-void Def_ReadProcessDED(ded_t *defs, String path)
+void Def_ReadProcessDED(ded_t *defs, String sourcePath)
 {
-    LOG_AS("Def_ReadProcessDED");
+     LOG_AS("Def_ReadProcessDED");
 
-    if(path.isEmpty()) return;
+     if(sourcePath.isEmpty()) return;
 
-    // Try FS2 first.
-    try
-    {
-        Block text;
-        App::rootFolder().locate<File const>(path) >> text;
-        if(!DED_ReadData(defs, text, path))
-        {
-            App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
-        }
+     // Try FS2 first.
+     try
+     {
+         Block text;
+         App::rootFolder().locate<File const>(sourcePath) >> text;
+         if(!DED_ReadData(defs, text, sourcePath, true/*consider it custom; there is no way to check...*/))
+         {
+             App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
+         }
         return; // Done!
     }
     catch(...)
@@ -56,7 +58,7 @@ void Def_ReadProcessDED(ded_t *defs, String path)
         // Try FS1 as fallback.
     }
 
-    de::Uri const uri(path, RC_NULL);
+    de::Uri const uri(sourcePath, RC_NULL);
     if(!App_FileSystem().accessFile(uri))
     {
         LOG_RES_WARNING("\"%s\" not found!") << NativePath(uri.asText()).pretty();
@@ -71,7 +73,7 @@ void Def_ReadProcessDED(ded_t *defs, String path)
         return;
     }
 
-    if(!DED_Read(defs, path))
+    if(!DED_Read(defs, sourcePath))
     {
         App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
     }
@@ -86,14 +88,15 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
         {
             uint8_t const *data = lump.cache();
             String sourcePath = lump.container().composePath();
-            DED_ReadData(ded, (char const *)data, sourcePath);
+            bool custom       = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+            DED_ReadData(ded, (char const *)data, sourcePath, custom);
             lump.unlock();
         }
         return true;
     }
     catch(LumpIndex::NotFoundError const&)
     {} // Ignore error.
-    DED_SetError("Bad lump number.");
+    DED_SetError("Bad lump number");
     return false;
 }
 
@@ -114,9 +117,8 @@ int DED_Read(ded_t *ded, String path)
 
         // Copy the file into the local buffer and parse definitions.
         hndl->read((uint8_t *)bufferedDef, bufferedDefSize);
+        int result = DED_ReadData(ded, bufferedDef, path, hndl->file().hasCustom());
         App_FileSystem().releaseFile(hndl->file());
-
-        int result = DED_ReadData(ded, bufferedDef, path);
 
         // Done. Release temporary storage and return the result.
         M_Free(bufferedDef);
@@ -125,13 +127,13 @@ int DED_Read(ded_t *ded, String path)
     catch(FS1::NotFoundError const &)
     {} // Ignore.
 
-    DED_SetError("File could not be opened for reading.");
+    DED_SetError("File could not be opened for reading");
     return false;
 }
 
-int DED_ReadData(ded_t *ded, char const *buffer, String _sourceFile)
+int DED_ReadData(ded_t *ded, char const *buffer, String sourceFile, bool sourceIsCustom)
 {
-    return DEDParser(ded).parse(buffer, _sourceFile);
+    return DEDParser(ded).parse(buffer, sourceFile, sourceIsCustom);
 }
 
 char const *DED_Error()

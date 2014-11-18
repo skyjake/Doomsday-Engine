@@ -43,6 +43,7 @@
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
+#include "world/sky.h"
 #include "world/thinkers.h"
 #include "BspLeaf"
 #include "BspNode"
@@ -67,6 +68,7 @@
 #include "render/fx/bloom.h"
 #include "render/fx/vignette.h"
 #include "render/fx/lensflares.h"
+#include "render/skydrawable.h"
 #include "render/vr.h"
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
@@ -426,7 +428,7 @@ void Rend_Register()
     LightDecoration::consoleRegister();
     LightGrid::consoleRegister();
     Lumobj::consoleRegister();
-    Sky::consoleRegister();
+    SkyDrawable::consoleRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Generator::consoleRegister();
@@ -687,9 +689,10 @@ bool Rend_SkyLightIsEnabled()
 
 Vector3f Rend_SkyLightColor()
 {
-    if(Rend_SkyLightIsEnabled())
+    if(Rend_SkyLightIsEnabled() && ClientApp::worldSystem().hasMap())
     {
-        Vector3f const &ambientColor = theSky->ambientColor();
+        Sky &sky = ClientApp::worldSystem().map().sky();
+        Vector3f const &ambientColor = sky.ambientColor();
 
         if(rendSkyLight != oldRendSkyLight ||
            !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f) ||
@@ -3452,10 +3455,20 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     popGLStateForPass(mode);
 }
 
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
+}
+
 static void drawSky()
 {
     DrawLists::FoundLists lists;
-    ClientApp::renderSystem().drawLists().findAll(SkyMaskGeom, lists);
+    rendSys().drawLists().findAll(SkyMaskGeom, lists);
     if(!devRendSkyAlways && lists.isEmpty())
     {
         return;
@@ -3490,7 +3503,7 @@ static void drawSky()
     glStencilFunc(GL_EQUAL, 1, 0xffffffff);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-    theSky->draw();
+    rendSys().sky().draw(&worldSys().skyAnimator());
 
     if(!devRendSkyAlways)
     {

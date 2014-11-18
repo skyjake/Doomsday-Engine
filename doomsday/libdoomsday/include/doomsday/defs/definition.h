@@ -1,6 +1,7 @@
-/** @file defs/definition.h
+/** @file definition.h  Base class for definition record accessors.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,8 +54,11 @@ public:
     /**
      * Inserts the default members into the definition. All definitions are required to
      * implement this, as it is automatically called for all newly created definitions.
+     *
+     * All definitions share some common members, so derived classes are required to
+     * call this before inserting their own members.
      */
-    virtual void resetToDefaults() = 0;
+    virtual void resetToDefaults();
 };
 
 } // namespace defn

@@ -27,8 +27,6 @@
 #include "doomsday.h"
 #include "p_mobj.h"
 
-#define TELEFOGHEIGHTF      (32)
-
 #ifdef __cplusplus
 extern "C" {
 #endif

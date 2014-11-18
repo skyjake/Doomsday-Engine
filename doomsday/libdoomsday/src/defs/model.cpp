@@ -28,6 +28,8 @@ namespace defn {
 
 void Model::resetToDefaults()
 {
+    Definition::resetToDefaults();
+
     // Add all expected fields with their default values.
     def().addText  ("id", "");
     def().addText  ("state", "");
@@ -50,6 +52,8 @@ void Model::resetToDefaults()
 Record &Model::addSub()
 {
     Record *sub = new Record;
+
+    sub->addBoolean("custom", false);
 
     sub->addText  ("filename", "");
     sub->addText  ("skinFilename", "");

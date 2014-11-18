@@ -39,7 +39,13 @@
 #include "doomsday/defs/dedparser.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
+#include "doomsday/defs/episode.h"
+#include "doomsday/defs/finale.h"
+#include "doomsday/defs/mapgraphnode.h"
+#include "doomsday/defs/mapinfo.h"
 #include "doomsday/defs/model.h"
+#include "doomsday/defs/music.h"
+#include "doomsday/defs/sky.h"
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/filesys/sys_direc.h"
@@ -54,6 +60,7 @@
 #include <de/App>
 #include <de/NativePath>
 #include <de/ArrayValue>
+#include <de/RecordValue>
 #include <de/game/Game>
 #include <de/memory.h>
 #include <de/vector1.h>
@@ -126,7 +133,7 @@ using namespace de;
 #define RV_FLAGS(lab, X, P) if(ISLABEL(lab)) { READFLAGS(X, P); } else
 #define RV_BLENDMODE(lab, X) if(ISLABEL(lab)) { READBLENDMODE(X); } else
 #define RV_ANYSTR(lab, X)   if(ISLABEL(lab)) { if(!ReadAnyString(&X)) { FAILURE } } else
-#define RV_END          { setError("Unknown label.", label); retVal = false; goto ded_end_read; }
+#define RV_END          { setError("Unknown label '" + String(label) + "'."); retVal = false; goto ded_end_read; }
 
 static struct xgclass_s *xgClassLinks;
 
@@ -154,7 +161,8 @@ DENG2_PIMPL(DEDParser)
         dd_bool     atEnd;
         int         lineNumber;
         String      fileName;
-        int         version; // v6 does not require semicolons.
+        int         version;  ///< v6 does not require semicolons.
+        bool        custom;   ///< @c true= source is a user supplied add-on.
     };
 
     typedef dedsource_s dedsource_t;
@@ -171,7 +179,7 @@ DENG2_PIMPL(DEDParser)
         zap(unreadToken);
     }
 
-    void DED_InitReader(char const *buffer, String fileName)
+    void DED_InitReader(char const *buffer, String fileName, bool sourceIsCustom)
     {
         if(source && source - sourceStack >= MAX_RECUR_DEPTH)
         {
@@ -195,6 +203,7 @@ DENG2_PIMPL(DEDParser)
         source->lineNumber = 1;
         source->fileName   = fileName;
         source->version    = DED_VERSION;
+        source->custom     = sourceIsCustom;
     }
 
     void DED_CloseReader()
@@ -207,6 +216,17 @@ DENG2_PIMPL(DEDParser)
         {
             source--;
         }
+    }
+
+    String readPosAsText()
+    {
+        return "\"" + (source? source->fileName : "[buffered-data]") + "\""
+               " on line #" + String::number(source? source->lineNumber : 0);
+    }
+
+    void setError(String const &message)
+    {
+        DED_SetError("In " + readPosAsText() + "\n  " + message);
     }
 
     /**
@@ -493,7 +513,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing integer value.");
+            setError("Missing integer value");
             return false;
         }
 
@@ -509,7 +529,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing integer value.");
+            setError("Missing integer value");
             return false;
         }
 
@@ -536,7 +556,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing float value.");
+            setError("Missing float value");
             return false;
         }
 
@@ -578,7 +598,7 @@ DENG2_PIMPL(DEDParser)
         ReadToken();
         if(ISTOKEN(";"))
         {
-            setError("Missing flags value.");
+            setError("Missing flags value");
             return false;
         }
         if(ISTOKEN("0"))
@@ -706,7 +726,7 @@ DENG2_PIMPL(DEDParser)
             ReadToken();
             if(source->atEnd)
             {
-                setError("Unexpected end of file.");
+                setError("Unexpected end of file");
                 return false;
             }
             if(ISTOKEN("}")) // End block.
@@ -718,7 +738,7 @@ DENG2_PIMPL(DEDParser)
             {
                 if(source->version <= 5)
                 {
-                    setError("Label without value.");
+                    setError("Label without value");
                     return false;
                 }
                 continue; // Semicolons are optional in v6.
@@ -757,16 +777,18 @@ DENG2_PIMPL(DEDParser)
         return value == expected;
     }
 
-    int readData(char const *buffer, String sourceFile)
+    int readData(char const *buffer, String sourceFile, bool sourceIsCustom)
     {
         char  dummy[128], label[128], tmp[256];
         int   dummyInt, idx, retVal = true;
+        int   prevEpisodeDefIdx = -1; // For "Copy".
         int   prevMobjDefIdx = -1; // For "Copy".
         int   prevStateDefIdx = -1; // For "Copy"
         int   prevLightDefIdx = -1; // For "Copy".
         int   prevMaterialDefIdx = -1; // For "Copy".
         int   prevModelDefIdx = -1; // For "Copy".
         int   prevMapInfoDefIdx = -1; // For "Copy".
+        int   prevMusicDefIdx = -1; // For "Copy".
         int   prevSkyDefIdx = -1; // For "Copy".
         int   prevDetailDefIdx = -1; // For "Copy".
         int   prevGenDefIdx = -1; // For "Copy".
@@ -779,7 +801,7 @@ DENG2_PIMPL(DEDParser)
         int   bCopyNext = 0;
 
         // Get the next entry from the source stack.
-        DED_InitReader(buffer, sourceFile);
+        DED_InitReader(buffer, sourceFile, sourceIsCustom);
 
         // For including other files -- we must know where we are.
         String sourceFileDir = sourceFile.fileNamePath();
@@ -916,8 +938,211 @@ DENG2_PIMPL(DEDParser)
                 if(qstrlen(id))
                 {
                     ded->addFlag(id, value);
-                    // Sanity check.
-                    DENG2_ASSERT(ded->flags.find("id", id).geti("value") == value);
+                    Record &flag = ded->flags.find("id", id);
+                    DENG2_ASSERT(flag.geti("value") == value); // Sanity check.
+                    if(source->custom) flag.set("custom", true);
+                }
+            }
+
+            if(ISTOKEN("Episode"))
+            {
+                bool bModify = false;
+                Record dummyEpsd;
+                Record *epsd = 0;
+
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // New episodes are appended to the end of the list.
+                    idx = ded->addEpisode();
+                    epsd = &ded->episodes[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    ded_stringid_t otherEpisodeId;
+
+                    READSTR(otherEpisodeId);
+                    ReadToken();
+
+                    idx = ded->getEpisodeNum(otherEpisodeId);
+                    if(idx >= 0)
+                    {
+                        epsd = &ded->episodes[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Episode \"%s\" in %s on line #%i")
+                                << otherEpisodeId << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+
+                        // We'll read into a dummy definition.
+                        defn::Episode(dummyEpsd).resetToDefaults();
+                        epsd = &dummyEpsd;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(epsd != 0);
+
+                if(prevEpisodeDefIdx >= 0 && bCopyNext)
+                {
+                    ded->episodes.copy(prevEpisodeDefIdx, *epsd);
+                }
+                if(source->custom) epsd->set("custom", true);
+
+                defn::Episode mainDef(*epsd);
+                int hub = 0;
+                int notHubMap = 0;
+                FINDBEGIN;
+                forever
+                {
+                    READLABEL;
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READSTR((*epsd)["id"]);
+                    }
+                    else RV_URI("Start Map", (*epsd)["startMap"], "Maps")
+                    RV_STR("Title", (*epsd)["title"])
+                    RV_STR("Menu Help Info", (*epsd)["menuHelpInfo"])
+                    RV_URI("Menu Image", (*epsd)["menuImage"], "Patches")
+                    RV_STR("Menu Shortcut", (*epsd)["menuShortcut"])
+                    if(ISLABEL("Hub"))
+                    {
+                        Record *hubRec;
+                        // Add another hub.
+                        if(hub >= mainDef.hubCount())
+                        {
+                            mainDef.addHub();
+                        }
+                        DENG_ASSERT(hub < mainDef.hubCount());
+                        hubRec = &mainDef.hub(hub);
+                        if(source->custom) hubRec->set("custom", true);
+
+                        int map = 0;
+                        FINDBEGIN;
+                        forever
+                        {
+                            READLABEL;
+                            RV_STR("ID", (*hubRec)["id"])
+                            if(ISLABEL("Map"))
+                            {
+                                // Add another map.
+                                if(map >= int(hubRec->geta("map").size()))
+                                {
+                                    QScopedPointer<Record> map(new Record);
+                                    defn::MapGraphNode(*map).resetToDefaults();
+                                    (*hubRec)["map"].value<ArrayValue>()
+                                            .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                                }
+                                DENG_ASSERT(map < int(hubRec->geta("map").size()));
+                                Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
+                                if(source->custom) mapRec.set("custom", true);
+
+                                int exit = 0;
+                                FINDBEGIN;
+                                forever
+                                {
+                                    READLABEL;
+                                    RV_URI("ID", mapRec["id"], "Maps")
+                                    RV_INT("Warp Number", mapRec["warpNumber"])
+                                    if(ISLABEL("Exit"))
+                                    {
+                                        defn::MapGraphNode mgNodeDef(mapRec);
+
+                                        // Add another exit.
+                                        if(exit >= mgNodeDef.exitCount())
+                                        {
+                                            mgNodeDef.addExit();
+                                        }
+                                        DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                        Record &exitRec = mgNodeDef.exit(exit);
+                                        if(source->custom) exitRec.set("custom", true);
+
+                                        FINDBEGIN;
+                                        forever
+                                        {
+                                            READLABEL;
+                                            RV_STR("ID", exitRec["id"])
+                                            RV_URI("Target Map", exitRec["targetMap"], "Maps")
+                                            RV_END
+                                            CHECKSC;
+                                        }
+                                        exit++;
+                                    }
+                                    else RV_END
+                                    CHECKSC;
+                                }
+                                map++;
+                            }
+                            else RV_END
+                            CHECKSC;
+                        }
+                        hub++;
+                    }
+                    else if(ISLABEL("Map"))
+                    {
+                        // Add another none-hub map.
+                        if(notHubMap >= int(epsd->geta("map").size()))
+                        {
+                            QScopedPointer<Record> map(new Record);
+                            defn::MapGraphNode(*map).resetToDefaults();
+                            (*epsd)["map"].value<ArrayValue>()
+                                    .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                        }
+                        DENG_ASSERT(notHubMap < int(epsd->geta("map").size()));
+                        Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
+                        if(source->custom) mapRec.set("custom", true);
+
+                        int exit = 0;
+                        FINDBEGIN;
+                        forever
+                        {
+                            READLABEL;
+                            RV_URI("ID", mapRec["id"], "Maps")
+                            RV_INT("Warp Number", mapRec["warpNumber"])
+                            if(ISLABEL("Exit"))
+                            {
+                                defn::MapGraphNode mgNodeDef(mapRec);
+
+                                // Add another exit.
+                                if(exit >= mgNodeDef.exitCount())
+                                {
+                                    mgNodeDef.addExit();
+                                }
+                                DENG_ASSERT(exit < mgNodeDef.exitCount());
+                                Record &exitRec = mgNodeDef.exit(exit);
+                                if(source->custom) exitRec.set("custom", true);
+
+                                FINDBEGIN;
+                                forever
+                                {
+                                    READLABEL;
+                                    RV_STR("ID", exitRec["id"])
+                                    RV_URI("Target Map", exitRec["targetMap"], "Maps")
+                                    RV_END
+                                    CHECKSC;
+                                }
+                                exit++;
+                            }
+                            else RV_END
+                            CHECKSC;
+                        }
+                        notHubMap++;
+                    }
+                    else RV_END
+                    CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevEpisodeDefIdx = idx;
                 }
             }
 
@@ -944,7 +1169,7 @@ DENG2_PIMPL(DEDParser)
                     idx = ded->getMobjNum(otherMobjId);
                     if(idx < 0)
                     {
-                        LOG_RES_WARNING("Ignoring unknown Mobj %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Mobj \"%s\" in %s on line #%i")
                                 << otherMobjId << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
@@ -960,7 +1185,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1045,7 +1270,7 @@ DENG2_PIMPL(DEDParser)
                     idx = ded->getStateNum(otherStateId);
                     if(idx < 0)
                     {
-                        LOG_RES_WARNING("Ignoring unknown State %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown State \"%s\" in %s on line #%i")
                                 << otherStateId << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
 
@@ -1061,7 +1286,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1212,7 +1437,7 @@ DENG2_PIMPL(DEDParser)
 
                     if(!mat)
                     {
-                        LOG_RES_WARNING("Ignoring unknown Material %s in %s on line #%i")
+                        LOG_RES_WARNING("Ignoring unknown Material \"%s\" in %s on line #%i")
                                 << otherMat->asText()
                                 << (source? source->fileName : "?")
                                 << (source? source->lineNumber : 0);
@@ -1231,7 +1456,7 @@ DENG2_PIMPL(DEDParser)
                 }
                 else
                 {
-                    setError("Cannot both Copy(Previous) and Modify.");
+                    setError("Cannot both Copy(Previous) and Modify");
                     retVal = false;
                     goto ded_end_read;
                 }
@@ -1263,7 +1488,7 @@ DENG2_PIMPL(DEDParser)
 
                         if(layer >= DED_MAX_MATERIAL_LAYERS)
                         {
-                            setError("Too many Material layers.");
+                            setError("Too many Material layers");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1326,7 +1551,7 @@ DENG2_PIMPL(DEDParser)
 
                         if(light == DED_MAX_MATERIAL_DECORATIONS)
                         {
-                            setError("Too many lights in material.");
+                            setError("Too many lights in material");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1418,9 +1643,10 @@ DENG2_PIMPL(DEDParser)
 
                     if(bCopyNext) ded->models.copy(prevModelDefIdx, mdl);
                 }
+                if(source->custom) mdl.set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     RV_STR("ID", mdl["id"])
@@ -1532,186 +1758,394 @@ DENG2_PIMPL(DEDParser)
             }
 
             if(ISTOKEN("Music"))
-            {   // A new music.
-                ded_music_t*        mus;
+            {
+                bool bModify = false;
+                Record dummyMusic;
+                Record *music = 0;
 
-                idx = DED_AddMusic(ded, "");
-                mus = &ded->music[idx];
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // New musics are appended to the end of the list.
+                    idx = ded->addMusic();
+                    music = &ded->musics[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    ded_stringid_t otherMusicId;
+
+                    READSTR(otherMusicId);
+                    ReadToken();
+
+                    idx = ded->getMusicNum(otherMusicId);
+                    if(idx >= 0)
+                    {
+                        music = &ded->musics[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Music \"%s\" in %s on line #%i")
+                                << otherMusicId << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+
+                        // We'll read into a dummy definition.
+                        defn::Music(dummyMusic).resetToDefaults();
+                        music = &dummyMusic;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(music != 0);
+
+                if(prevMusicDefIdx >= 0 && bCopyNext)
+                {
+                    ded->musics.copy(prevMusicDefIdx, *music);
+                }
+                if(source->custom) music->set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", mus->id)
-                    RV_STR("Lump", mus->lumpName)
-                    RV_URI("File name", &mus->path, "Music")
-                    RV_URI("File", &mus->path, "Music")
-                    RV_URI("Ext", &mus->path, "Music") // Both work.
-                    RV_INT("CD track", mus->cdTrack)
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READSTR((*music)["id"]);
+                    }
+                    else RV_STR("Name", (*music)["title"])
+                    RV_STR("Lump", (*music)["lumpName"])
+                    RV_URI("File name", (*music)["path"], "Music")
+                    RV_URI("File", (*music)["path"], "Music")
+                    RV_URI("Ext", (*music)["path"], "Music") // Both work.
+                    RV_INT("CD track", (*music)["cdTrack"])
                     RV_END
                     CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevMusicDefIdx = idx;
                 }
             }
 
             if(ISTOKEN("Sky"))
-            {   // A new sky definition.
-                ded_sky_t* sky;
-                uint sub = 0;
+            {
+                int model = 0;
 
-                idx = DED_AddSky(ded, "");
-                sky = &ded->skies[idx];
+                // New skies are appended to the end of the list.
+                idx = ded->addSky();
+                Record &sky = ded->skies[idx];
 
-                // Should we copy the previous definition?
                 if(prevSkyDefIdx >= 0 && bCopyNext)
                 {
-                    ded->skies.copyTo(sky, prevSkyDefIdx);
+                    //Record *prevSky = &ded->skies[prevSkyDefIdx];
+                    ded->skies.copy(prevSkyDefIdx, sky);
                 }
-                prevSkyDefIdx = idx;
-                sub = 0;
+                if(source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", sky->id)
-                    RV_FLAGS("Flags", sky->flags, "sif_")
-                    RV_FLT("Height", sky->height)
-                    RV_FLT("Horizon offset", sky->horizonOffset)
-                    RV_VEC("Light color", sky->color, 3)
+                    RV_STR("ID", sky["id"])
+                    RV_FLAGS("Flags", sky["flags"], "sif_")
+                    RV_FLT("Height", sky["height"])
+                    RV_FLT("Horizon offset", sky["horizonOffset"])
+                    RV_VEC_VAR("Light color", sky["color"], 3)
                     if(ISLABEL("Layer 1") || ISLABEL("Layer 2"))
                     {
-                        ded_skylayer_t *sl = sky->layers + atoi(label+6) - 1;
+                        defn::Sky mainDef(sky);
+                        Record &layerDef = mainDef.layer(atoi(label+6) - 1);
+                        if(source->custom) layerDef.set("custom", true);
+
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("Material", &sl->material, 0)
-                            RV_URI("Texture", &sl->material, "Textures" )
-                            RV_FLAGS("Flags", sl->flags, "slf_")
-                            RV_FLT("Offset", sl->offset)
-                            RV_FLT("Color limit", sl->colorLimit)
+                            RV_URI("Material", layerDef["material"], 0)
+                            RV_URI("Texture", layerDef["material"], "Textures" )
+                            RV_FLAGS("Flags", layerDef["flags"], "slf_")
+                            RV_FLT("Offset", layerDef["offset"])
+                            RV_FLT("Offset speed", layerDef["offsetSpeed"])
+                            RV_FLT("Color limit", layerDef["colorLimit"])
                             RV_END
                             CHECKSC;
                         }
                     }
                     else if(ISLABEL("Model"))
                     {
-                        ded_skymodel_t *sm = &sky->models[sub];
-                        if(sub == NUM_SKY_MODELS)
-                        {   // Too many!
-                            setError("Too many Sky models.");
+                        defn::Sky mainDef(sky);
+
+                        if(model == 32/*MAX_SKY_MODELS*/)
+                        {
+                            // Too many!
+                            setError("Too many Sky models");
                             retVal = false;
                             goto ded_end_read;
                         }
-                        sub++;
+
+                        // Add another model.
+                        if(model >= mainDef.modelCount())
+                        {
+                            mainDef.addModel();
+                        }
+                        DENG_ASSERT(model < mainDef.modelCount());
+
+                        Record &mdlDef = mainDef.model(model);
+                        if(source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_STR("ID", sm->id)
-                            RV_INT("Layer", sm->layer)
-                            RV_FLT("Frame interval", sm->frameInterval)
-                            RV_FLT("Yaw", sm->yaw)
-                            RV_FLT("Yaw speed", sm->yawSpeed)
-                            RV_VEC("Rotate", sm->rotate, 2)
-                            RV_VEC("Offset factor", sm->coordFactor, 3)
-                            RV_VEC("Color", sm->color, 4)
-                            RV_ANYSTR("Execute", sm->execute)
+                            RV_STR("ID", mdlDef["id"])
+                            RV_INT("Layer", mdlDef["layer"])
+                            RV_FLT("Frame interval", mdlDef["frameInterval"])
+                            RV_FLT("Yaw", mdlDef["yaw"])
+                            RV_FLT("Yaw speed", mdlDef["yawSpeed"])
+                            RV_VEC_VAR("Rotate", mdlDef["rotate"], 2)
+                            RV_VEC_VAR("Offset factor", mdlDef["originOffset"], 3)
+                            RV_VEC_VAR("Color", mdlDef["color"], 4)
+                            RV_STR("Execute", mdlDef["execute"])
                             RV_END
                             CHECKSC;
                         }
+                        model++;
                     }
                     else RV_END
                     CHECKSC;
                 }
+
+                prevSkyDefIdx = idx;
             }
 
             if(ISTOKEN("Map")) // Info
-            {   // A new map info.
-                uint sub;
-                ded_mapinfo_t* mi;
+            {
+                ReadToken();
+                if(!ISTOKEN("Info"))
+                {
+                    setError("Unknown token 'Map" + String(token) + "'");
+                    retVal = false;
+                    goto ded_end_read;
+                }
 
-                idx = DED_AddMapInfo(ded, NULL);
-                mi = &ded->mapInfo[idx];
+                bool bModify = false;
+                Record dummyMi;
+                Record *mi = nullptr;
+                int model = 0;
 
-                // Should we copy the previous definition?
+                ReadToken();
+                if(!ISTOKEN("Mods"))
+                {
+                    // New mapinfos are appended to the end of the list.
+                    idx = ded->addMapInfo();
+                    mi = &ded->mapInfos[idx];
+                }
+                else if(!bCopyNext)
+                {
+                    de::Uri *otherMap = nullptr;
+                    READURI(&otherMap, "Maps");
+                    ReadToken();
+
+                    idx = ded->getMapInfoNum(*otherMap);
+                    if(idx >= 0)
+                    {
+                        mi = &ded->mapInfos[idx];
+                        bModify = true;
+                    }
+                    else
+                    {
+                        LOG_RES_WARNING("Ignoring unknown Map \"%s\" in %s on line #%i")
+                                << otherMap->asText()
+                                << (source? source->fileName : "?")
+                                << (source? source->lineNumber : 0);
+                    }
+                    delete otherMap;
+
+                    if(mi && ISTOKEN("if"))
+                    {
+                        bool negate = false;
+                        bool testCustom = false;
+                        forever
+                        {
+                            ReadToken();
+                            if(ISTOKEN("{"))
+                            {
+                                break;
+                            }
+
+                            if(!testCustom)
+                            {
+                                if(ISTOKEN("not"))
+                                {
+                                    negate = !negate;
+                                }
+                                else if(ISTOKEN("custom"))
+                                {
+                                    testCustom = true;
+                                }
+                                else RV_END
+                            }
+                            else RV_END
+                        }
+
+                        if(testCustom)
+                        {
+                            if(mi->getb("custom") != negate)
+                            {
+                                mi = nullptr; // skip
+                            }
+                        }
+                        else
+                        {
+                            setError("Expected condition expression to follow 'if'");
+                            retVal = false;
+                            goto ded_end_read;
+                        }
+                    }
+
+                    if(!mi)
+                    {
+                        // We'll read into a dummy definition.
+                        defn::MapInfo(dummyMi).resetToDefaults();
+                        mi = &dummyMi;
+                    }
+                }
+                else
+                {
+                    setError("Cannot both Copy(Previous) and Modify");
+                    retVal = false;
+                    goto ded_end_read;
+                }
+                DENG2_ASSERT(mi != 0);
+
                 if(prevMapInfoDefIdx >= 0 && bCopyNext)
                 {
-                    ded->mapInfo.copyTo(mi, prevMapInfoDefIdx);
+                    // Record *prevMapInfo = &ded->mapInfos[prevMapInfoDefIdx];
+                    ded->mapInfos.copy(prevMapInfoDefIdx, *mi);
                 }
-                prevMapInfoDefIdx = idx;
-                sub = 0;
+                if(source->custom) mi->set("custom", true);
+
+                Record &sky = mi->subrecord("sky");
+                if(source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_URI("ID", &mi->uri, "Maps")
-                    RV_STR("Name", mi->name)
-                    RV_STR("Author", mi->author)
-                    RV_FLAGS("Flags", mi->flags, "mif_")
-                    RV_STR("Music", mi->music)
-                    RV_FLT("Par time", mi->parTime)
-                    RV_FLT("Fog color R", mi->fogColor[0])
-                    RV_FLT("Fog color G", mi->fogColor[1])
-                    RV_FLT("Fog color B", mi->fogColor[2])
-                    RV_FLT("Fog start", mi->fogStart)
-                    RV_FLT("Fog end", mi->fogEnd)
-                    RV_FLT("Fog density", mi->fogDensity)
-                    RV_FLT("Ambient light", mi->ambient)
-                    RV_FLT("Gravity", mi->gravity)
-                    RV_ANYSTR("Execute", mi->execute)
-                    RV_STR("Sky", mi->skyID)
-                    RV_FLT("Sky height", mi->sky.height)
-                    RV_FLT("Horizon offset", mi->sky.horizonOffset)
-                    RV_VEC("Sky light color", mi->sky.color, 3)
+                    // ID cannot be changed when modifying
+                    if(!bModify && ISLABEL("ID"))
+                    {
+                        READURI((*mi)["id"], "Maps");
+                    }
+                    else RV_STR("Title", (*mi)["title"])
+                    RV_STR("Name", (*mi)["title"]) // Alias
+                    RV_URI("Title image", (*mi)["titleImage"], "Patches")
+                    RV_STR("Author", (*mi)["author"])
+                    RV_FLAGS("Flags", (*mi)["flags"], "mif_")
+                    RV_STR("Music", (*mi)["music"])
+                    RV_FLT("Par time", (*mi)["parTime"])
+                    if(ISLABEL("Fog color R"))
+                    {
+                        float red; READFLT(red);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(0, red);
+                    }
+                    else if(ISLABEL("Fog color G"))
+                    {
+                        float green; READFLT(green);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(1, green);
+                    }
+                    else if(ISLABEL("Fog color B"))
+                    {
+                        float blue; READFLT(blue);
+                        (*mi)["fogColor"].value<ArrayValue>().setElement(2, blue);
+                    }
+                    else
+                    RV_FLT("Fog start", (*mi)["fogStart"])
+                    RV_FLT("Fog end", (*mi)["fogEnd"])
+                    RV_FLT("Fog density", (*mi)["fogDensity"])
+                    RV_STR("Fade Table", (*mi)["fadeTable"])
+                    RV_FLT("Ambient light", (*mi)["ambient"])
+                    RV_FLT("Gravity", (*mi)["gravity"])
+                    RV_STR("Execute", (*mi)["execute"])
+                    RV_STR("Sky", (*mi)["skyId"])
+                    RV_FLT("Sky height", sky["height"])
+                    RV_FLT("Horizon offset", sky["horizonOffset"])
+                    RV_VEC_VAR("Sky light color", sky["color"], 3)
                     if(ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                     {
-                        ded_skylayer_t *sl = mi->sky.layers + atoi(label+10) - 1;
+                        defn::Sky skyDef(sky);
+                        Record &layerDef = skyDef.layer(atoi(label+10) - 1);
+                        if(source->custom) layerDef.set("custom", true);
+
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("Material", &sl->material, 0)
-                            RV_URI("Texture", &sl->material, "Textures")
-                            RV_FLAGS("Flags", sl->flags, "slf_")
-                            RV_FLT("Offset", sl->offset)
-                            RV_FLT("Color limit", sl->colorLimit)
+                            RV_URI("Material", layerDef["material"], 0)
+                            RV_URI("Texture", layerDef["material"], "Textures" )
+                            RV_FLAGS("Flags", layerDef["flags"], "slf_")
+                            RV_FLT("Offset", layerDef["offset"])
+                            RV_FLT("Offset speed", layerDef["offsetSpeed"])
+                            RV_FLT("Color limit", layerDef["colorLimit"])
                             RV_END
                             CHECKSC;
                         }
                     }
                     else if(ISLABEL("Sky Model"))
                     {
-                        ded_skymodel_t *sm = &mi->sky.models[sub];
-                        if(sub == NUM_SKY_MODELS)
-                        {   // Too many!
-                            setError("Too many Sky models.");
+                        defn::Sky skyDef(sky);
+
+                        if(model == 32/*MAX_SKY_MODELS*/)
+                        {
+                            // Too many!
+                            setError("Too many Sky models");
                             retVal = false;
                             goto ded_end_read;
                         }
-                        sub++;
+
+                        // Add another model.
+                        if(model >= skyDef.modelCount())
+                        {
+                            skyDef.addModel();
+                        }
+                        DENG_ASSERT(model < skyDef.modelCount());
+
+                        Record &mdlDef = skyDef.model(model);
+                        if(source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_STR("ID", sm->id)
-                            RV_INT("Layer", sm->layer)
-                            RV_FLT("Frame interval", sm->frameInterval)
-                            RV_FLT("Yaw", sm->yaw)
-                            RV_FLT("Yaw speed", sm->yawSpeed)
-                            RV_VEC("Rotate", sm->rotate, 2)
-                            RV_VEC("Offset factor", sm->coordFactor, 3)
-                            RV_VEC("Color", sm->color, 4)
-                            RV_ANYSTR("Execute", sm->execute)
+                            RV_STR("ID", mdlDef["id"])
+                            RV_INT("Layer", mdlDef["layer"])
+                            RV_FLT("Frame interval", mdlDef["frameInterval"])
+                            RV_FLT("Yaw", mdlDef["yaw"])
+                            RV_FLT("Yaw speed", mdlDef["yawSpeed"])
+                            RV_VEC_VAR("Rotate", mdlDef["rotate"], 2)
+                            RV_VEC_VAR("Offset factor", mdlDef["originOffset"], 3)
+                            RV_VEC_VAR("Color", mdlDef["color"], 4)
+                            RV_STR("Execute", mdlDef["execute"])
                             RV_END
                             CHECKSC;
                         }
+                        model++;
                     }
                     else RV_END
                     CHECKSC;
+                }
+
+                // If we did not read into a dummy update the previous index.
+                if(idx > 0)
+                {
+                    prevMapInfoDefIdx = idx;
                 }
             }
 
@@ -1737,7 +2171,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         else
                         {
-                            setError("Syntax error in Text value.");
+                            setError("Syntax error in Text value");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1811,7 +2245,7 @@ DENG2_PIMPL(DEDParser)
                             int ascii = atoi(label);
                             if(ascii < 0 || ascii > 255)
                             {
-                                setError("Invalid ascii code.");
+                                setError("Invalid ascii code");
                                 retVal = false;
                                 goto ded_end_read;
                             }
@@ -1855,7 +2289,7 @@ DENG2_PIMPL(DEDParser)
                     READLABEL_NOBREAK;
                     if(strchr(label, '|'))
                     {
-                        setError("Value labels can not include '|' characters (ASCII 124).");
+                        setError("Value labels can not include '|' characters (ASCII 124)");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -1882,7 +2316,7 @@ DENG2_PIMPL(DEDParser)
                         }
                         else
                         {
-                            setError("Syntax error in Value string.");
+                            setError("Syntax error in Value string");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -1925,7 +2359,7 @@ DENG2_PIMPL(DEDParser)
                     else
                     {
                         // Only the above characters are allowed.
-                        setError("Illegal token.");
+                        setError("Illegal token");
                         retVal = false;
                         goto ded_end_read;
                     }
@@ -2131,16 +2565,18 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Finale") || ISTOKEN("InFine"))
             {
-                idx = DED_AddFinale(ded);
-                ded_finale_t *fin = &ded->finales[idx];
+                // New finales are appended to the end of the list.
+                idx = ded->addFinale();
+                Record &fin = ded->finales[idx];
+                if(source->custom) fin.set("custom", true);
 
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_STR("ID", fin->id)
-                    RV_URI("Before", &fin->before, "Maps")
-                    RV_URI("After", &fin->after, "Maps")
+                    RV_STR("ID", fin["id"])
+                    RV_URI("Before", fin["before"], "Maps")
+                    RV_URI("After", fin["after"], "Maps")
                     RV_INT("Game", dummyInt)
                     if(ISLABEL("Script"))
                     {
@@ -2161,9 +2597,8 @@ DENG2_PIMPL(DEDParser)
                             }
                             ReadToken();
                         }
-                        QByteArray bufferUtf8 = buffer.toUtf8();
-                        fin->script = (char *) M_Realloc(fin->script, bufferUtf8.length() + 1);
-                        qstrcpy(fin->script, bufferUtf8.constData());
+                        buffer.squeeze();
+                        fin.set("script", buffer);
                     }
                     else RV_END
                     CHECKSC;
@@ -2204,7 +2639,7 @@ DENG2_PIMPL(DEDParser)
                     {
                         if(sub == DED_DECOR_NUM_LIGHTS)
                         {
-                            setError("Too many lights in decoration.");
+                            setError("Too many lights in decoration");
                             retVal = false;
                             goto ded_end_read;
                         }
@@ -2622,25 +3057,6 @@ DENG2_PIMPL(DEDParser)
         // Reset state for continuing.
         strncpy(token, "", MAX_TOKEN_LEN);
     }
-
-    void setError(char const *str, char const *more = 0)
-    {
-        extern char dedReadError[512];
-        if(more)
-        {
-            sprintf(dedReadError, "Error in %s:\n  Line %i: %s (%s)",
-                    source? source->fileName.toUtf8().constData() : "?",
-                    source? source->lineNumber : 0,
-                    str, more);
-        }
-        else
-        {
-            sprintf(dedReadError, "Error in %s:\n  Line %i: %s",
-                    source? source->fileName.toUtf8().constData() : "?",
-                    source? source->lineNumber : 0,
-                    str);
-        }
-    }
 };
 
 DEDParser::DEDParser(ded_t *ded) : d(new Instance(this))
@@ -2648,7 +3064,7 @@ DEDParser::DEDParser(ded_t *ded) : d(new Instance(this))
     d->ded = ded;
 }
 
-int DEDParser::parse(char const *buffer, String sourceFile)
+int DEDParser::parse(char const *buffer, String sourceFile, bool sourceIsCustom)
 {
-    return d->readData(buffer, sourceFile);
+    return d->readData(buffer, sourceFile, sourceIsCustom);
 }

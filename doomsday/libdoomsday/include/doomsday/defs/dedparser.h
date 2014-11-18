@@ -37,7 +37,7 @@ class LIBDOOMSDAY_PUBLIC DEDParser
 public:
     DEDParser(ded_t *ded);
 
-    int parse(char const *buffer, de::String sourceFile);
+    int parse(char const *buffer, de::String sourceFile, bool sourceIsCustom);
 
 private:
     DENG2_PRIVATE(d)

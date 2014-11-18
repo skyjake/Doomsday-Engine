@@ -43,6 +43,7 @@
 #include "../../doom/include/dstrings.h"
 #include "../../doom/include/g_game.h"
 #include "../../doom/include/info.h"
+#include "../../doom/include/intermission.h"
 #include "../../doom/include/m_cheat.h"
 #include "../../doom/include/m_random.h"
 #include "../../doom/include/p_enemy.h"
@@ -59,6 +60,5 @@
 #include "../../doom/include/r_defs.h"
 #include "../../doom/include/st_stuff.h"
 #include "../../doom/include/tables.h"
-#include "../../doom/include/wi_stuff.h"
 
 #endif // __JDOOM_CONVENIENCE_H__

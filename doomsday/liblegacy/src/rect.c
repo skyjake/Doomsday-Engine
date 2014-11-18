@@ -65,7 +65,7 @@ Rect *Rect_NewFromRaw(RectRaw const *rawRect)
 
 void Rect_Delete(Rect *r)
 {
-    DENG_ASSERT(r);
+    if(!r) return;
     Point2_Delete(r->origin);
     Size2_Delete(r->size);
     M_Free(r);

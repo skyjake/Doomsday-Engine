@@ -1546,161 +1546,111 @@ void C_DECL A_Explode(mobj_t *mo)
     P_RadiusAttack(mo, mo->target, 128, 127);
 }
 
+typedef enum {
+    ST_SPAWN_FLOOR,
+    ST_SPAWN_DOOR,
+    ST_LEAVEMAP
+} SpecialType;
+
+/// @todo Should be defined in MapInfo.
+typedef struct {
+    int gameModeBits;
+    char const *mapPath;
+    dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
+    mobjtype_t bossType;
+    //dd_bool massacreOnDeath;
+    SpecialType special;
+    int tag;
+    int type;
+} BossTrigger;
+
+/**
+ * Trigger special effects on certain maps if all "bosses" are dead.
+ *
+ * @note DOOM ver 1.9 behavoir change:
+ * @see http://doomwiki.org/wiki/Tag_666#Difference_in_behaviour_between_Doom1_and_Ultimate_Doom
+ */
 void C_DECL A_BossDeath(mobj_t *mo)
 {
+    static BossTrigger const bossTriggers[] =
+    {
+        { GM_ANY_DOOM2, "MAP07", false, MT_FATSO,   ST_SPAWN_FLOOR, 666, (int)FT_LOWERTOLOWEST  },
+        { GM_ANY_DOOM2, "MAP07", false, MT_BABY,    ST_SPAWN_FLOOR, 667, (int)FT_RAISETOTEXTURE },
+        { GM_ANY_DOOM,  "E1M8",  true,  MT_BRUISER, ST_SPAWN_FLOOR, 666, (int)FT_LOWERTOLOWEST  },
+        { GM_ANY_DOOM,  "E2M8",  true,  MT_CYBORG,  ST_LEAVEMAP,    0,   0                      },
+        { GM_ANY_DOOM,  "E3M8",  true,  MT_SPIDER,  ST_LEAVEMAP,    0,   0                      },
+        { GM_ANY_DOOM,  "E4M6",  false, MT_CYBORG,  ST_SPAWN_DOOR,  666, (int)DT_BLAZEOPEN      },
+        { GM_ANY_DOOM,  "E4M8",  false, MT_SPIDER,  ST_SPAWN_FLOOR, 666, (int)FT_LOWERTOLOWEST  }
+    };
+    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
+
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
+
+    // Make sure there is a player alive.
     int i;
-    countmobjworker_params_t parm;
-
-    if(gameModeBits & GM_ANY_DOOM2)
-    {
-        if(G_CurrentMapNumber() != 6)
-            return;
-        if(mo->type != MT_FATSO && mo->type != MT_BABY)
-            return;
-    }
-    /*
-     * DOOM ver 1.9 behavioral change:
-     * Many classic PWADS such as "Doomsday of UAC" (UAC_DEAD.wad) rely on the
-     * old behavior. Episode 4 is exempt by PrBoom's precedent.
-     */
-    else if(cfg.anyBossDeath && gameEpisode < 3)
-    {
-        if(G_CurrentMapNumber() != 7)
-            return;
-
-        if(gameEpisode != 0 && mo->type == MT_BRUISER)
-            return;
-    }
-    else
-    {
-        switch(gameEpisode)
-        {
-        case 0:
-            if(G_CurrentMapNumber() != 7)
-                return;
-
-            if(mo->type != MT_BRUISER)
-                return;
-            break;
-
-        case 1:
-            if(G_CurrentMapNumber() != 7)
-                return;
-
-            if(mo->type != MT_CYBORG)
-                return;
-            break;
-
-        case 2:
-            if(G_CurrentMapNumber() != 7)
-                return;
-
-            if(mo->type != MT_SPIDER)
-                return;
-
-            break;
-
-        case 3:
-            switch(G_CurrentMapNumber())
-            {
-            case 5:
-                if(mo->type != MT_CYBORG)
-                    return;
-                break;
-
-            case 7:
-                if(mo->type != MT_SPIDER)
-                    return;
-                break;
-
-            default:
-                return;
-            }
-            break;
-
-        default:
-            if(G_CurrentMapNumber() != 7)
-                return;
-            break;
-        }
-    }
-
-    // Make sure there is a player alive for victory...
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame && players[i].health > 0)
             break;
     }
+    if(i == MAXPLAYERS) return;
 
-    if(i == MAXPLAYERS)
-        return; // No one left alive, so do not end game.
-
-    // Scan the remaining thinkers to see if all bosses are dead.
-    parm.excludeMobj = mo;
-    parm.type        = mo->type;
-    parm.minHealth   = 1;
-
-    if(!noMobjRemains(&parm))
-        return; // Other boss not dead.
-
-    // Victory!
-    if(gameModeBits & GM_ANY_DOOM2)
+    for(i = 0; i < numBossTriggers; ++i)
     {
-        if(G_CurrentMapNumber() == 6)
-        {
-            if(mo->type == MT_FATSO)
-            {
-                Line *dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-                P_FreeDummyLine(dummyLine);
-                return;
-            }
+        BossTrigger const *trigger = &bossTriggers[i];
 
-            if(mo->type == MT_BABY)
-            {
-                Line *dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 667;
-                EV_DoFloor(dummyLine, FT_RAISETOTEXTURE);
-                P_FreeDummyLine(dummyLine);
-                return;
-            }
+        if(!(trigger->gameModeBits & gameModeBits)) continue;
+
+        // Mobj type requirement change in DOOM ver 1.9
+        if(!(cfg.anyBossDeath && trigger->compatAnyBoss))
+        {
+            // Not a boss on this map?
+            if(mo->type != trigger->bossType) continue;
         }
-    }
-    else
-    {
-        if(gameEpisode == 0)
+
+        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
+
+        // Scan the remaining thinkers to determine if this is indeed the last boss.
         {
+            countmobjworker_params_t parm;
+            parm.excludeMobj = mo;
+            parm.type        = mo->type;
+            parm.minHealth   = 1;
+
+            // Anything left alive?
+            if(!noMobjRemains(&parm)) continue;
+        }
+
+        // Kill all remaining enemies?
+        /*if(trigger->massacreOnDeath)
+        {
+            P_Massacre();
+        }*/
+
+        // Trigger the special.
+        switch(trigger->special)
+        {
+        case ST_SPAWN_FLOOR: {
             Line *dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = 666;
-            EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
             P_FreeDummyLine(dummyLine);
-            return;
-        }
+            break; }
 
-        if(gameEpisode == 3)
-        {
-            if(G_CurrentMapNumber() == 5)
-            {
-                Line *dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoDoor(dummyLine, DT_BLAZEOPEN);
-                P_FreeDummyLine(dummyLine);
-                return;
-            }
+        case ST_SPAWN_DOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
 
-            if(G_CurrentMapNumber() == 7)
-            {
-                Line *dummyLine = P_AllocDummyLine();
-                P_ToXLine(dummyLine)->tag = 666;
-                EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-                P_FreeDummyLine(dummyLine);
-                return;
-            }
+        case ST_LEAVEMAP:
+            G_SetGameActionMapCompletedAndSetNextMap();
+            break;
+
+        default: DENG_ASSERT(!"A_BossDeath: Unknown trigger special type");
         }
     }
-
-    G_SetGameActionMapCompletedAndSetNextMap();
 }
 
 void C_DECL A_Hoof(mobj_t *mo)
@@ -1709,9 +1659,13 @@ void C_DECL A_Hoof(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
     S_StartSound(SFX_HOOF |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  (!Str_CompareIgnoreCase(currentMapPath, "E1M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E2M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E3M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E4M8"))? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1721,9 +1675,13 @@ void C_DECL A_Metal(mobj_t *mo)
      * @todo Kludge: Only play very loud sounds in map 8.
      * \todo: Implement a MAPINFO option for this.
      */
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
     S_StartSound(SFX_METAL |
                  (!(gameModeBits & GM_ANY_DOOM2) &&
-                  G_CurrentMapNumber() == 7 ? DDSF_NO_ATTENUATION : 0), mo);
+                  (!Str_CompareIgnoreCase(currentMapPath, "E1M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E2M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E3M8") ||
+                   !Str_CompareIgnoreCase(currentMapPath, "E4M8"))? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

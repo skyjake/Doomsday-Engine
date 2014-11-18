@@ -23,6 +23,7 @@
 #include "p_spec.h"
 
 #include <cstring>
+#include "gamesession.h"
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "m_argv.h"
@@ -389,7 +390,7 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
         break;
 
     case 53:
@@ -436,7 +437,7 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 105:
         // Secret EXIT
-        G_SetGameActionMapCompleted(G_NextMap(true), 0, true);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
         break;
 
     case 106:
@@ -998,7 +999,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int /*side*/)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_SetGameActionMapCompleted(G_NextMap(false), 0, false);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;
@@ -1095,7 +1096,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int /*side*/)
         if(cyclingMaps && mapCycleNoExit)
             break;
 
-        G_SetGameActionMapCompleted(G_NextMap(true), 0, true);
+        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
         break;

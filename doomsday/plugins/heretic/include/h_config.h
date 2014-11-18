@@ -35,6 +35,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "doomsday.h"
 #include "doomdef.h"
 #include "hu_lib.h"
 
@@ -214,8 +215,10 @@ typedef struct jheretic_config_s {
     float           xhairColor[4];
 
     // Network.
-    byte            netDeathmatch;
+    char *          netEpisode;
+    Uri *           netMap;
 
+    byte            netDeathmatch;
     byte            netMobDamageModifier;    // multiplier for non-player mobj damage
     byte            netMobHealthModifier;    // health modifier for non-player mobjs
     int             netGravity;              // Custom gravity multiplier.
@@ -224,8 +227,6 @@ typedef struct jheretic_config_s {
     byte            netNoMonsters;
     byte            netRespawn;
     byte            netJumping;
-    byte            netEpisode;
-    byte            netMap;
     byte            netSkill;
     byte            netSlot;
     byte            netColor;

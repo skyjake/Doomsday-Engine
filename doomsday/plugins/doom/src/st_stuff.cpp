@@ -1547,7 +1547,7 @@ void WeaponSlot_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 void WeaponSlot_UpdateGeometry(uiwidget_t *ob)
 {
     guidata_weaponslot_t *wpns = (guidata_weaponslot_t *)ob->typedata;
-    char const *text = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.hudPatchReplaceMode), wpns->patchId);
+    String const text = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.hudPatchReplaceMode), wpns->patchId);
     patchinfo_t info;
 
     Rect_SetWidthHeight(ob->geometry, 0, 0);
@@ -1555,13 +1555,13 @@ void WeaponSlot_UpdateGeometry(uiwidget_t *ob)
     if(G_Ruleset_Deathmatch()) return;
     if(ST_AutomapIsActive(ob->player) && cfg.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[ob->player].plr->mo) && Get(DD_PLAYBACK)) return;
-    if(!text && !R_GetPatchInfo(wpns->patchId, &info)) return;
+    if(text.isEmpty() && !R_GetPatchInfo(wpns->patchId, &info)) return;
 
-    if(text)
+    if(!text.isEmpty())
     {
         Size2Raw textSize;
         FR_SetFont(ob->font);
-        FR_TextSize(&textSize, text);
+        FR_TextSize(&textSize, text.toUtf8().constData());
         Rect_SetWidthHeight(ob->geometry, textSize.width  * cfg.statusbarScale,
                                            textSize.height * cfg.statusbarScale);
         return;

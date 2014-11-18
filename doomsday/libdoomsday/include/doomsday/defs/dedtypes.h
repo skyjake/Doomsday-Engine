@@ -46,7 +46,7 @@ typedef ded_stringid_t ded_string_t;
 typedef ded_stringid_t ded_mobjid_t;
 typedef ded_stringid_t ded_stateid_t;
 typedef ded_stringid_t ded_soundid_t;
-typedef ded_stringid_t ded_musicid_t;
+//typedef ded_stringid_t ded_musicid_t;
 typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
@@ -331,6 +331,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     }
 } ded_sound_t;
 
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
@@ -378,16 +379,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_skymodel_s {
     }
 } ded_skymodel_t;
 
-#define NUM_SKY_LAYERS      2
-#define NUM_SKY_MODELS      32
-
-// Sky flags.
-#define SIF_DRAW_SPHERE     0x1 ///< Always draw the sky sphere.
-
-#define DEFAULT_SKY_HEIGHT               ( .666667f )
-#define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
     ded_stringid_t  id;
     ded_flags_t     flags; // Flags.
@@ -414,14 +405,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
         }
     }
 } ded_sky_t;
-
-/// @todo These values should be tweaked a bit.
-#define DEFAULT_FOG_START       0
-#define DEFAULT_FOG_END         2100
-#define DEFAULT_FOG_DENSITY     0.0001f
-#define DEFAULT_FOG_COLOR_RED   138.0f/255
-#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
-#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
     de::Uri*        uri; // ID of the map (e.g. E2M3 or MAP21).
@@ -451,6 +434,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
         sky.reallocate();
     }
 } ded_mapinfo_t;
+#endif
 
 typedef struct {
     ded_stringid_t  id;
@@ -480,6 +464,7 @@ typedef struct {
     }
 } ded_value_t;
 
+#if 0
 typedef struct {
     ded_stringid_t  id;
     de::Uri*        before;
@@ -492,6 +477,7 @@ typedef struct {
         M_Free(script);
     }
 } ded_finale_t;
+#endif
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     int             id;

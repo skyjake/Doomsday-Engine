@@ -276,7 +276,7 @@ bool ACScriptInterpreter::startScript(int scriptNumber, de::Uri const *mapUri,
 
     if(mapUri)
     {
-        if(gameMapUri != *mapUri)
+        if(COMMON_GAMESESSION->mapUri() != *mapUri)
         {
             // Script is not for the current map.
             // Add it to the store to be started when that map is next entered.

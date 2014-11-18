@@ -1,6 +1,7 @@
-/** @file defs/definition.cpp
+/** @file definition.cpp  Base class for definition record accessors.
  *
- * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,6 +18,7 @@
  */
 
 #include "doomsday/defs/definition.h"
+#include <de/Record>
 
 using namespace de;
 
@@ -41,6 +43,11 @@ int Definition::order() const
 Definition::operator bool() const
 {
     return accessedRecordPtr() != 0;
+}
+
+void Definition::resetToDefaults()
+{
+    def().addBoolean("custom", false);
 }
 
 } // namespace defn

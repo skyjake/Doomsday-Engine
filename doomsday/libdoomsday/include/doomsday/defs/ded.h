@@ -56,6 +56,9 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     //DEDArray<ded_flag_t> flags;
     DEDRegister flags;
 
+    // Episodes.
+    DEDRegister episodes;
+
     // Map object information.
     DEDArray<ded_mobj_t> mobjs;
 
@@ -77,16 +80,19 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister models;
 
     // Skies.
-    DEDArray<ded_sky_t> skies;
+    //DEDArray<ded_sky_t> skies;
+    DEDRegister skies;
 
     // Sounds.
     DEDArray<ded_sound_t> sounds;
 
     // Music.
-    DEDArray<ded_music_t> music;
+    //DEDArray<ded_music_t> music;
+    DEDRegister musics;
 
     // Map information.
-    DEDArray<ded_mapinfo_t> mapInfo;
+    //DEDArray<ded_mapinfo_t> mapInfo;
+    DEDRegister mapInfos;
 
     // Text.
     DEDArray<ded_text_t> text;
@@ -104,7 +110,8 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_ptcgen_t> ptcGens;
 
     // Finales.
-    DEDArray<ded_finale_t> finales;
+    //DEDArray<ded_finale_t> finales;
+    DEDRegister finales;
 
     // Decorations.
     DEDArray<ded_decor_t> decorations;
@@ -134,7 +141,17 @@ public:
 
     int addFlag(de::String const &id, int value);
 
+    int addEpisode();
+
+    int addFinale();
+
+    int addMapInfo();
+
     int addModel();
+
+    int addMusic();
+
+    int addSky();
 
     //ded_flag_t *getFlag(char const *flag) const;
 
@@ -156,7 +173,13 @@ public:
 
     int getStateNum(char const *id) const;
 
+    int getEpisodeNum(de::String const &id) const;
+
+    int getMapInfoNum(de::Uri const &uri) const;
+
     int getModelNum(char const *id) const;
+
+    int getSkyNum(char const *id) const;
 
     int getSoundNum(char const *id) const;
 
@@ -165,23 +188,17 @@ public:
      * @param name  Sound name.
      * @return If the name is not found, returns the NULL sound index (zero).
      */
-    int getSoundNumForName(const char* name) const;
+    int getSoundNumForName(char const *name) const;
 
-    ded_music_t *getMusic(char const *id) const;
+    int getMusicNum(char const *id) const;
 
-    int getMusicNum(const char* id) const;
+    ded_value_t *getValueById(char const *id) const;
 
-    ded_value_t* getValueById(char const* id) const;
+    ded_value_t *getValueByUri(de::Uri const &uri) const;
 
-    ded_value_t* getValueByUri(de::Uri const &uri) const;
+    ded_compositefont_t *findCompositeFontDef(de::Uri const &uri) const;
 
-    ded_mapinfo_t *getMapInfo(de::Uri const *uri) const;
-
-    ded_sky_t* getSky(char const* id) const;
-
-    ded_compositefont_t* findCompositeFontDef(de::Uri const& uri) const;
-
-    ded_compositefont_t* getCompositeFont(char const* uriCString) const;
+    ded_compositefont_t *getCompositeFont(char const *uriCString) const;
 
 protected:
     void release();
@@ -205,17 +222,17 @@ int             DED_AddLight(ded_t* ded, char const* stateID);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterial(ded_t* ded, char const* uri);
 LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
 int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
-int             DED_AddSky(ded_t* ded, char const* id);
+//int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
-LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
-int             DED_AddMapInfo(ded_t* ded, char const* uri);
+//LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
+//int             DED_AddMapInfo(ded_t* ded, char const* uri);
 int             DED_AddText(ded_t* ded, char const* id);
 int             DED_AddTextureEnv(ded_t* ded, char const* id);
 int             DED_AddValue(ded_t *ded, char const* id);
 int             DED_AddDetail(ded_t* ded, char const* lumpname);
 int             DED_AddPtcGen(ded_t* ded, char const* state);
 int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
-int             DED_AddFinale(ded_t* ded);
+//int             DED_AddFinale(ded_t* ded);
 int             DED_AddDecoration(ded_t* ded);
 int             DED_AddReflection(ded_t* ded);
 int             DED_AddGroup(ded_t* ded);

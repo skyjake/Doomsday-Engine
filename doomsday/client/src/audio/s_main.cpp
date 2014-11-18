@@ -38,13 +38,15 @@
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/filesys/fs_util.h>
 
+using namespace de;
+
 BEGIN_PROF_TIMERS()
   PROF_SOUND_STARTFRAME
 END_PROF_TIMERS()
 
 D_CMD(PlaySound);
 
-audiodriver_t* audioDriver = NULL;
+audiodriver_t *audioDriver;
 
 int showSoundInfo = false;
 int soundMinDist = 256; // No distance attenuation this close.
@@ -510,10 +512,10 @@ int S_StartMusicNum(int id, dd_bool looped)
     // Don't play music if the volume is at zero.
     if(isDedicated) return true;
 
-    if(id < 0 || id >= defs.music.size()) return false;
-    ded_music_t *def = &defs.music[id];
+    if(id < 0 || id >= defs.musics.size()) return false;
+    Record const *def = &defs.musics[id];
 
-    LOG_AUDIO_MSG("Starting music '%s'") << def->id;
+    LOG_AUDIO_MSG("Starting music '%s'") << def->gets("id");
 
     return Mus_Start(def, looped);
 

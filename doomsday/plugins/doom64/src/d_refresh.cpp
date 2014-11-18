@@ -268,7 +268,7 @@ void D_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
-        WI_Drawer();
+        IN_Drawer();
     }
 
     // Draw HUD displays; menu, messages.

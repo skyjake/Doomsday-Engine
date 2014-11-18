@@ -1,7 +1,7 @@
 /** @file d_netsv.cpp  Common code related to net games (server-side).
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -27,7 +27,6 @@
 #include "player.h"
 #include "p_user.h"
 #include "p_map.h"
-#include "mapinfo.h"
 #include "mobj.h"
 #include "p_actor.h"
 #include "g_common.h"
@@ -44,9 +43,10 @@
 #include <cstdio>
 #include <cstring>
 
+using namespace de;
 using namespace common;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 #  define SOUND_COUNTDOWN       SFX_PICKUP_KEY
 #elif __JDOOM__ || __JDOOM64__
 #  define SOUND_COUNTDOWN       SFX_GETPOW
@@ -230,6 +230,10 @@ static void NetSv_CycleToMapNum(de::Uri const &mapUri)
 /**
  * Reads through the MapCycle cvar and finds the map with the given index.
  * Rules that apply to the map are returned in 'rules'.
+ *
+ * @pre The game session has already begun. Necessary because the cycle rules
+ * for Hexen reference maps by "warp numbers", which, can only be resolved in
+ * the context of an episode.
  */
 static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 {
@@ -324,7 +328,6 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 #if !__JHEXEN__
                     uint episode = 0;
 #endif
-
 #if __JDOOM__
                     if(!(gameModeBits & GM_ANY_DOOM2))
                     {
@@ -349,7 +352,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
 #if __JHEXEN__
                     // In Hexen map numbers must be translated (urgh...).
-                    de::Uri mapUri = P_TranslateMapIfExists(map);
+                    de::Uri mapUri = TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), map);
 #else
                     de::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
@@ -567,7 +570,7 @@ void NetSv_NewPlayerEnters(int plrNum)
         playerclass_t pClass = P_ClassForPlayerWhenRespawning(plrNum, false);
         playerstart_t const *start;
 
-        if((start = P_GetPlayerStart(gameMapEntrance, plrNum, false)))
+        if((start = P_GetPlayerStart(COMMON_GAMESESSION->mapEntryPoint(), plrNum, false)))
         {
             mapspot_t const *spot = &mapSpots[start->spot];
 
@@ -596,7 +599,7 @@ void NetSv_Intermission(int flags, int state, int time)
 {
     if(IS_CLIENT) return;
 
-    Writer *msg = D_NetWrite();
+    writer_s *msg = D_NetWrite();
     Writer_WriteByte(msg, flags);
 
     /// @todo jHeretic does not transmit the intermission info!
@@ -604,23 +607,22 @@ void NetSv_Intermission(int flags, int state, int time)
     if(flags & IMF_BEGIN)
     {
         // Only include the necessary information.
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteUInt16(msg, wmInfo.maxKills);
-        Writer_WriteUInt16(msg, wmInfo.maxItems);
-        Writer_WriteUInt16(msg, wmInfo.maxSecret);
-#endif
-#if __JDOOM__ || __JDOOM64__
-        Uri_Write(reinterpret_cast<Uri *>(&::wmInfo.nextMap), msg);
-        Uri_Write(reinterpret_cast<Uri *>(&::wmInfo.currentMap), msg);
-#elif __JHEXEN__
-        Uri_Write(reinterpret_cast<Uri *>(&::nextMapUri), msg);
-        Writer_WriteByte(msg, ::nextMapEntrance);
-#endif
-#if __JDOOM__ || __JDOOM64__
-        Writer_WriteByte(msg, wmInfo.didSecret);
-#endif
+#  if __JDOOM__ || __JDOOM64__
+        Writer_WriteUInt16(msg, ::wmInfo.maxKills);
+        Writer_WriteUInt16(msg, ::wmInfo.maxItems);
+        Writer_WriteUInt16(msg, ::wmInfo.maxSecret);
+#  endif
+        Uri_Write(reinterpret_cast<uri_s *>(&::wmInfo.nextMap), msg);
+#  if __JHEXEN__
+        Writer_WriteByte(msg, ::wmInfo.nextMapEntryPoint);
+#  else
+        Uri_Write(reinterpret_cast<uri_s *>(&::wmInfo.currentMap), msg);
+#  endif
+#  if __JDOOM__ || __JDOOM64__
+        Writer_WriteByte(msg, ::wmInfo.didSecret);
+#  endif
     }
-#endif
+#  endif
 
     if(flags & IMF_STATE)
     {
@@ -641,7 +643,7 @@ void NetSv_SendTotalCounts(int to)
 #ifndef __JHEXEN__
     if(IS_CLIENT) return;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteInt32(writer, totalKills);
     Writer_WriteInt32(writer, totalItems);
     Writer_WriteInt32(writer, totalSecret);
@@ -657,12 +659,15 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    de::String const gameId = COMMON_GAMESESSION->gameId();
+    AutoStr *gameId    = AutoStr_FromTextStd(COMMON_GAMESESSION->gameId().toLatin1().constData());
+    AutoStr *episodeId = AutoStr_FromTextStd(COMMON_GAMESESSION->episodeId().toLatin1().constData());
+    de::Uri mapUri     = COMMON_GAMESESSION->mapUri();
 
     // Print a short message that describes the game state.
-    LOG_NET_NOTE("Sending game setup: %s %s %s")
-            << gameId
-            << gameMapUri.resolved()
+    LOG_NET_NOTE("Sending game setup: %s %s %s %s")
+            << Str_Text(gameId)
+            << Str_Text(episodeId)
+            << mapUri.resolved()
             << gameConfigString;
 
     // Send an update to all the players in the game.
@@ -671,18 +676,17 @@ void NetSv_SendGameState(int flags, int to)
         if(!players[i].plr->inGame) continue;
         if((unsigned)to != DDSP_ALL_PLAYERS && to != i) continue;
 
-        Writer *writer = D_NetWrite();
+        writer_s *writer = D_NetWrite();
         Writer_WriteByte(writer, flags);
 
         // Game identity key.
-        Writer_WriteByte(writer, gameId.length());
-        Writer_Write(writer, gameId.toLatin1().constData(), gameId.length());
+        Str_Write(gameId, writer);
 
-        // The current map.
-        Uri_Write(reinterpret_cast<Uri *>(&gameMapUri), writer);
+        // Current map.
+        Uri_Write(reinterpret_cast<uri_s *>(&mapUri), writer);
 
-        // The current episode number.
-        Writer_WriteByte(writer, ::gameEpisode);
+        // Current episode.
+        Str_Write(episodeId, writer);
 
         // Old map number. Presently unused.
         Writer_WriteByte(writer, 0);
@@ -723,7 +727,7 @@ void NetSv_PlayerMobjImpulse(mobj_t *mobj, float mx, float my, float mz)
     // Which player?
     int plrNum = mobj->player - players;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteUInt16(writer, mobj->thinker.id);
     Writer_WriteFloat(writer, mx);
     Writer_WriteFloat(writer, my);
@@ -739,7 +743,7 @@ void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int an
     LOGDEV_NET_MSG("NetSv_SendPlayerSpawnPosition: Player #%i pos:%s angle:%x")
             << plrNum << de::Vector3f(x, y, z).asText() << angle;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteFloat(writer, x);
     Writer_WriteFloat(writer, y);
     Writer_WriteFloat(writer, z);
@@ -760,7 +764,7 @@ void NetSv_SendPlayerState2(int srcPlrNum, int destPlrNum, int flags, dd_bool /*
         !players[destPlrNum].plr->inGame))
         return;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
 
     // Include the player number if necessary.
     if(pType == GPT_PLAYER_STATE2)
@@ -807,7 +811,7 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags, dd_bool /*r
 
     LOGDEV_NET_MSG("NetSv_SendPlayerState: src=%i, dest=%i, flags=%x") << srcPlrNum << destPlrNum << flags;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
 
     // Include the player number if necessary.
     if(pType == GPT_PLAYER_STATE)
@@ -1044,7 +1048,7 @@ void NetSv_SendPlayerInfo(int whose, int toWhom)
 {
     if(IS_CLIENT) return;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteByte(writer, whose);
     Writer_WriteByte(writer, cfg.playerColor[whose]);
 
@@ -1054,7 +1058,7 @@ void NetSv_SendPlayerInfo(int whose, int toWhom)
     Net_SendPacket(toWhom, GPT_PLAYER_INFO, Writer_Data(writer), Writer_Size(writer));
 }
 
-void NetSv_ChangePlayerInfo(int from, Reader *msg)
+void NetSv_ChangePlayerInfo(int from, reader_s *msg)
 {
     player_t *pl = &players[from];
 
@@ -1170,7 +1174,7 @@ void NetSv_SendPlayerClass(int plrNum, char cls)
 {
     App_Log(DE2_DEV_NET_MSG, "NetSv_SendPlayerClass: Player %i has class %i", plrNum, cls);
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteByte(writer, cls);
     Net_SendPacket(plrNum, GPT_CLASS, Writer_Data(writer), Writer_Size(writer));
 }
@@ -1179,7 +1183,7 @@ void NetSv_SendJumpPower(int target, float power)
 {
     if(!IS_SERVER) return;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteFloat(writer, power);
     Net_SendPacket(target, GPT_JUMP_POWER, Writer_Data(writer), Writer_Size(writer));
 }
@@ -1218,7 +1222,7 @@ void NetSv_ExecuteCheat(int player, char const *command)
     }
 }
 
-void NetSv_DoCheat(int player, Reader *msg)
+void NetSv_DoCheat(int player, reader_s *msg)
 {
     size_t len = Reader_ReadUInt16(msg);
     char *command = (char *)Z_Calloc(len + 1, PU_GAMESTATIC, 0);
@@ -1283,7 +1287,7 @@ static void NetSv_HitFloorCallback(mobj_t *mo, void * /*context*/)
     P_HitFloor(mo);
 }
 
-void NetSv_DoFloorHit(int player, Reader *msg)
+void NetSv_DoFloorHit(int player, reader_s *msg)
 {
     player_t *plr = &players[player];
 
@@ -1306,7 +1310,7 @@ void NetSv_DoFloorHit(int player, Reader *msg)
     NetSv_TemporaryPlacedCallback(mo, 0, pos, mo->angle, NetSv_HitFloorCallback);
 }
 
-void NetSv_DoAction(int player, Reader *msg)
+void NetSv_DoAction(int player, reader_s *msg)
 {
     player_t *pl = &players[player];
 
@@ -1371,7 +1375,7 @@ void NetSv_DoAction(int player, Reader *msg)
     }
 }
 
-void NetSv_DoDamage(int player, Reader *msg)
+void NetSv_DoDamage(int player, reader_s *msg)
 {
     int damage       = Reader_ReadInt32(msg);
     thid_t target    = Reader_ReadUInt16(msg);
@@ -1394,7 +1398,7 @@ void NetSv_SaveGame(uint sessionId)
         return;
 
     // This will make the clients save their games.
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_SAVE, Writer_Data(writer), Writer_Size(writer));
 
@@ -1410,7 +1414,7 @@ void NetSv_LoadGame(uint sessionId)
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteUInt32(writer, sessionId);
     Net_SendPacket(DDSP_ALL_PLAYERS, GPT_LOAD, Writer_Data(writer), Writer_Size(writer));
 
@@ -1438,7 +1442,7 @@ void NetSv_SendMessageEx(int plrNum, char const *msg, dd_bool yellow)
         D_NetMessageNoSound(CONSOLEPLAYER, msg);
     }
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteUInt16(writer, strlen(msg));
     Writer_Write(writer, msg, strlen(msg));
     Net_SendPacket(plrNum,
@@ -1467,7 +1471,7 @@ void NetSv_MaybeChangeWeapon(int plrNum, int weapon, int ammo, int force)
             "NetSv_MaybeChangeWeapon: Plr=%i Weapon=%i Ammo=%i Force=%i",
             plrNum, weapon, ammo, force);
 
-    Writer *writer = D_NetWrite();
+    writer_s *writer = D_NetWrite();
     Writer_WriteInt16(writer, weapon);
     Writer_WriteInt16(writer, ammo);
     Writer_WriteByte(writer, force != 0);
@@ -1482,7 +1486,7 @@ void NetSv_SendLocalMobjState(mobj_t *mobj, char const *stateName)
     Str_InitStatic(&name, stateName);
 
     // Inform the client about this.
-    Writer *msg = D_NetWrite();
+    writer_s *msg = D_NetWrite();
     Writer_WriteUInt16(msg, mobj->thinker.id);
     Writer_WriteUInt16(msg, mobj->target? mobj->target->thinker.id : 0); // target id
     Str_Write(&name, msg); // state to switch to
