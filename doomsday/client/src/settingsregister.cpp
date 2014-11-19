@@ -380,7 +380,7 @@ DENG2_OBSERVES(App, GameChange)
             return true;
         }
         return false; // nothing added
-	}
+    }
 
     /**
      * Deserializes all the profiles (see aboutToUnloadGame()). In addition,
@@ -438,7 +438,7 @@ DENG2_OBSERVES(App, GameChange)
         {
             // Update current profile.
             current = App::config()[confName()].value().asText();
-		}
+        }
 
         if(!profiles.contains(current))
         {

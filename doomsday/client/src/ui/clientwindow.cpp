@@ -5,7 +5,7 @@
  * MacWindowBehavior. This would make the code easier to follow and more adaptable
  * to the quirks of each platform.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -522,7 +522,7 @@ DENG2_PIMPL(ClientWindow)
     {
         if(variable.name() == "fsaa")
         {
-			updateFSAAMode();
+            updateFSAAMode();
         }
         else if(variable.name() == "vsync")
         {
@@ -530,23 +530,23 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-	void updateFSAAMode()
-	{
-		int sampleCount = 1;
-		bool configured = App::config().getb(self.configName("fsaa"));
-		if(CommandLine_Exists("-nofsaa") || !configured)
-		{
-			LOG_GL_VERBOSE("Multisampling off");
-		}
-		else
-		{
-			sampleCount = 4; // four samples is fine?
-			LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
-		}
-		// All GLFramebuffer instances using default multisampling will automatically
-		// switch to the new setting.
-		GLFramebuffer::setDefaultMultisampling(sampleCount);
-	}
+    void updateFSAAMode()
+    {
+        int sampleCount = 1;
+        bool configured = App::config().getb(self.configName("fsaa"));
+        if(CommandLine_Exists("-nofsaa") || !configured)
+        {
+            LOG_GL_VERBOSE("Multisampling off");
+        }
+        else
+        {
+            sampleCount = 4; // four samples is fine?
+            LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
+        }
+        // All GLFramebuffer instances using default multisampling will automatically
+        // switch to the new setting.
+        GLFramebuffer::setDefaultMultisampling(sampleCount);
+    }
 
     void installSidebar(SidebarLocation location, GuiWidget *widget)
     {
@@ -858,13 +858,13 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-	if(!BusyMode_Active())
-	{
-		LOG_DEBUG("Window is about to close, executing 'quit'");
+    if(!BusyMode_Active())
+    {
+        LOG_DEBUG("Window is about to close, executing 'quit'");
 
-		/// @todo autosave and quit?
-		Con_Execute(CMDS_DDAY, "quit", true, false);
-	}
+        /// @todo autosave and quit?
+        Con_Execute(CMDS_DDAY, "quit", true, false);
+    }
 
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
@@ -873,10 +873,10 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
-	d->updateFSAAMode();
+    d->updateFSAAMode();
 
     // Update the capability flags.
-	GL_state.features.multisample = GLFramebuffer::defaultMultisampling();// canvas.format().sampleBuffers();
+    GL_state.features.multisample = GLFramebuffer::defaultMultisampling();// canvas.format().sampleBuffers();
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
@@ -986,7 +986,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
-	/*
+    /*
 #ifdef WIN32
     if(CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
@@ -1010,7 +1010,7 @@ bool ClientWindow::setDefaultGLFormat() // static
         LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
-	*/
+    */
 
     if(fmt != QGLFormat::defaultFormat())
     {

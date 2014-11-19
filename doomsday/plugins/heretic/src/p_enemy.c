@@ -595,7 +595,7 @@ void C_DECL A_Look(mobj_t *actor)
         else
         {
             S_StartSound(sound, actor);
-		}
+        }
     }
 
     P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));

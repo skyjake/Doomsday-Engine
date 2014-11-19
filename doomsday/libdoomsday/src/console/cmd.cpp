@@ -55,7 +55,7 @@ void Con_ClearCommands(void)
     ccmdBlockSet = 0;
     ccmdListHead = 0;
     numUniqueNamedCCmds = 0;
-	mappedConfigVariables.clear();
+    mappedConfigVariables.clear();
 }
 
 void Con_AddKnownWordsForCommands()

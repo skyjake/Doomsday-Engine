@@ -194,7 +194,7 @@ void LogBuffer_Clear(void)
 
 void LogBuffer_EnableStandardOutput(int enable)
 {
-	de::LogBuffer::get().enableStandardOutput(enable != 0);
+    de::LogBuffer::get().enableStandardOutput(enable != 0);
 }
 
 void LogBuffer_Printf(unsigned int metadata, char const *format, ...)

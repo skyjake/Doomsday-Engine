@@ -29,15 +29,15 @@
 
 // Net events.
 typedef enum neteventtype_e {
-	NE_CLIENT_ENTRY,
-	NE_CLIENT_EXIT,
+    NE_CLIENT_ENTRY,
+    NE_CLIENT_EXIT,
     //NE_END_CONNECTION
     //NE_TERMINATE_NODE
 } neteventtype_t;
 
 typedef struct netevent_s {
-	neteventtype_t  type;
-	nodeid_t        id;
+    neteventtype_t  type;
+    nodeid_t        id;
 } netevent_t;
 
 #ifdef __cplusplus
