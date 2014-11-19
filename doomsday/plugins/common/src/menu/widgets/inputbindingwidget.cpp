@@ -432,7 +432,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     DD_Execute(true, cmd.toUtf8().constData());
 
     // We've finished the grab.
-    setFlags(Active);
+    setFlags(Active, UnsetFlags);
     DD_SetInteger(DD_SYMBOLIC_ECHO, false);
     S_LocalSound(SFX_MENU_ACCEPT, nullptr);
     return true;
