@@ -32,8 +32,7 @@
 #include "Material"
 #include "ModelDef"
 
-#define DEFAULT_SKY_HORIZON_OFFSET       ( 0 )
-#define DEFAULT_SKY_SPHERE_MATERIAL      ( "Textures:SKY1" )
+#define DEFAULT_SKY_SPHERE_MATERIAL ( "Textures:SKY1" )
 
 /**
  * Behavior logic for a sky in the world system.

@@ -34,7 +34,7 @@ void Sky::resetToDefaults()
     def().addText  ("id", "");
     def().addNumber("flags", 0);
     def().addNumber("height", DEFAULT_SKY_HEIGHT);
-    def().addNumber("horizonOffset", 0);
+    def().addNumber("horizonOffset", DEFAULT_SKY_HORIZON_OFFSET);
     def().addArray ("color", new ArrayValue(Vector3f()));
     def().addArray ("layer", new ArrayValue);
     def().addArray ("model", new ArrayValue);

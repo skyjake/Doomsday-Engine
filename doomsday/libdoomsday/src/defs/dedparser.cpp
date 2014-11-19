@@ -1997,7 +1997,7 @@ DENG2_PIMPL(DEDParser)
 
                         if(testCustom)
                         {
-                            if(mi->getb("custom") != negate)
+                            if(mi->getb("custom") != !negate)
                             {
                                 mi = nullptr; // skip
                             }
