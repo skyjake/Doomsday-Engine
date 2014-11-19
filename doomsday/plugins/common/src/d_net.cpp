@@ -21,6 +21,7 @@
 #include "common.h"
 #include "d_net.h"
 
+#include <de/RecordValue>
 #include "g_common.h"
 #include "gamesession.h"
 #include "player.h"
@@ -71,6 +72,27 @@ void D_NetConsoleRegister()
     {
         C_VAR_CHARPTR("server-game-episode",                    &cfg.netEpisode,                        0, 0, 0);
         C_VAR_URIPTR ("server-game-map",                        &cfg.netMap,                            0, 0, 0);
+
+        String episode;
+        de::Uri map("Maps:", RC_NULL);
+        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+        for(auto const &pair : episodesById)
+        {
+            Record const &episodeDef = *pair.second->as<RecordValue>().record();
+            de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+            if(P_MapExists(startMap.compose().toUtf8().constData()))
+            {
+                episode = episodeDef.gets("id");
+                map     = startMap;
+                break;
+            }
+        }
+        if(map.isEmpty())
+        {
+            LOG_NET_WARNING("No episodes are defined. It will not be possible to start the server");
+        }
+        Con_SetString("server-game-episode", episode.toUtf8().constData());
+        Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
     }
 
     /// @todo "server-*" cvars should only be registered by dedicated servers.
@@ -183,7 +205,8 @@ int D_NetServerStarted(int before)
     P_ResetPlayerRespawnClasses();
 
     String const episodeId = Con_GetString("server-game-episode");
-    de::Uri const mapUri   = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
+    de::Uri mapUri = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
+    if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
     GameRuleset rules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
     rules.skill = skillmode_t(cfg.netSkill);
