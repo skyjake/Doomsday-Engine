@@ -241,7 +241,7 @@ int LineEditWidget::handleEvent(event_t const &ev)
         char ch = char(ev.data1);
         if(shiftdown)
         {
-            ch = shiftXForm[ch];
+            ch = shiftXForm[int(ch)];
         }
 
         // Filter out nasty charactemnRendState->

@@ -979,7 +979,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
         }
         else if(exits.count() == 1)
         {
-            chosenExit = exits.first();
+            chosenExit = exits.values().first();
             String chosenExitId = chosenExit->gets("id");
             if(chosenExitId != name.toLower())
             {
