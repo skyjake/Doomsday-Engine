@@ -37,7 +37,6 @@
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationAreaWidget>
-#include <de/ProgressWidget>
 #include <de/VRWindowTransform>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
