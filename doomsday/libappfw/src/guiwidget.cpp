@@ -443,6 +443,12 @@ RuleRectangle &GuiWidget::rule()
     return d->rule;
 }
 
+Rectanglei GuiWidget::contentRect() const
+{
+    Vector4i const pad = margins().toVector();
+    return rule().recti().adjusted(pad.xy(), -pad.zw());
+}
+
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;

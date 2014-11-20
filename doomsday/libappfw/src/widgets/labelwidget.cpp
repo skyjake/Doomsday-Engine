@@ -246,11 +246,6 @@ public Font::RichFormat::IStyle
         return latestTextSize;
     }
 
-    Rectanglei contentArea() const
-    {
-        return self.rule().recti().adjusted(margin().xy(), -margin().zw());
-    }
-
     /**
      * Determines where the label's image and text should be drawn.
      *
@@ -258,7 +253,7 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = contentArea();
+        Rectanglei const contentRect = self.contentRect();
 
         Vector2f const imgSize = imageSize() * imageScale;
 
@@ -765,7 +760,7 @@ void LabelWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
     if(!d->overlayImage.isNull())
     {
         Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
-        applyAlignment(d->overlayAlign, rect, d->contentArea());
+        applyAlignment(d->overlayAlign, rect, contentRect());
         d->overlayImage->glMakeGeometry(verts, rect);
     }
 }

@@ -167,16 +167,10 @@ DENG_GUI_PIMPL(SliderWidget)
         }
     }
 
-    Rectanglei contentRect() const
-    {
-        Vector4i margins = self.margins().toVector();
-        return self.rule().recti().adjusted(margins.xy(), -margins.zw());
-    }
-
     /// Determines the total area where the slider is moving.
     Rectanglei sliderRect() const
     {
-        Rectanglei const rect = contentRect();
+        Rectanglei const rect = self.contentRect();
         return Rectanglei(Vector2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
                           Vector2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
     }
@@ -431,7 +425,7 @@ DENG_GUI_PIMPL(SliderWidget)
         }
         else
         {
-            Rectanglei const rect = contentRect();
+            Rectanglei const rect = self.contentRect();
 
             //qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
             //   << range.asText() << "new value:" << value - clickStep();
@@ -457,13 +451,6 @@ DENG_GUI_PIMPL(SliderWidget)
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Instance(this))
 {
-    /*
-    // Testing.
-    setRange(Rangef(0, 1));
-    setPrecision(2);
-    setValue(.5f);
-    */
-
     // Default size.
     rule().setInput(Rule::Width,  style().rules().rule("slider.width"))
           .setInput(Rule::Height, OperatorRule::maximum(

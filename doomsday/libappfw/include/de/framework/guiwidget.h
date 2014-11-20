@@ -208,6 +208,8 @@ public:
      */
     RuleRectangle &rule();
 
+    Rectanglei contentRect() const;
+
     /**
      * Returns the rule rectangle that defines the placement of the widget on
      * the target canvas.

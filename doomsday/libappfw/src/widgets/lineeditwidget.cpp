@@ -228,12 +228,6 @@ DENG_GUI_PIMPL(LineEditWidget)
     {
         self.requestGeometry();
     }
-
-    inline Rectanglei contentRect() const
-    {
-        Vector4i const margins = self.margins().toVector();
-        return self.rule().recti().adjusted(margins.xy(), -margins.zw());
-    }
 };
 
 LineEditWidget::LineEditWidget(String const &name)
@@ -273,7 +267,7 @@ Rectanglei LineEditWidget::cursorRect() const
 {
     Vector2i const cursorPos = lineCursorPos();
     Vector2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
-            d->contentRect().topLeft;
+            contentRect().topLeft;
 
     return Rectanglei(cp + toDevicePixels(Vector2i(-1, 0)),
                       cp + Vector2i(toDevicePixels(1), d->font->height().valuei()));
@@ -294,7 +288,7 @@ void LineEditWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
-    Rectanglei const contentRect = d->contentRect();
+    Rectanglei const contentRect = this->contentRect();
     Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
 
     // Text lines.
