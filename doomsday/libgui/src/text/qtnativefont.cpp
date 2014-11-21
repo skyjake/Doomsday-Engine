@@ -91,7 +91,13 @@ int QtNativeFont::nativeFontLineSpacing() const
 
 Rectanglei QtNativeFont::nativeFontMeasure(String const &text) const
 {
+#ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei rect = Rectanglei::fromQRect(d->metrics->boundingRect(text));
+#else
+    Rectanglei rect(Vector2i(0, -d->metrics->ascent()),
+                    Vector2i(d->metrics->width(text),
+                             d->metrics->descent()));
+#endif
 
     if(rect.height() == 0)
     {
@@ -112,13 +118,7 @@ QImage QtNativeFont::nativeFontRasterize(String const &text,
                                          Vector4ub const &foreground,
                                          Vector4ub const &background) const
 {
-#ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
     Rectanglei const bounds = measure(text);
-#else
-    Rectanglei const bounds(Vector2i(0, -d->metrics->ascent()),
-                            Vector2i(d->metrics->width(text),
-                                     d->metrics->descent()));
-#endif
 
     QColor const fgColor(foreground.x, foreground.y, foreground.z, foreground.w);
     QColor const bgColor(background.x, background.y, background.z, background.w);
