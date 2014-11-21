@@ -23,6 +23,20 @@
  */
 
 #include "doomsday/console/exec.h"
+
+#include <cctype>
+#include <cmath>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <QFile>
+#include <QTextStream>
+#include <de/memory.h>
+#include <de/charsymbols.h>
+#include <de/App>
+#include <de/game/Game>
+#include <de/LogBuffer>
+#include <de/Time>
 #include "doomsday/console/knownword.h"
 #include "doomsday/console/cmd.h"
 #include "doomsday/console/var.h"
@@ -31,20 +45,6 @@
 #include "doomsday/filesys/fs_util.h"
 #include "doomsday/uri.h"
 #include "dd_share.h"
-
-#include <de/memory.h>
-#include <de/strutil.h>
-#include <de/App>
-#include <de/game/Game>
-#include <de/LogBuffer>
-#include <de/Time>
-#include <de/charsymbols.h>
-
-#include <cstdio>
-#include <cstdlib>
-#include <cstdarg>
-#include <cmath>
-#include <cctype>
 
 using namespace de;
 
@@ -854,63 +854,42 @@ int Con_Executef(byte src, int silent, const char *command, ...)
     return Con_Execute(src, buffer, silent, false);
 }
 
-static void readLine(char *buffer, size_t len, FileHandle *file)
-{
-    std::memset(buffer, 0, len);
-
-    size_t p = 0;
-    while(p < len - 1) // Make the last null stay there.
-    {
-        char ch = file->getC();
-        if(ch == '\r') continue;
-
-        if(file->atEnd() || ch == '\n')
-            return;
-
-        buffer[p++] = ch;
-    }
-}
-
 dd_bool Con_Parse(Path const &fileName, dd_bool silently)
 {
-    try
-    {
-        // Relative paths are relative to the native working directory.
-        String path = (NativePath::workPath() / NativePath(fileName).expand()).withSeparators('/');
-        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(path, "rt"));
+    // Relative paths are relative to the native working directory.
+    NativePath fn = NativePath::workPath() / NativePath(fileName).expand();
+    if(!QFile::exists(fn))
+        return false;
 
-        // This file is filled with console commands.
+    QFile file(fn);
+    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return false;
+
+    // This file is filled with console commands.
+    QTextStream in(&file);
+    int currentLine = 1;
+    while(!in.atEnd())
+    {
         // Each line is a command.
-        char buff[512];
-        for(int line = 1; ;)
+        String const line = String(in.readLine()).leftStrip();
+        if(!line.isEmpty() && line.first() != '#')
         {
-            readLine(buff, 512, hndl.data());
-            if(buff[0] && !M_IsComment(buff))
+            // Execute the commands silently.
+            if(!Con_Execute(CMDS_CONFIG, line.toUtf8().constData(), silently, false))
             {
-                // Execute the commands silently.
-                if(!Con_Execute(CMDS_CONFIG, buff, silently, false))
+                if(!silently)
                 {
                     LOG_SCR_WARNING("%s(%i): error executing command \"%s\"")
-                            << NativePath(fileName).pretty()
-                            << line
-                            << buff;
+                            << fn.pretty()
+                            << currentLine
+                            << line;
                 }
             }
-
-            if(hndl->atEnd()) break;
-
-            line++;
         }
-
-        App_FileSystem().releaseFile(hndl->file());
-
-        return true;
+        currentLine += 1;
     }
-    catch(FS1::NotFoundError const &er)
-    {
-        LOG_SCR_WARNING(er.asText());
-    }
-    return false;
+
+    return true;
 }
 
 /**

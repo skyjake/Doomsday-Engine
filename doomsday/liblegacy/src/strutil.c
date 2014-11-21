@@ -216,17 +216,6 @@ dd_bool M_IsStringValidFloat(const char* str)
     return !isBad;
 }
 
-dd_bool M_IsComment(const char* buffer)
-{
-    int i = 0;
-
-    while(isspace((unsigned char) buffer[i]) && buffer[i])
-        i++;
-    if(buffer[i] == '#')
-        return true;
-    return false;
-}
-
 char* M_StrCat(char* buf, const char* str, size_t bufSize)
 {
     return M_StrnCat(buf, str, strlen(str), bufSize);
