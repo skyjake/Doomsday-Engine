@@ -1,6 +1,6 @@
-/** @file mesh.h Mesh Geometry Data Structure.
+/** @file mesh.h  Mesh Geometry Data Structure.
  *
- * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -45,7 +45,7 @@ class HEdge;
 class Mesh
 {
 public:
-    typedef QList<Vertex *> Vertexes;
+    typedef QList<Vertex *> Vertexs;
     typedef QList<Face *> Faces;
     typedef QList<HEdge *> HEdges;
 
@@ -113,6 +113,7 @@ public:
 
 public:
     Mesh();
+    ~Mesh();
 
     /**
      * Clear the mesh destroying all geometry elements.
@@ -155,7 +156,7 @@ public:
     /**
      * Returns the total number of vertexes in the mesh.
      */
-    inline int vertexCount() const { return vertexes().count(); }
+    inline int vertexCount() const { return vertexs().count(); }
 
     /**
      * Returns the total number of faces in the mesh.
@@ -170,7 +171,7 @@ public:
     /**
      * Returns @c true iff there are no vertexes in the mesh.
      */
-    inline bool vertexesIsEmpty() const { return vertexes().isEmpty(); }
+    inline bool vertexsIsEmpty() const { return vertexs().isEmpty(); }
 
     /**
      * Returns @c true iff there are no faces in the mesh.
@@ -185,7 +186,7 @@ public:
     /**
      * Provides access to the set of all vertexes in the mesh.
      */
-    Vertexes const &vertexes() const;
+    Vertexs const &vertexs() const;
 
     /**
      * Provides access to the set of all faces in the mesh.

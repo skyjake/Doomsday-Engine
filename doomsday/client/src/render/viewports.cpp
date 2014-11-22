@@ -1275,12 +1275,13 @@ void R_BeginFrame()
 
     // Update viewer => lumobj distances ready for linking and sorting.
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    foreach(Lumobj *lum, map.lumobjs())
+    map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.
-        Vector3d delta = lum->origin() - viewData->current.origin;
-        luminousDist[lum->indexInMap()] = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
-    }
+        Vector3d delta = lob.origin() - viewData->current.origin;
+        luminousDist[lob.indexInMap()] = M_ApproxDistance3(delta.x, delta.y, delta.z * 1.2 /*correct aspect*/);
+        return LoopContinue;
+    });
 
     if(rendMaxLumobjs > 0 && numLuminous > rendMaxLumobjs)
     {
@@ -1363,8 +1364,8 @@ void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace)
     // between the viewpoint and the lumobj.
     Vector3d const eye = Rend_EyeOrigin().xzy();
 
-    foreach(Polyobj *po, subspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    for(Polyobj *po : subspace->polyobjs())
+    for(HEdge *hedge : po->mesh().hedges())
     {
         // Is this on the back of a one-sided line?
         if(!hedge->hasMapElement())

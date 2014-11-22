@@ -19,8 +19,12 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "render/surfacedecorator.h"
+
+#include <QMap>
+#include <QSet>
+#include <de/Observers>
+#include <de/Vector>
 
 #include "world/map.h"
 #include "BspLeaf"
@@ -33,29 +37,21 @@
 #include "LightDecoration"
 #include "WallEdge"
 
-#include <de/Observers>
-#include <de/Vector>
-#include <QMap>
-#include <QSet>
-
 using namespace de;
 
 typedef QSet<Surface *> SurfaceSet;
 typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
 
-DENG2_PIMPL(SurfaceDecorator),
-DENG2_OBSERVES(Material, DimensionsChange),
-DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
+DENG2_PIMPL_NOREF(SurfaceDecorator)
+, DENG2_OBSERVES(Material, DimensionsChange)
+, DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 {
     MaterialSurfaceMap decorated; ///< All surfaces being looked after.
 
-    Instance(Public *i) : Base(i)
-    {}
-
     ~Instance()
     {
-        foreach(SurfaceSet const &set, decorated)
-        foreach(Surface *surface, set)
+        for(SurfaceSet const &set : decorated)
+        for(Surface *surface : set)
         {
             observeMaterial(surface->material(), false);
         }
@@ -77,7 +73,7 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
 
     void updateDecorations(Surface &suf, MaterialSnapshot const &materialSnapshot,
         Vector2f const &materialOrigin, Vector3d const &topLeft,
-        Vector3d const &bottomRight, Sector *containingSector = 0)
+        Vector3d const &bottomRight, Sector *containingSector = nullptr)
     {
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
@@ -156,9 +152,9 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
     {
         MaterialSurfaceMap::const_iterator found = decorated.constFind(&material);
         if(found != decorated.constEnd())
-        foreach(Surface *surface, found.value())
+        for(Surface *surface : found.value())
         {
-            surface->markAsNeedingDecorationUpdate();
+            surface->markForDecorationUpdate();
         }
     }
 
@@ -169,15 +165,14 @@ DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
     }
 
     /// Observes MaterialAnimation DecorationStageChange
-    void materialAnimationDecorationStageChanged(MaterialAnimation &anim,
+    void materialAnimationDecorationStageChanged(MaterialAnimation & /*anim*/,
         Material::Decoration &decor)
     {
         markSurfacesForRedecoration(decor.material());
-        DENG2_UNUSED(anim);
     }
 };
 
-SurfaceDecorator::SurfaceDecorator() : d(new Instance(this))
+SurfaceDecorator::SurfaceDecorator() : d(new Instance)
 {}
 
 static bool prepareGeometry(Surface &surface, Vector3d &topLeft,
@@ -246,10 +241,10 @@ void SurfaceDecorator::decorate(Surface &surface)
     if(!surface.hasMaterial())
         return; // Huh?
 
-    if(!surface._needDecorationUpdate)
+    if(!surface.needsDecorationUpdate())
         return;
 
-    surface._needDecorationUpdate = false;
+    surface.markForDecorationUpdate(false);
     surface.clearDecorations();
 
     Vector3d topLeft, bottomRight;
@@ -273,9 +268,9 @@ void SurfaceDecorator::redecorate()
         MaterialSnapshot const *materialSnapshot = 0;
 
         SurfaceSet const &surfaceSet = i.value();
-        foreach(Surface *surface, surfaceSet)
+        for(Surface *surface : surfaceSet)
         {
-            if(!surface->_needDecorationUpdate)
+            if(!surface->needsDecorationUpdate())
                 continue;
 
             // Time to prepare the material?
@@ -285,7 +280,7 @@ void SurfaceDecorator::redecorate()
                 materialSnapshot = &material.prepare(Rend_MapSurfaceMaterialSpec());
             }
 
-            surface->_needDecorationUpdate = false;
+            surface->markForDecorationUpdate(false);
             surface->clearDecorations();
 
             Vector3d topLeft, bottomRight;

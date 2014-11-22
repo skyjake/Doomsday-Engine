@@ -530,16 +530,14 @@ void R_ProjectSprite(mobj_t *mo)
                 ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
             DENG2_ASSERT(pl != 0);
 
-            Lumobj const *lum = cluster.sector().map().lumobj(mo->lumIdx);
-            DENG_ASSERT(lum != 0);
-
-            vissprite_t *vis = R_NewVisSprite(VSPR_FLARE);
+            Lumobj const &lob = cluster.sector().map().lumobj(mo->lumIdx);
+            vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);
 
             vis->pose.distance = distFromEye;
 
             // Determine the exact center of the flare.
             vis->pose.origin = moPos + visOff;
-            vis->pose.origin.z += lum->zOffset();
+            vis->pose.origin.z += lob.zOffset();
 
             float flareSize = pl->brightMul;
             // X offset to the flare position.
@@ -564,7 +562,7 @@ void R_ProjectSprite(mobj_t *mo)
                 vis->data.flare.size = 8;
 
             // Color is taken from the associated lumobj.
-            V3f_Set(vis->data.flare.color, lum->color().x, lum->color().y, lum->color().z);
+            V3f_Set(vis->data.flare.color, lob.color().x, lob.color().y, lob.color().z);
 
             vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
             vis->data.flare.xOff = xOffset;

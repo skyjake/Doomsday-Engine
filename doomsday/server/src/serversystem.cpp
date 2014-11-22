@@ -1,6 +1,7 @@
 /** @file serversystem.cpp  Subsystem for tending to clients.
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,32 +18,36 @@
  */
 
 #include "serversystem.h"
+
+#include <de/c_wrapper.h>
+#include <de/timer.h>
+#include <de/Address>
+#include <de/Beacon>
+#include <de/ByteRefArray>
+#include <de/Garbage>
+#include <de/ListenSocket>
+#include <de/TextApp>
+
+#include "api_console.h"
+
 #include "serverapp.h"
 #include "shellusers.h"
 #include "remoteuser.h"
+
 #include "server/sv_def.h"
 #include "server/sv_frame.h"
+
 #include "network/net_main.h"
 #include "network/net_buf.h"
 #include "network/net_event.h"
 #include "network/monitor.h"
 #include "network/masterserver.h"
+
 #include "dd_main.h"
 #include "dd_loop.h"
 #include "sys_system.h"
 #include "world/map.h"
 #include "world/p_players.h"
-
-#include "api_console.h"
-
-#include <de/Address>
-#include <de/Beacon>
-#include <de/ByteRefArray>
-#include <de/ListenSocket>
-#include <de/TextApp>
-#include <de/Garbage>
-#include <de/c_wrapper.h>
-#include <de/timer.h>
 
 using namespace de;
 
@@ -55,32 +60,23 @@ static de::duint16 Server_ListenPort()
 
 DENG2_PIMPL(ServerSystem)
 {
-    bool inited;
+    bool inited = false;
 
     /// Beacon for informing clients that a server is present.
-    Beacon beacon;
+    Beacon beacon = { DEFAULT_UDP_PORT };
     Time lastBeaconUpdateAt;
 
-    ListenSocket *serverSock;
+    ListenSocket *serverSock = nullptr;
 
     QMap<Id, RemoteUser *> users;
     ShellUsers shellUsers;
 
-    Instance(Public *i)
-        : Base(i),
-          inited(false),
-          beacon(DEFAULT_UDP_PORT),
-          serverSock(0)
-    {}
-
-    ~Instance()
-    {
-        deinit();
-    }
+    Instance(Public *i) : Base(i) {}
+    ~Instance() { deinit(); }
 
     bool isStarted() const
     {
-        return serverSock != 0;
+        return serverSock != nullptr;
     }
 
     bool init(duint16 port)
@@ -92,6 +88,7 @@ DENG2_PIMPL(ServerSystem)
         deinit();
 
         // Open a listening TCP socket. It will accept client connections.
+        DENG2_ASSERT(!serverSock);
         if(!(serverSock = new ListenSocket(port)))
             return false;
 
@@ -100,7 +97,7 @@ DENG2_PIMPL(ServerSystem)
         // Update the beacon with the new port.
         beacon.start(port);
 
-        App_WorldSystem().audienceForMapChange += shellUsers;
+        App_WorldSystem().audienceForMapChange() += shellUsers;
 
         inited = true;
         return true;
@@ -109,7 +106,7 @@ DENG2_PIMPL(ServerSystem)
     void clearUsers()
     {
         // Clear the client nodes.
-        foreach(RemoteUser *u, users.values())
+        for(RemoteUser *u : users.values())
         {
             delete u;
         }
@@ -123,7 +120,7 @@ DENG2_PIMPL(ServerSystem)
 
         if(ServerApp::appExists())
         {
-            App_WorldSystem().audienceForMapChange -= shellUsers;
+            App_WorldSystem().audienceForMapChange() -= shellUsers;
         }
 
         beacon.stop();
@@ -153,8 +150,8 @@ DENG2_PIMPL(ServerSystem)
                 serverinfo_t info;
                 Sv_GetInfo(&info);
 
-                QScopedPointer<de::Record> rec(Sv_InfoToRecord(&info));
-                de::Block msg;
+                std::unique_ptr<Record> rec(Sv_InfoToRecord(&info));
+                Block msg;
                 de::Writer(msg).withHeader() << *rec;
                 beacon.setMessage(msg);
             }
@@ -179,8 +176,6 @@ DENG2_PIMPL(ServerSystem)
 
     void printStatus()
     {
-        int i, first;
-
         if(serverSock)
         {
             LOG_NOTE("SERVER: Listening on TCP port %i") << serverSock->port();
@@ -190,8 +185,8 @@ DENG2_PIMPL(ServerSystem)
             LOG_NOTE("SERVER: No server socket open");
         }
 
-        first = true;
-        for(i = 1; i < DDMAXPLAYERS; ++i)
+        int first = true;
+        for(int i = 1; i < DDMAXPLAYERS; ++i)
         {
             client_t *cl = &clients[i];
             player_t *plr = &ddPlayers[i];
@@ -205,6 +200,7 @@ DENG2_PIMPL(ServerSystem)
                     LOG_MSG(_E(m) "P# Name:      Nd Jo Hs Rd Gm Age:");
                     first = false;
                 }
+
                 LOG_MSG(_E(m) "%2i %-10s %2i %c  %c  %c  %c  %f sec")
                         << i << cl->name << cl->nodeID
                         << (user->isJoined()? '*' : ' ')
@@ -269,14 +265,12 @@ RemoteUser &ServerSystem::user(Id const &id) const
 bool ServerSystem::isUserAllowedToJoin(RemoteUser &/*user*/) const
 {
     // If the server is full, attempts to connect are canceled.
-    if(Sv_GetNumConnected() >= svMaxPlayers)
-        return false;
-
-    return true;
+    return (Sv_GetNumConnected() < svMaxPlayers);
 }
 
 void ServerSystem::convertToShellUser(RemoteUser *user)
 {
+    DENG2_ASSERT(user);
     LOG_AS("convertToShellUser");
 
     Socket *socket = user->takeSocket();
@@ -295,9 +289,11 @@ void ServerSystem::timeChanged(Clock const &clock)
     Garbage_Recycle();
 
     // Adjust loop rate depending on whether players are in game.
-    int i, count = 0;
-    for(i = 1; i < DDMAXPLAYERS; ++i)
+    int count = 0;
+    for(int i = 1; i < DDMAXPLAYERS; ++i)
+    {
         if(ddPlayers[i].shared.inGame) count++;
+    }
 
     DENG2_TEXT_APP->loop().setRate(count? 35 : 3);
 
@@ -357,7 +353,7 @@ ServerSystem &App_ServerSystem()
 
 //---------------------------------------------------------------------------
 
-void Server_Register(void)
+void Server_Register()
 {
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
 
@@ -366,21 +362,23 @@ void Server_Register(void)
 #endif
 }
 
-dd_bool N_ServerOpen(void)
+dd_bool N_ServerOpen()
 {
     App_ServerSystem().start(Server_ListenPort());
 
-    // The game module may have something that needs doing before we
-    // actually begin.
+    // The game module may have something that needs doing before we actually begin.
     if(gx.NetServerStart)
+    {
         gx.NetServerStart(true);
+    }
 
     Sv_StartNetGame();
 
-    // The game DLL might want to do something now that the
-    // server is started.
+    // The game DLL might want to do something now that the server is started.
     if(gx.NetServerStart)
+    {
         gx.NetServerStart(false);
+    }
 
     if(masterAware)
     {
@@ -391,7 +389,7 @@ dd_bool N_ServerOpen(void)
     return true;
 }
 
-dd_bool N_ServerClose(void)
+dd_bool N_ServerClose()
 {
     if(!App_ServerSystem().isListening()) return true;
 
@@ -403,19 +401,23 @@ dd_bool N_ServerClose(void)
     }
 
     if(gx.NetServerStop)
+    {
         gx.NetServerStop(true);
+    }
 
     Net_StopGame();
     Sv_StopNetGame();
 
     if(gx.NetServerStop)
+    {
         gx.NetServerStop(false);
+    }
 
     App_ServerSystem().stop();
     return true;
 }
 
-void N_PrintNetworkStatus(void)
+void N_PrintNetworkStatus()
 {
     App_ServerSystem().printStatus();
 }

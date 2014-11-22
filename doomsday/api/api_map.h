@@ -315,6 +315,13 @@ DENG_API_TYPEDEF(Map)
     struct mobj_s  *(*MO_CreateXYZ)(thinkfunc_t function, coord_t x, coord_t y, coord_t z, angle_t angle, coord_t radius, coord_t height, int ddflags);
     void            (*MO_Destroy)(struct mobj_s *mobj);
     struct mobj_s  *(*MO_ById)(int id);
+
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Mobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a mobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
     int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
@@ -412,6 +419,12 @@ DENG_API_TYPEDEF(Map)
      */
     struct polyobj_s *(*PO_ByTag)(int tag);
 
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Polyobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a polyobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
     int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
 
     /**
@@ -419,6 +432,12 @@ DENG_API_TYPEDEF(Map)
      */
     void            (*PO_SetCallback)(void (*func)(struct mobj_s *, void *, void *));
 
+    /**
+     * @note validCount should be incremented before calling this to begin a
+     * new logical traversal. Otherwise Polyobjs marked with a validCount equal
+     * to this will be skipped over (can be used to avoid processing a polyobj
+     * multiple times during a complex and/or non-linear traversal.
+     */
     int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (ConvexSubspace *, void *), void *context);
 
     // Traversers

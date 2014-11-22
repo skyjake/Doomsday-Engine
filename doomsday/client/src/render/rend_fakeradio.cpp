@@ -1410,24 +1410,28 @@ void Rend_DrawShadowOffsetVerts()
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.
-    foreach(Line *line, map.lines())
-    for(uint k = 0; k < 2; ++k)
+    map.forAllLines([] (Line &line)
     {
-        Vertex &vtx = line->vertex(k);
-        LineOwner const *base = vtx.firstLineOwner();
-        LineOwner const *own = base;
-        do
+        for(int i = 0; i < 2; ++i)
         {
-            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
-            coord_t z = own->line().frontSector().floor().heightSmoothed();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
+            Vertex &vtx = line.vertex(i);
 
-            xy = vtx.origin() + own->innerShadowOffset();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+            LineOwner const *base = vtx.firstLineOwner();
+            LineOwner const *own  = base;
+            do
+            {
+                Vector2d xy = vtx.origin() + own->extendedShadowOffset();
+                coord_t z   = own->line().frontSector().floor().heightSmoothed();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            own = &own->next();
-        } while(own != base);
-    }
+                xy = vtx.origin() + own->innerShadowOffset();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+
+                own = &own->next();
+            } while(own != base);
+        }
+        return LoopContinue;
+    });
 
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);

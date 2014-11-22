@@ -1,7 +1,7 @@
-/** @file blockmap.cpp World map element blockmap.
+/** @file blockmap.cpp  World map element blockmap.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -19,19 +19,17 @@
  * 02110-1301 USA</small>
  */
 
-#include <cmath>
+#include "world/blockmap.h"
 
+#include <cmath>
 #include <de/memoryzone.h>
 #include <de/vector1.h>
-
 #include <de/Vector>
 
 #include "de_base.h"
 #include "de_console.h"
 #include "de_graphics.h" // For debug visual.
 #include "de_render.h" // For debug visual.
-
-#include "world/blockmap.h"
 
 namespace de {
 
@@ -442,7 +440,7 @@ bool Blockmap::link(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    if(CellData *cellData = d->cellData(cell, true /*can create*/))
+    if(auto *cellData = d->cellData(cell, true /*can create*/))
     {
         return cellData->link(elem);
     }
@@ -462,7 +460,7 @@ bool Blockmap::link(AABoxd const &region, void *elem)
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        if(CellData *cellData = d->cellData(cell, true))
+        if(auto *cellData = d->cellData(cell, true))
         {
             if(cellData->link(elem))
             {
@@ -478,7 +476,7 @@ bool Blockmap::unlink(Cell const &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
-    if(CellData *cellData = d->cellData(cell))
+    if(auto *cellData = d->cellData(cell))
     {
         return cellData->unlink(elem);
     }
@@ -498,7 +496,7 @@ bool Blockmap::unlink(AABoxd const &region, void *elem)
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        if(CellData *cellData = d->cellData(cell))
+        if(auto *cellData = d->cellData(cell))
         {
             if(cellData->unlink(elem))
             {
@@ -512,12 +510,12 @@ bool Blockmap::unlink(AABoxd const &region, void *elem)
 
 void Blockmap::unlinkAll()
 {
-    foreach(Instance::Node const &node, d->nodes)
+    for(Instance::Node const &node : d->nodes)
     {
         // Only leafs with user data.
         if(!node.isLeaf()) continue;
 
-        if(CellData *cellData = node.leafData)
+        if(auto *cellData = node.leafData)
         {
             cellData->unlinkAll();
         }
@@ -526,58 +524,47 @@ void Blockmap::unlinkAll()
 
 int Blockmap::cellElementCount(Cell const &cell) const
 {
-    if(CellData *cellData = d->cellData(cell))
+    if(auto *cellData = d->cellData(cell))
     {
         return cellData->elemCount;
     }
     return 0;
 }
 
-int Blockmap::iterate(Cell const &cell, int (*callback) (void *, void *),
-                      void *context) const
+LoopResult Blockmap::forAllInCell(Cell const &cell, std::function<LoopResult (void *object)> func) const
 {
-    if(!callback) return false; // Huh?
-
-    if(CellData *cellData = d->cellData(cell))
+    if(auto *cellData = d->cellData(cell))
     {
         RingNode *node = cellData->ringNodes;
         while(node)
         {
             RingNode *next = node->next;
-
             if(node->elem)
             {
-                if(int result = callback(node->elem, context))
-                    return result; // Stop iteration.
+                if(auto result = func(node->elem)) return result;
             }
-
             node = next;
         }
     }
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
-int Blockmap::iterate(AABoxd const &region, int (*callback) (void *, void *),
-                      void *context) const
+LoopResult Blockmap::forAllInBox(AABoxd const &box, std::function<LoopResult (void *object)> func) const
 {
-    if(!callback) return false; // Huh?
-
-    CellBlock cellBlock = toCellBlock(region);
+    CellBlock cellBlock = toCellBlock(box);
     d->clipBlock(cellBlock);
 
     Cell cell;
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)
     {
-        if(int result = iterate(cell, callback, context))
-            return result;
+        if(auto result = forAllInCell(cell, func)) return result;
     }
-
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
-int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
-                      int (*callback) (void *, void *), void *context) const
+LoopResult Blockmap::forAllInPath(Vector2d const &from_, Vector2d const &to_,
+    std::function<LoopResult (void *object)> func) const
 {
     // We may need to clip and/or adjust these points.
     Vector2d from = from_;
@@ -587,7 +574,7 @@ int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
     if(!(from.x >= d->bounds.minX && from.x <= d->bounds.maxX &&
          from.y >= d->bounds.minY && from.y <= d->bounds.maxY))
     {
-        return false;
+        return LoopContinue;
     }
 
     // Check the easy case of a trace line completely outside the blockmap.
@@ -596,7 +583,7 @@ int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
        (from.y < d->bounds.minY && to.y < d->bounds.minY) ||
        (from.y > d->bounds.maxY && to.y > d->bounds.maxY))
     {
-        return false;
+        return LoopContinue;
     }
 
     /*
@@ -707,8 +694,8 @@ int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
     for(int pass = 0; pass < 64; ++pass) // Prevent a round off error leading us into
                                          // an infinite loop...
     {
-        if(int result = iterate(cell, callback, context))
-            return result; // Early out.
+        if(auto result = forAllInCell(cell, func))
+            return result;
 
         if(cell == destCell) break;
 
@@ -724,7 +711,7 @@ int Blockmap::iterate(Vector2d const &from_, Vector2d const &to_,
         }
     }
 
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
 // Debug visual ----------------------------------------------------------------

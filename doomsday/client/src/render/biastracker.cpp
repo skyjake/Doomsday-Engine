@@ -238,7 +238,7 @@ void BiasTracker::applyChanges(BiasDigest &changes)
         /// sources by unique in-map index, and 2) re-index source references
         /// here upon deletion. The assumption being that affection changes
         /// occur far more frequently.
-        if(changes.isSourceChanged(App_WorldSystem().map().toIndex(*ctbr->source)))
+        if(changes.isSourceChanged(App_WorldSystem().map().indexOf(*ctbr->source)))
         {
             d->changedContributions |= 1 << i;
         }

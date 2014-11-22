@@ -1,7 +1,7 @@
 /** @file line.h  World map line.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,18 +21,15 @@
 #ifndef DENG_WORLD_LINE_H
 #define DENG_WORLD_LINE_H
 
-#include "HEdge"
-
-#include "MapElement"
-#include "Polyobj"
-#include "Vertex"
-
+#include <QFlags>
+#include <de/binangle.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <de/binangle.h>
-#include <QFlags>
-#include <QList>
+#include "HEdge"
+#include "MapElement"
+#include "Polyobj"
+#include "Vertex"
 
 class LineOwner;
 class Sector;
@@ -134,9 +131,7 @@ public:
             /**
              * Returns the line side owner of the segment.
              */
-            inline Side &lineSide() { return parent().as<Side>(); }
-
-            /// @copydoc lineSide()
+            inline Side       &lineSide()       { return parent().as<Side>(); }
             inline Side const &lineSide() const { return parent().as<Side>(); }
 
             /**
@@ -145,9 +140,7 @@ public:
              *
              * @see lineSide()
              */
-            inline Line &line() { return lineSide().line(); }
-
-            /// @copydoc line()
+            inline Line       &line()       { return lineSide().line(); }
             inline Line const &line() const { return lineSide().line(); }
 
             /**
@@ -193,8 +186,6 @@ public:
             DENG2_PRIVATE(d)
         };
 
-        typedef QList<Segment *> Segments;
-
     public:
         /**
          * Construct a new line side.
@@ -208,9 +199,7 @@ public:
         /**
          * Returns the Line owner of the side.
          */
-        inline Line &line() { return parent().as<Line>(); }
-
-        /// @copydoc line()
+        inline Line       &line()       { return parent().as<Line>(); }
         inline Line const &line() const { return parent().as<Line>(); }
 
         /**
@@ -270,7 +259,7 @@ public:
          *
          * @see vertex(), from()
          */
-        inline Vertex &to() const { return vertex(To); }
+        inline Vertex &to  () const { return vertex(To); }
 
         /**
          * Returns @c true iff Sections are defined for the side.
@@ -291,9 +280,7 @@ public:
          *
          * @param sectionId  Identifier of the surface to return.
          */
-        Surface &surface(int sectionId);
-
-        /// @copydoc surface()
+        Surface       &surface(int sectionId);
         Surface const &surface(int sectionId) const;
 
         /**
@@ -301,9 +288,7 @@ public:
          *
          * @see surface()
          */
-        inline Surface &middle() { return surface(Middle); }
-
-        /// @copydoc middle()
+        inline Surface       &middle()       { return surface(Middle); }
         inline Surface const &middle() const { return surface(Middle); }
 
         /**
@@ -311,9 +296,7 @@ public:
          *
          * @see surface()
          */
-        inline Surface &bottom() { return surface(Bottom); }
-
-        /// @copydoc bottom()
+        inline Surface       &bottom()       { return surface(Bottom); }
         inline Surface const &bottom() const { return surface(Bottom); }
 
         /**
@@ -321,9 +304,7 @@ public:
          *
          * @see surface()
          */
-        inline Surface &top() { return surface(Top); }
-
-        /// @copydoc top()
+        inline Surface       &top()       { return surface(Top); }
         inline Surface const &top() const { return surface(Top); }
 
         /**
@@ -333,9 +314,7 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        SoundEmitter &soundEmitter(int sectionId);
-
-        /// @copydoc soundEmitter()
+        SoundEmitter       &soundEmitter(int sectionId);
         SoundEmitter const &soundEmitter(int sectionId) const;
 
         /**
@@ -343,9 +322,7 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        inline SoundEmitter &middleSoundEmitter() { return soundEmitter(Middle); }
-
-        /// @copydoc middleSoundEmitter()
+        inline SoundEmitter       &middleSoundEmitter()       { return soundEmitter(Middle); }
         inline SoundEmitter const &middleSoundEmitter() const { return soundEmitter(Middle); }
 
         /**
@@ -353,9 +330,7 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        inline SoundEmitter &bottomSoundEmitter() { return soundEmitter(Bottom); }
-
-        /// @copydoc bottomSoundEmitter()
+        inline SoundEmitter       &bottomSoundEmitter()       { return soundEmitter(Bottom); }
         inline SoundEmitter const &bottomSoundEmitter() const { return soundEmitter(Bottom); }
 
         /**
@@ -363,9 +338,7 @@ public:
          *
          * @see Section::soundEmitter()
          */
-        inline SoundEmitter &topSoundEmitter() { return soundEmitter(Top); }
-
-        /// @copydoc topSoundEmitter()
+        inline SoundEmitter       &topSoundEmitter()       { return soundEmitter(Top); }
         inline SoundEmitter const &topSoundEmitter() const { return soundEmitter(Top); }
 
         /**
@@ -391,7 +364,7 @@ public:
          * Update the @em top sound emitter origin for the side.
          * @see updateSoundEmitterOrigin()
          */
-        inline void updateTopSoundEmitterOrigin() { updateSoundEmitterOrigin(Top); }
+        inline void updateTopSoundEmitterOrigin()    { updateSoundEmitterOrigin(Top); }
 
         /**
          * Update ALL sound emitter origins for the side.
@@ -441,11 +414,6 @@ public:
          * @return  Pointer to the (possibly newly constructed) Segment.
          */
         Segment *addSegment(de::HEdge &hedge);
-
-        /**
-         * Provides access to the sorted segment list for the side.
-         */
-        Segments const &segments() const;
 
         /**
          * Convenient method of returning the half-edge of the left-most segment
@@ -519,44 +487,38 @@ public:
 
 public: /// @todo make private:
     /// Links to vertex line owner nodes:
-    LineOwner *_vo1;
-    LineOwner *_vo2;
+    LineOwner *_vo1 = nullptr;
+    LineOwner *_vo2 = nullptr;
 
     /// Sector of the map for which this line acts as a "One-way window".
     /// @todo Now unnecessary, refactor away -ds
-    Sector *_bspWindowSector;
+    Sector *_bspWindowSector = nullptr;
 
 public:
     Line(Vertex &from, Vertex &to,
-         int flags                   = 0,
-         Sector *frontSector         = 0,
-         Sector *backSector          = 0);
+         int flags           = 0,
+         Sector *frontSector = nullptr,
+         Sector *backSector  = nullptr);
 
     /**
      * Returns the specified logical side of the line.
      *
      * @param back  If not @c 0 return the Back side; otherwise the Front side.
      */
-    Side &side(int back);
-
-    /// @copydoc side()
+    Side       &side(int back);
     Side const &side(int back) const;
 
     /**
      * Returns the logical Front side of the line.
      */
-    inline Side &front() { return side(Front); }
-
-    /// @copydoc front()
+    inline Side       &front()       { return side(Front); }
     inline Side const &front() const { return side(Front); }
 
     /**
      * Returns the logical Back side of the line.
      */
-    inline Side &back() { return side(Back); }
-
-    /// @copydoc back()
-    inline Side const &back() const { return side(Back); }
+    inline Side       &back()        { return side(Back); }
+    inline Side const &back() const  { return side(Back); }
 
     /**
      * Returns @c true iff Side::Sections are defined for the specified side
@@ -574,7 +536,7 @@ public:
     /**
      * Returns @c true iff Side::Sections are defined for the Back side of the line.
      */
-    inline bool hasBackSections() const { return hasSections(Back); }
+    inline bool hasBackSections() const  { return hasSections(Back); }
 
     /**
      * Returns @c true iff a sector is attributed to the specified side of the line.
@@ -591,7 +553,7 @@ public:
     /**
      * Returns @c true iff a sector is attributed to the Back side of the line.
      */
-    inline bool hasBackSector() const { return hasSector(Back); }
+    inline bool hasBackSector() const  { return hasSector(Back); }
 
     /**
      * Convenient accessor method for returning the sector attributed to the
@@ -619,7 +581,7 @@ public:
     /**
      * Returns the sector attributed to the Back side of the line.
      */
-    inline Sector &backSector() const { return sector(Back); }
+    inline Sector &backSector() const  { return sector(Back); }
 
     /**
      * Convenient accessor method for returning a pointer to the sector attributed
@@ -631,7 +593,7 @@ public:
      * Convenient accessor method for returning a pointer to the sector attributed
      * to the back side of the line.
      */
-    inline Sector *backSectorPtr() const { return sectorPtr(Back); }
+    inline Sector *backSectorPtr() const  { return sectorPtr(Back); }
 
     /**
      * Returns @c true iff the line is considered @em self-referencing.
@@ -667,6 +629,11 @@ public:
     inline Vertex &from() const { return vertex(From); }
 
     /**
+     * Returns the To/End vertex for the line.
+     */
+    inline Vertex &to() const   { return vertex(To); }
+
+    /**
      * Convenient accessor method for returning the origin of the From/Start
      * vertex for the line.
      *
@@ -675,17 +642,12 @@ public:
     inline de::Vector2d const &fromOrigin() const { return from().origin(); }
 
     /**
-     * Returns the To/End vertex for the line.
-     */
-    inline Vertex &to() const { return vertex(To); }
-
-    /**
      * Convenient accessor method for returning the origin of the To/End
      * vertex for the line.
      *
      * @see to()
      */
-    inline de::Vector2d const &toOrigin() const { return to().origin(); }
+    inline de::Vector2d const &toOrigin() const   { return to().origin(); }
 
     /**
      * Returns the point on the line which lies at the exact center of the
@@ -774,7 +736,7 @@ public:
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    coord_t pointDistance(de::Vector2d const &point, coord_t *offset = 0) const;
+    coord_t pointDistance(de::Vector2d const &point, coord_t *offset = nullptr) const;
 
     /**
      * Where does the given @a point lie relative to the line? Note that the

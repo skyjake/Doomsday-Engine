@@ -18,8 +18,20 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "world/worldsystem.h"
+
+#include <map>
+#include <utility>
+#include <QMap>
+#include <QtAlgorithms>
+#include <de/memoryzone.h>
+#include <de/timer.h>
+#include <de/Error>
+#include <de/Log>
+#include <de/Time>
+#include <doomsday/console/cmd.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/console/var.h>
 
 #include "de_defs.h"
 #include "de_play.h"
@@ -27,15 +39,19 @@
 #include "dd_main.h"
 #include "dd_def.h"
 #include "dd_loop.h"
-#include "ui/progress.h"
 
 #include "audio/s_main.h"
-#include "edit_map.h"
 #include "network/net_main.h"
 
+#include "edit_map.h"
 #include "Plane"
 #include "Sector"
 #include "SectorCluster"
+#include "world/p_ticker.h"
+#include "world/sky.h"
+#include "world/thinkers.h"
+
+#include "ui/progress.h"
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
@@ -60,23 +76,6 @@
 #ifdef __SERVER__
 #  include "server/sv_pool.h"
 #endif
-
-#include "world/p_ticker.h"
-#include "world/sky.h"
-#include "world/thinkers.h"
-
-#include <doomsday/console/cmd.h>
-#include <doomsday/console/var.h>
-#include <doomsday/console/exec.h>
-#include <de/Error>
-#include <de/Log>
-#include <de/Time>
-#include <de/memoryzone.h>
-#include <de/timer.h>
-#include <QMap>
-#include <QtAlgorithms>
-#include <map>
-#include <utility>
 
 using namespace de;
 
@@ -252,7 +251,7 @@ private:
         }
     }
 
-    Map *_map; ///< Map currently being reported on, if any (not owned).
+    Map *_map = nullptr;  ///< Map currently being reported on, if any (not owned).
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
@@ -293,14 +292,6 @@ DENG2_PIMPL(WorldSystem)
 
     Instance(Public *i) : Base(i)
     {}
-
-    void notifyMapChange()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(MapChange, i)
-        {
-            i->worldSystemMapChanged();
-        }
-    }
 
     /**
      * Compose the relative path (relative to the runtime directory) to the
@@ -457,7 +448,7 @@ DENG2_PIMPL(WorldSystem)
         /// so that it may perform the connection itself. Such notification
         /// would also afford the map the opportunity to prepare various data
         /// which is only needed when made current (e.g., caches for render).
-        self.audienceForFrameBegin += map;
+        self.audienceForFrameBegin() += map;
 #endif
 
         // Print summary information about this map.
@@ -581,11 +572,14 @@ DENG2_PIMPL(WorldSystem)
 
 #ifdef __CLIENT__
         /// @todo Refactor away:
-        foreach(Sector *sector, map->sectors())
-        foreach(LineSide *side, sector->sides())
+        map->forAllSectors([] (Sector &sector)
         {
-            side->fixMissingMaterials();
-        }
+            for(LineSide *side : sector.sides())
+            {
+                side->fixMissingMaterials();
+            }
+            return LoopContinue;
+        });
 #endif
 
         map->initPolyobjs();
@@ -689,7 +683,7 @@ DENG2_PIMPL(WorldSystem)
         {
             // Remove the current map from our audiences.
             /// @todo Map should handle this.
-            self.audienceForFrameBegin -= map;
+            self.audienceForFrameBegin() -= map;
         }
 #endif
 
@@ -767,7 +761,24 @@ DENG2_PIMPL(WorldSystem)
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif
+
+    void notifyMapChange()
+    {
+        DENG2_FOR_PUBLIC_AUDIENCE2(MapChange, i) i->worldSystemMapChanged();
+    }
+
+    DENG2_PIMPL_AUDIENCE(MapChange)
+#ifdef __CLIENT__
+    DENG2_PIMPL_AUDIENCE(FrameBegin)
+    DENG2_PIMPL_AUDIENCE(FrameEnd)
+#endif
 };
+
+DENG2_AUDIENCE_METHOD(WorldSystem, MapChange)
+#ifdef __CLIENT__
+DENG2_AUDIENCE_METHOD(WorldSystem, FrameBegin)
+DENG2_AUDIENCE_METHOD(WorldSystem, FrameEnd)
+#endif
 
 WorldSystem::WorldSystem() : d(new Instance(this))
 {}
@@ -827,7 +838,7 @@ void WorldSystem::reset()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr    = &ddPlayers[i];
         ddplayer_t *ddpl = &plr->shared;
 
         // Mobjs go down with the map.
@@ -858,7 +869,7 @@ void WorldSystem::update()
 {
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t *plr = &ddPlayers[i];
+        player_t *plr    = &ddPlayers[i];
         ddplayer_t *ddpl = &plr->shared;
 
         // States have changed, the state pointers are unknown.
@@ -913,7 +924,7 @@ Hand &WorldSystem::hand(coord_t *distance) const
     if(!d->hand)
     {
         d->hand.reset(new Hand());
-        audienceForFrameEnd += *d->hand;
+        audienceForFrameEnd() += *d->hand;
         if(d->map)
         {
             d->updateHandOrigin();
@@ -929,7 +940,7 @@ Hand &WorldSystem::hand(coord_t *distance) const
 void WorldSystem::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
-    DENG2_FOR_AUDIENCE(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
+    DENG2_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
 void WorldSystem::endFrame()
@@ -947,7 +958,7 @@ void WorldSystem::endFrame()
     }
 
     // Notify interested parties that the current frame has ended.
-    DENG2_FOR_AUDIENCE(FrameEnd, i) i->worldSystemFrameEnds();
+    DENG2_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
 }
 
 bool WorldSystem::isPointInVoid(Vector3d const &pos) const

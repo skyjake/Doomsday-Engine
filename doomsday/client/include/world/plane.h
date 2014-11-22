@@ -1,7 +1,7 @@
 /** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,18 +21,17 @@
 #ifndef DENG_WORLD_PLANE_H
 #define DENG_WORLD_PLANE_H
 
-#include "dd_share.h" // SoundEmitter
-#ifdef __CLIENT__
-#  include "def_main.h"
-#endif
-
-#include "MapElement"
-
 #ifdef __CLIENT__
 #  include <de/Error>
 #endif
 #include <de/Observers>
 #include <de/Vector>
+
+#include "dd_share.h" // SoundEmitter
+#ifdef __CLIENT__
+#  include "def_main.h" // ded_ptcgen_t
+#endif
+#include "MapElement"
 
 class Sector;
 class Surface;
@@ -58,15 +57,15 @@ public:
 #endif
 
     /// Notified when the plane is about to be deleted.
-    DENG2_DEFINE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
+    DENG2_DEFINE_AUDIENCE2(Deletion, void planeBeingDeleted(Plane const &plane))
 
     /// Notified whenever a @em sharp height change occurs.
-    DENG2_DEFINE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane))
+    DENG2_DEFINE_AUDIENCE2(HeightChange, void planeHeightChanged(Plane &plane))
 
 #ifdef __CLIENT__
 
     /// Notified whenever a @em smoothed height change occurs.
-    DENG2_DEFINE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
+    DENG2_DEFINE_AUDIENCE2(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
 
 #endif
 
@@ -88,9 +87,7 @@ public:
     /**
      * Returns the owning Sector of the plane.
      */
-    Sector &sector();
-
-    /// @copydoc sector()
+    Sector       &sector();
     Sector const &sector() const;
 
     /**
@@ -118,9 +115,7 @@ public:
     /**
      * Returns the Surface of the plane.
      */
-    Surface &surface();
-
-    /// @copydoc surface()
+    Surface       &surface();
     Surface const &surface() const;
 
     /**
@@ -135,9 +130,7 @@ public:
     /**
      * Returns the sound emitter for the plane.
      */
-    SoundEmitter &soundEmitter();
-
-    /// @copydoc soundEmitter()
+    SoundEmitter       &soundEmitter();
     SoundEmitter const &soundEmitter() const;
 
     /**

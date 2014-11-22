@@ -1,7 +1,7 @@
 /** @file interceptor.cpp  World map element/object ray trace interceptor.
  *
  * @authors Copyright © 1999-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
  * @par License
@@ -19,14 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/interceptor.h"
-
-#include "world/worldsystem.h" // validCount
-#include "world/p_object.h"
 
 #include <de/memoryzone.h>
 #include <de/vector1.h>
+#include "world/blockmap.h"
+#include "world/p_object.h"
+#include "world/worldsystem.h" // validCount
 
 using namespace de;
 
@@ -41,7 +40,7 @@ struct ListNode
 
     template <class ObjectType>
     ObjectType &objectAs() const {
-        DENG2_ASSERT(object != 0);
+        DENG2_ASSERT(object);
         return *static_cast<ObjectType *>(object);
     }
 };
@@ -64,7 +63,7 @@ DENG2_PIMPL_NOREF(Interceptor)
     Vector2d to;
     int flags; ///< @ref pathTraverseFlags
 
-    Map *map;
+    Map *map = nullptr;
     LineOpening opening;
 
     // Array representation for ray geometry (used with legacy code).
@@ -74,11 +73,10 @@ DENG2_PIMPL_NOREF(Interceptor)
     Instance(traverser_t callback, Vector2d const &from, Vector2d const &to,
              int flags, void *context)
         : callback(callback)
-        , context(context)
-        , from(from)
-        , to(to)
-        , flags(flags)
-        , map(0)
+        , context (context)
+        , from    (from)
+        , to      (to)
+        , flags   (flags)
     {
         V2d_Set(fromV1, from.x, from.y);
         V2d_Set(directionV1, to.x - from.x, to.y - from.y);
@@ -102,11 +100,12 @@ DENG2_PIMPL_NOREF(Interceptor)
 
             // Configure the static head and tail.
             head.distance = 0.0f;
-            head.next = &tail;
-            head.prev = 0;
+            head.next     = &tail;
+            head.prev     = nullptr;
+
             tail.distance = 1.0f;
-            tail.prev = &head;
-            tail.next = 0;
+            tail.prev     = &head;
+            tail.next     = nullptr;
         }
 
         // Start reusing intercepts (may point to a sentinel but that is Ok).
@@ -124,7 +123,8 @@ DENG2_PIMPL_NOREF(Interceptor)
         // Reset the trace.
         head.next = &tail;
         tail.prev = &head;
-        mru = 0;
+
+        mru = nullptr;
 
 #undef MININTERCEPTS
     }
@@ -139,7 +139,7 @@ DENG2_PIMPL_NOREF(Interceptor)
      */
     void addIntercept(intercepttype_t type, float distance, void *object)
     {
-        DENG2_ASSERT(object != 0);
+        DENG2_ASSERT(object);
 
         // First reject vs our sentinels
         if(distance < head.distance) return;
@@ -272,25 +272,28 @@ DENG2_PIMPL_NOREF(Interceptor)
         return false; // Continue iteration.
     }
 
-    static int interceptPathMobjWorker(mobj_t *mobj, void *context)
-    {
-        static_cast<Instance *>(context)->intercept(*mobj);
-        return false; // Continue iteration.
-    }
-
     void runTrace()
     {
         /// @todo Store the intercept list internally?
         clearIntercepts();
 
-        validCount++;
+        int const localValidCount = ++validCount;
         if(flags & PTF_LINE)
         {
-            map->linePathIterator(from, to, interceptPathLineWorker, this);
+            map->forAllLinesInPath(from, to, interceptPathLineWorker, this);
         }
         if(flags & PTF_MOBJ)
         {
-            map->mobjPathIterator(from, to, interceptPathMobjWorker, this);
+            map->mobjBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
+            {
+                mobj_t &mob = *(mobj_t *)object;
+                if(mob.validCount != localValidCount) // not yet processed
+                {
+                    mob.validCount = localValidCount;
+                    intercept(mob);
+                }
+                return LoopContinue;
+            });
         }
     }
 };

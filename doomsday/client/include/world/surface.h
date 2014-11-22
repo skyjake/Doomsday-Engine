@@ -1,7 +1,7 @@
 /** @file surface.h  World map surface.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,20 +21,15 @@
 #ifndef DENG_WORLD_SURFACE_H
 #define DENG_WORLD_SURFACE_H
 
-#include "Material"
-
-#include "MapElement"
-#include <doomsday/uri.h>
-
+#include <functional>
 #include <de/Error>
 #include <de/Matrix>
 #include <de/Observers>
 #include <de/Vector>
-#ifdef __CLIENT__
-#  include <QList>
-#endif
+#include <doomsday/uri.h>
+#include "MapElement"
+#include "Material"
 
-class BspLeaf;
 class Decoration;
 
 /**
@@ -53,27 +48,19 @@ public:
     DENG2_ERROR(MissingMaterialError);
 
     /// Notified when the @em sharp material origin changes.
-    DENG2_DEFINE_AUDIENCE(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(MaterialOriginChange, void surfaceMaterialOriginChanged(Surface &surface))
 
     /// Notified whenever the normal vector changes.
-    DENG2_DEFINE_AUDIENCE(NormalChange, void surfaceNormalChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(NormalChange, void surfaceNormalChanged(Surface &surface))
 
     /// Notified whenever the opacity changes.
-    DENG2_DEFINE_AUDIENCE(OpacityChange, void surfaceOpacityChanged(Surface &surface))
+    DENG2_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
 
     /// Notified whenever the tint color changes.
-    DENG2_DEFINE_AUDIENCE(TintColorChange, void surfaceTintColorChanged(Surface &sector))
+    DENG2_DEFINE_AUDIENCE2(TintColorChange, void surfaceTintColorChanged(Surface &sector))
 
     /// Maximum speed for a smoothed material offset.
     static int const MAX_SMOOTH_MATERIAL_MOVE = 8;
-
-#ifdef __CLIENT__
-    typedef QList<Decoration *> Decorations;
-
-public: /// @todo Does not belong at this level
-    bool _needDecorationUpdate; ///< @c true= An update is needed.
-
-#endif // __CLIENT__
 
 public:
     /**
@@ -96,7 +83,7 @@ public:
     /**
      * Returns a copy of the normalized tangent vector for the surface.
      */
-    inline de::Vector3f tangent() const { return tangentMatrix().column(0); }
+    inline de::Vector3f tangent() const   { return tangentMatrix().column(0); }
 
     /**
      * Returns a copy of the normalized bitangent vector for the surface.
@@ -106,7 +93,7 @@ public:
     /**
      * Returns a copy of the normalized normal vector for the surface.
      */
-    inline de::Vector3f normal() const { return tangentMatrix().column(2); }
+    inline de::Vector3f normal() const    { return tangentMatrix().column(2); }
 
     /**
      * Change the tangent space normal vector for the surface. If changed,
@@ -182,11 +169,11 @@ public:
     Material &material() const;
 
     /**
-     * Returns a pointer to the attributed material of the surface; otherwise @c 0.
+     * Returns a pointer to the attributed material of the surface; otherwise @c nullptr.
      *
      * @see hasMaterial(), hasFixMaterial()
      */
-    inline Material *materialPtr() const { return hasMaterial()? &material() : 0; }
+    inline Material *materialPtr() const { return hasMaterial()? &material() : nullptr; }
 
     /**
      * Change the attributed material of the surface. On client side, any existing
@@ -315,21 +302,9 @@ public:
     float glow(de::Vector3f &color) const;
 
     /**
-     * Add the specified decoration to the surface.
-     *
-     * @param decoration  Decoration to add. Ownership is given to the surface.
-     */
-    void addDecoration(Decoration *decoration);
-
-    /**
      * Clear all surface decorations.
      */
     void clearDecorations();
-
-    /**
-     * Provides access to the surface decorations for efficient traversal.
-     */
-    Decorations const &decorations() const;
 
     /**
      * Returns the total number of surface decorations.
@@ -337,9 +312,26 @@ public:
     int decorationCount() const;
 
     /**
+     * Add the specified decoration to the surface.
+     *
+     * @param decoration  Decoration to add. Ownership is given to the surface.
+     */
+    void addDecoration(Decoration *decoration);
+
+    /**
+     * Iterate through all the surface decorations.
+     */
+    de::LoopResult forAllDecorations(std::function<de::LoopResult (Decoration &)> func) const;
+
+    /**
      * Mark the surface as needing a decoration update.
      */
-    void markAsNeedingDecorationUpdate();
+    void markForDecorationUpdate(bool yes = true);
+
+    /**
+     * Returns @c true if the surface is marked for decoration update.
+     */
+    bool needsDecorationUpdate() const;
 
 #endif // __CLIENT__
 

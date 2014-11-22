@@ -73,12 +73,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     else if(type == DT_SECTOR_SOUND) // Plane as emitter
     {        
         int index = deltaId;
-
-        if(index >= 0 && index < map.sectorCount())
-        {
-            sector = map.sectors().at(index);
-        }
-        else
+        if(!(sector = map.sectorPtr(index)))
         {
             LOG_NET_WARNING("Received sound delta has invalid sector index %i") << index;
             skip = true;
@@ -87,9 +82,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
     else if(type == DT_SIDE_SOUND) // Side section as emitter
     {
         int index = deltaId;
-
-        side = map.sideByIndex(index);
-        if(!side)
+        if(!(side = map.sidePtr(index)))
         {
             LOG_NET_WARNING("Received sound delta has invalid side index %i") << index;
             skip = true;
@@ -101,12 +94,7 @@ void Cl_ReadSoundDelta(deltatype_t type)
 
         LOG_NET_XVERBOSE("DT_POLY_SOUND: poly=%d") << index;
 
-        if(index >= 0 && index < map.polyobjCount())
-        {
-            poly = map.polyobjs().at(index);
-            emitter = (mobj_t *) poly;
-        }
-        else
+        if(!(emitter = (mobj_t *) (poly = map.polyobjPtr(index))))
         {
             LOG_NET_WARNING("Received sound delta has invalid polyobj index %i") << index;
             skip = true;
@@ -283,7 +271,7 @@ void Cl_Sound()
             LOG_NET_WARNING("Invalid sector number %i") << num;
             return;
         }
-        mobj_t *mo = (mobj_t *) &map.sectors().at(num)->soundEmitter();
+        mobj_t *mo = (mobj_t *) &map.sector(num).soundEmitter();
         //S_StopSound(0, mo);
         S_LocalSoundAtVolume(sound, mo, volume / 127.0f);
     }

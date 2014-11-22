@@ -3951,33 +3951,38 @@ void ResourceSystem::cacheForCurrentMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([this, &spec] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            if(side.middle().hasMaterial())
-                cache(side.middle().material(), spec);
+                if(side.middle().hasMaterial())
+                    cache(side.middle().material(), spec);
 
-            if(side.top().hasMaterial())
-                cache(side.top().material(), spec);
+                if(side.top().hasMaterial())
+                    cache(side.top().material(), spec);
 
-            if(side.bottom().hasMaterial())
-                cache(side.bottom().material(), spec);
-        }
+                if(side.bottom().hasMaterial())
+                    cache(side.bottom().material(), spec);
+            }
+            return LoopContinue;
+        });
 
-        foreach(Sector *sector, map.sectors())
+        map.forAllSectors([this, &spec] (Sector &sector)
         {
             // Skip sectors with no line sides as their planes will never be drawn.
-            if(!sector->sideCount()) continue;
-
-            foreach(Plane *plane, sector->planes())
+            if(sector.sideCount())
+            for(Plane *plane : sector.planes())
             {
                 if(plane->surface().hasMaterial())
+                {
                     cache(plane->surface().material(), spec);
+                }
             }
-        }
+            return LoopContinue;
+        });
     }
 
     if(precacheSprites)

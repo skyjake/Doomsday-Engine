@@ -40,6 +40,7 @@
 #include "Texture"
 #include "Face"
 #include "world/map.h"
+#include "world/blockmap.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -2596,21 +2597,21 @@ static void writeAllWallSections(HEdge *hedge)
 
 static void writeSubspaceWallSections()
 {
-    HEdge *base = curSubspace->poly().hedge();
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    for(Mesh *mesh : curSubspace->extraMeshes())
+    for(HEdge *hedge : mesh->hedges())
     {
         writeAllWallSections(hedge);
     }
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    for(Polyobj *po : curSubspace->polyobjs())
+    for(HEdge *hedge : po->mesh().hedges())
     {
         writeAllWallSections(hedge);
     }
@@ -2997,13 +2998,13 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
 static void generateDecorationFlares(Map &map)
 {
     Vector3d const viewPos = Rend_EyeOrigin().xzy();
-
-    foreach(Lumobj *lum, map.lumobjs())
+    map.forAllLumobjs([&viewPos] (Lumobj &lob)
     {
-        lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
+        lob.generateFlare(viewPos, R_ViewerLumobjDistance(lob.indexInMap()));
 
         /// @todo mark these light sources visible for LensFx
-    }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -3977,7 +3978,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_WorldSystem().map().toIndex(*s));
+    return String::number(App_WorldSystem().map().indexOf(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -4087,7 +4088,7 @@ static void drawBiasEditingVisuals(Map &map)
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
 
-    foreach(Grabbable *grabbable, hand.grabbed())
+    for(Grabbable *grabbable : hand.grabbed())
     {
         if(de::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
         BiasSource *s = &grabbable->as<BiasSource>();
@@ -4112,13 +4113,14 @@ static void drawBiasEditingVisuals(Map &map)
     // Show all sources?
     if(editShowAll)
     {
-        foreach(BiasSource *source, map.biasSources())
+        map.forAllBiasSources([&nearSource] (BiasSource &source)
         {
-            if(source == nearSource) continue;
-            if(source->isGrabbed()) continue;
-
-            drawSource(source);
-        }
+            if(&source != nearSource && !source.isGrabbed())
+            {
+                drawSource(&source);
+            }
+            return LoopContinue;
+        });
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -4464,15 +4466,16 @@ static void drawMobjBoundingBoxes(Map &map)
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, map.polyobjs())
+        map.forAllPolyobjs([] (Polyobj &pob)
         {
-            Sector const &sec = polyobj->sector();
-            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
-            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
+            Sector const &sec = pob.sector();
+
+            coord_t width  = (pob.aaBox.maxX - pob.aaBox.minX)/2;
+            coord_t length = (pob.aaBox.maxY - pob.aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
-            Vector3d pos(polyobj->aaBox.minX + width,
-                         polyobj->aaBox.minY + length,
+            Vector3d pos(pob.aaBox.minX + width,
+                         pob.aaBox.minY + length,
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
@@ -4482,7 +4485,7 @@ static void drawMobjBoundingBoxes(Map &map)
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f);
 
-            foreach(Line *line, polyobj->lines())
+            for(Line *line : pob.lines())
             {
                 Vector3d pos(line->center(), sec.floor().height());
 
@@ -4490,7 +4493,9 @@ static void drawMobjBoundingBoxes(Map &map)
                               BANG2DEG(BANG_90 - line->angle()),
                               green, alpha, 0);
             }
-        }
+
+            return LoopContinue;
+        });
     }
 
     GL_BlendMode(BM_NORMAL);
@@ -4675,47 +4680,46 @@ static void drawLumobjs(Map &map)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    for(int i = 0; i < map.lumobjCount(); ++i)
+    map.forAllLumobjs([] (Lumobj &lob)
     {
-        Lumobj *lum = map.lumobj(i);
-
-        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(i))
-            continue;
+        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
+            return LoopContinue;
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslated(lum->origin().x, lum->origin().z + lum->zOffset(), lum->origin().y);
+        glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
 
         glBegin(GL_LINES);
         {
             glColor4fv(black);
-            glVertex3f(-lum->radius(), 0, 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(-lob.radius(), 0, 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(lum->radius(), 0, 0);
+            glVertex3f(lob.radius(), 0, 0);
 
-            glVertex3f(0, -lum->radius(), 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, -lob.radius(), 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, lum->radius(), 0);
+            glVertex3f(0, lob.radius(), 0);
 
-            glVertex3f(0, 0, -lum->radius());
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, -lob.radius());
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, 0, lum->radius());
+            glVertex3f(0, 0, lob.radius());
         }
         glEnd();
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
-    }
+        return LoopContinue;
+    });
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -4746,50 +4750,54 @@ static void drawSoundEmitters(Map &map)
 
     if(devSoundEmitters & SOF_SIDE)
     {
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            drawSoundEmitter(side.middleSoundEmitter(),
-                             String("Line #%1 (%2, middle)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.middleSoundEmitter(),
+                                 String("Line #%1 (%2, middle)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.bottomSoundEmitter(),
-                             String("Line #%1 (%2, bottom)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.bottomSoundEmitter(),
+                                 String("Line #%1 (%2, bottom)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.topSoundEmitter(),
-                             String("Line #%1 (%2, top)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
-        }
+                drawSoundEmitter(side.topSoundEmitter(),
+                                 String("Line #%1 (%2, top)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
+            }
+            return LoopContinue;
+        });
     }
 
     if(devSoundEmitters & (SOF_SECTOR|SOF_PLANE))
     {
-        foreach(Sector *sec, map.sectors())
+        map.forAllSectors([] (Sector &sec)
         {
             if(devSoundEmitters & SOF_PLANE)
             {
-                foreach(Plane *plane, sec->planes())
+                for(Plane *plane : sec.planes())
                 {
                     drawSoundEmitter(plane->soundEmitter(),
                                      String("Sector #%1 (pln:%2)")
-                                         .arg(sec->indexInMap())
+                                         .arg(sec.indexInMap())
                                          .arg(plane->indexInSector()));
                 }
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(sec->soundEmitter(),
-                                 String("Sector #%1").arg(sec->indexInMap()));
+                drawSoundEmitter(sec.soundEmitter(),
+                                 String("Sector #%1").arg(sec.indexInMap()));
             }
-        }
+            return LoopContinue;
+        });
     }
 }
 
@@ -4958,16 +4966,13 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
     }
 }
 
-static int drawSubspaceVertexWorker(ConvexSubspace *subspace, void *context)
+static void drawSubspaceVertexs(ConvexSubspace &sub, drawVertexVisual_params_t &parms)
 {
-    drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
+    SectorCluster &cluster = sub.cluster();
+    ddouble const min      = cluster.  visFloor().heightSmoothed();
+    ddouble const max      = cluster.visCeiling().heightSmoothed();
 
-    SectorCluster &cluster = subspace->cluster();
-
-    ddouble min = cluster.  visFloor().heightSmoothed();
-    ddouble max = cluster.visCeiling().heightSmoothed();
-
-    HEdge *base  = subspace->poly().hedge();
+    HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4979,21 +4984,19 @@ static int drawSubspaceVertexWorker(ConvexSubspace *subspace, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    for(Mesh *mesh : sub.extraMeshes())
+    for(HEdge *hedge : mesh->hedges())
     {
         drawVertexVisual(hedge->vertex(), min, max, parms);
         drawVertexVisual(hedge->twin().vertex(), min, max, parms);
     }
 
-    foreach(Polyobj *polyobj, subspace->polyobjs())
-    foreach(Line *line, polyobj->lines())
+    for(Polyobj *polyobj : sub.polyobjs())
+    for(Line *line : polyobj->lines())
     {
         drawVertexVisual(line->from(), min, max, parms);
         drawVertexVisual(line->to(), min, max, parms);
     }
-
-    return false; // Continue iteration.
 }
 
 /**
@@ -5024,9 +5027,23 @@ static void drawVertexes(Map &map)
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        parms.drawBar = true;
+        parms.drawBar   = true;
         parms.drawLabel = parms.drawOrigin = false;
-        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            ConvexSubspace &sub   = *(ConvexSubspace *)object;
+            // Check the bounds.
+            AABoxd const &polyBox = sub.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(sub, parms);
+            }
+            return LoopContinue;
+        });
 
         glEnable(GL_DEPTH_TEST);
     }
@@ -5041,8 +5058,21 @@ static void drawVertexes(Map &map)
 
     parms.drawnVerts->fill(false); // Process all again.
     parms.drawOrigin = true;
-    parms.drawBar = parms.drawLabel = false;
-    map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+    parms.drawBar    = parms.drawLabel = false;
+    map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+    {
+        ConvexSubspace &sub   = *(ConvexSubspace *)object;
+        // Check the bounds.
+        AABoxd const &polyBox = sub.poly().aaBox();
+        if(!(polyBox.maxX < box.minX ||
+             polyBox.minX > box.maxX ||
+             polyBox.minY > box.maxY ||
+             polyBox.maxY < box.minY))
+        {
+            drawSubspaceVertexs(sub, parms);
+        }
+        return LoopContinue;
+    });
 
     glEnable(GL_DEPTH_TEST);
 
@@ -5050,8 +5080,21 @@ static void drawVertexes(Map &map)
     {
         parms.drawnVerts->fill(false); // Process all again.
         parms.drawLabel = true;
-        parms.drawBar = parms.drawOrigin = false;
-        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+        parms.drawBar   = parms.drawOrigin = false;
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            ConvexSubspace &sub   = *(ConvexSubspace *)object;
+            // Check the bounds.
+            AABoxd const &polyBox = sub.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(sub, parms);
+            }
+            return LoopContinue;
+        });
     }
 
     // Restore previous state.

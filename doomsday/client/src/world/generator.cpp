@@ -580,73 +580,6 @@ static int manyNewParticlesWorker(thinker_t *th, void *context)
     return false; // Continue iteration.
 }
 
-struct checklineworker_params_t
-{
-    AABoxd mbox;
-    fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
-    bool tmcross;
-    Line *ptcHitLine;
-};
-
-static int checkLineWorker(Line *ld, void *context)
-{
-    checklineworker_params_t &parm = *static_cast<checklineworker_params_t *>(context);
-
-    // Does the bounding box miss the line completely?
-    if(parm.mbox.maxX <= ld->aaBox().minX || parm.mbox.minX >= ld->aaBox().maxX ||
-       parm.mbox.maxY <= ld->aaBox().minY || parm.mbox.minY >= ld->aaBox().maxY)
-        return false;
-
-    // Movement must cross the line.
-    if((ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx1), FIX2FLT(parm.tmpy1))) < 0) ==
-       (ld->pointOnSide(Vector2d(FIX2FLT(parm.tmpx2), FIX2FLT(parm.tmpy2))) < 0))
-        return false;
-
-    /*
-     * We are possibly hitting something here.
-     */
-
-    // Bounce if we hit a solid wall.
-    /// @todo fixme: What about "one-way" window lines?
-    parm.ptcHitLine = ld;
-    if(!ld->hasBackSector()) return true; // Boing!
-
-    Sector *front = ld->frontSectorPtr();
-    Sector *back  = ld->backSectorPtr();
-
-    // Determine the opening we have here.
-    /// @todo Use R_OpenRange()
-    fixed_t ceil;
-    if(front->ceiling().height() < back->ceiling().height())
-    {
-        ceil = FLT2FIX(front->ceiling().height());
-    }
-    else
-    {
-        ceil = FLT2FIX(back->ceiling().height());
-    }
-
-    fixed_t floor;
-    if(front->floor().height() > back->floor().height())
-    {
-        floor = FLT2FIX(front->floor().height());
-    }
-    else
-    {
-        floor = FLT2FIX(back->floor().height());
-    }
-
-    // There is a backsector. We possibly might hit something.
-    if(parm.tmpz - parm.tmprad < floor || parm.tmpz + parm.tmprad > ceil)
-        return true; // Boing!
-
-    // There is a possibility that the new position is in a new sector.
-    parm.tmcross = true; // Afterwards, update the sector pointer.
-
-    // False alarm, continue checking.
-    return false;
-}
-
 /**
  * Particle touches something solid. Returns false iff the particle dies.
  */
@@ -897,6 +830,13 @@ void Generator::moveParticle(int index)
     fixed_t x = pinfo->origin[VX] + pinfo->mov[VX];
     fixed_t y = pinfo->origin[VY] + pinfo->mov[VY];
 
+    struct checklineworker_params_t
+    {
+        AABoxd box;
+        fixed_t tmpz, tmprad, tmpx1, tmpx2, tmpy1, tmpy2;
+        bool tmcross;
+        Line *ptcHitLine;
+    };
     checklineworker_params_t clParm; zap(clParm);
     clParm.tmcross = false; // Has crossed potential sector boundary?
 
@@ -964,15 +904,82 @@ void Generator::moveParticle(int index)
     vec2d_t point;
     V2d_Set(point, FIX2FLT(MIN_OF(x, pinfo->origin[VX]) - st->radius),
                    FIX2FLT(MIN_OF(y, pinfo->origin[VY]) - st->radius));
-    V2d_InitBox(clParm.mbox.arvec2, point);
+    V2d_InitBox(clParm.box.arvec2, point);
     V2d_Set(point, FIX2FLT(MAX_OF(x, pinfo->origin[VX]) + st->radius),
                    FIX2FLT(MAX_OF(y, pinfo->origin[VY]) + st->radius));
-    V2d_AddToBox(clParm.mbox.arvec2, point);
+    V2d_AddToBox(clParm.box.arvec2, point);
 
     // Iterate the lines in the contacted blocks.
 
     validCount++;
-    if(map().lineBoxIterator(clParm.mbox, checkLineWorker, &clParm))
+    DENG2_ASSERT(!clParm.ptcHitLine);
+    map().forAllLinesInBox(clParm.box, [&clParm] (Line &line)
+    {
+        // Does the bounding box miss the line completely?
+        if(clParm.box.maxX <= line.aaBox().minX || clParm.box.minX >= line.aaBox().maxX ||
+           clParm.box.maxY <= line.aaBox().minY || clParm.box.minY >= line.aaBox().maxY)
+        {
+            return LoopContinue;
+        }
+
+        // Movement must cross the line.
+        if((line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx1), FIX2FLT(clParm.tmpy1))) < 0) ==
+           (line.pointOnSide(Vector2d(FIX2FLT(clParm.tmpx2), FIX2FLT(clParm.tmpy2))) < 0))
+        {
+            return LoopContinue;
+        }
+
+        /*
+         * We are possibly hitting something here.
+         */
+
+        // Bounce if we hit a solid wall.
+        /// @todo fixme: What about "one-way" window lines?
+        clParm.ptcHitLine = &line;
+        if(!line.hasBackSector())
+        {
+            return LoopAbort; // Boing!
+        }
+
+        Sector *front = line.frontSectorPtr();
+        Sector *back  = line.backSectorPtr();
+
+        // Determine the opening we have here.
+        /// @todo Use R_OpenRange()
+        fixed_t ceil;
+        if(front->ceiling().height() < back->ceiling().height())
+        {
+            ceil = FLT2FIX(front->ceiling().height());
+        }
+        else
+        {
+            ceil = FLT2FIX(back->ceiling().height());
+        }
+
+        fixed_t floor;
+        if(front->floor().height() > back->floor().height())
+        {
+            floor = FLT2FIX(front->floor().height());
+        }
+        else
+        {
+            floor = FLT2FIX(back->floor().height());
+        }
+
+        // There is a backsector. We possibly might hit something.
+        if(clParm.tmpz - clParm.tmprad < floor || clParm.tmpz + clParm.tmprad > ceil)
+        {
+            return LoopAbort; // Boing!
+        }
+
+        // False alarm, continue checking.
+        clParm.ptcHitLine = nullptr;
+        // There is a possibility that the new position is in a new sector.
+        clParm.tmcross    = true; // Afterwards, update the sector pointer.
+        return LoopContinue;
+    });
+
+    if(clParm.ptcHitLine)
     {
         fixed_t normal[2], dotp;
 

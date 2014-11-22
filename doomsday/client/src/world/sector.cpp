@@ -307,30 +307,34 @@ void Sector::buildSides()
 
 #ifdef DENG2_QT_4_7_OR_NEWER
     int count = 0;
-    for(Line *line : map().lines())
+    map().forAllLines([this, &count] (Line &line)
     {
-        if(line->frontSectorPtr() == this || line->backSectorPtr()  == this)
+        if(line.frontSectorPtr() == this || line.backSectorPtr()  == this)
+        {
             ++count;
-    }
+        }
+        return LoopContinue;
+    });
 
     if(!count) return;
 
     d->sides.reserve(count);
 #endif
 
-    for(Line *line : map().lines())
+    map().forAllLines([this] (Line &line)
     {
-        if(line->frontSectorPtr() == this)
+        if(line.frontSectorPtr() == this)
         {
             // Ownership of the side is not given to the sector.
-            d->sides.append(&line->front());
+            d->sides.append(&line.front());
         }
-        else if(line->backSectorPtr()  == this)
+        else if(line.backSectorPtr()  == this)
         {
             // Ownership of the side is not given to the sector.
-            d->sides.append(&line->back());
+            d->sides.append(&line.back());
         }
-    }
+        return LoopContinue;
+    });
 }
 
 Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
@@ -344,7 +348,7 @@ Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
     {
         // We want notification of height changes so that we can update sound
         // emitter origins of dependent surfaces.
-        plane->audienceForHeightChange += d;
+        plane->audienceForHeightChange() += d;
     }
 
     // Once both floor and ceiling are known we can determine the z-height origin

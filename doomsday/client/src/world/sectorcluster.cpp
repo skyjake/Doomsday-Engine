@@ -27,6 +27,9 @@
 #include "Line"
 #include "Plane"
 #include "Surface"
+#ifdef __CLIENT__
+#  include "world/blockmap.h"
+#endif
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -214,21 +217,21 @@ DENG2_PIMPL(SectorCluster)
 
         if(yes)
         {
-            plane->audienceForDeletion += this;
+            plane->audienceForDeletion() += this;
             if(observeHeight)
             {
-                plane->audienceForHeightChange         += this;
+                plane->audienceForHeightChange()         += this;
 #ifdef __CLIENT__
-                plane->audienceForHeightSmoothedChange += this;
+                plane->audienceForHeightSmoothedChange() += this;
 #endif
             }
         }
         else
         {
-            plane->audienceForDeletion             -= this;
-            plane->audienceForHeightChange         -= this;
+            plane->audienceForDeletion()             -= this;
+            plane->audienceForHeightChange()         -= this;
 #ifdef __CLIENT__
-            plane->audienceForHeightSmoothedChange -= this;
+            plane->audienceForHeightSmoothedChange() -= this;
 #endif
         }
     }
@@ -609,17 +612,17 @@ DENG2_PIMPL(SectorCluster)
         LineSide &front = line.front();
         DENG2_ASSERT(front.hasSections());
         {
-            front.middle().markAsNeedingDecorationUpdate();
-            front.bottom().markAsNeedingDecorationUpdate();
-            front.   top().markAsNeedingDecorationUpdate();
+            front.middle().markForDecorationUpdate();
+            front.bottom().markForDecorationUpdate();
+            front.   top().markForDecorationUpdate();
         }
 
         LineSide &back = line.back();
         if(back.hasSections())
         {
-            back.middle().markAsNeedingDecorationUpdate();
-            back.bottom().markAsNeedingDecorationUpdate();
-            back   .top().markAsNeedingDecorationUpdate();
+            back.middle().markForDecorationUpdate();
+            back.bottom().markForDecorationUpdate();
+            back   .top().markForDecorationUpdate();
         }
     }
 
@@ -814,12 +817,6 @@ DENG2_PIMPL(SectorCluster)
         reverbSubspaces.insert(subspace);
     }
 
-    static int addReverbSubspaceWorker(ConvexSubspace *subspace, void *context)
-    {
-        static_cast<Instance *>(context)->addReverbSubspace(subspace);
-        return false; // Continue iteration.
-    }
-
     /**
      * Perform environmental audio (reverb) initialization.
      *
@@ -832,15 +829,35 @@ DENG2_PIMPL(SectorCluster)
      */
     void findReverbSubspaces()
     {
-        AABoxd affectionBounds = self.aaBox();
-        affectionBounds.minX -= 128;
-        affectionBounds.minY -= 128;
-        affectionBounds.maxX += 128;
-        affectionBounds.maxY += 128;
+        Map const &map = self.sector().map();
+
+        AABoxd box = self.aaBox();
+        box.minX -= 128;
+        box.minY -= 128;
+        box.maxX += 128;
+        box.maxY += 128;
 
         // Link all convex subspaces whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        self.sector().map().subspaceBoxIterator(affectionBounds, addReverbSubspaceWorker, this);
+        int const localValidCount = ++validCount;
+        map.subspaceBlockmap().forAllInBox(box, [this, &box, &localValidCount] (void *object)
+        {
+            ConvexSubspace &sub = *(ConvexSubspace *)object;
+            if(sub.validCount() != localValidCount) // not yet processed
+            {
+                sub.setValidCount(localValidCount);
+                // Check the bounds.
+                AABoxd const &polyBox = sub.poly().aaBox();
+                if(!(polyBox.maxX < box.minX ||
+                     polyBox.minX > box.maxX ||
+                     polyBox.minY > box.maxY ||
+                     polyBox.maxY < box.minY))
+                {
+                    addReverbSubspace(&sub);
+                }
+            }
+            return LoopContinue;
+        });
     }
 
     /**
@@ -1231,7 +1248,7 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
 {
     if(Instance::GeometryData *gdata = d->geomDataForShard(shard))
     {
-        Map::BiasSources const &sources = sector().map().biasSources();
+        Map const &map = sector().map();
 
         BiasTracker &tracker = shard->biasTracker();
         tracker.clearContributors();
@@ -1243,15 +1260,15 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
             Plane const &plane       = visPlane(gdata->geomId);
             Surface const &surface   = plane.surface();
 
-            Vector3d surfacePoint(subspace.poly().center(), plane.heightSmoothed());
+            Vector3d const surfacePoint(subspace.poly().center(), plane.heightSmoothed());
 
-            foreach(BiasSource *source, sources)
+            map.forAllBiasSources([&tracker, &subspace, &surface, &surfacePoint] (BiasSource &source)
             {
                 // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
+                if(source.intensity() <= 0)
+                    return LoopContinue;
 
-                Vector3d sourceToSurface = (source->origin() - surfacePoint).normalize();
+                Vector3d sourceToSurface = (source.origin() - surfacePoint).normalize();
                 coord_t distance = 0;
 
                 // Calculate minimum 2D distance to the subspace.
@@ -1260,16 +1277,17 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
                 HEdge *node = baseNode;
                 do
                 {
-                    coord_t len = (Vector2d(source->origin()) - node->origin()).length();
+                    coord_t len = (Vector2d(source.origin()) - node->origin()).length();
                     if(node == baseNode || len < distance)
                         distance = len;
                 } while((node = &node->next()) != baseNode);
 
                 if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
+                    return LoopContinue;
 
-                tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
+                tracker.addContributor(&source, source.evaluateIntensity() / de::max(distance, 1.0));
+                return LoopContinue;
+            });
             break; }
 
         case DMU_SEGMENT: {
@@ -1279,28 +1297,29 @@ bool SectorCluster::updateBiasContributors(Shard *shard)
             Vector2d const &to     = seg.hedge().twin().origin();
             Vector2d const center  = (from + to) / 2;
 
-            foreach(BiasSource *source, sources)
+            map.forAllBiasSources([&tracker, &surface, &from, &to, &center] (BiasSource &source)
             {
                 // If the source is too weak we will ignore it completely.
-                if(source->intensity() <= 0)
-                    continue;
+                if(source.intensity() <= 0)
+                    return LoopContinue;
 
-                Vector3d sourceToSurface = (source->origin() - center).normalize();
+                Vector3d sourceToSurface = (source.origin() - center).normalize();
 
                 // Calculate minimum 2D distance to the segment.
                 coord_t distance = 0;
                 for(int k = 0; k < 2; ++k)
                 {
-                    coord_t len = (Vector2d(source->origin()) - (!k? from : to)).length();
+                    coord_t len = (Vector2d(source.origin()) - (!k? from : to)).length();
                     if(k == 0 || len < distance)
                         distance = len;
                 }
 
                 if(sourceToSurface.dot(surface.normal()) < 0)
-                    continue;
+                    return LoopContinue;
 
-                tracker.addContributor(source, source->evaluateIntensity() / de::max(distance, 1.0));
-            }
+                tracker.addContributor(&source, source.evaluateIntensity() / de::max(distance, 1.0));
+                return LoopContinue;
+            });
             break; }
 
         default:

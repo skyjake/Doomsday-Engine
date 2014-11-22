@@ -105,7 +105,11 @@ struct ContactSpreader
                 _spreadBlocks->setBit(cellIndex);
             }
 
-            _blockmap.iterate(cell, spreadContactWorker, this);
+            _blockmap.forAllInCell(cell, [this] (void *element)
+            {
+                spreadContact(*static_cast<Contact *>(element));
+                return LoopContinue;
+            });
         }
     }
 
@@ -257,13 +261,6 @@ private:
             maybeSpreadOverEdge(hedge);
 
         } while((hedge = &hedge->next()) != base);
-    }
-
-    static int spreadContactWorker(void *contact, void *context)
-    {
-        ContactSpreader *inst = static_cast<ContactSpreader *>(context);
-        inst->spreadContact(*static_cast<Contact *>(contact));
-        return false; // Continue iteration.
     }
 };
 

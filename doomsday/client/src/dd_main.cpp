@@ -3323,11 +3323,14 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 #ifdef __CLIENT__
     // Update all sectors.
     /// @todo Refactor away.
-    foreach(Sector *sector, map.sectors())
-    foreach(LineSide *side, sector->sides())
+    map.forAllSectors([] (Sector &sector)
     {
-        side->fixMissingMaterials();
-    }
+        for(LineSide *side : sector.sides())
+        {
+            side->fixMissingMaterials();
+        }
+        return LoopContinue;
+    });
 #endif
 
     // Re-initialize polyobjs.

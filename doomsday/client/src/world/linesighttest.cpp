@@ -239,8 +239,8 @@ DENG2_PIMPL(LineSightTest)
         ConvexSubspace const &subspace = bspLeaf.subspace();
 
         // Check polyobj lines.
-        foreach(Polyobj *po, subspace.polyobjs())
-        foreach(Line *line, po->lines())
+        for(Polyobj *po : subspace.polyobjs())
+        for(Line *line : po->lines())
         {
             if(!crossLine(line->front()))
                 return false; // Stop traversal.
@@ -258,8 +258,8 @@ DENG2_PIMPL(LineSightTest)
             }
         } while((hedge = &hedge->next()) != base);
 
-        foreach(Mesh *mesh, subspace.extraMeshes())
-        foreach(HEdge *hedge, mesh->hedges())
+        for(Mesh *mesh : subspace.extraMeshes())
+        for(HEdge *hedge : mesh->hedges())
         {
             // Is this on the back of a one-sided line?
             if(!hedge->hasMapElement())
