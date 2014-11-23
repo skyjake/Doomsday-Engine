@@ -638,7 +638,7 @@ Widget *Page::tryFindWidget(int flags, int group)
 {
     for(Widget *wi : d->children)
     {
-        if(wi->group() == group && (wi->flags() & flags) == flags)
+        if(wi->group() == group && int(wi->flags() & flags) == flags)
             return wi;
     }
     return 0; // Not found.

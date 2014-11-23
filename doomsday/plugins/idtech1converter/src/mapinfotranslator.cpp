@@ -217,11 +217,6 @@ namespace internal {
         }
     };
 
-    static inline String boolAsText(bool yes)
-    {
-        return yes? "true" : "false";
-    }
-
     static de::Uri composeMapUri(uint episode, uint map)
     {
         String const gameIdKey = DENG2_APP->game().id();

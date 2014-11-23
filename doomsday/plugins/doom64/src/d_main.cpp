@@ -180,7 +180,7 @@ void D_PreInit()
     cfg.slidingCorpses = false;
     //cfg.fastMonsters = false;
     cfg.netJumping = true;
-    cfg.netEpisode = "";
+    cfg.netEpisode = (char *) "";
     cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;

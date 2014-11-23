@@ -98,10 +98,12 @@ static int lgMXSample  = 1; ///< 5 samples per block. Cvar.
 
 namespace de {
 
+#ifdef __CLIENT__
 static inline WorldSystem &worldSys()
 {
     return App_WorldSystem();
 }
+#endif
 
 struct EditableElements
 {
