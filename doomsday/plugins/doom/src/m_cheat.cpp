@@ -86,7 +86,7 @@ void G_RegisterCheats(void)
         ADDCHEATCMD("joelkoenigs",      "give w7 %p");
         ADDCHEATCMD("joshuastorms",     "give g %p");
         ADDCHEAT("kimhyers",            MyPos);
-        ADDCHEATCMD("leesnyder%1%2",    "warp %1%2");
+        ADDCHEATCMD("leesnyder%1%2",    "warp %1 %2");
         ADDCHEATCMD("marybregi",        "give v %p");
         ADDCHEATCMD("mikekoenigs",      "give war2 %p");
         ADDCHEATCMD("scottholman",      "give wakr3 %p");
@@ -101,7 +101,7 @@ void G_RegisterCheats(void)
         // end of the current tic.
         ADDCHEATCMD("idchoppers",       "give w7 %p");
 
-        ADDCHEATCMD("idclev%1%2",       "warp %1%2");
+        ADDCHEATCMD("idclev%1%2",       ((gameModeBits & GM_ANY_DOOM)? "warp %1 %2" : "warp %1%2"));
         ADDCHEATCMD("idclip",           "noclip %p");
         ADDCHEATCMD("iddqd",            "god %p");
         ADDCHEAT("iddt",                Reveal);

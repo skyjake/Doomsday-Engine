@@ -58,7 +58,7 @@ CHEAT_FUNC(Reveal);
 void G_RegisterCheats(void)
 {
     ADDCHEATCMD("cockadoodledoo",   "chicken %p");
-    ADDCHEATCMD("engage%1%2",       "warp %1%2");
+    ADDCHEATCMD("engage%1%2",       "warp %1 %2");
     ADDCHEAT("gimme%1%2",           InvItem3); // Final stage.
     ADDCHEAT("gimme%1",             InvItem2); // 2nd stage (ask for count).
     ADDCHEAT("gimme",               InvItem);  // 1st stage (ask for type).
