@@ -362,7 +362,8 @@ int Mus_Start(Record const *rec, bool looped)
         case MUSP_CD:
             if(Mus_GetCD(rec))
             {
-                return AudioDriver_Music_PlayCDTrack(Mus_GetCD(rec), looped);
+                if(AudioDriver_Music_PlayCDTrack(Mus_GetCD(rec), looped))
+                    return true;
             }
             break;
 
@@ -374,7 +375,8 @@ int Mus_Start(Record const *rec, bool looped)
                         << rec->gets("id") << NativePath(Str_Text(&path)).pretty();
 
                 // Its an external file.
-                return AudioDriver_Music_PlayFile(Str_Text(&path), looped);
+                if(AudioDriver_Music_PlayFile(Str_Text(&path), looped))
+                    return true;
             }
 
             // Next, try non-MUS lumps.
@@ -385,18 +387,13 @@ int Mus_Start(Record const *rec, bool looped)
         case MUSP_MUS:
             if(AudioDriver_Music_Available())
             {
-                String const lumpName = rec->gets("lumpName");
-                lumpnum_t lumpNum = App_FileSystem().lumpNumForName(lumpName);
-                if(lumpNum >= 0)
-                {
-                    int result = Mus_StartLump(lumpNum, looped, canPlayMUS);
-                    if(result < 0) break;
-                    return result;
-                }
+                lumpnum_t const lumpNum = App_FileSystem().lumpNumForName(rec->gets("lumpName"));
+                if(Mus_StartLump(lumpNum, looped, canPlayMUS) == 1)
+                    return true;
             }
             break;
 
-        default: DENG_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
+        default: DENG2_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
         }
     }
 
