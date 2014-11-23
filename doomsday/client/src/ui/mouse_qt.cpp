@@ -199,11 +199,12 @@ void Mouse_Qt_SubmitMotion(int axis, int deltaX, int deltaY)
         // We are not yet equipped to handle finer wheel motions.
         Mouse_Qt_SubmitButton(idx, true);
         Mouse_Qt_SubmitButton(idx, false);
-        return;
     }
-
-    mouseDelta[axis].dx += deltaX;
-    mouseDelta[axis].dy += deltaY;
+    else
+    {
+        mouseDelta[axis].dx += deltaX;
+        mouseDelta[axis].dy += deltaY;
+    }
 }
 
 void Mouse_Qt_SubmitWindowPosition(int x, int y)

@@ -465,7 +465,11 @@ DENG2_PIMPL(ClientWindow)
                 return true;
 
             case Event::MouseWheel:
-                Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->pos().x, mouse->pos().y);
+                if(mouse->wheelMotion() == MouseEvent::Step)
+                {
+                    // The old input system can only do wheel step events.
+                    Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
+                }
                 return true;
 
             default:
