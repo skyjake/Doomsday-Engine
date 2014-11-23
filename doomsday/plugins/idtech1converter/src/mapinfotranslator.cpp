@@ -79,7 +79,7 @@ namespace internal {
 
             // Add all expected fields with their default values.
             addText   ("id", "");
-            addNumber ("cdTrack", 0);
+            addNumber ("cdTrack", 1);
         }
     };
 
@@ -1433,9 +1433,13 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
             String const musicId = mapId + "_music";
             os << "\n\nMusic {"
-               << "\n  ID = \"" + musicId + "\";"
-               << "\n  Lump = \"" + info.gets("music") + "\";"
-               << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
+               << "\n  ID = \"" + musicId + "\";";
+            String const musicLumpName = info.gets("music");
+            if(!musicLumpName.isEmpty())
+            {
+               os << "\n  Lump = \"" + musicLumpName + "\";";
+            }
+            os << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
                << "\n}";
 
             bool const doubleSky = info.getb("doubleSky");

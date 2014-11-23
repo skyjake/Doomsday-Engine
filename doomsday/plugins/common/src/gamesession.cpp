@@ -630,23 +630,6 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Restart the map music?
         if(!briefing)
         {
-#if __JHEXEN__
-            /**
-             * @note Kludge: Due to the way music is managed with Hexen, unless we explicitly stop
-             * the current playing track the engine will not change tracks. This is due to the use
-             * of the runtime-updated "currentmap" definition (the engine thinks music has not changed
-             * because the current Music definition is the same).
-             *
-             * It only worked previously was because the waiting-for-map-load song was started prior
-             * to map loading.
-             *
-             * @todo Rethink the Music definition stuff with regard to Hexen. Why not create definitions
-             * during startup by parsing MAPINFO?
-             */
-            S_StopMusic();
-            //S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-
             S_MapMusic(mapUri);
             S_PauseMusic(true);
         }
