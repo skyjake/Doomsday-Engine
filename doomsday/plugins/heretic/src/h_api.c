@@ -84,7 +84,7 @@ int G_RegisterGames(int hookType, int param, void* data)
         "heretic-share", CONFIGDIR,
         "Heretic Shareware", "Raven Software",
         LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
-        "$(App.DataPath)/$(GamePlugin.Name).heretic-share.mapinfo"
+        "$(App.DataPath)/$(GamePlugin.Name)/.heretic-share.mapinfo"
     };
 
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
