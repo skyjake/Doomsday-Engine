@@ -10,6 +10,7 @@ secretnext E1M9
 warptrans 1
 sky1 SKY1 0
 music MUS_E1M1
+cluster 1
 
 map E1M2 lookup HUSTR_E1M2
 next E1M3
@@ -17,6 +18,7 @@ secretnext E1M9
 warptrans 2
 sky1 SKY1 0
 music MUS_E1M2
+cluster 1
 
 map E1M3 lookup HUSTR_E1M3
 next E1M4
@@ -24,6 +26,7 @@ secretnext E1M9
 warptrans 3
 sky1 SKY1 0
 music MUS_E1M3
+cluster 1
 
 map E1M4 lookup HUSTR_E1M4
 next E1M5
@@ -31,6 +34,7 @@ secretnext E1M9
 warptrans 4
 sky1 SKY1 0
 music MUS_E1M4
+cluster 1
 
 map E1M5 lookup HUSTR_E1M5
 next E1M6
@@ -38,6 +42,7 @@ secretnext E1M9
 warptrans 5
 sky1 SKY1 0
 music MUS_E1M5
+cluster 1
 
 map E1M6 lookup HUSTR_E1M6
 next E1M7
@@ -45,6 +50,7 @@ secretnext E1M9
 warptrans 6
 sky1 SKY1 0
 music MUS_E1M6
+cluster 1
 
 map E1M7 lookup HUSTR_E1M7
 next E1M8
@@ -52,15 +58,18 @@ secretnext E1M9
 warptrans 7
 sky1 SKY1 0
 music MUS_E1M7
+cluster 1
 
 map E1M8 lookup HUSTR_E1M8
 warptrans 8
 sky1 SKY1 0
 nointermission
 music MUS_E1M8
+cluster 1
 
 map E1M9 lookup HUSTR_E1M9
 next E1M7
 warptrans 9
 sky1 SKY1 0
 music MUS_E1M9
+cluster 1
