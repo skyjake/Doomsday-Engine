@@ -1713,7 +1713,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
         else
         {
-            ClientWindow::main().console().clearLog();
+            ClientWindow::main().console().zeroLogHeight();
         }
     }
 #endif
