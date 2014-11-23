@@ -549,6 +549,7 @@ void ConsoleWidget::clearLog()
     d->height->set(0);
     d->log->scrollToBottom();
     d->log->enablePageKeys(false);
+    d->log->clear();
 }
 
 void ConsoleWidget::showFullLog()
