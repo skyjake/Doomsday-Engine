@@ -602,7 +602,7 @@ void TaskBarWidget::open()
 
         unsetBehavior(DisableEventDispatchToChildren);
 
-        d->console->clearLog();
+        d->console->zeroLogHeight();
 
         d->vertShift->set(0, OPEN_CLOSE_SPAN);
         setOpacity(1, OPEN_CLOSE_SPAN);
