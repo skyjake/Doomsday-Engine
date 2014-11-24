@@ -109,7 +109,9 @@ public:
          * Compose the full symbolic name of the control including the device name
          * (if one is attributed), for example:
          *
+         * @code
          * <device-name>-<name> => "mouse-x"
+         * @endcode
          */
         de::String fullName() const;
 
@@ -265,7 +267,7 @@ public:
      *
      * @param id  Unique id of the axis control.
      *
-     * @return  Axis control associated with the given @id.
+     * @return  Axis control associated with the given @a id.
      */
     InputDeviceAxisControl &axis(de::dint id) const;
 
@@ -298,7 +300,7 @@ public:
      *
      * @param id  Unique id of the button control.
      *
-     * @return  Button control associated with the given @id.
+     * @return  Button control associated with the given @a id.
      */
     InputDeviceButtonControl &button(de::dint id) const;
 
@@ -324,7 +326,7 @@ public:
      *
      * @param id  Unique id of the hat control.
      *
-     * @return  Hat control associated with the given @id.
+     * @return  Hat control associated with the given @a id.
      */
     InputDeviceHatControl &hat(de::dint id) const;
 

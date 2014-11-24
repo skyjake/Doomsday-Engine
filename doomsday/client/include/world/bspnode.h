@@ -66,7 +66,7 @@ public:
      * @param leftBounds   Axis-aligned bounding box for the left half-space.
      */
     BspNode(de::Partition const &partition = de::Partition(),
-            AABoxd const &rightBound       = AABoxd(),
+            AABoxd const &rightBounds      = AABoxd(),
             AABoxd const &leftBounds       = AABoxd());
 
     /**

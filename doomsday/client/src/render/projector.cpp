@@ -36,9 +36,14 @@
 
 using namespace de;
 
-#define PLF_SORT_LUMINOSITY_DESC    0x1 ///< Sort by descending luminosity, brightest to dullest.
-#define PLF_TEX_FLOOR               0x4 ///< Prefer the "floor" slot when picking textures.
-#define PLF_TEX_CEILING             0x8 ///< Prefer the "ceiling" slot when picking textures.
+/**
+ * @defgroup lightProjectionFlags Light Projection Flags
+ */
+///@{
+#define PLF_SORT_LUMINOSITY_DESC    0x1  ///< Sort by descending luminosity, brightest to dullest.
+#define PLF_TEX_FLOOR               0x4  ///< Prefer the "floor" slot when picking textures.
+#define PLF_TEX_CEILING             0x8  ///< Prefer the "ceiling" slot when picking textures.
+///@}
 
 struct ListNode
 {

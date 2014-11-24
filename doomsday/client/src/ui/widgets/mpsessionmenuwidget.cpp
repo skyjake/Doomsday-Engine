@@ -1,4 +1,4 @@
-/** @file mpselectionwidget.cpp
+/** @file mpsessionmenuwidget.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *

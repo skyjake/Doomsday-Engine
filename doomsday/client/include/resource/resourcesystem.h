@@ -748,7 +748,9 @@ public:
      */
     MapDefs const &allMapDefs() const;
 
-    /// @copydoc allMapDefs()
+    /**
+     * @overload
+     */
     MapDefs &allMapDefs();
 
     /**

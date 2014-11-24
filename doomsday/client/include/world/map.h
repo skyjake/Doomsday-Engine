@@ -252,6 +252,8 @@ public: // Light sources -------------------------------------------------------
 
     /**
      * Iterate through the BiasSources of the map.
+     *
+     * @param func  Callback to make for each BiasSource.
      */
     LoopResult forAllBiasSources(std::function<LoopResult (BiasSource &)> func) const;
 
@@ -308,6 +310,8 @@ public: // Light sources -------------------------------------------------------
 
     /**
      * Iterate through the Lumpobjs of the map.
+     *
+     * @param func  Callback to make for each Lumobj.
      */
     LoopResult forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const;
 #endif // __CLIENT__
@@ -327,6 +331,8 @@ public: // Lines & Line-Sides --------------------------------------------------
 
     /**
      * Iterate through the Lines of the map.
+     *
+     * @param func  Callback to make for each Line.
      */
     LoopResult forAllLines(std::function<LoopResult (Line &)> func) const;
 
@@ -338,11 +344,15 @@ public: // Lines & Line-Sides --------------------------------------------------
      * be skipped over (can be used to avoid processing a line multiple times during
      * complex / non-linear traversals.
      *
+     * @param box    Axis-aligned bounding box in which Lines must be Blockmap-linked.
      * @param flags  @ref lineIteratorFlags
+     * @param func   Callback to make for each Line.
      */
     LoopResult forAllLinesInBox(AABoxd const &box, int flags, std::function<LoopResult (Line &)> func) const;
 
-    /// @copydoc forAllLinesInBox()
+    /**
+     * @overload
+     */
     inline LoopResult forAllLinesInBox(AABoxd const &box, std::function<LoopResult (Line &)> func) const
     {
         return forAllLinesInBox(box, LIF_ALL, func);
@@ -491,7 +501,9 @@ public: // Poly objects --------------------------------------------------------
     Polyobj *polyobjPtr(int index) const;
 
     /**
-     * Iterate through the Sectors of the map.
+     * Iterate through the Polyobjs of the map.
+     *
+     * @param func  Callback to make for each Polyobj.
      */
     LoopResult forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const;
 
@@ -528,6 +540,8 @@ public: // Sectors -------------------------------------------------------------
 
     /**
      * Iterate through the Sectors of the map.
+     *
+     * @param func  Callback to make for each Sector.
      */
     LoopResult forAllSectors(std::function<LoopResult (Sector &)> func) const;
 
@@ -562,9 +576,13 @@ public: // Sector clusters -----------------------------------------------------
      * Iterate through the SectorClusters of the map.
      *
      * @param sector  If not @c nullptr, traverse the clusters of this Sector only.
+     * @param func    Callback to make for each SectorCluster.
      */
     LoopResult forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func);
 
+    /**
+     * @overload
+     */
     inline LoopResult forAllClusters(std::function<LoopResult (SectorCluster &)> func) {
         return forAllClusters(nullptr, func);
     }
@@ -606,7 +624,9 @@ public: // Subspaces -----------------------------------------------------------
     ConvexSubspace *subspacePtr(int index) const;
 
     /**
-     * Iterate through the Sectors of the map.
+     * Iterate through the ConvexSubspaces of the map.
+     *
+     * @param func  Callback to make for each ConvexSubspace.
      */
     LoopResult forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const;
 
@@ -625,6 +645,8 @@ public: // Vertexs -------------------------------------------------------------
 
     /**
      * Iterate through the Vertexs of the map.
+     *
+     * @param func  Callback to make for each Vertex.
      */
     LoopResult forAllVertexs(std::function<LoopResult (Vertex &)> func) const;
 
@@ -892,8 +914,9 @@ public: /// @todo Most of the following should be private:
      * To check whether a given mobj is a client mobj, use Cl_IsClientMobj(). The network
      * state can then be accessed with ClMobj_GetInfo().
      *
-     * @param id  Identifier of the client mobj. Every client mobj has a unique
-     *            identifier.
+     * @param id         Identifier of the client mobj. Every client mobj has a unique
+     *                   identifier.
+     * @param canCreate  @c true= create a new client mobj if none existing.
      *
      * @return  Pointer to the gameside mobj.
      */

@@ -89,10 +89,8 @@ public:
     /**
      * Returns the parent sector of the cluster.
      */
+    Sector       &sector();
     Sector const &sector() const;
-
-    /// @copydoc sector()
-    Sector &sector();
 
     /**
      * Returns the identified @em physical plane of the parent sector. Note
@@ -101,30 +99,25 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
+    Plane       &plane(int planeIndex);
     Plane const &plane(int planeIndex) const;
-
-    /// @copydoc plane()
-    Plane &plane(int planeIndex);
 
     /**
      * Returns the sector plane which defines the @em physical floor of the
      * cluster.
      * @see hasSector(), plane()
      */
+    inline Plane       &floor()       { return plane(Sector::Floor); }
     inline Plane const &floor() const { return plane(Sector::Floor); }
-
-    /// @copydoc floor()
-    inline Plane &floor() { return plane(Sector::Floor); }
 
     /**
      * Returns the sector plane which defines the @em physical ceiling of
      * the cluster.
      * @see hasSector(), plane()
      */
+    inline Plane       &ceiling()       { return plane(Sector::Ceiling); }
     inline Plane const &ceiling() const { return plane(Sector::Ceiling); }
 
-    /// @copydoc ceiling()
-    inline Plane &ceiling() { return plane(Sector::Ceiling); }
 
     /**
      * Returns the identified @em visual sector plane for the cluster (which
@@ -132,30 +125,24 @@ public:
      *
      * @param planeIndex  Index of the plane to return.
      */
+    Plane       &visPlane(int planeIndex);
     Plane const &visPlane(int planeIndex) const;
-
-    /// @copydoc visPlane()
-    Plane &visPlane(int planeIndex);
 
     /**
      * Returns the sector plane which defines the @em visual floor of the
      * cluster.
      * @see hasSector(), floor()
      */
+    inline Plane       &visFloor()       { return visPlane(Sector::Floor); }
     inline Plane const &visFloor() const { return visPlane(Sector::Floor); }
-
-    /// @copydoc visFloor()
-    inline Plane &visFloor() { return visPlane(Sector::Floor); }
 
     /**
      * Returns the sector plane which defines the @em visual ceiling of the
      * cluster.
      * @see hasSector(), ceiling()
      */
+    inline Plane       &visCeiling()       { return visPlane(Sector::Ceiling); }
     inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
-
-    /// @copydoc visCeiling()
-    inline Plane &visCeiling() { return visPlane(Sector::Ceiling); }
 
     /**
      * Returns the total number of @em visual planes in the cluster.

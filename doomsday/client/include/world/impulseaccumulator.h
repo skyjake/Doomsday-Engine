@@ -41,6 +41,9 @@ public:
 
 public:
     /**
+     * @param impulseId  Unique identifier of the player impulse to accumulate for.
+     * @param type       Logical accumulator type.
+     *
      * @param expireBeforeSharpTick  If the source of the accumulation has changed
      * state when a sharp tick occurs, the accumulation will expire automatically.
      * For example, if the key bound to "attack" is not held down when a sharp tick
