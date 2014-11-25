@@ -71,7 +71,7 @@ static byte refMonitor;
 
 void Sfx_UpdateReverb()
 {
-    listenerCluster = 0;
+    listenerCluster = nullptr;
 }
 
 #ifdef __CLIENT__
@@ -79,7 +79,7 @@ void Sfx_UpdateReverb()
 /**
  * This is a high-priority thread that periodically checks if the channels
  * need to be updated with more data. The thread terminates when it notices
- * that the channels have been destroyed. The Sfx audioDriver maintains a 250ms
+ * that the channels have been destroyed. The Sfx audio driver maintains a 250ms
  * buffer for each channel, which means the refresh must be done often
  * enough to keep them filled.
  *
@@ -794,7 +794,7 @@ int Sfx_StartSound(sfxsample_t *sample, float volume, float freq, mobj_t *emitte
 
     /**
      * Load in the sample. Must load prior to setting properties, because
-     * the audioDriver might actually create the real buffer only upon loading.
+     * the audio driver might actually create the real buffer only upon loading.
      *
      * @note The sample is not reloaded if a sample with the same ID is already
      * loaded on the channel.
@@ -870,7 +870,7 @@ void Sfx_StartFrame()
     if(!sfxAvail)
         return;
 
-    // Tell the audioDriver that the sound frame begins.
+    // Tell the audio driver that the sound frame begins.
     AudioDriver_Interface(AudioDriver_SFX())->Event(SFXEV_BEGIN);
 
     // Have there been changes to the cvar settings?
@@ -1045,7 +1045,7 @@ dd_bool Sfx_Init()
     AudioDriver_SFX()->Listener(SFXLP_UNITS_PER_METER, 30);
     AudioDriver_SFX()->Listener(SFXLP_DOPPLER, 1.5f);
 
-    // The audioDriver is working, let's create the channels.
+    // The audio driver is working, let's create the channels.
     Sfx_InitChannels();
 
     // Init the sample cache.

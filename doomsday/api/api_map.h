@@ -1,12 +1,12 @@
-/** @file api_map.h Public API to the world (map) data.
+/** @file api_map.h  Public API to the world (map) data.
+ *
+ * @ingroup world
  *
  * World data comprises the map and all the objects in it. The public API
  * includes accessing and modifying map data objects via DMU.
  *
- * @ingroup world
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,6 +29,8 @@
 #include "apis.h"
 #include <de/aabox.h>
 #include <de/mathutil.h>
+#include <de/str.h>
+#include <doomsday/world/thinker.h>
 
 #define DMT_ARCHIVE_INDEX DDVT_INT
 
