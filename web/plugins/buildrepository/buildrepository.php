@@ -919,11 +919,11 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
         }
 
         // Add the 'static' packages.
-        $this->populateStaticPackages(&$this->packages);
+        $this->populateStaticPackages($this->packages);
 
         // The symbolic packages are kept seperate.
         $this->symbolicPackages = array();
-        $this->populateSymbolicPackages(&$this->symbolicPackages);
+        $this->populateSymbolicPackages($this->symbolicPackages);
 
         // Link build events together to form the navigation chains.
         $this->chainBuilds();
@@ -1232,12 +1232,12 @@ class BuildRepositoryPlugin extends Plugin implements Actioner, RequestInterpret
 
         // Latest stable packages.
         $packageListTitle = 'Latest packages:';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, FALSE/*stable*/,
+        $this->outputPackageList($this->packages, $pack, PID_ANY, FALSE/*stable*/,
                                  TRUE/*only downloadables*/, 8, $packageListTitle);
 
         // Latest unstable packages.
         $packageListTitle = 'Latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>):';
-        $this->outputPackageList(&$this->packages, $pack, PID_ANY, TRUE/*unstable*/,
+        $this->outputPackageList($this->packages, $pack, PID_ANY, TRUE/*unstable*/,
                                  TRUE/*only downloadables*/, 8, $packageListTitle);
 
 ?></div><?php
@@ -1759,13 +1759,13 @@ jQuery(document).ready(function() {
         // Generate widgets for the symbolic packages.
         $packageListTitle = '<h3>Downloads for the latest packages</h3>';
 
-        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+        $this->outputPackageList($this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
                                  FALSE/*stable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
         $packageListTitle = '<h3>Downloads for the latest packages (<a class="link-definition" href="dew/index.php?title=Automated_build_system#Unstable" title="What does \'unstable\' mean?">unstable</a>)</h3>';
 
-        $this->outputPackageList(&$this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
+        $this->outputPackageList($this->symbolicPackages, NULL/*no chosen pack*/, PID_ANY,
                                  TRUE/*unstable filter*/, TRUE/*only downloadables*/,
                                  -1/*no result limit*/, $packageListTitle);
 
