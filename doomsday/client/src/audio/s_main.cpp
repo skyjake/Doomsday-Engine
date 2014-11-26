@@ -70,8 +70,8 @@ int soundMaxDist = 2025;
 // Setting these variables is enough to adjust the volumes.
 // S_StartFrame() will call the actual routines to change the volume
 // when there are changes.
-int sfxVolume = 255;
-int musVolume = 255;
+int sfxVolume = 255 * 2/3;
+int musVolume = 255 * 2/3;
 
 int sfxBits = 8;
 int sfxRate = 11025;

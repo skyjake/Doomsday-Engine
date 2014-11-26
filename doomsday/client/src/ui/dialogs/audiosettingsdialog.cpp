@@ -56,6 +56,12 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(sampleRate   = new CVarChoiceWidget("sound-rate"));
         area.add(musicSource  = new CVarChoiceWidget("music-source"));
 
+        // Display volumes on a 0...100 scale.
+        sfxVolume  ->setDisplayFactor(100.0 / 255.0);
+        musicVolume->setDisplayFactor(100.0 / 255.0);
+        sfxVolume  ->setStep(1.0 / sfxVolume->displayFactor());
+        musicVolume->setStep(1.0 / musicVolume->displayFactor());
+
         // Developer options.
         self.add(devPopup = new GridPopupWidget);
         soundInfo = new CVarToggleWidget("sound-info", tr("Sound Channel Status"));
@@ -84,7 +90,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
     LabelWidget *sfxVolLabel   = LabelWidget::newWithText(tr("SFX Volume:"), &area());
     LabelWidget *musicVolLabel = LabelWidget::newWithText(tr("Music Volume:"), &area());
-    LabelWidget *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Volume:"), &area());
+    LabelWidget *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Strength:"), &area());
 
     d->sound3D->setText(tr("3D Effects & Reverb"));
     d->overlapStop->setText(tr("One Sound per Emitter"));

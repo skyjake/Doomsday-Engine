@@ -257,8 +257,8 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,    "net-dev",            0);
 
         audioSettings
-                .define(SReg::IntCVar,   "sound-volume",        255)
-                .define(SReg::IntCVar,   "music-volume",        255)
+                .define(SReg::IntCVar,   "sound-volume",        255 * 2/3)
+                .define(SReg::IntCVar,   "music-volume",        255 * 2/3)
                 .define(SReg::FloatCVar, "sound-reverb-volume", 0.5f)
                 .define(SReg::IntCVar,   "sound-info",          0)
                 .define(SReg::IntCVar,   "sound-rate",          11025)
