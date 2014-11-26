@@ -345,7 +345,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->logMenu = new PopupMenuWidget;
     d->logMenu->setAnchor(d->button->rule().midX(), d->button->rule().top());
     d->logMenu->items()
-            << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
+            << new ui::ActionItem(style().images().image("close"), tr("Clear Log"),
+                                  new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Go to Latest"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::ActionItem(tr("Copy Path to Clipboard"),
