@@ -485,6 +485,11 @@ void SliderWidget::setPrecision(int precisionDecimals)
     d->updateRangeLabels();
 }
 
+void SliderWidget::setStep(double step)
+{
+    d->step = step;
+}
+
 void SliderWidget::setValue(ddouble value)
 {
     d->setValue(value);
