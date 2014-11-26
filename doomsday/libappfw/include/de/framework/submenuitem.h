@@ -20,7 +20,7 @@
 #define LIBAPPFW_UI_SUBMENUITEM_H
 
 #include "../ui/defs.h"
-#include "item.h"
+#include "imageitem.h"
 #include "listdata.h"
 
 namespace de {
@@ -29,11 +29,14 @@ namespace ui {
 /**
  * UI context item that contains items for a submenu.
  */
-class LIBAPPFW_PUBLIC SubmenuItem : public Item
+class LIBAPPFW_PUBLIC SubmenuItem : public ImageItem
 {
 public:
     SubmenuItem(String const &label, ui::Direction openingDirection)
-        : Item(ShownAsButton, label), _dir(openingDirection) {}
+        : ImageItem(ShownAsButton, label), _dir(openingDirection) {}
+
+    SubmenuItem(Image const &image, String const &label, ui::Direction openingDirection)
+        : ImageItem(ShownAsButton, image, label), _dir(openingDirection) {}
 
     Data &items() { return _items; }
     Data const &items() const { return _items; }

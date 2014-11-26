@@ -34,8 +34,8 @@ class Data;
  * Data item.
  *
  * Items are pure content -- the exact presentation parameters (widget type,
- * alignment, scaling, etc.) is determined by the container widget and/or
- * responsible organizer, not by the item. This allows one item to be presented
+ * alignment, scaling, etc.)ares determined by the container widget and/or
+ * responsible organizer, not by an Item. This allows one item to be presented
  * in different ways by different widgets/contexts.
  *
  * @see ui::Data
