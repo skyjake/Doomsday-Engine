@@ -174,7 +174,7 @@ String SavedSession::Metadata::asStyledText() const
                   _E(l) "Session id: "   _E(.)_E(i) "%3\n" _E(.)
                   _E(l) "Episode: "      _E(.)_E(i) "%4\n" _E(.)
                   _E(D) "Current map:\n" _E(.) "%5\n"
-                  _E(D) "Game rules:\n"  _E(.) "%6")
+                  _E(D) "Game rules:\n"  _E(.) _E(m) "%6" _E(r)) // monospace for Record output
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))
              .arg(geti("sessionId", 0))
