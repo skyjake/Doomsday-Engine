@@ -864,7 +864,7 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
     // Update the capability flags.
-    GL_state.features.multisample = canvas.format().sampleBuffers();
+    GL_state.features.multisample = GLFramebuffer::defaultMultisampling() > 1;
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
