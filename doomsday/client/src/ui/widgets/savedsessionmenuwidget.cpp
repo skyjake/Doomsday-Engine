@@ -146,7 +146,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
                                          .arg(item.title()));
 
                 menuButton().setImage(style().images().image("close.ringless"));
-                menuButton().setImageScale(.75f);
+                menuButton().setImageScale(toDevicePixels(.375f));
                 menuButton().setImageColor(style().colors().colorf("altaccent"));
 
                 // Metadata.
