@@ -27,14 +27,25 @@ DENG2_PIMPL(GameSessionWidget)
 , DENG2_OBSERVES(de::ButtonWidget, Press)
 , DENG2_OBSERVES(App, GameUnload)
 {
+    PopupStyle popupStyle;
     ButtonWidget *load;
     ButtonWidget *info;
-    DocumentPopupWidget *popup;
+    ButtonWidget *funcs = nullptr;
+    DocumentPopupWidget *doc = nullptr;
+    PopupMenuWidget *menu = nullptr;
 
-    Instance(Public *i) : Base(i)
+    Instance(Public *i, PopupStyle ps, ui::Direction popupOpeningDirection)
+        : Base(i)
+        , popupStyle(ps)
     {
+        // Set up the buttons.
         self.add(load = new ButtonWidget);
         self.add(info = new ButtonWidget);
+        if(popupStyle == PopupMenu)
+        {
+            self.add(funcs = new ButtonWidget);
+            funcs->audienceForPress() += this;
+        }
 
         load->disable();
         load->setBehavior(Widget::ContentClipping);
@@ -46,11 +57,18 @@ DENG2_PIMPL(GameSessionWidget)
         info->setWidthPolicy(ui::Expand);
         info->setAlignment(ui::AlignBottom);
         info->setText(_E(s)_E(B) + tr("..."));
-
-        self.add(popup = new DocumentPopupWidget);
-        popup->setAnchorAndOpeningDirection(info->rule(), ui::Up);
-        popup->document().setMaximumLineWidth(popup->style().rules().rule("document.popup.width").valuei());
         info->audienceForPress() += this;
+
+        // Set up the info/actions popup widget.
+        self.add(doc = new DocumentPopupWidget);
+        doc->document().setMaximumLineWidth(doc->style().rules().rule("document.popup.width").valuei());
+
+        if(popupStyle == PopupMenu)
+        {
+            self.add(menu = new PopupMenuWidget);
+            menu->setAnchorAndOpeningDirection(funcs->rule(), ui::Right);
+        }
+        doc->setAnchorAndOpeningDirection(info->rule(), popupOpeningDirection);
 
         App::app().audienceForGameUnload() += this;
     }
@@ -58,28 +76,34 @@ DENG2_PIMPL(GameSessionWidget)
     ~Instance()
     {
         App::app().audienceForGameUnload() -= this;
+
+        if(menu) menu->dismiss();
+        doc->dismiss();
     }
 
     void aboutToUnloadGame(game::Game const &)
     {
-        popup->close(0);
+        doc->close(0);
+        if(menu) menu->close(0);
     }
 
-    void buttonPressed(ButtonWidget &)
+    void buttonPressed(ButtonWidget &btn)
     {
-        /*
-        // Show information about the game.
-        popup->setAnchorAndOpeningDirection(
-                    bt.rule(),
-                    bt.rule().top().valuei() + bt.rule().height().valuei() / 2 <
-                    bt.root().viewRule().height().valuei() / 2?
-                        ui::Down : ui::Up);*/
-        self.updateInfoContent();
-        popup->open();
+        if(&btn == info)
+        {
+            self.updateInfoContent();
+            doc->open();
+        }
+        else
+        {
+            menu->open();
+        }
     }
 };
 
-GameSessionWidget::GameSessionWidget() : d(new Instance(this))
+GameSessionWidget::GameSessionWidget(PopupStyle ps,
+                                     ui::Direction popupOpeningDirection)
+    : d(new Instance(this, ps, popupOpeningDirection))
 {
     Font const &font = style().fonts().font("default");
     rule().setInput(Rule::Height, OperatorRule::maximum(font.lineSpacing() * 3 +
@@ -92,10 +116,27 @@ GameSessionWidget::GameSessionWidget() : d(new Instance(this))
             .setInput(Rule::Top,    rule().top())
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  d->info->rule().left());
+
     d->info->rule()
             .setInput(Rule::Top,    rule().top())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Bottom, rule().bottom());
+
+    if(d->popupStyle == PopupMenu)
+    {
+        d->funcs->rule()
+                .setInput(Rule::Top,    rule().top())
+                .setInput(Rule::Right,  rule().right())
+                .setInput(Rule::Height, d->info->rule().width())
+                .setInput(Rule::Width,  d->info->rule().width());
+
+        d->info->rule().setInput(Rule::Top, d->funcs->rule().bottom());
+    }
+}
+
+GameSessionWidget::PopupStyle GameSessionWidget::popupStyle() const
+{
+    return d->popupStyle;
 }
 
 ButtonWidget &GameSessionWidget::loadButton()
@@ -108,9 +149,21 @@ ButtonWidget &GameSessionWidget::infoButton()
     return *d->info;
 }
 
+ButtonWidget &GameSessionWidget::menuButton()
+{
+    return *d->funcs;
+}
+
 DocumentWidget &GameSessionWidget::document()
 {
-    return d->popup->document();
+    DENG2_ASSERT(d->doc);
+    return d->doc->document();
+}
+
+PopupMenuWidget &GameSessionWidget::menu()
+{
+    DENG2_ASSERT(d->menu);
+    return *d->menu;
 }
 
 void GameSessionWidget::updateInfoContent()

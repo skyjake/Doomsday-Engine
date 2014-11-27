@@ -127,11 +127,11 @@ String const &Game::statusAsText() const
 String Game::description() const
 {
     return String(_E(b) "%1 - %2\n" _E(.)
-                  _E(l) "IdentityKey: " _E(.)_E(i) "%3 " _E(.)
-                  _E(l) "PluginId: "    _E(.)_E(i) "%4\n" _E(.)
-                  _E(D) "Startup resources:\n" _E(.) "%5\n"
-                  _E(D) "Other resources:\n" _E(.) "%6\n"
-                  _E(D) "Status: " _E(.) "%7")
+                  _E(l) "IdentityKey: " _E(.) "%3 "
+                  _E(l) "PluginId: "    _E(.) "%4\n"
+                  _E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%5\n"
+                  _E(D)_E(b) "Other resources:\n" _E(.)_E(.) "%6\n"
+                  _E(D)_E(b) "Status: " _E(.) "%7")
             .arg(title())
             .arg(author())
             .arg(identityKey())

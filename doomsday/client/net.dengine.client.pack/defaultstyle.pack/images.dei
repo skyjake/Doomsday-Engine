@@ -31,7 +31,10 @@ group logo {
 image fold     { path = "graphics/fold.png" }
 image gauge    { path = "graphics/gauge.png" }
 image gear     { path = "graphics/gear.png" }
-image close    { path = "graphics/close.png" }
+group close {
+    image ring     { path = "graphics/close.png" }
+    image ringless { path = "graphics/close-ringless.png" }
+}
 image alert    { path = "graphics/alert.png" }
 
 # Subsystems:

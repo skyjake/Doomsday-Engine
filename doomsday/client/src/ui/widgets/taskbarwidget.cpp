@@ -399,7 +399,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->setAnchorAndOpeningDirection(d->logo->rule(), ui::Up);
 
     // Game unloading confirmation submenu.
-    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(style().images().image("close"),
+    ui::SubmenuItem *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
                                                       tr("Unload Game"), ui::Left);
     unloadMenu->items()
             << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))

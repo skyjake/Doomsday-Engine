@@ -29,7 +29,7 @@
 #include <de/SignalAction>
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
-#include <de/ui/Item>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 using de::game::Session;
@@ -105,7 +105,21 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
      */
     struct SavegameWidget : public GameSessionWidget
     {
-        SavegameWidget()
+        /// Action that deletes a savegame folder.
+        struct DeleteAction : public Action {
+            SavegameWidget *widget;
+            String savePath;
+
+            DeleteAction(SavegameWidget *wgt, String const &path)
+                : widget(wgt), savePath(path) {}
+            void trigger() {
+                widget->menu().close(0);
+                App::rootFolder().removeFile(savePath);
+                App::fileSystem().refresh();
+            }
+        };
+
+        SavegameWidget() : GameSessionWidget(PopupMenu, ui::Up)
         {
             loadButton().disable();
 
@@ -127,16 +141,26 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
                 loadButton().disable(sGame.status() == Game::Incomplete);
 
-                loadButton().setText(String(_E(b) "%1" _E(.) "\n" _E(l)_E(D) "%2")
-                                         .arg(item.title())
-                                         .arg(sGame.identityKey()));
+                loadButton().setText(String(_E(l)_E(F) "%1" _E(.)_E(.) "\n%2")
+                                         .arg(sGame.identityKey())
+                                         .arg(item.title()));
 
-                // Extra information.
+                menuButton().setImage(style().images().image("close.ringless"));
+                menuButton().setImageScale(.75f);
+                menuButton().setImageColor(style().colors().colorf("altaccent"));
+
+                // Metadata.
                 document().setText(session.metadata().asStyledText() + "\n" +
-                                   String(_E(D) "Resource: " _E(.)_E(i) "\"%1\"\n" _E(.)
-                                          _E(l) "Modified: " _E(.)_E(i) "%2")
-                                        .arg(session.path())
-                                        .arg(session.status().modifiedAt.asText(Time::FriendlyFormat)));
+                                   String(_E(D)_E(b) "Resource: " _E(.)_E(.)_E(C) "\"%1\"\n" _E(.)
+                                          _E(l) "Modified: " _E(.) "%2")
+                                   .arg(session.path())
+                                   .arg(session.status().modifiedAt.asText(Time::FriendlyFormat)));
+
+                // Actions to be done on the saved game.
+                menu().items()
+                        << new ui::Item(ui::Item::Separator, tr("Really delete the savegame?"))
+                        << new ui::ActionItem(tr("Delete Savegame"), new DeleteAction(this, session.path()))
+                        << new ui::ActionItem(tr("Cancel"), new SignalAction(&menu(), SLOT(close())));
             }
             catch(Error const &)
             {
@@ -171,6 +195,8 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
         emit self.availabilityChanged();
     }
 
+    QSet<String> pendingDismiss;
+
     void updateItemsFromSavedIndex()
     {
         bool changed = false;
@@ -181,8 +207,15 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
             String const savePath = self.items().at(idx).data().toString();
             if(!Session::savedIndex().find(savePath))
             {
-                self.items().remove(idx--);
-                changed = true;
+                if(!pendingDismiss.contains(savePath))
+                {
+                    // Make this item disappear after a delay.
+                    pendingDismiss.insert(savePath);
+
+                    auto &wgt = self.itemWidget<GuiWidget>(self.items().at(idx));
+                    wgt.setBehavior(DisableEventDispatch); // can't trigger any more
+                    wgt.setOpacity(0, .5f);
+                }
             }
         }
 
@@ -199,6 +232,38 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
                     self.items().append(new SavegameListItem(session, self));
                     changed = true;
                 }
+            }
+        }
+
+        if(changed)
+        {
+            // Let others know that one or more games have appeared or disappeared from the menu.
+            emit self.availabilityChanged();
+        }
+    }
+
+    void removeDismissedItems()
+    {
+        if(pendingDismiss.isEmpty()) return;
+
+        bool changed = false;
+
+        QMutableSetIterator<String> iter(pendingDismiss);
+        while(iter.hasNext())
+        {
+            String const path = iter.next();
+            ui::DataPos idx = self.items().findData(path);
+            if(idx == ui::Data::InvalidPos)
+            {
+                iter.remove(); // It's already gone?
+                continue;
+            }
+            auto &wgt = self.itemWidget<GuiWidget>(self.items().at(idx));
+            if(fequal(wgt.opacity(), 0.f))
+            {
+                // Time to erase this item.
+                self.items().remove(idx);
+                changed = true;
             }
         }
 
@@ -236,6 +301,12 @@ SavedSessionMenuWidget::SavedSessionMenuWidget()
     : SessionMenuWidget("savegame-session-menu"), d(new Instance(this))
 {
     d->updateItemsFromSavedIndex();
+}
+
+void SavedSessionMenuWidget::update()
+{
+    SessionMenuWidget::update();
+    d->removeDismissedItems();
 }
 
 Action *SavedSessionMenuWidget::makeAction(ui::Item const &item)

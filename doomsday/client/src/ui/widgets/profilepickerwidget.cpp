@@ -133,7 +133,7 @@ void ProfilePickerWidget::openMenu()
             << new ActionItem(tr("Duplicate..."), new SignalAction(this, SLOT(duplicate())))
             << new ui::Item(Item::Separator)
             << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(reset())))
-            << new ActionItem(style().images().image("close"), tr("Delete..."),
+            << new ActionItem(style().images().image("close.ring"), tr("Delete..."),
                               new SignalAction(this, SLOT(remove())));
     add(d->menu);
 
