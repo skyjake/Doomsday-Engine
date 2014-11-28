@@ -583,14 +583,16 @@ namespace internal {
                 lexer.readString();
                 return;
             }
-            if(!Str_CompareIgnoreCase(tok, "enddemon") ||
+            if(!Str_CompareIgnoreCase(tok, "endbunny") ||
+               !Str_CompareIgnoreCase(tok, "enddemon") ||
                !Str_CompareIgnoreCase(tok, "endgame1") ||
                !Str_CompareIgnoreCase(tok, "endgame2") ||
                !Str_CompareIgnoreCase(tok, "endgame3") ||
                !Str_CompareIgnoreCase(tok, "endgame4") ||
                !Str_CompareIgnoreCase(tok, "endgamec") ||
                !Str_CompareIgnoreCase(tok, "endgames") ||
-               !Str_CompareIgnoreCase(tok, "endgamew"))
+               !Str_CompareIgnoreCase(tok, "endgamew") ||
+               !Str_CompareIgnoreCase(tok, "endtitle"))
             {
                 LOG_WARNING("MAPINFO Map.next EndGame directives are not supported.");
                 return;
