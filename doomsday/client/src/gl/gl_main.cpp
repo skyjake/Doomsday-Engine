@@ -113,6 +113,7 @@ void GL_Register()
 
     Con_AddMappedConfigVariable("vid-vsync", "i", "window.main.vsync");
     Con_AddMappedConfigVariable("vid-fsaa",  "i", "window.main.fsaa");
+    Con_AddMappedConfigVariable("vid-fps",   "i", "window.main.showFps");
 
     // Ccmds
     C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
