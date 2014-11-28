@@ -1448,9 +1448,12 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
 
             os << "\n\nMap Info {"
                << "\n  ID = \"" + mapId + "\";"
-               << "\n  Title = \"" + info.gets("title") + "\";"
-               << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";"
-               << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
+               << "\n  Title = \"" + info.gets("title") + "\";";
+            if(!info.getb("custom"))
+            {
+               os << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";";
+            }
+            os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
                << "\n  Music = \"" + musicId + "\";";
             de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())
