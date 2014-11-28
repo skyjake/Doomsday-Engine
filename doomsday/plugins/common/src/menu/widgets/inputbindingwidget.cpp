@@ -362,7 +362,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
 
     // The Delete key in the Menu context is reserved for deleting bindings
     if((!context.compareWithCase("menu") || !context.compareWithCase("shortcut")) &&
-       !symbol.beginsWith("key-delete-down"))
+       symbol.beginsWith("key-delete-down"))
     {
         return false;
     }
@@ -401,9 +401,9 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
         if(binds->flags & CCF_STAGED)
         {
             // Staging is buttons.
-            if(name.beginsWith("key-") ||
-               name.beginsWith("joy-button") ||
-               name.beginsWith("mouse-left") ||
+            if(name.beginsWith("key-")         ||
+               name.beginsWith("joy-button")   ||
+               name.beginsWith("mouse-left")   ||
                name.beginsWith("mouse-middle") ||
                name.beginsWith("mouse-right"))
             {
