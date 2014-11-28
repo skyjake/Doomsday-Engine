@@ -2765,7 +2765,10 @@ D_CMD(WarpMap)
     }
     else
     {
-        G_SetGameActionNewSession(defaultGameRules, episodeId, mapUri);
+        // If a session is already in progress then copy the rules from it.
+        GameRuleset const rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
+                                                                 : defaultGameRules);
+        G_SetGameActionNewSession(rules, episodeId, mapUri);
     }
 
     // If the command source was "us" the game library then it was probably in
