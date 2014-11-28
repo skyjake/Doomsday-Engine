@@ -14,7 +14,7 @@ Map Info mods "E1M4" if not custom { Music = "e1m4"; Sky = "sky1"; }
 Map Info mods "E1M5" if not custom { Music = "e1m5"; Sky = "sky1"; }
 
 # The rest of this file is skipped if Chex
-SkipIf Not chex;
+SkipIf chex;
 
 Map Info mods "E1M6" if not custom { Music = "e1m6"; Sky = "sky1"; }
 Map Info mods "E1M7" if not custom { Music = "e1m7"; Sky = "sky1"; }
