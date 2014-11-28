@@ -1318,15 +1318,14 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
         os << "\n\nHeader { Version = 6; }";
 
         // Output episode defs.
-        int episodeIdx = 0;
         for(auto const pair : defs.episodeInfos)
         {
+            String const episodeId  = String::fromStdString(pair.first);
             EpisodeInfo const &info = pair.second;
 
             de::Uri startMapUri(info.gets("startMap"), RC_NULL);
             if(startMapUri.path().isEmpty()) continue;
 
-            String episodeId = String::number(episodeIdx + 1);
             // Find all the hubs for this episode.
             MapInfos mapInfos = buildHubMapInfoTable(episodeId);
 
@@ -1415,8 +1414,6 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
                 }
             }
             os << "\n} # Episode '" << episodeId << "'";
-
-            episodeIdx += 1;
         }
 
         GameInfo gameInfo;
