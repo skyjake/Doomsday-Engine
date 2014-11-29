@@ -73,3 +73,12 @@ warptrans 9
 sky1 SKY1 0
 music MUS_E1M9
 cluster 1
+
+; Episodes 2 and 3 contain only the game menu related properties
+episode E2M1
+name "EPISODE2"
+key h
+
+episode E3M1
+name "EPISODE3"
+key d
