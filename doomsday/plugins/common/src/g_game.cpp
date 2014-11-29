@@ -2358,7 +2358,10 @@ D_CMD(LoadSession)
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
             // Compose the confirmation message.
             String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, existingDescription.toUtf8().constData());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
+                                       sslot->id().toUtf8().constData(),
+                                       existingDescription.toUtf8().constData());
+
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new String(sslot->id()));
             return true;
         }
@@ -2469,7 +2472,9 @@ D_CMD(SaveSession)
 
             // Compose the confirmation message.
             String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, existingDescription.toUtf8().constData());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
+                                       sslot->id().toUtf8().constData(),
+                                       existingDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = sslot->id();
