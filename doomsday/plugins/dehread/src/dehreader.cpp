@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "dehread.h"
+#include "dehreader.h"
 
 #include <QDebug>
 #include <QDir>
@@ -30,15 +30,16 @@
 #include <QRegExp>
 #include <QStringList>
 
+#include <de/memory.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <de/App>
 #include <de/Block>
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
-#include <de/memory.h>
+#include <de/game/Game>
 
-#include "dehreader.h"
+#include "dehread.h"
 #include "dehreader_util.h"
 #include "info.h"
 
@@ -58,31 +59,30 @@ class DehReader
 {
     /// The parser encountered a syntax error in the source file. @ingroup errors
     DENG2_ERROR(SyntaxError);
+
     /// The parser encountered an unknown section in the source file. @ingroup errors
     DENG2_ERROR(UnknownSection);
+
     /// The parser reached the end of the source file. @ingroup errors
     DENG2_ERROR(EndOfFile);
 
+public:
     Block const &patch;
-    int pos;
-    int currentLineNumber;
+    bool patchIsCustom = true;
 
-    DehReaderFlags flags;
+    int pos = 0;
+    int currentLineNumber = 0;
 
-    int patchVersion;
-    int doomVersion;
+    DehReaderFlags flags = 0;
 
-    String line; ///< Current line.
+    int patchVersion = -1;  ///< @c -1= Unknown.
+    int doomVersion  = -1;  ///< @c -1= Unknown.
+
+    String line;            ///< Current line.
 
 public:
-    DehReader(Block const &_patch, DehReaderFlags _flags = 0)
-        : patch(_patch)
-        , pos(0)
-        , currentLineNumber(0)
-        , flags(_flags)
-        , patchVersion(-1) // unknown
-        , doomVersion(-1) // unknown
-        , line("")
+    DehReader(Block const &patch, bool patchIsCustom = true, DehReaderFlags flags = 0)
+        : patch(patch), patchIsCustom(patchIsCustom), flags(flags)
     {
         stackDepth++;
     }
@@ -408,7 +408,10 @@ public:
                     }
                     else if(line.beginsWith("Cheat", Qt::CaseInsensitive))
                     {
-                        LOG_WARNING("DeHackEd [Cheat] patches are not supported.");
+                        if(!(!patchIsCustom && App::game().id() == "hacx"))
+                        {
+                            LOG_WARNING("DeHackEd [Cheat] patches are not supported.");
+                        }
                         skipToNextSection();
                     }
                     else if(line.beginsWith("[CODEPTR]", Qt::CaseInsensitive)) // BEX
@@ -653,7 +656,7 @@ public:
 
                     try
                     {
-                        DehReader(deh, includeFlags).parse();
+                        DehReader(deh, true/*is-custom*/, includeFlags).parse();
                     }
                     catch(Error const &er)
                     {
@@ -1852,11 +1855,11 @@ public:
     }
 };
 
-void readDehPatch(Block const &patch, DehReaderFlags flags)
+void readDehPatch(Block const &patch, bool patchIsCustom, DehReaderFlags flags)
 {
     try
     {
-        DehReader(patch, flags).parse();
+        DehReader(patch, patchIsCustom, flags).parse();
     }
     catch(Error const &er)
     {
