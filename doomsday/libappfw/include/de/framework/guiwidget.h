@@ -103,6 +103,7 @@ public:
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
+            BlurredWithSolidFill,
             SharedBlur,         ///< Use the blur background from a BlurWidget.
             SharedBlurWithBorderGlow,
             Rounded
@@ -181,6 +182,12 @@ public:
          * containing the blurred background is updated regardless.
          */
         DontDrawContent = 0x4,
+
+        /**
+         * Visible opacity determined solely by the widget itself, not affected by
+         * ancestors.
+         */
+        IndependentOpacity = 0x8,
 
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };

@@ -265,7 +265,8 @@ DENG2_PIMPL(GuiWidget)
         }
 
         if(background.type != Background::Blurred &&
-           background.type != Background::BlurredWithBorderGlow)
+           background.type != Background::BlurredWithBorderGlow &&
+           background.type != Background::BlurredWithSolidFill)
         {
             deinitBlur();
             return;
@@ -299,9 +300,15 @@ DENG2_PIMPL(GuiWidget)
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
-        if(!attribs.testFlag(DontDrawContent) && background.solidFill.w > 0)
+        Vector4f blurColor = background.solidFill;
+        float blurOpacity  = self.visibleOpacity();
+        if(background.type == Background::BlurredWithSolidFill)
         {
-            self.drawBlurredRect(self.rule().recti(), background.solidFill, self.visibleOpacity());
+            blurColor.w = 1;
+        }
+        if(!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        {
+            self.drawBlurredRect(self.rule().recti(), blurColor, blurOpacity);
         }
     }
 
@@ -553,11 +560,14 @@ Animation GuiWidget::opacity() const
 float GuiWidget::visibleOpacity() const
 {
     float opacity = d->currentOpacity();
-    for(Widget *i = Widget::parent(); i != 0; i = i->parent())
+    if(!d->attribs.testFlag(IndependentOpacity))
     {
-        if(GuiWidget *w = i->maybeAs<GuiWidget>())
+        for(Widget *i = Widget::parent(); i != 0; i = i->parent())
         {
-            opacity *= w->d->currentOpacity();
+            if(GuiWidget *w = i->maybeAs<GuiWidget>())
+            {
+                opacity *= w->d->currentOpacity();
+            }
         }
     }
     return opacity;
@@ -908,6 +918,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     case Background::Blurred: // blurs drawn separately in GuiWidget::draw()
     case Background::SharedBlur:
+    case Background::BlurredWithSolidFill:
         break;
 
     case Background::None:
