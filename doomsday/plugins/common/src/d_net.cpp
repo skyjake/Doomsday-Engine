@@ -50,15 +50,15 @@ static void notifyAllowCheatsChange()
 {
     if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
     {
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "--- CHEATS NOW %s ON THIS SERVER ---",
-                                                     netSvAllowCheats? "ENABLED" : "DISABLED");
-        NetSv_SendMessage(DDSP_ALL_PLAYERS, Str_Text(msg));
+        String const msg = String("--- CHEATS NOW %1 ON THIS SERVER ---")
+                               .arg(netSvAllowCheats? "ENABLED" : "DISABLED");
+        NetSv_SendMessage(DDSP_ALL_PLAYERS, msg.toUtf8().constData());
     }
 }
 
 void D_NetConsoleRegister()
 {
-    C_VAR_CHARPTR("mapcycle",                       &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
+    C_VAR_CHARPTR("mapcycle",                   &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
 
     C_CMD        ("setcolor",   "i",    SetColor);
 #if __JHEXEN__
@@ -70,28 +70,21 @@ void D_NetConsoleRegister()
 
     if(IS_DEDICATED)
     {
-        C_VAR_CHARPTR("server-game-episode",                    &cfg.netEpisode,                        0, 0, 0);
-        C_VAR_URIPTR ("server-game-map",                        &cfg.netMap,                            0, 0, 0);
+        C_VAR_CHARPTR("server-game-episode",    &cfg.netEpisode,    0, 0, 0);
+        C_VAR_URIPTR ("server-game-map",        &cfg.netMap,        0, 0, 0);
 
-        String episode;
+        String episodeId = FirstPlayableEpisodeId();
         de::Uri map("Maps:", RC_NULL);
-        DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-        for(auto const &pair : episodesById)
+        if(!episodeId.isEmpty())
         {
-            Record const &episodeDef = *pair.second->as<RecordValue>().record();
-            de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-            if(P_MapExists(startMap.compose().toUtf8().constData()))
-            {
-                episode = episodeDef.gets("id");
-                map     = startMap;
-                break;
-            }
+            map = de::Uri(Defs().episodes.find("id", episodeId).gets("startMap"), RC_NULL);
+            DENG2_ASSERT(!map.isEmpty());
         }
-        if(map.isEmpty())
+        else
         {
-            LOG_NET_WARNING("No episodes are defined. It will not be possible to start the server");
+            LOG_NET_WARNING("No playable episode available. It will not be possible to start the server");
         }
-        Con_SetString("server-game-episode", episode.toUtf8().constData());
+        Con_SetString("server-game-episode", episodeId.toUtf8().constData());
         Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
     }
 

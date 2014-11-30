@@ -1793,7 +1793,7 @@ void Hu_MenuInitEpisodePage()
     DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
     if(!episodesById.size())
     {
-        LOG_RES_WARNING("No episodes are defined. It will not be possible to start a new game from the menu");
+        LOG_WARNING("No episodes are defined. It will not be possible to start a new game from the menu");
         return;
     }
 
