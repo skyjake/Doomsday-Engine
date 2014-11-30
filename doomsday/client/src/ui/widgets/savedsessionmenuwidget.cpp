@@ -141,7 +141,7 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
                 loadButton().disable(sGame.status() == Game::Incomplete);
 
-                loadButton().setText(String("%2\n" _E(s)_E(l)_E(F) "%3 %1")
+                loadButton().setText(String("%2\n" _E(l)_E(F) "%3 %1")
                                          .arg(sGame.identityKey())
                                          .arg(item.title())
                                          .arg(tr("saved in")));
