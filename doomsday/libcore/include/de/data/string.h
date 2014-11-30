@@ -33,6 +33,9 @@ namespace de {
  * The String class extends the QString class with Block conversion and
  * other convenience methods.
  *
+ * The default codec when converting strings from C strings is UTF-8 (e.g.,
+ * constructor that takes a <code>char const *</code> as the only argument).
+ *
  * @ingroup types
  */
 class DENG2_PUBLIC String : public QString
