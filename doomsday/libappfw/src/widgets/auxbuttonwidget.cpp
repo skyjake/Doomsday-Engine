@@ -32,6 +32,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
     {
         self.add(aux = new ButtonWidget);
         aux->setFont("small");
+        aux->setTextColor("text");
         aux->setSizePolicy(ui::Expand, ui::Fixed);
         Rule const &unit = style().rules().rule("unit");
         aux->rule()
@@ -63,12 +64,12 @@ DENG_GUI_PIMPL(AuxButtonWidget)
             if(!isInverted())
             {
                 setAuxBorderColorf(style().colors().colorf("accent"));
-                aux->setTextColor("accent");
+                aux->setTextModulationColorf(style().colors().colorf("accent"));
             }
             else
             {
                 setAuxBorderColorf(style().colors().colorf("inverted.accent"));
-                aux->setTextColor("inverted.accent");
+                aux->setTextModulationColorf(style().colors().colorf("inverted.accent"));
             }
             break;
 
@@ -76,12 +77,12 @@ DENG_GUI_PIMPL(AuxButtonWidget)
             if(!isInverted())
             {
                 setAuxBorderColorf(style().colors().colorf("text"));
-                aux->setTextColor("text");
+                aux->setTextModulationColorf(style().colors().colorf("text"));
             }
             else
             {
                 setAuxBorderColorf(style().colors().colorf("inverted.text"));
-                aux->setTextColor("inverted.text");
+                aux->setTextModulationColorf(style().colors().colorf("inverted.text"));
             }
             break;
 
@@ -90,13 +91,13 @@ DENG_GUI_PIMPL(AuxButtonWidget)
             {
                 setAuxBorderColorf(style().colors().colorf(""),
                                    style().colors().colorf("inverted.background"));
-                aux->setTextColor("inverted.text");
+                aux->setTextModulationColorf(style().colors().colorf("inverted.text"));
             }
             else
             {
                 setAuxBorderColorf(style().colors().colorf(""),
                                    style().colors().colorf("background"));
-                aux->setTextColor("text");
+                aux->setTextModulationColorf(style().colors().colorf("text"));
             }
             break;
         }
@@ -104,7 +105,7 @@ DENG_GUI_PIMPL(AuxButtonWidget)
 
     bool isInverted() const
     {
-        return inverted ^ self.isUsingInfoStyle();
+        return inverted;
     }
 
     void updateStyle()
@@ -121,20 +122,14 @@ DENG_GUI_PIMPL(AuxButtonWidget)
 
     void applyNormalStyle()
     {
-        self.setBackgroundColor("background");
-        self.setTextColor("text");
-        aux->setTextColor("accent");
-        aux->setHoverTextColor("text", ButtonWidget::ReplaceColor);
-        setAuxBorderColorf(style().colors().colorf("accent"));
+        aux->setHoverTextColor("text");
+        buttonStateChanged(*aux, aux->state());
     }
 
     void applyInvertedStyle()
     {
-        self.setBackgroundColor("inverted.background");
-        self.setTextColor("inverted.text");
-        aux->setTextColor("inverted.text");
-        aux->setHoverTextColor("inverted.text", ButtonWidget::ReplaceColor);
-        setAuxBorderColorf(style().colors().colorf("inverted.text"));
+        aux->setHoverTextColor("inverted.text");
+        buttonStateChanged(*aux, aux->state());
     }
 };
 
@@ -151,13 +146,16 @@ ButtonWidget &AuxButtonWidget::auxiliary()
 
 void AuxButtonWidget::useNormalStyle()
 {
+    useInfoStyle(false);
+
     d->inverted = false;
     d->updateStyle();
 }
 
-void AuxButtonWidget::useInvertedStyle()
+void AuxButtonWidget::invertStyle()
 {
-    d->inverted = true;
+    useInfoStyle(!isUsingInfoStyle());
+    d->inverted = !d->inverted;
     d->updateStyle();
 }
 

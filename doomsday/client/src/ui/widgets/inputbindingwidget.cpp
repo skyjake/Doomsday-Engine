@@ -161,14 +161,14 @@ DENG_GUI_PIMPL(InputBindingWidget)
     {
         root().setFocus(thisPublic);
         self.auxiliary().disable();
-        self.useInvertedStyle();
+        self.invertStyle();
     }
 
     void unfocus()
     {
         root().setFocus(0);
         self.auxiliary().enable();
-        self.useNormalStyle();
+        self.invertStyle();
     }
 };
 

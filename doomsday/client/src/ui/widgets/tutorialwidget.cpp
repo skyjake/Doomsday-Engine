@@ -340,7 +340,7 @@ DENG_GUI_PIMPL(TutorialWidget)
                           "To change it, click in the box and then press the key or key combination you "
                           "want to assign as the shortcut.");
                 InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
-                bind->useInfoStyle();
+                bind->invertStyle();
                 dlg->area().add(bind);
             }
             dlg->message().setText(msg);

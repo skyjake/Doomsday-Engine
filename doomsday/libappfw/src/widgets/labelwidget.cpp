@@ -129,6 +129,7 @@ public Font::RichFormat::IStyle
         altAccentColor = st.colors().color("label.altaccent");
 
         glText.setFont(self.font());
+        glText.forceUpdate();
 
         self.requestGeometry();
     }
@@ -633,6 +634,11 @@ void LabelWidget::setTextModulationColorf(Vector4f const &colorf)
 {
     d->textGLColor = colorf;
     requestGeometry();
+}
+
+Vector4f LabelWidget::textModulationColorf() const
+{
+    return d->textGLColor;
 }
 
 void LabelWidget::setImageAlignment(Alignment const &imageAlign)

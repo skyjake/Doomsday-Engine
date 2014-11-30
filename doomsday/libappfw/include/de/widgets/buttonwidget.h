@@ -33,6 +33,8 @@ namespace de {
  */
 class LIBAPPFW_PUBLIC ButtonWidget : public LabelWidget
 {
+    Q_OBJECT
+
 public:
     enum State {
         Up,
@@ -103,6 +105,9 @@ public:
     // Events.
     void update();
     bool handleEvent(Event const &event);
+
+signals:
+    void pressed();
 
 protected:
     void updateModelViewProjection(GLUniform &uMvp);
