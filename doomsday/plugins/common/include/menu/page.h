@@ -46,6 +46,9 @@ typedef QList<Widget *> WidgetList;
 /**
  * UI menu page (dialog).
  *
+ * @todo Menu pages should not have a "fixed" previous page mechanism, this should
+ * be described in a more flexible manner -ds
+ *
  * @ingroup menu
  */
 class Page
@@ -53,8 +56,8 @@ class Page
 public:
     enum Flag
     {
-        FixedLayout  = 0x1, ///< Children are positioned using a fixed layout.
-        NoScroll     = 0x2, ///< Scrolling is disabled.
+        FixedLayout  = 0x1,  ///< Children are positioned using a fixed layout.
+        NoScroll     = 0x2,  ///< Scrolling is disabled.
 
         DefaultFlags = 0
     };

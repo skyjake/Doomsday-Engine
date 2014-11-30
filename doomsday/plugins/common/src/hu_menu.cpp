@@ -133,6 +133,7 @@ void Hu_MenuDrawMultiplayerPage(Page const &page, Vector2i const &origin);
 void Hu_MenuDrawPlayerSetupPage(Page const &page, Vector2i const &origin);
 
 int Hu_MenuColorWidgetCmdResponder(Page &page, menucommand_e cmd);
+int Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection(Page &page, menucommand_e cmd);
 
 void Hu_MenuSaveSlotEdit(Widget &wi, Widget::Action action);
 
@@ -577,7 +578,8 @@ void Hu_MenuInitSkillPage()
     };
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("Skill", origin, Page::FixedLayout | Page::NoScroll, Hu_MenuDrawSkillPage));
+    Page *page = Hu_MenuAddPage(new Page("Skill", origin, Page::FixedLayout | Page::NoScroll,
+                                         Hu_MenuDrawSkillPage, Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -1890,7 +1892,8 @@ void Hu_MenuInitPlayerClassPage()
         }
     }
 
-    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), Page::FixedLayout | Page::NoScroll, Hu_MenuDrawPlayerClassPage));
+    Page *page = Hu_MenuAddPage(new Page("PlayerClass", Vector2i(66, 66), Page::FixedLayout | Page::NoScroll,
+                                         Hu_MenuDrawPlayerClassPage, Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Episode"));
 
@@ -2396,6 +2399,53 @@ int Hu_MenuColorWidgetCmdResponder(Page &page, menucommand_e cmd)
     }
 
     return false;
+}
+
+/**
+ * Determines if manual episode selection via the menu can be skipped if only one
+ * episode is playable.
+ *
+ * Some demo/shareware game versions use the episode selection menu for the purpose
+ * of prompting the user to buy the full version. In such a case, disable skipping.
+ *
+ * @return  @c true if skipping is allowed.
+ */
+static bool allowSkipEpisodeSelection()
+{
+#if __JDOOM__
+    if(gameMode == doom_shareware)    return false; // Never.
+#elif __JHERETIC__
+    if(gameMode == heretic_shareware) return false; // Never.
+#endif
+    return true;
+}
+
+int Hu_MenuSkipPreviousPageIfSkippingEpisodeSelection(Page &page, menucommand_e cmd)
+{
+    // All we react to are MCMD_NAV_OUT commands.
+    if(cmd != MCMD_NAV_OUT) return false;
+
+    Page *previous = page.previousPage();
+
+    // Skip this page if only one episode is playable.
+    if(allowSkipEpisodeSelection() && PlayableEpisodeCount() == 1)
+    {
+        previous = previous->previousPage();
+    }
+
+    if(previous)
+    {
+        S_LocalSound(SFX_MENU_CANCEL, nullptr);
+        Hu_MenuSetPage(previous);
+    }
+    else
+    {
+        // No previous page so just close the menu.
+        S_LocalSound(SFX_MENU_CLOSE, nullptr);
+        Hu_MenuCommand(MCMD_CLOSE);
+    }
+
+    return true;
 }
 
 /// Depending on the current menu state some commands require translating.
@@ -2943,27 +2993,28 @@ void Hu_MenuSelectSingleplayer(Widget & /*wi*/, Widget::Action action)
 {
     if(action != Widget::Deactivated) return;
 
+    // If a networked game is already in progress inform the user we can't continue.
+    /// @todo Allow continue: Ask the user if the networked game should be stopped.
     if(IS_NETGAME)
     {
-        Hu_MsgStart(MSG_ANYKEY, NEWGAME, NULL, 0, NULL);
+        Hu_MsgStart(MSG_ANYKEY, NEWGAME, nullptr, 0, nullptr);
         return;
     }
 
-    // Skip episode selection if only one is defined.
-    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-    if(episodesById.size() == 1)
+    // Skip episode selection if only one is playable.
+    if(allowSkipEpisodeSelection() && PlayableEpisodeCount() == 1)
     {
-        mnEpisode = episodesById.begin()->second->as<RecordValue>().record()->gets("id");
+        mnEpisode = FirstPlayableEpisodeId();
 #if __JHEXEN__
         Hu_MenuSetPage("PlayerClass");
 #else
         Hu_MenuSetPage("Skill");
 #endif
+        return;
     }
-    else
-    {
-        Hu_MenuSetPage("Episode");
-    }
+
+    // Show the episode selection menu.
+    Hu_MenuSetPage("Episode");
 }
 
 void Hu_MenuSelectMultiplayer(Widget & /*wi*/, Widget::Action action)
