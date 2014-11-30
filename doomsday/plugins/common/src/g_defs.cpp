@@ -58,7 +58,38 @@ void GetDefState(char const *def, int *val)
     if(*val < 0) *val = 0;
 }
 
-de::Uri TranslateMapWarpNumber(String const &episodeId, uint warpNumber)
+int PlayableEpisodeCount()
+{
+    int count = 0;
+    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+    for(auto const &pair : episodesById)
+    {
+        Record const &episodeDef = *pair.second->as<RecordValue>().record();
+        de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+        if(P_MapExists(startMap.compose().toUtf8().constData()))
+        {
+            count += 1;
+        }
+    }
+    return count;
+}
+
+String FirstPlayableEpisodeId()
+{
+    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
+    for(auto const &pair : episodesById)
+    {
+        Record const &episodeDef = *pair.second->as<RecordValue>().record();
+        de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+        if(P_MapExists(startMap.compose().toUtf8().constData()))
+        {
+            return episodeDef.gets("id");
+        }
+    }
+    return ""; // Not found.
+}
+
+de::Uri TranslateMapWarpNumber(String const &episodeId, int warpNumber)
 {
     if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
     {

@@ -30,6 +30,7 @@
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "g_eventsequence.h"
+#include "g_defs.h"
 #include "gamesession.h"
 #include "hu_msg.h"
 #include "p_user.h"
@@ -54,16 +55,35 @@ CHEAT_FUNC(Music)
 
     player_t *plr = &players[player];
 
-    int musnum;
-    if(gameModeBits & GM_ANY_DOOM2)
-        musnum = (args[0] - '0') * 10 + (args[1] - '0');
-    else
-        musnum = (args[0] - '1') * 9  + (args[1] - '0');
+    int const numEpisodes = PlayableEpisodeCount();
+    if(!numEpisodes) return false;
 
-    if(S_StartMusicNum(musnum, true))
+    // The number of episodes determines how to interpret the arguments.
+    /// @note Logic here aims to be somewhat vanilla compatible, yet offer
+    /// a limited degree of support for custom episodes. The "playmusic"
+    /// cmd is a far more flexible method of changing music.
+    String episodeId;
+    int warpNumber;
+    if(numEpisodes > 1)
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
-        return true;
+        episodeId  = String::number(args[0]);
+        warpNumber = args[1];
+    }
+    else
+    {
+        episodeId  = FirstPlayableEpisodeId();
+        warpNumber = (args[0] - '0') * 10 + (args[1] - '0');
+    }
+
+    // Lookup and try to enqueue the Music for the referenced episode and map.
+    de::Uri const mapUri = TranslateMapWarpNumber(episodeId, warpNumber);
+    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    {
+        if(S_StartMusic(mapInfo->gets("music").toUtf8().constData(), true /*loop it*/))
+        {
+            P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
+            return true;
+        }
     }
 
     P_SetMessage(plr, LMF_NO_HIDE, STSTR_NOMUS);
