@@ -144,6 +144,17 @@ public:
      */
     void restoreFromConfig();
 
+    /**
+     * Saves the current state in memory (not persistently). The saved state can
+     * later be restored with a call to restoreState().
+     */
+    void saveState();
+
+    /**
+     * Restores the attribuets of the window from previously saved state.
+     */
+    void restoreState();
+
     static PersistentCanvasWindow &main();
 
     // Events.

@@ -432,8 +432,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     struct Task
     {
-        enum Type
-        {
+        enum Type {
             ShowNormal,
             ShowFullscreen,
             ShowMaximized,
@@ -457,16 +456,18 @@ DENG2_PIMPL(PersistentCanvasWindow)
 
     // Logical state.
     State state;
+    State savedState; // used by saveState(), restoreState()
     bool neverShown;
 
     typedef QList<Task> Tasks;
     Tasks queue;
 
     Instance(Public *i, String const &windowId)
-        : Base(i),
-          id(windowId),
-          state(windowId),
-          neverShown(true)
+        : Base(i)
+        , id(windowId)
+        , state(windowId)
+        , savedState(windowId)
+        , neverShown(true)
     {
         // Keep a global pointer to the main window.
         if(id == MAIN_WINDOW_ID)
@@ -816,6 +817,16 @@ void PersistentCanvasWindow::restoreFromConfig()
     d->state.restoreFromConfig();
     d->state.modifyAccordingToOptions();
     d->applyToWidget(d->state);
+}
+
+void PersistentCanvasWindow::saveState()
+{
+    d->savedState = d->widgetState();
+}
+
+void PersistentCanvasWindow::restoreState()
+{
+    d->applyToWidget(d->savedState);
 }
 
 bool PersistentCanvasWindow::isCentered() const
