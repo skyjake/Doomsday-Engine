@@ -1,7 +1,8 @@
 /** @file dehreader.h  DeHackEd patch parser.
- * @ingroup dehreader
  *
  * Parses DeHackEd patches and updates the engine's definition databases.
+ *
+ * @ingroup dehreader
  *
  * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -27,9 +28,7 @@
 #include "dehread.h"
 #include <de/Block>
 
-/**
- * Maximum number of nested patch file inclussions. Set to zero to disable.
- */
+/// Maximum number of nested patch file inclussions. Set to zero to disable.
 #define DEHREADER_INCLUDE_DEPTH_MAX         2
 
 /// Flags used with @see readDehPatch() to alter read behavior.
@@ -46,9 +45,10 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(DehReaderFlags)
  * Parses a text stream as a DeHackEd patch and updates the engine's definition
  * databases accordingly.
  *
- * @param patch  DeHackEd patch to parse.
- * @param flags  @ref DehReaderFlags
+ * @param patch          DeHackEd patch to parse.
+ * @param patchIsCustom  Source of the patch data is a user-supplied add-on
+ * @param flags          @ref DehReaderFlags
  */
-void readDehPatch(de::Block const &patch, DehReaderFlags flags = 0);
+void readDehPatch(de::Block const &patch, bool patchIsCustom, DehReaderFlags flags = 0);
 
-#endif // LIBDEHREAD_DEHREADER_H
+#endif  // LIBDEHREAD_DEHREADER_H

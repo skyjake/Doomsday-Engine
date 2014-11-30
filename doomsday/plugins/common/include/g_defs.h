@@ -31,6 +31,18 @@
 ded_t &Defs();
 
 /**
+ * Returns the total number of 'playable' episodes. A playable episode is one whos
+ * starting map is defined, and for which map data exists.
+ */
+int PlayableEpisodeCount();
+
+/**
+ * Returns the unique identifier of the first playable episode. If no playable episodes
+ * are defined a zero-length string is returned.
+ */
+de::String FirstPlayableEpisodeId();
+
+/**
  * Translates a map warp number for the @em current episode to a unique map identifier.
  *
  * @note This should only be used where necessary for compatibility reasons as the
@@ -44,7 +56,7 @@ ded_t &Defs();
  * @return The unique identifier of the map. If no game session is in progress or the
  * warp number is not found, the URI "Maps:" is returned.
  */
-de::Uri TranslateMapWarpNumber(de::String const &episodeId, uint warpNumber);
+de::Uri TranslateMapWarpNumber(de::String const &episodeId, int warpNumber);
 
 extern "C" {
 #endif

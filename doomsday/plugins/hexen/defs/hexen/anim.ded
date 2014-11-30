@@ -21,13 +21,6 @@ Header { Version = 6; }
 Group
 {
   Flags = precache;
-  Texture { ID = "BOSSK1"; };
-  Texture { ID = "BOSSK2"; };
-}
-
-Group
-{
-  Flags = precache;
   Texture { ID = "SPAWN01"; };
   Texture { ID = "SPAWN02"; };
   Texture { ID = "SPAWN03"; };
@@ -60,23 +53,8 @@ Group
 Group
 {
   Flags = precache;
-  Texture { ID = "SW51_OFF"; };
-  Texture { ID = "SW51_ON"; };
-}
-
-Group
-{
-  Flags = precache;
   Texture { ID = "SW52_OFF"; };
   Texture { ID = "SW52_ON"; };
-}
-
-Group
-{
-  Flags = precache;
-  Texture { ID = "SW53_DN"; };
-  Texture { ID = "SW53_MD"; };
-  Texture { ID = "SW53_UP"; };
 }
 
 Group
@@ -118,20 +96,6 @@ Group
 Group
 {
   Flags = precache;
-  Texture { ID = "VALVE01"; };
-  Texture { ID = "VALVE02"; };
-}
-
-Group
-{
-  Flags = precache;
-  Texture { ID = "VALVE1"; };
-  Texture { ID = "VALVE2"; };
-}
-
-Group
-{
-  Flags = precache;
   Texture { ID = "GLASS01"; };
   Texture { ID = "GLASS03"; };
   Texture { ID = "GLASS05"; };
@@ -143,4 +107,43 @@ Group
   Flags = precache;
   Texture { ID = "X_FAC01"; };
   Texture { ID = "X_FAC09"; };
+}
+
+# The rest of this file is skipped if Hexen demo
+SkipIf hexen-demo;
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "BOSSK1"; };
+  Texture { ID = "BOSSK2"; };
+}
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "SW51_OFF"; };
+  Texture { ID = "SW51_ON"; };
+}
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "SW53_DN"; };
+  Texture { ID = "SW53_MD"; };
+  Texture { ID = "SW53_UP"; };
+}
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "VALVE01"; };
+  Texture { ID = "VALVE02"; };
+}
+
+Group
+{
+  Flags = precache;
+  Texture { ID = "VALVE1"; };
+  Texture { ID = "VALVE2"; };
 }

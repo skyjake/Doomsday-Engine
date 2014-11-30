@@ -114,7 +114,7 @@ int G_RegisterGames(int hookType, int param, void *data)
     GameDef const doomShareDef = {
         "doom1-share", "doom",
         "DOOM Shareware", "id Software",
-        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER
+        LEGACYSAVEGAMENAMEEXP, LEGACYSAVEGAMESUBFOLDER,
         "$(App.DataPath)/$(GamePlugin.Name)/doom1-share.mapinfo"
     };
 
