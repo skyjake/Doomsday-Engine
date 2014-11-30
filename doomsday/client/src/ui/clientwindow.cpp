@@ -236,6 +236,7 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
                 .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
         container().add(gameSelMenu);
+        gameSelMenu->filter().enableBackground(gameSelMenu->scrollPositionY());
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
