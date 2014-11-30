@@ -257,15 +257,16 @@ DENG2_PIMPL(ClientApp)
                 .define(SReg::IntCVar,    "net-dev",            0);
 
         audioSettings
-                .define(SReg::IntCVar,   "sound-volume",        255 * 2/3)
-                .define(SReg::IntCVar,   "music-volume",        255 * 2/3)
-                .define(SReg::FloatCVar, "sound-reverb-volume", 0.5f)
-                .define(SReg::IntCVar,   "sound-info",          0)
-                .define(SReg::IntCVar,   "sound-rate",          11025)
-                .define(SReg::IntCVar,   "sound-16bit",         0)
-                .define(SReg::IntCVar,   "sound-3d",            0)
-                .define(SReg::IntCVar,   "sound-overlap-stop",  0)
-                .define(SReg::IntCVar,   "music-source",        MUSP_EXT);
+                .define(SReg::IntCVar,    "sound-volume",        255 * 2/3)
+                .define(SReg::IntCVar,    "music-volume",        255 * 2/3)
+                .define(SReg::FloatCVar,  "sound-reverb-volume", 0.5f)
+                .define(SReg::IntCVar,    "sound-info",          0)
+                .define(SReg::IntCVar,    "sound-rate",          11025)
+                .define(SReg::IntCVar,    "sound-16bit",         0)
+                .define(SReg::IntCVar,    "sound-3d",            0)
+                .define(SReg::IntCVar,    "sound-overlap-stop",  0)
+                .define(SReg::IntCVar,    "music-source",        MUSP_EXT)
+                .define(SReg::StringCVar, "music-soundfont",     "");
     }
 
 #ifdef UNIX
