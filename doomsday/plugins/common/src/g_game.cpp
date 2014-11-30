@@ -2076,11 +2076,12 @@ String G_EpisodeTitle(String episodeId)
     if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         title = episodeDef->gets("title");
+
         // Perhaps the title string is a reference to a Text definition?
-        void *ptr;
-        if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &ptr) != -1)
+        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        if(textIdx >= 0)
         {
-            title = (char const *) ptr; // Yes, use the resolved text string.
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
         }
     }
     return title;
@@ -2094,11 +2095,12 @@ String G_MapTitle(de::Uri const &mapUri)
     if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         title = mapInfo->gets("title");
+
         // Perhaps the title string is a reference to a Text definition?
-        void *ptr;
-        if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &ptr) != -1)
+        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        if(textIdx >= 0)
         {
-            title = (char const *) ptr; // Yes, use the resolved text string.
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
         }
     }
 

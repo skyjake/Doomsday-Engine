@@ -1802,13 +1802,9 @@ void Hu_MenuInitEpisodePage()
     for(auto const &pair : episodesById)
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
+        String const episodeId   = episodeDef.gets("id");
 
-        String title = episodeDef.gets("title");
-        // Perhaps a Text definition?
-        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
-        if(textIdx >= 0) title = String(Defs().text[textIdx].text); // Yes, use the resolved text string.
-
-        auto *btn = new ButtonWidget(title);
+        auto *btn = new ButtonWidget(G_EpisodeTitle(episodeId));
         btn->setFixedY(y);
 
         // Has a menu image been specified?
@@ -1841,7 +1837,7 @@ void Hu_MenuInitEpisodePage()
         if(P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->setAction(Widget::Deactivated, Hu_MenuSelectEpisode);
-            btn->setUserValue(episodeDef.gets("id"));
+            btn->setUserValue(episodeId);
         }
         else
         {
@@ -1864,7 +1860,7 @@ void Hu_MenuInitEpisodePage()
                 btn->setFlags(Widget::Disabled);
                 LOG_RES_WARNING("Failed to locate the starting map \"%s\" for episode '%s'."
                                 " This episode will not be selectable from the menu")
-                        << startMap << episodeDef.gets("id");
+                        << startMap << episodeId;
             }
         }
 

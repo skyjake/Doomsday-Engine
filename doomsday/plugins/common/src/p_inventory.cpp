@@ -303,9 +303,9 @@ void P_InitInventory()
             continue;
 
         data->type     = type;
-        data->niceName = textenum_t(Def_Get(DD_DEF_TEXT, (char *) def->niceName, NULL));
+        data->niceName = textenum_t(Defs().getTextNumForName(def->niceName));
         data->action   = getActionPtr(def->action);
-        data->useSnd   = sfxenum_t(Def_Get(DD_DEF_SOUND, (char *) def->useSnd, NULL));
+        data->useSnd   = sfxenum_t(Defs().getSoundNum(def->useSnd));
         data->patchId  = R_DeclarePatch(def->patch);
     }
 
