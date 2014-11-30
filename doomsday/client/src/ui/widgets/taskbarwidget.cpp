@@ -91,6 +91,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
     bool opened;
 
+    GuiWidget *backBlur;
     ConsoleWidget *console;
     ButtonWidget *logo;
     ButtonWidget *conf;
@@ -285,6 +286,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
     {
         updateStatus();
         showOrHideMenuItems();
+        backBlur->show(style().isBlurringAllowed());
     }
 
     void networkGameJoined()
@@ -319,7 +321,7 @@ PopupWidget *makeUpdaterSettings() {
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 {
 #if 0
-    // GameWidget is presently incompatible with blurring.
+    // GameWidget is presently too inefficient with blurring.
     BlurWidget *blur = new BlurWidget("taskbar_blur");
     add(blur);
     Background bg(*blur, style().colors().colorf("background"));
@@ -328,6 +330,15 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
 #endif
 
     Rule const &gap = style().rules().rule("gap");
+
+    d->backBlur = new LabelWidget;
+    d->backBlur->rule()
+            .setInput(Rule::Left, rule().left())
+            .setInput(Rule::Bottom, rule().bottom())
+            .setInput(Rule::Right, rule().right())
+            .setInput(Rule::Top, rule().top());
+    d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    add(d->backBlur);
 
     d->console = new ConsoleWidget;
     d->console->rule()

@@ -150,6 +150,9 @@ public:
      */
     void drawGameContent();
 
+    void fadeInTaskBarBlur(de::TimeDelta span);
+    void fadeOutTaskBarBlur(de::TimeDelta span);
+
     void updateCanvasFormat();
     void updateRootSize();
 
@@ -178,6 +181,7 @@ protected:
 public slots:
     void toggleFPSCounter();
     void showColorAdjustments();
+    void hideTaskBarBlur();
 
 private:
     DENG2_PRIVATE(d)

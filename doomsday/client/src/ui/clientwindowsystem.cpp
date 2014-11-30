@@ -32,6 +32,10 @@ DENG2_PIMPL(ClientWindowSystem)
         bool isBlurringAllowed() const {
             return !App_GameLoaded();
         }
+        GuiWidget *sharedBlurWidget() const {
+            if(!ClientWindow::mainExists()) return nullptr;
+            return &ClientWindow::main().taskBarBlur();
+        }
     };
 
     Instance(Public *i)

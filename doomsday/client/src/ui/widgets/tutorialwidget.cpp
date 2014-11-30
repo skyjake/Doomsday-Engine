@@ -429,10 +429,7 @@ TutorialWidget::TutorialWidget()
 void TutorialWidget::start()
 {
     // Blur the rest of the view.
-    GuiWidget &blur = ClientWindow::main().taskBarBlur();
-    blur.show();
-    blur.setOpacity(0);
-    blur.setOpacity(1, .5);
+    ClientWindow::main().fadeInTaskBarBlur(.5);
 
     d->initStep(Instance::Welcome);
 }
@@ -447,14 +444,13 @@ void TutorialWidget::stop()
     d->deinitStep();
 
     // Animate away and unfade darkening.
-    ClientWindow::main().taskBarBlur().setOpacity(0, .5);
+    ClientWindow::main().fadeOutTaskBarBlur(.5);
 
     QTimer::singleShot(500, this, SLOT(dismiss()));
 }
 
 void TutorialWidget::dismiss()
 {
-    ClientWindow::main().taskBarBlur().hide();
     hide();
     guiDeleteLater();
 }

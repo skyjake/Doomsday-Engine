@@ -422,7 +422,8 @@ void ConsoleWidget::enableBlur(bool yes)
     Background logBg = d->log->background();
     if(yes)
     {
-        logBg.type = Background::Blurred;
+        logBg.type = Background::SharedBlur;
+        logBg.blur = &ClientWindow::main().taskBarBlur();
     }
     else
     {

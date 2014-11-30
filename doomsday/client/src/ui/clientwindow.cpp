@@ -255,7 +255,7 @@ DENG2_PIMPL(ClientWindow)
         taskBarBlur = new LabelWidget("taskbar-blur");
         taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
         taskBarBlur->rule().setRect(root.viewRule());
-        taskBarBlur->hide(); // must be explicitly shown if needed
+        taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
         container().add(taskBarBlur);
 
         // Taskbar is over almost everything else.
@@ -330,6 +330,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
+        self.hideTaskBarBlur(); // update background blur mode
 
         activateOculusRiftModeIfConnected();
     }
@@ -1067,6 +1068,32 @@ void ClientWindow::drawGameContent()
     GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
     d->root.drawUntil(*d->gameSelMenu);
+}
+
+void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
+{
+    d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent, UnsetFlags);
+    d->taskBarBlur->setOpacity(0);
+    d->taskBarBlur->setOpacity(1, span);
+}
+
+void ClientWindow::fadeOutTaskBarBlur(TimeDelta span)
+{
+    d->taskBarBlur->setOpacity(0, span);
+    QTimer::singleShot(span.asMilliSeconds(), this, SLOT(hideTaskBarBlur()));
+}
+
+void ClientWindow::hideTaskBarBlur()
+{
+    d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
+    if(d->taskBar->style().isBlurringAllowed())
+    {
+        d->taskBarBlur->setOpacity(1);
+    }
+    else
+    {
+        d->taskBarBlur->setOpacity(0);
+    }
 }
 
 void ClientWindow::updateCanvasFormat()
