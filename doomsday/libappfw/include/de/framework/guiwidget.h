@@ -104,18 +104,19 @@ public:
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
             SharedBlur,         ///< Use the blur background from a BlurWidget.
+            SharedBlurWithBorderGlow,
             Rounded
         };
         Vector4f solidFill;     ///< Always applied if opacity > 0.
         Type type;
         Vector4f color;         ///< Secondary color.
         float thickness;        ///< Frame border thickenss.
-        BlurWidget *blur;
+        GuiWidget *blur;
 
         Background()
             : type(None), thickness(0), blur(0) {}
 
-        Background(BlurWidget &blurred, Vector4f const &blurColor)
+        Background(GuiWidget &blurred, Vector4f const &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
         Background(Vector4f const &solid, Type t = None)
@@ -174,6 +175,12 @@ public:
         RetainStatePersistently = 0x1,
 
         AnimateOpacityWhenEnabledOrDisabled = 0x2,
+
+        /**
+         * Prevents the drawing of the widget contents even if it visible. The texture
+         * containing the blurred background is updated regardless.
+         */
+        DontDrawContent = 0x4,
 
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };

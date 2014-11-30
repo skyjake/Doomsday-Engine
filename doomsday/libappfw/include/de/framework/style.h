@@ -27,6 +27,7 @@
 
 namespace de {
 
+class GuiWidget;
 class Package;
 
 /**
@@ -68,6 +69,8 @@ public:
      * Determines if blurred widget backgrounds are allowed.
      */
     virtual bool isBlurringAllowed() const;
+
+    virtual GuiWidget *sharedBlurWidget() const;
 
 public:
     /**

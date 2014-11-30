@@ -401,7 +401,8 @@ public ChildWidgetOrganizer::IFilter
         else if(Style::get().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
-            bg.type = Background::BlurredWithBorderGlow;
+            bg.type = Background::SharedBlurWithBorderGlow;
+            bg.blur = style().sharedBlurWidget();
             bg.solidFill = Vector4f(0, 0, 0, .65f);
         }
         else

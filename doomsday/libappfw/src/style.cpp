@@ -191,7 +191,7 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
         return &fonts().font("monospace");
 
     default:
-        return 0;
+        return nullptr;
     }
 }
 
@@ -200,7 +200,12 @@ bool Style::isBlurringAllowed() const
     return true;
 }
 
-static Style *theAppStyle = 0;
+GuiWidget *Style::sharedBlurWidget() const
+{
+    return nullptr;
+}
+
+static Style *theAppStyle = nullptr;
 
 Style &Style::get()
 {

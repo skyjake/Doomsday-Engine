@@ -135,11 +135,13 @@ DENG_GUI_PIMPL(PopupWidget)
         }
         else
         {
-            self.set(Background(st.colors().colorf("background"),
-                                !opaqueBackground && st.isBlurringAllowed()?
-                                    Background::BlurredWithBorderGlow : Background::BorderGlow,
-                                st.colors().colorf("glow"),
-                                st.rules().rule("glow").valuei()));
+            Background bg(st.colors().colorf("background"),
+                          !opaqueBackground && st.isBlurringAllowed()?
+                              Background::SharedBlurWithBorderGlow : Background::BorderGlow,
+                          st.colors().colorf("glow"),
+                          st.rules().rule("glow").valuei());
+            bg.blur = style().sharedBlurWidget();
+            self.set(bg);
         }
 
         if(opaqueBackground)
