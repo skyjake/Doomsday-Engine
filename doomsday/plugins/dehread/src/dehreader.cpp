@@ -147,7 +147,7 @@ public:
         case '\0':
             if(size_t(pos) != patch.size() - 1)
             {
-                LOG_WARNING("Unexpected EOF encountered on line #%i, ignoring") << currentLineNumber;
+                LOG_WARNING("Unexpected EOF encountered on line #%i") << currentLineNumber;
             }
             break;
         case '\n':
@@ -230,7 +230,7 @@ public:
 
         if(patchVersion != 6)
         {
-            LOG_WARNING("Unknown patch version, unexpected results may occur") << patchVersion;
+            LOG_WARNING("Patch version %i unknown, unexpected results may occur") << patchVersion;
         }
     }
 
@@ -258,7 +258,7 @@ public:
         // Is this for a known Doom version?
         if(!normalizeDoomVersion(doomVersion))
         {
-            LOG_WARNING("Unknown Doom version, assuming v1.9");
+            LOG_WARNING("Doom version undefined, assuming v1.9");
             doomVersion = 3;
         }
 
@@ -288,7 +288,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Thing '%s' out of range, ignoring\n(Create more Thing defs)") << arg;
+                            LOG_WARNING("DeHackEd Thing '%s' out of range\n(Create more Thing defs)") << arg;
                             dummyMobj.clear();
                             mobj = &dummyMobj;
                         }
@@ -309,7 +309,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Frame '%s' out of range, ignoring\n(Create more State defs)") << arg;
+                            LOG_WARNING("DeHackEd Frame '%s' out of range\n(Create more State defs)") << arg;
                             dummyState.clear();
                             state = &dummyState;
                         }
@@ -330,7 +330,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Pointer '%s' out of range, ignoring\n(Create more State defs)") << arg;
+                            LOG_WARNING("DeHackEd Pointer '%s' out of range\n(Create more State defs)") << arg;
                             dummyState.clear();
                             state = &dummyState;
                         }
@@ -351,7 +351,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Sprite '%s' out of range, ignoring\n(Create more Sprite defs)") << arg;
+                            LOG_WARNING("DeHackEd Sprite '%s' out of range\n(Create more Sprite defs)") << arg;
                             dummySprite.clear();
                             sprite = &dummySprite;
                         }
@@ -368,7 +368,7 @@ public:
 
                         if(!isKnownAmmoNum)
                         {
-                            LOG_WARNING("DeHackEd Ammo '%s' out of range, ignoring") << arg;
+                            LOG_WARNING("DeHackEd Ammo '%s' out of range") << arg;
                         }
 
                         skipToNextLine();
@@ -383,7 +383,7 @@ public:
 
                         if(!isKnownWeaponNum)
                         {
-                            LOG_WARNING("DeHackEd Weapon '%s' out of range, ignoring") << arg;
+                            LOG_WARNING("DeHackEd Weapon '%s' out of range") << arg;
                         }
 
                         skipToNextLine();
@@ -402,7 +402,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Sound '%s' out of range, ignoring\n(Create more Sound defs)") << arg;
+                            LOG_WARNING("DeHackEd Sound '%s' out of range\n(Create more Sound defs)") << arg;
                             dummySound.clear();
                             sound = &dummySound;
                         }
@@ -635,7 +635,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -783,7 +783,7 @@ public:
                 continue;
             }
 
-            LOG_WARNING("DeHackEd Unknown flag mnemonic '%s', ignoring") << token;
+            LOG_WARNING("DeHackEd Unknown flag mnemonic '%s'") << token;
         }
 
         return changedGroups;
@@ -809,7 +809,7 @@ public:
                 {
                     if(!ignore)
                     {
-                        LOG_WARNING("DeHackEd Unknown frame '%s', ignoring") << dehStateName;
+                        LOG_WARNING("DeHackEd Frame '%s' unknown") << dehStateName;
                     }
                 }
                 else
@@ -819,7 +819,7 @@ public:
                     {
                         if(value < 0 || value >= ded->states.size())
                         {
-                            LOG_WARNING("DeHackEd Frame #%i out of range, ignoring") << value;
+                            LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                         }
                         else
                         {
@@ -844,7 +844,7 @@ public:
                 {
                     if(!ignore)
                     {
-                        LOG_WARNING("DeHackEd Unknown sound '%s', ignoring") << dehSoundName;
+                        LOG_WARNING("DeHackEd Sound '%s' unknown") << dehSoundName;
                     }
                 }
                 else
@@ -854,7 +854,7 @@ public:
                     {
                         if(value < 0 || value >= ded->sounds.size())
                         {
-                            LOG_WARNING("DeHackEd Sound #%i out of range, ignoring") << value;
+                            LOG_WARNING("DeHackEd Sound #%i out of range") << value;
                         }
                         else
                         {
@@ -868,7 +868,7 @@ public:
                             case SDN_ATTACK:    soundAdr = &mobj->attackSound; break;
                             case SDN_SEE:       soundAdr = &mobj->seeSound;    break;
                             default:
-                                throw Error("DehReader", String("Unknown soundname id %i").arg(mapping->id));
+                                throw Error("DehReader", String("Thing Sound %i unknown").arg(mapping->id));
                             }
 
                             ded_sound_t const &sound = ded->sounds[soundsIdx];
@@ -1029,7 +1029,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1067,7 +1067,7 @@ public:
                 {
                     if(value < 0 || value >= ded->states.size())
                     {
-                        LOG_WARNING("DeHackEd Frame #%i out of range, ignoring") << value;
+                        LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                     }
                     else
                     {
@@ -1090,7 +1090,7 @@ public:
                 {
                     if(value < 0 || value > ded->sprites.size())
                     {
-                        LOG_WARNING("DeHackEd Sprite #%i out of range, ignoring") << value;
+                        LOG_WARNING("DeHackEd Sprite #%i out of range") << value;
                     }
                     else
                     {
@@ -1125,7 +1125,7 @@ public:
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                     {
-                        LOG_WARNING("DeHackEd Unknown unknown-value '%s', ignoring")
+                        LOG_WARNING("DeHackEd Unknown-value '%s' unknown")
                                 << var.mid(8);
                     }
                     else
@@ -1142,7 +1142,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1174,7 +1174,7 @@ public:
 
                     if(offset < 0 || offset >= ded->sprites.size())
                     {
-                        LOG_WARNING("DeHackEd Sprite offset #%i out of range, ignoring") << value;
+                        LOG_WARNING("DeHackEd Sprite offset #%i out of range") << value;
                     }
                     else
                     {
@@ -1186,7 +1186,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i, ignoring.")
+                LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i.")
                         << var << currentLineNumber;
             }
         }
@@ -1267,7 +1267,7 @@ public:
                     int const numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
-                        LOG_WARNING("DeHackEd Neg. One 2 #%i out of range, ignoring") << lumpNum;
+                        LOG_WARNING("DeHackEd Neg. One 2 #%i out of range") << lumpNum;
                     }
                     else
                     {
@@ -1279,7 +1279,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1307,7 +1307,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1331,7 +1331,7 @@ public:
                 {
                     if(!ignore)
                     {
-                        LOG_WARNING("DeHackEd Unknown frame '%s', ignoring") << dehStateName;
+                        LOG_WARNING("DeHackEd Frame '%s' unknown") << dehStateName;
                     }
                 }
                 else
@@ -1340,7 +1340,7 @@ public:
                     {
                         if(value < 0 || value > ded->states.size())
                         {
-                            LOG_WARNING("DeHackEd Frame #%i out of range, ignoring") << value;
+                            LOG_WARNING("DeHackEd Frame #%i out of range") << value;
                         }
                         else
                         {
@@ -1361,7 +1361,7 @@ public:
                 {
                     if(value < 0 || value >= 6)
                     {
-                        LOG_WARNING("DeHackEd Unknown ammotype %i, ignoring") << value;
+                        LOG_WARNING("DeHackEd Ammo Type %i unknown") << value;
                     }
                     else
                     {
@@ -1376,7 +1376,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1399,7 +1399,7 @@ public:
                 {
                     if(actionIdx < 0 || actionIdx >= NUMSTATES)
                     {
-                        LOG_WARNING("DeHackEd Codep frame #%i out of range, ignoring") << actionIdx;
+                        LOG_WARNING("DeHackEd Codep frame #%i out of range") << actionIdx;
                     }
                     else
                     {
@@ -1412,7 +1412,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i, ignoring")
+                LOG_WARNING("Unknown symbol \"%s\" encountered on line #%i")
                         << var << currentLineNumber;
             }
         }
@@ -1434,7 +1434,7 @@ public:
             }
             else
             {
-                LOG_WARNING("Unknown Misc value \"%s\", ignoring") << var;
+                LOG_WARNING("Misc-value \"%s\" unknown") << var;
             }
         }
     }
@@ -1501,14 +1501,14 @@ public:
                     }
                     else
                     {
-                        LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i), ignoring")
+                        LOG_WARNING("Failed locating MapInfo for \"%s\" (episode:%i, map:%i)")
                                 << uri << episode << map;
                     }
                 }
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1550,7 +1550,7 @@ public:
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1580,7 +1580,7 @@ public:
             }
             catch(SyntaxError const &er)
             {
-                LOG_WARNING("%s, ignoring") << er.asText();
+                LOG_WARNING("%s") << er.asText();
             }
         }
 
@@ -1607,7 +1607,7 @@ public:
                 int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->states.size())
                 {
-                    LOG_WARNING("DeHackEd Frame #%d out of range, ignoring\n(Create more State defs!)")
+                    LOG_WARNING("DeHackEd Frame #%d out of range\n(Create more State defs!)")
                             << stateNum;
                 }
                 else
@@ -1638,7 +1638,7 @@ public:
                         }
                         else
                         {
-                            LOG_WARNING("DeHackEd Unknown action '%s', ignoring")
+                            LOG_WARNING("DeHackEd Action '%s' unknown")
                                     << action.mid(2);
                         }
                     }
@@ -1799,7 +1799,7 @@ public:
 #if 0
         if(spriteIdx >= ded->count.sprites.num)
         {
-            LOG_WARNING("Sprite name #%i out of range, ignoring.") << spriteIdx;
+            LOG_WARNING("Sprite name #%i out of range.") << spriteIdx;
             return false;
         }
 
