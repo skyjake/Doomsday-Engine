@@ -1898,8 +1898,7 @@ static void writeWallSection(HEdge &hedge, int section,
 
     MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
 
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    Vector2f const materialScale = surface.materialScale();
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -2120,8 +2119,7 @@ static void writeSubspacePlane(Plane &plane)
     }
     materialOrigin.y = -materialOrigin.y;
 
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    Vector2f const materialScale = surface.materialScale();
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d topLeft(poly.aaBox().minX,

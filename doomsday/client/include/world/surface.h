@@ -30,7 +30,9 @@
 #include "MapElement"
 #include "Material"
 
+#ifdef __CLIENT__
 class Decoration;
+#endif
 
 /**
  * Models a "boundless" but otherwise geometric map surface. Boundless in the
@@ -80,49 +82,90 @@ public:
      */
     de::Matrix3f const &tangentMatrix() const;
 
-    /**
-     * Returns a copy of the normalized tangent vector for the surface.
-     */
-    inline de::Vector3f tangent() const   { return tangentMatrix().column(0); }
-
-    /**
-     * Returns a copy of the normalized bitangent vector for the surface.
-     */
+    inline de::Vector3f tangent()   const { return tangentMatrix().column(0); }
     inline de::Vector3f bitangent() const { return tangentMatrix().column(1); }
+    inline de::Vector3f normal()    const { return tangentMatrix().column(2); }
 
     /**
-     * Returns a copy of the normalized normal vector for the surface.
-     */
-    inline de::Vector3f normal() const    { return tangentMatrix().column(2); }
-
-    /**
-     * Change the tangent space normal vector for the surface. If changed,
-     * the tangent vectors will be recalculated next time they are needed.
-     * The NormalChange audience is notified whenever the normal changes.
+     * Change the tangent space normal vector for the surface. If changed, the
+     * tangent vectors will be recalculated next time they are needed. The
+     * NormalChange audience is notified whenever the normal changes.
      *
      * @param newNormal  New normal vector (will be normalized if needed).
      */
     Surface &setNormal(de::Vector3f const &newNormal);
 
     /**
-     * Returns a copy of the current @ref surfaceFlags of the surface.
-     */
-    int flags() const;
-
-    /**
-     * Change the @ref surfaceFlags of the surface.
+     * Returns the opacity of the surface. The OpacityChange audience is notified
+     * whenever the opacity changes.
      *
-     * @param flagsToChange  Flags to change the value of.
-     * @param operation      Logical operation to perform on the flags.
+     * @see setOpacity()
      */
-    Surface &setFlags(int flagsToChange, de::FlagOp operation = de::SetFlags);
+    float opacity() const;
+    Surface &setOpacity(float newOpacity);
 
     /**
-     * Returns @c true iff the surface is flagged @a flagsToTest.
+     * Returns the tint color of the surface. The TintColorChange audience is
+     * notified whenever the tint color changes.
+     *
+     * @see setTintColor()
      */
-    inline bool isFlagged(int flagsToTest) const {
-        return (flags() & flagsToTest) != 0;
-    }
+    de::Vector3f const &tintColor() const;
+    Surface &setTintColor(de::Vector3f const &newTintColor);
+
+    /**
+     * Returns the blendmode for the surface.
+     */
+    blendmode_t blendMode() const;
+    Surface &setBlendMode(blendmode_t newBlendMode);
+
+#ifdef __CLIENT__
+    /**
+     * Determine the glow properties of the surface, which, are derived from the
+     * bound material (averaged color).
+     *
+     * @param color  Amplified glow color is written here.
+     *
+     * @return  Glow strength/intensity or @c 0 if not presently glowing.
+     */
+    float glow(de::Vector3f &color) const;
+
+public: // Decorations ------------------------------------------------------------
+
+    /**
+     * Clear all surface decorations.
+     */
+    void clearDecorations();
+
+    /**
+     * Returns the total number of surface decorations.
+     */
+    int decorationCount() const;
+
+    /**
+     * Add the specified decoration to the surface.
+     *
+     * @param decoration  Decoration to add. Ownership is given to the surface.
+     */
+    void addDecoration(Decoration *decoration);
+
+    /**
+     * Iterate through all the surface decorations.
+     */
+    de::LoopResult forAllDecorations(std::function<de::LoopResult (Decoration &)> func) const;
+
+    /**
+     * Mark the surface as needing a decoration update.
+     */
+    void markForDecorationUpdate(bool yes = true);
+
+    /**
+     * Returns @c true if the surface is marked for decoration update.
+     */
+    bool needsDecorationUpdate() const;
+#endif // __CLIENT__
+
+public: // Material ---------------------------------------------------------------
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -130,12 +173,11 @@ public:
     bool hasMaterial() const;
 
     /**
-     * Returns @c true iff a @em fix material is bound to the surface, which
-     * was chosen automatically where one was missing. Clients should not be
-     * notified when a fix material is bound to the surface (as they should
-     * perform their fixing, locally). However, if the fix material is later
-     * replaced with a "normally-bound" material, clients should be notified
-     * as per usual.
+     * Returns @c true iff a @em fix material is bound to the surface, which was
+     * chosen automatically where one was missing. Clients should not be notified
+     * when a fix material is bound to the surface (as they should perform their
+     * fixing, locally). However, if the fix material is later replaced with a
+     * "normally-bound" material, clients should be notified as per usual.
      */
     bool hasFixMaterial() const;
 
@@ -167,35 +209,38 @@ public:
      * @see hasMaterial(), hasFixMaterial()
      */
     Material &material() const;
+    Material *materialPtr() const;
 
     /**
-     * Returns a pointer to the attributed material of the surface; otherwise @c nullptr.
-     *
-     * @see hasMaterial(), hasFixMaterial()
-     */
-    inline Material *materialPtr() const { return hasMaterial()? &material() : nullptr; }
-
-    /**
-     * Change the attributed material of the surface. On client side, any existing
+     * Change the material attributed to the surface. On client side, any existing
      * decorations are cleared whenever the material changes and the surface is
      * marked for redecoration.
      *
-     * @param newMaterial   New material to apply. Use @c 0 to clear.
+     * @param newMaterial   New material to apply. Use @c nullptr to clear.
      * @param isMissingFix  @c true= this is a fix for a "missing" material.
      */
     Surface &setMaterial(Material *newMaterial, bool isMissingFix = false);
 
     /**
-     * Returns the material origin offset of the surface.
+     * Returns @c true if the surface material is mirrored on the X axis.
      */
-    de::Vector2f const &materialOrigin() const;
+    bool materialMirrorX() const;
 
     /**
-     * Change the material origin offset of the surface.
-     *
-     * @param newOrigin  New origin offset in map coordinate space units.
+     * Returns @c true if the surface material is mirrored on the Y axis.
      */
+    bool materialMirrorY() const;
+
+    /**
+     * Returns the material origin offset for the surface.
+     */
+    de::Vector2f const &materialOrigin() const;
     Surface &setMaterialOrigin(de::Vector2f const &newOrigin);
+
+    /**
+     * Returns the material scale factors for the surface.
+     */
+    de::Vector2f materialScale() const;
 
     /**
      * Compose a URI for the surface's material. If no material is bound then a
@@ -205,55 +250,8 @@ public:
      */
     de::Uri composeMaterialUri() const;
 
-    /**
-     * Returns the opacity of the surface. The OpacityChange audience is notified
-     * whenever the opacity changes.
-     *
-     * @see setOpacity()
-     */
-    float opacity() const;
-
-    /**
-     * Change the opacity of the surface. The OpacityChange audience is notified
-     * whenever the opacity changes.
-     *
-     * @param newOpacity  New opacity strength.
-     *
-     * @see opacity()
-     */
-    Surface &setOpacity(float newOpacity);
-
-    /**
-     * Returns the tint color of the surface. The TintColorChange audience is notified
-     * whenever the tint color changes.
-     *
-     * @see setTintColor()
-     */
-    de::Vector3f const &tintColor() const;
-
-    /**
-     * Change the tint color for the surface. The TintColorChange audience is notified
-     * whenever the tint color changes.
-     *
-     * @param newTintColor  New tint color.
-     *
-     * @see tintColor()
-     */
-    Surface &setTintColor(de::Vector3f const &newTintColor);
-
-    /**
-     * Returns the blendmode for the surface.
-     */
-    blendmode_t blendMode() const;
-
-    /**
-     * Change blendmode.
-     *
-     * @param newBlendMode  New blendmode.
-     */
-    Surface &setBlendMode(blendmode_t newBlendMode);
-
 #ifdef __CLIENT__
+public: // Material origin animation/smoothing ------------------------------------
 
     /**
      * Returns the current smoothed (interpolated) material origin for the
@@ -289,49 +287,6 @@ public:
      * Roll the surface's material origin tracking buffer.
      */
     void updateMaterialOriginTracking();
-
-    /**
-     * Determine the glow properties of the surface, which, are derived from the
-     * bound material (averaged color).
-     *
-     * Return values:
-     * @param color  Amplified glow color is written here.
-     *
-     * @return  Glow strength/intensity or @c 0 if not presently glowing.
-     */
-    float glow(de::Vector3f &color) const;
-
-    /**
-     * Clear all surface decorations.
-     */
-    void clearDecorations();
-
-    /**
-     * Returns the total number of surface decorations.
-     */
-    int decorationCount() const;
-
-    /**
-     * Add the specified decoration to the surface.
-     *
-     * @param decoration  Decoration to add. Ownership is given to the surface.
-     */
-    void addDecoration(Decoration *decoration);
-
-    /**
-     * Iterate through all the surface decorations.
-     */
-    de::LoopResult forAllDecorations(std::function<de::LoopResult (Decoration &)> func) const;
-
-    /**
-     * Mark the surface as needing a decoration update.
-     */
-    void markForDecorationUpdate(bool yes = true);
-
-    /**
-     * Returns @c true if the surface is marked for decoration update.
-     */
-    bool needsDecorationUpdate() const;
 
 #endif // __CLIENT__
 

@@ -193,17 +193,6 @@ Surface &Surface::setNormal(Vector3f const &newNormal)
     return *this;
 }
 
-int Surface::flags() const
-{
-    return d->flags;
-}
-
-Surface &Surface::setFlags(int flagsToChange, FlagOp operation)
-{
-    applyFlagOperation(d->flags, flagsToChange, operation);
-    return *this;
-}
-
 bool Surface::hasMaterial() const
 {
     return d->material != nullptr;
@@ -216,12 +205,14 @@ bool Surface::hasFixMaterial() const
 
 Material &Surface::material() const
 {
-    if(d->material)
-    {
-        return *d->material;
-    }
+    if(d->material) return *d->material;
     /// @throw MissingMaterialError Attempted with no material bound.
     throw MissingMaterialError("Surface::material", "No material is bound");
+}
+
+Material *Surface::materialPtr() const
+{
+    return hasMaterial()? &material() : nullptr;
 }
 
 Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
@@ -298,6 +289,21 @@ Surface &Surface::setMaterialOrigin(Vector2f const &newOrigin)
         d->notifyMaterialOriginChanged();
     }
     return *this;
+}
+
+bool Surface::materialMirrorX() const
+{
+    return (d->flags & DDSUF_MATERIAL_FLIPH) != 0;
+}
+
+bool Surface::materialMirrorY() const
+{
+    return (d->flags & DDSUF_MATERIAL_FLIPV) != 0;
+}
+
+Vector2f Surface::materialScale() const
+{
+    return Vector2f(materialMirrorX()? -1 : 1, materialMirrorY()? -1 : 1);
 }
 
 de::Uri Surface::composeMaterialUri() const
