@@ -141,8 +141,6 @@ public:
      * @todo Refactor away.
      */
     int validCount() const;
-
-    /// @todo Refactor away.
     void setValidCount(int newValidCount);
 
 #ifdef __CLIENT__
@@ -155,9 +153,9 @@ public:
     de::Vector2d const &worldGridOffset() const;
 
     /**
-     * Returns a pointer to the face geometry half-edge which has been chosen
-     * for use as the base for a triangle fan GL primitive. May return @c 0 if
-     * no suitable base was determined.
+     * Returns a pointer to the face geometry half-edge which has been chosen for
+     * use as the base for a triangle fan GL primitive. May return @c nullptr if no
+     * suitable base was determined.
      */
     de::HEdge *fanBase() const;
 
@@ -172,8 +170,8 @@ public:
     int fanVertexCount() const;
 
     /**
-     * Returns the frame number of the last time mobj sprite projection was
-     * performed for the subspace.
+     * Returns the frame number of the last time mobj sprite projection was performed
+     * for the subspace.
      */
     int lastSpriteProjectFrame() const;
     void setLastSpriteProjectFrame(int newFrameNumber);
@@ -221,8 +219,8 @@ public: // Luminous objects ----------------------------------------------------
     void unlinkAllLumobjs();
 
     /**
-     * Unlink the specified @a lumobj in the subspace. If the lumobj is not
-     * linked then nothing will happen.
+     * Unlink the specified @a lumobj in the subspace. If the lumobj is not linked
+     * then nothing will happen.
      *
      * @param lumobj  Lumobj to unlink.
      *
@@ -231,8 +229,8 @@ public: // Luminous objects ----------------------------------------------------
     void unlink(Lumobj &lumobj);
 
     /**
-     * Link the specified @a lumobj in the subspace. If the lumobj is already
-     * linked then nothing will happen.
+     * Link the specified @a lumobj in the subspace. If the lumobj is already linked
+     * then nothing will happen.
      *
      * @param lumobj  Lumobj to link.
      *
@@ -262,9 +260,9 @@ public: // Poly objects --------------------------------------------------------
     bool unlink(struct polyobj_s const &polyobj);
 
     /**
-     * Add the given @a polyobj to the set of those linked to the subspace.
-     * Ownership is unaffected. If the polyobj is already linked in this set
-     * then nothing will happen.
+     * Add the given @a polyobj to the set of those linked to the subspace. Ownership
+     * is unaffected. If the polyobj is already linked in this set then nothing will
+     * happen.
      */
     void link(struct polyobj_s const &polyobj);
 
@@ -281,20 +279,19 @@ public: // Shadowing-lines (fakeradio) -----------------------------------------
     void clearShadowLines();
 
     /**
-     * Add the specified line @a side to the set of fake radio shadow lines for
-     * the subspace. If the line is already present in this set then nothing
-     * will happen.
-     *
-     * @param side  Map line side to add to the set.
-     */
-    void addShadowLine(LineSide &side);
-
-    /**
      * Iterate through the set of fake radio shadow lines for the subspace.
      *
      * @param func  Callback to make for each LineSide.
      */
     de::LoopResult forAllShadowLines(std::function<de::LoopResult (LineSide &)> func) const;
+
+    /**
+     * Add the specified line @a side to the set of fake radio shadow lines for the
+     * subspace. If the line is already present in this set then nothing will happen.
+     *
+     * @param side  Map line side to add to the set.
+     */
+    void addShadowLine(LineSide &side);
 #endif // __CLIENT__
 
 private:
