@@ -67,7 +67,7 @@ CHEAT_FUNC(Music)
     if(numEpisodes > 1)
     {
         episodeId  = String::number(args[0] - '0');
-        warpNumber = args[1];
+        warpNumber = args[1] - '0';
     }
     else
     {
