@@ -359,24 +359,10 @@ public: // Lines & Line-Sides --------------------------------------------------
     }
 
     /**
-     * The callback function will be called once for each line that crosses
-     * trough the object. This means all the lines will be two-sided.
+     * The callback function will be called once for each line that crosses the object.
+     * This means all the lines will be two-sided.
      */
-    int forAllLinesTouchingMobj(struct mobj_s *mobj, int (*callback) (Line *, void *),
-                                void *context = nullptr) const;
-
-    /**
-     * @param flags  @ref lineIteratorFlags
-     */
-    int forAllLinesInPath(Vector2d const &from, Vector2d const &to, int flags,
-        int (*callback) (Line *line, void *context), void *context = nullptr) const;
-
-    /// @copydoc forAllLinesInPath()
-    inline int forAllLinesInPath(Vector2d const &from, Vector2d const &to,
-        int (*callback) (Line *line, void *context), void *context = nullptr) const
-    {
-        return forAllLinesInPath(from, to, LIF_ALL, callback, context);
-    }
+    LoopResult forAllLinesTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Line &)> func) const;
 
     // ---
 
@@ -411,8 +397,7 @@ public: // Lines & Line-Sides --------------------------------------------------
 
 public: // Map-objects ------------------------------------------------------------
 
-    int forAllMobjsTouchingLine(Line *line, int (*callback) (struct mobj_s *mobj, void *context),
-                                void *context = nullptr) const;
+    LoopResult forAllMobjsTouchingLine(Line &line, std::function<LoopResult (struct mobj_s &)> func) const;
 
     /**
      * Increment validCount before using this. 'func' is called for each mobj
@@ -422,8 +407,7 @@ public: // Map-objects ---------------------------------------------------------
      * (Lovely name; actually this is a combination of SectorMobjs and
      * a bunch of LineMobjs iterations.)
      */
-    int forAllMobjsTouchingSector(Sector *sector, int (*callback) (struct mobj_s *mobj, void *context),
-                                  void *context = nullptr) const;
+    LoopResult forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (struct mobj_s &)> func) const;
 
     /**
      * Links a mobj into both a block and a BSP leaf based on it's (x,y).
@@ -551,8 +535,7 @@ public: // Sectors -------------------------------------------------------------
      * partly inside). This is not a 3D check; the mobj may actually reside
      * above or under the sector.
      */
-    int forAllSectorsTouchingMobj(struct mobj_s *mobj, int (*callback) (Sector *sector, void *context),
-                                  void *context = nullptr) const;
+    LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Sector &)> func) const;
 
 public: // Sector clusters --------------------------------------------------------
 

@@ -2380,148 +2380,162 @@ Blockmap const &Map::subspaceBlockmap() const
     throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
-int Map::forAllLinesTouchingMobj(mobj_t *mo, int (*callback) (Line *, void *),
-    void *context) const
+LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (Line &)> func) const
 {
-    if(mo->lineRoot)
-    {
-        linknode_t *tn = d->mobjNodes.nodes;
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
 
+    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
+    {
         QVarLengthArray<Line *, 16> linkStore;
-        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-            nix = tn[nix].next)
+
+        linknode_t *tn = d->mobjNodes.nodes;
+        for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
         {
-            linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
+            linkStore.append((Line *)(tn[nix].ptr));
         }
 
         for(int i = 0; i < linkStore.count(); ++i)
         {
-            Line *line = linkStore[i];
-            if(int result = callback(line, context))
+            if(auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult (Sector &)> func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
+    {
+        QVarLengthArray<Sector *, 16> linkStore;
+
+        // Always process the mobj's own sector first.
+        Sector &ownSec = *Mobj_BspLeafAtOrigin(mob).sectorPtr();
+        ownSec.setValidCount(validCount);
+        linkStore.append(&ownSec);
+
+        // Any good lines around here?
+        if(mob.lineRoot)
+        {
+            linknode_t *tn = d->mobjNodes.nodes;
+            for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+            {
+                Line *ld = (Line *)(tn[nix].ptr);
+
+                // All these lines have sectors on both sides.
+                // First, try the front.
+                Sector &frontSec = ld->frontSector();
+                if(frontSec.validCount() != validCount)
+                {
+                    frontSec.setValidCount(validCount);
+                    linkStore.append(&frontSec);
+                }
+
+                // And then the back.
+                /// @todo Above comment suggest always twosided, which is it? -ds
+                if(ld->hasBackSector())
+                {
+                    Sector &backSec = ld->backSector();
+                    if(backSec.validCount() != validCount)
+                    {
+                        backSec.setValidCount(validCount);
+                        linkStore.append(&backSec);
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < linkStore.count(); ++i)
+        {
+            if(auto result = func(*linkStore[i]))
                 return result;
         }
     }
 
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
-int Map::forAllSectorsTouchingMobj(mobj_t *mo, int (*callback) (Sector *, void *),
-    void *context) const
+LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mobj_t &)> func) const
 {
-    QVarLengthArray<Sector *, 16> linkStore;
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
 
-    // Always process the mobj's own sector first.
-    Sector &ownSec = *Mobj_BspLeafAtOrigin(*mo).sectorPtr();
-    linkStore.append(&ownSec);
-    ownSec.setValidCount(validCount);
-
-    // Any good lines around here?
-    if(mo->lineRoot)
+    if(&line.map() == this)
     {
-        linknode_t *tn = d->mobjNodes.nodes;
+        QVarLengthArray<mobj_t *, 256> linkStore;
 
-        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-            nix = tn[nix].next)
+        // Collate mobjs touching the given line in case these relationships change.
+        linknode_t *ln   = d->lineNodes.nodes;
+        nodeindex_t root = d->lineLinks[line.indexInMap()];
+        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            Line *ld = reinterpret_cast<Line *>(tn[nix].ptr);
+            linkStore.append((mobj_t *)(ln[nix].ptr));
+        }
 
-            // All these lines have sectors on both sides.
-            // First, try the front.
-            Sector &frontSec = ld->frontSector();
-            if(frontSec.validCount() != validCount)
+        for(int i = 0; i < linkStore.count(); ++i)
+        {
+            if(auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (mobj_t &)> func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if(&sector.map() == this)
+    {
+        QVarLengthArray<mobj_t *, 256> linkStore;
+
+        // Collate mobjs that obviously are in the sector.
+        for(mobj_t *mob = sector.firstMobj(); mob; mob = mob->sNext)
+        {
+            if(mob->validCount != validCount)
             {
-                frontSec.setValidCount(validCount);
-                linkStore.append(&frontSec);
+                mob->validCount = validCount;
+                linkStore.append(mob);
             }
+        }
 
-            // And then the back.
-            /// @todo Above comment suggest always twosided, which is it? -ds
-            if(ld->hasBackSector())
+        // Collate mobjs linked to the sector's lines.
+        linknode_t const *ln = d->lineNodes.nodes;
+        for(LineSide *side : sector.sides())
+        {
+            nodeindex_t root = d->lineLinks[side->line().indexInMap()];
+            for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
             {
-                Sector &backSec = ld->backSector();
-                if(backSec.validCount() != validCount)
+                mobj_t *mob = (mobj_t *)(ln[nix].ptr);
+                if(mob->validCount != validCount)
                 {
-                    backSec.setValidCount(validCount);
-                    linkStore.append(&backSec);
+                    mob->validCount = validCount;
+                    linkStore.append(mob);
                 }
             }
         }
-    }
 
-    for(int i = 0; i < linkStore.count(); ++i)
-    {
-        Sector *sector = linkStore[i];
-        if(int result = callback(sector, context))
-            return result;
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::forAllMobjsTouchingLine(Line *line, int (*callback) (mobj_t *, void *),
-    void *context) const
-{
-    QVarLengthArray<mobj_t *, 256> linkStore;
-
-    nodeindex_t root = d->lineLinks[line->indexInMap()];
-    linknode_t *ln = d->lineNodes.nodes;
-
-    for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
-    {
-        linkStore.append(reinterpret_cast<mobj_t *>(ln[nix].ptr));
-    }
-
-    for(int i = 0; i < linkStore.count(); ++i)
-    {
-        mobj_t *mobj = linkStore[i];
-        if(int result = callback(mobj, context))
-            return result;
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::forAllMobjsTouchingSector(Sector *sector, int (*callback) (mobj_t *, void *),
-    void *context) const
-{
-    QVarLengthArray<mobj_t *, 256> linkStore;
-
-    // Collate mobjs that obviously are in the sector.
-    for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
-    {
-        if(mo->validCount != validCount)
+        // Process all collected mobjs.
+        for(int i = 0; i < linkStore.count(); ++i)
         {
-            mo->validCount = validCount;
-            linkStore.append(mo);
+            if(auto result = func(*linkStore[i]))
+                return result;
         }
     }
-
-    // Collate mobjs linked to the sector's lines.
-    linknode_t const *ln = d->lineNodes.nodes;
-    for(LineSide *side : sector->sides())
-    {
-        nodeindex_t root = d->lineLinks[side->line().indexInMap()];
-
-        for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
-        {
-            mobj_t *mo = reinterpret_cast<mobj_t *>(ln[nix].ptr);
-            if(mo->validCount != validCount)
-            {
-                mo->validCount = validCount;
-                linkStore.append(mo);
-            }
-        }
-    }
-
-    // Process all collected mobjs.
-    for(int i = 0; i < linkStore.count(); ++i)
-    {
-        mobj_t *mobj = linkStore[i];
-        if(int result = callback(mobj, context))
-            return result;
-    }
-
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
 int Map::unlink(mobj_t &mo)
@@ -2641,55 +2655,6 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, int flags, std::function<Loo
             {
                 line.setValidCount(localValidCount);
                 return func(line);
-            }
-            return LoopResult(); // continue
-        });
-    }
-
-    return result;
-}
-
-int Map::forAllLinesInPath(Vector2d const &from, Vector2d const &to, int flags,
-    int (*callback)(Line *, void *), void *context) const
-{
-    LoopResult result = LoopContinue;
-
-    // Process polyobj lines?
-    if((flags & LIF_POLYOBJ) && polyobjCount())
-    {
-        int const localValidCount = validCount;
-        result = polyobjBlockmap().forAllInPath(from, to, [&callback, &context, &localValidCount] (void *object)
-        {
-            Polyobj &pob = *(Polyobj *)object;
-            if(pob.validCount != localValidCount) // not yet processed
-            {
-                pob.validCount = localValidCount;
-                for(Line *line : pob.lines())
-                {
-                    if(line->validCount() != localValidCount) // not yet processed
-                    {
-                        line->setValidCount(localValidCount);
-
-                        if(int result = callback(line, context))
-                            return LoopResult( result );
-                    }
-                }
-            }
-            return LoopResult(); // continue
-        });
-    }
-
-    // Process sector lines?
-    if(!result && (flags & LIF_SECTOR))
-    {
-        int const localValidCount = validCount;
-        result = lineBlockmap().forAllInPath(from, to, [&callback, &context, &localValidCount] (void *object)
-        {
-            Line &line = *(Line *)object;
-            if(line.validCount() != localValidCount) // not yet processed
-            {
-                line.setValidCount(localValidCount);
-                return LoopResult( callback(&line, context) );
             }
             return LoopResult(); // continue
         });

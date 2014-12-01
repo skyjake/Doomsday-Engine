@@ -1564,31 +1564,47 @@ DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 }
 
 #undef Mobj_TouchedLinesIterator
-DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
+DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
 {
-    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_Map(*mo).forAllLinesTouchingMobj(mo, callback, context);
+    DENG2_ASSERT(mob && callback);
+    LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
+    {
+        return LoopResult( callback(&line, context) );
+    });
+    return result;
 }
 
 #undef Mobj_TouchedSectorsIterator
-DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
+DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
 {
-    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_Map(*mo).forAllSectorsTouchingMobj(mo, callback, context);
+    DENG2_ASSERT(mob && callback);
+    LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
+    {
+        return LoopResult( callback(&sector, context) );
+    });
+    return result;
 }
 
 #undef Line_TouchingMobjsIterator
 DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!line) return false; // Continue iteration.
-    return line->map().forAllMobjsTouchingLine(line, callback, context);
+    DENG2_ASSERT(line && callback);
+    LoopResult result = line->map().forAllMobjsTouchingLine(*line, [&callback, &context] (mobj_t &mob)
+    {
+        return LoopResult( callback(&mob, context) );
+    });
+    return result;
 }
 
 #undef Sector_TouchingMobjsIterator
 DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!sector) return false; // Continue iteration.
-    return sector->map().forAllMobjsTouchingSector(sector, callback, context);
+    DENG2_ASSERT(sector && callback);
+    LoopResult result = sector->map().forAllMobjsTouchingSector(*sector, [&callback, &context] (mobj_t &mob)
+    {
+        return LoopResult( callback(&mob, context) );
+    });
+    return result;
 }
 
 #undef Sector_AtPoint_FixedPrecision

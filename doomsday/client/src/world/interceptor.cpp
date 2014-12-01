@@ -24,6 +24,7 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 #include "world/blockmap.h"
+#include "world/lineblockmap.h"
 #include "world/p_object.h"
 #include "world/worldsystem.h" // validCount
 
@@ -266,28 +267,55 @@ DENG2_PIMPL_NOREF(Interceptor)
         }
     }
 
-    static int interceptPathLineWorker(Line *line, void *context)
-    {
-        static_cast<Instance *>(context)->intercept(*line);
-        return false; // Continue iteration.
-    }
-
     void runTrace()
     {
-        /// @todo Store the intercept list internally?
         clearIntercepts();
-
         int const localValidCount = ++validCount;
+
         if(flags & PTF_LINE)
         {
-            map->forAllLinesInPath(from, to, interceptPathLineWorker, this);
+            // Process polyobj lines.
+            if(map->polyobjCount())
+            {
+                map->polyobjBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
+                {
+                    Polyobj &pob = *(Polyobj *)object;
+                    if(pob.validCount != localValidCount)  // not yet processed
+                    {
+                        pob.validCount = localValidCount;
+                        for(Line *line : pob.lines())
+                        {
+                            if(line->validCount() != localValidCount)  // not yet processed
+                            {
+                                line->setValidCount(localValidCount);
+                                intercept(*line);
+                            }
+                        }
+                    }
+                    return LoopContinue;
+                });
+            }
+
+            // Process sector lines.
+            map->lineBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
+            {
+                Line &line = *(Line *)object;
+                if(line.validCount() != localValidCount)  // not yet processed
+                {
+                    line.setValidCount(localValidCount);
+                    intercept(line);
+                }
+                return LoopContinue;
+            });
         }
+
         if(flags & PTF_MOBJ)
         {
+            // Process map objects.
             map->mobjBlockmap().forAllInPath(from, to, [this, &localValidCount] (void *object)
             {
                 mobj_t &mob = *(mobj_t *)object;
-                if(mob.validCount != localValidCount) // not yet processed
+                if(mob.validCount != localValidCount)  // not yet processed
                 {
                     mob.validCount = localValidCount;
                     intercept(mob);
