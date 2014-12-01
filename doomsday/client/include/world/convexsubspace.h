@@ -21,12 +21,10 @@
 #ifndef DENG_WORLD_CONVEXSUBSPACE_H
 #define DENG_WORLD_CONVEXSUBSPACE_H
 
-#include <QSet>
+#include <functional>
 #include <de/Error>
 #include <de/Vector>
-
 #include "Mesh"
-
 #include "MapElement"
 #include "Line"
 #include "SectorCluster"
@@ -48,20 +46,11 @@ public:
     /// An invalid polygon was specified. @ingroup errors
     DENG2_ERROR(InvalidPolyError);
 
+    /// Required BspLeaf attribution is missing. @ingroup errors
+    DENG2_ERROR(MissingBspLeafError);
+
     /// Required sector cluster attribution is missing. @ingroup errors
     DENG2_ERROR(MissingClusterError);
-
-    /// Linked-element lists/sets:
-    typedef QSet<de::Mesh *>  Meshes;
-    typedef QSet<polyobj_s *> Polyobjs;
-
-#ifdef __CLIENT__
-    typedef QSet<Lumobj *>    Lumobjs;
-    typedef QSet<LineSide *>  ShadowLines;
-
-    // Final audio environment characteristics.
-    typedef uint AudioEnvironmentFactors[NUM_REVERB_DATA];
-#endif
 
 public:
     /**
@@ -72,18 +61,6 @@ public:
      * @param poly  Polygon to construct from. Ownership is unaffected.
      */
     static ConvexSubspace *newFromConvexPoly(de::Face &poly, BspLeaf *bspLeaf = 0);
-
-    /**
-     * Returns the BspLeaf to which the subspace is assigned.
-     */
-    BspLeaf &bspLeaf() const;
-
-    void setBspLeaf(BspLeaf *newBspLeaf);
-
-    /**
-     * Provides access to the attributed convex geometry (a polygon).
-     */
-    de::Face &poly() const;
 
     /**
      * Determines whether the specified @a point in the map coordinate space
@@ -98,6 +75,11 @@ public:
     bool contains(de::Vector2d const &point) const;
 
     /**
+     * Provides access to the attributed convex geometry (a polygon).
+     */
+    de::Face &poly() const;
+
+    /**
      * Assign an additional mesh geometry to the subspace. Such @em extra meshes
      * are used to represent geometry which would otherwise result in a
      * non-manifold mesh if incorporated in the primary mesh for the map.
@@ -108,44 +90,11 @@ public:
     void assignExtraMesh(de::Mesh &mesh);
 
     /**
-     * Provides access to the set of 'extra' mesh geometries for the subspace.
+     * Iterate through the 'extra' meshes of the subspace.
      *
-     * @see assignExtraMesh()
+     * @param func  Callback to make for each Mesh.
      */
-    Meshes const &extraMeshes() const;
-
-    /**
-     * Remove the given @a polyobj from the set of those linked to the subspace.
-     *
-     * @return  @c true= @a polyobj was linked and subsequently removed.
-     */
-    bool unlink(polyobj_s const &polyobj);
-
-    /**
-     * Add the given @a polyobj to the set of those linked to the subspace.
-     * Ownership is unaffected. If the polyobj is already linked in this set
-     * then nothing will happen.
-     */
-    void link(struct polyobj_s const &polyobj);
-
-    /**
-     * Provides access to the set of polyobjs linked to the subspace.
-     */
-    Polyobjs const &polyobjs() const;
-
-    /**
-     * Convenient method of returning the total number of polyobjs linked to the
-     * subspace.
-     */
-    inline int polyobjCount() { return polyobjs().count(); }
-
-    /**
-     * Returns the vector described by the offset from the map coordinate space
-     * origin to the top most, left most point of the geometry of the subspace.
-     *
-     * @see aaBox()
-     */
-    de::Vector2d const &worldGridOffset() const;
+    de::LoopResult forAllExtraMeshes(std::function<de::LoopResult (de::Mesh &)> func) const;
 
     /**
      * Returns @c true iff a SectorCluster is attributed to the subspace. The
@@ -154,22 +103,22 @@ public:
     bool hasCluster() const;
 
     /**
-     * Change the sector cluster attributed to the subspace.
-     *
-     * @param newCluster New sector cluster to attribute to the subspace.
-     *                   Ownership is unaffected. Can be @c 0 (to clear the
-     *                   attribution).
-     *
-     * @see hasCluster(), cluster()
-     */
-    void setCluster(SectorCluster *newCluster);
-
-    /**
      * Returns the SectorCluster attributed to the subspace.
      *
      * @see hasCluster()
      */
     SectorCluster &cluster() const;
+    SectorCluster *clusterPtr() const;
+
+    /**
+     * Change the sector cluster attributed to the subspace.
+     *
+     * @param newCluster New sector cluster to attribute to the subspace.
+     *                   Ownership is unaffected. Use @c nullptr to clear.
+     *
+     * @see hasCluster(), cluster()
+     */
+    void setCluster(SectorCluster *newCluster);
 
     /**
      * Convenient method returning Sector of the SectorCluster attributed to the
@@ -180,14 +129,10 @@ public:
     inline Sector &sector() const { return cluster().sector(); }
 
     /**
-     * Convenient method returning a pointer to the SectorCluster attributed to
-     * the subspace. If not attributed then @c 0 is returned.
-     *
-     * @see hasCluster(), cluster()
+     * Returns the BspLeaf to which the subspace is assigned.
      */
-    inline SectorCluster *clusterPtr() const {
-        return hasCluster()? &cluster() : 0;
-    }
+    BspLeaf &bspLeaf() const;
+    void setBspLeaf(BspLeaf *newBspLeaf);
 
     /**
      * Returns the @em validCount of the subspace. Used by some legacy iteration
@@ -202,23 +147,73 @@ public:
 
 #ifdef __CLIENT__
     /**
-     * Clear the list of fake radio shadow line sides for the subspace.
-     */
-    void clearShadowLines();
-
-    /**
-     * Add the specified line @a side to the set of fake radio shadow lines for
-     * the subspace. If the line is already present in this set then nothing
-     * will happen.
+     * Returns the vector described by the offset from the map coordinate space
+     * origin to the top most, left most point of the geometry of the subspace.
      *
-     * @param side  Map line side to add to the set.
+     * @see aaBox()
      */
-    void addShadowLine(LineSide &side);
+    de::Vector2d const &worldGridOffset() const;
 
     /**
-     * Provides access to the set of fake radio shadow lines for the subspace.
+     * Returns a pointer to the face geometry half-edge which has been chosen
+     * for use as the base for a triangle fan GL primitive. May return @c 0 if
+     * no suitable base was determined.
      */
-    ShadowLines const &shadowLines() const;
+    de::HEdge *fanBase() const;
+
+    /**
+     * Returns the number of vertices needed for a triangle fan GL primitive.
+     *
+     * @note When first called after a face geometry is assigned a new 'base'
+     * half-edge for the triangle fan primitive will be determined.
+     *
+     * @see fanBase()
+     */
+    int fanVertexCount() const;
+
+    /**
+     * Returns the frame number of the last time mobj sprite projection was
+     * performed for the subspace.
+     */
+    int lastSpriteProjectFrame() const;
+    void setLastSpriteProjectFrame(int newFrameNumber);
+
+public: // Audio Environment (reverb) ---------------------------------------------
+    /**
+     * Audio environment characteristics.
+     */
+    struct AudioEnvironmentData
+    {
+        // Final reverb factors.
+        typedef uint ReverbFactors[NUM_REVERB_DATA];
+        ReverbFactors reverb;
+
+        AudioEnvironmentData() { de::zap(reverb); }
+    };
+
+    /**
+     * Recalculate the environmental audio characteristics (reverb) of the subspace.
+     */
+    bool updateAudioEnvironment();
+
+    /**
+     * Provides access to the final environmental audio environment characteristics
+     * of the subspace, for efficient accumulation.
+     */
+    AudioEnvironmentData const &audioEnvironmentData() const;
+
+public: // Luminous objects -------------------------------------------------------
+    /**
+     * Returns the total number of Lumobjs linked to the subspace.
+     */
+    int lumobjCount() const;
+
+    /**
+     * Iterate through the Lumobjs of the subspace.
+     *
+     * @param func  Callback to make for each Lumobj.
+     */
+    de::LoopResult forAllLumobjs(std::function<de::LoopResult (Lumobj &)> func) const;
 
     /**
      * Clear all lumobj links for the subspace.
@@ -241,65 +236,75 @@ public:
      *
      * @param lumobj  Lumobj to link.
      *
-     * @see lumobjs(), unlink()
+     * @see unlink()
      */
     void link(Lumobj &lumobj);
+#endif // __CLIENT__
+
+public: // Poly objects -----------------------------------------------------------
+    /**
+     * Returns the total number of Polyobjs linked to the subspace.
+     */
+    int polyobjCount() const;
 
     /**
-     * Provides access to the set of lumobjs linked to the subspace.
+     * Iterate through the Polyobjs of the subspace.
      *
-     * @see linkLumobj(), clearLumobjs()
+     * @param func  Callback to make for each Polyobj.
      */
-    Lumobjs const &lumobjs() const;
+    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (struct polyobj_s &)> func) const;
 
     /**
-     * Returns the frame number of the last time mobj sprite projection was
-     * performed for the subspace.
-     */
-    int lastSpriteProjectFrame() const;
-
-    /**
-     * Change the frame number of the last time mobj sprite projection was
-     * performed for the subspace.
+     * Remove the given @a polyobj from the set of those linked to the subspace.
      *
-     * @param newFrame  New frame number.
+     * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    void setLastSpriteProjectFrame(int newFrame);
+    bool unlink(struct polyobj_s const &polyobj);
 
     /**
-     * Returns a pointer to the face geometry half-edge which has been chosen
-     * for use as the base for a triangle fan GL primitive. May return @c 0 if
-     * no suitable base was determined.
+     * Add the given @a polyobj to the set of those linked to the subspace.
+     * Ownership is unaffected. If the polyobj is already linked in this set
+     * then nothing will happen.
      */
-    de::HEdge *fanBase() const;
+    void link(struct polyobj_s const &polyobj);
+
+#ifdef __CLIENT__
+public: // Shadowing-lines (fakeradio) --------------------------------------------
+    /**
+     * Returns the total number of shadow line sides linked in the subspace.
+     */
+    int shadowLineCount() const;
 
     /**
-     * Returns the number of vertices needed for a triangle fan GL primitive.
+     * Clear the list of fake radio shadow line sides for the subspace.
+     */
+    void clearShadowLines();
+
+    /**
+     * Add the specified line @a side to the set of fake radio shadow lines for
+     * the subspace. If the line is already present in this set then nothing
+     * will happen.
      *
-     * @note When first called after a face geometry is assigned a new 'base'
-     * half-edge for the triangle fan primitive will be determined.
+     * @param side  Map line side to add to the set.
+     */
+    void addShadowLine(LineSide &side);
+
+    /**
+     * Iterate through the set of fake radio shadow lines for the subspace.
      *
-     * @see fanBase()
+     * @param func  Callback to make for each LineSide.
      */
-    int numFanVertices() const;
-
-    /**
-     * Recalculate the environmental audio characteristics (reverb) of the subspace.
-     */
-    bool updateReverb();
-
-    /**
-     * Provides access to the final environmental audio characteristics (reverb)
-     * of the subspace, for efficient accumulation.
-     */
-    AudioEnvironmentFactors const &reverb() const;
-
+    de::LoopResult forAllShadowLines(std::function<de::LoopResult (LineSide &)> func) const;
 #endif // __CLIENT__
 
 private:
-    ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = 0);
+    ConvexSubspace(de::Face &convexPolygon, BspLeaf *bspLeaf = nullptr);
 
     DENG2_PRIVATE(d)
 };
+
+#ifdef __CLIENT__
+typedef ConvexSubspace::AudioEnvironmentData ConvexSubspaceAudioEnvironmentData;
+#endif
 
 #endif // DENG_WORLD_CONVEXSUBSPACE_H

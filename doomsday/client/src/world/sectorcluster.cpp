@@ -734,7 +734,7 @@ DENG2_PIMPL(SectorCluster)
             if(!ddMapSetup && useBias)
             {
                 // Inform bias surfaces of changed geometry.
-                foreach(ConvexSubspace *subspace, subspaces)
+                for(ConvexSubspace *subspace : subspaces)
                 {
                     if(Shard *shard = self.findShard(*subspace, plane.indexInSector()))
                     {
@@ -748,11 +748,14 @@ DENG2_PIMPL(SectorCluster)
                         updateBiasForWallSectionsAfterGeometryMove(hedge);
                     } while((hedge = &hedge->next()) != base);
 
-                    foreach(Mesh *mesh, subspace->extraMeshes())
-                    foreach(HEdge *hedge, mesh->hedges())
+                    subspace->forAllExtraMeshes([this] (Mesh &mesh)
                     {
-                        updateBiasForWallSectionsAfterGeometryMove(hedge);
-                    }
+                        for(HEdge *hedge : mesh.hedges())
+                        {
+                            updateBiasForWallSectionsAfterGeometryMove(hedge);
+                        }
+                        return LoopContinue;
+                    });
                 }
             }
 
@@ -879,11 +882,11 @@ DENG2_PIMPL(SectorCluster)
         reverb[SRD_SPACE] = reverb[SRD_VOLUME] =
             reverb[SRD_DECAY] = reverb[SRD_DAMPING] = 0;
 
-        foreach(ConvexSubspace *subspace, reverbSubspaces)
+        for(ConvexSubspace *subspace : reverbSubspaces)
         {
-            if(subspace->updateReverb())
+            if(subspace->updateAudioEnvironment())
             {
-                ConvexSubspace::AudioEnvironmentFactors const &subReverb = subspace->reverb();
+                auto const &subReverb = subspace->audioEnvironmentData().reverb;
 
                 reverb[SRD_SPACE]   += subReverb[SRD_SPACE];
 
@@ -1209,7 +1212,7 @@ static int countIlluminationPoints(MapElement &mapElement, int group)
     case DMU_SUBSPACE: {
         ConvexSubspace &subspace = mapElement.as<ConvexSubspace>();
         DENG2_ASSERT(group >= 0 && group < subspace.sector().planeCount()); // sanity check
-        return subspace.numFanVertices(); }
+        return subspace.fanVertexCount(); }
 
     case DMU_SEGMENT:
         DENG2_ASSERT(group >= 0 && group <= LineSide::Top); // sanity check

@@ -1238,6 +1238,13 @@ bool R_ViewerLumobjIsHidden(int idx)
     return false;
 }
 
+static void markLumobjClipped(Lumobj const &lob, bool yes = true)
+{
+    int const index = lob.indexInMap();
+    DENG2_ASSERT(index >= 0 && index < lob.map().lumobjCount());
+    luminousClipped[index] = yes? 1 : 0;
+}
+
 /// Used to sort lumobjs by distance from viewpoint.
 static int lumobjSorter(void const *e1, void const *e2)
 {
@@ -1324,7 +1331,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     if(luminousClipped[lumIdx] > 1)
         return;
 
-    luminousClipped[lumIdx] = 0;
+    markLumobjClipped(*lum, false);
 
     /// @todo Determine the exact centerpoint of the light in addLuminous!
     Vector3d origin = lum->origin();
@@ -1334,57 +1341,58 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         if(!C_IsPointVisible(origin))
         {
-            luminousClipped[lumIdx] = 1; // Won't have a halo.
+            markLumobjClipped(*lum); // Won't have a halo.
         }
     }
     else
     {
-        luminousClipped[lumIdx] = 1;
+        markLumobjClipped(*lum);
 
         Vector3d const eye = Rend_EyeOrigin().xzy();
-
         if(LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
-            luminousClipped[lumIdx] = 0; // Will have a halo.
+            markLumobjClipped(*lum, false); // Will have a halo.
         }
     }
 }
 
-void R_ViewerClipLumobjBySight(Lumobj *lum, ConvexSubspace *subspace)
+void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
 {
-    if(!lum || !subspace) return;
+    if(!lob || !subspace) return;
 
     // Already clipped?
-    int lumIdx = lum->indexInMap();
-    if(luminousClipped[lumIdx])
+    if(luminousClipped[lob->indexInMap()])
         return;
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
     Vector3d const eye = Rend_EyeOrigin().xzy();
 
-    for(Polyobj *po : subspace->polyobjs())
-    for(HEdge *hedge : po->mesh().hedges())
+    subspace->forAllPolyobjs([&lob, &eye] (Polyobj &pob)
     {
-        // Is this on the back of a one-sided line?
-        if(!hedge->hasMapElement())
-            continue;
-
-        // Ignore half-edges facing the wrong way.
-        if(hedge->mapElementAs<LineSideSegment>().isFrontFacing())
+        for(HEdge *hedge : pob.mesh().hedges())
         {
-            coord_t eyeV1[2]       = { eye.x, eye.y };
-            coord_t lumOriginV1[2] = { lum->origin().x, lum->origin().y };
-            coord_t fromV1[2]      = { hedge->origin().x, hedge->origin().y };
-            coord_t toV1[2]        = { hedge->twin().origin().x, hedge->twin().origin().y };
-            if(V2d_Intercept2(lumOriginV1, eyeV1, fromV1, toV1, 0, 0, 0))
+            // Is this on the back of a one-sided line?
+            if(!hedge->hasMapElement())
+                continue;
+
+            // Ignore half-edges facing the wrong way.
+            if(hedge->mapElementAs<LineSideSegment>().isFrontFacing())
             {
-                luminousClipped[lumIdx] = 1;
-                break;
+                coord_t eyeV1[2]       = { eye.x, eye.y };
+                coord_t lumOriginV1[2] = { lob->origin().x, lob->origin().y };
+                coord_t fromV1[2]      = { hedge->origin().x, hedge->origin().y };
+                coord_t toV1[2]        = { hedge->twin().origin().x, hedge->twin().origin().y };
+                if(V2d_Intercept2(lumOriginV1, eyeV1, fromV1, toV1, 0, 0, 0))
+                {
+                    markLumobjClipped(*lob);
+                    break;
+                }
             }
         }
-    }
+        return LoopContinue;
+    });
 }
 
 D_CMD(ViewGrid)

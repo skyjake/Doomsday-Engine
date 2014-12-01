@@ -396,7 +396,7 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         switch(prop)
         {
         case DMU_LINE:
-            foreach(LineSide *side, sector.sides())
+            for(LineSide *side : sector.sides())
             {
                 if(int result = callback(&side->line(), context))
                     return result;
@@ -404,7 +404,7 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
             return false; // Continue iteration
 
         case DMU_PLANE:
-            foreach(Plane *plane, sector.planes())
+            for(Plane *plane : sector.planes())
             {
                 if(int result = callback(plane, context))
                     return result;
@@ -432,17 +432,20 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                 }
             } while((hedge = &hedge->next()) != base);
 
-            foreach(Mesh *mesh, subspace.extraMeshes())
-            foreach(HEdge *hedge, mesh->hedges())
+            LoopResult result = subspace.forAllExtraMeshes([&callback, &context] (Mesh &mesh)
             {
-                // Is this on the back of a one-sided line?
-                if(!hedge->hasMapElement())
-                    continue;
+                for(HEdge *hedge : mesh.hedges())
+                {
+                    // Is this on the back of a one-sided line?
+                    if(!hedge->hasMapElement())
+                        continue;
 
-                if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
-                    return result;
-            }
-            return false; /* Continue iteration */ }
+                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                        return LoopResult( result );
+                }
+                return LoopResult(); // continue
+            });
+            return result; }
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));

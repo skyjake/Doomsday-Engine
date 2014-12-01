@@ -2602,17 +2602,23 @@ static void writeSubspaceWallSections()
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    for(Mesh *mesh : curSubspace->extraMeshes())
-    for(HEdge *hedge : mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 
-    for(Polyobj *po : curSubspace->polyobjs())
-    for(HEdge *hedge : po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static void writeSubspacePlanes()
@@ -2649,17 +2655,23 @@ static void markSubspaceFrontFacingWalls()
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &backPlane)
@@ -2749,10 +2761,12 @@ static void occludeSubspace(bool frontFacing)
 
 static void clipSubspaceLumobjs()
 {
-    foreach(Lumobj *lum, curSubspace->lumobjs())
+    DENG2_ASSERT(curSubspace);
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobj(lum);
-    }
+        R_ViewerClipLumobj(&lob);
+        return LoopContinue;
+    });
 }
 
 /**
@@ -2763,12 +2777,14 @@ static void clipSubspaceLumobjs()
 static void clipSubspaceLumobjsBySight()
 {
     // Any work to do?
+    DENG2_ASSERT(curSubspace);
     if(!curSubspace->polyobjCount()) return;
 
-    foreach(Lumobj *lum, curSubspace->lumobjs())
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobjBySight(lum, curSubspace);
-    }
+        R_ViewerClipLumobjBySight(&lob, curSubspace);
+        return LoopContinue;
+    });
 }
 
 /// If not front facing this is no-op.
@@ -2796,17 +2812,23 @@ static void clipSubspaceFrontFacingWalls()
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
@@ -4616,17 +4638,23 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        for(Mesh *mesh : subspace->extraMeshes())
-        for(HEdge *hedge : mesh->hedges())
+        subspace->forAllExtraMeshes([] (Mesh &mesh)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : mesh.hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
 
-        for(Polyobj *polyobj : subspace->polyobjs())
-        for(HEdge *hedge : polyobj->mesh().hedges())
+        subspace->forAllPolyobjs([] (Polyobj &pob)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : pob.mesh().hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
     }
 
     int const planeCount = cluster.sector().planeCount();
@@ -4982,19 +5010,25 @@ static void drawSubspaceVertexs(ConvexSubspace &sub, drawVertexVisual_params_t &
 
     } while((hedge = &hedge->next()) != base);
 
-    for(Mesh *mesh : sub.extraMeshes())
-    for(HEdge *hedge : mesh->hedges())
+    sub.forAllExtraMeshes([&min, &max, &parms] (Mesh &mesh)
     {
-        drawVertexVisual(hedge->vertex(), min, max, parms);
-        drawVertexVisual(hedge->twin().vertex(), min, max, parms);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            drawVertexVisual(hedge->vertex(), min, max, parms);
+            drawVertexVisual(hedge->twin().vertex(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 
-    for(Polyobj *polyobj : sub.polyobjs())
-    for(Line *line : polyobj->lines())
+    sub.forAllPolyobjs([&min, &max, &parms] (Polyobj &pob)
     {
-        drawVertexVisual(line->from(), min, max, parms);
-        drawVertexVisual(line->to(), min, max, parms);
-    }
+        for(Line *line : pob.lines())
+        {
+            drawVertexVisual(line->from(), min, max, parms);
+            drawVertexVisual(line->to(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 }
 
 /**

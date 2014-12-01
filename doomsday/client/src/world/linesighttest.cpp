@@ -239,14 +239,18 @@ DENG2_PIMPL(LineSightTest)
         ConvexSubspace const &subspace = bspLeaf.subspace();
 
         // Check polyobj lines.
-        for(Polyobj *po : subspace.polyobjs())
-        for(Line *line : po->lines())
+        LoopResult blocked = subspace.forAllPolyobjs([this] (Polyobj &pob)
         {
-            if(!crossLine(line->front()))
-                return false; // Stop traversal.
-        }
+            for(Line *line : pob.lines())
+            {
+                if(!crossLine(line->front()))
+                    return LoopAbort;
+            }
+            return LoopContinue;
+        });
+        if(blocked) return false;
 
-        // Check the lines for the edges of the subspace geometry.
+        // Check lines for the edges of the subspace geometry.
         HEdge *base = subspace.poly().hedge();
         HEdge *hedge = base;
         do
@@ -258,18 +262,22 @@ DENG2_PIMPL(LineSightTest)
             }
         } while((hedge = &hedge->next()) != base);
 
-        for(Mesh *mesh : subspace.extraMeshes())
-        for(HEdge *hedge : mesh->hedges())
+        // Check lines for the extra meshes.
+        blocked = subspace.forAllExtraMeshes([this] (Mesh &mesh)
         {
-            // Is this on the back of a one-sided line?
-            if(!hedge->hasMapElement())
-                continue;
+            for(HEdge *hedge : mesh.hedges())
+            {
+                // Is this on the back of a one-sided line?
+                if(!hedge->hasMapElement())
+                    continue;
 
-            if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
-                return false;
-        }
+                if(!crossLine(hedge->mapElementAs<LineSideSegment>().lineSide()))
+                    return LoopAbort;
+            }
+            return LoopContinue;
+        });
 
-        return true; // Continue traversal.
+        return !blocked;
     }
 
     /**

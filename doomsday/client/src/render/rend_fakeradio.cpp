@@ -1308,8 +1308,7 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
-    if(shadowLines.isEmpty()) return;
+    if(!subspace.shadowLineCount()) return;
 
     SectorCluster &cluster = subspace.cluster();
     float sectorlight = cluster.lightSourceIntensity();
@@ -1326,13 +1325,13 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 
     // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.
-    foreach(LineSide *side, shadowLines)
+    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSurface] (LineSide &side)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(side->shadowVisCount() != R_FrameCount())
+        if(side.shadowVisCount() != R_FrameCount())
         {
-            side->setShadowVisCount(R_FrameCount());
+            side.setShadowVisCount(R_FrameCount());
 
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
@@ -1340,11 +1339,12 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
                 if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
-                    writeShadowSection(pln, *side, shadowDark);
+                    writeShadowSection(pln, side, shadowDark);
                 }
             }
         }
-    }
+        return LoopContinue;
+    });
 }
 
 #ifdef DENG_DEBUG
