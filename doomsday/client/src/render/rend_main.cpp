@@ -4802,25 +4802,26 @@ static void drawSoundEmitters(Map &map)
         });
     }
 
-    if(devSoundEmitters & (SOF_SECTOR|SOF_PLANE))
+    if(devSoundEmitters & (SOF_SECTOR | SOF_PLANE))
     {
-        map.forAllSectors([] (Sector &sec)
+        map.forAllSectors([] (Sector &sector)
         {
             if(devSoundEmitters & SOF_PLANE)
             {
-                for(Plane *plane : sec.planes())
+                sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawSoundEmitter(plane->soundEmitter(),
+                    drawSoundEmitter(plane.soundEmitter(),
                                      String("Sector #%1 (pln:%2)")
-                                         .arg(sec.indexInMap())
-                                         .arg(plane->indexInSector()));
-                }
+                                         .arg(plane.sector().indexInMap())
+                                         .arg(plane.indexInSector()));
+                    return LoopContinue;
+                });
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(sec.soundEmitter(),
-                                 String("Sector #%1").arg(sec.indexInMap()));
+                drawSoundEmitter(sector.soundEmitter(),
+                                 String("Sector #%1").arg(sector.indexInMap()));
             }
             return LoopContinue;
         });

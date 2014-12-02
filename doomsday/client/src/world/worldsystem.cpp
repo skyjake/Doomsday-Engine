@@ -574,10 +574,11 @@ DENG2_PIMPL(WorldSystem)
         /// @todo Refactor away:
         map->forAllSectors([] (Sector &sector)
         {
-            for(LineSide *side : sector.sides())
+            sector.forAllSides([] (LineSide &side)
             {
-                side->fixMissingMaterials();
-            }
+                side.fixMissingMaterials();
+                return LoopContinue;
+            });
             return LoopContinue;
         });
 #endif

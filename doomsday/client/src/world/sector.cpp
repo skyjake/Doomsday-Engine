@@ -20,6 +20,7 @@
 
 #include "world/sector.h"
 
+#include <QList>
 #include <QtAlgorithms>
 #include <de/vector1.h>
 #include <de/Log>
@@ -41,8 +42,12 @@ DENG2_PIMPL(Sector)
 
     ThinkerT<SoundEmitter> emitter;   ///< Head of the sound emitter chain.
 
+    typedef QList<Plane *> Planes;
     Planes planes;                    ///< All owned planes.
+
+    typedef QList<LineSide *> Sides;
     Sides sides;                      ///< All referencing line sides (not owned).
+
     mobj_t *mobjList = nullptr;       ///< All mobjs "in" the sector (not owned).
 
     float lightLevel = 0;             ///< Ambient light level.
@@ -98,12 +103,12 @@ DENG2_PIMPL(Sector)
         // point of the sector geometry is now known.
         if(haveGeometry)
         {
-            emitter->origin[VX] = (aaBox.minX + aaBox.maxX) / 2;
-            emitter->origin[VY] = (aaBox.minY + aaBox.maxY) / 2;
+            emitter->origin[0] = (aaBox.minX + aaBox.maxX) / 2;
+            emitter->origin[1] = (aaBox.minY + aaBox.maxY) / 2;
         }
         else
         {
-            emitter->origin[VX] = emitter->origin[VY] = 0;
+            emitter->origin[0] = emitter->origin[1] = 0;
         }
     }
 
@@ -138,7 +143,7 @@ DENG2_PIMPL(Sector)
     void planeHeightChanged(Plane & /*plane*/)
     {
         // Update the z-height origin of our sound emitter right away.
-        emitter->origin[VZ] = (self.floor().height() + self.ceiling().height()) / 2;
+        emitter->origin[2] = (self.floor().height() + self.ceiling().height()) / 2;
 
 #ifdef __CLIENT__
         // A plane move means we must re-apply missing material fixes.
@@ -271,21 +276,6 @@ void Sector::setValidCount(int newValidCount)
     d->validCount = newValidCount;
 }
 
-Plane &Sector::plane(int planeIndex)
-{
-    return const_cast<Plane &>(const_cast<Sector const &>(*this).plane(planeIndex));
-}
-
-Plane const &Sector::plane(int planeIndex) const
-{
-    if(planeIndex >= 0 && planeIndex < d->planes.count())
-    {
-        return *d->planes.at(planeIndex);
-    }
-    /// @throw MissingPlaneError The referenced plane does not exist.
-    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
-}
-
 bool Sector::hasSkyMaskedPlane() const
 {
     for(Plane *plane : d->planes)
@@ -296,9 +286,72 @@ bool Sector::hasSkyMaskedPlane() const
     return false;
 }
 
-Sector::Sides const &Sector::sides() const
+int Sector::planeCount() const
 {
-    return d->sides;
+    return d->planes.count();
+}
+
+Plane &Sector::plane(int planeIndex)
+{
+    if(planeIndex >= 0 && planeIndex < d->planes.count())
+    {
+        return *d->planes.at(planeIndex);
+    }
+    /// @throw MissingPlaneError The referenced plane does not exist.
+    throw MissingPlaneError("Sector::plane", QString("Missing plane %1").arg(planeIndex));
+}
+
+Plane const &Sector::plane(int planeIndex) const
+{
+    return const_cast<Sector *>(this)->plane(planeIndex);
+}
+
+Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
+{
+    Plane *plane = new Plane(*this, normal, height);
+
+    plane->setIndexInSector(d->planes.count());
+    d->planes.append(plane);
+
+    if(plane->isSectorFloor() || plane->isSectorCeiling())
+    {
+        // We want notification of height changes so that we can update sound
+        // emitter origins of dependent surfaces.
+        plane->audienceForHeightChange() += d;
+    }
+
+    // Once both floor and ceiling are known we can determine the z-height origin
+    // of our sound emitter.
+    /// @todo fixme: Assume planes are defined in order.
+    if(planeCount() == 2)
+    {
+        d->emitter->origin[2] = (floor().height() + ceiling().height()) / 2;
+    }
+
+    return plane;
+}
+
+LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func) const
+{
+    for(Plane *plane : d->planes)
+    {
+        if(auto result = func(*plane)) return result;
+    }
+    return LoopContinue;
+}
+
+int Sector::sideCount() const
+{
+    return d->sides.count();
+}
+
+LoopResult Sector::forAllSides(std::function<LoopResult (LineSide &)> func) const
+{
+    for(LineSide *side : d->sides)
+    {
+        if(auto result = func(*side)) return result;
+    }
+    return LoopContinue;
 }
 
 void Sector::buildSides()
@@ -335,36 +388,6 @@ void Sector::buildSides()
         }
         return LoopContinue;
     });
-}
-
-Plane *Sector::addPlane(Vector3f const &normal, coord_t height)
-{
-    Plane *plane = new Plane(*this, normal, height);
-
-    plane->setIndexInSector(d->planes.count());
-    d->planes.append(plane);
-
-    if(plane->isSectorFloor() || plane->isSectorCeiling())
-    {
-        // We want notification of height changes so that we can update sound
-        // emitter origins of dependent surfaces.
-        plane->audienceForHeightChange() += d;
-    }
-
-    // Once both floor and ceiling are known we can determine the z-height origin
-    // of our sound emitter.
-    /// @todo fixme: Assume planes are defined in order.
-    if(planeCount() == 2)
-    {
-        d->emitter->origin[VZ] = (floor().height() + ceiling().height()) / 2;
-    }
-
-    return plane;
-}
-
-Sector::Planes const &Sector::planes() const
-{
-    return d->planes;
 }
 
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)

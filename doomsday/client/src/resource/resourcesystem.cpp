@@ -3974,12 +3974,15 @@ void ResourceSystem::cacheForCurrentMap()
         {
             // Skip sectors with no line sides as their planes will never be drawn.
             if(sector.sideCount())
-            for(Plane *plane : sector.planes())
             {
-                if(plane->surface().hasMaterial())
+                sector.forAllPlanes([this, &spec] (Plane &plane)
                 {
-                    cache(plane->surface().material(), spec);
-                }
+                    if(plane.surface().hasMaterial())
+                    {
+                        cache(plane.surface().material(), spec);
+                    }
+                    return LoopContinue;
+                });
             }
             return LoopContinue;
         });

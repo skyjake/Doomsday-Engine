@@ -1045,12 +1045,12 @@ DENG2_PIMPL(Map)
      */
     Polyobj *polyobjBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Polyobj *polyobj, polyobjs)
+        for(Polyobj *polyobj : polyobjs)
         {
             if(&soundEmitter == &polyobj->soundEmitter())
                 return polyobj;
         }
-        return 0;
+        return nullptr; // Not found.
     }
 
     /**
@@ -1062,12 +1062,12 @@ DENG2_PIMPL(Map)
      */
     Sector *sectorBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Sector *sector, sectors)
+        for(Sector *sector : sectors)
         {
             if(&soundEmitter == &sector->soundEmitter())
                 return sector;
         }
-        return 0; // Not found.
+        return nullptr; // Not found.
     }
 
     /**
@@ -1079,15 +1079,21 @@ DENG2_PIMPL(Map)
      */
     Plane *planeBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Sector *sector, sectors)
-        foreach(Plane *plane, sector->planes())
+        Plane *found = nullptr;  // Not found.
+        for(Sector *sector : sectors)
         {
-            if(&soundEmitter == &plane->soundEmitter())
+            LoopResult located = sector->forAllPlanes([&soundEmitter, &found] (Plane &plane)
             {
-                return plane;
-            }
+                if(&soundEmitter == &plane.soundEmitter())
+                {
+                    found = &plane;
+                    return LoopAbort;
+                }
+                return LoopContinue;
+            });
+            if(located) break;
         }
-        return 0; // Not found.
+        return found;
     }
 
     /**
@@ -1100,7 +1106,7 @@ DENG2_PIMPL(Map)
     Surface *surfaceBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         // Perhaps a wall surface?
-        foreach(Line *line, lines)
+        for(Line *line : lines)
         for(int i = 0; i < 2; ++i)
         {
             LineSide &side = line->side(i);
@@ -1120,7 +1126,7 @@ DENG2_PIMPL(Map)
             }
         }
 
-        return 0; // Not found.
+        return nullptr; // Not found.
     }
 
 #ifdef __CLIENT__
@@ -1141,7 +1147,7 @@ DENG2_PIMPL(Map)
         if(resetNextViewer)
         {
             // Reset the plane height trackers.
-            foreach(Plane *plane, trackedPlanes)
+            for(Plane *plane : trackedPlanes)
             {
                 plane->resetSmoothedHeight();
             }
@@ -1176,7 +1182,7 @@ DENG2_PIMPL(Map)
         if(resetNextViewer)
         {
             // Reset the surface material origin trackers.
-            foreach(Surface *surface, scrollingSurfaces)
+            for(Surface *surface : scrollingSurfaces)
             {
                 surface->resetSmoothedMaterialOrigin();
             }
@@ -1906,7 +1912,7 @@ void Map::buildMaterialLists()
 {
     d->surfaceDecorator().reset();
 
-    foreach(Line *line, d->lines)
+    for(Line *line : d->lines)
     for(int i = 0; i < 2; ++i)
     {
         LineSide &side = line->side(i);
@@ -1917,15 +1923,16 @@ void Map::buildMaterialLists()
         linkInMaterialLists(&side.bottom());
     }
 
-    foreach(Sector *sector, d->sectors)
+    for(Sector *sector : d->sectors)
     {
         // Skip sectors with no lines as their planes will never be drawn.
         if(!sector->sideCount()) continue;
 
-        foreach(Plane *plane, sector->planes())
+        sector->forAllPlanes([this] (Plane &plane)
         {
-            linkInMaterialLists(&plane->surface());
-        }
+            linkInMaterialLists(&plane.surface());
+            return LoopContinue;
+        });
     }
 }
 
@@ -2514,9 +2521,9 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
 
         // Collate mobjs linked to the sector's lines.
         linknode_t const *ln = d->lineNodes.nodes;
-        for(LineSide *side : sector.sides())
+        sector.forAllSides([this, &linkStore, &ln] (LineSide &side)
         {
-            nodeindex_t root = d->lineLinks[side->line().indexInMap()];
+            nodeindex_t root = d->lineLinks[side.line().indexInMap()];
             for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
             {
                 mobj_t *mob = (mobj_t *)(ln[nix].ptr);
@@ -2526,7 +2533,8 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
                     linkStore.append(mob);
                 }
             }
-        }
+            return LoopContinue;
+        });
 
         // Process all collected mobjs.
         for(int i = 0; i < linkStore.count(); ++i)
@@ -2759,7 +2767,7 @@ void Map::initSkyFix()
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     /// @todo Can't we defer this?
-    foreach(Sector *sector, d->sectors)
+    for(Sector *sector : d->sectors)
     {
         if(!sector->sideCount()) continue;
 
@@ -2802,19 +2810,20 @@ void Map::initSkyFix()
 
         // Update for middle materials on lines which intersect the
         // floor and/or ceiling on the front (i.e., sector) side.
-        foreach(LineSide *side, sector->sides())
+        sector->forAllSides([this, &skyCeil, &skyFloor] (LineSide &side)
         {
-            if(!side->hasSections()) continue;
-            if(!side->middle().hasMaterial()) continue;
+            if(!side.hasSections()) return LoopContinue;
+            if(!side.middle().hasMaterial()) return LoopContinue;
 
             // There must be a sector on both sides.
-            if(!side->hasSector() || !side->back().hasSector()) continue;
+            if(!side.hasSector() || !side.back().hasSector())
+                return LoopContinue;
 
             // Possibility of degenerate BSP leaf.
-            if(!side->leftHEdge()) continue;
+            if(!side.leftHEdge()) return LoopContinue;
 
-            WallEdge edge(WallSpec::fromMapSide(*side, LineSide::Middle),
-                          *side->leftHEdge(), Line::From);
+            WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                          *side.leftHEdge(), Line::From);
 
             if(edge.isValid() && edge.top().z() > edge.bottom().z())
             {
@@ -2830,7 +2839,8 @@ void Map::initSkyFix()
                     d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
                 }
             }
-        }
+            return LoopContinue;
+        });
     }
 
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -3090,9 +3100,12 @@ void Map::update()
 
     // Update all surfaces.
     for(Sector *sector : d->sectors)
-    for(Plane *plane : sector->planes())
     {
-        plane->surface().markForDecorationUpdate();
+        sector->forAllPlanes([] (Plane &plane)
+        {
+            plane.surface().markForDecorationUpdate();
+            return LoopContinue;
+        });
     }
 
     for(Line *line : d->lines)
@@ -3206,10 +3219,14 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
                 d->generateLumobjs(side.bottom());
                 d->generateLumobjs(side.top());
             }
+
             for(Sector *sector : d->sectors)
-            for(Plane *plane : sector->planes())
             {
-                d->generateLumobjs(plane->surface());
+                sector->forAllPlanes([this] (Plane &plane)
+                {
+                    d->generateLumobjs(plane.surface());
+                    return LoopContinue;
+                });
             }
         }
 
@@ -3924,9 +3941,12 @@ bool Map::endEditing()
 
     // Finish planes.
     for(Sector *sector : d->sectors)
-    for(Plane *plane : sector->planes())
     {
-        plane->updateSoundEmitterOrigin();
+        sector->forAllPlanes([] (Plane &plane)
+        {
+            plane.updateSoundEmitterOrigin();
+            return LoopContinue;
+        });
     }
 
     // We can now initialize the convex subspace blockmap.

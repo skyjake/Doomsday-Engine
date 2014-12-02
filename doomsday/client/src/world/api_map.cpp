@@ -396,20 +396,16 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         switch(prop)
         {
         case DMU_LINE:
-            for(LineSide *side : sector.sides())
+            return sector.forAllSides([&callback, &context] (LineSide &side)
             {
-                if(int result = callback(&side->line(), context))
-                    return result;
-            }
-            return false; // Continue iteration
+                return callback(&side.line(), context);
+            });
 
         case DMU_PLANE:
-            for(Plane *plane : sector.planes())
+            return sector.forAllPlanes([&callback, &context] (Plane &plane)
             {
-                if(int result = callback(plane, context))
-                    return result;
-            }
-            return false; // Continue iteration
+                return callback(&plane, context);
+            });
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
