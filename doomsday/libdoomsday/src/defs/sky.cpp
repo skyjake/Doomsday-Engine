@@ -95,7 +95,7 @@ Record &Sky::addModel()
     model->addNumber("yawSpeed", 0);
     model->addArray ("originOffset", new ArrayValue(Vector3f()));
     model->addArray ("rotate", new ArrayValue(Vector2f()));
-    model->addText  ("exectute", "");
+    model->addText  ("execute", "");
     model->addArray ("color", new ArrayValue(Vector4f(1, 1, 1, 1)));
 
     def()["model"].value<ArrayValue>()
