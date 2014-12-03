@@ -2068,16 +2068,10 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
 
-        // Calculate visual radius for shadows.
-        /// @todo fixme: use a separate property.
-        /*if(def.shadowRadius)
-        {
-            modef->visualRadius = def.shadowRadius;
-        }
-        else*/
-        {
-            modef->visualRadius = calcModelVisualRadius(modef);
-        }
+        modef->visualRadius = calcModelVisualRadius(modef); // based on geometry bounds
+
+        // Shadow radius can be specified manually.
+        modef->shadowRadius = def.getf("shadowRadius");
     }
 
     static int destroyModelInRepository(StringPool::Id id, void *context)

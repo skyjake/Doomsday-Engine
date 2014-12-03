@@ -115,55 +115,42 @@ struct ModelDef
     char id[MODELDEF_ID_MAXLEN + 1];
 
     /// Pointer to the states list.
-    state_t *state;
+    state_t *state      = nullptr;
 
-    int flags;
-    uint group;
-    int select;
-    short skinTics;
+    int flags           = 0;
+    uint group          = 0;
+    int select          = 0;
+    short skinTics      = 0;
 
     /// [0,1) When is this frame in effect?
-    float interMark;
-    float interRange[2];
+    float interMark     = 0;
+    float interRange[2] { 0.f, 0.f };
     de::Vector3f offset;
-    float resize;
+    float resize        = 0;
     de::Vector3f scale;
 
     typedef std::vector<de::Vector3f> PtcOffsets;
     PtcOffsets _ptcOffset;
 
-    float visualRadius;
+    float visualRadius  = 0;
+    float shadowRadius  = 0; // if zero, visual radius used instead
 
     defn::Model def;
 
     /// Points to next inter-frame, or NULL.
-    ModelDef *interNext;
+    ModelDef *interNext = nullptr;
 
     /// Points to next selector, or NULL (only for "base" modeldefs).
-    ModelDef *selectNext;
+    ModelDef *selectNext = nullptr;
 
     /// Submodels.
     typedef std::vector<SubmodelDef> Subs;
     Subs _sub;
 
     ModelDef(char const *modelDefId = "")
-        : state(0),
-          flags(0),
-          group(0),
-          select(0),
-          skinTics(0),
-          interMark(0),
-          resize(0),
-          visualRadius(0),
-          interNext(0),
-          selectNext(0)
     {
         de::zap(id);
         strncpy(id, modelDefId, MODELDEF_ID_MAXLEN);
-
-        de::zap(interRange);
-        de::zap(offset);
-        de::zap(scale);
     }
 
     SubmodelDef *addSub()

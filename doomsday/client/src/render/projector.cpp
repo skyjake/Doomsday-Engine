@@ -426,7 +426,7 @@ static void projectMobjShadow(mobj_t &mobj, project_params_t &parm)
         return;
 
     // Calculate the radius of the shadow.
-    float shadowRadius = Mobj_VisualRadius(mobj);
+    float shadowRadius = Mobj_ShadowRadius(mobj);
     if(shadowRadius <= 0)
         return;
 

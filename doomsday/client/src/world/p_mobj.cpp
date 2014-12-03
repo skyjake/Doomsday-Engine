@@ -811,6 +811,24 @@ coord_t Mobj_Radius(mobj_t const &mobj)
     return mobj.radius;
 }
 
+#ifdef __CLIENT__
+coord_t Mobj_ShadowRadius(mobj_t const &mobj)
+{
+    if(useModels)
+    {
+        if(ModelDef *modef = Mobj_ModelDef(mobj))
+        {
+            if(modef->shadowRadius > 0)
+            {
+                return modef->shadowRadius;
+            }
+        }
+    }
+    // Fall back to the visual radius.
+    return Mobj_VisualRadius(mobj);
+}
+#endif
+
 coord_t Mobj_VisualRadius(mobj_t const &mobj)
 {
 #ifdef __CLIENT__
