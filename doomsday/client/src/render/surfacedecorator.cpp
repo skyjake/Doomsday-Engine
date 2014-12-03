@@ -166,7 +166,7 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
 
     /// Observes MaterialAnimation DecorationStageChange
     void materialAnimationDecorationStageChanged(MaterialAnimation & /*anim*/,
-        Material::Decoration &decor)
+        MaterialDecoration &decor)
     {
         markSurfacesForRedecoration(decor.material());
     }
@@ -233,7 +233,7 @@ static inline Sector *containingSector(Surface &surface)
 {
     if(surface.parent().type() == DMU_PLANE)
         return &surface.parent().as<Plane>().sector();
-    return 0;
+    return nullptr;
 }
 
 void SurfaceDecorator::decorate(Surface &surface)
@@ -265,7 +265,7 @@ void SurfaceDecorator::redecorate()
     MaterialSurfaceMap::iterator i = d->decorated.begin();
     while(i != d->decorated.end())
     {
-        MaterialSnapshot const *materialSnapshot = 0;
+        MaterialSnapshot const *materialSnapshot = nullptr;
 
         SurfaceSet const &surfaceSet = i.value();
         for(Surface *surface : surfaceSet)
