@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "render/skydrawable.h"
 
 #include <cmath>
@@ -105,7 +104,7 @@ struct Hemisphere
         DENG2_ASSERT(layer);
         if(renderTextures == 0)
         {
-            return 0;
+            return nullptr;
         }
         if(renderTextures == 2)
         {
@@ -122,7 +121,7 @@ struct Hemisphere
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
     static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const *layer,
-                                   bool *needFadeOut = 0)
+                                   bool *needFadeOut = nullptr)
     {
         DENG2_ASSERT(layer);
 
@@ -220,7 +219,7 @@ struct Hemisphere
 
             if(!ldata.active) continue;
 
-            TextureVariant *layerTex = 0;
+            TextureVariant *layerTex = nullptr;
             if(Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
                 MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
@@ -468,7 +467,12 @@ DENG2_PIMPL(SkyDrawable)
 
             // If the associated layer is not active then the model won't be drawn.
             Record const &skyModelDef = defn::Sky(*sky->def()).model(i);
-            if(!layers[skyModelDef.geti("layer")].active) continue;
+            int const layerNum        = skyModelDef.geti("layer");
+            if(layerNum > 0 && layerNum <= MAX_LAYERS)
+            {
+                if(!layers[layerNum - 1].active)
+                    continue;
+            }
 
             Animator::ModelState const &mstate = animator->model(i);
 
@@ -655,7 +659,7 @@ ModelDef *SkyDrawable::modelDef(int modelIndex) const
     {
         return d->models[modelIndex].modef;
     }
-    return 0;
+    return nullptr;
 }
 
 void SkyDrawable::draw(Animator const *animator) const
@@ -704,12 +708,12 @@ void SkyDrawable::consoleRegister() // static
 
 DENG2_PIMPL_NOREF(SkyDrawable::Animator)
 {
-    SkyDrawable *sky;
+    SkyDrawable *sky = nullptr;
 
     LayerState layers[MAX_LAYERS];
     ModelState models[MAX_MODELS];
 
-    Instance(SkyDrawable *sky = 0) : sky(sky)
+    Instance()
     {
         de::zap(layers);
         de::zap(models);
@@ -719,8 +723,10 @@ DENG2_PIMPL_NOREF(SkyDrawable::Animator)
 SkyDrawable::Animator::Animator() : d(new Instance)
 {}
 
-SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance(&sky))
-{}
+SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance)
+{
+    d->sky = &sky;
+}
 
 SkyDrawable::Animator::~Animator()
 {}
@@ -754,7 +760,7 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 
 SkyDrawable &SkyDrawable::Animator::sky() const
 {
-    DENG2_ASSERT(d->sky != 0);
+    DENG2_ASSERT(d->sky);
     return *d->sky;
 }
 
@@ -765,17 +771,14 @@ bool SkyDrawable::Animator::hasLayer(int index) const
 
 SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index)
 {
-    if(hasLayer(index))
-    {
-        return d->layers[index];
-    }
+    if(hasLayer(index)) return d->layers[index];
     /// @throw MissingLayerStateError An invalid layer state index was specified.
     throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::number(index) + ".");
 }
 
 SkyDrawable::Animator::LayerState const &SkyDrawable::Animator::layer(int index) const
 {
-    return const_cast<LayerState const &>(const_cast<SkyDrawable::Animator *>(this)->layer(index));
+    return const_cast<SkyDrawable::Animator *>(this)->layer(index);
 }
 
 bool SkyDrawable::Animator::hasModel(int index) const
@@ -785,17 +788,14 @@ bool SkyDrawable::Animator::hasModel(int index) const
 
 SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index)
 {
-    if(hasModel(index))
-    {
-        return d->models[index];
-    }
+    if(hasModel(index)) return d->models[index];
     /// @throw MissingModelStateError An invalid model state index was specified.
     throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::number(index) + ".");
 }
 
 SkyDrawable::Animator::ModelState const &SkyDrawable::Animator::model(int index) const
 {
-    return const_cast<ModelState const &>(const_cast<SkyDrawable::Animator *>(this)->model(index));
+    return const_cast<SkyDrawable::Animator *>(this)->model(index);
 }
 
 void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
