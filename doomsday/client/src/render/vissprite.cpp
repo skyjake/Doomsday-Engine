@@ -117,7 +117,9 @@ void VisSprite_SetupModel(vissprite_t *spr,
 
 void R_SortVisSprites()
 {
-    int count = visSpriteP - visSprites;
+    if(!visSpriteP) return;
+
+    int const count = visSpriteP - visSprites;
     if(!count) return;
 
     vissprite_t unsorted;

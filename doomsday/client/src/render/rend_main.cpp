@@ -3585,7 +3585,7 @@ static void drawMasked()
 
     R_SortVisSprites();
 
-    if(visSpriteP > visSprites)
+    if(visSpriteP && visSpriteP > visSprites)
     {
         bool primaryHaloDrawn = false;
 
