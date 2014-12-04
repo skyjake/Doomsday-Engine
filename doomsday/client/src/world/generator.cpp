@@ -1135,6 +1135,7 @@ void Generator_Delete(Generator *gen)
     gen->map().unlink(*gen);
     gen->map().thinkers().remove(gen->thinker);
     gen->clearParticles();
+    Z_Free(gen->stages); gen->stages = nullptr;
     // The generator itself is free'd when it's next turn for thinking comes.
 }
 
