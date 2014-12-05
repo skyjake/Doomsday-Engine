@@ -259,7 +259,7 @@ static void drawBackground()
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -317,7 +317,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
     DGL_Color4f(1, 1, 1, 1);
 
     common::GameSession::VisitedMaps const visited = visitedMaps();
-    foreach(de::Uri const &visitedMap, visited)
+    for(de::Uri const &visitedMap : visited)
     {
         if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
         {
@@ -326,8 +326,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
                 continue;
             }
 
-            Point2Raw origin(loc->origin.x, loc->origin.y);
-            GL_DrawPatch(pBeenThere, &origin);
+            GL_DrawPatch(pBeenThere, loc->origin);
         }
     }
 
@@ -335,8 +334,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
     {
         if(Location const *loc = tryFindLocationForMap(locations, wbs->nextMap))
         {
-            Point2Raw origin(loc->origin.x, loc->origin.y);
-            GL_DrawPatch(pGoingThere, &origin);
+            GL_DrawPatch(pGoingThere, loc->origin);
         }
     }
 
@@ -480,8 +478,8 @@ static void drawDeathmatchStats()
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                GL_DrawPatchXY(pFaceAlive[i], 40, ypos);
-                GL_DrawPatchXY(pFaceDead[i], xpos, 18);
+                GL_DrawPatch(pFaceAlive[i], Vector2i(40, ypos));
+                GL_DrawPatch(pFaceDead[i],  Vector2i(xpos, 18));
             }
 
             FR_SetFont(FID(GF_FONTB));
@@ -586,10 +584,10 @@ static void drawNetgameStats()
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            GL_DrawPatchXY(pFaceAlive[i], 27, ypos+2);
+            GL_DrawPatch(pFaceAlive[i], Vector2i(27, ypos + 2));
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatchXY(pFaceAlive[i], 25, ypos);
+            GL_DrawPatch(pFaceAlive[i], Vector2i(25, ypos));
 
             if(interTime < 40)
             {

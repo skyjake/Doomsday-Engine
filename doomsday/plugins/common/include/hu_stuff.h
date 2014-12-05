@@ -144,18 +144,18 @@ enum patchreplacemode_t
  * @defgroup patchReplacementFlags  Patch Replacement Flags.
  * @{
  */
-#define PRF_NO_IWAD             0x1 ///< Allow if resource does not originate from an IWAD.
-#define PRF_NO_PWAD             0x2 ///< Allow if resource does not originate from a PWAD/external source.
+#define PRF_NO_IWAD             0x1  ///< Allow if resource does not originate from an IWAD.
+#define PRF_NO_PWAD             0x2  ///< Allow if resource does not originate from a PWAD/external source.
 /**@}*/
 
 /**
  * Given a unique patch identifier (@a id) lookup a patch replacement string
  * associated with this.
  *
- * @param patchId       Unique patch identifier.
- * @param flags         @ref patchReplacementFlags
+ * @param patchId  Unique patch identifier.
+ * @param flags    @ref patchReplacementFlags
  *
- * @return  Patch replacement string if defined/found else @c NULL.
+ * @return  Patch replacement string if defined/found else @c nullptr.
  */
 char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
 
@@ -165,9 +165,9 @@ char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags);
  *
  * @note If the patch does not originate from an IWAD it will not be replaced.
  *
- * @param replaceMode   Replacement mode.
- * @param patchId       Unique identifier of the patch to choose a replacement for.
- * @param text          A prechoosen string replacement to be used if appropriate.
+ * @param replaceMode  Replacement mode.
+ * @param patchId      Unique identifier of the patch to choose a replacement for.
+ * @param text         A prechoosen string replacement to be used if appropriate.
  */
 de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t patchId,
                                      de::String const &text = "");
@@ -175,13 +175,13 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t replaceMode, patchid_t p
 /**
  * Implements patch replacement.
  *
- * @param patchId   Unique identifier of the patch to be drawn if no replacement.
- * @param replacement   Patch replacement string. Will be drawn instead of the
- *                      patch if not @c NULL.
- * @param origin        Orient drawing about this offset (topleft:[0,0]).
- * @param alignFlags    @ref alignmentFlags
- * @param patchFlags    @ref drawPatchFlags
- * @param textFlags     @ref drawTextFlags
+ * @param patchId      Unique identifier of the patch to be drawn if no replacement.
+ * @param replacement  Patch replacement string. Will be drawn instead of the
+ *                     patch if not @c nullptr.
+ * @param origin       Orient drawing about this offset (topleft:[0,0]).
+ * @param alignFlags   @ref alignmentFlags
+ * @param patchFlags   @ref drawPatchFlags
+ * @param textFlags    @ref drawTextFlags
  */
 void WI_DrawPatch(patchid_t patchId,
                   de::String const &replacement = "",

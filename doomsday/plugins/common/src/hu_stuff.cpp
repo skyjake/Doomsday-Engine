@@ -44,6 +44,7 @@
 #include <cstring>
 #include <map>
 
+using namespace de;
 using namespace common;
 
 /**
@@ -1134,15 +1135,15 @@ de::String Hu_ChoosePatchReplacement(patchreplacemode_t mode, patchid_t patchId,
 void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vector2i const &origin,
     int alignFlags, int patchFlags, short textFlags)
 {
-    Point2Raw const originAsPoint2Raw(origin.x, origin.y);
     if(!replacement.isEmpty())
     {
         // Use the replacement string.
+        Point2Raw const originAsPoint2Raw(origin.x, origin.y);
         FR_DrawText3(replacement.toUtf8().constData(), &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
     // Use the original patch.
-    GL_DrawPatch3(patchId, &originAsPoint2Raw, alignFlags, patchFlags);
+    GL_DrawPatch(patchId, origin, alignFlags, patchFlags);
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)
@@ -1600,10 +1601,10 @@ void M_DrawShadowedPatch3(patchid_t id, int x, int y, int alignFlags, int patchF
         return;
 
     DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawPatchXY3(id, x+2, y+2, alignFlags, patchFlags);
+    GL_DrawPatch(id, Vector2i(x + 2, y + 2), alignFlags, patchFlags);
 
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatchXY3(id, x, y, alignFlags, patchFlags);
+    GL_DrawPatch(id, Vector2i(x, y), alignFlags, patchFlags);
 }
 
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, int alignFlags, int patchFlags)

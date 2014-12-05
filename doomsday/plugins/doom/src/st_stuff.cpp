@@ -1328,7 +1328,7 @@ void SBarFace_Drawer(uiwidget_t *obj, Point2Raw const *offset)
 
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY2(patchId, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, ALIGN_TOPLEFT);
+        GL_DrawPatch(patchId, Vector2i(ORIGINX + ST_FACESX, ORIGINY + ST_FACESY), ALIGN_TOPLEFT);
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1384,13 +1384,13 @@ void KeySlot_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 #define ORIGINX (-ST_WIDTH/2)
 #define ORIGINY (-ST_HEIGHT)
 
-    static Point2Raw const elements[] = {
-        Point2Raw( ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y ),
-        Point2Raw( ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y ),
-        Point2Raw( ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y )
+    static Vector2i const elements[] = {
+        { ORIGINX + ST_KEY0X, ORIGINY + ST_KEY0Y },
+        { ORIGINX + ST_KEY1X, ORIGINY + ST_KEY1Y },
+        { ORIGINX + ST_KEY2X, ORIGINY + ST_KEY2Y }
     };
     guidata_keyslot_t *kslt = (guidata_keyslot_t *)ob->typedata;
-    Point2Raw const *loc  = &elements[kslt->slot];
+    Vector2i const &loc   = elements[kslt->slot];
     hudstate_t const *hud = &hudStates[ob->player];
     int yOffset = ST_HEIGHT * (1 - hud->showBar);
     int fullscreen = headupDisplayMode(ob->player);
@@ -1410,10 +1410,10 @@ void KeySlot_Drawer(uiwidget_t *ob, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatchXY(kslt->patchId, loc->x + comboOffset, loc->y + comboOffset);
+    GL_DrawPatch(kslt->patchId, loc + Vector2i(comboOffset, comboOffset));
     if(kslt->patchId2 != 0)
     {
-        GL_DrawPatchXY(kslt->patchId2, loc->x - comboOffset, loc->y - comboOffset);
+        GL_DrawPatch(kslt->patchId2, loc - Vector2i(comboOffset, comboOffset));
     }
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -1929,11 +1929,11 @@ void Face_Drawer(uiwidget_t *obj, Point2Raw const *offset)
     {
         if(IS_NETGAME)
         {
-            GL_DrawPatchXY(bgInfo.id, 0, 0);
+            GL_DrawPatch(bgInfo.id, Vector2i(0, 0));
         }
         x += bgInfo.geometry.size.width/2;
     }
-    GL_DrawPatchXY(pFace, x, y);
+    GL_DrawPatch(pFace, Vector2i(x, y));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

@@ -107,11 +107,11 @@ SOURCES += \
     $$common_src/g_update.cpp \
     $$common_src/gamerules.cpp \
     $$common_src/gamesession.cpp \
-    $$common_src/gl_drawpatch.c \
+    $$common_src/gl_drawpatch.cpp \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.cpp \
     $$common_src/hu_chat.cpp \
-    $$common_src/hu_inventory.c \
+    $$common_src/hu_inventory.cpp \
     $$common_src/hu_lib.cpp \
     $$common_src/hu_log.cpp \
     $$common_src/hu_menu.cpp \

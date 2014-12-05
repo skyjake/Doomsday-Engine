@@ -2194,7 +2194,7 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, int focusObjectHeight, float
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, alpha);
 
-    GL_DrawPatchXY3(pCursor, 0, 0, 0, DPF_NO_OFFSET);
+    GL_DrawPatch(pCursor, Vector2i(0, 0), 0, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -2647,11 +2647,11 @@ void Hu_MenuDrawMainPage(Page const & /*page*/, Vector2i const &origin)
     WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pMainTitle),
                  Vector2i(origin.x + TITLEOFFSET_X, origin.y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #if __JHEXEN__
-    GL_DrawPatchXY(pBullWithFire[(frame + 2) % 7], origin.x - 73, origin.y + 24);
-    GL_DrawPatchXY(pBullWithFire[frame], origin.x + 168, origin.y + 24);
+    GL_DrawPatch(pBullWithFire[(frame + 2) % 7], origin + Vector2i(-73, 24));
+    GL_DrawPatch(pBullWithFire[frame],           origin + Vector2i(168, 24));
 #elif __JHERETIC__
-    GL_DrawPatchXY(pRotatingSkull[17 - frame], origin.x - 70, origin.y - 46);
-    GL_DrawPatchXY(pRotatingSkull[frame], origin.x + 122, origin.y - 46);
+    GL_DrawPatch(pRotatingSkull[17 - frame],     origin + Vector2i(-70, -46));
+    GL_DrawPatch(pRotatingSkull[frame],          origin + Vector2i(122, -46));
 #endif
 
     DGL_Disable(DGL_TEXTURE_2D);

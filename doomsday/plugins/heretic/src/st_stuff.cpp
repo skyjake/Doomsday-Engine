@@ -340,7 +340,7 @@ void SBarChain_Drawer(uiwidget_t *wi, Point2Raw const *offset)
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatchXY(pGemInfo.id, x + gemXOffset, chainY);
+    GL_DrawPatch(pGemInfo.id, Vector2i(x + gemXOffset, chainY));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -411,29 +411,21 @@ void SBarBackground_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, 1);
-        GL_DrawPatchXY(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
-        GL_DrawPatchXY(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopLeft,  Vector2i(ORIGINX      , ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopRight, Vector2i(ORIGINX + 290, ORIGINY - 10));
 
         // Faces.
-        GL_DrawPatchXY(pStatusbar, ORIGINX, ORIGINY);
+        GL_DrawPatch(pStatusbar, Vector2i(ORIGINX, ORIGINY));
 
         if(P_GetPlayerCheats(&players[wi->player]) & CF_GODMODE)
         {
-            GL_DrawPatchXY(pGodLeft, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatchXY(pGodRight, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
+            GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
         }
 
-        if(!Hu_InventoryIsOpen(wi->player))
-        {
-            if(G_Ruleset_Deathmatch())
-                GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
-            else
-                GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
-        }
-        else
-        {
-            GL_DrawPatchXY(pInvBar, ORIGINX+34, ORIGINY+2);
-        }
+        patchid_t panel = Hu_InventoryIsOpen(wi->player)? pInvBar
+                        : G_Ruleset_Deathmatch()        ? pStatBar : pLifeBar;
+        GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -444,8 +436,8 @@ void SBarBackground_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        GL_DrawPatchXY(pStatusbarTopLeft, ORIGINX, ORIGINY-10);
-        GL_DrawPatchXY(pStatusbarTopRight, ORIGINX+290, ORIGINY-10);
+        GL_DrawPatch(pStatusbarTopLeft,  Vector2i(ORIGINX      , ORIGINY - 10));
+        GL_DrawPatch(pStatusbarTopRight, Vector2i(ORIGINX + 290, ORIGINY - 10));
 
         DGL_SetPatch(pStatusbar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -462,8 +454,8 @@ void SBarBackground_Drawer(uiwidget_t *wi, Point2Raw const *offset)
             DGL_DrawCutRectf2Tiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectf2Tiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            GL_DrawPatchXY(pGodLeft, ORIGINX+16, ORIGINY+9);
-            GL_DrawPatchXY(pGodRight, ORIGINX+287, ORIGINY+9);
+            GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
+            GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
         }
         else
         {
@@ -471,17 +463,9 @@ void SBarBackground_Drawer(uiwidget_t *wi, Point2Raw const *offset)
             DGL_DrawCutRectf2Tiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX, ORIGINY, 0, 0);
         }
 
-        if(!Hu_InventoryIsOpen(wi->player))
-        {
-            if(G_Ruleset_Deathmatch())
-                GL_DrawPatchXY(pStatBar, ORIGINX+34, ORIGINY+2);
-            else
-                GL_DrawPatchXY(pLifeBar, ORIGINX+34, ORIGINY+2);
-        }
-        else
-        {
-            GL_DrawPatchXY(pInvBar, ORIGINX+34, ORIGINY+2);
-        }
+        patchid_t panel = Hu_InventoryIsOpen(wi->player)? pInvBar
+                        : G_Ruleset_Deathmatch()        ? pStatBar : pLifeBar;
+        GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -900,13 +884,13 @@ void KeySlot_Drawer(uiwidget_t *wi, Point2Raw const *offset)
 #define ORIGINX (-ST_WIDTH / 2)
 #define ORIGINY (-ST_HEIGHT)
 
-    static Point2Raw const elements[] = {
+    static Vector2i const elements[] = {
         { ORIGINX + ST_KEY0X, ORIGINY + ST_KEY0Y },
         { ORIGINX + ST_KEY1X, ORIGINY + ST_KEY1Y },
         { ORIGINX + ST_KEY2X, ORIGINY + ST_KEY2Y }
     };
     guidata_keyslot_t *kslt = (guidata_keyslot_t *)wi->typedata;
-    Point2Raw const *loc    = &elements[kslt->keytypeA];
+    Vector2i const *loc     = &elements[kslt->keytypeA];
     hudstate_t const *hud   = &hudStates[wi->player];
     int const yOffset       = ST_HEIGHT * (1 - hud->showBar);
     int const fullscreen    = headupDisplayMode(wi->player);
@@ -925,7 +909,7 @@ void KeySlot_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatch(kslt->patchId, loc);
+    GL_DrawPatch(kslt->patchId, *loc);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1097,7 +1081,7 @@ void SBarReadyAmmoIcon_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
-    GL_DrawPatchXY(icon->patchId, X, Y);
+    GL_DrawPatch(icon->patchId, Vector2i(X, Y));
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1191,7 +1175,7 @@ void SBarReadyItem_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY(item->patchId, x, y);
+        GL_DrawPatch(item->patchId, Vector2i(x, y));
 
         readyItem = P_InventoryReadyItem(wi->player);
         if(!(hud->readyItemFlashCounter > 0) && IIT_NONE != readyItem)
@@ -1319,7 +1303,7 @@ void Flight_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY(flht->patchId, 16, 14);
+        GL_DrawPatch(flht->patchId, Vector2i(16, 14));
 
         DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -1403,7 +1387,7 @@ void Tome_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, alpha);
-        GL_DrawPatchXY(tome->patchId, 13, 13);
+        GL_DrawPatch(tome->patchId, Vector2i(13, 13));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -1492,7 +1476,7 @@ void ReadyAmmoIcon_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatchXY3(icon->patchId, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(icon->patchId, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1517,7 +1501,7 @@ void ReadyAmmoIcon_UpdateGeometry(uiwidget_t *wi)
     if(!R_GetPatchInfo(icon->patchId, &info)) return;
 
     Rect_SetWidthHeight(wi->geometry, info.geometry.size.width  * cfg.hudScale,
-                                       info.geometry.size.height * cfg.hudScale);
+                                      info.geometry.size.height * cfg.hudScale);
 }
 
 void ReadyAmmo_Drawer(uiwidget_t *wi, Point2Raw const *offset)
@@ -1725,7 +1709,7 @@ void Keys_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[0], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(pKeys[0], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[0], &pInfo))
@@ -1736,7 +1720,7 @@ void Keys_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[1], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(pKeys[1], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
 
         if(R_GetPatchInfo(pKeys[1], &pInfo))
@@ -1747,7 +1731,7 @@ void Keys_Drawer(uiwidget_t *wi, Point2Raw const *offset)
     {
         DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY3(pKeys[2], x, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(pKeys[2], Vector2i(x, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 
@@ -1909,9 +1893,9 @@ void ReadyItem_Drawer(uiwidget_t *wi, Point2Raw const *offset)
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        GL_DrawPatchXY3(pInvItemBox, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+        GL_DrawPatch(pInvItemBox, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        GL_DrawPatchXY(item->patchId, xOffset, yOffset);
+        GL_DrawPatch(item->patchId, Vector2i(xOffset, yOffset));
 
         inventoryitemtype_t readyItem = P_InventoryReadyItem(wi->player);
         if(!(hud->readyItemFlashCounter > 0) && IIT_NONE != readyItem)

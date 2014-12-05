@@ -423,8 +423,8 @@ static void drawNavigation(Vector2i const origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], origin.x - 144, origin.y, ALIGN_RIGHT);
-    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin.x + 144, origin.y, ALIGN_LEFT);
+    GL_DrawPatch( pInvPageLeft[currentPage == 0 || (menuTime & 8)]           , origin - Vector2i(144, 0), ALIGN_RIGHT);
+    GL_DrawPatch(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin + Vector2i(144, 0), ALIGN_LEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
