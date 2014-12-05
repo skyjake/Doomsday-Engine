@@ -2695,7 +2695,7 @@ struct uiwidgetdef_t
         { UWG_COUNTERS,     ALIGN_LEFT,        ORDER_RIGHTTOLEFT, UWGF_VERTICAL, PADDING },
         { UWG_AUTOMAP,      ALIGN_TOPLEFT }
     };
-    int const widgetGroupDefCount = sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]);
+    int const widgetGroupDefCount = int(sizeof(widgetGroupDefs) / sizeof(widgetGroupDefs[0]));
 
     uiwidgetdef_t const widgetDefs[] = {
         { GUI_BOX,          ALIGN_TOPLEFT,    UWG_STATUSBAR,    GF_NONE,      SBarBackground_UpdateGeometry, SBarBackground_Drawer },
