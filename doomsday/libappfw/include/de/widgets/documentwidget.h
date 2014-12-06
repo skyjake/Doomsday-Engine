@@ -74,9 +74,7 @@ public:
 
     // Events.
     void viewResized();
-    void update();
     void drawContent();
-    bool handleEvent(Event const &event);
 
 protected:
     void glInit();
