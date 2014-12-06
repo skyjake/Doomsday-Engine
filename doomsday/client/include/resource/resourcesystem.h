@@ -110,7 +110,7 @@ public:
     DENG2_ERROR(UnknownFontIdError);
 #endif
 
-    typedef QSet<de::MaterialManifest *> MaterialManifestSet;
+    typedef QSet<MaterialManifest *> MaterialManifestSet;
     typedef MaterialManifestSet MaterialManifestGroup; // Alias
     typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
 
@@ -236,7 +236,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
-    de::MaterialManifest &materialManifest(de::Uri const &path) const;
+    MaterialManifest &materialManifest(de::Uri const &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -246,7 +246,7 @@ public:
      *
      * @return  The associated manifest.
      */
-    de::MaterialManifest &toMaterialManifest(materialid_t id) const;
+    MaterialManifest &toMaterialManifest(materialid_t id) const;
 
     /**
      * Returns the total number of unique materials in the collection.
@@ -326,7 +326,7 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    inline de::MaterialManifest &declareMaterial(de::Uri const &uri) {
+    inline MaterialManifest &declareMaterial(de::Uri const &uri) {
         return materialScheme(uri.scheme()).declare(uri.path());
     }
 
@@ -769,16 +769,18 @@ public:
     void clearAllAnimGroups();
 
     /**
-     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
-     */
-    de::AnimGroup *animGroup(int uniqueId);
-
-    /**
      * Construct a new animation group.
      *
      * @param flags  @ref animationGroupFlags
      */
     de::AnimGroup &newAnimGroup(int flags);
+
+    /**
+     * Returns the AnimGroup associated with @a uniqueId (1-based); otherwise @c 0.
+     */
+    de::AnimGroup *animGroup(int uniqueId);
+
+    de::AnimGroup *animGroupForTexture(de::TextureManifest &textureManifest);
 
     /**
      * Returns the total number of color palettes.
@@ -833,18 +835,6 @@ public:
     void setDefaultColorPalette(ColorPalette *newDefaultPalette);
 
 #ifdef __CLIENT__
-
-    /**
-     * Rewind all material animations back to their initial/starting state.
-     *
-     * @see allMaterials(), MaterialAnimation::restart()
-     */
-    inline void restartAllMaterialAnimations() {
-        foreach(Material *material, allMaterials())
-        foreach(MaterialAnimation *animation, material->animations()) {
-            animation->restart();
-        }
-    }
 
     /**
      * Prepare resources for the current Map.

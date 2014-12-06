@@ -39,7 +39,6 @@
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 
-#  include "MaterialSnapshot"
 #  include "Decoration"
 
 #  include "render/rend_main.h"
@@ -420,18 +419,23 @@ Surface &Surface::setBlendMode(blendmode_t newBlendMode)
 #ifdef __CLIENT__
 float Surface::glow(Vector3f &color) const
 {
-    if(!d->material || !d->material->hasGlow())
+    if(!d->material || !d->material->hasGlowingTextureLayers())
     {
         color = Vector3f();
         return 0;
     }
 
-    MaterialSnapshot const &ms = d->material->prepare(Rend_MapSurfaceMaterialSpec());
-    averagecolor_analysis_t const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
-    if(!avgColorAmplified) throw Error("Surface::glow", QString("Texture \"%1\" has no AverageColorAmplifiedAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+    MaterialAnimator &matAnimator = d->material->getAnimator(Rend_MapSurfaceMaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    TextureVariant *texture       = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(Texture::AverageColorAmplifiedAnalysis));
+    if(!avgColorAmplified) throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");
 
     color = Vector3f(avgColorAmplified->color.rgb);
-    return ms.glowStrength() * glowFactor; // Global scale factor.
+    return matAnimator.glowStrength() * glowFactor; // Global scale factor.
 }
 
 void Surface::addDecoration(Decoration *decoration)

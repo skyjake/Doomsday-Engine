@@ -36,8 +36,6 @@
 #include "render/vissprite.h"
 #include "render/mobjanimator.h"
 
-#include "MaterialSnapshot"
-
 #include "world/map.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -255,20 +253,19 @@ void R_ProjectSprite(mobj_t *mo)
     {
         // Log but otherwise ignore this error.
         LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
-            << mo->sprite << mo->frame << er.asText();
+                << mo->sprite << mo->frame << er.asText();
     }
-
     if(!mat) return;
+    MaterialAnimator &matAnimator = mat->getAnimator(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    Vector2i const &matDimensions = matAnimator.dimensions();
+    TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
     // A valid sprite texture in the "Sprites" scheme is required.
-    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
-    if(!ms.hasTexture(MTU_PRIMARY))
-    {
-        return;
-    }
-
-    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
+    if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))
     {
         return;
     }
@@ -286,7 +283,7 @@ void R_ProjectSprite(mobj_t *mo)
     coord_t const visWidth = Mobj_VisualRadius(*mo) * 2; /// @todo ignorant of rotation...
     Vector2d v1, v2;
     R_ProjectViewRelativeLine2D(moPos, mf || viewAlign, visWidth,
-                                (mf? 0 : coord_t(-tex.origin().x) - (visWidth / 2.0f)),
+                                (mf? 0 : coord_t(-tex->base().origin().x) - (visWidth / 2.0f)),
                                 v1, v2);
 
     // Not visible?
@@ -328,7 +325,7 @@ void R_ProjectSprite(mobj_t *mo)
         findMobjZOrigin(mo, floorAdjust, vis);
     }
 
-    coord_t topZ = vis->pose.origin.z + -tex.origin().y; // global z top
+    coord_t topZ = vis->pose.origin.z + -tex->base().origin().y; // global z top
 
     // Determine floor clipping.
     coord_t floorClip = mo->floorClip;
@@ -440,19 +437,19 @@ void R_ProjectSprite(mobj_t *mo)
 
         // We must find the correct positioning using the sector floor
         // and ceiling heights as an aid.
-        if(ms.height() < ceiling.heightSmoothed() - floor.heightSmoothed())
+        if(matDimensions.y < ceiling.heightSmoothed() - floor.heightSmoothed())
         {
             // Sprite fits in, adjustment possible?
             if(fitTop && topZ > ceiling.heightSmoothed())
                 topZ = ceiling.heightSmoothed();
 
-            if(floorAdjust && fitBottom && topZ - ms.height() < floor.heightSmoothed())
-                topZ = floor.heightSmoothed() + ms.height();
+            if(floorAdjust && fitBottom && topZ - matDimensions.y < floor.heightSmoothed())
+                topZ = floor.heightSmoothed() + matDimensions.y;
         }
         // Adjust by the floor clip.
         topZ -= floorClip;
 
-        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - ms.height() / 2.0f);
+        Vector3d const origin(vis->pose.origin.x, vis->pose.origin.y, topZ - matDimensions.y / 2.0f);
         Vector4f ambientColor;
         uint vLightListIdx = 0;
         evaluateLighting(origin, subspace, vis->pose.distance, fullbright,
@@ -517,18 +514,23 @@ void R_ProjectSprite(mobj_t *mo)
             SpriteViewAngle const &sprViewAngle =
                 sprite->closestViewAngle(mo->angle, R_ViewPointToAngle(mo->origin));
 
-            Material *mat = sprViewAngle.material;
+            DENG2_ASSERT(sprViewAngle.material);
+            MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
+
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
+
+            Vector2i const &matDimensions = matAnimator.dimensions();
+            TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
             // A valid sprite texture in the "Sprites" scheme is required.
-            MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec(mo->tclass, mo->tmap));
-            if(!ms.hasTexture(MTU_PRIMARY))
+            if(!tex || tex->base().manifest().schemeName().compareWithoutCase("Sprites"))
+            {
                 return;
-            Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-            if(tex.manifest().schemeName().compareWithoutCase("Sprites"))
-                return;;
-            pointlight_analysis_t const *pl = (pointlight_analysis_t const *)
-                ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::BrightPointAnalysis);
-            DENG2_ASSERT(pl != 0);
+            }
+
+            pointlight_analysis_t const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(Texture::BrightPointAnalysis);
+            DENG2_ASSERT(pl);
 
             Lumobj const &lob = cluster.sector().map().lumobj(mo->lumIdx);
             vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);
@@ -541,7 +543,7 @@ void R_ProjectSprite(mobj_t *mo)
 
             float flareSize = pl->brightMul;
             // X offset to the flare position.
-            float xOffset = ms.width() * pl->originX - -tex.origin().x;
+            float xOffset = matDimensions.x * pl->originX - -tex->base().origin().x;
 
             // Does the mobj have an active light definition?
             ded_light_t const *def = (mo->state? runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mo->state)].light : 0);
@@ -582,7 +584,7 @@ void R_ProjectSprite(mobj_t *mo)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
-                << mo->sprite << mo->frame << er.asText();
+                    << mo->sprite << mo->frame << er.asText();
         }
     }
 }

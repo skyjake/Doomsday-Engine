@@ -1,6 +1,6 @@
-/** @file materialvariantspec.h Specialization specification for a variant material.
+/** @file materialvariantspec.h  Logical material, draw-context variant specification.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,8 +17,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
-#define LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H
+#ifndef CLIENT_RESOURCE_MATERIALVARIANTSPEC_H
+#define CLIENT_RESOURCE_MATERIALVARIANTSPEC_H
 
 #ifndef __CLIENT__
 #  error "resource/materialvariantspec.h only exists in the Client"
@@ -41,25 +41,15 @@ struct MaterialVariantSpec
 {
 public:
     /// Usage context identifier.
-    MaterialContextId context;
+    MaterialContextId contextId { FirstMaterialContextId };
 
     /// Interned specification for the primary texture.
-    TextureVariantSpec const *primarySpec;
+    TextureVariantSpec const *primarySpec = nullptr;
 
-public:
-    /**
-     * Construct a zeroed MaterialVariantSpec instance.
-     */
-    MaterialVariantSpec()
-        : context(MaterialContextId(0))
-        , primarySpec(0)
-    {}
-
-    /**
-     * Construct a MaterialVariantSpec instance by duplicating @a other.
-     */
+    MaterialVariantSpec() {}
     MaterialVariantSpec(MaterialVariantSpec const &other)
-        : context(other.context), primarySpec(other.primarySpec)
+        : contextId  (other.contextId)
+        , primarySpec(other.primarySpec)
     {}
 
     /**
@@ -70,7 +60,11 @@ public:
      *
      * Same as operator ==
      */
-    bool compare(MaterialVariantSpec const &other) const;
+    bool compare(MaterialVariantSpec const &other) const {
+        if(this == &other) return true;
+        if(contextId != other.contextId) return false;
+        return primarySpec == other.primarySpec;
+    }
 
     /**
      * Determines whether specification @a other is equal to this specification.
@@ -91,4 +85,4 @@ public:
 
 } // namespace de
 
-#endif /* LIBDENG_RESOURCE_MATERIALVARIANTSPEC_H */
+#endif  // CLIENT_RESOURCE_MATERIALVARIANTSPEC_H

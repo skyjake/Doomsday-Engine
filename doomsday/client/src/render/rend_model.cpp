@@ -37,7 +37,6 @@
 #include "render/modelrenderer.h"
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 
@@ -107,6 +106,11 @@ static uint vertexBufferSize; ///< Current number of vertices supported by the r
 #ifdef DENG_DEBUG
 static bool announcedVertexBufferMaxBreach; ///< @c true if an attempt has been made to expand beyond our capability.
 #endif
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 /*static void modelAspectModChanged()
 {
@@ -656,6 +660,12 @@ static int chooseSkin(ModelDef &mf, int submodel, int id, int selector, int tmap
     return skin;
 }
 
+static inline MaterialVariantSpec const &modelSkinMaterialSpec()
+{
+    return resSys().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                 1, -2, -1, true, true, false, false);
+}
+
 static void drawSubmodel(uint number, vissprite_t const &spr)
 {
     drawmodelparams_t const &parm = *VS_MODEL(&spr);
@@ -916,14 +926,13 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all surfaces using the gray texture.
-        MaterialVariantSpec const &spec = ClientApp::resourceSystem()
-                .materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
-                              1, -2, -1, true, true, false, false);
+        MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("gray")))
+                                                    .getAnimator(modelSkinMaterialSpec());
 
-        MaterialSnapshot const &ms = ClientApp::resourceSystem()
-                .material(de::Uri("System", Path("gray"))).prepare(spec);
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
 
-        skinTexture = &ms.texture(MTU_PRIMARY);
+        skinTexture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     }
     else
     {
@@ -1123,14 +1132,14 @@ void Rend_DrawModel(vissprite_t const &spr)
 
 TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_DIFFUSE,
+    return resSys().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
 TextureVariantSpec const &Rend_ModelShinyTextureSpec()
 {
-    return ClientApp::resourceSystem().textureSpec(TC_MODELSKIN_REFLECTION,
+    return resSys().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,
         false, false, false);
 }

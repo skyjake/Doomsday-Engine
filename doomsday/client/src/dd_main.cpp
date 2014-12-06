@@ -73,6 +73,7 @@
 #  include "render/vr.h"
 #  include "Contact"
 #  include "Sector"
+#  include "MaterialAnimator"
 #  include "ui/ui_main.h"
 #  include "ui/sys_input.h"
 #  include "ui/widgets/taskbarwidget.h"
@@ -2386,7 +2387,14 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    App_ResourceSystem().restartAllMaterialAnimations();
+    for(Material *material : App_ResourceSystem().allMaterials())
+    {
+        material->forAllAnimators([] (MaterialAnimator &animator)
+        {
+            animator.rewind();
+            return LoopContinue;
+        });
+    }
 #endif
 }
 

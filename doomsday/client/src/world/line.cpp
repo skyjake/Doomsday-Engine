@@ -574,9 +574,9 @@ static Material *chooseFixMaterial(LineSide &side, int section)
     choice2 = frontSec->planeSurface(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
-    if(choice1 && !choice1->isAnimated() && !choice1->isSkyMasked())
+    if(choice1 && !choice1->hasAnimatedTextureLayers() && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !choice2->isAnimated() && !choice2->isSkyMasked())
+    if(choice2 && !choice2->hasAnimatedTextureLayers() && !choice2->isSkyMasked())
         return choice2;
 
     // Prefer a non-masked material.

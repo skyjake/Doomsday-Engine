@@ -27,7 +27,6 @@
 #include <cstring>
 #include <QTextStream>
 #include <de/findfile.h>
-#include <de/vector1.h>
 #include <de/App>
 #include <de/NativePath>
 #include <doomsday/defs/dedfile.h>
@@ -52,6 +51,12 @@
 #endif
 
 #include "resource/manifest.h"
+#include "resource/materialdetailtexturelayer.h"
+#include "resource/materialtexturelayer.h"
+#include "resource/materialshinelayer.h"
+#ifdef __CLIENT__
+#  include "resource/materiallightdecoration.h"
+#endif
 
 using namespace de;
 
@@ -73,6 +78,16 @@ static mobjinfo_t *gettingFor;
 
 static xgclass_t nullXgClassLinks;  ///< Used when none defined.
 static xgclass_t *xgClassLinks;
+
+static inline FS1 &fileSys()
+{
+    return App_FileSystem();
+}
+
+static inline ResourceSystem &resSys()
+{
+    return App_ResourceSystem();
+}
 
 void RuntimeDefs::clear()
 {
@@ -232,7 +247,7 @@ ded_value_t *Def_GetValueById(char const *id)
 
 ded_value_t *Def_GetValueByUri(struct uri_s const *_uri)
 {
-    if(!_uri) return 0;
+    if(!_uri) return nullptr;
     return defs.getValueByUri(*reinterpret_cast<de::Uri const *>(_uri));
 }
 
@@ -242,13 +257,12 @@ ded_compositefont_t *Def_GetCompositeFont(char const *uri)
 }
 
 /// @todo $revise-texture-animation
-ded_decor_t *Def_GetDecoration(uri_s const *uri, /*bool hasExternal,*/ bool isCustom)
+static ded_decoration_t *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
 {
-    DENG2_ASSERT(uri);
     for(int i = defs.decorations.size() - 1; i >= 0; i--)
     {
-        ded_decor_t *def = &defs.decorations[i];
-        if(def->material && Uri_Equality((uri_s *)def->material, uri))
+        ded_decoration_t *def = &defs.decorations[i];
+        if(def->material && *def->material == uri)
         {
             // Is this suitable?
             if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
@@ -258,14 +272,18 @@ ded_decor_t *Def_GetDecoration(uri_s const *uri, /*bool hasExternal,*/ bool isCu
     return nullptr;  // None found.
 }
 
-/// @todo $revise-texture-animation
-ded_reflection_t *Def_GetReflection(uri_s const *uri, /* bool hasExternal,*/ bool isCustom)
+static inline ded_decoration_t *tryFindDecorationForMaterial(Material const &mat)
 {
-    DENG2_ASSERT(uri);
+    return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
+}
+
+/// @todo $revise-texture-animation
+static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
+{
     for(int i = defs.reflections.size() - 1; i >= 0; i--)
     {
         ded_reflection_t *def = &defs.reflections[i];
-        if(def->material && Uri_Equality((uri_s *)def->material, uri))
+        if(def->material && *def->material ==  uri)
         {
             // Is this suitable?
             if(Def_IsAllowedReflection(def, /*hasExternal,*/ isCustom))
@@ -276,28 +294,27 @@ ded_reflection_t *Def_GetReflection(uri_s const *uri, /* bool hasExternal,*/ boo
 }
 
 /// @todo $revise-texture-animation
-ded_detailtexture_t *Def_GetDetailTex(uri_s const *uri, /*bool hasExternal,*/ bool isCustom)
+static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
 {
-    DENG2_ASSERT(uri);
     for(int i = defs.details.size() - 1; i >= 0; i--)
     {
         ded_detailtexture_t *def = &defs.details[i];
 
-        if(def->material1 && Uri_Equality((uri_s *)def->material1, uri))
+        if(def->material1 && *def->material1 == uri)
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
                 return def;
         }
 
-        if(def->material2 && Uri_Equality((uri_s *)def->material2, uri))
+        if(def->material2 && *def->material2 == uri)
         {
             // Is this suitable?
             if(Def_IsAllowedDetailTex(def, /*hasExternal,*/ isCustom))
                 return def;
         }
     }
-    return nullptr; // None found.
+    return nullptr;  // Not found.
 }
 
 ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
@@ -331,12 +348,12 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
 #endif
     }
 
-    return nullptr; // None found.
+    return nullptr;  // None found.
 }
 
 ded_ptcgen_t *Def_GetGenerator(uri_s const *uri)
 {
-    if(!uri) return 0;
+    if(!uri) return nullptr;
     return Def_GetGenerator(reinterpret_cast<de::Uri const &>(*uri));
 }
 
@@ -377,10 +394,12 @@ int Def_GetTextNumForName(char const *name)
  */
 static void Def_InitTextDef(ddtext_t *txt, char const *str)
 {
+    DENG2_ASSERT(txt);
+
     // Handle null pointers with "".
     if(!str) str = "";
 
-    txt->text = (char*) M_Calloc(qstrlen(str) + 1);
+    txt->text = (char *) M_Calloc(qstrlen(str) + 1);
 
     char const *in = str;
     char *out = txt->text;
@@ -428,7 +447,7 @@ static void Def_ReadLumpDefs()
 {
     LOG_AS("Def_ReadLumpDefs");
 
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex const &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundDefns;
     lumpIndex.findAll("DD_DEFNS.lmp", foundDefns);
     DENG2_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
@@ -479,12 +498,12 @@ int Def_GetIntValue(char *val, int *returned_val)
     char *data;
     if(Def_Get(DD_DEF_VALUE, val, &data) >= 0)
     {
-        *returned_val = strtol(data, 0, 0);
+        if(returned_val) *returned_val = strtol(data, 0, 0);
         return true;
     }
 
     // Convert the literal string
-    *returned_val = strtol(val, 0, 0);
+    if(returned_val) *returned_val = strtol(val, 0, 0);
     return false;
 }
 
@@ -533,7 +552,7 @@ static QStringList allMapInfoUrns()
     bool ignoreNonCustom = false;
     try
     {
-        String mainMapInfo = App_FileSystem().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        String mainMapInfo = fileSys().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
         if(!mainMapInfo.isEmpty())
         {
             foundPaths << mainMapInfo;
@@ -544,7 +563,7 @@ static QStringList allMapInfoUrns()
     {} // Ignore this error.
 
     // Process all other lumps named MAPINFO.lmp
-    LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
+    LumpIndex const &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundLumps;
     lumpIndex.findAll("MAPINFO.lmp", foundLumps);
     for(auto const &lumpNumber : foundLumps)
@@ -609,7 +628,7 @@ static void readAllDefinitions()
      */
 
     /*
-    String foundPath = App_FileSystem().findPath(de::Uri("doomsday.ded", RC_DEFINITION),
+    String foundPath = fileSys().findPath(de::Uri("doomsday.ded", RC_DEFINITION),
                                                   RLF_DEFAULT, App_ResourceClass(RC_DEFINITION));
     foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
@@ -673,7 +692,7 @@ static void readAllDefinitions()
         if(!CommandLine_Exists("-noauto"))
         {
             FS1::PathList foundPaths;
-            if(App_FileSystem().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
+            if(fileSys().findAllPaths(de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded", RC_NULL).resolved(), 0, foundPaths))
             {
                 foreach(FS1::PathListItem const &found, foundPaths)
                 {
@@ -717,21 +736,6 @@ static void readAllDefinitions()
     LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
-static AnimGroup const *findAnimGroupForTexture(TextureManifest &textureManifest)
-{
-    // Group ids are 1-based.
-    // Search backwards to allow patching.
-    for(int i = App_ResourceSystem().animGroupCount(); i > 0; i--)
-    {
-        AnimGroup *animGroup = App_ResourceSystem().animGroup(i);
-        if(animGroup->hasFrameFor(textureManifest))
-        {
-            return animGroup;
-        }
-    }
-    return nullptr;  // Not found.
-}
-
 static void defineFlaremap(de::Uri const &resourceUri)
 {
     if(resourceUri.isEmpty()) return;
@@ -745,7 +749,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
        resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
 
-    App_ResourceSystem().defineTexture("Flaremaps", resourceUri);
+    resSys().defineTexture("Flaremaps", resourceUri);
 }
 
 static void defineLightmap(de::Uri const &resourceUri)
@@ -755,17 +759,16 @@ static void defineLightmap(de::Uri const &resourceUri)
     // Reference to none?
     if(!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
 
-    App_ResourceSystem().defineTexture("Lightmaps", resourceUri);
+    resSys().defineTexture("Lightmaps", resourceUri);
 }
 
 static void generateMaterialDefForTexture(TextureManifest &manifest)
 {
     LOG_AS("generateMaterialDefForTexture");
 
-    de::Uri texUri = manifest.composeUri();
+    de::Uri const texUri = manifest.composeUri();
 
-    int matIdx = DED_AddMaterial(&defs, 0);
-    ded_material_t *mat = &defs.materials[matIdx];
+    ded_material_t *mat = &defs.materials[defs.addMaterial()];
     mat->autoGenerated = true;
     mat->uri = new de::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path());
 
@@ -774,7 +777,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
         Texture &tex = manifest.texture();
         mat->width  = tex.width();
         mat->height = tex.height();
-        mat->flags  = (tex.isFlagged(Texture::NoDraw)? Material::NoDraw : 0);
+        mat->flags  = (tex.isFlagged(Texture::NoDraw)? MATF_NO_DRAW : 0);
     }
     else
     {
@@ -782,17 +785,15 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     }
 
     // The first stage is implicit.
-    int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
+    int layerIdx = mat->layers[0].addStage();
     ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
     DENG2_ASSERT(st);
     st->texture = new de::Uri(texUri);
 
     // Is there an animation for this?
-    AnimGroup const *anim = findAnimGroupForTexture(manifest);
+    AnimGroup const *anim = resSys().animGroupForTexture(manifest);
     if(anim && anim->frameCount() > 1)
     {
-        AnimGroupFrame const *animFrame;
-
         // Determine the start frame.
         int startFrame = 0;
         while(&anim->frame(startFrame).textureManifest() != &manifest)
@@ -805,7 +806,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
             return;
 
         // Complete configuration of the first stage.
-        animFrame = &anim->frame(startFrame);
+        AnimGroupFrame const *animFrame = &anim->frame(startFrame);
         st->tics = animFrame->tics() + animFrame->randomTics();
         if(animFrame->randomTics())
         {
@@ -821,7 +822,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
             animFrame = &anim->frame(frame);
             TextureManifest &frameManifest = animFrame->textureManifest();
 
-            int layerIdx = DED_AddMaterialLayerStage(&mat->layers[0]);
+            int layerIdx = mat->layers[0].addStage();
             ded_material_layer_stage_t *st = &mat->layers[0].stages[layerIdx];
             st->texture = new de::Uri(frameManifest.composeUrn());
             st->tics    = animFrame->tics() + animFrame->randomTics();
@@ -835,7 +836,7 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
 
 static void generateMaterialDefsForAllTexturesInScheme(String schemeName)
 {
-    TextureScheme &scheme = App_ResourceSystem().textureScheme(schemeName);
+    TextureScheme &scheme = resSys().textureScheme(schemeName);
 
     PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
     while(iter.hasNext())
@@ -851,68 +852,102 @@ static void generateMaterialDefs()
     generateMaterialDefsForAllTexturesInScheme("Sprites");
 }
 
-static ded_group_t *findGroupDefByFrameTextureUri(de::Uri const &uri)
+#ifdef __CLIENT__
+
+/**
+ * (Re)Decorate the given @a material according to definition @a def. Any existing
+ * decorations will be cleared in the process.
+ *
+ * @param material  The material being (re)decorated.
+ * @param def       Definition to apply.
+ */
+static void redecorateMaterial(Material &material, ded_material_t const &def)
 {
-    if(uri.isEmpty()) return nullptr;
+    material.clearAllDecorations();
 
-    // Reverse iteration (later defs override earlier ones).
-    for(int i = defs.groups.size(); i--> 0; )
+    // Prefer decorations defined within the material.
+    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
     {
-        ded_group_t &grp = defs.groups[i];
+        ded_material_lightdecoration_t const &decorDef = def.decorations[i];
 
-        // We aren't interested in precache groups.
-        if(grp.flags & AGF_PRECACHE) continue;
+        // Is this valid? (A zero number of stages signifies the last).
+        if(!decorDef.stages.size()) break;
 
-        // Or empty/single-frame groups.
-        if(grp.members.size() < 2) continue;
-
-        for(int k = 0; k < grp.members.size(); ++k)
+        for(int k = 0; k < decorDef.stages.size(); ++k)
         {
-            ded_group_member_t &gm = grp.members[k];
+            ded_decorlight_stage_t *stage = &decorDef.stages[k];
 
-            if(!gm.material) continue;
+            if(stage->up)    defineLightmap(*stage->up);
+            if(stage->down)  defineLightmap(*stage->down);
+            if(stage->sides) defineLightmap(*stage->sides);
+            if(stage->flare) defineFlaremap(*stage->flare);
+        }
 
-            if(*gm.material == uri)
-            {
-                // Found one.
-                return &grp;
-            }
+        material.addDecoration(MaterialLightDecoration::fromDef(decorDef));
+    }
 
-            // Only animate if the first frame in the group?
-            if(grp.flags & AGF_FIRST_ONLY) break;
+    if(material.hasDecorations())
+        return;
+
+    // Perhaps old style linked decoration definitions?
+    /// @todo fixme: Need to factor in the decoration definitions for all animation frames.
+    if(ded_decoration_t *decorDef = tryFindDecorationForMaterial(material))
+    {
+        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        {
+            ded_decorlight_t const &lightDef = decorDef->lights[i];
+
+            // Is this valid? (A zero-strength color signifies the last).
+            if(Vector3f(lightDef.stage.color) == Vector3f(0, 0, 0))
+                break;
+
+            // Translate the old style definition.
+            std::unique_ptr<MaterialLightDecoration> decor(new MaterialLightDecoration(lightDef.patternSkip, lightDef.patternOffset));
+            std::unique_ptr<MaterialLightDecoration::AnimationStage> tempStage(MaterialLightDecoration::AnimationStage::fromDef(lightDef.stage));
+            decor->addStage(*tempStage);              // makes a copy.
+            material.addDecoration(decor.release());  // takes ownership.
         }
     }
-
-    return nullptr;  // Not found.
 }
 
-static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
-{
-    material.clearLayers();
+#endif // __CLIENT__
 
+static void configureMaterial(Material &mat, ded_material_t const &def)
+{
+    // Reconfigure basic properties.
+    mat.setDimensions(Vector2i(def.width, def.height));
+    mat.markDontDraw((def.flags & MATF_NO_DRAW) != 0);
+    mat.markSkyMasked((def.flags & MATF_SKYMASK) != 0);
+
+#ifdef __CLIENT__
+    mat.setAudioEnvironment(S_AudioEnvironmentId(def.uri));
+#endif
+
+    // Reconfigure the layers.
+    mat.clearAllLayers();
     for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
     {
-        material.newLayer(&def.layers[i]);
+        mat.addLayer(MaterialTextureLayer::fromDef(def.layers[i]));
     }
 
-    if(material.layerCount() && material.layers()[0]->stageCount())
+    if(mat.layerCount() && mat.layer(0).stageCount())
     {
-        MaterialLayer *layer0        = material.layers()[0];
-        MaterialLayer::Stage *stage0 = layer0->stages()[0];
+        MaterialTextureLayer &layer0                 = mat.layer(0).as<MaterialTextureLayer>();
+        MaterialTextureLayer::AnimationStage &stage0 = layer0.stage(0);
 
-        if(stage0->texture)
+        if(stage0.texture())
         {
             // We may need to interpret the layer animation from the now
             // deprecated Group definitions.
 
-            if(def.autoGenerated && layer0->stageCount() == 1)
+            if(def.autoGenerated && layer0.stageCount() == 1)
             {
-                de::Uri textureUri(stage0->texture->manifest().composeUri());
+                de::Uri textureUri(stage0.texture()->manifest().composeUri());
 
                 // Possibly; see if there is a compatible definition with
                 // a member named similarly to the texture for layer #0.
 
-                if(ded_group_t const *grp = findGroupDefByFrameTextureUri(textureUri))
+                if(ded_group_t const *grp = defs.findGroupForFrameTexture(textureUri))
                 {
                     // Determine the start frame.
                     int startFrame = 0;
@@ -924,8 +959,8 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                     // Configure the first stage.
                     ded_group_member_t const &gm0 = grp->members[startFrame];
-                    stage0->tics     = gm0.tics;
-                    stage0->variance = gm0.randomTics / float( gm0.tics );
+                    stage0.tics     = gm0.tics;
+                    stage0.variance = gm0.randomTics / float( gm0.tics );
 
                     // Add further stages for each frame in the group.
                     startFrame++;
@@ -938,8 +973,8 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
 
                         try
                         {
-                            Texture &texture = App_ResourceSystem().texture(*gm.material);
-                            layer0->addStage(Material::Layer::Stage(&texture, gm.tics, gm.randomTics / float( gm.tics )));
+                            Texture &texture = resSys().texture(*gm.material);
+                            layer0.addStage(MaterialTextureLayer::AnimationStage(&texture, gm.tics, gm.randomTics / float( gm.tics )));
                         }
                         catch(TextureManifest::MissingTextureError const &)
                         {} // Ignore this error.
@@ -949,45 +984,44 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                 }
             }
 
-            if(!material.isDetailed())
+            if(!mat.hasDetailTextureLayer())
             {
                 // Are there Detail definitions we need to produce a layer for?
-                Material::DetailLayer *dlayer = 0;
+                MaterialDetailTextureLayer *dlayer = nullptr;
 
-                for(int i = 0; i < layer0->stageCount(); ++i)
+                for(int i = 0; i < layer0.stageCount(); ++i)
                 {
-                    Material::Layer::Stage *stage = layer0->stages()[i];
-                    de::Uri textureUri(stage->texture->manifest().composeUri());
-
+                    MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
                     ded_detailtexture_t const *detailDef =
-                        Def_GetDetailTex(reinterpret_cast<uri_s *>(&textureUri),
-                                         /*UNKNOWN VALUE,*/ material.manifest().isCustom());
+                        tryFindDetailTexture(stage.texture()->manifest().composeUri(),
+                                             /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
-                    if(!detailDef || !detailDef->stage.texture) continue;
+                    if(!detailDef || !detailDef->stage.texture)
+                        continue;
 
                     if(!dlayer)
                     {
                         // Add a new detail layer.
-                        dlayer = material.newDetailLayer(detailDef);
+                        mat.addLayer(dlayer = MaterialDetailTextureLayer::fromDef(*detailDef));
                     }
                     else
                     {
                         // Add a new stage.
                         try
                         {
-                            Texture &texture = App_ResourceSystem().textureScheme("Details").findByResourceUri(*detailDef->stage.texture).texture();
-                            dlayer->addStage(Material::DetailLayer::Stage(&texture, stage->tics, stage->variance,
-                                                                          detailDef->stage.scale, detailDef->stage.strength,
-                                                                          detailDef->stage.maxDistance));
+                            Texture &texture = resSys().textureScheme("Details").findByResourceUri(*detailDef->stage.texture).texture();
+                            dlayer->addStage(MaterialDetailTextureLayer::AnimationStage(&texture, stage.tics, stage.variance,
+                                                                                        detailDef->stage.scale, detailDef->stage.strength,
+                                                                                        detailDef->stage.maxDistance));
 
                             if(dlayer->stageCount() == 2)
                             {
                                 // Update the first stage with timing info.
-                                Material::Layer::Stage const *stage0  = layer0->stages()[0];
-                                Material::DetailLayer::Stage *dstage0 = dlayer->stages()[0];
+                                MaterialTextureLayer::AnimationStage const &stage0  = layer0.stage(0);
+                                MaterialDetailTextureLayer::AnimationStage &dstage0 = dlayer->stage(0);
 
-                                dstage0->tics     = stage0->tics;
-                                dstage0->variance = stage0->variance;
+                                dstage0.tics     = stage0.tics;
+                                dstage0.variance = stage0.variance;
                             }
                         }
                         catch(TextureManifest::MissingTextureError const &)
@@ -998,33 +1032,32 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                 }
             }
 
-            if(!material.isShiny())
+            if(!mat.hasShineLayer())
             {
                 // Are there Reflection definition we need to produce a layer for?
-                Material::ShineLayer *slayer = nullptr;
+                MaterialShineLayer *slayer = nullptr;
 
-                for(int i = 0; i < layer0->stageCount(); ++i)
+                for(int i = 0; i < layer0.stageCount(); ++i)
                 {
-                    MaterialLayer::Stage *stage = layer0->stages()[i];
-                    de::Uri textureUri(stage->texture->manifest().composeUri());
-
+                    MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
                     ded_reflection_t const *shineDef =
-                        Def_GetReflection(reinterpret_cast<uri_s *>(&textureUri),
-                                          /*UNKNOWN VALUE,*/ material.manifest().isCustom());
+                        tryFindReflection(stage.texture()->manifest().composeUri(),
+                                          /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
-                    if(!shineDef || !shineDef->stage.texture) continue;
+                    if(!shineDef || !shineDef->stage.texture)
+                        continue;
 
                     if(!slayer)
                     {
                         // Add a new shine layer.
-                        slayer = material.newShineLayer(shineDef);
+                        mat.addLayer(slayer = MaterialShineLayer::fromDef(*shineDef));
                     }
                     else
                     {
                         // Add a new stage.
                         try
                         {
-                            Texture &texture = App_ResourceSystem().textureScheme("Reflections")
+                            Texture &texture = resSys().textureScheme("Reflections")
                                                    .findByResourceUri(*shineDef->stage.texture).texture();
 
                             Texture *maskTexture = nullptr;
@@ -1032,7 +1065,7 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                             {
                                 try
                                 {
-                                    maskTexture = &App_ResourceSystem().textureScheme("Masks")
+                                    maskTexture = &resSys().textureScheme("Masks")
                                                        .findByResourceUri(*shineDef->stage.maskTexture).texture();
                                 }
                                 catch(TextureManifest::MissingTextureError const &)
@@ -1041,20 +1074,20 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
                                 {} // Ignore this error.
                             }
 
-                            slayer->addStage(Material::ShineLayer::Stage(&texture, stage->tics, stage->variance,
-                                                                         maskTexture, shineDef->stage.blendMode,
-                                                                         shineDef->stage.shininess,
-                                                                         Vector3f(shineDef->stage.minColor),
-                                                                         Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+                            slayer->addStage(MaterialShineLayer::AnimationStage(&texture, stage.tics, stage.variance,
+                                                                                maskTexture, shineDef->stage.blendMode,
+                                                                                shineDef->stage.shininess,
+                                                                                Vector3f(shineDef->stage.minColor),
+                                                                                Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
 
                             if(slayer->stageCount() == 2)
                             {
                                 // Update the first stage with timing info.
-                                Material::Layer::Stage const *stage0 = layer0->stages()[0];
-                                Material::ShineLayer::Stage *sstage0 = slayer->stages()[0];
+                                MaterialTextureLayer::AnimationStage const &stage0 = layer0.stage(0);
+                                MaterialShineLayer::AnimationStage &sstage0        = slayer->stage(0);
 
-                                sstage0->tics     = stage0->tics;
-                                sstage0->variance = stage0->variance;
+                                sstage0.tics     = stage0.tics;
+                                sstage0.variance = stage0.variance;
                             }
                         }
                         catch(TextureManifest::MissingTextureError const &)
@@ -1066,76 +1099,13 @@ static void rebuildMaterialLayers(Material &material, ded_material_t const &def)
             }
         }
     }
-}
 
 #ifdef __CLIENT__
-static void rebuildMaterialDecorations(Material &material, ded_material_t const &def)
-{
-    material.clearDecorations();
+    redecorateMaterial(mat, def);
+#endif
 
-    // Add (light) decorations to the material.
-    // Prefer decorations defined within the material.
-    for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i)
-    {
-        ded_material_decoration_t const &lightDef = def.decorations[i];
-
-        // Is this valid? (A zero number of stages signifies the last).
-        if(!lightDef.stages.size()) break;
-
-        for(int k = 0; k < lightDef.stages.size(); ++k)
-        {
-            ded_decorlight_stage_t *stage = &lightDef.stages[k];
-
-            if(stage->up)
-            {
-                defineLightmap(*stage->up);
-            }
-            if(stage->down)
-            {
-                defineLightmap(*stage->down);
-            }
-            if(stage->sides)
-            {
-                defineLightmap(*stage->sides);
-            }
-            if(stage->flare)
-            {
-                defineFlaremap(*stage->flare);
-            }
-        }
-
-        MaterialDecoration *decor = MaterialDecoration::fromDef(lightDef);
-        material.addDecoration(*decor);
-    }
-
-    if(!material.decorationCount())
-    {
-        // Perhaps an oldschool linked decoration definition?
-        de::Uri materialUri = material.manifest().composeUri();
-        ded_decor_t *decorDef = Def_GetDecoration(reinterpret_cast<uri_s *>(&materialUri),
-                                                  material.manifest().isCustom());
-        if(decorDef)
-        {
-            for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-            {
-                ded_decoration_t &lightDef = decorDef->lights[i];
-                // Is this valid? (A zero-strength color signifies the last).
-                if(V3f_IsZero(lightDef.stage.color)) break;
-
-                MaterialDecoration *decor = MaterialDecoration::fromDef(lightDef);
-                material.addDecoration(*decor);
-            }
-        }
-    }
-}
-#endif // __CLIENT__
-
-static Material::Flags translateMaterialDefFlags(ded_flags_t flags)
-{
-    Material::Flags mf;
-    if(flags & MATF_NO_DRAW) mf |= Material::NoDraw;
-    if(flags & MATF_SKYMASK) mf |= Material::SkyMask;
-    return mf;
+    // At this point we know the material is usable.
+    mat.markValid();
 }
 
 static void interpretMaterialDef(ded_material_t const &def)
@@ -1147,7 +1117,7 @@ static void interpretMaterialDef(ded_material_t const &def)
     try
     {
         // Create/retrieve a manifest for the would-be material.
-        MaterialManifest *manifest = &App_ResourceSystem().declareMaterial(*def.uri);
+        MaterialManifest *manifest = &resSys().declareMaterial(*def.uri);
 
         // Update manifest classification:
         manifest->setFlags(MaterialManifest::AutoGenerated, def.autoGenerated? SetFlags : UnsetFlags);
@@ -1159,7 +1129,7 @@ static void interpretMaterialDef(ded_material_t const &def)
             {
                 try
                 {
-                    Texture &texture = App_ResourceSystem().texture(*firstLayer.stages[0].texture);
+                    Texture &texture = resSys().texture(*firstLayer.stages[0].texture);
                     if(texture.isFlagged(Texture::Custom))
                     {
                         manifest->setFlags(MaterialManifest::Custom);
@@ -1176,24 +1146,9 @@ static void interpretMaterialDef(ded_material_t const &def)
             }
         }
 
-        /*
-         * (Re)configure the material:
-         */
+        // (Re)configure the material.
         /// @todo Defer until necessary.
-        Material &material = *manifest->derive();
-
-        material.setFlags(translateMaterialDefFlags(def.flags));
-        material.setDimensions(Vector2i(def.width, def.height));
-#ifdef __CLIENT__
-        material.setAudioEnvironment(S_AudioEnvironmentId(def.uri));
-#endif
-
-        rebuildMaterialLayers(material, def);
-#ifdef __CLIENT__
-        rebuildMaterialDecorations(material, def);
-#endif
-
-        material.markValid(true);
+        configureMaterial(*manifest->derive(), def);
     }
     catch(ResourceSystem::UnknownSchemeError const &er)
     {
@@ -1209,7 +1164,7 @@ static void interpretMaterialDef(ded_material_t const &def)
 
 static void invalidateAllMaterials()
 {
-    for(Material *material : App_ResourceSystem().allMaterials())
+    for(Material *material : resSys().allMaterials())
     {
         material->markValid(false);
     }
@@ -1218,11 +1173,11 @@ static void invalidateAllMaterials()
 #ifdef __CLIENT__
 static void clearFontDefinitionLinks()
 {
-    for(AbstractFont *font : App_ResourceSystem().allFonts())
+    for(AbstractFont *font : resSys().allFonts())
     {
         if(CompositeBitmapFont *compFont = font->maybeAs<CompositeBitmapFont>())
         {
-            compFont->setDefinition(0);
+            compFont->setDefinition(nullptr);
         }
     }
 }
@@ -1236,7 +1191,7 @@ void Def_Read()
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        FS1::Scheme &scheme = App_FileSystem().scheme(App_ResourceClass("RC_MODEL").defaultScheme());
+        FS1::Scheme &scheme = fileSys().scheme(App_ResourceClass("RC_MODEL").defaultScheme());
         scheme.reset();
 
         invalidateAllMaterials();
@@ -1264,7 +1219,7 @@ void Def_Read()
     // Composite fonts.
     for(int i = 0; i < defs.compositeFonts.size(); ++i)
     {
-        App_ResourceSystem().newFontFromDef(defs.compositeFonts[i]);
+        resSys().newFontFromDef(defs.compositeFonts[i]);
     }
 #endif
 
@@ -1352,34 +1307,22 @@ void Def_Read()
     // Decorations. (Define textures).
     for(int i = 0; i < defs.decorations.size(); ++i)
     {
-        ded_decor_t *dec = &defs.decorations[i];
+        ded_decoration_t *dec = &defs.decorations[i];
         for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
         {
-            ded_decoration_t *dl = &dec->lights[k];
-
-            if(V3f_IsZero(dl->stage.color)) break;
-
-            if(dl->stage.up)
+            ded_decorlight_t *dl = &dec->lights[k];
+            if(Vector3f(dl->stage.color) != Vector3f(0, 0, 0))
             {
-                defineLightmap(*dl->stage.up);
-            }
-            if(dl->stage.down)
-            {
-                defineLightmap(*dl->stage.down);
-            }
-            if(dl->stage.sides)
-            {
-                defineLightmap(*dl->stage.sides);
-            }
-            if(dl->stage.flare)
-            {
-                defineFlaremap(*dl->stage.flare);
+                if(dl->stage.up)    defineLightmap(*dl->stage.up);
+                if(dl->stage.down)  defineLightmap(*dl->stage.down);
+                if(dl->stage.sides) defineLightmap(*dl->stage.sides);
+                if(dl->stage.flare) defineFlaremap(*dl->stage.flare);
             }
         }
     }
 
     // Detail textures (Define textures).
-    App_ResourceSystem().textureScheme("Details").clear();
+    resSys().textureScheme("Details").clear();
     for(int i = 0; i < defs.details.size(); ++i)
     {
         ded_detailtexture_t *dtl = &defs.details[i];
@@ -1390,12 +1333,12 @@ void Def_Read()
 
         if(!dtl->stage.texture) continue;
 
-        App_ResourceSystem().defineTexture("Details", *dtl->stage.texture);
+        resSys().defineTexture("Details", *dtl->stage.texture);
     }
 
     // Surface reflections (Define textures).
-    App_ResourceSystem().textureScheme("Reflections").clear();
-    App_ResourceSystem().textureScheme("Masks").clear();
+    resSys().textureScheme("Reflections").clear();
+    resSys().textureScheme("Masks").clear();
     for(int i = 0; i < defs.reflections.size(); ++i)
     {
         ded_reflection_t *ref = &defs.reflections[i];
@@ -1405,11 +1348,11 @@ void Def_Read()
 
         if(ref->stage.texture)
         {
-            App_ResourceSystem().defineTexture("Reflections", *ref->stage.texture);
+            resSys().defineTexture("Reflections", *ref->stage.texture);
         }
         if(ref->stage.maskTexture)
         {
-            App_ResourceSystem().defineTexture("Masks", *ref->stage.maskTexture,
+            resSys().defineTexture("Masks", *ref->stage.maskTexture,
                             Vector2i(ref->stage.maskWidth, ref->stage.maskHeight));
         }
     }
@@ -1449,7 +1392,7 @@ void Def_Read()
 
         qstrcpy(si->id, snd->id);
         qstrcpy(si->lumpName, snd->lumpName);
-        si->lumpNum     = (qstrlen(snd->lumpName) > 0? App_FileSystem().lumpNumForName(snd->lumpName) : -1);
+        si->lumpNum     = (qstrlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
         qstrcpy(si->name, snd->name);
 
         int const soundIdx = Def_GetSoundNum(snd->link);
@@ -1527,7 +1470,7 @@ void Def_Read()
         ded_ptcgen_t *pg = &defs.ptcGens[i];
         int st = Def_GetStateNum(pg->state);
 
-        if(!strcmp(pg->type, "*"))
+        if(!qstrcmp(pg->type, "*"))
             pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
         else
             pg->typeNum = Def_GetMobjNum(pg->type);
@@ -1642,14 +1585,14 @@ static void initMaterialGroup(ded_group_t &def)
 
         try
         {
-            MaterialManifest &manifest = App_ResourceSystem().materialManifest(*gm->material);
+            MaterialManifest &manifest = resSys().materialManifest(*gm->material);
 
             if(def.flags & AGF_PRECACHE) // A precache group.
             {
                 // Only create the group once the first material has been found.
                 if(!group)
                 {
-                    group = &App_ResourceSystem().newMaterialGroup();
+                    group = &resSys().newMaterialGroup();
                 }
 
                 group->insert(&manifest);
@@ -1660,10 +1603,10 @@ static void initMaterialGroup(ded_group_t &def)
                 // Only create the group once the first material has been found.
                 if(animNumber == -1)
                 {
-                    animNumber = App_ResourceSystem().newAnimGroup(def.flags & ~AGF_PRECACHE);
+                    animNumber = resSys().newAnimGroup(def.flags & ~AGF_PRECACHE);
                 }
 
-                App_ResourceSystem().animGroup(animNumber).addFrame(manifest.material(), gm->tics, gm->randomTics);
+                resSys().animGroup(animNumber).addFrame(manifest.material(), gm->tics, gm->randomTics);
             }
 #endif
         }
@@ -1696,15 +1639,15 @@ void Def_PostInit()
             st->model = -1;
             try
             {
-                ModelDef &modef = App_ResourceSystem().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                ModelDef &modef = resSys().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
                 if(modef.subModelId(0) == NOMODELID)
                 {
                     continue;
                 }
 
-                Model &mdl = App_ResourceSystem().model(modef.subModelId(0));
+                Model &mdl = resSys().model(modef.subModelId(0));
 
-                st->model = App_ResourceSystem().indexOf(&modef);
+                st->model = resSys().indexOf(&modef);
                 st->frame = mdl.frameNumber(st->frameName);
                 if(st->frame < 0) st->frame = 0;
                 if(st->endFrameName[0])
@@ -1748,7 +1691,7 @@ void Def_PostInit()
     }
 
     // Material groups (e.g., for precaching).
-    App_ResourceSystem().clearAllMaterialGroups();
+    resSys().clearAllMaterialGroups();
     for(int i = 0; i < defs.groups.size(); ++i)
     {
         initMaterialGroup(defs.groups[i]);
@@ -1834,7 +1777,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     {
         try
         {
-            l->actMaterial = App_ResourceSystem().materialManifest(*def->actMaterial).id();
+            l->actMaterial = resSys().materialManifest(*def->actMaterial).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
@@ -1844,7 +1787,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
     {
         try
         {
-            l->deactMaterial = App_ResourceSystem().materialManifest(*def->deactMaterial).id();
+            l->deactMaterial = resSys().materialManifest(*def->deactMaterial).id();
         }
         catch(ResourceSystem::MissingManifestError const &)
         {} // Ignore this error.
@@ -1883,7 +1826,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 {
                     try
                     {
-                        l->iparm[k] = App_ResourceSystem().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
+                        l->iparm[k] = resSys().materialManifest(de::Uri(def->iparmStr[k], RC_NULL)).id();
                     }
                     catch(ResourceSystem::MissingManifestError const &)
                     {} // Ignore this error.
@@ -2019,7 +1962,7 @@ int Def_Get(int type, char const *id, void *out)
                     break;
             }
         }
-        if(out) *(char**) out = (idx >= 0? defs.values[idx].text : 0);
+        if(out) *(char **) out = (idx >= 0? defs.values[idx].text : 0);
         return idx; }
 
     case DD_DEF_VALUE_BY_INDEX: {
@@ -2116,7 +2059,7 @@ int Def_Set(int type, int index, int value, void const *ptr)
             qstrcpy(runtimeDefs.sounds[index].lumpName, (char const *) ptr);
             if(qstrlen(runtimeDefs.sounds[index].lumpName))
             {
-                runtimeDefs.sounds[index].lumpNum = App_FileSystem().lumpNumForName(runtimeDefs.sounds[index].lumpName);
+                runtimeDefs.sounds[index].lumpNum = fileSys().lumpNumForName(runtimeDefs.sounds[index].lumpName);
                 if(runtimeDefs.sounds[index].lumpNum < 0)
                 {
                     LOG_RES_WARNING("Unknown sound lump name \"%s\"; sound #%i will be inaudible")
@@ -2151,7 +2094,7 @@ StringArray *Def_ListMobjTypeIDs()
 
 StringArray *Def_ListStateIDs()
 {
-    StringArray* array = StringArray_New();
+    StringArray *array = StringArray_New();
     for(int i = 0; i < defs.states.size(); ++i)
     {
         StringArray_Append(array, defs.states[i].id);
@@ -2159,7 +2102,7 @@ StringArray *Def_ListStateIDs()
     return array;
 }
 
-bool Def_IsAllowedDecoration(ded_decor_t const *def, /*bool hasExternal,*/ bool isCustom)
+bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom)
 {
     //if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
     if(!isCustom)   return (def->flags & DCRF_NO_IWAD) == 0;

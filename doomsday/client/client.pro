@@ -154,11 +154,11 @@ DENG_CONVENIENCE_HEADERS += \
     include/MapElement \
     include/MapObject \
     include/Material \
+    include/MaterialAnimator \
     include/MaterialArchive \
     include/MaterialContext \
     include/MaterialManifest \
     include/MaterialScheme \
-    include/MaterialSnapshot \
     include/MaterialVariantSpec \
     include/Mesh \
     include/Model \
@@ -330,10 +330,14 @@ DENG_HEADERS += \
     include/resource/manifest.h \
     include/resource/mapdef.h \
     include/resource/material.h \
+    include/resource/materialanimator.h \
     include/resource/materialarchive.h \
+    include/resource/materialdetailtexturelayer.h \
+    include/resource/materiallightdecoration.h \
     include/resource/materialmanifest.h \
     include/resource/materialscheme.h \
-    include/resource/materialsnapshot.h \
+    include/resource/materialshinelayer.h \
+    include/resource/materialtexturelayer.h \
     include/resource/materialvariantspec.h \
     include/resource/model.h \
     include/resource/modeldef.h \
@@ -660,12 +664,14 @@ SOURCES += \
     src/resource/manifest.cpp \
     src/resource/mapdef.cpp \
     src/resource/material.cpp \
-    src/resource/materialanimation.cpp \
+    src/resource/materialanimator.cpp \
     src/resource/materialarchive.cpp \
+    src/resource/materialdetailtexturelayer.cpp \
+    src/resource/materiallightdecoration.cpp \
     src/resource/materialmanifest.cpp \
     src/resource/materialscheme.cpp \
-    src/resource/materialsnapshot.cpp \
-    src/resource/materialvariant.cpp \
+    src/resource/materialshinelayer.cpp \
+    src/resource/materialtexturelayer.cpp \
     src/resource/model.cpp \
     src/resource/patch.cpp \
     src/resource/patchname.cpp \

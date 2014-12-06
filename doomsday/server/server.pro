@@ -189,8 +189,11 @@ DENG_HEADERS += \
     $$SRC/include/resource/mapdef.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
+    $$SRC/include/resource/materialdetailtexturelayer.h \
     $$SRC/include/resource/materialmanifest.h \
     $$SRC/include/resource/materialscheme.h \
+    $$SRC/include/resource/materialshinelayer.h \
+    $$SRC/include/resource/materialtexturelayer.h \
     $$SRC/include/resource/patch.h \
     $$SRC/include/resource/patchname.h \
     $$SRC/include/resource/rawtexture.h \
@@ -340,8 +343,11 @@ SOURCES += \
     $$SRC/src/resource/mapdef.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
+    $$SRC/src/resource/materialdetailtexturelayer.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
     $$SRC/src/resource/materialscheme.cpp \
+    $$SRC/src/resource/materialshinelayer.cpp \
+    $$SRC/src/resource/materialtexturelayer.cpp \
     $$SRC/src/resource/patch.cpp \
     $$SRC/src/resource/patchname.cpp \
     $$SRC/src/resource/pcx.cpp \

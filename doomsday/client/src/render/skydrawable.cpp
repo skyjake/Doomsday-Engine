@@ -33,7 +33,6 @@
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "ModelDef"
 
@@ -127,9 +126,12 @@ struct Hemisphere
 
         if(Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+            MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer->isMasked()));
 
-            Texture &pTex = ms.texture(MTU_PRIMARY).generalCase();
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
+
+            Texture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
                     (pTex.analysisDataPointer((hemisphere == UpperHemisphere? Texture::AverageTopColorAnalysis
                                                                             : Texture::AverageBottomColorAnalysis)));
@@ -222,16 +224,19 @@ struct Hemisphere
             TextureVariant *layerTex = nullptr;
             if(Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
-                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
+                MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
 
-                layerTex = &ms.texture(MTU_PRIMARY);
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
+
+                layerTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 GL_BindTexture(layerTex);
 
                 glEnable(GL_TEXTURE_2D);
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                Vector2i const &texSize = layerTex->generalCase().dimensions();
+                Vector2i const &texSize = layerTex->base().dimensions();
                 if(texSize.x > 0)
                 {
                     glTranslatef(ldata.offset / texSize.x, 0, 0);

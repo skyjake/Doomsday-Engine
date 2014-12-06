@@ -99,6 +99,18 @@ int ded_s::addEpisode()
     return def.geti("__order__");
 }
 
+int ded_s::addDecoration()
+{
+    ded_decoration_t *decor = decorations.append();
+    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+    {
+        // The color (0,0,0) means the light is not active.
+        decor->lights[i].stage.elevation = 1;
+        decor->lights[i].stage.radius    = 1;
+    }
+    return decorations.indexOf(decor);
+}
+
 int ded_s::addFinale()
 {
     Record &def = finales.append();
@@ -111,6 +123,12 @@ int ded_s::addMapInfo()
     Record &def = mapInfos.append();
     defn::MapInfo(def).resetToDefaults();
     return def.geti("__order__");
+}
+
+int ded_s::addMaterial()
+{
+    ded_material_t *mat = materials.append();
+    return materials.indexOf(mat);
 }
 
 int ded_s::addModel()
@@ -190,30 +208,6 @@ int DED_AddLight(ded_t* ded, char const* stateid)
     return ded->lights.indexOf(light);
 }
 
-int DED_AddMaterial(ded_t* ded, char const* uri)
-{
-    ded_material_t* mat = ded->materials.append();
-    if(uri) mat->uri = new de::Uri(uri, RC_NULL);
-    return ded->materials.indexOf(mat);
-}
-
-int DED_AddMaterialLayerStage(ded_material_layer_t *ml)
-{
-    ded_material_layer_stage_t *stage = ml->stages.append();
-    return ml->stages.indexOf(stage);
-}
-
-int DED_AddMaterialDecorationStage(ded_material_decoration_t *li)
-{
-    ded_decorlight_stage_t *stage = li->stages.append();
-
-    // The color (0,0,0) means the light is not visible during this stage.
-    stage->elevation = 1;
-    stage->radius    = 1;
-
-    return li->stages.indexOf(stage);
-}
-
 int DED_AddSound(ded_t* ded, char const* id)
 {
     ded_sound_t* snd = ded->sounds.append();
@@ -291,18 +285,6 @@ int DED_AddPtcGenStage(ded_ptcgen_t* gen)
     stage->hitSound.volume = 1;
 
     return gen->stages.indexOf(stage);
-}
-
-int DED_AddDecoration(ded_t* ded)
-{
-    ded_decor_t* decor = ded->decorations.append();
-    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-    {
-        // The color (0,0,0) means the light is not active.
-        decor->lights[i].stage.elevation = 1;
-        decor->lights[i].stage.radius    = 1;
-    }
-    return ded->decorations.indexOf(decor);
 }
 
 int DED_AddReflection(ded_t *ded)
@@ -640,6 +622,41 @@ ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
         }
     }
     return def;
+}
+
+ded_group_t *ded_s::findGroupForFrameTexture(de::Uri const &uri) const
+{
+    if(uri.isEmpty()) return nullptr;
+
+    // Reverse iteration (later defs override earlier ones).
+    for(int i = groups.size(); i--> 0; )
+    {
+        ded_group_t &grp = groups[i];
+
+        // We aren't interested in precache groups.
+        if(grp.flags & AGF_PRECACHE) continue;
+
+        // Or empty/single-frame groups.
+        if(grp.members.size() < 2) continue;
+
+        for(int k = 0; k < grp.members.size(); ++k)
+        {
+            ded_group_member_t &gm = grp.members[k];
+
+            if(!gm.material) continue;
+
+            if(*gm.material == uri)
+            {
+                // Found one.
+                return &grp;
+            }
+
+            // Only animate if the first frame in the group?
+            if(grp.flags & AGF_FIRST_ONLY) break;
+        }
+    }
+
+    return nullptr;  // Not found.
 }
 
 int ded_s::getTextNumForName(const char* name) const

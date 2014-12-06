@@ -203,6 +203,8 @@
 
 #define DENG2_PLURAL_S(Count) ((Count) != 1? "s" : "")
 
+#define DENG2_BOOL_YESNO(Yes) ((Yes)? "yes" : "no" )
+
 /**
  * Forms an escape sequence string literal. Escape sequences begin
  * with an ASCII Escape character.

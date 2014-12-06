@@ -25,10 +25,10 @@
 #include "Material"
 
 #ifdef __CLIENT__
-#  include "MaterialSnapshot"
 #  include "gl/gl_draw.h"
 #  include "gl/gl_main.h"
 #  include "render/rend_main.h" // renderWireframe
+#  include "MaterialAnimator"
 #endif
 
 using namespace de;
@@ -94,6 +94,13 @@ FinalePageWidget::~FinalePageWidget()
 {}
 
 #ifdef __CLIENT__
+static inline MaterialVariantSpec const &uiMaterialSpec()
+{
+    return App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+                                             GL_REPEAT, GL_REPEAT, 0, 1, 0,
+                                             false, false, false, false);
+}
+
 void FinalePageWidget::draw() const
 {
     if(d->flags.hidden) return;
@@ -109,15 +116,14 @@ void FinalePageWidget::draw() const
 
         if(topAlpha > 0 && bottomAlpha > 0)
         {
-            if(d->bg.material)
+            if(Material *material = d->bg.material)
             {
-                MaterialVariantSpec const &spec =
-                    App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
-                                                      GL_REPEAT, GL_REPEAT, 0, 1, 0,
-                                                      false, false, false, false);
-                MaterialSnapshot const &ms = d->bg.material->prepare(spec);
+                MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec());
 
-                GL_BindTexture(&ms.texture(MTU_PRIMARY));
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
+
+                GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
                 glEnable(GL_TEXTURE_2D);
             }
 

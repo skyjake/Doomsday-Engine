@@ -26,14 +26,14 @@
 #include "de_graphics.h"
 #include "de_ui.h"
 #include "de_misc.h"
+#include "clientapp.h"
 
 #include "api_fontrender.h"
 #include "resource/image.h"
 #include "gl/texturecontent.h"
 #include "render/rend_main.h"
 #include "render/rend_font.h"
-#include "MaterialSnapshot"
-#include "Material"
+#include "MaterialAnimator"
 
 #include "ui/ui_main.h"
 
@@ -57,6 +57,11 @@ static ui_color_t ui_colors[NUM_UI_COLORS] = {
     /* UIC_BRD_LOW */   { .25f, .25f, .55f },
     /* UIC_HELP */      { .4f, .4f, .52f }
 };
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 void UI_Register(void)
 {
@@ -112,7 +117,7 @@ static AbstractFont *loadSystemFont(char const *name)
 #endif
     F_ExpandBasePath(&resourcePath, &resourcePath);
 
-    AbstractFont *font = App_ResourceSystem().newFontFromFile(uri, Str_Text(&resourcePath));
+    AbstractFont *font = resSys().newFontFromFile(uri, Str_Text(&resourcePath));
     if(!font)
     {
         App_Error("loadSystemFont: Failed loading font \"%s\".", name);
@@ -130,7 +135,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     {
         try
         {
-            FontManifest &manifest = App_ResourceSystem().fontManifest(de::Uri(uri, RC_NULL));
+            FontManifest &manifest = resSys().fontManifest(de::Uri(uri, RC_NULL));
             if(manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());
@@ -158,7 +163,7 @@ void UI_LoadFonts()
 
 de::MaterialVariantSpec const &UI_MaterialSpec(int texSpecFlags)
 {
-    return App_ResourceSystem().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
+    return resSys().materialSpec(UiContext, texSpecFlags | TSF_NO_COMPRESSION,
                                              0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, 1, 0, false, false, false, false);
 }
@@ -222,8 +227,10 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
 void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd_bool filled,
     ui_color_t* topColor, ui_color_t* bottomColor, float alpha, float bottomAlpha)
 {
-    float s[2] = { 0, 1 }, t[2] = { 0, 1 };
-    assert(origin && size);
+    DENG2_ASSERT(origin && size);
+
+    float s[2] = { 0, 1 };
+    float t[2] = { 0, 1 };
 
     //alpha *= uiAlpha;
     //bottomAlpha *= uiAlpha;
@@ -240,15 +247,18 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
     if(!bottomColor)
         bottomColor = topColor;
 
+    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", (filled? Path("ui/boxfill") : Path("ui/boxcorner"))))
+                                                .getAnimator(UI_MaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+
     // The fill comes first, if there's one.
+    glBegin(GL_QUADS);
     if(filled)
     {
-        MaterialSnapshot const &ms =
-            App_ResourceSystem().material(de::Uri("System", Path("ui/boxfill")))
-                .prepare(UI_MaterialSpec());
-        GL_BindTexture(&ms.texture(MTU_PRIMARY));
-
-        glBegin(GL_QUADS);
         glTexCoord2f(0.5f, 0.5f);
         UI_SetColorA(topColor, alpha);
         glVertex2f(origin->x + border, origin->y + border);
@@ -256,15 +266,6 @@ void UI_DrawRectEx(const Point2Raw* origin, const Size2Raw* size, int border, dd
         UI_SetColorA(bottomColor, bottomAlpha);
         glVertex2f(origin->x + size->width - border, origin->y + size->height - border);
         glVertex2f(origin->x + border, origin->y + size->height - border);
-    }
-    else
-    {
-        MaterialSnapshot const &ms =
-            App_ResourceSystem().material(de::Uri("System", Path("ui/boxcorner")))
-                .prepare(UI_MaterialSpec());
-        GL_BindTexture(&ms.texture(MTU_PRIMARY));
-
-        glBegin(GL_QUADS);
     }
 
     if(!filled || border > 0)
@@ -358,7 +359,7 @@ void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, fl
 
     // Background gradient picture.
     MaterialSnapshot const &ms =
-        App_ResourceSystem().material(de::Uri("System", Path("ui/background")))
+        resSys().material(de::Uri("System", Path("ui/background")))
             .prepare(UI_MaterialSpec(TSF_MONOCHROME));
     GL_BindTexture(&ms.texture(MTU_PRIMARY));
     */

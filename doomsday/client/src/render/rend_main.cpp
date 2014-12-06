@@ -35,7 +35,6 @@
 #include "edit_bias.h" /// @todo remove me
 #include "network/net_main.h" /// @todo remove me
 
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "Face"
@@ -271,6 +270,11 @@ static ConvexSubspace *curSubspace; // Subspace currently being drawn.
 static Vector3f curSectorLightColor;
 static float curSectorLightLevel;
 static bool firstSubspace; // No range checking for the first one.
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 static void scheduleFullLightGridUpdate()
 {
@@ -830,7 +834,7 @@ int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
-    coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
+    coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
@@ -849,16 +853,19 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        MaterialSnapshot const &ms = material->prepare();
-        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        // Ensure we've up to date info about the material.
+        matAnimator->prepare();
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.width();
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
+        Vector2i const &matDimensions = matAnimator->dimensions();
+
+        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
+        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / matDimensions.x;
+        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / matDimensions.y;
         VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].z - rvertices[0].z) / ms.height();
+                (rvertices[3].z - rvertices[0].z) / matDimensions.y;
 
-        if(!ms.isOpaque())
+        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        if(!matAnimator->isOpaque())
         {
             if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
                  VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
@@ -876,12 +883,10 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = material->generalCase()
-                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
-                                      true /*can create variant*/);
+        matAnimator = &matAnimator->material().getAnimator(Rend_MapSurfaceMaterialSpec(wrapS, wrapT));
     }
 
-    VS_WALL(vis)->material = material;
+    VS_WALL(vis)->animator  = matAnimator;
     VS_WALL(vis)->blendMode = blendMode;
 
     for(int i = 0; i < 4; ++i)
@@ -1058,35 +1063,38 @@ struct rendworldpoly_params_t
 };
 
 static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
-    rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
+    rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
+    DENG2_ASSERT(posCoords);
+
     SectorCluster &cluster = curSubspace->cluster();
 
-    DENG_ASSERT(posCoords != 0);
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
 
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
-    bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
-    // Map RTU configuration from prepared MaterialSnapshot(s).
-    GLTextureUnit const *primaryRTU       = (!p.skyMasked)? &ms.unit(RTU_PRIMARY) : NULL;
-    GLTextureUnit const *primaryDetailRTU = (r_detail && !p.skyMasked && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    GLTextureUnit const *interRTU         = (!p.skyMasked && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
-    GLTextureUnit const *interDetailRTU   = (r_detail && !p.skyMasked && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
-    GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    // Map RTU configuration.
+    GLTextureUnit const *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
+    GLTextureUnit const *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
+    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
+    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
+    GLTextureUnit const *shineRTU       = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
+    GLTextureUnit const *shineMaskRTU   = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
     Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector2f *interCoords    = layer0InterRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
-    Vector4f *shinyColors    = 0;
-    Vector2f *shinyTexCoords = 0;
-    Vector2f *modCoords      = 0;
+    Vector4f *shinyColors    = nullptr;
+    Vector2f *shinyTexCoords = nullptr;
+    Vector2f *modCoords      = nullptr;
 
     DGLuint modTex = 0;
     Vector2f modTexSt[2]; // [topLeft, bottomRight]
@@ -1095,7 +1103,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     if(!skyMaskedMaterial)
     {
         // ShinySurface?
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1116,7 +1124,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
              */
             if(useLights && Rend_IsMTexLights())
             {
-                TexProjection *dyn = 0;
+                TexProjection *dyn = nullptr;
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
                 modTex      = dyn->texture;
@@ -1134,11 +1142,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Blend texture coordinates.
-        if(interRTU && !drawAsVisSprite)
+        if(layer0InterRTU && !drawAsVisSprite)
             quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Shiny texture coordinates.
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
@@ -1153,19 +1161,19 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             Vector3f const delta(vtx - *p.topLeft);
 
             // Primary texture coordinates.
-            if(primaryRTU)
+            if(layer0RTU)
             {
                 primaryCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Blend primary texture coordinates.
-            if(interRTU)
+            if(layer0InterRTU)
             {
                 interCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Shiny texture coordinates.
-            if(shinyRTU)
+            if(shineRTU)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx);
             }
@@ -1302,15 +1310,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
         }
 
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // Strength of the shine.
-            Vector3f const &minColor = ms.shineMinColor();
+            Vector3f const &minColor = matAnimator.shineMinColor();
             for(uint i = 0; i < numVertices; ++i)
             {
                 Vector4f &color = shinyColors[i];
                 color = Vector3f(colorCoords[i]).max(minColor);
-                color.w = shinyRTU->opacity;
+                color.w = shineRTU->opacity;
             }
         }
 
@@ -1357,7 +1365,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
          * needed because all masked polys must be sorted (sprites are masked
          * polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
+        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1491,9 +1499,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1505,18 +1513,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1528,9 +1536,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1559,15 +1567,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1581,7 +1589,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
@@ -1589,14 +1597,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                                     shineMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
                                      false, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
-                                     shinyMaskRTU? primaryCoords : 0);
+                                     shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1616,9 +1624,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1630,18 +1638,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1653,9 +1661,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1674,15 +1682,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords, interCoords,
                                  modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1697,13 +1705,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                     ms.shineBlendMode(),
+                                     matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER         ).scale,
                                      listSpec.unit(TU_INTER         ).offset,
                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                      false, numVertices,
-                                     posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+                                     posCoords, shinyColors, shinyTexCoords, shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1716,7 +1724,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     R_FreeRendColors(shinyColors);
 
     return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
+            !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
 }
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
@@ -1896,9 +1904,8 @@ static void writeWallSection(HEdge &hedge, int section,
     bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
     bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-    Vector2f const materialScale = surface.materialScale();
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+    Vector2f const materialScale  = surface.materialScale();
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -1937,7 +1944,7 @@ static void writeWallSection(HEdge &hedge, int section,
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
@@ -1945,8 +1952,7 @@ static void writeWallSection(HEdge &hedge, int section,
                     surface.hasMaterial()? surface.materialPtr()
                                          : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= glowFactor; // Global scale factor.
@@ -1999,7 +2005,7 @@ static void writeWallSection(HEdge &hedge, int section,
     posCoords[3] =    rightEdge.top().origin();
 
     // Draw this section.
-    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
+    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
     if(wroteOpaque)
     {
         // Render FakeRadio for this section?
@@ -2106,7 +2112,7 @@ static void writeSubspacePlane(Plane &plane)
         }
     }
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
     Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
                             + surface.materialOriginSmoothed();
@@ -2178,7 +2184,7 @@ static void writeSubspacePlane(Plane &plane)
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
@@ -2186,8 +2192,7 @@ static void writeSubspacePlane(Plane &plane)
                     surface.hasMaterial()? surface.materialPtr()
                                          : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= glowFactor; // Global scale factor.
@@ -2215,7 +2220,7 @@ static void writeSubspacePlane(Plane &plane)
                                                 plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
-    renderWorldPoly(posCoords, vertCount, parm, ms);
+    renderWorldPoly(posCoords, vertCount, parm, matAnimator);
 
     if(&plane.sector() != &curSubspace->sector())
     {
@@ -2231,7 +2236,7 @@ static void writeSubspacePlane(Plane &plane)
 static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
-    DENG2_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords);
 
     if(!devRendSkyMode)
     {
@@ -2245,20 +2250,23 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
     else
     {
-        DENG2_ASSERT(texCoords != 0);
+        DENG2_ASSERT(texCoords);
 
         DrawListSpec listSpec;
         listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
-            DENG2_ASSERT(material != 0);
+            DENG2_ASSERT(material);
+            MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
 
             // Map RTU configuration from the sky surface material.
-            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
-            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
-            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
-            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
+            listSpec.texunits[TU_PRIMARY]        = matAnimator.texUnit(MaterialAnimator::TU_LAYER0);
+            listSpec.texunits[TU_PRIMARY_DETAIL] = matAnimator.texUnit(MaterialAnimator::TU_DETAIL);
+            listSpec.texunits[TU_INTER]          = matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER);
+            listSpec.texunits[TU_INTER_DETAIL]   = matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER);
         }
 
         ClientApp::renderSystem().drawLists()
@@ -4471,11 +4479,13 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms =
-        ClientApp::resourceSystem().material(de::Uri("System", Path("bbox")))
-                  .prepare(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("bbox")))
+                                                .getAnimator(Rend_SpriteMaterialSpec());
 
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

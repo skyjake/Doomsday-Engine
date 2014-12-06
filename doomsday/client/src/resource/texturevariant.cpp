@@ -595,7 +595,7 @@ void Texture::Variant::release()
     d->glTexName = 0;
 }
 
-Texture &Texture::Variant::generalCase() const
+Texture &Texture::Variant::base() const
 {
     return d->texture;
 }

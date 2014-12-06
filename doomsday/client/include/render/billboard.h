@@ -25,6 +25,7 @@
 
 #include "dd_types.h"
 #include "Material"
+#include "MaterialAnimator"
 #include "MaterialVariantSpec"
 
 class BspLeaf;
@@ -37,19 +38,19 @@ class BspLeaf;
  */
 struct drawmaskedwallparams_t
 {
-    void *material; /// MaterialVariant
-    blendmode_t blendMode; ///< Blendmode to be used when drawing
-                               /// (two sided mid textures only)
+    MaterialAnimator *animator;
+    blendmode_t blendMode;       ///< Blendmode to be used when drawing (two sided mid textures only)
+
     struct wall_vertex_s {
-        float pos[3]; ///< x y and z coordinates.
+        float pos[3];            ///< x y and z coordinates.
         float color[4];
     } vertices[4];
 
     double texOffset[2];
-    float texCoord[2][2]; ///< u and v coordinates.
+    float texCoord[2][2];        ///< u and v coordinates.
 
-    DGLuint modTex; ///< Texture to modulate with.
-    float modTexCoord[2][2]; ///< [top-left, bottom-right][x, y]
+    DGLuint modTex;              ///< Texture to modulate with.
+    float modTexCoord[2][2];     ///< [top-left, bottom-right][x, y]
     float modColor[4];
 };
 
@@ -89,8 +90,8 @@ struct drawspriteparams_t
     blendmode_t blendMode;
 
     // Material:
-    void *material; /// MaterialVariant
-    dd_bool matFlip[2]; // [S, T] Flip along the specified axis.
+    MaterialAnimator *matAnimator;
+    dd_bool matFlip[2];             ///< [S, T] Flip along the specified axis.
 
     // Lighting/color:
     //float ambientColor[4];

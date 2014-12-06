@@ -116,15 +116,16 @@ public:
 
     private:
         /**
-         * @param generalCase   Texture from which this variant is derived.
-         * @param spec          Specification used to derive this variant.
-         *                      Ownership is NOT given to the Variant.
+         * @param texture  Base Texture from which the draw-context variant is derived.
+         * @param spec     Draw-context variant specification.
          */
-        Variant(Texture &generalCase, TextureVariantSpec const &spec);
+        Variant(Texture &texture, TextureVariantSpec const &spec);
 
     public:
-        /// @return  Superior texture of which the variant is a derivative.
-        Texture &generalCase() const;
+        /**
+         * Returns the base Texture for the draw-context variant.
+         */
+        Texture &base() const;
 
         /// Returns @c true if the variant is "prepared".
         inline bool isPrepared() const { return glName() != 0; }

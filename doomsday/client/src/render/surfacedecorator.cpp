@@ -44,7 +44,7 @@ typedef QMap<Material *, SurfaceSet> MaterialSurfaceMap;
 
 DENG2_PIMPL_NOREF(SurfaceDecorator)
 , DENG2_OBSERVES(Material, DimensionsChange)
-, DENG2_OBSERVES(MaterialAnimation, DecorationStageChange)
+, DENG2_OBSERVES(MaterialAnimator, DecorationStageChange)
 {
     MaterialSurfaceMap decorated; ///< All surfaces being looked after.
 
@@ -61,24 +61,24 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
     {
         if(yes)
         {
-            material.audienceForDimensionsChange += this;
-            material.animation(MapSurfaceContext).audienceForDecorationStageChange += this;
+            material.audienceForDimensionsChange() += this;
+            material.getAnimator(Rend_MapSurfaceMaterialSpec()).audienceForDecorationStageChange += this;
         }
         else
         {
-            material.audienceForDimensionsChange -= this;
-            material.animation(MapSurfaceContext).audienceForDecorationStageChange -= this;
+            material.audienceForDimensionsChange() -= this;
+            material.getAnimator(Rend_MapSurfaceMaterialSpec()).audienceForDecorationStageChange -= this;
         }
     }
 
-    void updateDecorations(Surface &suf, MaterialSnapshot const &materialSnapshot,
+    void updateDecorations(Surface &suf, MaterialAnimator &matAnimator,
         Vector2f const &materialOrigin, Vector3d const &topLeft,
         Vector3d const &bottomRight, Sector *containingSector = nullptr)
     {
         Vector3d delta = bottomRight - topLeft;
         if(de::fequal(delta.length(), 0)) return;
 
-        Material &material = materialSnapshot.material();
+        Material &material = matAnimator.material();
         int const axis = suf.normal().maxAxis();
 
         Vector2d sufDimensions;
@@ -97,30 +97,34 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
         if(sufDimensions.y < 0) sufDimensions.y = -sufDimensions.y;
 
         // Generate a number of decorations.
-        Material::Decorations const &decorations = material.decorations();
-        for(int i = 0; i < decorations.count(); ++i)
+        int decorIndex = 0;
+
+        material.forAllDecorations([&suf, &matAnimator, &materialOrigin
+                                   , &topLeft, &bottomRight, &containingSector
+                                   , &delta, &axis, &sufDimensions, &decorIndex]
+                                   (MaterialDecoration &decor)
         {
-            MaterialSnapshotDecoration &matDecor = materialSnapshot.decoration(i);
-            MaterialDecoration const *def = decorations[i];
+            Vector2i const &matDimensions               = matAnimator.material().dimensions();
+            MaterialAnimator::Decoration const &decorSS = matAnimator.decoration(decorIndex);
 
             // Skip values must be at least one.
-            Vector2i skip = Vector2i(def->patternSkip().x + 1, def->patternSkip().y + 1)
+            Vector2i skip = Vector2i(decor.patternSkip().x + 1, decor.patternSkip().y + 1)
                                 .max(Vector2i(1, 1));
 
-            Vector2f repeat = material.dimensions() * skip;
+            Vector2f repeat = matDimensions * skip;
             if(repeat == Vector2f(0, 0))
-                return;
+                return LoopAbort;
 
-            Vector3d origin = topLeft + suf.normal() * matDecor.elevation;
+            Vector3d origin = topLeft + suf.normal() * decorSS.elevation();
 
-            float s = de::wrap(matDecor.pos[0] - material.width() * def->patternOffset().x + materialOrigin.x,
+            float s = de::wrap(decorSS.origin().x - matDimensions.x * decor.patternOffset().x + materialOrigin.x,
                                0.f, repeat.x);
 
             // Plot decorations.
             for(; s < sufDimensions.x; s += repeat.x)
             {
                 // Determine the topmost point for this row.
-                float t = de::wrap(matDecor.pos[1] - material.height() * def->patternOffset().y + materialOrigin.y,
+                float t = de::wrap(decorSS.origin().y - matDimensions.y * decor.patternOffset().y + materialOrigin.y,
                                    0.f, repeat.y);
 
                 for(; t < sufDimensions.y; t += repeat.y)
@@ -142,10 +146,13 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
                             continue;
                     }
 
-                    suf.addDecoration(new LightDecoration(matDecor, decorOrigin));
+                    suf.addDecoration(new LightDecoration(decorSS, decorOrigin));
                 }
             }
-        }
+
+            decorIndex += 1;
+            return LoopContinue;
+        });
     }
 
     void markSurfacesForRedecoration(Material &material)
@@ -158,17 +165,14 @@ DENG2_PIMPL_NOREF(SurfaceDecorator)
         }
     }
 
-    /// Observes Material DimensionsChange
     void materialDimensionsChanged(Material &material)
     {
         markSurfacesForRedecoration(material);
     }
 
-    /// Observes MaterialAnimation DecorationStageChange
-    void materialAnimationDecorationStageChanged(MaterialAnimation & /*anim*/,
-        MaterialDecoration &decor)
+    void materialAnimatorDecorationStageChanged(MaterialAnimator &animator)
     {
-        markSurfacesForRedecoration(decor.material());
+        markSurfacesForRedecoration(animator.material());
     }
 };
 
@@ -252,10 +256,9 @@ void SurfaceDecorator::decorate(Surface &surface)
 
     if(prepareGeometry(surface, topLeft, bottomRight, materialOrigin))
     {
-        MaterialSnapshot const &materialSnapshot =
-            surface.material().prepare(Rend_MapSurfaceMaterialSpec());
+        MaterialAnimator &matAnimator = surface.material().getAnimator(Rend_MapSurfaceMaterialSpec());
 
-        d->updateDecorations(surface, materialSnapshot, materialOrigin,
+        d->updateDecorations(surface, matAnimator, materialOrigin,
                              topLeft, bottomRight, containingSector(surface));
     }
 }
@@ -265,7 +268,7 @@ void SurfaceDecorator::redecorate()
     MaterialSurfaceMap::iterator i = d->decorated.begin();
     while(i != d->decorated.end())
     {
-        MaterialSnapshot const *materialSnapshot = nullptr;
+        MaterialAnimator *matAnimator = nullptr;
 
         SurfaceSet const &surfaceSet = i.value();
         for(Surface *surface : surfaceSet)
@@ -274,10 +277,10 @@ void SurfaceDecorator::redecorate()
                 continue;
 
             // Time to prepare the material?
-            if(!materialSnapshot)
+            if(!matAnimator)
             {
                 Material &material = *i.key();
-                materialSnapshot = &material.prepare(Rend_MapSurfaceMaterialSpec());
+                matAnimator = &material.getAnimator(Rend_MapSurfaceMaterialSpec());
             }
 
             surface->markForDecorationUpdate(false);
@@ -288,7 +291,7 @@ void SurfaceDecorator::redecorate()
 
             if(prepareGeometry(*surface, topLeft, bottomRight, materialOrigin))
             {
-                d->updateDecorations(*surface, *materialSnapshot, materialOrigin,
+                d->updateDecorations(*surface, *matAnimator, materialOrigin,
                                      topLeft, bottomRight, containingSector(*surface));
             }
         }
@@ -350,7 +353,7 @@ void SurfaceDecorator::add(Surface *surface)
     remove(surface);
 
     if(!surface->hasMaterial()) return;
-    if(!surface->material().isDecorated()) return;
+    if(!surface->material().hasDecorations()) return;
 
     d->decorated[&surface->material()].insert(surface);
 

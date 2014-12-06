@@ -114,7 +114,7 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDRegister finales;
 
     // Decorations.
-    DEDArray<ded_decor_t> decorations;
+    DEDArray<ded_decoration_t> decorations;
 
     // Reflections.
     DEDArray<ded_reflection_t> reflections;
@@ -143,9 +143,13 @@ public:
 
     int addEpisode();
 
+    int addDecoration();
+
     int addFinale();
 
     int addMapInfo();
+
+    int addMaterial();
 
     int addModel();
 
@@ -200,6 +204,8 @@ public:
 
     ded_compositefont_t *getCompositeFont(char const *uriCString) const;
 
+    ded_group_t *findGroupForFrameTexture(de::Uri const &uri) const;
+
 protected:
     void release();
 
@@ -219,21 +225,13 @@ int             DED_AddMobj(ded_t* ded, char const* idStr);
 int             DED_AddState(ded_t* ded, char const* id);
 int             DED_AddSprite(ded_t* ded, char const* name);
 int             DED_AddLight(ded_t* ded, char const* stateID);
-LIBDOOMSDAY_PUBLIC int DED_AddMaterial(ded_t* ded, char const* uri);
-LIBDOOMSDAY_PUBLIC int DED_AddMaterialLayerStage(ded_material_layer_t *ml);
-int             DED_AddMaterialDecorationStage(ded_material_decoration_t *li);
-//int             DED_AddSky(ded_t* ded, char const* id);
 int             DED_AddSound(ded_t* ded, char const* id);
-//LIBDOOMSDAY_PUBLIC int DED_AddMusic(ded_t* ded, char const* id);
-//int             DED_AddMapInfo(ded_t* ded, char const* uri);
 int             DED_AddText(ded_t* ded, char const* id);
 int             DED_AddTextureEnv(ded_t* ded, char const* id);
 int             DED_AddValue(ded_t *ded, char const* id);
 int             DED_AddDetail(ded_t* ded, char const* lumpname);
 int             DED_AddPtcGen(ded_t* ded, char const* state);
 int             DED_AddPtcGenStage(ded_ptcgen_t* gen);
-//int             DED_AddFinale(ded_t* ded);
-int             DED_AddDecoration(ded_t* ded);
 int             DED_AddReflection(ded_t* ded);
 int             DED_AddGroup(ded_t* ded);
 int             DED_AddGroupMember(ded_group_t* grp);

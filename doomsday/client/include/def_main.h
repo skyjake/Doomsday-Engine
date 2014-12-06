@@ -24,6 +24,8 @@
 #define LIBDENG_DEFINITIONS_MAIN_H
 
 #include <vector>
+#include <doomsday/defs/ded.h>
+#include <doomsday/defs/dedtypes.h>
 #include <de/stringarray.h>
 #include "Material"
 
@@ -178,10 +180,6 @@ ded_value_t *Def_GetValueByUri(Uri const *uri);
 ded_material_t *Def_GetMaterial(char const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
-/// @todo $revise-texture-animation
-ded_decor_t *Def_GetDecoration(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
-ded_reflection_t *Def_GetReflection(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
-ded_detailtexture_t *Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -236,7 +234,7 @@ StringArray *Def_ListStateIDs(void);
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-bool Def_IsAllowedDecoration(ded_decor_t const *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.

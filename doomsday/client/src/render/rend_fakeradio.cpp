@@ -27,7 +27,6 @@
 #include "clientapp.h"
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Face"
 #include "ConvexSubspace"
@@ -1273,7 +1272,7 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
 
     // Missing, glowing or sky-masked materials are exempted.
     Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow())
+    if(material.isSkyMasked() || material.hasGlowingTextureLayers())
         return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume

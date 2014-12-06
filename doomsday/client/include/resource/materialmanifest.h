@@ -1,6 +1,6 @@
 /** @file materialmanifest.h  Description of a logical material resource.
  *
- * @authors Copyright © 2011-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,16 +20,16 @@
 #ifndef DENG_RESOURCE_MATERIALMANIFEST_H
 #define DENG_RESOURCE_MATERIALMANIFEST_H
 
-#include "Material"
-#include <doomsday/uri.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
 #include <de/Vector>
+#include <doomsday/uri.h>
+#include "Material"
 
 namespace de {
-
 class MaterialScheme;
+}
 
 /**
  * Description for a would-be logical Material resource.
@@ -40,7 +40,7 @@ class MaterialScheme;
  * @see MaterialScheme, Material
  * @ingroup resource
  */
-class MaterialManifest : public PathTree::Node
+class MaterialManifest : public de::PathTree::Node
 {
 public:
     /// Required material instance is missing. @ingroup errors
@@ -60,7 +60,8 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
-    MaterialManifest(PathTree::NodeArgs const &args);
+    MaterialManifest(de::PathTree::NodeArgs const &args);
+    ~MaterialManifest();
 
     /**
      * Derive a new logical Material instance by interpreting the manifest.
@@ -72,10 +73,10 @@ public:
     /**
      * Returns the owning scheme of the manifest.
      */
-    MaterialScheme &scheme() const;
+    de::MaterialScheme &scheme() const;
 
     /// Convenience method for returning the name of the owning scheme.
-    String const &schemeName() const;
+    de::String const &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the material manifest.
@@ -86,9 +87,8 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the material manifest.
      */
-    inline Uri composeUri(QChar sep = '/') const
-    {
-        return Uri(schemeName(), path(sep));
+    inline de::Uri composeUri(QChar sep = '/') const {
+        return de::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -96,16 +96,18 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns a textual description of the source of the manifest.
      *
      * @return Human-friendly description of the source of the manifest.
      */
-    String sourceDescription() const;
+    de::String sourceDescription() const;
 
-    /// @return  Unique identifier associated with the manifest.
+    /**
+     * Returns the unique identifier associated with the manifest.
+     */
     materialid_t id() const;
 
     void setId(materialid_t newId);
@@ -147,20 +149,12 @@ public:
      * @see hasMaterial()
      */
     Material &material() const;
-
-    /**
-     * Returns a pointer to the associated Material resource; otherwise @c 0.
-     *
-     * @see hasMaterial()
-     */
-    inline Material *materialPtr() const {
-        return hasMaterial()? &material() : 0;
-    }
+    Material *materialPtr() const;
 
     /**
      * Change the material associated with the manifest.
      *
-     * @param  newMaterial  New material to associate with.
+     * @param newMaterial  New material to associate with.
      */
     void setMaterial(Material *newMaterial);
 
@@ -170,6 +164,4 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialManifest::Flags)
 
-} // namespace de
-
-#endif // DENG_RESOURCE_MATERIALMANIFEST_H
+#endif  // DENG_RESOURCE_MATERIALMANIFEST_H

@@ -27,7 +27,6 @@
 #include "clientapp.h"
 
 #include "world/map.h"
-#include "MaterialSnapshot"
 #include "WallEdge"
 
 #include "gl/gl_texmanager.h"

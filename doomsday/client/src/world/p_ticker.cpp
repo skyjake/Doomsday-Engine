@@ -107,10 +107,16 @@ int P_MobjTicker(thinker_t *th, void *context)
  */
 static void materialsTicker(timespan_t elapsed)
 {
-    foreach(Material *material, App_ResourceSystem().allMaterials())
-    foreach(MaterialAnimation *animation, material->animations())
+    /// @todo Each context animator should be driven by a more relevant ticker, rather
+    /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
+    /// context should be driven separately).
+    for(Material *material : App_ResourceSystem().allMaterials())
     {
-        animation->animate(elapsed);
+        material->forAllAnimators([&elapsed] (MaterialAnimator &animator)
+        {
+            animator.animate(elapsed);
+            return LoopContinue;
+        });
     }
 }
 

@@ -65,6 +65,7 @@
 #  include "gl/gl_main.h"
 
 #  include "Lumobj"
+#  include "MaterialAnimator"
 #  include "render/viewports.h" // R_ResetViewer
 #  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
@@ -623,8 +624,16 @@ DENG2_PIMPL(WorldSystem)
         VL_InitForMap(*map); // Converted vlights (from lumobjs).
         map->initBias(); // Shadow bias sources and surfaces.
 
-        // Restart all material animations.
-        App_ResourceSystem().restartAllMaterialAnimations();
+        // Rewind/restart material animators.
+        /// @todo Only rewind animators responsible for map-surface contexts.
+        for(Material *material : App_ResourceSystem().allMaterials())
+        {
+            material->forAllAnimators([] (MaterialAnimator &animator)
+            {
+                animator.rewind();
+                return LoopContinue;
+            });
+        }
 #endif
 
         /*

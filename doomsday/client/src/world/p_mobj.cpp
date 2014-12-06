@@ -456,15 +456,21 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
     // Always use the front rotation when determining light properties.
     if(!sprite->hasViewAngle(0)) return;
-    Material *mat = sprite->viewAngle(0).material;
+    SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
 
-    MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
-    if(!ms.hasTexture(MTU_PRIMARY)) return; // Unloadable texture?
-    Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
+    DENG2_ASSERT(sprViewAngle.material);
+    MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    if(!tex) return;  // Unloadable texture?
+    Vector2i const &texOrigin = tex->base().origin();
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
-    coord_t impacted = mo->origin[VZ] + -tex.origin().y - ms.height() - cluster.visFloor().heightSmoothed();
+    coord_t impacted = mo->origin[VZ] + -texOrigin.y - matAnimator.dimensions().y - cluster.visFloor().heightSmoothed();
 
     // If the floor is a visual plane then no light should be emitted.
     if(impacted < 0 && &cluster.visFloor() != &cluster.floor())
@@ -484,7 +490,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
 
         if(!de::fequal(def->offset[1], 0))
         {
-            lum->setZOffset(-tex.origin().y - def->offset[1]);
+            lum->setZOffset(-texOrigin.y - def->offset[1]);
         }
 
         if(Vector3f(def->color) != Vector3f(0, 0, 0))
@@ -552,13 +558,17 @@ float Mobj_ShadowStrength(mobj_t *mo)
         {
             if(sprite->hasViewAngle(0))
             {
-                Material *mat = sprite->viewAngle(0).material;
-                // Ensure we've prepared this.
-                MaterialSnapshot const &ms = mat->prepare(Rend_SpriteMaterialSpec());
+                SpriteViewAngle const &sprViewAngle = sprite->viewAngle(0);
+                DENG2_ASSERT(sprViewAngle.material);
+                MaterialAnimator &matAnimator = sprViewAngle.material->getAnimator(Rend_SpriteMaterialSpec());
 
-                averagealpha_analysis_t const *aa = (averagealpha_analysis_t const *)
-                    ms.texture(MTU_PRIMARY).generalCase().analysisDataPointer(Texture::AverageAlphaAnalysis);
-                DENG2_ASSERT(aa != 0);
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
+
+                TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+                DENG2_ASSERT(texture);
+                auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                DENG2_ASSERT(aa);
 
                 // We use an average which factors in the coverage ratio
                 // of alpha:non-alpha pixels.

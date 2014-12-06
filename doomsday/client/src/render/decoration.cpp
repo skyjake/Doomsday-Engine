@@ -1,7 +1,7 @@
 /** @file decoration.cpp  World surface decoration.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -19,61 +19,48 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "render/decoration.h"
-
-#include "MaterialSnapshot"
 #include "Surface"
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(Decoration)
 {
-    MaterialSnapshotDecoration *source;
-    Surface *surface;
-
-    Instance(MaterialSnapshotDecoration &source) : source(&source), surface(0)
-    {}
+    MaterialAnimator::Decoration const *source = nullptr;
+    Surface *surface = nullptr;
 };
 
-Decoration::Decoration(MaterialSnapshotDecoration &source, Vector3d const &origin)
-    : MapObject(origin), d(new Instance(source))
-{}
+Decoration::Decoration(MaterialAnimator::Decoration const &source, Vector3d const &origin)
+    : MapObject(origin)
+    , d(new Instance)
+{
+    d->source = &source;
+}
 
 Decoration::~Decoration()
 {}
 
-MaterialSnapshotDecoration &Decoration::source()
+MaterialAnimator::Decoration const &Decoration::source() const
 {
-    return *d->source;
-}
-
-MaterialSnapshotDecoration const &Decoration::source() const
-{
+    DENG2_ASSERT(d->source);
     return *d->source;
 }
 
 bool Decoration::hasSurface() const
 {
-    return d->surface != 0;
+    return d->surface != nullptr;
 }
 
 Surface &Decoration::surface()
 {
-    if(d->surface != 0)
-    {
-        return *d->surface;
-    }
-    /// @throw MissingSurfaceError Attempted with no surface attributed.
+    if(hasSurface()) return *d->surface;
+    /// @throw MissingSurfaceError  Attempted with no surface attributed.
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
 }
 
 Surface const &Decoration::surface() const
 {
-    if(d->surface != 0)
-    {
-        return *d->surface;
-    }
+    if(hasSurface()) return *d->surface;
     /// @throw MissingSurfaceError Attempted with no surface attributed.
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
 }

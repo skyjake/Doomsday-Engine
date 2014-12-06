@@ -29,8 +29,6 @@
 #include "render/vissprite.h"
 #include "render/vlight.h"
 
-#include "MaterialSnapshot"
-
 #include "world/map.h"
 #include "world/p_players.h"
 #include "BspLeaf"
@@ -56,42 +54,53 @@ float weaponFOVShift    = 45;
 float weaponOffsetScale = 0.3183f; // 1/Pi
 byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
+
+static MaterialVariantSpec const &pspriteMaterialSpec()
+{
+    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 0, -2, 0, false, true, true, false);
+}
+
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
-    ddpsprite_t *psp      = spr->psp;
-    int const spriteIdx   = psp->statePtr->sprite;
-    int const frameIdx    = psp->statePtr->frame;
-    float const offScaleY = weaponOffsetScaleY / 1000.0f;
-
-    SpriteViewAngle const &sprViewAngle =
-        ClientApp::resourceSystem().sprite(spriteIdx, frameIdx).viewAngle(0);
-
-    Material *material = sprViewAngle.material;
-    bool flip          = sprViewAngle.mirrorX;
-
-    MaterialVariantSpec const &spec =
-        ClientApp::resourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                 0, -2, 0, false, true, true, false);
-    MaterialSnapshot const &ms = material->prepare(spec);
-
-    Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec().variant;
-
 #define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
 
-    params->pos[VX] = psp->pos[VX] + tex.origin().x + pspOffset[VX] - texSpec.border;
-    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + tex.origin().y +
+    ddpsprite_t *psp      = spr->psp;
+    float const offScaleY = weaponOffsetScaleY / 1000.0f;
+    int const spriteIdx   = psp->statePtr->sprite;
+    int const frameIdx    = psp->statePtr->frame;
+    Sprite const &sprite  = resSys().sprite(spriteIdx, frameIdx);
+
+    SpriteViewAngle const &sprViewAngle = sprite.viewAngle(0);
+    MaterialAnimator &matAnimator       = sprViewAngle.material->getAnimator(pspriteMaterialSpec());
+
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    Vector2i const &matDimensions         = matAnimator.dimensions();
+    TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    Vector2i const &texOrigin             = tex.base().origin();
+    variantspecification_t const &texSpec = tex.spec().variant;
+
+
+    params->pos[VX] = psp->pos[VX] + texOrigin.x + pspOffset[VX] - texSpec.border;
+    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + texOrigin.y +
                       pspOffset[VY] - texSpec.border;
-    params->width  = ms.width() + texSpec.border*2;
-    params->height = ms.height() + texSpec.border*2;
 
-    ms.texture(MTU_PRIMARY).glCoords(&params->texOffset[0], &params->texOffset[1]);
+    params->width  = matDimensions.x + texSpec.border * 2;
+    params->height = matDimensions.y + texSpec.border * 2;
 
-    params->texFlip[0] = flip;
+    tex.glCoords(&params->texOffset[0], &params->texOffset[1]);
+
+    params->texFlip[0] = sprViewAngle.mirrorX;
     params->texFlip[1] = false;
 
-    params->mat = material;
+    params->mat = &matAnimator.material();
     params->ambientColor[3] = spr->data.sprite.alpha;
 
     if(spr->data.sprite.isFullBright)

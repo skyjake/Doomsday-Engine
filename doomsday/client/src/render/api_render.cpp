@@ -33,11 +33,12 @@
 
 #include "resource/resourcesystem.h"
 #ifdef __CLIENT__
-#  include "MaterialSnapshot"
 #  include "MaterialVariantSpec"
 #endif
 #include <de/Log>
 #include <doomsday/console/exec.h>
+
+using namespace de;
 
 // m_misc.c
 DENG_EXTERN_C int M_ScreenShot(const char* name, int bits);
@@ -102,6 +103,15 @@ DENG_EXTERN_C void R_SetViewPortPlayer(int consoleNum, int viewPlayer);
 // sky.cpp
 DENG_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 
+#ifdef __CLIENT__
+static inline MaterialVariantSpec const &pspriteMaterialSpec()
+{
+    return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
+                                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             0, 1, -1, false, true, true, false);
+}
+#endif
+
 #undef R_GetSpriteInfo
 DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *info)
 {
@@ -131,23 +141,24 @@ DENG_EXTERN_C dd_bool R_GetSpriteInfo(int spriteId, int frame, spriteinfo_t *inf
 
 #ifdef __CLIENT__
     /// @todo fixme: We should not be using the PSprite spec here. -ds
-    de::MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                          0, 1, -1, false, true, true, false);
-    de::MaterialSnapshot const &ms = info->material->prepare(spec);
+    MaterialAnimator &matAnimator = info->material->getAnimator(pspriteMaterialSpec());
 
-    de::Texture &tex = ms.texture(MTU_PRIMARY).generalCase();
-    variantspecification_t const &texSpec = ms.texture(MTU_PRIMARY).spec().variant;
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
 
-    info->geometry.origin.x    = -tex.origin().x + -texSpec.border;
-    info->geometry.origin.y    = -tex.origin().y +  texSpec.border;
-    info->geometry.size.width  = ms.width()  + texSpec.border * 2;
-    info->geometry.size.height = ms.height() + texSpec.border * 2;
+    Vector2i const &matDimensions = matAnimator.dimensions();
+    TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    Vector2i const &texDimensions = tex->base().origin();
+    int const texBorder           = tex->spec().variant.border;
 
-    ms.texture(MTU_PRIMARY).glCoords(&info->texCoord[0], &info->texCoord[1]);
+    info->geometry.origin.x    = -texDimensions.x + -texBorder;
+    info->geometry.origin.y    = -texDimensions.y +  texBorder;
+    info->geometry.size.width  = matDimensions.x + texBorder * 2;
+    info->geometry.size.height = matDimensions.y + texBorder * 2;
+
+    tex->glCoords(&info->texCoord[0], &info->texCoord[1]);
 #else
-    de::Texture &tex = *info->material->layers()[0]->stages()[0]->texture;
+    Texture &tex = *info->material->layer(0).stage(0).texture;
 
     info->geometry.origin.x    = -tex.origin().x;
     info->geometry.origin.y    = -tex.origin().y;
