@@ -124,7 +124,7 @@ struct ModelDef
 
     /// [0,1) When is this frame in effect?
     float interMark     = 0;
-    float interRange[2] { 0.f, 0.f };
+    float interRange[2];
     de::Vector3f offset;
     float resize        = 0;
     de::Vector3f scale;
@@ -150,6 +150,7 @@ struct ModelDef
     ModelDef(char const *modelDefId = "")
     {
         de::zap(id);
+        de::zap(interRange);
         strncpy(id, modelDefId, MODELDEF_ID_MAXLEN);
     }
 
