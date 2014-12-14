@@ -23,7 +23,10 @@
 #ifndef LIBCOMMON_PLAYSIM_MAPSETUP_H
 #define LIBCOMMON_PLAYSIM_MAPSETUP_H
 
-#include "common.h"
+#include <de/types.h>
+#include <doomsday/uri.h>
+#include "api_uri.h"
+#include "api_map.h"
 
 // If true we are in the process of setting up a map.
 DENG_EXTERN_C dd_bool mapSetup;
@@ -60,6 +63,27 @@ void P_SpawnSectorMaterialOriginScrollers(void);
 void P_SpawnSideMaterialOriginScrollers(void);
 
 void P_SpawnAllMaterialOriginScrollers(void);
+
+/**
+ * Update line visibility in the specified player's automap.
+ *
+ * @param player   Local player number whose map is to change.
+ * @param lineIdx  Line to change.
+ * @param visible  @c true= mark the line as visible.
+ */
+void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible);
+
+struct xline_s *P_GetXLine(int idx);
+struct xline_s *P_ToXLine(Line *line);
+
+struct xsector_s *P_GetXSector(int index);
+
+/**
+ * Converts a sector to an xsector.
+ */
+struct xsector_s *P_ToXSector(Sector *sector);
+
+struct xsector_s const *P_ToXSector_const(Sector const *sector);
 
 #ifdef __cplusplus
 } // extern "C"

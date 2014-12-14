@@ -107,6 +107,11 @@ xsector_t *P_ToXSector(Sector *sector)
     }
 }
 
+xsector_t const *P_ToXSector_const(Sector const *sector)
+{
+    return P_ToXSector(const_cast<Sector *>(sector));
+}
+
 xsector_t *P_GetXSector(int index)
 {
     if(index < 0 || index >= numsectors) return 0;
