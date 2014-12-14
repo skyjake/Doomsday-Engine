@@ -230,30 +230,7 @@ void P_Thrust(player_t *player, angle_t angle, coord_t move)
 
     if(!(player->powers[PT_FLIGHT] && !(mo->origin[VZ] <= mo->floorZ)))
     {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        Sector *sec = Mobj_Sector(mo);
-#endif
-#if __JHEXEN__
-        terraintype_t const *tt = P_MobjFloorTerrain(mo);
-#endif
-
-#if __JHEXEN__
-        if(tt->flags & TTF_FRICTION_LOW)
-        {
-            move /= 2;
-        }
-#elif __JHERETIC__
-        if(P_ToXSector(sec)->special == 15) // Friction_Low
-        {
-            move /= 4;
-        }
-        else
-#endif
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        {
-            move *= XS_ThrustMul(sec);
-        }
-#endif
+        move *= Mobj_ThrustMul(mo);
     }
 
     mo->mom[MX] += move * FIX2FLT(finecosine[an]);

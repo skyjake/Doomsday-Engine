@@ -47,34 +47,80 @@
 /// Threshold for stopping walk animation.
 #define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
 
+coord_t Mobj_ThrustMulForFriction(coord_t friction)
+{
+    if(friction <= FRICTION_NORMAL)
+        return 1; // Normal friction.
+
+    if(friction > 1)
+        return 0; // There's nothing to thrust from!
+
+    // Decrease thrust exponentially when nearing friction == 1.0.
+    // {c = -93.31092643, b = 208.0448223, a = -114.7338958}
+    return (-114.7338958 * friction * friction + 208.0448223 * friction - 93.31092643);
+}
+
+coord_t Mobj_ThrustMul(mobj_t const *mo)
+{
+    coord_t mul = 1.0;
+
+#if __JHEXEN__
+    if(P_MobjFloorTerrain(mo)->flags & TTF_FRICTION_LOW)
+    {
+        mul /= 2;
+    }
+#else // !__JHEXEN__
+    Sector *sec = Mobj_Sector(mo);
+
+#if __JHERETIC__
+    if(P_ToXSector(sec)->special == 15) // Friction_Low
+    {
+        mul /= 4;
+        return mul; // XG friction ignored.
+    }
+#endif
+
+    // Use a thrust multiplier based on the sector's friction.
+    mul = Mobj_ThrustMulForFriction(XS_Friction(sec));
+
+#endif
+
+    return mul;
+}
+
+dd_bool Mobj_IsAirborne(mobj_t const *mo)
+{
+    return ((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj) != 0;
+}
+
 coord_t Mobj_Friction(mobj_t const *mo)
 {
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
+    if(Mobj_IsAirborne(mo))
     {
         // Airborne "friction".
         return FRICTION_FLY;
     }
 
-#ifdef __JHERETIC__
-    if(P_ToXSector(Mobj_Sector(mo))->special == 15)
+#if __JHERETIC__
+    if(P_ToXSector(Mobj_Sector(mo))->special == 15) // Low friction.
     {
-        // Low friction.
         return FRICTION_LOW;
     }
 #endif
 
-#ifdef __JHEXEN__
+#if __JHEXEN__
     terraintype_t const *tt = P_MobjFloorTerrain(mo);
     if(tt->flags & TTF_FRICTION_LOW)
     {
         return FRICTION_LOW;
     }
-    return FRICTION_NORMAL; // Hexen doesn't have XG sectors.
 #endif
 
-#ifndef __JHEXEN__
+#if LIBCOMMON_HAVE_XG
     // Use the current sector's friction.
     return XS_Friction(Mobj_Sector(mo));
+#else
+    return FRICTION_NORMAL;
 #endif
 }
 
