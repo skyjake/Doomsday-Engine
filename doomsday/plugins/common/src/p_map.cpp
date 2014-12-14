@@ -84,9 +84,9 @@ static byte *rejectMatrix;
 
 coord_t P_GetGravity()
 {
-    if(cfg.netGravity != -1)
+    if(cfg.common.netGravity != -1)
     {
-        return (coord_t) cfg.netGravity / 100;
+        return (coord_t) cfg.common.netGravity / 100;
     }
     return *((coord_t *) DD_GetVariable(DD_GRAVITY));
 }
@@ -2126,7 +2126,7 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
         {
-            shootZ += (cfg.plrViewHeight - 5);
+            shootZ += (cfg.common.plrViewHeight - 5);
         }
     }
     else
@@ -2146,13 +2146,13 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     if(lineTarget)
     {
         // While autoaiming, we accept this slope.
-        if(!t1->player || !cfg.noAutoAim)
+        if(!t1->player || !cfg.common.noAutoAim)
         {
             return aimSlope;
         }
     }
 
-    if(t1->player && cfg.noAutoAim)
+    if(t1->player && cfg.common.noAutoAim)
     {
         // The slope is determined by lookdir.
         return tan(LOOKDIR2RAD(t1->dPlayer->lookDir)) / 1.2;
@@ -2183,7 +2183,7 @@ void P_LineAttack(mobj_t *t1, angle_t angle, coord_t distance, coord_t slope,
     {
         if(!(t1->player->plr->flags & DDPF_CAMERA))
         {
-            shootZ += cfg.plrViewHeight - 5;
+            shootZ += cfg.common.plrViewHeight - 5;
         }
     }
     else
@@ -2275,12 +2275,12 @@ static int PIT_RadiusAttack(mobj_t *thing, void *context)
 
     coord_t dist = (delta[VX] > delta[VY]? delta[VX] : delta[VY]);
 #if __JHEXEN__
-    if(!cfg.netNoMaxZRadiusAttack)
+    if(!cfg.common.netNoMaxZRadiusAttack)
     {
         dist = (delta[VZ] > dist? delta[VZ] : dist);
     }
 #else
-    if(!(cfg.netNoMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
+    if(!(cfg.common.netNoMaxZRadiusAttack || (thing->info->flags2 & MF2_INFZBOMBDAMAGE)))
     {
         dist = (delta[VZ] > dist? delta[VZ] : dist);
     }

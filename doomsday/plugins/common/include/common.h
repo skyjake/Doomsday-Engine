@@ -34,6 +34,8 @@
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
 #define IS_NETWORK_CLIENT       (DD_GetInteger(DD_CLIENT) && DD_GetInteger(DD_NETGAME))
 
+#include "config.h"
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__

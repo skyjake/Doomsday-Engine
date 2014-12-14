@@ -38,6 +38,7 @@
 #include "doomsday.h"
 #include "doomdef.h"
 #include "hu_lib.h"
+#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,78 +76,28 @@ typedef enum {
 #define CCH_ITEMS_PRCNT     0x10
 #define CCH_SECRETS_PRCNT   0x20
 
-// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
-//          depending on build settings.
-
 typedef struct jheretic_config_s {
-    float           playerMoveSpeed;
-    int             useJLook;      // Joy look (joy Y => viewpitch)
-    int             alwaysRun;     // Always run.
-    int             noAutoAim;     // No auto-aiming?
-    int             jLookDeltaMode;
-    int             lookSpring;
-    float           lookSpeed;
-    float           turnSpeed;
-    byte            povLookAround;
-    int             jumpEnabled;
-    float           jumpPower;
-    int             airborneMovement;
-    byte            setSizeNeeded;
-    int             setBlocks;
-    int             screenBlocks;
+    libcommon_config_t common;
 
-    byte            slidingCorpses;
-    int             echoMsg;
-    int             hudFog;
-
-    float           menuScale;
-    int             menuEffectFlags;
-    float           menuShadow;
-
-    byte            menuSlam;
-    byte            menuShortcutsEnabled;
-    byte            menuScaleMode;
-    int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestDescription;
-    byte            menuCursorRotate;
-    float           menuTextColors[MENU_COLOR_COUNT][3];
-    float           menuTextFlashColor[3];
-    int             menuTextFlashSpeed;
-    float           menuTextGlitter;
-
-    byte            inludeScaleMode;
-    int             inludePatchReplaceMode;
-
-    byte            confirmQuickGameSave;
-    byte            confirmRebornLoad;
-    byte            loadLastSaveOnReborn;
-
-    int             hudPatchReplaceMode;
-    byte            hudShown[6];   // HUD data visibility.
-    float           hudScale;      // How to scale HUD data?
-    float           hudColor[4];
-    float           hudIconAlpha;
-    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
-    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            moveCheckZ;    // if true, mobjs can move over/under each other.
-    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
-    byte            weaponAutoSwitch;
-    byte            noWeaponAutoSwitchIfFiring;
-    byte            ammoAutoSwitch;
-    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
-    int             weaponOrder[NUM_WEAPON_TYPES];
-    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
-    float           filterStrength;
-    int             plrViewHeight;
-    byte            mapTitle, hideIWADAuthor;
+    byte            bobWeaponLower;
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
+
+    byte            moveCheckZ;    // if true, mobjs can move over/under each other.
+    byte            slidingCorpses;
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
+
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            respawnMonstersNightmare;
+    int             corpseTime;
 
-    float           statusbarScale;
-    float           statusbarOpacity;
-    float           statusbarCounterAlpha;
+    byte            netRespawn;
+    byte            netSlot;
+
+    playerclass_t   playerClass[MAXPLAYERS];
+    int             playerColor[MAXPLAYERS];
 
     /**
      * Compatibility options.
@@ -162,78 +113,6 @@ typedef struct jheretic_config_s {
     byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
     byte            fixPlaneScrollMaterialsEastOnly; // Fix Heretic bug; plane materials would only scroll east.
 
-    byte            hudShownCheatCounters;
-    float           hudCheatCounterScale;
-    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
-
-    // Automap stuff.
-/*  int             automapPos;
-    float           automapWidth;
-    float           automapHeight;*/
-    float           automapMobj[3];
-    float           automapL0[3];
-    float           automapL1[3];
-    float           automapL2[3];
-    float           automapL3[3];
-    float           automapBack[3];
-    float           automapOpacity;
-    float           automapLineAlpha;
-    float           automapLineWidth; ///< In fixed 320x200 pixels.
-    byte            automapRotate;
-    int             automapHudDisplay;
-    int             automapCustomColors;
-    byte            automapShowDoors;
-    float           automapDoorGlow;
-    byte            automapBabyKeys;
-    float           automapZoomSpeed;
-    float           automapPanSpeed;
-    byte            automapPanResetOnOpen;
-    float           automapOpenSeconds;
-    byte            automapTitleAtBottom;
-
-    int             msgCount;
-    float           msgScale;
-    float           msgUptime;
-    int             msgBlink;
-    int             msgAlign;
-    float           msgColor[3];
-
-    char*           chatMacros[10];
-    byte            chatBeep;
-
-    int             corpseTime;
-
-    float           bobWeapon, bobView;
-    byte            bobWeaponLower;
-    int             cameraNoClip;
-
-    // Crosshair.
-    int             xhair;
-    float           xhairAngle;
-    float           xhairSize;
-    byte            xhairVitality;
-    float           xhairColor[4];
-
-    // Network.
-    char *          netEpisode;
-    Uri *           netMap;
-
-    byte            netDeathmatch;
-    byte            netMobDamageModifier;    // multiplier for non-player mobj damage
-    byte            netMobHealthModifier;    // health modifier for non-player mobjs
-    int             netGravity;              // Custom gravity multiplier.
-    byte            netNoMaxZRadiusAttack;   // radius attacks are infinitely tall
-    byte            netNoMaxZMonsterMeleeAttack;    // melee attacks are infinitely tall
-    byte            netNoMonsters;
-    byte            netRespawn;
-    byte            netJumping;
-    byte            netSkill;
-    byte            netSlot;
-    byte            netColor;
-
-    playerclass_t   playerClass[MAXPLAYERS];
-    int             playerColor[MAXPLAYERS];
-
     // jHeretic specific
     int             ringFilter;
     float           inventoryTimer; // Number of seconds until the invetory auto-hides.
@@ -243,8 +122,8 @@ typedef struct jheretic_config_s {
     int             inventorySlotMaxVis;
     byte            inventorySlotShowEmpty;
     byte            inventorySelectMode;
-    int             tomeCounter, tomeSound;
-    //byte            fastMonsters;
+    int             tomeCounter;
+    int             tomeSound;
 } game_config_t;
 
 extern game_config_t cfg;      // in g_game.c

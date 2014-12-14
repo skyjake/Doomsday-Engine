@@ -123,7 +123,7 @@ namespace internal
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
     static inline String patchReplacementText(patchid_t patchId, String const &text = "")
     {
-        return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
+        return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.inludePatchReplaceMode),
                                          patchId, text);
     }
 
@@ -1444,7 +1444,7 @@ void IN_Drawer()
 
     dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK | BPF_OVERDRAW_CLIP,
-        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
+        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.common.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     drawBackground();
@@ -1555,6 +1555,6 @@ void IN_SkipToNext()
 
 void IN_ConsoleRegister()
 {
-    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
+    C_VAR_BYTE("inlude-stretch",            &cfg.common.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.common.inludePatchReplaceMode,    0, 0, 1);
 }

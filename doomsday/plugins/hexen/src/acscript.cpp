@@ -1468,14 +1468,14 @@ ACS_COMMAND(AmbientSound)
     int volume = acs.locals.pop();
 
     // If we are playing 3D sounds, create a temporary source mobj for the sound.
-    if(cfg.snd3D && plrmo)
+    if(Con_GetInteger("sound-3d") && plrmo)
     {
         // SpawnMobj calls P_Random. We don't want that the random generator gets
         // out of sync.
         if((mobj = P_SpawnMobjXYZ(MT_CAMERA,
-                                  plrmo->origin[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                                  plrmo->origin[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                                  plrmo->origin[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+                                  plrmo->origin[VX] + ((M_Random() - 127) * 2),
+                                  plrmo->origin[VY] + ((M_Random() - 127) * 2),
+                                  plrmo->origin[VZ] + ((M_Random() - 127) * 2),
                                   0, 0)))
         {
             mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.

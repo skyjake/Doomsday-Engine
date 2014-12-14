@@ -385,7 +385,7 @@ dd_bool P_TakePower(player_t *player, powertype_t powerType)
     case PT_FLIGHT: {
         mobj_t *plrmo = player->plr->mo;
 
-        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.lookSpring)
+        if(plrmo->origin[VZ] != plrmo->floorZ && cfg.common.lookSpring)
         {
             player->centering = true;
         }
@@ -1164,7 +1164,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source,
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Some close combat weapons should not inflict thrust and push the

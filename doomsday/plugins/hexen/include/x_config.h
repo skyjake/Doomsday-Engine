@@ -62,141 +62,19 @@ typedef enum {
 // This struct should be cleaned up. Currently some of the data isn't
 // even used any more.
 
-// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
-//          depending on build settings.
-
-typedef struct {
-    float           playerMoveSpeed;
-    float           lookSpeed;
-    float           turnSpeed;
-    int             quakeFly;
-    //byte            fastMonsters;
-    int             useJLook;
-    int             screenBlocks;
-    int             setBlocks;
-
-    int             hudPatchReplaceMode;
-    byte            hudShown[4]; // HUD data visibility.
-    float           hudScale;
-    float           hudColor[4];
-    float           hudIconAlpha;
-    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
-    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    int             showFPS, lookSpring;
-    int             mlookInverseY;
-    int             echoMsg;
-    int             translucentIceCorpse;
+typedef struct jhexen_config_s {
+    libcommon_config_t common;
 
     byte            overrideHubMsg; // skip the transition hub message when 1
-    int             cameraNoClip;
-    float           bobView, bobWeapon;
+    int             mlookInverseY;
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
 
-    byte            confirmQuickGameSave;
-    byte            confirmRebornLoad;
-    byte            loadLastSaveOnReborn;
-
-    int             jumpEnabled;
-    float           jumpPower;
-    int             airborneMovement;
-    int             useMouse, noAutoAim, alwaysRun;
-    byte            povLookAround;
-    int             jLookDeltaMode;
-
-    int             xhair;
-    float           xhairAngle;
-    float           xhairSize;
-    byte            xhairVitality;
-    float           xhairColor[4];
-
-    float           statusbarScale;
-    float           statusbarOpacity;
-    float           statusbarCounterAlpha;
-
-    int             msgCount;
-    float           msgScale;
-    float           msgUptime;
-    int             msgBlink;
-    int             msgAlign;
-    float           msgColor[3];
-    byte            weaponAutoSwitch;
-    byte            noWeaponAutoSwitchIfFiring;
-    byte            ammoAutoSwitch;
+    int             translucentIceCorpse;
     byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
-    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
-    int             weaponOrder[NUM_WEAPON_TYPES];
-    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-    float           filterStrength;
 
-    byte            hudShownCheatCounters;
-    float           hudCheatCounterScale;
-    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
-
-    // Automap stuff.
-/*    int             automapPos;
-    float           automapWidth;
-    float           automapHeight; */
-    float           automapMobj[3];
-    float           automapL0[3];
-    float           automapL1[3];
-    float           automapL2[3];
-    float           automapL3[3];
-    float           automapBack[3];
-    float           automapOpacity;
-    float           automapLineAlpha;
-    float           automapLineWidth; ///< In fixed 320x200 pixels.
-    byte            automapRotate;
-    byte            automapHudDisplay;
-    int             automapCustomColors;
-    byte            automapShowDoors;
-    float           automapDoorGlow;
-    byte            automapBabyKeys;
-    float           automapZoomSpeed;
-    float           automapPanSpeed;
-    byte            automapPanResetOnOpen;
-    float           automapOpenSeconds;
-    byte            automapTitleAtBottom;
-
-    int             messagesOn;
-    char*           chatMacros[10];
-    byte            chatBeep;
-    int             snd3D;
-    float           sndReverbFactor;
-    byte            reverbDebug;
-
-    int             plrViewHeight;
-    byte            mapTitle, hideIWADAuthor;
-    int             hudFog;
-
-    float           menuScale;
-    int             menuEffectFlags;
-    float           menuShadow;
-
-    byte            menuSlam;
-    byte            menuShortcutsEnabled;
-    byte            menuScaleMode;
-    int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestDescription;
-    byte            menuCursorRotate;
-    float           menuTextColors[MENU_COLOR_COUNT][3];
-    float           menuTextFlashColor[3];
-    int             menuTextFlashSpeed;
-    float           menuTextGlitter;
-
-    byte            inludeScaleMode;
-    int             inludePatchReplaceMode;
-
-    // Network:
-    char *          netEpisode;
-    Uri *           netMap;
-
-    byte            netClass, netColor, netSkill;
-    byte            netDeathmatch, netNoMonsters, netRandomClass;
-    byte            netJumping;
-    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
-    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Custom gravity multiplier.
-    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
-    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
+    byte            netClass;
+    byte            netRandomClass;
 
     playerclass_t   playerClass[MAXPLAYERS];
     byte            playerColor[MAXPLAYERS];

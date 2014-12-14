@@ -12,6 +12,7 @@ HEADERS += \
     $$common_inc/am_map.h \
     $$common_inc/animdefs.h \
     $$common_inc/common.h \
+    $$common_inc/config.h \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \

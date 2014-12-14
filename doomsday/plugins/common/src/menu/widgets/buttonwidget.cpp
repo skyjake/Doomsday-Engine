@@ -57,13 +57,13 @@ void ButtonWidget::draw() const
     float t = (isFocused()? 1 : 0);
 
     // Flash if focused.
-    if(isFocused() && cfg.menuTextFlashSpeed > 0)
+    if(isFocused() && cfg.common.menuTextFlashSpeed > 0)
     {
-        float const speed = cfg.menuTextFlashSpeed / 2.f;
+        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), textColor.w), t);
+    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
     FR_SetFont(fontId);
     FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
@@ -74,7 +74,7 @@ void ButtonWidget::draw() const
         String replacement;
         if(!d->noAltText)
         {
-            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text);
+            replacement = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), d->patch, d->text);
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -121,7 +121,7 @@ void ButtonWidget::updateGeometry()
         if(!d->noAltText)
         {
             // Use the replacement string?
-            useText = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), d->patch, d->text);
+            useText = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), d->patch, d->text);
         }
 
         if(useText.isEmpty())

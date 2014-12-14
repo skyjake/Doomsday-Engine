@@ -244,7 +244,7 @@ int P_GetPlayerCheats(player_t const *player)
     if(player->plr->flags & DDPF_CAMERA)
     {
         return (player->cheats |
-                (CF_GODMODE | cfg.cameraNoClip? CF_NOCLIP : 0));
+                (CF_GODMODE | cfg.common.cameraNoClip? CF_NOCLIP : 0));
     }
     return player->cheats;
 }
@@ -348,7 +348,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
         // Preferences are set by the user.
         for(int i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+            weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
             weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
@@ -400,21 +400,21 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
             retVal = weapon;
         }
         // Is the player currently firing?
-        else if(!((player->brain.attack) && cfg.noWeaponAutoSwitchIfFiring))
+        else if(!((player->brain.attack) && cfg.common.noWeaponAutoSwitchIfFiring))
         {
             // Should we change weapon automatically?
 
-            if(cfg.weaponAutoSwitch == 2) // Behavior: Always change
+            if(cfg.common.weaponAutoSwitch == 2) // Behavior: Always change
             {
                 retVal = weapon;
             }
-            else if(cfg.weaponAutoSwitch == 1) // Behavior: Change if better
+            else if(cfg.common.weaponAutoSwitch == 1) // Behavior: Change if better
             {
                 // Iterate the weapon order array and see if a weapon change
                 // should be made. Preferences are user selectable.
                 for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                    weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
                     weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
@@ -437,7 +437,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
     }
     else if(ammo != AT_NOAMMO) // Player is about to be given some ammo.
     {
-        if(force || (!(player->ammo[ammo].owned > 0) && cfg.ammoAutoSwitch != 0))
+        if(force || (!(player->ammo[ammo].owned > 0) && cfg.common.ammoAutoSwitch))
         {
             // We were down to zero, so select a new weapon.
 
@@ -446,7 +446,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
             // Preferences are user selectable.
             for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                weapontype_t candidate = weapontype_t(cfg.weaponOrder[i]);
+                weapontype_t candidate = weapontype_t(cfg.common.weaponOrder[i]);
                 weaponinfo_t *winf     = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
@@ -471,12 +471,12 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
                  * logic to decipher first...
                  */
 
-                if(cfg.ammoAutoSwitch == 2) // Behavior: Always change
+                if(cfg.common.ammoAutoSwitch == 2) // Behavior: Always change
                 {
                     retVal = candidate;
                     break;
                 }
-                else if(cfg.ammoAutoSwitch == 1 && player->readyWeapon == candidate)
+                else if(cfg.common.ammoAutoSwitch == 1 && player->readyWeapon == candidate)
                 {
                     // readyweapon has a higher priority so don't change.
                     break;
@@ -596,9 +596,9 @@ weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
 
     // Are we using weapon order preferences for next/previous?
     weapontype_t *list;
-    if(cfg.weaponNextMode)
+    if(cfg.common.weaponNextMode)
     {
-        list = (weapontype_t *) cfg.weaponOrder;
+        list = (weapontype_t *) cfg.common.weaponOrder;
         prev = !prev; // Invert order.
     }
     else
@@ -613,7 +613,7 @@ weapontype_t P_PlayerFindWeapon(player_t *player, dd_bool prev)
     for(; i < NUM_WEAPON_TYPES; ++i)
     {
         w = list[i];
-        if(!cfg.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
+        if(!cfg.common.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
         {
             if(w == player->readyWeapon)
                 break;
@@ -702,7 +702,7 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
+        App_Log(DE2_LOG_MAP | (cfg.common.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.
@@ -728,7 +728,7 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
     if(pl == &players[CONSOLEPLAYER])
     {
-        App_Log(DE2_LOG_MAP | (cfg.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
+        App_Log(DE2_LOG_MAP | (cfg.common.echoMsg? DE2_LOG_NOTE : DE2_LOG_VERBOSE), "%s", msg);
     }
 
     // Servers are responsible for sending these messages to the clients.

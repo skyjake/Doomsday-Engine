@@ -132,9 +132,9 @@ void X_PreInit()
     {
         cfg.playerClass[i] = PCLASS_FIGHTER;
     }
-    cfg.playerMoveSpeed = 1;
-    cfg.statusbarScale = 1;
-    cfg.screenBlocks = cfg.setBlocks = 10;
+    cfg.common.playerMoveSpeed = 1;
+    cfg.common.statusbarScale = 1;
+    cfg.common.screenBlocks = cfg.common.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_READYITEM] = true;
@@ -143,129 +143,129 @@ void X_PreInit()
     {
         cfg.hudUnHide[i] = 1;
     }
-    cfg.lookSpeed = 3;
-    cfg.turnSpeed = 1;
-    cfg.xhairAngle = 0;
-    cfg.xhairSize = .5f;
-    cfg.xhairVitality = false;
-    cfg.xhairColor[0] = 1;
-    cfg.xhairColor[1] = 1;
-    cfg.xhairColor[2] = 1;
-    cfg.xhairColor[3] = 1;
-    cfg.filterStrength = .8f;
-    cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
-    cfg.jumpPower = 9;
-    cfg.airborneMovement = 1;
-    cfg.weaponAutoSwitch = 1; // IF BETTER
-    cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // never
+    cfg.common.lookSpeed = 3;
+    cfg.common.turnSpeed = 1;
+    cfg.common.xhairAngle = 0;
+    cfg.common.xhairSize = .5f;
+    cfg.common.xhairVitality = false;
+    cfg.common.xhairColor[0] = 1;
+    cfg.common.xhairColor[1] = 1;
+    cfg.common.xhairColor[2] = 1;
+    cfg.common.xhairColor[3] = 1;
+    cfg.common.filterStrength = .8f;
+    cfg.common.jumpEnabled = cfg.common.netJumping = true; // true by default in Hexen
+    cfg.common.jumpPower = 9;
+    cfg.common.airborneMovement = 1;
+    cfg.common.weaponAutoSwitch = 1; // IF BETTER
+    cfg.common.noWeaponAutoSwitchIfFiring = false;
+    cfg.common.ammoAutoSwitch = 0; // never
     //cfg.fastMonsters = false;
-    cfg.netEpisode = (char *) "";
-    cfg.netMap = 0;
-    cfg.netSkill = SM_MEDIUM;
-    cfg.netColor = 8; // Use the default color by default.
-    cfg.netMobDamageModifier = 1;
-    cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1;        // use map default
-    cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
-    cfg.mapTitle = true;
-    cfg.automapTitleAtBottom = true;
-    cfg.hideIWADAuthor = true;
-    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
-    cfg.menuScale = .75f;
-    cfg.menuTextColors[0][0] = defFontRGB[0];
-    cfg.menuTextColors[0][1] = defFontRGB[1];
-    cfg.menuTextColors[0][2] = defFontRGB[2];
-    cfg.menuTextColors[1][0] = defFontRGB2[0];
-    cfg.menuTextColors[1][1] = defFontRGB2[1];
-    cfg.menuTextColors[1][2] = defFontRGB2[2];
-    cfg.menuTextColors[2][0] = defFontRGB3[0];
-    cfg.menuTextColors[2][1] = defFontRGB3[1];
-    cfg.menuTextColors[2][2] = defFontRGB3[2];
-    cfg.menuTextColors[3][0] = defFontRGB3[0];
-    cfg.menuTextColors[3][1] = defFontRGB3[1];
-    cfg.menuTextColors[3][2] = defFontRGB3[2];
-    cfg.menuEffectFlags = MEF_TEXT_SHADOW;
-    cfg.menuShortcutsEnabled = true;
+    cfg.common.netEpisode = (char *) "";
+    cfg.common.netMap = 0;
+    cfg.common.netSkill = SM_MEDIUM;
+    cfg.common.netColor = 8; // Use the default color by default.
+    cfg.common.netMobDamageModifier = 1;
+    cfg.common.netMobHealthModifier = 1;
+    cfg.common.netGravity = -1;        // use map default
+    cfg.common.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
+    cfg.common.mapTitle = true;
+    cfg.common.automapTitleAtBottom = true;
+    cfg.common.hideIWADAuthor = true;
+    cfg.common.menuPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.menuScale = .75f;
+    cfg.common.menuTextColors[0][0] = defFontRGB[0];
+    cfg.common.menuTextColors[0][1] = defFontRGB[1];
+    cfg.common.menuTextColors[0][2] = defFontRGB[2];
+    cfg.common.menuTextColors[1][0] = defFontRGB2[0];
+    cfg.common.menuTextColors[1][1] = defFontRGB2[1];
+    cfg.common.menuTextColors[1][2] = defFontRGB2[2];
+    cfg.common.menuTextColors[2][0] = defFontRGB3[0];
+    cfg.common.menuTextColors[2][1] = defFontRGB3[1];
+    cfg.common.menuTextColors[2][2] = defFontRGB3[2];
+    cfg.common.menuTextColors[3][0] = defFontRGB3[0];
+    cfg.common.menuTextColors[3][1] = defFontRGB3[1];
+    cfg.common.menuTextColors[3][2] = defFontRGB3[2];
+    cfg.common.menuEffectFlags = MEF_TEXT_SHADOW;
+    cfg.common.menuShortcutsEnabled = true;
 
-    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
-    cfg.confirmQuickGameSave = true;
-    cfg.confirmRebornLoad = true;
-    cfg.loadLastSaveOnReborn = false;
+    cfg.common.confirmQuickGameSave = true;
+    cfg.common.confirmRebornLoad = true;
+    cfg.common.loadLastSaveOnReborn = false;
 
-    cfg.hudFog = 5;
-    cfg.menuSlam = true;
-    cfg.menuGameSaveSuggestDescription = true;
-    cfg.menuTextFlashColor[0] = 1.0f;
-    cfg.menuTextFlashColor[1] = .5f;
-    cfg.menuTextFlashColor[2] = .5f;
-    cfg.menuTextFlashSpeed = 4;
-    cfg.menuCursorRotate = false;
+    cfg.common.hudFog = 5;
+    cfg.common.menuSlam = true;
+    cfg.common.menuGameSaveSuggestDescription = true;
+    cfg.common.menuTextFlashColor[0] = 1.0f;
+    cfg.common.menuTextFlashColor[1] = .5f;
+    cfg.common.menuTextFlashColor[2] = .5f;
+    cfg.common.menuTextFlashSpeed = 4;
+    cfg.common.menuCursorRotate = false;
 
-    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
-    cfg.hudScale = .7f;
-    cfg.hudColor[0] = defFontRGB[0];
-    cfg.hudColor[1] = defFontRGB[1];
-    cfg.hudColor[2] = defFontRGB[2];
-    cfg.hudColor[3] = 1;
-    cfg.hudIconAlpha = 1;
-    cfg.cameraNoClip = true;
-    cfg.bobView = cfg.bobWeapon = 1;
+    cfg.common.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.hudScale = .7f;
+    cfg.common.hudColor[0] = defFontRGB[0];
+    cfg.common.hudColor[1] = defFontRGB[1];
+    cfg.common.hudColor[2] = defFontRGB[2];
+    cfg.common.hudColor[3] = 1;
+    cfg.common.hudIconAlpha = 1;
+    cfg.common.cameraNoClip = true;
+    cfg.common.bobView = cfg.common.bobWeapon = 1;
 
-    cfg.statusbarOpacity = 1;
-    cfg.statusbarCounterAlpha = 1;
+    cfg.common.statusbarOpacity = 1;
+    cfg.common.statusbarCounterAlpha = 1;
     cfg.inventoryTimer = 5;
 
-    cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .42f; // Unseen areas
-    cfg.automapL0[1] = .42f;
-    cfg.automapL0[2] = .42f;
+    cfg.common.automapCustomColors = 0; // Never.
+    cfg.common.automapL0[0] = .42f; // Unseen areas
+    cfg.common.automapL0[1] = .42f;
+    cfg.common.automapL0[2] = .42f;
 
-    cfg.automapL1[0] = .41f; // onesided lines
-    cfg.automapL1[1] = .30f;
-    cfg.automapL1[2] = .15f;
+    cfg.common.automapL1[0] = .41f; // onesided lines
+    cfg.common.automapL1[1] = .30f;
+    cfg.common.automapL1[2] = .15f;
 
-    cfg.automapL2[0] = .82f; // floor height change lines
-    cfg.automapL2[1] = .70f;
-    cfg.automapL2[2] = .52f;
+    cfg.common.automapL2[0] = .82f; // floor height change lines
+    cfg.common.automapL2[1] = .70f;
+    cfg.common.automapL2[2] = .52f;
 
-    cfg.automapL3[0] = .47f; // ceiling change lines
-    cfg.automapL3[1] = .30f;
-    cfg.automapL3[2] = .16f;
+    cfg.common.automapL3[0] = .47f; // ceiling change lines
+    cfg.common.automapL3[1] = .30f;
+    cfg.common.automapL3[2] = .16f;
 
-    cfg.automapMobj[0] = 1.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 1.f;
+    cfg.common.automapMobj[0] = 1.f;
+    cfg.common.automapMobj[1] = 1.f;
+    cfg.common.automapMobj[2] = 1.f;
 
-    cfg.automapBack[0] = 1.0f;
-    cfg.automapBack[1] = 1.0f;
-    cfg.automapBack[2] = 1.0f;
-    cfg.automapOpacity = 1.0f;
-    cfg.automapLineAlpha = 1.0f;
-    cfg.automapLineWidth = 1.1f;
-    cfg.automapShowDoors = true;
-    cfg.automapDoorGlow = 8;
-    cfg.automapHudDisplay = 2;
-    cfg.automapRotate = true;
-    cfg.automapBabyKeys = false;
-    cfg.automapZoomSpeed = .1f;
-    cfg.automapPanSpeed = .5f;
-    cfg.automapPanResetOnOpen = true;
-    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+    cfg.common.automapBack[0] = 1.0f;
+    cfg.common.automapBack[1] = 1.0f;
+    cfg.common.automapBack[2] = 1.0f;
+    cfg.common.automapOpacity = 1.0f;
+    cfg.common.automapLineAlpha = 1.0f;
+    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapShowDoors = true;
+    cfg.common.automapDoorGlow = 8;
+    cfg.common.automapHudDisplay = 2;
+    cfg.common.automapRotate = true;
+    cfg.common.automapBabyKeys = false;
+    cfg.common.automapZoomSpeed = .1f;
+    cfg.common.automapPanSpeed = .5f;
+    cfg.common.automapPanResetOnOpen = true;
+    cfg.common.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
 
-    cfg.hudCheatCounterScale = .7f;
-    cfg.hudCheatCounterShowWithAutomap = true;
+    cfg.common.hudCheatCounterScale = .7f;
+    cfg.common.hudCheatCounterShowWithAutomap = true;
 
-    cfg.msgCount = 4;
-    cfg.msgScale = .8f;
-    cfg.msgUptime = 5;
-    cfg.msgAlign = 1; // Center.
-    cfg.msgBlink = 5;
-    cfg.msgColor[0] = defFontRGB3[0];
-    cfg.msgColor[1] = defFontRGB3[1];
-    cfg.msgColor[2] = defFontRGB3[2];
-    cfg.echoMsg = true;
+    cfg.common.msgCount = 4;
+    cfg.common.msgScale = .8f;
+    cfg.common.msgUptime = 5;
+    cfg.common.msgAlign = 1; // Center.
+    cfg.common.msgBlink = 5;
+    cfg.common.msgColor[0] = defFontRGB3[0];
+    cfg.common.msgColor[1] = defFontRGB3[1];
+    cfg.common.msgColor[2] = defFontRGB3[2];
+    cfg.common.echoMsg = true;
 
     cfg.inventoryTimer = 5;
     cfg.inventoryWrap = false;
@@ -275,14 +275,14 @@ void X_PreInit()
     cfg.inventorySlotShowEmpty = true;
     cfg.inventorySelectMode = 0; // Cursor select.
 
-    cfg.chatBeep = true;
+    cfg.common.chatBeep = true;
 
-    cfg.weaponOrder[0] = WT_FOURTH;
-    cfg.weaponOrder[1] = WT_THIRD;
-    cfg.weaponOrder[2] = WT_SECOND;
-    cfg.weaponOrder[3] = WT_FIRST;
+    cfg.common.weaponOrder[0] = WT_FOURTH;
+    cfg.common.weaponOrder[1] = WT_THIRD;
+    cfg.common.weaponOrder[2] = WT_SECOND;
+    cfg.common.weaponOrder[3] = WT_FIRST;
 
-    cfg.weaponCycleSequential = true;
+    cfg.common.weaponCycleSequential = true;
 
     // Use the crossfade transition by default.
     Con_SetInteger("con-transition", 0);
@@ -310,7 +310,7 @@ void X_PostInit()
     // Defaults for skill, episode and map.
     ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
 
-    ::cfg.netDeathmatch = cmdLine.check("-deathmatch")? true : false;
+    ::cfg.common.netDeathmatch = cmdLine.check("-deathmatch")? true : false;
 
     ::defaultGameRules.noMonsters    = cmdLine.check("-nomonsters")? true : false;
     ::defaultGameRules.randomClasses = cmdLine.check("-randclass") ? true : false;

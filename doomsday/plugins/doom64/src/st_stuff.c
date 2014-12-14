@@ -98,21 +98,21 @@ static hudstate_t hudStates[MAXPLAYERS];
 
 void ST_Register(void)
 {
-    C_VAR_FLOAT2( "hud-color-r", &cfg.hudColor[0], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-g", &cfg.hudColor[1], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-b", &cfg.hudColor[2], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-a", &cfg.hudColor[3], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.hudIconAlpha, 0, 0, 1, unhideHUD )
-    C_VAR_INT(    "hud-patch-replacement", &cfg.hudPatchReplaceMode, 0, 0, 1 )
-    C_VAR_FLOAT2( "hud-scale", &cfg.hudScale, 0, 0.1f, 1, unhideHUD )
-    C_VAR_FLOAT(  "hud-timer", &cfg.hudTimer, 0, 0, 60 )
+    C_VAR_FLOAT2( "hud-color-r", &cfg.common.hudColor[0], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-g", &cfg.common.hudColor[1], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-b", &cfg.common.hudColor[2], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-a", &cfg.common.hudColor[3], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.common.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_INT(    "hud-patch-replacement", &cfg.common.hudPatchReplaceMode, 0, 0, 1 )
+    C_VAR_FLOAT2( "hud-scale", &cfg.common.hudScale, 0, 0.1f, 1, unhideHUD )
+    C_VAR_FLOAT(  "hud-timer", &cfg.common.hudTimer, 0, 0, 60 )
 
     // Displays
     C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.hudShownCheatCounters, 0, 0, 63, unhideHUD )
-    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.common.hudShownCheatCounters, 0, 0, 63, unhideHUD )
+    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.common.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
+    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.common.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
     C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
@@ -136,7 +136,7 @@ void ST_Register(void)
 
 static int fullscreenMode(int player)
 {
-    return (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+    return (cfg.common.screenBlocks < 10? 0 : cfg.common.screenBlocks - 10);
 }
 
 void ST_HUDUnHide(int player, hueevent_t ev)
@@ -157,7 +157,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
     {
-        hudStates[player].hideTics = (cfg.hudTimer * TICSPERSEC);
+        hudStates[player].hideTics = (cfg.common.hudTimer * TICSPERSEC);
         hudStates[player].hideAmount = 0;
     }
 }
@@ -214,7 +214,7 @@ void ST_Ticker(timespan_t ticLength)
         }
         else
         {
-            if(cfg.screenBlocks == 13)
+            if(cfg.common.screenBlocks == 13)
             {
                 if(hud->alpha > 0.0f)
                 {
@@ -231,7 +231,7 @@ void ST_Ticker(timespan_t ticLength)
         // The following is restricted to fixed 35 Hz ticks.
         if(isSharpTic && !Pause_IsPaused())
         {
-            if(cfg.hudTimer == 0)
+            if(cfg.common.hudTimer == 0)
             {
                 hud->hideTics = hud->hideAmount = 0;
             }
@@ -239,7 +239,7 @@ void ST_Ticker(timespan_t ticLength)
             {
                 if(hud->hideTics > 0)
                     hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                if(hud->hideTics == 0 && cfg.common.hudTimer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
 
@@ -360,10 +360,10 @@ void ST_doFullscreenStuff(int player)
     player_t *plr = &players[player];
     char buf[20];
     int w, h, pos = 0, oldPos = 0, spr,i;
-    int h_width = 320 / cfg.hudScale;
-    int h_height = 200 / cfg.hudScale;
-    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]);
-    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha);
+    int h_width = 320 / cfg.common.hudScale;
+    int h_height = 200 / cfg.common.hudScale;
+    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.common.hudColor[3]);
+    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.common.hudIconAlpha);
 
     textalpha = MINMAX_OF(0.f, textalpha, 1.f);
     iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
@@ -376,14 +376,14 @@ void ST_doFullscreenStuff(int player)
         i = 199 - HUDBORDERY;
         if(cfg.hudShown[HUD_HEALTH])
         {
-            i -= 18 * cfg.hudScale;
+            i -= 18 * cfg.common.hudScale;
         }
 
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
 
         DGL_Enable(DGL_TEXTURE_2D);
         FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
 
         FR_DrawTextXY3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
 
@@ -393,7 +393,7 @@ void ST_doFullscreenStuff(int player)
     // Setup the scaling matrix.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+    DGL_Scalef(cfg.common.hudScale, cfg.common.hudScale, 1);
 
     // Draw the visible HUD data, first health.
     if(cfg.hudShown[HUD_HEALTH])
@@ -412,7 +412,7 @@ void ST_doFullscreenStuff(int player)
         sprintf(buf, "%i", plr->health);
 
         FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
         FR_DrawTextXY3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -489,7 +489,7 @@ Draw_EndZoom();
             DGL_Enable(DGL_TEXTURE_2D);
 
             FR_SetFont(FID(GF_FONTB));
-            FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+            FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
             FR_DrawTextXY3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
 
             DGL_Disable(DGL_TEXTURE_2D);
@@ -510,7 +510,7 @@ Draw_EndZoom();
 
         sprintf(buf, "%i", plr->armorPoints);
         FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
         FR_DrawTextXY3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -557,7 +557,7 @@ void ST_Drawer(int player)
 
     hud = &hudStates[player];
     hud->firstTime = hud->firstTime;
-    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreenMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.common.automapHudDisplay == 0 || cfg.common.automapHudDisplay == 2));
 
     drawUIWidgetsForPlayer(players + player);
 }
@@ -629,7 +629,7 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
     UIAutomap_ClearPoints(obj);
 
 #if !__JHEXEN__
-    if(G_Ruleset_Skill() == SM_BABY && cfg.automapBabyKeys)
+    if(G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
     {
         int flags = UIAutomap_Flags(obj);
         UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
@@ -692,9 +692,9 @@ void ST_Start(int player)
     obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
     flags = UIWidget_Alignment(obj);
     flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
-    if(cfg.msgAlign == 0)
+    if(cfg.common.msgAlign == 0)
         flags |= ALIGN_LEFT;
-    else if(cfg.msgAlign == 2)
+    else if(cfg.common.msgAlign == 2)
         flags |= ALIGN_RIGHT;
     UIWidget_SetAlignment(obj, flags);
 
@@ -702,7 +702,7 @@ void ST_Start(int player)
     // If the automap was left open; close it.
     UIAutomap_Open(obj, false, true);
     initAutomapForCurrentMap(obj);
-    UIAutomap_SetCameraRotation(obj, cfg.automapRotate);
+    UIAutomap_SetCameraRotation(obj, cfg.common.automapRotate);
 
     hud->stopped = false;
 }
@@ -875,9 +875,9 @@ void ST_LogUpdateAlignment(void)
 
         flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
-        if(cfg.msgAlign == 0)
+        if(cfg.common.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
-        else if(cfg.msgAlign == 2)
+        else if(cfg.common.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
         UIGroup_SetFlags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]), flags);
     }
@@ -904,7 +904,7 @@ dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
     if(!obj) return false;
     if(UIAutomap_Active(obj))
     {
-        if(cfg.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
+        if(cfg.common.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
         {
             /*if(UIAutomap_Fullscreen(obj))
             {*/

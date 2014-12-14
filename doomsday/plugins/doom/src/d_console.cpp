@@ -53,7 +53,7 @@ static void updateEyeHeight()
     player_t *plr = &players[CONSOLEPLAYER];
     if(!(plr->plr->flags & DDPF_CAMERA))
     {
-        plr->viewHeight = (float) cfg.plrViewHeight;
+        plr->viewHeight = (float) cfg.common.plrViewHeight;
     }
 }
 
@@ -77,48 +77,48 @@ D_CMD(ScreenShot)
 void G_ConsoleRegistration()
 {
     // View/Refresh
-    C_VAR_INT2 ("view-size",                            &cfg.setBlocks,                     0, 3, 13, viewResizeAudioFeedback);
-    C_VAR_BYTE ("hud-title",                            &cfg.mapTitle,                      0, 0, 1);
-    C_VAR_BYTE ("hud-title-author-noiwad",              &cfg.hideIWADAuthor,                0, 0, 1);
+    C_VAR_INT2 ("view-size",                            &cfg.common.setBlocks,                     0, 3, 13, viewResizeAudioFeedback);
+    C_VAR_BYTE ("hud-title",                            &cfg.common.mapTitle,                      0, 0, 1);
+    C_VAR_BYTE ("hud-title-author-noiwad",              &cfg.common.hideIWADAuthor,                0, 0, 1);
 
-    C_VAR_FLOAT("view-bob-height",                      &cfg.bobView,                       0, 0, 1);
-    C_VAR_FLOAT("view-bob-weapon",                      &cfg.bobWeapon,                     0, 0, 1);
+    C_VAR_FLOAT("view-bob-height",                      &cfg.common.bobView,                       0, 0, 1);
+    C_VAR_FLOAT("view-bob-weapon",                      &cfg.common.bobWeapon,                     0, 0, 1);
     C_VAR_BYTE ("view-bob-weapon-switch-lower",         &cfg.bobWeaponLower,                0, 0, 1);
-    C_VAR_FLOAT("view-filter-strength",                 &cfg.filterStrength,                0, 0, 1);
+    C_VAR_FLOAT("view-filter-strength",                 &cfg.common.filterStrength,                0, 0, 1);
 
     // Player
     // Player data
-    C_VAR_BYTE ("player-color",                         &cfg.netColor,                      0, 0, 4);
-    C_VAR_INT2 ("player-eyeheight",                     &cfg.plrViewHeight,                 0, 41, 54, updateEyeHeight);
+    C_VAR_BYTE ("player-color",                         &cfg.common.netColor,                      0, 0, 4);
+    C_VAR_INT2 ("player-eyeheight",                     &cfg.common.plrViewHeight,                 0, 41, 54, updateEyeHeight);
 
     // Movment
-    C_VAR_FLOAT("player-move-speed",                    &cfg.playerMoveSpeed,               0, 0, 1);
-    C_VAR_INT  ("player-jump",                          &cfg.jumpEnabled,                   0, 0, 1);
-    C_VAR_FLOAT("player-jump-power",                    &cfg.jumpPower,                     0, 0, 100);
-    C_VAR_BYTE ("player-air-movement",                  &cfg.airborneMovement,              0, 0, 32);
+    C_VAR_FLOAT("player-move-speed",                    &cfg.common.playerMoveSpeed,               0, 0, 1);
+    C_VAR_INT  ("player-jump",                          &cfg.common.jumpEnabled,                   0, 0, 1);
+    C_VAR_FLOAT("player-jump-power",                    &cfg.common.jumpPower,                     0, 0, 100);
+    C_VAR_BYTE ("player-air-movement",                  &cfg.common.airborneMovement,              0, 0, 32);
 
     // Weapon switch preferences
-    C_VAR_BYTE ("player-autoswitch",                    &cfg.weaponAutoSwitch,              0, 0, 2);
-    C_VAR_BYTE ("player-autoswitch-ammo",               &cfg.ammoAutoSwitch,                0, 0, 2);
+    C_VAR_BYTE ("player-autoswitch",                    &cfg.common.weaponAutoSwitch,              0, 0, 2);
+    C_VAR_BYTE ("player-autoswitch-ammo",               &cfg.common.ammoAutoSwitch,                0, 0, 2);
     C_VAR_BYTE ("player-autoswitch-berserk",            &cfg.berserkAutoSwitch,             0, 0, 1);
-    C_VAR_BYTE ("player-autoswitch-notfiring",          &cfg.noWeaponAutoSwitchIfFiring,    0, 0, 1);
+    C_VAR_BYTE ("player-autoswitch-notfiring",          &cfg.common.noWeaponAutoSwitchIfFiring,    0, 0, 1);
 
     // Weapon Order preferences
-    C_VAR_INT  ("player-weapon-order0",                 &cfg.weaponOrder[0],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order1",                 &cfg.weaponOrder[1],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order2",                 &cfg.weaponOrder[2],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order3",                 &cfg.weaponOrder[3],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order4",                 &cfg.weaponOrder[4],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order5",                 &cfg.weaponOrder[5],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order6",                 &cfg.weaponOrder[6],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order7",                 &cfg.weaponOrder[7],                0, 0, NUM_WEAPON_TYPES);
-    C_VAR_INT  ("player-weapon-order8",                 &cfg.weaponOrder[8],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order0",                 &cfg.common.weaponOrder[0],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order1",                 &cfg.common.weaponOrder[1],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order2",                 &cfg.common.weaponOrder[2],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order3",                 &cfg.common.weaponOrder[3],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order4",                 &cfg.common.weaponOrder[4],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order5",                 &cfg.common.weaponOrder[5],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order6",                 &cfg.common.weaponOrder[6],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order7",                 &cfg.common.weaponOrder[7],                0, 0, NUM_WEAPON_TYPES);
+    C_VAR_INT  ("player-weapon-order8",                 &cfg.common.weaponOrder[8],                0, 0, NUM_WEAPON_TYPES);
 
-    C_VAR_BYTE ("player-weapon-nextmode",               &cfg.weaponNextMode,                0, 0, 1);
-    C_VAR_BYTE ("player-weapon-cycle-sequential",       &cfg.weaponCycleSequential,         0, 0, 1);
+    C_VAR_BYTE ("player-weapon-nextmode",               &cfg.common.weaponNextMode,                0, 0, 1);
+    C_VAR_BYTE ("player-weapon-cycle-sequential",       &cfg.common.weaponCycleSequential,         0, 0, 1);
 
     // Misc
-    C_VAR_INT  ("player-camera-noclip",                 &cfg.cameraNoClip,                  0, 0, 1);
+    C_VAR_INT  ("player-camera-noclip",                 &cfg.common.cameraNoClip,                  0, 0, 1);
     C_VAR_BYTE ("player-death-lookup",                  &cfg.deathLookUp,                   0, 0, 1);
 
     // Compatibility options
@@ -145,7 +145,7 @@ void G_ConsoleRegistration()
     C_VAR_INT  ("game-corpse-time",                     &cfg.corpseTime,                    CVF_NO_MAX, 0, 0);
 
     // Misc
-    C_VAR_BYTE ("msg-echo",                             &cfg.echoMsg,                       0, 0, 1);
+    C_VAR_BYTE ("msg-echo",                             &cfg.common.echoMsg,                       0, 0, 1);
 
 
     C_CMD("spy",         "",     CycleSpy);

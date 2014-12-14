@@ -37,6 +37,7 @@
 #include "api_uri.h"
 #include "doomdef.h"
 #include "hu_lib.h"
+#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,84 +75,37 @@ typedef enum {
 #define CCH_ITEMS_PRCNT     0x10
 #define CCH_SECRETS_PRCNT   0x20
 
-// WARNING: Do not use the dd_bool type. Its size can be either 1 or 4 bytes
-//          depending on build settings.
-
 typedef struct jdoom_config_s {
-    float           playerMoveSpeed;
-    int             useJLook;      // Joy look (joy Y => viewpitch)
-    int             alwaysRun;     // Always run.
-    int             noAutoAim;     // No auto-aiming?
-    int             jLookDeltaMode;
-    int             lookSpring;
-    float           lookSpeed;
-    float           turnSpeed;
-    byte            povLookAround;
-    int             jumpEnabled;
-    float           jumpPower;
-    int             airborneMovement;
-    int             setBlocks;
-    int             screenBlocks;
-    byte            deathLookUp; // look up when killed
-    byte            slidingCorpses;
-    //byte            fastMonsters;
-    byte            echoMsg;
-    int             hudFog;
+    libcommon_config_t common;
 
-    float           menuScale;
-    int             menuEffectFlags;
-    float           menuShadow;
     int             menuQuitSound;
-    byte            menuSlam;
-    byte            menuShortcutsEnabled;
-    byte            menuScaleMode;
-    int             menuPatchReplaceMode;
-    byte            menuGameSaveSuggestDescription;
-    byte            menuCursorRotate;
-    float           menuTextColors[MENU_COLOR_COUNT][3];
-    float           menuTextFlashColor[3];
-    int             menuTextFlashSpeed;
-    float           menuTextGlitter;
-
-    byte            inludeScaleMode;
-    int             inludePatchReplaceMode;
-
-    byte            confirmQuickGameSave;
-    byte            confirmRebornLoad;
-    byte            loadLastSaveOnReborn;
-
-    int             hudPatchReplaceMode;
-    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
-    byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
-    float           hudScale; // How to scale HUD data?
-    float           hudColor[4];
-    float           hudIconAlpha;
-    float           hudTimer; // Number of seconds until the hud/statusbar auto-hides.
-    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
-    byte            moveCheckZ;    // if true, mobjs can move over/under each other.
-    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
-    byte            weaponAutoSwitch;
-    byte            noWeaponAutoSwitchIfFiring;
-    byte            ammoAutoSwitch;
-    byte            berserkAutoSwitch;
-    int             weaponOrder[NUM_WEAPON_TYPES];
-    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     byte            secretMsg;
-    float           filterStrength;
-    int             plrViewHeight;
-    byte            mapTitle, hideIWADAuthor;
+    byte            hudKeysCombine; // One icon per color (e.g. if red key and red skull is owned only show red key).
+    byte            bobWeaponLower;
+    byte            hudShown[NUMHUDDISPLAYS]; // HUD data visibility.
+    byte            hudUnHide[NUMHUDUNHIDEEVENTS]; // when the hud/statusbar unhides.
+
+    byte            berserkAutoSwitch;
+    byte            deathLookUp;    // look up when killed
+
+    byte            moveCheckZ;     // if true, mobjs can move over/under each other.
+    byte            slidingCorpses;
+    byte            allowMonsterFloatOverBlocking; // if true, floating mobjs are allowed to climb over mobjs blocking the way.
+    byte            respawnMonstersNightmare;
+    int             corpseTime;
+
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;
     byte            noCoopAnything; // disable all multiplayer objects in co-op
-    byte            noNetBFG;
     byte            coopRespawnItems;
-    byte            respawnMonstersNightmare;
+    byte            noNetBFG;
+    byte            netBFGFreeLook; // Allow free-aim with BFG.
+    byte            netRespawn;
+    byte            netSlot;
+    byte            killMessages;
 
-    float           statusbarScale;
-    float           statusbarOpacity;
-    float           statusbarCounterAlpha;
+    int             playerColor[MAXPLAYERS];
 
     /**
      * Compatibility options:
@@ -172,78 +126,6 @@ typedef struct jdoom_config_s {
     byte            gibCrushedNonBleeders;
     byte            fixOuchFace;
     byte            fixStatusbarOwnedWeapons;
-
-    byte            hudShownCheatCounters;
-    float           hudCheatCounterScale;
-    byte            hudCheatCounterShowWithAutomap; ///< Only show when the automap is open.
-
-    // Automap stuff.
-/*  int             automapPos;
-    float           automapWidth;
-    float           automapHeight;*/
-    float           automapMobj[3];
-    float           automapL0[3];
-    float           automapL1[3];
-    float           automapL2[3];
-    float           automapL3[3];
-    float           automapBack[3];
-    float           automapOpacity;
-    float           automapLineAlpha;
-    float           automapLineWidth; ///< In fixed 320x200 pixels.
-    byte            automapRotate;
-    int             automapHudDisplay;
-    int             automapCustomColors;
-    byte            automapShowDoors;
-    float           automapDoorGlow;
-    byte            automapBabyKeys;
-    float           automapZoomSpeed;
-    float           automapPanSpeed;
-    byte            automapPanResetOnOpen;
-    float           automapOpenSeconds;
-    byte            automapTitleAtBottom;
-
-    int             msgCount;
-    float           msgScale;
-    float           msgUptime;
-    int             msgBlink;
-    int             msgAlign;
-    float           msgColor[3];
-
-    char           *chatMacros[10];
-    byte            chatBeep;
-
-    int             corpseTime;
-    byte            killMessages;
-    float           bobWeapon, bobView;
-    byte            bobWeaponLower;
-    int             cameraNoClip;
-
-    // Crosshair.
-    int             xhair;
-    float           xhairAngle;
-    float           xhairSize;
-    byte            xhairVitality;
-    float           xhairColor[4];
-
-    // Network.
-    char *          netEpisode;
-    Uri *           netMap;
-
-    byte            netDeathmatch;
-    byte            netBFGFreeLook; // Allow free-aim with BFG.
-    byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
-    byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Custom gravity multiplier.
-    byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
-    byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
-    byte            netNoMonsters;
-    byte            netRespawn;
-    byte            netJumping;
-    byte            netSkill;
-    byte            netSlot;
-    byte            netColor;
-
-    int             playerColor[MAXPLAYERS];
 } game_config_t;
 
 extern game_config_t cfg;

@@ -826,7 +826,7 @@ void Hu_FogEffectTicker(timespan_t ticLength)
     static const float MENUFOGSPEED[2] = {.03f, -.085f};
     int i;
 
-    if(cfg.hudFog == 0)
+    if(cfg.common.hudFog == 0)
         return;
 
     // Move towards the target alpha
@@ -849,7 +849,7 @@ void Hu_FogEffectTicker(timespan_t ticLength)
 
     for(i = 0; i < 2; ++i)
     {
-        if(cfg.hudFog == 2)
+        if(cfg.common.hudFog == 2)
         {
             fog->layers[i].texAngle += ((MENUFOGSPEED[i]/4) * ticLength * TICRATE);
             fog->layers[i].posAngle -= (MENUFOGSPEED[!i]    * ticLength * TICRATE);
@@ -866,7 +866,7 @@ void Hu_FogEffectTicker(timespan_t ticLength)
     }
 
     // Calculate the height of the menuFog 3 Y join
-    if(cfg.hudFog == 4)
+    if(cfg.common.hudFog == 4)
     {
         if(fog->scrollDir && fog->joinY > 0.46f)
             fog->joinY = fog->joinY / 1.002f;
@@ -1287,10 +1287,10 @@ static void drawFogEffect(void)
     DGL_PushMatrix();
 
     // Two layers.
-    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
+    Hu_DrawFogEffect(cfg.common.hudFog - 1, mfd->texture,
                      mfd->layers[0].texOffset, mfd->layers[0].texAngle,
                      mfd->alpha, fogEffectData.joinY);
-    Hu_DrawFogEffect(cfg.hudFog - 1, mfd->texture,
+    Hu_DrawFogEffect(cfg.common.hudFog - 1, mfd->texture,
                      mfd->layers[1].texOffset, mfd->layers[1].texAngle,
                      mfd->alpha, fogEffectData.joinY);
 
@@ -1350,7 +1350,7 @@ void Hu_Drawer()
         return;
 
     // Draw the fog effect?
-    if(fogEffectData.alpha > 0 && cfg.hudFog)
+    if(fogEffectData.alpha > 0 && cfg.common.hudFog)
         drawFogEffect();
 
     if(Hu_IsMessageActive())
@@ -1376,7 +1376,7 @@ dd_bool Hu_IsStatusBarVisible(int player)
 #else
     if(!ST_StatusBarIsActive(player)) return false;
 
-    if(ST_AutomapIsActive(player) && cfg.automapHudDisplay == 0)
+    if(ST_AutomapIsActive(player) && cfg.common.automapHudDisplay == 0)
     {
         return false;
     }
@@ -1408,7 +1408,7 @@ int Hu_MapTitleFirstLineHeight()
 
 dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    de::String const author = G_MapAuthor(COMMON_GAMESESSION->mapUri(), CPP_BOOL(cfg.hideIWADAuthor));
+    de::String const author = G_MapAuthor(COMMON_GAMESESSION->mapUri(), CPP_BOOL(cfg.common.hideIWADAuthor));
     return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1429,7 +1429,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
     de::Uri const mapUri    = COMMON_GAMESESSION->mapUri();
     de::String const title  = G_MapTitle(mapUri);
-    de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.hideIWADAuthor));
+    de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.common.hideIWADAuthor));
 
     float y = 0;
 
@@ -1486,7 +1486,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 dd_bool Hu_IsMapTitleVisible(void)
 {
-    if(!cfg.mapTitle) return false;
+    if(!cfg.common.mapTitle) return false;
 
     return (actualMapTime < 6 * 35) || ST_AutomapIsActive(DISPLAYPLAYER);
 }
@@ -1504,27 +1504,27 @@ static dd_bool needToRespectHudSizeWhenAutomapOpen(void)
 {
 #ifdef __JDOOM__
     if(cfg.hudShown[HUD_FACE] && !Hu_IsStatusBarVisible(DISPLAYPLAYER) &&
-       cfg.automapHudDisplay > 0) return true;
+       cfg.common.automapHudDisplay > 0) return true;
 #endif
     return false;
 }
 
 void Hu_MapTitleDrawer(const RectRaw* portGeometry)
 {
-    if(!cfg.mapTitle || !portGeometry) return;
+    if(!cfg.common.mapTitle || !portGeometry) return;
 
     // Scale according to the viewport size.
     float scale;
     R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT,
                                     portGeometry->size.width, portGeometry->size.height,
-                                    scalemode_t(cfg.menuScaleMode));
+                                    scalemode_t(cfg.common.menuScaleMode));
 
     // Determine origin of the title.
     Point2Raw origin(portGeometry->size.width / 2,
                      6 * portGeometry->size.height / SCREENHEIGHT);
 
     // Should the title be positioned in the bottom of the view?
-    if(cfg.automapTitleAtBottom &&
+    if(cfg.common.automapTitleAtBottom &&
             ST_AutomapIsActive(DISPLAYPLAYER) &&
             (actualMapTime > 6 * TICSPERSEC))
     {
@@ -1546,7 +1546,7 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
         }
         else if(needToRespectHudSizeWhenAutomapOpen())
         {
-            off += 30 * cfg.hudScale;
+            off += 30 * cfg.common.hudScale;
         }
 
         origin.y -= off * portGeometry->size.height / float(SCREENHEIGHT);

@@ -130,7 +130,7 @@ void NetSv_UpdateGameConfigDescription()
     }
 #endif
 
-    if(cfg.jumpEnabled)
+    if(cfg.common.jumpEnabled)
     {
         strcat(gameConfigString, " jump");
     }
@@ -155,7 +155,7 @@ void NetSv_Ticker()
 #endif
 
     // Inform clients about jumping?
-    float power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
+    float power = (cfg.common.jumpEnabled ? cfg.common.jumpPower : 0);
     if(power != netJumpPower)
     {
         netJumpPower = power;
@@ -698,7 +698,7 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-            | (cfg.jumpEnabled? 0x10 : 0));
+            | (cfg.common.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
         Writer_WriteByte(writer, COMMON_GAMESESSION->rules().skill & 0x7);

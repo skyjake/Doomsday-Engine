@@ -269,7 +269,7 @@ void Hu_MenuInitControlsPage()
 
 static void Hu_MenuDrawControlsPage(Page const & /*page*/, Vector2i const & /*offset*/)
 {
-    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to assign new, [Del] to clear", origin);
 }
 
@@ -280,11 +280,11 @@ void Hu_MenuControlGrabDrawer(char const *niceName, float alpha)
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetLeading(0);
-    FR_SetColorAndAlpha(cfg.menuTextColors[1][CR], cfg.menuTextColors[1][CG], cfg.menuTextColors[1][CB], alpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[1][CR], cfg.common.menuTextColors[1][CG], cfg.common.menuTextColors[1][CB], alpha);
     FR_DrawTextXY3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[2][CR], cfg.menuTextColors[2][CG], cfg.menuTextColors[2][CB], alpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[2][CR], cfg.common.menuTextColors[2][CG], cfg.common.menuTextColors[2][CB], alpha);
     FR_DrawTextXY3(niceName, SCREENWIDTH/2, SCREENHEIGHT/2+2, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(DTF_ONLY_SHADOW));
 
     DGL_Disable(DGL_TEXTURE_2D);

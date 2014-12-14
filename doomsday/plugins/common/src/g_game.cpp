@@ -678,7 +678,7 @@ void R_InitRefresh()
     LOG_RES_VERBOSE("Loading data for refresh...");
 
     // Setup the view border.
-    cfg.screenBlocks = cfg.setBlocks;
+    cfg.common.screenBlocks = cfg.common.setBlocks;
     {
         uri_s *paths[9];
         for(int i = 0; i < 9; ++i)
@@ -1539,7 +1539,7 @@ static void rebornPlayers()
                 return;
 
             // Do we need user confirmation?
-            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
+            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
@@ -1848,7 +1848,7 @@ void G_PlayerReborn(int player)
 #endif
 
     // Reset viewheight.
-    p->viewHeight      = cfg.plrViewHeight;
+    p->viewHeight      = cfg.common.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // We'll need to update almost everything.
@@ -2338,7 +2338,7 @@ D_CMD(LoadSession)
         if(sslot->isLoadable())
         {
             // A known used slot identifier.
-            if(confirmed || !cfg.confirmQuickGameSave)
+            if(confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2451,7 +2451,7 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            if(sslot->isUnused() || confirmed || !cfg.confirmQuickGameSave)
+            if(sslot->isUnused() || confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2958,10 +2958,10 @@ void G_ConsoleRegister()
 {
     GameSession::consoleRegister();
 
-    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
-    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm",              &cfg.common.confirmQuickGameSave,  0, 0, 1);
+    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.common.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.common.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.common.loadLastSaveOnReborn,  0, 0, 1);
 
     C_CMD("deletegamesave",     "ss",       DeleteSavedSession);
     C_CMD("deletegamesave",     "s",        DeleteSavedSession);

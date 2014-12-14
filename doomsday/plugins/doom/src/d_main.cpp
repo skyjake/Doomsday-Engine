@@ -169,60 +169,60 @@ void D_PreInit()
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
-    cfg.playerMoveSpeed = 1;
-    cfg.povLookAround = true;
-    cfg.screenBlocks = cfg.setBlocks = 10;
-    cfg.echoMsg = true;
-    cfg.lookSpeed = 3;
-    cfg.turnSpeed = 1;
+    cfg.common.playerMoveSpeed = 1;
+    cfg.common.povLookAround = true;
+    cfg.common.screenBlocks = cfg.common.setBlocks = 10;
+    cfg.common.echoMsg = true;
+    cfg.common.lookSpeed = 3;
+    cfg.common.turnSpeed = 1;
 
-    cfg.menuPatchReplaceMode = PRM_ALLOW_TEXT;
-    cfg.menuScale = .9f;
-    cfg.menuTextGlitter = .5f;
-    cfg.menuShadow = 0.33f;
+    cfg.common.menuPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.menuScale = .9f;
+    cfg.common.menuTextGlitter = .5f;
+    cfg.common.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
-    cfg.menuSlam = false;
-    cfg.menuShortcutsEnabled = true;
-    cfg.menuGameSaveSuggestDescription = true;
-    cfg.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
-    cfg.menuTextFlashColor[0] = .7f;
-    cfg.menuTextFlashColor[1] = .9f;
-    cfg.menuTextFlashColor[2] = 1;
-    cfg.menuTextFlashSpeed = 4;
+    cfg.common.menuSlam = false;
+    cfg.common.menuShortcutsEnabled = true;
+    cfg.common.menuGameSaveSuggestDescription = true;
+    cfg.common.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
+    cfg.common.menuTextFlashColor[0] = .7f;
+    cfg.common.menuTextFlashColor[1] = .9f;
+    cfg.common.menuTextFlashColor[2] = 1;
+    cfg.common.menuTextFlashSpeed = 4;
     if(gameMode != doom_chex)
     {
-        cfg.menuCursorRotate = true;
+        cfg.common.menuCursorRotate = true;
     }
     if(gameMode == doom2_hacx)
     {
-        cfg.menuTextColors[0][CR] = cfg.menuTextColors[0][CG] = cfg.menuTextColors[0][CB] = 1;
-        memcpy(cfg.menuTextColors[1], defFontRGB, sizeof(cfg.menuTextColors[1]));
-        cfg.menuTextColors[2][CR] = cfg.menuTextColors[3][CR] = .2f;
-        cfg.menuTextColors[2][CG] = cfg.menuTextColors[3][CG] = .2f;
-        cfg.menuTextColors[2][CB] = cfg.menuTextColors[3][CB] = .9f;
+        cfg.common.menuTextColors[0][CR] = cfg.common.menuTextColors[0][CG] = cfg.common.menuTextColors[0][CB] = 1;
+        memcpy(cfg.common.menuTextColors[1], defFontRGB, sizeof(cfg.common.menuTextColors[1]));
+        cfg.common.menuTextColors[2][CR] = cfg.common.menuTextColors[3][CR] = .2f;
+        cfg.common.menuTextColors[2][CG] = cfg.common.menuTextColors[3][CG] = .2f;
+        cfg.common.menuTextColors[2][CB] = cfg.common.menuTextColors[3][CB] = .9f;
     }
     else
     {
-        memcpy(cfg.menuTextColors[0], defFontRGB2, sizeof(cfg.menuTextColors[0]));
+        memcpy(cfg.common.menuTextColors[0], defFontRGB2, sizeof(cfg.common.menuTextColors[0]));
         if(gameMode == doom_chex)
         {
-            cfg.menuTextColors[1][CR] = .85f;
-            cfg.menuTextColors[1][CG] = .3f;
-            cfg.menuTextColors[1][CB] = .3f;
+            cfg.common.menuTextColors[1][CR] = .85f;
+            cfg.common.menuTextColors[1][CG] = .3f;
+            cfg.common.menuTextColors[1][CB] = .3f;
         }
         else
         {
-            cfg.menuTextColors[1][CR] = 1.f;
-            cfg.menuTextColors[1][CG] = .7f;
-            cfg.menuTextColors[1][CB] = .3f;
+            cfg.common.menuTextColors[1][CR] = 1.f;
+            cfg.common.menuTextColors[1][CG] = .7f;
+            cfg.common.menuTextColors[1][CB] = .3f;
         }
-        memcpy(cfg.menuTextColors[2], defFontRGB,  sizeof(cfg.menuTextColors[2]));
-        memcpy(cfg.menuTextColors[3], defFontRGB2, sizeof(cfg.menuTextColors[3]));
+        memcpy(cfg.common.menuTextColors[2], defFontRGB,  sizeof(cfg.common.menuTextColors[2]));
+        memcpy(cfg.common.menuTextColors[3], defFontRGB2, sizeof(cfg.common.menuTextColors[3]));
     }
 
-    cfg.inludePatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
-    cfg.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    cfg.common.hudPatchReplaceMode = PRM_ALLOW_TEXT;
     cfg.hudKeysCombine = false;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
@@ -235,48 +235,48 @@ void D_PreInit()
     {
         cfg.hudUnHide[i] = 1;
     }
-    cfg.hudScale = .6f;
+    cfg.common.hudScale = .6f;
 
-    memcpy(cfg.hudColor, defFontRGB2, sizeof(cfg.hudColor));
-    cfg.hudColor[CA] = 1;
+    memcpy(cfg.common.hudColor, defFontRGB2, sizeof(cfg.common.hudColor));
+    cfg.common.hudColor[CA] = 1;
 
-    cfg.hudFog = 1;
-    cfg.hudIconAlpha = 1;
-    cfg.xhairAngle = 0;
-    cfg.xhairSize = .5f;
-    cfg.xhairVitality = false;
-    cfg.xhairColor[0] = 1;
-    cfg.xhairColor[1] = 1;
-    cfg.xhairColor[2] = 1;
-    cfg.xhairColor[3] = 1;
+    cfg.common.hudFog = 1;
+    cfg.common.hudIconAlpha = 1;
+    cfg.common.xhairAngle = 0;
+    cfg.common.xhairSize = .5f;
+    cfg.common.xhairVitality = false;
+    cfg.common.xhairColor[0] = 1;
+    cfg.common.xhairColor[1] = 1;
+    cfg.common.xhairColor[2] = 1;
+    cfg.common.xhairColor[3] = 1;
 
-    cfg.filterStrength = .8f;
+    cfg.common.filterStrength = .8f;
     cfg.moveCheckZ = true;
-    cfg.jumpPower = 9;
-    cfg.airborneMovement = 1;
-    cfg.weaponAutoSwitch = 1; // if better
-    cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // never
+    cfg.common.jumpPower = 9;
+    cfg.common.airborneMovement = 1;
+    cfg.common.weaponAutoSwitch = 1; // if better
+    cfg.common.noWeaponAutoSwitchIfFiring = false;
+    cfg.common.ammoAutoSwitch = 0; // never
     cfg.secretMsg = true;
     cfg.slidingCorpses = false;
     //cfg.fastMonsters = false;
-    cfg.netJumping = true;
-    cfg.netEpisode = (char *) "";
-    cfg.netMap = 0;
-    cfg.netSkill = SM_MEDIUM;
-    cfg.netColor = 4;
+    cfg.common.netJumping = true;
+    cfg.common.netEpisode = (char *) "";
+    cfg.common.netMap = 0;
+    cfg.common.netSkill = SM_MEDIUM;
+    cfg.common.netColor = 4;
     cfg.netBFGFreeLook = 0;    // allow free-aim 0=none 1=not BFG 2=All
-    cfg.netMobDamageModifier = 1;
-    cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1;        // use map default
-    cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
-    cfg.mapTitle = true;
-    cfg.automapTitleAtBottom = true;
-    cfg.hideIWADAuthor = true;
+    cfg.common.netMobDamageModifier = 1;
+    cfg.common.netMobHealthModifier = 1;
+    cfg.common.netGravity = -1;        // use map default
+    cfg.common.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
+    cfg.common.mapTitle = true;
+    cfg.common.automapTitleAtBottom = true;
+    cfg.common.hideIWADAuthor = true;
 
-    cfg.confirmQuickGameSave = true;
-    cfg.confirmRebornLoad = true;
-    cfg.loadLastSaveOnReborn = false;
+    cfg.common.confirmQuickGameSave = true;
+    cfg.common.confirmRebornLoad = true;
+    cfg.common.loadLastSaveOnReborn = false;
 
     cfg.maxSkulls = true;
     cfg.allowSkullsInWalls = false;
@@ -288,92 +288,92 @@ void D_PreInit()
     cfg.fixOuchFace = true;
     cfg.fixStatusbarOwnedWeapons = true;
 
-    cfg.statusbarScale = 1;
-    cfg.statusbarOpacity = 1;
-    cfg.statusbarCounterAlpha = 1;
+    cfg.common.statusbarScale = 1;
+    cfg.common.statusbarOpacity = 1;
+    cfg.common.statusbarCounterAlpha = 1;
 
-    cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .4f; // Unseen areas
-    cfg.automapL0[1] = .4f;
-    cfg.automapL0[2] = .4f;
+    cfg.common.automapCustomColors = 0; // Never.
+    cfg.common.automapL0[0] = .4f; // Unseen areas
+    cfg.common.automapL0[1] = .4f;
+    cfg.common.automapL0[2] = .4f;
 
-    cfg.automapL1[0] = 1.f; // onesided lines
-    cfg.automapL1[1] = 0.f;
-    cfg.automapL1[2] = 0.f;
+    cfg.common.automapL1[0] = 1.f; // onesided lines
+    cfg.common.automapL1[1] = 0.f;
+    cfg.common.automapL1[2] = 0.f;
 
-    cfg.automapL2[0] = .77f; // floor height change lines
-    cfg.automapL2[1] = .6f;
-    cfg.automapL2[2] = .325f;
+    cfg.common.automapL2[0] = .77f; // floor height change lines
+    cfg.common.automapL2[1] = .6f;
+    cfg.common.automapL2[2] = .325f;
 
-    cfg.automapL3[0] = 1.f; // ceiling change lines
-    cfg.automapL3[1] = .95f;
-    cfg.automapL3[2] = 0.f;
+    cfg.common.automapL3[0] = 1.f; // ceiling change lines
+    cfg.common.automapL3[1] = .95f;
+    cfg.common.automapL3[2] = 0.f;
 
-    cfg.automapMobj[0] = 0.f;
-    cfg.automapMobj[1] = 1.f;
-    cfg.automapMobj[2] = 0.f;
+    cfg.common.automapMobj[0] = 0.f;
+    cfg.common.automapMobj[1] = 1.f;
+    cfg.common.automapMobj[2] = 0.f;
 
-    cfg.automapBack[0] = 0.f;
-    cfg.automapBack[1] = 0.f;
-    cfg.automapBack[2] = 0.f;
-    cfg.automapOpacity = .7f;
-    cfg.automapLineAlpha = .7f;
-    cfg.automapLineWidth = 1.1f;
-    cfg.automapShowDoors = true;
-    cfg.automapDoorGlow = 8;
-    cfg.automapHudDisplay = 2;
-    cfg.automapRotate = true;
-    cfg.automapBabyKeys = false;
-    cfg.automapZoomSpeed = .1f;
-    cfg.automapPanSpeed = .5f;
-    cfg.automapPanResetOnOpen = true;
-    cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+    cfg.common.automapBack[0] = 0.f;
+    cfg.common.automapBack[1] = 0.f;
+    cfg.common.automapBack[2] = 0.f;
+    cfg.common.automapOpacity = .7f;
+    cfg.common.automapLineAlpha = .7f;
+    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapShowDoors = true;
+    cfg.common.automapDoorGlow = 8;
+    cfg.common.automapHudDisplay = 2;
+    cfg.common.automapRotate = true;
+    cfg.common.automapBabyKeys = false;
+    cfg.common.automapZoomSpeed = .1f;
+    cfg.common.automapPanSpeed = .5f;
+    cfg.common.automapPanResetOnOpen = true;
+    cfg.common.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
 
-    cfg.hudCheatCounterScale = .7f;
-    cfg.hudCheatCounterShowWithAutomap = true;
+    cfg.common.hudCheatCounterScale = .7f;
+    cfg.common.hudCheatCounterShowWithAutomap = true;
 
     if(gameMode == doom_chex)
     {
         cfg.hudKeysCombine = true;
     }
 
-    cfg.msgCount = 4;
-    cfg.msgScale = .8f;
-    cfg.msgUptime = 5;
-    cfg.msgAlign = 0; // Left.
-    cfg.msgBlink = 5;
+    cfg.common.msgCount = 4;
+    cfg.common.msgScale = .8f;
+    cfg.common.msgUptime = 5;
+    cfg.common.msgAlign = 0; // Left.
+    cfg.common.msgBlink = 5;
 
     if(gameMode == doom2_hacx)
     {
-        cfg.msgColor[CR] = .2f;
-        cfg.msgColor[CG] = .2f;
-        cfg.msgColor[CB] = .9f;
+        cfg.common.msgColor[CR] = .2f;
+        cfg.common.msgColor[CG] = .2f;
+        cfg.common.msgColor[CB] = .9f;
     }
     else
     {
-        memcpy(cfg.msgColor, defFontRGB2, sizeof(cfg.msgColor));
+        memcpy(cfg.common.msgColor, defFontRGB2, sizeof(cfg.common.msgColor));
     }
 
-    cfg.chatBeep = true;
+    cfg.common.chatBeep = true;
 
     cfg.killMessages = true;
-    cfg.bobWeapon = 1;
-    cfg.bobView = 1;
+    cfg.common.bobWeapon = 1;
+    cfg.common.bobView = 1;
     cfg.bobWeaponLower = true;
-    cfg.cameraNoClip = true;
+    cfg.common.cameraNoClip = true;
     cfg.respawnMonstersNightmare = true;
 
-    cfg.weaponOrder[0] = WT_SIXTH;
-    cfg.weaponOrder[1] = WT_NINETH;
-    cfg.weaponOrder[2] = WT_FOURTH;
-    cfg.weaponOrder[3] = WT_THIRD;
-    cfg.weaponOrder[4] = WT_SECOND;
-    cfg.weaponOrder[5] = WT_EIGHTH;
-    cfg.weaponOrder[6] = WT_FIFTH;
-    cfg.weaponOrder[7] = WT_SEVENTH;
-    cfg.weaponOrder[8] = WT_FIRST;
+    cfg.common.weaponOrder[0] = WT_SIXTH;
+    cfg.common.weaponOrder[1] = WT_NINETH;
+    cfg.common.weaponOrder[2] = WT_FOURTH;
+    cfg.common.weaponOrder[3] = WT_THIRD;
+    cfg.common.weaponOrder[4] = WT_SECOND;
+    cfg.common.weaponOrder[5] = WT_EIGHTH;
+    cfg.common.weaponOrder[6] = WT_FIFTH;
+    cfg.common.weaponOrder[7] = WT_SEVENTH;
+    cfg.common.weaponOrder[8] = WT_FIRST;
 
-    cfg.weaponCycleSequential = true;
+    cfg.common.weaponCycleSequential = true;
     cfg.berserkAutoSwitch = true;
 
     // Use the DOOM transition by default.
@@ -407,11 +407,11 @@ void D_PostInit()
 
     if(cmdLine.check("-altdeath"))
     {
-        ::cfg.netDeathmatch = 2;
+        ::cfg.common.netDeathmatch = 2;
     }
     else if(cmdLine.check("-deathmatch"))
     {
-        ::cfg.netDeathmatch = 1;
+        ::cfg.common.netDeathmatch = 1;
     }
 
     // Apply these rules.

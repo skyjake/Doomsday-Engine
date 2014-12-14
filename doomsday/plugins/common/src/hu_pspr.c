@@ -89,7 +89,7 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 float HU_PSpriteYOffset(player_t* pl)
 {
     Size2Raw winSize, portSize;
-    float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
+    float offy = (cfg.common.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
 
     R_ViewWindowSize(pl - players, &winSize);
     R_ViewPortSize(pl - players, &portSize);
@@ -107,9 +107,9 @@ float HU_PSpriteYOffset(player_t* pl)
     if(winSize.height < portSize.height)
     {
 # if __JDOOM__
-        offy -= (float) (ST_HEIGHT) * cfg.statusbarScale - 16;
+        offy -= (float) (ST_HEIGHT) * cfg.common.statusbarScale - 16;
 # else
-        offy -= (float) (ST_HEIGHT-1) * cfg.statusbarScale - 20;
+        offy -= (float) (ST_HEIGHT-1) * cfg.common.statusbarScale - 20;
 # endif
     }
 #endif

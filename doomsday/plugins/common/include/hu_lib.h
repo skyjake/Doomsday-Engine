@@ -21,7 +21,11 @@
 #ifndef LIBCOMMON_GUI_LIBRARY_H
 #define LIBCOMMON_GUI_LIBRARY_H
 
-#include "common.h"
+#if __JHEXEN__
+#  include "h2def.h"
+#else
+#  include "doomdef.h"
+#endif
 #include "hu_stuff.h"
 
 typedef enum menucommand_e
