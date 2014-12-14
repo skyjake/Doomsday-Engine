@@ -248,8 +248,6 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
 
 mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
-coord_t P_MobjGetFriction(mobj_t* mo);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

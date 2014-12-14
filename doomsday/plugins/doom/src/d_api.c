@@ -248,7 +248,7 @@ game_export_t* GetGameAPI(void)
     gx.Responder = G_Responder;
     gx.EndFrame = D_EndFrame;
     gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (coord_t (*)(void *)) P_MobjGetFriction;
+    gx.MobjFriction = Mobj_Friction;
     gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
     gx.MobjTryMoveXYZ = P_TryMoveXYZ;
     gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;

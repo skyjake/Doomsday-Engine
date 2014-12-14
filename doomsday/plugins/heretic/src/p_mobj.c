@@ -230,25 +230,6 @@ void P_WindThrust(mobj_t *mo)
     }
 }
 
-coord_t P_MobjGetFriction(mobj_t *mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-    else
-    {
-        Sector *sec = Mobj_Sector(mo);
-
-        if(P_ToXSector(sec)->special == 15)
-        {
-            return FRICTION_LOW;
-        }
-
-        return XS_Friction(sec);
-    }
-}
-
 void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];

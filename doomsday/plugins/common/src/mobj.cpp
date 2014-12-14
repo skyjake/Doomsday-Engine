@@ -33,6 +33,7 @@
 #include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
+#include "p_actor.h"
 
 #include <de/mathutil.h>
 #include <cmath>
@@ -46,7 +47,7 @@
 /// Threshold for stopping walk animation.
 #define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
 
-static coord_t getFriction(mobj_t *mo)
+coord_t Mobj_Friction(mobj_t const *mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
     {
@@ -62,7 +63,19 @@ static coord_t getFriction(mobj_t *mo)
     }
 #endif
 
-    return P_MobjGetFriction(mo);
+#ifdef __JHEXEN__
+    terraintype_t const *tt = P_MobjFloorTerrain(mo);
+    if(tt->flags & TTF_FRICTION_LOW)
+    {
+        return FRICTION_LOW;
+    }
+    return FRICTION_NORMAL; // Hexen doesn't have XG sectors.
+#endif
+
+#ifndef __JHEXEN__
+    // Use the current sector's friction.
+    return XS_Friction(Mobj_Sector(mo));
+#endif
 }
 
 dd_bool Mobj_IsVoodooDoll(mobj_t const *mo)
@@ -153,7 +166,7 @@ void Mobj_XYMoveStopping(mobj_t *mo)
     }
     else
     {
-        coord_t friction = getFriction(mo);
+        coord_t friction = Mobj_Friction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }

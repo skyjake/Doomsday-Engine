@@ -258,23 +258,6 @@ static __inline dd_bool isInWalkState(player_t* pl)
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
 
-coord_t P_MobjGetFriction(mobj_t* mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-    else
-    {
-        const terraintype_t* tt = P_MobjFloorTerrain(mo);
-
-        if(tt->flags & TTF_FRICTION_LOW)
-            return FRICTION_LOW;
-    }
-
-    return FRICTION_NORMAL;
-}
-
 void P_MobjMoveXY(mobj_t* mo)
 {
     static const coord_t windTab[3] = {
@@ -586,7 +569,7 @@ explode:
     }
     else
     {
-        coord_t friction = P_MobjGetFriction(mo);
+        coord_t friction = Mobj_Friction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }

@@ -74,42 +74,9 @@ void P_FloorBounceMissile(mobj_t *mo)
     P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
 }
 
-/**
- * @return              The ground friction factor for the mobj.
- */
-coord_t P_MobjGetFriction(mobj_t *mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-
-    return XS_Friction(Mobj_Sector(mo));
-}
-
 static __inline dd_bool isInWalkState(player_t *pl)
 {
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
-}
-
-static coord_t getFriction(mobj_t *mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) &&
-       !mo->onMobj)
-    {
-        // Airborne friction.
-        return FRICTION_FLY;
-    }
-
-#if __JHERETIC__
-    if(P_ToXSector(Mobj_Sector(mo))->special == 15)
-    {
-        // Friction_Low
-        return FRICTION_LOW;
-    }
-#endif
-
-    return P_MobjGetFriction(mo);
 }
 
 void P_MobjMoveXY(mobj_t *mo)

@@ -29,6 +29,16 @@ extern "C" {
 #endif
 
 /**
+ * Determines the current friction affecting @a mo, given the sector it is in and
+ * whether it is on the floor.
+ *
+ * @param mo  Object.
+ *
+ * @return Friction multiplier to apply to the momentum.
+ */
+coord_t Mobj_Friction(mobj_t const *mo);
+
+/**
  * Handles the stopping of mobj movement. Also stops player walking animation.
  *
  * @param mobj  Mobj instance.
