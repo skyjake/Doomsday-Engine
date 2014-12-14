@@ -76,6 +76,8 @@ static void viewResizeAudioFeedback()
 
 void G_ConsoleRegistration()
 {
+    Common_Register();
+
     // View/Refresh
     C_VAR_INT2 ("view-size",                            &cfg.common.setBlocks,              0, 3, 13, viewResizeAudioFeedback);
     C_VAR_BYTE ("hud-title",                            &cfg.common.mapTitle,               0, 0, 1);
@@ -91,12 +93,6 @@ void G_ConsoleRegistration()
     // Player data
     C_VAR_BYTE ("player-color",                         &cfg.common.netColor,               0, 0, 4);
     C_VAR_INT2 ("player-eyeheight",                     &cfg.common.plrViewHeight,          0, 41, 54, updateEyeHeight);
-
-    // Movement
-    C_VAR_FLOAT("player-move-speed",                    &cfg.common.playerMoveSpeed,        0, 0, 1);
-    C_VAR_INT  ("player-jump",                          &cfg.common.jumpEnabled,            0, 0, 1);
-    C_VAR_FLOAT("player-jump-power",                    &cfg.common.jumpPower,              0, 0, 100);
-    C_VAR_BYTE ("player-air-movement",                  &cfg.common.airborneMovement,       0, 0, 32);
 
     // Weapon switch preferences
     C_VAR_BYTE ("player-autoswitch",                    &cfg.common.weaponAutoSwitch,       0, 0, 2);

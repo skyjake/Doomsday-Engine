@@ -60,6 +60,8 @@ D_CMD(ScreenShot)
 
 void G_ConsoleRegistration()
 {
+    Common_Register();
+
     // View/Refresh
     C_VAR_INT  ("view-size",                            &cfg.common.setBlocks,              0, 3, 11);
     C_VAR_BYTE ("hud-title",                            &cfg.common.mapTitle,               0, 0, 1);
@@ -75,11 +77,7 @@ void G_ConsoleRegistration()
     C_VAR_BYTE ("player-color",                         &cfg.common.netColor,               0, 0, 4);
     C_VAR_INT2 ("player-eyeheight",                     &cfg.common.plrViewHeight,          0, 41, 54, updateEyeHeight);
 
-    // Movment
-    C_VAR_FLOAT("player-move-speed",                    &cfg.common.playerMoveSpeed,        0, 0, 1);
-    C_VAR_INT  ("player-jump",                          &cfg.common.jumpEnabled,            0, 0, 1);
-    C_VAR_FLOAT("player-jump-power",                    &cfg.common.jumpPower,              0, 0, 100);
-    C_VAR_BYTE ("player-air-movement",                  &cfg.common.airborneMovement,       0, 0, 32);
+    // Movement
     C_VAR_BYTE ("player-weapon-recoil",                 &cfg.weaponRecoil,                  0, 0, 1);
 
     // Weapon switch preferences
