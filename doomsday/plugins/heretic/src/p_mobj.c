@@ -230,25 +230,6 @@ void P_WindThrust(mobj_t *mo)
     }
 }
 
-coord_t P_MobjGetFriction(mobj_t *mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-    else
-    {
-        Sector *sec = Mobj_Sector(mo);
-
-        if(P_ToXSector(sec)->special == 15)
-        {
-            return FRICTION_LOW;
-        }
-
-        return XS_Friction(sec);
-    }
-}
-
 void P_MobjMoveXY(mobj_t *mo)
 {
     coord_t pos[2], mom[2];
@@ -397,7 +378,7 @@ void P_MobjMoveZ(mobj_t *mo)
     {
         mo->player->viewHeight -= mo->floorZ - mo->origin[VZ];
         mo->player->viewHeightDelta =
-            (cfg.plrViewHeight - mo->player->viewHeight) / 8;
+            (cfg.common.plrViewHeight - mo->player->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -994,7 +975,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->flags2 = info->flags2;
     mo->flags3 = info->flags3;
     mo->damage = info->damage;
-    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.common.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
@@ -1255,7 +1236,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, dd_bool ch
         // see which target is to be aimed at
         angle = source->angle;
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!cfg.noAutoAim)
+        if(!cfg.common.noAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1275,7 +1256,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest, dd_bool ch
             }
 
         if(!P_MobjIsCamera(source->player->plr->mo))
-            spawnZOff = cfg.plrViewHeight - 9 +
+            spawnZOff = cfg.common.plrViewHeight - 9 +
                 source->player->plr->lookDir / 173;
     }
     else
@@ -1441,7 +1422,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t mangle, coo
     {
         // Try to find a target.
         slope = P_AimLineAttack(source, angle, 16 * 64);
-        if(!cfg.noAutoAim)
+        if(!cfg.common.noAutoAim)
             if(!lineTarget)
             {
                 angle += 1 << 26;
@@ -1461,7 +1442,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t mangle, coo
             }
 
         if(!(source->player->plr->flags & DDPF_CAMERA))
-            spawnZOff = cfg.plrViewHeight - 9 +
+            spawnZOff = cfg.common.plrViewHeight - 9 +
                         (source->player->plr->lookDir) / 173;
     }
     else

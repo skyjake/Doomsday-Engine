@@ -1552,11 +1552,11 @@ static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const 
     int i = 0, aIndex = -1, bIndex = -1;
     do
     {
-        if(cfg.weaponOrder[i] == a->userValue())
+        if(cfg.common.weaponOrder[i] == a->userValue())
         {
             aIndex = i;
         }
-        if(cfg.weaponOrder[i] == b->userValue())
+        if(cfg.common.weaponOrder[i] == b->userValue())
         {
             bIndex = i;
         }
@@ -2063,7 +2063,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     if(!menuActive) return;
 
     // Animate cursor rotation?
-    if(cfg.menuCursorRotate)
+    if(cfg.common.menuCursorRotate)
     {
         if(cursor.hasRotation)
         {
@@ -2159,7 +2159,7 @@ void Hu_MenuDefaultFocusAction(Widget &, Widget::Action action)
 
 short Hu_MenuMergeEffectWithDrawTextFlags(short f)
 {
-    return ((~cfg.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
+    return ((~cfg.common.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
 void Hu_MenuDrawFocusCursor(Vector2i const &origin, int focusObjectHeight, float alpha)
@@ -2211,7 +2211,7 @@ void Hu_MenuDrawPageTitle(String title, Vector2i const &origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorv(cfg.menuTextColors[0]);
+    FR_SetColorv(cfg.common.menuTextColors[0]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
     FR_DrawTextXY3(title.toUtf8().constData(), origin.x, origin.y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
@@ -2225,7 +2225,7 @@ void Hu_MenuDrawPageHelp(String helpText, Vector2i const &origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetColorv(cfg.common.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
     FR_DrawTextXY3(helpText.toUtf8().constData(), origin.x, origin.y, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(0));
@@ -2268,7 +2268,7 @@ void Hu_MenuDrawer()
     if(!Hu_MenuIsVisible()) return;
 
     GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
-        Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.menuScaleMode));
+        Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.common.menuScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     // First determine whether the focus cursor should be visible.
@@ -2286,7 +2286,7 @@ void Hu_MenuDrawer()
     DGL_PushMatrix();
 
     DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-    DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
+    DGL_Scalef(cfg.common.menuScale, cfg.common.menuScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     Hu_MenuPage().draw(mnAlpha, showFocusCursor);
@@ -2586,7 +2586,7 @@ int Hu_MenuFallbackResponder(event_t *ev)
 
     if(!Hu_MenuIsActive() || !page) return false;
 
-    if(cfg.menuShortcutsEnabled)
+    if(cfg.common.menuShortcutsEnabled)
     {
         if(ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
         {
@@ -2644,7 +2644,7 @@ void Hu_MenuDrawMainPage(Page const & /*page*/, Vector2i const &origin)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(1, 1, 1, mnRendState->pageAlpha);
 
-    WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pMainTitle),
+    WI_DrawPatch(pMainTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pMainTitle),
                  Vector2i(origin.x + TITLEOFFSET_X, origin.y + TITLEOFFSET_Y), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #if __JHEXEN__
     GL_DrawPatch(pBullWithFire[(frame + 2) % 7], origin + Vector2i(-73, 24));
@@ -2730,7 +2730,7 @@ void Hu_MenuDrawPlayerClassPage(Page const & /*page*/, Vector2i const &origin)
 {
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Choose class:", origin.x - 32, origin.y - 42, ALIGN_TOPLEFT,
                    Hu_MenuMergeEffectWithDrawTextFlags(0));
@@ -2748,10 +2748,10 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorv(cfg.menuTextColors[0]);
+    FR_SetColorv(cfg.common.menuTextColors[0]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    WI_DrawPatch(pEpisode, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pEpisode),
+    WI_DrawPatch(pEpisode, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pEpisode),
                  Vector2i(origin.x + 7, origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2760,7 +2760,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
     FR_DrawTextXY3("Choose episode:", origin.x - 32, origin.y - 42, ALIGN_TOPLEFT,
                    Hu_MenuMergeEffectWithDrawTextFlags(0));
@@ -2777,11 +2777,11 @@ void Hu_MenuDrawSkillPage(Page const & /*page*/, Vector2i const &origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch(pNewGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pNewGame),
+    WI_DrawPatch(pNewGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pNewGame),
                  Vector2i(origin.x + 48, origin.y - 49), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
-    WI_DrawPatch(pSkill, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSkill),
+    WI_DrawPatch(pSkill, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pSkill),
                  Vector2i(origin.x + 6,  origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2826,7 +2826,7 @@ void Hu_MenuSelectSaveSlot(Widget &wi, Widget::Action action)
 void Hu_MenuSaveSlotEdit(Widget &wi, Widget::Action action)
 {
     if(action != Widget::Activated) return;
-    if(cfg.menuGameSaveSuggestDescription)
+    if(cfg.common.menuGameSaveSuggestDescription)
     {
         auto &edit = wi.as<LineEditWidget>();
         edit.setText(G_DefaultSavedSessionUserDescription("" /*don't reuse an existing description*/));
@@ -2868,17 +2868,17 @@ void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vector2i const &origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
     FR_DrawTextXY3("Load Game", SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #else
-    WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pLoadGame),
+    WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pLoadGame),
                  Vector2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
-    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to load, [Del] to clear", helpOrigin);
 }
 
@@ -2890,15 +2890,15 @@ void Hu_MenuDrawSaveGamePage(Page const & /*page*/, Vector2i const &origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch(pSaveGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pSaveGame),
+    WI_DrawPatch(pSaveGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pSaveGame),
                  Vector2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
 
-    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
     Hu_MenuDrawPageHelp("Select to save, [Del] to clear", helpOrigin);
 }
 
@@ -2918,9 +2918,9 @@ void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vector2i const &origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
     FR_SetFont(FID(GF_FONTB));
-    FR_SetColorAndAlpha(cfg.menuTextColors[0][CR], cfg.menuTextColors[0][CG], cfg.menuTextColors[0][CB], mnRendState->pageAlpha);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    WI_DrawPatch(pOptionsTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.menuPatchReplaceMode), pOptionsTitle),
+    WI_DrawPatch(pOptionsTitle, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pOptionsTitle),
                  Vector2i(origin.x + 42, origin.y - 20), ALIGN_TOP, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -2973,18 +2973,18 @@ void Hu_MenuChangeWeaponPriority(Widget & /*wi*/, Widget::Action action)
     {
         if(choice < NUM_WEAPON_TYPES-1)
         {
-            int temp = cfg.weaponOrder[choice+1];
-            cfg.weaponOrder[choice+1] = cfg.weaponOrder[choice];
-            cfg.weaponOrder[choice] = temp;
+            int temp = cfg.common.weaponOrder[choice+1];
+            cfg.common.weaponOrder[choice+1] = cfg.common.weaponOrder[choice];
+            cfg.common.weaponOrder[choice] = temp;
         }
     }
     else
     {
         if(choice > 0)
         {
-            int temp = cfg.weaponOrder[choice];
-            cfg.weaponOrder[choice] = cfg.weaponOrder[choice-1];
-            cfg.weaponOrder[choice-1] = temp;
+            int temp = cfg.common.weaponOrder[choice];
+            cfg.common.weaponOrder[choice] = cfg.common.weaponOrder[choice-1];
+            cfg.common.weaponOrder[choice-1] = temp;
         }
     }*/
 }
@@ -3065,9 +3065,9 @@ void Hu_MenuActivatePlayerSetup(Page &page)
     mop.setPlayerClass(PCLASS_PLAYER);
 #endif
     mop.setTranslationClass(0);
-    mop.setTranslationMap(cfg.netColor);
+    mop.setTranslationMap(cfg.common.netColor);
 
-    color.selectItemByValue(cfg.netColor);
+    color.selectItemByValue(cfg.common.netColor);
 #if __JHEXEN__
     ListWidget &class_ = page.findWidget(Widget::Id2).as<ListWidget>();
     class_.selectItemByValue(cfg.netClass);
@@ -3118,7 +3118,7 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget &wi, Widget::Action action)
     cfg.netClass = plrClassList.selection();
 #endif
     // The color translation map is stored in the list item data member.
-    cfg.netColor = plrColorList.itemData(plrColorList.selection());
+    cfg.common.netColor = plrColorList.itemData(plrColorList.selection());
 
     if(action != Widget::Deactivated) return;
 
@@ -3139,7 +3139,7 @@ void Hu_MenuSelectAcceptPlayerSetup(Widget &wi, Widget::Action action)
         // change (or such would appear to be the case).
         DD_Executef(false, "setclass %i", cfg.netClass);
 #endif
-        DD_Executef(false, "setcolor %i", cfg.netColor);
+        DD_Executef(false, "setcolor %i", cfg.common.netColor);
     }
 
     Hu_MenuSetPage("Multiplayer");
@@ -3380,12 +3380,12 @@ D_CMD(MenuOpen)
 
     if(argc > 1)
     {
-        if(!stricmp(argv[1], "open"))
+        if(!qstricmp(argv[1], "open"))
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
         }
-        if(!stricmp(argv[1], "close"))
+        if(!qstricmp(argv[1], "close"))
         {
             Hu_MenuCommand(MCMD_CLOSE);
             return true;
@@ -3415,47 +3415,47 @@ D_CMD(MenuCommand)
     if(menuActive)
     {
         char const *cmd = argv[0] + 4;
-        if(!stricmp(cmd, "up"))
+        if(!qstricmp(cmd, "up"))
         {
             Hu_MenuCommand(MCMD_NAV_UP);
             return true;
         }
-        if(!stricmp(cmd, "down"))
+        if(!qstricmp(cmd, "down"))
         {
             Hu_MenuCommand(MCMD_NAV_DOWN);
             return true;
         }
-        if(!stricmp(cmd, "left"))
+        if(!qstricmp(cmd, "left"))
         {
             Hu_MenuCommand(MCMD_NAV_LEFT);
             return true;
         }
-        if(!stricmp(cmd, "right"))
+        if(!qstricmp(cmd, "right"))
         {
             Hu_MenuCommand(MCMD_NAV_RIGHT);
             return true;
         }
-        if(!stricmp(cmd, "back"))
+        if(!qstricmp(cmd, "back"))
         {
             Hu_MenuCommand(MCMD_NAV_OUT);
             return true;
         }
-        if(!stricmp(cmd, "delete"))
+        if(!qstricmp(cmd, "delete"))
         {
             Hu_MenuCommand(MCMD_DELETE);
             return true;
         }
-        if(!stricmp(cmd, "select"))
+        if(!qstricmp(cmd, "select"))
         {
             Hu_MenuCommand(MCMD_SELECT);
             return true;
         }
-        if(!stricmp(cmd, "pagedown"))
+        if(!qstricmp(cmd, "pagedown"))
         {
             Hu_MenuCommand(MCMD_NAV_PAGEDOWN);
             return true;
         }
-        if(!stricmp(cmd, "pageup"))
+        if(!qstricmp(cmd, "pageup"))
         {
             Hu_MenuCommand(MCMD_NAV_PAGEUP);
             return true;
@@ -3466,39 +3466,39 @@ D_CMD(MenuCommand)
 
 void Hu_MenuConsoleRegister()
 {
-    C_VAR_FLOAT("menu-scale",               &cfg.menuScale,              0, .1f, 1);
-    C_VAR_BYTE ("menu-stretch",             &cfg.menuScaleMode,          0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_FLOAT("menu-flash-r",             &cfg.menuTextFlashColor[CR], 0, 0, 1);
-    C_VAR_FLOAT("menu-flash-g",             &cfg.menuTextFlashColor[CG], 0, 0, 1);
-    C_VAR_FLOAT("menu-flash-b",             &cfg.menuTextFlashColor[CB], 0, 0, 1);
-    C_VAR_INT  ("menu-flash-speed",         &cfg.menuTextFlashSpeed,     0, 0, 50);
-    C_VAR_BYTE ("menu-cursor-rotate",       &cfg.menuCursorRotate,       0, 0, 1);
-    C_VAR_INT  ("menu-effect",              &cfg.menuEffectFlags,        0, 0, MEF_EVERYTHING);
-    C_VAR_FLOAT("menu-color-r",             &cfg.menuTextColors[0][CR],  0, 0, 1);
-    C_VAR_FLOAT("menu-color-g",             &cfg.menuTextColors[0][CG],  0, 0, 1);
-    C_VAR_FLOAT("menu-color-b",             &cfg.menuTextColors[0][CB],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorb-r",            &cfg.menuTextColors[1][CR],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorb-g",            &cfg.menuTextColors[1][CG],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorb-b",            &cfg.menuTextColors[1][CB],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorc-r",            &cfg.menuTextColors[2][CR],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorc-g",            &cfg.menuTextColors[2][CG],  0, 0, 1);
-    C_VAR_FLOAT("menu-colorc-b",            &cfg.menuTextColors[2][CB],  0, 0, 1);
-    C_VAR_FLOAT("menu-colord-r",            &cfg.menuTextColors[3][CR],  0, 0, 1);
-    C_VAR_FLOAT("menu-colord-g",            &cfg.menuTextColors[3][CG],  0, 0, 1);
-    C_VAR_FLOAT("menu-colord-b",            &cfg.menuTextColors[3][CB],  0, 0, 1);
-    C_VAR_FLOAT("menu-glitter",             &cfg.menuTextGlitter,        0, 0, 1);
-    C_VAR_INT  ("menu-fog",                 &cfg.hudFog,                 0, 0, 5);
-    C_VAR_FLOAT("menu-shadow",              &cfg.menuShadow,             0, 0, 1);
-    C_VAR_INT  ("menu-patch-replacement",   &cfg.menuPatchReplaceMode,   0, 0, 1);
-    C_VAR_BYTE ("menu-slam",                &cfg.menuSlam,               0, 0, 1);
-    C_VAR_BYTE ("menu-hotkeys",             &cfg.menuShortcutsEnabled,   0, 0, 1);
+    C_VAR_FLOAT("menu-scale",               &cfg.common.menuScale,              0, .1f, 1);
+    C_VAR_BYTE ("menu-stretch",             &cfg.common.menuScaleMode,          0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_FLOAT("menu-flash-r",             &cfg.common.menuTextFlashColor[CR], 0, 0, 1);
+    C_VAR_FLOAT("menu-flash-g",             &cfg.common.menuTextFlashColor[CG], 0, 0, 1);
+    C_VAR_FLOAT("menu-flash-b",             &cfg.common.menuTextFlashColor[CB], 0, 0, 1);
+    C_VAR_INT  ("menu-flash-speed",         &cfg.common.menuTextFlashSpeed,     0, 0, 50);
+    C_VAR_BYTE ("menu-cursor-rotate",       &cfg.common.menuCursorRotate,       0, 0, 1);
+    C_VAR_INT  ("menu-effect",              &cfg.common.menuEffectFlags,        0, 0, MEF_EVERYTHING);
+    C_VAR_FLOAT("menu-color-r",             &cfg.common.menuTextColors[0][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-color-g",             &cfg.common.menuTextColors[0][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-color-b",             &cfg.common.menuTextColors[0][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-r",            &cfg.common.menuTextColors[1][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-g",            &cfg.common.menuTextColors[1][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorb-b",            &cfg.common.menuTextColors[1][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-r",            &cfg.common.menuTextColors[2][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-g",            &cfg.common.menuTextColors[2][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colorc-b",            &cfg.common.menuTextColors[2][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-r",            &cfg.common.menuTextColors[3][CR],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-g",            &cfg.common.menuTextColors[3][CG],  0, 0, 1);
+    C_VAR_FLOAT("menu-colord-b",            &cfg.common.menuTextColors[3][CB],  0, 0, 1);
+    C_VAR_FLOAT("menu-glitter",             &cfg.common.menuTextGlitter,        0, 0, 1);
+    C_VAR_INT  ("menu-fog",                 &cfg.common.hudFog,                 0, 0, 5);
+    C_VAR_FLOAT("menu-shadow",              &cfg.common.menuShadow,             0, 0, 1);
+    C_VAR_INT  ("menu-patch-replacement",   &cfg.common.menuPatchReplaceMode,   0, 0, 1);
+    C_VAR_BYTE ("menu-slam",                &cfg.common.menuSlam,               0, 0, 1);
+    C_VAR_BYTE ("menu-hotkeys",             &cfg.common.menuShortcutsEnabled,   0, 0, 1);
 #if __JDOOM__ || __JDOOM64__
     C_VAR_INT  ("menu-quitsound",           &cfg.menuQuitSound,          0, 0, 1);
 #endif
-    C_VAR_BYTE ("menu-save-suggestname",    &cfg.menuGameSaveSuggestDescription, 0, 0, 1);
+    C_VAR_BYTE ("menu-save-suggestname",    &cfg.common.menuGameSaveSuggestDescription, 0, 0, 1);
 
     // Aliases for obsolete cvars:
-    C_VAR_BYTE ("menu-turningskull",        &cfg.menuCursorRotate,       0, 0, 1);
+    C_VAR_BYTE ("menu-turningskull",        &cfg.common.menuCursorRotate,       0, 0, 1);
 
 
     C_CMD("menu",           "s",    MenuOpen);

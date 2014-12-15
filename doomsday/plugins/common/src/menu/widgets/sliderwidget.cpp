@@ -157,7 +157,7 @@ void SliderWidget::draw() const
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    if(cfg.menuShadow > 0)
+    if(cfg.common.menuShadow > 0)
     {
         float const from[] = { 2, float(1 + HEIGHT / 2) };
         float const to[]   = { float(MNDATA_SLIDER_SLOTS * WIDTH - 2), float(1 + HEIGHT / 2) };

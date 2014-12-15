@@ -89,35 +89,4 @@ typedef struct xline_s {
 DENG_EXTERN_C xline_t *xlines;
 DENG_EXTERN_C xsector_t *xsectors;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * Converts a line to an xline.
- */
-xline_t *P_ToXLine(Line *line);
-
-xline_t *P_GetXLine(int index);
-
-/**
- * Converts a sector to an xsector.
- */
-xsector_t *P_ToXSector(Sector *sector);
-
-xsector_t *P_GetXSector(int index);
-
-/**
- * Update the specified player's automap.
- *
- * @param player  Local player number whose map is to change.
- * @param lineIdx  Line to change.
- * @param visible  @c true= mark the line as visible.
- */
-void P_SetLineAutomapVisibility(int player, int lineIdx, dd_bool visible);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
 #endif

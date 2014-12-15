@@ -83,9 +83,9 @@ static pcontrolstate_t controlStates[MAXPLAYERS];
 void G_ControlRegister(void)
 {
     // Control (options/preferences)
-    C_VAR_INT   ("ctl-aim-noauto",  &cfg.noAutoAim, 0, 0, 1);
-    C_VAR_FLOAT ("ctl-turn-speed",  &cfg.turnSpeed, 0, 1, 5);
-    C_VAR_INT   ("ctl-run",         &cfg.alwaysRun, 0, 0, 1);
+    C_VAR_INT   ("ctl-aim-noauto",  &cfg.common.noAutoAim, 0, 0, 1);
+    C_VAR_FLOAT ("ctl-turn-speed",  &cfg.common.turnSpeed, 0, 1, 5);
+    C_VAR_INT   ("ctl-run",         &cfg.common.alwaysRun, 0, 0, 1);
 
 #if __JHERETIC__ || __JHEXEN__
     C_VAR_BYTE  ("ctl-inventory-mode", &cfg.inventorySelectMode, 0, 0, 1);
@@ -94,12 +94,12 @@ void G_ControlRegister(void)
     C_VAR_BYTE  ("ctl-inventory-use-next", &cfg.inventoryUseNext, 0, 0, 1);
 #endif
 
-    C_VAR_FLOAT ("ctl-look-speed",  &cfg.lookSpeed, 0, 1, 5);
-    C_VAR_INT   ("ctl-look-spring", &cfg.lookSpring, 0, 0, 1);
+    C_VAR_FLOAT ("ctl-look-speed",  &cfg.common.lookSpeed, 0, 1, 5);
+    C_VAR_INT   ("ctl-look-spring", &cfg.common.lookSpring, 0, 0, 1);
 
-    C_VAR_BYTE  ("ctl-look-pov",    &cfg.povLookAround, 0, 0, 1);
-    C_VAR_INT   ("ctl-look-joy",    &cfg.useJLook, 0, 0, 1);
-    C_VAR_INT   ("ctl-look-joy-delta", &cfg.jLookDeltaMode, 0, 0, 1);
+    C_VAR_BYTE  ("ctl-look-pov",    &cfg.common.povLookAround, 0, 0, 1);
+    C_VAR_INT   ("ctl-look-joy",    &cfg.common.useJLook, 0, 0, 1);
+    C_VAR_INT   ("ctl-look-joy-delta", &cfg.common.jLookDeltaMode, 0, 0, 1);
 
     C_CMD("defaultgamebindings",    "",     DefaultGameBinds);
 
@@ -453,7 +453,7 @@ static void G_AdjustAngle(player_t *player, int turn, float elapsed)
         return; // Sorry, can't help you, pal.
 
     /* $unifiedangles */
-    player->plr->mo->angle += FLT2FIX(cfg.turnSpeed * elapsed * 35.f * turn);
+    player->plr->mo->angle += FLT2FIX(cfg.common.turnSpeed * elapsed * 35.f * turn);
 }
 
 static void G_AdjustLookDir(player_t *player, int look, float elapsed)
@@ -468,7 +468,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
         else
         {
-            ddplr->lookDir += cfg.lookSpeed * look * elapsed * 35; /* $unifiedangles */
+            ddplr->lookDir += cfg.common.lookSpeed * look * elapsed * 35; /* $unifiedangles */
         }
     }
 
@@ -524,7 +524,7 @@ void P_PlayerThinkHeadTurning(int pnum, timespan_t ticLength)
     else
         cstate->targetLookOffset = 0;
 
-    if(cstate->targetLookOffset != cstate->lookOffset && cfg.povLookAround)
+    if(cstate->targetLookOffset != cstate->lookOffset && cfg.common.povLookAround)
     {
         float   diff = (cstate->targetLookOffset - cstate->lookOffset) / 2;
 
@@ -635,7 +635,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     speed = PLAYER_ACTION(pnum, A_SPEED);
 
     // Walk -> run, run -> walk.
-    if(cfg.alwaysRun)
+    if(cfg.common.alwaysRun)
         speed = !speed;
 
     // Use two stage accelerative turning on the keyboard and joystick.
@@ -715,7 +715,7 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
         side -= sideMoveSpeed;
 
     // Look up/down/center keys
-    if(!cfg.lookSpring || (cfg.lookSpring && !forward))
+    if(!cfg.common.lookSpring || (cfg.common.lookSpring && !forward))
     {
         if(PLAYER_ACTION(pnum, A_LOOKUP))
         {
@@ -1033,11 +1033,11 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
                 adj = -adj;
             plr->plr->lookDir += adj; /* $unifiedangles */
         }
-        if(cfg.useJLook)
+        if(cfg.common.useJLook)
         {
-            if(cfg.jLookDeltaMode) /* $unifiedangles */
+            if(cfg.common.jLookDeltaMode) /* $unifiedangles */
                 plr->plr->lookDir +=
-                    joylook / 20.0f * cfg.lookSpeed *
+                    joylook / 20.0f * cfg.common.lookSpeed *
                     (cfg.jlookInverseY ? -1 : 1) * elapsedTics;
             else
                 plr->plr->lookDir =
@@ -1067,13 +1067,13 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
     }
 #endif
 
-    if(cfg.playerMoveSpeed > 1)
-        cfg.playerMoveSpeed = 1;
+    if(cfg.common.playerMoveSpeed > 1)
+        cfg.common.playerMoveSpeed = 1;
 
-    cmd->forwardMove += forward * cfg.playerMoveSpeed;
-    cmd->sideMove += side * cfg.playerMoveSpeed;;
+    cmd->forwardMove += forward * cfg.common.playerMoveSpeed;
+    cmd->sideMove += side * cfg.common.playerMoveSpeed;;
 
-    if(cfg.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
+    if(cfg.common.lookSpring && !PLAYER_ACTION(pnum, A_MLOOK) &&
        (cmd->forwardMove > MAXPLMOVE / 3 || cmd->forwardMove < -MAXPLMOVE / 3 ||
            cmd->sideMove > MAXPLMOVE / 3 || cmd->sideMove < -MAXPLMOVE / 3 ||
            cstate->mlookPressed))

@@ -174,12 +174,12 @@ void LightningAnimator::advanceTime()
         P_SetInt(DMU_SKY, 0, DMU_FLAGS, skyFlags);
 
         // If 3D sounds are active, position the clap somewhere above the player.
-        if(::cfg.snd3D && plrmo && !IS_NETGAME)
+        if(Con_GetInteger("sound-3d") && plrmo && !IS_NETGAME)
         {
             coord_t clapOrigin[] = {
-                plrmo->origin[VX] + (16 * (M_Random() - 127) << FRACBITS),
-                plrmo->origin[VY] + (16 * (M_Random() - 127) << FRACBITS),
-                plrmo->origin[VZ] + (4000 << FRACBITS)
+                plrmo->origin[VX] + (16 * (M_Random() - 127)),
+                plrmo->origin[VY] + (16 * (M_Random() - 127)),
+                plrmo->origin[VZ] + 4000
             };
             clapSource = P_SpawnMobj(MT_CAMERA, clapOrigin, 0, 0);
             if(clapSource)

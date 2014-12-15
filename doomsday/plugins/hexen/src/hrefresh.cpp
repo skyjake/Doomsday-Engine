@@ -50,7 +50,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (G_Ruleset_Deathmatch()? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (G_Ruleset_Deathmatch()? 1.0f : cfg.common.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
@@ -59,7 +59,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        rgba[CA] = cfg.common.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
         return true;
     }
     else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
@@ -68,7 +68,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 0;
         rgba[CG] = 1;
         rgba[CB] = 0;
-        rgba[CA] = cfg.filterStrength * (filter - STARTPOISONPALS + 1) / 16.f;
+        rgba[CA] = cfg.common.filterStrength * (filter - STARTPOISONPALS + 1) / 16.f;
         return true;
     }
     else if(filter >= STARTSCOURGEPAL)
@@ -77,7 +77,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = .5f;
         rgba[CB] = 0;
-        rgba[CA] = cfg.filterStrength * (STARTSCOURGEPAL + 3 - filter) / 6.f;
+        rgba[CA] = cfg.common.filterStrength * (STARTSCOURGEPAL + 3 - filter) / 6.f;
         return true;
     }
     else if(filter >= STARTHOLYPAL)
@@ -86,7 +86,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = 1;
-        rgba[CA] = cfg.filterStrength * (STARTHOLYPAL + 3 - filter) / 6.f;
+        rgba[CA] = cfg.common.filterStrength * (STARTHOLYPAL + 3 - filter) / 6.f;
         return true;
     }
     else if(filter == STARTICEPAL)
@@ -95,7 +95,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = .5f;
         rgba[CG] = .5f;
         rgba[CB] = 1;
-        rgba[CA] = cfg.filterStrength * .4f;
+        rgba[CA] = cfg.common.filterStrength * .4f;
         return true;
     }
 

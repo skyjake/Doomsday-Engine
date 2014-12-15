@@ -33,8 +33,8 @@ void UIChat_LoadMacros()
     // Retrieve the chat macro strings if not already set.
     for(int i = 0; i < 10; ++i)
     {
-        if(cfg.chatMacros[i]) continue;
-        cfg.chatMacros[i] = (char *) GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
+        if(cfg.common.chatMacros[i]) continue;
+        cfg.common.chatMacros[i] = (char *) GET_TXT(TXT_HUSTR_CHATMACRO0 + i);
     }
 }
 
@@ -227,7 +227,7 @@ dd_bool UIChat_TextIsEmpty(uiwidget_t *ob)
 char const *UIChat_FindMacro(uiwidget_t * /*ob*/, int macroId)
 {
     if(macroId < 0 || macroId >= 10) return 0;
-    return cfg.chatMacros[macroId];
+    return cfg.common.chatMacros[macroId];
 }
 
 dd_bool UIChat_LoadMacro(uiwidget_t *ob, int macroId)
@@ -305,8 +305,8 @@ void UIChat_Drawer(uiwidget_t *ob, Point2Raw const *offset)
     DENG2_ASSERT(ob->type == GUI_CHAT);
 
     //guidata_chat_t *chat = (guidata_chat_t *)ob->typedata;
-    float const textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    //float const iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    float const textAlpha = uiRendState->pageAlpha * cfg.common.hudColor[3];
+    //float const iconAlpha = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
     char const *text = UIChat_Text(ob);
 
     if(!UIChat_IsActive(ob)) return;
@@ -314,18 +314,18 @@ void UIChat_Drawer(uiwidget_t *ob, Point2Raw const *offset)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
-    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+    DGL_Scalef(cfg.common.msgScale, cfg.common.msgScale, 1);
 
     FR_SetFont(ob->font);
-    FR_SetColorAndAlpha(cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha);
+    FR_SetColorAndAlpha(cfg.common.hudColor[CR], cfg.common.hudColor[CG], cfg.common.hudColor[CB], textAlpha);
 
     int const textWidth  = FR_TextWidth(text);
     int const cursorWidth = FR_CharWidth('_');
 
     int xOffset = 0;
-    if(cfg.msgAlign == 1)
+    if(cfg.common.msgAlign == 1)
         xOffset = -(textWidth + cursorWidth)/2;
-    else if(cfg.msgAlign == 2)
+    else if(cfg.common.msgAlign == 2)
         xOffset = -(textWidth + cursorWidth);
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -351,8 +351,8 @@ void UIChat_UpdateGeometry(uiwidget_t *ob)
     if(!UIChat_IsActive(ob)) return;
 
     FR_SetFont(ob->font);
-    Rect_SetWidthHeight(ob->geometry, cfg.msgScale * (FR_TextWidth(text) + FR_CharWidth('_')),
-                                      cfg.msgScale * (de::max(FR_TextHeight(text), FR_CharHeight('_'))));
+    Rect_SetWidthHeight(ob->geometry, cfg.common.msgScale * (FR_TextWidth(text) + FR_CharWidth('_')),
+                                      cfg.common.msgScale * (de::max(FR_TextHeight(text), FR_CharHeight('_'))));
 }
 
 int UIChat_ParseDestination(char const *str)
@@ -383,15 +383,15 @@ int UIChat_ParseMacroId(char const *str)
 
 void UIChat_Register()
 {
-    C_VAR_CHARPTR("chat-macro0", &cfg.chatMacros[0], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro1", &cfg.chatMacros[1], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro2", &cfg.chatMacros[2], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro3", &cfg.chatMacros[3], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro4", &cfg.chatMacros[4], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro5", &cfg.chatMacros[5], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro6", &cfg.chatMacros[6], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro7", &cfg.chatMacros[7], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro8", &cfg.chatMacros[8], 0, 0, 0);
-    C_VAR_CHARPTR("chat-macro9", &cfg.chatMacros[9], 0, 0, 0);
-    C_VAR_BYTE   ("chat-beep",   &cfg.chatBeep,      0, 0, 1);
+    C_VAR_CHARPTR("chat-macro0", &cfg.common.chatMacros[0], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro1", &cfg.common.chatMacros[1], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro2", &cfg.common.chatMacros[2], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro3", &cfg.common.chatMacros[3], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro4", &cfg.common.chatMacros[4], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro5", &cfg.common.chatMacros[5], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro6", &cfg.common.chatMacros[6], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro7", &cfg.common.chatMacros[7], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro8", &cfg.common.chatMacros[8], 0, 0, 0);
+    C_VAR_CHARPTR("chat-macro9", &cfg.common.chatMacros[9], 0, 0, 0);
+    C_VAR_BYTE   ("chat-beep",   &cfg.common.chatBeep,      0, 0, 1);
 }

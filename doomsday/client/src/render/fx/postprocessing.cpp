@@ -112,7 +112,6 @@ DENG2_PIMPL(PostProcessing)
         //framebuf.setColorFormat(Image::RGBA_8888);
         //framebuf.resize(consoleSize());
 
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
         uFrame = framebuf.colorTexture();
 
         // Drawable for drawing stuff back to the original target.
@@ -186,19 +185,19 @@ DENG2_PIMPL(PostProcessing)
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
 
-        /*
-        Canvas::Size const size = root().window().canvas().size();
-        uMvpMatrix =
-                Matrix4f::ortho(0, size.x, 0, size.y) *
-                Matrix4f::scaleThenTranslate(self.viewRect().size(),
-                                             self.viewRect().topLeft);*/
+        Rectanglef const vp = GLState::current().viewport();
+        Vector2f targetSize = GLState::current().target().size();
+
+        uMvpMatrix = Matrix4f::ortho(vp.left()   / targetSize.x,
+                                     vp.right()  / targetSize.x,
+                                     vp.top()    / targetSize.y,
+                                     vp.bottom() / targetSize.y);
 
         uFadeInOut = fade * opacity;
 
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
-                .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
                 .apply();
 
         frame.draw();

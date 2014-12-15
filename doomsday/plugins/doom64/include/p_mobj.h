@@ -263,8 +263,6 @@ extern "C" {
 
 void P_ExplodeMissile(mobj_t *mo);
 
-coord_t P_MobjGetFriction(mobj_t *mo);
-
 mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
 
 /**

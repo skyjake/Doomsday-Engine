@@ -91,7 +91,7 @@ static dd_bool checkMeleeRange(mobj_t *actor)
     dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
                             pl->origin[VY] - actor->origin[VY]);
 
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!cfg.common.netNoMaxZMonsterMeleeAttack)
     {
         // Account for Z height difference.
         if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||

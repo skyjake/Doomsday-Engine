@@ -412,7 +412,7 @@ static void drawNavigation(Vector2i const origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetColorv(cfg.common.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
     FR_DrawTextXY3(subpageText(currentPage, totalPages).toUtf8().constData(), origin.x, origin.y,
@@ -434,7 +434,7 @@ static void drawTitle(String const &title)
 {
     if(title.isEmpty()) return;
 
-    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
 
     FR_PushAttrib();
     Hu_MenuDrawPageTitle(title, origin); origin.y += 16;
@@ -445,8 +445,8 @@ static void drawTitle(String const &title)
 static void setupRenderStateForPageDrawing(Page &page, float alpha)
 {
     rs.pageAlpha   = alpha;
-    rs.textGlitter = cfg.menuTextGlitter;
-    rs.textShadow  = cfg.menuShadow;
+    rs.textGlitter = cfg.common.menuTextGlitter;
+    rs.textShadow  = cfg.common.menuShadow;
 
     for(int i = 0; i < MENU_FONT_COUNT; ++i)
     {
@@ -574,7 +574,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     // How about some additional help/information for the focused item?
     if(focused && !focused->helpInfo().isEmpty())
     {
-        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
         Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }
@@ -733,7 +733,7 @@ Vector3f Page::predefinedColor(mn_page_colorid_t id)
 {
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
     uint const colorIndex = d->colors[id];
-    return Vector3f(cfg.menuTextColors[colorIndex]);
+    return Vector3f(cfg.common.menuTextColors[colorIndex]);
 }
 
 int Page::timer()

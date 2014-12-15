@@ -47,7 +47,7 @@ static int UILog_FirstPVisMessageIdx(uiwidget_t const *ob)
 
     if(0 != log->_pvisMsgCount)
     {
-        int n = log->_nextUsedMsg - de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
+        int n = log->_nextUsedMsg - de::min(log->_pvisMsgCount, de::max(0, cfg.common.msgCount));
         if(n < 0) n += LOG_MAX_MESSAGES; // Wrap around.
         return n;
     }
@@ -169,7 +169,7 @@ void UILog_Post(uiwidget_t *ob, byte flags, char const *text)
     p[requiredLen] = '\0';
     sprintf(p, "%s", text);
 
-    UILog_Push(ob, flags, p, cfg.msgUptime * TICSPERSEC);
+    UILog_Push(ob, flags, p, cfg.common.msgUptime * TICSPERSEC);
 
     M_Free(bigBuf);
 
@@ -181,7 +181,7 @@ void UILog_Refresh(uiwidget_t *ob)
     DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
     guidata_log_t *log = (guidata_log_t *)ob->typedata;
 
-    log->_pvisMsgCount = de::min(log->_msgCount, de::max(0, cfg.msgCount));
+    log->_pvisMsgCount = de::min(log->_msgCount, de::max(0, cfg.common.msgCount));
     int n = UILog_FirstMessageIdx(ob);
     if(0 > n) return;
 
@@ -231,18 +231,18 @@ void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset)
 {
     DENG2_ASSERT(ob != 0 && ob->type == GUI_LOG);
     guidata_log_t *log = (guidata_log_t *)ob->typedata;
-    int const alignFlags  = ALIGN_TOP| ((cfg.msgAlign == 0)? ALIGN_LEFT : (cfg.msgAlign == 2)? ALIGN_RIGHT : 0);
+    int const alignFlags  = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
     short const textFlags = DTF_NO_EFFECTS;
-    float const textAlpha = uiRendState->pageAlpha * cfg.hudColor[3];
-    //float const iconAlpha = uiRendState->pageAlpha * cfg.hudIconAlpha;
+    float const textAlpha = uiRendState->pageAlpha * cfg.common.hudColor[3];
+    //float const iconAlpha = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
     int lineHeight;
-    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
+    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.common.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float y, yOffset, scrollFactor, col[4];
     float offsetDueToMapTitle = 0;
     guidata_log_message_t *msg;
 
-    if(Hu_IsMapTitleVisible() && !cfg.automapTitleAtBottom)
+    if(Hu_IsMapTitleVisible() && !cfg.common.automapTitleAtBottom)
     {
         offsetDueToMapTitle = Hu_MapTitleHeight();
     }
@@ -253,7 +253,7 @@ void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset)
     DGL_PushMatrix();
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Translatef(0, offsetDueToMapTitle, 0);
-    DGL_Scalef(cfg.msgScale, cfg.msgScale, 1);
+    DGL_Scalef(cfg.common.msgScale, cfg.common.msgScale, 1);
 
     firstMsg = firstPVisMsg = UILog_FirstPVisMessageIdx(ob);
     if(!cfg.hudShown[HUD_LOG])
@@ -318,9 +318,9 @@ void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset)
             continue;
 
         // Default color and alpha.
-        col[CR] = cfg.msgColor[CR];
-        col[CG] = cfg.msgColor[CG];
-        col[CB] = cfg.msgColor[CB];
+        col[CR] = cfg.common.msgColor[CR];
+        col[CG] = cfg.common.msgColor[CG];
+        col[CB] = cfg.common.msgColor[CB];
         if(n != firstMsg)
         {
             col[CA] = textAlpha;
@@ -332,14 +332,14 @@ void UILog_Drawer(uiwidget_t *ob, Point2Raw const *offset)
             col[CA] = MINMAX_OF(0, col[CA], 1);
         }
 
-        if((msg->flags & LMF_JUSTADDED) && 0 != cfg.msgBlink)
+        if((msg->flags & LMF_JUSTADDED) && 0 != cfg.common.msgBlink)
         {
-            uint const blinkSpeed = cfg.msgBlink;
+            uint const blinkSpeed = cfg.common.msgBlink;
             uint const msgTics = msg->tics - msg->ticsRemain;
 
             if(msgTics < blinkSpeed)
             {
-                uint const td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
+                uint const td = (cfg.common.msgUptime * TICSPERSEC) - msg->ticsRemain;
                 if(n == lastMsg && (0 == msgTics || (td & 2)))
                 {
                     // Use the "flash" color.
@@ -375,7 +375,7 @@ void UILog_UpdateGeometry(uiwidget_t *ob)
     guidata_log_t *log = (guidata_log_t *)ob->typedata;
     guidata_log_message_t *msg;
     int lineHeight;
-    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.msgCount));
+    int i, n, pvisMsgCount = de::min(log->_pvisMsgCount, de::max(0, cfg.common.msgCount));
     int drawnMsgCount, firstPVisMsg, firstMsg, lastMsg;
     float scrollFactor;
     RectRaw lineGeometry;
@@ -454,22 +454,22 @@ void UILog_UpdateGeometry(uiwidget_t *ob)
         Rect_SetHeight(ob->geometry, Rect_Height(ob->geometry) - lineHeight * scrollFactor);
     }
 
-    Rect_SetWidthHeight(ob->geometry, Rect_Width(ob->geometry)  * cfg.msgScale,
-                                      Rect_Height(ob->geometry) * cfg.msgScale);
+    Rect_SetWidthHeight(ob->geometry, Rect_Width(ob->geometry)  * cfg.common.msgScale,
+                                      Rect_Height(ob->geometry) * cfg.common.msgScale);
 }
 
 void UILog_Register()
 {
     // Behavior
-    C_VAR_FLOAT("msg-uptime",  &cfg.msgUptime,          0, 1, 60);
+    C_VAR_FLOAT("msg-uptime",  &cfg.common.msgUptime,          0, 1, 60);
 
     // Display
-    C_VAR_INT2 ("msg-align",   &cfg.msgAlign,           0, 0, 2, ST_LogUpdateAlignment);
-    C_VAR_INT  ("msg-blink",   &cfg.msgBlink,           CVF_NO_MAX, 0, 0);
-    C_VAR_FLOAT("msg-color-r", &cfg.msgColor[CR],       0, 0, 1);
-    C_VAR_FLOAT("msg-color-g", &cfg.msgColor[CG],       0, 0, 1);
-    C_VAR_FLOAT("msg-color-b", &cfg.msgColor[CB],       0, 0, 1);
-    C_VAR_INT  ("msg-count",   &cfg.msgCount,           0, 1, 8);
-    C_VAR_FLOAT("msg-scale",   &cfg.msgScale,           0, 0.1f, 1);
+    C_VAR_INT2 ("msg-align",   &cfg.common.msgAlign,           0, 0, 2, ST_LogUpdateAlignment);
+    C_VAR_INT  ("msg-blink",   &cfg.common.msgBlink,           CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("msg-color-r", &cfg.common.msgColor[CR],       0, 0, 1);
+    C_VAR_FLOAT("msg-color-g", &cfg.common.msgColor[CG],       0, 0, 1);
+    C_VAR_FLOAT("msg-color-b", &cfg.common.msgColor[CB],       0, 0, 1);
+    C_VAR_INT  ("msg-count",   &cfg.common.msgCount,           0, 1, 8);
+    C_VAR_FLOAT("msg-scale",   &cfg.common.msgScale,           0, 0.1f, 1);
     C_VAR_BYTE2("msg-show",    &cfg.hudShown[HUD_LOG],  0, 0, 1, ST_LogPostVisibilityChangeNotification);
 }

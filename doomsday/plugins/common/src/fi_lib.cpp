@@ -132,7 +132,7 @@ static dd_bool stackHasDefId(char const *defId)
     for(uint i = 0; i < finaleStackSize; ++i)
     {
         fi_state_t *s = &finaleStack[i];
-        if(!stricmp(s->defId, defId))
+        if(!qstricmp(s->defId, defId))
         {
             return true;
         }
@@ -473,9 +473,9 @@ static int playerClassForName(char const *name)
 {
     if(name && name[0])
     {
-        if(!stricmp(name, "fighter")) return PCLASS_FIGHTER;
-        if(!stricmp(name, "cleric"))  return PCLASS_CLERIC;
-        if(!stricmp(name, "mage"))    return PCLASS_MAGE;
+        if(!qstricmp(name, "fighter")) return PCLASS_FIGHTER;
+        if(!qstricmp(name, "cleric"))  return PCLASS_CLERIC;
+        if(!qstricmp(name, "mage"))    return PCLASS_MAGE;
     }
     return PCLASS_NONE;
 }
@@ -492,20 +492,20 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
         return false;
     }
 
-    if(!stricmp(p->token, "secret"))
+    if(!qstricmp(p->token, "secret"))
     {
         // Secret exit was used?
         p->returnVal = s->conditions.secret;
         return true;
     }
 
-    if(!stricmp(p->token, "deathmatch"))
+    if(!qstricmp(p->token, "deathmatch"))
     {
         p->returnVal = (COMMON_GAMESESSION->rules().deathmatch != false);
         return true;
     }
 
-    if(!stricmp(p->token, "leavehub"))
+    if(!qstricmp(p->token, "leavehub"))
     {
         // Current hub has been completed?
         p->returnVal = s->conditions.leave_hub;
@@ -532,7 +532,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
 
     // Game modes.
     /// @todo The following conditions should be moved into the engine. -dj
-    if(!stricmp(p->token, "shareware"))
+    if(!qstricmp(p->token, "shareware"))
     {
 #if __JDOOM__
         p->returnVal = ((gameMode == doom_shareware) != false);
@@ -546,12 +546,12 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
         return true;
     }
 #if __JDOOM__
-    if(!stricmp(p->token, "ultimate"))
+    if(!qstricmp(p->token, "ultimate"))
     {
         p->returnVal = (gameMode == doom_ultimate);
         return true;
     }
-    if(!stricmp(p->token, "commercial"))
+    if(!qstricmp(p->token, "commercial"))
     {
         p->returnVal = (gameModeBits & GM_ANY_DOOM2) != 0;
         return true;

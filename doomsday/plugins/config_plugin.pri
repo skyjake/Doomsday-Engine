@@ -44,6 +44,10 @@ else: include(../dep_core.pri)
 include(../dep_doomsday.pri)
 include(../dep_legacy.pri)
 
+*-gcc*|*-g++*|*-clang* {
+    QMAKE_CXXFLAGS_WARN_ON += -Wno-missing-field-initializers
+}
+
 deng_mingw: QMAKE_CFLAGS_WARN_ON += \
     -Wno-unused-parameter \
     -Wno-missing-field-initializers \

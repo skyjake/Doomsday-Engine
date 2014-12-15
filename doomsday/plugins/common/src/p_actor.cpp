@@ -224,7 +224,7 @@ dd_bool Mobj_IsDroppedItem(mobj_t *mobj)
 #endif
 }
 
-terraintype_t const *P_MobjFloorTerrain(mobj_t *mobj)
+terraintype_t const *P_MobjFloorTerrain(mobj_t const *mobj)
 {
     return P_PlaneMaterialTerrainType(Mobj_Sector(mobj), PLN_FLOOR);
 }

@@ -161,8 +161,7 @@ void XS_Update(void);
 void XS_Thinker(void *xsThinker);
 
 coord_t XS_Gravity(Sector *sector);
-coord_t XS_Friction(Sector *sector);
-coord_t XS_ThrustMul(Sector *sector);
+coord_t XS_Friction(Sector const *sector);
 
 void XS_InitMovePlane(Line *line);
 

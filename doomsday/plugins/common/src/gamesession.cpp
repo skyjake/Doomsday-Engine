@@ -382,11 +382,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         else if(IS_DEDICATED)
         {
 #if !__JHEXEN__
-            rules.deathmatch      = cfg.netDeathmatch;
+            rules.deathmatch      = cfg.common.netDeathmatch;
             rules.respawnMonsters = cfg.netRespawn;
 
-            rules.noMonsters      = cfg.netNoMonsters;
-            /*rules.*/cfg.jumpEnabled = cfg.netJumping;
+            rules.noMonsters      = cfg.common.netNoMonsters;
+            /*rules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #else
             rules.randomClasses   = cfg.netRandomClass;
 #endif
@@ -1002,7 +1002,7 @@ bool GameSession::progressRestoredOnReload() const
 #if __JHEXEN__
     return true; // Cannot be disabled.
 #else
-    return cfg.loadLastSaveOnReborn;
+    return cfg.common.loadLastSaveOnReborn;
 #endif
 }
 

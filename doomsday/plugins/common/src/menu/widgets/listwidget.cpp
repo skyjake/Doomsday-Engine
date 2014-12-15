@@ -124,13 +124,13 @@ void ListWidget::draw() const
     Vector4f const &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
-    if(flashSelection && cfg.menuTextFlashSpeed > 0)
+    if(flashSelection && cfg.common.menuTextFlashSpeed > 0)
     {
-        float const speed = cfg.menuTextFlashSpeed / 2.f;
+        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }
 
-    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.menuTextFlashColor), textColor.w), t);
+    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
     Vector4f const dimColor   = Vector4f(Vector3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
 
     if(d->first < d->items.count() && d->numvis > 0)

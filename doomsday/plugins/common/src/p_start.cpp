@@ -481,12 +481,12 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, coord_t x, coord_t y, coord
     {
         App_Log(DE2_MAP_MSG, "Player #%i spawned as a camera", plrNum);
 
-        p->plr->mo->origin[VZ] += (coord_t) cfg.plrViewHeight;
+        p->plr->mo->origin[VZ] += (coord_t) cfg.common.plrViewHeight;
         p->viewHeight = 0;
     }
     else
     {
-        p->viewHeight = (coord_t) cfg.plrViewHeight;
+        p->viewHeight = (coord_t) cfg.common.plrViewHeight;
     }
     p->viewHeightDelta = 0;
 
@@ -606,7 +606,7 @@ void P_SpawnClient(int plrNum)
                 -30000, -30000, 0, 0, MSF_Z_FLOOR, false, false, false);
 
     player_t *p = &players[plrNum];
-    p->viewHeight = cfg.plrViewHeight;
+    p->viewHeight = cfg.common.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // The mobj was just spawned onto invalid coordinates. The view cannot

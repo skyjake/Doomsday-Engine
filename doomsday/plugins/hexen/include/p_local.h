@@ -114,7 +114,6 @@ dd_bool     P_HealRadius(player_t* plr);
 void        P_BlastRadius(player_t* plr);
 
 dd_bool     P_CheckMissileSpawn(mobj_t* mo);
-coord_t     P_MobjGetFriction(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 dd_bool     P_HitFloor(mobj_t* mo);
 

@@ -466,13 +466,13 @@ void R_GetWeaponBob(int player, float* x, float* y)
 {
     if(x)
     {
-        *x = 1 + (cfg.bobWeapon * players[player].bob) *
+        *x = 1 + (cfg.common.bobWeapon * players[player].bob) *
             FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
     if(y)
     {
-        *y = 32 + (cfg.bobWeapon * players[player].bob) *
+        *y = 32 + (cfg.common.bobWeapon * players[player].bob) *
             FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }
@@ -881,7 +881,7 @@ void P_BulletSlope(mobj_t *mo)
 {
     angle_t             an = mo->angle;
 
-    if(!cfg.noAutoAim) // Autoaiming enabled.
+    if(!cfg.common.noAutoAim) // Autoaiming enabled.
     {
         // See which target is to be aimed at.
         bulletSlope = P_AimLineAttack(mo, an, 16 * 64);
