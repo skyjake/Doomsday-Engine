@@ -36,24 +36,17 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    struct AnimationStage : public Stage
+    class AnimationStage : public Stage
     {
     public:
-        float shininess;
-        blendmode_t blendMode;
-        de::Vector3f minColor;
-        de::Texture *maskTexture;
-        de::Vector2f maskDimensions;
-
-    public:
         AnimationStage(de::Texture *texture, int tics, float variance,
-                       de::Texture *maskTexture           = 0,
+                       de::Texture *maskTexture           = nullptr,
                        blendmode_t blendMode              = BM_ADD,
                        float shininess                    = 1,
                        de::Vector3f const &minColor       = de::Vector3f(0, 0, 0),
                        de::Vector2f const &maskDimensions = de::Vector2f(1, 1));
         AnimationStage(AnimationStage const &other);
-        virtual ~AnimationStage() {}
+        virtual ~AnimationStage();
 
         /**
          * Construct a new AnimationStage from the given @a definition.
@@ -61,14 +54,39 @@ public:
         static AnimationStage *fromDef(ded_shine_stage_t const &definition);
 
         /**
-         * Returns the Texture in effect for the animation stage.
+         * Returns the shine Texture in effect for the animation stage.
          */
         de::Texture *texture() const;
+
+        /**
+         * Returns the shine mask Texture in effect for the animation stage.
+         */
+        de::Texture *maskTexture() const;
+
+        /**
+         * Returns the shine mask dimensions in effect for the animation stage.
+         */
+        de::Vector2f const &maskDimensions() const;
+
+        /**
+         * Returns the shine strength factor in effect for the animation stage.
+         */
+        float shininess() const;
+
+        /**
+         * Returns the shine texture blending mode in effect for the animation stage.
+         */
+        blendmode_t blendMode() const;
+
+        /**
+         * Returns the minimum surface color intensities in effect for the animation stage.
+         */
+        de::Vector3f const &minColor() const;
 
         de::String description() const;
 
     private:
-        de::Texture *_texture;  ///< Not owned.
+        DENG2_PRIVATE(d)
     };
 
 public:

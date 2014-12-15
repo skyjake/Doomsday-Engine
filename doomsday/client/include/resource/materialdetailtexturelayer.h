@@ -36,13 +36,8 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    struct AnimationStage : public Stage
+    class AnimationStage : public Stage
     {
-    public:
-        float scale;
-        float strength;
-        float maxDistance;
-
     public:
         AnimationStage(de::Texture *texture, int tics,
                        float variance    = 0,
@@ -50,7 +45,7 @@ public:
                        float strength    = 1,
                        float maxDistance = 0);
         AnimationStage(AnimationStage const &other);
-        virtual ~AnimationStage() {}
+        virtual ~AnimationStage();
 
         /**
          * Construct a new AnimationStage from the given @a definition.
@@ -58,14 +53,29 @@ public:
         static AnimationStage *fromDef(ded_detail_stage_t const &definition);
 
         /**
-         * Returns the Texture in effect for the animation stage.
+         * Returns the detail Texture in effect for the animation stage.
          */
         de::Texture *texture() const;
+
+        /**
+         * Returns the detail texture scale factor in effect for the animation stage.
+         */
+        float scale() const;
+
+        /**
+         * Returns the detail texture blending factor in effect for the animation stage.
+         */
+        float strength() const;
+
+        /**
+         * Returns the maximum world distance in effect for the animation stage.
+         */
+        float maxDistance() const;
 
         de::String description() const;
 
     private:
-        de::Texture *_texture;  ///< Not owned.
+        DENG2_PRIVATE(d)
     };
 
 public:

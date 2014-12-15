@@ -377,9 +377,9 @@ AudioEnvironmentId Material::audioEnvironment() const
     return (isDrawable()? d->audioEnvironment : AE_NONE);
 }
 
-void Material::setAudioEnvironment(AudioEnvironmentId audioEnvironment)
+void Material::setAudioEnvironment(AudioEnvironmentId newEnvironment)
 {
-    d->audioEnvironment = audioEnvironment;
+    d->audioEnvironment = newEnvironment;
 }
 
 void Material::clearAllLayers()
@@ -389,37 +389,6 @@ void Material::clearAllLayers()
     qDeleteAll(d->layers); d->layers.clear();
     d->detailLayer.reset();
     d->shineLayer.reset();
-}
-
-bool Material::hasAnimatedTextureLayers() const
-{
-    for(Layer const *layer : d->layers)
-    {
-        if(layer->isAnimated()) return true;
-    }
-    return false;
-}
-
-bool Material::hasDetailTextureLayer() const
-{
-    return bool(d->detailLayer);
-}
-
-bool Material::hasGlowingTextureLayers() const
-{
-    return forAllLayers([](Layer &layer)
-    {
-        if(auto const *texLayer = layer.maybeAs<MaterialTextureLayer>())
-        {
-            return LoopResult( int(texLayer->hasGlow()) );
-        }
-        return LoopResult();  // continue
-    });
-}
-
-bool Material::hasShineLayer() const
-{
-    return bool(d->shineLayer);
 }
 
 int Material::layerCount() const
@@ -491,6 +460,37 @@ LoopResult Material::forAllLayers(std::function<LoopResult (Layer &)> func) cons
         if(auto result = func(*d->shineLayer)) return result;
     }
     return LoopContinue;
+}
+
+bool Material::hasAnimatedTextureLayers() const
+{
+    for(Layer const *layer : d->layers)
+    {
+        if(layer->isAnimated()) return true;
+    }
+    return false;
+}
+
+bool Material::hasGlowingTextureLayers() const
+{
+    return forAllLayers([](Layer &layer)
+    {
+        if(auto const *texLayer = layer.maybeAs<MaterialTextureLayer>())
+        {
+            return LoopResult( int(texLayer->hasGlow()) );
+        }
+        return LoopResult();  // continue
+    });
+}
+
+bool Material::hasDetailTextureLayer() const
+{
+    return bool(d->detailLayer);
+}
+
+bool Material::hasShineLayer() const
+{
+    return bool(d->shineLayer);
 }
 
 #ifdef __CLIENT__

@@ -42,26 +42,47 @@ static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool
     return nullptr;
 }
 
+DENG2_PIMPL_NOREF(MaterialShineLayer::AnimationStage)
+{
+    Texture *texture = nullptr;      ///< Not owned.
+    Texture *maskTexture = nullptr;  ///< Not owned.
+    Vector2f maskDimensions;
+    float shininess = 0;
+    blendmode_t blendMode;
+    Vector3f minColor;
+
+    Instance() {}
+    Instance(Instance const &other)
+        : IPrivate()
+        , texture       (other.texture)
+        , maskTexture   (other.maskTexture)
+        , maskDimensions(other.maskDimensions)
+        , shininess     (other.shininess)
+        , blendMode     (other.blendMode)
+        , minColor      (other.minColor)
+    {}
+};
+
 MaterialShineLayer::AnimationStage::AnimationStage(Texture *texture, int tics, float variance,
     Texture *maskTexture, blendmode_t blendMode, float shininess, Vector3f const &minColor,
     Vector2f const &maskDimensions)
     : Stage(tics, variance)
-    , _texture      (texture)
-    , maskTexture   (maskTexture)
-    , blendMode     (blendMode)
-    , shininess     (shininess)
-    , minColor      (minColor)
-    , maskDimensions(maskDimensions)
-{}
+    , d(new Instance)
+{
+    d->texture        = texture;
+    d->maskTexture    = maskTexture;
+    d->maskDimensions = maskDimensions;
+    d->shininess      = shininess;
+    d->blendMode      = blendMode;
+    d->minColor       = minColor;
+}
 
 MaterialShineLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : Stage(other)
-    , _texture      (other._texture)
-    , maskTexture   (other.maskTexture)
-    , blendMode     (other.blendMode)
-    , shininess     (other.shininess)
-    , minColor      (other.minColor)
-    , maskDimensions(other.maskDimensions)
+    , d(new Instance(*other.d))
+{}
+
+MaterialShineLayer::AnimationStage::~AnimationStage()
 {}
 
 MaterialShineLayer::AnimationStage *
@@ -77,25 +98,46 @@ MaterialShineLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
 
 Texture *MaterialShineLayer::AnimationStage::texture() const
 {
-    return _texture;
+    return d->texture;
+}
+
+Texture *MaterialShineLayer::AnimationStage::maskTexture() const
+{
+    return d->maskTexture;
+}
+
+Vector2f const &MaterialShineLayer::AnimationStage::maskDimensions() const
+{
+    return d->maskDimensions;
+}
+
+float MaterialShineLayer::AnimationStage::shininess() const
+{
+    return d->shininess;
+}
+
+blendmode_t MaterialShineLayer::AnimationStage::blendMode() const
+{
+    return d->blendMode;
+}
+
+Vector3f const &MaterialShineLayer::AnimationStage::minColor() const
+{
+    return d->minColor;
 }
 
 String MaterialShineLayer::AnimationStage::description() const
 {
-    String const path     = (_texture    ? _texture  ->manifest().composeUri().asText() : "(prev)");
-    String const maskPath = (maskTexture? maskTexture->manifest().composeUri().asText() : "(none)");
+    String const path     = (d->texture    ? d->texture    ->manifest().composeUri().asText() : "(prev)");
+    String const maskPath = (d->maskTexture? d->maskTexture->manifest().composeUri().asText() : "(none)");
 
-    return String("Texture:\"%1\" MaskTexture:\"%2\" Tics:%3 (~%4)"
-                  "\n      Shininess:%5 BlendMode:%6 MaskDimensions:%7"
-                  "\n      MinColor:%8")
-               .arg(path)
-               .arg(maskPath)
-               .arg(tics)
-               .arg(variance, 0, 'g', 2)
-               .arg(shininess, 0, 'g', 2)
-               .arg(R_NameForBlendMode(blendMode))
-               .arg(maskDimensions.asText())
-               .arg(minColor.asText());
+    return String(_E(l)   "Texture: \"")      + _E(.) + path + "\""
+                + _E(l) + " MaskTexture: \""  + _E(.) + maskPath + "\""
+                + _E(l) + " MaskDimensions: " + _E(.) + d->maskDimensions.asText()
+                + _E(l) + "\nTics: "          + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'f', 2) : "-1")
+                + _E(l) + " Shininess: "      + _E(.) + String::number(d->shininess, 'f', 2)
+                + _E(l) + " MinColor: "       + _E(.) + d->minColor.asText()
+                + _E(l) + " BlendMode: "      + _E(.) + R_NameForBlendMode(d->blendMode);
 }
 
 // ------------------------------------------------------------------------------------

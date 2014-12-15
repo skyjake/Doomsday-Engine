@@ -374,7 +374,7 @@ DENG2_PIMPL(MaterialAnimator)
 
                     if(Texture *tex = stage.texture())
                     {
-                        float const contrast         = de::clamp(0.f, stage.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
+                        float const contrast         = de::clamp(0.f, stage.strength(), 1.f) * ::detailFactor /*Global strength multiplier*/;
                         TextureVariantSpec &dTexSpec = ClientApp::resourceSystem().detailTextureSpec(contrast);
 
                         snapshot->textures[TU_DETAIL] = tex->prepareVariant(dTexSpec);
@@ -384,7 +384,7 @@ DENG2_PIMPL(MaterialAnimator)
                     {
                         if(Texture *tex = next.texture())
                         {
-                            float const contrast         = de::clamp(0.f, next.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
+                            float const contrast         = de::clamp(0.f, next.strength(), 1.f) * ::detailFactor /*Global strength multiplier*/;
                             TextureVariantSpec &dTexSpec = ClientApp::resourceSystem().detailTextureSpec(contrast);
 
                             snapshot->textures[TU_DETAIL_INTER] = tex->prepareVariant(dTexSpec);
@@ -405,7 +405,7 @@ DENG2_PIMPL(MaterialAnimator)
                     {
                         snapshot->textures[TU_SHINE] = tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
                         // We are only interested in a mask if we have a shiny texture.
-                        if(Texture *maskTex = stage.maskTexture)
+                        if(Texture *maskTex = stage.maskTexture())
                         {
                             snapshot->textures[TU_SHINE_MASK] = maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                         }
@@ -432,7 +432,7 @@ DENG2_PIMPL(MaterialAnimator)
                     MaterialTextureLayer::AnimationStage const &stage = texLayer->stage(l.stage);
                     MaterialTextureLayer::AnimationStage const &next  = texLayer->stage(l.stage + 1);
 
-                    Vector2f const offset = de::lerp(stage.texOrigin, next.texOrigin, l.inter);
+                    Vector2f const offset = de::lerp(stage.origin(), next.origin(), l.inter);
 
                     snapshot->units[TU_LAYER0 + texLayerIndex] =
                             GLTextureUnit(*tex, Vector2f(1, 1) / snapshot->dimensions, offset);
@@ -440,7 +440,7 @@ DENG2_PIMPL(MaterialAnimator)
                     // Glow strength is taken from texture layer #0.
                     if(texLayerIndex == 0)
                     {
-                        snapshot->glowStrength = de::lerp(stage.glowStrength, next.glowStrength, l.inter);
+                        snapshot->glowStrength = de::lerp(stage.glowStrength(), next.glowStrength(), l.inter);
                     }
                 }
                 // Setup the inter primary texture unit.
@@ -472,7 +472,7 @@ DENG2_PIMPL(MaterialAnimator)
                         MaterialDetailTextureLayer::AnimationStage const &stage = detLayer->stage(l.stage);
                         MaterialDetailTextureLayer::AnimationStage const &next  = detLayer->stage(l.stage + 1);
 
-                        float scale = de::lerp(stage.scale, next.scale, l.inter);
+                        float scale = de::lerp(stage.scale(), next.scale(), l.inter);
                         if(::detailScale > .0001f) scale *= ::detailScale; // Global scale factor.
 
                         snapshot->units[TU_DETAIL] =
@@ -507,11 +507,11 @@ DENG2_PIMPL(MaterialAnimator)
                         MaterialShineLayer::AnimationStage const &stage = shiLayer->stage(l.stage);
                         MaterialShineLayer::AnimationStage const &next  = shiLayer->stage(l.stage + 1);
 
-                        Vector3f minColor = de::lerp(stage.minColor,  next.minColor,  l.inter);
-                        float shininess   = de::lerp(stage.shininess, next.shininess, l.inter);
+                        Vector3f minColor = de::lerp(stage.minColor(),  next.minColor(),  l.inter);
+                        float shininess   = de::lerp(stage.shininess(), next.shininess(), l.inter);
 
                         snapshot->shineMinColor  = minColor.min(Vector3f(1, 1, 1)).max(Vector3f(0, 0, 0));
-                        snapshot->shineBlendMode = stage.blendMode;
+                        snapshot->shineBlendMode = stage.blendMode();
 
                         snapshot->units[TU_SHINE] =
                             GLTextureUnit(*tex, Vector2f(1, 1), Vector2f(0, 0),

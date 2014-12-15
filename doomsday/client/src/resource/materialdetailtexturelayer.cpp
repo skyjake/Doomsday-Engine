@@ -40,21 +40,39 @@ static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
     return nullptr;
 }
 
+DENG2_PIMPL_NOREF(MaterialDetailTextureLayer::AnimationStage)
+{
+    Texture *texture = nullptr;  ///< Not owned.
+    float scale = 1;
+    float strength = 1;
+    float maxDistance = 0;
+
+    Instance() {}
+    Instance(Instance const &other)
+        : texture    (other.texture)
+        , scale      (other.scale)
+        , strength   (other.strength)
+        , maxDistance(other.maxDistance)
+    {}
+};
+
 MaterialDetailTextureLayer::AnimationStage::AnimationStage(Texture *texture, int tics,
     float variance, float scale, float strength, float maxDistance)
     : Stage(tics, variance)
-    , _texture   (texture)
-    , scale      (scale)
-    , strength   (strength)
-    , maxDistance(maxDistance)
-{}
+    , d(new Instance)
+{
+    d->texture     = texture;
+    d->scale       = scale;
+    d->strength    = strength;
+    d->maxDistance = maxDistance;
+}
 
 MaterialDetailTextureLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : Stage(other)
-    , _texture   (other._texture)
-    , scale      (other.scale)
-    , strength   (other.strength)
-    , maxDistance(other.maxDistance)
+    , d(new Instance(*other.d))
+{}
+
+MaterialDetailTextureLayer::AnimationStage::~AnimationStage()
 {}
 
 MaterialDetailTextureLayer::AnimationStage *
@@ -67,21 +85,33 @@ MaterialDetailTextureLayer::AnimationStage::fromDef(ded_detail_stage_t const &de
 
 Texture *MaterialDetailTextureLayer::AnimationStage::texture() const
 {
-    return _texture;
+    return d->texture;
+}
+
+float MaterialDetailTextureLayer::AnimationStage::scale() const
+{
+    return d->scale;
+}
+
+float MaterialDetailTextureLayer::AnimationStage::strength() const
+{
+    return d->strength;
+}
+
+float MaterialDetailTextureLayer::AnimationStage::maxDistance() const
+{
+    return d->maxDistance;
 }
 
 String MaterialDetailTextureLayer::AnimationStage::description() const
 {
-    String const path = (_texture? _texture->manifest().composeUri().asText() : "(prev)");
+    String const path = (d->texture? d->texture->manifest().composeUri().asText() : "(prev)");
 
-    return String("Texture:\"%1\" Tics:%2 (~%3)"
-                  "\n       Scale:%4 Strength:%5 MaxDistance:%6")
-               .arg(path)
-               .arg(tics)
-               .arg(variance,    0, 'g', 2)
-               .arg(scale,       0, 'g', 2)
-               .arg(strength,    0, 'g', 2)
-               .arg(maxDistance, 0, 'g', 2);
+    return String(_E(l)   "Texture: \"")   + _E(.) + path + "\""
+                + _E(l) + " Tics: "        + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'f', 2) : "-1")
+                + _E(l) + " Scale: "       + _E(.) + String::number(d->scale, 'f', 2)
+                + _E(l) + " Strength: "    + _E(.) + String::number(d->strength, 'f', 2)
+                + _E(l) + " MaxDistance: " + _E(.) + String::number(d->maxDistance, 'f', 2);
 }
 
 // ------------------------------------------------------------------------------------

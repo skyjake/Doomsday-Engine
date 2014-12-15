@@ -435,8 +435,7 @@ public:  // Animators ----------------------------------------------------------
     int animatorCount() const;
 
     /**
-     * Determines if a MaterialAnimator for exists for a material variant which fulfills
-     * @a spec.
+     * Determines if a MaterialAnimator exists for a material variant which fulfills @a spec.
      */
     bool hasAnimator(de::MaterialVariantSpec const &spec);
 

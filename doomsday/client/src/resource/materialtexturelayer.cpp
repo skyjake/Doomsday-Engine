@@ -22,21 +22,40 @@
 
 using namespace de;
 
+DENG2_PIMPL_NOREF(MaterialTextureLayer::AnimationStage)
+{
+    Texture *texture = nullptr;  ///< Not owned.
+    Vector2f origin;
+    float glowStrength = 0;
+    float glowStrengthVariance = 0;
+
+    Instance() {}
+    Instance(Instance const &other)
+        : IPrivate()
+        , texture             (other.texture)
+        , origin              (other.origin)
+        , glowStrength        (other.glowStrength)
+        , glowStrengthVariance(other.glowStrengthVariance)
+    {}
+};
+
 MaterialTextureLayer::AnimationStage::AnimationStage(Texture *texture, int tics,
-    float variance, float glowStrength, float glowStrengthVariance, Vector2f const texOrigin)
+    float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin)
     : Stage(tics, variance)
-    , _texture            (texture)
-    , glowStrength        (glowStrength)
-    , glowStrengthVariance(glowStrengthVariance)
-    , texOrigin           (texOrigin)
-{}
+    , d(new Instance)
+{
+    d->texture              = texture;
+    d->origin               = origin;
+    d->glowStrength         = glowStrength;
+    d->glowStrengthVariance = glowStrengthVariance;
+}
 
 MaterialTextureLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : Stage(other)
-    , _texture            (other._texture)
-    , glowStrength        (other.glowStrength)
-    , glowStrengthVariance(other.glowStrengthVariance)
-    , texOrigin           (other.texOrigin)
+    , d(new Instance(*other.d))
+{}
+
+MaterialTextureLayer::AnimationStage::~AnimationStage()
 {}
 
 MaterialTextureLayer::AnimationStage *
@@ -49,22 +68,37 @@ MaterialTextureLayer::AnimationStage::fromDef(ded_material_layer_stage_t const &
 
 Texture *MaterialTextureLayer::AnimationStage::texture() const
 {
-    return _texture;
+    return d->texture;
 }
 
-void MaterialTextureLayer::AnimationStage::setTexture(Texture *newTexture)
+Vector2f const &MaterialTextureLayer::AnimationStage::origin() const
 {
-    _texture = newTexture;
+    return d->origin;
+}
+
+float MaterialTextureLayer::AnimationStage::glowStrength() const
+{
+    return d->glowStrength;
+}
+
+float MaterialTextureLayer::AnimationStage::glowStrengthVariance() const
+{
+    return d->glowStrengthVariance;
 }
 
 String MaterialTextureLayer::AnimationStage::description() const
 {
-    String const path = (_texture? _texture->manifest().composeUri().asText() : "(prev)");
+    String const path = (d->texture? d->texture->manifest().composeUri().asText() : "(prev)");
 
     return String(_E(l)   "Texture: \"") + _E(.) + path + "\""
                 + _E(l) + " Tics: "      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'f', 2) : "-1")
-                + _E(l) + " Origin: "    + _E(.) + texOrigin.asText()
-                + _E(l) + " Glow: "      + _E(.) + String("%1 (~%2)").arg(glowStrength, 0, 'f', 2).arg(glowStrengthVariance, 0, 'f', 2);
+                + _E(l) + " Origin: "    + _E(.) + d->origin.asText()
+                + _E(l) + " Glow: "      + _E(.) + String("%1 (~%2)").arg(d->glowStrength, 0, 'f', 2).arg(d->glowStrengthVariance, 0, 'f', 2);
+}
+
+void MaterialTextureLayer::AnimationStage::setTexture(Texture *newTexture)
+{
+    d->texture = newTexture;
 }
 
 // ------------------------------------------------------------------------------------
@@ -94,7 +128,7 @@ bool MaterialTextureLayer::hasGlow() const
 {
     for(int i = 0; i < stageCount(); ++i)
     {
-        if(stage(i).glowStrength > .0001f)
+        if(stage(i).glowStrength() > .0001f)
             return true;
     }
     return false;

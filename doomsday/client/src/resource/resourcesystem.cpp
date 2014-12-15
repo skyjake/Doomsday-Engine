@@ -564,7 +564,7 @@ DENG2_PIMPL(ResourceSystem)
                         MaterialDetailTextureLayer::AnimationStage &stage = detailLayer->stage(i);
                         if(Texture *tex = stage.texture())
                         {
-                            float const contrast = de::clamp(0.f, stage.strength, 1.f)
+                            float const contrast = de::clamp(0.f, stage.strength(), 1.f)
                                                  * detailFactor /*Global strength multiplier*/;
                             tex->prepareVariant(App_ResourceSystem().detailTextureSpec(contrast));
                         }
@@ -580,7 +580,7 @@ DENG2_PIMPL(ResourceSystem)
                         if(Texture *tex = stage.texture())
                         {
                             tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                            if(Texture *maskTex = stage.maskTexture)
+                            if(Texture *maskTex = stage.maskTexture())
                             {
                                 maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
                             }

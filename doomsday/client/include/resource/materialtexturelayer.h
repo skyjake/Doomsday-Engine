@@ -39,18 +39,13 @@ public:
     class AnimationStage : public Stage
     {
     public:
-        float glowStrength;
-        float glowStrengthVariance;
-        de::Vector2f texOrigin;
-
-    public:
         AnimationStage(de::Texture *texture, int tics,
-                       float variance               = 0,
-                       float glowStrength           = 0,
-                       float glowStrengthVariance   = 0,
-                       de::Vector2f const texOrigin = de::Vector2f());
+                       float variance             = 0,
+                       float glowStrength         = 0,
+                       float glowStrengthVariance = 0,
+                       de::Vector2f const origin  = de::Vector2f());
         AnimationStage(AnimationStage const &other);
-        virtual ~AnimationStage() {}
+        virtual ~AnimationStage();
 
         /**
          * Construct a new AnimationStage from the given @a definition.
@@ -63,14 +58,27 @@ public:
         de::Texture *texture() const;
 
         /**
-         * Change the Texture in effect for the animation stage to @a newTexture.
+         * Returns the material space, texture origin in effect for the animation stage.
          */
-        void setTexture(de::Texture *newTexture);
+        de::Vector2f const &origin() const;
+
+        /**
+         * Returns the glow strength factor in effect for the animation stage.
+         */
+        float glowStrength() const;
+
+        /**
+         * Returns the glow strength variance factor in effect for the animation stage.
+         */
+        float glowStrengthVariance() const;
 
         de::String description() const;
 
+        /// @todo refactor away:
+        void setTexture(de::Texture *newTexture);
+
     private:
-        de::Texture *_texture;  ///< Not owned.
+        DENG2_PRIVATE(d)
     };
 
 public:
