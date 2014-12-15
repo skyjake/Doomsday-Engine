@@ -155,8 +155,8 @@ public:  // Layers -------------------------------------------------------------
     /**
      * Base class for modelling a logical layer.
      *
-     * A layer in this context is an formalized extension mechanism for customizing the
-     * visual composition of material. Layers are primarily intended for the modelling
+     * A layer in this context is a formalized extension mechanism for customizing the
+     * visual composition of a material. Layers are primarily intended for the modelling
      * of animated texture layers.
      *
      * Each material is composed from one or more layers. Layers are arranged in a stack,
@@ -235,9 +235,8 @@ public:  // Layers -------------------------------------------------------------
     /**
      * Add a new layer into the appropriate layer stack position.
      *
-     * @note As this invalidates the existing logical state, any previously derived
-     * draw-context variants are cleared in the process (they will be automatically
-     * rebuilt later if/when needed).
+     * @note As this alters the layer state, any existing client side MaterialAnimators
+     * will need to be reconfigured/destroyed as they will no longer be valid.
      *
      * @param layer  Layer to add. Material takes ownership.
      */
@@ -259,9 +258,8 @@ public:  // Layers -------------------------------------------------------------
     /**
      * Destroys all the material's layers.
      *
-     * @note As this invalidates the existing logical state, any previously derived
-     * context variants are cleared in the process (they will be automatically rebuilt
-     * later if/when needed).
+     * @note As this alters the layer state, any existing client side MaterialAnimators
+     * will need to be reconfigured/destroyed as they will no longer be valid.
      */
     void clearAllLayers();
 
@@ -286,11 +284,11 @@ public:  // Decorations --------------------------------------------------------
      *
      * @par Skip Patterns
      * Normally each material decoration is repeated as many times as the material.
-     * Meaning that for each time the material dimensions repeat on given axis, each
+     * Meaning that for each time the material dimensions repeat on a given axis, each
      * of the decorations will be repeated also.
      *
      * A skip pattern allows for sparser repeats to be configured. The X and Y axes of
-     * a skip pattern correspond on the horizontal and vertical axes of the material,
+     * a skip pattern correspond to the horizontal and vertical axes of the material,
      * respectively.
      */
     class Decoration
@@ -322,7 +320,7 @@ public:  // Decorations --------------------------------------------------------
 
     public:
         /**
-         * Construct a new material Decoration with given skip pattern configuration.
+         * Construct a new material Decoration with the given skip pattern configuration.
          */
         Decoration(de::Vector2i const &patternSkip   = de::Vector2i(),
                    de::Vector2i const &patternOffset = de::Vector2i());
