@@ -38,8 +38,11 @@
  * Animator for a Material within a given client side usage context.
  *
  * Each usage context has it's own Material animator for an independent animation
- * timelines. Additionally, contexts define a @ref MaterialVariantSpec which dictates
- * how the various dependent resources are interpreted within that context.
+ * timeline. Additionally, contexts define a @ref MaterialVariantSpec which dictates
+ * how the various dependent resources are interpreted within that context. (This is
+ * necessary because of the quirky behavior of the id Tech 1 map renderer, where the
+ * texture dimensions are interpreted differently according to whether it is used on
+ * a "floor" or "wall" map surface).
  */
 class MaterialAnimator
 {

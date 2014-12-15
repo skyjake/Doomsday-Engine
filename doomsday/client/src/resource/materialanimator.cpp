@@ -239,7 +239,7 @@ DENG2_PIMPL(MaterialAnimator)
         short tics;   ///< Remaining (sharp) tics in the current stage.
         float inter;  ///< Intermark from the current stage to the next [0..1].
 
-        String description() const {
+        String synopsis() const {
             return String("stage: %1 tics: %2 inter: %3").arg(stage).arg(tics).arg(inter);
         }
     };
