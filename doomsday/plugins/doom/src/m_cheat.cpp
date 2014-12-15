@@ -589,18 +589,18 @@ D_CMD(CheatWhere)
     Sector *sector = Mobj_Sector(plrMo);
 
     uri_s *matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
-    LOG_SCR_MSG("FloorZ:%g Material:%s")
+    LOG_SCR_MSG("FloorZ:%f Material:%s")
             << P_GetDoublep(sector, DMU_FLOOR_HEIGHT)
             << Str_Text(Uri_ToString(matUri));
     Uri_Delete(matUri);
 
     matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
-    LOG_SCR_MSG("CeilingZ:%g Material:%s")
+    LOG_SCR_MSG("CeilingZ:%f Material:%s")
             << P_GetDoublep(sector, DMU_CEILING_HEIGHT)
             << Str_Text(Uri_ToString(matUri));
     Uri_Delete(matUri);
 
-    LOG_SCR_MSG("Player height:%g Player radius:%g")
+    LOG_SCR_MSG("Player height:%f Player radius:%f")
             << plrMo->height << plrMo->radius;
 
     return true;
