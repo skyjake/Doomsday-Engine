@@ -1,4 +1,4 @@
-/** @file materialdetailtexturelayer.h  Logical material, detail-texture layer.
+/** @file materialdetaillayer.h  Logical material, detail-texture layer.
  *
  * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
  *
@@ -17,26 +17,26 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef CLIENT_RESOURCE_MATERIALDETAILTEXTURELAYER_H
-#define CLIENT_RESOURCE_MATERIALDETAILTEXTURELAYER_H
+#ifndef CLIENT_RESOURCE_MATERIALDETAILLAYER_H
+#define CLIENT_RESOURCE_MATERIALDETAILLAYER_H
 
 #include <de/String>
 #include <doomsday/defs/dedtypes.h>
-#include "Material"
+#include "resource/materialtexturelayer.h"
 #include "Texture"
 
 /**
- * Specialized Material::Layer for describing an animated detail-texture layer.
+ * Specialized MaterialTextureLayer for describing an animated detail texture layer.
  *
  * @ingroup resource
  */
-class MaterialDetailTextureLayer : public Material::Layer
+class MaterialDetailLayer : public MaterialTextureLayer
 {
 public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public Stage
+    class AnimationStage : public MaterialTextureLayer::AnimationStage
     {
     public:
         AnimationStage(de::Texture *texture, int tics,
@@ -51,11 +51,6 @@ public:
          * Construct a new AnimationStage from the given @a definition.
          */
         static AnimationStage *fromDef(ded_detail_stage_t const &definition);
-
-        /**
-         * Returns the detail Texture in effect for the animation stage.
-         */
-        de::Texture *texture() const;
 
         /**
          * Returns the detail texture scale factor in effect for the animation stage.
@@ -79,14 +74,12 @@ public:
     };
 
 public:
-    virtual ~MaterialDetailTextureLayer() {}
-
-    de::String describe() const;
+    virtual ~MaterialDetailLayer() {}
 
     /**
      * Construct a new DetailTextureLayer from the given @a definition.
      */
-    static MaterialDetailTextureLayer *fromDef(ded_detailtexture_t const &definition);
+    static MaterialDetailLayer *fromDef(ded_detailtexture_t const &definition);
 
     /**
      * Add a new animation stage to the detail texture layer.
@@ -103,6 +96,8 @@ public:
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
     AnimationStage &stage(int index) const;
+
+    de::String describe() const;
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALDETAILTEXTURELAYER_H

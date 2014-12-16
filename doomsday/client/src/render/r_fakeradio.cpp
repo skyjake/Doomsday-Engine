@@ -58,10 +58,15 @@ bool Rend_RadioPlaneCastsShadow(Plane const &plane)
 {
     if(plane.surface().hasMaterial())
     {
-        Material const &surfaceMaterial = plane.surface().material();
-        if(!surfaceMaterial.isDrawable())             return false;
-        if(surfaceMaterial.hasGlowingTextureLayers()) return false;
-        if(surfaceMaterial.isSkyMasked())             return false;
+        MaterialAnimator &matAnimator = plane.surface().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        if(!matAnimator.material().isDrawable()) return false;
+        if(matAnimator.material().isSkyMasked()) return false;
+
+        if(matAnimator.glowStrength() > 0) return false;
     }
     return true;
 }

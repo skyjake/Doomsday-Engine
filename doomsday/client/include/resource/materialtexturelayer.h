@@ -26,11 +26,11 @@
 #include "Texture"
 
 /**
- * Specialized Material::Layer for describing an animated texture layer.
+ * Specialized MaterialLayer for describing an animated texture layer.
  *
  * @ingroup resource
  */
-class MaterialTextureLayer : public Material::Layer
+class MaterialTextureLayer : public MaterialLayer
 {
 public:
     /**
@@ -40,10 +40,14 @@ public:
     {
     public:
         AnimationStage(de::Texture *texture, int tics,
-                       float variance             = 0,
-                       float glowStrength         = 0,
-                       float glowStrengthVariance = 0,
-                       de::Vector2f const origin  = de::Vector2f());
+                       float variance                     = 0,
+                       float glowStrength                 = 0,
+                       float glowStrengthVariance         = 0,
+                       de::Vector2f const origin          = de::Vector2f(),
+                       de::Texture *maskTexture           = nullptr,
+                       de::Vector2f const &maskDimensions = de::Vector2f(1, 1),
+                       blendmode_t blendMode              = BM_NORMAL,
+                       float opacity                      = 1);
         AnimationStage(AnimationStage const &other);
         virtual ~AnimationStage();
 
@@ -61,6 +65,26 @@ public:
          * Returns the material space, texture origin in effect for the animation stage.
          */
         de::Vector2f const &origin() const;
+
+        /**
+         * Returns the mask Texture in effect for the animation stage.
+         */
+        de::Texture *maskTexture() const;
+
+        /**
+         * Returns the mask dimensions in effect for the animation stage.
+         */
+        de::Vector2f const &maskDimensions() const;
+
+        /**
+         * Returns the opacity factor in effect for the animation stage.
+         */
+        float opacity() const;
+
+        /**
+         * Returns the texture blending mode in effect for the animation stage.
+         */
+        blendmode_t blendMode() const;
 
         /**
          * Returns the glow strength factor in effect for the animation stage.
@@ -89,8 +113,6 @@ public:
      */
     static MaterialTextureLayer *fromDef(ded_material_layer_t const &definition);
 
-    de::String describe() const;
-
     /**
      * Returns @c true if glow is enabled for one or more animation stages.
      */
@@ -111,6 +133,8 @@ public:
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
     AnimationStage &stage(int index) const;
+
+    de::String describe() const;
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALTEXTURELAYER_H

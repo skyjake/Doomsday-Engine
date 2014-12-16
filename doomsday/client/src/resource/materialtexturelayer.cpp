@@ -19,33 +19,49 @@
 
 #include "resource/materialtexturelayer.h"
 #include "dd_main.h"
+#include "r_util.h" // R_NameForBlendMode
 
 using namespace de;
 
 DENG2_PIMPL_NOREF(MaterialTextureLayer::AnimationStage)
 {
-    Texture *texture = nullptr;  ///< Not owned.
     Vector2f origin;
+    Texture *texture = nullptr;      ///< Not owned.
+    Texture *maskTexture = nullptr;  ///< Not owned.
+    Vector2f maskDimensions;
+    blendmode_t blendMode = BM_NORMAL;
+    float opacity = 1;
+
     float glowStrength = 0;
     float glowStrengthVariance = 0;
 
     Instance() {}
     Instance(Instance const &other)
         : IPrivate()
-        , texture             (other.texture)
         , origin              (other.origin)
+        , texture             (other.texture)
+        , maskTexture         (other.maskTexture)
+        , maskDimensions      (other.maskDimensions)
+        , blendMode           (other.blendMode)
+        , opacity             (other.opacity)
         , glowStrength        (other.glowStrength)
         , glowStrengthVariance(other.glowStrengthVariance)
     {}
 };
 
 MaterialTextureLayer::AnimationStage::AnimationStage(Texture *texture, int tics,
-    float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin)
+    float variance, float glowStrength, float glowStrengthVariance, Vector2f const origin,
+    Texture *maskTexture, Vector2f const &maskDimensions, blendmode_t blendMode, float opacity)
     : Stage(tics, variance)
     , d(new Instance)
 {
-    d->texture              = texture;
     d->origin               = origin;
+    d->texture              = texture;
+    d->maskTexture          = maskTexture;
+    d->maskDimensions       = maskDimensions;
+    d->blendMode            = blendMode;
+    d->opacity              = opacity;
+
     d->glowStrength         = glowStrength;
     d->glowStrengthVariance = glowStrengthVariance;
 }
@@ -76,6 +92,26 @@ Vector2f const &MaterialTextureLayer::AnimationStage::origin() const
     return d->origin;
 }
 
+Texture *MaterialTextureLayer::AnimationStage::maskTexture() const
+{
+    return d->maskTexture;
+}
+
+Vector2f const &MaterialTextureLayer::AnimationStage::maskDimensions() const
+{
+    return d->maskDimensions;
+}
+
+blendmode_t MaterialTextureLayer::AnimationStage::blendMode() const
+{
+    return d->blendMode;
+}
+
+float MaterialTextureLayer::AnimationStage::opacity() const
+{
+    return d->opacity;
+}
+
 float MaterialTextureLayer::AnimationStage::glowStrength() const
 {
     return d->glowStrength;
@@ -90,10 +126,21 @@ String MaterialTextureLayer::AnimationStage::description() const
 {
     String const path = (d->texture? d->texture->manifest().composeUri().asText() : "(prev)");
 
-    return String(_E(l)   "Texture: \"") + _E(.) + path + "\""
-                + _E(l) + " Tics: "      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'f', 2) : "-1")
-                + _E(l) + " Origin: "    + _E(.) + d->origin.asText()
-                + _E(l) + " Glow: "      + _E(.) + String("%1 (~%2)").arg(d->glowStrength, 0, 'f', 2).arg(d->glowStrengthVariance, 0, 'f', 2);
+    String str = String(_E(l)   "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'f', 2) : "-1")
+                      + _E(l) + " Origin: "    + _E(.) + d->origin.asText()
+                      + _E(l) + " Texture: \"" + _E(.) + path + "\"";
+
+    if(d->maskTexture)
+    {
+        str += String(_E(l)   "\nMaskTexture: \"") + _E(.) + d->maskTexture->manifest().composeUri().asText() + "\""
+                    + _E(l) + " MaskDimensions: "  + _E(.) + d->maskDimensions.asText();
+    }
+
+    str += String(_E(l)   "\nBlendMode: ") + _E(.) + R_NameForBlendMode(d->blendMode)
+                + _E(l) + " Opacity: "     + _E(.) + String::number(d->opacity, 'f', 2)
+                + _E(l) + " Glow: "        + _E(.) + String("%1 (~%2)").arg(d->glowStrength, 0, 'f', 2).arg(d->glowStrengthVariance, 0, 'f', 2);
+
+    return str;
 }
 
 void MaterialTextureLayer::AnimationStage::setTexture(Texture *newTexture)

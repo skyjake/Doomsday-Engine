@@ -419,7 +419,7 @@ Surface &Surface::setBlendMode(blendmode_t newBlendMode)
 #ifdef __CLIENT__
 float Surface::glow(Vector3f &color) const
 {
-    if(!d->material || !d->material->hasGlowingTextureLayers())
+    if(!d->material || d->material->isSkyMasked())
     {
         color = Vector3f();
         return 0;
@@ -449,8 +449,7 @@ void Surface::addDecoration(Decoration *decoration)
 
 void Surface::clearDecorations()
 {
-    qDeleteAll(d->decorations);
-    d->decorations.clear();
+    qDeleteAll(d->decorations); d->decorations.clear();
 }
 
 LoopResult Surface::forAllDecorations(std::function<LoopResult (Decoration &)> func) const

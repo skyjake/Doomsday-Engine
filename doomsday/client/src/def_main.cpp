@@ -51,9 +51,9 @@
 #endif
 
 #include "resource/manifest.h"
-#include "resource/materialdetailtexturelayer.h"
-#include "resource/materialtexturelayer.h"
+#include "resource/materialdetaillayer.h"
 #include "resource/materialshinelayer.h"
+#include "resource/materialtexturelayer.h"
 #ifdef __CLIENT__
 #  include "resource/materiallightdecoration.h"
 #endif
@@ -927,7 +927,7 @@ static void configureMaterial(Material &mat, ded_material_t const &def)
     mat.clearAllLayers();
     for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i)
     {
-        mat.addLayer(MaterialTextureLayer::fromDef(def.layers[i]));
+        mat.addLayerAt(MaterialTextureLayer::fromDef(def.layers[i]), mat.layerCount());
     }
 
     if(mat.layerCount() && mat.layer(0).stageCount())
@@ -984,117 +984,109 @@ static void configureMaterial(Material &mat, ded_material_t const &def)
                 }
             }
 
-            if(!mat.hasDetailTextureLayer())
+            // Are there Detail definitions we need to produce a layer for?
+            MaterialDetailLayer *dlayer = nullptr;
+            for(int i = 0; i < layer0.stageCount(); ++i)
             {
-                // Are there Detail definitions we need to produce a layer for?
-                MaterialDetailTextureLayer *dlayer = nullptr;
+                MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
+                ded_detailtexture_t const *detailDef =
+                    tryFindDetailTexture(stage.texture()->manifest().composeUri(),
+                                         /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
-                for(int i = 0; i < layer0.stageCount(); ++i)
+                if(!detailDef || !detailDef->stage.texture)
+                    continue;
+
+                if(!dlayer)
                 {
-                    MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
-                    ded_detailtexture_t const *detailDef =
-                        tryFindDetailTexture(stage.texture()->manifest().composeUri(),
-                                             /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
-
-                    if(!detailDef || !detailDef->stage.texture)
-                        continue;
-
-                    if(!dlayer)
+                    // Add a new detail layer.
+                    mat.addLayerAt(dlayer = MaterialDetailLayer::fromDef(*detailDef), 0);
+                }
+                else
+                {
+                    // Add a new stage.
+                    try
                     {
-                        // Add a new detail layer.
-                        mat.addLayer(dlayer = MaterialDetailTextureLayer::fromDef(*detailDef));
-                    }
-                    else
-                    {
-                        // Add a new stage.
-                        try
+                        Texture &texture = resSys().textureScheme("Details").findByResourceUri(*detailDef->stage.texture).texture();
+                        dlayer->addStage(MaterialDetailLayer::AnimationStage(&texture, stage.tics, stage.variance,
+                                                                                    detailDef->stage.scale, detailDef->stage.strength,
+                                                                                    detailDef->stage.maxDistance));
+
+                        if(dlayer->stageCount() == 2)
                         {
-                            Texture &texture = resSys().textureScheme("Details").findByResourceUri(*detailDef->stage.texture).texture();
-                            dlayer->addStage(MaterialDetailTextureLayer::AnimationStage(&texture, stage.tics, stage.variance,
-                                                                                        detailDef->stage.scale, detailDef->stage.strength,
-                                                                                        detailDef->stage.maxDistance));
+                            // Update the first stage with timing info.
+                            MaterialTextureLayer::AnimationStage const &stage0  = layer0.stage(0);
+                            MaterialDetailLayer::AnimationStage &dstage0 = dlayer->stage(0);
 
-                            if(dlayer->stageCount() == 2)
-                            {
-                                // Update the first stage with timing info.
-                                MaterialTextureLayer::AnimationStage const &stage0  = layer0.stage(0);
-                                MaterialDetailTextureLayer::AnimationStage &dstage0 = dlayer->stage(0);
-
-                                dstage0.tics     = stage0.tics;
-                                dstage0.variance = stage0.variance;
-                            }
+                            dstage0.tics     = stage0.tics;
+                            dstage0.variance = stage0.variance;
                         }
-                        catch(TextureManifest::MissingTextureError const &)
-                        {} // Ignore this error.
-                        catch(ResourceSystem::MissingManifestError const &)
-                        {} // Ignore this error.
                     }
+                    catch(TextureManifest::MissingTextureError const &)
+                    {} // Ignore this error.
+                    catch(ResourceSystem::MissingManifestError const &)
+                    {} // Ignore this error.
                 }
             }
 
-            if(!mat.hasShineLayer())
+            // Are there Reflection definition we need to produce a layer for?
+            MaterialShineLayer *slayer = nullptr;
+            for(int i = 0; i < layer0.stageCount(); ++i)
             {
-                // Are there Reflection definition we need to produce a layer for?
-                MaterialShineLayer *slayer = nullptr;
+                MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
+                ded_reflection_t const *shineDef =
+                    tryFindReflection(stage.texture()->manifest().composeUri(),
+                                      /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
-                for(int i = 0; i < layer0.stageCount(); ++i)
+                if(!shineDef || !shineDef->stage.texture)
+                    continue;
+
+                if(!slayer)
                 {
-                    MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
-                    ded_reflection_t const *shineDef =
-                        tryFindReflection(stage.texture()->manifest().composeUri(),
-                                          /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
-
-                    if(!shineDef || !shineDef->stage.texture)
-                        continue;
-
-                    if(!slayer)
+                    // Add a new shine layer.
+                    mat.addLayerAt(slayer = MaterialShineLayer::fromDef(*shineDef), mat.layerCount());
+                }
+                else
+                {
+                    // Add a new stage.
+                    try
                     {
-                        // Add a new shine layer.
-                        mat.addLayer(slayer = MaterialShineLayer::fromDef(*shineDef));
-                    }
-                    else
-                    {
-                        // Add a new stage.
-                        try
+                        Texture &texture = resSys().textureScheme("Reflections")
+                                               .findByResourceUri(*shineDef->stage.texture).texture();
+
+                        Texture *maskTexture = nullptr;
+                        if(shineDef->stage.maskTexture)
                         {
-                            Texture &texture = resSys().textureScheme("Reflections")
-                                                   .findByResourceUri(*shineDef->stage.texture).texture();
-
-                            Texture *maskTexture = nullptr;
-                            if(shineDef->stage.maskTexture)
+                            try
                             {
-                                try
-                                {
-                                    maskTexture = &resSys().textureScheme("Masks")
-                                                       .findByResourceUri(*shineDef->stage.maskTexture).texture();
-                                }
-                                catch(TextureManifest::MissingTextureError const &)
-                                {} // Ignore this error.
-                                catch(ResourceSystem::MissingManifestError const &)
-                                {} // Ignore this error.
+                                maskTexture = &resSys().textureScheme("Masks")
+                                                   .findByResourceUri(*shineDef->stage.maskTexture).texture();
                             }
-
-                            slayer->addStage(MaterialShineLayer::AnimationStage(&texture, stage.tics, stage.variance,
-                                                                                maskTexture, shineDef->stage.blendMode,
-                                                                                shineDef->stage.shininess,
-                                                                                Vector3f(shineDef->stage.minColor),
-                                                                                Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
-
-                            if(slayer->stageCount() == 2)
-                            {
-                                // Update the first stage with timing info.
-                                MaterialTextureLayer::AnimationStage const &stage0 = layer0.stage(0);
-                                MaterialShineLayer::AnimationStage &sstage0        = slayer->stage(0);
-
-                                sstage0.tics     = stage0.tics;
-                                sstage0.variance = stage0.variance;
-                            }
+                            catch(TextureManifest::MissingTextureError const &)
+                            {} // Ignore this error.
+                            catch(ResourceSystem::MissingManifestError const &)
+                            {} // Ignore this error.
                         }
-                        catch(TextureManifest::MissingTextureError const &)
-                        {} // Ignore this error.
-                        catch(ResourceSystem::MissingManifestError const &)
-                        {} // Ignore this error.
+
+                        slayer->addStage(MaterialShineLayer::AnimationStage(&texture, stage.tics, stage.variance,
+                                                                            maskTexture, shineDef->stage.blendMode,
+                                                                            shineDef->stage.shininess,
+                                                                            Vector3f(shineDef->stage.minColor),
+                                                                            Vector2f(shineDef->stage.maskWidth, shineDef->stage.maskHeight)));
+
+                        if(slayer->stageCount() == 2)
+                        {
+                            // Update the first stage with timing info.
+                            MaterialTextureLayer::AnimationStage const &stage0 = layer0.stage(0);
+                            MaterialShineLayer::AnimationStage &sstage0        = slayer->stage(0);
+
+                            sstage0.tics     = stage0.tics;
+                            sstage0.variance = stage0.variance;
+                        }
                     }
+                    catch(TextureManifest::MissingTextureError const &)
+                    {} // Ignore this error.
+                    catch(ResourceSystem::MissingManifestError const &)
+                    {} // Ignore this error.
                 }
             }
         }

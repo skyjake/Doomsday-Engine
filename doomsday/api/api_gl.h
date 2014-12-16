@@ -146,7 +146,7 @@ typedef enum blendmode_e {
 
 #define VALID_BLENDMODE(val) ((int)(val) >= BM_FIRST && (int)(val) <= BM_LAST)
 
-#define NUM_BLENDMODES       (BM_LAST - BM_FIRST)
+#define NUM_BLENDMODES       (10)
 
 typedef struct dgl_vertex_s {
     float           xyz[4]; ///< The fourth is padding.

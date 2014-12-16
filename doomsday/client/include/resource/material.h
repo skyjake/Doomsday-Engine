@@ -149,9 +149,6 @@ public:  // Layers -------------------------------------------------------------
     /// The referenced layer does not exist. @ingroup errors
     DENG2_ERROR(MissingLayerError);
 
-    /// Maximum number of Layers.
-    static int const max_layers = 1;
-
     /**
      * Base class for modelling a logical layer.
      *
@@ -233,14 +230,15 @@ public:  // Layers -------------------------------------------------------------
     int layerCount() const;
 
     /**
-     * Add a new layer into the appropriate layer stack position.
+     * Add a new layer at the given layer stack position.
      *
      * @note As this alters the layer state, any existing client side MaterialAnimators
      * will need to be reconfigured/destroyed as they will no longer be valid.
      *
      * @param layer  Layer to add. Material takes ownership.
+     * @param index  Numeric position in the layer stack at which to add the layer.
      */
-    void addLayer(Layer *layer);
+    void addLayerAt(Layer *layer, int index);
 
     /**
      * Lookup a Layer by it's unique @a index.
@@ -249,25 +247,12 @@ public:  // Layers -------------------------------------------------------------
     Layer *layerPtr(int index) const;
 
     /**
-     * Iterate through all the Layers of the material.
-     *
-     * @param func  Callback to make for each Layer.
-     */
-    de::LoopResult forAllLayers(std::function<de::LoopResult (Layer &)> func) const;
-
-    /**
      * Destroys all the material's layers.
      *
      * @note As this alters the layer state, any existing client side MaterialAnimators
      * will need to be reconfigured/destroyed as they will no longer be valid.
      */
     void clearAllLayers();
-
-    /// @todo Cache these analyses:
-    bool hasAnimatedTextureLayers() const;
-    bool hasDetailTextureLayer() const;
-    bool hasGlowingTextureLayers() const;
-    bool hasShineLayer() const;
 
 #ifdef __CLIENT__
 public:  // Decorations ---------------------------------------------------------------
@@ -418,11 +403,6 @@ public:  // Decorations --------------------------------------------------------
     void addDecoration(Decoration *decor);
 
     /**
-     * Lookup the material Decoration by it's unique @a decorIndex.
-     */
-    Decoration &decoration(int decorIndex);
-
-    /**
      * Destroys all the material's decorations.
      */
     void clearAllDecorations();
@@ -473,6 +453,7 @@ private:
     DENG2_PRIVATE(d)
 };
 
+typedef Material::Layer      MaterialLayer;
 #ifdef __CLIENT__
 typedef Material::Decoration MaterialDecoration;
 #endif

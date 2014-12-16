@@ -22,27 +22,27 @@
 
 #include <de/String>
 #include <doomsday/defs/dedtypes.h>
-#include "Material"
+#include "resource/materialtexturelayer.h"
 #include "Texture"
 
 /**
- * Specialized Material::Layer for a describing an animated shine/reflection layer.
+ * Specialized MaterialTextureLayer for describing an animated shine/reflection layer.
  *
  * @ingroup resource
  */
-class MaterialShineLayer : public Material::Layer
+class MaterialShineLayer : public MaterialTextureLayer
 {
 public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public Stage
+    class AnimationStage : public MaterialTextureLayer::AnimationStage
     {
     public:
         AnimationStage(de::Texture *texture, int tics, float variance,
                        de::Texture *maskTexture           = nullptr,
                        blendmode_t blendMode              = BM_ADD,
-                       float shininess                    = 1,
+                       float opacity                      = 1,
                        de::Vector3f const &minColor       = de::Vector3f(0, 0, 0),
                        de::Vector2f const &maskDimensions = de::Vector2f(1, 1));
         AnimationStage(AnimationStage const &other);
@@ -54,31 +54,6 @@ public:
         static AnimationStage *fromDef(ded_shine_stage_t const &definition);
 
         /**
-         * Returns the shine Texture in effect for the animation stage.
-         */
-        de::Texture *texture() const;
-
-        /**
-         * Returns the shine mask Texture in effect for the animation stage.
-         */
-        de::Texture *maskTexture() const;
-
-        /**
-         * Returns the shine mask dimensions in effect for the animation stage.
-         */
-        de::Vector2f const &maskDimensions() const;
-
-        /**
-         * Returns the shine strength factor in effect for the animation stage.
-         */
-        float shininess() const;
-
-        /**
-         * Returns the shine texture blending mode in effect for the animation stage.
-         */
-        blendmode_t blendMode() const;
-
-        /**
          * Returns the minimum surface color intensities in effect for the animation stage.
          */
         de::Vector3f const &minColor() const;
@@ -86,13 +61,12 @@ public:
         de::String description() const;
 
     private:
-        DENG2_PRIVATE(d)
+        de::Vector3f _minColor;
     };
 
 public:
-    virtual ~MaterialShineLayer() {}
-
-    de::String describe() const;
+    MaterialShineLayer();
+    virtual ~MaterialShineLayer();
 
     /**
      * Construct a new layer from the specified definition.
@@ -114,6 +88,8 @@ public:
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
     AnimationStage &stage(int index) const;
+
+    de::String describe() const;
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALSHINELAYER_H

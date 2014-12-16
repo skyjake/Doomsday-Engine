@@ -189,7 +189,7 @@ DENG_HEADERS += \
     $$SRC/include/resource/mapdef.h \
     $$SRC/include/resource/material.h \
     $$SRC/include/resource/materialarchive.h \
-    $$SRC/include/resource/materialdetailtexturelayer.h \
+    $$SRC/include/resource/materialdetaillayer.h \
     $$SRC/include/resource/materialmanifest.h \
     $$SRC/include/resource/materialscheme.h \
     $$SRC/include/resource/materialshinelayer.h \
@@ -343,7 +343,7 @@ SOURCES += \
     $$SRC/src/resource/mapdef.cpp \
     $$SRC/src/resource/material.cpp \
     $$SRC/src/resource/materialarchive.cpp \
-    $$SRC/src/resource/materialdetailtexturelayer.cpp \
+    $$SRC/src/resource/materialdetaillayer.cpp \
     $$SRC/src/resource/materialmanifest.cpp \
     $$SRC/src/resource/materialscheme.cpp \
     $$SRC/src/resource/materialshinelayer.cpp \

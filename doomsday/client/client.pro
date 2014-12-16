@@ -332,7 +332,7 @@ DENG_HEADERS += \
     include/resource/material.h \
     include/resource/materialanimator.h \
     include/resource/materialarchive.h \
-    include/resource/materialdetailtexturelayer.h \
+    include/resource/materialdetaillayer.h \
     include/resource/materiallightdecoration.h \
     include/resource/materialmanifest.h \
     include/resource/materialscheme.h \
@@ -666,7 +666,7 @@ SOURCES += \
     src/resource/material.cpp \
     src/resource/materialanimator.cpp \
     src/resource/materialarchive.cpp \
-    src/resource/materialdetailtexturelayer.cpp \
+    src/resource/materialdetaillayer.cpp \
     src/resource/materiallightdecoration.cpp \
     src/resource/materialmanifest.cpp \
     src/resource/materialscheme.cpp \

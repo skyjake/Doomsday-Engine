@@ -39,6 +39,8 @@
 
 #ifdef __CLIENT__
 #  include "world/map.h"
+#  include "resource/materialdetaillayer.h"
+#  include "resource/materialshinelayer.h"
 #endif
 
 #ifdef WIN32
@@ -490,6 +492,19 @@ void Line::Side::setShadowVisCount(int newCount)
 
 #ifdef __CLIENT__
 
+static bool materialHasAnimatedTextureLayers(Material const &mat)
+{
+    for(int i = 0; i < mat.layerCount(); ++i)
+    {
+        MaterialLayer const &layer = mat.layer(i);
+        if(!layer.is<MaterialDetailLayer>() && !layer.is<MaterialShineLayer>())
+        {
+            if(layer.isAnimated()) return true;
+        }
+    }
+    return false;
+}
+
 /**
  * Given a side section, look at the neighbouring surfaces and pick the
  * best choice of material used on those surfaces to be applied to "this"
@@ -574,9 +589,9 @@ static Material *chooseFixMaterial(LineSide &side, int section)
     choice2 = frontSec->planeSurface(section == LineSide::Bottom? Sector::Floor : Sector::Ceiling).materialPtr();
 
     // Prefer a non-animated, non-masked material.
-    if(choice1 && !choice1->hasAnimatedTextureLayers() && !choice1->isSkyMasked())
+    if(choice1 && !materialHasAnimatedTextureLayers(*choice1) && !choice1->isSkyMasked())
         return choice1;
-    if(choice2 && !choice2->hasAnimatedTextureLayers() && !choice2->isSkyMasked())
+    if(choice2 && !materialHasAnimatedTextureLayers(*choice2) && !choice2->isSkyMasked())
         return choice2;
 
     // Prefer a non-masked material.

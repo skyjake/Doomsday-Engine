@@ -35,11 +35,6 @@
 #include "resource/patch.h"
 #include "resource/patchname.h"
 
-// @todo remove me:
-#include "resource/materialdetailtexturelayer.h"
-#include "resource/materialtexturelayer.h"
-#include "resource/materialshinelayer.h"
-
 #ifdef __CLIENT__
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
@@ -534,61 +529,15 @@ DENG2_PIMPL(ResourceSystem)
         MaterialVariantSpec const *spec; /// Interned context specification.
 
         MaterialCacheTask(Material &resource, MaterialVariantSpec const &contextSpec)
-            : CacheTask(), material(&resource), spec(&contextSpec)
+            : CacheTask()
+            , material(&resource)
+            , spec(&contextSpec)
         {}
 
         void run()
         {
-            // Ensure a variant for the specified context is created.
-            material->getAnimator(*spec);
-
-            // Cache all material resources.
-            material->forAllLayers([this] (Material::Layer &layer)
-            {
-                if(auto *texLayer = layer.maybeAs<MaterialTextureLayer>())
-                {
-                    for(int i = 0; i < texLayer->stageCount(); ++i)
-                    {
-                        if(Texture *tex = texLayer->stage(i).texture())
-                        {
-                            tex->prepareVariant(*spec->primarySpec);
-                        }
-                    }
-                }
-                if(auto *detailLayer = layer.maybeAs<MaterialDetailTextureLayer>())
-                {
-                    // Do we need to prepare detail texture(s)?
-                    if(!material->isSkyMasked())
-                    for(int i = 0; i < detailLayer->stageCount(); ++i)
-                    {
-                        MaterialDetailTextureLayer::AnimationStage &stage = detailLayer->stage(i);
-                        if(Texture *tex = stage.texture())
-                        {
-                            float const contrast = de::clamp(0.f, stage.strength(), 1.f)
-                                                 * detailFactor /*Global strength multiplier*/;
-                            tex->prepareVariant(App_ResourceSystem().detailTextureSpec(contrast));
-                        }
-                    }
-                }
-                if(auto *shineLayer = layer.maybeAs<MaterialShineLayer>())
-                {
-                    // Do we need to prepare a shiny texture (and possibly a mask)?
-                    if(!material->isSkyMasked())
-                    for(int i = 0; i < shineLayer->stageCount(); ++i)
-                    {
-                        MaterialShineLayer::AnimationStage &stage = shineLayer->stage(i);
-                        if(Texture *tex = stage.texture())
-                        {
-                            tex->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                            if(Texture *maskTex = stage.maskTexture())
-                            {
-                                maskTex->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
-                            }
-                        }
-                    }
-                }
-                return LoopContinue;
-            });
+            // Cache all dependent assets and upload GL textures if necessary.
+            material->getAnimator(*spec).cacheAssets();
         }
     };
 

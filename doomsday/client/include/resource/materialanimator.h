@@ -164,6 +164,8 @@ public:
      */
     void prepare(bool forceUpdate = false);
 
+    void cacheAssets();
+
     /**
      * Returns @c true if the Material is currently thought to be fully "opaque", i.e., the
      * composited layer stack has no translucent gaps.

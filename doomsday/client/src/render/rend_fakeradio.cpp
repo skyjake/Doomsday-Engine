@@ -1256,8 +1256,8 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
 static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
 {
-    DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().definesPolyobj());
+    DENG2_ASSERT(side.hasSections());
+    DENG2_ASSERT(!side.line().definesPolyobj());
 
     if(!(shadowDark > .0001)) return;
 
@@ -1270,9 +1270,15 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
 
-    // Missing, glowing or sky-masked materials are exempted.
-    Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlowingTextureLayers())
+    // Surfaces with a sky-masked material don't shadow.
+    if(suf->material().isSkyMasked()) return;
+
+    // Ensure we have up to date info about the material.
+    MaterialAnimator &matAnimator = suf->material().getAnimator(Rend_MapSurfaceMaterialSpec());
+    matAnimator.prepare();
+
+    // Surfaces with a glowing material don't shadow.
+    if(matAnimator.glowStrength() > 0)
         return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume

@@ -30,8 +30,7 @@
 #  include "MaterialAnimator"
 #endif
 
-/// @todo remove me:
-#include "resource/materialdetailtexturelayer.h"
+#include "resource/materialdetaillayer.h"
 #include "resource/materialtexturelayer.h"
 #include "resource/materialshinelayer.h"
 
@@ -186,8 +185,6 @@ DENG2_PIMPL(Material)
 
     /// Layers (owned), from bottom-most to top-most draw order.
     QList<Layer *> layers;
-    std::unique_ptr<Layer> detailLayer;
-    std::unique_ptr<Layer> shineLayer;
 
 #ifdef __CLIENT__
     /// Decorations (owned), to be projected into the world (relative to a Surface).
@@ -212,17 +209,35 @@ DENG2_PIMPL(Material)
         return dimensions.x > 0 && dimensions.y > 0;
     }
 
+    MaterialTextureLayer *firstTextureLayer() const
+    {
+        for(Layer *layer : layers)
+        {
+            if(layer->is<MaterialDetailLayer>()) continue;
+            if(layer->is<MaterialShineLayer>())         continue;
+
+            if(auto *texLayer = layer->maybeAs<MaterialTextureLayer>())
+            {
+                return texLayer;
+            }
+        }
+        return nullptr;
+    }
+
     /**
      * Determines which texture we would be interested in obtaining our world dimensions
      * from if our own dimensions are undefined.
      */
-    Texture *inheritDimensionsTexture()
+    Texture *inheritDimensionsTexture() const
     {
-        // We're interested in the texture bound to the primary layer.
-        if(!layers.count()) return nullptr;
-        MaterialTextureLayer const &texLayer = self.layer(0).as<MaterialTextureLayer>();
-        if(!texLayer.stageCount()) return nullptr;
-        return texLayer.stage(0).texture();
+        if(auto const *texLayer = firstTextureLayer())
+        {
+            if(texLayer->stageCount() >= 1)
+            {
+                return texLayer->stage(0).texture();
+            }
+        }
+        return nullptr;
     }
 
     /**
@@ -259,7 +274,7 @@ DENG2_PIMPL(Material)
         DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
         // Clear the association so we don't try to cancel notifications later.
-        self.layer(0).as<MaterialTextureLayer>().stage(0).setTexture(nullptr);
+        firstTextureLayer()->stage(0).setTexture(nullptr);
 
 #if !defined(DENG2_DEBUG)
         DENG2_UNUSED(texture);
@@ -387,8 +402,6 @@ void Material::clearAllLayers()
     d->maybeCancelTextureDimensionsChangeNotification();
 
     qDeleteAll(d->layers); d->layers.clear();
-    d->detailLayer.reset();
-    d->shineLayer.reset();
 }
 
 int Material::layerCount() const
@@ -396,38 +409,23 @@ int Material::layerCount() const
     return d->layers.count();
 }
 
-void Material::addLayer(Layer *layer)
+void Material::addLayerAt(Layer *layer, int position)
 {
     if(!layer) return;
+    if(d->layers.contains(layer)) return;
 
-    // Some layer types currently require special handling.
-    if(layer->is<MaterialDetailTextureLayer>())
+    position = de::clamp(0, position, layerCount());
+
+    d->maybeCancelTextureDimensionsChangeNotification();
+
+    d->layers.insert(position, layer);
+
+    if(!d->haveValidDimensions())
     {
-        if(layer == d->detailLayer.get()) return;
-
-        d->detailLayer.reset(layer);
-    }
-    else if(layer->is<MaterialShineLayer>())
-    {
-        if(layer == d->shineLayer.get()) return;
-
-        d->shineLayer.reset(layer);
-    }
-    else
-    {
-        if(d->layers.contains(layer)) return;
-
-        // Otherwise generic layers go into the main layer stack.
-        d->layers.append(layer);
-
-        // Are we interested in inheriting dimensions from the layer's texture?
-        if(!d->haveValidDimensions() && d->layers.count() == 1)
+        if(Texture *tex = d->inheritDimensionsTexture())
         {
-            if(Texture *tex = d->inheritDimensionsTexture())
-            {
-                tex->audienceForDeletion         += d;
-                tex->audienceForDimensionsChange += d;
-            }
+            tex->audienceForDeletion         += d;
+            tex->audienceForDimensionsChange += d;
         }
     }
 }
@@ -443,54 +441,6 @@ Material::Layer *Material::layerPtr(int index) const
 {
     if(index >= 0 && index < layerCount()) return d->layers[index];
     return nullptr;
-}
-
-LoopResult Material::forAllLayers(std::function<LoopResult (Layer &)> func) const
-{
-    if(d->detailLayer)
-    {
-        if(auto result = func(*d->detailLayer)) return result;
-    }
-    for(Layer *layer : d->layers)
-    {
-        if(auto result = func(*layer)) return result;
-    }
-    if(d->shineLayer)
-    {
-        if(auto result = func(*d->shineLayer)) return result;
-    }
-    return LoopContinue;
-}
-
-bool Material::hasAnimatedTextureLayers() const
-{
-    for(Layer const *layer : d->layers)
-    {
-        if(layer->isAnimated()) return true;
-    }
-    return false;
-}
-
-bool Material::hasGlowingTextureLayers() const
-{
-    return forAllLayers([](Layer &layer)
-    {
-        if(auto const *texLayer = layer.maybeAs<MaterialTextureLayer>())
-        {
-            return LoopResult( int(texLayer->hasGlow()) );
-        }
-        return LoopResult();  // continue
-    });
-}
-
-bool Material::hasDetailTextureLayer() const
-{
-    return bool(d->detailLayer);
-}
-
-bool Material::hasShineLayer() const
-{
-    return bool(d->shineLayer);
 }
 
 #ifdef __CLIENT__
@@ -516,13 +466,6 @@ void Material::addDecoration(Decoration *decor)
 
     decor->setMaterial(this);
     d->decorations.append(decor);
-}
-
-Material::Decoration &Material::decoration(int decorIndex)
-{
-    if(decorIndex >= 0 && decorIndex < decorationCount()) return *d->decorations[decorIndex];
-    /// @throw MissingDecorationError  Invalid decoration reference.
-    throw MissingDecorationError("Material::decoration", "Unknown decoration #" + String::number(decorIndex));
 }
 
 void Material::clearAllDecorations()
@@ -577,23 +520,20 @@ String Material::description() const
 #ifdef __CLIENT__
                + _E(l) + " EnvClass: \"" + _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\""
 #endif
-               + _E(l) + " Glowing: "    + _E(.) + DENG2_BOOL_YESNO(hasGlowingTextureLayers())
                + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
 
     // Add the layer config:
-    forAllLayers([&str] (Layer &layer)
+    for(Layer const *layer : d->layers)
     {
-        str += "\n" + layer.description();
-        return LoopContinue;
-    });
+        str += "\n" + layer->description();
+    }
 
 #ifdef __CLIENT__
     // Add the decoration config:
-    forAllDecorations([&str] (Decoration &decor)
+    for(Decoration const *decor : d->decorations)
     {
-        str += "\n" + decor.description();
-        return LoopContinue;
-    });
+        str += "\n" + decor->description();
+    }
 #endif
 
     return str;
