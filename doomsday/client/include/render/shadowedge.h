@@ -21,6 +21,7 @@
 #ifndef DENG_RENDER_FAKERADIO_SHADOWEDGE_H
 #define DENG_RENDER_FAKERADIO_SHADOWEDGE_H
 
+#include <de/types.h>
 #include <de/Vector>
 
 namespace de {
