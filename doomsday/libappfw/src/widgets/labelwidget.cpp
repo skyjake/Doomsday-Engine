@@ -231,11 +231,17 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
-        if(overrideImageSize.x > 0 && overrideImageSize.y > 0)
+        Vector2f size = image.isNull()? Vector2f() : image->size();
+        // Override components separately.
+        if(overrideImageSize.x > 0)
         {
-            return overrideImageSize;
+            size.x = overrideImageSize.x;
         }
-        return image.isNull()? Vector2f() : image->size();
+        if(overrideImageSize.y > 0)
+        {
+            size.y = overrideImageSize.y;
+        }
+        return size;
     }
 
     Vector2ui textSize() const
