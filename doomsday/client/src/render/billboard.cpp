@@ -449,8 +449,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
     TextureVariant *tex = nullptr;
     Vector2f size;
-    float viewOffsetX;   ///< View-aligned offset to center point.
-    float s = 1, t = 1;  ///< Bottom right coords.
+    float viewOffsetX = 0;   ///< View-aligned offset to center point.
+    float s = 1, t = 1;      ///< Bottom right coords.
 
     // Many sprite properties are inherited from the material.
     if(MaterialAnimator *matAnimator = parm.matAnimator)

@@ -256,6 +256,8 @@ ded_compositefont_t *Def_GetCompositeFont(char const *uri)
     return defs.getCompositeFont(uri);
 }
 
+#ifdef __CLIENT__
+
 /// @todo $revise-texture-animation
 static ded_decoration_t *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
 {
@@ -276,6 +278,8 @@ static inline ded_decoration_t *tryFindDecorationForMaterial(Material const &mat
 {
     return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
 }
+
+#endif // __CLIENT__
 
 /// @todo $revise-texture-animation
 static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
