@@ -296,7 +296,8 @@ void Rend_Draw3DPlayerSprites()
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     static GLTexture localDepth; // note: static!
-    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth, GLTarget::DepthStencil);
+    GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
+                                         GLTarget::DepthStencil);
 
     for(int i = 0; i < DDMAXPSPRITES; ++i)
     {

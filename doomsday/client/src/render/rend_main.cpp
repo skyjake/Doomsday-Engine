@@ -3504,8 +3504,11 @@ static void drawSky()
     }
 
     // We do not want to update color and/or depth.
-    glDisable(GL_DEPTH_TEST);
-    GLState::push().setColorMask(gl::WriteNone).apply();
+    GLState::push()
+            .setDepthTest(false)
+            .setDepthWrite(false)
+            .setColorMask(gl::WriteNone)
+            .apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     glEnable(GL_STENCIL_TEST);
@@ -3524,7 +3527,6 @@ static void drawSky()
 
     // Restore previous GL state.
     GLState::pop().apply();
-    glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
@@ -3541,7 +3543,6 @@ static void drawSky()
 
     // Return GL state to normal.
     glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
 }
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)

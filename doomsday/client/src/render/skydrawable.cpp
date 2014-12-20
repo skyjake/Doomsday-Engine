@@ -452,9 +452,10 @@ DENG2_PIMPL(SkyDrawable)
     {
         if(!haveModels) return;
 
-        // We don't want anything written in the depth buffer.
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+        // Sky models use depth testing, but they won't interfere with world geometry.
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -505,15 +506,12 @@ DENG2_PIMPL(SkyDrawable)
             Rend_DrawModel(vis);
         }
 
-        // We don't want that anything interferes with what was drawn.
-        //glClear(GL_DEPTH_BUFFER_BIT);
-
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        // Restore assumed default GL state.
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
+        // We don't want that anything in the world geometry interferes with what was
+        // drawn in the sky.
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     void setupModels(Record const *def)
@@ -694,12 +692,10 @@ MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
                                  0, -1, -1, false, true, false, false);
 }
 
-namespace {
-void markSphereForRebuild()
+static void markSphereForRebuild()
 {
     // Defer this task until draw time, when we can be sure we are in the correct thread.
     hemisphere.needRebuild = true;
-}
 }
 
 void SkyDrawable::consoleRegister() // static
