@@ -23,84 +23,52 @@
 
 using namespace de;
 
-static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
+static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
 {
     try
     {
         if(def.texture)
         {
-            return &App_ResourceSystem().textureScheme("Details")
-                        .findByResourceUri(*def.texture).texture();
+            return App_ResourceSystem().textureScheme("Details")
+                       .findByResourceUri(*def.texture)
+                           .composeUri();
         }
     }
-    catch(TextureManifest::MissingTextureError const &)
-    {} // Ignore this error.
     catch(TextureScheme::NotFoundError const &)
     {} // Ignore this error.
-    return nullptr;
+    return de::Uri();
 }
 
-DENG2_PIMPL_NOREF(MaterialDetailLayer::AnimationStage)
-{
-    float scale = 1;
-    float strength = 1;
-    float maxDistance = 0;
-
-    Instance() {}
-    Instance(Instance const &other)
-        : scale      (other.scale)
-        , strength   (other.strength)
-        , maxDistance(other.maxDistance)
-    {}
-};
-
-MaterialDetailLayer::AnimationStage::AnimationStage(Texture *texture, int tics,
+MaterialDetailLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
     float variance, float scale, float strength, float maxDistance)
     : MaterialTextureLayer::AnimationStage(texture, tics, variance)
-    , d(new Instance)
 {
-    d->scale       = scale;
-    d->strength    = strength;
-    d->maxDistance = maxDistance;
+    set("scale", scale);
+    set("strength", strength);
+    set("maxDistance", maxDistance);
 }
 
 MaterialDetailLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : MaterialTextureLayer::AnimationStage(other)
-    , d(new Instance(*other.d))
 {}
 
 MaterialDetailLayer::AnimationStage::~AnimationStage()
 {}
 
+void MaterialDetailLayer::AnimationStage::resetToDefaults()
+{
+    MaterialTextureLayer::AnimationStage::resetToDefaults();
+    addNumber("scale", 1);
+    addNumber("strength", 1);
+    addNumber("maxDistance", 0);
+}
+
 MaterialDetailLayer::AnimationStage *
 MaterialDetailLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
 {
-    Texture *texture = findTextureForDetailLayerStage(def);
+    de::Uri const texture = findTextureForDetailStage(def);
     return new AnimationStage(texture, def.tics, def.variance,
                               def.scale, def.strength, def.maxDistance);
-}
-
-float MaterialDetailLayer::AnimationStage::scale() const
-{
-    return d->scale;
-}
-
-float MaterialDetailLayer::AnimationStage::strength() const
-{
-    return d->strength;
-}
-
-float MaterialDetailLayer::AnimationStage::maxDistance() const
-{
-    return d->maxDistance;
-}
-
-String MaterialDetailLayer::AnimationStage::description() const
-{
-    return MaterialTextureLayer::AnimationStage::description()
-                + _E(l) + "\nScale: "      + _E(.) + String::number(d->scale, 'f', 2)
-                + _E(l) + " Strength: "    + _E(.) + String::number(d->strength, 'f', 2)
-                + _E(l) + " MaxDistance: " + _E(.) + String::number(d->maxDistance, 'f', 2);
 }
 
 // ------------------------------------------------------------------------------------
@@ -117,11 +85,6 @@ int MaterialDetailLayer::addStage(MaterialDetailLayer::AnimationStage const &sta
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
-}
-
-MaterialDetailLayer::AnimationStage &MaterialDetailLayer::stage(int index) const
-{
-    return static_cast<AnimationStage &>(Layer::stage(index));
 }
 
 String MaterialDetailLayer::describe() const

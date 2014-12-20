@@ -21,9 +21,9 @@
 #define CLIENT_RESOURCE_MATERIALTEXTURELAYER_H
 
 #include <de/String>
+#include <de/Record>
 #include <doomsday/defs/dedtypes.h>
 #include "Material"
-#include "Texture"
 
 /**
  * Specialized MaterialLayer for describing an animated texture layer.
@@ -36,73 +36,29 @@ public:
     /**
      * Stages describe texture change animations.
      */
-    class AnimationStage : public Stage
+    class AnimationStage : public de::Record, public Stage
     {
     public:
-        AnimationStage(de::Texture *texture, int tics,
+        AnimationStage(de::Uri const &texture, int tics,
                        float variance                     = 0,
                        float glowStrength                 = 0,
                        float glowStrengthVariance         = 0,
                        de::Vector2f const origin          = de::Vector2f(),
-                       de::Texture *maskTexture           = nullptr,
+                       de::Uri const &maskTexture         = de::Uri(),
                        de::Vector2f const &maskDimensions = de::Vector2f(1, 1),
                        blendmode_t blendMode              = BM_NORMAL,
                        float opacity                      = 1);
         AnimationStage(AnimationStage const &other);
         virtual ~AnimationStage();
 
+        virtual void resetToDefaults();
+
         /**
          * Construct a new AnimationStage from the given @a definition.
          */
         static AnimationStage *fromDef(ded_material_layer_stage_t const &definition);
 
-        /**
-         * Returns the Texture in effect for the animation stage.
-         */
-        de::Texture *texture() const;
-
-        /**
-         * Returns the material space, texture origin in effect for the animation stage.
-         */
-        de::Vector2f const &origin() const;
-
-        /**
-         * Returns the mask Texture in effect for the animation stage.
-         */
-        de::Texture *maskTexture() const;
-
-        /**
-         * Returns the mask dimensions in effect for the animation stage.
-         */
-        de::Vector2f const &maskDimensions() const;
-
-        /**
-         * Returns the opacity factor in effect for the animation stage.
-         */
-        float opacity() const;
-
-        /**
-         * Returns the texture blending mode in effect for the animation stage.
-         */
-        blendmode_t blendMode() const;
-
-        /**
-         * Returns the glow strength factor in effect for the animation stage.
-         */
-        float glowStrength() const;
-
-        /**
-         * Returns the glow strength variance factor in effect for the animation stage.
-         */
-        float glowStrengthVariance() const;
-
         de::String description() const;
-
-        /// @todo refactor away:
-        void setTexture(de::Texture *newTexture);
-
-    private:
-        DENG2_PRIVATE(d)
     };
 
 public:

@@ -23,7 +23,6 @@
 #include <de/String>
 #include <doomsday/defs/dedtypes.h>
 #include "resource/materialtexturelayer.h"
-#include "Texture"
 
 /**
  * Specialized MaterialTextureLayer for describing an animated shine/reflection layer.
@@ -39,8 +38,8 @@ public:
     class AnimationStage : public MaterialTextureLayer::AnimationStage
     {
     public:
-        AnimationStage(de::Texture *texture, int tics, float variance,
-                       de::Texture *maskTexture           = nullptr,
+        AnimationStage(de::Uri const &texture, int tics, float variance,
+                       de::Uri const &maskTexture         = de::Uri(),
                        blendmode_t blendMode              = BM_ADD,
                        float opacity                      = 1,
                        de::Vector3f const &minColor       = de::Vector3f(0, 0, 0),
@@ -53,15 +52,7 @@ public:
          */
         static AnimationStage *fromDef(ded_shine_stage_t const &definition);
 
-        /**
-         * Returns the minimum surface color intensities in effect for the animation stage.
-         */
-        de::Vector3f const &minColor() const;
-
-        de::String description() const;
-
-    private:
-        de::Vector3f _minColor;
+        void resetToDefaults();
     };
 
 public:
@@ -81,13 +72,6 @@ public:
      * @return  Index of the newly added stage (0 based).
      */
     int addStage(AnimationStage const &stage);
-
-    /**
-     * Lookup an AnimationStage by it's unique @a index.
-     *
-     * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
-     */
-    AnimationStage &stage(int index) const;
 
     de::String describe() const;
 };

@@ -23,7 +23,6 @@
 #include <de/String>
 #include <doomsday/defs/dedtypes.h>
 #include "resource/materialtexturelayer.h"
-#include "Texture"
 
 /**
  * Specialized MaterialTextureLayer for describing an animated detail texture layer.
@@ -39,7 +38,7 @@ public:
     class AnimationStage : public MaterialTextureLayer::AnimationStage
     {
     public:
-        AnimationStage(de::Texture *texture, int tics,
+        AnimationStage(de::Uri const &texture, int tics,
                        float variance    = 0,
                        float scale       = 1,
                        float strength    = 1,
@@ -52,25 +51,7 @@ public:
          */
         static AnimationStage *fromDef(ded_detail_stage_t const &definition);
 
-        /**
-         * Returns the detail texture scale factor in effect for the animation stage.
-         */
-        float scale() const;
-
-        /**
-         * Returns the detail texture blending factor in effect for the animation stage.
-         */
-        float strength() const;
-
-        /**
-         * Returns the maximum world distance in effect for the animation stage.
-         */
-        float maxDistance() const;
-
-        de::String description() const;
-
-    private:
-        DENG2_PRIVATE(d)
+        void resetToDefaults();
     };
 
 public:
@@ -90,14 +71,7 @@ public:
      */
     int addStage(AnimationStage const &stage);
 
-    /**
-     * Lookup an AnimationStage by it's unique @a index.
-     *
-     * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
-     */
-    AnimationStage &stage(int index) const;
-
     de::String describe() const;
 };
 
-#endif  // CLIENT_RESOURCE_MATERIALDETAILTEXTURELAYER_H
+#endif  // CLIENT_RESOURCE_MATERIALDETAILLAYER_H

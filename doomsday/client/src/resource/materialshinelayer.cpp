@@ -23,60 +23,54 @@
 
 using namespace de;
 
-static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
+static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
 {
     if(de::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
     {
         try
         {
-            return &App_ResourceSystem()
-                        .textureScheme(findMask? "Masks" : "Reflections")
-                            .findByResourceUri(*resourceUri).texture();
+            return App_ResourceSystem()
+                       .textureScheme(findMask? "Masks" : "Reflections")
+                           .findByResourceUri(*resourceUri)
+                               .composeUri();
         }
-        catch(TextureManifest::MissingTextureError const &)
-        {} // Ignore this error.
         catch(TextureScheme::NotFoundError const &)
         {} // Ignore this error.
     }
-    return nullptr;
+    return de::Uri();
 }
 
-MaterialShineLayer::AnimationStage::AnimationStage(Texture *texture, int tics, float variance,
-    Texture *maskTexture, blendmode_t blendMode, float opacity, Vector3f const &minColor,
-    Vector2f const &maskDimensions)
+MaterialShineLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+    float variance, de::Uri const &maskTexture, blendmode_t blendMode, float opacity,
+    Vector3f const &minColor, Vector2f const &maskDimensions)
     : MaterialTextureLayer::AnimationStage(texture, tics, variance, 0, 0, Vector2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
-    , _minColor(minColor)
-{}
+{
+    set("minColor", new ArrayValue(minColor));
+}
 
 MaterialShineLayer::AnimationStage::AnimationStage(AnimationStage const &other)
     : MaterialTextureLayer::AnimationStage(other)
-    , _minColor(other._minColor)
 {}
 
 MaterialShineLayer::AnimationStage::~AnimationStage()
 {}
 
+void MaterialShineLayer::AnimationStage::resetToDefaults()
+{
+    MaterialTextureLayer::AnimationStage::resetToDefaults();
+    addArray("minColor", new ArrayValue(Vector3f(0, 0, 0)));
+}
+
 MaterialShineLayer::AnimationStage *
 MaterialShineLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
 {
-    Texture *texture     = findTextureForShineLayerStage(def, false/*not mask*/);
-    Texture *maskTexture = findTextureForShineLayerStage(def, true/*mask*/);
+    de::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
+    de::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
 
     return new AnimationStage(texture, def.tics, def.variance, maskTexture,
                               def.blendMode, def.shininess, Vector3f(def.minColor),
                               Vector2f(def.maskWidth, def.maskHeight));
-}
-
-Vector3f const &MaterialShineLayer::AnimationStage::minColor() const
-{
-    return _minColor;
-}
-
-String MaterialShineLayer::AnimationStage::description() const
-{
-    return MaterialTextureLayer::AnimationStage::description()
-                + _E(l) + " MinColor: " + _E(.) + _minColor.asText();
 }
 
 // ------------------------------------------------------------------------------------
@@ -100,11 +94,6 @@ int MaterialShineLayer::addStage(MaterialShineLayer::AnimationStage const &stage
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;
-}
-
-MaterialShineLayer::AnimationStage &MaterialShineLayer::stage(int index) const
-{
-    return static_cast<AnimationStage &>(Layer::stage(index));
 }
 
 String MaterialShineLayer::describe() const

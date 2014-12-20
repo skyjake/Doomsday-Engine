@@ -214,7 +214,7 @@ DENG2_PIMPL(Material)
         for(Layer *layer : layers)
         {
             if(layer->is<MaterialDetailLayer>()) continue;
-            if(layer->is<MaterialShineLayer>())         continue;
+            if(layer->is<MaterialShineLayer>())  continue;
 
             if(auto *texLayer = layer->maybeAs<MaterialTextureLayer>())
             {
@@ -234,7 +234,14 @@ DENG2_PIMPL(Material)
         {
             if(texLayer->stageCount() >= 1)
             {
-                return texLayer->stage(0).texture();
+                try
+                {
+                    return &App_ResourceSystem().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
+                }
+                catch(TextureManifest::MissingTextureError &)
+                {}
+                catch(ResourceSystem::MissingManifestError &)
+                {}
             }
         }
         return nullptr;
@@ -273,8 +280,8 @@ DENG2_PIMPL(Material)
         DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
         DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
-        // Clear the association so we don't try to cancel notifications later.
-        firstTextureLayer()->stage(0).setTexture(nullptr);
+        /// @todo kludge: Clear the association so we don't try to cancel notifications later.
+        firstTextureLayer()->stage(0).set("texture", "");
 
 #if !defined(DENG2_DEBUG)
         DENG2_UNUSED(texture);
