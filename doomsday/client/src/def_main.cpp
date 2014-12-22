@@ -987,7 +987,7 @@ static void configureMaterial(Material &mat, ded_material_t const &def)
             {
                 MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
                 ded_detailtexture_t const *detailDef =
-                    tryFindDetailTexture(stage.gets("texture"),
+                    tryFindDetailTexture(de::Uri(stage.gets("texture"), RC_NULL),
                                          /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
                 if(!detailDef || !detailDef->stage.texture)
@@ -1029,7 +1029,7 @@ static void configureMaterial(Material &mat, ded_material_t const &def)
             {
                 MaterialTextureLayer::AnimationStage &stage = layer0.stage(i);
                 ded_reflection_t const *shineDef =
-                    tryFindReflection(stage.gets("texture"),
+                    tryFindReflection(de::Uri(stage.gets("texture"), RC_NULL),
                                       /*UNKNOWN VALUE,*/ mat.manifest().isCustom());
 
                 if(!shineDef || !shineDef->stage.texture)
@@ -1112,8 +1112,8 @@ static void interpretMaterialDef(ded_material_t const &def)
             {
                 try
                 {
-                    Texture &texture = resSys().texture(*firstLayer.stages[0].texture);
-                    if(texture.isFlagged(Texture::Custom))
+                    TextureManifest &texManifest = resSys().textureManifest(*firstLayer.stages[0].texture);
+                    if(texManifest.hasTexture() && texManifest.texture().isFlagged(Texture::Custom))
                     {
                         manifest->setFlags(MaterialManifest::Custom);
                     }
