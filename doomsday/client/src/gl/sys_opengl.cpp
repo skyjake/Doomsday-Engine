@@ -99,7 +99,7 @@ static void initialize(void)
 #else
     GL_state.features.texCompression = false;
 #endif
-    if(CommandLine_Exists("-notexcomp"))
+    if(!CommandLine_Exists("-texcomp") || CommandLine_Exists("-notexcomp"))
     {
         GL_state.features.texCompression = false;
     }
@@ -149,6 +149,8 @@ de::String Sys_GLDescription()
         os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
+
+    os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
     glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
     os << TABBED("Available texture units:", iVal);
