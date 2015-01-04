@@ -26,6 +26,9 @@
 #include "dd_share.h"
 #include <de/reader.h>
 #include <de/writer.h>
+#ifdef __cplusplus
+#  include <de/String>
+#endif
 
 #include "common.h"
 
@@ -259,6 +262,9 @@ void D_NetMessageNoSound(int player, char const *msg);
 
 #ifdef __cplusplus
 } // extern "C"
+
+de::String D_NetDefaultEpisode();
+de::Uri D_NetDefaultMap();
 #endif
 
 #include "d_netsv.h"

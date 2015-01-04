@@ -56,13 +56,31 @@ static void notifyAllowCheatsChange()
     }
 }
 
+String D_NetDefaultEpisode()
+{
+    return FirstPlayableEpisodeId();
+}
+
+de::Uri D_NetDefaultMap()
+{
+    String const episodeId = D_NetDefaultEpisode();
+
+    de::Uri map("Maps:", RC_NULL);
+    if(!episodeId.isEmpty())
+    {
+        map = de::Uri(Defs().episodes.find("id", episodeId).gets("startMap"), RC_NULL);
+        DENG2_ASSERT(!map.isEmpty());
+    }
+    return map;
+}
+
 void D_NetConsoleRegister()
 {
-    C_VAR_CHARPTR("mapcycle",                   &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
+    C_VAR_CHARPTR("mapcycle",           &mapCycle,  CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
 
     C_CMD        ("setcolor",   "i",    SetColor);
 #if __JHEXEN__
-    C_CMD_FLAGS  ("setclass",   "i",    SetClass, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS  ("setclass",   "i",    SetClass,   CMDF_NO_DEDICATED);
 #endif
     C_CMD        ("startcycle", "",     MapCycle);
     C_CMD        ("endcycle",   "",     MapCycle);
@@ -73,17 +91,10 @@ void D_NetConsoleRegister()
         C_VAR_CHARPTR("server-game-episode",    &cfg.common.netEpisode,    0, 0, 0);
         C_VAR_URIPTR ("server-game-map",        &cfg.common.netMap,        0, 0, 0);
 
-        String episodeId = FirstPlayableEpisodeId();
-        de::Uri map("Maps:", RC_NULL);
-        if(!episodeId.isEmpty())
-        {
-            map = de::Uri(Defs().episodes.find("id", episodeId).gets("startMap"), RC_NULL);
-            DENG2_ASSERT(!map.isEmpty());
-        }
-        else
-        {
-            LOG_NET_WARNING("No playable episode available. It will not be possible to start the server");
-        }
+        // Use the first playable map as the default.
+        String episodeId = D_NetDefaultEpisode();
+        de::Uri map      = D_NetDefaultMap();
+
         Con_SetString("server-game-episode", episodeId.toUtf8().constData());
         Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
     }
@@ -197,7 +208,7 @@ int D_NetServerStarted(int before)
 #endif
     P_ResetPlayerRespawnClasses();
 
-    String const episodeId = Con_GetString("server-game-episode");
+    String episodeId = Con_GetString("server-game-episode");
     de::Uri mapUri = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
@@ -205,7 +216,23 @@ int D_NetServerStarted(int before)
     rules.skill = skillmode_t(cfg.common.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+
+    try
+    {
+        // First try the configured map.
+        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+    }
+    catch(Error const &er)
+    {
+        LOGDEV_ERROR("Failed to start server: %s") << er.asText();
+        episodeId = D_NetDefaultEpisode();
+        mapUri    = D_NetDefaultMap();
+        LOG_INFO("Using the default map (%s) to start the server due to failure to load the configured map")
+                << mapUri;
+
+        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+    }
+
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     return true;
