@@ -42,6 +42,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_actor.h"
+#include "p_tick.h"
 
 #define FATSPREAD               (ANG90/8)
 #define FAT_DELTAANGLE          (85*ANGLE_1) // jd64
@@ -1505,7 +1506,7 @@ void C_DECL A_Tracer(mobj_t* actor)
     float slope;
     mobj_t* dest, *th;
 
-    if((int) GAMETIC & 3) return;
+    if(mapTime & 3) return;
 
     // Clients do not spawn puffs.
     if(!IS_CLIENT)
