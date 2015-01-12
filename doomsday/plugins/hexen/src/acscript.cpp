@@ -65,6 +65,12 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
+ACScriptInterpreter::DeferredTask::DeferredTask()
+    : scriptNumber(-1)
+{
+    de::zap(args);
+}
+
 ACScriptInterpreter::DeferredTask::DeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args_[])
     : mapUri      (mapUri)
     , scriptNumber(scriptNumber)
@@ -74,17 +80,9 @@ ACScriptInterpreter::DeferredTask::DeferredTask(de::Uri const &mapUri, int scrip
 
 ACScriptInterpreter::DeferredTask *ACScriptInterpreter::DeferredTask::newFromReader(de::Reader &from) //static
 {
-    de::String mapUriStr;
-    from >> mapUriStr;
-    de::Uri mapUri(mapUriStr, RC_NULL);
-    int scriptNumber; ///< On the target map.
-    from >> scriptNumber;
-    byte args[4];
-    for(int i = 0; i < 4; ++i)
-    {
-        from >> args[i];
-    }
-    return new DeferredTask(mapUri, scriptNumber, args);
+    std::unique_ptr<DeferredTask> task(new DeferredTask);
+    from >> *task;
+    return task.release();
 }
 
 void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
@@ -1892,12 +1890,24 @@ D_CMD(ListACScripts)
         App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
         return true;
     }
+    
+    App_Log(DE2_SCR_MSG, "World variables:");
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        App_Log(DE2_SCR_MSG, "  #%i: %i", i, interp.worldVars[i]);
+    }
+
+    App_Log(DE2_SCR_MSG, "Map variables:");
+    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        App_Log(DE2_SCR_MSG, "  #%i: %i", i, interp.mapVars[i]);
+    }
 
     App_Log(DE2_SCR_MSG, "Available ACScripts:");
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
         BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-        App_Log(DE2_SCR_MSG, "%s - args: %i",
+        App_Log(DE2_SCR_MSG, "  %s - args: %i",
                              Str_Text(interp.scriptName(info.scriptNumber)), info.argCount);
     }
 
