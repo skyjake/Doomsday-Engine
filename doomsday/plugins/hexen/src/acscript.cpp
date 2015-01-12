@@ -1732,26 +1732,35 @@ int ACScript::read(MapStateReader *msr)
         // Note: the thinker class byte has already been read.
         int ver = Reader_ReadByte(reader); // version byte.
 
-        activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
-        activator  = msr->mobj(PTR2INT(activator), &activator);
+        // Activator.
+        activator = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        activator = msr->mobj(PTR2INT(activator), &activator);
 
-        int temp = Reader_ReadInt32(reader);
-        if(temp >= 0)
+        // Line.
+        int lineIndex = Reader_ReadInt32(reader);
+        if(lineIndex >= 0)
         {
-            line   = (Line *)P_ToPtr(DMU_LINE, temp);
+            line = (Line *) P_ToPtr(DMU_LINE, lineIndex);
             DENG_ASSERT(line != 0);
         }
         else
         {
-            line   = 0;
+            line = 0;
         }
 
-        side       = Reader_ReadInt32(reader);
-        _info      = interpreter().scriptInfoPtr(Reader_ReadInt32(reader));
+        // Side index.
+        side  = Reader_ReadInt32(reader);
+
+        // Script number.
+        int scriptNumber = Reader_ReadInt32(reader);
+        _info = interpreter().scriptInfoPtr(scriptNumber);
+
+        // Obsolete ignored value in the old format?
         if(ver < 2)
         {
             /*infoIndex =*/ Reader_ReadInt32(reader);
         }
+
         delayCount = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
