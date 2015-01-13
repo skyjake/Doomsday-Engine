@@ -39,8 +39,6 @@ deng_extassimp {
                 QMAKE_LFLAGS += -Wl,-rpath,$$ASSIMP_DIR/lib
             }
         }
-
-
     }
     else {
         # On Windows we assume that cmake has been run in the root of
