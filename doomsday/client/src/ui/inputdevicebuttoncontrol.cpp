@@ -73,16 +73,9 @@ bool InputDeviceButtonControl::inDefaultState() const
 
 void InputDeviceButtonControl::reset()
 {
-    if(_isDown)
-    {
-        setBindContextAssociation(Expired);
-    }
-    else
-    {
-        _isDown = false;
-        _time   = 0;
-        setBindContextAssociation(Triggered | Expired, UnsetFlags);
-    }
+    setBindContextAssociation(Triggered | Expired, UnsetFlags);
+    _isDown = false;
+    _time   = 0;
 }
 
 duint InputDeviceButtonControl::time() const

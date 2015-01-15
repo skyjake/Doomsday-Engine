@@ -528,9 +528,10 @@ DENG2_PIMPL(InputSystem)
             DENG2_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
             std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
+            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)")
                     << ev.toggle.id << char(ev.toggle.id)
-                    << ev.toggle.text << strlen(ev.toggle.text);
+                    << ev.toggle.text << strlen(ev.toggle.text)
+                    << ev.toggle.state;
 
             self.postEvent(&ev);
         }
@@ -989,6 +990,10 @@ bool InputSystem::ignoreEvents(bool yes)
         // Clear all the event buffers.
         d->postEventsForAllDevices();
         clearEvents();
+
+        // Also reset input device state so that controls don't get stuck if they
+        // are released during the ignoring.
+        for(InputDevice *dev : d->devices) dev->reset();
     }
     return oldIgnoreInput;
 }
