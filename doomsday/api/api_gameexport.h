@@ -122,7 +122,7 @@ typedef struct {
 
     // Miscellaneous.
     void          (*MobjThinker) (void *mobj);
-    coord_t       (*MobjFriction) (void* mobj); // Returns a friction factor.
+    coord_t       (*MobjFriction) (struct mobj_s const *mobj); // Returns a friction factor.
     dd_bool       (*MobjCheckPositionXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
     dd_bool       (*MobjTryMoveXYZ) (struct mobj_s* mobj, coord_t x, coord_t y, coord_t z);
     void          (*SectorHeightChangeNotification)(int sectorIdx); // Applies necessary checks on objects.

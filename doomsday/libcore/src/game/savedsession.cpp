@@ -145,7 +145,7 @@ void SavedSession::Metadata::parse(String const &source)
 
 String SavedSession::Metadata::asStyledText() const
 {
-    String currentMapText = String(_E(l)" - Uri: " _E(.)_E(i) "%1" _E(.)).arg(gets("mapUri"));
+    String currentMapText = String(_E(l)" - Uri: " _E(.) "%1" _E(.)).arg(gets("mapUri"));
     // Is the time in the current map known?
     if(has("mapTime"))
     {
@@ -153,16 +153,16 @@ String SavedSession::Metadata::asStyledText() const
         int const hours   = time / 3600; time -= hours * 3600;
         int const minutes = time / 60;   time -= minutes * 60;
         int const seconds = time;
-        currentMapText += String("\n" _E(l) " - Time: " _E(.)_E(i) "%1:%2:%3" _E(.))
+        currentMapText += String("\n" _E(l) " - Time: " _E(.) "%1:%2:%3" )
                              .arg(hours,   2, 10, QChar('0'))
                              .arg(minutes, 2, 10, QChar('0'))
                              .arg(seconds, 2, 10, QChar('0'));
     }
 
-    // Try to format the game rules so they look a little prettier.
+    // Remove extra space in the
     String gameRulesText;
     QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
-    rules.replaceInStrings(QRegExp("^(.*)= (.*)$"), _E(l) "\\1: " _E(.)_E(i) "\\2" _E(.));
+    rules.replaceInStrings(QRegExp("(.*)\\s*:\\s*([^ ].*)"), _E(l) "\\1: " _E(.) "\\2");
     for(int i = 0; i < rules.size(); ++i)
     {
         if(i) gameRulesText += "\n";
@@ -170,11 +170,11 @@ String SavedSession::Metadata::asStyledText() const
     }
 
     return String(_E(b) "%1\n" _E(.)
-                  _E(l) "IdentityKey: "  _E(.)_E(i) "%2 "  _E(.)
-                  _E(l) "Session id: "   _E(.)_E(i) "%3\n" _E(.)
-                  _E(l) "Episode: "      _E(.)_E(i) "%4\n" _E(.)
-                  _E(D) "Current map:\n" _E(.) "%5\n"
-                  _E(D) "Game rules:\n"  _E(.) "%6")
+                  _E(l) "IdentityKey: "  _E(.) "%2 "
+                  _E(l) "Session id: "   _E(.) "%3\n"
+                  _E(l) "Episode: "      _E(.) "%4\n"
+                  _E(D)_E(b) "Current map:\n" _E(.)_E(.) "%5\n"
+                  _E(D)_E(b) "Game rules:\n"  _E(.)_E(.) "%6")
              .arg(gets("userDescription", ""))
              .arg(gets("gameIdentityKey", ""))
              .arg(geti("sessionId", 0))

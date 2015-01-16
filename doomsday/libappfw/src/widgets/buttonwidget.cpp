@@ -30,6 +30,7 @@ DENG2_OBSERVES(Action, Triggered)
     State state;
     DotPath hoverTextColor;
     DotPath originalTextColor;
+    Vector4f originalTextModColor;
     DotPath bgColorId;
     HoverColorMode hoverColorMode;
     bool infoStyle;
@@ -66,6 +67,7 @@ DENG2_OBSERVES(Action, Triggered)
         {
             // Remember the original text color.
             originalTextColor = self.textColorId();
+            originalTextModColor = self.textModulationColorf();
         }
 
         State const prev = state;
@@ -84,7 +86,7 @@ DENG2_OBSERVES(Action, Triggered)
                 switch(hoverColorMode)
                 {
                 case ModulateColor:
-                    self.setTextModulationColorf(Vector4f(1, 1, 1, 1));
+                    self.setTextModulationColorf(originalTextModColor);
                     break;
                 case ReplaceColor:
                     self.setTextColor(originalTextColor);
@@ -196,17 +198,20 @@ void ButtonWidget::useInfoStyle(bool yes)
 {
     d->infoStyle = yes;
     if(yes)
-    {
-        setTextColor("inverted.text");
+    {        
+        d->originalTextColor = "inverted.text";
         setHoverTextColor("inverted.text", ReplaceColor);
         setBackgroundColor("inverted.background");
     }
     else
     {
-        setTextColor("text");
+        d->originalTextColor = "text";
         setHoverTextColor("text", ReplaceColor);
         setBackgroundColor("background");
     }
+    setTextColor(d->originalTextColor);
+    d->originalTextModColor = Vector4f(1, 1, 1, 1);
+    setTextModulationColorf(d->originalTextModColor);
     updateStyle();
 }
 
@@ -253,6 +258,7 @@ void ButtonWidget::trigger()
     AutoRef<Action> held = holdRef(d->action);
 
     // Notify.
+    emit pressed();
     DENG2_FOR_AUDIENCE2(Press, i) i->buttonPressed(*this);
 
     if(held)
@@ -332,7 +338,6 @@ void ButtonWidget::updateStyle()
 void ButtonWidget::update()
 {
     LabelWidget::update();
-
     d->updateAnimation();
 }
 

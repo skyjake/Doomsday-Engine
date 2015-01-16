@@ -12,6 +12,7 @@ HEADERS += \
     $$common_inc/am_map.h \
     $$common_inc/animdefs.h \
     $$common_inc/common.h \
+    $$common_inc/config.h \
     $$common_inc/d_net.h \
     $$common_inc/d_netcl.h \
     $$common_inc/d_netsv.h \
@@ -107,11 +108,11 @@ SOURCES += \
     $$common_src/g_update.cpp \
     $$common_src/gamerules.cpp \
     $$common_src/gamesession.cpp \
-    $$common_src/gl_drawpatch.c \
+    $$common_src/gl_drawpatch.cpp \
     $$common_src/hexlex.cpp \
     $$common_src/hu_automap.cpp \
     $$common_src/hu_chat.cpp \
-    $$common_src/hu_inventory.c \
+    $$common_src/hu_inventory.cpp \
     $$common_src/hu_lib.cpp \
     $$common_src/hu_log.cpp \
     $$common_src/hu_menu.cpp \

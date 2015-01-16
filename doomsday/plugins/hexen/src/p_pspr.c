@@ -244,7 +244,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *x = 0;
         else
-            *x = 1 + (cfg.bobWeapon * players[player].bob) *
+            *x = 1 + (cfg.common.bobWeapon * players[player].bob) *
                 FIX2FLT(finecosine[(128 * mapTime) & FINEMASK]);
     }
 
@@ -253,7 +253,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
         if(players[player].morphTics > 0)
             *y = 0;
         else
-            *y = 32 + (cfg.bobWeapon * players[player].bob) *
+            *y = 32 + (cfg.common.bobWeapon * players[player].bob) *
                 FIX2FLT(finesine[(128 * mapTime) & FINEMASK & (FINEANGLES / 2 - 1)]);
     }
 }

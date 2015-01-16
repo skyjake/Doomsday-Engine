@@ -192,7 +192,9 @@ public:
      */
     bool move(de::Vector2d const &delta);
 
-    /// @copydoc move()
+    /**
+     * @overload
+     */
     inline bool move(coord_t x, coord_t y) {
         return move(de::Vector2d(x, y));
     }

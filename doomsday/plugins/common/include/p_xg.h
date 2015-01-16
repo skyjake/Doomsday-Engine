@@ -24,6 +24,9 @@
 #include "p_xgline.h"
 #include "p_xgsec.h"
 
+/// Indicates XG is available.
+#define LIBCOMMON_HAVE_XG 1
+
 DENG_EXTERN_C int xgDev;
 DENG_EXTERN_C dd_bool xgDataLumps;
 

@@ -315,4 +315,6 @@ void CanvasWindow::setMain(CanvasWindow *window)
     mainWindow = window;
 }
 
+
+
 } // namespace de

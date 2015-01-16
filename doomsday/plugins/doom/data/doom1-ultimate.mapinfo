@@ -61,7 +61,7 @@ secretnext E1M9
 warptrans 6
 sky1 SKY1 0
 par 180
-music D_E1M9
+music D_E1M6
 titlepatch WILV05
 cluster 1
 
@@ -89,6 +89,7 @@ next E1M4
 warptrans 9
 sky1 SKY1 0
 par 165
+music D_E1M9
 titlepatch WILV08
 cluster 1
 

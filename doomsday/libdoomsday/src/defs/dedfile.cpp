@@ -115,10 +115,14 @@ int DED_Read(ded_t *ded, String path)
         hndl->rewind();
         char *bufferedDef = (char *) M_Calloc(bufferedDefSize + 1);
 
+        File1 &file = hndl->file();
+        /// @todo Custom status for contained files is not inherited from the container?
+        bool const isCustom = (file.isContained()? file.container().hasCustom() : file.hasCustom());
+
         // Copy the file into the local buffer and parse definitions.
         hndl->read((uint8_t *)bufferedDef, bufferedDefSize);
-        int result = DED_ReadData(ded, bufferedDef, path, hndl->file().hasCustom());
-        App_FileSystem().releaseFile(hndl->file());
+        int result = DED_ReadData(ded, bufferedDef, path, isCustom);
+        App_FileSystem().releaseFile(file);
 
         // Done. Release temporary storage and return the result.
         M_Free(bufferedDef);

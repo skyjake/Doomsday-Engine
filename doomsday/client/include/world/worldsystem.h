@@ -30,16 +30,18 @@
 #ifndef DENG_WORLDSYSTEM_H
 #define DENG_WORLDSYSTEM_H
 
-#include <doomsday/uri.h>
 #include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <de/System>
+#include <doomsday/uri.h>
 
 #ifdef __CLIENT__
 #  include "render/skydrawable.h"
+#endif
 
+#ifdef __CLIENT__
 class Hand;
 #endif
 
@@ -57,14 +59,14 @@ public:
     DENG2_ERROR(MapError);
 
     /// Notified whenever the "current" map changes.
-    DENG2_DEFINE_AUDIENCE(MapChange, void worldSystemMapChanged())
+    DENG2_DEFINE_AUDIENCE2(MapChange, void worldSystemMapChanged())
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DENG2_DEFINE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+    DENG2_DEFINE_AUDIENCE2(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DENG2_DEFINE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
+    DENG2_DEFINE_AUDIENCE2(FrameEnd, void worldSystemFrameEnds())
 #endif
 
 public:
@@ -153,7 +155,7 @@ public:
      * @param distance  The current distance of the hand from the viewer will be
      *                  written here if not @c 0.
      */
-    Hand &hand(coord_t *distance = 0) const;
+    Hand &hand(coord_t *distance = nullptr) const;
 
     /**
      * Determines if a point is in the void.

@@ -98,11 +98,23 @@ static int lgMXSample  = 1; ///< 5 samples per block. Cvar.
 
 namespace de {
 
+#ifdef __CLIENT__
+static inline WorldSystem &worldSys()
+{
+    return App_WorldSystem();
+}
+#endif
+
 struct EditableElements
 {
-    Map::Lines lines;
-    Map::Sectors sectors;
-    Map::Polyobjs polyobjs;
+    typedef QList<Line *> Lines;
+    Lines lines;
+
+    typedef QList<Sector *> Sectors;
+    Sectors sectors;
+
+    typedef QList<Polyobj *> Polyobjs;
+    Polyobjs polyobjs;
 
     EditableElements()
     {}
@@ -121,7 +133,7 @@ DENG2_PIMPL(Map)
 , DENG2_OBSERVES(ThinkerData, Deletion)
 #endif
 {
-    bool editingEnabled;
+    bool editingEnabled = true;
     EditableElements editable;
 
     MapDef *def;    ///< Definition for the map (not owned, may be @c NULL).
@@ -129,14 +141,18 @@ DENG2_PIMPL(Map)
 
     Mesh mesh;      ///< All map geometries.
 
+    typedef QList<Sector *> Sectors;
     Sectors sectors;
+
+    typedef QList<Line *> Lines;
     Lines lines;
+
+    typedef QList<Polyobj *> Polyobjs;
     Polyobjs polyobjs;
 
     struct Bsp
     {
         BspTree *tree; ///< Owns the BspElements.
-
 
         Bsp() : tree(0) {}
         ~Bsp() { clear(); }
@@ -156,6 +172,7 @@ DENG2_PIMPL(Map)
         }
     } bsp;
 
+    typedef QList<ConvexSubspace *> Subspaces;
     Subspaces subspaces;
 
     typedef QMultiMap<Sector *, SectorCluster *> SectorClusters;
@@ -219,7 +236,7 @@ DENG2_PIMPL(Map)
 
     nodepile_t mobjNodes;
     nodepile_t lineNodes;
-    nodeindex_t *lineLinks; ///< Indices to roots.
+    nodeindex_t *lineLinks = nullptr; ///< Indices to roots.
 
 #ifdef __CLIENT__
     PlaneSet trackedPlanes;
@@ -298,32 +315,25 @@ DENG2_PIMPL(Map)
     /// Shadow Bias data.
     struct Bias
     {
-        uint currentTime;        ///< The "current" frame in milliseconds.
-        uint lastChangeOnFrame;
-        BiasSources sources;     ///< All bias light sources (owned).
+        uint currentTime = 0;        ///< The "current" frame in milliseconds.
+        uint lastChangeOnFrame = 0;
 
-        Bias() : currentTime(0), lastChangeOnFrame(0)
-        {}
+        typedef QList<BiasSource *> BiasSources;
+        BiasSources sources;         ///< All bias light sources (owned).
     } bias;
 
+    typedef QList<Lumobj *> Lumobjs;
     Lumobjs lumobjs;  ///< All lumobjs (owned).
 
     QScopedPointer<SurfaceDecorator> decorator;
 
-    coord_t skyFloorHeight;
-    coord_t skyCeilingHeight;
+    coord_t skyFloorHeight   = DDMAXFLOAT;
+    coord_t skyCeilingHeight = DDMINFLOAT;
 
     ClMobjHash clMobjHash;
 #endif
 
-    Instance(Public *i)
-        : Base            (i)
-        , editingEnabled  (true)
-        , lineLinks       (0)
-#ifdef __CLIENT__
-        , skyFloorHeight  (DDMAXFLOAT)
-        , skyCeilingHeight(DDMINFLOAT)
-#endif
+    Instance(Public *i) : Base(i)
     {
         sky.setMap(thisPublic);
         sky.setIndexInMap(0);
@@ -346,7 +356,7 @@ DENG2_PIMPL(Map)
         qDeleteAll(subspaces);
         qDeleteAll(sectors);
 
-        foreach(Polyobj *polyobj, polyobjs)
+        for(Polyobj *polyobj : polyobjs)
         {
             polyobj->~Polyobj();
             M_Free(polyobj);
@@ -355,7 +365,7 @@ DENG2_PIMPL(Map)
 
 #ifdef __CLIENT__        
         // Stop observing client mobjs.
-        foreach(mobj_t *mo, clMobjHash)
+        for(mobj_t *mo : clMobjHash)
         {
             THINKER_DATA(mo->thinker, ThinkerData).audienceForDeletion() -= this;
         }
@@ -365,18 +375,13 @@ DENG2_PIMPL(Map)
         // mobjNodes/lineNodes/lineLinks
     }
 
-    inline WorldSystem &worldSys()
-    {
-        return App_WorldSystem();
-    }
-
     /**
      * @pre Axis-aligned bounding boxes of all Sectors must be initialized.
      */
     void updateBounds()
     {
         bool haveGeometry = false;
-        foreach(Line *line, lines)
+        for(Line *line : lines)
         {
             // Polyobj lines don't count.
             if(line->definesPolyobj()) continue;
@@ -399,10 +404,7 @@ DENG2_PIMPL(Map)
     void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
-        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i)
-        {
-            i->unclosedSectorFound(sector, nearPoint);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
     }
 
     /**
@@ -413,25 +415,20 @@ DENG2_PIMPL(Map)
      */
     void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i)
-        {
-            i->oneWayWindowFound(line, backFacingSector);
-        }
+        DENG2_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
     }
 
     struct testForWindowEffectParams
     {
-        double frontDist, backDist;
-        Sector *frontOpen, *backOpen;
-        Line *frontLine, *backLine;
-        Line *testLine;
+        double frontDist    = 0;
+        double backDist     = 0;
+        Sector *frontOpen   = nullptr;
+        Sector *backOpen    = nullptr;
+        Line *frontLine     = nullptr;
+        Line *backLine      = nullptr;
+        Line *testLine      = nullptr;
+        bool castHorizontal = false;
         Vector2d testLineCenter;
-        bool castHorizontal;
-
-        testForWindowEffectParams()
-            : frontDist(0), backDist(0), frontOpen(0), backOpen(0),
-              frontLine(0), backLine(0), testLine(0), castHorizontal(false)
-        {}
     };
 
     static void testForWindowEffect2(Line &line, testForWindowEffectParams &p)
@@ -510,12 +507,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-    static int testForWindowEffectWorker(Line *line, void *parms)
-    {
-        testForWindowEffect2(*line, *reinterpret_cast<testForWindowEffectParams *>(parms));
-        return false; // Continue iteration.
-    }
-
     bool lineMightHaveWindowEffect(Line const &line)
     {
         if(line.definesPolyobj()) return false;
@@ -538,7 +529,7 @@ DENG2_PIMPL(Map)
 
     void findOneWayWindows()
     {
-        foreach(Vertex *vertex, mesh.vertexes())
+        for(Vertex *vertex : mesh.vertexs())
         {
             // Count the total number of one and two-sided line owners for each
             // vertex. (Used in the process of locating window effect lines.)
@@ -546,7 +537,7 @@ DENG2_PIMPL(Map)
         }
 
         // Search for "one-way window" effects.
-        foreach(Line *line, lines)
+        for(Line *line : lines)
         {
             if(!lineMightHaveWindowEffect(*line))
                 continue;
@@ -568,8 +559,13 @@ DENG2_PIMPL(Map)
                 scanRegion.minX = line->aaBox().minX - bsp::DIST_EPSILON;
                 scanRegion.maxX = line->aaBox().maxX + bsp::DIST_EPSILON;
             }
+
             validCount++;
-            self.lineBoxIterator(scanRegion, LIF_SECTOR, testForWindowEffectWorker, &p);
+            self.forAllLinesInBox(scanRegion, LIF_SECTOR, [&p] (Line &line)
+            {
+                testForWindowEffect2(line, p);
+                return LoopContinue;
+            });
 
             if(p.backOpen && p.frontOpen && line->frontSectorPtr() == p.backOpen)
             {
@@ -632,7 +628,7 @@ DENG2_PIMPL(Map)
             // Attribute an index to any new vertexes.
             for(int i = nextVertexOrd; i < mesh.vertexCount(); ++i)
             {
-                Vertex *vtx = mesh.vertexes().at(i);
+                Vertex *vtx = mesh.vertexs().at(i);
                 vtx->setMap(thisPublic);
                 vtx->setIndexInMap(i);
             }
@@ -903,6 +899,11 @@ DENG2_PIMPL(Map)
     {
         if(!mo || !line) return;
 
+        // Lines with only one sector will not be linked to because a mobj can't
+        // legally cross one.
+        if(!line->hasFrontSector()) return;
+        if(!line->hasBackSector()) return;
+
         // Add a node to the mobj's ring.
         nodeindex_t nodeIndex = NP_New(&mobjNodes, line);
         NP_Link(&mobjNodes, nodeIndex, mo->lineRoot);
@@ -913,58 +914,33 @@ DENG2_PIMPL(Map)
         NP_Link(&lineNodes, nodeIndex, lineLinks[line->indexInMap()]);
     }
 
-    struct LineLinkerParams
-    {
-        Map *map;
-        mobj_t *mo;
-        AABoxd moAABox;
-    };
-
-    /**
-     * The given line might cross the mobj. If necessary, link the mobj into
-     * the line's mobj link ring.
-     */
-    static int lineLinkerWorker(Line *line, void *context)
-    {
-        LineLinkerParams &parm = *static_cast<LineLinkerParams *>(context);
-
-        // Do the bounding boxes intercept?
-        if(parm.moAABox.minX >= line->aaBox().maxX ||
-           parm.moAABox.minY >= line->aaBox().maxY ||
-           parm.moAABox.maxX <= line->aaBox().minX ||
-           parm.moAABox.maxY <= line->aaBox().minY)
-        {
-            return false;
-        }
-
-        // Line does not cross the mobj's bounding box?
-        if(line->boxOnSide(parm.moAABox)) return false;
-
-        // Lines with only one sector will not be linked to because a mobj can't
-        // legally cross one.
-        if(!line->hasFrontSector()) return false;
-        if(!line->hasBackSector()) return false;
-
-        parm.map->d->linkMobjToLine(parm.mo, line);
-        return false;
-    }
-
     /**
      * @note Caller must ensure that the mobj is @em not linked.
      */
     void linkMobjToLines(mobj_t &mo)
     {
+        AABoxd const box = Mobj_AABox(mo);
+
         // Get a new root node.
         mo.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
 
-        // Set up a line iterator for doing the linking.
-        LineLinkerParams parm; zap(parm);
-        parm.map     = &self;
-        parm.mo      = &mo;
-        parm.moAABox = Mobj_AABox(mo);
-
         validCount++;
-        self.lineBoxIterator(parm.moAABox, lineLinkerWorker, &parm);
+        self.forAllLinesInBox(box, [this, &mo, &box] (Line &line)
+        {
+            // Do the bounding boxes intercept?
+            if(!(box.minX >= line.aaBox().maxX ||
+                 box.minY >= line.aaBox().maxY ||
+                 box.maxX <= line.aaBox().minX ||
+                 box.maxY <= line.aaBox().minY))
+            {
+                // Line crosses the mobj's bounding box?
+                if(!line.boxOnSide(box))
+                {
+                    this->linkMobjToLine(&mo, &line);
+                }
+            }
+            return LoopContinue;
+        });
     }
 
     /**
@@ -1069,12 +1045,12 @@ DENG2_PIMPL(Map)
      */
     Polyobj *polyobjBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Polyobj *polyobj, polyobjs)
+        for(Polyobj *polyobj : polyobjs)
         {
             if(&soundEmitter == &polyobj->soundEmitter())
                 return polyobj;
         }
-        return 0;
+        return nullptr; // Not found.
     }
 
     /**
@@ -1086,12 +1062,12 @@ DENG2_PIMPL(Map)
      */
     Sector *sectorBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Sector *sector, sectors)
+        for(Sector *sector : sectors)
         {
             if(&soundEmitter == &sector->soundEmitter())
                 return sector;
         }
-        return 0; // Not found.
+        return nullptr; // Not found.
     }
 
     /**
@@ -1103,15 +1079,21 @@ DENG2_PIMPL(Map)
      */
     Plane *planeBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
-        foreach(Sector *sector, sectors)
-        foreach(Plane *plane, sector->planes())
+        Plane *found = nullptr;  // Not found.
+        for(Sector *sector : sectors)
         {
-            if(&soundEmitter == &plane->soundEmitter())
+            LoopResult located = sector->forAllPlanes([&soundEmitter, &found] (Plane &plane)
             {
-                return plane;
-            }
+                if(&soundEmitter == &plane.soundEmitter())
+                {
+                    found = &plane;
+                    return LoopAbort;
+                }
+                return LoopContinue;
+            });
+            if(located) break;
         }
-        return 0; // Not found.
+        return found;
     }
 
     /**
@@ -1124,7 +1106,7 @@ DENG2_PIMPL(Map)
     Surface *surfaceBySoundEmitter(SoundEmitter const &soundEmitter) const
     {
         // Perhaps a wall surface?
-        foreach(Line *line, lines)
+        for(Line *line : lines)
         for(int i = 0; i < 2; ++i)
         {
             LineSide &side = line->side(i);
@@ -1144,7 +1126,7 @@ DENG2_PIMPL(Map)
             }
         }
 
-        return 0; // Not found.
+        return nullptr; // Not found.
     }
 
 #ifdef __CLIENT__
@@ -1165,7 +1147,7 @@ DENG2_PIMPL(Map)
         if(resetNextViewer)
         {
             // Reset the plane height trackers.
-            foreach(Plane *plane, trackedPlanes)
+            for(Plane *plane : trackedPlanes)
             {
                 plane->resetSmoothedHeight();
             }
@@ -1200,7 +1182,7 @@ DENG2_PIMPL(Map)
         if(resetNextViewer)
         {
             // Reset the surface material origin trackers.
-            foreach(Surface *surface, scrollingSurfaces)
+            for(Surface *surface : scrollingSurfaces)
             {
                 surface->resetSmoothedMaterialOrigin();
             }
@@ -1259,7 +1241,7 @@ DENG2_PIMPL(Map)
          * Apply changes to all surfaces:
          */
         bias.lastChangeOnFrame = R_FrameCount();
-        foreach(SectorCluster *cluster, clusters)
+        for(SectorCluster *cluster : clusters)
         {
             cluster->applyBiasDigest(allChanges);
         }
@@ -1270,26 +1252,27 @@ DENG2_PIMPL(Map)
      */
     void generateMobjContacts()
     {
-        foreach(Sector *sector, sectors)
+        for(Sector *sector : sectors)
         for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
         {
             R_AddContact(*iter);
         }
     }
 
-    void generateLumobjs(QList<Decoration *> const &decorList) const
+    void generateLumobjs(Surface const &surface)
     {
-        foreach(Decoration const *decor, decorList)
+        surface.forAllDecorations([this] (Decoration &decor)
         {
-            if(LightDecoration const *decorLight = decor->maybeAs<LightDecoration>())
+            if(LightDecoration const *decorLight = decor.maybeAs<LightDecoration>())
             {
-                QScopedPointer<Lumobj>lum(decorLight->generateLumobj());
-                if(!lum.isNull())
+                std::unique_ptr<Lumobj> lum(decorLight->generateLumobj());
+                if(lum)
                 {
                     self.addLumobj(*lum); // a copy is made.
                 }
             }
-        }
+            return LoopContinue;
+        });
     }
 
     /**
@@ -1585,10 +1568,6 @@ DENG2_PIMPL(Map)
 
 Map::Map(MapDef *mapDefinition) : d(new Instance(this))
 {
-    _globalGravity     = 0;
-    _effectiveGravity  = 0;
-    _ambientLightLevel = 0;
-
     setDef(mapDefinition);
 }
 
@@ -1609,7 +1588,7 @@ Mesh const &Map::mesh() const
 
 bool Map::hasBspTree() const
 {
-    return d->bsp.tree != 0;
+    return d->bsp.tree != nullptr;
 }
 
 Map::BspTree const &Map::bspTree() const
@@ -1620,34 +1599,6 @@ Map::BspTree const &Map::bspTree() const
     }
     /// @throw MissingBspTreeError  Attempted with no BSP tree available.
     throw MissingBspTreeError("Map::bspTree", "No BSP tree is available");
-}
-
-Map::Subspaces const &Map::subspaces() const
-{
-    return d->subspaces;
-}
-
-LoopResult Map::forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func)
-{
-    if(sector)
-    {
-        for(auto it = d->clusters.constFind(sector); it != d->clusters.end() && it.key() == sector; ++it)
-        {
-            if(auto result = func(**it)) return result;
-        }
-        return LoopContinue;
-    }
-
-    for(SectorCluster *cluster : d->clusters)
-    {
-        if(auto result = func(*cluster)) return result;
-    }
-    return LoopContinue;
-}
-
-int Map::clusterCount() const
-{
-    return d->clusters.count();
 }
 
 #ifdef __CLIENT__
@@ -1961,7 +1912,7 @@ void Map::buildMaterialLists()
 {
     d->surfaceDecorator().reset();
 
-    foreach(Line *line, d->lines)
+    for(Line *line : d->lines)
     for(int i = 0; i < 2; ++i)
     {
         LineSide &side = line->side(i);
@@ -1972,15 +1923,16 @@ void Map::buildMaterialLists()
         linkInMaterialLists(&side.bottom());
     }
 
-    foreach(Sector *sector, d->sectors)
+    for(Sector *sector : d->sectors)
     {
         // Skip sectors with no lines as their planes will never be drawn.
         if(!sector->sideCount()) continue;
 
-        foreach(Plane *plane, sector->planes())
+        sector->forAllPlanes([this] (Plane &plane)
         {
-            linkInMaterialLists(&plane->surface());
-        }
+            linkInMaterialLists(&plane.surface());
+            return LoopContinue;
+        });
     }
 }
 
@@ -2123,24 +2075,193 @@ Sky &Map::sky() const
     return d->sky;
 }
 
-Map::Vertexes const &Map::vertexes() const
+int Map::vertexCount() const
 {
-    return d->mesh.vertexes();
+    return d->mesh.vertexCount();
 }
 
-Map::Lines const &Map::lines() const
+Vertex &Map::vertex(int index) const
 {
-    return d->lines;
+    if(Vertex *vtx = vertexPtr(index)) return *vtx;
+    /// @throw MissingElementError  Invalid Vertex reference specified.
+    throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::number(index));
 }
 
-Map::Sectors const &Map::sectors() const
+Vertex *Map::vertexPtr(int index) const
 {
-    return d->sectors;
+    if(index >= 0 && index < d->mesh.vertexCount())
+    {
+        return d->mesh.vertexs().at(index);
+    }
+    return nullptr;
 }
 
-Map::Polyobjs const &Map::polyobjs() const
+LoopResult Map::forAllVertexs(std::function<LoopResult (Vertex &)> func) const
 {
-    return d->polyobjs;
+    for(Vertex *vtx : d->mesh.vertexs())
+    {
+        if(auto result = func(*vtx)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::lineCount() const
+{
+    return d->lines.count();
+}
+
+Line &Map::line(int index) const
+{
+    if(Line *li = linePtr(index)) return *li;
+    /// @throw MissingElementError  Invalid Line reference specified.
+    throw MissingElementError("Map::line", "Unknown Line index:" + String::number(index));
+}
+
+Line *Map::linePtr(int index) const
+{
+    if(index >= 0 && index < d->lines.count())
+    {
+        return d->lines.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllLines(std::function<LoopResult (Line &)> func) const
+{
+    for(Line *li : d->lines)
+    {
+        if(auto result = func(*li)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::sectorCount() const
+{
+    return d->sectors.count();
+}
+
+Sector &Map::sector(int index) const
+{
+    if(Sector *sec = sectorPtr(index)) return *sec;
+    /// @throw MissingElementError  Invalid Sector reference specified.
+    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::number(index));
+}
+
+Sector *Map::sectorPtr(int index) const
+{
+    if(index >= 0 && index < d->sectors.count())
+    {
+        return d->sectors.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
+{
+    for(Sector *sec : d->sectors)
+    {
+        if(auto result = func(*sec)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::subspaceCount() const
+{
+    return d->subspaces.count();
+}
+
+ConvexSubspace &Map::subspace(int index) const
+{
+    if(ConvexSubspace *sub = subspacePtr(index)) return *sub;
+    /// @throw MissingElementError  Invalid ConvexSubspace reference specified.
+    throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::number(index));
+}
+
+ConvexSubspace *Map::subspacePtr(int index) const
+{
+    if(index >= 0 && index < d->subspaces.count())
+    {
+        return d->subspaces.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
+{
+    for(ConvexSubspace *sub : d->subspaces)
+    {
+        if(auto result = func(*sub)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::clusterCount() const
+{
+    return d->clusters.count();
+}
+
+LoopResult Map::forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func)
+{
+    if(sector)
+    {
+        for(auto it = d->clusters.constFind(sector); it != d->clusters.end() && it.key() == sector; ++it)
+        {
+            if(auto result = func(**it)) return result;
+        }
+        return LoopContinue;
+    }
+
+    for(SectorCluster *cluster : d->clusters)
+    {
+        if(auto result = func(*cluster)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::polyobjCount() const
+{
+    return d->polyobjs.count();
+}
+
+Polyobj &Map::polyobj(int index) const
+{
+    if(Polyobj *pob = polyobjPtr(index)) return *pob;
+    /// @throw MissingObjectError  Invalid ConvexSubspace reference specified.
+    throw MissingObjectError("Map::subspace", "Unknown Polyobj index:" + String::number(index));
+}
+
+Polyobj *Map::polyobjPtr(int index) const
+{
+    if(index >= 0 && index < d->polyobjs.count())
+    {
+        return d->polyobjs.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const
+{
+    for(Polyobj *pob : d->polyobjs)
+    {
+        if(auto result = func(*pob)) return result;
+    }
+    return LoopContinue;
+}
+
+void Map::initPolyobjs()
+{
+    LOG_AS("Map::initPolyobjs");
+
+    for(Polyobj *po : d->polyobjs)
+    {
+        /// @todo Is this still necessary? -ds
+        /// (This data is updated automatically when moving/rotating).
+        po->updateAABox();
+        po->updateSurfaceTangents();
+
+        po->unlink();
+        po->link();
+    }
 }
 
 int Map::ambientLightLevel() const
@@ -2148,16 +2269,23 @@ int Map::ambientLightLevel() const
     return _ambientLightLevel;
 }
 
+LineSide &Map::side(int index) const
+{
+    if(LineSide *side = sidePtr(index)) return *side;
+    /// @throw MissingElementError  Invalid LineSide reference specified.
+    throw MissingElementError("Map::side", "Unknown LineSide index:" + String::number(index));
+}
+
+LineSide *Map::sidePtr(int index) const
+{
+    if(index < 0) return nullptr;
+    return &d->lines.at(index / 2)->side(index % 2);
+}
+
 int Map::toSideIndex(int lineIndex, int backSide) // static
 {
     DENG_ASSERT(lineIndex >= 0);
     return lineIndex * 2 + (backSide? 1 : 0);
-}
-
-LineSide *Map::sideByIndex(int index) const
-{
-    if(index < 0) return 0;
-    return &d->lines.at(index / 2)->side(index % 2);
 }
 
 bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
@@ -2189,32 +2317,6 @@ bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
     }
 
     return (*sector != 0 || *poly != 0|| *plane != 0|| *surface != 0);
-}
-
-Polyobj *Map::polyobjByTag(int tag) const
-{
-    foreach(Polyobj *polyobj, d->polyobjs)
-    {
-        if(polyobj->tag == tag)
-            return polyobj;
-    }
-    return 0;
-}
-
-void Map::initPolyobjs()
-{
-    LOG_AS("Map::initPolyobjs");
-
-    foreach(Polyobj *po, d->polyobjs)
-    {
-        /// @todo Is this still necessary? -ds
-        /// (This data is updated automatically when moving/rotating).
-        po->updateAABox();
-        po->updateSurfaceTangents();
-
-        po->unlink();
-        po->link();
-    }
 }
 
 EntityDatabase &Map::entityDatabase() const
@@ -2285,290 +2387,163 @@ Blockmap const &Map::subspaceBlockmap() const
     throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
-struct blockmapcellmobjsiterator_params_t
+LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (Line &)> func) const
 {
-    int localValidCount;
-    int (*callback) (mobj_t *, void *);
-    void *context;
-};
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
 
-static int blockmapCellMobjsIterator(void *object, void *context)
-{
-    mobj_t *mobj = static_cast<mobj_t *>(object);
-    blockmapcellmobjsiterator_params_t &parm = *static_cast<blockmapcellmobjsiterator_params_t *>(context);
-
-    if(mobj->validCount != parm.localValidCount)
+    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
     {
-        // This mobj has now been processed for the current iteration.
-        mobj->validCount = parm.localValidCount;
-
-        // Action the callback.
-        if(int result = parm.callback(mobj, parm.context))
-            return result; // Stop iteration.
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::mobjBoxIterator(AABoxd const &box, int (*callback) (mobj_t *, void *),
-                         void *context) const
-{
-    if(!d->mobjBlockmap.isNull())
-    {
-        blockmapcellmobjsiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = callback;
-        parm.context         = context;
-
-        return d->mobjBlockmap->iterate(box, blockmapCellMobjsIterator, &parm);
-    }
-    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::mobjBoxIterator", "Mobj blockmap is not initialized");
-}
-
-int Map::mobjPathIterator(Vector2d const &from, Vector2d const &to,
-    int (*callback)(mobj_t *, void *), void *context) const
-{
-    if(!d->mobjBlockmap.isNull())
-    {
-        blockmapcellmobjsiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = callback;
-        parm.context         = context;
-
-        return d->mobjBlockmap->iterate(from, to, blockmapCellMobjsIterator, &parm);
-    }
-    /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::mobjPathIterator", "Mobj blockmap is not initialized");
-}
-
-struct blockmapcelllinesiterator_params_t
-{
-    int localValidCount;
-    int (*callback) (Line *, void *);
-    void *context;
-};
-
-static int blockmapCellLinesIterator(void *mapElement, void *context)
-{
-    Line *line = static_cast<Line *>(mapElement);
-    blockmapcelllinesiterator_params_t &parm = *static_cast<blockmapcelllinesiterator_params_t *>(context);
-
-    if(line->validCount() != parm.localValidCount)
-    {
-        // This line has now been processed for the current iteration.
-        line->setValidCount(parm.localValidCount);
-
-        // Action the callback.
-        if(int result = parm.callback(line, parm.context))
-            return result; // Stop iteration.
-    }
-
-    return false; // Continue iteration.
-}
-
-struct blockmapcellsubspacesiterator_params_t
-{
-    AABoxd const *box;
-    int localValidCount;
-    int (*callback) (ConvexSubspace *, void *);
-    void *context;
-};
-
-static int blockmapCellSubspacesIterator(void *object, void *context)
-{
-    ConvexSubspace *subspace = static_cast<ConvexSubspace *>(object);
-    blockmapcellsubspacesiterator_params_t &parm = *static_cast<blockmapcellsubspacesiterator_params_t *>(context);
-
-    if(subspace->validCount() != parm.localValidCount)
-    {
-        // This subspace has now been processed for the current iteration.
-        subspace->setValidCount(parm.localValidCount);
-
-        // Check the bounds.
-        AABoxd const &leafAABox = subspace->poly().aaBox();
-        if(parm.box)
-        {
-            if(leafAABox.maxX < parm.box->minX ||
-               leafAABox.minX > parm.box->maxX ||
-               leafAABox.minY > parm.box->maxY ||
-               leafAABox.maxY < parm.box->minY)
-            {
-                return false; // Continue iteration.
-            }
-        }
-
-        // Action the callback.
-        if(int result = parm.callback(subspace, parm.context))
-            return result; // Stop iteration.
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::subspaceBoxIterator(AABoxd const &box, int (*callback) (ConvexSubspace *, void *),
-    void *context) const
-{
-    if(!d->subspaceBlockmap.isNull())
-    {
-        static int localValidCount = 0;
-        // This is only used here.
-        localValidCount++;
-
-        blockmapcellsubspacesiterator_params_t parm; zap(parm);
-        parm.localValidCount = localValidCount;
-        parm.callback        = callback;
-        parm.context         = context;
-        parm.box             = &box;
-
-        return d->subspaceBlockmap->iterate(box, blockmapCellSubspacesIterator, &parm);
-    }
-    /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::subspaceBoxIterator", "Convex subspace blockmap is not initialized");
-}
-
-int Map::mobjTouchedLineIterator(mobj_t *mo, int (*callback) (Line *, void *),
-                                 void *context) const
-{
-    if(mo->lineRoot)
-    {
-        linknode_t *tn = d->mobjNodes.nodes;
-
         QVarLengthArray<Line *, 16> linkStore;
-        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-            nix = tn[nix].next)
+
+        linknode_t *tn = d->mobjNodes.nodes;
+        for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
         {
-            linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
+            linkStore.append((Line *)(tn[nix].ptr));
         }
 
         for(int i = 0; i < linkStore.count(); ++i)
         {
-            Line *line = linkStore[i];
-            if(int result = callback(line, context))
+            if(auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult (Sector &)> func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if(&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
+    {
+        QVarLengthArray<Sector *, 16> linkStore;
+
+        // Always process the mobj's own sector first.
+        Sector &ownSec = *Mobj_BspLeafAtOrigin(mob).sectorPtr();
+        ownSec.setValidCount(validCount);
+        linkStore.append(&ownSec);
+
+        // Any good lines around here?
+        if(mob.lineRoot)
+        {
+            linknode_t *tn = d->mobjNodes.nodes;
+            for(nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
+            {
+                Line *ld = (Line *)(tn[nix].ptr);
+
+                // All these lines have sectors on both sides.
+                // First, try the front.
+                Sector &frontSec = ld->frontSector();
+                if(frontSec.validCount() != validCount)
+                {
+                    frontSec.setValidCount(validCount);
+                    linkStore.append(&frontSec);
+                }
+
+                // And then the back.
+                /// @todo Above comment suggest always twosided, which is it? -ds
+                if(ld->hasBackSector())
+                {
+                    Sector &backSec = ld->backSector();
+                    if(backSec.validCount() != validCount)
+                    {
+                        backSec.setValidCount(validCount);
+                        linkStore.append(&backSec);
+                    }
+                }
+            }
+        }
+
+        for(int i = 0; i < linkStore.count(); ++i)
+        {
+            if(auto result = func(*linkStore[i]))
                 return result;
         }
     }
 
-    return false; // Continue iteration.
+    return LoopContinue;
 }
 
-int Map::mobjTouchedSectorIterator(mobj_t *mo, int (*callback) (Sector *, void *),
-                                   void *context) const
+LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mobj_t &)> func) const
 {
-    QVarLengthArray<Sector *, 16> linkStore;
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
 
-    // Always process the mobj's own sector first.
-    Sector &ownSec = *Mobj_BspLeafAtOrigin(*mo).sectorPtr();
-    linkStore.append(&ownSec);
-    ownSec.setValidCount(validCount);
-
-    // Any good lines around here?
-    if(mo->lineRoot)
+    if(&line.map() == this)
     {
-        linknode_t *tn = d->mobjNodes.nodes;
+        QVarLengthArray<mobj_t *, 256> linkStore;
 
-        for(nodeindex_t nix = tn[mo->lineRoot].next; nix != mo->lineRoot;
-            nix = tn[nix].next)
-        {
-            Line *ld = reinterpret_cast<Line *>(tn[nix].ptr);
-
-            // All these lines have sectors on both sides.
-            // First, try the front.
-            Sector &frontSec = ld->frontSector();
-            if(frontSec.validCount() != validCount)
-            {
-                frontSec.setValidCount(validCount);
-                linkStore.append(&frontSec);
-            }
-
-            // And then the back.
-            /// @todo Above comment suggest always twosided, which is it? -ds
-            if(ld->hasBackSector())
-            {
-                Sector &backSec = ld->backSector();
-                if(backSec.validCount() != validCount)
-                {
-                    backSec.setValidCount(validCount);
-                    linkStore.append(&backSec);
-                }
-            }
-        }
-    }
-
-    for(int i = 0; i < linkStore.count(); ++i)
-    {
-        Sector *sector = linkStore[i];
-        if(int result = callback(sector, context))
-            return result;
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::lineTouchingMobjIterator(Line *line, int (*callback) (mobj_t *, void *),
-                                  void *context) const
-{
-    QVarLengthArray<mobj_t *, 256> linkStore;
-
-    nodeindex_t root = d->lineLinks[line->indexInMap()];
-    linknode_t *ln = d->lineNodes.nodes;
-
-    for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
-    {
-        linkStore.append(reinterpret_cast<mobj_t *>(ln[nix].ptr));
-    }
-
-    for(int i = 0; i < linkStore.count(); ++i)
-    {
-        mobj_t *mobj = linkStore[i];
-        if(int result = callback(mobj, context))
-            return result;
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::sectorTouchingMobjIterator(Sector *sector,
-    int (*callback) (mobj_t *, void *), void *context) const
-{
-    QVarLengthArray<mobj_t *, 256> linkStore;
-
-    // Collate mobjs that obviously are in the sector.
-    for(mobj_t *mo = sector->firstMobj(); mo; mo = mo->sNext)
-    {
-        if(mo->validCount != validCount)
-        {
-            mo->validCount = validCount;
-            linkStore.append(mo);
-        }
-    }
-
-    // Collate mobjs linked to the sector's lines.
-    linknode_t const *ln = d->lineNodes.nodes;
-    foreach(LineSide *side, sector->sides())
-    {
-        nodeindex_t root = d->lineLinks[side->line().indexInMap()];
-
+        // Collate mobjs touching the given line in case these relationships change.
+        linknode_t *ln   = d->lineNodes.nodes;
+        nodeindex_t root = d->lineLinks[line.indexInMap()];
         for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            mobj_t *mo = reinterpret_cast<mobj_t *>(ln[nix].ptr);
-            if(mo->validCount != validCount)
-            {
-                mo->validCount = validCount;
-                linkStore.append(mo);
-            }
+            linkStore.append((mobj_t *)(ln[nix].ptr));
+        }
+
+        for(int i = 0; i < linkStore.count(); ++i)
+        {
+            if(auto result = func(*linkStore[i]))
+                return result;
         }
     }
+    return LoopContinue;
+}
 
-    // Process all collected mobjs.
-    for(int i = 0; i < linkStore.count(); ++i)
+LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (mobj_t &)> func) const
+{
+    /// @todo Optimize: It should not be necessary to collate the objects first in
+    /// in order to perform the iteration. This kind of "belt and braces" safety
+    /// measure would not be necessary at this level if the caller(s) instead took
+    /// responsibility for managing relationship changes during the iteration. -ds
+
+    if(&sector.map() == this)
     {
-        mobj_t *mobj = linkStore[i];
-        if(int result = callback(mobj, context))
-            return result;
-    }
+        QVarLengthArray<mobj_t *, 256> linkStore;
 
-    return false; // Continue iteration.
+        // Collate mobjs that obviously are in the sector.
+        for(mobj_t *mob = sector.firstMobj(); mob; mob = mob->sNext)
+        {
+            if(mob->validCount != validCount)
+            {
+                mob->validCount = validCount;
+                linkStore.append(mob);
+            }
+        }
+
+        // Collate mobjs linked to the sector's lines.
+        linknode_t const *ln = d->lineNodes.nodes;
+        sector.forAllSides([this, &linkStore, &ln] (LineSide &side)
+        {
+            nodeindex_t root = d->lineLinks[side.line().indexInMap()];
+            for(nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
+            {
+                mobj_t *mob = (mobj_t *)(ln[nix].ptr);
+                if(mob->validCount != validCount)
+                {
+                    mob->validCount = validCount;
+                    linkStore.append(mob);
+                }
+            }
+            return LoopContinue;
+        });
+
+        // Process all collected mobjs.
+        for(int i = 0; i < linkStore.count(); ++i)
+        {
+            if(auto result = func(*linkStore[i]))
+                return result;
+        }
+    }
+    return LoopContinue;
 }
 
 int Map::unlink(mobj_t &mo)
@@ -2649,153 +2624,51 @@ void Map::link(Polyobj &polyobj)
     d->polyobjBlockmap->link(polyobj.aaBox, &polyobj);
 }
 
-struct blockmapcellpolyobjsiterator_params_t
+LoopResult Map::forAllLinesInBox(AABoxd const &box, int flags, std::function<LoopResult (Line &line)> func) const
 {
-    int localValidCount;
-    int (*callback) (Polyobj *, void *);
-    void *context;
-};
+    LoopResult result = LoopContinue;
 
-static int blockmapCellPolyobjsIterator(void *object, void *context)
-{
-    Polyobj *polyobj = static_cast<Polyobj *>(object);
-    blockmapcellpolyobjsiterator_params_t &parm = *static_cast<blockmapcellpolyobjsiterator_params_t *>(context);
-
-    if(polyobj->validCount != parm.localValidCount)
+    // Process polyobj lines?
+    if((flags & LIF_POLYOBJ) && polyobjCount())
     {
-        // This polyobj has now been processed for the current iteration.
-        polyobj->validCount = parm.localValidCount;
-
-        // Action the callback.
-        if(int result = parm.callback(polyobj, parm.context))
-            return result; // Stop iteration.
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::polyobjBoxIterator(AABoxd const &box,
-    int (*callback) (struct polyobj_s *, void *), void *context) const
-{
-    if(!d->polyobjBlockmap.isNull())
-    {
-        blockmapcellpolyobjsiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = callback;
-        parm.context         = context;
-
-        return d->polyobjBlockmap->iterate(box, blockmapCellPolyobjsIterator, &parm);
-    }
-    /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
-    throw MissingBlockmapError("Map::polyobjBoxIterator", "Polyobj blockmap is not initialized");
-}
-
-struct polyobjlineiterator_params_t
-{
-    int (*callback) (Line *, void *);
-    void *context;
-};
-
-static int polyobjLineIterator(Polyobj *po, void *context = 0)
-{
-    polyobjlineiterator_params_t &parm = *static_cast<polyobjlineiterator_params_t *>(context);
-
-    foreach(Line *line, po->lines())
-    {
-        if(line->validCount() != validCount)
+        int const localValidCount = validCount;
+        result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
-            line->setValidCount(validCount);
-
-            if(int result = parm.callback(line, parm.context))
-                return result;
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-int Map::lineBoxIterator(AABoxd const &box, int flags,
-    int (*callback) (Line *, void *), void *context) const
-{
-    // Process polyobj lines?
-    if((flags & LIF_POLYOBJ) && polyobjCount())
-    {
-        if(d->polyobjBlockmap.isNull())
-            /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::lineBoxIterator", "Polyobj blockmap is not initialized");
-
-        polyobjlineiterator_params_t pliParm; zap(pliParm);
-        pliParm.callback = callback;
-        pliParm.context  = context;
-
-        blockmapcellpolyobjsiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = polyobjLineIterator;
-        parm.context         = &pliParm;
-
-        if(int result = d->polyobjBlockmap->iterate(box, blockmapCellPolyobjsIterator, &parm))
-            return result;
+            Polyobj &pob = *(Polyobj *)object;
+            if(pob.validCount != localValidCount) // not yet processed
+            {
+                pob.validCount = localValidCount;
+                for(Line *line : pob.lines())
+                {
+                    if(line->validCount() != localValidCount) // not yet processed
+                    {
+                        line->setValidCount(localValidCount);
+                        if(auto result = func(*line))
+                            return result;
+                    }
+                }
+            }
+            return LoopResult(); // continue
+        });
     }
 
     // Process sector lines?
-    if(flags & LIF_SECTOR)
+    if(!result && (flags & LIF_SECTOR))
     {
-        if(d->lineBlockmap.isNull())
-            /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::lineBoxIterator", "Line blockmap is not initialized");
-
-        blockmapcelllinesiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = callback;
-        parm.context         = context;
-
-        if(int result = d->lineBlockmap->iterate(box, blockmapCellLinesIterator, &parm))
-            return result;
+        int const localValidCount = validCount;
+        result = lineBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
+        {
+            Line &line = *(Line *)object;
+            if(line.validCount() != localValidCount) // not yet processed
+            {
+                line.setValidCount(localValidCount);
+                return func(line);
+            }
+            return LoopResult(); // continue
+        });
     }
 
-    return 0; // Continue iteration.
-}
-
-int Map::linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
-    int (*callback)(Line *, void *), void *context) const
-{
-    // Process polyobj lines?
-    if((flags & LIF_POLYOBJ) && polyobjCount())
-    {
-        if(d->polyobjBlockmap.isNull())
-            /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::linePathIterator", "Polyobj blockmap is not initialized");
-
-        polyobjlineiterator_params_t pliParm; zap(pliParm);
-        pliParm.callback = callback;
-        pliParm.context  = context;
-
-        blockmapcellpolyobjsiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = polyobjLineIterator;
-        parm.context         = &pliParm;
-
-        if(int result = d->polyobjBlockmap->iterate(from, to, blockmapCellPolyobjsIterator, &parm))
-            return result;
-    }
-
-    // Process sector lines?
-    if(flags & LIF_SECTOR)
-    {
-        if(d->lineBlockmap.isNull())
-            /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
-            throw MissingBlockmapError("Map::linePathIterator", "Line blockmap is not initialized");
-
-        blockmapcelllinesiterator_params_t parm; zap(parm);
-        parm.localValidCount = validCount;
-        parm.callback        = callback;
-        parm.context         = context;
-
-        if(int result = d->lineBlockmap->iterate(from, to, blockmapCellLinesIterator, &parm))
-            return result;
-    }
-
-    return 0; // Continue iteration.
+    return result;
 }
 
 BspLeaf &Map::bspLeafAt(Vector2d const &point) const
@@ -2894,7 +2767,7 @@ void Map::initSkyFix()
 
     // Update for sector plane heights and mobjs which intersect the ceiling.
     /// @todo Can't we defer this?
-    foreach(Sector *sector, d->sectors)
+    for(Sector *sector : d->sectors)
     {
         if(!sector->sideCount()) continue;
 
@@ -2937,19 +2810,20 @@ void Map::initSkyFix()
 
         // Update for middle materials on lines which intersect the
         // floor and/or ceiling on the front (i.e., sector) side.
-        foreach(LineSide *side, sector->sides())
+        sector->forAllSides([this, &skyCeil, &skyFloor] (LineSide &side)
         {
-            if(!side->hasSections()) continue;
-            if(!side->middle().hasMaterial()) continue;
+            if(!side.hasSections()) return LoopContinue;
+            if(!side.middle().hasMaterial()) return LoopContinue;
 
             // There must be a sector on both sides.
-            if(!side->hasSector() || !side->back().hasSector()) continue;
+            if(!side.hasSector() || !side.back().hasSector())
+                return LoopContinue;
 
             // Possibility of degenerate BSP leaf.
-            if(!side->leftHEdge()) continue;
+            if(!side.leftHEdge()) return LoopContinue;
 
-            WallEdge edge(WallSpec::fromMapSide(*side, LineSide::Middle),
-                          *side->leftHEdge(), Line::From);
+            WallEdge edge(WallSpec::fromMapSide(side, LineSide::Middle),
+                          *side.leftHEdge(), Line::From);
 
             if(edge.isValid() && edge.top().z() > edge.bottom().z())
             {
@@ -2965,7 +2839,8 @@ void Map::initSkyFix()
                     d->skyFloorHeight = edge.bottom().z() + edge.materialOrigin().y;
                 }
             }
-        }
+            return LoopContinue;
+        });
     }
 
     LOGDEV_MAP_VERBOSE("Completed in %.2f seconds") << begunAt.since();
@@ -3064,6 +2939,11 @@ int Map::generatorListIterator(uint listIndex, int (*callback) (Generator *, voi
     return 0; // Continue iteration.
 }
 
+int Map::lumobjCount() const
+{
+    return d->lumobjs.count();
+}
+
 Lumobj &Map::addLumobj(Lumobj const &lumobj)
 {
     d->lumobjs.append(new Lumobj(lumobj));
@@ -3088,7 +2968,7 @@ void Map::removeLumobj(int which)
 
 void Map::removeAllLumobjs()
 {
-    foreach(ConvexSubspace *subspace, d->subspaces)
+    for(ConvexSubspace *subspace : d->subspaces)
     {
         subspace->unlinkAllLumobjs();
     }
@@ -3096,9 +2976,34 @@ void Map::removeAllLumobjs()
     d->lumobjs.clear();
 }
 
-Map::Lumobjs const &Map::lumobjs() const
+Lumobj &Map::lumobj(int index) const
 {
-    return d->lumobjs;
+    if(Lumobj *lum = lumobjPtr(index)) return *lum;
+    /// @throw MissingObjectError  Invalid Lumobj reference specified.
+    throw MissingObjectError("Map::lumobj", "Unknown Lumobj index:" + String::number(index));
+}
+
+Lumobj *Map::lumobjPtr(int index) const
+{
+    if(index >= 0 && index < d->lumobjs.count())
+    {
+        return d->lumobjs.at(index);
+    }
+    return nullptr;
+}
+
+LoopResult Map::forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const
+{
+    for(Lumobj *lob : d->lumobjs)
+    {
+        if(auto result = func(*lob)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::biasSourceCount() const
+{
+    return d->bias.sources.count();
 }
 
 BiasSource &Map::addBiasSource(BiasSource const &biasSource)
@@ -3109,7 +3014,7 @@ BiasSource &Map::addBiasSource(BiasSource const &biasSource)
         return *d->bias.sources.last();
     }
     /// @throw FullError  Attempt to add a new bias source when already at capcity.
-    throw FullError("Map::addBiasSource", QString("Already at maximum capacity (%1)").arg(MAX_BIAS_SOURCES));
+    throw FullError("Map::addBiasSource", "Already at full capacity:" + String::number(MAX_BIAS_SOURCES));
 }
 
 void Map::removeBiasSource(int which)
@@ -3126,18 +3031,20 @@ void Map::removeAllBiasSources()
     d->bias.sources.clear();
 }
 
-Map::BiasSources const &Map::biasSources() const
+BiasSource &Map::biasSource(int index) const
 {
-    return d->bias.sources;
+   if(BiasSource *bsrc = biasSourcePtr(index)) return *bsrc;
+   /// @throw MissingObjectError  Invalid BiasSource reference specified.
+   throw MissingObjectError("Map::biasSource", "Unknown BiasSource index:" + String::number(index));
 }
 
-BiasSource *Map::biasSource(int index) const
+BiasSource *Map::biasSourcePtr(int index) const
 {
-   if(index >= 0 && index < biasSourceCount())
+   if(index >= 0 && index < d->bias.sources.count())
    {
-       return biasSources().at(index);
+       return d->bias.sources.at(index);
    }
-   return 0;
+   return nullptr;
 }
 
 /**
@@ -3148,7 +3055,7 @@ BiasSource *Map::biasSourceNear(Vector3d const &point) const
 {
     BiasSource *nearest = 0;
     coord_t minDist = 0;
-    foreach(BiasSource *src, d->bias.sources)
+    for(BiasSource *src : d->bias.sources)
     {
         coord_t dist = (src->origin() - point).length();
         if(!nearest || dist < minDist)
@@ -3160,9 +3067,18 @@ BiasSource *Map::biasSourceNear(Vector3d const &point) const
     return nearest;
 }
 
-int Map::toIndex(BiasSource const &source) const
+LoopResult Map::forAllBiasSources(std::function<LoopResult (BiasSource &)> func) const
 {
-    return d->bias.sources.indexOf(const_cast<BiasSource *>(&source));
+    for(BiasSource *bsrc : d->bias.sources)
+    {
+        if(auto result = func(*bsrc)) return result;
+    }
+    return LoopContinue;
+}
+
+int Map::indexOf(BiasSource const &bsrc) const
+{
+    return d->bias.sources.indexOf(const_cast<BiasSource *>(&bsrc));
 }
 
 uint Map::biasCurrentTime() const
@@ -3183,28 +3099,31 @@ void Map::update()
     d->updateParticleGens(); // Defs might've changed.
 
     // Update all surfaces.
-    foreach(Sector *sector, d->sectors)
-    foreach(Plane *plane, sector->planes())
+    for(Sector *sector : d->sectors)
     {
-        plane->surface().markAsNeedingDecorationUpdate();
+        sector->forAllPlanes([] (Plane &plane)
+        {
+            plane.surface().markForDecorationUpdate();
+            return LoopContinue;
+        });
     }
 
-    foreach(Line *line, d->lines)
+    for(Line *line : d->lines)
     for(int i = 0; i < 2; ++i)
     {
         LineSide &side = line->side(i);
         if(!side.hasSections()) continue;
 
-        side.top().markAsNeedingDecorationUpdate();
-        side.middle().markAsNeedingDecorationUpdate();
-        side.bottom().markAsNeedingDecorationUpdate();
+        side.top   ().markForDecorationUpdate();
+        side.middle().markForDecorationUpdate();
+        side.bottom().markForDecorationUpdate();
     }
 
     /// @todo Is this even necessary?
-    foreach(Polyobj *polyobj, d->polyobjs)
-    foreach(Line *line, polyobj->lines())
+    for(Polyobj *polyobj : d->polyobjs)
+    for(Line *line : polyobj->lines())
     {
-        line->front().middle().markAsNeedingDecorationUpdate();
+        line->front().middle().markForDecorationUpdate();
     }
 
     // Rebuild the surface material lists.
@@ -3266,7 +3185,7 @@ void Map::update()
 #ifdef __CLIENT__
 void Map::worldSystemFrameBegins(bool resetNextViewer)
 {
-    DENG2_ASSERT(&d->worldSys().map() == this); // Sanity check.
+    DENG2_ASSERT(&worldSys().map() == this); // Sanity check.
 
     // Interpolate the map ready for drawing view(s) of it.
     d->lerpTrackedPlanes(resetNextViewer);
@@ -3290,27 +3209,31 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
             d->surfaceDecorator().redecorate();
 
             // Generate lumobjs for all decorations who want them.
-            foreach(Line *line, d->lines)
+            for(Line *line : d->lines)
             for(int i = 0; i < 2; ++i)
             {
                 LineSide &side = line->side(i);
                 if(!side.hasSections()) continue;
 
-                d->generateLumobjs(side.middle().decorations());
-                d->generateLumobjs(side.bottom().decorations());
-                d->generateLumobjs(side.top().decorations());
+                d->generateLumobjs(side.middle());
+                d->generateLumobjs(side.bottom());
+                d->generateLumobjs(side.top());
             }
-            foreach(Sector *sector, d->sectors)
-            foreach(Plane *plane, sector->planes())
+
+            for(Sector *sector : d->sectors)
             {
-                d->generateLumobjs(plane->surface().decorations());
+                sector->forAllPlanes([this] (Plane &plane)
+                {
+                    d->generateLumobjs(plane.surface());
+                    return LoopContinue;
+                });
             }
         }
 
         // Spawn omnilights for mobjs?
         if(useDynLights)
         {
-            foreach(Sector *sector, d->sectors)
+            for(Sector *sector : d->sectors)
             for(mobj_t *iter = sector->firstMobj(); iter; iter = iter->sNext)
             {
                 Mobj_GenerateLumobjs(iter);
@@ -3696,7 +3619,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * the lines which the vertex belongs to sorted by angle, (the rings are
  * arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editableLines)
+void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &editableLines)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -3707,8 +3630,8 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
     LineOwner *lineOwners = (LineOwner *) Z_Malloc(sizeof(LineOwner) * editableLines.count() * 2, PU_MAPSTATIC, 0);
     LineOwner *allocator = lineOwners;
 
-    foreach(Line *line, editableLines)
-    for(uint p = 0; p < 2; ++p)
+    for(Line *line : editableLines)
+    for(int p = 0; p < 2; ++p)
     {
         setVertexLineOwner(&line->vertex(p), line, &allocator);
     }
@@ -3716,7 +3639,7 @@ void buildVertexLineOwnerRings(Map::Vertexes const &vertexes, Map::Lines &editab
     /*
      * Step 2: Sort line owners of each vertex and finalize the rings.
      */
-    foreach(Vertex *v, vertexes)
+    for(Vertex *v : vertexs)
     {
         if(!v->_numLineOwners) continue;
 
@@ -3775,22 +3698,14 @@ bool Map::isEditable() const
 
 struct VertexInfo
 {
-    /// Vertex for this info.
-    Vertex *vertex;
-
-    /// Determined equivalent vertex.
-    Vertex *equiv;
-
-    /// Line -> Vertex reference count.
-    uint refCount;
-
-    VertexInfo() : vertex(0), equiv(0), refCount(0)
-    {}
+    Vertex *vertex = nullptr;  ///< Vertex for this info.
+    Vertex *equiv = nullptr;   ///< Determined equivalent vertex.
+    uint refCount = 0;         ///< Line -> Vertex reference count.
 
     /// @todo Math here is not correct (rounding directionality). -ds
     int compareVertexOrigins(VertexInfo const &other) const
     {
-        DENG_ASSERT(vertex != 0 && other.vertex != 0);
+        DENG2_ASSERT(vertex && other.vertex);
 
         if(this == &other) return 0;
         if(vertex == other.vertex) return 0;
@@ -3820,8 +3735,10 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Populate the vertex info.
     QVector<VertexInfo> vertexInfo(mesh.vertexCount());
     int ord = 0;
-    foreach(Vertex *vertex, mesh.vertexes())
+    for(Vertex *vertex : mesh.vertexs())
+    {
         vertexInfo[ord++].vertex = vertex;
+    }
 
     {
         // Sort a copy to place near vertexes adjacently.
@@ -3848,14 +3765,14 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
      */
 
     // Count line -> vertex references.
-    foreach(Line *line, lines)
+    for(Line *line : lines)
     {
         vertexInfo[line->from().indexInMap()].refCount++;
         vertexInfo[  line->to().indexInMap()].refCount++;
     }
 
     // Perform the replacement.
-    foreach(Line *line, lines)
+    for(Line *line : lines)
     {
         while(vertexInfo[line->from().indexInMap()].equiv)
         {
@@ -3882,7 +3799,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
      * Step 3 - Prune vertexes:
      */
     int prunedCount = 0, numUnused = 0;
-    foreach(VertexInfo const &info, vertexInfo)
+    for(VertexInfo const &info : vertexInfo)
     {
         Vertex *vertex = info.vertex;
 
@@ -3898,20 +3815,20 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     {
         // Re-index with a contiguous range of indices.
         int ord = 0;
-        foreach(Vertex *vertex, mesh.vertexes())
+        for(Vertex *vertex : mesh.vertexs())
         {
             vertex->setIndexInMap(ord++);
         }
 
         /// Update lines. @todo Line should handle this itself.
-        foreach(Line *line, lines)
+        for(Line *line : lines)
         {
             line->updateSlopeType();
             line->updateAABox();
         }
 
-        LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused).")
-            << prunedCount << (prunedCount - numUnused) << numUnused;
+        LOGDEV_MAP_NOTE("Pruned %d vertexes (%d equivalents, %d unused)")
+                << prunedCount << (prunedCount - numUnused) << numUnused;
     }
 }
 
@@ -3922,10 +3839,10 @@ bool Map::endEditing()
     d->editingEnabled = false;
 
     LOG_AS("Map");
-    LOG_MAP_VERBOSE("Editing ended.");
-    LOGDEV_MAP_VERBOSE("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors.")
-        << d->mesh.vertexCount()        << d->editable.lines.count()
-        << d->editable.polyobjs.count() << d->editable.sectors.count();
+    LOG_MAP_VERBOSE("Editing ended");
+    LOGDEV_MAP_VERBOSE("New elements: %d Vertexes, %d Lines, %d Polyobjs and %d Sectors")
+            << d->mesh.vertexCount()        << d->editable.lines.count()
+            << d->editable.polyobjs.count() << d->editable.sectors.count();
 
     /*
      * Perform cleanup on the new map elements.
@@ -3933,13 +3850,13 @@ bool Map::endEditing()
     pruneVertexes(d->mesh, d->editable.lines);
 
     // Ensure lines with only one sector are flagged as blocking.
-    foreach(Line *line, d->editable.lines)
+    for(Line *line : d->editable.lines)
     {
         if(!line->hasFrontSector() || !line->hasBackSector())
             line->setFlags(DDLF_BLOCKING);
     }
 
-    buildVertexLineOwnerRings(d->mesh.vertexes(), d->editable.lines);
+    buildVertexLineOwnerRings(d->mesh.vertexs(), d->editable.lines);
 
     /*
      * Move the editable elements to the "static" element lists.
@@ -3972,7 +3889,7 @@ bool Map::endEditing()
         Polyobj *polyobj = d->polyobjs.back();
 
         // Create half-edge geometry and line segments for each line.
-        foreach(Line *line, polyobj->lines())
+        for(Line *line : polyobj->lines())
         {
             HEdge *hedge = polyobj->mesh().newHEdge(line->from());
 
@@ -4007,7 +3924,7 @@ bool Map::endEditing()
     d->initPolyobjBlockmap();
 
     // Finish lines.
-    foreach(Line *line, d->lines)
+    for(Line *line : d->lines)
     for(int i = 0; i < 2; ++i)
     {
         line->side(i).updateSurfaceNormals();
@@ -4015,7 +3932,7 @@ bool Map::endEditing()
     }
 
     // Finish sectors.
-    foreach(Sector *sector, d->sectors)
+    for(Sector *sector : d->sectors)
     {
         d->buildClusters(*sector);
         sector->buildSides();
@@ -4023,10 +3940,13 @@ bool Map::endEditing()
     }
 
     // Finish planes.
-    foreach(Sector *sector, d->sectors)
-    foreach(Plane *plane, sector->planes())
+    for(Sector *sector : d->sectors)
     {
-        plane->updateSoundEmitterOrigin();
+        sector->forAllPlanes([] (Plane &plane)
+        {
+            plane.updateSoundEmitterOrigin();
+            return LoopContinue;
+        });
     }
 
     // We can now initialize the convex subspace blockmap.

@@ -1,6 +1,6 @@
 /** @file busywidget.cpp
  *
- * @authors Copyright (c) 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2013-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -42,13 +42,10 @@ DENG_GUI_PIMPL(BusyWidget)
     Time frameDrawnAt;
     GLFramebuffer transitionFrame;
     Drawable drawable;
-    GLUniform uTex;
-    GLUniform uMvpMatrix;
+    GLUniform uTex       { "uTex",       GLUniform::Sampler2D };
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4      };
 
-    Instance(Public *i)
-        : Base(i),
-          uTex("uTex", GLUniform::Sampler2D),
-          uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
+    Instance(Public *i) : Base(i)
     {
         progress = new ProgressWidget;
         progress->setAlignment(ui::AlignCenter, LabelWidget::AlignOnlyByImage);

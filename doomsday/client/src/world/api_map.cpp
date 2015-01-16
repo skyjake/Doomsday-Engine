@@ -1,10 +1,10 @@
-/** @file api_map.cpp Doomsday Map Update API.
+/** @file api_map.cpp  Doomsday Map Update API.
  *
  * @todo Throw a game-terminating exception if an illegal value is given
  * to a public API function.
  *
- * @authors Copyright &copy; 2006-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -38,6 +38,7 @@
 
 #include "Face"
 
+#include "world/blockmap.h"
 #include "world/dmuargs.h"
 #include "world/entitydatabase.h"
 #include "world/maputil.h"
@@ -228,9 +229,9 @@ void *P_AllocDummy(int type, void *extraData)
     {
     case DMU_LINE: {
         // Time to allocate the dummy vertex?
-        if(dummyMesh.vertexesIsEmpty())
+        if(dummyMesh.vertexsIsEmpty())
             dummyMesh.newVertex();
-        Vertex &dummyVertex = *dummyMesh.vertexes().first();
+        Vertex &dummyVertex = *dummyMesh.vertexs().first();
 
         DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
         dummies.insert(dl);
@@ -325,18 +326,16 @@ void *P_ToPtr(int type, int index)
     switch(type)
     {
     case DMU_VERTEX:
-        return App_WorldSystem().map().vertexes().at(index);
+        return App_WorldSystem().map().vertexPtr(index);
 
     case DMU_LINE:
-        return App_WorldSystem().map().lines().at(index);
+        return App_WorldSystem().map().linePtr(index);
 
     case DMU_SIDE:
-        return App_WorldSystem().map().sideByIndex(index);
+        return App_WorldSystem().map().sidePtr(index);
 
     case DMU_SECTOR:
-        if(index < 0 || index >= App_WorldSystem().map().sectors().size())
-            return 0;
-        return App_WorldSystem().map().sectors().at(index);
+        return App_WorldSystem().map().sectorPtr(index);
 
     case DMU_PLANE: {
         /// @todo Throw exception.
@@ -345,7 +344,7 @@ void *P_ToPtr(int type, int index)
         return 0; /* Unreachable. */ }
 
     case DMU_SUBSPACE:
-        return App_WorldSystem().map().subspaces().at(index);
+        return App_WorldSystem().map().subspacePtr(index);
 
     case DMU_SKY:
         if(index != 0) return 0; // Only one sky per map, presently.
@@ -397,20 +396,16 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
         switch(prop)
         {
         case DMU_LINE:
-            foreach(LineSide *side, sector.sides())
+            return sector.forAllSides([&callback, &context] (LineSide &side)
             {
-                if(int result = callback(&side->line(), context))
-                    return result;
-            }
-            return false; // Continue iteration
+                return callback(&side.line(), context);
+            });
 
         case DMU_PLANE:
-            foreach(Plane *plane, sector.planes())
+            return sector.forAllPlanes([&callback, &context] (Plane &plane)
             {
-                if(int result = callback(plane, context))
-                    return result;
-            }
-            return false; // Continue iteration
+                return callback(&plane, context);
+            });
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
@@ -433,17 +428,20 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
                 }
             } while((hedge = &hedge->next()) != base);
 
-            foreach(Mesh *mesh, subspace.extraMeshes())
-            foreach(HEdge *hedge, mesh->hedges())
+            LoopResult result = subspace.forAllExtraMeshes([&callback, &context] (Mesh &mesh)
             {
-                // Is this on the back of a one-sided line?
-                if(!hedge->hasMapElement())
-                    continue;
+                for(HEdge *hedge : mesh.hedges())
+                {
+                    // Is this on the back of a one-sided line?
+                    if(!hedge->hasMapElement())
+                        continue;
 
-                if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
-                    return result;
-            }
-            return false; /* Continue iteration */ }
+                    if(int result = callback(&hedge->mapElement().as<LineSideSegment>().line(), context))
+                        return LoopResult( result );
+                }
+                return LoopResult(); // continue
+            });
+            return result; }
 
         default:
             throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
@@ -462,29 +460,38 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     switch(type)
     {
     case DMU_VERTEX:
-        if(index >= 0 && index < App_WorldSystem().map().vertexCount())
-            return callback(App_WorldSystem().map().vertexes().at(index), context);
+        if(Vertex *vtx = App_WorldSystem().map().vertexPtr(index))
+        {
+            return callback(vtx, context);
+        }
         break;
 
     case DMU_LINE:
-        if(index >= 0 && index < App_WorldSystem().map().lineCount())
-            return callback(App_WorldSystem().map().lines().at(index), context);
+        if(Line *li = App_WorldSystem().map().linePtr(index))
+        {
+            return callback(li, context);
+        }
         break;
 
-    case DMU_SIDE: {
-        LineSide *side = App_WorldSystem().map().sideByIndex(index);
-        if(side)
-            return callback(side, context);
-        break; }
+    case DMU_SIDE:
+        if(LineSide *si = App_WorldSystem().map().sidePtr(index))
+        {
+            return callback(si, context);
+        }
+        break;
 
     case DMU_SUBSPACE:
-        if(index >= 0 && index < App_WorldSystem().map().subspaceCount())
-            return callback(App_WorldSystem().map().subspaces().at(index), context);
+        if(ConvexSubspace *sub = App_WorldSystem().map().subspacePtr(index))
+        {
+            return callback(sub, context);
+        }
         break;
 
     case DMU_SECTOR:
-        if(index >= 0 && index < App_WorldSystem().map().sectorCount())
-            return callback(App_WorldSystem().map().sectors().at(index), context);
+        if(Sector *sec = App_WorldSystem().map().sectorPtr(index))
+        {
+            return callback(sec, context);
+        }
         break;
 
     case DMU_PLANE: {
@@ -1556,31 +1563,47 @@ DENG_EXTERN_C void Mobj_Unlink(mobj_t *mobj)
 }
 
 #undef Mobj_TouchedLinesIterator
-DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mo, int (*callback) (Line *, void *), void *context)
+DENG_EXTERN_C int Mobj_TouchedLinesIterator(mobj_t *mob, int (*callback) (Line *, void *), void *context)
 {
-    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_Map(*mo).mobjTouchedLineIterator(mo, callback, context);
+    DENG2_ASSERT(mob && callback);
+    LoopResult result = Mobj_Map(*mob).forAllLinesTouchingMobj(*mob, [&callback, &context] (Line &line)
+    {
+        return LoopResult( callback(&line, context) );
+    });
+    return result;
 }
 
 #undef Mobj_TouchedSectorsIterator
-DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mo, int (*callback) (Sector *, void *), void *context)
+DENG_EXTERN_C int Mobj_TouchedSectorsIterator(mobj_t *mob, int (*callback) (Sector *, void *), void *context)
 {
-    if(!mo || !Mobj_IsLinked(*mo)) return false; // Continue iteration.
-    return Mobj_Map(*mo).mobjTouchedSectorIterator(mo, callback, context);
+    DENG2_ASSERT(mob && callback);
+    LoopResult result = Mobj_Map(*mob).forAllSectorsTouchingMobj(*mob, [&callback, &context] (Sector &sector)
+    {
+        return LoopResult( callback(&sector, context) );
+    });
+    return result;
 }
 
 #undef Line_TouchingMobjsIterator
 DENG_EXTERN_C int Line_TouchingMobjsIterator(Line *line, int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!line) return false; // Continue iteration.
-    return line->map().lineTouchingMobjIterator(line, callback, context);
+    DENG2_ASSERT(line && callback);
+    LoopResult result = line->map().forAllMobjsTouchingLine(*line, [&callback, &context] (mobj_t &mob)
+    {
+        return LoopResult( callback(&mob, context) );
+    });
+    return result;
 }
 
 #undef Sector_TouchingMobjsIterator
 DENG_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!sector) return false; // Continue iteration.
-    return sector->map().sectorTouchingMobjIterator(sector, callback, context);
+    DENG2_ASSERT(sector && callback);
+    LoopResult result = sector->map().forAllMobjsTouchingSector(*sector, [&callback, &context] (mobj_t &mob)
+    {
+        return LoopResult( callback(&mob, context) );
+    });
+    return result;
 }
 
 #undef Sector_AtPoint_FixedPrecision
@@ -1594,32 +1617,104 @@ DENG_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 DENG_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
-    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().mobjBoxIterator(*box, callback, context);
+    DENG2_ASSERT(box && callback);
+
+    LoopResult result = LoopContinue;
+    if(App_WorldSystem().hasMap())
+    {
+        Map const &map            = App_WorldSystem().map();
+        int const localValidCount = validCount;
+
+        result = map.mobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
+        {
+            mobj_t &mob = *(mobj_t *)object;
+            if(mob.validCount != localValidCount) // not yet processed
+            {
+                mob.validCount = localValidCount;
+                return LoopResult( callback(&mob, context) );
+            }
+            return LoopResult(); // continue
+        });
+    }
+    return result;
 }
 
 #undef Polyobj_BoxIterator
 DENG_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
-    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().polyobjBoxIterator(*box, callback, context);
+    DENG2_ASSERT(box && callback);
+
+    LoopResult result = LoopContinue;
+    if(App_WorldSystem().hasMap())
+    {
+        Map const &map            = App_WorldSystem().map();
+        int const localValidCount = validCount;
+
+        result = map.polyobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
+        {
+            Polyobj &pob = *(Polyobj *)object;
+            if(pob.validCount != localValidCount) // not yet processed
+            {
+                pob.validCount = localValidCount;
+                return LoopResult( callback(&pob, context) );
+            }
+            return LoopResult(); // continue
+        });
+    }
+    return result;
 }
 
 #undef Line_BoxIterator
 DENG_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
-    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().lineBoxIterator(*box, flags, callback, context);
+    DENG2_ASSERT(box && callback);
+
+    LoopResult result = LoopContinue;
+    if(App_WorldSystem().hasMap())
+    {
+        Map const &map = App_WorldSystem().map();
+        result = map.forAllLinesInBox(*box, flags, [&callback, &context] (Line &line)
+        {
+            return LoopResult( callback(&line, context) );
+        });
+    }
+    return result;
 }
 
 #undef Subspace_BoxIterator
 DENG_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
     int (*callback) (ConvexSubspace *, void *), void *context)
 {
-    if(!box || !App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().subspaceBoxIterator(*box, callback, context);
+    DENG2_ASSERT(box && callback);
+
+    LoopResult result = LoopContinue;
+    if(App_WorldSystem().hasMap())
+    {
+        Map const &map            = App_WorldSystem().map();
+        int const localValidCount = validCount;
+
+        result = map.subspaceBlockmap().forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)
+        {
+            ConvexSubspace &sub = *(ConvexSubspace *)object;
+            if(sub.validCount() != localValidCount) // not yet processed
+            {
+                sub.setValidCount(localValidCount);
+                // Check the bounds.
+                AABoxd const &polyBox = sub.poly().aaBox();
+                if(!(polyBox.maxX < box->minX ||
+                     polyBox.minX > box->maxX ||
+                     polyBox.minY > box->maxY ||
+                     polyBox.maxY < box->minY))
+                {
+                    return LoopResult( callback(&sub, context) );
+                }
+            }
+            return LoopResult(); // continue
+        });
+    }
+    return result;
 }
 
 #undef P_PathTraverse2
@@ -1727,15 +1822,27 @@ DENG_EXTERN_C void Polyobj_Link(Polyobj *po)
 #undef Polyobj_ById
 DENG_EXTERN_C Polyobj *Polyobj_ById(int index)
 {
-    if(!App_WorldSystem().hasMap()) return 0;
-    return App_WorldSystem().map().polyobjs().at(index);
+    if(!App_WorldSystem().hasMap()) return nullptr;
+    return App_WorldSystem().map().polyobjPtr(index);
 }
 
 #undef Polyobj_ByTag
 DENG_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 {
-    if(!App_WorldSystem().hasMap()) return 0;
-    return App_WorldSystem().map().polyobjByTag(tag);
+    Polyobj *found = nullptr; // not found.
+    if(App_WorldSystem().hasMap())
+    {
+        App_WorldSystem().map().forAllPolyobjs([&tag, &found] (Polyobj &pob)
+        {
+            if(pob.tag == tag)
+            {
+                found = &pob;
+                return LoopAbort;
+            }
+            return LoopContinue;
+        });
+    }
+    return found;
 }
 
 #undef Polyobj_Move

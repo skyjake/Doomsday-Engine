@@ -11,6 +11,9 @@ Header { Version = 6; }
 
 SkipIf -nodefaultfx;
 
+# None of these materials exist in shareware.
+SkipIf heretic-share;
+
 #
 # Glowing flats:
 #

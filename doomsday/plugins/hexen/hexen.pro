@@ -93,7 +93,7 @@ SOURCES += \
     src/p_things.c \
     src/p_waggle.cpp \
     src/sn_sonix.cpp \
-    src/st_stuff.c \
+    src/st_stuff.cpp \
     src/tables.c \
     src/x_api.c
 

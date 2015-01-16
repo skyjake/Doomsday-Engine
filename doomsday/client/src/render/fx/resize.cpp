@@ -84,7 +84,6 @@ DENG2_PIMPL(Resize)
     {    
         framebuf.glInit();
 
-        uMvpMatrix = Matrix4f::ortho(0, 1, 0, 1);
         uFrame = framebuf.colorTexture();
 
         // Drawable for drawing stuff back to the original target.
@@ -140,10 +139,17 @@ DENG2_PIMPL(Resize)
         glEnable(GL_TEXTURE_2D);
         glDisable(GL_ALPHA_TEST);
 
+        Rectanglef const vp = GLState::current().viewport();
+        Vector2f targetSize = GLState::current().target().size();
+
+        uMvpMatrix = Matrix4f::ortho(vp.left()   / targetSize.x,
+                                     vp.right()  / targetSize.x,
+                                     vp.top()    / targetSize.y,
+                                     vp.bottom() / targetSize.y);
+
         GLState::push()
                 .setBlend(false)
                 .setDepthTest(false)
-                .setViewport(Rectangleui::fromSize(GLState::current().target().size()))
                 .apply();
 
         frame.draw();

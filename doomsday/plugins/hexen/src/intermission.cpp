@@ -47,6 +47,8 @@
 
 #define MAX_INTRMSN_MESSAGE_SIZE (1024)
 
+using namespace de;
+
 enum gametype_t
 {
     SINGLE,
@@ -319,7 +321,7 @@ void IN_Drawer()
 
     dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK|BPF_OVERDRAW_CLIP, SCREENWIDTH, SCREENHEIGHT,
-                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
+                                   Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.common.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     lumpnum_t lumpNum = CentralLumpIndex().findLast("INTERPIC.lmp");
@@ -347,8 +349,8 @@ static void drawDeathTally()
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);
-    GL_DrawPatchXY(dpTallyTop, TALLY_TOP_X, TALLY_TOP_Y);
-    GL_DrawPatchXY(dpTallyLeft, TALLY_LEFT_X, TALLY_LEFT_Y);
+    GL_DrawPatch(dpTallyTop,  Vector2i(TALLY_TOP_X, TALLY_TOP_Y));
+    GL_DrawPatch(dpTallyLeft, Vector2i(TALLY_LEFT_X, TALLY_LEFT_Y));
 
     fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
     if(interTime < TALLY_EFFECT_TICKS)
@@ -462,6 +464,6 @@ void IN_SkipToNext()
 
 void IN_ConsoleRegister()
 {
-    C_VAR_BYTE("inlude-stretch",           &cfg.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement", &cfg.inludePatchReplaceMode, 0, 0, 1);
+    C_VAR_BYTE("inlude-stretch",           &cfg.common.inludeScaleMode, 0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement", &cfg.common.inludePatchReplaceMode, 0, 0, 1);
 }

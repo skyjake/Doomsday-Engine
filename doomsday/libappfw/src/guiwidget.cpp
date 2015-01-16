@@ -252,16 +252,21 @@ DENG2_PIMPL(GuiWidget)
 
     void drawBlurredBackground()
     {
-        if(background.type == Background::SharedBlur)
+        if(background.type == Background::SharedBlur ||
+           background.type == Background::SharedBlurWithBorderGlow)
         {
             // Use another widget's blur.
             DENG2_ASSERT(background.blur != 0);
-            background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+            if(background.blur)
+            {
+                background.blur->drawBlurredRect(self.rule().recti(), background.solidFill);
+            }
             return;
         }
 
         if(background.type != Background::Blurred &&
-           background.type != Background::BlurredWithBorderGlow)
+           background.type != Background::BlurredWithBorderGlow &&
+           background.type != Background::BlurredWithSolidFill)
         {
             deinitBlur();
             return;
@@ -295,9 +300,15 @@ DENG2_PIMPL(GuiWidget)
 
         // Pass 3: apply the vertical blur filter, drawing the final result
         // into the original target.
-        if(background.solidFill.w > 0)
+        Vector4f blurColor = background.solidFill;
+        float blurOpacity  = self.visibleOpacity();
+        if(background.type == Background::BlurredWithSolidFill)
         {
-            self.drawBlurredRect(self.rule().recti(), background.solidFill, self.visibleOpacity());
+            blurColor.w = 1;
+        }
+        if(!attribs.testFlag(DontDrawContent) && blurColor.w > 0 && blurOpacity > 0)
+        {
+            self.drawBlurredRect(self.rule().recti(), blurColor, blurOpacity);
         }
     }
 
@@ -443,6 +454,12 @@ RuleRectangle &GuiWidget::rule()
     return d->rule;
 }
 
+Rectanglei GuiWidget::contentRect() const
+{
+    Vector4i const pad = margins().toVector();
+    return rule().recti().adjusted(pad.xy(), -pad.zw());
+}
+
 RuleRectangle const &GuiWidget::rule() const
 {
     return d->rule;
@@ -543,11 +560,14 @@ Animation GuiWidget::opacity() const
 float GuiWidget::visibleOpacity() const
 {
     float opacity = d->currentOpacity();
-    for(Widget *i = Widget::parent(); i != 0; i = i->parent())
+    if(!d->attribs.testFlag(IndependentOpacity))
     {
-        if(GuiWidget *w = i->maybeAs<GuiWidget>())
+        for(Widget *i = Widget::parent(); i != 0; i = i->parent())
         {
-            opacity *= w->d->currentOpacity();
+            if(GuiWidget *w = i->maybeAs<GuiWidget>())
+            {
+                opacity *= w->d->currentOpacity();
+            }
         }
     }
     return opacity;
@@ -674,16 +694,19 @@ void GuiWidget::draw()
 
         d->drawBlurredBackground();
 
-        if(isClipped())
+        if(!d->attribs.testFlag(DontDrawContent))
         {
-            GLState::push().setNormalizedScissor(normalizedRect());
-        }
+            if(isClipped())
+            {
+                GLState::push().setNormalizedScissor(normalizedRect());
+            }
 
-        drawContent();
+            drawContent();
 
-        if(isClipped())
-        {
-            GLState::pop();
+            if(isClipped())
+            {
+                GLState::pop();
+            }
         }
 
         DENG2_ASSERT(GLState::stackDepth() == depthBeforeDrawingWidget);
@@ -802,7 +825,7 @@ void GuiWidget::drawContent()
 
 void GuiWidget::drawBlurredRect(Rectanglei const &rect, Vector4f const &color, float opacity)
 {
-    DENG2_ASSERT(d->blurInited);
+    //DENG2_ASSERT(d->blurInited);
     if(!d->blurInited) return;
 
     DENG2_ASSERT(d->blurFB[1]->isReady());
@@ -854,7 +877,8 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 {
     if(d->background.type != Background::Blurred &&
        d->background.type != Background::BlurredWithBorderGlow &&
-       d->background.type != Background::SharedBlur)
+       d->background.type != Background::SharedBlur &&
+       d->background.type != Background::SharedBlurWithBorderGlow)
     {
         // Is there a solid fill?
         if(d->background.solidFill.w > 0)
@@ -885,6 +909,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     case Background::BorderGlow:
     case Background::BlurredWithBorderGlow:
+    case Background::SharedBlurWithBorderGlow:
         verts.makeFlexibleFrame(rule().recti().expanded(thick),
                                 thick,
                                 d->background.color,
@@ -893,6 +918,7 @@ void GuiWidget::glMakeGeometry(DefaultVertexBuf::Builder &verts)
 
     case Background::Blurred: // blurs drawn separately in GuiWidget::draw()
     case Background::SharedBlur:
+    case Background::BlurredWithSolidFill:
         break;
 
     case Background::None:

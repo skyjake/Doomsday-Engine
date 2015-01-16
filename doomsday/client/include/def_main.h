@@ -1,9 +1,9 @@
-/**
- * @file def_main.h
- * Definitions subsystem. @ingroup defs
+/** @file def_main.h  Definition subsystem.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @ingroup defs
+ *
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,9 +23,11 @@
 #ifndef LIBDENG_DEFINITIONS_MAIN_H
 #define LIBDENG_DEFINITIONS_MAIN_H
 
-#include "Material"
-#include <de/stringarray.h>
 #include <vector>
+#include <doomsday/defs/ded.h>
+#include <doomsday/defs/dedtypes.h>
+#include <de/stringarray.h>
+#include "Material"
 
 template <typename PODType>
 struct Array : public std::vector<PODType>
@@ -38,7 +40,7 @@ struct Array : public std::vector<PODType>
         return std::vector<PODType>::size();
     }
     void clear() {
-        _elements = 0;
+        _elements = nullptr;
         std::vector<PODType>::clear();
     }
     PODType *append(int count = 1) {
@@ -50,7 +52,7 @@ struct Array : public std::vector<PODType>
             _elements = &(*this)[0];
             return &_elements[size() - count];
         }
-        return 0;
+        return nullptr;
     }
     /// Determine the index of element @a elem. Performance is O(1).
     int indexOf(PODType const *elem) const {
@@ -80,30 +82,32 @@ extern "C" {
 // the actual classes are game-side
 struct xgclass_s;
 
-typedef struct sfxinfo_s {
-    void* data; /// Pointer to sound data.
+struct sfxinfo_t
+{
+    void *data;           ///< Pointer to sound data.
     lumpnum_t lumpNum;
-    char lumpName[9]; /// Actual lump name of the sound (full name).
-    char id[32]; /// Identifier name (from the def).
-    char name[32]; /// Long name.
-    struct sfxinfo_s* link; /// Link to another sound.
+    char lumpName[9];     ///< Actual lump name of the sound (full name).
+    char id[32];          ///< Identifier name (from the def).
+    char name[32];        ///< Long name.
+    sfxinfo_t *link;      ///< Link to another sound.
     int linkPitch;
     int linkVolume;
     int priority;
-    int channels; /// Max. channels for the sound to occupy.
-    int usefulness; /// Used to determine when to cache out.
+    int channels;         ///< Max. channels for the sound to occupy.
+    int usefulness;       ///< Used to determine when to cache out.
     int flags;
     int group;
-    ddstring_t external; /// Path to external file.
-} sfxinfo_t;
+    ddstring_t external;  ///< Path to external file.
+};
 
-extern ded_t defs; ///< Main definitions database (internal).
+extern ded_t defs;  ///< Main definitions database (internal).
 
-typedef struct stateinfo_s {
+struct stateinfo_t
+{
     mobjinfo_t *owner;
     ded_light_t *light;
     ded_ptcgen_t *ptcGens;
-} stateinfo_t;
+};
 
 /**
  * Definitions that have been preprocessed for runtime use. Some of these are
@@ -111,66 +115,71 @@ typedef struct stateinfo_s {
  */
 struct RuntimeDefs
 {
-    Array<sprname_t>   sprNames; ///< Sprite name list.
-    Array<mobjinfo_t>  mobjInfo; ///< Map object info database.
-    Array<state_t>     states;   ///< State list.
+    Array<sprname_t>   sprNames;   ///< Sprite name list.
+    Array<mobjinfo_t>  mobjInfo;   ///< Map object info database.
+    Array<state_t>     states;     ///< State list.
     Array<stateinfo_t> stateInfo;
-    Array<sfxinfo_t>   sounds;   ///< Sound effect list.
-    Array<ddtext_t>    texts;    ///< Text string list.
+    Array<sfxinfo_t>   sounds;     ///< Sound effect list.
+    Array<ddtext_t>    texts;      ///< Text string list.
 
     void clear();
 };
 
 extern RuntimeDefs runtimeDefs;
 
-void            Def_Init(void);
-int             Def_GetGameClasses(void);
+/**
+ * Initializes the definition databases.
+ */
+void Def_Init(void);
+
+/**
+ * Retrieves the XG Class list from the Game.
+ * XGFunc links are provided by the Game, who owns the actual
+ * XG classes and their functions.
+ */
+int Def_GetGameClasses(void);
 
 /**
  * Finish definition database initialization. Initialization is split into two
  * phases either side of the texture manager, this being the post-phase.
  */
-void            Def_PostInit(void);
+void Def_PostInit(void);
 
 /**
  * Destroy databases.
  */
-void            Def_Destroy(void);
+void Def_Destroy(void);
 
 /**
  * Reads the specified definition files, and creates the sprite name,
  * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
  */
-void            Def_Read(void);
+void Def_Read(void);
 
-int             Def_GetMobjNum(const char* id);
-int             Def_GetMobjNumForName(const char* name);
-const char*     Def_GetMobjName(int num);
+int Def_GetMobjNum(char const *id);
+int Def_GetMobjNumForName(char const *name);
+char const *Def_GetMobjName(int num);
 
-state_t        *Def_GetState(int num);
-int             Def_GetStateNum(char const *id);
-char const     *Def_GetStateName(state_t *state);
+state_t *Def_GetState(int num);
+int Def_GetStateNum(char const *id);
+char const *Def_GetStateName(state_t *state);
 
-int             Def_GetActionNum(char const *id);
+int Def_GetActionNum(char const *id);
 
 /**
  * Returns the unique sprite number associated with the specified sprite @a name;
  * otherwise @c -1 if not found.
  */
-spritenum_t     Def_GetSpriteNum(char const *name);
+spritenum_t Def_GetSpriteNum(char const *name);
 
-int             Def_GetModelNum(const char* id);
-int             Def_GetMusicNum(const char* id);
-int             Def_GetSoundNum(const char* id);
-ded_value_t*    Def_GetValueById(const char* id);
-ded_value_t*    Def_GetValueByUri(const Uri* uri);
-ded_material_t* Def_GetMaterial(const char* uri);
-ded_compositefont_t* Def_GetCompositeFont(const char* uri);
-ded_light_t*    Def_GetLightDef(int spr, int frame);
-/// @todo $revise-texture-animation
-ded_decor_t*    Def_GetDecoration(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
-ded_reflection_t* Def_GetReflection(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
-ded_detailtexture_t* Def_GetDetailTex(Uri const *uri, /*bool hasExternal,*/ bool isCustom);
+int Def_GetModelNum(char const *id);
+int Def_GetMusicNum(char const *id);
+int Def_GetSoundNum(char const *id);
+ded_value_t *Def_GetValueById(char const *id);
+ded_value_t *Def_GetValueByUri(Uri const *uri);
+ded_material_t *Def_GetMaterial(char const *uri);
+ded_compositefont_t *Def_GetCompositeFont(char const *uri);
+ded_light_t *Def_GetLightDef(int spr, int frame);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -185,22 +194,26 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
 extern "C" {
 #endif
 
-ded_ptcgen_t*   Def_GetDamageGenerator(int mobjType);
+ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 
-int             Def_EvalFlags(char const *string);
+int Def_EvalFlags(char const *string);
 
 /**
  * @return  @c true= the definition was found.
  */
-int Def_Get(int type, const char* id, void* out);
+int Def_Get(int type, char const *id, void *out);
 
 /**
  * This is supposed to be the main interface for outside parties to
  * modify definitions (unless they want to do it manually with dedfile.h).
  */
-int Def_Set(int type, int index, int value, const void* ptr);
+int Def_Set(int type, int index, int value, void const *ptr);
 
-dd_bool Def_SameStateSequence(state_t* snew, state_t* sold);
+/**
+ * Can we reach 'snew' if we start searching from 'sold'?
+ * Take a maximum of 16 steps.
+ */
+dd_bool Def_SameStateSequence(state_t *snew, state_t *sold);
 
 /**
  * Compiles a list of all the defined mobj types. Indices in this list
@@ -208,7 +221,7 @@ dd_bool Def_SameStateSequence(state_t* snew, state_t* sold);
  *
  * @return StringArray instance. Caller gets ownership.
  */
-StringArray* Def_ListMobjTypeIDs(void);
+StringArray *Def_ListMobjTypeIDs(void);
 
 /**
  * Compiles a list of all the defined mobj states. Indices in this list
@@ -216,12 +229,12 @@ StringArray* Def_ListMobjTypeIDs(void);
  *
  * @return StringArray instance. Caller gets ownership.
  */
-StringArray* Def_ListStateIDs(void);
+StringArray *Def_ListStateIDs(void);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
  */
-bool Def_IsAllowedDecoration(ded_decor_t const *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.
@@ -239,4 +252,4 @@ D_CMD(ListMobjs);
 } // extern "C"
 #endif
 
-#endif /* LIBDENG_DEFINITIONS_MAIN_H */
+#endif  // LIBDENG_DEFINITIONS_MAIN_H

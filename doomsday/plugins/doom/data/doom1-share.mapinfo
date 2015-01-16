@@ -91,3 +91,14 @@ sky1 SKY1 0
 par 165
 titlepatch WILV08
 cluster 1
+
+; Episodes 2 and 3 contain only the game menu related properties
+episode E2M1
+name "EPISODE2"
+key s
+picname M_EPI2
+
+episode E3M1
+name "EPISODE3"
+picname M_EPI3
+key i

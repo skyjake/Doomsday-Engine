@@ -389,6 +389,7 @@ public Font::RichFormat::IStyle
     {
         sink.clear();
         clearCache();
+        self.setContentHeight(0);
     }
 
     void clearCache()

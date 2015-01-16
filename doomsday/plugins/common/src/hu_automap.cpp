@@ -83,44 +83,44 @@ static DGLuint amMaskTexture = 0; // Used to mask the map primitives.
 
 void UIAutomap_Register()
 {
-    C_VAR_FLOAT("map-opacity",              &cfg.automapOpacity,        0, 0, 1);
+    C_VAR_FLOAT("map-opacity",              &cfg.common.automapOpacity,        0, 0, 1);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    C_VAR_BYTE ("map-babykeys",             &cfg.automapBabyKeys,       0, 0, 1);
+    C_VAR_BYTE ("map-babykeys",             &cfg.common.automapBabyKeys,       0, 0, 1);
 #endif
-    C_VAR_FLOAT("map-background-r",         &cfg.automapBack[0],        0, 0, 1);
-    C_VAR_FLOAT("map-background-g",         &cfg.automapBack[1],        0, 0, 1);
-    C_VAR_FLOAT("map-background-b",         &cfg.automapBack[2],        0, 0, 1);
-    C_VAR_INT  ("map-customcolors",         &cfg.automapCustomColors,   0, 0, 1);
-    C_VAR_FLOAT( "map-line-opacity",        &cfg.automapLineAlpha,      0, 0, 1);
-    C_VAR_FLOAT("map-line-width",           &cfg.automapLineWidth,      0, .1f, 2);
-    C_VAR_FLOAT("map-mobj-r",               &cfg.automapMobj[0],        0, 0, 1);
-    C_VAR_FLOAT("map-mobj-g",               &cfg.automapMobj[1],        0, 0, 1);
-    C_VAR_FLOAT("map-mobj-b",               &cfg.automapMobj[2],        0, 0, 1);
-    C_VAR_FLOAT("map-wall-r",               &cfg.automapL1[0],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-g",               &cfg.automapL1[1],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-b",               &cfg.automapL1[2],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-unseen-r",        &cfg.automapL0[0],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-unseen-g",        &cfg.automapL0[1],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-unseen-b",        &cfg.automapL0[2],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-floorchange-r",   &cfg.automapL2[0],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-floorchange-g",   &cfg.automapL2[1],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-floorchange-b",   &cfg.automapL2[2],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-ceilingchange-r", &cfg.automapL3[0],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-ceilingchange-g", &cfg.automapL3[1],          0, 0, 1);
-    C_VAR_FLOAT("map-wall-ceilingchange-b", &cfg.automapL3[2],          0, 0, 1);
-    C_VAR_BYTE ("map-door-colors",          &cfg.automapShowDoors,      0, 0, 1);
-    C_VAR_FLOAT("map-door-glow",            &cfg.automapDoorGlow,       0, 0, 200);
-    C_VAR_INT  ("map-huddisplay",           &cfg.automapHudDisplay,     0, 0, 2);
-    C_VAR_FLOAT("map-pan-speed",            &cfg.automapPanSpeed,       0, 0, 1);
-    C_VAR_BYTE ("map-pan-resetonopen",      &cfg.automapPanResetOnOpen, 0, 0, 1);
-    C_VAR_BYTE ("map-rotate",               &cfg.automapRotate,         0, 0, 1);
-    C_VAR_FLOAT("map-zoom-speed",           &cfg.automapZoomSpeed,      0, 0, 1);
-    C_VAR_FLOAT("map-open-timer",           &cfg.automapOpenSeconds,    CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE ("map-title-position",       &cfg.automapTitleAtBottom,  0, 0, 1);
+    C_VAR_FLOAT("map-background-r",         &cfg.common.automapBack[0],        0, 0, 1);
+    C_VAR_FLOAT("map-background-g",         &cfg.common.automapBack[1],        0, 0, 1);
+    C_VAR_FLOAT("map-background-b",         &cfg.common.automapBack[2],        0, 0, 1);
+    C_VAR_INT  ("map-customcolors",         &cfg.common.automapCustomColors,   0, 0, 1);
+    C_VAR_FLOAT( "map-line-opacity",        &cfg.common.automapLineAlpha,      0, 0, 1);
+    C_VAR_FLOAT("map-line-width",           &cfg.common.automapLineWidth,      0, .1f, 2);
+    C_VAR_FLOAT("map-mobj-r",               &cfg.common.automapMobj[0],        0, 0, 1);
+    C_VAR_FLOAT("map-mobj-g",               &cfg.common.automapMobj[1],        0, 0, 1);
+    C_VAR_FLOAT("map-mobj-b",               &cfg.common.automapMobj[2],        0, 0, 1);
+    C_VAR_FLOAT("map-wall-r",               &cfg.common.automapL1[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-g",               &cfg.common.automapL1[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-b",               &cfg.common.automapL1[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-r",        &cfg.common.automapL0[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-g",        &cfg.common.automapL0[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-unseen-b",        &cfg.common.automapL0[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-r",   &cfg.common.automapL2[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-g",   &cfg.common.automapL2[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-floorchange-b",   &cfg.common.automapL2[2],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-r", &cfg.common.automapL3[0],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-g", &cfg.common.automapL3[1],          0, 0, 1);
+    C_VAR_FLOAT("map-wall-ceilingchange-b", &cfg.common.automapL3[2],          0, 0, 1);
+    C_VAR_BYTE ("map-door-colors",          &cfg.common.automapShowDoors,      0, 0, 1);
+    C_VAR_FLOAT("map-door-glow",            &cfg.common.automapDoorGlow,       0, 0, 200);
+    C_VAR_INT  ("map-huddisplay",           &cfg.common.automapHudDisplay,     0, 0, 2);
+    C_VAR_FLOAT("map-pan-speed",            &cfg.common.automapPanSpeed,       0, 0, 1);
+    C_VAR_BYTE ("map-pan-resetonopen",      &cfg.common.automapPanResetOnOpen, 0, 0, 1);
+    C_VAR_BYTE ("map-rotate",               &cfg.common.automapRotate,         0, 0, 1);
+    C_VAR_FLOAT("map-zoom-speed",           &cfg.common.automapZoomSpeed,      0, 0, 1);
+    C_VAR_FLOAT("map-open-timer",           &cfg.common.automapOpenSeconds,    CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE ("map-title-position",       &cfg.common.automapTitleAtBottom,  0, 0, 1);
     C_VAR_BYTE ("rend-dev-freeze-map",      &freezeMapRLs,              CVF_NO_ARCHIVE, 0, 1);
 
     // Aliases for old names:
-    C_VAR_FLOAT("map-alpha-lines",          &cfg.automapLineAlpha,      0, 0, 1);
+    C_VAR_FLOAT("map-alpha-lines",          &cfg.common.automapLineAlpha,      0, 0, 1);
 }
 
 static void rotate2D(coord_t* x, coord_t* y, float angle)
@@ -266,7 +266,7 @@ static void rendLine2(uiwidget_t *ob, float x1, float y1, float x2, float y2,
 
         // Scale line thickness relative to zoom level?
         if(scaleGlowWithView)
-            thickness = cfg.automapDoorGlow * 2.5f + 3;
+            thickness = cfg.common.automapDoorGlow * 2.5f + 3;
         else
             thickness = glowSize;
 
@@ -655,12 +655,12 @@ static void drawMapLine(Line *line, uiwidget_t *uiWidget)
 
         rendLine2(uiWidget, v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba,
-                  (xLine->special && !cfg.automapShowDoors ?
+                  (xLine->special && !cfg.common.automapShowDoors ?
                         GLOW_NONE : info->glow),
                   info->glowStrength,
                   info->glowSize, !rs.addToLists, info->scaleWithView,
-                  (info->glow && !(xLine->special && !cfg.automapShowDoors)),
-                  (xLine->special && !cfg.automapShowDoors ?
+                  (info->glow && !(xLine->special && !cfg.common.automapShowDoors)),
+                  (xLine->special && !cfg.common.automapShowDoors ?
                         BM_NORMAL : info->blendMode),
                   (am->flags & AMF_REND_LINE_NORMALS),
                   rs.addToLists);
@@ -815,7 +815,7 @@ int rendPolyobjLine(Line* line, void* context)
     if(info)
     {
         rendLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
-                    info->rgba[3] * cfg.automapLineAlpha * alpha, info->blendMode,
+                    info->rgba[3] * cfg.common.automapLineAlpha * alpha, info->blendMode,
                     (am->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
 
@@ -931,7 +931,7 @@ static void drawPlayerMarker(int consoleNum, automapcfg_t* config)
 
     R_GetColorPaletteRGBf(0, playerPaletteColor(consoleNum), color, false);
 
-    alpha = cfg.automapLineAlpha * uiRendState->pageAlpha;
+    alpha = cfg.common.automapLineAlpha * uiRendState->pageAlpha;
 #if !__JHEXEN__
     if(player->powers[PT_INVISIBILITY])
         alpha *= .125f;
@@ -1053,8 +1053,8 @@ static void rendThingPoints(uiwidget_t* obj)
 
     params.flags = UIAutomap_Flags(obj);
     params.vgId = AM_GetVectorGraphic(am->mcfg, AMO_THING);
-    AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, customPal);
-    params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * alpha, 1.f);
+    AM_GetMapColor(params.rgb, cfg.common.automapMobj, THINGCOLORS, customPal);
+    params.alpha = MINMAX_OF(0.f, cfg.common.automapLineAlpha * alpha, 1.f);
 
     UIAutomap_PVisibleAABounds(obj, &aaBox.minX, &aaBox.maxX, &aaBox.minY, &aaBox.maxY);
     VALIDCOUNT++;
@@ -1187,10 +1187,10 @@ static void setupGLStateForMap(uiwidget_t *obj)
     }
     else
     {
-        AM_GetMapColor(bgColor, cfg.automapBack, WHITE, customPal);
+        AM_GetMapColor(bgColor, cfg.common.automapBack, WHITE, customPal);
     }
 #else
-    AM_GetMapColor(bgColor, cfg.automapBack, BACKGROUND, customPal);
+    AM_GetMapColor(bgColor, cfg.common.automapBack, BACKGROUND, customPal);
 #endif
 
     // Do we want a background texture?
@@ -1205,7 +1205,7 @@ static void setupGLStateForMap(uiwidget_t *obj)
         DGL_LoadIdentity();
 
         DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
-        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
+        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.common.automapOpacity * alpha);
 
         DGL_Translatef(geometry.origin.x, geometry.origin.y, 0);
 
@@ -1229,7 +1229,7 @@ static void setupGLStateForMap(uiwidget_t *obj)
     {
         // Nope just a solid color.
         DGL_SetNoMaterial();
-        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.automapOpacity * alpha);
+        DGL_Color4f(bgColor[CR], bgColor[CG], bgColor[CB], cfg.common.automapOpacity * alpha);
         DGL_DrawRectf2(0, 0, geometry.size.width, geometry.size.height);
     }
 
@@ -1439,7 +1439,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.automapLineWidth * aspectScale, 3.f));
+    DGL_SetFloat(DGL_LINE_WIDTH, MINMAX_OF(.5f, cfg.common.automapLineWidth * aspectScale, 3.f));
 
 /*#if _DEBUG
     // Draw the rectangle described by the visible bounds.
@@ -1490,7 +1490,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
             const automapcfg_lineinfo_t* info = &am->mcfg->mapObjectInfo[i];
 
             // Setup the global list state.
-            DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3] * cfg.automapLineAlpha * alpha);
+            DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3] * cfg.common.automapLineAlpha * alpha);
             DGL_BlendMode(info->blendMode);
 
             // Draw.
@@ -1536,7 +1536,7 @@ void UIAutomap_Drawer(uiwidget_t* obj, const Point2Raw* offset)
     }
 
     // Draw glows?
-    if(cfg.automapShowDoors)
+    if(cfg.common.automapShowDoors)
     {
         /// @todo Optimize: Hugely inefficent. Need a new approach.
         DGL_Enable(DGL_TEXTURE_2D);
@@ -1590,14 +1590,14 @@ dd_bool UIAutomap_Open(uiwidget_t* obj, dd_bool yes, dd_bool fast)
         else
         {
             // The map's target player is available.
-            if(!(am->pan && !cfg.automapPanResetOnOpen))
+            if(!(am->pan && !cfg.common.automapPanResetOnOpen))
             {
                 coord_t origin[3];
                 Mobj_OriginSmoothed(mo, origin);
                 UIAutomap_SetCameraOrigin(obj, origin[VX], origin[VY]);
             }
 
-            if(am->pan && cfg.automapPanResetOnOpen)
+            if(am->pan && cfg.common.automapPanResetOnOpen)
             {
                 /* $unifiedangles */
                 float angle = (am->rotate? (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360 : 0);
@@ -1636,7 +1636,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
     if(G_GameState() != GS_MAP) return;
 
     // Move towards the target alpha level for the automap.
-    am->alphaTimer += (cfg.automapOpenSeconds == 0? 1 : 1/cfg.automapOpenSeconds * ticLength);
+    am->alphaTimer += (cfg.common.automapOpenSeconds == 0? 1 : 1/cfg.common.automapOpenSeconds * ticLength);
     if(am->alphaTimer >= 1)
         am->alpha = am->targetAlpha;
     else
@@ -1647,7 +1647,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
         return;
 
     // Map view zoom contol.
-    zoomSpeed = 1 + (2 * cfg.automapZoomSpeed) * ticLength * TICRATE;
+    zoomSpeed = 1 + (2 * cfg.common.automapZoomSpeed) * ticLength * TICRATE;
     if(players[player].brain.speed)
         zoomSpeed *= 1.5f;
 
@@ -1669,7 +1669,7 @@ void UIAutomap_Ticker(uiwidget_t* obj, timespan_t ticLength)
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
         /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
-        panUnitsPerSecond = UIAutomap_FrameToMap(obj, 140 * Rect_Height(UIWidget_Geometry(obj))/200.f) * (2 * cfg.automapPanSpeed);
+        panUnitsPerSecond = UIAutomap_FrameToMap(obj, 140 * Rect_Height(UIWidget_Geometry(obj))/200.f) * (2 * cfg.common.automapPanSpeed);
         if(panUnitsPerSecond < 8)
             panUnitsPerSecond = 8;
 

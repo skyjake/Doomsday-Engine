@@ -27,19 +27,33 @@
 
 using namespace de;
 
-DENG2_PIMPL(GameFilterWidget)
+static TimeDelta const BACKGROUND_FADE_SPAN = 0.25;
+static float const BACKGROUND_FILL_OPACITY = 0.8f;
+
+DENG_GUI_PIMPL(GameFilterWidget)
 {
+    LabelWidget *background = nullptr;
+    Rule const *bgOpacityRule = nullptr;
+    Animation bgOpacity { 0, Animation::Linear };
+    bool animatingOpacity = false;
+
     TabWidget *tabs;
     LabelWidget *sortLabel;
     ChoiceWidget *sortBy;
     DialogContentStylist stylist;
-    FilterMode filterMode;
+    FilterMode filterMode = UserChangeable;
 
-    Instance(Public *i)
-        : Base(i)
-        , filterMode(UserChangeable)
+    Instance(Public *i) : Base(i)
     {
         stylist.setContainer(self);
+
+        // Optional background.
+        self.add(background = new LabelWidget);
+        background->set(Background(Vector4f(style().colors().colorf("text"), 0),
+                                   Background::BlurredWithSolidFill));
+        background->setOpacity(0);
+        background->setAttribute(IndependentOpacity);
+        background->hide(); // hidden by default
 
         // Create widgets.
         self.add(tabs = new TabWidget);
@@ -68,9 +82,34 @@ DENG2_PIMPL(GameFilterWidget)
                 .setInput(Rule::Top,   self.rule().top());
     }
 
+    ~Instance()
+    {
+        releaseRef(bgOpacityRule);
+    }
+
     String persistId(String const &name) const
     {
         return self.name() + "." + name;
+    }
+
+    void updateBackgroundOpacity()
+    {
+        float opacity = (bgOpacityRule->value() > 1? 1 : 0);
+        if(!fequal(bgOpacity.target(), opacity))
+        {
+            bgOpacity.setValue(opacity, BACKGROUND_FADE_SPAN);
+            background->setOpacity(opacity, BACKGROUND_FADE_SPAN);
+            animatingOpacity = true;
+        }
+
+        if(animatingOpacity)
+        {
+            Background bg = background->background();
+            bg.solidFill.w = bgOpacity * BACKGROUND_FILL_OPACITY;
+            background->set(bg);
+
+            if(bgOpacity.done()) animatingOpacity = false;
+        }
     }
 };
 
@@ -105,6 +144,21 @@ void GameFilterWidget::setFilter(Filter flt, FilterMode mode)
     }
 }
 
+void GameFilterWidget::enableBackground(Rule const &scrollPositionRule)
+{
+    DENG2_ASSERT(hasRoot());
+
+    d->bgOpacityRule = holdRef(scrollPositionRule);
+
+    d->background->rule()
+            .setInput(Rule::Left,   root().viewLeft())
+            .setInput(Rule::Right,  root().viewRight())
+            .setInput(Rule::Top,    d->tabs->rule().top()    - style().rules().rule("gap"))
+            .setInput(Rule::Bottom, d->tabs->rule().bottom() + style().rules().rule("gap"));
+
+    d->background->show();
+}
+
 GameFilterWidget::Filter GameFilterWidget::filter() const
 {
     return Filter(d->tabs->currentItem().data().toUInt());
@@ -113,6 +167,16 @@ GameFilterWidget::Filter GameFilterWidget::filter() const
 GameFilterWidget::SortOrder GameFilterWidget::sortOrder() const
 {
     return SortOrder(d->sortBy->selectedItem().data().toInt());
+}
+
+void GameFilterWidget::update()
+{
+    GuiWidget::update();
+
+    if(d->background->isVisible())
+    {
+        d->updateBackgroundOpacity();
+    }
 }
 
 void GameFilterWidget::operator >> (PersistentState &toState) const

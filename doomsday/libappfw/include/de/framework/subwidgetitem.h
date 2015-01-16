@@ -20,9 +20,10 @@
 #define LIBAPPFW_UI_SUBWIDGETITEM_H
 
 #include "../ui/defs.h"
-#include "../ui/Item"
+#include "../ui/ImageItem"
 
 #include <de/Image>
+#include <functional>
 
 namespace de {
 
@@ -33,33 +34,30 @@ namespace ui {
 /**
  * UI context item that opens a widget as a popup.
  */
-class LIBAPPFW_PUBLIC SubwidgetItem : public Item
+class LIBAPPFW_PUBLIC SubwidgetItem : public ImageItem
 {
 public:
-    typedef PopupWidget *(*WidgetConstructor)();
+    typedef std::function<PopupWidget * ()> WidgetConstructor;
 
 public:
     SubwidgetItem(String const &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
-        : Item(ShownAsButton, label)
+        : ImageItem(ShownAsButton, label)
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
     SubwidgetItem(Image const &image, String const &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
-        : Item(ShownAsButton, label)
+        : ImageItem(ShownAsButton, image, label)
         , _constructor(constructor)
-        , _dir(openingDirection)
-        , _image(image) {}
+        , _dir(openingDirection) {}
 
     PopupWidget *makeWidget() const { return _constructor(); }
     ui::Direction openingDirection() const { return _dir; }
-    Image image() const { return _image; }
 
 private:
     WidgetConstructor _constructor;
     ui::Direction _dir;
-    Image _image;
 };
 
 } // namespace ui

@@ -61,9 +61,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
     return spr;
 }
 
-void VisSprite_SetupSprite(vissprite_t *spr,
-                           VisEntityPose const &pose,
-                           VisEntityLighting const &light,
+void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
@@ -72,7 +70,7 @@ void VisSprite_SetupSprite(vissprite_t *spr,
     drawspriteparams_t &p = *VS_SPRITE(spr);
 
     MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
-    MaterialVariant *variant = material.chooseVariant(spec, true);
+    MaterialAnimator *matAnimator   = &material.getAnimator(spec);
 
     DENG2_ASSERT((tClass == 0 && tMap == 0) ||
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
@@ -81,7 +79,7 @@ void VisSprite_SetupSprite(vissprite_t *spr,
     p.bspLeaf         = bspLeafAtOrigin;
     p.noZWrite        = noSpriteZWrite;
 
-    p.material        = variant;
+    p.matAnimator     = matAnimator;
     p.matFlip[0]      = matFlipS;
     p.matFlip[1]      = matFlipT;
     p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
@@ -90,9 +88,7 @@ void VisSprite_SetupSprite(vissprite_t *spr,
     spr->light.ambientColor[3] = (useSpriteAlpha? light.ambientColor.w : 1);
 }
 
-void VisSprite_SetupModel(vissprite_t *spr,
-                          VisEntityPose const &pose,
-                          VisEntityLighting const &light,
+void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
     ModelDef *mf, ModelDef *nextMF, float inter,
     int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
@@ -117,7 +113,9 @@ void VisSprite_SetupModel(vissprite_t *spr,
 
 void R_SortVisSprites()
 {
-    int count = visSpriteP - visSprites;
+    if(!visSpriteP) return;
+
+    int const count = visSpriteP - visSprites;
     if(!count) return;
 
     vissprite_t unsorted;

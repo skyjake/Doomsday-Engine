@@ -35,11 +35,11 @@
 #include "edit_bias.h" /// @todo remove me
 #include "network/net_main.h" /// @todo remove me
 
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "Face"
 #include "world/map.h"
+#include "world/blockmap.h"
 #include "world/lineowner.h"
 #include "world/p_object.h"
 #include "world/p_players.h"
@@ -270,6 +270,11 @@ static ConvexSubspace *curSubspace; // Subspace currently being drawn.
 static Vector3f curSectorLightColor;
 static float curSectorLightLevel;
 static bool firstSubspace; // No range checking for the first one.
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 static void scheduleFullLightGridUpdate()
 {
@@ -829,7 +834,7 @@ int RIT_FirstDynlightIterator(TexProjection const *dyn, void *parameters)
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
 void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
-    coord_t wallLength, MaterialVariant *material, Vector2f const &materialOrigin,
+    coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &materialOrigin,
     blendmode_t blendMode, uint lightListIdx, float glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
@@ -848,16 +853,19 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     // wrapping.
     if(renderTextures)
     {
-        MaterialSnapshot const &ms = material->prepare();
-        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        // Ensure we've up to date info about the material.
+        matAnimator->prepare();
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / ms.width();
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / ms.width();
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / ms.height();
+        Vector2i const &matDimensions = matAnimator->dimensions();
+
+        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
+        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / matDimensions.x;
+        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / matDimensions.y;
         VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
-                (rvertices[3].z - rvertices[0].z) / ms.height();
+                (rvertices[3].z - rvertices[0].z) / matDimensions.y;
 
-        if(!ms.isOpaque())
+        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        if(!matAnimator->isOpaque())
         {
             if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
                  VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
@@ -875,12 +883,10 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
         }
 
         // Choose a specific variant for use as a middle wall section.
-        material = material->generalCase()
-                       .chooseVariant(Rend_MapSurfaceMaterialSpec(wrapS, wrapT),
-                                      true /*can create variant*/);
+        matAnimator = &matAnimator->material().getAnimator(Rend_MapSurfaceMaterialSpec(wrapS, wrapT));
     }
 
-    VS_WALL(vis)->material = material;
+    VS_WALL(vis)->animator  = matAnimator;
     VS_WALL(vis)->blendMode = blendMode;
 
     for(int i = 0; i < 4; ++i)
@@ -1057,35 +1063,38 @@ struct rendworldpoly_params_t
 };
 
 static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
-    rendworldpoly_params_t const &p, MaterialSnapshot const &ms)
+    rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
+    DENG2_ASSERT(posCoords);
+
     SectorCluster &cluster = curSubspace->cluster();
 
-    DENG_ASSERT(posCoords != 0);
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
 
     uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
-    bool const skyMaskedMaterial = (p.skyMasked || (ms.material().isSkyMasked()));
-    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!ms.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+    bool const drawAsVisSprite   = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     bool useLights = false, useShadows = false, hasDynlights = false;
 
-    // Map RTU configuration from prepared MaterialSnapshot(s).
-    GLTextureUnit const *primaryRTU       = (!p.skyMasked)? &ms.unit(RTU_PRIMARY) : NULL;
-    GLTextureUnit const *primaryDetailRTU = (r_detail && !p.skyMasked && ms.unit(RTU_PRIMARY_DETAIL).hasTexture())? &ms.unit(RTU_PRIMARY_DETAIL) : NULL;
-    GLTextureUnit const *interRTU         = (!p.skyMasked && ms.unit(RTU_INTER).hasTexture())? &ms.unit(RTU_INTER) : NULL;
-    GLTextureUnit const *interDetailRTU   = (r_detail && !p.skyMasked && ms.unit(RTU_INTER_DETAIL).hasTexture())? &ms.unit(RTU_INTER_DETAIL) : NULL;
-    GLTextureUnit const *shinyRTU         = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture())? &ms.unit(RTU_REFLECTION) : NULL;
-    GLTextureUnit const *shinyMaskRTU     = (useShinySurfaces && !p.skyMasked && ms.unit(RTU_REFLECTION).hasTexture() && ms.unit(RTU_REFLECTION_MASK).hasTexture())? &ms.unit(RTU_REFLECTION_MASK) : NULL;
+    // Map RTU configuration.
+    GLTextureUnit const *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
+    GLTextureUnit const *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
+    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
+    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
+    GLTextureUnit const *shineRTU       = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
+    GLTextureUnit const *shineMaskRTU   = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
     Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    Vector2f *interCoords    = interRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector2f *interCoords    = layer0InterRTU? R_AllocRendTexCoords(realNumVertices) : 0;
 
-    Vector4f *shinyColors    = 0;
-    Vector2f *shinyTexCoords = 0;
-    Vector2f *modCoords      = 0;
+    Vector4f *shinyColors    = nullptr;
+    Vector2f *shinyTexCoords = nullptr;
+    Vector2f *modCoords      = nullptr;
 
     DGLuint modTex = 0;
     Vector2f modTexSt[2]; // [topLeft, bottomRight]
@@ -1094,7 +1103,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     if(!skyMaskedMaterial)
     {
         // ShinySurface?
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1115,7 +1124,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
              */
             if(useLights && Rend_IsMTexLights())
             {
-                TexProjection *dyn = 0;
+                TexProjection *dyn = nullptr;
                 Rend_IterateProjectionList(p.lightListIdx, RIT_FirstDynlightIterator, (void *)&dyn);
 
                 modTex      = dyn->texture;
@@ -1133,11 +1142,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         quadTexCoords(primaryCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Blend texture coordinates.
-        if(interRTU && !drawAsVisSprite)
+        if(layer0InterRTU && !drawAsVisSprite)
             quadTexCoords(interCoords, posCoords, p.wall.sectionWidth, *p.topLeft);
 
         // Shiny texture coordinates.
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
             quadShinyTexCoords(shinyTexCoords, &posCoords[1], &posCoords[2], p.wall.sectionWidth);
 
         // First light texture coordinates.
@@ -1152,19 +1161,19 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             Vector3f const delta(vtx - *p.topLeft);
 
             // Primary texture coordinates.
-            if(primaryRTU)
+            if(layer0RTU)
             {
                 primaryCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Blend primary texture coordinates.
-            if(interRTU)
+            if(layer0InterRTU)
             {
                 interCoords[i] = Vector2f(delta.x, -delta.y);
             }
 
             // Shiny texture coordinates.
-            if(shinyRTU)
+            if(shineRTU)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx);
             }
@@ -1301,15 +1310,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
         }
 
-        if(shinyRTU && !drawAsVisSprite)
+        if(shineRTU && !drawAsVisSprite)
         {
             // Strength of the shine.
-            Vector3f const &minColor = ms.shineMinColor();
+            Vector3f const &minColor = matAnimator.shineMinColor();
             for(uint i = 0; i < numVertices; ++i)
             {
                 Vector4f &color = shinyColors[i];
                 color = Vector3f(colorCoords[i]).max(minColor);
-                color.w = shinyRTU->opacity;
+                color.w = shineRTU->opacity;
             }
         }
 
@@ -1356,7 +1365,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
          * needed because all masked polys must be sorted (sprites are masked
          * polys). Otherwise there will be artifacts.
          */
-        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &ms.materialVariant(),
+        Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
         R_FreeRendTexCoords(primaryCoords);
@@ -1490,9 +1499,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1504,18 +1513,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1527,9 +1536,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1558,15 +1567,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords,
                                  interCoords, modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1580,7 +1589,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
@@ -1588,14 +1597,14 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                      posCoords + 3 + leftEdge.divisionCount(),
                                      shinyColors + 3 + leftEdge.divisionCount(),
                                      shinyTexCoords? shinyTexCoords + 3 + leftEdge.divisionCount() : 0,
-                                     shinyMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
-                              .write(gl::TriangleFan, ms.shineBlendMode(),
+                                     shineMaskRTU? primaryCoords + 3 + leftEdge.divisionCount() : 0)
+                              .write(gl::TriangleFan, matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER).scale,
                                      listSpec.unit(TU_INTER).offset,
                                      Vector2f(1, 1), Vector2f(0, 0),
                                      false, 3 + leftEdge.divisionCount(),
                                      posCoords, shinyColors, shinyTexCoords,
-                                     shinyMaskRTU? primaryCoords : 0);
+                                     shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1615,9 +1624,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             DrawListSpec listSpec((modTex || hasDynlights)? LitGeom : UnlitGeom);
 
-            if(primaryRTU)
+            if(layer0RTU)
             {
-                listSpec.texunits[TU_PRIMARY] = *primaryRTU;
+                listSpec.texunits[TU_PRIMARY] = *layer0RTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY].offset += *p.materialOrigin;
@@ -1629,18 +1638,18 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(primaryDetailRTU)
+            if(detailRTU)
             {
-                listSpec.texunits[TU_PRIMARY_DETAIL] = *primaryDetailRTU;
+                listSpec.texunits[TU_PRIMARY_DETAIL] = *detailRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_PRIMARY_DETAIL].offset += *p.materialOrigin;
                 }
             }
 
-            if(interRTU)
+            if(layer0InterRTU)
             {
-                listSpec.texunits[TU_INTER] = *interRTU;
+                listSpec.texunits[TU_INTER] = *layer0InterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1652,9 +1661,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 }
             }
 
-            if(interDetailRTU)
+            if(detailInterRTU)
             {
-                listSpec.texunits[TU_INTER_DETAIL] = *interDetailRTU;
+                listSpec.texunits[TU_INTER_DETAIL] = *detailInterRTU;
                 if(p.materialOrigin)
                 {
                     listSpec.texunits[TU_INTER_DETAIL].offset += *p.materialOrigin;
@@ -1673,15 +1682,15 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                                  posCoords, colorCoords, primaryCoords, interCoords,
                                  modTex, &modColor, modCoords);
 
-            if(shinyRTU)
+            if(shineRTU)
             {
                 DrawListSpec listSpec(ShineGeom);
 
-                listSpec.texunits[TU_PRIMARY] = *shinyRTU;
+                listSpec.texunits[TU_PRIMARY] = *shineRTU;
 
-                if(shinyMaskRTU)
+                if(shineMaskRTU)
                 {
-                    listSpec.texunits[TU_INTER] = *shinyMaskRTU;
+                    listSpec.texunits[TU_INTER] = *shineMaskRTU;
                     if(p.materialOrigin)
                     {
                         listSpec.texunits[TU_INTER].offset += *p.materialOrigin;
@@ -1696,13 +1705,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 ClientApp::renderSystem().drawLists()
                           .find(listSpec)
                               .write(p.isWall? gl::TriangleStrip : gl::TriangleFan,
-                                     ms.shineBlendMode(),
+                                     matAnimator.shineBlendMode(),
                                      listSpec.unit(TU_INTER         ).scale,
                                      listSpec.unit(TU_INTER         ).offset,
                                      listSpec.unit(TU_PRIMARY_DETAIL).scale,
                                      listSpec.unit(TU_PRIMARY_DETAIL).offset,
                                      false, numVertices,
-                                     posCoords, shinyColors, shinyTexCoords, shinyMaskRTU? primaryCoords : 0);
+                                     posCoords, shinyColors, shinyTexCoords, shineMaskRTU? primaryCoords : 0);
             }
         }
     }
@@ -1715,7 +1724,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     R_FreeRendColors(shinyColors);
 
     return (p.forceOpaque || skyMaskedMaterial ||
-            !(p.alpha < 1 || !ms.isOpaque() || p.blendMode > 0));
+            !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
 }
 
 static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
@@ -1895,10 +1904,8 @@ static void writeWallSection(HEdge &hedge, int section,
     bool const skyMasked       = material->isSkyMasked() && !devRendSkyMode;
     bool const twoSidedMiddle  = (wallSpec.section == LineSide::Middle && !side.considerOneSided());
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+    Vector2f const materialScale  = surface.materialScale();
 
     rendworldpoly_params_t parm; zap(parm);
 
@@ -1937,7 +1944,7 @@ static void writeWallSection(HEdge &hedge, int section,
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
@@ -1945,8 +1952,7 @@ static void writeWallSection(HEdge &hedge, int section,
                     surface.hasMaterial()? surface.materialPtr()
                                          : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= glowFactor; // Global scale factor.
@@ -1999,7 +2005,7 @@ static void writeWallSection(HEdge &hedge, int section,
     posCoords[3] =    rightEdge.top().origin();
 
     // Draw this section.
-    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, ms);
+    bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
     if(wroteOpaque)
     {
         // Render FakeRadio for this section?
@@ -2106,7 +2112,7 @@ static void writeSubspacePlane(Plane &plane)
         }
     }
 
-    MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
+    MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
 
     Vector2f materialOrigin = curSubspace->worldGridOffset() // Align to the worldwide grid.
                             + surface.materialOriginSmoothed();
@@ -2119,8 +2125,7 @@ static void writeSubspacePlane(Plane &plane)
     }
     materialOrigin.y = -materialOrigin.y;
 
-    Vector2f const materialScale((surface.flags() & DDSUF_MATERIAL_FLIPH)? -1 : 1,
-                                 (surface.flags() & DDSUF_MATERIAL_FLIPV)? -1 : 1);
+    Vector2f const materialScale = surface.materialScale();
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d topLeft(poly.aaBox().minX,
@@ -2179,7 +2184,7 @@ static void writeSubspacePlane(Plane &plane)
         {
             if(material == surface.materialPtr())
             {
-                parm.glowing = ms.glowStrength();
+                parm.glowing = matAnimator.glowStrength();
             }
             else
             {
@@ -2187,8 +2192,7 @@ static void writeSubspacePlane(Plane &plane)
                     surface.hasMaterial()? surface.materialPtr()
                                          : &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-                MaterialSnapshot const &ms = actualMaterial->prepare(Rend_MapSurfaceMaterialSpec());
-                parm.glowing = ms.glowStrength();
+                parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
             parm.glowing *= glowFactor; // Global scale factor.
@@ -2216,7 +2220,7 @@ static void writeSubspacePlane(Plane &plane)
                                                 plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
-    renderWorldPoly(posCoords, vertCount, parm, ms);
+    renderWorldPoly(posCoords, vertCount, parm, matAnimator);
 
     if(&plane.sector() != &curSubspace->sector())
     {
@@ -2232,7 +2236,7 @@ static void writeSubspacePlane(Plane &plane)
 static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
-    DENG2_ASSERT(posCoords != 0);
+    DENG2_ASSERT(posCoords);
 
     if(!devRendSkyMode)
     {
@@ -2246,20 +2250,23 @@ static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
     }
     else
     {
-        DENG2_ASSERT(texCoords != 0);
+        DENG2_ASSERT(texCoords);
 
         DrawListSpec listSpec;
         listSpec.group = UnlitGeom;
         if(renderTextures != 2)
         {
-            DENG2_ASSERT(material != 0);
+            DENG2_ASSERT(material);
+            MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
+
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
 
             // Map RTU configuration from the sky surface material.
-            MaterialSnapshot const &ms = material->prepare(Rend_MapSurfaceMaterialSpec());
-            listSpec.texunits[TU_PRIMARY]        = ms.unit(RTU_PRIMARY);
-            listSpec.texunits[TU_PRIMARY_DETAIL] = ms.unit(RTU_PRIMARY_DETAIL);
-            listSpec.texunits[TU_INTER]          = ms.unit(RTU_INTER);
-            listSpec.texunits[TU_INTER_DETAIL]   = ms.unit(RTU_INTER_DETAIL);
+            listSpec.texunits[TU_PRIMARY]        = matAnimator.texUnit(MaterialAnimator::TU_LAYER0);
+            listSpec.texunits[TU_PRIMARY_DETAIL] = matAnimator.texUnit(MaterialAnimator::TU_DETAIL);
+            listSpec.texunits[TU_INTER]          = matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER);
+            listSpec.texunits[TU_INTER_DETAIL]   = matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER);
         }
 
         ClientApp::renderSystem().drawLists()
@@ -2596,24 +2603,30 @@ static void writeAllWallSections(HEdge *hedge)
 
 static void writeSubspaceWallSections()
 {
-    HEdge *base = curSubspace->poly().hedge();
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
         writeAllWallSections(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        writeAllWallSections(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            writeAllWallSections(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static void writeSubspacePlanes()
@@ -2650,17 +2663,23 @@ static void markSubspaceFrontFacingWalls()
         markFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        markFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            markFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &backPlane)
@@ -2750,10 +2769,12 @@ static void occludeSubspace(bool frontFacing)
 
 static void clipSubspaceLumobjs()
 {
-    foreach(Lumobj *lum, curSubspace->lumobjs())
+    DENG2_ASSERT(curSubspace);
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobj(lum);
-    }
+        R_ViewerClipLumobj(&lob);
+        return LoopContinue;
+    });
 }
 
 /**
@@ -2764,12 +2785,14 @@ static void clipSubspaceLumobjs()
 static void clipSubspaceLumobjsBySight()
 {
     // Any work to do?
+    DENG2_ASSERT(curSubspace);
     if(!curSubspace->polyobjCount()) return;
 
-    foreach(Lumobj *lum, curSubspace->lumobjs())
+    curSubspace->forAllLumobjs([] (Lumobj &lob)
     {
-        R_ViewerClipLumobjBySight(lum, curSubspace);
-    }
+        R_ViewerClipLumobjBySight(&lob, curSubspace);
+        return LoopContinue;
+    });
 }
 
 /// If not front facing this is no-op.
@@ -2797,17 +2820,23 @@ static void clipSubspaceFrontFacingWalls()
         clipFrontFacingWalls(hedge);
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, curSubspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    curSubspace->forAllExtraMeshes([] (Mesh &mesh)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *po, curSubspace->polyobjs())
-    foreach(HEdge *hedge, po->mesh().hedges())
+    curSubspace->forAllPolyobjs([] (Polyobj &pob)
     {
-        clipFrontFacingWalls(hedge);
-    }
+        for(HEdge *hedge : pob.mesh().hedges())
+        {
+            clipFrontFacingWalls(hedge);
+        }
+        return LoopContinue;
+    });
 }
 
 static int projectSpriteWorker(mobj_t &mo, void * /*context*/)
@@ -2997,13 +3026,13 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
 static void generateDecorationFlares(Map &map)
 {
     Vector3d const viewPos = Rend_EyeOrigin().xzy();
-
-    foreach(Lumobj *lum, map.lumobjs())
+    map.forAllLumobjs([&viewPos] (Lumobj &lob)
     {
-        lum->generateFlare(viewPos, R_ViewerLumobjDistance(lum->indexInMap()));
+        lob.generateFlare(viewPos, R_ViewerLumobjDistance(lob.indexInMap()));
 
         /// @todo mark these light sources visible for LensFx
-    }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -3475,8 +3504,11 @@ static void drawSky()
     }
 
     // We do not want to update color and/or depth.
-    glDisable(GL_DEPTH_TEST);
-    GLState::push().setColorMask(gl::WriteNone).apply();
+    GLState::push()
+            .setDepthTest(false)
+            .setDepthWrite(false)
+            .setColorMask(gl::WriteNone)
+            .apply();
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     glEnable(GL_STENCIL_TEST);
@@ -3495,7 +3527,6 @@ static void drawSky()
 
     // Restore previous GL state.
     GLState::pop().apply();
-    glEnable(GL_DEPTH_TEST);
     glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
@@ -3512,7 +3543,6 @@ static void drawSky()
 
     // Return GL state to normal.
     glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
 }
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
@@ -3564,7 +3594,7 @@ static void drawMasked()
 
     R_SortVisSprites();
 
-    if(visSpriteP > visSprites)
+    if(visSpriteP && visSpriteP > visSprites)
     {
         bool primaryHaloDrawn = false;
 
@@ -3977,7 +4007,7 @@ static String labelForSource(BiasSource *s)
 {
     if(!s || !editShowIndices) return String();
     /// @todo Don't assume the current map.
-    return String::number(App_WorldSystem().map().toIndex(*s));
+    return String::number(App_WorldSystem().map().indexOf(*s));
 }
 
 static void drawSource(BiasSource *s)
@@ -4087,7 +4117,7 @@ static void drawBiasEditingVisuals(Map &map)
     if(nearSource->isLocked())
         drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
 
-    foreach(Grabbable *grabbable, hand.grabbed())
+    for(Grabbable *grabbable : hand.grabbed())
     {
         if(de::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
         BiasSource *s = &grabbable->as<BiasSource>();
@@ -4112,13 +4142,14 @@ static void drawBiasEditingVisuals(Map &map)
     // Show all sources?
     if(editShowAll)
     {
-        foreach(BiasSource *source, map.biasSources())
+        map.forAllBiasSources([&nearSource] (BiasSource &source)
         {
-            if(source == nearSource) continue;
-            if(source->isGrabbed()) continue;
-
-            drawSource(source);
-        }
+            if(&source != nearSource && !source.isGrabbed())
+            {
+                drawSource(&source);
+            }
+            return LoopContinue;
+        });
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -4449,11 +4480,13 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    MaterialSnapshot const &ms =
-        ClientApp::resourceSystem().material(de::Uri("System", Path("bbox")))
-                  .prepare(Rend_SpriteMaterialSpec());
+    MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("bbox")))
+                                                .getAnimator(Rend_SpriteMaterialSpec());
 
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
+    // Ensure we've up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
@@ -4464,15 +4497,16 @@ static void drawMobjBoundingBoxes(Map &map)
 
     if(devPolyobjBBox)
     {
-        foreach(Polyobj const *polyobj, map.polyobjs())
+        map.forAllPolyobjs([] (Polyobj &pob)
         {
-            Sector const &sec = polyobj->sector();
-            coord_t width  = (polyobj->aaBox.maxX - polyobj->aaBox.minX)/2;
-            coord_t length = (polyobj->aaBox.maxY - polyobj->aaBox.minY)/2;
+            Sector const &sec = pob.sector();
+
+            coord_t width  = (pob.aaBox.maxX - pob.aaBox.minX)/2;
+            coord_t length = (pob.aaBox.maxY - pob.aaBox.minY)/2;
             coord_t height = (sec.ceiling().height() - sec.floor().height())/2;
 
-            Vector3d pos(polyobj->aaBox.minX + width,
-                         polyobj->aaBox.minY + length,
+            Vector3d pos(pob.aaBox.minX + width,
+                         pob.aaBox.minY + length,
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
@@ -4482,7 +4516,7 @@ static void drawMobjBoundingBoxes(Map &map)
 
             Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f);
 
-            foreach(Line *line, polyobj->lines())
+            for(Line *line : pob.lines())
             {
                 Vector3d pos(line->center(), sec.floor().height());
 
@@ -4490,7 +4524,9 @@ static void drawMobjBoundingBoxes(Map &map)
                               BANG2DEG(BANG_90 - line->angle()),
                               green, alpha, 0);
             }
-        }
+
+            return LoopContinue;
+        });
     }
 
     GL_BlendMode(BM_NORMAL);
@@ -4613,17 +4649,23 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
             drawTangentVectorsForWallSections(hedge);
         } while((hedge = &hedge->next()) != base);
 
-        for(Mesh *mesh : subspace->extraMeshes())
-        for(HEdge *hedge : mesh->hedges())
+        subspace->forAllExtraMeshes([] (Mesh &mesh)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : mesh.hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
 
-        for(Polyobj *polyobj : subspace->polyobjs())
-        for(HEdge *hedge : polyobj->mesh().hedges())
+        subspace->forAllPolyobjs([] (Polyobj &pob)
         {
-            drawTangentVectorsForWallSections(hedge);
-        }
+            for(HEdge *hedge : pob.mesh().hedges())
+            {
+                drawTangentVectorsForWallSections(hedge);
+            }
+            return LoopContinue;
+        });
     }
 
     int const planeCount = cluster.sector().planeCount();
@@ -4675,47 +4717,46 @@ static void drawLumobjs(Map &map)
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
-    for(int i = 0; i < map.lumobjCount(); ++i)
+    map.forAllLumobjs([] (Lumobj &lob)
     {
-        Lumobj *lum = map.lumobj(i);
-
-        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(i))
-            continue;
+        if(rendMaxLumobjs > 0 && R_ViewerLumobjIsHidden(lob.indexInMap()))
+            return LoopContinue;
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
 
-        glTranslated(lum->origin().x, lum->origin().z + lum->zOffset(), lum->origin().y);
+        glTranslated(lob.origin().x, lob.origin().z + lob.zOffset(), lob.origin().y);
 
         glBegin(GL_LINES);
         {
             glColor4fv(black);
-            glVertex3f(-lum->radius(), 0, 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(-lob.radius(), 0, 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(lum->radius(), 0, 0);
+            glVertex3f(lob.radius(), 0, 0);
 
-            glVertex3f(0, -lum->radius(), 0);
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, -lob.radius(), 0);
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, lum->radius(), 0);
+            glVertex3f(0, lob.radius(), 0);
 
-            glVertex3f(0, 0, -lum->radius());
-            glColor4f(lum->color().x, lum->color().y, lum->color().z, 1);
+            glVertex3f(0, 0, -lob.radius());
+            glColor4f(lob.color().x, lob.color().y, lob.color().z, 1);
             glVertex3f(0, 0, 0);
             glVertex3f(0, 0, 0);
             glColor4fv(black);
-            glVertex3f(0, 0, lum->radius());
+            glVertex3f(0, 0, lob.radius());
         }
         glEnd();
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
-    }
+        return LoopContinue;
+    });
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
@@ -4746,50 +4787,55 @@ static void drawSoundEmitters(Map &map)
 
     if(devSoundEmitters & SOF_SIDE)
     {
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            drawSoundEmitter(side.middleSoundEmitter(),
-                             String("Line #%1 (%2, middle)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.middleSoundEmitter(),
+                                 String("Line #%1 (%2, middle)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.bottomSoundEmitter(),
-                             String("Line #%1 (%2, bottom)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
+                drawSoundEmitter(side.bottomSoundEmitter(),
+                                 String("Line #%1 (%2, bottom)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
 
-            drawSoundEmitter(side.topSoundEmitter(),
-                             String("Line #%1 (%2, top)")
-                                 .arg(line->indexInMap())
-                                 .arg(i? "back" : "front"));
-        }
+                drawSoundEmitter(side.topSoundEmitter(),
+                                 String("Line #%1 (%2, top)")
+                                     .arg(line.indexInMap())
+                                     .arg(i? "back" : "front"));
+            }
+            return LoopContinue;
+        });
     }
 
-    if(devSoundEmitters & (SOF_SECTOR|SOF_PLANE))
+    if(devSoundEmitters & (SOF_SECTOR | SOF_PLANE))
     {
-        foreach(Sector *sec, map.sectors())
+        map.forAllSectors([] (Sector &sector)
         {
             if(devSoundEmitters & SOF_PLANE)
             {
-                foreach(Plane *plane, sec->planes())
+                sector.forAllPlanes([] (Plane &plane)
                 {
-                    drawSoundEmitter(plane->soundEmitter(),
+                    drawSoundEmitter(plane.soundEmitter(),
                                      String("Sector #%1 (pln:%2)")
-                                         .arg(sec->indexInMap())
-                                         .arg(plane->indexInSector()));
-                }
+                                         .arg(plane.sector().indexInMap())
+                                         .arg(plane.indexInSector()));
+                    return LoopContinue;
+                });
             }
 
             if(devSoundEmitters & SOF_SECTOR)
             {
-                drawSoundEmitter(sec->soundEmitter(),
-                                 String("Sector #%1").arg(sec->indexInMap()));
+                drawSoundEmitter(sector.soundEmitter(),
+                                 String("Sector #%1").arg(sector.indexInMap()));
             }
-        }
+            return LoopContinue;
+        });
     }
 }
 
@@ -4958,16 +5004,13 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
     }
 }
 
-static int drawSubspaceVertexWorker(ConvexSubspace *subspace, void *context)
+static void drawSubspaceVertexs(ConvexSubspace &sub, drawVertexVisual_params_t &parms)
 {
-    drawVertexVisual_params_t &parms = *static_cast<drawVertexVisual_params_t *>(context);
+    SectorCluster &cluster = sub.cluster();
+    ddouble const min      = cluster.  visFloor().heightSmoothed();
+    ddouble const max      = cluster.visCeiling().heightSmoothed();
 
-    SectorCluster &cluster = subspace->cluster();
-
-    ddouble min = cluster.  visFloor().heightSmoothed();
-    ddouble max = cluster.visCeiling().heightSmoothed();
-
-    HEdge *base  = subspace->poly().hedge();
+    HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -4979,21 +5022,25 @@ static int drawSubspaceVertexWorker(ConvexSubspace *subspace, void *context)
 
     } while((hedge = &hedge->next()) != base);
 
-    foreach(Mesh *mesh, subspace->extraMeshes())
-    foreach(HEdge *hedge, mesh->hedges())
+    sub.forAllExtraMeshes([&min, &max, &parms] (Mesh &mesh)
     {
-        drawVertexVisual(hedge->vertex(), min, max, parms);
-        drawVertexVisual(hedge->twin().vertex(), min, max, parms);
-    }
+        for(HEdge *hedge : mesh.hedges())
+        {
+            drawVertexVisual(hedge->vertex(), min, max, parms);
+            drawVertexVisual(hedge->twin().vertex(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 
-    foreach(Polyobj *polyobj, subspace->polyobjs())
-    foreach(Line *line, polyobj->lines())
+    sub.forAllPolyobjs([&min, &max, &parms] (Polyobj &pob)
     {
-        drawVertexVisual(line->from(), min, max, parms);
-        drawVertexVisual(line->to(), min, max, parms);
-    }
-
-    return false; // Continue iteration.
+        for(Line *line : pob.lines())
+        {
+            drawVertexVisual(line->from(), min, max, parms);
+            drawVertexVisual(line->to(), min, max, parms);
+        }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -5024,9 +5071,23 @@ static void drawVertexes(Map &map)
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
 
-        parms.drawBar = true;
+        parms.drawBar   = true;
         parms.drawLabel = parms.drawOrigin = false;
-        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            ConvexSubspace &sub   = *(ConvexSubspace *)object;
+            // Check the bounds.
+            AABoxd const &polyBox = sub.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(sub, parms);
+            }
+            return LoopContinue;
+        });
 
         glEnable(GL_DEPTH_TEST);
     }
@@ -5041,8 +5102,21 @@ static void drawVertexes(Map &map)
 
     parms.drawnVerts->fill(false); // Process all again.
     parms.drawOrigin = true;
-    parms.drawBar = parms.drawLabel = false;
-    map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+    parms.drawBar    = parms.drawLabel = false;
+    map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+    {
+        ConvexSubspace &sub   = *(ConvexSubspace *)object;
+        // Check the bounds.
+        AABoxd const &polyBox = sub.poly().aaBox();
+        if(!(polyBox.maxX < box.minX ||
+             polyBox.minX > box.maxX ||
+             polyBox.minY > box.maxY ||
+             polyBox.maxY < box.minY))
+        {
+            drawSubspaceVertexs(sub, parms);
+        }
+        return LoopContinue;
+    });
 
     glEnable(GL_DEPTH_TEST);
 
@@ -5050,8 +5124,21 @@ static void drawVertexes(Map &map)
     {
         parms.drawnVerts->fill(false); // Process all again.
         parms.drawLabel = true;
-        parms.drawBar = parms.drawOrigin = false;
-        map.subspaceBoxIterator(box, drawSubspaceVertexWorker, &parms);
+        parms.drawBar   = parms.drawOrigin = false;
+        map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
+        {
+            ConvexSubspace &sub   = *(ConvexSubspace *)object;
+            // Check the bounds.
+            AABoxd const &polyBox = sub.poly().aaBox();
+            if(!(polyBox.maxX < box.minX ||
+                 polyBox.minX > box.maxX ||
+                 polyBox.minY > box.maxY ||
+                 polyBox.maxY < box.minY))
+            {
+                drawSubspaceVertexs(sub, parms);
+            }
+            return LoopContinue;
+        });
     }
 
     // Restore previous state.

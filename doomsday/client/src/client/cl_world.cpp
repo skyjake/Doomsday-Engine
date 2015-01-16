@@ -163,9 +163,8 @@ void Cl_ReadSectorDelta(int /*deltaType*/)
     float speed[2]  = { 0, 0 };
 
     // Sector index number.
-    int const index = Reader_ReadUInt16(msgReader);
-    DENG2_ASSERT(index < map.sectorCount());
-    Sector *sec = map.sectors().at(index);
+    Sector *sec = map.sectorPtr(Reader_ReadUInt16(msgReader));
+    DENG2_ASSERT(sec);
 
     // Flags.
     int df = Reader_ReadPackedUInt32(msgReader);
@@ -266,7 +265,7 @@ void Cl_ReadSideDelta(int /*deltaType*/)
     int const index = Reader_ReadUInt16(msgReader);
     int const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
-    LineSide *side = map.sideByIndex(index);
+    LineSide *side = map.sidePtr(index);
     DENG2_ASSERT(side != 0);
 
     if(df & SIDF_TOP_MATERIAL)
@@ -351,46 +350,42 @@ void Cl_ReadSideDelta(int /*deltaType*/)
 void Cl_ReadPolyDelta()
 {
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_WorldSystem().map();
+    Map &map     = App_WorldSystem().map();
+    Polyobj &pob = map.polyobj(Reader_ReadPackedUInt16(msgReader));
 
-    int const index = Reader_ReadPackedUInt16(msgReader);
-    int const df    = Reader_ReadByte(msgReader); // Flags.
-
-    DENG2_ASSERT(index < map.polyobjCount());
-    Polyobj *po = map.polyobjs().at(index);
-
+    int const df = Reader_ReadByte(msgReader); // Flags.
     if(df & PODF_DEST_X)
     {
-        po->dest[VX] = Reader_ReadFloat(msgReader);
+        pob.dest[VX] = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_DEST_Y)
     {
-        po->dest[VY] = Reader_ReadFloat(msgReader);
+        pob.dest[VY] = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_SPEED)
     {
-        po->speed = Reader_ReadFloat(msgReader);
+        pob.speed = Reader_ReadFloat(msgReader);
     }
 
     if(df & PODF_DEST_ANGLE)
     {
-        po->destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+        pob.destAngle = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     }
 
     if(df & PODF_ANGSPEED)
     {
-        po->angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
+        pob.angleSpeed = ((angle_t)Reader_ReadInt16(msgReader)) << 16;
     }
 
     if(df & PODF_PERPETUAL_ROTATE)
     {
-        po->destAngle = -1;
+        pob.destAngle = -1;
     }
 
     // Update/create the polymover thinker.
-    ClPolyMover::newThinker(*po,
+    ClPolyMover::newThinker(pob,
             /* move: */   CPP_BOOL(df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED)),
             /* rotate: */ CPP_BOOL(df & (PODF_DEST_ANGLE | PODF_ANGSPEED | PODF_PERPETUAL_ROTATE)));
 }

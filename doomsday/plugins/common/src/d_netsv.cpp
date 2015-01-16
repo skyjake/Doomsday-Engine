@@ -130,7 +130,7 @@ void NetSv_UpdateGameConfigDescription()
     }
 #endif
 
-    if(cfg.jumpEnabled)
+    if(cfg.common.jumpEnabled)
     {
         strcat(gameConfigString, " jump");
     }
@@ -155,7 +155,7 @@ void NetSv_Ticker()
 #endif
 
     // Inform clients about jumping?
-    float power = (cfg.jumpEnabled ? cfg.jumpPower : 0);
+    float power = (cfg.common.jumpEnabled ? cfg.common.jumpPower : 0);
     if(power != netJumpPower)
     {
         netJumpPower = power;
@@ -257,7 +257,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
             // E.g. "Time:10/Frags:5" or "t:30, f:10"
             clear = false;
         }
-        else if(!strnicmp("time", ptr, 1))
+        else if(!qstrnicmp("time", ptr, 1))
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
@@ -276,7 +276,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
             ptr = end - 1;
         }
-        else if(!strnicmp("frags", ptr, 1))
+        else if(!qstrnicmp("frags", ptr, 1))
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
@@ -698,7 +698,7 @@ void NetSv_SendGameState(int flags, int to)
 #else
             | 0
 #endif
-            | (cfg.jumpEnabled? 0x10 : 0));
+            | (cfg.common.jumpEnabled? 0x10 : 0));
 
         // Note that SM_NOTHINGS will result in a value of '7'.
         Writer_WriteByte(writer, COMMON_GAMESESSION->rules().skill & 0x7);
@@ -1192,7 +1192,7 @@ void NetSv_ExecuteCheat(int player, char const *command)
 {
     // Killing self is always allowed.
     /// @todo fixme: really? Even in deathmatch?? (should be a game rule)
-    if(!strnicmp(command, "suicide", 7))
+    if(!qstrnicmp(command, "suicide", 7))
     {
         DD_Executef(false, "suicide %i", player);
     }
@@ -1205,16 +1205,16 @@ void NetSv_ExecuteCheat(int player, char const *command)
     }
 
     /// @todo Can't we use the multipurpose cheat command here?
-    if(!strnicmp(command, "god", 3)
-       || !strnicmp(command, "noclip", 6)
-       || !strnicmp(command, "give", 4)
-       || !strnicmp(command, "kill", 4)
+    if(!qstrnicmp(command, "god", 3)
+       || !qstrnicmp(command, "noclip", 6)
+       || !qstrnicmp(command, "give", 4)
+       || !qstrnicmp(command, "kill", 4)
 #ifdef __JHERETIC__
-       || !strnicmp(command, "chicken", 7)
+       || !qstrnicmp(command, "chicken", 7)
 #elif __JHEXEN__
-       || !strnicmp(command, "class", 5)
-       || !strnicmp(command, "pig", 3)
-       || !strnicmp(command, "runscript", 9)
+       || !qstrnicmp(command, "class", 5)
+       || !qstrnicmp(command, "pig", 3)
+       || !qstrnicmp(command, "runscript", 9)
 #endif
        )
     {
@@ -1512,7 +1512,7 @@ D_CMD(MapCycle)
         return false;
     }
 
-    if(!stricmp(argv[0], "startcycle")) // (Re)start rotation?
+    if(!qstricmp(argv[0], "startcycle")) // (Re)start rotation?
     {
         // Find the first map in the sequence.
         de::Uri mapUri = NetSv_ScanCycle(cycleIndex = 0);

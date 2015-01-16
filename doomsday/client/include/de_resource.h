@@ -29,7 +29,6 @@
 #include "resource/sprite.h"
 
 #ifdef __CLIENT__
-#  include "resource/materialsnapshot.h"
 #  include "resource/materialvariantspec.h"
 #endif
 

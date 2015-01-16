@@ -35,6 +35,7 @@ public:
 
 public slots:
     void continueToNextStep();
+    void backToPreviousStep();
     void stop();
     void dismiss();
     void flashHighlight();

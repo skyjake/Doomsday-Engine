@@ -20,10 +20,36 @@
 #ifndef DENG_REFRESH_UTIL_H
 #define DENG_REFRESH_UTIL_H
 
+#include <de/Matrix>
+#include <de/String>
+#include <de/Vector>
+
 #include "api_gl.h"
 
-#include <de/Matrix>
-#include <de/Vector>
+#ifdef __CLIENT__
+#undef min
+#undef max
+
+/**
+ * Description of an inclusive..inclusive light intensity range.
+ *
+ * @ingroup data
+ */
+struct LightRange
+{
+    float min;
+    float max;
+
+    LightRange(float _min = 0, float _max = 0) : min(_min), max(_max) {}
+    LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1]) {}
+    LightRange(LightRange const &other) : min(other.min), max(other.max) {}
+
+    /// Returns a textual representation of the lightlevels.
+    de::String asText() const {
+        return de::String("(min: %1 max: %2)").arg(min, 0, 'f', 2).arg(max, 0, 'f', 2);
+    }
+};
+#endif
 
 float R_MovementYaw(float const mom[2]);
 float R_MovementXYYaw(float momx, float momy);

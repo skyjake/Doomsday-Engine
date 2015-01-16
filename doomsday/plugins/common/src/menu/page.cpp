@@ -412,7 +412,7 @@ static void drawNavigation(Vector2i const origin)
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
-    FR_SetColorv(cfg.menuTextColors[1]);
+    FR_SetColorv(cfg.common.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
     FR_DrawTextXY3(subpageText(currentPage, totalPages).toUtf8().constData(), origin.x, origin.y,
@@ -423,8 +423,8 @@ static void drawNavigation(Vector2i const origin)
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatchXY2( pInvPageLeft[currentPage == 0 || (menuTime & 8)], origin.x - 144, origin.y, ALIGN_RIGHT);
-    GL_DrawPatchXY2(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin.x + 144, origin.y, ALIGN_LEFT);
+    GL_DrawPatch( pInvPageLeft[currentPage == 0 || (menuTime & 8)]           , origin - Vector2i(144, 0), ALIGN_RIGHT);
+    GL_DrawPatch(pInvPageRight[currentPage == totalPages-1 || (menuTime & 8)], origin + Vector2i(144, 0), ALIGN_LEFT);
 
     DGL_Disable(DGL_TEXTURE_2D);
 #endif
@@ -434,7 +434,7 @@ static void drawTitle(String const &title)
 {
     if(title.isEmpty()) return;
 
-    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+    Vector2i origin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) - ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
 
     FR_PushAttrib();
     Hu_MenuDrawPageTitle(title, origin); origin.y += 16;
@@ -445,8 +445,8 @@ static void drawTitle(String const &title)
 static void setupRenderStateForPageDrawing(Page &page, float alpha)
 {
     rs.pageAlpha   = alpha;
-    rs.textGlitter = cfg.menuTextGlitter;
-    rs.textShadow  = cfg.menuShadow;
+    rs.textGlitter = cfg.common.menuTextGlitter;
+    rs.textShadow  = cfg.common.menuShadow;
 
     for(int i = 0; i < MENU_FONT_COUNT; ++i)
     {
@@ -574,7 +574,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     // How about some additional help/information for the focused item?
     if(focused && !focused->helpInfo().isEmpty())
     {
-        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.menuScale));
+        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
         Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }
@@ -638,7 +638,7 @@ Widget *Page::tryFindWidget(int flags, int group)
 {
     for(Widget *wi : d->children)
     {
-        if(wi->group() == group && (wi->flags() & flags) == flags)
+        if(wi->group() == group && int(wi->flags() & flags) == flags)
             return wi;
     }
     return 0; // Not found.
@@ -733,7 +733,7 @@ Vector3f Page::predefinedColor(mn_page_colorid_t id)
 {
     DENG2_ASSERT(VALID_MNPAGE_COLORID(id));
     uint const colorIndex = d->colors[id];
-    return Vector3f(cfg.menuTextColors[colorIndex]);
+    return Vector3f(cfg.common.menuTextColors[colorIndex]);
 }
 
 int Page::timer()

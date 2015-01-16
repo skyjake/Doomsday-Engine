@@ -1,7 +1,7 @@
 /** @file r_draw.cpp  Misc Drawing Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#include <de/concurrency.h>
+
 #include "clientapp.h"
 #include "sys_system.h"
 #include "render/r_main.h"
@@ -27,11 +29,9 @@
 #include "gl/sys_opengl.h"
 
 #include "api_resource.h"
-#include "MaterialSnapshot"
+#include "MaterialAnimator"
 
 #include "world/p_players.h" // displayPlayer
-
-#include <de/concurrency.h>
 
 using namespace de;
 
@@ -55,12 +55,17 @@ static de::Uri *borderGraphicsNames[9];
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
 
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
+
 static void loadViewBorderPatches()
 {
     borderPatches[0] = 0;
     for(uint i = 1; i < 9; ++i)
     {
-        borderPatches[i] = ClientApp::resourceSystem().declarePatch(borderGraphicsNames[i]->path());
+        borderPatches[i] = resSys().declarePatch(borderGraphicsNames[i]->path());
     }
 
     // Detemine the view border size.
@@ -75,7 +80,7 @@ static void loadViewBorderPatches()
 
 static Texture &borderTexture(int borderComp)
 {
-    TextureScheme &patches = ClientApp::resourceSystem().textureScheme("Patches");
+    TextureScheme &patches = resSys().textureScheme("Patches");
     DENG2_ASSERT(borderComp >= 0 && borderComp < 9);
     return patches.findByUniqueId(borderPatches[borderComp]).texture();
 }
@@ -153,7 +158,7 @@ void R_ShutdownViewWindow()
 TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
     gl::Wrapping wrapT)
 {
-    return ClientApp::resourceSystem().textureSpec(TC_UI, flags, 0, 0, 0,
+    return resSys().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
 }
 
@@ -199,7 +204,7 @@ void R_DrawPatchTiled(Texture &texture, int x, int y, int w, int h,
 
 static MaterialVariantSpec const &bgMaterialSpec()
 {
-    return ClientApp::resourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+    return resSys().materialSpec(UiContext, 0, 0, 0, 0,
                                                     GL_REPEAT, GL_REPEAT, 0, -3,
                                                     0, false, false, false, false);
 }
@@ -244,13 +249,16 @@ void R_DrawViewBorder()
     // View background.
     try
     {
-        MaterialSnapshot const &ms =
-            ClientApp::resourceSystem().material(*borderGraphicsNames[BG_BACKGROUND])
-                      .prepare(bgMaterialSpec());
+        MaterialAnimator &matAnimator = resSys().material(*borderGraphicsNames[BG_BACKGROUND])
+                                                    .getAnimator(bgMaterialSpec());
 
-        GL_BindTexture(&ms.texture(MTU_PRIMARY));
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
+
+        GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
+        Vector2i const &matDimensions = matAnimator.dimensions();
         GL_DrawCutRectf2Tiled(0, 0, port->geometry.width(), port->geometry.height(),
-                              ms.width(), ms.height(), 0, 0,
+                              matDimensions.x, matDimensions.y, 0, 0,
                               vd->window.topLeft.x - border, vd->window.topLeft.y - border,
                               vd->window.width() + 2 * border, vd->window.height() + 2 * border);
     }

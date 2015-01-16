@@ -32,6 +32,7 @@ namespace defn {
 #define SLF_MASK            0x2  ///< @c true= mask the layer.
 
 #define DEFAULT_SKY_HEIGHT               ( .666667f )
+#define DEFAULT_SKY_HORIZON_OFFSET       ( -0.105f )
 #define DEFAULT_SKY_SPHERE_XOFFSET       ( 0 )
 #define DEFAULT_SKY_SPHERE_FADEOUT_LIMIT ( .3f )
 

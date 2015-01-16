@@ -17,7 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_platform.h"
+#include <QBitArray>
+#include <de/vector1.h>
+
 #include "world/contactspreader.h"
 
 #include "Face"
@@ -30,14 +32,11 @@
 #include "SectorCluster"
 #include "Surface"
 
-#include "world/worldsystem.h" // validCount
+#include "world/worldsystem.h"  // validCount
 
-#include "render/rend_main.h" // Rend_mapSurfaceMaterialSpec
+#include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
+#include "MaterialAnimator"
 #include "WallEdge"
-#include "MaterialSnapshot"
-
-#include <de/vector1.h>
-#include <QBitArray>
 
 namespace de {
 
@@ -105,7 +104,11 @@ struct ContactSpreader
                 _spreadBlocks->setBit(cellIndex);
             }
 
-            _blockmap.iterate(cell, spreadContactWorker, this);
+            _blockmap.forAllInCell(cell, [this] (void *element)
+            {
+                spreadContact(*static_cast<Contact *>(element));
+                return LoopContinue;
+            });
         }
     }
 
@@ -217,9 +220,12 @@ private:
                     openTop = fromCluster.visCeiling().heightSmoothed();
                 }
 
+                MaterialAnimator &matAnimator = facingLineSide.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
                 // Ensure we have up to date info about the material.
-                MaterialSnapshot const &ms = facingLineSide.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
-                if(ms.height() >= openTop - openBottom)
+                matAnimator.prepare();
+
+                if(matAnimator.dimensions().y >= openTop - openBottom)
                 {
                     // Possibly; check the placement.
                     WallEdge edge(WallSpec::fromMapSide(facingLineSide, LineSide::Middle),
@@ -257,13 +263,6 @@ private:
             maybeSpreadOverEdge(hedge);
 
         } while((hedge = &hedge->next()) != base);
-    }
-
-    static int spreadContactWorker(void *contact, void *context)
-    {
-        ContactSpreader *inst = static_cast<ContactSpreader *>(context);
-        inst->spreadContact(*static_cast<Contact *>(contact));
-        return false; // Continue iteration.
     }
 };
 

@@ -130,13 +130,13 @@ void LineEditWidget::draw() const
         float t = 0;
 
         // Flash if focused?
-        if(!isActive() && isFocused() && cfg.menuTextFlashSpeed > 0)
+        if(!isActive() && isFocused() && cfg.common.menuTextFlashSpeed > 0)
         {
-            float const speed = cfg.menuTextFlashSpeed / 2.f;
+            float const speed = cfg.common.menuTextFlashSpeed / 2.f;
             t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }
 
-        Vector4f color = de::lerp(Vector3f(cfg.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.menuTextFlashColor), t);
+        Vector4f color = de::lerp(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.common.menuTextFlashColor), t);
         color *= light;
         color.w = textAlpha;
 
@@ -241,7 +241,7 @@ int LineEditWidget::handleEvent(event_t const &ev)
         char ch = char(ev.data1);
         if(shiftdown)
         {
-            ch = shiftXForm[ch];
+            ch = shiftXForm[int(ch)];
         }
 
         // Filter out nasty charactemnRendState->

@@ -1,31 +1,21 @@
-/**\file st_stuff.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file st_stuff.cpp  Hexen specific HUD and statusbar widgets.
  *
- *\author Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Statusbar code jHexen - specific.
- *
- * Does palette indicators as well (red pain, bright pickup)
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBHEXEN_STUFF_H
@@ -55,7 +45,7 @@ void ST_Register(void);
 void ST_Init(void);
 void ST_Shutdown(void);
 
-int ST_Responder(event_t* ev);
+int ST_Responder(event_t *ev);
 void ST_Ticker(timespan_t ticLength);
 void ST_Drawer(int player);
 
@@ -64,9 +54,9 @@ void ST_Stop(int player);
 
 void ST_CloseAll(int player, dd_bool fast);
 
-uiwidget_t* ST_UIChatForPlayer(int player);
-uiwidget_t* ST_UILogForPlayer(int player);
-uiwidget_t* ST_UIAutomapForPlayer(int player);
+uiwidget_t *ST_UIChatForPlayer(int player);
+uiwidget_t *ST_UILogForPlayer(int player);
+uiwidget_t *ST_UIAutomapForPlayer(int player);
 
 dd_bool ST_ChatIsActive(int player);
 dd_bool ST_StatusBarIsActive(int player);
@@ -75,11 +65,11 @@ dd_bool ST_StatusBarIsActive(int player);
  * Post a message to the specified player's log.
  *
  * @param player  Player (local) number whose log to post to.
- * @param flags  @ref logMessageFlags
- * @param text  Message Text to be posted. Messages may use the same
- *      paramater control blocks as with the engine's Text rendering API.
+ * @param flags   @ref logMessageFlags
+ * @param text    Message Text to be posted. Messages may include encoded parameters
+ *                to control how the messae is presented.
  */
-void ST_LogPost(int player, byte flags, const char* text);
+void ST_LogPost(int player, byte flags, char const *text);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
@@ -120,12 +110,12 @@ float ST_AutomapOpacity(int player);
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures2(int player, const RectRaw* region);
+dd_bool ST_AutomapObscures2(int player, RectRaw const *region);
 dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height);
 
 int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z);
 void ST_AutomapClearPoints(int player);
-dd_bool ST_AutomapPointOrigin(int player, int point, coord_t* x, coord_t* y, coord_t* z);
+dd_bool ST_AutomapPointOrigin(int player, int point, coord_t *x, coord_t *y, coord_t *z);
 
 void ST_SetAutomapCameraRotation(int player, dd_bool on);
 
@@ -148,12 +138,8 @@ void ST_RebuildAutomap(int player);
 
 void ST_FlashCurrentItem(int player);
 
-D_CMD(ChatOpen);
-D_CMD(ChatAction);
-D_CMD(ChatSendMacro);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
 
-#endif /* LIBHEXEN_STUFF_H */
+#endif  // LIBHEXEN_STUFF_H

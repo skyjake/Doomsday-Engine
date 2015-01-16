@@ -676,8 +676,8 @@ Vector3f OculusRift::headOrientation() const
 
 Matrix4f OculusRift::eyePose() const
 {
-    DENG2_ASSERT(isReady());
 #ifdef DENG_HAVE_OCULUS_API
+    if(!isReady()) return Matrix4f();
     if(d->needPoseUpdate) d->updateEyePoses();
     return d->eyeMatrix[d->currentEye];
 #else

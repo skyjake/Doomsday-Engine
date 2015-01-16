@@ -21,6 +21,7 @@
 
 #include <de/ButtonWidget>
 #include <de/DocumentWidget>
+#include <de/PopupMenuWidget>
 
 /**
  * Widget for representing an item (game session) in a session menu (see
@@ -31,11 +32,20 @@
 class GameSessionWidget : public de::GuiWidget
 {
 public:
-    GameSessionWidget();
+    enum PopupStyle { PopupDocument, PopupMenu };
+
+public:
+    GameSessionWidget(PopupStyle popupStyle = PopupDocument,
+                      de::ui::Direction popupOpeningDirection = de::ui::Up);
+
+    PopupStyle popupStyle() const;
 
     de::ButtonWidget &loadButton();
     de::ButtonWidget &infoButton();
+    de::ButtonWidget &menuButton();
+
     de::DocumentWidget &document();
+    de::PopupMenuWidget &menu();
 
     /**
      * Called immediately before the Info button is pressed.

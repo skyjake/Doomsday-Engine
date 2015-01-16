@@ -73,6 +73,7 @@
 #  include "render/vr.h"
 #  include "Contact"
 #  include "Sector"
+#  include "MaterialAnimator"
 #  include "ui/ui_main.h"
 #  include "ui/sys_input.h"
 #  include "ui/widgets/taskbarwidget.h"
@@ -1713,7 +1714,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         }
         else
         {
-            ClientWindow::main().console().clearLog();
+            ClientWindow::main().console().zeroLogHeight();
         }
     }
 #endif
@@ -2386,7 +2387,14 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    App_ResourceSystem().restartAllMaterialAnimations();
+    for(Material *material : App_ResourceSystem().allMaterials())
+    {
+        material->forAllAnimators([] (MaterialAnimator &animator)
+        {
+            animator.rewind();
+            return LoopContinue;
+        });
+    }
 #endif
 }
 
@@ -3323,11 +3331,15 @@ DENG_EXTERN_C void R_SetupMap(int mode, int flags)
 #ifdef __CLIENT__
     // Update all sectors.
     /// @todo Refactor away.
-    foreach(Sector *sector, map.sectors())
-    foreach(LineSide *side, sector->sides())
+    map.forAllSectors([] (Sector &sector)
     {
-        side->fixMissingMaterials();
-    }
+        sector.forAllSides([] (LineSide &side)
+        {
+            side.fixMissingMaterials();
+            return LoopContinue;
+        });
+        return LoopContinue;
+    });
 #endif
 
     // Re-initialize polyobjs.

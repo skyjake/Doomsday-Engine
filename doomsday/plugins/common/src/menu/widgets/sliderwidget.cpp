@@ -157,7 +157,7 @@ void SliderWidget::draw() const
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    if(cfg.menuShadow > 0)
+    if(cfg.common.menuShadow > 0)
     {
         float const from[] = { 2, float(1 + HEIGHT / 2) };
         float const to[]   = { float(MNDATA_SLIDER_SLOTS * WIDTH - 2), float(1 + HEIGHT / 2) };
@@ -166,14 +166,14 @@ void SliderWidget::draw() const
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
 
-    GL_DrawPatchXY3(pSliderLeft, 0, 0, ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
-    GL_DrawPatchXY(pSliderRight, MNDATA_SLIDER_SLOTS * WIDTH, 0);
+    GL_DrawPatch(pSliderLeft,  Vector2i(0, 0), ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
+    GL_DrawPatch(pSliderRight, Vector2i(MNDATA_SLIDER_SLOTS * WIDTH, 0));
 
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
-    GL_DrawPatchXY3(pSliderHandle, d->thumbPos(), 1, ALIGN_TOP, DPF_NO_OFFSET);
+    GL_DrawPatch(pSliderHandle, Vector2i(d->thumbPos(), 1), ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);
 

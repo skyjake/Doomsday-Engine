@@ -62,14 +62,14 @@ namespace internal
         { BlendOp,        2  },
         { ColorMask,      4  },
         { Scissor,        1  },
-        { ScissorX,       12 }, // 12 bits == 4096 max
-        { ScissorY,       12 },
-        { ScissorWidth,   12 },
-        { ScissorHeight,  12 },
-        { ViewportX,      12 },
-        { ViewportY,      12 },
-        { ViewportWidth,  12 },
-        { ViewportHeight, 12 }
+        { ScissorX,       13 }, // 13 bits == 8192 max
+        { ScissorY,       13 },
+        { ScissorWidth,   13 },
+        { ScissorHeight,  13 },
+        { ViewportX,      13 },
+        { ViewportY,      13 },
+        { ViewportWidth,  13 },
+        { ViewportHeight, 13 }
     };
     static BitField::Elements const glStateProperties(propSpecs, MAX_PROPERTIES);
 

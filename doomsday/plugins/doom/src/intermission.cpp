@@ -123,18 +123,29 @@ namespace internal
     /// and/or domain. Passing an "existing" text string is also a bit awkward... -ds
     static inline String patchReplacementText(patchid_t patchId, String const &text = "")
     {
-        return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.inludePatchReplaceMode),
+        return Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.inludePatchReplaceMode),
                                          patchId, text);
     }
 
-    static void drawPercent(int x, int y, int p)
+    static void drawChar(QChar const ch, Vector2i const &origin,
+                         int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
-        if(p < 0) return;
+        Point2Raw const rawOrigin(origin.x, origin.y);
+        FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
+    }
 
-        Point2Raw origin(x, y);
-        char buf[20]; dd_snprintf(buf, 20, "%i", p);
-        FR_DrawChar3('%', &origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-        FR_DrawText3(buf, &origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+    static void drawText(String const &text, Vector2i const &origin,
+                         int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
+    {
+        Point2Raw const rawOrigin(origin.x, origin.y);
+        FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
+    }
+
+    static void drawPercent(int percent, Vector2i const &origin)
+    {
+        if(percent < 0) return;
+        drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+        drawText(String::number(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
     }
 
     /**
@@ -151,16 +162,12 @@ namespace internal
             int const seconds = t % 60;
             int const minutes = t / 60 % 60;
 
-            char buf[20];
-            FR_DrawCharXY3(':', origin.x, origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+            drawChar(':', origin);
             if(minutes > 0)
             {
-                dd_snprintf(buf, 20, "%d", minutes);
-                FR_DrawTextXY3(buf, origin.x, origin.y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+                drawText(String::number(minutes), origin, ALIGN_TOPRIGHT);
             }
-
-            dd_snprintf(buf, 20, "%02d", seconds);
-            FR_DrawTextXY3(buf, origin.x + FR_CharWidth(':'), origin.y, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vector2i(FR_CharWidth(':'), 0));
 
             return;
         }
@@ -371,7 +378,7 @@ static void drawBackground()
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    GL_DrawPatchXY3(pBackground, 0, 0, ALIGN_TOPLEFT, DPF_NO_OFFSET);
+    GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
     if(Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId()))
     {
@@ -398,7 +405,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
 {
     DENG2_ASSERT(!wbs->currentMap.isEmpty());
 
-    patchid_t patchId = 0;
+    patchid_t titlePatchId = 0;
 
     String const title       = G_MapTitle(wbs->currentMap);
     de::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
@@ -406,7 +413,7 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            titlePatchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
         }
     }
 
@@ -416,13 +423,19 @@ static void drawFinishedTitle(Vector2i origin = Vector2i(SCREENWIDTH / 2, WI_TIT
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-    // Draw map title.
-    WI_DrawPatch(patchId, patchReplacementText(patchId, title), origin, ALIGN_TOP, 0, DTF_NO_TYPEIN);
-
-    patchinfo_t info;
-    if(R_GetPatchInfo(patchId, &info))
+    String const text = patchReplacementText(titlePatchId, title);
+    if(!text.isEmpty())
     {
-        origin.y += (5 * info.geometry.size.height) / 4;
+        // Draw title text.
+        drawText(text, origin, ALIGN_TOP, DTF_NO_TYPEIN);
+        origin.y += (5 * FR_TextHeight(text.toUtf8().constData())) / 4;
+    }
+    else
+    {
+        // Draw title image.
+        GL_DrawPatch(titlePatchId, origin, ALIGN_TOP);
+        patchinfo_t info;
+        if(R_GetPatchInfo(titlePatchId, &info)) origin.y += (5 * info.geometry.size.height) / 4;
     }
 
     // Draw "Finished!"
@@ -818,11 +831,11 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
             // If more than 1 member, show the member count.
             if(1 > teamInfo[i].playerCount)
             {
-                char tmp[20]; sprintf(tmp, "%i", teamInfo[i].playerCount);
+                String const count = String::number(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
-                FR_DrawTextXY3(tmp, origin.x - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-                FR_DrawTextXY3(tmp, DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y + info.geometry.size.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+                drawText(count, Vector2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
+                drawText(count, Vector2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y + info.geometry.size.height - 8));
             }
         }
         else
@@ -853,18 +866,15 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
         origin.x = DM_MATRIXX + DM_SPACINGX;
         if(teamInfo[i].playerCount > 0)
         {
-            char buf[20];
             for(int k = 0; k < NUMTEAMS; ++k)
             {
                 if(teamInfo[k].playerCount > 0)
                 {
-                    dd_snprintf(buf, 20, "%i", dmFrags[i][k]);
-                    FR_DrawTextXY3(buf, origin.x + w, origin.y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+                    drawText(String::number(dmFrags[i][k]), origin + Vector2i(w, 0), ALIGN_TOPRIGHT);
                 }
                 origin.x += DM_SPACINGX;
             }
-            dd_snprintf(buf, 20, "%i", dmTotals[i]);
-            FR_DrawTextXY3(buf, DM_TOTALSX + w, origin.y, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+            drawText(String::number(dmTotals[i]), Vector2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
         }
 
         origin.y += WI_SPACINGY;
@@ -1085,8 +1095,9 @@ static void drawNetgameStats()
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
-            char tmp[40]; sprintf(tmp, "%i", teamInfo[i].playerCount);
-            FR_DrawTextXY3(tmp, x - info.geometry.size.width + 1, y + info.geometry.size.height - 8, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
+            drawText(String::number(teamInfo[i].playerCount),
+                     Vector2i(x - info.geometry.size.width + 1,
+                              y + info.geometry.size.height - 8), ALIGN_TOPLEFT);
         }
 
         FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
@@ -1098,19 +1109,18 @@ static void drawNetgameStats()
         x += NG_SPACINGX;
 
         FR_SetFont(FID(GF_SMALL));
-        drawPercent(x - pwidth, y + 10, cntKills[i]);
+        drawPercent(cntKills[i], Vector2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(x - pwidth, y + 10, cntItems[i]);
+        drawPercent(cntItems[i], Vector2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(x - pwidth, y + 10, cntSecret[i]);
+        drawPercent(cntSecret[i], Vector2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
         if(doFrags)
         {
-            char buf[20]; dd_snprintf(buf, 20, "%i", cntFrags[i]);
-            FR_DrawTextXY3(buf, x, y + 10, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+            drawText(String::number(cntFrags[i]), Vector2i(x, y + 10), ALIGN_TOPRIGHT);
         }
 
         y += WI_SPACINGY;
@@ -1132,19 +1142,19 @@ static void drawSinglePlayerStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    WI_DrawPatch(pKills, patchReplacementText(pKills), Vector2i(SP_STATSX, SP_STATSY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pItems, patchReplacementText(pItems), Vector2i(SP_STATSX, SP_STATSY + lh), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pKills   , patchReplacementText(pKills)   , Vector2i(SP_STATSX, SP_STATSY)         , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pItems   , patchReplacementText(pItems)   , Vector2i(SP_STATSX, SP_STATSY + lh)    , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     WI_DrawPatch(pSecretSP, patchReplacementText(pSecretSP), Vector2i(SP_STATSX, SP_STATSY + 2 * lh), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
-    WI_DrawPatch(pTime, patchReplacementText(pTime), Vector2i(SP_TIMEX, SP_TIMEY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
+    WI_DrawPatch(pTime    , patchReplacementText(pTime)    , Vector2i(SP_TIMEX, SP_TIMEY)           , ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     if(wbs->parTime != -1)
     {
         WI_DrawPatch(pPar, patchReplacementText(pPar), Vector2i(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY), ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
     }
 
     FR_SetFont(FID(GF_SMALL));
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
-    drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
+    drawPercent(cntKills[0] , Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY));
+    drawPercent(cntItems[0] , Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY + lh));
+    drawPercent(cntSecret[0], Vector2i(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh));
 
     if(cntTime >= 0)
     {
@@ -1434,7 +1444,7 @@ void IN_Drawer()
 
     dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, BPF_OVERDRAW_MASK | BPF_OVERDRAW_CLIP,
-        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.inludeScaleMode));
+        SCREENWIDTH, SCREENHEIGHT, Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.common.inludeScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     drawBackground();
@@ -1545,6 +1555,6 @@ void IN_SkipToNext()
 
 void IN_ConsoleRegister()
 {
-    C_VAR_BYTE("inlude-stretch",            &cfg.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
-    C_VAR_INT ("inlude-patch-replacement",  &cfg.inludePatchReplaceMode,    0, 0, 1);
+    C_VAR_BYTE("inlude-stretch",            &cfg.common.inludeScaleMode,           0, SCALEMODE_FIRST, SCALEMODE_LAST);
+    C_VAR_INT ("inlude-patch-replacement",  &cfg.common.inludePatchReplaceMode,    0, 0, 1);
 }

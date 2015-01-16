@@ -1,6 +1,6 @@
-/** @file mesh.cpp Mesh Geometry Data Structure.
+/** @file mesh.cpp  Mesh Geometry Data Structure.
  *
- * @authors Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2008-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -29,47 +29,36 @@ namespace de {
 
 DENG2_PIMPL_NOREF(Mesh::Element)
 {
-    /// Mesh owner of the element.
-    Mesh &mesh;
-
-    /// MapElement to which the mesh element is attributed (if any).
-    MapElement *mapElement;
-
-    Instance(Mesh &mesh) : mesh(mesh), mapElement(0)
-    {}
+    Mesh *mesh = nullptr;              ///< Owner of the element.
+    MapElement *mapElement = nullptr;  ///< Attributed MapElement if any (not owned).
 };
 
-Mesh::Element::Element(Mesh &mesh) : d(new Instance(mesh))
-{}
+Mesh::Element::Element(Mesh &mesh) : d(new Instance)
+{
+    d->mesh = &mesh;
+}
 
 Mesh &Mesh::Element::mesh() const
 {
-    return d->mesh;
+    DENG2_ASSERT(d->mesh);
+    return *d->mesh;
 }
 
 bool Mesh::Element::hasMapElement() const
 {
-    return d->mapElement != 0;
+    return d->mapElement != nullptr;
 }
 
 MapElement &Mesh::Element::mapElement()
 {
-    if(d->mapElement)
-    {
-        return *d->mapElement;
-    }
+    if(d->mapElement) return *d->mapElement;
     /// @throw MissingMapElement  Attempted with no map element attributed.
     throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
 }
 
 MapElement const &Mesh::Element::mapElement() const
 {
-    if(d->mapElement)
-    {
-        return *d->mapElement;
-    }
-    /// @throw MissingMapElement  Attempted with no map element attributed.
-    throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
+    return const_cast<Mesh::Element *>(this)->mapElement();
 }
 
 void Mesh::Element::setMapElement(MapElement const *newMapElement)
@@ -77,32 +66,24 @@ void Mesh::Element::setMapElement(MapElement const *newMapElement)
     d->mapElement = const_cast<MapElement *>(newMapElement);
 }
 
-DENG2_PIMPL(Mesh)
+DENG2_PIMPL_NOREF(Mesh)
 {
-    /// All vertexes in the mesh.
-    Vertexes vertexes;
-
-    /// All half-edges in the mesh.
-    HEdges hedges;
-
-    /// All faces in the mesh.
-    Faces faces;
-
-    Instance(Public *i) : Base(i)
-    {}
-
-    ~Instance()
-    {
-        self.clear();
-    }
+    Vertexs vertexs;  ///< All vertexs in the mesh.
+    HEdges hedges;    ///< All half-edges in the mesh.
+    Faces faces;      ///< All faces in the mesh.
 };
 
-Mesh::Mesh() : d(new Instance(this))
+Mesh::Mesh() : d(new Instance)
 {}
+
+Mesh::~Mesh()
+{
+    clear();
+}
 
 void Mesh::clear()
 {
-    qDeleteAll(d->vertexes); d->vertexes.clear();
+    qDeleteAll(d->vertexs); d->vertexs.clear();
     qDeleteAll(d->hedges); d->hedges.clear();
     qDeleteAll(d->faces); d->faces.clear();
 }
@@ -110,7 +91,7 @@ void Mesh::clear()
 Vertex *Mesh::newVertex(Vector2d const &origin)
 {
     Vertex *vtx = new Vertex(*this, origin);
-    d->vertexes.append(vtx);
+    d->vertexs.append(vtx);
     return vtx;
 }
 
@@ -130,9 +111,9 @@ Face *Mesh::newFace()
 
 void Mesh::removeVertex(Vertex &vertex)
 {
-    int sizeBefore = d->vertexes.size();
-    d->vertexes.removeOne(&vertex);
-    if(sizeBefore != d->vertexes.size())
+    int sizeBefore = d->vertexs.size();
+    d->vertexs.removeOne(&vertex);
+    if(sizeBefore != d->vertexs.size())
     {
         delete &vertex;
     }
@@ -158,9 +139,9 @@ void Mesh::removeFace(Face &face)
     }
 }
 
-Mesh::Vertexes const &Mesh::vertexes() const
+Mesh::Vertexs const &Mesh::vertexs() const
 {
-    return d->vertexes;
+    return d->vertexs;
 }
 
 Mesh::Faces const &Mesh::faces() const

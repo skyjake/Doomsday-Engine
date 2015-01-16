@@ -345,7 +345,8 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->logMenu = new PopupMenuWidget;
     d->logMenu->setAnchor(d->button->rule().midX(), d->button->rule().top());
     d->logMenu->items()
-            << new ui::ActionItem(tr("Clear Log"), new CommandAction("clear"))
+            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear Log"),
+                                  new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
             << new ui::ActionItem(tr("Go to Latest"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::ActionItem(tr("Copy Path to Clipboard"),
@@ -421,7 +422,8 @@ void ConsoleWidget::enableBlur(bool yes)
     Background logBg = d->log->background();
     if(yes)
     {
-        logBg.type = Background::Blurred;
+        logBg.type = Background::SharedBlur;
+        logBg.blur = &ClientWindow::main().taskBarBlur();
     }
     else
     {
@@ -545,6 +547,12 @@ void ConsoleWidget::closeLog()
 }
 
 void ConsoleWidget::clearLog()
+{
+    zeroLogHeight();
+    d->log->clear();
+}
+
+void ConsoleWidget::zeroLogHeight()
 {
     d->height->set(0);
     d->log->scrollToBottom();

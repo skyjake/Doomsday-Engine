@@ -36,13 +36,17 @@ namespace de {
  *
  * The status of a ProgressWidget can be updated from any thread. This allows
  * background tasks to update the status during their operations.
+ *
+ * @todo Needs a bit of cleanup: the visual style (large gear, small gear, dots)
+ * and the range setup should be separate concepts.
  */
 class LIBAPPFW_PUBLIC ProgressWidget : public LabelWidget
 {
 public:
     enum Mode {
         Ranged,
-        Indefinite
+        Indefinite,
+        Dots        ///< One dot per range unit, no label.
     };
 
 public:

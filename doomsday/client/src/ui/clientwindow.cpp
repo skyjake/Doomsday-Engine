@@ -5,7 +5,7 @@
  * MacWindowBehavior. This would make the code easier to follow and more adaptable
  * to the quirks of each platform.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -37,7 +37,6 @@
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationAreaWidget>
-#include <de/ProgressWidget>
 #include <de/VRWindowTransform>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
@@ -237,6 +236,7 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Width, gameSelMenu->rule().width() - gameSelMenu->margins().width())
                 .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
         container().add(gameSelMenu);
+        gameSelMenu->filter().enableBackground(gameSelMenu->scrollPositionY());
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -256,7 +256,7 @@ DENG2_PIMPL(ClientWindow)
         taskBarBlur = new LabelWidget("taskbar-blur");
         taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
         taskBarBlur->rule().setRect(root.viewRule());
-        taskBarBlur->hide(); // must be explicitly shown if needed
+        taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
         container().add(taskBarBlur);
 
         // Taskbar is over almost everything else.
@@ -331,6 +331,7 @@ DENG2_PIMPL(ClientWindow)
 
         // Check with Style if blurring is allowed.
         taskBar->console().enableBlur(taskBar->style().isBlurringAllowed());
+        self.hideTaskBarBlur(); // update background blur mode
 
         activateOculusRiftModeIfConnected();
     }
@@ -466,7 +467,11 @@ DENG2_PIMPL(ClientWindow)
                 return true;
 
             case Event::MouseWheel:
-                Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->pos().x, mouse->pos().y);
+                if(mouse->wheelMotion() == MouseEvent::Step)
+                {
+                    // The old input system can only do wheel step events.
+                    Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
+                }
                 return true;
 
             default:
@@ -522,31 +527,18 @@ DENG2_PIMPL(ClientWindow)
     {
         if(variable.name() == "fsaa")
         {
-			updateFSAAMode();
+            self.updateCanvasFormat();
         }
         else if(variable.name() == "vsync")
         {
+#ifdef WIN32
+            self.updateCanvasFormat();
+            DENG2_UNUSED(newValue);
+#else
             GL_SetVSync(newValue.isTrue());
+#endif
         }
     }
-
-	void updateFSAAMode()
-	{
-		int sampleCount = 1;
-		bool configured = App::config().getb(self.configName("fsaa"));
-		if(CommandLine_Exists("-nofsaa") || !configured)
-		{
-			LOG_GL_VERBOSE("Multisampling off");
-		}
-		else
-		{
-			sampleCount = 4; // four samples is fine?
-			LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
-		}
-		// All GLFramebuffer instances using default multisampling will automatically
-		// switch to the new setting.
-		GLFramebuffer::setDefaultMultisampling(sampleCount);
-	}
 
     void installSidebar(SidebarLocation location, GuiWidget *widget)
     {
@@ -858,13 +850,13 @@ void ClientWindow::setMode(Mode const &mode)
 
 void ClientWindow::closeEvent(QCloseEvent *ev)
 {
-	if(!BusyMode_Active())
-	{
-		LOG_DEBUG("Window is about to close, executing 'quit'");
+    if(!BusyMode_Active())
+    {
+        LOG_DEBUG("Window is about to close, executing 'quit'");
 
-		/// @todo autosave and quit?
-		Con_Execute(CMDS_DDAY, "quit", true, false);
-	}
+        /// @todo autosave and quit?
+        Con_Execute(CMDS_DDAY, "quit", true, false);
+    }
 
     // We are not authorizing immediate closing of the window;
     // engine shutdown will take care of it later.
@@ -873,10 +865,8 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
 
 void ClientWindow::canvasGLReady(Canvas &canvas)
 {
-	d->updateFSAAMode();
-
     // Update the capability flags.
-	GL_state.features.multisample = GLFramebuffer::defaultMultisampling() > 1;// canvas.format().sampleBuffers();
+    GL_state.features.multisample = GLFramebuffer::defaultMultisampling() > 1;
     LOGDEV_GL_MSG("GL feature: Multisampling: %b") << GL_state.features.multisample;
 
     if(vrCfg().needsStereoGLFormat() && !canvas.format().stereo())
@@ -993,7 +983,6 @@ bool ClientWindow::setDefaultGLFormat() // static
         fmt.setStereo(true);
     }
 
-	/*
 #ifdef WIN32
     if(CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
     {
@@ -1017,7 +1006,6 @@ bool ClientWindow::setDefaultGLFormat() // static
         LOG_GL_VERBOSE("Multisampling on (%i samples)") << sampleCount;
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
-	*/
 
     if(fmt != QGLFormat::defaultFormat())
     {
@@ -1088,6 +1076,32 @@ void ClientWindow::drawGameContent()
     GLState::current().target().clear(GLTarget::ColorDepthStencil);
 
     d->root.drawUntil(*d->gameSelMenu);
+}
+
+void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
+{
+    d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent, UnsetFlags);
+    d->taskBarBlur->setOpacity(0);
+    d->taskBarBlur->setOpacity(1, span);
+}
+
+void ClientWindow::fadeOutTaskBarBlur(TimeDelta span)
+{
+    d->taskBarBlur->setOpacity(0, span);
+    QTimer::singleShot(span.asMilliSeconds(), this, SLOT(hideTaskBarBlur()));
+}
+
+void ClientWindow::hideTaskBarBlur()
+{
+    d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
+    if(d->taskBar->style().isBlurringAllowed())
+    {
+        d->taskBarBlur->setOpacity(1);
+    }
+    else
+    {
+        d->taskBarBlur->setOpacity(0);
+    }
 }
 
 void ClientWindow::updateCanvasFormat()

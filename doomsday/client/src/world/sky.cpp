@@ -18,21 +18,22 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "world/sky.h"
 
 #include <cmath>
 #include <QtAlgorithms>
 #include <de/Log>
+#include "dd_main.h"
 
 #ifdef __CLIENT__
 #  include "gl/gl_main.h"
 #  include "gl/gl_tex.h"
 #  include "render/rend_main.h"    // rendSkyLightAuto
 #  include "render/skydrawable.h"  // SkyDrawable::layerMaterialSpec
+#  include "MaterialAnimator"
 
-#  include "MaterialSnapshot"
 #  include "Texture"
+#  include "TextureManifest"
 #endif
 
 #define NUM_LAYERS  2
@@ -240,26 +241,27 @@ DENG2_PIMPL(Sky)
             if(!layer.isActive()) continue;
 
             // A material is required for drawing.
-            if(!layer.material()) continue;
             Material *mat = layer.material();
+            if(!mat) continue;
+            MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer.isMasked()));
 
-            // Prepare and ensure the material has at least a primary texture.
-            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer.isMasked()));
-            if(ms.hasTexture(MTU_PRIMARY))
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
+
+            if(TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-                averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageColorAnalysis));
-                if(!avgColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageColorAnalysis").arg(ms.texture(MTU_PRIMARY).generalCase().manifest().composeUri()));
+                averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageColorAnalysis));
+                if(!avgColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageColorAnalysis");
 
                 if(i == firstActiveLayer)
                 {
-                    averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageTopColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageTopColorAnalysis").arg(tex.manifest().composeUri()));
+                    averagecolor_analysis_t const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageTopColorAnalysis));
+                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
 
                     topCapColor = Vector3f(avgLineColor->color.rgb);
 
-                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex.analysisDataPointer(Texture::AverageBottomColorAnalysis));
-                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", QString("Texture \"%1\" has no AverageBottomColorAnalysis").arg(tex.manifest().composeUri()));
+                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(Texture::AverageBottomColorAnalysis));
+                    if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" +  tex->base().manifest().composeUri().asText() + "\" has no AverageBottomColorAnalysis");
 
                     bottomCapColor = Vector3f(avgLineColor->color.rgb);
                 }

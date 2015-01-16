@@ -107,6 +107,11 @@ xsector_t *P_ToXSector(Sector *sector)
     }
 }
 
+xsector_t const *P_ToXSector_const(Sector const *sector)
+{
+    return P_ToXSector(const_cast<Sector *>(sector));
+}
+
 xsector_t *P_GetXSector(int index)
 {
     if(index < 0 || index >= numsectors) return 0;
@@ -651,9 +656,9 @@ void P_SetupMap(de::Uri const &mapUri)
     {
         // Whenever the map changes, update the game rule config.
         GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
-        newRules.deathmatch      = cfg.netDeathmatch;
-        newRules.noMonsters      = cfg.netNoMonsters;
-        /*newRules.*/cfg.jumpEnabled = cfg.netJumping;
+        newRules.deathmatch      = cfg.common.netDeathmatch;
+        newRules.noMonsters      = cfg.common.netNoMonsters;
+        /*newRules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         newRules.respawnMonsters = cfg.netRespawn;
 #endif

@@ -24,7 +24,6 @@
 #include "de_render.h"
 #include "de_graphics.h"
 
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "resource/sprite.h"
@@ -48,6 +47,11 @@ int alwaysAlign;
 int noSpriteZWrite;
 
 byte devNoSprites;
+
+static inline ResourceSystem &resSys()
+{
+    return ClientApp::resourceSystem();
+}
 
 void Rend_SpriteRegister()
 {
@@ -88,14 +92,16 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLenum normalTarget, dynTarget;
-
-    Texture::Variant *tex = 0;
+    TextureVariant *tex = nullptr;
     if(renderTextures)
     {
-        MaterialSnapshot const &ms =
-            reinterpret_cast<MaterialVariant *>(parms.material)->prepare();
-        tex = &ms.texture(MTU_PRIMARY);
+        MaterialAnimator *matAnimator = parms.animator;
+        DENG2_ASSERT(matAnimator);
+
+        // Ensure we have up to date info about the material.
+        matAnimator->prepare();
+
+        tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
     }
 
     // Do we have a dynamic light to blend with?
@@ -107,12 +113,12 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         if(IS_MUL)
         {
             normal = 1;
-            dyn = 0;
+            dyn    = 0;
         }
         else
         {
             normal = 0;
-            dyn = 1;
+            dyn    = 1;
         }
 
         GL_SelectTexUnits(2);
@@ -142,8 +148,8 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 
     GL_BlendMode(parms.blendMode);
 
-    normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
-    dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
+    GLenum normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
+    GLenum dynTarget    =    dyn? GL_TEXTURE1 : GL_TEXTURE0;
 
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
@@ -313,9 +319,9 @@ static void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
 
 MaterialVariantSpec const &PSprite_MaterialSpec()
 {
-    return ClientApp::resourceSystem().materialSpec(SpriteContext, 0, 0, 0, 0,
-                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                    1, -2, 0, false, true, true, false);
+    return resSys().materialSpec(SpriteContext, 0, 0, 0, 0,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 1, -2, 0, false, true, true, false);
 }
 
 void Rend_DrawPSprite(rendpspriteparams_t const &parms)
@@ -331,11 +337,13 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     else if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        MaterialSnapshot const &ms =
-            ClientApp::resourceSystem().material(de::Uri("System", Path("gray")))
-                      .prepare(PSprite_MaterialSpec());
+        MaterialAnimator &matAnimator = resSys().material(de::Uri("System", Path("gray")))
+                                                    .getAnimator(PSprite_MaterialSpec());
 
-        GL_BindTexture(&ms.texture(MTU_PRIMARY));
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -417,23 +425,9 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
 MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass, int tmap)
 {
-    return ClientApp::resourceSystem().materialSpec(SpriteContext, 0, 1, tclass, tmap,
-                                                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                    1, -2, -1, true, true, true, false);
-}
-
-static MaterialVariant *chooseSpriteMaterial(drawspriteparams_t const &p)
-{
-    if(!renderTextures) return 0;
-    if(renderTextures == 2)
-    {
-        // For lighting debug, render all solid surfaces using the gray texture.
-        return ClientApp::resourceSystem().material(de::Uri("System", Path("gray")))
-                    .chooseVariant(Rend_SpriteMaterialSpec(), true);
-    }
-
-    // Use the pre-chosen sprite.
-    return reinterpret_cast<MaterialVariant *>(p.material);
+    return resSys().materialSpec(SpriteContext, 0, 1, tclass, tmap,
+                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                 1, -2, -1, true, true, true, false);
 }
 
 static int drawVectorLightWorker(VectorLight const *vlight, void *context)
@@ -448,47 +442,47 @@ static int drawVectorLightWorker(VectorLight const *vlight, void *context)
 
 void Rend_DrawSprite(vissprite_t const &spr)
 {
-    drawspriteparams_t const &parms = *VS_SPRITE(&spr);
+    drawspriteparams_t const &parm = *VS_SPRITE(&spr);
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    bool restoreMatrix = false;
-    bool restoreZ = false;
-
-    Point2Rawf viewOffset; ///< View-aligned offset to center point.
-    Size2Rawf size;
-
-    MaterialSnapshot const *ms = 0;
-    float s = 1, t = 1; ///< Bottom right coords.
+    TextureVariant *tex = nullptr;
+    Vector2f size;
+    float viewOffsetX = 0;   ///< View-aligned offset to center point.
+    float s = 1, t = 1;      ///< Bottom right coords.
 
     // Many sprite properties are inherited from the material.
-    if(parms.material)
+    if(MaterialAnimator *matAnimator = parm.matAnimator)
     {
-        // Ensure this variant has been prepared.
-        ms = &reinterpret_cast<MaterialVariant *>(parms.material)->prepare();
+        // Ensure we have up to date info about the material.
+        matAnimator->prepare();
 
-        variantspecification_t const &texSpec = ms->texture(MTU_PRIMARY).spec().variant;
-        size.width  = ms->width() + texSpec.border * 2;
-        size.height = ms->height() + texSpec.border * 2;
-        viewOffset.x = -size.width / 2;
+        tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
+        int const texBorder = tex->spec().variant.border;
 
-        ms->texture(MTU_PRIMARY).glCoords(&s, &t);
+        size        = matAnimator->dimensions() + Vector2i(texBorder * 2, texBorder * 2);
+        viewOffsetX = -size.x / 2 + -tex->base().origin().x;
 
-        Texture &tex = ms->texture(MTU_PRIMARY).generalCase();
-        viewOffset.x += float(-tex.origin().x);
+        tex->glCoords(&s, &t);
     }
 
-    // We may want to draw using another material instead.
-    MaterialVariant *mat = chooseSpriteMaterial(parms);
-    if(mat != reinterpret_cast<MaterialVariant *>(parms.material))
+    // We may want to draw using another material variant instead.
+    if(renderTextures == 2)
     {
-        ms = mat? &mat->prepare() : 0;
+        // For lighting debug, render all solid surfaces using the gray texture.
+        Material &debugMaterial       = resSys().material(de::Uri("System", Path("gray")));
+        MaterialAnimator &matAnimator = debugMaterial.getAnimator(Rend_SpriteMaterialSpec());
+
+        // Ensure we have up to date info about the material.
+        matAnimator.prepare();
+
+        tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     }
 
-    if(ms)
+    if(renderTextures)
     {
-        GL_BindTexture(&ms->texture(MTU_PRIMARY));
+        GL_BindTexture(tex);
         glEnable(GL_TEXTURE_2D);
     }
     else
@@ -503,15 +497,15 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
     coord_t v1[3], v2[3], v3[3], v4[3];
     R_ProjectViewRelativeLine2D(spriteCenter, spr.pose.viewAligned,
-                                size.width, viewOffset.x, v1, v4);
+                                size.x, viewOffsetX, v1, v4);
 
     v2[VX] = v1[VX];
     v2[VY] = v1[VY];
     v3[VX] = v4[VX];
     v3[VY] = v4[VY];
 
-    v1[VZ] = v4[VZ] = spriteCenter[VZ] - size.height / 2 + viewOffset.y;
-    v2[VZ] = v3[VZ] = spriteCenter[VZ] + size.height / 2 + viewOffset.y;
+    v1[VZ] = v4[VZ] = spriteCenter[VZ] - size.y / 2;
+    v2[VZ] = v3[VZ] = spriteCenter[VZ] + size.y / 2;
 
     // Calculate the surface normal.
     coord_t surfaceNormal[3];
@@ -552,6 +546,8 @@ void Rend_DrawSprite(vissprite_t const &spr)
     }
 
     // Do we need to do some aligning?
+    bool restoreMatrix = false;
+    bool restoreZ      = false;
     if(spr.pose.viewAligned || alwaysAlign >= 2)
     {
         // We must set up a modelview transformation matrix.
@@ -601,14 +597,14 @@ void Rend_DrawSprite(vissprite_t const &spr)
     }
 
     // Need to change blending modes?
-    if(parms.blendMode != BM_NORMAL)
+    if(parm.blendMode != BM_NORMAL)
     {
-        GL_BlendMode(parms.blendMode);
+        GL_BlendMode(parm.blendMode);
     }
 
     // Transparent sprites shouldn't be written to the Z buffer.
-    if(parms.noZWrite || spr.light.ambientColor[CA] < .98f ||
-       !(parms.blendMode == BM_NORMAL || parms.blendMode == BM_ZEROALPHA))
+    if(parm.noZWrite || spr.light.ambientColor[CA] < .98f ||
+       !(parm.blendMode == BM_NORMAL || parm.blendMode == BM_ZEROALPHA))
     {
         restoreZ = true;
         glDepthMask(GL_FALSE);
@@ -637,18 +633,18 @@ void Rend_DrawSprite(vissprite_t const &spr)
     v[3].xyz[1] = v4[VZ];
     v[3].xyz[2] = v4[VY];
 
-    tc[0].st[0] = s *  (parms.matFlip[0]? 1:0);
-    tc[0].st[1] = t * (!parms.matFlip[1]? 1:0);
-    tc[1].st[0] = s *  (parms.matFlip[0]? 1:0);
-    tc[1].st[1] = t *  (parms.matFlip[1]? 1:0);
-    tc[2].st[0] = s * (!parms.matFlip[0]? 1:0);
-    tc[2].st[1] = t *  (parms.matFlip[1]? 1:0);
-    tc[3].st[0] = s * (!parms.matFlip[0]? 1:0);
-    tc[3].st[1] = t * (!parms.matFlip[1]? 1:0);
+    tc[0].st[0] = s *  (parm.matFlip[0]? 1:0);
+    tc[0].st[1] = t * (!parm.matFlip[1]? 1:0);
+    tc[1].st[0] = s *  (parm.matFlip[0]? 1:0);
+    tc[1].st[1] = t *  (parm.matFlip[1]? 1:0);
+    tc[2].st[0] = s * (!parm.matFlip[0]? 1:0);
+    tc[2].st[1] = t *  (parm.matFlip[1]? 1:0);
+    tc[3].st[0] = s * (!parm.matFlip[0]? 1:0);
+    tc[3].st[1] = t * (!parm.matFlip[1]? 1:0);
 
     drawQuad(v, quadColors, tc);
 
-    if(ms)
+    if(renderTextures)
     {
         glDisable(GL_TEXTURE_2D);
     }
@@ -681,7 +677,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     }
 
     // Change back to normal blending?
-    if(parms.blendMode != BM_NORMAL)
+    if(parm.blendMode != BM_NORMAL)
     {
         GL_BlendMode(BM_NORMAL);
     }

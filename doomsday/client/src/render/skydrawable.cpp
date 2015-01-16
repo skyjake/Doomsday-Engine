@@ -1,4 +1,4 @@
-/** @file skydrawble.cpp  Drawable specialized for the sky.
+/** @file skydrawable.cpp  Drawable specialized for the sky.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_base.h"
 #include "render/skydrawable.h"
 
 #include <cmath>
@@ -34,7 +33,6 @@
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
 
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "ModelDef"
 
@@ -105,7 +103,7 @@ struct Hemisphere
         DENG2_ASSERT(layer);
         if(renderTextures == 0)
         {
-            return 0;
+            return nullptr;
         }
         if(renderTextures == 2)
         {
@@ -122,15 +120,18 @@ struct Hemisphere
      * Determine the cap/fadeout color to use for the given sky @a layer.
      */
     static Vector3f chooseCapColor(SphereComponent hemisphere, SkyLayer const *layer,
-                                   bool *needFadeOut = 0)
+                                   bool *needFadeOut = nullptr)
     {
         DENG2_ASSERT(layer);
 
         if(Material *mat = chooseMaterialForSkyLayer(layer))
         {
-            MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(layer->isMasked()));
+            MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(layer->isMasked()));
 
-            Texture &pTex = ms.texture(MTU_PRIMARY).generalCase();
+            // Ensure we've up to date info about the material.
+            matAnimator.prepare();
+
+            Texture &pTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
             averagecolor_analysis_t const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>
                     (pTex.analysisDataPointer((hemisphere == UpperHemisphere? Texture::AverageTopColorAnalysis
                                                                             : Texture::AverageBottomColorAnalysis)));
@@ -220,19 +221,22 @@ struct Hemisphere
 
             if(!ldata.active) continue;
 
-            TextureVariant *layerTex = 0;
+            TextureVariant *layerTex = nullptr;
             if(Material *mat = chooseMaterialForSkyLayer(skyLayer))
             {
-                MaterialSnapshot const &ms = mat->prepare(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
+                MaterialAnimator &matAnimator = mat->getAnimator(SkyDrawable::layerMaterialSpec(skyLayer->isMasked()));
 
-                layerTex = &ms.texture(MTU_PRIMARY);
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
+
+                layerTex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 GL_BindTexture(layerTex);
 
                 glEnable(GL_TEXTURE_2D);
                 glMatrixMode(GL_TEXTURE);
                 glPushMatrix();
                 glLoadIdentity();
-                Vector2i const &texSize = layerTex->generalCase().dimensions();
+                Vector2i const &texSize = layerTex->base().dimensions();
                 if(texSize.x > 0)
                 {
                     glTranslatef(ldata.offset / texSize.x, 0, 0);
@@ -448,9 +452,10 @@ DENG2_PIMPL(SkyDrawable)
     {
         if(!haveModels) return;
 
-        // We don't want anything written in the depth buffer.
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+        // Sky models use depth testing, but they won't interfere with world geometry.
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -468,7 +473,12 @@ DENG2_PIMPL(SkyDrawable)
 
             // If the associated layer is not active then the model won't be drawn.
             Record const &skyModelDef = defn::Sky(*sky->def()).model(i);
-            if(!layers[skyModelDef.geti("layer")].active) continue;
+            int const layerNum        = skyModelDef.geti("layer");
+            if(layerNum > 0 && layerNum <= MAX_LAYERS)
+            {
+                if(!layers[layerNum - 1].active)
+                    continue;
+            }
 
             Animator::ModelState const &mstate = animator->model(i);
 
@@ -496,15 +506,12 @@ DENG2_PIMPL(SkyDrawable)
             Rend_DrawModel(vis);
         }
 
-        // We don't want that anything interferes with what was drawn.
-        //glClear(GL_DEPTH_BUFFER_BIT);
-
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        // Restore assumed default GL state.
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
+        // We don't want that anything in the world geometry interferes with what was
+        // drawn in the sky.
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     void setupModels(Record const *def)
@@ -655,7 +662,7 @@ ModelDef *SkyDrawable::modelDef(int modelIndex) const
     {
         return d->models[modelIndex].modef;
     }
-    return 0;
+    return nullptr;
 }
 
 void SkyDrawable::draw(Animator const *animator) const
@@ -685,12 +692,10 @@ MaterialVariantSpec const &SkyDrawable::layerMaterialSpec(bool masked) // static
                                  0, -1, -1, false, true, false, false);
 }
 
-namespace {
-void markSphereForRebuild()
+static void markSphereForRebuild()
 {
     // Defer this task until draw time, when we can be sure we are in the correct thread.
     hemisphere.needRebuild = true;
-}
 }
 
 void SkyDrawable::consoleRegister() // static
@@ -704,12 +709,12 @@ void SkyDrawable::consoleRegister() // static
 
 DENG2_PIMPL_NOREF(SkyDrawable::Animator)
 {
-    SkyDrawable *sky;
+    SkyDrawable *sky = nullptr;
 
     LayerState layers[MAX_LAYERS];
     ModelState models[MAX_MODELS];
 
-    Instance(SkyDrawable *sky = 0) : sky(sky)
+    Instance()
     {
         de::zap(layers);
         de::zap(models);
@@ -719,8 +724,10 @@ DENG2_PIMPL_NOREF(SkyDrawable::Animator)
 SkyDrawable::Animator::Animator() : d(new Instance)
 {}
 
-SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance(&sky))
-{}
+SkyDrawable::Animator::Animator(SkyDrawable &sky) : d(new Instance)
+{
+    d->sky = &sky;
+}
 
 SkyDrawable::Animator::~Animator()
 {}
@@ -754,7 +761,7 @@ void SkyDrawable::Animator::setSky(SkyDrawable *sky)
 
 SkyDrawable &SkyDrawable::Animator::sky() const
 {
-    DENG2_ASSERT(d->sky != 0);
+    DENG2_ASSERT(d->sky);
     return *d->sky;
 }
 
@@ -765,17 +772,14 @@ bool SkyDrawable::Animator::hasLayer(int index) const
 
 SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index)
 {
-    if(hasLayer(index))
-    {
-        return d->layers[index];
-    }
+    if(hasLayer(index)) return d->layers[index];
     /// @throw MissingLayerStateError An invalid layer state index was specified.
     throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::number(index) + ".");
 }
 
 SkyDrawable::Animator::LayerState const &SkyDrawable::Animator::layer(int index) const
 {
-    return const_cast<LayerState const &>(const_cast<SkyDrawable::Animator *>(this)->layer(index));
+    return const_cast<SkyDrawable::Animator *>(this)->layer(index);
 }
 
 bool SkyDrawable::Animator::hasModel(int index) const
@@ -785,17 +789,14 @@ bool SkyDrawable::Animator::hasModel(int index) const
 
 SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index)
 {
-    if(hasModel(index))
-    {
-        return d->models[index];
-    }
+    if(hasModel(index)) return d->models[index];
     /// @throw MissingModelStateError An invalid model state index was specified.
     throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::number(index) + ".");
 }
 
 SkyDrawable::Animator::ModelState const &SkyDrawable::Animator::model(int index) const
 {
-    return const_cast<ModelState const &>(const_cast<SkyDrawable::Animator *>(this)->model(index));
+    return const_cast<SkyDrawable::Animator *>(this)->model(index);
 }
 
 void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)

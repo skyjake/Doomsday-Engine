@@ -1,6 +1,6 @@
-/** @file material.cpp  Logical Material.
+/** @file material.cpp  Logical material resource.
  *
- * @authors Copyright © 2009-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2009-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,299 +17,125 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "resource/material.h"
 
-#include "dd_main.h"
-#include "def_main.h"
-#include "r_util.h" // R_NameForBlendMode
-#include "audio/s_environ.h"
-#include "world/map.h"
-
+#include <QFlag>
 #include <QtAlgorithms>
-#include <de/math.h>
+#include <de/Log>
 #include <doomsday/console/cmd.h>
 
+#include "dd_main.h"
+#include "MaterialManifest"
+#ifdef __CLIENT__
+#  include "MaterialAnimator"
+#endif
+
+#include "resource/materialdetaillayer.h"
+#include "resource/materialtexturelayer.h"
+#include "resource/materialshinelayer.h"
+
+namespace internal
+{
+    enum MaterialFlag
+    {
+        //Unused1      = MATF_UNUSED1,
+        DontDraw     = MATF_NO_DRAW,  ///< Map surfaces using the material should never be drawn.
+        SkyMasked    = MATF_SKYMASK,  ///< Apply sky masking for map surfaces using the material.
+
+        Valid        = 0x8,           ///< Marked as @em valid.
+        DefaultFlags = Valid
+    };
+    Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
+    Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialFlags)
+}
+using namespace internal;
 using namespace de;
-
-Material::Layer::Layer()
-{}
-
-Material::Layer::~Layer()
-{
-    qDeleteAll(_stages);
-}
-
-static Texture *findTextureForLayerStage(ded_material_layer_stage_t const &def)
-{
-    try
-    {
-        if(def.texture)
-        {
-            return &App_ResourceSystem().texture(*def.texture);
-        }
-    }
-    catch(TextureManifest::MissingTextureError const &)
-    {} // Ignore this error.
-    catch(ResourceSystem::MissingManifestError const &)
-    {} // Ignore this error.
-    return 0;
-}
-
-Material::Layer::Stage *Material::Layer::Stage::fromDef(ded_material_layer_stage_t const &def)
-{
-    Texture *texture = findTextureForLayerStage(def);
-    return new Stage(texture, def.tics, def.variance, def.glowStrength,
-                     def.glowStrengthVariance, Vector2f(def.texOrigin));
-}
-
-Material::Layer *Material::Layer::fromDef(ded_material_layer_t const &layerDef)
-{
-    Layer *layer = new Layer();
-    for(int i = 0; i < layerDef.stages.size(); ++i)
-    {
-        layer->_stages.push_back(Stage::fromDef(layerDef.stages[i]));
-    }
-    return layer;
-}
 
 int Material::Layer::stageCount() const
 {
     return _stages.count();
 }
 
-int Material::Layer::addStage(Material::Layer::Stage const &stageToCopy)
-{
-    _stages.push_back(new Stage(stageToCopy));
-    return _stages.count() - 1;
-}
-
-Material::Layer::Stages const &Material::Layer::stages() const
-{
-    return _stages;
-}
-
-Material::DetailLayer::DetailLayer()
-{}
-
-Material::DetailLayer::~DetailLayer()
+Material::Layer::~Layer()
 {
     qDeleteAll(_stages);
 }
 
-static Texture *findTextureForDetailLayerStage(ded_detail_stage_t const &def)
+Material::Layer::Stage &Material::Layer::stage(int index) const
 {
-    try
+    if(stageCount())
     {
-        if(def.texture)
-        {
-            return &App_ResourceSystem().textureScheme("Details")
-                        .findByResourceUri(*def.texture).texture();
-        }
+        index = de::wrap(index, 0, _stages.count());
+        return *_stages[index];
     }
-    catch(TextureManifest::MissingTextureError const &)
-    {} // Ignore this error.
-    catch(TextureScheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
+    /// @throw MissingStageError  No stages are defined.
+    throw MissingStageError("Material::Layer::stage", "Layer has no stages");
 }
 
-Material::DetailLayer::Stage *Material::DetailLayer::Stage::fromDef(ded_detail_stage_t const &def)
+String Material::Layer::describe() const
 {
-    Texture *texture = findTextureForDetailLayerStage(def);
-
-    return new Stage(texture, def.tics, def.variance,
-                     def.scale, def.strength, def.maxDistance);
+    return "abstract Layer";
 }
 
-Material::DetailLayer *Material::DetailLayer::fromDef(ded_detailtexture_t const &layerDef)
+String Material::Layer::description() const
 {
-    DetailLayer *layer = new DetailLayer();
-    // Only the one stage.
-    layer->_stages.push_back(Stage::fromDef(layerDef.stage));
-    return layer;
-}
-
-int Material::DetailLayer::stageCount() const
-{
-    return _stages.count();
-}
-
-int Material::DetailLayer::addStage(Material::DetailLayer::Stage const &stageToCopy)
-{
-    _stages.push_back(new Stage(stageToCopy));
-    return _stages.count() - 1;
-}
-
-Material::DetailLayer::Stages const &Material::DetailLayer::stages() const
-{
-    return _stages;
-}
-
-Material::ShineLayer::ShineLayer()
-{}
-
-Material::ShineLayer::~ShineLayer()
-{
-    qDeleteAll(_stages);
-}
-
-static Texture *findTextureForShineLayerStage(ded_shine_stage_t const &def, bool findMask)
-{
-    try
+    int const numStages = stageCount();
+    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
+    for(int i = 0; i < numStages; ++i)
     {
-        if(findMask)
-        {
-            if(def.maskTexture)
-            {
-                return &App_ResourceSystem().textureScheme("Masks")
-                            .findByResourceUri(*def.maskTexture).texture();
-            }
-        }
-        else
-        {
-            if(def.texture)
-            {
-                return &App_ResourceSystem().textureScheme("Reflections")
-                            .findByResourceUri(*def.texture).texture();
-            }
-        }
+        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
     }
-    catch(TextureManifest::MissingTextureError const &)
-    {} // Ignore this error.
-    catch(TextureScheme::NotFoundError const &)
-    {} // Ignore this error.
-    return 0;
+    return str;
 }
 
-Material::ShineLayer::Stage *Material::ShineLayer::Stage::fromDef(ded_shine_stage_t const &def)
-{
-    Texture *texture     = findTextureForShineLayerStage(def, false/*not mask*/);
-    Texture *maskTexture = findTextureForShineLayerStage(def, true/*mask*/);
-
-    return new Stage(texture, def.tics, def.variance, maskTexture,
-                     def.blendMode, def.shininess, Vector3f(def.minColor),
-                     Vector2f(def.maskWidth, def.maskHeight));
-}
-
-Material::ShineLayer *Material::ShineLayer::fromDef(ded_reflection_t const &layerDef)
-{
-    ShineLayer *layer = new ShineLayer();
-    // Only the one stage.
-    layer->_stages.push_back(Stage::fromDef(layerDef.stage));
-    return layer;
-}
-
-int Material::ShineLayer::stageCount() const
-{
-    return _stages.count();
-}
-
-int Material::ShineLayer::addStage(Material::ShineLayer::Stage const &stageToCopy)
-{
-    _stages.push_back(new Stage(stageToCopy));
-    return _stages.count() - 1;
-}
-
-Material::ShineLayer::Stages const &Material::ShineLayer::stages() const
-{
-    return _stages;
-}
+// ------------------------------------------------------------------------------------
 
 #ifdef __CLIENT__
 
-Material::Decoration::Stage *Material::Decoration::Stage::fromDef(ded_decorlight_stage_t const &def)
+DENG2_PIMPL_NOREF(Material::Decoration)
 {
-    Texture *upTexture    = App_ResourceSystem().texture("Lightmaps", def.up);
-    Texture *downTexture  = App_ResourceSystem().texture("Lightmaps", def.down);
-    Texture *sidesTexture = App_ResourceSystem().texture("Lightmaps", def.sides);
+    Material *material = nullptr;  ///< Owning Material.
+    Vector2i patternSkip;          ///< Pattern skip intervals.
+    Vector2i patternOffset;        ///< Pattern skip interval offsets.
+};
 
-    Texture *flareTexture = 0;
-    int sysFlareIdx = def.sysFlareIdx;
-
-    if(def.flare && !def.flare->isEmpty())
-    {
-        de::Uri const *resourceUri = def.flare;
-
-        // Select a system flare by numeric identifier?
-        if(resourceUri->path().length() == 1 &&
-           resourceUri->path().toStringRef().first().isDigit())
-        {
-            sysFlareIdx = resourceUri->path().toStringRef().first().digitValue();
-        }
-        else
-        {
-            flareTexture = App_ResourceSystem().texture("Flaremaps", resourceUri);
-        }
-    }
-
-    return new Stage(def.tics, def.variance, Vector2f(def.pos), def.elevation,
-                     Vector3f(def.color), def.radius, def.haloRadius,
-                     Stage::LightLevels(def.lightLevels),
-                     upTexture, downTexture, sidesTexture, flareTexture, sysFlareIdx);
-}
-
-String Material::Decoration::Stage::LightLevels::asText() const
+Material::Decoration::Decoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
+    : d(new Instance)
 {
-    return String("(min:%1 max:%2)")
-               .arg(min, 0, 'g', 2)
-               .arg(max, 0, 'g', 2);
+    d->patternSkip   = patternSkip;
+    d->patternOffset = patternOffset;
 }
-
-Material::Decoration::Decoration(Vector2i const &_patternSkip, Vector2i const &_patternOffset)
-    : _material(0), _patternSkip(_patternSkip), _patternOffset(_patternOffset)
-{}
 
 Material::Decoration::~Decoration()
 {
     qDeleteAll(_stages);
 }
 
-Material::Decoration *Material::Decoration::fromDef(ded_material_decoration_t const &def)
-{
-    Decoration *dec = new Decoration(Vector2i(def.patternSkip),
-                                     Vector2i(def.patternOffset));
-    for(int i = 0; i < def.stages.size(); ++i)
-    {
-        dec->_stages.push_back(Stage::fromDef(def.stages[i]));
-    }
-    return dec;
-}
-
-Material::Decoration *Material::Decoration::fromDef(ded_decoration_t const &def)
-{
-    Decoration *dec = new Decoration(Vector2i(def.patternSkip),
-                                     Vector2i(def.patternOffset));
-    // Only the one stage.
-    dec->_stages.push_back(Stage::fromDef(def.stage));
-    return dec;
-}
-
 Material &Material::Decoration::material()
 {
-    DENG2_ASSERT(_material != 0);
-    return *_material;
+    DENG2_ASSERT(d->material);
+    return *d->material;
 }
 
 Material const &Material::Decoration::material() const
 {
-    DENG2_ASSERT(_material != 0);
-    return *_material;
+    DENG2_ASSERT(d->material);
+    return *d->material;
 }
 
 void Material::Decoration::setMaterial(Material *newOwner)
 {
-    _material = newOwner;
+    d->material = newOwner;
 }
 
 Vector2i const &Material::Decoration::patternSkip() const
 {
-    return _patternSkip;
+    return d->patternSkip;
 }
 
 Vector2i const &Material::Decoration::patternOffset() const
 {
-    return _patternOffset;
+    return d->patternOffset;
 }
 
 int Material::Decoration::stageCount() const
@@ -317,143 +143,113 @@ int Material::Decoration::stageCount() const
     return _stages.count();
 }
 
-Material::Decoration::Stages const &Material::Decoration::stages() const
+Material::Decoration::Stage &Material::Decoration::stage(int index) const
 {
-    return _stages;
+    if(stageCount())
+    {
+        index = de::wrap(index, 0, _stages.count());
+        return *_stages[index];
+    }
+    /// @throw MissingStageError  No stages are defined.
+    throw MissingStageError("Material::Decoration::stage", "Decoration has no stages");
 }
 
-#endif // __CLIENT__
-
-DENG2_PIMPL(Material),
-DENG2_OBSERVES(de::Texture, DimensionsChange),
-DENG2_OBSERVES(de::Texture, Deletion)
+String Material::Decoration::describe() const
 {
-    /// Manifest derived to yield the material.
-    MaterialManifest &manifest;
+    return "abstract Decoration";
+}
+
+String Material::Decoration::description() const
+{
+    int const numStages = stageCount();
+    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DENG2_PLURAL_S(numStages) + "):";
+    for(int i = 0; i < numStages; ++i)
+    {
+        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
+    }
+    return str;
+}
+
+#endif  // __CLIENT__
+
+// ------------------------------------------------------------------------------------
+
+DENG2_PIMPL(Material)
+, DENG2_OBSERVES(Texture, Deletion)
+, DENG2_OBSERVES(Texture, DimensionsChange)
+{
+    MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
+    Vector2i dimensions;                   ///< World dimensions in map coordinate space units.
+    MaterialFlags flags { DefaultFlags };
+    AudioEnvironmentId audioEnvironment { AE_NONE };
+
+    /// Layers (owned), from bottom-most to top-most draw order.
+    QList<Layer *> layers;
 
 #ifdef __CLIENT__
-    /// Set of context animation states.
-    Animations animations;
-    bool animationsAreDirty;
+    /// Decorations (owned), to be projected into the world (relative to a Surface).
+    QList<Decoration *> decorations;
 
-    /// Set of use-case/context variant instances.
-    Variants variants;
+    /// Set of draw-context animators (owned).
+    QList<MaterialAnimator *> animators;
 #endif
 
-    /// World dimensions in map coordinate space units.
-    Vector2i dimensions;
-
-    /// @ref materialFlags
-    Flags flags;
-
-    /// Layers.
-    Layers layers;
-    DetailLayer *detailLayer;
-    ShineLayer *shineLayer;
-
-#ifdef __CLIENT__
-    /// Audio environment.
-    AudioEnvironmentId audioEnvironment;
-
-    /// Decorations (will be projected into the map relative to a surface).
-    Decorations decorations;
-#endif
-
-    /// @c false= the material is no longer valid.
-    bool valid;
-
-    Instance(Public *i, MaterialManifest &_manifest)
-        : Base(i)
-        , manifest(_manifest)
-#ifdef __CLIENT__
-        , animationsAreDirty(true)
-#endif
-        , flags(0)
-        , detailLayer(0)
-        , shineLayer(0)
-#ifdef __CLIENT__
-        , audioEnvironment(AE_NONE)
-#endif
-        , valid(true)
-    {}
+    Instance(Public *i) : Base(i) {}
 
     ~Instance()
     {
 #ifdef __CLIENT__
-        self.clearVariants();
-        self.clearDecorations();
+        self.clearAllAnimators();
+        self.clearAllDecorations();
 #endif
-        self.clearLayers();
-
-#ifdef __CLIENT__
-        clearAnimations();
-#endif
+        self.clearAllLayers();
     }
 
-#ifdef __CLIENT__
-
-    void clearAnimations()
-    {
-        // Context variants will be invalid after this, so clear them.
-        self.clearVariants();
-
-        QMutableMapIterator<MaterialContextId, Animation *> iter(animations);
-        while(iter.hasNext())
-        {
-            Animation *animation = iter.next().value();
-            delete animation;
-            iter.remove();
-        }
-        animationsAreDirty = true;
-    }
-
-    void rebuildAnimations()
-    {
-        if(!animationsAreDirty) return;
-
-        clearAnimations();
-
-        // Create a new animation state for each render (usage) context.
-        /// @todo If the material is not animated; don't create Animations.
-        for(int rc = int(FirstMaterialContextId); rc <= int(LastMaterialContextId); ++rc)
-        {
-            MaterialContextId context = MaterialContextId(rc);
-            animations.insert(context, new Animation(*thisPublic, context));
-        }
-        animationsAreDirty = false;
-    }
-
-#endif // __CLIENT__
-
-    /// Notify interested parties of a change in world dimensions.
-    void notifyDimensionsChanged()
-    {
-        DENG2_FOR_PUBLIC_AUDIENCE(DimensionsChange, i)
-        {
-            i->materialDimensionsChanged(self);
-        }
-    }
-
-    /// Returns @c true iff both world dimension axes are defined.
-    inline bool haveValidDimensions() const
-    {
+    inline bool haveValidDimensions() const {
         return dimensions.x > 0 && dimensions.y > 0;
     }
 
-    /**
-     * Determines which texture we would be interested in obtaining our
-     * world dimensions from if our own dimensions are undefined.
-     */
-    Texture *inheritDimensionsTexture()
+    MaterialTextureLayer *firstTextureLayer() const
     {
-        // We're interested in the texture bound to the primary layer.
-        if(!layers.count() || !layers[0]->stageCount()) return 0;
-        return layers[0]->stages()[0]->texture;
+        for(Layer *layer : layers)
+        {
+            if(layer->is<MaterialDetailLayer>()) continue;
+            if(layer->is<MaterialShineLayer>())  continue;
+
+            if(auto *texLayer = layer->maybeAs<MaterialTextureLayer>())
+            {
+                return texLayer;
+            }
+        }
+        return nullptr;
     }
 
     /**
-     * Determines whether the world dimensions are now defined and if so
-     * cancels future notifications about changes to texture dimensions.
+     * Determines which texture we would be interested in obtaining our world dimensions
+     * from if our own dimensions are undefined.
+     */
+    Texture *inheritDimensionsTexture() const
+    {
+        if(auto const *texLayer = firstTextureLayer())
+        {
+            if(texLayer->stageCount() >= 1)
+            {
+                try
+                {
+                    return &App_ResourceSystem().texture(de::Uri(texLayer->stage(0).gets("texture"), RC_NULL));
+                }
+                catch(TextureManifest::MissingTextureError &)
+                {}
+                catch(ResourceSystem::MissingManifestError &)
+                {}
+            }
+        }
+        return nullptr;
+    }
+
+    /**
+     * Determines whether the world dimensions are now defined and if so cancels future
+     * notifications about changes to texture dimensions.
      */
     void maybeCancelTextureDimensionsChangeNotification()
     {
@@ -478,35 +274,63 @@ DENG2_OBSERVES(de::Texture, Deletion)
     // Observes Texture Deletion.
     void textureBeingDeleted(Texture const &texture)
     {
-        // If here it means the texture we were planning to inherit dimensions
-        // from is being deleted and therefore we won't be able to.
+        // If here it means the texture we were planning to inherit dimensions from is
+        // being deleted and therefore we won't be able to.
 
         DENG2_ASSERT(!haveValidDimensions()); // Sanity check.
         DENG2_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
-        // Clear the association so we don't try to cancel notifications later.
-        layers[0]->stages()[0]->texture = 0;
+        /// @todo kludge: Clear the association so we don't try to cancel notifications later.
+        firstTextureLayer()->stage(0).set("texture", "");
 
 #if !defined(DENG2_DEBUG)
         DENG2_UNUSED(texture);
 #endif
     }
+
+#ifdef __CLIENT__
+    MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
+    {
+        for(MaterialAnimator const *animator : animators)
+        {
+            if(animator->variantSpec().compare(spec))
+            {
+                return const_cast<MaterialAnimator *>(animator);  // This will do fine.
+            }
+        }
+
+        if(!canCreate) return nullptr;
+
+        animators.append(new MaterialAnimator(self, spec));
+        return animators.back();
+    }
+#endif // __CLIENT__
+
+    DENG2_PIMPL_AUDIENCE(Deletion)
+    DENG2_PIMPL_AUDIENCE(DimensionsChange)
 };
 
+DENG2_AUDIENCE_METHOD(Material, Deletion)
+DENG2_AUDIENCE_METHOD(Material, DimensionsChange)
+
 Material::Material(MaterialManifest &manifest)
-    : MapElement(DMU_MATERIAL), d(new Instance(this, manifest))
-{}
+    : MapElement(DMU_MATERIAL)
+    , d(new Instance(this))
+{
+    d->manifest = &manifest;
+}
 
 Material::~Material()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    DENG2_FOR_AUDIENCE(Deletion, i) i->materialBeingDeleted(*this);
+    DENG2_FOR_AUDIENCE2(Deletion, i) i->materialBeingDeleted(*this);
 }
 
 MaterialManifest &Material::manifest() const
 {
-    return d->manifest;
+    DENG2_ASSERT(d->manifest);
+    return *d->manifest;
 }
 
 Vector2i const &Material::dimensions() const
@@ -514,283 +338,231 @@ Vector2i const &Material::dimensions() const
     return d->dimensions;
 }
 
-void Material::setDimensions(Vector2i const &_newDimensions)
+void Material::setDimensions(Vector2i const &newDimensions)
 {
-    Vector2i newDimensions = _newDimensions.max(Vector2i(0, 0));
-    if(d->dimensions != newDimensions)
+    Vector2i const newDimensionsClamped = newDimensions.max(Vector2i(0, 0));
+    if(d->dimensions != newDimensionsClamped)
     {
-        d->dimensions = newDimensions;
+        d->dimensions = newDimensionsClamped;
         d->maybeCancelTextureDimensionsChangeNotification();
 
-        d->notifyDimensionsChanged();
-    }
-}
-
-void Material::setWidth(int newWidth)
-{
-    if(d->dimensions.x != newWidth)
-    {
-        d->dimensions.x = newWidth;
-        d->maybeCancelTextureDimensionsChangeNotification();
-
-        d->notifyDimensionsChanged();
+        // Notify interested parties.
+        DENG2_FOR_AUDIENCE2(DimensionsChange, i) i->materialDimensionsChanged(*this);
     }
 }
 
 void Material::setHeight(int newHeight)
 {
-    if(d->dimensions.y != newHeight)
-    {
-        d->dimensions.y = newHeight;
-        d->maybeCancelTextureDimensionsChangeNotification();
-
-        d->notifyDimensionsChanged();
-    }
+    setDimensions(Vector2i(width(), newHeight));
 }
 
-Material::Flags Material::flags() const
+void Material::setWidth(int newWidth)
 {
-    return d->flags;
+    setDimensions(Vector2i(newWidth, height()));
 }
 
-void Material::setFlags(Material::Flags flagsToChange, FlagOp operation)
+bool Material::isDrawable() const
 {
-    applyFlagOperation(d->flags, flagsToChange, operation);
+    return d->flags.testFlag(DontDraw) == false;
 }
 
-bool Material::isAnimated() const
+bool Material::isSkyMasked() const
 {
-    foreach(Layer *layer, d->layers)
-    {
-        if(layer->isAnimated()) return true;
-    }
-    return false; // Not at all.
+    return d->flags.testFlag(SkyMasked);
 }
 
-bool Material::isDetailed() const
+bool Material::isValid() const
 {
-    return d->detailLayer != 0;
+    return d->flags.testFlag(Valid);
 }
 
-bool Material::isShiny() const
+void Material::markDontDraw(bool yes)
 {
-    return d->shineLayer != 0;
+    if(yes)  d->flags |=  DontDraw;
+    else     d->flags &= ~DontDraw;
 }
 
-bool Material::hasGlow() const
+void Material::markSkyMasked(bool yes)
 {
-    foreach(Layer *layer, d->layers)
-    foreach(Layer::Stage *stage, layer->stages())
-    {
-        if(stage->glowStrength > .0001f) return true;
-    }
-    return false;
+    if(yes)  d->flags |=  SkyMasked;
+    else     d->flags &= ~SkyMasked;
 }
 
-void Material::clearLayers()
+void Material::markValid(bool yes)
 {
-    d->maybeCancelTextureDimensionsChangeNotification();
-
-#ifdef __CLIENT__
-    d->animationsAreDirty = true;
-#endif
-
-    qDeleteAll(d->layers);
-    d->layers.clear();
-
-    if(d->detailLayer)
-    {
-        delete d->detailLayer; d->detailLayer = 0;
-    }
-    if(d->shineLayer)
-    {
-        delete d->shineLayer; d->shineLayer = 0;
-    }
+    if(yes)  d->flags |=  Valid;
+    else     d->flags &= ~Valid;
 }
-
-Material::Layer *Material::newLayer(ded_material_layer_t const *def)
-{
-#ifdef __CLIENT__
-    d->animationsAreDirty = true;
-#endif
-
-    Layer *newLayer = def? Layer::fromDef(*def) : new Layer();
-    d->layers.push_back(newLayer);
-
-    // Are we interested in inheriting dimensions from the layer's texture?
-    if(!d->haveValidDimensions() && d->layers.count() == 1)
-    {
-        Texture *inheritanceTexture = d->inheritDimensionsTexture();
-        if(inheritanceTexture)
-        {
-            inheritanceTexture->audienceForDimensionsChange += d;
-            // Thusly, we are also interested in deletion notification.
-            inheritanceTexture->audienceForDeletion += d;
-        }
-    }
-    return newLayer;
-}
-
-Material::DetailLayer *Material::newDetailLayer(ded_detailtexture_t const *def)
-{
-#ifdef __CLIENT__
-    d->animationsAreDirty = true;
-#endif
-
-    DetailLayer *newLayer = def? DetailLayer::fromDef(*def) : new DetailLayer();
-    if(d->detailLayer) delete d->detailLayer;
-    d->detailLayer = newLayer;
-    return newLayer;
-}
-
-Material::ShineLayer *Material::newShineLayer(ded_reflection_t const *def)
-{
-#ifdef __CLIENT__
-    d->animationsAreDirty = true;
-#endif
-
-    ShineLayer *newLayer = def? ShineLayer::fromDef(*def) : new ShineLayer();
-    if(d->shineLayer) delete d->shineLayer;
-    d->shineLayer = newLayer;
-    return newLayer;
-}
-
-Material::Layers const &Material::layers() const
-{
-    return d->layers;
-}
-
-Material::DetailLayer const &Material::detailLayer() const
-{
-    if(isDetailed())
-    {
-        DENG2_ASSERT(d->detailLayer != 0);
-        return *d->detailLayer;
-    }
-    /// @throw Material::UnknownLayerError Invalid layer reference.
-    throw UnknownLayerError("Material::detailLayer", "Material has no details layer");
-}
-
-Material::ShineLayer const &Material::shineLayer() const
-{
-    if(isShiny())
-    {
-        DENG2_ASSERT(d->shineLayer != 0);
-        return *d->shineLayer;
-    }
-    /// @throw Material::UnknownLayerError Invalid layer reference.
-    throw UnknownLayerError("Material::shineLayer", "Material has no shine layer");
-}
-
-#ifdef __CLIENT__
 
 AudioEnvironmentId Material::audioEnvironment() const
 {
-    if(isDrawable()) return d->audioEnvironment;
-    return AE_NONE;
+    return (isDrawable()? d->audioEnvironment : AE_NONE);
 }
 
-void Material::setAudioEnvironment(AudioEnvironmentId audioEnvironment)
+void Material::setAudioEnvironment(AudioEnvironmentId newEnvironment)
 {
-    d->audioEnvironment = audioEnvironment;
+    d->audioEnvironment = newEnvironment;
 }
 
-void Material::addDecoration(Material::Decoration &decor)
+void Material::clearAllLayers()
 {
-    if(d->decorations.contains(&decor)) return;
+    d->maybeCancelTextureDimensionsChangeNotification();
 
-    decor.setMaterial(this);
-    d->decorations.push_back(&decor);
-    d->animationsAreDirty = true;
+    qDeleteAll(d->layers); d->layers.clear();
 }
 
-Material::Decorations const &Material::decorations() const
+int Material::layerCount() const
 {
-    return d->decorations;
+    return d->layers.count();
 }
 
-void Material::clearDecorations()
+void Material::addLayerAt(Layer *layer, int position)
 {
-    if(!isDecorated()) return;
+    if(!layer) return;
+    if(d->layers.contains(layer)) return;
 
-    qDeleteAll(d->decorations);
-    d->decorations.clear();
-    d->animationsAreDirty = true;
-}
+    position = de::clamp(0, position, layerCount());
 
-Material::Animation &Material::animation(MaterialContextId context) const
-{
-    d->rebuildAnimations();
+    d->maybeCancelTextureDimensionsChangeNotification();
 
-    Animations::const_iterator found = d->animations.find(context);
-    if(found != d->animations.end())
+    d->layers.insert(position, layer);
+
+    if(!d->haveValidDimensions())
     {
-        return *found.value();
-    }
-    /// @throw MissingAnimationError No animation exists for the specifed context.
-    throw MissingAnimationError("Material::animation", QString("No animation for context %1").arg(int(context)));
-}
-
-Material::Animations const &Material::animations() const
-{
-    d->rebuildAnimations();
-    return d->animations;
-}
-
-Material::Variants const &Material::variants() const
-{
-    // If an animation state rebuild is necessary, the context variants will need
-    // to be rebuilt also.
-    d->rebuildAnimations();
-    return d->variants;
-}
-
-Material::Variant *Material::chooseVariant(MaterialVariantSpec const &spec, bool canCreate)
-{
-    foreach(Variant *variant, variants())
-    {
-        MaterialVariantSpec const &cand = variant->spec();
-        if(cand.compare(spec))
+        if(Texture *tex = d->inheritDimensionsTexture())
         {
-            // This will do fine.
-            return variant;
+            tex->audienceForDeletion         += d;
+            tex->audienceForDimensionsChange += d;
         }
     }
-
-    if(!canCreate) return 0;
-
-    d->variants.push_back(new Variant(*this, spec));
-    return d->variants.back();
 }
 
-void Material::clearVariants()
+Material::Layer &Material::layer(int index) const
 {
-    while(!d->variants.isEmpty())
-    {
-         delete d->variants.takeFirst();
-    }
-    d->variants.clear();
+    if(index >= 0 && index < layerCount()) return *d->layers[index];
+    /// @throw Material::MissingLayerError  Invalid layer reference.
+    throw MissingLayerError("Material::layer", "Unknown layer #" + String::number(index));
 }
 
-#endif // __CLIENT__
+Material::Layer *Material::layerPtr(int index) const
+{
+    if(index >= 0 && index < layerCount()) return d->layers[index];
+    return nullptr;
+}
+
+#ifdef __CLIENT__
+
+int Material::decorationCount() const
+{
+    return d->decorations.count();
+}
+
+LoopResult Material::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
+{
+    for(Decoration *decor : d->decorations)
+    {
+        if(auto result = func(*decor)) return result;
+    }
+    return LoopContinue;
+}
+
+/// @todo Update client side MaterialAnimators?
+void Material::addDecoration(Decoration *decor)
+{
+    if(!decor || d->decorations.contains(decor)) return;
+
+    decor->setMaterial(this);
+    d->decorations.append(decor);
+}
+
+void Material::clearAllDecorations()
+{
+    qDeleteAll(d->decorations); d->decorations.clear();
+}
+
+int Material::animatorCount() const
+{
+    return d->animators.count();
+}
+
+bool Material::hasAnimator(MaterialVariantSpec const &spec)
+{
+    return d->findAnimator(spec) != nullptr;
+}
+
+MaterialAnimator &Material::getAnimator(MaterialVariantSpec const &spec)
+{
+    return *d->findAnimator(spec, true/*create*/);
+}
+
+LoopResult Material::forAllAnimators(std::function<LoopResult (MaterialAnimator &)> func) const
+{
+    for(MaterialAnimator *animator : d->animators)
+    {
+        if(auto result = func(*animator)) return result;
+    }
+    return LoopContinue;
+}
+
+void Material::clearAllAnimators()
+{
+    qDeleteAll(d->animators); d->animators.clear();
+}
+
+#endif  // __CLIENT__
+
+String Material::describe() const
+{
+    return "Material \"" + manifest().composeUri().asText() + "\"";
+}
+
+String Material::description() const
+{
+    String str = String(_E(l) "Dimensions: ") + _E(.) + (d->haveValidDimensions()? dimensions().asText() : "unknown (not yet prepared)")
+               + _E(l) + " Source: "     + _E(.) + manifest().sourceDescription()
+#ifdef __CLIENT__
+               + _E(b) + " x"  + String::number(animatorCount()) + _E(.)
+#endif
+               + _E(l) + "\nDrawable: "  + _E(.) + DENG2_BOOL_YESNO(isDrawable())
+#ifdef __CLIENT__
+               + _E(l) + " EnvClass: \"" + _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\""
+#endif
+               + _E(l) + " SkyMasked: "  + _E(.) + DENG2_BOOL_YESNO(isSkyMasked());
+
+    // Add the layer config:
+    for(Layer const *layer : d->layers)
+    {
+        str += "\n" + layer->description();
+    }
+
+#ifdef __CLIENT__
+    // Add the decoration config:
+    for(Decoration const *decor : d->decorations)
+    {
+        str += "\n" + decor->description();
+    }
+#endif
+
+    return str;
+}
 
 int Material::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
     case DMU_FLAGS: {
-        short flags_ = flags();
-        args.setValue(DMT_MATERIAL_FLAGS, &flags_, 0);
-        break; }
-
-    case DMU_WIDTH: {
-        int width_ = width();
-        args.setValue(DMT_MATERIAL_WIDTH, &width_, 0);
+        short f = d->flags;
+        args.setValue(DMT_MATERIAL_FLAGS, &f, 0);
         break; }
 
     case DMU_HEIGHT: {
-        int height_ = height();
-        args.setValue(DMT_MATERIAL_HEIGHT, &height_, 0);
+        int h = d->dimensions.y;
+        args.setValue(DMT_MATERIAL_HEIGHT, &h, 0);
+        break; }
+
+    case DMU_WIDTH: {
+        int w = d->dimensions.x;
+        args.setValue(DMT_MATERIAL_WIDTH, &w, 0);
         break; }
 
     default:
@@ -799,292 +571,35 @@ int Material::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-bool Material::isValid() const
-{
-    return d->valid;
-}
-
-void Material::markValid(bool yes)
-{
-    if(d->valid == yes) return;
-    d->valid = yes;
-}
-
-String Material::description() const
-{
-    String str = String("Material \"%1\"").arg(manifest().composeUri().asText());
-#ifdef DENG_DEBUG
-    str += String(" [%2]").arg(de::dintptr(this));
-#endif
-    str += " Dimensions:"
-        +  (width() == 0 && height() == 0? String("unknown (not yet prepared)")
-                                         : dimensions().asText())
-        +  " Source:" + manifest().sourceDescription();
-#ifdef __CLIENT__
-    str += String(" x%1").arg(variantCount());
-#endif
-    return str;
-}
-
-String Material::synopsis() const
-{
-    String str = String("Drawable:%1").arg(isDrawable()? "yes" : "no");
-#ifdef __CLIENT__
-    str += String(" EnvClass:\"%1\" Decorated:%2")
-            .arg(audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment()))
-            .arg(isDecorated()? "yes" : "no");
-#endif
-    str += String("\nDetailed:%1 Glowing:%2 Shiny:%3 SkyMasked:%4")
-               .arg(isDetailed()     ? "yes" : "no")
-               .arg(hasGlow()        ? "yes" : "no")
-               .arg(isShiny()        ? "yes" : "no")
-               .arg(isSkyMasked()    ? "yes" : "no");
-
-    // Add the layer config:
-    for(int i = 0; i < layers().count(); ++i)
-    {
-        Material::Layer const &lDef = *(layers()[i]);
-        int const stageCount = lDef.stageCount();
-
-        str += String("\nLayer #%1 (%2 %3):")
-                   .arg(i).arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
-
-        for(int k = 0; k < stageCount; ++k)
-        {
-            Material::Layer::Stage const &sDef = *(lDef.stages()[k]);
-            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
-                                      : QString("(prev)");
-
-            str += String("\n  #%1: Texture:\"%2\" Tics:%3 (~%4)"
-                          "\n      Offset:%5 Glow:%6 (~%7)")
-                       .arg(k)
-                       .arg(path)
-                       .arg(sDef.tics)
-                       .arg(sDef.variance,             0, 'g', 2)
-                       .arg(sDef.texOrigin.asText())
-                       .arg(sDef.glowStrength,         0, 'g', 2)
-                       .arg(sDef.glowStrengthVariance, 0, 'g', 2);
-        }
-    }
-
-    // Add the detail layer config:
-    if(isDetailed())
-    {
-        Material::DetailLayer const &lDef = detailLayer();
-        int const stageCount = lDef.stageCount();
-
-        str += String("\nDetailLayer #0 (%1 %2):")
-                   .arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
-
-        for(int i = 0; i < stageCount; ++i)
-        {
-            Material::DetailLayer::Stage const &sDef = *(lDef.stages()[i]);
-            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
-                                      : QString("(prev)");
-
-            str += String("\n  #%1: Texture:\"%2\" Tics:%3 (~%4)"
-                          "\n       Scale:%5 Strength:%6 MaxDistance:%7")
-                       .arg(i)
-                       .arg(path)
-                       .arg(sDef.tics)
-                       .arg(sDef.variance,    0, 'g', 2)
-                       .arg(sDef.scale,       0, 'g', 2)
-                       .arg(sDef.strength,    0, 'g', 2)
-                       .arg(sDef.maxDistance, 0, 'g', 2);
-        }
-    }
-
-    // Add the shine layer config:
-    if(isShiny())
-    {
-        Material::ShineLayer const &lDef = shineLayer();
-        int const stageCount = lDef.stageCount();
-
-        str += String("\nShineLayer #0 (%1 %2):")
-                   .arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
-
-        for(int i = 0; i < stageCount; ++i)
-        {
-            Material::ShineLayer::Stage const &sDef = *(lDef.stages()[i]);
-            String path = sDef.texture? sDef.texture->manifest().composeUri().asText()
-                                      : QString("(prev)");
-            String maskPath = sDef.maskTexture? sDef.maskTexture->manifest().composeUri().asText()
-                                              : QString("(none)");
-
-            str += String("\n  #%1: Texture:\"%2\" MaskTexture:\"%3\" Tics:%4 (~%5)"
-                          "\n      Shininess:%6 BlendMode:%7 MaskDimensions:%8"
-                          "\n      MinColor:%9")
-                       .arg(i)
-                       .arg(path)
-                       .arg(maskPath)
-                       .arg(sDef.tics)
-                       .arg(sDef.variance, 0, 'g', 2)
-                       .arg(sDef.shininess, 0, 'g', 2)
-                       .arg(R_NameForBlendMode(sDef.blendMode))
-                       .arg(sDef.maskDimensions.asText())
-                       .arg(sDef.minColor.asText());
-        }
-    }
-
-#ifdef __CLIENT__
-    // Add the decoration config:
-    if(isDecorated())
-    {
-        for(int i = 0; i < decorations().count(); ++i)
-        {
-            MaterialDecoration const *lDef = decorations()[i];
-            int const stageCount = lDef->stageCount();
-
-            str += String("\nDecoration #%1 (%2 %3):")
-                       .arg(i).arg(stageCount).arg(stageCount == 1? "Stage" : "Stages");
-
-            for(int k = 0; k < stageCount; ++k)
-            {
-                MaterialDecoration::Stage const &sDef = *lDef->stages()[k];
-
-                str += String("\n  #%1: Tics:%2 (~%3) Offset:%4 Elevation:%5"
-                              "\n      Color:%6 Radius:%7 HaloRadius:%8"
-                              "\n      LightLevels:%9")
-                           .arg(k)
-                           .arg(sDef.tics)
-                           .arg(sDef.variance, 0, 'g', 2)
-                           .arg(sDef.pos.asText())
-                           .arg(sDef.elevation, 0, 'g', 2)
-                           .arg(sDef.color.asText())
-                           .arg(sDef.radius, 0, 'g', 2)
-                           .arg(sDef.haloRadius, 0, 'g', 2)
-                           .arg(sDef.lightLevels.asText());
-            }
-        }
-    }
-#endif
-
-    return str;
-}
-
 D_CMD(InspectMaterial)
 {
     DENG2_UNUSED(src);
+    ResourceSystem &resSys = App_ResourceSystem();
 
     de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
     if(!search.scheme().isEmpty() &&
-       !App_ResourceSystem().knownMaterialScheme(search.scheme()))
+       !resSys.knownMaterialScheme(search.scheme()))
     {
-        LOG_RES_WARNING("Unknown scheme %s") << search.scheme();
+        LOG_SCR_WARNING("Unknown scheme \"%s\"") << search.scheme();
         return false;
     }
 
     try
     {
-        MaterialManifest &manifest = App_ResourceSystem().materialManifest(search);
-        try
+        MaterialManifest &manifest = resSys.materialManifest(search);
+        if(Material *material = manifest.materialPtr())
         {
-            Material &material = manifest.material();
-
-            // Print material description:
-            LOG_RES_MSG(material.description());
-
-            // Print material synopsis:
-            LOG_RES_MSG(material.synopsis());
-
-#if defined(__CLIENT__) && defined(DENG_DEBUG)
-            // Print current animation states?
-            if(material.hasAnimatedLayers() || material.hasAnimatedDecorations())
-            {
-                LOG_RES_MSG(_E(R));
-
-                foreach(MaterialAnimation *animation, material.animations())
-                {
-                    LOG_RES_MSG("Animation Context #%i:" _E(m)_E(D)
-                                "\n  Layer  Stage Tics Inter") << animation->context();
-
-                    // Print layer state info:
-                    int const layerCount = material.layerCount();
-                    for(int i = 0; i < layerCount; ++i)
-                    {
-                        Material::Layer *layer = material.layers()[i];
-                        if(!layer->isAnimated()) continue;
-
-                        MaterialAnimation::LayerState const &l = animation->layer(i);
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg(QString("#%1:").arg(i), 6)
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        LOG_RES_MSG(_E(m) + info);
-                    }
-
-                    // Print detail layer state info:
-                    if(material.isDetailed() && material.detailLayer().isAnimated())
-                    {
-                        MaterialAnimation::LayerState const &l = animation->detailLayer();
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg("Detail:")
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        LOG_RES_MSG(_E(m) + info);
-                    }
-
-                    // Print shine layer state info:
-                    if(material.isShiny() && material.shineLayer().isAnimated())
-                    {
-                        MaterialAnimation::LayerState const &l = animation->shineLayer();
-                        QString info = QString("  %1 %2 %3 %4")
-                                           .arg("Shine:")
-                                           .arg(l.stage, -5)
-                                           .arg(int(l.tics), -4)
-                                           .arg(l.inter, -5);
-                        LOG_RES_MSG(_E(m) + info);
-                    }
-
-                    // Print decoration state info:
-                    if(material.isDecorated())
-                    {
-                        LOG_RES_MSG(_E(m)_E(D) "  Decor  Stage Tics Inter");
-
-                        int const decorationCount = material.decorationCount();
-                        for(int i = 0; i < decorationCount; ++i)
-                        {
-                            Material::Decoration *decor = material.decorations()[i];
-                            if(!decor->isAnimated()) continue;
-
-                            MaterialAnimation::DecorationState const &l = animation->decoration(i);
-                            QString info = QString("  %1 %2 %3 %4")
-                                               .arg(QString("#%1:").arg(i), 6)
-                                               .arg(l.stage, -5)
-                                               .arg(int(l.tics), -4)
-                                               .arg(l.inter, -5);
-                            LOG_RES_MSG(_E(m) + info);
-                        }
-                    }
-                }
-            }
-
-            if(material.variantCount())
-            {
-                // Print variant specs.
-                LOG_MSG(_E(R));
-
-                int variantIdx = 0;
-                foreach(MaterialVariant *variant, material.variants())
-                {
-                    LOG_RES_MSG("Variant #%i: Spec:%p") << variantIdx << &variant->spec();
-                    ++variantIdx;
-                }
-            }
-#endif // __CLIENT__ && DENG_DEBUG
-            return true;
+            LOG_SCR_MSG(_E(D)_E(b) "%s\n" _E(.)_E(.)) << material->describe() << material->description();
         }
-        catch(MaterialManifest::MissingMaterialError const &)
+        else
         {
-            LOG_RES_MSG("%s") << manifest.description();
-            return true;
+            LOG_SCR_MSG(manifest.description());
         }
+        return true;
     }
     catch(ResourceSystem::MissingManifestError const &er)
     {
-        LOG_RES_WARNING("%s") << er.asText();
+        LOG_SCR_WARNING("%s") << er.asText();
     }
     return false;
 }

@@ -111,8 +111,10 @@ public:
 
     /**
      * Find an object of the specified type with the type-unique name.
+     *
+     * @param type  FinaleWidget type identifier.
      * @param name  Unique name of the object we are looking for.
-
+     *
      * @return  a) Existing object associated with unique @a name.
      *          b) New object with unique @a name.
      */

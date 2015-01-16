@@ -243,6 +243,8 @@ private:
         int scriptNumber; ///< On the target map.
         byte args[4];
 
+        DeferredTask();
+
         /**
          * @param mapUri        Unique identifier of the target map. A copy is made.
          * @param scriptNumber  Script number to execute on the target map.

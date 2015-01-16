@@ -736,6 +736,10 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_s {
     void reallocate() {
         stages.reallocate();
     }
+    int addStage() {
+        ded_material_layer_stage_t *stage = stages.append();
+        return stages.indexOf(stage);
+    }
 } ded_material_layer_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
@@ -765,7 +769,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
     }
 } ded_decorlight_stage_t;
 
-typedef struct LIBDOOMSDAY_PUBLIC ded_material_decoration_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_material_lightdecoration_s {
     int patternOffset[2];
     int patternSkip[2];
     DEDArray<ded_decorlight_stage_t> stages;
@@ -776,7 +780,16 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_decoration_s {
     void reallocate() {
         stages.reallocate();
     }
-} ded_material_decoration_t;
+    int addStage() {
+        ded_decorlight_stage_t *stage = stages.append();
+
+        // The color (0,0,0) means the light is not visible during this stage.
+        stage->elevation = 1;
+        stage->radius    = 1;
+
+        return stages.indexOf(stage);
+    }
+} ded_material_lightdecoration_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
     de::Uri *uri;
@@ -785,7 +798,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
     int width;
     int height; // In world units.
     ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
-    ded_material_decoration_t decorations[DED_MAX_MATERIAL_DECORATIONS];
+    ded_material_lightdecoration_t decorations[DED_MAX_MATERIAL_DECORATIONS];
 
     void release() {
         delete uri;
@@ -808,7 +821,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
 } ded_material_t;
 
 // An oldschool material-linked decoration definition.
-typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_s {
     int patternOffset[2];
     int patternSkip[2];
     // There is only one stage.
@@ -820,7 +833,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
     void reallocate() {
         stage.reallocate();
     }
-} ded_decoration_t;
+} ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
 #define DED_DECOR_NUM_LIGHTS    16
@@ -830,10 +843,10 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
 #define DCRF_PWAD           0x2 // Can use if from PWAD.
 #define DCRF_EXTERNAL       0x4 // Can use if from external resource.
 
-typedef struct LIBDOOMSDAY_PUBLIC ded_decor_s {
+typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
     de::Uri *material;
     ded_flags_t flags;
-    ded_decoration_t lights[DED_DECOR_NUM_LIGHTS];
+    ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
 
     void release() {
         delete material;
@@ -847,7 +860,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_decor_s {
             lights[i].reallocate();
         }
     }
-} ded_decor_t;
+} ded_decoration_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_mappedcharacter_s {
     unsigned char   ch;

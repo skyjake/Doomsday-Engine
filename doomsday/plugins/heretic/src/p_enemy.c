@@ -93,7 +93,7 @@ dd_bool P_CheckMeleeRange(mobj_t* actor)
     dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
                             pl->origin[VY] - actor->origin[VY]);
 
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!cfg.common.netNoMaxZMonsterMeleeAttack)
     {
         // Account for Z height difference.
         if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||
@@ -595,7 +595,7 @@ void C_DECL A_Look(mobj_t *actor)
         else
         {
             S_StartSound(sound, actor);
-		}
+        }
     }
 
     P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));

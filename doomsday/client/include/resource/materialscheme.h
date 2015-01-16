@@ -20,18 +20,18 @@
 #ifndef DENG_RESOURCE_MATERIALSCHEME_H
 #define DENG_RESOURCE_MATERIALSCHEME_H
 
-#include "MaterialManifest"
-#include <doomsday/uri.h>
+#include <de/Error>
 #include <de/Observers>
 #include <de/PathTree>
-#include <de/Error>
+#include <doomsday/uri.h>
+#include "MaterialManifest"
 
 namespace de {
 
 /**
  * Material collection subspace.
  *
- * @see Materials
+ * @see Material
  * @ingroup resource
  */
 class MaterialScheme

@@ -65,6 +65,12 @@ struct BytecodeScriptInfo
     int waitValue;
 };
 
+ACScriptInterpreter::DeferredTask::DeferredTask()
+    : scriptNumber(-1)
+{
+    de::zap(args);
+}
+
 ACScriptInterpreter::DeferredTask::DeferredTask(de::Uri const &mapUri, int scriptNumber, byte const args_[])
     : mapUri      (mapUri)
     , scriptNumber(scriptNumber)
@@ -74,17 +80,9 @@ ACScriptInterpreter::DeferredTask::DeferredTask(de::Uri const &mapUri, int scrip
 
 ACScriptInterpreter::DeferredTask *ACScriptInterpreter::DeferredTask::newFromReader(de::Reader &from) //static
 {
-    de::String mapUriStr;
-    from >> mapUriStr;
-    de::Uri mapUri(mapUriStr, RC_NULL);
-    int scriptNumber; ///< On the target map.
-    from >> scriptNumber;
-    byte args[4];
-    for(int i = 0; i < 4; ++i)
-    {
-        from >> args[i];
-    }
-    return new DeferredTask(mapUri, scriptNumber, args);
+    std::unique_ptr<DeferredTask> task(new DeferredTask);
+    from >> *task;
+    return task.release();
 }
 
 void ACScriptInterpreter::DeferredTask::operator >> (de::Writer &to) const
@@ -1468,14 +1466,14 @@ ACS_COMMAND(AmbientSound)
     int volume = acs.locals.pop();
 
     // If we are playing 3D sounds, create a temporary source mobj for the sound.
-    if(cfg.snd3D && plrmo)
+    if(Con_GetInteger("sound-3d") && plrmo)
     {
         // SpawnMobj calls P_Random. We don't want that the random generator gets
         // out of sync.
         if((mobj = P_SpawnMobjXYZ(MT_CAMERA,
-                                  plrmo->origin[VX] + (((M_Random() - 127) * 2) << FRACBITS),
-                                  plrmo->origin[VY] + (((M_Random() - 127) * 2) << FRACBITS),
-                                  plrmo->origin[VZ] + (((M_Random() - 127) * 2) << FRACBITS),
+                                  plrmo->origin[VX] + ((M_Random() - 127) * 2),
+                                  plrmo->origin[VY] + ((M_Random() - 127) * 2),
+                                  plrmo->origin[VZ] + ((M_Random() - 127) * 2),
                                   0, 0)))
         {
             mobj->tics = 5 * TICSPERSEC; // Five seconds should be enough.
@@ -1732,26 +1730,35 @@ int ACScript::read(MapStateReader *msr)
         // Note: the thinker class byte has already been read.
         int ver = Reader_ReadByte(reader); // version byte.
 
-        activator  = INT2PTR(mobj_t, Reader_ReadInt32(reader));
-        activator  = msr->mobj(PTR2INT(activator), &activator);
+        // Activator.
+        activator = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        activator = msr->mobj(PTR2INT(activator), &activator);
 
-        int temp = Reader_ReadInt32(reader);
-        if(temp >= 0)
+        // Line.
+        int lineIndex = Reader_ReadInt32(reader);
+        if(lineIndex >= 0)
         {
-            line   = (Line *)P_ToPtr(DMU_LINE, temp);
+            line = (Line *) P_ToPtr(DMU_LINE, lineIndex);
             DENG_ASSERT(line != 0);
         }
         else
         {
-            line   = 0;
+            line = 0;
         }
 
-        side       = Reader_ReadInt32(reader);
-        _info      = interpreter().scriptInfoPtr(Reader_ReadInt32(reader));
+        // Side index.
+        side  = Reader_ReadInt32(reader);
+
+        // Script number.
+        int scriptNumber = Reader_ReadInt32(reader);
+        _info = interpreter().scriptInfoPtr(scriptNumber);
+
+        // Obsolete ignored value in the old format?
         if(ver < 2)
         {
             /*infoIndex =*/ Reader_ReadInt32(reader);
         }
+
         delayCount = Reader_ReadInt32(reader);
 
         for(uint i = 0; i < ACS_STACK_DEPTH; ++i)
@@ -1883,12 +1890,24 @@ D_CMD(ListACScripts)
         App_Log(DE2_SCR_MSG, "No ACScripts are currently loaded.");
         return true;
     }
+    
+    App_Log(DE2_SCR_MSG, "World variables:");
+    for(int i = 0; i < MAX_ACS_WORLD_VARS; ++i)
+    {
+        App_Log(DE2_SCR_MSG, "  #%i: %i", i, interp.worldVars[i]);
+    }
+
+    App_Log(DE2_SCR_MSG, "Map variables:");
+    for(int i = 0; i < MAX_ACS_MAP_VARS; ++i)
+    {
+        App_Log(DE2_SCR_MSG, "  #%i: %i", i, interp.mapVars[i]);
+    }
 
     App_Log(DE2_SCR_MSG, "Available ACScripts:");
     for(int i = 0; i < interp.scriptCount(); ++i)
     {
         BytecodeScriptInfo &info = interp.scriptInfoByIndex(i);
-        App_Log(DE2_SCR_MSG, "%s - args: %i",
+        App_Log(DE2_SCR_MSG, "  %s - args: %i",
                              Str_Text(interp.scriptName(info.scriptNumber)), info.argCount);
     }
 

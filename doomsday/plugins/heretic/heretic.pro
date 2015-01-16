@@ -85,7 +85,7 @@ SOURCES += \
     src/p_setup.c \
     src/p_spec.cpp \
     src/p_telept.c \
-    src/st_stuff.c \
+    src/st_stuff.cpp \
     src/tables.c
 
 win32 {

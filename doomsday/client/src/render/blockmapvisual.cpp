@@ -60,32 +60,10 @@ static void drawMobj(mobj_t const &mobj)
     glVertex2f(bounds.minX, bounds.maxY);
 }
 
-static int drawMobjWorker(void *mobjPtr, void * /*context*/)
-{
-    mobj_t &mobj = *static_cast<mobj_t *>(mobjPtr);
-    if(mobj.validCount != validCount)
-    {
-        mobj.validCount = validCount;
-        drawMobj(mobj);
-    }
-    return false; // Continue iteration.
-}
-
 static void drawLine(Line const &line)
 {
     glVertex2f(line.fromOrigin().x, line.fromOrigin().y);
     glVertex2f(  line.toOrigin().x,   line.toOrigin().y);
-}
-
-static int drawLineWorker(void *linePtr, void * /*context*/)
-{
-    Line &line = *static_cast<Line *>(linePtr);
-    if(line.validCount() != validCount)
-    {
-        line.setValidCount(validCount);
-        drawLine(line);
-    }
-    return false; // Continue iteration.
 }
 
 static void drawSubspace(ConvexSubspace const &subspace)
@@ -149,55 +127,72 @@ static void drawSubspace(ConvexSubspace const &subspace)
     } while((hedge = &hedge->next()) != base);
 }
 
-static int drawSubspaceWorker(void *subspacePtr, void * /*context*/)
-{
-    ConvexSubspace &subspace = *static_cast<ConvexSubspace *>(subspacePtr);
-    if(subspace.validCount() != validCount)
-    {
-        subspace.setValidCount(validCount);
-        drawSubspace(subspace);
-    }
-    return false; // Continue iteration.
-}
-
-static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawLineWorker, context);
+        bmap.forAllInCell(cell, [] (void *object)
+        {
+            Line &line = *(Line *)object;
+            if(line.validCount() != validCount)
+            {
+                line.setValidCount(validCount);
+                drawLine(line);
+            }
+            return LoopContinue;
+        });
     glEnd();
-    return false; // Continue iteration.
-}
-
-static int drawCellPolyobjLineWorker(void *object, void *context)
-{
-    Polyobj *po = (Polyobj *)object;
-    foreach(Line *line, po->lines())
-    {
-        if(int result = drawLineWorker(line, context))
-            return result;
-    }
     return false; // Continue iteration.
 }
 
 static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
 {
     glBegin(GL_LINES);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawCellPolyobjLineWorker, context);
+        bmap.forAllInCell(cell, [&context] (void *object)
+        {
+            Polyobj &pob = *(Polyobj *)object;
+            for(Line *line : pob.lines())
+            {
+                if(line->validCount() != validCount)
+                {
+                    line->setValidCount(validCount);
+                    drawLine(*line);
+                }
+            }
+            return LoopContinue;
+        });
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
     glBegin(GL_QUADS);
-        bmap.iterate(cell, (int (*)(void*,void*)) drawMobjWorker, context);
+        bmap.forAllInCell(cell, [] (void *object)
+        {
+            mobj_t &mob = *(mobj_t *)object;
+            if(mob.validCount != validCount)
+            {
+                mob.validCount = validCount;
+                drawMobj(mob);
+            }
+            return LoopContinue;
+        });
     glEnd();
     return false; // Continue iteration.
 }
 
-static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, void *context)
+static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, void *)
 {
-    bmap.iterate(cell, (int (*)(void*,void*)) drawSubspaceWorker, context);
+    bmap.forAllInCell(cell, [] (void *object)
+    {
+        ConvexSubspace *sub = (ConvexSubspace *)object;
+        if(sub->validCount() != validCount)
+        {
+            sub->setValidCount(validCount);
+            drawSubspace(*sub);
+        }
+        return LoopContinue;
+    });
     return false; // Continue iteration.
 }
 

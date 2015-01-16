@@ -258,23 +258,6 @@ static __inline dd_bool isInWalkState(player_t* pl)
     return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class_)->runState < 4;
 }
 
-coord_t P_MobjGetFriction(mobj_t* mo)
-{
-    if((mo->flags2 & MF2_FLY) && !(mo->origin[VZ] <= mo->floorZ) && !mo->onMobj)
-    {
-        return FRICTION_FLY;
-    }
-    else
-    {
-        const terraintype_t* tt = P_MobjFloorTerrain(mo);
-
-        if(tt->flags & TTF_FRICTION_LOW)
-            return FRICTION_LOW;
-    }
-
-    return FRICTION_NORMAL;
-}
-
 void P_MobjMoveXY(mobj_t* mo)
 {
     static const coord_t windTab[3] = {
@@ -586,7 +569,7 @@ explode:
     }
     else
     {
-        coord_t friction = P_MobjGetFriction(mo);
+        coord_t friction = Mobj_Friction(mo);
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
     }
@@ -629,7 +612,7 @@ void P_MobjMoveZ(mobj_t* mo)
     {
         mo->player->viewHeight -= mo->floorZ - mo->origin[VZ];
         mo->player->viewHeightDelta =
-            (cfg.plrViewHeight - mo->player->viewHeight) / 8;
+            (cfg.common.plrViewHeight - mo->player->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -762,7 +745,7 @@ void P_MobjMoveZ(mobj_t* mo)
                             S_StartSound(SFX_PLAYER_LAND, mo);
                     }
 
-                    if(cfg.lookSpring)
+                    if(cfg.common.lookSpring)
                         mo->player->centering = true;
                 }
             }
@@ -897,7 +880,7 @@ static void landedOnThing(mobj_t* mo)
         S_StartSound(SFX_PLAYER_LAND, mo);
     }
 
-    if(cfg.lookSpring) // || demorecording || demoplayback)
+    if(cfg.common.lookSpring) // || demorecording || demoplayback)
         mo->player->centering = true;
 }
 
@@ -1054,7 +1037,7 @@ void P_MobjThinker(void *thinkerPtr)
                         mobj->player->viewHeight -=
                             mobj->onMobj->origin[VZ] + mobj->onMobj->height - mobj->origin[VZ];
                         mobj->player->viewHeightDelta =
-                            (cfg.plrViewHeight - mobj->player->viewHeight) / 8;
+                            (cfg.common.plrViewHeight - mobj->player->viewHeight) / 8;
                     }
 
                     mobj->origin[VZ] = mobj->onMobj->origin[VZ] + mobj->onMobj->height;
@@ -1155,7 +1138,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->flags3 = info->flags3;
     // This doesn't appear to actually be used see P_DamageMobj in P_inter.c
     mo->damage = info->damage;
-    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.netMobHealthModifier : 1);
+    mo->health = info->spawnHealth * (IS_NETGAME ? cfg.common.netMobHealthModifier : 1);
     mo->moveDir = DI_NODIR;
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
@@ -1860,7 +1843,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coor
         if(source->player)
         {
             if(!P_MobjIsCamera(source->player->plr->mo))
-                spawnZOff = cfg.plrViewHeight - 9 +
+                spawnZOff = cfg.common.plrViewHeight - 9 +
                     source->player->plr->lookDir / 173;
         }
         else
@@ -1933,7 +1916,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float movfac = 1, slope;
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
     int spawnFlags = 0;
     mobj_t *missile;
 
@@ -1976,7 +1959,7 @@ mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source)
     else
     {
         if(!P_MobjIsCamera(source->player->plr->mo))
-            pos[VZ] += cfg.plrViewHeight - 9 +
+            pos[VZ] += cfg.common.plrViewHeight - 9 +
                 (source->player->plr->lookDir / 173);
         pos[VZ] -= source->floorClip;
     }
@@ -2028,7 +2011,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)
     coord_t pos[3];
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
     float slope, movfac = 1;
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2054,7 +2037,7 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t origAngle)
 
     memcpy(pos, source->origin, sizeof(pos));
     if(!P_MobjIsCamera(source->player->plr->mo))
-        pos[VZ] += cfg.plrViewHeight - 9 +
+        pos[VZ] += cfg.common.plrViewHeight - 9 +
             (source->player->plr->lookDir / 173);
     pos[VZ] -= source->floorClip;
 
@@ -2081,7 +2064,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     angle_t angle;
     float slope, movfac = 1;
     float fangle = LOOKDIR2RAD(source->player->plr->lookDir);
-    dd_bool dontAim = cfg.noAutoAim;
+    dd_bool dontAim = cfg.common.noAutoAim;
 
     // See which target is to be aimed at.
     angle = origAngle;
@@ -2105,7 +2088,7 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     }
 
     if(!P_MobjIsCamera(source->player->plr->mo))
-        z += cfg.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
+        z += cfg.common.plrViewHeight - 9 + (source->player->plr->lookDir / 173);
     z -= source->floorClip;
 
     if((th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))

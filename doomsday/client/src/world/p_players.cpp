@@ -305,7 +305,7 @@ D_CMD(Impulse)
 
     if(PlayerImpulse *imp = P_PlayerImpulseByName(argv[1]))
     {
-        int const playerNum = (argc == 3? String(argv[2]).toInt() : 0);
+        int const playerNum = (argc == 3? P_LocalToConsole(String(argv[2]).toInt()) : consolePlayer);
         if(ImpulseAccumulator *accum = accumulator(imp->id, playerNum))
         {
             accum->receiveBinary();

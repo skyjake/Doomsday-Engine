@@ -103,8 +103,6 @@ DENG_PUBLIC char* M_StrTok(char** cursor, const char *delimiters);
 
 DENG_PUBLIC char* M_TrimmedFloat(float val);
 
-DENG_PUBLIC dd_bool M_IsComment(const char* text);
-
 DENG_PUBLIC void M_ForceUppercase(char *text);
 
 /// @return  @c true if @a string can be interpreted as a valid integer.

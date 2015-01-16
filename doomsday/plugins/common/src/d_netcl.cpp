@@ -785,7 +785,7 @@ void NetCl_SendPlayerInfo()
 
     writer_s *msg = D_NetWrite();
 
-    Writer_WriteByte(msg, cfg.netColor);
+    Writer_WriteByte(msg, cfg.common.netColor);
 #ifdef __JHEXEN__
     Writer_WriteByte(msg, cfg.netClass);
 #else

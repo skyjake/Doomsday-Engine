@@ -34,6 +34,8 @@
 #define IS_NETWORK_SERVER       (DD_GetInteger(DD_SERVER) && DD_GetInteger(DD_NETGAME))
 #define IS_NETWORK_CLIENT       (DD_GetInteger(DD_CLIENT) && DD_GetInteger(DD_NETGAME))
 
+#include "config.h"
+
 #if __JDOOM__
 #  include "jdoom.h"
 #elif __JDOOM64__
@@ -47,6 +49,7 @@
 #include "gamerules.h"
 #include "g_defs.h"
 #include "pause.h"
+#include "p_mapsetup.h"
 #ifdef __cplusplus
 #  include <doomsday/filesys/lumpindex.h>
 #endif
@@ -56,6 +59,7 @@ extern "C" {
 #endif
 
 int Common_GetInteger(int id);
+void Common_Register();
 
 #ifdef __cplusplus
 } // extern "C"

@@ -27,7 +27,6 @@
 #include "clientapp.h"
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Face"
 #include "ConvexSubspace"
@@ -1257,8 +1256,8 @@ static void writeShadowSection2(ShadowEdge const &leftEdge, ShadowEdge const &ri
 
 static void writeShadowSection(int planeIndex, LineSide const &side, float shadowDark)
 {
-    DENG_ASSERT(side.hasSections());
-    DENG_ASSERT(!side.line().definesPolyobj());
+    DENG2_ASSERT(side.hasSections());
+    DENG2_ASSERT(!side.line().definesPolyobj());
 
     if(!(shadowDark > .0001)) return;
 
@@ -1271,9 +1270,15 @@ static void writeShadowSection(int planeIndex, LineSide const &side, float shado
     // Surfaces with a missing material don't shadow.
     if(!suf->hasMaterial()) return;
 
-    // Missing, glowing or sky-masked materials are exempted.
-    Material const &material = suf->material();
-    if(material.isSkyMasked() || material.hasGlow())
+    // Surfaces with a sky-masked material don't shadow.
+    if(suf->material().isSkyMasked()) return;
+
+    // Ensure we have up to date info about the material.
+    MaterialAnimator &matAnimator = suf->material().getAnimator(Rend_MapSurfaceMaterialSpec());
+    matAnimator.prepare();
+
+    // Surfaces with a glowing material don't shadow.
+    if(matAnimator.glowStrength() > 0)
         return;
 
     // If the sector containing the shadowing line section is fully closed (i.e., volume
@@ -1308,8 +1313,7 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
     if(!rendFakeRadio) return;
     if(levelFullBright) return;
 
-    ConvexSubspace::ShadowLines const &shadowLines = subspace.shadowLines();
-    if(shadowLines.isEmpty()) return;
+    if(!subspace.shadowLineCount()) return;
 
     SectorCluster &cluster = subspace.cluster();
     float sectorlight = cluster.lightSourceIntensity();
@@ -1326,13 +1330,13 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
 
     // We need to check all the shadow lines linked to this subspace for
     // the purpose of fakeradio shadowing.
-    foreach(LineSide *side, shadowLines)
+    subspace.forAllShadowLines([&cluster, &shadowDark, &eyeToSurface] (LineSide &side)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
-        if(side->shadowVisCount() != R_FrameCount())
+        if(side.shadowVisCount() != R_FrameCount())
         {
-            side->setShadowVisCount(R_FrameCount());
+            side.setShadowVisCount(R_FrameCount());
 
             for(int pln = 0; pln < cluster.visPlaneCount(); ++pln)
             {
@@ -1340,11 +1344,12 @@ void Rend_RadioSubspaceEdges(ConvexSubspace const &subspace)
                 if(Vector3f(eyeToSurface, Rend_EyeOrigin().y - plane.heightSmoothed())
                         .dot(plane.surface().normal()) >= 0)
                 {
-                    writeShadowSection(pln, *side, shadowDark);
+                    writeShadowSection(pln, side, shadowDark);
                 }
             }
         }
-    }
+        return LoopContinue;
+    });
 }
 
 #ifdef DENG_DEBUG
@@ -1410,24 +1415,28 @@ void Rend_DrawShadowOffsetVerts()
     glEnable(GL_TEXTURE_2D);
 
     /// @todo fixme: Should use the visual plane heights of sector clusters.
-    foreach(Line *line, map.lines())
-    for(uint k = 0; k < 2; ++k)
+    map.forAllLines([] (Line &line)
     {
-        Vertex &vtx = line->vertex(k);
-        LineOwner const *base = vtx.firstLineOwner();
-        LineOwner const *own = base;
-        do
+        for(int i = 0; i < 2; ++i)
         {
-            Vector2d xy = vtx.origin() + own->extendedShadowOffset();
-            coord_t z = own->line().frontSector().floor().heightSmoothed();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
+            Vertex &vtx = line.vertex(i);
 
-            xy = vtx.origin() + own->innerShadowOffset();
-            drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+            LineOwner const *base = vtx.firstLineOwner();
+            LineOwner const *own  = base;
+            do
+            {
+                Vector2d xy = vtx.origin() + own->extendedShadowOffset();
+                coord_t z   = own->line().frontSector().floor().heightSmoothed();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, yellow);
 
-            own = &own->next();
-        } while(own != base);
-    }
+                xy = vtx.origin() + own->innerShadowOffset();
+                drawPoint(Vector3d(xy.x, xy.y, z), 1, red);
+
+                own = &own->next();
+            } while(own != base);
+        }
+        return LoopContinue;
+    });
 
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);

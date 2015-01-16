@@ -678,7 +678,7 @@ void R_InitRefresh()
     LOG_RES_VERBOSE("Loading data for refresh...");
 
     // Setup the view border.
-    cfg.screenBlocks = cfg.setBlocks;
+    cfg.common.screenBlocks = cfg.common.setBlocks;
     {
         uri_s *paths[9];
         for(int i = 0; i < 9; ++i)
@@ -839,16 +839,7 @@ void G_AutoStartOrBeginTitleLoop()
         if(startEpisodeId.isEmpty())
         {
             // Pick the first playable episode.
-            for(auto const &pair : Defs().episodes.lookup("id").elements())
-            {
-                Record const &episodeDef = *pair.second->as<RecordValue>().record();
-                de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-                if(P_MapExists(startMap.compose().toUtf8().constData()))
-                {
-                    startEpisodeId = episodeDef.gets("id");
-                    break;
-                }
-            }
+            startEpisodeId = FirstPlayableEpisodeId();
         }
 
         // Ensure that the map exists.
@@ -1548,7 +1539,7 @@ static void rebornPlayers()
                 return;
 
             // Do we need user confirmation?
-            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.confirmRebornLoad)
+            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
@@ -1857,7 +1848,7 @@ void G_PlayerReborn(int player)
 #endif
 
     // Reset viewheight.
-    p->viewHeight      = cfg.plrViewHeight;
+    p->viewHeight      = cfg.common.plrViewHeight;
     p->viewHeightDelta = 0;
 
     // We'll need to update almost everything.
@@ -2085,11 +2076,12 @@ String G_EpisodeTitle(String episodeId)
     if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         title = episodeDef->gets("title");
+
         // Perhaps the title string is a reference to a Text definition?
-        void *ptr;
-        if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &ptr) != -1)
+        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        if(textIdx >= 0)
         {
-            title = (char const *) ptr; // Yes, use the resolved text string.
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
         }
     }
     return title;
@@ -2103,11 +2095,12 @@ String G_MapTitle(de::Uri const &mapUri)
     if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         title = mapInfo->gets("title");
+
         // Perhaps the title string is a reference to a Text definition?
-        void *ptr;
-        if(Def_Get(DD_DEF_TEXT, title.toUtf8().constData(), &ptr) != -1)
+        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        if(textIdx >= 0)
         {
-            title = (char const *) ptr; // Yes, use the resolved text string.
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
         }
     }
 
@@ -2345,7 +2338,7 @@ D_CMD(LoadSession)
         if(sslot->isLoadable())
         {
             // A known used slot identifier.
-            if(confirmed || !cfg.confirmQuickGameSave)
+            if(confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2358,7 +2351,10 @@ D_CMD(LoadSession)
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
             // Compose the confirmation message.
             String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT, existingDescription.toUtf8().constData());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
+                                       sslot->id().toUtf8().constData(),
+                                       existingDescription.toUtf8().constData());
+
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new String(sslot->id()));
             return true;
         }
@@ -2455,7 +2451,7 @@ D_CMD(SaveSession)
                 userDescription = argv[2];
             }
 
-            if(sslot->isUnused() || confirmed || !cfg.confirmQuickGameSave)
+            if(sslot->isUnused() || confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2469,7 +2465,9 @@ D_CMD(SaveSession)
 
             // Compose the confirmation message.
             String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
-            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT, existingDescription.toUtf8().constData());
+            AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
+                                       sslot->id().toUtf8().constData(),
+                                       existingDescription.toUtf8().constData());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = sslot->id();
@@ -2637,27 +2635,9 @@ D_CMD(WarpMap)
     String episodeId = COMMON_GAMESESSION->episodeId();
 
     // Otherwise if only one playable episode is defined - select it.
-    if(episodeId.isEmpty())
+    if(episodeId.isEmpty() && PlayableEpisodeCount() == 1)
     {
-        for(auto const &pair : Defs().episodes.lookup("id").elements())
-        {
-            Record const &episodeDef = *pair.second->as<RecordValue>().record();
-            de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-            if(!P_MapExists(startMap.compose().toUtf8().constData()))
-            {
-                continue;
-            }
-
-            if(episodeId.isEmpty())
-            {
-                episodeId = episodeDef.gets("id");
-            }
-            else
-            {
-                episodeId.clear();
-                break;
-            }
-        }
+        episodeId = FirstPlayableEpisodeId();
     }
 
     // Has an episode been specified?
@@ -2765,7 +2745,10 @@ D_CMD(WarpMap)
     }
     else
     {
-        G_SetGameActionNewSession(defaultGameRules, episodeId, mapUri);
+        // If a session is already in progress then copy the rules from it.
+        GameRuleset const rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
+                                                                 : defaultGameRules);
+        G_SetGameActionNewSession(rules, episodeId, mapUri);
     }
 
     // If the command source was "us" the game library then it was probably in
@@ -2975,10 +2958,10 @@ void G_ConsoleRegister()
 {
     GameSession::consoleRegister();
 
-    C_VAR_BYTE("game-save-confirm",              &cfg.confirmQuickGameSave,  0, 0, 1);
-    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.confirmQuickGameSave,  0, 0, 1);
-    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.confirmRebornLoad,     0, 0, 1);
-    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.loadLastSaveOnReborn,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm",              &cfg.common.confirmQuickGameSave,  0, 0, 1);
+    /* Alias */ C_VAR_BYTE("menu-quick-ask",     &cfg.common.confirmQuickGameSave,  0, 0, 1);
+    C_VAR_BYTE("game-save-confirm-loadonreborn", &cfg.common.confirmRebornLoad,     0, 0, 1);
+    C_VAR_BYTE("game-save-last-loadonreborn",    &cfg.common.loadLastSaveOnReborn,  0, 0, 1);
 
     C_CMD("deletegamesave",     "ss",       DeleteSavedSession);
     C_CMD("deletegamesave",     "s",        DeleteSavedSession);

@@ -62,7 +62,7 @@ void G_RendSpecialFilter(int player, RectRaw const *region)
         region->size.width, region->size.height,
         filters[cfg.ringFilter == 1].colorRGB[CR],
         filters[cfg.ringFilter == 1].colorRGB[CG],
-        filters[cfg.ringFilter == 1].colorRGB[CB], cfg.filterStrength);
+        filters[cfg.ringFilter == 1].colorRGB[CB], cfg.common.filterStrength);
 
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
@@ -79,7 +79,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (COMMON_GAMESESSION->rules().deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (COMMON_GAMESESSION->rules().deathmatch? 1.0f : cfg.common.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
@@ -88,7 +88,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;
-        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
+        rgba[CA] = cfg.common.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
         return true;
     }
 

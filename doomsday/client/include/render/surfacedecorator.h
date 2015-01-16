@@ -1,7 +1,7 @@
-/** @file surfacedecorator.h World surface decorator.
+/** @file surfacedecorator.h  World surface decorator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,14 +17,12 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_SURFACEDECORATOR_H
-#define DENG_CLIENT_RENDER_SURFACEDECORATOR_H
+#ifndef CLIENT_RENDER_SURFACEDECORATOR_H
+#define CLIENT_RENDER_SURFACEDECORATOR_H
 
 #include <de/libcore.h>
 
 class Surface;
-
-#define MAX_DECOR_LIGHTS        (16384)
 
 /**
  * The decorator assumes responsibility for decorating surfaces according to
@@ -88,4 +86,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_CLIENT_RENDER_SURFACEDECORATOR_H
+#endif // CLIENT_RENDER_SURFACEDECORATOR_H

@@ -49,7 +49,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define VIEW_HEIGHT         (cfg.plrViewHeight)
+#define VIEW_HEIGHT         (cfg.common.plrViewHeight)
 
 #define MAXBOB              (16) // pixels.
 
@@ -119,7 +119,7 @@ void P_CalcHeight(player_t *plr)
     else
     {
         angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
-        target = cfg.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
+        target = cfg.common.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
     // Do the change gradually.

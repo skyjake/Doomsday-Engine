@@ -148,9 +148,9 @@ static void drawMessage()
     FR_SetFont(FID(GF_FONTA));
     FR_LoadDefaultAttrib();
     FR_SetLeading(LEADING);
-    FR_SetShadowStrength(cfg.menuTextGlitter);
-    FR_SetGlitterStrength(cfg.menuShadow);
-    FR_SetColorAndAlpha(cfg.menuTextColors[MENU_COLOR4][CR], cfg.menuTextColors[MENU_COLOR4][CG], cfg.menuTextColors[MENU_COLOR4][CB], 1);
+    FR_SetShadowStrength(cfg.common.menuTextGlitter);
+    FR_SetGlitterStrength(cfg.common.menuShadow);
+    FR_SetColorAndAlpha(cfg.common.menuTextColors[MENU_COLOR4][CR], cfg.common.menuTextColors[MENU_COLOR4][CG], cfg.common.menuTextColors[MENU_COLOR4][CB], 1);
 
     FR_DrawText3(msgText, &origin, ALIGN_TOP, textFlags);
     origin.y += FR_TextHeight(msgText);
@@ -169,13 +169,13 @@ void Hu_MsgDrawer()
 
     dgl_borderedprojectionstate_t bp;
     GL_ConfigureBorderedProjection(&bp, 0, SCREENWIDTH, SCREENHEIGHT,
-          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.menuScaleMode));
+          Get(DD_WINDOW_WIDTH), Get(DD_WINDOW_HEIGHT), scalemode_t(cfg.common.menuScaleMode));
     GL_BeginBorderedProjection(&bp);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-    DGL_Scalef(cfg.menuScale, cfg.menuScale, 1);
+    DGL_Scalef(cfg.common.menuScale, cfg.common.menuScale, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     drawMessage();
@@ -281,19 +281,19 @@ D_CMD(MsgResponse)
         }
 
         char const *cmd = argv[0] + 7;
-        if(!stricmp(cmd, "yes"))
+        if(!qstricmp(cmd, "yes"))
         {
             awaitingResponse = false;
             messageResponse = MSG_YES;
             return true;
         }
-        if(!stricmp(cmd, "no"))
+        if(!qstricmp(cmd, "no"))
         {
             awaitingResponse = false;
             messageResponse = MSG_NO;
             return true;
         }
-        if(!stricmp(cmd, "cancel"))
+        if(!qstricmp(cmd, "cancel"))
         {
             awaitingResponse = false;
             messageResponse = MSG_CANCEL;

@@ -21,6 +21,15 @@
 #ifndef DENG_WORLD_MAP_H
 #define DENG_WORLD_MAP_H
 
+#include <functional>
+#include <QList>
+#include <QHash>
+#include <QSet>
+#include <doomsday/uri.h>
+#include <de/BinaryTree>
+#include <de/Observers>
+#include <de/Vector>
+
 #include "Mesh"
 
 #include "BspNode"
@@ -39,15 +48,8 @@
 #  include "Lumobj"
 #endif
 
-#include <QList>
-#include <QHash>
-#include <QSet>
-#include <doomsday/uri.h>
-#include <de/BinaryTree>
-#include <de/Observers>
-#include <de/Vector>
-
 class MapDef;
+
 class BspLeaf;
 class ConvexSubspace;
 class LineBlockmap;
@@ -88,6 +90,12 @@ public:
     /// Base error for runtime map editing errors. @ingroup errors
     DENG2_ERROR(EditError);
 
+    /// Required map element is missing. @ingroup errors
+    DENG2_ERROR(MissingElementError);
+
+    /// Required map object is missing. @ingroup errors
+    DENG2_ERROR(MissingObjectError);
+
     /// Required blockmap is missing. @ingroup errors
     DENG2_ERROR(MissingBlockmapError);
 
@@ -101,7 +109,7 @@ public:
     /// Required light grid is missing. @ingroup errors
     DENG2_ERROR(MissingLightGridError);
 
-    /// Attempted to add a new element when already full. @ingroup errors
+    /// Attempted to add a new element/object when full. @ingroup errors
     DENG2_ERROR(FullError);
 #endif
 
@@ -109,12 +117,10 @@ public:
     DENG2_DEFINE_AUDIENCE(Deletion, void mapBeingDeleted(Map const &map))
 
     /// Notified when a one-way window construct is first found.
-    DENG2_DEFINE_AUDIENCE(OneWayWindowFound,
-        void oneWayWindowFound(Line &line, Sector &backFacingSector))
+    DENG2_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /// Notified when an unclosed sector is first found.
-    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound,
-        void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
+    DENG2_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, Vector2d const &nearPoint))
 
     /*
      * Constants:
@@ -126,33 +132,18 @@ public:
     static int const MAX_GENERATORS = 512;
 #endif
 
-    /*
-     * Linked-element lists:
-     */
-    typedef Mesh::Vertexes   Vertexes;
-    typedef QList<Line *>    Lines;
-    typedef QList<Polyobj *> Polyobjs;
-    typedef QList<Sector *>  Sectors;
-
-    typedef QList<ConvexSubspace *> Subspaces;
-
-#ifdef __CLIENT__
-    typedef QSet<Plane *>    PlaneSet;
-    typedef QSet<Surface *>  SurfaceSet;
-
-    typedef QList<BiasSource *> BiasSources;
-    typedef QList<Lumobj *>  Lumobjs;
-
-    typedef QHash<thid_t, mobj_t *> ClMobjHash;
-#endif
-
     typedef de::BinaryTree<BspElement *> BspTree;
 
-public: /// @todo make private:
-    coord_t _globalGravity; // The defined gravity for this map.
-    coord_t _effectiveGravity; // The effective gravity for this map.
+#ifdef __CLIENT__
+    typedef QSet<Plane *> PlaneSet;
+    typedef QSet<Surface *> SurfaceSet;
+    typedef QHash<thid_t, struct mobj_s *> ClMobjHash;
+#endif
 
-    int _ambientLightLevel; // Ambient lightlevel for the current map.
+public: /// @todo make private:
+    coord_t _globalGravity    = 0;  ///< The defined gravity for this map.
+    coord_t _effectiveGravity = 0;  ///< The effective gravity for this map.
+    int _ambientLightLevel    = 0;  ///< Ambient lightlevel for the current map.
 
 public:
     /**
@@ -163,12 +154,7 @@ public:
      *
      * @param mapDefinition  Definition for the map (Can be set later, @ref setDef).
      */
-    Map(MapDef *mapDefinition = 0);
-
-    /**
-     * Change the definition associated with the map to @a newMapDefinition.
-     */
-    void setDef(MapDef *newMapDefinition);
+    explicit Map(MapDef *mapDefinition = nullptr);
 
     /**
      * Returns the definition for the map.
@@ -176,9 +162,9 @@ public:
     MapDef *def() const;
 
     /**
-     * To be called following an engine reset to update the map state.
+     * Change the definition associated with the map to @a newMapDefinition.
      */
-    void update();
+    void setDef(MapDef *newMapDefinition);
 
     /**
      * Returns the points which describe the boundary of the map coordinate
@@ -196,6 +182,11 @@ public:
     }
 
     /**
+     * Returns the minimum ambient light level for the whole map.
+     */
+    int ambientLightLevel() const;
+
+    /**
      * Returns the currently effective gravity multiplier for the map.
      */
     coord_t gravity() const;
@@ -208,83 +199,185 @@ public:
     void setGravity(coord_t newGravity);
 
     /**
-     * Returns the minimum ambient light level for the whole map.
+     * To be called following an engine reset to update the map state.
      */
-    int ambientLightLevel() const;
+    void update();
+
+#ifdef __CLIENT__
+public: // Light sources ----------------------------------------------------------
 
     /**
-     * Provides access to the thinker lists for the map.
+     * Returns the total number of BiasSources in the map.
      */
-    Thinkers /*const*/ &thinkers() const;
+    int biasSourceCount() const;
 
     /**
-     * Returns the logical sky for the map.
-     */
-    Sky &sky() const;
-
-    /**
-     * Provides access to the primary @ref Mesh geometry owned by the map.
-     * Note that further meshes may be assigned to individual elements of
-     * the map should their geometries not be representable as a manifold
-     * with the primary mesh (e.g., polyobjs and BSP leaf "extra" meshes).
-     */
-    Mesh const &mesh() const;
-
-    /**
-     * Provides a list of all the non-editable vertexes in the map.
-     */
-    Vertexes const &vertexes() const;
-
-    /**
-     * Provides a list of all the non-editable lines in the map.
-     */
-    Lines const &lines() const;
-
-    /**
-     * Provides a list of all the non-editable polyobjs in the map.
-     */
-    Polyobjs const &polyobjs() const;
-
-    /**
-     * Provides a list of all the non-editable sectors in the map.
-     */
-    Sectors const &sectors() const;
-
-    inline int vertexCount() const        { return vertexes().count(); }
-
-    inline int lineCount() const          { return lines().count(); }
-
-    inline int sideCount() const          { return lines().count() * 2; }
-
-    inline int polyobjCount() const       { return polyobjs().count(); }
-
-    inline int sectorCount() const        { return sectors().count(); }
-
-    /**
-     * Provides access to the subspace list for efficient traversal.
-     */
-    Subspaces const &subspaces() const;
-
-    /**
-     * Returns the total number of subspaces in the map.
-     */
-    inline int subspaceCount() const { return subspaces().count(); }
-
-    /**
-     * Returns the total number of SectorClusters in the map.
-     */
-    int clusterCount() const;
-
-    /**
-     * Iterate through the SectorClusters of the map.
+     * Attempt to add a new bias light source to the map (a copy is made).
      *
-     * @param sector  If not @c nullptr, traverse the clusters of this Sector only.
+     * @note At most @ref MAX_BIAS_SOURCES are supported for technical reasons.
+     *
+     * @return  Reference to the newly added bias source.
+     *
+     * @see biasSourceCount()
+     * @throws FullError  Once capacity is reached.
      */
-    LoopResult forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func);
+    BiasSource &addBiasSource(BiasSource const &biasSource = BiasSource());
 
-    inline LoopResult forAllClusters(std::function<LoopResult (SectorCluster &)> func) {
-        return forAllClusters(nullptr, func);
+    /**
+     * Removes the specified bias light source from the map.
+     *
+     * @see removeAllBiasSources()
+     */
+    void removeBiasSource(int which);
+
+    /**
+     * Remove all bias sources from the map.
+     *
+     * @see removeBiasSource()
+     */
+    void removeAllBiasSources();
+
+    /**
+     * Lookup a BiasSource by it's unique @a index.
+     */
+    BiasSource &biasSource(int index) const;
+    BiasSource *biasSourcePtr(int index) const;
+
+    /**
+     * Finds the bias source nearest to the specified map space @a point.
+     *
+     * @note This result is not cached. May return @c 0 if no bias sources exist.
+     */
+    BiasSource *biasSourceNear(Vector3d const &point) const;
+
+    /**
+     * Iterate through the BiasSources of the map.
+     *
+     * @param func  Callback to make for each BiasSource.
+     */
+    LoopResult forAllBiasSources(std::function<LoopResult (BiasSource &)> func) const;
+
+    /**
+     * Lookup the unique index for the given bias @a source.
+     */
+    int indexOf(BiasSource const &source) const;
+
+    /**
+     * Returns the time in milliseconds when the current render frame began. Used
+     * for interpolation purposes.
+     */
+    uint biasCurrentTime() const;
+
+    /**
+     * Returns the frameCount of the current render frame. Used for tracking changes
+     * to bias sources/surfaces.
+     */
+    uint biasLastChangeOnFrame() const;
+
+    // Luminous-objects -----------------------------------------------------------
+
+    /**
+     * Returns the total number of lumobjs in the map.
+     */
+    int lumobjCount() const;
+
+    /**
+     * Add a new lumobj to the map (a copy is made).
+     *
+     * @return  Reference to the newly added lumobj.
+     */
+    Lumobj &addLumobj(Lumobj const &lumobj = Lumobj());
+
+    /**
+     * Removes the specified lumobj from the map.
+     *
+     * @see removeAllLumobjs()
+     */
+    void removeLumobj(int which);
+
+    /**
+     * Remove all lumobjs from the map.
+     *
+     * @see removeLumobj()
+     */
+    void removeAllLumobjs();
+
+    /**
+     * Lookup a Lumobj in the map by it's unique @a index.
+     */
+    Lumobj &lumobj(int index) const;
+    Lumobj *lumobjPtr(int index) const;
+
+    /**
+     * Iterate through the Lumpobjs of the map.
+     *
+     * @param func  Callback to make for each Lumobj.
+     */
+    LoopResult forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const;
+#endif // __CLIENT__
+
+public: // Lines & Line-Sides -----------------------------------------------------
+
+    /**
+     * Returns the total number of Lines in the map.
+     */
+    int lineCount() const;
+
+    /**
+     * Lookup a Line in the map by it's unique @a index.
+     */
+    Line &line(int index) const;
+    Line *linePtr(int index) const;
+
+    /**
+     * Iterate through the Lines of the map.
+     *
+     * @param func  Callback to make for each Line.
+     */
+    LoopResult forAllLines(std::function<LoopResult (Line &)> func) const;
+
+    /**
+     * Lines and Polyobj lines (note polyobj lines are iterated first).
+     *
+     * @note validCount should be incremented before calling this to begin a new
+     * logical traversal. Otherwise Lines marked with a validCount equal to this will
+     * be skipped over (can be used to avoid processing a line multiple times during
+     * complex / non-linear traversals.
+     *
+     * @param box    Axis-aligned bounding box in which Lines must be Blockmap-linked.
+     * @param flags  @ref lineIteratorFlags
+     * @param func   Callback to make for each Line.
+     */
+    LoopResult forAllLinesInBox(AABoxd const &box, int flags, std::function<LoopResult (Line &)> func) const;
+
+    /**
+     * @overload
+     */
+    inline LoopResult forAllLinesInBox(AABoxd const &box, std::function<LoopResult (Line &)> func) const
+    {
+        return forAllLinesInBox(box, LIF_ALL, func);
     }
+
+    /**
+     * The callback function will be called once for each line that crosses the object.
+     * This means all the lines will be two-sided.
+     */
+    LoopResult forAllLinesTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Line &)> func) const;
+
+    // ---
+
+    /**
+     * Returns the total number of Line::Sides in the map.
+     */
+    inline int sideCount() const { return lineCount() * 2; }
+
+    /**
+     * Lookup a LineSide in the map by it's unique @a index.
+     *
+     * @see toSideIndex()
+     */
+    LineSide &side(int index) const;
+    LineSide *sidePtr(int index) const;
 
     /**
      * Helper function which returns the relevant side index given a @a lineIndex
@@ -302,25 +395,245 @@ public:
      */
     static int toSideIndex(int lineIndex, int side);
 
-    /**
-     * Locate a LineSide in the map by it's unique @a index.
-     *
-     * @param index  Unique index attributed to the line side.
-     *
-     * @return  Pointer to the identified LineSide instance; otherwise @c 0.
-     *
-     * @see toSideIndex()
-     */
-    LineSide *sideByIndex(int index) const;
+public: // Map-objects ------------------------------------------------------------
+
+    LoopResult forAllMobjsTouchingLine(Line &line, std::function<LoopResult (struct mobj_s &)> func) const;
 
     /**
-     * Locate a Polyobj in the map by it's unique in-map tag.
+     * Increment validCount before using this. 'func' is called for each mobj
+     * that is (even partly) inside the sector. This is not a 3D test, the
+     * mobjs may actually be above or under the sector.
      *
-     * @param tag  Tag associated with the polyobj to be located.
-     *
-     * @return  Pointer to the identified Polyobj instance; otherwise @c 0.
+     * (Lovely name; actually this is a combination of SectorMobjs and
+     * a bunch of LineMobjs iterations.)
      */
-    Polyobj *polyobjByTag(int tag) const;
+    LoopResult forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (struct mobj_s &)> func) const;
+
+    /**
+     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
+     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
+     * the BspLeaf pointer. Can be called without unlinking first.
+     * Should be called AFTER mobj translation to (re-)insert the mobj.
+     */
+    void link(struct mobj_s &mobj, int flags);
+
+    /**
+     * Unlinks a mobj from everything it has been linked to. Should be called
+     * BEFORE mobj translation to extract the mobj.
+     *
+     * @param mobj  Mobj to be unlinked.
+     *
+     * @return  DDLINK_* flags denoting what the mobj was unlinked from
+     * (in case we need to re-link).
+     */
+    int unlink(struct mobj_s &mobj);
+
+#ifdef __CLIENT__
+public: // Particle generators --------------------------------------------------------
+
+    /**
+     * Returns the total number of @em active generators in the map.
+     */
+    int generatorCount() const;
+
+    /**
+     * Attempt to spawn a new (particle) generator for the map. If no free identifier
+     * is available then @c 0 is returned.
+     */
+    Generator *newGenerator();
+
+    /**
+     * Iterate over all generators in the map making a callback for each. Iteration
+     * ends when all generators have been processed or a callback returns non-zero.
+     *
+     * @param callback  Callback to make for each iteration.
+     * @param context   User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorIterator(int (*callback) (Generator *, void *), void *context = nullptr);
+
+    /**
+     * Iterate over all generators in the map which are present in the identified
+     * list making a callback for each. Iteration ends when all targeted generators
+     * have been processed or a callback returns non-zero.
+     *
+     * @param listIndex  Index of the list to traverse.
+     * @param callback   Callback to make for each iteration.
+     * @param context    User data to be passed to the callback.
+     *
+     * @return  @c 0 iff iteration completed wholly.
+     */
+    int generatorListIterator(uint listIndex, int (*callback) (Generator *, void *),
+                              void *context = nullptr);
+
+    void unlink(Generator &generator);
+
+#endif // __CLIENT__
+
+public: // Poly objects -----------------------------------------------------------
+
+    /**
+     * Returns the total number of Polyobjs in the map.
+     */
+    int polyobjCount() const;
+
+    /**
+     * Lookup a Polyobj in the map by it's unique @a index.
+     */
+    Polyobj &polyobj(int index) const;
+    Polyobj *polyobjPtr(int index) const;
+
+    /**
+     * Iterate through the Polyobjs of the map.
+     *
+     * @param func  Callback to make for each Polyobj.
+     */
+    LoopResult forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const;
+
+    /**
+     * Link the specified @a polyobj in any internal data structures for
+     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
+     * translation to (re-)insert the polyobj.
+     *
+     * @param polyobj  Poly-object to be linked.
+     */
+    void link(Polyobj &polyobj);
+
+    /**
+     * Unlink the specified @a polyobj from any internal data structures for
+     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
+     * translation to extract the polyobj.
+     *
+     * @param polyobj  Poly-object to be unlinked.
+     */
+    void unlink(Polyobj &polyobj);
+
+public: // Sectors ----------------------------------------------------------------
+
+    /**
+     * Returns the total number of Sectors in the map.
+     */
+    int sectorCount() const;
+
+    /**
+     * Lookup a Sector in the map by it's unique @a index.
+     */
+    Sector &sector(int index) const;
+    Sector *sectorPtr(int index) const;
+
+    /**
+     * Iterate through the Sectors of the map.
+     *
+     * @param func  Callback to make for each Sector.
+     */
+    LoopResult forAllSectors(std::function<LoopResult (Sector &)> func) const;
+
+    /**
+     * Increment validCount before calling this routine. The callback function
+     * will be called once for each sector the mobj is touching (totally or
+     * partly inside). This is not a 3D check; the mobj may actually reside
+     * above or under the sector.
+     */
+    LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<LoopResult (Sector &)> func) const;
+
+public: // Sector clusters --------------------------------------------------------
+
+    /**
+     * Returns the total number of SectorClusters in the map.
+     */
+    int clusterCount() const;
+
+    /**
+     * Determine the SectorCluster which contains @a point and which is on the
+     * back side of the BS partition that lies in front of @a point.
+     *
+     * @param point  Map space coordinates to determine the BSP leaf for.
+     *
+     * @return  SectorCluster containing the specified point if any or @c 0 if
+     * the clusters have not yet been built.
+     */
+    SectorCluster *clusterAt(Vector2d const &point) const;
+
+    /**
+     * Iterate through the SectorClusters of the map.
+     *
+     * @param sector  If not @c nullptr, traverse the clusters of this Sector only.
+     * @param func    Callback to make for each SectorCluster.
+     */
+    LoopResult forAllClusters(Sector *sector, std::function<LoopResult (SectorCluster &)> func);
+
+    /**
+     * @overload
+     */
+    inline LoopResult forAllClusters(std::function<LoopResult (SectorCluster &)> func) {
+        return forAllClusters(nullptr, func);
+    }
+
+public: // Skies ------------------------------------------------------------------
+
+    /**
+     * Returns the logical sky for the map.
+     */
+    Sky &sky() const;
+
+#ifdef __CLIENT__
+    coord_t skyFix(bool ceiling) const;
+
+    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
+    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
+
+    void setSkyFix(bool ceiling, coord_t newHeight);
+
+    inline void setSkyFixFloor(coord_t newHeight) {
+        setSkyFix(false /*the floor*/, newHeight);
+    }
+    inline void setSkyFixCeiling(coord_t newHeight) {
+        setSkyFix(true /*the ceiling*/, newHeight);
+    }
+#endif
+
+public: // Subspaces --------------------------------------------------------------
+
+    /**
+     * Returns the total number of subspaces in the map.
+     */
+    int subspaceCount() const;
+
+    /**
+     * Lookup a Subspace in the map by it's unique @a index.
+     */
+    ConvexSubspace &subspace(int index) const;
+    ConvexSubspace *subspacePtr(int index) const;
+
+    /**
+     * Iterate through the ConvexSubspaces of the map.
+     *
+     * @param func  Callback to make for each ConvexSubspace.
+     */
+    LoopResult forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const;
+
+public: // Vertexs ----------------------------------------------------------------
+
+    /**
+     * Returns the total number of Vertexs in the map.
+     */
+    int vertexCount() const;
+
+    /**
+     * Lookup a Vertex in the map by it's unique @a index.
+     */
+    Vertex &vertex(int index) const;
+    Vertex *vertexPtr(int index) const;
+
+    /**
+     * Iterate through the Vertexs of the map.
+     *
+     * @param func  Callback to make for each Vertex.
+     */
+    LoopResult forAllVertexs(std::function<LoopResult (Vertex &)> func) const;
+
+public: // Data structures --------------------------------------------------------
 
     /**
      * Provides access to the entity database.
@@ -328,14 +641,22 @@ public:
     EntityDatabase &entityDatabase() const;
 
     /**
-     * Provides access to the mobj blockmap.
+     * Provides access to the primary @ref Mesh geometry owned by the map. Note that
+     * further meshes may be assigned to individual elements of the map should their
+     * geometries not be representable as a manifold with the primary mesh (e.g.,
+     * polyobjs and BSP leaf "extra" meshes).
      */
-    Blockmap const &mobjBlockmap() const;
+    Mesh const &mesh() const;
 
     /**
      * Provides access to the line blockmap.
      */
     LineBlockmap const &lineBlockmap() const;
+
+    /**
+     * Provides access to the mobj blockmap.
+     */
+    Blockmap const &mobjBlockmap() const;
 
     /**
      * Provides access to the polyobj blockmap.
@@ -346,6 +667,11 @@ public:
      * Provides access to the convex subspace blockmap.
      */
     Blockmap const &subspaceBlockmap() const;
+
+    /**
+     * Provides access to the thinker lists for the map.
+     */
+    Thinkers /*const*/ &thinkers() const;
 
     /**
      * Returns @c true iff a BSP tree is available for the map.
@@ -380,54 +706,6 @@ public:
     BspLeaf &bspLeafAt_FixedPrecision(Vector2d const &point) const;
 
     /**
-     * Determine the SectorCluster which contains @a point and which is on the
-     * back side of the BS partition that lies in front of @a point.
-     *
-     * @param point  Map space coordinates to determine the BSP leaf for.
-     *
-     * @return  SectorCluster containing the specified point if any or @c 0 if
-     * the clusters have not yet been built.
-     */
-    SectorCluster *clusterAt(Vector2d const &point) const;
-
-    /**
-     * Links a mobj into both a block and a BSP leaf based on it's (x,y).
-     * Sets mobj->bspLeaf properly. Calling with flags==0 only updates
-     * the BspLeaf pointer. Can be called without unlinking first.
-     * Should be called AFTER mobj translation to (re-)insert the mobj.
-     */
-    void link(struct mobj_s &mobj, int flags);
-
-    /**
-     * Link the specified @a polyobj in any internal data structures for
-     * bookkeeping purposes. Should be called AFTER Polyobj rotation and/or
-     * translation to (re-)insert the polyobj.
-     *
-     * @param polyobj  Polyobj to be linked.
-     */
-    void link(Polyobj &polyobj);
-
-    /**
-     * Unlinks a mobj from everything it has been linked to. Should be called
-     * BEFORE mobj translation to extract the mobj.
-     *
-     * @param mo  Mobj to be unlinked.
-     *
-     * @return  DDLINK_* flags denoting what the mobj was unlinked from
-     * (in case we need to re-link).
-     */
-    int unlink(struct mobj_s &mobj);
-
-    /**
-     * Unlink the specified @a polyobj from any internal data structures for
-     * bookkeeping purposes. Should be called BEFORE Polyobj rotation and/or
-     * translation to extract the polyobj.
-     *
-     * @param polyobj  Polyobj to be unlinked.
-     */
-    void unlink(Polyobj &polyobj);
-
-    /**
      * Given an @a emitter origin, attempt to identify the map element
      * to which it belongs.
      *
@@ -442,248 +720,35 @@ public:
     bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
-    int mobjBoxIterator(AABoxd const &box,
-        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
-
-    int mobjPathIterator(Vector2d const &from, Vector2d const &to,
-        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
-
-    /**
-     * Lines and Polyobj lines (note polyobj lines are iterated first).
-     *
-     * @note validCount should be incremented before calling this to begin
-     * a new logical traversal. Otherwise Lines marked with a validCount
-     * equal to this will be skipped over (can be used to avoid processing
-     * a line multiple times during complex / non-linear traversals.
-     *
-     * @param flags  @ref lineIteratorFlags
-     */
-    int lineBoxIterator(AABoxd const &box, int flags,
-        int (*callback) (Line *line, void *context), void *context = 0) const;
-
-    /// @copydoc lineBoxIterator()
-    inline int lineBoxIterator(AABoxd const &box,
-        int (*callback) (Line *line, void *context), void *context = 0) const
-    {
-        return lineBoxIterator(box, LIF_ALL, callback, context);
-    }
-
-    /**
-     * @param flags  @ref lineIteratorFlags
-     */
-    int linePathIterator(Vector2d const &from, Vector2d const &to, int flags,
-        int (*callback) (Line *line, void *context), void *context = 0) const;
-
-    /// @copydoc linePathIterator()
-    inline int linePathIterator(Vector2d const &from, Vector2d const &to,
-        int (*callback) (Line *line, void *context), void *context = 0) const
-    {
-        return linePathIterator(from, to, LIF_ALL, callback, context);
-    }
-
-    int subspaceBoxIterator(AABoxd const &box,
-        int (*callback) (ConvexSubspace *subspace, void *context), void *context = 0) const;
-
-    /**
-     * @note validCount should be incremented before calling this to begin a
-     * new logical traversal. Otherwise Lines marked with a validCount equal
-     * to this will be skipped over (can be used to avoid processing a line
-     * multiple times during complex / non-linear traversals.
-     */
-    int polyobjBoxIterator(AABoxd const &box,
-        int (*callback) (struct polyobj_s *polyobj, void *context),
-        void *context = 0) const;
-
-    /**
-     * The callback function will be called once for each line that crosses
-     * trough the object. This means all the lines will be two-sided.
-     */
-    int mobjTouchedLineIterator(struct mobj_s *mo,
-        int (*callback) (Line *, void *), void *context = 0) const;
-
-    /**
-     * Increment validCount before calling this routine. The callback function
-     * will be called once for each sector the mobj is touching (totally or
-     * partly inside). This is not a 3D check; the mobj may actually reside
-     * above or under the sector.
-     */
-    int mobjTouchedSectorIterator(struct mobj_s *mo,
-        int (*callback) (Sector *sector, void *context), void *context = 0) const;
-
-    int lineTouchingMobjIterator(Line *line,
-        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
-
-    /**
-     * Increment validCount before using this. 'func' is called for each mobj
-     * that is (even partly) inside the sector. This is not a 3D test, the
-     * mobjs may actually be above or under the sector.
-     *
-     * (Lovely name; actually this is a combination of SectorMobjs and
-     * a bunch of LineMobjs iterations.)
-     */
-    int sectorTouchingMobjIterator(Sector *sector,
-        int (*callback) (struct mobj_s *mobj, void *context), void *context = 0) const;
-
 #ifdef __CLIENT__
-    coord_t skyFix(bool ceiling) const;
-
-    inline coord_t skyFixFloor() const   { return skyFix(false /*the floor*/); }
-    inline coord_t skyFixCeiling() const { return skyFix(true /*the ceiling*/); }
-
-    void setSkyFix(bool ceiling, coord_t newHeight);
-
-    inline void setSkyFixFloor(coord_t newHeight) {
-        setSkyFix(false /*the floor*/, newHeight);
-    }
-    inline void setSkyFixCeiling(coord_t newHeight) {
-        setSkyFix(true /*the ceiling*/, newHeight);
-    }
 
     /**
-     * Attempt to spawn a new (particle) generator for the map. If no free identifier
-     * is available then @c 0 is returned.
-     */
-    Generator *newGenerator();
-
-    void unlink(Generator &generator);
-
-    /**
-     * Iterate over all generators in the map making a callback for each. Iteration
-     * ends when all generators have been processed or a callback returns non-zero.
+     * Returns @c true iff a LightGrid has been initialized for the map.
      *
-     * @param callback  Callback to make for each iteration.
-     * @param context   User data to be passed to the callback.
+     * @see lightGrid()
+     */
+    bool hasLightGrid();
+
+    /**
+     * Provides access to the light grid for the map.
      *
-     * @return  @c 0 iff iteration completed wholly.
+     * @see hasLightGrid()
      */
-    int generatorIterator(int (*callback) (Generator *, void *), void *context = 0);
+    LightGrid &lightGrid();
 
     /**
-     * Iterate over all generators in the map which are present in the identified
-     * list making a callback for each. Iteration ends when all targeted generators
-     * have been processed or a callback returns non-zero.
+     * (Re)-initialize the light grid used for smoothed sector lighting.
      *
-     * @param listIndex  Index of the list to traverse.
-     * @param callback   Callback to make for each iteration.
-     * @param context    User data to be passed to the callback.
+     * If the grid has not yet been initialized block light sources are determined
+     * at this time (SectorClusters must be built for this).
      *
-     * @return  @c 0 iff iteration completed wholly.
-     */
-    int generatorListIterator(uint listIndex, int (*callback) (Generator *, void *), void *context = 0);
-
-    /**
-     * Returns the total number of @em active generators in the map.
-     */
-    int generatorCount() const;
-
-    /**
-     * Add a new lumobj to the map (a copy is made).
+     * If the grid has already been initialized calling this will perform a full update.
      *
-     * @return  Reference to the newly added lumobj.
-     *
-     * @see lumobjCount()
+     * @note Initialization may take some time depending on the complexity of the
+     * map (physial dimensions, number of sectors) and should therefore be done
+     * "off-line".
      */
-    Lumobj &addLumobj(Lumobj const &lumobj = Lumobj());
-
-    /**
-     * Removes the specified lumobj from the map.
-     *
-     * @see removeAllLumobjs()
-     */
-    void removeLumobj(int which);
-
-    /**
-     * Remove all lumobjs from the map.
-     *
-     * @see removeLumobj()
-     */
-    void removeAllLumobjs();
-
-    /**
-     * Provides a list of all the lumobjs in the map.
-     */
-    Lumobjs const &lumobjs() const;
-
-    /**
-     * Returns the total number of lumobjs in the map.
-     */
-    inline int lumobjCount() const { return lumobjs().count(); }
-
-    /**
-     * Lookup a lumobj in the map by it's unique @a index.
-     */
-    inline Lumobj *lumobj(int index) const { return lumobjs().at(index); }
-
-    /**
-     * Attempt to add a new bias light source to the map (a copy is made).
-     *
-     * @note At most @ref MAX_BIAS_SOURCES are supported for technical reasons.
-     *
-     * @return  Reference to the newly added bias source.
-     *
-     * @see biasSourceCount()
-     * @throws FullError  Once capacity is reached.
-     */
-    BiasSource &addBiasSource(BiasSource const &biasSource = BiasSource());
-
-    /**
-     * Removes the specified bias light source from the map.
-     *
-     * @see removeAllBiasSources()
-     */
-    void removeBiasSource(int which);
-
-    /**
-     * Remove all bias sources from the map.
-     *
-     * @see removeBiasSource()
-     */
-    void removeAllBiasSources();
-
-    /**
-     * Provides a list of all the bias sources in the map.
-     */
-    BiasSources const &biasSources() const;
-
-    /**
-     * Returns the total number of bias sources in the map.
-     */
-    inline int biasSourceCount() const { return biasSources().count(); }
-
-    /**
-     * Returns the time in milliseconds when the current render frame began. Used
-     * for interpolation purposes.
-     */
-    uint biasCurrentTime() const;
-
-    /**
-     * Returns the frameCount of the current render frame. Used for tracking changes
-     * to bias sources/surfaces.
-     */
-    uint biasLastChangeOnFrame() const;
-
-    /**
-     * Lookup a bias source in the map by it's unique @a index.
-     */
-    BiasSource *biasSource(int index) const;
-
-    /**
-     * Finds the bias source nearest to the specified map space @a point.
-     *
-     * @note This result is not cached. May return @c 0 if no bias sources exist.
-     */
-    BiasSource *biasSourceNear(Vector3d const &point) const;
-
-    /**
-     * Lookup the unique index for the given bias @a source.
-     */
-    int toIndex(BiasSource const &source) const;
-
-    /**
-     * Deletes hidden, unpredictable or nulled mobjs for which we have not received
-     * updates in a while.
-     */
-    void expireClMobjs();
+    void initLightGrid();
 
     /**
      * Link the given @a surface in all material lists and surface sets which
@@ -727,34 +792,6 @@ public:
     void updateTrackedPlanes();
 
     /**
-     * Returns @c true iff a LightGrid has been initialized for the map.
-     *
-     * @see lightGrid()
-     */
-    bool hasLightGrid();
-
-    /**
-     * Provides access to the light grid for the map.
-     *
-     * @see hasLightGrid()
-     */
-    LightGrid &lightGrid();
-
-    /**
-     * (Re)-initialize the light grid used for smoothed sector lighting.
-     *
-     * If the grid has not yet been initialized block light sources are determined
-     * at this time (SectorClusters must be built for this).
-     *
-     * If the grid has already been initialized calling this will perform a full update.
-     *
-     * @note Initialization may take some time depending on the complexity of the
-     * map (physial dimensions, number of sectors) and should therefore be done
-     * "off-line".
-     */
-    void initLightGrid();
-
-    /**
      * Perform spreading of all contacts in the specified map space @a region.
      */
     void spreadAllContacts(AABoxd const &region);
@@ -762,6 +799,19 @@ public:
 #endif // __CLIENT__
 
 public:
+
+    /**
+     * Returns a rich formatted, textual summary of the map's elements, suitable
+     * for logging.
+     */
+    String elementSummaryAsStyledText() const;
+
+    /**
+     * Returns a rich formatted, textual summary of the map's objects, suitable
+     * for logging.
+     */
+    String objectSummaryAsStyledText() const;
+
     /**
      * To be called to register the commands and variables of this module.
      */
@@ -773,15 +823,7 @@ public:
      */
     static void initDummies();
 
-#ifdef __CLIENT__
-
-protected:
-    /// Observes WorldSystem FrameBegin
-    void worldSystemFrameBegins(bool resetNextViewer);
-
-#endif // __CLIENT__
-
-public: /// @todo Make private:
+public: /// @todo Most of the following should be private:
 
     /**
      * Initialize the node piles and link rings. To be called after map load.
@@ -843,18 +885,25 @@ public: /// @todo Make private:
     void clearClMobjs();
 
     /**
+     * Deletes hidden, unpredictable or nulled mobjs for which we have not received
+     * updates in a while.
+     */
+    void expireClMobjs();
+
+    /**
      * Find/create a client mobj with the unique identifier @a id. Client mobjs are
      * just like normal mobjs, except they have additional network state.
      *
      * To check whether a given mobj is a client mobj, use Cl_IsClientMobj(). The network
      * state can then be accessed with ClMobj_GetInfo().
      *
-     * @param id  Identifier of the client mobj. Every client mobj has a unique
-     *            identifier.
+     * @param id         Identifier of the client mobj. Every client mobj has a unique
+     *                   identifier.
+     * @param canCreate  @c true= create a new client mobj if none existing.
      *
      * @return  Pointer to the gameside mobj.
      */
-    mobj_t *clMobjFor(thid_t id, bool canCreate = false) const;
+    struct mobj_s *clMobjFor(thid_t id, bool canCreate = false) const;
 
     /**
      * Iterate all client mobjs, making a callback for each. Iteration ends if a
@@ -865,30 +914,20 @@ public: /// @todo Make private:
      *
      * @return  @c 0 if all callbacks return @c 0; otherwise the result of the last.
      */
-    int clMobjIterator(int (*callback) (mobj_t *, void *), void *context = 0);
+    int clMobjIterator(int (*callback) (struct mobj_s *, void *), void *context = nullptr);
 
     /**
      * Provides readonly access to the client mobj hash.
      */
     ClMobjHash const &clMobjHash() const;
+
+protected:
+    /// Observes WorldSystem FrameBegin
+    void worldSystemFrameBegins(bool resetNextViewer);
+
 #endif // __CLIENT__
 
-    /**
-     * Returns a rich formatted, textual summary of the map's elements, suitable
-     * for logging.
-     */
-    de::String elementSummaryAsStyledText() const;
-
-    /**
-     * Returns a rich formatted, textual summary of the map's objects, suitable
-     * for logging.
-     */
-    de::String objectSummaryAsStyledText() const;
-
-public:
-    /*
-     * Runtime map editing:
-     */
+public: // Editing ----------------------------------------------------------------
 
     /**
      * Returns @c true iff the map is currently in an editable state.
@@ -913,7 +952,7 @@ public:
      * @see isEditable()
      */
     Line *createLine(Vertex &v1, Vertex &v2, int flags = 0,
-                     Sector *frontSector = 0, Sector *backSector = 0,
+                     Sector *frontSector = nullptr, Sector *backSector = nullptr,
                      int archiveIndex = MapElement::NoIndex);
 
     /**
@@ -930,16 +969,19 @@ public:
     /**
      * Provides a list of all the editable lines in the map.
      */
+    typedef QList<Line *> Lines;
     Lines const &editableLines() const;
 
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
+    typedef QList<Polyobj *> Polyobjs;
     Polyobjs const &editablePolyobjs() const;
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
+    typedef QList<Sector *> Sectors;
     Sectors const &editableSectors() const;
 
     inline int editableLineCount() const    { return editableLines().count(); }

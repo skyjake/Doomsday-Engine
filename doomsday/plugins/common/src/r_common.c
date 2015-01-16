@@ -93,20 +93,20 @@ static dd_bool maximizedViewWindow(int player)
         Con_Error("maximizedViewWindow: Invalid player #%i.", player);
         exit(1);
     }
-    return (!(G_GameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+    return (!(G_GameState() == GS_MAP && cfg.common.screenBlocks <= 10 &&
               !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))); // $democam: can be set on every game tic.
 }
 
 static void calcStatusBarSize(Size2Raw* size, Size2Rawf* viewScale, int maxWidth)
 {
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-    float aspectScale = cfg.statusbarScale;
+    float aspectScale = cfg.common.statusbarScale;
 
     size->width = ST_WIDTH * viewScale->height;
     if(size->width > maxWidth)
         aspectScale *= (float)maxWidth/size->width;
 
-    size->width *= cfg.statusbarScale;
+    size->width *= cfg.common.statusbarScale;
     size->height = floor(ST_HEIGHT * 1.2f/*aspect correct*/ * aspectScale);
 #else
     size->width = size->height  = 0;
@@ -141,16 +141,16 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
     memcpy(&window, newGeometry, sizeof(window));
     window.origin.x = window.origin.y = 0;
 
-    // Override @c cfg.screenBlocks and force a maximized window?
-    if(!maximizedViewWindow(player) && cfg.screenBlocks <= 10)
+    // Override @c cfg.common.screenBlocks and force a maximized window?
+    if(!maximizedViewWindow(player) && cfg.common.screenBlocks <= 10)
     {
         Size2Raw statusBarSize;
         calcStatusBarSize(&statusBarSize, &viewScale, newGeometry->size.width);
 
-        if(cfg.screenBlocks != 10)
+        if(cfg.common.screenBlocks != 10)
         {
-            window.size.width  = cfg.screenBlocks * SCREENWIDTH/10;
-            window.size.height = cfg.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
+            window.size.width  = cfg.common.screenBlocks * SCREENWIDTH/10;
+            window.size.height = cfg.common.screenBlocks * (SCREENHEIGHT - statusBarSize.height) / 10;
 
             window.origin.x = (SCREENWIDTH - window.size.width) / 2;
             window.origin.y = (SCREENHEIGHT - statusBarSize.height - window.size.height) / 2;
@@ -176,13 +176,13 @@ static void resizeViewWindow(int player, const RectRaw* newGeometry,
 void R_ResizeViewWindow(int flags)
 {
     static dd_bool oldMaximized;
-    int i, delta, destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    int i, delta, destBlocks = MINMAX_OF(3, cfg.common.setBlocks, 13);
     dd_bool maximized;
     RectRaw port;
 
     if(IS_DEDICATED) return;
 
-    // Override @c cfg.screenBlocks and force a maximized window?
+    // Override @c cfg.common.screenBlocks and force a maximized window?
     maximized = maximizedViewWindow(DISPLAYPLAYER);
     if(maximized != oldMaximized)
     {
@@ -192,28 +192,28 @@ void R_ResizeViewWindow(int flags)
 
     if(!(flags & RWF_FORCE))
     {
-        if(cfg.screenBlocks == destBlocks)
+        if(cfg.common.screenBlocks == destBlocks)
             return;
     }
 
-    delta = MINMAX_OF(-1, destBlocks - cfg.screenBlocks, 1);
+    delta = MINMAX_OF(-1, destBlocks - cfg.common.screenBlocks, 1);
     if(delta != 0)
     {
-        if(cfg.screenBlocks >= 10 && destBlocks != 13)
+        if(cfg.common.screenBlocks >= 10 && destBlocks != 13)
         {
             // When going fullscreen, force a hud show event (to reset the timer).
             for(i = 0; i < MAXPLAYERS; ++i)
                 ST_HUDUnHide(i, HUE_FORCE);
         }
 
-        if((cfg.screenBlocks == 11 && destBlocks == 10) ||
-           (cfg.screenBlocks == 10 && destBlocks == 11))
+        if((cfg.common.screenBlocks == 11 && destBlocks == 10) ||
+           (cfg.common.screenBlocks == 10 && destBlocks == 11))
         {
             // When going to/from statusbar span, do an instant change.
             flags |= RWF_NO_LERP;
         }
 
-        cfg.screenBlocks += delta;
+        cfg.common.screenBlocks += delta;
         flags |= RWF_FORCE;
     }
 

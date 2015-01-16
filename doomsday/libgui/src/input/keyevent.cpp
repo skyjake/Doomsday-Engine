@@ -349,9 +349,19 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
 #ifdef XFREE_KEYMAPPING
 static int x11ScancodeToDDKey(int scancode)
 {
-    Display* disp = QX11Info::display();
-    KeySym sym = XKeycodeToKeysym(disp, scancode, 0);
+    int symCount;
+    KeySym *syms = XGetKeyboardMapping(QX11Info::display(), scancode, 1, &symCount);
+    if(!symCount) 
+    {
+        XFree(syms);
+        return 0;
+    }
+    KeySym sym = syms[0];
+    XFree(syms); 
+    syms = nullptr;
+
     if(sym == NoSymbol) return 0;
+    
     unsigned int ucs4 = X11_KeySymToUcs4(sym);
     if(ucs4)
     {
@@ -433,7 +443,7 @@ KeyEvent::State KeyEvent::state() const
 bool KeyEvent::isModifier() const
 {
     return _qtKey == Qt::Key_Shift || _qtKey == Qt::Key_Control ||
-           _qtKey == Qt::Key_Alt   || _qtKey == Qt::Key_Meta;
+            _qtKey == Qt::Key_Alt   || _qtKey == Qt::Key_Meta;
 }
 
 } // namespace de

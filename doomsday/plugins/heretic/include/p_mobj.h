@@ -283,8 +283,6 @@ mobj_t *Vanilla_P_SpawnMissileAngle(mobj_t *source, mobjtype_t type, angle_t ang
 
 mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
-coord_t P_MobjGetFriction(mobj_t *mobj);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

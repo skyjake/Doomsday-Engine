@@ -36,22 +36,11 @@ void S_MapMusic(de::Uri const &mapUri)
 {
     if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
-#ifdef __JHEXEN__
-        // Update the 'currentmap' music definition.
-        String const songId = "currentmap";
-
-        Record &music = Defs().musics.find("id", songId);
-        music.set("lumpName", mapInfo->gets("songLump"));
-        music.set("cdTrack", mapInfo->geti("cdTrack", 0));
-#else
-        String const songId  = mapInfo->gets("music");
-#endif
-
-        int const songNumber = Defs().getMusicNum(songId.toUtf8().constData());
-        if(S_StartMusicNum(songNumber, true))
+        Block const musicIdUtf8 = mapInfo->gets("music").toUtf8();
+        if(S_StartMusic(musicIdUtf8.constData(), true))
         {
             // Set the game status cvar for the map music.
-            Con_SetInteger2("map-music", songNumber, SVF_WRITE_OVERRIDE);
+            Con_SetInteger2("map-music", Defs().getMusicNum(musicIdUtf8.constData()), SVF_WRITE_OVERRIDE);
         }
     }
 }
@@ -120,7 +109,10 @@ void SndInfoParser(ddstring_s const *path)
                 {
                     if(Record *mapInfo = Defs().mapInfos.tryFind("id", G_ComposeMapUri(0, mapNumber - 1).compose()))
                     {
-                        mapInfo->set("songLump", Str_Text(lumpName));
+                        if(Record *music = Defs().musics.tryFind("id", mapInfo->gets("music")))
+                        {
+                            music->set("lumpName", Str_Text(lumpName));
+                        }
                     }
                 }
                 continue;

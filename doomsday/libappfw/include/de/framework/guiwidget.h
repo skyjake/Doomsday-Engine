@@ -103,19 +103,21 @@ public:
             BorderGlow,         ///< Border glow with specified color/thickness.
             Blurred,            ///< Blurs whatever is showing behind the widget.
             BlurredWithBorderGlow,
+            BlurredWithSolidFill,
             SharedBlur,         ///< Use the blur background from a BlurWidget.
+            SharedBlurWithBorderGlow,
             Rounded
         };
         Vector4f solidFill;     ///< Always applied if opacity > 0.
         Type type;
         Vector4f color;         ///< Secondary color.
         float thickness;        ///< Frame border thickenss.
-        BlurWidget *blur;
+        GuiWidget *blur;
 
         Background()
             : type(None), thickness(0), blur(0) {}
 
-        Background(BlurWidget &blurred, Vector4f const &blurColor)
+        Background(GuiWidget &blurred, Vector4f const &blurColor)
             : solidFill(blurColor), type(SharedBlur), thickness(0), blur(&blurred) {}
 
         Background(Vector4f const &solid, Type t = None)
@@ -175,6 +177,18 @@ public:
 
         AnimateOpacityWhenEnabledOrDisabled = 0x2,
 
+        /**
+         * Prevents the drawing of the widget contents even if it visible. The texture
+         * containing the blurred background is updated regardless.
+         */
+        DontDrawContent = 0x4,
+
+        /**
+         * Visible opacity determined solely by the widget itself, not affected by
+         * ancestors.
+         */
+        IndependentOpacity = 0x8,
+
         DefaultAttributes = RetainStatePersistently | AnimateOpacityWhenEnabledOrDisabled
     };
     Q_DECLARE_FLAGS(Attributes, Attribute)
@@ -207,6 +221,8 @@ public:
      * the target canvas.
      */
     RuleRectangle &rule();
+
+    Rectanglei contentRect() const;
 
     /**
      * Returns the rule rectangle that defines the placement of the widget on

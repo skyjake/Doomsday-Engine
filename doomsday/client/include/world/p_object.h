@@ -204,6 +204,15 @@ Sprite *Mobj_Sprite(mobj_t const &mobj);
 ModelDef *Mobj_ModelDef(mobj_t const &mobj, ModelDef **nextModef = 0,
                         float *interp = 0);
 
+/**
+ * Determines the shadow radius of a mobj. Falls back to Mobj_VisualRadius().
+ *
+ * @param mobj  Map object.
+ *
+ * @return Radius for shadow.
+ */
+coord_t Mobj_ShadowRadius(mobj_t const &mobj);
+
 #endif // __CLIENT__
 
 coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);

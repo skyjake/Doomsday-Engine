@@ -21,6 +21,7 @@
 #include "common.h"
 #include "d_net.h"
 
+#include <de/RecordValue>
 #include "g_common.h"
 #include "gamesession.h"
 #include "player.h"
@@ -49,19 +50,37 @@ static void notifyAllowCheatsChange()
 {
     if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
     {
-        AutoStr *msg = Str_Appendf(AutoStr_NewStd(), "--- CHEATS NOW %s ON THIS SERVER ---",
-                                                     netSvAllowCheats? "ENABLED" : "DISABLED");
-        NetSv_SendMessage(DDSP_ALL_PLAYERS, Str_Text(msg));
+        String const msg = String("--- CHEATS NOW %1 ON THIS SERVER ---")
+                               .arg(netSvAllowCheats? "ENABLED" : "DISABLED");
+        NetSv_SendMessage(DDSP_ALL_PLAYERS, msg.toUtf8().constData());
     }
+}
+
+String D_NetDefaultEpisode()
+{
+    return FirstPlayableEpisodeId();
+}
+
+de::Uri D_NetDefaultMap()
+{
+    String const episodeId = D_NetDefaultEpisode();
+
+    de::Uri map("Maps:", RC_NULL);
+    if(!episodeId.isEmpty())
+    {
+        map = de::Uri(Defs().episodes.find("id", episodeId).gets("startMap"), RC_NULL);
+        DENG2_ASSERT(!map.isEmpty());
+    }
+    return map;
 }
 
 void D_NetConsoleRegister()
 {
-    C_VAR_CHARPTR("mapcycle",                       &mapCycle,          CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
+    C_VAR_CHARPTR("mapcycle",           &mapCycle,  CVF_HIDE | CVF_NO_ARCHIVE, 0, 0);
 
     C_CMD        ("setcolor",   "i",    SetColor);
 #if __JHEXEN__
-    C_CMD_FLAGS  ("setclass",   "i",    SetClass, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS  ("setclass",   "i",    SetClass,   CMDF_NO_DEDICATED);
 #endif
     C_CMD        ("startcycle", "",     MapCycle);
     C_CMD        ("endcycle",   "",     MapCycle);
@@ -69,8 +88,15 @@ void D_NetConsoleRegister()
 
     if(IS_DEDICATED)
     {
-        C_VAR_CHARPTR("server-game-episode",                    &cfg.netEpisode,                        0, 0, 0);
-        C_VAR_URIPTR ("server-game-map",                        &cfg.netMap,                            0, 0, 0);
+        C_VAR_CHARPTR("server-game-episode",    &cfg.common.netEpisode,    0, 0, 0);
+        C_VAR_URIPTR ("server-game-map",        &cfg.common.netMap,        0, 0, 0);
+
+        // Use the first playable map as the default.
+        String episodeId = D_NetDefaultEpisode();
+        de::Uri map      = D_NetDefaultMap();
+
+        Con_SetString("server-game-episode", episodeId.toUtf8().constData());
+        Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
     }
 
     /// @todo "server-*" cvars should only be registered by dedicated servers.
@@ -84,28 +110,28 @@ void D_NetConsoleRegister()
 #endif
     C_VAR_INT2   ("server-game-cheat",                      &netSvAllowCheats,                      0, 0, 1, notifyAllowCheatsChange);
 #if __JDOOM__ || __JDOOM64__
-    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 2);
+    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.common.netDeathmatch,              0, 0, 2);
 #else
-    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.netDeathmatch,                     0, 0, 1);
+    C_VAR_BYTE   ("server-game-deathmatch",                 &cfg.common.netDeathmatch,              0, 0, 1);
 #endif
-    C_VAR_BYTE   ("server-game-jump",                       &cfg.netJumping,                        0, 0, 1);
+    C_VAR_BYTE   ("server-game-jump",                       &cfg.common.netJumping,                 0, 0, 1);
     C_VAR_CHARPTR("server-game-mapcycle",                   &mapCycle,                              0, 0, 0);
     C_VAR_BYTE   ("server-game-mapcycle-noexit",            &mapCycleNoExit,                        0, 0, 1);
 #if __JHERETIC__
     C_VAR_BYTE   ("server-game-maulotaur-fixfloorfire",     &cfg.fixFloorFire,                      0, 0, 1);
 #endif
-    C_VAR_BYTE   ("server-game-monster-meleeattack-nomaxz", &cfg.netNoMaxZMonsterMeleeAttack,       0, 0, 1);
+    C_VAR_BYTE   ("server-game-monster-meleeattack-nomaxz", &cfg.common.netNoMaxZMonsterMeleeAttack,0, 0, 1);
 #if __JDOOM__ || __JDOOM64__
     C_VAR_BYTE   ("server-game-nobfg",                      &cfg.noNetBFG,                          0, 0, 1);
 #endif
-    C_VAR_BYTE   ("server-game-nomonsters",                 &cfg.netNoMonsters,                     0, 0, 1);
+    C_VAR_BYTE   ("server-game-nomonsters",                 &cfg.common.netNoMonsters,              0, 0, 1);
 #if !__JHEXEN__
     C_VAR_BYTE   ("server-game-noteamdamage",               &cfg.noTeamDamage,                      0, 0, 1);
 #endif
 #if __JHERETIC__
     C_VAR_BYTE   ("server-game-plane-fixmaterialscroll",    &cfg.fixPlaneScrollMaterialsEastOnly,   0, 0, 1);
 #endif
-    C_VAR_BYTE   ("server-game-radiusattack-nomaxz",        &cfg.netNoMaxZRadiusAttack,             0, 0, 1);
+    C_VAR_BYTE   ("server-game-radiusattack-nomaxz",        &cfg.common.netNoMaxZRadiusAttack,      0, 0, 1);
 #if __JHEXEN__
     C_VAR_BYTE   ("server-game-randclass",                  &cfg.netRandomClass,                    0, 0, 1);
 #endif
@@ -115,12 +141,12 @@ void D_NetConsoleRegister()
 #if __JDOOM__ || __JHERETIC__
     C_VAR_BYTE   ("server-game-respawn-monsters-nightmare", &cfg.respawnMonstersNightmare,          0, 0, 1);
 #endif
-    C_VAR_BYTE   ("server-game-skill",                      &cfg.netSkill,                          0, 0, 4);
+    C_VAR_BYTE   ("server-game-skill",                      &cfg.common.netSkill,                   0, 0, 4);
 
     // Modifiers:
-    C_VAR_BYTE   ("server-game-mod-damage",                 &cfg.netMobDamageModifier,              0, 1, 100);
-    C_VAR_INT    ("server-game-mod-gravity",                &cfg.netGravity,                        0, -1, 100);
-    C_VAR_BYTE   ("server-game-mod-health",                 &cfg.netMobHealthModifier,              0, 1, 20);
+    C_VAR_BYTE   ("server-game-mod-damage",                 &cfg.common.netMobDamageModifier,       0, 1, 100);
+    C_VAR_INT    ("server-game-mod-gravity",                &cfg.common.netGravity,                 0, -1, 100);
+    C_VAR_BYTE   ("server-game-mod-health",                 &cfg.common.netMobHealthModifier,       0, 1, 20);
 
     // Coop:
 #if !__JHEXEN__
@@ -173,7 +199,7 @@ int D_NetServerStarted(int before)
     if(before) return true;
 
     // We're the server, so...
-    ::cfg.playerColor[0] = PLR_COLOR(0, ::cfg.netColor);
+    ::cfg.playerColor[0] = PLR_COLOR(0, ::cfg.common.netColor);
 
 #if __JHEXEN__
     ::cfg.playerClass[0] = playerclass_t(::cfg.netClass);
@@ -182,14 +208,31 @@ int D_NetServerStarted(int before)
 #endif
     P_ResetPlayerRespawnClasses();
 
-    String const episodeId = Con_GetString("server-game-episode");
-    de::Uri const mapUri   = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
+    String episodeId = Con_GetString("server-game-episode");
+    de::Uri mapUri = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
+    if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
     GameRuleset rules(COMMON_GAMESESSION->rules()); // Make a copy of the current rules.
-    rules.skill = skillmode_t(cfg.netSkill);
+    rules.skill = skillmode_t(cfg.common.netSkill);
 
     COMMON_GAMESESSION->end();
-    COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+
+    try
+    {
+        // First try the configured map.
+        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+    }
+    catch(Error const &er)
+    {
+        LOGDEV_ERROR("Failed to start server: %s") << er.asText();
+        episodeId = D_NetDefaultEpisode();
+        mapUri    = D_NetDefaultMap();
+        LOG_INFO("Using the default map (%s) to start the server due to failure to load the configured map")
+                << mapUri;
+
+        COMMON_GAMESESSION->begin(rules, episodeId, mapUri);
+    }
+
     G_SetGameAction(GA_NONE); /// @todo Necessary?
 
     return true;
@@ -319,7 +362,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     // Here we will only display the message.
     else if(peType == DDPE_CHAT_MESSAGE)
     {
-        int oldecho = cfg.echoMsg;
+        int oldecho = cfg.common.echoMsg;
         AutoStr *msg = AutoStr_New();
 
         if(plrNumber > 0)
@@ -333,9 +376,9 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         Str_Truncate(msg, NETBUFFER_MAXMESSAGE); // not overly long, please
 
         // The chat message is already echoed by the console.
-        cfg.echoMsg = false;
-        D_NetMessageEx(CONSOLEPLAYER, Str_Text(msg), (cfg.chatBeep? true : false));
-        cfg.echoMsg = oldecho;
+        cfg.common.echoMsg = false;
+        D_NetMessageEx(CONSOLEPLAYER, Str_Text(msg), (cfg.common.chatBeep? true : false));
+        cfg.common.echoMsg = oldecho;
     }
 
     return true;
@@ -372,7 +415,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         }
 
         // Send info about our jump power.
-        NetSv_SendJumpPower(parm, cfg.jumpEnabled ? cfg.jumpPower : 0);
+        NetSv_SendJumpPower(parm, cfg.common.jumpEnabled? cfg.common.jumpPower : 0);
         NetSv_Paused(paused);
         break; }
 
@@ -697,7 +740,7 @@ D_CMD(SetColor)
 {
     DENG2_UNUSED2(src, argc);
 
-    cfg.netColor = atoi(argv[1]);
+    cfg.common.netColor = atoi(argv[1]);
     if(IS_SERVER) // A local player?
     {
         if(IS_DEDICATED) return false;
@@ -708,7 +751,7 @@ D_CMD(SetColor)
         // a local mobj we're dealing with. We'll change the color translation
         // bits directly.
 
-        cfg.playerColor[player] = PLR_COLOR(player, cfg.netColor);
+        cfg.playerColor[player] = PLR_COLOR(player, cfg.common.netColor);
         players[player].colorMap = cfg.playerColor[player];
 
         if(players[player].plr->mo)

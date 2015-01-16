@@ -1,4 +1,4 @@
-/** @file linesegmentblock.h  World BSP line segment block.
+/** @file superblockmap.h  World BSP line segment block.
  *
  * Originally based on glBSP 2.24 (in turn, based on BSP 2.3)
  * @see http://sourceforge.net/projects/glbsp/

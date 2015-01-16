@@ -143,8 +143,8 @@ DENG_API_T(R);
 #define R_AddAnimGroupFrame             _api_R.AddAnimGroupFrame
 #define R_CreateColorPalette            _api_R.CreateColorPalette
 #define R_CreateColorPaletteTranslation _api_R.CreateColorPaletteTranslation
-#define R_GetColorPaletteNumForName		_api_R.GetColorPaletteNumForName
-#define R_GetColorPaletteNameForNum		_api_R.GetColorPaletteNameForNum
+#define R_GetColorPaletteNumForName     _api_R.GetColorPaletteNumForName
+#define R_GetColorPaletteNameForNum     _api_R.GetColorPaletteNameForNum
 #define R_GetColorPaletteRGBf           _api_R.GetColorPaletteRGBf
 #define R_GetColorPaletteRGBubv         _api_R.GetColorPaletteRGBubv
 #define Textures_UniqueId               _api_R.TextureUniqueId

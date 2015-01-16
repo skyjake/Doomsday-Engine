@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "de_platform.h"
 #include "render/shadowedge.h"
 
 #include "Face"
@@ -33,8 +32,8 @@
 #include "world/lineowner.h"
 
 #include "render/rend_main.h"
+#include "MaterialAnimator"
 #include "WallEdge"
-#include "MaterialSnapshot"
 
 namespace de {
 
@@ -96,11 +95,13 @@ static bool middleMaterialCoversOpening(LineSide const &side)
     if(!side.hasSections()) return false;
     if(!side.middle().hasMaterial()) return false;
 
+    MaterialAnimator &matAnimator = side.middle().material().getAnimator(Rend_MapSurfaceMaterialSpec());
+
     // Ensure we have up to date info about the material.
-    MaterialSnapshot const &ms = side.middle().material().prepare(Rend_MapSurfaceMaterialSpec());
+    matAnimator.prepare();
 
     // Might the material cover the opening?
-    if(ms.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
+    if(matAnimator.isOpaque() && !side.middle().blendMode() && side.middle().opacity() >= 1)
     {
         // Stretched middles always cover the opening.
         if(side.isFlagged(SDF_MIDDLE_STRETCH))
@@ -130,7 +131,7 @@ static bool middleMaterialCoversOpening(LineSide const &side)
             openTop = frontSec.ceiling().heightSmoothed();
         }
 
-        if(ms.height() >= openTop - openBottom)
+        if(matAnimator.dimensions().y >= openTop - openBottom)
         {
             // Possibly; check the placement.
             if(side.leftHEdge()) // possibility of degenerate BSP leaf

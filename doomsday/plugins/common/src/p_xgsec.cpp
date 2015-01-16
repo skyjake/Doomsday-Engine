@@ -3010,36 +3010,21 @@ coord_t XS_Gravity(Sector* sec)
         coord_t gravity = xsec->xg->info.gravity;
 
         // Apply gravity modifier.
-        if(cfg.netGravity != -1)
-            gravity *= (coord_t) cfg.netGravity / 100;
+        if(cfg.common.netGravity != -1)
+            gravity *= (coord_t) cfg.common.netGravity / 100;
 
         return gravity;
     }
 }
 
-coord_t XS_Friction(Sector* sector)
+coord_t XS_Friction(Sector const *sector)
 {
-    if(!P_ToXSector(sector)->xg || !(P_ToXSector(sector)->xg->info.flags & STF_FRICTION))
+    auto const *xsec = P_ToXSector_const(sector);
+
+    if(!xsec->xg || !(xsec->xg->info.flags & STF_FRICTION))
         return FRICTION_NORMAL; // Normal friction.
 
-    return P_ToXSector(sector)->xg->info.friction;
-}
-
-/**
- * @return              The thrust multiplier to emulate by friction.
- */
-coord_t XS_ThrustMul(Sector *sector)
-{
-    coord_t x = XS_Friction(sector);
-
-    if(x <= FRICTION_NORMAL)
-        return 1; // Normal friction.
-
-    if(x > 1)
-        return 0; // There's nothing to thrust from!
-
-    // {c = -93.31092643, b = 208.0448223, a = -114.7338958}
-    return (-114.7338958 * x * x + 208.0448223 * x - 93.31092643);
+    return xsec->xg->info.friction;
 }
 
 /**

@@ -34,8 +34,8 @@
 #include "resource/compositetexture.h"
 #include "resource/patch.h"
 #include "resource/patchname.h"
+
 #ifdef __CLIENT__
-#  include "MaterialSnapshot"
 #  include "gl/gl_tex.h"
 #  include "gl/gl_texmanager.h"
 #  include "render/rend_model.h"
@@ -529,52 +529,15 @@ DENG2_PIMPL(ResourceSystem)
         MaterialVariantSpec const *spec; /// Interned context specification.
 
         MaterialCacheTask(Material &resource, MaterialVariantSpec const &contextSpec)
-            : CacheTask(), material(&resource), spec(&contextSpec)
+            : CacheTask()
+            , material(&resource)
+            , spec(&contextSpec)
         {}
 
         void run()
         {
-            ResourceSystem &resSys = App_ResourceSystem();
-
-            // Ensure a variant for the specified context is created.
-            material->createVariant(*spec);
-            DENG2_ASSERT(material->chooseVariant(*spec) != 0);
-
-            // Prepare all layer textures.
-            foreach(MaterialLayer *layer, material->layers())
-            foreach(MaterialLayer::Stage *stage, layer->stages())
-            {
-                if(stage->texture)
-                {
-                    stage->texture->prepareVariant(*spec->primarySpec);
-                }
-            }
-
-            // Do we need to prepare detail texture(s)?
-            if(!material->isSkyMasked() && material->isDetailed())
-            foreach(MaterialDetailLayer::Stage *stage, material->detailLayer().stages())
-            {
-                if(stage->texture)
-                {
-                    float const contrast = de::clamp(0.f, stage->strength, 1.f)
-                                         * detailFactor /*Global strength multiplier*/;
-                    stage->texture->prepareVariant(resSys.detailTextureSpec(contrast));
-                }
-            }
-
-            // Do we need to prepare a shiny texture (and possibly a mask)?
-            if(!material->isSkyMasked() && material->isShiny())
-            foreach(MaterialShineLayer::Stage *stage, material->shineLayer().stages())
-            {
-               if(stage->texture)
-               {
-                   stage->texture->prepareVariant(Rend_MapSurfaceShinyTextureSpec());
-                   if(stage->maskTexture)
-                   {
-                       stage->maskTexture->prepareVariant(Rend_MapSurfaceShinyMaskTextureSpec());
-                   }
-               }
-            }
+            // Cache all dependent assets and upload GL textures if necessary.
+            material->getAnimator(*spec).cacheAssets();
         }
     };
 
@@ -894,7 +857,7 @@ DENG2_PIMPL(ResourceSystem)
                              noStretch, toAlpha);
 
         // Apply the normalized spec to the template.
-        tpl.context     = contextId;
+        tpl.contextId     = contextId;
         tpl.primarySpec = &primarySpec;
 
         return *findMaterialSpec(tpl, true);
@@ -982,8 +945,8 @@ DENG2_PIMPL(ResourceSystem)
 
     bool textureSpecInUse(TextureVariantSpec const &spec)
     {
-        foreach(Texture *texture, textures)
-        foreach(TextureVariant *variant, texture->variants())
+        for(Texture *texture : textures)
+        for(TextureVariant *variant : texture->variants())
         {
             if(&variant->spec() == &spec)
             {
@@ -1775,10 +1738,15 @@ DENG2_PIMPL(ResourceSystem)
         if(!sprite) return;
         if(!sprite->hasViewAngle(0)) return;
 
-        MaterialSnapshot const &ms = sprite->viewAngle(0).material->prepare(Rend_SpriteMaterialSpec());
-        Texture const &tex = ms.texture(MTU_PRIMARY).generalCase();
-        int off = de::max(0, -tex.origin().y - ms.height());
-        scaleModel(mf, ms.height(), off);
+        MaterialAnimator &matAnimator = sprite->viewAngle(0).material->getAnimator(Rend_SpriteMaterialSpec());
+
+        // Ensure we've up to date info about the material.
+        matAnimator.prepare();
+
+        Texture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
+        int off = de::max(0, -texture.origin().y - matAnimator.dimensions().y);
+
+        scaleModel(mf, matAnimator.dimensions().y, off);
     }
 
     float calcModelVisualRadius(ModelDef *def)
@@ -2068,16 +2036,10 @@ DENG2_PIMPL(ResourceSystem)
             }
         }
 
-        // Calculate visual radius for shadows.
-        /// @todo fixme: use a separate property.
-        /*if(def.shadowRadius)
-        {
-            modef->visualRadius = def.shadowRadius;
-        }
-        else*/
-        {
-            modef->visualRadius = calcModelVisualRadius(modef);
-        }
+        modef->visualRadius = calcModelVisualRadius(modef); // based on geometry bounds
+
+        // Shadow radius can be specified manually.
+        modef->shadowRadius = def.getf("shadowRadius");
     }
 
     static int destroyModelInRepository(StringPool::Id id, void *context)
@@ -2132,7 +2094,7 @@ DENG2_PIMPL(ResourceSystem)
         materials.append(&material);
 
         // We want notification when the material is about to be deleted.
-        material.audienceForDeletion += this;
+        material.audienceForDeletion() += this;
     }
 
     /// Observes MaterialManifest Deletion.
@@ -3523,6 +3485,15 @@ int ResourceSystem::animGroupCount()
     return d->animGroups.count();
 }
 
+AnimGroup &ResourceSystem::newAnimGroup(int flags)
+{
+    LOG_AS("ResourceSystem");
+    int const uniqueId = d->animGroups.count() + 1; // 1-based.
+    // Allocating one by one is inefficient but it doesn't really matter.
+    d->animGroups.append(new AnimGroup(uniqueId, flags));
+    return *d->animGroups.last();
+}
+
 AnimGroup *ResourceSystem::animGroup(int uniqueId)
 {
     LOG_AS("ResourceSystem::animGroup");
@@ -3531,16 +3502,22 @@ AnimGroup *ResourceSystem::animGroup(int uniqueId)
         return d->animGroups.at(uniqueId - 1);
     }
     LOGDEV_RES_WARNING("Invalid group #%i, returning NULL") << uniqueId;
-    return 0;
+    return nullptr;
 }
 
-AnimGroup &ResourceSystem::newAnimGroup(int flags)
+AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest &textureManifest)
 {
-    LOG_AS("ResourceSystem");
-    int const uniqueId = d->animGroups.count() + 1; // 1-based.
-    // Allocating one by one is inefficient but it doesn't really matter.
-    d->animGroups.append(new AnimGroup(uniqueId, flags));
-    return *d->animGroups.last();
+    // Group ids are 1-based.
+    // Search backwards to allow patching.
+    for(int i = animGroupCount(); i > 0; i--)
+    {
+        AnimGroup *group = animGroup(i);
+        if(group->hasFrameFor(textureManifest))
+        {
+            return group;
+        }
+    }
+    return nullptr;  // Not found.
 }
 
 struct SpriteFrameDef
@@ -3951,33 +3928,41 @@ void ResourceSystem::cacheForCurrentMap()
     {
         MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
 
-        foreach(Line *line, map.lines())
-        for(int i = 0; i < 2; ++i)
+        map.forAllLines([this, &spec] (Line &line)
         {
-            LineSide &side = line->side(i);
-            if(!side.hasSections()) continue;
+            for(int i = 0; i < 2; ++i)
+            {
+                LineSide &side = line.side(i);
+                if(!side.hasSections()) continue;
 
-            if(side.middle().hasMaterial())
-                cache(side.middle().material(), spec);
+                if(side.middle().hasMaterial())
+                    cache(side.middle().material(), spec);
 
-            if(side.top().hasMaterial())
-                cache(side.top().material(), spec);
+                if(side.top().hasMaterial())
+                    cache(side.top().material(), spec);
 
-            if(side.bottom().hasMaterial())
-                cache(side.bottom().material(), spec);
-        }
+                if(side.bottom().hasMaterial())
+                    cache(side.bottom().material(), spec);
+            }
+            return LoopContinue;
+        });
 
-        foreach(Sector *sector, map.sectors())
+        map.forAllSectors([this, &spec] (Sector &sector)
         {
             // Skip sectors with no line sides as their planes will never be drawn.
-            if(!sector->sideCount()) continue;
-
-            foreach(Plane *plane, sector->planes())
+            if(sector.sideCount())
             {
-                if(plane->surface().hasMaterial())
-                    cache(plane->surface().material(), spec);
+                sector.forAllPlanes([this, &spec] (Plane &plane)
+                {
+                    if(plane.surface().hasMaterial())
+                    {
+                        cache(plane.surface().material(), spec);
+                    }
+                    return LoopContinue;
+                });
             }
-        }
+            return LoopContinue;
+        });
     }
 
     if(precacheSprites)

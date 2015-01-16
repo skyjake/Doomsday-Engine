@@ -126,8 +126,10 @@ static void iterateBindings(controlconfig_t const *binds, char const *bindings, 
         {
             isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
 
-            if(!strncmp(ptr, "key", 3) || strstr(ptr, "-button") ||
-               !strncmp(ptr, "mouse-left", 10) || !strncmp(ptr, "mouse-middle", 12) ||
+            if(!strncmp(ptr, "key", 3)           ||
+               !strncmp(ptr, "joy-button", 10)   ||
+               !strncmp(ptr, "mouse-left", 10)   ||
+               !strncmp(ptr, "mouse-middle", 12) ||
                !strncmp(ptr, "mouse-right", 11))
             {
                 if(((binds->flags & CCF_INVERSE) && isInverse) ||
@@ -346,17 +348,21 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     String symbol = symbolicDescriptor(event);
     if(symbol.isEmpty()) return false;
 
-    // We're interested in key or button down events.
-    if(symbol.beginsWith("key-") && !symbol.endsWith("-down"))
+    // We're only interested in button down events.
+    if((symbol.beginsWith("key-")         ||
+        symbol.beginsWith("joy-button")   ||
+        symbol.beginsWith("mouse-left")   ||
+        symbol.beginsWith("mouse-middle") ||
+        symbol.beginsWith("mouse-right")) && !symbol.endsWith("-down"))
     {
-       return false;
+        return false;
     }
 
     String const context = bindContext();
 
     // The Delete key in the Menu context is reserved for deleting bindings
     if((!context.compareWithCase("menu") || !context.compareWithCase("shortcut")) &&
-       !symbol.compareWithCase("key-delete-down"))
+       symbol.beginsWith("key-delete-down"))
     {
         return false;
     }
@@ -394,10 +400,12 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
         // Staged?
         if(binds->flags & CCF_STAGED)
         {
-            // Staging is for keys and buttons.
-            if(name.beginsWith("key-") || name.indexOf("-button") >= 0 ||
-               !name.compareWithCase("mouse-left") || !name.compareWithCase("mouse-middle") ||
-               !name.compareWithCase("mouse-right"))
+            // Staging is buttons.
+            if(name.beginsWith("key-")         ||
+               name.beginsWith("joy-button")   ||
+               name.beginsWith("mouse-left")   ||
+               name.beginsWith("mouse-middle") ||
+               name.beginsWith("mouse-right"))
             {
                 stateFlags += "-staged";
             }
@@ -432,7 +440,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     DD_Execute(true, cmd.toUtf8().constData());
 
     // We've finished the grab.
-    setFlags(Active);
+    setFlags(Active, UnsetFlags);
     DD_SetInteger(DD_SYMBOLIC_ECHO, false);
     S_LocalSound(SFX_MENU_ACCEPT, nullptr);
     return true;

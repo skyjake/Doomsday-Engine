@@ -1,5 +1,4 @@
 /** @file dehread.cpp  DeHackEd patch reader plugin for Doomsday Engine.
- * @ingroup dehread
  *
  * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2012-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -19,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#include "dehread.h"
+
 #include <QDir>
 #include <QFile>
 #include <doomsday/filesys/lumpindex.h>
@@ -27,7 +28,6 @@
 #include <de/Log>
 #include <de/String>
 
-#include "dehread.h"
 #include "dehreader.h"
 
 using namespace de;
@@ -71,21 +71,25 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
     deh.append(QChar(0));
     lump.unlock();
 
-    LOG_RES_MSG("Applying DeHackEd patch lump #%i \"%s:%s\"")
+    /// @todo Custom status for contained files is not inherited from the container?
+    bool lumpIsCustom = (lump.isContained()? lump.container().hasCustom() : lump.hasCustom());
+
+    LOG_RES_MSG("Applying DeHackEd patch lump #%i \"%s:%s\"%s")
             << lumpNum
             << NativePath(lump.container().composePath()).pretty()
-            << lump.name();
+            << lump.name()
+            << (lumpIsCustom? " (custom)" : "");
 
-    readDehPatch(deh, NoInclude | IgnoreEOF);
+    readDehPatch(deh, lumpIsCustom, NoInclude | IgnoreEOF);
 }
 
-static void readFile(String const &filePath)
+static void readFile(String const &sourcePath, bool sourceIsCustom = true)
 {
-    QFile file(filePath);
+    QFile file(sourcePath);
     if(!file.open(QFile::ReadOnly | QFile::Text))
     {
         LOG_AS("DehRead::readFile");
-        LOG_WARNING("Failed opening \"%s\" for read, aborting...") << QDir::toNativeSeparators(filePath);
+        LOG_WARNING("Failed opening \"%s\" for read, aborting...") << QDir::toNativeSeparators(sourcePath);
         return;
     }
 
@@ -93,10 +97,11 @@ static void readFile(String const &filePath)
     Block deh = file.readAll();
     deh.append(QChar(0));
 
-    LOG_RES_MSG("Applying DeHackEd patch file \"%s\"")
-            << NativePath(filePath).pretty();
+    LOG_RES_MSG("Applying DeHackEd patch file \"%s\"%s")
+            << NativePath(sourcePath).pretty()
+            << (sourceIsCustom? " (custom)" : "");
 
-    readDehPatch(deh, IgnoreEOF);
+    readDehPatch(deh, sourceIsCustom, IgnoreEOF);
 }
 
 static void readPatchLumps(LumpIndex const &lumpIndex)

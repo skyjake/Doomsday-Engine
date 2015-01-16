@@ -528,9 +528,10 @@ DENG2_PIMPL(InputSystem)
             DENG2_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
             std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
 
-            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u]")
+            LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)")
                     << ev.toggle.id << char(ev.toggle.id)
-                    << ev.toggle.text << strlen(ev.toggle.text);
+                    << ev.toggle.text << strlen(ev.toggle.text)
+                    << ev.toggle.state;
 
             self.postEvent(&ev);
         }
@@ -774,8 +775,6 @@ DENG2_PIMPL(InputSystem)
      */
     void updateAllDeviceStateAssociations()
     {
-        auto &_self = self;
-
         // Clear all existing associations.
         for(InputDevice *device : devices)
         {
@@ -793,16 +792,16 @@ DENG2_PIMPL(InputSystem)
             if(!context->isActive())
                 continue;
 
-            context->forAllCommandBindings([&_self, &context] (Record &rec)
+            context->forAllCommandBindings([this, &context] (Record &rec)
             {
                 CommandBinding bind(rec);
 
                 InputDeviceControl *ctrl = nullptr;
                 switch(bind.geti("type"))
                 {
-                case E_AXIS:   ctrl = &_self.device(bind.geti("deviceId")).axis  (bind.geti("controlId")); break;
-                case E_TOGGLE: ctrl = &_self.device(bind.geti("deviceId")).button(bind.geti("controlId")); break;
-                case E_ANGLE:  ctrl = &_self.device(bind.geti("deviceId")).hat   (bind.geti("controlId")); break;
+                case E_AXIS:   ctrl = &self.device(bind.geti("deviceId")).axis  (bind.geti("controlId")); break;
+                case E_TOGGLE: ctrl = &self.device(bind.geti("deviceId")).button(bind.geti("controlId")); break;
+                case E_ANGLE:  ctrl = &self.device(bind.geti("deviceId")).hat   (bind.geti("controlId")); break;
 
                 case E_SYMBOLIC: break;
 
@@ -820,10 +819,10 @@ DENG2_PIMPL(InputSystem)
             });
 
             // Associate all the device bindings.
-            context->forAllImpulseBindings([&_self, &context] (Record &rec)
+            context->forAllImpulseBindings([this, &context] (Record &rec)
             {
                 ImpulseBinding bind(rec);
-                InputDevice &dev = _self.device(bind.geti("deviceId"));
+                InputDevice &dev = self.device(bind.geti("deviceId"));
 
                 InputDeviceControl *ctrl = nullptr;
                 switch(bind.geti("type"))
@@ -991,6 +990,10 @@ bool InputSystem::ignoreEvents(bool yes)
         // Clear all the event buffers.
         d->postEventsForAllDevices();
         clearEvents();
+
+        // Also reset input device state so that controls don't get stuck if they
+        // are released during the ignoring.
+        for(InputDevice *dev : d->devices) dev->reset();
     }
     return oldIgnoreInput;
 }

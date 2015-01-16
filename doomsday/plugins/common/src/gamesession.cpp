@@ -382,11 +382,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         else if(IS_DEDICATED)
         {
 #if !__JHEXEN__
-            rules.deathmatch      = cfg.netDeathmatch;
+            rules.deathmatch      = cfg.common.netDeathmatch;
             rules.respawnMonsters = cfg.netRespawn;
 
-            rules.noMonsters      = cfg.netNoMonsters;
-            /*rules.*/cfg.jumpEnabled = cfg.netJumping;
+            rules.noMonsters      = cfg.common.netNoMonsters;
+            /*rules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #else
             rules.randomClasses   = cfg.netRandomClass;
 #endif
@@ -630,23 +630,6 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Restart the map music?
         if(!briefing)
         {
-#if __JHEXEN__
-            /**
-             * @note Kludge: Due to the way music is managed with Hexen, unless we explicitly stop
-             * the current playing track the engine will not change tracks. This is due to the use
-             * of the runtime-updated "currentmap" definition (the engine thinks music has not changed
-             * because the current Music definition is the same).
-             *
-             * It only worked previously was because the waiting-for-map-load song was started prior
-             * to map loading.
-             *
-             * @todo Rethink the Music definition stuff with regard to Hexen. Why not create definitions
-             * during startup by parsing MAPINFO?
-             */
-            S_StopMusic();
-            //S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-
             S_MapMusic(mapUri);
             S_PauseMusic(true);
         }
@@ -979,7 +962,7 @@ de::Uri GameSession::mapUriForNamedExit(String name)
         }
         else if(exits.count() == 1)
         {
-            chosenExit = exits.first();
+            chosenExit = exits.values().first();
             String chosenExitId = chosenExit->gets("id");
             if(chosenExitId != name.toLower())
             {
@@ -1019,7 +1002,7 @@ bool GameSession::progressRestoredOnReload() const
 #if __JHEXEN__
     return true; // Cannot be disabled.
 #else
-    return cfg.loadLastSaveOnReborn;
+    return cfg.common.loadLastSaveOnReborn;
 #endif
 }
 

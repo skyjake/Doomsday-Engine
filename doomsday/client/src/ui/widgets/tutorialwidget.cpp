@@ -1,4 +1,4 @@
-/** @file tutorialdialog.cpp
+/** @file tutorialwidget.cpp
  *
  * @authors Copyright (c) 2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -27,7 +27,9 @@
 #include <de/SignalAction>
 #include <de/Untrapper>
 #include <de/PopupMenuWidget>
+#include <de/ProgressWidget>
 #include <de/NotificationAreaWidget>
+#include <de/StyleProceduralImage>
 
 using namespace de;
 
@@ -47,9 +49,9 @@ DENG_GUI_PIMPL(TutorialWidget)
         Finish
     };
 
-    Step current;
+    Step current = Welcome;
     MessageDialog *dlg = nullptr;
-    LabelWidget *highlight;
+    LabelWidget *highlight = nullptr;
     NotificationAreaWidget *notifs = nullptr; ///< Fake notifications just for an example.
     UniqueWidgetPtr<LabelWidget> exampleAlert;
     QTimer flashing;
@@ -58,7 +60,6 @@ DENG_GUI_PIMPL(TutorialWidget)
 
     Instance(Public *i)
         : Base(i)
-        , current(Welcome)
         , taskBarInitiallyOpen(ClientWindow::main().taskBar().isOpen())
         , untrapper(ClientWindow::main())
     {
@@ -115,12 +116,54 @@ DENG_GUI_PIMPL(TutorialWidget)
     }
 
     /**
+     * Counts the total number of steps currently available.
+     */
+    int stepCount() const
+    {
+        int count = 0;
+        for(Step s = Welcome; s != Finish; s = advanceStep(s)) count++;
+        return count;
+    }
+
+    int stepOrdinal(Step s) const
+    {
+        int ord = stepCount() - 1;
+        for(; s != Finish; s = advanceStep(s)) ord--;
+        return ord;
+    }
+
+    /**
+     * Determines which step follows step @a s.
+     * @param s  Step.
+     * @return The next step.
+     */
+    Step advanceStep(Step s) const
+    {
+        s = Instance::Step(s + 1);
+        validateStep(s);
+        return s;
+    }
+
+    Step previousStep(Step s) const
+    {
+        if(s == Welcome) return s;
+        Step prev = Welcome;
+        while(prev != Finish)
+        {
+            Step following = advanceStep(prev);
+            if(following == s) break;
+            prev = following;
+        }
+        return prev;
+    }
+
+    /**
      * Checks if step @a s is valid for the current engine state and if not,
      * skips to the next valid state.
      *
      * @param s  Current step.
      */
-    void validateStep(Step &s)
+    void validateStep(Step &s) const
     {
         forever
         {
@@ -153,7 +196,8 @@ DENG_GUI_PIMPL(TutorialWidget)
         }
 
         current = s;
-        bool const isFinalStep = (current == Finish - 1);
+        bool const isFirstStep = (current == Welcome);
+        bool const isLastStep  = (current == Finish - 1);
 
         dlg = new MessageDialog;
         dlg->useInfoStyle();
@@ -161,11 +205,27 @@ DENG_GUI_PIMPL(TutorialWidget)
         dlg->setClickToClose(false);
         QObject::connect(dlg, SIGNAL(accepted(int)), thisPublic, SLOT(continueToNextStep()));
         QObject::connect(dlg, SIGNAL(rejected(int)), thisPublic, SLOT(stop()));
-        dlg->buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                               isFinalStep? tr("Done") : tr("Continue"));
-        if(!isFinalStep)
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default | DialogWidget::Id1,
+                                               isLastStep? tr("Done") : tr("Next"));
+        if(!isFirstStep)
         {
-            dlg->buttons() << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,  tr("Skip Tutorial"));
+            dlg->buttons() << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id2, "",
+                                                   new SignalAction(thisPublic, SLOT(backToPreviousStep())));
+
+            auto &prevBtn = *dlg->buttonWidget(DialogWidget::Id2);
+            prevBtn.setImage(new StyleProceduralImage("fold", prevBtn, 90));
+            prevBtn.setImageColor(style().colors().colorf("inverted.text"));
+        }
+
+        if(!isLastStep)
+        {
+            dlg->buttons() << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Action,
+                                                   tr("Close"));
+
+            auto &nextBtn = *dlg->buttonWidget(DialogWidget::Id1);
+            nextBtn.setImage(new StyleProceduralImage("fold", nextBtn, -90));
+            nextBtn.setImageColor(style().colors().colorf("inverted.text"));
+            nextBtn.setTextAlignment(ui::AlignLeft);
         }
 
         // Insert the content for the dialog.
@@ -280,7 +340,7 @@ DENG_GUI_PIMPL(TutorialWidget)
                           "To change it, click in the box and then press the key or key combination you "
                           "want to assign as the shortcut.");
                 InputBindingWidget *bind = InputBindingWidget::newTaskBarShortcut();
-                bind->useInfoStyle();
+                bind->invertStyle();
                 dlg->area().add(bind);
             }
             dlg->message().setText(msg);
@@ -296,6 +356,20 @@ DENG_GUI_PIMPL(TutorialWidget)
             break;
         }
 
+        // Progress indication.
+        auto *progress = new ProgressWidget;
+        progress->setColor("inverted.text");
+        progress->setRange(Rangei(0, stepCount()));
+        progress->setProgress(stepOrdinal(current) + 1, 0);
+        progress->setMode(ProgressWidget::Dots);
+        progress->rule()
+                .setInput(Rule::Top,    dlg->buttonsMenu().rule().top())
+                .setInput(Rule::Bottom, dlg->buttonsMenu().rule().bottom() -
+                                        dlg->buttonsMenu().margins().bottom())
+                .setInput(Rule::Left,   dlg->rule().left())
+                .setInput(Rule::Right,  dlg->rule().right());
+        dlg->add(progress);
+
         GuiRootWidget &root = self.root();
 
         // Keep the tutorial above any dialogs etc. that might've been opened.
@@ -310,6 +384,7 @@ DENG_GUI_PIMPL(TutorialWidget)
      */
     void deinitStep()
     {
+        // Get rid of the previous dialog.
         if(dlg)
         {
             dlg->close(0);
@@ -354,10 +429,7 @@ TutorialWidget::TutorialWidget()
 void TutorialWidget::start()
 {
     // Blur the rest of the view.
-    GuiWidget &blur = ClientWindow::main().taskBarBlur();
-    blur.show();
-    blur.setOpacity(0);
-    blur.setOpacity(1, .5);
+    ClientWindow::main().fadeInTaskBarBlur(.5);
 
     d->initStep(Instance::Welcome);
 }
@@ -372,14 +444,13 @@ void TutorialWidget::stop()
     d->deinitStep();
 
     // Animate away and unfade darkening.
-    ClientWindow::main().taskBarBlur().setOpacity(0, .5);
+    ClientWindow::main().fadeOutTaskBarBlur(.5);
 
     QTimer::singleShot(500, this, SLOT(dismiss()));
 }
 
 void TutorialWidget::dismiss()
 {
-    ClientWindow::main().taskBarBlur().hide();
     hide();
     guiDeleteLater();
 }
@@ -399,5 +470,10 @@ bool TutorialWidget::handleEvent(Event const &event)
 
 void TutorialWidget::continueToNextStep()
 {
-    d->initStep(Instance::Step(d->current + 1));
+    d->initStep(d->advanceStep(d->current));
+}
+
+void TutorialWidget::backToPreviousStep()
+{
+    d->initStep(d->previousStep(d->current));
 }

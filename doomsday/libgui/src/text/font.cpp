@@ -292,6 +292,20 @@ QImage Font::rasterize(String const &textLine,
 
         String const part = textLine.substr(iter.range());
 
+#ifdef WIN32
+        // Kludge: No light-weight fonts available, so reduce opacity to give the
+        // illusion of thinness.
+        if(iter.weight() == RichFormat::Light)
+        {
+            if(Vector3ub(60, 60, 60) > fg) // dark
+                fg.w *= .66f;
+            else if(Vector3ub(230, 230, 230) < fg) // light
+                fg.w *= .85f;
+            else
+                fg.w *= .925f;
+        }
+#endif
+
         QImage fragment = font.rasterize(part, fg, bg);
         Rectanglei const bounds = font.measure(part);
 

@@ -85,7 +85,9 @@ DENG_GUI_PIMPL(PopupWidget)
 
         case ui::Down:
             self.rule()
-                    .setInput(Rule::Top,  *anchorY + *marker)
+                    .setInput(Rule::Top,  OperatorRule::minimum(
+                                  *anchorY + *marker,
+                                  self.root().viewHeight() - self.rule().height() - self.margins().bottom()))
                     .setInput(Rule::Left, OperatorRule::clamped(
                                   *anchorX - self.rule().width() / 2,
                                   self.margins().left(),
@@ -133,11 +135,13 @@ DENG_GUI_PIMPL(PopupWidget)
         }
         else
         {
-            self.set(Background(st.colors().colorf("background"),
-                                !opaqueBackground && st.isBlurringAllowed()?
-                                    Background::BlurredWithBorderGlow : Background::BorderGlow,
-                                st.colors().colorf("glow"),
-                                st.rules().rule("glow").valuei()));
+            Background bg(st.colors().colorf("background"),
+                          !opaqueBackground && st.isBlurringAllowed()?
+                              Background::SharedBlurWithBorderGlow : Background::BorderGlow,
+                          st.colors().colorf("glow"),
+                          st.rules().rule("glow").valuei());
+            bg.blur = style().sharedBlurWidget();
+            self.set(bg);
         }
 
         if(opaqueBackground)

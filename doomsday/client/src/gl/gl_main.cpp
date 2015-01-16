@@ -42,7 +42,6 @@
 #include "gl/texturecontent.h"
 #include "ui/clientwindowsystem.h"
 #include "resource/hq2x.h"
-#include "MaterialSnapshot"
 #include "MaterialVariantSpec"
 #include "Texture"
 #include "api_render.h"
@@ -113,6 +112,7 @@ void GL_Register()
 
     Con_AddMappedConfigVariable("vid-vsync", "i", "window.main.vsync");
     Con_AddMappedConfigVariable("vid-fsaa",  "i", "window.main.fsaa");
+    Con_AddMappedConfigVariable("vid-fps",   "i", "window.main.showFps");
 
     // Ccmds
     C_CMD_FLAGS("fog",              NULL,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
@@ -935,15 +935,30 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     return c.name;
 }
 
-void GL_SetMaterialUI2(Material *mat, gl::Wrapping wrapS, gl::Wrapping wrapT)
+static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::Wrapping wrapT)
 {
-    if(!mat) return; // @todo we need a "NULL material".
+    return App_ResourceSystem().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS),
+                                             GL_Wrap(wrapT), 0, 1, 0, false, false,
+                                             false, false);
+}
 
-    MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS),
-                                          GL_Wrap(wrapT), 0, 1, 0, false, false,
-                                          false, false);
-    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
+static inline MaterialVariantSpec const &pspriteMaterialSpec(int tClass, int tMap)
+{
+    return App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, tClass, tMap,
+                                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             0, 1, 0, false, true, true, false);
+}
+
+void GL_SetMaterialUI2(Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
+{
+    if(!material) return; // @todo we need a "NULL material".
+
+    MaterialAnimator &matAnimator = material->getAnimator(uiMaterialSpec(wrapS, wrapT));
+
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
 void GL_SetMaterialUI(Material *mat)
@@ -951,15 +966,16 @@ void GL_SetMaterialUI(Material *mat)
     GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
 }
 
-void GL_SetPSprite(Material *mat, int tClass, int tMap)
+void GL_SetPSprite(Material *material, int tClass, int tMap)
 {
-    if(!mat) return; // @todo we need a "NULL material".
+    if(!material) return; // @todo we need a "NULL material".
 
-    MaterialVariantSpec const &spec =
-        App_ResourceSystem().materialSpec(PSpriteContext, 0, 1, tClass, tMap,
-                                          GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                          0, 1, 0, false, true, true, false);
-    GL_BindTexture(&mat->prepare(spec).texture(MTU_PRIMARY));
+    MaterialAnimator &matAnimator = material->getAnimator(pspriteMaterialSpec(tClass, tMap));
+
+    // Ensure we have up to date info about the material.
+    matAnimator.prepare();
+
+    GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
 void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)

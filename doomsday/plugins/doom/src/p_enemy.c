@@ -37,6 +37,7 @@
 #include "p_door.h"
 #include "p_floor.h"
 #include "p_saveg.h"
+#include "p_tick.h"
 
 #define FATSPREAD               (ANG90/8)
 #define SKULLSPEED              (20)
@@ -80,7 +81,7 @@ static dd_bool checkMeleeRange(mobj_t *actor)
     dist = M_ApproxDistance(pl->origin[VX] - actor->origin[VX],
                             pl->origin[VY] - actor->origin[VY]);
 
-    if(!cfg.netNoMaxZMonsterMeleeAttack)
+    if(!cfg.common.netNoMaxZMonsterMeleeAttack)
     {
         // Account for Z height difference.
         if(pl->origin[VZ] > actor->origin[VZ] + actor->height ||
@@ -957,7 +958,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     float slope;
     mobj_t *dest, *th;
 
-    if((int) GAMETIC & 3) return;
+    if(mapTime & 3) return;
 
     // Clients do not spawn puffs.
     if(!IS_CLIENT)

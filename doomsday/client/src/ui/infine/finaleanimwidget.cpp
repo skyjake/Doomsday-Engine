@@ -25,11 +25,11 @@
 #include "api_sound.h"
 
 #ifdef __CLIENT__
-#  include "MaterialSnapshot"
 #  include "gl/gl_main.h"
 #  include "gl/gl_texmanager.h" // GL_PrepareRawTexture()
 #  include "render/r_draw.h"    // Rend_PatchTextureSpec()
 #  include "render/rend_main.h" // filterUI
+#  include "MaterialAnimator"
 #endif
 
 using namespace de;
@@ -186,6 +186,13 @@ static void drawGeometry(int numVerts, Vector3f const *posCoords,
     glEnd();
 }
 
+static inline MaterialVariantSpec const &uiMaterialSpec()
+{
+    return App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
+                                             GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                                             0, -3, 0, false, false, false, false);
+}
+
 static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3],
     float /*const*/ scale[3], float const rgba[4], float const rgba2[4], float angle,
     Vector3f const &worldOffset)
@@ -245,41 +252,39 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             }
             break;
 
-        case FinaleAnimWidget::Frame::PFT_MATERIAL: {
-            Material *mat = f->texRef.material;
-            if(mat)
+        case FinaleAnimWidget::Frame::PFT_MATERIAL:
+            if(Material *mat = f->texRef.material)
             {
-                MaterialVariantSpec const &spec =
-                    App_ResourceSystem().materialSpec(UiContext, 0, 0, 0, 0,
-                                                      GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                                      0, -3, 0, false, false, false, false);
-                MaterialSnapshot const &ms = mat->prepare(spec);
+                /// @todo Utilize *all* properties of the Material.
+                MaterialAnimator &matAnimator      = mat->getAnimator(uiMaterialSpec());
 
-                GL_BindTexture(&ms.texture(MTU_PRIMARY));
+                // Ensure we've up to date info about the material.
+                matAnimator.prepare();
+
+                Vector2i const &matDimensions = matAnimator.dimensions();
+                TextureVariant *tex           = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+                int const texBorder           = tex->spec().variant.border;
+
+                GL_BindTexture(tex);
                 glEnable(GL_TEXTURE_2D);
                 textureEnabled = true;
 
-                TextureVariantSpec const &texSpec = ms.texture(MTU_PRIMARY).spec();
-
-                /// @todo Utilize *all* properties of the Material.
-                V3f_Set(dimensions,
-                        ms.width() + texSpec.variant.border * 2,
-                        ms.height() + texSpec.variant.border * 2, 0);
+                V3f_Set(dimensions, matDimensions.x + texBorder * 2, matDimensions.y + texBorder * 2, 0);
                 V2f_Set(rotateCenter, dimensions[VX] / 2, dimensions[VY] / 2);
-                ms.texture(MTU_PRIMARY).glCoords(&texScale[VX], &texScale[VY]);
+                tex->glCoords(&texScale[VX], &texScale[VY]);
 
-                Texture const &texture = ms.texture(MTU_PRIMARY).generalCase();
-                de::Uri uri = texture.manifest().composeUri();
-                if(!uri.scheme().compareWithoutCase("Sprites"))
+                // Apply a sprite-texture origin offset?
+                bool const texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
+                if(texIsSprite)
                 {
-                    V3f_Set(offset, texture.origin().x, texture.origin().y, 0);
+                    V3f_Set(offset, tex->base().origin().x, tex->base().origin().y, 0);
                 }
                 else
                 {
                     V3f_Set(offset, 0, 0, 0);
                 }
             }
-            break; }
+            break;
 
         case FinaleAnimWidget::Frame::PFT_PATCH: {
             TextureManifest &manifest = App_ResourceSystem().textureScheme("Patches")

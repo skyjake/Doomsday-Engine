@@ -21,7 +21,7 @@
 #ifndef DENG_WORLD_SECTOR_H
 #define DENG_WORLD_SECTOR_H
 
-#include <QList>
+#include <functional>
 #ifdef __CLIENT__
 #  include <de/aabox.h>
 #endif
@@ -56,12 +56,6 @@ public:
     /// Notified whenever a light color change occurs.
     DENG2_DEFINE_AUDIENCE(LightColorChange, void sectorLightColorChanged(Sector &sector))
 
-    /*
-     * Linked-element lists:
-     */
-    typedef QList<Plane *>    Planes;
-    typedef QList<LineSide *> Sides;
-
     // Plane identifiers:
     enum { Floor, Ceiling };
 
@@ -76,81 +70,82 @@ public:
            de::Vector3f const &lightColor = de::Vector3f(1, 1, 1));
 
     /**
-     * Returns the sector plane with the specified @a planeIndex.
+     * Returns @c true if at least one Plane in the sector is sky-masked.
+     *
+     * @see Surface::hasSkyMaskedMaterial()
      */
-    Plane &plane(int planeIndex);
-
-    /// @copydoc plane()
-    Plane const &plane(int planeIndex) const;
-
     bool hasSkyMaskedPlane() const;
-
-    /**
-     * Returns the floor plane of the sector.
-     */
-    inline Plane &floor() { return plane(Floor); }
-
-    /// @copydoc floor()
-    inline Plane const &floor() const { return plane(Floor); }
-
-    /**
-     * Returns the ceiling plane of the sector.
-     */
-    inline Plane &ceiling() { return plane(Ceiling); }
-
-    /// @copydoc ceiling()
-    inline Plane const &ceiling() const { return plane(Ceiling); }
-
-    Plane *addPlane(de::Vector3f const &normal, coord_t height);
-
-    /**
-     * Provides access to the list of planes in/owned by the sector, for efficient
-     * traversal.
-     */
-    Planes const &planes() const;
 
     /**
      * Returns the total number of planes in/owned by the sector.
      */
-    inline int planeCount() const { return planes().count(); }
+    int planeCount() const;
+
+    /**
+     * Lookup a Plane by it's sector-unique @a planeIndex.
+     */
+    Plane       &plane(int planeIndex);
+    Plane const &plane(int planeIndex) const;
+
+    /**
+     * Returns the @em floor Plane of the sector.
+     */
+    inline Plane       &floor()       { return plane(Floor); }
+    inline Plane const &floor() const { return plane(Floor); }
+
+    /**
+     * Returns the @em ceiling Plane of the sector.
+     */
+    inline Plane       &ceiling()       { return plane(Ceiling); }
+    inline Plane const &ceiling() const { return plane(Ceiling); }
+
+    /**
+     * Add a new Plane to the sector.
+     *
+     * @param normal  World space normal for the new plane.
+     * @param height  World space Z axis coordinate for the new plane.
+     */
+    Plane *addPlane(de::Vector3f const &normal, coord_t height);
+
+    /**
+     * Iterate through the Planes of the sector.
+     *
+     * @param func  Callback to make for each Plane.
+     */
+    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane &)> func) const;
 
     /**
      * Convenient accessor method for returning the surface of the specified
      * plane of the sector.
      */
-    inline Surface &planeSurface(int planeIndex) { return plane(planeIndex).surface(); }
-
-    /// @copydoc planeSurface()
+    inline Surface       &planeSurface(int planeIndex)       { return plane(planeIndex).surface(); }
     inline Surface const &planeSurface(int planeIndex) const { return plane(planeIndex).surface(); }
 
     /**
      * Convenient accessor method for returning the surface of the floor plane
      * of the sector.
      */
-    inline Surface &floorSurface() { return floor().surface(); }
-
-    /// @copydoc floorSurface()
+    inline Surface       &floorSurface()       { return floor().surface(); }
     inline Surface const &floorSurface() const { return floor().surface(); }
 
     /**
      * Convenient accessor method for returning the surface of the ceiling plane
      * of the sector.
      */
-    inline Surface &ceilingSurface() { return ceiling().surface(); }
-
-    /// @copydoc ceilingSurface()
+    inline Surface       &ceilingSurface()       { return ceiling().surface(); }
     inline Surface const &ceilingSurface() const { return ceiling().surface(); }
 
     /**
-     * Provides access to the list of line sides which reference the sector,
-     * for efficient traversal.
+     * Returns the total number of Line::Sides which reference the sector.
      */
-    Sides const &sides() const;
+    int sideCount() const;
 
     /**
-     * Returns the total number of line sides which reference the sector.
+     * Iterate through the Line::Sides of the sector.
+     *
+     * @param func  Callback to make for each Line::Side.
      */
-    inline int sideCount() const { return sides().count(); }
+    de::LoopResult forAllSides(std::function<de::LoopResult (LineSide &)> func) const;
 
     /**
      * (Re)Build the side list for the sector.
@@ -171,9 +166,7 @@ public:
      * sector are linked to this, forming a chain which can be traversed using
      * the 'next' pointer of the emitter's thinker_t.
      */
-    SoundEmitter &soundEmitter();
-
-    /// @copydoc soundEmitter()
+    SoundEmitter       &soundEmitter();
     SoundEmitter const &soundEmitter() const;
 
     /**
@@ -230,19 +223,19 @@ public:
     /**
      * Unlink the mobj from the list of mobjs "in" the sector.
      *
-     * @param mobj  Mobj to be unlinked.
+     * @param mob  Mobj to be unlinked.
      */
-    void unlink(struct mobj_s *mobj);
+    void unlink(struct mobj_s *mob);
 
     /**
      * Link the mobj to the head of the list of mobjs "in" the sector. Note that
      * mobjs in this list may not actually be inside the sector. This is because
      * the sector is determined by interpreting the BSP leaf as a half-space and
-     * not a closed convex subspace (@ref Map::link()).
+     * not a closed convex subspace (@ref de::Map::link()).
      *
-     * @param mobj  Mobj to be linked.
+     * @param mob  Mobj to be linked.
      */
-    void link(struct mobj_s *mobj);
+    void link(struct mobj_s *mob);
 
     /**
      * Returns the @em validCount of the sector. Used by some legacy iteration
@@ -285,4 +278,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // DENG_WORLD_SECTOR_H
+#endif  // DENG_WORLD_SECTOR_H

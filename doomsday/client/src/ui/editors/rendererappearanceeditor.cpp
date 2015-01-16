@@ -286,8 +286,8 @@ DENG2_OBSERVES(App, GameChange)
         container->add(close   = new ButtonWidget);
         container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
 
-//        close->setText(tr("Close"));
-        close->setImage(style().images().image("close"));
+        close->setImage(style().images().image("close.ringless"));
+        close->setImageColor(style().colors().colorf("altaccent"));
         close->setOverrideImageSize(style().fonts().font("title").height().valuei());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
 

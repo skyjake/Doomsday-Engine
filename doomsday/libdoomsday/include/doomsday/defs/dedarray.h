@@ -128,6 +128,16 @@ public:
         return elements[index];
     }
 
+    PODType const &first() const
+    {
+        return at(0);
+    }
+
+    PODType const &last() const
+    {
+        return at(size() - 1);
+    }
+
     /**
      * Appends new, zeroed elements to the end of the array.
      *
@@ -199,9 +209,9 @@ public:
 
     int indexOf(PODType const *element) const
     {
-        int index = element - elements;
-        DENG2_ASSERT(index >= 0 && index < size());
-        return index;
+        if(size() > 0 && element >= &first() && element <= &last())
+            return element - elements;
+        return -1;
     }
 
     void clear()

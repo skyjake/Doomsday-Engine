@@ -2050,7 +2050,7 @@ int P_DamageMobj2(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damageP
     {
         // damage = (int) ((float) damage * netMobDamageModifier);
         if(IS_NETGAME)
-            damage *= cfg.netMobDamageModifier;
+            damage *= cfg.common.netMobDamageModifier;
     }
 
     // Special damage types.

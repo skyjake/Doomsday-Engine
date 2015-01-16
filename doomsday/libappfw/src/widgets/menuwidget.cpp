@@ -269,12 +269,20 @@ DENG2_PIMPL(MenuWidget)
 
     void updateItemWidget(GuiWidget &widget, Item const &item)
     {
+        // Image items apply their image to all label-based widgets.
+        if(ImageItem const *img = item.maybeAs<ImageItem>())
+        {
+            if(LabelWidget *label = widget.maybeAs<LabelWidget>())
+            {
+                label->setImage(img->image());
+            }
+        }
+
         if(ActionItem const *act = item.maybeAs<ActionItem>())
         {
             if(item.semantics().testFlag(Item::ShownAsButton))
             {
                 ButtonWidget &b = widget.as<ButtonWidget>();
-                b.setImage(act->image());
                 b.setText(act->label());
                 if(act->action())
                 {
@@ -300,11 +308,6 @@ DENG2_PIMPL(MenuWidget)
             // Other kinds of items are represented as labels or
             // label-derived widgets.
             widget.as<LabelWidget>().setText(item.label());
-
-            if(SubwidgetItem const *sub = item.maybeAs<SubwidgetItem>())
-            {
-                widget.as<LabelWidget>().setImage(sub->image());
-            }
         }
     }
 

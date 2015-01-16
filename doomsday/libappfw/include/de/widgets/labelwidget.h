@@ -133,6 +133,8 @@ public:
 
     void setTextModulationColorf(Vector4f const &colorf);
 
+    Vector4f textModulationColorf() const;
+
     /**
      * Sets the maximum width used for text. By default, the maximum width is determined
      * automatically based on the layout of the label content.

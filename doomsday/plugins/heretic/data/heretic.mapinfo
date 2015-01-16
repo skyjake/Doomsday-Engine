@@ -10,6 +10,7 @@ secretnext E1M9
 warptrans 1
 sky1 SKY1 0
 music MUS_E1M1
+cluster 1
 
 map E1M2 lookup HUSTR_E1M2
 next E1M3
@@ -17,6 +18,7 @@ secretnext E1M9
 warptrans 2
 sky1 SKY1 0
 music MUS_E1M2
+cluster 1
 
 map E1M3 lookup HUSTR_E1M3
 next E1M4
@@ -24,6 +26,7 @@ secretnext E1M9
 warptrans 3
 sky1 SKY1 0
 music MUS_E1M3
+cluster 1
 
 map E1M4 lookup HUSTR_E1M4
 next E1M5
@@ -31,6 +34,7 @@ secretnext E1M9
 warptrans 4
 sky1 SKY1 0
 music MUS_E1M4
+cluster 1
 
 map E1M5 lookup HUSTR_E1M5
 next E1M6
@@ -38,6 +42,7 @@ secretnext E1M9
 warptrans 5
 sky1 SKY1 0
 music MUS_E1M5
+cluster 1
 
 map E1M6 lookup HUSTR_E1M6
 next E1M7
@@ -45,6 +50,7 @@ secretnext E1M9
 warptrans 6
 sky1 SKY1 0
 music MUS_E1M6
+cluster 1
 
 map E1M7 lookup HUSTR_E1M7
 next E1M8
@@ -52,18 +58,21 @@ secretnext E1M9
 warptrans 7
 sky1 SKY1 0
 music MUS_E1M7
+cluster 1
 
 map E1M8 lookup HUSTR_E1M8
 warptrans 8
 sky1 SKY1 0
 nointermission
 music MUS_E1M8
+cluster 1
 
 map E1M9 lookup HUSTR_E1M9
 next E1M7
 warptrans 9
 sky1 SKY1 0
 music MUS_E1M9
+cluster 1
 
 ; Episode 2 ------------------------------------------------------------
 
@@ -77,6 +86,7 @@ secretnext E2M9
 warptrans 1
 sky1 SKY2 0
 music MUS_E2M1
+cluster 2
 
 map E2M2 lookup HUSTR_E2M2
 next E2M3
@@ -84,6 +94,7 @@ secretnext E2M9
 warptrans 2
 sky1 SKY2 0
 music MUS_E2M2
+cluster 2
 
 map E2M3 lookup HUSTR_E2M3
 next E2M4
@@ -91,6 +102,7 @@ secretnext E2M9
 warptrans 3
 sky1 SKY2 0
 music MUS_E2M3
+cluster 2
 
 map E2M4 lookup HUSTR_E2M4
 next E2M5
@@ -98,6 +110,7 @@ secretnext E2M9
 warptrans 4
 sky1 SKY2 0
 music MUS_E2M4
+cluster 2
 
 map E2M5 lookup HUSTR_E2M5
 next E2M6
@@ -105,6 +118,7 @@ secretnext E2M9
 warptrans 5
 sky1 SKY2 0
 music MUS_E1M4
+cluster 2
 
 map E2M6 lookup HUSTR_E2M6
 next E2M7
@@ -112,6 +126,7 @@ secretnext E2M9
 warptrans 6
 sky1 SKY2 0
 music MUS_E2M6
+cluster 2
 
 map E2M7 lookup HUSTR_E2M7
 next E2M8
@@ -119,18 +134,21 @@ secretnext E2M9
 warptrans 7
 sky1 SKY2 0
 music MUS_E2M7
+cluster 2
 
 map E2M8 lookup HUSTR_E2M8
 warptrans 8
 sky1 SKY2 0
 nointermission
 music MUS_E2M8
+cluster 2
 
 map E2M9 lookup HUSTR_E2M9
 next E2M5
 warptrans 9
 sky1 SKY2 0
 music MUS_E2M9
+cluster 2
 
 ; Episode 3 ------------------------------------------------------------
 
@@ -144,6 +162,7 @@ secretnext E3M9
 warptrans 1
 sky1 SKY3 0
 music MUS_E1M1
+cluster 3
 
 map E3M2 lookup HUSTR_E3M2
 next E3M3
@@ -151,6 +170,7 @@ secretnext E3M9
 warptrans 2
 sky1 SKY3 0
 music MUS_E3M2
+cluster 3
 
 map E3M3 lookup HUSTR_E3M3
 next E3M4
@@ -158,6 +178,7 @@ secretnext E3M9
 warptrans 3
 sky1 SKY3 0
 music MUS_E3M3
+cluster 3
 
 map E3M4 lookup HUSTR_E3M4
 next E3M5
@@ -165,6 +186,7 @@ secretnext E3M9
 warptrans 4
 sky1 SKY3 0
 music MUS_E1M6
+cluster 3
 
 map E3M5 lookup HUSTR_E3M5
 next E3M6
@@ -172,6 +194,7 @@ secretnext E3M9
 warptrans 5
 sky1 SKY3 0
 music MUS_E1M3
+cluster 3
 
 map E3M6 lookup HUSTR_E3M6
 next E3M7
@@ -179,6 +202,7 @@ secretnext E3M9
 warptrans 6
 sky1 SKY3 0
 music MUS_E1M2
+cluster 3
 
 map E3M7 lookup HUSTR_E3M7
 next E3M8
@@ -186,15 +210,18 @@ secretnext E3M9
 warptrans 7
 sky1 SKY3 0
 music MUS_E1M5
+cluster 3
 
 map E3M8 lookup HUSTR_E3M8
 warptrans 8
 sky1 SKY3 0
 nointermission
 music MUS_E1M9
+cluster 3
 
 map E3M9 lookup HUSTR_E3M9
 next E3M5
 warptrans 9
 sky1 SKY3 0
 music MUS_E2M6
+cluster 3

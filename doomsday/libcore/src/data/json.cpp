@@ -125,7 +125,8 @@ public:
             // Add to the result.
             result.insert(name, value);
             // Move forward.
-            c = next();
+            skipWhite();
+            c = next();            
             if(c == '}')
             {
                 // End of object.

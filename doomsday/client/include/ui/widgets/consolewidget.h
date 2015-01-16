@@ -77,6 +77,7 @@ public slots:
     void openLog();
     void closeLog();
     void clearLog();
+    void zeroLogHeight();
     void showFullLog();
     void setFullyOpaque();
     void commandLineFocusGained();
