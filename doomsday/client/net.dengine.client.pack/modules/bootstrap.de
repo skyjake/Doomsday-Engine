@@ -6,12 +6,15 @@
 # The window is not yet visible -- no GL operations can be performed.
 # Config has already been loaded from persistent storage.
 
-import Version, App, Config, SavedSession
+import Version, App, Config, Input, SavedSession
 
 def bindDefaultConsoleTildeKey()
-    import Input
     Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
     Input.bindEvent("console:key-tilde-down+key-shift-up", "taskbar")
+end
+
+def bindWindowsMenuKey()
+    Input.bindEvent("global:key-winmenu-down", "taskbar")
 end
 
 def runLegacySavegameConversion(newGame)
@@ -31,20 +34,33 @@ def runPluginLoadHooks(newGame)
     catch: pass
 end
 
+def isUpgradedToBuild(number)
+    return Version.OLD_VERSION[3] < number and Version.BUILD >= number
+end
+
+def addOnLoadHookForAllGames(function)
+    for plug in subrecords(Config.plugin).values()
+        plug.onNextLoad += [function]
+    end    
+end
+
 def upgradeMaintenance()
     if not 'OLD_VERSION' in Version: return
     
     # Ensure that the default Tilde binding is present when upgrading
     # from an older version.
-    if Version.OLD_VERSION[3] < 920 and Version.BUILD >= 920
+    if isUpgradedToBuild(920)
         # Register a single-shot hook that ensures the binding is present
         # after a game has been loaded the next time. This must be done
         # per-plugin as the bindings are stored separately for each.
         # Config is persistent so these will be remembered even after 
         # shutting down the app.
-        for plug in subrecords(Config.plugin).values()
-            plug.onNextLoad += [bindDefaultConsoleTildeKey]
-        end
+        addOnLoadHookForAllGames(bindDefaultConsoleTildeKey)
+    end
+    
+    # Add the default Menu key bindings.
+    if isUpgradedToBuild(1479)
+        addOnLoadHookForAllGames(bindWindowsMenuKey)
     end
 end
 

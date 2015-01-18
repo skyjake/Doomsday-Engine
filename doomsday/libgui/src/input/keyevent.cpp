@@ -222,6 +222,7 @@ int de::KeyEvent::ddKeyFromQt(int qtKey, int nativeVirtualKey, int nativeScanCod
     case Qt::Key_Shift:         return DDKEY_RSHIFT;
     case Qt::Key_Alt:           return DDKEY_RALT;
     case Qt::Key_AltGr:         return DDKEY_LALT;
+    case Qt::Key_Menu:          return DDKEY_WINMENU;
     case Qt::Key_Return:        return DDKEY_RETURN;
     case Qt::Key_F1:            return DDKEY_F1;
     case Qt::Key_F2:            return DDKEY_F2;

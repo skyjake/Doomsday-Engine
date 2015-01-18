@@ -90,6 +90,7 @@ enum {
     DDKEY_DIVIDE,       ///< '/' on numeric keypad.
     DDKEY_MULTIPLY,     ///< '*' on the numeric keypad.
     DDKEY_SECTION,      ///< §
+    DDKEY_WINMENU,      ///< Windows-specific context menu key.
     DD_HIGHEST_KEYCODE
 };
 
