@@ -110,8 +110,12 @@ def parseConfig(fn):
         if opt.parentNode.tagName == u'hostconfig':
             commonOptions.append(getContent(opt))
     
-    rebuildTimes = \
-        parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
+    # Rebuild times is an optional setting.
+    try:
+        rebuildTimes = \
+            parseRebuildTimes(cfg.getElementsByTagName('rebuildTimes')[0])
+    except IndexError:
+        rebuildTimes = []
         
     doomsdayBinary = getContent(cfg.getElementsByTagName('doomsday')[0])
     try:
@@ -368,9 +372,9 @@ def main():
         logCleanup()
 
     except Exception, x:
-        print x
-        #import traceback
-        #traceback.print_exc()
+        #print x
+        import traceback
+        traceback.print_exc()
     
     # We're done.
     endInstance()
