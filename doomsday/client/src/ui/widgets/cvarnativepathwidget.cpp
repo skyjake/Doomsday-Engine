@@ -28,6 +28,8 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
 {
     char const *cvar;
     NativePath path;
+    QStringList filters;
+    String blankText = "(not set)";
 
     cvar_t *var() const
     {
@@ -40,7 +42,7 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
     {
         if(path.isEmpty())
         {
-            return String(_E(l)) + tr("(not set)") + _E(.);
+            return String(_E(l)) + blankText + _E(.);
         }
         return path.fileName();
     }
@@ -54,8 +56,21 @@ CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
 
     auxiliary().setText(tr("Browse"));
 
-    //connect(this, SIGNAL(pressed()), this, SLOT(chooseUsingNativeFileDialog()));
     connect(&auxiliary(), SIGNAL(pressed()), this, SLOT(chooseUsingNativeFileDialog()));
+}
+
+void CVarNativePathWidget::setFilters(StringList const &filters)
+{
+    d->filters.clear();
+    for(auto const &f : filters)
+    {
+        d->filters << f;
+    }
+}
+
+void CVarNativePathWidget::setBlankText(String const &text)
+{
+    d->blankText = text;
 }
 
 char const *CVarNativePathWidget::cvarPath() const
@@ -74,7 +89,8 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
     auto &win = ClientWindow::main();
 
 #ifndef MACOSX
-    // Switch temporarily to windowed mode.
+    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
+    // is never changed on that platform.
     win.saveState();
     int windowedMode[] = {
         ClientWindow::Fullscreen, false,
@@ -87,6 +103,10 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
     QDir dir(d->path);
     if(d->path.isEmpty()) dir = QDir::home();
     QFileDialog dlg(&win, tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
+    if(!d->filters.isEmpty())
+    {
+        dlg.setNameFilters(d->filters);
+    }
     dlg.setFileMode(QFileDialog::ExistingFile);
     dlg.setOption(QFileDialog::ReadOnly, true);
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));

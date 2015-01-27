@@ -32,6 +32,24 @@ class CVarNativePathWidget : public de::AuxButtonWidget, public ICVarWidget
 public:
     CVarNativePathWidget(char const *cvarPath);
 
+    /**
+     * Sets all the file types that can be selected using the widget. Each entry in
+     * the list should be formatted as "Description (*.ext *.ext2)".
+     *
+     * The default is "All files (*)".
+     *
+     * @param filters  Allowed file types.
+     */
+    void setFilters(de::StringList const &filters);
+
+    /**
+     * Sets the text that is shown as the current selection when nothing has been
+     * selected.
+     *
+     * @param text  Blank text placeholder.
+     */
+    void setBlankText(de::String const &text);
+
     char const *cvarPath() const;
 
 public slots:
