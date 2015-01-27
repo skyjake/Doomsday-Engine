@@ -32,9 +32,11 @@
 #endif
 
 #include "jdoom.h"
+#include "p_inter.h"
 
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "player.h"
 #include "p_user.h"

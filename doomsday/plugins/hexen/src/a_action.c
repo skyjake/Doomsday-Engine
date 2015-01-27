@@ -19,13 +19,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <string.h>
-#include <math.h>
-
 #include "jhexen.h"
 
-#include "p_map.h"
+#include <string.h>
+#include <math.h>
+#include "g_common.h"
 #include "mobj.h"
+#include "p_map.h"
 
 #define TELEPORT_LIFE           (1)
 

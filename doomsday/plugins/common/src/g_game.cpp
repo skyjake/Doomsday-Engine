@@ -37,6 +37,8 @@
 #include "am_map.h"
 #include "animdefs.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
 #include "g_controls.h"

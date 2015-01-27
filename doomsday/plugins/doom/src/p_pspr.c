@@ -36,10 +36,12 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
+#include "jdoom.h"
+#include "p_pspr.h"
 
-#include "common.h"
+#include <math.h>
 #include "d_net.h"
+#include "d_netcl.h"
 #include "player.h"
 #include "p_map.h"
 #include "p_tick.h"

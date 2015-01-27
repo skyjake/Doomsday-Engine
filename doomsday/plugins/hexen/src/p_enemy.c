@@ -1,49 +1,38 @@
-/**\file
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_enemy.c  Enemy thinking, AI.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 1999 Activision
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 1999 Activision
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
-
-/**
- * p_enemy.c: Enemy thinking, AI.
- *
- * Action Pointer Functions that are associated with states/frames.
- */
-
-// HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
 #include <math.h>
 #include <assert.h>
 
 #include "jhexen.h"
+#include "p_enemy.h"
 
-#include "dmu_lib.h"
-#include "p_mapspec.h"
-#include "p_map.h"
-#include "g_common.h"
+#include "acs/system.h"
 #include "d_net.h"
-
-// MACROS ------------------------------------------------------------------
+#include "d_netsv.h"
+#include "dmu_lib.h"
+#include "g_common.h"
+#include "p_map.h"
+#include "p_mapspec.h"
 
 #define MONS_LOOK_RANGE             (16*64)
 #define MONS_LOOK_LIMIT             64
@@ -93,19 +82,7 @@
 #define KORAX_ARM5_HEIGHT           (86)
 #define KORAX_ARM6_HEIGHT           (53)
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 void KSpiritInit(mobj_t *spirit, mobj_t *korax);
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int maulatorSeconds = 25;
 //dd_bool fastMonsters = false;
@@ -129,10 +106,6 @@ mobj_t *corpseQueue[CORPSEQUEUESIZE];
 int corpseQueueSlot;
 mobj_t *bodyque[BODYQUESIZE];
 int bodyqueslot;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void P_ClearBodyQueue(void)
 {
@@ -4259,7 +4232,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        Game_ACScriptInterpreter_StartScript(249, 0/*current-map*/, args, actor, NULL, 0);
+        Game_ACScriptSystem_StartScript(249, 0/*current-map*/, args, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4336,7 +4309,7 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    Game_ACScriptInterpreter_StartScript(255, 0/*current-map*/, args, actor, NULL, 0); // Death script.
+    Game_ACScriptSystem_StartScript(255, 0/*current-map*/, args, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4524,7 +4497,7 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     }
 
     assert(scriptNumber >= 0);
-    Game_ACScriptInterpreter_StartScript(scriptNumber, 0/*current-map*/, args, mo, NULL, 0);
+    Game_ACScriptSystem_StartScript(scriptNumber, 0/*current-map*/, args, mo, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

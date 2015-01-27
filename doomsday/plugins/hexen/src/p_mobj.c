@@ -1,4 +1,4 @@
-/** @file p_mobj.c World map object interaction.
+/** @file p_mobj.c  World map object interaction.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
@@ -23,15 +23,17 @@
 #  pragma optimize("g", off)
 #endif
 
+#include "jhexen.h"
+#include "p_mobj.h"
+
 #include <math.h>
 #include <string.h>
 #include <de/binangle.h>
-
-#include "jhexen.h"
+#include "d_netcl.h"
 #include "dmu_lib.h"
+#include "g_common.h"
 #include "p_map.h"
 #include "player.h"
-#include "g_common.h"
 
 #define MAX_BOB_OFFSET          8
 

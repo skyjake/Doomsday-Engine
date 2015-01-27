@@ -29,9 +29,10 @@
 #endif
 
 #include "jdoom.h"
+
 #ifdef __cplusplus
-#include "mapstatereader.h"
-#include "mapstatewriter.h"
+class MapStateReader;
+class MapStateWriter;
 
 /**
  * Global state of boss brain.

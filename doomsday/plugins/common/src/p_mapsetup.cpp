@@ -20,27 +20,28 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_mapsetup.h"
+
 #include <cmath>
 #include <cctype>  // isspace
 #include <cstring>
-
-#include "common.h"
-
+#include "acs/script.h"
+#include "acs/system.h"
 #include "am_map.h"
+#include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "r_common.h"
+#include "hu_pspr.h"
+#include "hu_stuff.h"
 #include "p_actor.h"
 #include "p_scroll.h"
 #include "p_start.h"
 #include "p_tick.h"
 #include "polyobjs.h"
-#include "hu_pspr.h"
-#include "hu_stuff.h"
-#include "d_net.h"
-
-#include "p_mapsetup.h"
+#include "r_common.h"
 
 #if __JDOOM64__
 # define TOLIGHTIDX(c) (!((c) >> 8)? 0 : ((c) - 0x100) + 1)
@@ -910,14 +911,23 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
         lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
         if(acsLumpNum < CentralLumpIndex().size())
         {
-            ACScriptInterpreter &interp = Game_ACScriptInterpreter();
+            acs::System &acscriptSys = Game_ACScriptSystem();
 
-            interp.loadBytecode(CentralLumpIndex()[acsLumpNum]);
-
-            std::memset(interp.mapVars, 0, sizeof(interp.mapVars));
+            acscriptSys.loadBytecode(CentralLumpIndex()[acsLumpNum]);
+            acscriptSys.mapVars.fill(0);
 
             // Start all scripts flagged to begin immediately.
-            interp.startOpenScripts();
+            // (allow a 1 second delay for map initialization to complete).
+            acscriptSys.forAllScripts([] (acs::Script &script)
+            {
+                if(script.entryPoint().startWhenMapBegins)
+                {
+                    bool justStarted = script.start(acs::Script::Args()/*default args*/, nullptr, nullptr, 0, TICSPERSEC);
+                    DENG2_ASSERT(justStarted);
+                    DENG2_UNUSED(justStarted);
+                }
+                return LoopContinue;
+            });
         }
     }
 #endif

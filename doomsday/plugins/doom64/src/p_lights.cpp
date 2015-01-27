@@ -26,6 +26,8 @@
 #include "p_lights.h"
 
 #include "dmu_lib.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 

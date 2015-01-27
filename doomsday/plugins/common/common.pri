@@ -9,6 +9,9 @@ INCLUDEPATH += \
     $$DENG_LZSS_DIR/portable/include
 
 HEADERS += \
+    $$common_inc/acs/interpreter.h \
+    $$common_inc/acs/script.h \
+    $$common_inc/acs/system.h \
     $$common_inc/am_map.h \
     $$common_inc/animdefs.h \
     $$common_inc/common.h \
@@ -93,6 +96,9 @@ HEADERS += \
     $$common_inc/menu/widgets/widget.h
 
 SOURCES += \
+    $$common_src/acs/interpreter.cpp \
+    $$common_src/acs/script.cpp \
+    $$common_src/acs/system.cpp \
     $$common_src/am_map.c \
     $$common_src/animdefs.cpp \
     $$common_src/common.c \
@@ -132,7 +138,7 @@ SOURCES += \
     $$common_src/p_iterlist.c \
     $$common_src/p_map.cpp \
     $$common_src/p_mapsetup.cpp \
-    $$common_src/p_mapspec.c \
+    $$common_src/p_mapspec.cpp \
     $$common_src/p_plat.cpp \
     $$common_src/p_saveg.cpp \
     $$common_src/p_saveio.cpp \

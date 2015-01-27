@@ -22,7 +22,8 @@
 #ifndef LIBCOMMON_D_NETCL_H
 #define LIBCOMMON_D_NETCL_H
 
-#include "d_net.h"
+#include "common.h"
+#include <de/reader.h>
 
 #ifdef __cplusplus
 extern "C" {

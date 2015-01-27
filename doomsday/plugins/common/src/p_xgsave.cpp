@@ -22,6 +22,8 @@
 
 #include "common.h"
 #include "dmu_lib.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 #include "p_mapsetup.h"
 #include "p_saveg.h"
 #include "p_xg.h"

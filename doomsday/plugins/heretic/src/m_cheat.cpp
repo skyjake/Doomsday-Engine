@@ -1,4 +1,4 @@
-/** @file m_cheat.c Cheat code sequences
+/** @file m_cheat.cpp  Cheat code sequences
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,13 +19,15 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <errno.h>
-
 #include "jheretic.h"
+#include "m_cheat.h"
 
+#include <cerrno>
+#include <cstdlib>
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "hu_msg.h"
 #include "g_eventsequence.h"

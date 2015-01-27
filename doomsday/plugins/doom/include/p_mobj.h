@@ -41,9 +41,10 @@
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
+
 #ifdef __cplusplus
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+class MapStateReader;
+class MapStateWriter;
 #endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0

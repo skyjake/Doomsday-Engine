@@ -19,12 +19,14 @@
  * 02110-1301 USA</small>
  */
 
-#include <cstring>
-#include <cstdio>
-
 #include "jhexen.h"
+#include "p_spec.h"
 
+#include <cstdio>
+#include <cstring>
+#include "acs/system.h"
 #include "dmu_lib.h"
+#include "d_netsv.h"
 #include "g_common.h"
 #include "gamesession.h"
 #include "lightninganimator.h"
@@ -44,6 +46,11 @@
 
 using namespace de;
 using namespace common;
+
+static inline acs::System &acsScriptSys()
+{
+    return Game_ACScriptSystem();
+}
 
 LightningAnimator lightningAnimator;
 
@@ -118,40 +125,25 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
 
 static de::Uri getMapUriForWarpNumber(int warpNumber)
 {
-    if(!warpNumber)
+    /// @c <= 0 means the current map.
+    if(warpNumber <= 0) return COMMON_GAMESESSION->mapUri();
+
+    // See if a translation exists for this.
+    String episodeId = COMMON_GAMESESSION->episodeId();
+    de::Uri mapUri   = TranslateMapWarpNumber(episodeId, warpNumber);
+    if(!mapUri.isEmpty()) return mapUri;
+
+    // If the episode ID is a number - interpret this as a map number
+    // for vanilla compat (ugh...).
+    bool isNumber;
+    int oldEpisodeNum = episodeId.toInt(&isNumber);
+    if(isNumber && oldEpisodeNum > 0)
     {
-        return COMMON_GAMESESSION->mapUri(); // Current map URI.
-    }
-    return TranslateMapWarpNumber(COMMON_GAMESESSION->episodeId(), warpNumber);
-}
-
-dd_bool P_StartLockedACS(Line *line, byte *args, mobj_t *mo, int side)
-{
-    DENG2_ASSERT(args != 0 && mo != 0);
-
-    if(!mo->player) return false;
-
-    if(int lock = args[4])
-    {
-        if(!(mo->player->keys & (1 << (lock - 1))))
-        {
-            char LockedBuffer[80];
-            sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
-            P_SetMessage(mo->player, 0, LockedBuffer);
-            S_StartSound(SFX_DOOR_LOCKED, mo);
-            return false;
-        }
+        return G_ComposeMapUri(oldEpisodeNum - 1, warpNumber - 1);
     }
 
-    byte newArgs[5];
-    for(int i = 0; i < 4; ++i)
-    {
-        newArgs[i] = args[i];
-    }
-    newArgs[4] = 0;
-
-    de::Uri mapUri = getMapUriForWarpNumber(newArgs[1]);
-    return Game_ACScriptInterpreter().startScript(newArgs[0], &mapUri, &newArgs[2], mo, line, side);
+    // There is no auto-logical translation possible.
+    return de::Uri();
 }
 
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
@@ -429,23 +421,70 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break;
 
     case 80: /* ACS_Execute */ {
-        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
-        success = Game_ACScriptInterpreter().startScript(args[0], &mapUri, &args[2], mo, line, side);
+        int scriptNumber = args[0];
+        de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        acs::Script::Args scriptArgs(&args[2], 3);
+        if(COMMON_GAMESESSION->mapUri() == mapUri)
+        {
+            if(acsScriptSys().hasScript(scriptNumber))
+            {
+               success = acsScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
+            }
+        }
+        else
+        {
+            success = acsScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
+        }
         break; }
 
     case 81: /* ACS_Suspend */ {
-        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
-        success = Game_ACScriptInterpreter().suspendScript(args[0], &mapUri);
+        int scriptNumber = args[0];
+        //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        if(acsScriptSys().hasScript(scriptNumber))
+        {
+            success = acsScriptSys().script(scriptNumber).suspend();
+        }
         break; }
 
     case 82: /* ACS_Terminate */ {
-        de::Uri mapUri = getMapUriForWarpNumber(args[1]);
-        success = Game_ACScriptInterpreter().terminateScript(args[0], &mapUri);
+        int scriptNumber = args[0];
+        //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        if(acsScriptSys().hasScript(scriptNumber))
+        {
+            success = acsScriptSys().script(scriptNumber).terminate();
+        }
         break; }
 
-    case 83: // ACS_LockedExecute
-        success = P_StartLockedACS(line, args, mo, side);
-        break;
+    case 83: /* ACS_LockedExecute */ {
+        if(!mo->player) break;
+
+        if(int lock = args[4])
+        {
+            if(!(mo->player->keys & (1 << (lock - 1))))
+            {
+                char LockedBuffer[80];
+                sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
+                P_SetMessage(mo->player, 0, LockedBuffer);
+                S_StartSound(SFX_DOOR_LOCKED, mo);
+                break;
+            }
+        }
+
+        int scriptNumber = args[0];
+        de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        acs::Script::Args scriptArgs(args, 4);
+        if(COMMON_GAMESESSION->mapUri() == mapUri)
+        {
+            if(acsScriptSys().hasScript(scriptNumber))
+            {
+                success = acsScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
+            }
+        }
+        else
+        {
+            success = acsScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
+        }
+        break; }
 
     case 90: // Poly Rotate Left Override
         success = EV_RotatePoly(line, args, 1, true);
@@ -768,21 +807,6 @@ void P_SpawnAllSpecialThinkers()
 {
     P_SpawnSectorSpecialThinkers();
     P_SpawnLineSpecialThinkers();
-}
-
-dd_bool P_SectorTagIsBusy(int tag)
-{
-    /// @note The sector tag lists cannot be used here as an iteration at a higher
-    /// level may already be in progress.
-    for(int i = 0; i < numsectors; ++i)
-    {
-        xsector_t *xsec = P_ToXSector((Sector *) P_ToPtr(DMU_SECTOR, i));
-        if(xsec->tag == tag && xsec->specialData)
-        {
-            return true;
-        }
-    }
-    return false;
 }
 
 void P_InitLightning()

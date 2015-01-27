@@ -23,9 +23,10 @@
 #include "p_spec.h"
 
 #include <cstring>
-#include "gamesession.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
+#include "gamesession.h"
 #include "m_argv.h"
 #include "p_ceiling.h"
 #include "p_door.h"

@@ -35,7 +35,6 @@
 #include "../../hexen/include/x_api.h"
 #include "../../hexen/include/a_action.h"
 #include "../../hexen/include/acfnlink.h"
-#include "../../hexen/include/acscript.h"
 #include "../../hexen/include/g_game.h"
 #include "../../hexen/include/intermission.h"
 #include "../../hexen/include/m_cheat.h"

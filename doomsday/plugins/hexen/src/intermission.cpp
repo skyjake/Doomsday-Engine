@@ -24,6 +24,8 @@
 
 #include <cstdio>
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "g_common.h"

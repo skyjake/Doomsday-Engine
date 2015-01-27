@@ -21,19 +21,19 @@
 #include "common.h"
 #include "d_netcl.h"
 
-#include "g_common.h"
-#include "gamesession.h"
-#include "p_saveg.h"
-#include "player.h"
-#include "p_map.h"
-#include "p_start.h"
-#include "p_actor.h"
-#include "p_inventory.h"
-#include "hu_inventory.h"
-#include "st_stuff.h"
-
 #include <cstdio>
 #include <cstring>
+#include "d_netsv.h"       ///< @todo remove me
+#include "g_common.h"
+#include "gamesession.h"
+#include "hu_inventory.h"
+#include "p_actor.h"
+#include "p_inventory.h"
+#include "p_map.h"
+#include "p_saveg.h"
+#include "p_start.h"
+#include "player.h"
+#include "st_stuff.h"
 
 using namespace de;
 using namespace common;

@@ -21,6 +21,8 @@
 #include "common.h"
 #include "thinkerinfo.h"
 
+#include "acs/interpreter.h"
+#include "acs/script.h"
 #include "mobj.h"
 #include "p_ceiling.h"
 #include "p_door.h"
@@ -29,7 +31,6 @@
 #include "p_scroll.h"
 #include "p_switch.h"
 #if __JHEXEN__
-#  include "acscript.h"
 #  include "p_pillar.h"
 #  include "p_waggle.h"
 #endif
@@ -103,11 +104,11 @@ static ThinkerClassInfo thinkerInfo[] = {
 #if __JHEXEN__
     {
      TC_INTERPRET_ACS,
-     (thinkfunc_t) ACScript_Thinker,
+     (thinkfunc_t) acs_Interpreter_Think,
      0,
-     de::function_cast<WriteThinkerFunc>(writeThinkerAs<ACScript>),
-     de::function_cast<ReadThinkerFunc>(readThinkerAs<ACScript>),
-     sizeof(ACScript)
+     de::function_cast<WriteThinkerFunc>(writeThinkerAs<acs::Interpreter>),
+     de::function_cast<ReadThinkerFunc>(readThinkerAs<acs::Interpreter>),
+     sizeof(acs::Interpreter)
     },
     {
      TC_FLOOR_WAGGLE,

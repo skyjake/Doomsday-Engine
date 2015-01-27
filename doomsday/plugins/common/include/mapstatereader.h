@@ -21,10 +21,11 @@
 #ifndef LIBCOMMON_MAPSTATEREADER_H
 #define LIBCOMMON_MAPSTATEREADER_H
 
-#include "common.h"
-#include "thingarchive.h"
+#include <de/reader.h>
 #include <de/game/SavedSession>
 #include <de/String>
+#include "common.h"
+#include "thingarchive.h"
 
 /**
  * Performs native saved game map state deserialization.

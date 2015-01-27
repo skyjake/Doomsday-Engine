@@ -1,9 +1,7 @@
-/** @file p_pspr.c Weapon sprite animation.
- *
- * Weapon sprite animation, weapon objects. Action functions for weapons.
+/** @file p_pspr.c  Weapon sprite animation.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -21,15 +19,17 @@
  * 02110-1301 USA</small>
  */
 
+#include "jhexen.h"
+#include "p_pspr.h"
+
 #include <math.h>
-
-#include "common.h"
-#include "r_common.h"
-
-#include "player.h"
-#include "p_map.h"
+#include "d_netcl.h"
+#include "g_common.h"
 #include "mobj.h"
 #include "p_inventory.h"
+#include "p_map.h"
+#include "player.h"
+#include "r_common.h"
 
 #define LOWERSPEED          (6)
 #define RAISESPEED          (6)

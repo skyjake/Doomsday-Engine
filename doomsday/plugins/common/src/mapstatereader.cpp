@@ -18,12 +18,16 @@
  * 02110-1301 USA</small>
  */
 
-#include "common.h"
 #include "mapstatereader.h"
 
+#include <de/ArrayValue>
+#include <de/NativePath>
+#include <de/String>
+#include "acs/system.h"
+#include "d_netsv.h"           /// @todo remove me
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
-#include "d_netsv.h"           /// @todo remove me
+#include "g_game.h"
 #include "hu_log.h"
 #include "mapstatewriter.h"    // ChunkId
 #include "p_actor.h"
@@ -35,9 +39,6 @@
 #include "polyobjs.h"
 #include "r_common.h"
 #include "thinkerinfo.h"
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/String>
 
 namespace internal
 {
@@ -666,7 +667,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().readMapState(thisPublic);
+        Game_ACScriptSystem().readMapState(thisPublic);
         // endSegment();
 #endif
     }

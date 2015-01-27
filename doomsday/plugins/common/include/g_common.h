@@ -22,10 +22,10 @@
 #define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
+#include <doomsday/uri.h>
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
-#include <doomsday/uri.h>
 
 #if __cplusplus
 class SaveSlots;
@@ -216,4 +216,4 @@ D_CMD( CCmdExitLevel );
 
 DENG_EXTERN_C dd_bool singledemo;
 
-#endif // LIBCOMMON_GAME_H
+#endif  // LIBCOMMON_GAME_H

@@ -28,16 +28,15 @@
 #include "common.h"
 #include "mobj.h"
 
+#include <cmath>
+#include <de/mathutil.h>
 #include "dmu_lib.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 #include "p_actor.h"
-#include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "p_actor.h"
-
-#include <de/mathutil.h>
-#include <cmath>
-#include <cassert>
+#include "player.h"
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
 

@@ -22,7 +22,7 @@
 #ifndef LIBCOMMON_MOBJ
 #define LIBCOMMON_MOBJ
 
-#include "g_common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -32,9 +32,10 @@
 
 #include "doomsday.h"
 #include "xgclass.h"
+
 #ifdef __cplusplus
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+class MapStateReader;
+class MapStateWriter;
 #endif
 
 // Line type classes. Add new classes to the end!

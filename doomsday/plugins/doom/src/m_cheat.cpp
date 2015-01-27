@@ -28,6 +28,8 @@
 
 #include "jdoom.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_eventsequence.h"
 #include "g_defs.h"

@@ -19,19 +19,22 @@
  * 02110-1301 USA</small>
  */
 
+#include <string.h>
+#include <math.h>
+
 #include "jhexen.h"
 #include "p_inter.h"
 
+#include "acs/system.h"
 #include "am_map.h"
-#include "p_inventory.h"
+#include "d_netsv.h"
+#include "g_common.h"
 #include "hu_inventory.h"
-#include "player.h"
-#include "p_map.h"
 #include "mobj.h"
+#include "p_inventory.h"
+#include "p_map.h"
 #include "p_user.h"
-
-#include <string.h>
-#include <math.h>
+#include "player.h"
 
 #define BONUSADD                (6)
 
@@ -1451,7 +1454,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         if(target->type == MT_SORCBOSS)
         {
             dummy = 0;
-            Game_ACScriptInterpreter_StartScript(target->special, 0/*current-map*/,
+            Game_ACScriptSystem_StartScript(target->special, 0/*current-map*/,
                                                  (byte *) &dummy, target, NULL, 0);
         }
         else

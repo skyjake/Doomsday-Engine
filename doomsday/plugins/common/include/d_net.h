@@ -23,14 +23,13 @@
 #ifndef LIBCOMMON_NETWORK_DEF_H
 #define LIBCOMMON_NETWORK_DEF_H
 
-#include "dd_share.h"
+#include "doomsday.h"
 #include <de/reader.h>
 #include <de/writer.h>
 #ifdef __cplusplus
 #  include <de/String>
+#  include <doomsday/uri.h>
 #endif
-
-#include "common.h"
 
 #define NETBUFFER_MAXMESSAGE 255
 
@@ -231,7 +230,7 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data);
  * @return  @c true = no further processing of the damage should be done else, process the
  * damage as normally.
  */
-dd_bool D_NetDamageMobj(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
+dd_bool D_NetDamageMobj(struct mobj_s *target, struct mobj_s *inflictor, struct mobj_s *source, int damage);
 
 int D_NetWorldEvent(int type, int tic, void *data);
 
@@ -267,7 +266,4 @@ de::String D_NetDefaultEpisode();
 de::Uri D_NetDefaultMap();
 #endif
 
-#include "d_netsv.h"
-#include "d_netcl.h"
-
-#endif // LIBCOMMON_NETWORK_DEF_H
+#endif  // LIBCOMMON_NETWORK_DEF_H

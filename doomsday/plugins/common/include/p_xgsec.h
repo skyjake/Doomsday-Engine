@@ -24,8 +24,11 @@
 #include "g_common.h"
 #ifdef __cplusplus
 #  include <de/Vector>
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+#endif
+
+#ifdef __cplusplus
+class MapStateReader;
+class MapStateWriter;
 #endif
 
 // Sector chain event types.

@@ -40,8 +40,6 @@ D_CMD(CheatRunScript);
 D_CMD(CheatSuicide);
 D_CMD(CheatWhere);
 D_CMD(CycleSpy);
-D_CMD(InspectACScript);
-D_CMD(ListACScripts);
 D_CMD(MakeLocal);
 D_CMD(MovePlane);
 D_CMD(PrintPlayerCoords);
@@ -153,7 +151,5 @@ void G_ConsoleRegistration()
 
     C_CMD("pig",         NULL,   CheatMorph);
     C_CMD("runscript",   "i*",   CheatRunScript);
-    C_CMD("scriptinfo",  "i",    InspectACScript);
-    C_CMD("scriptinfo",  "",     ListACScripts);
     C_CMD("class",       "i*",   CheatShadowcaster);
 }

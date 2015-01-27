@@ -27,6 +27,7 @@
 #include <cstring>
 #include "gamesession.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "m_argv.h"
 #include "p_ceiling.h"

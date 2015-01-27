@@ -35,9 +35,10 @@
 
 #include "doomsday.h"
 #include "p_terraintype.h"
+
 #ifdef __cplusplus
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+class MapStateReader;
+class MapStateWriter;
 #endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0

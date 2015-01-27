@@ -1,4 +1,4 @@
-/** @file p_map.cpp Common map routines.
+/** @file p_map.cpp  Common map routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,13 +19,16 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_map.h"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-
-#include "common.h"
-
+#include "acs/system.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "g_common.h"
 #include "gamesession.h"
 #include "dmu_lib.h"
@@ -35,8 +38,6 @@
 #include "p_actor.h"
 #include "player.h"
 #include "p_mapsetup.h"
-
-#include "p_map.h"
 
 /*
  * Try move variables:
@@ -3211,8 +3212,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return true; // Item type doesn't match.
         }
 
-        Game_ACScriptInterpreter_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
-                                             parm.useMobj, icpt->line, 0);
+        Game_ACScriptSystem_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
+                                        parm.useMobj, icpt->line, 0);
         xline->special = 0;
 
         parm.activated = true;
@@ -3231,8 +3232,8 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
             return false; // Item type doesn't match...
         }
 
-        Game_ACScriptInterpreter_StartScript(icpt->mobj->args[1], 0/*current-map*/,
-                                             &icpt->mobj->args[2], parm.useMobj, NULL, 0);
+        Game_ACScriptSystem_StartScript(icpt->mobj->args[1], 0/*current-map*/,
+                                        &icpt->mobj->args[2], parm.useMobj, NULL, 0);
         icpt->mobj->special = 0;
 
         parm.activated = true;
