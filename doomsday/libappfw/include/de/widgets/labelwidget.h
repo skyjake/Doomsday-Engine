@@ -111,6 +111,8 @@ public:
      */
     void setTextGap(DotPath const &styleRuleId);
 
+    DotPath const &textGap() const;
+
     enum AlignmentMode {
         AlignByCombination,
         AlignOnlyByImage,

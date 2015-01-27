@@ -620,6 +620,11 @@ void LabelWidget::setTextGap(DotPath const &styleRuleId)
     d->updateStyle();
 }
 
+DotPath const &LabelWidget::textGap() const
+{
+    return d->gapId;
+}
+
 void LabelWidget::setAlignment(Alignment const &align, AlignmentMode mode)
 {
     d->align = align;
