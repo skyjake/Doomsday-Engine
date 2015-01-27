@@ -55,6 +55,8 @@ public:
 public slots:
     void updateFromCVar();
     void chooseUsingNativeFileDialog();
+    void clearPath();
+    void showActionsPopup();
 
 protected slots:
     void setCVarValueFromWidget();

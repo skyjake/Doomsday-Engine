@@ -95,6 +95,8 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                 << new ChoiceItem(tr("Monthly"),    UpdaterSettings::Monthly);
 
         lastChecked->margins().setTop("");
+        lastChecked->setFont("separator.annotation");
+        lastChecked->setTextColor("altaccent");
 
         releaseLabel->setText("Release type:");
 
@@ -147,11 +149,11 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         String ago = st.lastCheckAgo();
         if(!ago.isEmpty())
         {
-            lastChecked->setText(_E(F)_E(t) + tr("Last checked %1.").arg(st.lastCheckAgo()));
+            lastChecked->setText(tr("Last checked %1.").arg(st.lastCheckAgo()));
         }
         else
         {
-            lastChecked->setText(_E(F)_E(t) + tr("Never checked."));
+            lastChecked->setText(tr("Never checked."));
         }
 
         autoCheck->setActive(!st.onlyCheckManually());

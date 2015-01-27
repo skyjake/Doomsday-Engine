@@ -20,6 +20,8 @@
 #include "ui/clientwindow.h"
 
 #include <doomsday/console/var.h>
+#include <de/PopupMenuWidget>
+#include <de/SignalAction>
 #include <QFileDialog>
 
 using namespace de;
@@ -29,6 +31,7 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
     char const *cvar;
     NativePath path;
     QStringList filters;
+    PopupMenuWidget *menu;
     String blankText = "(not set)";
 
     cvar_t *var() const
@@ -51,12 +54,21 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
 CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
     : d(new Instance)
 {
+    add(d->menu = new PopupMenuWidget);
+    d->menu->setAnchorAndOpeningDirection(rule(), ui::Up);
+    d->menu->items()
+            << new ui::ActionItem(tr("Browse..."),
+                                  new SignalAction(this, SLOT(chooseUsingNativeFileDialog())))
+            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear"),
+                                  new SignalAction(this, SLOT(clearPath())));
+
     d->cvar = cvarPath;
     updateFromCVar();
 
     auxiliary().setText(tr("Browse"));
 
     connect(&auxiliary(), SIGNAL(pressed()), this, SLOT(chooseUsingNativeFileDialog()));
+    connect(this, SIGNAL(pressed()), this, SLOT(showActionsPopup()));
 }
 
 void CVarNativePathWidget::setFilters(StringList const &filters)
@@ -120,6 +132,25 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
 #ifndef MACOSX
     win.restoreState();
 #endif
+}
+
+void CVarNativePathWidget::clearPath()
+{
+    d->path.clear();
+    setCVarValueFromWidget();
+    setText(d->labelText());
+}
+
+void CVarNativePathWidget::showActionsPopup()
+{
+    if(!d->menu->isOpen())
+    {
+        d->menu->open();
+    }
+    else
+    {
+        d->menu->close(0);
+    }
 }
 
 void CVarNativePathWidget::setCVarValueFromWidget()
