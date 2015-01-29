@@ -1,7 +1,7 @@
 /** @file system.cpp  Action Code Script (ACS) system.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1999 Activision
  *
  * @par License
@@ -30,8 +30,6 @@
 
 using namespace de;
 
-namespace acs {
-
 namespace internal
 {
     /**
@@ -52,12 +50,12 @@ namespace internal
     class DeferredTask : public ISerializable
     {
     public:
-        de::Uri mapUri;             ///< Unique identifier of the target map.
-        dint32 scriptNumber;        ///< Script number to execute on the target map.
-        Script::Args scriptArgs;
+        de::Uri mapUri;                ///< Unique identifier of the target map.
+        dint32 scriptNumber;           ///< Script number to execute on the target map.
+        acs::Script::Args scriptArgs;
 
         DeferredTask() : scriptNumber(-1) {}
-        DeferredTask(de::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
+        DeferredTask(de::Uri const &mapUri, dint32 scriptNumber, acs::Script::Args const &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
@@ -93,8 +91,11 @@ namespace internal
             for(dbyte &arg : scriptArgs) from >> arg;
         }
     };
-}
+
+}  // namespace internal
 using namespace internal;
+
+namespace acs {
 
 DENG2_PIMPL(System)
 {

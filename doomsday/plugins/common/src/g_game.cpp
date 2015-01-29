@@ -34,6 +34,7 @@
 #include <doomsday/defs/episode.h>
 #include <doomsday/uri.h>
 
+#include "acs/system.h"
 #include "am_map.h"
 #include "animdefs.h"
 #include "d_net.h"
@@ -317,14 +318,15 @@ void G_CommonPreInit()
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();      // Main command list.
-    D_NetConsoleRegister();       // For network.
-    G_ConsoleRegister();          // Top level game cvars and commands.
+    acs::System::consoleRegister();
+    D_NetConsoleRegister();
+    G_ConsoleRegister();
     Pause_Register();
-    G_ControlRegister();          // For controls/input.
-    SaveSlots::consoleRegister(); // Game-save system.
-    Hu_MenuConsoleRegister();     // For the menu.
-    GUI_Register();               // For the UI library.
-    Hu_MsgRegister();             // For the game messages.
+    G_ControlRegister();
+    SaveSlots::consoleRegister();
+    Hu_MenuConsoleRegister();
+    GUI_Register();
+    Hu_MsgRegister();
     ST_Register();                // For the hud/statusbar.
     IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
