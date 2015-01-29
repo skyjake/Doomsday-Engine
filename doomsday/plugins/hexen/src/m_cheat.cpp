@@ -553,7 +553,7 @@ D_CMD(CheatGive)
         case 'p':
             for(int k = IIT_FIRSTPUZZITEM; k < NUM_INVENTORYITEM_TYPES; ++k)
             {
-                P_InventoryGive(player, inventoryitemtype_t(i), false);
+                P_InventoryGive(player, inventoryitemtype_t(k), false);
             }
 
             P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
