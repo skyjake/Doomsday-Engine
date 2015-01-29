@@ -59,6 +59,12 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
         area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
+        musicSoundfont->setBlankText(tr("System default"));
+        musicSoundfont->setFilters(StringList()
+                                   << "SF2 soundfonts (*.sf2)"
+                                   << "DLS soundfonts (*.dls)"
+                                   << "All files (*)");
+
         // Display volumes on a 0...100 scale.
         sfxVolume  ->setDisplayFactor(100.0 / 255.0);
         musicVolume->setDisplayFactor(100.0 / 255.0);
@@ -111,7 +117,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
             << new ChoiceItem(tr("External files"), MUSP_EXT)
             << new ChoiceItem(tr("CD"), MUSP_CD);
 
-    auto *sfLabel = LabelWidget::newWithText(tr("Sound Font:"), &area());
+    auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
 
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
