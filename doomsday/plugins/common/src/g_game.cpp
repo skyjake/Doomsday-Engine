@@ -1093,8 +1093,8 @@ void G_BeginMap()
         R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
     }
 
-    // Clear all controls for all local players.
-    G_ControlReset(-1);
+    // Reset controls for all local players.
+    G_ControlReset();
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;

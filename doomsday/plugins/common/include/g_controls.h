@@ -150,7 +150,12 @@ void        G_ControlRegister(void);
 void        G_DefineControls(void);
 void        G_DefaultBindings(void);
 void        G_RegisterBindClasses(void);
-void        G_ControlReset(int pnum);
+
+/**
+ * Reset controls for all local players.
+ */
+void G_ControlReset(void);
+
 float       G_GetLookOffset(int pnum);
 void        G_ResetLookOffset(int pnum);
 
