@@ -288,10 +288,10 @@ SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
 }
 
 #undef Mobj_Sector
-DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
+DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 {
-    if(!mobj) return 0;
-    return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
+    if(!mob || !Mobj_IsLinked(*mob)) return nullptr;
+    return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
 void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
