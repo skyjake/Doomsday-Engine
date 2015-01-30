@@ -135,24 +135,26 @@ Script::State Script::state() const
 
 bool Script::isRunning() const
 {
-    return state() == Running;
+    return d->state == Running;
 }
 
 bool Script::isSuspended() const
 {
-    return state() == Suspended;
+    return d->state == Suspended;
 }
 
 bool Script::isWaiting() const
 {
-    switch(state())
+    switch(d->state)
     {
+    case WaitingForScript:
     case WaitingForSector:
     case WaitingForPolyobj:
-    case WaitingForScript:
         return true;
+
+    default:
+        return false;
     }
-    return false;
 }
 
 void Script::waitForPolyobj(int tag)

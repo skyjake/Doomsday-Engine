@@ -48,7 +48,7 @@ struct Interpreter
     struct mobj_s *activator;
     Line *line;
     int side;
-    void *_script;
+    Script *_script;
     int delayCount;
     struct Stack { // Local value stack.
         int values[ACS_INTERPRETER_SCRIPT_STACK_DEPTH];
@@ -62,33 +62,37 @@ struct Interpreter
     int args[ACS_INTERPRETER_MAX_SCRIPT_ARGS];
     int const *pcodePtr;
 
-    acs::System &scriptSys() const;
+    System &scriptSys() const;
 
     /**
      * Returns the Script data for the thinker.
      */
-    acs::Script &script() const;
+    Script &script() const;
 
     void think();
 
     /**
-     * Deserialize the thinker from the currently open save file.
+     * Deserialize the thinker using the given data reader @msr.
      */
     int read(MapStateReader *msr);
 
     /**
-     * Serialize the thinker to the currently open save file.
+     * Serialize the thinker using the given data writer @msw.
      */
     void write(MapStateWriter *msw) const;
 
     /**
-     * @param script      Logical ACS script-state instance.
-     * @param scriptArgs  Args passed to the script.
-     * @param delayCount  Delay in tics to wait before interpretation begins.
+     * Constructs a new ACScript Interpreter and adds its thinker to the map.
+     *
+     * @param script      ACScript to interpret.
+     * @param scriptArgs  Script argument values.
+     * @param activator   Map object activator, if any (can be @c nullptr).
+     * @param delayCount  Number of tics to wait before interpretation begins.
+     *                    (Can be used to delay processing during map startup.)
      */
-    static thinker_s *newThinker(acs::Script &script, acs::Script::Args const &scriptArgs,
-                                 struct mobj_s *activator = nullptr, Line *line = nullptr,
-                                 int side = 0, int delayCount = 0);
+    static thinker_s *newThinker(Script &script, Script::Args const &scriptArgs,
+        struct mobj_s *activator = nullptr, Line *line = nullptr, int side = 0,
+        int delayCount = 0);
 };
 
 }  // namespace acs

@@ -100,11 +100,11 @@ public:
      * thinkers for the @em current map.
      *
      * @param args       Script argument values.
-     * @param activator  Mobj activator, if any (can be @c nullptr).
+     * @param activator  Map object activator, if any (can be @c nullptr).
      * @param line       Line activator, if any (can be @c nullptr).
      * @param side       Line side number.
      * @param delayTics  Number of tics to wait before interpretation begins.
-     *                   (Can be used to delay processing during map startup).
+     *                   (Can be used to delay processing during map startup.)
      *
      * @return  @c true if started/resumed.
      */

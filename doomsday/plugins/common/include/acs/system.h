@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef COMMON_ACS_SYSTEM_H
-#define COMMON_ACS_SYSTEM_H
+#ifndef LIBCOMMON_ACS_SYSTEM_H
+#define LIBCOMMON_ACS_SYSTEM_H
 
 #include "common.h"
 #ifdef __cplusplus
@@ -158,4 +158,4 @@ dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, Uri const *mapUri,
 }  // extern "C"
 #endif
 
-#endif  // COMMON_ACS_SYSTEM_H
+#endif  // LIBCOMMON_ACS_SYSTEM_H

@@ -24,8 +24,8 @@
 #include <de/ISerializable>
 #include <de/Log>
 #include <de/NativePath>
-#include "acs/script.h"
 #include "acs/interpreter.h"
+#include "acs/script.h"
 #include "gamesession.h"
 
 using namespace de;
@@ -33,7 +33,7 @@ using namespace de;
 namespace internal
 {
     /**
-     * Bytecode header. Read directly from the map lump.
+     * Bytecode header. Read directly from the data resource file.
      */
 #pragma pack(1)
     struct BytecodeHeader
@@ -372,8 +372,8 @@ void System::runDeferredTasks(de::Uri const &mapUri)
 D_CMD(InspectACScript)
 {
     DENG2_UNUSED2(src, argc);
-    System &scriptSys = Game_ACScriptSystem();
-    int const scriptNumber    = String(argv[1]).toInt();
+    System &scriptSys      = Game_ACScriptSystem();
+    int const scriptNumber = String(argv[1]).toInt();
 
     if(!scriptSys.hasScript(scriptNumber))
     {
@@ -421,8 +421,10 @@ D_CMD(ListACScripts)
             return LoopContinue;
         });
     }
-
-    LOG_SCR_MSG("No ACScripts are currently loaded");
+    else
+    {
+        LOG_SCR_MSG("No ACScripts are currently loaded");
+    }
     return true;
 }
 
@@ -432,7 +434,7 @@ void System::consoleRegister()  // static
     C_CMD("scriptinfo",  "",     ListACScripts);
 }
 
-} // namespace acs
+}  // namespace acs
 
 static acs::System scriptSys;  ///< The One acs::System instance.
 

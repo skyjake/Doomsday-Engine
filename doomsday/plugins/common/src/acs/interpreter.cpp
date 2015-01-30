@@ -36,7 +36,7 @@ using namespace de;
 
 namespace internal {
 
-    /// Bytecode command return value.
+    /// Status to return from ACScript command functions.
     enum CommandResult
     {
         Continue,
@@ -46,7 +46,7 @@ namespace internal {
 
     typedef CommandResult (*CommandFunc) (acs::Interpreter &);
 
-/// Helper macro for declaring an ACS command (function callback).
+/// Helper macro for declaring ACScript command functions.
 #define ACS_COMMAND(Name) CommandResult cmd##Name(acs::Interpreter &interp)
 
     static String printBuffer;
@@ -1136,7 +1136,7 @@ System &Interpreter::scriptSys() const
 Script &Interpreter::script() const
 {
     DENG2_ASSERT(_script);
-    return *static_cast<Script *>(_script);
+    return *_script;
 }
 
 void Interpreter::Stack::push(int value)
