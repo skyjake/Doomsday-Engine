@@ -309,7 +309,7 @@ def logCleanup():
         logs = logs[:-1]
         for log in logs:
             fn = os.path.join(sv.runtime, log)
-            run('gzip -9 ' + fn)
+            run('gzip -9f ' + fn)
     
     
 def startInstance():
