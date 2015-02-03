@@ -215,7 +215,7 @@ void Script::read(reader_s *reader)
 
 void Script::resumeIfWaitingForScript(Script const &other)
 {
-    DENG2_ASSERT(&other != this);
+    if(&other == this) return;
     d->resumeIfWaitingForScript(other);
 }
 
