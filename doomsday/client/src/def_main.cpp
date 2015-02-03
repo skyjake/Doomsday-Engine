@@ -655,7 +655,8 @@ static void readAllDefinitions()
 
             if(!xlat.isEmpty())
             {
-                qDebug() << "[TranslatedMapInfos] custom:false\n" << xlat;
+                LOGDEV_MAP_VERBOSE("Non-custom translated MAPINFO definitions:\n") << xlat;
+
                 if(!DED_ReadData(&defs, xlat.toUtf8().constData(),
                                  "[TranslatedMapInfos]", false /*not custom*/))
                 {
@@ -665,7 +666,8 @@ static void readAllDefinitions()
 
             if(!xlatCustom.isEmpty())
             {
-                qDebug() << "[TranslatedMapInfos] custom:true\n" << xlatCustom;
+                LOGDEV_MAP_VERBOSE("Custom translated MAPINFO definitions:\n") << xlatCustom;
+
                 if(!DED_ReadData(&defs, xlatCustom.toUtf8().constData(),
                                  "[TranslatedMapInfos]", true /*custom*/))
                 {
