@@ -50,9 +50,9 @@ namespace internal {
 #define ACS_COMMAND(Name) CommandResult cmd##Name(acs::Interpreter &interp)
 
     static String printBuffer;
-    static byte specArgs[5];
 
 #ifdef __JHEXEN__
+    static byte specArgs[5];
 
     ACS_COMMAND(NOP)
     {

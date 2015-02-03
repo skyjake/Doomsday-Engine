@@ -76,7 +76,7 @@ static coord_t attackRange;
 mobj_t *PuffSpawned;
 #endif
 static coord_t shootZ; ///< Height if not aiming up or down.
-static mobj_t *shootThing;
+static mobj_t *shooterThing;
 static float aimSlope;
 static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
 
@@ -2037,19 +2037,23 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
     }
 
     // Intercepted a mobj.
-
     mobj_t *th = icpt->mobj;
 
-    if(th == shootThing) return false; // Can't aim at oneself.
-    if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something?
+    if(th == shooterThing) return false; // Can't aim at oneself.
+
+    if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something (not shootable)?
+
 #if __JHERETIC__
     if(th->type == MT_POD) return false; // Can't auto-aim at pods.
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
+    if(Mobj_IsPlayer(shooterThing) && Mobj_IsPlayer(th) &&
+       IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
     {
-        return false; // Don't aim at fellow co-op players.
+        // In co-op, players don't aim at fellow players (although manually aiming is
+        // always possible).
+        return false;
     }
 #endif
 
@@ -2134,13 +2138,14 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     {
         shootZ += (t1->height / 2) + 8;
     }
+
     /// @todo What about t1->floorClip ? -ds
 
-    topSlope    = 100.0/160;
-    bottomSlope = -100.0/160;
-    attackRange = distance;
-    lineTarget  = 0;
-    shootThing  = t1;
+    topSlope     = 100.0/160;
+    bottomSlope  = -100.0/160;
+    attackRange  = distance;
+    lineTarget   = 0;
+    shooterThing = t1;
 
     P_PathTraverse(t1->origin, target, PTR_AimTraverse, 0);
 
