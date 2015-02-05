@@ -30,6 +30,7 @@
 #include <de/SequentialLayout>
 #include <de/DocumentPopupWidget>
 #include <de/ui/Item>
+#include <de/IndirectRule>
 
 using namespace de;
 
@@ -121,9 +122,6 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         ServerWidget()
         {
             loadButton().disable();
-
-            // Don't clip any of the provided information.
-            loadButton().setHeightPolicy(ui::Expand);
         }
 
         void updateFromItem(ServerListItem const &item)
@@ -163,6 +161,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
     DiscoveryMode mode;
     ServerLink::FoundMask mask;
+    IndirectRule *maxHeightRule = new IndirectRule;
 
     Instance(Public *i)
         : Base(i)
@@ -174,8 +173,44 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
     ~Instance()
     {
+        releaseRef(maxHeightRule);
         link().audienceForDiscoveryUpdate -= this;
         App::app().audienceForGameChange() -= this;
+    }
+
+    /**
+     * Puts together a rule that determines the tallest load button of those present
+     * in the menu. This will be used to size all the buttons uniformly.
+     */
+    void updateItemMaxHeight()
+    {
+        // Form a rule that is the maximum of all load button heights.
+        Rule const *maxHgt = nullptr;
+        foreach(Widget *w, self.childWidgets())
+        {
+            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            {
+                auto const &itemHeight = sw->loadButton().contentHeight();
+                if(!maxHgt)
+                {
+                    maxHgt = holdRef(itemHeight);
+                }
+                else
+                {
+                    changeRef(maxHgt, OperatorRule::maximum(*maxHgt, itemHeight));
+                }
+            }
+        }
+
+        if(maxHgt)
+        {
+            maxHeightRule->setSource(*maxHgt);
+        }
+        else
+        {
+            maxHeightRule->unsetSource();
+        }
+        releaseRef(maxHgt);
     }
 
     void linkDiscoveryUpdate(ServerLink const &link)
@@ -215,6 +250,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
         if(changed)
         {
+            updateItemMaxHeight();
             self.sort();
 
             // Let others know that one or more games have appeared or disappeared
@@ -262,7 +298,9 @@ Action *MPSessionMenuWidget::makeAction(ui::Item const &item)
 
 GuiWidget *MPSessionMenuWidget::makeItemWidget(ui::Item const &, GuiWidget const *)
 {
-    return new Instance::ServerWidget;
+    auto *sw = new Instance::ServerWidget;
+    sw->rule().setInput(Rule::Height, *d->maxHeightRule);
+    return sw;
 }
 
 void MPSessionMenuWidget::updateItemWidget(GuiWidget &widget, ui::Item const &item)
