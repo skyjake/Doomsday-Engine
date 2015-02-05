@@ -64,6 +64,12 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             BusyMode_FreezeGameForBusyMode();
             ClientWindow::main().taskBar().close();
 
+            // Automatically leave the current MP game.
+            if(netGame && isClient)
+            {
+                ClientApp::serverLink().disconnect();
+            }
+
             App_ChangeGame(App_Games().byIdentityKey(gameId), false /*no reload*/);
             Con_Execute(CMDS_DDAY, cmd.toLatin1(), false, false);
         }
