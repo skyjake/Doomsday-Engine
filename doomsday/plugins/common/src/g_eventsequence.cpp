@@ -252,7 +252,9 @@ void G_ShutdownEventSequences(void)
 
 int G_EventSequenceResponder(event_t* ev)
 {
-    if(!inited) Con_Error("G_EventSequenceResponder: Subsystem not presently initialized.");
+    DENG_ASSERT(inited);
+
+    if(!inited) return false;
 
     // We are only interested in key down events.
     if(!ev || ev->type != EV_KEY || ev->state != EVS_DOWN) return false;

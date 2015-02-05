@@ -38,7 +38,7 @@ using namespace de;
  */
 static int globalContextFallback(ddevent_t const *ddev)
 {
-    if(App_GameLoaded())
+    if(App_GameLoaded() && !BusyMode_Active())
     {
         event_t ev;
         if(InputSystem::convertEvent(*ddev, ev))
