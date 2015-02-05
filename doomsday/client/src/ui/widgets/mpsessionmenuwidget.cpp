@@ -143,13 +143,12 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                                     sv.version == DOOMSDAY_VERSION &&
                                     svGame.allStartupFilesFound());
 
-                loadButton().setText(String(_E(1) "%1 " _E(.) DENG2_CHAR_MDASH" %2" _E(C) " (%5)" _E(.)
-                                            _E(D)_E(l) "\n%6 %4")
+                loadButton().setText(String(_E(F)_E(s) "%2\n" _E(.)_E(.)_E(C) "(%4) " _E(.)
+                                            _E(1)_E(>) "%1" _E(.)_E(<)_E(D)_E(l) "\n%5 %3")
                                .arg(sv.name)
                                .arg(svGame.title())
                                .arg(sv.gameConfig)
                                .arg(sv.numPlayers)
-                               //.arg(sv.maxPlayers)
                                .arg(sv.map));
 
                 // Extra information.
@@ -216,6 +215,8 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
         if(changed)
         {
+            self.sort();
+
             // Let others know that one or more games have appeared or disappeared
             // from the menu.
             emit self.availabilityChanged();
