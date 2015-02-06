@@ -2125,7 +2125,7 @@ de::Uri G_MapTitleImage(de::Uri const &mapUri)
 
 String G_MapDescription(String episodeId, de::Uri const &mapUri)
 {
-    QByteArray mapUriUtf8 = mapUri.compose().toUtf8().constData();
+    Block mapUriUtf8 = mapUri.compose().toUtf8();
     if(!P_MapExists(mapUriUtf8.constData()))
     {
         return String("Unknown map (Episode: ") + episodeId + ", Uri: " + mapUri + ")";
@@ -2154,7 +2154,7 @@ String G_MapDescription(String episodeId, de::Uri const &mapUri)
     String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUriUtf8.constData()));
     if(!author.isEmpty())
     {
-        os << "\nAuthor: " DE2_ESC(i) << author;
+        os << "\n - Author: " DE2_ESC(i) << author;
     }
 
     return desc;

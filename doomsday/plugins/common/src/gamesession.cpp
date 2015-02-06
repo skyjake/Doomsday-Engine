@@ -1064,17 +1064,28 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     d->rules = newRules; // make a copy
     d->applyCurrentRules();
     d->setEpisode(episodeId);
-
     d->visitedMaps.clear();
     d->rememberVisitedMaps = true;
 
     // Begin the session.
     d->inProgress = true;
     d->setMapAndEntryPoint(mapUri, mapEntryPoint);
+
+    SessionMetadata metadata = d->metadata();
+
+    // Print a session banner to the log.
+    LOG_MSG(DE2_ESC(R));
+    LOG_NOTE("Episode: " DE2_ESC(i) DE2_ESC(b) "%s" DE2_ESC(.) " (%s)")
+            << G_EpisodeTitle(episodeId)
+            << d->rules.description();
+    LOG_VERBOSE("%s") << metadata.asStyledText();
+    LOG_MSG(DE2_ESC(R));
+
+    // Load the start map.
     d->reloadMap();
 
     // Create the internal .save session package.
-    d->updateSavedSession(internalSavePath, d->metadata());
+    d->updateSavedSession(internalSavePath, metadata);
 }
 
 void GameSession::reloadMap()
