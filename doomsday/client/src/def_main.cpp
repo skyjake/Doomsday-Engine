@@ -381,11 +381,6 @@ int Def_EvalFlags(char const *ptr)
     return defs.evalFlags2(ptr);
 }
 
-int Def_GetTextNumForName(char const *name)
-{
-    return defs.getTextNum(name);
-}
-
 /**
  * The following escape sequences are un-escaped:
  * <pre>
