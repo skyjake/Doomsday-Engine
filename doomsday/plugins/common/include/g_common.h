@@ -100,6 +100,17 @@ de::String G_MapTitle(de::Uri const &mapUri);
 de::Uri G_MapTitleImage(de::Uri const &mapUri);
 
 /**
+ * Compose a textual, rich-formatted description of the the referenced map, containing
+ * pertinent information and/or metadata (such as the title and author).
+ *
+ * @param episodeId  Unique episode identifier.
+ * @param mapUri     Unique map identifier.
+ *
+ * @return  Rich-formatted description of the map.
+ */
+de::String G_MapDescription(de::String episodeId, de::Uri const &mapUri);
+
+/**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
  * form for the current game mode (i.e., MAPXX or EXMY).
  *

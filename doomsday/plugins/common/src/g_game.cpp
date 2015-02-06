@@ -1045,44 +1045,6 @@ void G_StartHelp()
     LOG_SCR_WARNING("InFine script '%s' not defined") << scriptId;
 }
 
-/**
- * Prints a banner to the console containing information pertinent to the referenced map
- * (e.g., title, author...).
- */
-static void printMapBanner(String episodeId, de::Uri const &mapUri)
-{
-    LOG_MSG(DE2_ESC(R));
-
-    String const title = G_MapTitle(mapUri);
-    if(!title.isEmpty())
-    {
-        Record const *mgNodeDef = 0;
-        if(Record const *episode = Defs().episodes.tryFind("id", episodeId))
-        {
-            mgNodeDef = defn::Episode(*episode).tryFindMapGraphNode(mapUri.compose());
-        }
-
-        LOG_NOTE("Map: " DE2_ESC(i) DE2_ESC(b) "%s" DE2_ESC(.) " (%s%s)")
-                << title << mapUri
-                << (mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
-    }
-
-    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose().toUtf8().constData()));
-    if(!author.isEmpty())
-    {
-        LOG_NOTE("Author: " DE2_ESC(i)) << author;
-    }
-
-    String const episodeTitle = G_EpisodeTitle(episodeId);
-    if(!episodeTitle.isEmpty())
-    {
-        LOG_NOTE("Episode: " DE2_ESC(i) "%s (id: %s)")
-                << episodeTitle << episodeId;
-    }
-
-    LOG_MSG(DE2_ESC(R));
-}
-
 void G_BeginMap()
 {
     G_ChangeGameState(GS_MAP);
@@ -1102,7 +1064,11 @@ void G_BeginMap()
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);
 
-    printMapBanner(COMMON_GAMESESSION->episodeId(), COMMON_GAMESESSION->mapUri());
+    // Print a map banner to the log.
+    LOG_MSG(DE2_ESC(R));
+    LOG_NOTE("%s") << G_MapDescription(COMMON_GAMESESSION->episodeId(),
+                                       COMMON_GAMESESSION->mapUri());
+    LOG_MSG(DE2_ESC(R));
 }
 
 int G_Responder(event_t *ev)
@@ -2155,6 +2121,43 @@ de::Uri G_MapTitleImage(de::Uri const &mapUri)
         return de::Uri(mapInfo->gets("titleImage"), RC_NULL);
     }
     return de::Uri();
+}
+
+String G_MapDescription(String episodeId, de::Uri const &mapUri)
+{
+    QByteArray mapUriUtf8 = mapUri.compose().toUtf8().constData();
+    if(!P_MapExists(mapUriUtf8.constData()))
+    {
+        return String("Unknown map (Episode: ") + episodeId + ", Uri: " + mapUri + ")";
+    }
+
+    String desc;
+    QTextStream os(&desc);
+
+    String const title = G_MapTitle(mapUri);
+    if(!title.isEmpty())
+    {
+        os << "Map: " DE2_ESC(i) DE2_ESC(b) << title << DE2_ESC(.)
+           << " (Uri: " << mapUri;
+
+        if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
+        {
+            if(Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
+            {
+                os << ", warp: " << String::number(mgNodeDef->geti("warpNumber"));
+            }
+        }
+
+        os << ")" << DE2_ESC(.);
+    }
+
+    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUriUtf8.constData()));
+    if(!author.isEmpty())
+    {
+        os << "\nAuthor: " DE2_ESC(i) << author;
+    }
+
+    return desc;
 }
 
 /**
