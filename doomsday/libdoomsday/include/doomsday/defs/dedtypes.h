@@ -436,14 +436,20 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
 } ded_mapinfo_t;
 #endif
 
-typedef struct {
-    ded_stringid_t  id;
-    char*           text;
+struct ded_text_t
+{
+    ded_stringid_t id;
+    char *text;
 
     void release() {
         M_Free(text);
     }
-} ded_text_t;
+
+    void setText(char const *newTextToCopy) {
+        release();
+        text = M_StrDup(newTextToCopy);
+    }
+};
 
 typedef struct {
     ded_stringid_t  id;

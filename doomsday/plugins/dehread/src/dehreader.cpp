@@ -1688,14 +1688,14 @@ public:
     {
         if(id.isEmpty()) return;
 
-        int textIdx = Def_Get(DD_DEF_TEXT, id.toUtf8().constData(), nullptr);
+        int textIdx = ded->getTextNum(id.toUtf8().constData());
         if(textIdx < 0) return;
 
         // We must escape new lines.
         newValue.replace("\n", "\\n");
 
         // Replace this text.
-        Def_Set(DD_DEF_TEXT, textIdx, 0, newValue.toUtf8().constData());
+        ded->text[textIdx].setText(newValue.toUtf8().constData());
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
                 << textIdx << id << newValue;
     }
@@ -1880,8 +1880,7 @@ public:
         // Is replacement disallowed/not-supported?
         if(textMapping->name.isEmpty()) return true; // Pretend success.
 
-        Block textNameUtf8 = textMapping->name.toUtf8();
-        int textIdx = Def_Get(DD_DEF_TEXT, textNameUtf8.constData(), NULL);
+        int textIdx = ded->getTextNum(textMapping->name.toUtf8().constData());
         if(textIdx < 0) return false;
 
         // We must escape new lines.
@@ -1889,7 +1888,7 @@ public:
         Block newStrUtf8 = newStrCopy.replace("\n", "\\n").toUtf8();
 
         // Replace this text.
-        Def_Set(DD_DEF_TEXT, textIdx, 0, newStrUtf8.constData());
+        ded->text[textIdx].setText(newStrUtf8.constData());
 
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
                 << textIdx << textMapping->name << newStrUtf8.constData();

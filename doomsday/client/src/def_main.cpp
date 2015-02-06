@@ -383,7 +383,7 @@ int Def_EvalFlags(char const *ptr)
 
 int Def_GetTextNumForName(char const *name)
 {
-    return defs.getTextNumForName(name);
+    return defs.getTextNum(name);
 }
 
 /**
@@ -1923,19 +1923,6 @@ int Def_Get(int type, char const *id, void *out)
         qstrcpy((char *)out, runtimeDefs.sounds[i].lumpName);
         return true; }
 
-    case DD_DEF_TEXT:
-        if(id && id[0])
-        {
-            // Read backwards to allow patching.
-            for(int i = defs.text.size() - 1; i >= 0; i--)
-            {
-                if(qstricmp(defs.text[i].id, id)) continue;
-                if(out) *(char **) out = defs.text[i].text;
-                return i;
-            }
-        }
-        return -1;
-
     case DD_DEF_VALUE: {
         int idx = -1; // Not found.
         if(id && id[0])
@@ -1990,16 +1977,6 @@ int Def_Set(int type, int index, int value, void const *ptr)
 
     switch(type)
     {
-    case DD_DEF_TEXT:
-        if(index < 0 || index >= defs.text.size())
-        {
-            DENG2_ASSERT(!"Def_Set: Text index is invalid");
-            return false;
-        }
-        defs.text[index].text = (char *) M_Realloc(defs.text[index].text, qstrlen((char *)ptr) + 1);
-        qstrcpy(defs.text[index].text, (char const *) ptr);
-        break;
-
     case DD_DEF_STATE: {
         ded_state_t *stateDef;
         if(index < 0 || index >= defs.states.size())

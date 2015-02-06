@@ -304,7 +304,7 @@ void P_InitInventory()
             continue;
 
         data->type     = type;
-        data->niceName = textenum_t(Defs().getTextNumForName(def->niceName));
+        data->niceName = textenum_t(Defs().getTextNum(def->niceName));
         data->action   = getActionPtr(def->action);
         data->useSnd   = sfxenum_t(Defs().getSoundNum(def->useSnd));
         data->patchId  = R_DeclarePatch(def->patch);

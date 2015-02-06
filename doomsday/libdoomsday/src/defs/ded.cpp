@@ -659,17 +659,15 @@ ded_group_t *ded_s::findGroupForFrameTexture(de::Uri const &uri) const
     return nullptr;  // Not found.
 }
 
-int ded_s::getTextNumForName(const char* name) const
+int ded_s::getTextNum(char const *id) const
 {
-    int idx = -1;
-    if(name && name[0] && text.size())
+    if(id && id[0])
     {
-        int i = 0;
-        do
+        // Search in reverse insertion order to allow patching.
+        for(int i = text.size() - 1; i >= 0; i--)
         {
-            if(!qstricmp(text[i].id, name))
-                idx = i;
-        } while(idx == -1 && ++i < text.size());
+            if(!qstricmp(text[i].id, id)) return i;
+        }
     }
-    return idx;
+    return -1; // Not found.
 }

@@ -161,8 +161,6 @@ public:
 
     int evalFlags2(char const *ptr) const;
 
-    int getTextNumForName(const char* name) const;
-
     ded_material_t *findMaterialDef(de::Uri const &uri) const;
 
     ded_material_t *getMaterial(char const *uriCString) const;
@@ -183,6 +181,8 @@ public:
 
     int getModelNum(char const *id) const;
 
+    int getMusicNum(char const *id) const;
+
     int getSkyNum(char const *id) const;
 
     int getSoundNum(char const *id) const;
@@ -194,7 +194,7 @@ public:
      */
     int getSoundNumForName(char const *name) const;
 
-    int getMusicNum(char const *id) const;
+    int getTextNum(char const *id) const;
 
     ded_value_t *getValueById(char const *id) const;
 

@@ -409,11 +409,6 @@ namespace internal {
                     if(!enterText.compareWithoutCase("lookup"))
                     {
                         enterText = Str_Text(lexer.readString());
-                        /*char *found = 0;
-                        if(Def_Get(DD_DEF_TEXT, enterText.toUtf8().constData(), &found) >= 0)
-                        {
-                            enterText = String(found);
-                        }*/
                     }
                     continue;
                 }
@@ -425,11 +420,6 @@ namespace internal {
                     if(!exitText.compareWithoutCase("lookup"))
                     {
                         exitText = Str_Text(lexer.readString());
-                        /*char *found = 0;
-                        if(Def_Get(DD_DEF_TEXT, exitText.toUtf8().constData(), &found) >= 0)
-                        {
-                            exitText = String(found);
-                        }*/
                     }
                     continue;
                 }

@@ -2048,7 +2048,7 @@ String G_EpisodeTitle(String episodeId)
         title = episodeDef->gets("title");
 
         // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        int textIdx = Defs().getTextNum(title.toUtf8().constData());
         if(textIdx >= 0)
         {
             title = Defs().text[textIdx].text; // Yes, use the resolved text string.
@@ -2067,7 +2067,7 @@ String G_MapTitle(de::Uri const &mapUri)
         title = mapInfo->gets("title");
 
         // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
+        int textIdx = Defs().getTextNum(title.toUtf8().constData());
         if(textIdx >= 0)
         {
             title = Defs().text[textIdx].text; // Yes, use the resolved text string.
