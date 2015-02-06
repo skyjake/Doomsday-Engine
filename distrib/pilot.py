@@ -390,7 +390,7 @@ def handleCompletedTasks():
         elif task == 'tag_build':
             newTask('deb_changes', forClient='ubuntu-32bit')
             newTask('mac_meta', forClient='master')
-            newTask('generate_readme', forClient='clikits')
+            newTask('generate_readme', forClient='dox')
         
         elif task == 'deb_changes':
             newTask('build', allClients=True)
