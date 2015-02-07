@@ -270,6 +270,7 @@ void LogBuffer::setOutputFile(String const &path, OutputChangeBehavior behavior)
 
 String LogBuffer::outputFile() const
 {
+    if(!d->outputFile) return "";
     return d->outputFile->path();
 }
 
