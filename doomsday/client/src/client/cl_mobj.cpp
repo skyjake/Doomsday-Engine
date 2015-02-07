@@ -618,6 +618,8 @@ void ClMobj_ReadNullDelta()
 #undef ClMobj_Find
 mobj_t *ClMobj_Find(thid_t id)
 {
+    if(!App_WorldSystem().hasMap()) return nullptr;
+    
     /// @todo Do not assume the CURRENT map.
     return App_WorldSystem().map().clMobjFor(id);
 }
