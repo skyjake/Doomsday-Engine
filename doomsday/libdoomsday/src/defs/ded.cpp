@@ -18,22 +18,23 @@
  */
 
 #include "doomsday/defs/ded.h"
-#include "doomsday/defs/episode.h"
-#include "doomsday/defs/finale.h"
-#include "doomsday/defs/mapinfo.h"
-#include "doomsday/defs/model.h"
-#include "doomsday/defs/music.h"
-#include "doomsday/defs/sky.h"
-
-#include <de/ArrayValue>
-#include <de/NumberValue>
-#include <de/RecordValue>
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <de/memory.h>
 #include <de/strutil.h>
+#include <de/ArrayValue>
+#include <de/NumberValue>
+#include <de/RecordValue>
+
+#include "doomsday/defs/episode.h"
+#include "doomsday/defs/finale.h"
+#include "doomsday/defs/mapinfo.h"
+#include "doomsday/defs/material.h"
+#include "doomsday/defs/model.h"
+#include "doomsday/defs/music.h"
+#include "doomsday/defs/sky.h"
 
 using namespace de;
 
@@ -52,13 +53,14 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
-    : flags   (names.addRecord("flags"))
-    , episodes(names.addRecord("episodes"))
-    , models  (names.addRecord("models"))
-    , skies   (names.addRecord("skies"))
-    , musics  (names.addRecord("musics"))
-    , mapInfos(names.addRecord("mapInfos"))
-    , finales (names.addRecord("finales"))
+    : flags    (names.addRecord("flags"))
+    , episodes (names.addRecord("episodes"))
+    , materials(names.addRecord("materials"))
+    , models   (names.addRecord("models"))
+    , skies    (names.addRecord("skies"))
+    , musics   (names.addRecord("musics"))
+    , mapInfos (names.addRecord("mapInfos"))
+    , finales  (names.addRecord("finales"))
 {
     flags.addLookupKey("id");
     episodes.addLookupKey("id");
@@ -66,6 +68,7 @@ ded_s::ded_s()
     finales.addLookupKey("before");
     finales.addLookupKey("after");
     mapInfos.addLookupKey("id");
+    materials.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
     models.addLookupKey("state");
     musics.addLookupKey("id", DEDRegister::OnlyFirst);
@@ -127,8 +130,9 @@ int ded_s::addMapInfo()
 
 int ded_s::addMaterial()
 {
-    ded_material_t *mat = materials.append();
-    return materials.indexOf(mat);
+    Record &def = materials.append();
+    defn::Material(def).resetToDefaults();
+    return def.geti("__order__");
 }
 
 int ded_s::addModel()
@@ -330,55 +334,6 @@ int DED_AddLineType(ded_t* ded, int id)
     return ded->lineTypes.indexOf(li);
 }
 
-ded_material_t *ded_s::findMaterialDef(de::Uri const &uri) const
-{
-    for(int i = materials.size() - 1; i >= 0; i--)
-    {
-        ded_material_t *def = &materials[i];
-        if(def->uri && uri == *def->uri)
-        {
-            return def;
-        }
-    }
-    return 0; // Not found.
-}
-
-ded_material_t* ded_s::getMaterial(char const *uriCString) const
-{
-    ded_material_t* def = NULL;
-
-    if(uriCString && uriCString[0])
-    {
-        de::Uri uri(uriCString, RC_NULL);
-
-        if(uri.scheme().isEmpty())
-        {
-            // Caller doesn't care which scheme - use a priority search order.
-            de::Uri temp(uri);
-
-            temp.setScheme("Sprites");
-            def = findMaterialDef(temp);
-            if(!def)
-            {
-                temp.setScheme("Textures");
-                def = findMaterialDef(temp);
-            }
-            if(!def)
-            {
-                temp.setScheme("Flats");
-                def = findMaterialDef(temp);
-            }
-        }
-
-        if(!def)
-        {
-            def = findMaterialDef(uri);
-        }
-    }
-
-    return def;
-}
-
 int ded_s::getMobjNum(char const *id) const
 {
     int i;
@@ -474,14 +429,36 @@ int ded_s::getMapInfoNum(de::Uri const &uri) const
     {
         return def->geti("__order__");
     }
-    return -1;
+    return -1;  // Not found.
+}
 
-    /*for(int i = mapInfo.size() - 1; i >= 0; i--)
+int ded_s::getMaterialNum(de::Uri const &uri) const
+{
+    if(uri.isEmpty()) return -1;  // Not found.
+
+    if(uri.scheme().isEmpty())
     {
-        if(mapInfo[i].uri && *uri == *mapInfo[i].uri)
-            return i;
+        // Caller doesn't care which scheme - use a priority search order.
+        de::Uri temp(uri);
+
+        temp.setScheme("Sprites");
+        int idx = getMaterialNum(temp);
+        if(idx >= 0) return idx;
+
+        temp.setScheme("Textures");
+        idx = getMaterialNum(temp);
+        if(idx >= 0) return idx;
+
+        temp.setScheme("Flats");
+        idx = getMaterialNum(temp);
+        /*if(idx >= 0)*/ return idx;
     }
-    return -1;*/
+
+    if(Record const *def = materials.tryFind("id", uri.compose()))
+    {
+        return def->geti("__order__");
+    }
+    return -1;  // Not found.
 }
 
 int ded_s::getModelNum(const char *id) const

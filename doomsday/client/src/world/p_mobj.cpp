@@ -416,7 +416,8 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 
 static inline Texture *lightmap(de::Uri const *textureUri)
 {
-    return App_ResourceSystem().texture("Lightmaps", textureUri);
+    if(!textureUri) return nullptr;
+    return App_ResourceSystem().texture("Lightmaps", *textureUri);
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mo)

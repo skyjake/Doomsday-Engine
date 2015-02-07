@@ -2425,22 +2425,25 @@ void ResourceSystem::initSystemTextures()
     d->deriveAllTexturesInScheme("System");
 }
 
-Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
+Texture *ResourceSystem::texture(String schemeName, de::Uri const &resourceUri)
 {
-    if(resourceUri && !resourceUri->isEmpty())
+    if(!resourceUri.isEmpty())
     {
-        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
+        if(!resourceUri.path().toStringRef().compareWithoutCase("-"))
+        {
+            return nullptr;
+        }
 
         try
         {
-            return &textureScheme(schemeName).findByResourceUri(*resourceUri).texture();
+            return &textureScheme(schemeName).findByResourceUri(resourceUri).texture();
         }
         catch(TextureManifest::MissingTextureError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
         catch(TextureScheme::NotFoundError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
     }
-    return 0;
+    return nullptr;
 }
 
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
@@ -3519,7 +3522,7 @@ AnimGroup *ResourceSystem::animGroup(int uniqueId)
     return nullptr;
 }
 
-AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest &textureManifest)
+AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest const &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.

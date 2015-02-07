@@ -1,6 +1,6 @@
 /** @file materiallightdecoration.h  Logical material, light decoration.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -66,9 +66,10 @@ public:
         virtual ~AnimationStage() {}
 
         /**
-         * Construct a new AnimationStage from the given @a definition.
+         * Construct a new AnimationStage from the given @a stageDef.
          */
-        static AnimationStage *fromDef(ded_decorlight_stage_t const &definition);
+        static AnimationStage *fromDef(de::Record const &stageDef);
+        static AnimationStage *fromDef(ded_decorlight_stage_t const &stageDef);
 
         de::String description() const;
     };
@@ -81,7 +82,7 @@ public:
     /**
      * Construct a new material decoration from the specified definition.
      */
-    static MaterialLightDecoration *fromDef(ded_material_lightdecoration_t const &def);
+    static MaterialLightDecoration *fromDef(de::Record const &decorationDef);
 
     de::String describe() const;
 

@@ -1,6 +1,6 @@
 /** @file materialtexturelayer.cpp   Logical material, texture layer.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,6 +18,8 @@
  */
 
 #include "resource/materialtexturelayer.h"
+
+#include <doomsday/defs/material.h>
 #include "dd_main.h"
 #include "r_util.h" // R_NameForBlendMode
 
@@ -63,11 +65,13 @@ void MaterialTextureLayer::AnimationStage::resetToDefaults()
 }
 
 MaterialTextureLayer::AnimationStage *
-MaterialTextureLayer::AnimationStage::fromDef(ded_material_layer_stage_t const &def)
+MaterialTextureLayer::AnimationStage::fromDef(Record const &stageDef)
 {
-    de::Uri const texture = (def.texture? *def.texture : de::Uri());
-    return new AnimationStage(texture, def.tics, def.variance, def.glowStrength,
-                              def.glowStrengthVariance, Vector2f(def.texOrigin));
+    return new AnimationStage(de::Uri(stageDef.gets("texture"), RC_NULL),
+                              stageDef.geti("tics"), stageDef.getf("variance"),
+                              stageDef.getf("glowStrength"),
+                              stageDef.getf("glowStrengthVariance"),
+                              Vector2f(stageDef.geta("texOrigin")));
 }
 
 String MaterialTextureLayer::AnimationStage::description() const
@@ -78,12 +82,13 @@ String MaterialTextureLayer::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-MaterialTextureLayer *MaterialTextureLayer::fromDef(ded_material_layer_t const &def)
+MaterialTextureLayer *MaterialTextureLayer::fromDef(Record const &definition)
 {
+    defn::MaterialLayer layerDef(definition);
     auto *layer = new MaterialTextureLayer();
-    for(int i = 0; i < def.stages.size(); ++i)
+    for(int i = 0; i < layerDef.stageCount(); ++i)
     {
-        layer->_stages.append(AnimationStage::fromDef(def.stages[i]));
+        layer->_stages.append(AnimationStage::fromDef(layerDef.stage(i)));
     }
     return layer;
 }

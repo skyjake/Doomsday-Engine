@@ -177,7 +177,6 @@ int Def_GetMusicNum(char const *id);
 int Def_GetSoundNum(char const *id);
 ded_value_t *Def_GetValueById(char const *id);
 ded_value_t *Def_GetValueByUri(Uri const *uri);
-ded_material_t *Def_GetMaterial(char const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 

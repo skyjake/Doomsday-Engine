@@ -717,6 +717,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
     }
 } ded_group_t;
 
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_stage_s {
     de::Uri*        texture;
     int             tics;
@@ -747,6 +748,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_s {
         return stages.indexOf(stage);
     }
 } ded_material_layer_t;
+#endif
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
     int tics;
@@ -775,6 +777,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
     }
 } ded_decorlight_stage_t;
 
+#if 0
 typedef struct LIBDOOMSDAY_PUBLIC ded_material_lightdecoration_s {
     int patternOffset[2];
     int patternSkip[2];
@@ -825,6 +828,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
         }
     }
 } ded_material_t;
+#endif
 
 // An oldschool material-linked decoration definition.
 typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_s {

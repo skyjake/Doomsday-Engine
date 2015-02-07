@@ -53,7 +53,6 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     float       modelOffset;
 
     // Flag values (for all types of data).
-    //DEDArray<ded_flag_t> flags;
     DEDRegister flags;
 
     // Episodes.
@@ -72,26 +71,21 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_light_t> lights;
 
     // Materials.
-    DEDArray<ded_material_t> materials;
+    DEDRegister materials;
 
     // Models.
-    //typedef std::vector<ded_model_t> Models;
-    //Models models;
     DEDRegister models;
 
     // Skies.
-    //DEDArray<ded_sky_t> skies;
     DEDRegister skies;
 
     // Sounds.
     DEDArray<ded_sound_t> sounds;
 
     // Music.
-    //DEDArray<ded_music_t> music;
     DEDRegister musics;
 
     // Map information.
-    //DEDArray<ded_mapinfo_t> mapInfo;
     DEDRegister mapInfos;
 
     // Text.
@@ -161,10 +155,6 @@ public:
 
     int evalFlags2(char const *ptr) const;
 
-    ded_material_t *findMaterialDef(de::Uri const &uri) const;
-
-    ded_material_t *getMaterial(char const *uriCString) const;
-
     int getMobjNum(char const *id) const;
 
     int getMobjNumForName(char const *name) const;
@@ -178,6 +168,8 @@ public:
     int getEpisodeNum(de::String const &id) const;
 
     int getMapInfoNum(de::Uri const &uri) const;
+
+    int getMaterialNum(de::Uri const &uri) const;
 
     int getModelNum(char const *id) const;
 

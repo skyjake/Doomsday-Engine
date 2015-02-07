@@ -374,12 +374,12 @@ public:
      * Convenient method of searching the texture collection for a texture with
      * the specified @a schemeName and @a resourceUri.
      *
-     * @param schemeName  Unique name of the scheme in which to search.
+     * @param schemeName   Unique name of the scheme in which to search.
      * @param resourceUri  Path to the (image) resource to find the texture for.
      *
-     * @return  The found texture; otherwise @c 0.
+     * @return  The found texture; otherwise @c nullptr.
      */
-    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
+    de::Texture *texture(de::String schemeName, de::Uri const &resourceUri);
 
     /**
      * Determines if a texture manifest exists for a declared texture on @a path.
@@ -781,7 +781,7 @@ public:
      */
     de::AnimGroup *animGroup(int uniqueId);
 
-    de::AnimGroup *animGroupForTexture(de::TextureManifest &textureManifest);
+    de::AnimGroup *animGroupForTexture(de::TextureManifest const &textureManifest);
 
     /**
      * Returns the total number of color palettes.
