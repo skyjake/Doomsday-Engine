@@ -256,31 +256,6 @@ ded_compositefont_t *Def_GetCompositeFont(char const *uri)
     return defs.getCompositeFont(uri);
 }
 
-#ifdef __CLIENT__
-
-/// @todo $revise-texture-animation
-static ded_decoration_t *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
-{
-    for(int i = defs.decorations.size() - 1; i >= 0; i--)
-    {
-        ded_decoration_t *def = &defs.decorations[i];
-        if(def->material && *def->material == uri)
-        {
-            // Is this suitable?
-            if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
-                return def;
-        }
-    }
-    return nullptr;  // None found.
-}
-
-static inline ded_decoration_t *tryFindDecorationForMaterial(Material const &mat)
-{
-    return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
-}
-
-#endif // __CLIENT__
-
 /// @todo $revise-texture-animation
 static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
 {
@@ -835,15 +810,15 @@ static void generateMaterialDefForTexture(TextureManifest &manifest)
     }
 }
 
-static void generateMaterialDefsForAllTexturesInScheme(String schemeName)
+static void generateMaterialDefsForAllTexturesInScheme(TextureScheme &scheme)
 {
-    TextureScheme &scheme = resSys().textureScheme(schemeName);
-
     PathTreeIterator<TextureScheme::Index> iter(scheme.index().leafNodes());
-    while(iter.hasNext())
-    {
-        generateMaterialDefForTexture(iter.next());
-    }
+    while(iter.hasNext()) generateMaterialDefForTexture(iter.next());
+}
+
+static inline void generateMaterialDefsForAllTexturesInScheme(String const &schemeName)
+{
+    generateMaterialDefsForAllTexturesInScheme(resSys().textureScheme(schemeName));
 }
 
 static void generateMaterialDefs()
@@ -854,6 +829,27 @@ static void generateMaterialDefs()
 }
 
 #ifdef __CLIENT__
+
+/// @todo $revise-texture-animation
+static ded_decoration_t *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
+{
+    for(int i = defs.decorations.size() - 1; i >= 0; i--)
+    {
+        ded_decoration_t *def = &defs.decorations[i];
+        if(def->material && *def->material == uri)
+        {
+            // Is this suitable?
+            if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
+                return def;
+        }
+    }
+    return nullptr;  // None found.
+}
+
+static inline ded_decoration_t *tryFindDecorationForMaterial(Material const &mat)
+{
+    return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
+}
 
 /**
  * (Re)Decorate the given @a material according to definition @a def. Any existing
@@ -1213,7 +1209,6 @@ void Def_Read()
 
     // States.
     runtimeDefs.states.append(defs.states.size());
-
     for(int i = 0; i < runtimeDefs.states.size(); ++i)
     {
         ded_state_t *dst = &defs.states[i];
@@ -1250,7 +1245,6 @@ void Def_Read()
 
     // Mobj info.
     runtimeDefs.mobjInfo.append(defs.mobjs.size());
-
     for(int i = 0; i < runtimeDefs.mobjInfo.size(); ++i)
     {
         ded_mobj_t *dmo = &defs.mobjs[i];
@@ -1364,7 +1358,6 @@ void Def_Read()
 
     // Sound effects.
     runtimeDefs.sounds.append(defs.sounds.size());
-
     for(int i = 0; i < runtimeDefs.sounds.size(); ++i)
     {
         ded_sound_t *snd = &defs.sounds[i];
@@ -1417,12 +1410,10 @@ void Def_Read()
 
     // Text.
     runtimeDefs.texts.append(defs.text.size());
-
     for(int i = 0; i < defs.text.size(); ++i)
     {
         Def_InitTextDef(&runtimeDefs.texts[i], defs.text[i].text);
     }
-
     // Handle duplicate strings.
     for(int i = 0; i < runtimeDefs.texts.size(); ++i)
     {
@@ -1651,24 +1642,12 @@ void Def_PostInit()
     // Lights.
     for(int i = 0; i < defs.lights.size(); ++i)
     {
-        ded_light_t *lig = &defs.lights[i];
+        ded_light_t &lightDef = defs.lights[i];
 
-        if(lig->up)
-        {
-            defineLightmap(*lig->up);
-        }
-        if(lig->down)
-        {
-            defineLightmap(*lig->down);
-        }
-        if(lig->sides)
-        {
-            defineLightmap(*lig->sides);
-        }
-        if(lig->flare)
-        {
-            defineFlaremap(*lig->flare);
-        }
+        if(lightDef.up)    defineLightmap(*lightDef.up);
+        if(lightDef.down)  defineLightmap(*lightDef.down);
+        if(lightDef.sides) defineLightmap(*lightDef.sides);
+        if(lightDef.flare) defineFlaremap(*lightDef.flare);
     }
 
     // Material groups (e.g., for precaching).
