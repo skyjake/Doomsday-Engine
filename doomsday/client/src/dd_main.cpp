@@ -1,12 +1,10 @@
 /** @file dd_main.cpp  Engine core.
  *
- * @ingroup core
- *
  * @todo Much of this should be refactored and merged into the App classes.
  * @todo The rest should be split into smaller, perhaps domain-specific files.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -2387,14 +2385,14 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    for(Material *material : App_ResourceSystem().allMaterials())
+    App_ResourceSystem().forAllMaterials([] (Material &material)
     {
-        material->forAllAnimators([] (MaterialAnimator &animator)
+        return material.forAllAnimators([] (MaterialAnimator &animator)
         {
             animator.rewind();
             return LoopContinue;
         });
-    }
+    });
 #endif
 }
 

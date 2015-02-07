@@ -1,7 +1,7 @@
 /** @file def_main.cpp  Definition subsystem.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -1144,10 +1144,11 @@ static void interpretMaterialDef(ded_material_t const &def)
 
 static void invalidateAllMaterials()
 {
-    for(Material *material : resSys().allMaterials())
+    resSys().forAllMaterials([] (Material &material)
     {
-        material->markValid(false);
-    }
+        material.markValid(false);
+        return LoopContinue;
+    });
 }
 
 #ifdef __CLIENT__

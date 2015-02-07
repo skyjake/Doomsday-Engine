@@ -1,7 +1,7 @@
 /** @file materialarchive.cpp Material Archive.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -113,22 +113,13 @@ static Material *findRecordMaterial(Records &records, SerialId id)
 
 DENG2_PIMPL(MaterialArchive)
 {
-    /// Logical version number of the archive.
-    int version;
+    int version = MATERIALARCHIVE_VERSION;
 
-    /// Segment id assertion (Hexen saves).
-    bool useSegments;
+    bool useSegments = false;   ///< Segment id assertion (Hexen saves).
+    Records records;            ///< Mappings between URI and Material.
+    int numFlats = 0;           ///< Used with older versions.
 
-    /// Mappings between URI and Material.
-    Records records;
-
-    /// Used with older versions.
-    int numFlats;
-
-    Instance(Public *i, bool _useSegments) : Base(i),
-        version(MATERIALARCHIVE_VERSION),
-        useSegments(_useSegments),
-        numFlats(0)
+    Instance(Public *i) : Base(i)
     {}
 
     inline SerialId insertRecord(Uri const &uri)
@@ -199,8 +190,10 @@ DENG2_PIMPL(MaterialArchive)
 };
 
 MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
-    : d(new Instance(this, useSegments))
+    : d(new Instance(this))
 {
+    d->useSegments = useSegments;
+
     if(recordSymbolicMaterials)
     {
         // The first material is the special "unknown material".
@@ -348,13 +341,14 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
 #undef MaterialArchive_New
 MaterialArchive *MaterialArchive_New(int useSegments)
 {
-    de::MaterialArchive *archive = new de::MaterialArchive(useSegments);
+    auto *archive = new de::MaterialArchive(useSegments);
 
     // Populate the archive using the application's global/main Material collection.
-    foreach(Material *material, App_ResourceSystem().allMaterials())
+    App_ResourceSystem().forAllMaterials([&archive] (Material &material)
     {
-        archive->addRecord(*material);
-    }
+        archive->addRecord(material);
+        return de::LoopContinue;
+    });
 
     return reinterpret_cast<MaterialArchive *>(archive);
 }

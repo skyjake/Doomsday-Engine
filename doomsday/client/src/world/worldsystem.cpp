@@ -1,7 +1,7 @@
 /** @file worldsystem.cpp  World subsystem.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -626,14 +626,14 @@ DENG2_PIMPL(WorldSystem)
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
-        for(Material *material : App_ResourceSystem().allMaterials())
+        App_ResourceSystem().forAllMaterials([] (Material &material)
         {
-            material->forAllAnimators([] (MaterialAnimator &animator)
+            return material.forAllAnimators([] (MaterialAnimator &animator)
             {
                 animator.rewind();
                 return LoopContinue;
             });
-        }
+        });
 #endif
 
         /*

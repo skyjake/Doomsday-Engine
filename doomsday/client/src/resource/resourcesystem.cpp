@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -434,8 +434,8 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
 }
 
 DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
-, DENG2_OBSERVES(Games,            Addition)        // savegames folder setup
+, DENG2_OBSERVES(Loop,             Iteration)        // post savegame conversion FS population
+, DENG2_OBSERVES(Games,            Addition)         // savegames folder setup
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -475,16 +475,16 @@ DENG2_PIMPL(ResourceSystem)
     RawTextureHash rawTexHash;
 
     /// System subspace schemes containing the manifests/resources.
-    MaterialSchemes materialSchemes;
+    QMap<String, MaterialScheme *> materialSchemes;
     QList<MaterialScheme *> materialSchemeCreationOrder;
 
-    AllMaterials materials; ///< From all schemes.
-    uint materialManifestCount; ///< Total number of material manifests (in all schemes).
+    QList<Material *> materials;       ///< From all schemes.
+    int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
 
     MaterialManifestGroups materialGroups;
 
     uint materialManifestIdMapSize;
-    MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
+    MaterialManifest **materialManifestIdMap;  ///< Index with materialid_t-1
 
     MapDefs mapDefs;
 
@@ -493,18 +493,18 @@ DENG2_PIMPL(ResourceSystem)
     FontSchemes fontSchemes;
     QList<FontScheme *> fontSchemeCreationOrder;
 
-    AllFonts fonts; ///< From all schemes.
-    uint fontManifestCount; ///< Total number of font manifests (in all schemes).
+    AllFonts fonts;                    ///< From all schemes.
+    uint fontManifestCount;            ///< Total number of font manifests (in all schemes).
 
     uint fontManifestIdMapSize;
-    FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
+    FontManifest **fontManifestIdMap;  ///< Index with fontid_t-1
 
     typedef QVector<ModelDef> ModelDefs;
     ModelDefs modefs;
-    QVector<int> stateModefs; // Index to the modefs array.
+    QVector<int> stateModefs;          ///< Index to the modefs array.
 
     typedef StringPool ModelRepository;
-    ModelRepository *modelRepository; // Owns Model instances.
+    ModelRepository *modelRepository;  ///< Owns Model instances.
 
     /// A list of specifications for material variants.
     typedef QList<MaterialVariantSpec *> MaterialSpecs;
@@ -566,7 +566,6 @@ DENG2_PIMPL(ResourceSystem)
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette      (0)
-        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
         , materialManifestIdMap    (0)
 #ifdef __CLIENT__
@@ -2078,7 +2077,7 @@ DENG2_PIMPL(ResourceSystem)
         manifest.setId(id);
 
         // Add the new manifest to the id index/map.
-        if(materialManifestCount > materialManifestIdMapSize)
+        if(materialManifestCount > (int)materialManifestIdMapSize)
         {
             // Allocate more memory.
             materialManifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
@@ -2620,11 +2619,8 @@ MaterialScheme &ResourceSystem::materialScheme(String name) const
     LOG_AS("ResourceSystem::materialScheme");
     if(!name.isEmpty())
     {
-        MaterialSchemes::iterator found = d->materialSchemes.find(name.toLower());
-        if(found != d->materialSchemes.end())
-        {
-            return **found;
-        }
+        auto found = d->materialSchemes.find(name.toLower());
+        if(found != d->materialSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ResourceSystem::materialScheme", "No scheme found matching '" + name + "'");
@@ -2639,15 +2635,24 @@ bool ResourceSystem::knownMaterialScheme(String name) const
     return false;
 }
 
-ResourceSystem::MaterialSchemes const &ResourceSystem::allMaterialSchemes() const
+int ResourceSystem::materialSchemeCount() const
 {
-    return d->materialSchemes;
+    return d->materialSchemes.count();
+}
+
+LoopResult ResourceSystem::forAllMaterialSchemes(std::function<LoopResult (MaterialScheme &)> func) const
+{
+    for(MaterialScheme *scheme : d->materialSchemes)
+    {
+        if(auto result = func(*scheme)) return result;
+    }
+    return LoopContinue;
 }
 
 MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
 {
     duint32 idx = id - 1; // 1-based index.
-    if(idx < d->materialManifestCount)
+    if(idx < (duint32)d->materialManifestCount)
     {
         if(d->materialManifestIdMap[idx])
         {
@@ -2657,7 +2662,7 @@ MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
         DENG2_ASSERT(false);
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
-    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangeui(1, d->materialManifestCount + 1).asText());
+    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangei(1, d->materialManifestCount + 1).asText());
 }
 
 bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
@@ -2701,9 +2706,18 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
     throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
+int ResourceSystem::materialCount() const
 {
-    return d->materials;
+    return d->materials.count();
+}
+
+LoopResult ResourceSystem::forAllMaterials(std::function<LoopResult (Material &)> func) const
+{
+    for(Material *mat : d->materials)
+    {
+        if(auto result = func(*mat)) return result;
+    }
+    return LoopContinue;
 }
 
 ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
@@ -4132,10 +4146,11 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     }
     else // Consider resources in any scheme.
     {
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        App_ResourceSystem().forAllMaterialSchemes([&found, &like] (MaterialScheme &scheme)
         {
-            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-        }
+            scheme.index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+            return LoopContinue;
+        });
     }
     if(found.isEmpty()) return 0;
 
@@ -4294,15 +4309,16 @@ static void printMaterialIndex(de::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        App_ResourceSystem().forAllMaterialSchemes([&search, &flags, &printTotal] (MaterialScheme &scheme)
         {
-            int numPrinted = printMaterialIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 LOG_MSG(_E(R));
                 printTotal += numPrinted;
             }
-        }
+            return LoopContinue;
+        });
     }
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
@@ -4488,16 +4504,17 @@ D_CMD(PrintMaterialStats)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_MSG(_E(b) "Material Statistics:");
-    foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+    App_ResourceSystem().forAllMaterialSchemes([] (MaterialScheme &scheme)
     {
-        MaterialScheme::Index const &index = scheme->index();
+        MaterialScheme::Index const &index = scheme.index();
 
         uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "material" : "materials");
+                << scheme.name() << count << (count == 1? "material" : "materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
-    }
+        return LoopContinue;
+    });
     return true;
 }
 
