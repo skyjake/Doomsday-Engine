@@ -1,7 +1,7 @@
-/** @file database.cpp  Doomsday Engine Definition database.
+/** @file ded.cpp  Doomsday Engine Definition database.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -28,6 +28,7 @@
 #include <de/NumberValue>
 #include <de/RecordValue>
 
+#include "doomsday/defs/decoration.h"
 #include "doomsday/defs/episode.h"
 #include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapinfo.h"
@@ -53,20 +54,22 @@ float ded_ptcstage_t::particleRadius(int ptcIDX) const
 }
 
 ded_s::ded_s()
-    : flags    (names.addRecord("flags"))
-    , episodes (names.addRecord("episodes"))
-    , materials(names.addRecord("materials"))
-    , models   (names.addRecord("models"))
-    , skies    (names.addRecord("skies"))
-    , musics   (names.addRecord("musics"))
-    , mapInfos (names.addRecord("mapInfos"))
-    , finales  (names.addRecord("finales"))
+    : flags      (names.addRecord("flags"))
+    , episodes   (names.addRecord("episodes"))
+    , materials  (names.addRecord("materials"))
+    , models     (names.addRecord("models"))
+    , skies      (names.addRecord("skies"))
+    , musics     (names.addRecord("musics"))
+    , mapInfos   (names.addRecord("mapInfos"))
+    , finales    (names.addRecord("finales"))
+    , decorations(names.addRecord("decorations"))
 {
-    flags.addLookupKey("id");
+    decorations.addLookupKey("material");
     episodes.addLookupKey("id");
     finales.addLookupKey("id");
     finales.addLookupKey("before");
     finales.addLookupKey("after");
+    flags.addLookupKey("id");
     mapInfos.addLookupKey("id");
     materials.addLookupKey("id");
     models.addLookupKey("id", DEDRegister::OnlyFirst);
@@ -104,14 +107,9 @@ int ded_s::addEpisode()
 
 int ded_s::addDecoration()
 {
-    ded_decoration_t *decor = decorations.append();
-    for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-    {
-        // The color (0,0,0) means the light is not active.
-        decor->lights[i].stage.elevation = 1;
-        decor->lights[i].stage.radius    = 1;
-    }
-    return decorations.indexOf(decor);
+    Record &def = decorations.append();
+    defn::Decoration(def).resetToDefaults();
+    return def.geti("__order__");
 }
 
 int ded_s::addFinale()

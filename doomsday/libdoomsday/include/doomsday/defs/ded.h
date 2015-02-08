@@ -1,7 +1,7 @@
-/** @file defs/ded.h  Definition namespace.
+/** @file ded.h  Definition namespace.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -104,11 +104,10 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_ptcgen_t> ptcGens;
 
     // Finales.
-    //DEDArray<ded_finale_t> finales;
     DEDRegister finales;
 
     // Decorations.
-    DEDArray<ded_decoration_t> decorations;
+    DEDRegister decorations;
 
     // Reflections.
     DEDArray<ded_reflection_t> reflections;

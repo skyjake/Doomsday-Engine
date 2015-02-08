@@ -1,6 +1,6 @@
 /** @file material.h  Material definition accessor.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +20,6 @@
 #define LIBDOOMSDAY_DEFN_MATERIAL_H
 
 #include "definition.h"
-
-#include <functional>
 #include <de/RecordAccessor>
 
 namespace defn {

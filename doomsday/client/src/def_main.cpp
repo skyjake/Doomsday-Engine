@@ -29,6 +29,8 @@
 #include <de/findfile.h>
 #include <de/App>
 #include <de/NativePath>
+#include <de/RecordValue>
+#include <doomsday/defs/decoration.h>
 #include <doomsday/defs/dedfile.h>
 #include <doomsday/defs/dedparser.h>
 #include <doomsday/defs/material.h>
@@ -829,22 +831,27 @@ static void generateMaterialDefs()
 #ifdef __CLIENT__
 
 /// @todo $revise-texture-animation
-static ded_decoration_t *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
+static Record const *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
 {
-    for(int i = defs.decorations.size() - 1; i >= 0; i--)
+    if(!uri.isEmpty())
     {
-        ded_decoration_t *def = &defs.decorations[i];
-        if(def->material && *def->material == uri)
+        DictionaryValue::Elements const &decorationsByMaterial = defs.decorations.lookup("material").elements();
+        for(auto const &pair : decorationsByMaterial)
         {
-            // Is this suitable?
-            if(Def_IsAllowedDecoration(def, /*hasExternal,*/ isCustom))
-                return def;
+            Record const &decorDef = *pair.second->as<RecordValue>().record();
+            de::Uri const materialUri(decorDef.gets("material"), RC_NULL);
+            if(materialUri == uri)
+            {
+                // Is this suitable?
+                if(Def_IsAllowedDecoration(decorDef, /*hasExternal,*/ isCustom))
+                    return &decorDef;
+            }
         }
     }
-    return nullptr;  // None found.
+    return nullptr;  // Not found.
 }
 
-static inline ded_decoration_t *tryFindDecorationForMaterial(Material const &mat)
+static inline Record const *tryFindDecorationForMaterial(Material const &mat)
 {
     return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
 }
@@ -867,9 +874,6 @@ static void redecorateMaterial(Material &material, Record const &def)
     {
         defn::MaterialDecoration decorDef(matDef.decoration(i));
 
-        // Is this valid? (A zero number of stages signifies the last).
-        //if(!decorDef.stageCount()) break;
-
         for(int k = 0; k < decorDef.stageCount(); ++k)
         {
             Record const &st = decorDef.stage(k);
@@ -888,21 +892,12 @@ static void redecorateMaterial(Material &material, Record const &def)
 
     // Perhaps old style linked decoration definitions?
     /// @todo fixme: Need to factor in the decoration definitions for all animation frames.
-    if(ded_decoration_t *decorDef = tryFindDecorationForMaterial(material))
+    if(Record const *definition = tryFindDecorationForMaterial(material))
     {
-        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
+        defn::Decoration decorDef(*definition);
+        for(int i = 0; i < decorDef.lightCount(); ++i)
         {
-            ded_decorlight_t const &lightDef = decorDef->lights[i];
-
-            // Is this valid? (A zero-strength color signifies the last).
-            if(Vector3f(lightDef.stage.color) == Vector3f(0, 0, 0))
-                break;
-
-            // Translate the old style definition.
-            std::unique_ptr<MaterialLightDecoration> decor(new MaterialLightDecoration(lightDef.patternSkip, lightDef.patternOffset));
-            std::unique_ptr<MaterialLightDecoration::AnimationStage> tempStage(MaterialLightDecoration::AnimationStage::fromDef(lightDef.stage));
-            decor->addStage(*tempStage);              // makes a copy.
-            material.addDecoration(decor.release());  // takes ownership.
+            material.addDecoration(MaterialLightDecoration::fromDef(decorDef.light(i)));
         }
     }
 }
@@ -1285,16 +1280,16 @@ void Def_Read()
     // Decorations. (Define textures).
     for(int i = 0; i < defs.decorations.size(); ++i)
     {
-        ded_decoration_t *dec = &defs.decorations[i];
-        for(int k = 0; k < DED_DECOR_NUM_LIGHTS; ++k)
+        defn::Decoration decorDef(defs.decorations[i]);
+        for(int k = 0; k < decorDef.lightCount(); ++k)
         {
-            ded_decorlight_t *dl = &dec->lights[k];
-            if(Vector3f(dl->stage.color) != Vector3f(0, 0, 0))
+            Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
+            if(Vector3f(st.geta("color")) != Vector3f(0, 0, 0))
             {
-                if(dl->stage.up)    defineLightmap(*dl->stage.up);
-                if(dl->stage.down)  defineLightmap(*dl->stage.down);
-                if(dl->stage.sides) defineLightmap(*dl->stage.sides);
-                if(dl->stage.flare) defineFlaremap(*dl->stage.flare);
+                defineLightmap(de::Uri(st["lightmapUp"], RC_NULL));
+                defineLightmap(de::Uri(st["lightmapDown"], RC_NULL));
+                defineLightmap(de::Uri(st["lightmapSide"], RC_NULL));
+                defineFlaremap(de::Uri(st["haloTexture"], RC_NULL));
             }
         }
     }
@@ -2042,11 +2037,11 @@ StringArray *Def_ListStateIDs()
     return array;
 }
 
-bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom)
+bool Def_IsAllowedDecoration(Record const &decorDef, /*bool hasExternal,*/ bool isCustom)
 {
-    //if(hasExternal) return (def->flags & DCRF_EXTERNAL) != 0;
-    if(!isCustom)   return (def->flags & DCRF_NO_IWAD) == 0;
-    return (def->flags & DCRF_PWAD) != 0;
+    //if(hasExternal) return (decorDef.geti("flags") & DCRF_EXTERNAL) != 0;
+    if(!isCustom)   return (decorDef.geti("flags") & DCRF_NO_IWAD) == 0;
+    return (decorDef.geti("flags") & DCRF_PWAD) != 0;
 }
 
 bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom)

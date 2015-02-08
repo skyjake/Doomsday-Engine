@@ -69,7 +69,6 @@ public:
          * Construct a new AnimationStage from the given @a stageDef.
          */
         static AnimationStage *fromDef(de::Record const &stageDef);
-        static AnimationStage *fromDef(ded_decorlight_stage_t const &stageDef);
 
         de::String description() const;
     };

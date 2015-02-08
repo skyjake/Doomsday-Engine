@@ -1,6 +1,6 @@
 /** @file material.cpp  Material definition accessor.
  *
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -82,6 +82,8 @@ Record const &MaterialDecoration::stage(int index) const
     return *geta("stage")[index].as<RecordValue>().record();
 }
 
+// ------------------------------------------------------------------------------------
+
 void MaterialLayer::resetToDefaults()
 {
     Definition::resetToDefaults();
@@ -126,6 +128,8 @@ Record const &MaterialLayer::stage(int index) const
 {
     return *geta("stage")[index].as<RecordValue>().record();
 }
+
+// ------------------------------------------------------------------------------------
 
 void Material::resetToDefaults()
 {

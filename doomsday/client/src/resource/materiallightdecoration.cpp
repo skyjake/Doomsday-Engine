@@ -1,6 +1,6 @@
 /** @file materiallightdecoration.cpp   Logical material, light decoration.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -91,41 +91,6 @@ MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
                               Vector3f(stageDef.geta("color")), stageDef.getf("radius"),
                               stageDef.getf("haloRadius"),
                               LightRange(Vector2f(stageDef.geta("lightLevels"))),
-                              lightmapUp, lightmapDown, lightmapSide,
-                              haloTexture, haloTextureIndex);
-}
-
-MaterialLightDecoration::AnimationStage *
-MaterialLightDecoration::AnimationStage::fromDef(ded_decorlight_stage_t const &stageDef)
-{
-    Texture *lightmapUp   = stageDef.up?    resSys().texture("Lightmaps", *stageDef.up)    : nullptr;
-    Texture *lightmapDown = stageDef.down?  resSys().texture("Lightmaps", *stageDef.down)  : nullptr;
-    Texture *lightmapSide = stageDef.sides? resSys().texture("Lightmaps", *stageDef.sides) : nullptr;
-
-    int haloTextureIndex  = stageDef.sysFlareIdx;
-    Texture *haloTexture  = nullptr;
-    if(stageDef.flare && !stageDef.flare->isEmpty())
-    {
-        DENG2_ASSERT(stageDef.flare);
-        de::Uri const &haloTextureUri = *stageDef.flare;
-
-        // Select a system flare by numeric identifier?
-        if(haloTextureUri.path().length() == 1 &&
-           haloTextureUri.path().toStringRef().first().isDigit())
-        {
-            haloTextureIndex = haloTextureUri.path().toStringRef().first().digitValue();
-        }
-        else
-        {
-            haloTexture = resSys().texture("Flaremaps", haloTextureUri);
-        }
-    }
-
-    return new AnimationStage(stageDef.tics, stageDef.variance,
-                              Vector2f(stageDef.pos), stageDef.elevation,
-                              Vector3f(stageDef.color), stageDef.radius,
-                              stageDef.haloRadius,
-                              LightRange(stageDef.lightLevels),
                               lightmapUp, lightmapDown, lightmapSide,
                               haloTexture, haloTextureIndex);
 }

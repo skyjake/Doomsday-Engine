@@ -3,7 +3,7 @@
  * @ingroup defs
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -231,9 +231,9 @@ StringArray *Def_ListMobjTypeIDs(void);
 StringArray *Def_ListStateIDs(void);
 
 /**
- * Returns @c true iff @a def is compatible with the specified context.
+ * Returns @c true iff @a decorDef is compatible with the specified context.
  */
-bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom);
+bool Def_IsAllowedDecoration(de::Record const &decorDef, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.

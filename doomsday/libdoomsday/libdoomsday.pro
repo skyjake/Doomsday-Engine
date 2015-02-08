@@ -64,6 +64,7 @@ HEADERS += \
     include/doomsday/console/exec.h \
     include/doomsday/console/knownword.h \
     include/doomsday/console/var.h \
+    include/doomsday/defs/decoration.h \
     include/doomsday/defs/ded.h \
     include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
@@ -114,6 +115,7 @@ SOURCES += \
     src/console/exec.cpp \
     src/console/knownword.cpp \
     src/console/var.cpp \
+    src/defs/decoration.cpp \
     src/defs/ded.cpp \
     src/defs/dedfile.cpp \
     src/defs/definition.cpp \

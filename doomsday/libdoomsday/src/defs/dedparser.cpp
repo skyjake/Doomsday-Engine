@@ -36,6 +36,21 @@
 #define DENG_NO_API_MACROS_URI
 
 #include "doomsday/defs/dedparser.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+
+#include <de/memory.h>
+#include <de/vector1.h>
+#include <de/App>
+#include <de/NativePath>
+#include <de/ArrayValue>
+#include <de/RecordValue>
+#include <de/game/Game>
+
+#include "doomsday/defs/decoration.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
 #include "doomsday/defs/episode.h"
@@ -51,19 +66,6 @@
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
 #include "xgclass.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-#include <de/App>
-#include <de/NativePath>
-#include <de/ArrayValue>
-#include <de/RecordValue>
-#include <de/game/Game>
-#include <de/memory.h>
-#include <de/vector1.h>
 
 #ifdef WIN32
 #  define stricmp _stricmp
@@ -2605,77 +2607,82 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Decoration"))
             {
                 idx = ded->addDecoration();
-                ded_decoration_t *decor = &ded->decorations[idx];
+                Record &decor = ded->decorations[idx];
 
                 // Should we copy the previous definition?
                 if(prevDecorDefIdx >= 0 && bCopyNext)
                 {
-                    ded->decorations.copyTo(decor, prevDecorDefIdx);
+                    ded->decorations.copy(prevDecorDefIdx, decor);
                 }
 
-                uint sub = 0;
+                defn::Decoration mainDef(decor);
+                int light = 0;
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_FLAGS("Flags", decor->flags, "dcf_")
+                    RV_FLAGS("Flags", decor["flags"], "dcf_")
                     if(ISLABEL("Material"))
                     {
-                        READURI(&decor->material, 0)
+                        READURI(decor["material"], 0)
                     }
                     else if(ISLABEL("Texture"))
                     {
-                        READURI(&decor->material, "Textures")
+                        READURI(decor["material"], "Textures")
                     }
                     else if(ISLABEL("Flat"))
                     {
-                        READURI(&decor->material, "Flats")
+                        READURI(decor["material"], "Flats")
                     }
                     else if(ISLABEL("Light"))
                     {
-                        if(sub == DED_DECOR_NUM_LIGHTS)
+                        if(light == DED_MAX_MATERIAL_DECORATIONS)
                         {
-                            setError("Too many lights in decoration");
+                            setError("Too many Decoration.Lights");
                             retVal = false;
                             goto ded_end_read;
                         }
 
-                        ded_decorlight_t *dl = &decor->lights[sub];
+                        // Add another light.
+                        if(light >= mainDef.lightCount()) mainDef.addLight();
+                        defn::MaterialDecoration lightDef(mainDef.light(light));
+
+                        // One implicit stage.
+                        Record &st = lightDef.addStage();
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_VEC("Offset",        dl->stage.pos, 2)
-                            RV_FLT("Distance",      dl->stage.elevation)
-                            RV_VEC("Color",         dl->stage.color, 3)
-                            RV_FLT("Radius",        dl->stage.radius)
-                            RV_FLT("Halo radius",   dl->stage.haloRadius)
-                            RV_IVEC("Pattern offset", dl->patternOffset, 2)
-                            RV_IVEC("Pattern skip", dl->patternSkip, 2)
+                            RV_VEC_VAR("Offset", st["origin"], 2)
+                            RV_FLT("Distance", st["elevation"])
+                            RV_VEC_VAR("Color", st["color"], 3)
+                            RV_FLT("Radius", st["radius"])
+                            RV_FLT("Halo radius", st["haloRadius"])
+                            RV_VEC_VAR("Pattern offset", lightDef.def()["patternOffset"], 2)
+                            RV_VEC_VAR("Pattern skip", lightDef.def()["patternSkip"], 2)
                             if(ISLABEL("Levels"))
                             {
                                 FINDBEGIN;
+                                Vector2f levels;
                                 for(int b = 0; b < 2; ++b)
                                 {
-                                    READFLT(dl->stage.lightLevels[b])
-                                    dl->stage.lightLevels[b] /= 255.0f;
-                                    if(dl->stage.lightLevels[b] < 0)
-                                        dl->stage.lightLevels[b] = 0;
-                                    else if(dl->stage.lightLevels[b] > 1)
-                                        dl->stage.lightLevels[b] = 1;
+                                    float val;
+                                    READFLT(val)
+                                    levels[b] = de::clamp(0.f, val / 255.0f, 1.f);
                                 }
                                 ReadToken();
+                                st["lightLevels"] = new ArrayValue(levels);
                             }
                             else
-                            RV_INT("Flare texture", dl->stage.sysFlareIdx)
-                            RV_URI("Flare map",     &dl->stage.flare, "LightMaps")
-                            RV_URI("Top map",       &dl->stage.up,    "LightMaps")
-                            RV_URI("Bottom map",    &dl->stage.down,  "LightMaps")
-                            RV_URI("Side map",      &dl->stage.sides, "LightMaps")
+                            RV_INT("Flare texture", st["haloTextureIndex"])
+                            RV_URI("Flare map", st["haloTexture"], "LightMaps")
+                            RV_URI("Top map", st["lightmapUp"], "LightMaps")
+                            RV_URI("Bottom map", st["lightmapDown"], "LightMaps")
+                            RV_URI("Side map", st["lightmapSide"], "LightMaps")
                             RV_END
                             CHECKSC;
                         }
-                        sub++;
+                        light++;
                     }
                     else RV_END
                     CHECKSC;

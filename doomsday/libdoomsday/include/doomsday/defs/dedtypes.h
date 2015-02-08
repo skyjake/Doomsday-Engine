@@ -1,7 +1,7 @@
-/** @file defs/dedtypes.h  Definition types and structures (DED v1).
+/** @file dedtypes.h  Definition types and structures (DED v1).
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -30,23 +30,22 @@
 #include "api_gl.h"
 #include "dedarray.h"
 
-#define DED_DUP_URI(u)              u = (u? new de::Uri(*u) : 0)
+#define DED_DUP_URI(u)               u = (u? new de::Uri(*u) : 0)
 
-#define DED_SPRITEID_LEN            4
-#define DED_STRINGID_LEN            31
-#define DED_FUNC_LEN                255
+#define DED_SPRITEID_LEN             4
+#define DED_STRINGID_LEN             31
+#define DED_FUNC_LEN                 255
 
-#define DED_MAX_MATERIAL_LAYERS     1   ///< Maximum number of material layers.
-#define DED_MAX_MATERIAL_DECORATIONS 16 ///< Maximum number of material (light) decorations.
+#define DED_MAX_MATERIAL_LAYERS      1   ///< Maximum number of material layers (map renderer limitations).
+#define DED_MAX_MATERIAL_DECORATIONS 16  ///< Maximum number of material decorations (arbitrary).
 
-#define DED_PTCGEN_ANY_MOBJ_TYPE    -2  ///< Particle generator applies to ANY mobj type.
+#define DED_PTCGEN_ANY_MOBJ_TYPE     -2  ///< Particle generator applies to ANY mobj type.
 
 typedef char ded_stringid_t[DED_STRINGID_LEN + 1];
 typedef ded_stringid_t ded_string_t;
 typedef ded_stringid_t ded_mobjid_t;
 typedef ded_stringid_t ded_stateid_t;
 typedef ded_stringid_t ded_soundid_t;
-//typedef ded_stringid_t ded_musicid_t;
 typedef ded_stringid_t ded_funcid_t;
 typedef char ded_func_t[DED_FUNC_LEN + 1];
 typedef int ded_flags_t;
@@ -197,119 +196,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     }
 } ded_light_t;
 
-#if 0
-struct LIBDOOMSDAY_PUBLIC ded_submodel_t
-{
-    de::Uri*        filename;
-    de::Uri*        skinFilename; // Optional; override model's skin.
-    ded_string_t    frame;
-    int             frameRange;
-    ded_flags_t     flags; // ASCII string of the flags.
-    int             skin;
-    int             skinRange;
-    de::Vector3f    offset; // Offset XYZ within model.
-    float           alpha;
-    float           parm; // Custom parameter.
-    unsigned char   selSkinBits[2]; // Mask and offset.
-    unsigned char   selSkins[8];
-    de::Uri*        shinySkin;
-    float           shiny;
-    de::Vector3f    shinyColor;
-    float           shinyReact;
-    blendmode_t     blendMode; // bm_*
-
-    ded_submodel_t()
-        : filename(0)
-        , skinFilename(0)
-        , frameRange(0)
-        , flags(0)
-        , skin(0)
-        , skinRange(0)
-        , alpha(0)
-        , parm(0)
-        , shinySkin(0)
-        , shiny(0)
-        , shinyColor(1, 1, 1)
-        , shinyReact(1.0f)
-        , blendMode(BM_NORMAL)
-    {
-        de::zap(frame);
-        de::zap(selSkinBits);
-        de::zap(selSkins);
-    }
-};
-
-struct LIBDOOMSDAY_PUBLIC ded_model_t
-{
-    ded_stringid_t  id; // Optional identifier for the definition.
-    ded_stateid_t   state;
-    int             off;
-    ded_sprid_t     sprite; // Only used by autoscale.
-    int             spriteFrame; // Only used by autoscale.
-    ded_flags_t     group;
-    int             selector;
-    ded_flags_t     flags;
-    float           interMark;
-    float           interRange[2]; // 0-1 by default.
-    int             skinTics; // Tics per skin in range.
-    de::Vector3f    scale; // Scale XYZ
-    float           resize;
-    de::Vector3f    offset; // Offset XYZ
-    float           shadowRadius; // Radius for shadow (0=auto).
-
-    typedef std::vector<ded_submodel_t> Submodels;
-    Submodels _sub;
-
-    ded_model_t(char const *spriteId = "")
-        : off(0)
-        , spriteFrame(0)
-        , group(0)
-        , selector(0)
-        , flags(0)
-        , interMark(0)
-        , skinTics(0)
-        , scale(1, 1, 1)
-        , resize(0)
-        , shadowRadius(0)
-    {
-        de::zap(id);
-        de::zap(state);
-        de::zap(sprite);
-        de::zap(interRange);
-
-        strcpy(sprite.id, spriteId);
-        interRange[1] = 1;
-    }
-
-    bool hasSub(unsigned int subnum) const
-    {
-        return subnum < _sub.size();
-    }
-
-    unsigned int subCount() const
-    {
-        return _sub.size();
-    }
-
-    ded_submodel_t &sub(unsigned int subnum)
-    {
-        DENG2_ASSERT(hasSub(subnum));
-        return _sub[subnum];
-    }
-
-    ded_submodel_t const &sub(unsigned int subnum) const
-    {
-        DENG2_ASSERT(hasSub(subnum));
-        return _sub[subnum];
-    }
-
-    void appendSub()
-    {
-        _sub.push_back(ded_submodel_t());
-    }
-};
-#endif
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     ded_soundid_t   id; // ID of this sound, refered to by others.
     ded_string_t    name; // A tag name for the sound.
@@ -330,111 +216,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
         DED_DUP_URI(ext);
     }
 } ded_sound_t;
-
-#if 0
-typedef struct LIBDOOMSDAY_PUBLIC ded_music_s {
-    ded_musicid_t   id; // ID of this piece of music.
-    ded_string_t    lumpName; // Lump name.
-    de::Uri*        path; // External file (not a normal MUS file).
-    int             cdTrack; // 0 = no track.
-
-    void release() {
-        delete path;
-    }
-    void reallocate() {
-        DED_DUP_URI(path);
-    }
-} ded_music_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_skylayer_s {
-    ded_flags_t     flags;
-    de::Uri*        material;
-    float           offset;
-    float           colorLimit;
-
-    void release() {
-        delete material;
-    }
-    void reallocate() {
-        DED_DUP_URI(material);
-    }
-} ded_skylayer_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_skymodel_s {
-    ded_stringid_t  id;
-    int             layer; // Defaults to -1.
-    float           frameInterval; // Seconds per frame.
-    float           yaw;
-    float           yawSpeed; // Angles per second.
-    float           coordFactor[3];
-    float           rotate[2];
-    ded_anystring_t execute; // Executed on every frame change.
-    float           color[4]; // RGBA
-
-    void release() {
-        M_Free(execute);
-    }
-    void reallocate() {
-        execute = M_StrDup(execute);
-    }
-} ded_skymodel_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_sky_s {
-    ded_stringid_t  id;
-    ded_flags_t     flags; // Flags.
-    float           height;
-    float           horizonOffset;
-    float           color[3]; // Color of sky-lit sectors.
-    ded_skylayer_t  layers[NUM_SKY_LAYERS];
-    ded_skymodel_t  models[NUM_SKY_MODELS];
-
-    void release() {
-        for(int i = 0; i < NUM_SKY_LAYERS; ++i) {
-            layers[i].release();
-        }
-        for(int i = 0; i < NUM_SKY_MODELS; ++i) {
-            models[i].release();
-        }
-    }
-    void reallocate() {
-        for(int i = 0; i < NUM_SKY_LAYERS; ++i) {
-            layers[i].reallocate();
-        }
-        for(int i = 0; i < NUM_SKY_MODELS; ++i) {
-            models[i].reallocate();
-        }
-    }
-} ded_sky_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_mapinfo_s {
-    de::Uri*        uri; // ID of the map (e.g. E2M3 or MAP21).
-    ded_string_t    name; // Name of the map.
-    ded_string_t    author; // Author of the map.
-    ded_flags_t     flags; // Flags.
-    ded_musicid_t   music; // Music to play.
-    float           parTime; // Par time, in seconds.
-    float           fogColor[3]; // Fog color (RGB).
-    float           fogStart;
-    float           fogEnd;
-    float           fogDensity;
-    float           ambient; // Ambient light level.
-    float           gravity; // 1 = normal.
-    ded_stringid_t  skyID; // ID of the sky definition to use with this map. If not set, use the sky data in the mapinfo.
-    ded_sky_t       sky;
-    ded_anystring_t execute; // Executed during map setup (savegames, too).
-
-    void release() {
-        delete uri;
-        delete execute;
-        sky.release();
-    }
-    void reallocate() {
-        DED_DUP_URI(uri);
-        execute = M_StrDup(execute);
-        sky.reallocate();
-    }
-} ded_mapinfo_t;
-#endif
 
 struct ded_text_t
 {
@@ -470,21 +251,6 @@ typedef struct {
     }
 } ded_value_t;
 
-#if 0
-typedef struct {
-    ded_stringid_t  id;
-    de::Uri*        before;
-    de::Uri*        after;
-    char*           script;
-
-    void release() {
-        delete before;
-        delete after;
-        M_Free(script);
-    }
-} ded_finale_t;
-#endif
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     int             id;
     char            comment[64];
@@ -495,7 +261,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     float           actTime;
     int             actTag;
     int             aparm[9];
-    //ded_stringid_t    aparm_str[3];   // aparms 4, 6, 9
     ded_stringid_t  aparm9;
     float           tickerStart;
     float           tickerEnd;
@@ -717,161 +482,6 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
     }
 } ded_group_t;
 
-#if 0
-typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_stage_s {
-    de::Uri*        texture;
-    int             tics;
-    float           variance; // Stage variance (time).
-    float           glowStrength;
-    float           glowStrengthVariance;
-    float           texOrigin[2];
-
-    void release() {
-        delete texture;
-    }
-    void reallocate() {
-        DED_DUP_URI(texture);
-    }
-} ded_material_layer_stage_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_material_layer_s {
-    DEDArray<ded_material_layer_stage_t> stages;
-
-    void release() {
-        stages.clear();
-    }
-    void reallocate() {
-        stages.reallocate();
-    }
-    int addStage() {
-        ded_material_layer_stage_t *stage = stages.append();
-        return stages.indexOf(stage);
-    }
-} ded_material_layer_t;
-#endif
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_stage_s {
-    int tics;
-    float variance; // Stage variance (time).
-    float pos[2]; // Coordinates on the surface.
-    float elevation; // Distance from the surface.
-    float color[3]; // Light color.
-    float radius; // Dynamic light radius (-1 = no light).
-    float haloRadius; // Halo radius (zero = no halo).
-    float lightLevels[2]; // Fade by sector lightlevel.
-    int sysFlareIdx;
-    de::Uri *up, *down, *sides;
-    de::Uri *flare; // Overrides sysFlareIdx
-
-    void release() {
-        delete up;
-        delete down;
-        delete sides;
-        delete flare;
-    }
-    void reallocate() {
-        DED_DUP_URI(up);
-        DED_DUP_URI(down);
-        DED_DUP_URI(sides);
-        DED_DUP_URI(flare);
-    }
-} ded_decorlight_stage_t;
-
-#if 0
-typedef struct LIBDOOMSDAY_PUBLIC ded_material_lightdecoration_s {
-    int patternOffset[2];
-    int patternSkip[2];
-    DEDArray<ded_decorlight_stage_t> stages;
-
-    void release() {
-        stages.clear();
-    }
-    void reallocate() {
-        stages.reallocate();
-    }
-    int addStage() {
-        ded_decorlight_stage_t *stage = stages.append();
-
-        // The color (0,0,0) means the light is not visible during this stage.
-        stage->elevation = 1;
-        stage->radius    = 1;
-
-        return stages.indexOf(stage);
-    }
-} ded_material_lightdecoration_t;
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_material_s {
-    de::Uri *uri;
-    dd_bool autoGenerated;
-    ded_flags_t flags;
-    int width;
-    int height; // In world units.
-    ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
-    ded_material_lightdecoration_t decorations[DED_MAX_MATERIAL_DECORATIONS];
-
-    void release() {
-        delete uri;
-        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i) {
-            layers[i].release();
-        }
-        for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i) {
-            decorations[i].release();
-        }
-    }
-    void reallocate() {
-        DED_DUP_URI(uri);
-        for(int i = 0; i < DED_MAX_MATERIAL_LAYERS; ++i) {
-            layers[i].reallocate();
-        }
-        for(int i = 0; i < DED_MAX_MATERIAL_DECORATIONS; ++i) {
-            decorations[i].reallocate();
-        }
-    }
-} ded_material_t;
-#endif
-
-// An oldschool material-linked decoration definition.
-typedef struct LIBDOOMSDAY_PUBLIC ded_decorlight_s {
-    int patternOffset[2];
-    int patternSkip[2];
-    // There is only one stage.
-    ded_decorlight_stage_t stage;
-
-    void release() {
-        stage.release();
-    }
-    void reallocate() {
-        stage.reallocate();
-    }
-} ded_decorlight_t;
-
-// There is a fixed number of light decorations in each decoration.
-#define DED_DECOR_NUM_LIGHTS    16
-
-// Flags for decoration definitions.
-#define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.
-#define DCRF_PWAD           0x2 // Can use if from PWAD.
-#define DCRF_EXTERNAL       0x4 // Can use if from external resource.
-
-typedef struct LIBDOOMSDAY_PUBLIC ded_decoration_s {
-    de::Uri *material;
-    ded_flags_t flags;
-    ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
-
-    void release() {
-        delete material;
-        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i) {
-            lights[i].release();
-        }
-    }
-    void reallocate() {
-        DED_DUP_URI(material);
-        for(int i = 0; i < DED_DECOR_NUM_LIGHTS; ++i) {
-            lights[i].reallocate();
-        }
-    }
-} ded_decoration_t;
-
 typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_mappedcharacter_s {
     unsigned char   ch;
     de::Uri*        path;
@@ -894,4 +504,4 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_s {
     }
 } ded_compositefont_t;
 
-#endif // LIBDOOMSDAY_DEFINITION_TYPES_H
+#endif  // LIBDOOMSDAY_DEFINITION_TYPES_H
