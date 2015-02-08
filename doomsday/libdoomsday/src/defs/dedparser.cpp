@@ -2648,7 +2648,7 @@ DENG2_PIMPL(DEDParser)
                         defn::MaterialDecoration lightDef(mainDef.light(light));
 
                         // One implicit stage.
-                        Record &st = lightDef.addStage();
+                        Record &st = (lightDef.stageCount()? lightDef.stage(0) : lightDef.addStage());
                         FINDBEGIN;
                         forever
                         {
