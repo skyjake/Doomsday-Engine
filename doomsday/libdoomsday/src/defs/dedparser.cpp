@@ -1557,7 +1557,7 @@ DENG2_PIMPL(DEDParser)
 
                         // Add another decoration.
                         if(decor >= mainDef.decorationCount()) mainDef.addDecoration();
-                        defn::MaterialLayer decorDef(mainDef.decoration(layer));
+                        defn::MaterialDecoration decorDef(mainDef.decoration(decor));
 
                         int stage = 0;
                         FINDBEGIN;
