@@ -237,6 +237,7 @@ template <typename CountedType>
 class AutoRef
 {
 public:
+    AutoRef() : _ref(nullptr) {}
     AutoRef(CountedType *preHeld) : _ref(preHeld) {}
     AutoRef(CountedType &ref) : _ref(holdRef(ref)) {}
     ~AutoRef() { releaseRef(_ref); }
@@ -248,6 +249,7 @@ public:
     operator CountedType * () { return _ref; }
     operator CountedType const & () const { return *_ref; }
     operator CountedType & () { return *_ref; }
+    explicit operator bool () const { return _ref != nullptr; }
 private:
     CountedType *_ref;
 };

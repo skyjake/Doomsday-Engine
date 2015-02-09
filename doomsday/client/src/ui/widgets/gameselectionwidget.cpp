@@ -460,13 +460,16 @@ void GameSelectionWidget::updateSubsetLayout()
 void GameSelectionWidget::select(ui::Item const *item)
 {
     if(!item) return;
-
+    
+    // Should we perform an action afterwards? The signal handling may lead to
+    // destruction of the widget, so we'll hold a ref to the action.
+    AutoRef<Action> postAction(d->doAction? makeAction(*item) : nullptr);
+    
+    // Notify.
     emit gameSessionSelected(item);
-
-    // Should we also perform the action?
-    if(d->doAction)
+    
+    if(bool(postAction))
     {
-        AutoRef<Action> act = makeAction(*item);
-        act->trigger();
+        postAction->trigger();
     }
 }
