@@ -830,30 +830,20 @@ static void generateMaterialDefs()
 
 #ifdef __CLIENT__
 
-/// @todo $revise-texture-animation
-static Record const *tryFindDecoration(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
+/**
+ * Returns @c true iff @a decorDef is compatible with the specified context.
+ */
+static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textureUri,
+    bool materialIsCustom)
 {
-    if(!uri.isEmpty())
-    {
-        DictionaryValue::Elements const &decorationsByMaterial = defs.decorations.lookup("material").elements();
-        for(auto const &pair : decorationsByMaterial)
-        {
-            Record const &decorDef = *pair.second->as<RecordValue>().record();
-            de::Uri const materialUri(decorDef.gets("material"), RC_NULL);
-            if(materialUri == uri)
-            {
-                // Is this suitable?
-                if(Def_IsAllowedDecoration(decorDef, /*hasExternal,*/ isCustom))
-                    return &decorDef;
-            }
-        }
-    }
-    return nullptr;  // Not found.
-}
+    if(de::Uri(decorDef.gets("texture"), RC_NULL) != textureUri)
+        return false;
 
-static inline Record const *tryFindDecorationForMaterial(Material const &mat)
-{
-    return tryFindDecoration(mat.manifest().composeUri(), mat.manifest().isCustom());
+    if(materialIsCustom)
+    {
+        return (decorDef.geti("flags") & DCRF_PWAD) != 0;
+    }
+    return (decorDef.geti("flags") & DCRF_NO_IWAD) == 0;
 }
 
 /**
@@ -891,13 +881,90 @@ static void redecorateMaterial(Material &material, Record const &def)
         return;
 
     // Perhaps old style linked decoration definitions?
-    /// @todo fixme: Need to factor in the decoration definitions for all animation frames.
-    if(Record const *definition = tryFindDecorationForMaterial(material))
+    if(material.layerCount())
     {
-        defn::Decoration decorDef(*definition);
-        for(int i = 0; i < decorDef.lightCount(); ++i)
+        // The animation configuration of layer0 determines decoration animation.
+        auto const &decorationsByTexture   = defs.decorations.lookup("texture").elements();
+        MaterialTextureLayer const &layer0 = material.layer(0).as<MaterialTextureLayer>();
+
+        bool haveDecorations = false;
+        QVector<Record const *> stageDecorations(layer0.stageCount());
+        for(int i = 0; i < layer0.stageCount(); ++i)
         {
-            material.addDecoration(MaterialLightDecoration::fromDef(decorDef.light(i)));
+            MaterialTextureLayer::AnimationStage const &stage = layer0.stage(i);
+            try
+            {
+                TextureManifest &texManifest = resSys().textureManifest(de::Uri(stage.gets("texture"), RC_NULL));
+                de::Uri const texUri = texManifest.composeUri();
+                for(auto const &pair : decorationsByTexture)
+                {
+                    Record const &rec = *pair.second->as<RecordValue>().record();
+                    if(decorationIsCompatible(rec, texUri, material.manifest().isCustom()))
+                    {
+                        stageDecorations[i] = &rec;
+                        haveDecorations = true;
+                        break;
+                    }
+                }
+            }
+            catch(ResourceSystem::MissingManifestError const &)
+            {} // Ignore this error
+        }
+
+        if(!haveDecorations) return;
+
+        for(int i = 0; i < layer0.stageCount(); ++i)
+        {
+            if(!stageDecorations[i]) continue;
+
+            defn::Decoration mainDef(*stageDecorations[i]);
+            for(int k = 0; k < mainDef.lightCount(); ++k)
+            {
+                defn::MaterialDecoration decorDef(mainDef.light(k));
+                DENG2_ASSERT(decorDef.stageCount() == 1); // sanity check.
+
+                std::unique_ptr<MaterialLightDecoration> decor(
+                        new MaterialLightDecoration(Vector2i(decorDef.geta("patternSkip")),
+                                                    Vector2i(decorDef.geta("patternOffset")),
+                                                    false /*don't use interpolation*/));
+
+                std::unique_ptr<MaterialLightDecoration::AnimationStage> definedDecorStage(
+                        MaterialLightDecoration::AnimationStage::fromDef(decorDef.stage(0)));
+
+                definedDecorStage->tics = layer0.stage(i).tics;
+
+                if(i > 0)
+                {
+                    int tics = 0;
+                    for(int m = 0; m < i; ++m) tics += layer0.stage(m).tics;
+
+                    if(tics)
+                    {
+                        MaterialLightDecoration::AnimationStage preStage(*definedDecorStage);
+                        preStage.tics  = tics;
+                        preStage.color = Vector3f();
+                        decor->addStage(preStage);  // makes a copy.
+                    }
+                }
+
+                decor->addStage(*definedDecorStage);
+
+                if(i + 1 < layer0.stageCount())
+                {
+                    int tics = 0;
+                    for(int m = i + 1; m < layer0.stageCount(); ++m) tics += layer0.stage(m).tics;
+
+                    if(tics)
+                    {
+                        MaterialLightDecoration::AnimationStage postStage(*definedDecorStage);
+                        postStage.tics  = tics;
+                        postStage.color = Vector3f();
+                        decor->addStage(postStage);
+                    }
+                }
+
+                material.addDecoration(decor.release());  // takes ownership.
+            }
         }
     }
 }
@@ -2035,13 +2102,6 @@ StringArray *Def_ListStateIDs()
         StringArray_Append(array, defs.states[i].id);
     }
     return array;
-}
-
-bool Def_IsAllowedDecoration(Record const &decorDef, /*bool hasExternal,*/ bool isCustom)
-{
-    //if(hasExternal) return (decorDef.geti("flags") & DCRF_EXTERNAL) != 0;
-    if(!isCustom)   return (decorDef.geti("flags") & DCRF_NO_IWAD) == 0;
-    return (decorDef.geti("flags") & DCRF_PWAD) != 0;
 }
 
 bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom)

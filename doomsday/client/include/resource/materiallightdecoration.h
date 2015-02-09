@@ -75,7 +75,8 @@ public:
 
 public:
     MaterialLightDecoration(de::Vector2i const &patternSkip   = de::Vector2i(),
-                            de::Vector2i const &patternOffset = de::Vector2i());
+                            de::Vector2i const &patternOffset = de::Vector2i(),
+                            bool useInterpolation             = true);
     virtual ~MaterialLightDecoration();
 
     /**
@@ -100,6 +101,14 @@ public:
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
     AnimationStage &stage(int index) const;
+
+    /**
+     * Returns @c true if interpolation should be used with this decoration.
+     */
+    bool useInterpolation() const;
+
+private:
+    bool _useInterpolation;
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H

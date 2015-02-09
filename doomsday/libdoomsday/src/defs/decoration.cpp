@@ -32,7 +32,7 @@ void Decoration::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("material", "");  // URI. Unknown.
+    def().addText  ("texture", "");  // URI. Unknown.
     def().addNumber("flags", 0);
     def().addArray ("light", new ArrayValue);
 }

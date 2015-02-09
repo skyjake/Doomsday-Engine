@@ -2624,15 +2624,15 @@ DENG2_PIMPL(DEDParser)
                     RV_FLAGS("Flags", decor["flags"], "dcf_")
                     if(ISLABEL("Material"))
                     {
-                        READURI(decor["material"], 0)
+                        READURI(decor["texture"], 0)
                     }
                     else if(ISLABEL("Texture"))
                     {
-                        READURI(decor["material"], "Textures")
+                        READURI(decor["texture"], "Textures")
                     }
                     else if(ISLABEL("Flat"))
                     {
-                        READURI(decor["material"], "Flats")
+                        READURI(decor["texture"], "Flats")
                     }
                     else if(ISLABEL("Light"))
                     {

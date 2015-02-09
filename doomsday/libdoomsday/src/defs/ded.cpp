@@ -64,7 +64,7 @@ ded_s::ded_s()
     , finales    (names.addRecord("finales"))
     , decorations(names.addRecord("decorations"))
 {
-    decorations.addLookupKey("material");
+    decorations.addLookupKey("texture");
     episodes.addLookupKey("id");
     finales.addLookupKey("id");
     finales.addLookupKey("before");

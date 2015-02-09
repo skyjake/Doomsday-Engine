@@ -1,6 +1,6 @@
 /** @file materialanimator.cpp  Animator for a draw-context Material variant.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -72,7 +72,7 @@ static DGLuint prepareFlaremap(Texture *texture, int oldIdx)
 
 DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
 {
-    MaterialDecoration *materialDecoration = nullptr;
+    MaterialDecoration *matDecor = nullptr;
 
     int stage   = 0;  ///< Animation stage else @c -1 => decoration not in use.
     short tics  = 0;  ///< Remaining (sharp) tics in the current stage.
@@ -93,18 +93,28 @@ DENG2_PIMPL_NOREF(MaterialAnimator::Decoration)
     Texture *floorTex    = nullptr;
 
     Instance() { de::zap(lightLevels); }
+
+    bool useInterpolation() const
+    {
+        DENG2_ASSERT(matDecor);
+        if(auto const *light = matDecor->maybeAs<MaterialLightDecoration>())
+        {
+            return light->useInterpolation();
+        }
+        return true;
+    }
 };
 
 MaterialAnimator::Decoration::Decoration(MaterialDecoration &decor)
     : d(new Instance)
 {
-    d->materialDecoration = &decor;
+    d->matDecor = &decor;
 }
 
 MaterialDecoration &MaterialAnimator::Decoration::decor() const
 {
-    DENG2_ASSERT(d->materialDecoration);
-    return *d->materialDecoration;
+    DENG2_ASSERT(d->matDecor);
+    return *d->matDecor;
 }
 
 Vector2f MaterialAnimator::Decoration::origin() const
@@ -169,6 +179,8 @@ bool MaterialAnimator::Decoration::animate()
 {
     if(decor().isAnimated())
     {
+        d->inter = 0;
+
         if(DD_IsSharpTick() && d->tics-- <= 0)
         {
             // Advance to next stage.
@@ -177,7 +189,6 @@ bool MaterialAnimator::Decoration::animate()
                 // Loop back to the beginning.
                 d->stage = 0;
             }
-            d->inter = 0;
 
             MaterialDecoration::Stage const &stage = decor().stage(d->stage);
             if(stage.variance != 0)
@@ -188,8 +199,11 @@ bool MaterialAnimator::Decoration::animate()
             return true;
         }
 
-        MaterialDecoration::Stage const &stage = decor().stage(d->stage);
-        d->inter = 1.f - d->tics / float( stage.tics );
+        if(d->useInterpolation())
+        {
+            MaterialDecoration::Stage const &stage = decor().stage(d->stage);
+            d->inter = 1.f - d->tics / float( stage.tics );
+        }
     }
     return false;
 }

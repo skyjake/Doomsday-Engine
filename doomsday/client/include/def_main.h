@@ -231,11 +231,6 @@ StringArray *Def_ListMobjTypeIDs(void);
 StringArray *Def_ListStateIDs(void);
 
 /**
- * Returns @c true iff @a decorDef is compatible with the specified context.
- */
-bool Def_IsAllowedDecoration(de::Record const &decorDef, /*bool hasExternal,*/ bool isCustom);
-
-/**
  * Returns @c true iff @a def is compatible with the specified context.
  */
 bool Def_IsAllowedReflection(ded_reflection_t const *def, /*bool hasExternal,*/ bool isCustom);

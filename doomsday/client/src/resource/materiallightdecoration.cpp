@@ -108,8 +108,10 @@ String MaterialLightDecoration::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-MaterialLightDecoration::MaterialLightDecoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
+MaterialLightDecoration::MaterialLightDecoration(Vector2i const &patternSkip,
+    Vector2i const &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
+    , _useInterpolation(useInterpolation)
 {}
 
 MaterialLightDecoration::~MaterialLightDecoration()
@@ -142,4 +144,9 @@ MaterialLightDecoration::AnimationStage &MaterialLightDecoration::stage(int inde
 String MaterialLightDecoration::describe() const
 {
     return "Light decoration";
+}
+
+bool MaterialLightDecoration::useInterpolation() const
+{
+    return _useInterpolation;
 }

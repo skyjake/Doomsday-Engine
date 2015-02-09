@@ -23,9 +23,9 @@
 #include <de/RecordAccessor>
 
 // Flags for decoration definitions.
-#define DCRF_NO_IWAD        0x1  ///< Don't use if from IWAD.
-#define DCRF_PWAD           0x2  ///< Can use if from PWAD.
-#define DCRF_EXTERNAL       0x4  ///< Can use if from external resource.
+#define DCRF_NO_IWAD   0x1  ///< Don't use if from IWAD.
+#define DCRF_PWAD      0x2  ///< Can use if from PWAD.
+//#define DCRF_EXTERNAL  0x4  ///< Can use if from external resource.
 
 namespace defn {
 
