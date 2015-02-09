@@ -37,8 +37,8 @@
 # - deng_tests                  Build and deploy the test suite
 # - deng_writertypecheck        Enable type checking in Writer/Reader
 #
-# Read-only options (set automatically):
-# - deng_debug                  Debug build.
+# Read-only options (do not set manually):
+# - deng_debug                  Debug build (due to CONFIG+=debug).
 
 QT -= core gui
 CONFIG *= thread
