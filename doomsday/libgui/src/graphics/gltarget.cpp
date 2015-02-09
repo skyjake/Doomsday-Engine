@@ -531,7 +531,10 @@ void GLTarget::glBind() const
 
 void GLTarget::glRelease() const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // both read and write FBOs
+    LIBGUI_ASSERT_GL_OK();
 
     d->updateFromProxy();
 }
@@ -621,17 +624,15 @@ void GLTarget::updateFromProxy()
 
 void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filtering) const
 {
-    //qDebug() << "GLTarget: blit from" << d->fbo << "to" << dest.glName();
+    LIBGUI_ASSERT_GL_OK();
 
     DENG2_ASSERT(GLInfo::extensions().EXT_framebuffer_blit);
     if(!GLInfo::extensions().EXT_framebuffer_blit) return;
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
     LIBGUI_ASSERT_GL_OK();
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, dest.glName());
+    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, d->fbo);
     LIBGUI_ASSERT_GL_OK();
 
     Flags common = d->flags & dest.flags() & attachments;
@@ -644,8 +645,8 @@ void GLTarget::blit(GLTarget &dest, Flags const &attachments, gl::Filter filteri
                          filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, 0);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    LIBGUI_ASSERT_GL_OK();
 
     dest.markAsChanged();
 

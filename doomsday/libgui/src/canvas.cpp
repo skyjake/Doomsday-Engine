@@ -448,13 +448,11 @@ void Canvas::paintGL()
 {
     if(!d->parent || d->parent->isRecreationInProgress()) return;
 
-/*#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
-    if(d->resizeTimer.isActive())
-    {
-        d->resizeTimer.stop();
-        updateSize();
-    }
-#endif*/
+#ifdef LIBGUI_CANVAS_USE_DEFERRED_RESIZE
+    if(d->resizeTimer.isActive()) return;
+#endif
+
+    DENG2_ASSERT(QGLContext::currentContext() != 0);
 
     LIBGUI_ASSERT_GL_OK();
 

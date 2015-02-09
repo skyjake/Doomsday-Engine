@@ -151,9 +151,13 @@ DENG2_PIMPL(GLFramebuffer)
         color.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         color.setFilter(gl::Nearest, gl::Linear, gl::MipNone);
 
+        DENG2_ASSERT(color.isReady());
+
         depthStencil.setDepthStencilContent(size);
         depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
         depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+
+        DENG2_ASSERT(depthStencil.isReady());
 
         try
         {
@@ -225,6 +229,15 @@ noMultisampling:
                 .setTarget(defaultTarget)
                 .setViewport(Rectangleui::fromSize(size))
                 .apply();
+
+        if(!color.isReady())
+        {
+            // If the frame buffer hasn't been configured yet, just clear the canvas.
+            glClear(GL_COLOR_BUFFER_BIT);
+            canvas.QGLWidget::swapBuffers();
+            GLState::pop().apply();
+            return;
+        }
 
         switch(swapMode)
         {
