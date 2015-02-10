@@ -58,7 +58,6 @@
      error == GL_STACK_UNDERFLOW?   "GL_STACK_UNDERFLOW" : \
      error == GL_OUT_OF_MEMORY?     "GL_OUT_OF_MEMORY" : \
      error == GL_INVALID_FRAMEBUFFER_OPERATION? "GL_INVALID_FRAMEBUFFER_OPERATION" : \
-     error == GL_CONTEXT_LOST?      "GL_CONTEXT_LOST" :  \
                                     "?")
 
 #ifndef NDEBUG
