@@ -107,7 +107,12 @@ void Cl_CleanUp()
     // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
 
+    // Reset any view effects.
     GL_SetFilter(false);
+    Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
+    
+    // Forget all packets we've received but haven't yet handled.
+    N_ClearMessages();
 }
 
 void Cl_SendHello()
