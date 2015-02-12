@@ -741,6 +741,7 @@ void TaskBarWidget::chooseIWADFolder()
     if(reload)
     {
         ClientApp::resourceSystem().updateOverrideIWADPathFromConfig();
+        ClientWindow::main().console().closeLogAndUnfocusCommandLine();
 
         Con_InitProgress(200);
         App_Games().forgetAllResources();
