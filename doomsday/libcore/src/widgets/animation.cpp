@@ -357,8 +357,11 @@ Time const &Animation::currentTime() // static
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
 
+    static Lockable timeMutex;
     static Time theTime;
     static duint32 latestTick = 0;
+
+    DENG2_GUARD(timeMutex);
 
     duint32 const tc = _clock->tickCount();
     if(latestTick != tc)
