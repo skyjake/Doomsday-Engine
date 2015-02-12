@@ -933,34 +933,22 @@ static void redecorateMaterial(Material &material, Record const &def)
 
                 definedDecorStage->tics = layer0.stage(i).tics;
 
-                if(i > 0)
+                for(int m = 0; m < i; ++m)
                 {
-                    int tics = 0;
-                    for(int m = 0; m < i; ++m) tics += layer0.stage(m).tics;
-
-                    if(tics)
-                    {
-                        MaterialLightDecoration::AnimationStage preStage(*definedDecorStage);
-                        preStage.tics  = tics;
-                        preStage.color = Vector3f();
-                        decor->addStage(preStage);  // makes a copy.
-                    }
+                    MaterialLightDecoration::AnimationStage preStage(*definedDecorStage);
+                    preStage.tics  = layer0.stage(m).tics;
+                    preStage.color = Vector3f();
+                    decor->addStage(preStage);  // makes a copy.
                 }
 
                 decor->addStage(*definedDecorStage);
 
-                if(i + 1 < layer0.stageCount())
+                for(int m = i + 1; m < layer0.stageCount(); ++m)
                 {
-                    int tics = 0;
-                    for(int m = i + 1; m < layer0.stageCount(); ++m) tics += layer0.stage(m).tics;
-
-                    if(tics)
-                    {
-                        MaterialLightDecoration::AnimationStage postStage(*definedDecorStage);
-                        postStage.tics  = tics;
-                        postStage.color = Vector3f();
-                        decor->addStage(postStage);
-                    }
+                    MaterialLightDecoration::AnimationStage postStage(*definedDecorStage);
+                    postStage.tics  = layer0.stage(m).tics;
+                    postStage.color = Vector3f();
+                    decor->addStage(postStage);
                 }
 
                 material.addDecoration(decor.release());  // takes ownership.
