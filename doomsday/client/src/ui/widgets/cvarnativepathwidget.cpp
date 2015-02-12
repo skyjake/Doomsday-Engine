@@ -18,6 +18,7 @@
 
 #include "ui/widgets/cvarnativepathwidget.h"
 #include "ui/clientwindow.h"
+#include "clientapp.h"
 
 #include <doomsday/console/var.h>
 #include <de/PopupMenuWidget>
@@ -98,23 +99,12 @@ void CVarNativePathWidget::updateFromCVar()
 
 void CVarNativePathWidget::chooseUsingNativeFileDialog()
 {
-    auto &win = ClientWindow::main();
-
-#ifndef MACOSX
-    // Switch temporarily to windowed mode. Not needed on OS X because the display mode
-    // is never changed on that platform.
-    win.saveState();
-    int windowedMode[] = {
-        ClientWindow::Fullscreen, false,
-        ClientWindow::End
-    };
-    win.changeAttributes(windowedMode);
-#endif
+    ClientApp::app().beginNativeUIMode();
 
     // Use a native dialog to pick the path.
     QDir dir(d->path);
     if(d->path.isEmpty()) dir = QDir::home();
-    QFileDialog dlg(&win, tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
+    QFileDialog dlg(&ClientWindow::main(), tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
     if(!d->filters.isEmpty())
     {
         dlg.setNameFilters(d->filters);
@@ -129,9 +119,7 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
         setText(d->labelText());
     }
 
-#ifndef MACOSX
-    win.restoreState();
-#endif
+    ClientApp::app().endNativeUIMode();
 }
 
 void CVarNativePathWidget::clearPath()

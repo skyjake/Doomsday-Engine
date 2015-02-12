@@ -81,6 +81,8 @@ public:
 public slots:
     void openHomepageInBrowser();
     void openInBrowser(QUrl url);
+    void beginNativeUIMode();
+    void endNativeUIMode();
 
 private:
     DENG2_PRIVATE(d)
