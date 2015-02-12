@@ -29,8 +29,8 @@ using namespace de;
 
 DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
 , DENG2_OBSERVES(Games, Addition)
+, DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(Loop, Iteration) // deferred updates
-, DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(App, GameChange)
 {
     /// ActionItem with a Game member, for loading a particular game.
@@ -72,8 +72,8 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
     Instance(Public *i) : Base(i)
     {
         App_Games().audienceForAddition() += this;
+        App_Games().audienceForReadiness() += this;
         App::app().audienceForGameChange() += this;
-        App::app().audienceForStartupComplete() += this;
     }
 
     ~Instance()
@@ -81,8 +81,8 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         Loop::get().audienceForIteration() -= this;
 
         App_Games().audienceForAddition() -= this;
+        App_Games().audienceForReadiness() -= this;
         App::app().audienceForGameChange() -= this;
-        App::app().audienceForStartupComplete() -= this;
     }
 
     void gameAdded(Game &game)
@@ -173,7 +173,7 @@ DENG_GUI_PIMPL(SingleplayerSessionMenuWidget)
         emit self.availabilityChanged();
     }
 
-    void appStartupCompleted()
+    void gameReadinessUpdated()
     {
         updateGameAvailability();
     }

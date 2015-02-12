@@ -36,6 +36,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(MPSessionMenuWidget)
 , DENG2_OBSERVES(App, GameChange)
+, DENG2_OBSERVES(Games, Readiness)
 , DENG2_OBSERVES(ServerLink, DiscoveryUpdate)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
@@ -119,16 +120,25 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
      */
     struct ServerWidget : public GameSessionWidget
     {
+        ServerListItem const *svItem = nullptr;
+
         ServerWidget()
         {
             loadButton().disable();
+        }
+
+        Game const *game() const
+        {
+            if(!svItem) return nullptr;
+            return &App_Games().byIdentityKey(svItem->info().gameIdentityKey);
         }
 
         void updateFromItem(ServerListItem const &item)
         {
             try
             {
-                Game const &svGame = App_Games().byIdentityKey(item.info().gameIdentityKey);
+                svItem = &item;
+                Game const &svGame = *game();
 
                 if(style().images().has(svGame.logoImageId()))
                 {
@@ -136,11 +146,6 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 }
 
                 serverinfo_t const &sv = item.info();
-
-                loadButton().enable(sv.canJoin &&
-                                    sv.version == DOOMSDAY_VERSION &&
-                                    svGame.allStartupFilesFound());
-
                 loadButton().setText(String(_E(F)_E(s) "%2\n" _E(.)_E(.)_E(C) "(%4) " _E(.)
                                             _E(1)_E(>) "%1" _E(.)_E(<)_E(D)_E(l) "\n%5 %3")
                                .arg(sv.name)
@@ -151,11 +156,23 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
 
                 // Extra information.
                 document().setText(ServerInfo_AsStyledText(&sv));
+
+                updateAvailability();
             }
             catch(Error const &)
             {
+                svItem = nullptr;
+
                 /// @todo
             }
+        }
+
+        void updateAvailability()
+        {
+            loadButton().enable(svItem &&
+                                svItem->info().canJoin &&
+                                svItem->info().version == DOOMSDAY_VERSION &&
+                                game()->allStartupFilesFound());
         }
     };
 
@@ -169,6 +186,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
     {
         link().audienceForDiscoveryUpdate += this;
         App::app().audienceForGameChange() += this;
+        App_Games().audienceForReadiness() += this;
     }
 
     ~Instance()
@@ -176,6 +194,7 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
         releaseRef(maxHeightRule);
         link().audienceForDiscoveryUpdate -= this;
         App::app().audienceForGameChange() -= this;
+        App_Games().audienceForReadiness() -= this;
     }
 
     /**
@@ -266,6 +285,17 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
             // If the session menu exists across game changes, it's good to
             // keep it up to date.
             link().discoverUsingMaster();
+        }
+    }
+
+    void gameReadinessUpdated()
+    {
+        foreach(Widget *w, self.childWidgets())
+        {
+            if(ServerWidget *sw = w->maybeAs<ServerWidget>())
+            {
+                sw->updateAvailability();
+            }
         }
     }
 };
