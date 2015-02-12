@@ -36,9 +36,11 @@
 #include "CommandAction"
 #include "client/cl_def.h" // clientPaused
 #include "ui/ui_main.h"
+#include "ui/progress.h"
 #include "versioninfo.h"
 #include "dd_main.h"
 
+#include <doomsday/filesys/fs_main.h>
 #include <doomsday/console/exec.h>
 
 #include <de/KeyEvent>
@@ -52,6 +54,8 @@
 #include <de/PopupMenuWidget>
 #include <de/BlurWidget>
 
+#include <QFileDialog>
+
 using namespace de;
 using namespace ui;
 
@@ -62,9 +66,10 @@ enum MenuItemPositions
     // DE menu:
     POS_GAMES             = 0,
     POS_UNLOAD            = 1,
-    POS_GAMES_SEPARATOR   = 2,
-    POS_MULTIPLAYER       = 3,
-    POS_CONNECT           = 4,
+    POS_IWAD_FOLDER       = 2,
+    POS_GAMES_SEPARATOR   = 3,
+    POS_MULTIPLAYER       = 4,
+    POS_CONNECT           = 5,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -265,7 +270,8 @@ DENG_GUI_PIMPL(TaskBarWidget)
 
         itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
-        itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
+        itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
+        //itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_MULTIPLAYER)      .show(!game.isNull());
         itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
 
@@ -434,11 +440,12 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Instance(this))
     d->mainMenu->items()
             << new ui::ActionItem(tr("Switch Game..."), new SignalAction(this, SLOT(switchGame())))
             << unloadMenu                           // hidden with null-game
+            << new ui::ActionItem(tr("IWAD Folder..."), new SignalAction(this, SLOT(chooseIWADFolder())))
             << new ui::Item(ui::Item::Separator)
             << new ui::ActionItem(tr("Multiplayer Games..."), new SignalAction(this, SLOT(showMultiplayer())))
             << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Help"))
+            //<< new ui::Item(ui::Item::Separator, tr("Help"))
             << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())))
             << new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
             << new ui::Item(ui::Item::Annotation, tr("Annotations briefly describe menu functions."))
@@ -704,6 +711,41 @@ void TaskBarWidget::openMainMenu()
 void TaskBarWidget::closeMainMenu()
 {
     d->mainMenu->close();
+}
+
+void TaskBarWidget::chooseIWADFolder()
+{
+    DENG2_ASSERT(!App_GameLoaded());
+
+    bool reload = false;
+
+    // Use a native dialog to select the IWAD folder.
+    ClientApp::app().beginNativeUIMode();
+
+    QFileDialog dlg(&ClientWindow::main(),
+                    tr("Select IWAD Folder"),
+                    App::config().gets("resource.iwadFolder", ""));
+    dlg.setFileMode(QFileDialog::Directory);
+    dlg.setReadOnly(true);
+    dlg.setNameFilter("*.wad");
+    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    if(dlg.exec())
+    {
+        App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
+        reload = true;
+    }
+
+    ClientApp::app().endNativeUIMode();
+
+    // Reload packages and recheck for game availability.
+    if(reload)
+    {
+        ClientApp::resourceSystem().updateOverrideIWADPathFromConfig();
+
+        Con_InitProgress(200);
+        App_Games().forgetAllResources();
+        App_Games().locateAllResources();
+    }
 }
 
 void TaskBarWidget::openMultiplayerMenu()

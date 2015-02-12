@@ -1939,6 +1939,8 @@ dd_bool DD_Init(void)
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 
+    App_ResourceSystem().updateOverrideIWADPathFromConfig();
+
     // Try to locate all required data files for all registered games.
 #ifdef __CLIENT__
     Con_InitProgress2(200, .25f, 1); // Second half.

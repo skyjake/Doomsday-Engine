@@ -146,6 +146,12 @@ public:
      */
     ResourceClass &resClass(resourceclassid_t id);
 
+    /**
+     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
+     * path for the Packages scheme.
+     */
+    void updateOverrideIWADPathFromConfig();
+
     void clearAllResources();
     void clearAllRuntimeResources();
     void clearAllSystemResources();

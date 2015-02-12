@@ -2326,6 +2326,20 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
     throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
+void ResourceSystem::updateOverrideIWADPathFromConfig()
+{
+    String path = App::config().gets("resource.iwadFolder", "");
+    if(!path.isEmpty())
+    {
+        LOG_RES_NOTE("Using user-selected primary IWAD folder: \"%s\"") << path;
+
+        FS1::Scheme &ps = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
+        ps.clearSearchPathGroup(FS1::OverridePaths);
+        ps.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path, RC_PACKAGE),
+                                    SearchPath::NoDescend), FS1::OverridePaths);
+    }
+}
+
 void ResourceSystem::clearAllResources()
 {
     clearAllRuntimeResources();
