@@ -566,7 +566,7 @@ void ClientApp::beginNativeUIMode()
 #ifndef MACOSX
     auto &win = ClientWindow::main();
     win.saveState();
-    int windowedMode[] = {
+    int const windowedMode[] = {
         ClientWindow::Fullscreen, false,
         ClientWindow::End
     };
@@ -577,6 +577,6 @@ void ClientApp::beginNativeUIMode()
 void ClientApp::endNativeUIMode()
 {
 #ifndef MACOSX
-    win.restoreState();
+    ClientWindow::main().restoreState();
 #endif
 }
