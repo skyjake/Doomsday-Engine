@@ -237,7 +237,7 @@ dd_bool Sys_GLInitialize(void)
         {
             if(!CommandLine_Exists("-noglcheck"))
             {
-                Sys_CriticalMessagef("OpenGL implementation is too old!\n"
+                Sys_CriticalMessagef("Your OpenGL is too old!\n"
                                      "  Driver version: %s\n"
                                      "  The minimum supported version is 2.0",
                                      glGetString(GL_VERSION));
@@ -245,7 +245,7 @@ dd_bool Sys_GLInitialize(void)
             }
             else
             {
-                LOG_GL_WARNING("OpenGL implementation may be too old (2.0+ required, "
+                LOG_GL_WARNING("OpenGL may be too old (2.0+ required, "
                                "but driver reports %s)") << glGetString(GL_VERSION);
             }
         }

@@ -34,6 +34,7 @@
 #include <de/ByteArrayFile>
 
 #include "ui/nativeui.h"
+#include "ui/clientwindow.h"
 
 void Sys_MessageBox(messageboxtype_t type, const char* title, const char* msg, const char* detailedMsg)
 {
@@ -53,6 +54,11 @@ int Sys_MessageBox3(messageboxtype_t type, const char* title, const char* msg, c
         // There's no GUI...
         qWarning("%s", msg);
         return 0;
+    }
+
+    if(ClientWindow::mainExists())
+    {
+        ClientWindow::main().hide();
     }
 
     QMessageBox box;
