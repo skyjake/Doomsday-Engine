@@ -71,7 +71,7 @@ static int nextfinddata(FindData *fd)
         // Return the name of the last directory in the path.
         char* slash = last - 1;
         while(*slash != '/' && slash > fn) --slash;
-        Str_Set(&fd->name, slash + 1);
+        Str_Set(&fd->name, *slash == '/'? slash + 1 : slash);
         fd->attrib = A_SUBDIR;
     }
     else
@@ -236,8 +236,10 @@ void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext)
             strzncpy(name, lastSlash + 1, lastPeriod - lastSlash - 1);
         else if(lastSlash)
             strcpy(name, lastSlash + 1);
-        else
+        else if(lastPeriod)
             strzncpy(name, path, lastPeriod - path);
+        else 
+            strcpy(name, path);
     }
 
     // Last period gives us the extension.

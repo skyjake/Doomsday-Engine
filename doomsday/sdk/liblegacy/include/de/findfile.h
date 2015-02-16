@@ -52,6 +52,7 @@ typedef struct finddata_s {
 
 /**
  * Initializes the file finder and locates the first matching file.
+ * Directory names end in a directory separator character.
  *
  * @param findData  File finder.
  * @param pattern   File path pattern to find.
@@ -62,7 +63,8 @@ typedef struct finddata_s {
 DENG_PUBLIC int FindFile_FindFirst(FindData *findData, char const *pattern);
 
 /**
- * Finds the next matching file.
+ * Finds the next matching file. Directory names end in a directory 
+ * separator character.
  *
  * @param findData  File finder.
  *
