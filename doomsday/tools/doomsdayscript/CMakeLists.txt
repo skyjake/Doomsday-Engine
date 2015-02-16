@@ -8,7 +8,7 @@ include (../../cmake/Config.cmake)
 find_package (DengCore QUIET)
 
 add_executable (doomsdayscript main.cpp)
-target_link_libraries (doomsdayscript Deng::deng_core)
+target_link_libraries (doomsdayscript Deng::libcore)
 deng_target_defaults (doomsdayscript)
 
 install (TARGETS doomsdayscript DESTINATION bin)

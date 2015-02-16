@@ -27,11 +27,11 @@ configure_file (
 file (GLOB_RECURSE HEADERS include/doomsday/*)
 file (GLOB_RECURSE SOURCES src/*.cpp)
 
-deng_library (deng_doomsday ${SOURCES} ${HEADERS})
+deng_library (libdoomsday ${SOURCES} ${HEADERS})
 install (DIRECTORY include/doomsday DESTINATION include)
 
-target_link_libraries (deng_doomsday 
-    PUBLIC Deng::deng_core Deng::deng_legacy Deng::deng_shell
+target_link_libraries (libdoomsday 
+    PUBLIC Deng::libcore Deng::liblegacy Deng::libshell
 )
 
-deng_deploy_library (deng_doomsday DengDoomsday)
+deng_deploy_library (libdoomsday DengDoomsday)

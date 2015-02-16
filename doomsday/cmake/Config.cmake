@@ -88,6 +88,10 @@ macro (deng_library target)
     # Define the target and namespace alias.
     add_library (${target} SHARED ${_src})
     add_library (Deng::${target} ALIAS ${target})
+    # Libraries use the "deng_" prefix.
+    string (REGEX REPLACE "lib(.*)" "deng_\\1" _outName ${target})
+    set_property (TARGET ${target} PROPERTY OUTPUT_NAME ${_outName})
+    set (_outName)
     # Compiler settings.
     deng_target_defaults (${target})
     target_include_directories (${target} PUBLIC

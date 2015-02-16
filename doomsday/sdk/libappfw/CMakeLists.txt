@@ -19,11 +19,11 @@ add_definitions (-D__LIBAPPFW__)
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
-deng_library (deng_appfw ${SOURCES} ${HEADERS})
+deng_library (libappfw ${SOURCES} ${HEADERS})
 
-target_link_libraries (deng_appfw 
-    PUBLIC Deng::deng_core Deng::deng_gui Deng::deng_shell Qt5::Widgets Qt5::OpenGL
+target_link_libraries (libappfw 
+    PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL
 )
-link_opengl (deng_appfw)
+target_link_opengl (libappfw)
 
-deng_deploy_library (deng_appfw DengAppfw)
+deng_deploy_library (libappfw DengAppfw)

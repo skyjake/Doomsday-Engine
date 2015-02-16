@@ -2,9 +2,9 @@ find_package (OpenGL REQUIRED)
 
 include_directories (${OPENGL_INCLUDE_DIR})
 
-macro (link_opengl target)
+macro (target_link_opengl target)
     target_link_libraries (${target} PRIVATE ${OPENGL_LIBRARIES})
-endmacro (link_opengl)
+endmacro (target_link_opengl)
 
 #add_library (OpenGL::OpenGL UNKNOWN IMPORTED)
 #set_target_properties (OpenGL::OpenGL PROPERTIES

@@ -42,7 +42,7 @@ else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()
 
-target_link_libraries (shell Deng::deng_core Deng::deng_shell Qt5::Widgets)
+target_link_libraries (shell Deng::libcore Deng::libshell Qt5::Widgets)
 
 # include(../../../config.pri)
 #

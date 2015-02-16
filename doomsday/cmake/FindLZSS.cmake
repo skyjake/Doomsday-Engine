@@ -10,7 +10,7 @@ else ()
     target_include_directories (lzss 
         PUBLIC "${DENG_LZSS_DIR}/portable/include"
     )
-    target_link_libraries (lzss PRIVATE Deng::deng_legacy)
+    target_link_libraries (lzss PRIVATE Deng::liblegacy)
     set_property (TARGET lzss PROPERTY AUTOMOC OFF)
 endif ()
 

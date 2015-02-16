@@ -275,10 +275,10 @@ if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
 endif ()
 
 target_link_libraries (doomsday-server
-    Deng::deng_core
-    Deng::deng_legacy
-    Deng::deng_shell
-    Deng::deng_doomsday
+    Deng::libcore
+    Deng::liblegacy
+    Deng::libshell
+    Deng::libdoomsday
     lzss
 )
 

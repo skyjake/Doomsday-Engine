@@ -41,7 +41,7 @@ endif ()
 
 set (tgt doomsday-shell-text)
 add_executable (${tgt} ${SOURCES})
-target_link_libraries (${tgt} Deng::deng_core Deng::deng_shell ${CURSES_LIBRARIES})
+target_link_libraries (${tgt} Deng::libcore Deng::libshell ${CURSES_LIBRARIES})
 deng_target_defaults (${tgt})
 
 install (TARGETS ${tgt} DESTINATION bin)
