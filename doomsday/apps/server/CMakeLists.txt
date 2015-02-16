@@ -11,6 +11,7 @@ find_package (DengLegacy QUIET)
 find_package (DengShell QUIET)
 find_package (DengDoomsday QUIET)
 find_package (LZSS)
+find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DENG_API_DIR})
 
@@ -239,16 +240,40 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/vertex.cpp
     ${src}/src/world/worldsystem.cpp
 )
+
 if (UNIX)
     include_directories (../client/include/unix)
     list (APPEND SHARED_WITH_CLIENT ${src}/src/unix/dd_uinit.cpp)
+
+    if (AMETHYST_FOUND)
+        set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-server.6)
+        list (APPEND SOURCES ${MAN_PAGE})
+        set (DOC_DIR ${DENG_SOURCE_DIR}/doc/server)
+        add_custom_command (
+            OUTPUT ${MAN_PAGE}
+            COMMAND "${AMETHYST}" -dMAN -dUNIX -odoomsday-server.6 ${DOC_DIR}/server.ame
+            # MAIN_DEPENDENCY ${_tgt}
+            DEPENDS ${DOC_DIR}/server.ame ${DOC_DIR}/manpage.ame
+            COMMENT "Compiling manual page..."
+        )
+        install (FILES ${MAN_PAGE} DESTINATION share/man/man6)
+    endif ()
 endif ()
 
-add_executable (doomsday-server 
-    ${SOURCES} ${HEADERS} ${API_HEADERS} 
-    ${SHARED_WITH_CLIENT}
-)
+add_executable (doomsday-server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
 deng_target_defaults (doomsday-server)
+
+# There's some old code here so relax the warnings a bit.
+if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+    set_property (TARGET doomsday-server 
+        APPEND PROPERTY COMPILE_OPTIONS
+            -Wno-missing-field-initializers 
+            -Wno-missing-braces
+            -Wno-nested-anon-types
+            -Wno-gnu-anonymous-struct
+    )
+endif ()
+
 target_link_libraries (doomsday-server
     Deng::deng_core
     Deng::deng_legacy
@@ -261,3 +286,4 @@ install (
     TARGETS doomsday-server
     DESTINATION bin
 )
+
