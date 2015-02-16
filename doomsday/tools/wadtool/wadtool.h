@@ -22,10 +22,9 @@
 #ifndef __WAD_TOOL_H__
 #define __WAD_TOOL_H__
 
-#define VERSION_STR		"1.0"
+#define VERSION_STR		"1.1"
 
-typedef struct fname_s
-{
+typedef struct fname_s {
 	struct fname_s *next, *prev;
 	char path[256];
 	int size;
@@ -33,15 +32,13 @@ typedef struct fname_s
 	char lump[9];
 } fname_t;
 
-typedef struct
-{
+typedef struct {
 	char identification[4];
 	int numlumps;
 	int infotableofs;
 } wadinfo_t;
 
-typedef struct
-{
+typedef struct {
 	int filepos;
 	int size;
 	char name[8];
