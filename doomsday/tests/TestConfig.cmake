@@ -12,8 +12,9 @@ macro (deng_test target)
     target_link_libraries (${target} Deng::libcore)
     enable_cxx11 (${target})
     strict_warnings (${target})
-    set_property (TARGET ${target} 
-        PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
+    set_target_properties (${target} PROPERTIES
+        INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
+        FOLDER Tests
     )    
     install (TARGETS ${target} DESTINATION bin)
 endmacro (deng_test)

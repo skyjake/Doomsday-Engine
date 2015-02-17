@@ -12,6 +12,7 @@ find_package (LZSS)
 file (GLOB SOURCES src/*.cpp src/*.h)
 
 add_executable (savegametool ${SOURCES})
+set_property (TARGET savegametool PROPERTY FOLDER Tools)
 target_link_libraries (savegametool Deng::libcore Deng::liblegacy lzss)
 deng_target_defaults (savegametool)
 

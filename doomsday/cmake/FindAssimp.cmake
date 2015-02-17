@@ -1,13 +1,11 @@
 find_package (PkgConfig)
 
 pkg_check_modules (ASSIMP REQUIRED assimp)
+find_library (LIBASSIMP ${ASSIMP_LIBRARIES} HINTS ${ASSIMP_LIBRARY_DIRS})
+mark_as_advanced (LIBASSIMP)
 
-include_directories (${ASSIMP_INCLUDE_DIRS})
-link_directories    (${ASSIMP_LIBRARY_DIRS})
-
-macro (target_link_assimp target)
-    target_link_libraries (${target} PUBLIC ${ASSIMP_LIBRARIES})
-    set_property (TARGET ${target} 
-        PROPERTY INTERFACE_LINK_LIBRARIES "-L${ASSIMP_LIBRARY_DIRS}"
-    )
-endmacro (target_link_assimp)
+if (NOT TARGET assimp)
+    add_library (assimp INTERFACE)
+    target_include_directories (assimp INTERFACE ${ASSIMP_INCLUDE_DIRS})
+    target_link_libraries (assimp INTERFACE ${LIBASSIMP})
+endif ()

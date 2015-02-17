@@ -9,6 +9,8 @@ set (DENG_RELEASE_TYPE
     #Stable
 )
 
+set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2015 Deng Team")
+
 # Build Configuration --------------------------------------------------------
 
 if (DENG_RELEASE_TYPE STREQUAL "Stable")

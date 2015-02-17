@@ -5,4 +5,6 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_EXAMPLE)
 include (../PluginConfig.cmake)
 
+include_directories (include)
+
 deng_add_plugin (example src/example.c include/version.h)

@@ -50,8 +50,8 @@ endmacro (strict_warnings)
 
 macro (deng_target_defaults target)
     set_target_properties (${target} PROPERTIES 
-        VERSION       ${DENG_VERSION}
-        SOVERSION     ${DENG_COMPAT_VERSION}
+        VERSION   ${DENG_VERSION}
+        SOVERSION ${DENG_COMPAT_VERSION}
     )
     if (APPLE)
         set_property (TARGET ${target} PROPERTY INSTALL_RPATH "@loader_path/../Frameworks")
@@ -98,7 +98,13 @@ endfunction (deng_filter_platform_sources)
 # Set up resource bundling on OS X.
 # The arguments are a list of resource files/directories with the 
 # destination directory separated by a comma:
+#
 #   res/macx/shell.icns,Resources
+#
+# If the destionation is omitted, it defaults to "Resources".
+#
+# If the file path is the name of an existing target, its location
+# is used as the path.    
 #
 # DENG_RESOURCES is set to a list of the individual source files
 # to be added to add_executable().
@@ -114,6 +120,10 @@ function (deng_find_resources)
         if (NOT pair MATCHES ".*,.*")
             # No comma means the destination defaults to Resources.
             set (dest Resources)
+        endif ()
+        if (TARGET ${fn})
+            # Use the location of the target.
+            get_property (fn TARGET ${fn} PROPERTY LOCATION)
         endif ()
         set (origFn ${fn})
         list (APPEND src ${fn})
@@ -162,15 +172,18 @@ function (deng_add_package packName)
         message (FATAL_ERROR "deng_package: \"${outName}\" not found")
     endif ()
     set (outDir ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command (
-        OUTPUT ${outName}
-        COMMAND ${PYTHON_EXECUTABLE} 
-            "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py"
-            ${fullPath}
-            ${outDir}
+    execute_process (COMMAND ${PYTHON_EXECUTABLE} 
+        "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py"
+        ${fullPath} ${outDir}
+        OUTPUT_VARIABLE msg
+        OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    message (STATUS "${msg}")
     add_custom_target (${packName} ALL DEPENDS ${outName})
-    set_property (TARGET ${packName} PROPERTY OUTPUT_NAME "${outDir}/${outName}")
+    set_target_properties (${packName} PROPERTIES
+        LOCATION "${outDir}/${outName}"
+        FOLDER Packages
+    )
     install (FILES ${outDir}/${outName} DESTINATION ${DENG_INSTALL_DATA_DIR})
     set (DENG_REQUIRED_PACKAGES ${DENG_REQUIRED_PACKAGES} ${packName} PARENT_SCOPE)
 endfunction (deng_add_package)
@@ -181,7 +194,7 @@ function (deng_find_packages fullPaths)
     list (REMOVE_DUPLICATES names)
     foreach (name ${names})
         if (TARGET ${name})
-            get_property (loc TARGET ${name} PROPERTY OUTPUT_NAME)            
+            get_property (loc TARGET ${name} PROPERTY LOCATION)            
             list (APPEND result ${loc})
         else ()
             # Check the installed packages.
@@ -257,9 +270,75 @@ macro (deng_add_application target)
         install (FILES ${pkgs} DESTINATION ${DENG_INSTALL_DATA_DIR})
     endif ()
     deng_target_defaults (${target})
+    set_property (TARGET ${target} PROPERTY FOLDER Apps)
     set (src)
     set (pkgs)
     set (idx)
     set (pos)
     set (extraRes)
 endmacro (deng_add_application)
+
+function (add_pkgconfig_interface_library target)
+    sublist (pkgNames 1 -1 ${ARGV})
+    foreach (pkg ${pkgNames})
+        set (prefix "PKG_${pkg}")
+        pkg_check_modules (${prefix} REQUIRED ${pkg})
+        # Locate full paths of the required shared libraries.
+        foreach (lib ${${prefix}_LIBRARIES})
+            find_library (path ${lib} HINTS ${${prefix}_LIBRARY_DIRS})
+            get_filename_component (path ${path} REALPATH)
+            list (APPEND libs ${path})
+            unset (path CACHE)
+            set (path)
+        endforeach (lib)
+        list (APPEND cflags ${${prefix}_CFLAGS})
+    endforeach (pkg)
+    list (REMOVE_DUPLICATES cflags)
+    list (REMOVE_DUPLICATES libs)
+    add_library (${target} INTERFACE)
+    target_compile_options (${target} INTERFACE ${cflags})
+    target_link_libraries (${target} INTERFACE ${libs})
+endfunction (add_pkgconfig_interface_library)
+
+# Mac OS X -------------------------------------------------------------------
+
+function (fix_bundled_install_names binaryFile)
+    if (NOT EXISTS ${binaryFile})
+        message (FATAL_ERROR "fix_bundled_install_names: ${binaryFile} not found")
+    endif ()
+    sublist (libs 1 -1 ${ARGV})
+    find_program (OTOOL_EXECUTABLE otool)
+    execute_process (COMMAND ${OTOOL_EXECUTABLE} 
+        -L ${binaryFile}
+        OUTPUT_VARIABLE deps
+    )
+    foreach (fn ${libs})
+        get_filename_component (base "${fn}" NAME)
+        string (REGEX MATCH "([^\n]+/${base}) \\(compatibility version" matched ${deps})
+        string (STRIP ${CMAKE_MATCH_1} depPath)
+        execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
+            -change ${depPath} @loader_path/../Frameworks/${base}
+            ${binaryFile}
+)
+    endforeach (fn)    
+endfunction (fix_bundled_install_names)
+
+# Fixes the install names of the listed libraries that have been bundled into
+# the target.
+macro (deng_bundle_install_names target)
+    sublist (libs 1 -1 ${ARGV})
+    set (scriptName ${target}-postbuild.cmake)
+    # Correct the install names of the dependent libraries.
+    file (GENERATE OUTPUT ${scriptName}
+        CONTENT "\
+set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)\n\
+set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})\n\
+include (Macros)\n\
+fix_bundled_install_names (${target}.bundle/Contents/MacOS/${target} \"${libs}\")\n")
+    add_custom_command (TARGET ${target} POST_BUILD 
+        COMMAND ${CMAKE_COMMAND} -P ${scriptName}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )    
+    set (scriptName)        
+    set (libs)
+endmacro (deng_bundle_install_names)

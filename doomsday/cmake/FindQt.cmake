@@ -1,5 +1,5 @@
 # Qmake is used to find out the Qt install location.
-set (QMAKE qmake CACHE STRING "Path of the qmake binary of the Qt version to use")
+set (QMAKE qmake CACHE STRING "Path of the qmake executable to use")
 
 # Runs qmake to query one of its configuration variables.
 function (qmake_query qvar outvar)

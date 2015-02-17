@@ -33,6 +33,7 @@ list (APPEND CMAKE_PREFIX_PATH "${QT_PREFIX_DIR}")
 
 file (GLOB SOURCES src/*.cpp src/*.h)
 add_executable (amethyst ${SOURCES})
+set_property (TARGET amethyst PROPERTY FOLDER Tools)
 strict_warnings (amethyst)
 
 find_package (Qt5Core QUIET)

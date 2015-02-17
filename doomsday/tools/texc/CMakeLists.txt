@@ -5,6 +5,7 @@ project (DENG_TEXC)
 include (../../cmake/Config.cmake)
 
 add_executable (texc import.cpp texc.cpp texc.h)
+set_property (TARGET texc PROPERTY FOLDER Tools)
 
 set (DOC_DIR ${DENG_INSTALL_DOC_DIR}/texc)
 install (TARGETS texc DESTINATION bin)

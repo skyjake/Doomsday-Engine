@@ -67,3 +67,4 @@ set (Python_ADDITIONAL_VERSIONS 2.7)
 find_package (PythonInterp REQUIRED)
 
 include (cotire)
+include (LegacyPK3s)

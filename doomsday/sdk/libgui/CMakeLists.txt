@@ -22,9 +22,10 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
-target_link_libraries (libgui PUBLIC Deng::libcore Qt5::Gui Qt5::OpenGL)
-target_link_opengl (libgui)
-target_link_assimp (libgui)
+target_link_libraries (libgui 
+    PUBLIC Deng::libcore Qt5::Gui Qt5::OpenGL  
+    PRIVATE opengl assimp 
+)
 if (APPLE)
     link_framework (libgui Cocoa)
 endif ()

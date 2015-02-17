@@ -22,8 +22,8 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
 target_link_libraries (libappfw 
-    PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL
+    PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL 
+    PRIVATE opengl
 )
-target_link_opengl (libappfw)
 
 deng_deploy_library (libappfw DengAppfw)

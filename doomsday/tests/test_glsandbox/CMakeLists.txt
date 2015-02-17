@@ -14,5 +14,4 @@ deng_add_application (test_glsandbox
     glsandbox.qrc
 )
 
-target_link_libraries (test_glsandbox PRIVATE Deng::libappfw)
-target_link_opengl (test_glsandbox)
+target_link_libraries (test_glsandbox PRIVATE Deng::libappfw opengl)

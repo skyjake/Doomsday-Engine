@@ -9,6 +9,7 @@ include (../../cmake/Config.cmake)
 find_package (DengLegacy QUIET)
 
 add_executable (wadtool wadtool.c wadtool.h)
+set_property (TARGET wadtool PROPERTY FOLDER Tools)
 target_link_libraries (wadtool Deng::liblegacy)
 
 install (TARGETS wadtool DESTINATION bin)

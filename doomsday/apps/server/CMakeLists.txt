@@ -251,7 +251,7 @@ if (UNIX)
         set (DOC_DIR ${DENG_SOURCE_DIR}/doc/server)
         add_custom_command (
             OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST}" -dMAN -dUNIX -odoomsday-server.6 ${DOC_DIR}/server.ame
+            COMMAND "${AMETHYST_EXECUTABLE}" -dMAN -dUNIX -odoomsday-server.6 ${DOC_DIR}/server.ame
             DEPENDS ${DOC_DIR}/server.ame ${DOC_DIR}/manpage.ame
             COMMENT "Compiling manual page..."
         )

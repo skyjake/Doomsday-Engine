@@ -7,17 +7,19 @@ include (../../cmake/Config.cmake)
 
 add_subdirectory (example)
 
-# add_subdirectory (idtech1converter)
-# add_subdirectory (savegameconverter)
-# add_subdirectory (dehread)
-#
-# add_subdirectory (doom)
-# add_subdirectory (heretic)
-# add_subdirectory (hexen)
-# add_subdirectory (doom64)
-#
-# add_subdirectory (fmod)
-# add_subdirectory (fluidsynth)
+add_subdirectory (idtech1converter)
+add_subdirectory (savegameconverter)
+add_subdirectory (dehread)
+
+add_subdirectory (doom)
+add_subdirectory (heretic)
+add_subdirectory (hexen)
+add_subdirectory (doom64)
+
+add_subdirectory (fmod)
+if (NOT WIN32)
+    add_subdirectory (fluidsynth)
+endif ()
 # add_subdirectory (openal)
 #
 # # Platform-specific plugins.
