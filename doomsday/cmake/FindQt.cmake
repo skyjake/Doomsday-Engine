@@ -3,8 +3,10 @@ set (QMAKE qmake CACHE STRING "Path of the qmake binary of the Qt version to use
 
 # Runs qmake to query one of its configuration variables.
 function (qmake_query qvar outvar)
-    execute_process (COMMAND "${QMAKE}" -query ${qvar} OUTPUT_VARIABLE result)
-    string (STRIP "${result}" result)    
+    execute_process (COMMAND "${QMAKE}" -query ${qvar} 
+        OUTPUT_VARIABLE result 
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
     set (${outvar} "${result}" PARENT_SCOPE)
 endfunction (qmake_query)
 

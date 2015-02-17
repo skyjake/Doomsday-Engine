@@ -27,15 +27,17 @@ include (Version)
 find_package (Ccache)
 include (Options)
 
+set (DENG_INSTALL_DATA_DIR "share/doomsday")
 set (DENG_INSTALL_DOC_DIR "share/doc")
-set (DENG_INSTALL_LIB_DIR "lib/doomsday")
+set (DENG_INSTALL_LIB_DIR "lib")
 if (ARCH_BITS EQUAL 64)
     if (EXISTS ${CMAKE_INSTALL_PREFIX}/lib64)
-        set (DENG_INSTALL_LIB_DIR "lib64/doomsday")
+        set (DENG_INSTALL_LIB_DIR "lib64")
     elseif (EXISTS ${CMAKE_INSTALL_PREFIX}/lib/x86_64-linux-gnu)
         set (DENG_INSTALL_LIB_DIR "lib/x86_64-linux-gnu")
     endif ()
 endif ()    
+set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/doomsday")
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "runtime")
 
 # Qt Configuration -----------------------------------------------------------
@@ -61,54 +63,7 @@ endif ()
 
 # Helpers --------------------------------------------------------------------
 
+set (Python_ADDITIONAL_VERSIONS 2.7)
+find_package (PythonInterp REQUIRED)
+
 include (cotire)
-
-macro (deng_target_defaults target)
-    set_target_properties (${target} PROPERTIES 
-        VERSION       ${DENG_VERSION}
-        SOVERSION     ${DENG_COMPAT_VERSION}
-    )
-    if (APPLE)
-        set_property (TARGET ${target} PROPERTY INSTALL_RPATH "@loader_path/../Frameworks")
-    elseif (UNIX)
-        set_property (TARGET ${target} 
-            PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
-        )
-    endif ()        
-    enable_cxx11 (${target})
-    strict_warnings (${target})    
-    #cotire (${target})
-endmacro (deng_target_defaults)
-
-macro (deng_library target)
-    # Form the list of source files.
-    set (_src ${ARGV})    
-    list (REMOVE_AT _src 0) # remove target
-    deng_filter_platform_sources (_src ${_src})
-    # Define the target and namespace alias.
-    add_library (${target} SHARED ${_src})
-    add_library (Deng::${target} ALIAS ${target})
-    # Libraries use the "deng_" prefix.
-    string (REGEX REPLACE "lib(.*)" "deng_\\1" _outName ${target})
-    set_property (TARGET ${target} PROPERTY OUTPUT_NAME ${_outName})
-    set (_outName)
-    # Compiler settings.
-    deng_target_defaults (${target})
-    target_include_directories (${target} PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
-        $<INSTALL_INTERFACE:include/>
-    )    
-    #cotire (${target})
-endmacro (deng_library)
-
-macro (deng_deploy_library target name)
-    install (TARGETS ${target}
-        EXPORT ${name} 
-        LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR}
-        INCLUDES DESTINATION include)
-    install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::)
-    install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name})
-    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
-        install (DIRECTORY include/de DESTINATION include)
-    endif ()
-endmacro (deng_deploy_library)

@@ -28,7 +28,9 @@ endif ()
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
-deng_library (libcore ${SOURCES} ${HEADERS})
+deng_add_package (net.dengine.stdlib)
+
+deng_add_library (libcore ${SOURCES} ${HEADERS})
 
 # libcore uses the 2.x version numbering already; will be synced when 
 # the main project reached 2.0.0.

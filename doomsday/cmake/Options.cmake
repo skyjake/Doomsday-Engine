@@ -1,3 +1,6 @@
+option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functionality" ON)
+option (DENG_ENABLE_TESTS "Enable/disable the test suite" OFF)
+
 option (DENG_FIXED_ASM 
     "Use inline assembler for fixed-point math"
     ${DENG_FIXED_ASM_DEFAULT}
@@ -7,7 +10,7 @@ if (NOT DENG_FIXED_ASM)
 endif ()
 
 option (DENG_FAKE_MEMORY_ZONE
-    "Replace memory zone allocs with real malloc() calls (for debugging)"
+    "(Debug) Replace memory zone allocs with real malloc() calls"
     OFF
 )
 if (DENG_FAKE_MEMORY_ZONE)

@@ -15,7 +15,7 @@ add_definitions (-D__LIBSHELL__)
 file (GLOB_RECURSE HEADERS include/de/shell/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
-deng_library (libshell ${SOURCES} ${HEADERS})
+deng_add_library (libshell ${SOURCES} ${HEADERS})
 target_link_libraries (libshell Deng::libcore)
 
 deng_deploy_library (libshell DengShell)

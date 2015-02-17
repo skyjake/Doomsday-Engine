@@ -18,26 +18,18 @@ add_definitions (
     -DSHELL_VERSION="${DENG_VERSION}"
 )
 
-# Sources and resources.
 file (GLOB SOURCES src/*.cpp src/*.h res/shell.qrc)
+set (MAC_RES 
+    res/macx/shell.icns,Resources
+    res/macx/English.lproj,Resources
+)
+set (MACOSX_BUNDLE_ICON_FILE "shell.icns")
 
-if (APPLE)
-    deng_find_resources (
-        res/macx/shell.icns,Resources
-        res/macx/English.lproj,Resources
-    )
-    add_executable (shell MACOSX_BUNDLE ${SOURCES} ${DENG_RESOURCES})
-    deng_bundle_resources ()
-    set_property (TARGET shell PROPERTY
-        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/res/macx/Info.plist
-    )
-else ()
-    add_executable (shell ${SOURCES})
-endif ()
-deng_target_defaults (shell)
+deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
 
 if (APPLE OR WIN32)
     set_property (TARGET shell PROPERTY OUTPUT_NAME "Doomsday Shell")
+    set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday Shell")
 else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()

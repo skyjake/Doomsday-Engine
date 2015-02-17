@@ -11,6 +11,8 @@ find_package (Qt5OpenGL REQUIRED)
 find_package (Assimp REQUIRED)
 include (OpenGL)
 
+deng_add_package (net.dengine.stdlib.gui)
+
 # Definitions.
 add_definitions (-D__LIBGUI__)
 
@@ -18,7 +20,7 @@ add_definitions (-D__LIBGUI__)
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
-deng_library (libgui ${SOURCES} ${HEADERS})
+deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui PUBLIC Deng::libcore Qt5::Gui Qt5::OpenGL)
 target_link_opengl (libgui)

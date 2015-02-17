@@ -1,8 +1,13 @@
 set (DENG_LZSS_DIR "${DENG_EXTERNAL_SOURCE_DIR}/lzss")
 
+if (TARGET lzss)
+    # Already defined.
+    return ()
+endif ()
+
 if (WIN32)
-    add_library (LZSS::LZSS SHARED IMPORTED)
-    set_target_properties (LZSS::LZSS PROPERTIES
+    add_library (lzss SHARED IMPORTED)
+    set_target_properties (lzss PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${DENG_LZSS_DIR}/portable/include"
     )
 else ()

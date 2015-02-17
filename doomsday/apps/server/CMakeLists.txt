@@ -252,7 +252,6 @@ if (UNIX)
         add_custom_command (
             OUTPUT ${MAN_PAGE}
             COMMAND "${AMETHYST}" -dMAN -dUNIX -odoomsday-server.6 ${DOC_DIR}/server.ame
-            # MAIN_DEPENDENCY ${_tgt}
             DEPENDS ${DOC_DIR}/server.ame ${DOC_DIR}/manpage.ame
             COMMENT "Compiling manual page..."
         )

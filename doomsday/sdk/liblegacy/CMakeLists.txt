@@ -30,7 +30,7 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.c)
 
 include_directories (include include/de)
 
-deng_library (liblegacy ${SOURCES} ${HEADERS})
+deng_add_library (liblegacy ${SOURCES} ${HEADERS})
 target_link_libraries (liblegacy Deng::libcore)
 
 deng_deploy_library (liblegacy DengLegacy)

@@ -1,6 +1,10 @@
 include (PlatformGenericUnix)
 
-add_definitions (-DMACOSX)
+add_definitions (
+    -DMACOSX
+    # Fallback basedir for command line apps.
+    -DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}"
+)
 
 set (DENG_FIXED_ASM_DEFAULT OFF)
 

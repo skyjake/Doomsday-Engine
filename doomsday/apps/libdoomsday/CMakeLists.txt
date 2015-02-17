@@ -27,7 +27,7 @@ configure_file (
 file (GLOB_RECURSE HEADERS include/doomsday/*)
 file (GLOB_RECURSE SOURCES src/*.cpp)
 
-deng_library (libdoomsday ${SOURCES} ${HEADERS})
+deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 install (DIRECTORY include/doomsday DESTINATION include)
 
 target_link_libraries (libdoomsday 
