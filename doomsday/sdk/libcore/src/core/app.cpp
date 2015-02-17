@@ -571,12 +571,20 @@ NativePath App::nativeBasePath()
 #else
 # ifdef MACOSX
     path = d->appPath.fileNamePath() / "../Resources";
+    if(!path.exists())
+    {
+        // Try the built-in base directory (unbundled apps).
+        path = DENG_BASE_DIR;
+    }
 # else
     path = DENG_BASE_DIR;
 # endif
     if(!path.exists())
     {
         // Fall back to using the application binary path, which always exists.
+        // We use this instead of the working directory because the basedir is 
+        // meant for storing read-only data files that may be deployed with
+        // the application binary.
         path = d->appPath.fileNamePath();
     }
     // Also check the system config files.
