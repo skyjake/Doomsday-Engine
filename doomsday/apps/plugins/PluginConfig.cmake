@@ -6,16 +6,12 @@ project (DENG_PLUGINS)
 include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Config.cmake)
 
 find_package (DengDoomsday QUIET)
-find_package (LZSS)
 
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})
     add_library (${target} MODULE ${_src} ${DENG_RESOURCES})
     target_include_directories (${target} PUBLIC ${DENG_API_DIR})
-    target_link_libraries (${target} 
-        PUBLIC Deng::libdoomsday
-        PRIVATE lzss
-    )
+    target_link_libraries (${target} PUBLIC Deng::libdoomsday)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
     if (APPLE)

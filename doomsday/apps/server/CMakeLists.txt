@@ -1,11 +1,12 @@
-# Doomsday Engine -- Server
+# The Doomsday Engine Project -- Server
+# Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
 cmake_minimum_required (VERSION 3.0)
 project (DENG_SERVER)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Qt5Core)
 find_package (DengCore QUIET)
 find_package (DengLegacy QUIET)
 find_package (DengShell QUIET)

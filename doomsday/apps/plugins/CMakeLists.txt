@@ -17,13 +17,13 @@ add_subdirectory (hexen)
 add_subdirectory (doom64)
 
 add_subdirectory (fmod)
+add_subdirectory (openal)
 if (NOT WIN32)
     add_subdirectory (fluidsynth)
 endif ()
-# add_subdirectory (openal)
-#
-# # Platform-specific plugins.
-# if (WIN32)
-#     add_subdirectory (directsound)
-#     add_subdirectory (winmm)
-# endif ()
+
+# Platform-specific plugins.
+if (WIN32)
+    add_subdirectory (directsound)
+    add_subdirectory (winmm)
+endif ()

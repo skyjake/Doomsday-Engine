@@ -8,8 +8,11 @@ add_definitions (
 
 set (DENG_FIXED_ASM_DEFAULT OFF)
 
-macro (link_framework target fw)
+macro (link_framework target linkType fw)
     find_library (${fw}_LIBRARY ${fw})
+    if (${fw}_LIBRARY STREQUAL "${fw}_LIBRARY-NOTFOUND")
+        message (FATAL_ERROR "link_framework: ${fw} framework not found")
+    endif ()
     mark_as_advanced (${fw}_LIBRARY)
-    target_link_libraries (${target} PRIVATE ${${fw}_LIBRARY})
+    target_link_libraries (${target} ${linkType} ${${fw}_LIBRARY})
 endmacro (link_framework)

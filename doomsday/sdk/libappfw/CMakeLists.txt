@@ -10,6 +10,7 @@ find_package (Qt5OpenGL)
 find_package (DengCore QUIET)
 find_package (DengGui QUIET)
 find_package (DengShell QUIET)
+find_package (OculusVR QUIET)
 include (OpenGL)
 
 # Definitions.
@@ -25,5 +26,8 @@ target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL 
     PRIVATE opengl
 )
+if (LIBOVR_FOUND)
+    target_link_libraries (libappfw PRIVATE LibOVR)
+endif ()
 
 deng_deploy_library (libappfw DengAppfw)

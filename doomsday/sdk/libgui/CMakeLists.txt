@@ -27,7 +27,7 @@ target_link_libraries (libgui
     PRIVATE opengl assimp 
 )
 if (APPLE)
-    link_framework (libgui Cocoa)
+    link_framework (libgui PRIVATE Cocoa)
 endif ()
 
 deng_deploy_library (libgui DengGui)

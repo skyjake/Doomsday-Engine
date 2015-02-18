@@ -37,12 +37,12 @@
 #  pragma warning (disable: 4244)
 #endif
 
-#ifndef FINK
-   #include <AL/al.h>
-   #include <AL/alc.h>
+#ifdef HAVE_AL_H
+#  include <al.h>
+#  include <alc.h>
 #else
-   #include <openal/al.h>
-   #include <openal/alc.h>
+#  include <AL/al.h>
+#  include <AL/alc.h>
 #endif
 #include <stdio.h>
 #include <cassert>

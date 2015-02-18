@@ -71,7 +71,8 @@ function (deng_filter_platform_sources outName)
     list (REMOVE_AT ARGV 0) # outName
     foreach (fn ${ARGV})
         set (filtered NO)
-        if ("${fn}" MATCHES ".*_windows\\..*") # Windows-specific
+        if ("${fn}" MATCHES ".*_windows\\..*" OR 
+            "${fn}" MATCHES ".*/windows/.*") # Windows-specific
             if (NOT WIN32)
                 set (filtered YES)
             endif ()
@@ -79,7 +80,8 @@ function (deng_filter_platform_sources outName)
             if (NOT APPLE)
                 set (filtered YES)
             endif ()
-        elseif ("${fn}" MATCHES ".*_unix\\..*") # Unix specific files (Linux / OS X / etc.)
+        elseif ("${fn}" MATCHES ".*_unix\\..*" OR
+                "${fn}" MATCHES ".*/unix/.*") # Unix specific files (Linux / OS X / etc.)
             if (NOT UNIX)
                 set (filtered YES)
             endif ()
@@ -280,9 +282,18 @@ endmacro (deng_add_application)
 
 function (add_pkgconfig_interface_library target)
     sublist (pkgNames 1 -1 ${ARGV})
+    list (GET pkgNames 0 first)
+    if (NOT first STREQUAL "OPTIONAL")
+        set (checkMode REQUIRED)
+    else ()
+        list (REMOVE_AT pkgNames 0)        
+    endif ()
     foreach (pkg ${pkgNames})
         set (prefix "PKG_${pkg}")
-        pkg_check_modules (${prefix} REQUIRED ${pkg})
+        pkg_check_modules (${prefix} ${checkMode} ${pkg})
+        if (NOT checkMode STREQUAL "REQUIRED" AND NOT ${prefix}_FOUND)
+            return ()
+        endif ()
         # Locate full paths of the required shared libraries.
         foreach (lib ${${prefix}_LIBRARIES})
             find_library (path ${lib} HINTS ${${prefix}_LIBRARY_DIRS})
@@ -319,7 +330,7 @@ function (fix_bundled_install_names binaryFile)
         execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
             -change ${depPath} @loader_path/../Frameworks/${base}
             ${binaryFile}
-)
+        )
     endforeach (fn)    
 endfunction (fix_bundled_install_names)
 
@@ -329,8 +340,7 @@ macro (deng_bundle_install_names target)
     sublist (libs 1 -1 ${ARGV})
     set (scriptName ${target}-postbuild.cmake)
     # Correct the install names of the dependent libraries.
-    file (GENERATE OUTPUT ${scriptName}
-        CONTENT "\
+    file (GENERATE OUTPUT ${scriptName} CONTENT "\
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)\n\
 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})\n\
 include (Macros)\n\
