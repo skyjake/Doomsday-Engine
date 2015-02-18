@@ -27,6 +27,8 @@ configure_file (
 file (GLOB_RECURSE HEADERS include/doomsday/*)
 file (GLOB_RECURSE SOURCES src/*.cpp)
 
+deng_add_package (net.dengine.base)
+
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 install (DIRECTORY include/doomsday DESTINATION include)
 
