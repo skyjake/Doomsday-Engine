@@ -15,7 +15,7 @@ if (DENG_ENABLE_CCACHE)
     set_property (GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
     
     if (NOT DEFINED DENG_CCACHE_MSG)
-        message (STATUS "ccache enabled for all targets.")
+        message (STATUS "Compiler cache enabled for all targets.")
         set (DENG_CCACHE_MSG ON CACHE BOOL "ccache usage notified")
         mark_as_advanced (DENG_CCACHE_MSG)
     endif ()
