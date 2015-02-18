@@ -94,10 +94,25 @@ bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 
 bool LibraryFile::recognize(File const &file)
 {
+#ifdef MACOSX
+    // On Mac OS X, plugins are in the .bundle format. The LibraryFile will point
+    // to the actual binary inside the bundle. Libraries must be loaded from
+    // native files.
+    if(NativeFile const *native = file.maybeAs<NativeFile>())
+    {
+        // Check if this in the executable folder with a matching bundle name.
+        if(native->nativePath().fileNamePath().toString().endsWith(
+                    file.name() + ".bundle/Contents/MacOS"))
+        {
+            // (name).bundle/Contents/MacOS/(name)
+            return true;
+        }
+    }
+#else
     // Check the extension first.
     if(QLibrary::isLibrary(file.name()))
     {
-#if defined(UNIX) && !defined(MACOSX)
+#if defined(UNIX)
         // Only actual .so files should be considered.
         if(!file.name().endsWith(".so")) // just checks the file name
         {
@@ -107,20 +122,6 @@ bool LibraryFile::recognize(File const &file)
         // Looks like a library.
         return true;
     }
-
-#ifdef MACOSX
-    // On Mac OS X, shared libraries are in the folder bundle format.
-    // The LibraryFile will point to the actual binary inside the bundle.
-    // Libraries must be loaded from native files.
-    if(NativeFile const *native = file.maybeAs<NativeFile>())
-    {
-        // Check if the parent folder is a bundle.
-        if(QLibrary::isLibrary(native->nativePath().fileNamePath().fileName()))
-        {
-            return true;
-        }
-    }
 #endif
-
     return false;
 }
