@@ -260,12 +260,13 @@ if (UNIX)
     endif ()
 endif ()
 
-add_executable (doomsday-server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
-deng_target_defaults (doomsday-server)
+add_executable (server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
+deng_target_defaults (server)
+set_property (TARGET server PROPERTY OUTPUT_NAME "doomsday-server")
 
 # There's some old code here so relax the warnings a bit.
 if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-    set_property (TARGET doomsday-server 
+    set_property (TARGET server 
         APPEND PROPERTY COMPILE_OPTIONS
             -Wno-missing-field-initializers 
             -Wno-missing-braces
@@ -274,7 +275,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
     )
 endif ()
 
-target_link_libraries (doomsday-server
+target_link_libraries (server
     Deng::libcore
     Deng::liblegacy
     Deng::libshell
@@ -282,8 +283,4 @@ target_link_libraries (doomsday-server
     lzss
 )
 
-install (
-    TARGETS doomsday-server
-    DESTINATION bin
-)
-
+install (TARGETS server DESTINATION bin)

@@ -8,7 +8,7 @@ include (../../cmake/Config.cmake)
 find_package (DengCore QUIET)
 
 add_executable (doomsdayscript main.cpp)
-set_property (TARGET md2tool PROPERTY FOLDER Tools)
+set_property (TARGET doomsdayscript PROPERTY FOLDER Tools)
 target_link_libraries (doomsdayscript Deng::libcore)
 deng_target_defaults (doomsdayscript)
 

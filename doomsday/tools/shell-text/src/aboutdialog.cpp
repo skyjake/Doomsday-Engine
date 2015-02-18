@@ -29,7 +29,7 @@ AboutDialog::AboutDialog()
                        "The Shell is a utility for controlling and monitoring "
                        "Doomsday servers using a text-based (curses) user interface.")
                     .arg(SHELL_VERSION)
-                    .arg("2013 Deng Team"));
+                    .arg("2013-2015 Deng Team"));
 
     label->setExpandsToFitLines(true);
     label->rule()

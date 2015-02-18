@@ -97,7 +97,8 @@ else ()
     # We will use the libfluidsynth installed on the system.
     pkg_check_modules (FLUIDSYNTH fluidsynth)
     if (NOT FLUIDSYNTH_FOUND)
-        message (STATUS "Skipping ${tgt} because libfluidsynth not found (using pkg-config)")
+        message (STATUS "Not building ${tgt} because \"fluidsynth\" not found (using pkg-config).\n\
+   You could try an embedded build instead (DENG_FLUIDSYNTH_EMBEDDED).")
         return ()
     endif ()
     
@@ -128,7 +129,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
     endif ()
     
     if (APPLE)        
-        
+        deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
     endif ()
 endif ()
 

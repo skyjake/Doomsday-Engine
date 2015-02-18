@@ -12,6 +12,9 @@ macro (deng_test target)
     target_link_libraries (${target} Deng::libcore)
     enable_cxx11 (${target})
     strict_warnings (${target})
+    if (APPLE)
+        deng_xcode_attribs (${target})
+    endif ()
     set_target_properties (${target} PROPERTIES
         INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
         FOLDER Tests

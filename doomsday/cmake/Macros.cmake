@@ -54,6 +54,7 @@ macro (deng_target_defaults target)
         SOVERSION ${DENG_COMPAT_VERSION}
     )
     if (APPLE)
+        deng_xcode_attribs (${target})
         set_property (TARGET ${target} PROPERTY INSTALL_RPATH "@loader_path/../Frameworks")
     elseif (UNIX)
         set_property (TARGET ${target} 
@@ -116,6 +117,7 @@ endfunction (deng_filter_platform_sources)
 function (deng_find_resources)
     string (LENGTH ${CMAKE_CURRENT_SOURCE_DIR} srcDirLen)
     math (EXPR srcDirLen "${srcDirLen} + 1")
+    set (src)
     foreach (pair ${ARGV})
         string (REGEX REPLACE "(.*),.*" "\\1" fn ${pair})
         string (REGEX REPLACE ".*,(.*)" "\\1" dest ${pair})
@@ -128,14 +130,18 @@ function (deng_find_resources)
             get_property (fn TARGET ${fn} PROPERTY LOCATION)
         endif ()
         set (origFn ${fn})
-        list (APPEND src ${fn})
         if (NOT IS_ABSOLUTE ${fn})
             set (fn ${CMAKE_CURRENT_SOURCE_DIR}/${fn})
         endif ()
-        if (NOT IS_DIRECTORY ${fn})
+        if (NOT EXISTS ${fn})
+            # Just ignore it.
+            message (STATUS "Ignoring ${fn} -- not found")
+        elseif (NOT IS_DIRECTORY ${fn})
+            list (APPEND src ${origFn})
             # Just add as a single file.
             list (APPEND spec "${origFn},${dest}")
         else ()
+            #list (APPEND src ${origFn})
             # Do a glob to find all the files.
             file (GLOB_RECURSE _all ${fn}/*)
             # Determine length of the base path since it will be omitted 
@@ -146,7 +152,12 @@ function (deng_find_resources)
             foreach (path ${_all})
                 get_filename_component (subDir ${path} DIRECTORY)
                 string (SUBSTRING ${subDir} ${baseLen} -1 subDest)
-                string (SUBSTRING ${path} ${srcDirLen} -1 subPath)
+                # Omit the current source directory.
+                if (path MATCHES "${CMAKE_CURRENT_SOURCE_DIR}.*")
+                    string (SUBSTRING ${path} ${srcDirLen} -1 subPath)
+                else ()
+                    set (subPath ${path})
+                endif ()
                 list (APPEND spec "${subPath},${dest}/${subDest}")
                 list (APPEND src ${subPath})
             endforeach (path)
@@ -338,15 +349,16 @@ endfunction (fix_bundled_install_names)
 # the target.
 macro (deng_bundle_install_names target)
     sublist (libs 1 -1 ${ARGV})
-    set (scriptName ${target}-postbuild.cmake)
+    set (scriptName "${CMAKE_CURRENT_BINARY_DIR}/postbuild-${target}.cmake")
     # Correct the install names of the dependent libraries.
-    file (GENERATE OUTPUT ${scriptName} CONTENT "\
+    file (GENERATE OUTPUT "${scriptName}" CONTENT "\
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)\n\
 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})\n\
 include (Macros)\n\
-fix_bundled_install_names (${target}.bundle/Contents/MacOS/${target} \"${libs}\")\n")
+fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle/Contents/MacOS/${target}\"\
+    \"${libs}\")\n")
     add_custom_command (TARGET ${target} POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -P ${scriptName}
+        COMMAND ${CMAKE_COMMAND} -P "${scriptName}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )    
     set (scriptName)        
