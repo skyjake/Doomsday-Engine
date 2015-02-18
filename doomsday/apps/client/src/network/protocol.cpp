@@ -80,4 +80,4 @@ void Protocol_Send(void *data, size_t size, nodeid_t destination)
 
     LegacyNetwork_Send(N_GetNodeSocket(destination), data, size);
 }
-#endif 0
+#endif // 0

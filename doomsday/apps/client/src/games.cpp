@@ -295,7 +295,7 @@ D_CMD(ListGames)
     Games &games = App_Games();
     if(!games.count())
     {
-        LOG_MSG("No game is currently registered.");
+        LOG_MSG("No games are currently registered.");
         return true;
     }
 
