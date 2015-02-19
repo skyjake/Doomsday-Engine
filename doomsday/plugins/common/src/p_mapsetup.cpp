@@ -871,6 +871,36 @@ static void precacheResources()
 #endif
 }
 
+static void loadACScriptBytecodeForMap(de::Uri const &mapUri)
+{
+#if __JHEXEN__
+    if(IS_CLIENT) return;
+
+    /// @todo Should be using MapDef here...
+    lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
+    lumpnum_t bytecodeLumpNum        = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
+    if(!CentralLumpIndex().hasLump(bytecodeLumpNum)) return;
+
+    de::File1 &file = CentralLumpIndex()[bytecodeLumpNum];
+    if(!acs::System::recognizeBytecode(file)) return;
+
+    try
+    {
+        Game_ACScriptSystem().loadBytecodeFromFile(file);
+    }
+    catch(acs::System::LoadError const &er)
+    {
+        // Empty file / invalid bytecode.
+        LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode\n")
+                << NativePath(file.container().composePath())
+                << file.name()
+                << er.asText();
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+}
+
 void P_FinalizeMapChange(uri_s const *mapUri_)
 {
     de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
@@ -903,34 +933,8 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     XG_Init();
 #endif
 
-#if __JHEXEN__
-    if(!IS_CLIENT)
-    {
-        /// @todo Should be translated by the map converter.
-        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
-        lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
-        if(acsLumpNum < CentralLumpIndex().size())
-        {
-            acs::System &acscriptSys = Game_ACScriptSystem();
-
-            acscriptSys.loadBytecode(CentralLumpIndex()[acsLumpNum]);
-            acscriptSys.mapVars.fill(0);
-
-            // Start all scripts flagged to begin immediately.
-            // (allow a 1 second delay for map initialization to complete).
-            acscriptSys.forAllScripts([] (acs::Script &script)
-            {
-                if(script.entryPoint().startWhenMapBegins)
-                {
-                    bool justStarted = script.start(acs::Script::Args()/*default args*/, nullptr, nullptr, 0, TICSPERSEC);
-                    DENG2_ASSERT(justStarted);
-                    DENG2_UNUSED(justStarted);
-                }
-                return LoopContinue;
-            });
-        }
-    }
-#endif
+    loadACScriptBytecodeForMap(mapUri);
+    Game_ACScriptSystem().worldSystemMapChanged();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     P_FindSecrets();

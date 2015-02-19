@@ -431,7 +431,7 @@ namespace internal {
 
     ACS_COMMAND(Goto)
     {
-        interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+        interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
         return Continue;
     }
 
@@ -439,7 +439,7 @@ namespace internal {
     {
         if(interp.locals.pop())
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
         }
         else
         {
@@ -700,7 +700,7 @@ namespace internal {
         }
         else
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
         }
         return Continue;
     }
@@ -736,7 +736,7 @@ namespace internal {
     {
         if(interp.locals.top() == LONG(*interp.pcodePtr++))
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
             interp.locals.drop();
         }
         else
@@ -1187,7 +1187,7 @@ void Interpreter::write(MapStateWriter *msw) const
     {
         Writer_WriteInt32(writer, args[i]);
     }
-    Writer_WriteInt32(writer, ((byte const *)pcodePtr) - scriptSys().pcode());
+    Writer_WriteInt32(writer, ((dbyte const *)pcodePtr) - (dbyte const *)scriptSys().pcode().constData());
 }
 
 int Interpreter::read(MapStateReader *msr)
@@ -1242,7 +1242,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int *) (scriptSys().pcode() + Reader_ReadInt32(reader));
+        pcodePtr = (int const *) (scriptSys().pcode().constData() + Reader_ReadInt32(reader));
     }
     else
     {
@@ -1282,7 +1282,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int *) (scriptSys().pcode() + Reader_ReadInt32(reader));
+        pcodePtr = (int const *) (scriptSys().pcode().constData() + Reader_ReadInt32(reader));
     }
 
     thinker.function = (thinkfunc_t) acs_Interpreter_Think;

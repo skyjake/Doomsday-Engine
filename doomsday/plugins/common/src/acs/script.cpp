@@ -86,7 +86,7 @@ String Script::describe() const
 String Script::description() const
 {
     return DE2_ESC(l) "State: "     DE2_ESC(.) DE2_ESC(i) + stateAsText(d->state) + DE2_ESC(.)
-         + DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + d->waitValue;
+         + (isWaiting()? DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + String::number(d->waitValue) : "");
 }
 
 bool Script::start(Args const &args, mobj_t *activator, Line *line, int side, int delayCount)

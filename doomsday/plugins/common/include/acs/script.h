@@ -45,10 +45,10 @@ public:
      */
     struct EntryPoint
     {
-        int const *pcodePtr     = nullptr;
-        bool startWhenMapBegins = false;
-        int scriptNumber        = 0;
-        int scriptArgCount      = 0;
+        int const *pcodePtr       = nullptr;
+        bool startWhenMapBegins   = false;
+        de::dint32 scriptNumber   = 0;
+        de::dint32 scriptArgCount = 0;
     };
 
     /**

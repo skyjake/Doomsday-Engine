@@ -33,18 +33,6 @@ using namespace de;
 namespace internal
 {
     /**
-     * Bytecode header. Read directly from the data resource file.
-     */
-#pragma pack(1)
-    struct BytecodeHeader
-    {
-        dint32 marker;
-        dint32 infoOffset;
-        dint32 code;
-    };
-#pragma pack()
-
-    /**
      * A deferred task is enqueued when a script is started on a map not currently loaded.
      */
     class DeferredTask : public ISerializable
@@ -99,7 +87,7 @@ namespace acs {
 
 DENG2_PIMPL(System)
 {
-    byte const *pcode = nullptr;  ///< Loaded bytecode (if any).
+    Block pcode;  ///< Loaded bytecode (if any).
     QList<Script *> scripts;
     QList<String> strings;
 
@@ -109,17 +97,7 @@ DENG2_PIMPL(System)
     ~Instance()
     {
         clearDeferredTasks();
-        clearScripts();
-    }
-
-    void clearScripts()
-    {
-        qDeleteAll(scripts); scripts.clear();
-    }
-
-    void clearStrings()
-    {
-        strings.clear();
+        clearBytecode();
     }
 
     void clearDeferredTasks()
@@ -148,6 +126,81 @@ DENG2_PIMPL(System)
             i -= 1;
         }
     }
+
+    void clearBytecode()
+    {
+        pcode.clear();
+        qDeleteAll(scripts); scripts.clear();
+        strings.clear();
+    }
+
+    void loadBytecode(Block const &bytecode)
+    {
+        clearBytecode();
+
+        // Copy the complete bytecode data into a local buffer (we'll be randomly
+        // accessing this frequently).
+        pcode = bytecode;
+
+        de::Reader from(pcode);
+        dint32 magic, scriptInfoOffset;
+        from >> magic >> scriptInfoOffset;
+
+        // Read script entry point info.
+        from.seek(scriptInfoOffset - from.offset());
+        dint32 numScripts;
+        from >> numScripts;
+        for(dint32 i = 0; i < numScripts; ++i)
+        {
+#define OPEN_SCRIPTS_BASE 1000
+
+            Script::EntryPoint ep;
+
+            from >> ep.scriptNumber;
+            if(ep.scriptNumber >= OPEN_SCRIPTS_BASE)
+            {
+                ep.scriptNumber -= OPEN_SCRIPTS_BASE;
+                ep.startWhenMapBegins = true;
+            }
+
+            dint32 offset;
+            from >> offset;
+            if(offset > pcode.size())
+            {
+                throw LoadError("acs::System::loadBytecode", "Invalid script entrypoint offset");
+            }
+            ep.pcodePtr = (int const *)(pcode.constData() + offset);
+
+            from >> ep.scriptArgCount;
+            if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
+            {
+                throw LoadError("acs::System::loadBytecode", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
+            }
+
+            scripts << new Script(ep/*make a copy*/);
+
+#undef OPEN_SCRIPTS_BASE
+        }
+
+        // Read string constant values.
+        dint32 numStrings;
+        from >> numStrings;
+        QVector<dint32> stringOffsets;
+        stringOffsets.reserve(numStrings);
+        for(dint32 i = 0; i < numStrings; ++i)
+        {
+            dint32 offset;
+            from >> offset;
+            stringOffsets << offset;
+        }
+        for(auto const &offset : stringOffsets)
+        {
+            Block utf;
+            from.setOffset(offset);
+            from.readUntil(utf, 0);
+            strings << String::fromUtf8(utf);
+        }
+    }
 };
 
 System::System() : d(new Instance(this))
@@ -156,71 +209,41 @@ System::System() : d(new Instance(this))
     worldVars.fill(0);
 }
 
-void System::loadBytecode(File1 &file)
+bool System::recognizeBytecode(File1 const &file) // static
 {
-#define OPEN_SCRIPTS_BASE 1000
+    Block magic(3);
+    const_cast<File1 &>(file).read(magic.data(), 0, 3);
+    return magic == "ACS";
+}
 
+void System::loadBytecode(Block const &bytecode)
+{
     DENG2_ASSERT(!IS_CLIENT);
+    LOG_AS("acs::System");
+    try
+    {
+        d->loadBytecode(bytecode);
+    }
+    catch(IByteArray::OffsetError const &er)
+    {
+        d->clearBytecode();
+        throw LoadError("acs::System::loadBytecode", er.asText());
+    }
+}
 
+void System::loadBytecodeFromFile(File1 const &file)
+{
+    DENG2_ASSERT(!IS_CLIENT);
     LOG_AS("acs::System");
     LOG_SCR_VERBOSE("Loading bytecode from %s:%s...")
             << NativePath(file.container().composePath()).pretty()
             << file.name();
 
-    d->clearScripts();
-    d->clearStrings();
+    // Buffer the whole file.
+    Block bytecode(file.size());
+    const_cast<File1 &>(file).read(bytecode.data());
 
-    int numScripts = 0;
-
-    int const *readBuf = 0;
-    if(file.size() >= sizeof(BytecodeHeader))
-    {
-        void *region = Z_Malloc(file.size(), PU_MAP, nullptr);
-        file.read((uint8_t *)region);
-        BytecodeHeader const *header = (BytecodeHeader const *) region;
-        d->pcode = (byte const *) header;
-
-        if(LONG(header->infoOffset) < (int)file.size())
-        {
-            readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
-            numScripts = LONG(*readBuf++);
-        }
-    }
-
-    if(!numScripts)
-    {
-        // Empty file / invalid bytecode.
-        LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode")
-                << NativePath(file.container().composePath())
-                << file.name();
-        return;
-    }
-
-    for(int i = 0; i < numScripts; ++i)
-    {
-        Script::EntryPoint ep;
-
-        ep.scriptNumber = LONG(*readBuf++);
-        if(ep.scriptNumber >= OPEN_SCRIPTS_BASE)
-        {
-            ep.scriptNumber -= OPEN_SCRIPTS_BASE;
-            ep.startWhenMapBegins = true;
-        }
-        ep.pcodePtr = (int const *)(d->pcode + LONG(*readBuf++));
-        ep.scriptArgCount = LONG(*readBuf++);
-        if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
-            throw Error("acs::System::loadBytecode", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
-
-        d->scripts << new Script(ep/*make a copy*/);
-    }
-
-    int const numStrings = LONG(*readBuf++);
-    for(int i = 0; i < numStrings; ++i)
-    {
-        d->strings << String((char const *)(d->pcode + LONG(*readBuf++)));
-    }
-
-#undef OPEN_SCRIPTS_BASE
+    loadBytecode(bytecode);
 }
 
 void System::reset()
@@ -228,6 +251,7 @@ void System::reset()
     worldVars.fill(0);
     mapVars.fill(0);
     d->clearDeferredTasks();
+    d->clearBytecode();
 }
 
 int System::scriptCount() const
@@ -296,7 +320,7 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
     return true;
 }
 
-byte const *System::pcode() const
+Block const &System::pcode() const
 {
     return d->pcode;
 }
@@ -369,6 +393,22 @@ void System::runDeferredTasks(de::Uri const &mapUri)
     d->runDeferredTasks(mapUri);
 }
 
+void System::worldSystemMapChanged()
+{
+    mapVars.fill(0);
+
+    for(Script *script : d->scripts)
+    {
+        if(script->entryPoint().startWhenMapBegins)
+        {
+            bool justStarted = script->start(Script::Args()/*default args*/,
+                                             nullptr, nullptr, 0, TICSPERSEC);
+            DENG2_ASSERT(justStarted);
+            DENG2_UNUSED(justStarted);
+        }
+    }
+}
+
 D_CMD(InspectACScript)
 {
     DENG2_UNUSED2(src, argc);
@@ -389,7 +429,7 @@ D_CMD(InspectACScript)
     }
 
     Script const &script = scriptSys.script(scriptNumber);
-    LOG_SCR_MSG("%s\n%s") << script.describe() << script.description();
+    LOG_SCR_MSG("%s\n  %s") << script.describe() << script.description();
     return true;
 }
 
@@ -400,6 +440,14 @@ D_CMD(ListACScripts)
 
     if(scriptSys.scriptCount())
     {
+        LOG_SCR_MSG("Available ACScripts:");
+        scriptSys.forAllScripts([&scriptSys] (Script const &script)
+        {
+            LOG_SCR_MSG("  %s") << script.describe();
+            return LoopContinue;
+        });
+
+#ifdef DENG2_DEBUG
         LOG_SCR_MSG("World variables:");
         int idx = 0;
         for(int const &var : scriptSys.worldVars)
@@ -413,13 +461,7 @@ D_CMD(ListACScripts)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
-
-        LOG_SCR_MSG("Available ACScripts:");
-        scriptSys.forAllScripts([&scriptSys] (Script const &script)
-        {
-            LOG_SCR_MSG("  %s") << script.describe();
-            return LoopContinue;
-        });
+#endif
     }
     else
     {
@@ -430,8 +472,10 @@ D_CMD(ListACScripts)
 
 void System::consoleRegister()  // static
 {
-    C_CMD("scriptinfo",  "i",    InspectACScript);
-    C_CMD("scriptinfo",  "",     ListACScripts);
+    C_CMD("inspectacscript",        "i", InspectACScript);
+    /* Alias */ C_CMD("scriptinfo", "i", InspectACScript);
+    C_CMD("listacscripts",          "",  ListACScripts);
+    /* Alias */ C_CMD("scriptinfo", "",  ListACScripts);
 }
 
 }  // namespace acs

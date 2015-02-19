@@ -51,6 +51,9 @@ public:  /// @todo make private:
     std::array<int, 64> worldVars;
 
 public:
+    /// Failed to load bytecode data from source. @ingroup errors
+    DENG2_ERROR(LoadError);
+
     /// Required/referenced script is missing. @ingroup errors
     DENG2_ERROR(MissingScriptError);
 
@@ -67,9 +70,19 @@ public:
     void reset();
 
     /**
-     * Load new ACS bytecode from the specified @a file.
+     * Returns @c true if data @a file appears to be valid ACS bytecode.
      */
-    void loadBytecode(de::File1 &file);
+    static bool recognizeBytecode(/*de::IByteArray const &data*/ de::File1 const &file);
+
+    /**
+     * Loads ACS @a bytecode (a copy is made).
+     */
+    void loadBytecode(de::Block const &bytecode);
+
+    /**
+     * Loads ACS bytecode from the specified @a file.
+     */
+    void loadBytecodeFromFile(de::File1 const &file);
 
     /**
      * Returns the total number of script entry points in the loaded bytecode.
@@ -105,7 +118,7 @@ public:
     /**
      * Provides readonly access to the loaded bytecode.
      */
-    byte const *pcode() const;
+    de::Block const &pcode() const;
 
     /**
      * Provides readonly access to a string constant from the loaded bytecode.
@@ -125,6 +138,14 @@ public:  /// @todo make private: -----------------------------------------------
      * which should now begin/resume.
      */
     void runDeferredTasks(de::Uri const &mapUri);
+
+    /**
+     * Start all scripts flagged to begin immediately (but allow a 1 second delay
+     * for map initialization to complete).
+     *
+     * @todo Run deferred tasks at this time also?
+     */
+    void worldSystemMapChanged();
 
 public:
     /**
