@@ -47,4 +47,4 @@ set_target_properties (shell-text PROPERTIES
 target_link_libraries (shell-text Deng::libcore Deng::libshell ${CURSES_LIBRARIES})
 deng_target_defaults (shell-text)
 
-install (TARGETS shell-text DESTINATION bin)
+deng_install_tool (shell-text)

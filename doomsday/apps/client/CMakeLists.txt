@@ -96,9 +96,6 @@ if (APPLE)
         INSTALL_RPATH "@executable_path/../Frameworks"
     )
     
-    # Tools will be installed in the app bundle, too.
-    deng_install_tools (client server savegametool doomsdayscript md2tool shell-text texc wadtool)
-    
     # Plugins are bundled inside the client app. We'll run macdeployqt on the 
     # installed app before the plugins are there so it won't do unnecessary 
     # work on them -- plugins are already self-contained.

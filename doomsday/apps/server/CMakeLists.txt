@@ -286,4 +286,4 @@ target_link_libraries (server
     lzss
 )
 
-install (TARGETS server DESTINATION bin)
+deng_install_tool (server)

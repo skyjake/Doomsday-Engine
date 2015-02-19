@@ -12,4 +12,4 @@ set_property (TARGET doomsdayscript PROPERTY FOLDER Tools)
 target_link_libraries (doomsdayscript Deng::libcore)
 deng_target_defaults (doomsdayscript)
 
-install (TARGETS doomsdayscript DESTINATION bin)
+deng_install_tool (doomsdayscript)

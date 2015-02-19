@@ -61,24 +61,34 @@ macro (relaxed_warnings target)
     endif ()
 endmacro (relaxed_warnings)
 
+macro (deng_target_rpath target)
+    if (APPLE)
+        set_target_properties (${target} PROPERTIES
+            INSTALL_RPATH "@loader_path/../Frameworks"
+        )
+        if (${target} MATCHES "test_.*")
+            set_property (TARGET ${target} APPEND PROPERTY
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+            )
+        endif ()
+    elseif (UNIX)
+        set_property (TARGET ${target} 
+            PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+        )
+    endif ()        
+endmacro (deng_target_rpath)
+
 macro (deng_target_defaults target)
-    # OS X version numbers come from the Info.plist, we don't need version symlinks.
-    if (NOT APPLE)        
+    if (APPLE)        
+        deng_xcode_attribs (${target})
+        # OS X version numbers come from the Info.plist, we don't need version symlinks.
+    else () 
         set_target_properties (${target} PROPERTIES 
             VERSION   ${DENG_VERSION}
             SOVERSION ${DENG_COMPAT_VERSION}
         )
-    else ()
-        deng_xcode_attribs (${target})
-        set_target_properties (${target} PROPERTIES
-            BUILD_WITH_INSTALL_RPATH ON
-            INSTALL_RPATH "@loader_path/../Frameworks"
-        )
-    elseif (UNIX)
-        set_property (TARGET ${target} 
-            PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
-        )
-    endif ()        
+    endif ()
+    deng_target_rpath (${target})
     enable_cxx11 (${target})
     strict_warnings (${target})    
     #cotire (${target})
@@ -305,6 +315,14 @@ macro (deng_add_application target)
     endif ()
     deng_target_defaults (${target})
     set_property (TARGET ${target} PROPERTY FOLDER Apps)
+    if (target MATCHES "test_.*")
+        if (APPLE)
+            # Tests should be runnable from distrib/products.
+            set_property (TARGET ${target} APPEND PROPERTY 
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+            )
+        endif ()        
+    endif ()
     set (src)
     set (pkgs)
     set (idx)
@@ -438,30 +456,51 @@ function (deng_install_deployqt target)
     endif ()
 endfunction (deng_install_deployqt)
 
-macro (deng_install_tools app)
-    sublist (_tools 1 -1 ${ARGV})
-    get_property (_outName TARGET ${app} PROPERTY OUTPUT_NAME)
-    set (_dest "${_outName}.app/Contents/MacOS")
-    foreach (_tool ${_tools})
-        if (TARGET ${_tool})
-            get_property (_name TARGET ${_tool} PROPERTY OUTPUT_NAME)
-            if (NOT _name)
-                set (_name ${_tool})
-            endif()
-            install (FILES $<TARGET_FILE:${_tool}> DESTINATION ${_dest}
-                PERMISSIONS 
-                    OWNER_READ GROUP_READ WORLD_READ
-                    OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-                    OWNER_WRITE
-            )
-            install (CODE "
-                include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
-                set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
-                fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${_dest}/${_name}\"
-                    QtCore.framework/Versions/5/QtCore
-                    QtNetwork.framework/Versions/5/QtNetwork
-                    VERBATIM)
-                ")
-        endif ()      
-    endforeach (_tool)  
-endmacro (deng_install_tools)
+# macro (deng_install_tools app)
+#     sublist (_tools 1 -1 ${ARGV})
+#     get_property (_outName TARGET ${app} PROPERTY OUTPUT_NAME)
+#     set (_dest "${_outName}.app/Contents/MacOS")
+#     foreach (_tool ${_tools})
+#         if (TARGET ${_tool})
+#             get_property (_name TARGET ${_tool} PROPERTY OUTPUT_NAME)
+#             if (NOT _name)
+#                 set (_name ${_tool})
+#             endif()
+#             install (FILES $<TARGET_FILE:${_tool}> DESTINATION ${_dest}
+#                 PERMISSIONS
+#                     OWNER_READ GROUP_READ WORLD_READ
+#                     OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+#                     OWNER_WRITE
+#             )
+#             install (CODE "
+#                 include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
+#                 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+#                 fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${_dest}/${_name}\"
+#                     QtCore.framework/Versions/5/QtCore
+#                     QtNetwork.framework/Versions/5/QtNetwork
+#                     VERBATIM)
+#                 ")
+#         endif ()
+#     endforeach (_tool)
+# endmacro (deng_install_tools)
+
+function (deng_install_tool target)
+    install (TARGETS ${target} DESTINATION bin)
+    # OS X: Also install to the client application bundle.
+    if (APPLE)
+        set (dest "Doomsday.app/Contents/MacOS")
+        get_property (name TARGET ${target} PROPERTY OUTPUT_NAME)
+        if (NOT name)
+            set (name ${target})
+        endif()
+        install (TARGETS ${target} DESTINATION ${dest})
+        install (CODE "
+            include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
+            set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+            fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
+                QtCore.framework/Versions/5/QtCore
+                QtNetwork.framework/Versions/5/QtNetwork
+                VERBATIM)
+            ")
+    endif ()
+endfunction (deng_install_tool)

@@ -16,4 +16,4 @@ set_property (TARGET savegametool PROPERTY FOLDER Tools)
 target_link_libraries (savegametool Deng::libcore Deng::liblegacy lzss)
 deng_target_defaults (savegametool)
 
-install (TARGETS savegametool DESTINATION bin)
+deng_install_tool (savegametool)
