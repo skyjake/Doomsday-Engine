@@ -211,9 +211,16 @@ System::System() : d(new Instance(this))
 
 bool System::recognizeBytecode(File1 const &file) // static
 {
-    Block magic(3);
-    const_cast<File1 &>(file).read(magic.data(), 0, 3);
-    return magic == "ACS";
+    if(file.size() <= 4) return false;
+
+    // ACS bytecode begins with the magic identifier "ACS".
+    Block magic(4);
+    const_cast<File1 &>(file).read(magic.data(), 0, 4);
+    if(magic != "ACS") return false;
+
+    // ZDoom uses the fourth byte for versioning of their extended formats.
+    // Currently such formats are not supported.
+    return magic.at(3) == 0;
 }
 
 void System::loadBytecode(Block const &bytecode)
