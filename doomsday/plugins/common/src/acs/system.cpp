@@ -216,7 +216,7 @@ bool System::recognizeBytecode(File1 const &file) // static
     // ACS bytecode begins with the magic identifier "ACS".
     Block magic(4);
     const_cast<File1 &>(file).read(magic.data(), 0, 4);
-    if(magic != "ACS") return false;
+    if(!magic.startsWith("ACS")) return false;
 
     // ZDoom uses the fourth byte for versioning of their extended formats.
     // Currently such formats are not supported.
