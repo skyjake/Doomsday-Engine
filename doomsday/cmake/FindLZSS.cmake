@@ -16,6 +16,8 @@ else ()
     set_property (TARGET lzss PROPERTY AUTOMOC OFF)
 endif ()
 
+set_property (TARGET lzss PROPERTY FOLDER Libraries)
+
 
 # INCLUDEPATH += $$DENG_LZSS_DIR/portable/include
 #

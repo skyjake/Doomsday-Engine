@@ -24,3 +24,8 @@ macro (deng_xcode_attribs target)
         XCODE_ATTRIBUTE_GCC_INLINES_ARE_PRIVATE_EXTERN NO
     )
 endmacro (deng_xcode_attribs)
+
+macro (macx_set_bundle_name name)
+    # Underscores are not allowed in bundle identifiers.
+    string (REPLACE "_" "." MACOSX_BUNDLE_BUNDLE_NAME ${name})
+endmacro (macx_set_bundle_name)

@@ -1,7 +1,7 @@
 # Doomsday Engine - Applications
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_APPS)
+project (Apps)
 include (../cmake/Config.cmake)
 
 add_subdirectory (libdoomsday)

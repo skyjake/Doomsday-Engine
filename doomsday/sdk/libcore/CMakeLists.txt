@@ -35,10 +35,12 @@ deng_add_library (libcore ${SOURCES} ${HEADERS})
 # libcore uses the 2.x version numbering already; will be synced when 
 # the main project reached 2.0.0.
 set (DENG_LIBCORE_COMPAT_VERSION 2.0)
-set_target_properties (libcore PROPERTIES 
-    VERSION   ${DENG_LIBCORE_VERSION}
-    SOVERSION ${DENG_LIBCORE_COMPAT_VERSION} # compatibility version
-)
+if (NOT APPLE)
+    set_target_properties (libcore PROPERTIES 
+        VERSION   ${DENG_LIBCORE_VERSION}
+        SOVERSION ${DENG_LIBCORE_COMPAT_VERSION} # compatibility version
+    )
+endif ()
 
 target_link_libraries (libcore Qt5::Core Qt5::Network ZLIB::ZLIB)
 

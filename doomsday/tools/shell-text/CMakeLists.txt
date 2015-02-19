@@ -39,10 +39,12 @@ if (AMETHYST_FOUND)
     endif ()
 endif ()
 
-set (tgt doomsday-shell-text)
-add_executable (${tgt} ${SOURCES})
-set_property (TARGET ${tgt} PROPERTY FOLDER Tools)
-target_link_libraries (${tgt} Deng::libcore Deng::libshell ${CURSES_LIBRARIES})
-deng_target_defaults (${tgt})
+add_executable (shell-text ${SOURCES})
+set_target_properties (shell-text PROPERTIES
+    OUTPUT_NAME doomsday-shell-text
+    FOLDER Tools
+)
+target_link_libraries (shell-text Deng::libcore Deng::libshell ${CURSES_LIBRARIES})
+deng_target_defaults (shell-text)
 
-install (TARGETS ${tgt} DESTINATION bin)
+install (TARGETS shell-text DESTINATION bin)

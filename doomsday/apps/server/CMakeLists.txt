@@ -262,7 +262,10 @@ endif ()
 
 add_executable (server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})
 deng_target_defaults (server)
-set_property (TARGET server PROPERTY OUTPUT_NAME "doomsday-server")
+set_target_properties (server PROPERTIES
+    OUTPUT_NAME "doomsday-server"
+    FOLDER Apps
+)
 
 # There's some old code here so relax the warnings a bit.
 if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")

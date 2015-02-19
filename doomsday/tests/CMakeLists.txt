@@ -2,7 +2,7 @@
 # Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_TESTS)
+project (Tests)
 include (../cmake/Config.cmake)
 
 if (DENG_ENABLE_TESTS)

@@ -26,7 +26,6 @@ set (MAC_RES
 set (MACOSX_BUNDLE_ICON_FILE "shell.icns")
 
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
-
 if (APPLE OR WIN32)
     set_property (TARGET shell PROPERTY OUTPUT_NAME "Doomsday Shell")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday Shell")
@@ -35,6 +34,10 @@ else ()
 endif ()
 
 target_link_libraries (shell Deng::libcore Deng::libshell Qt5::Widgets)
+
+# Deployment.
+deng_install_deps (shell Deng::libcore Deng::libshell)
+deng_install_deployqt (shell)
 
 # include(../../../config.pri)
 #

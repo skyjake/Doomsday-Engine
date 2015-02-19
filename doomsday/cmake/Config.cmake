@@ -38,6 +38,7 @@ if (ARCH_BITS EQUAL 64)
     endif ()
 endif ()    
 set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/doomsday")
+set (DENG_INSTALL_STAGING_DIR "bundle-staging")
 set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "runtime")
 
 # Qt Configuration -----------------------------------------------------------
@@ -45,11 +46,15 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "runtime")
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
 set (CMAKE_AUTORCC ON)
+set_property (GLOBAL PROPERTY AUTOGEN_TARGETS_FOLDER Generated)
 
 find_package (Qt)
 
 # Find Qt5 in all projects to ensure automoc is run.
 list (APPEND CMAKE_PREFIX_PATH "${QT_PREFIX_DIR}")
+
+# This will ensure automoc works in all projects.
+find_package (Qt5Core)
 
 # Platform-Specific Configuration --------------------------------------------
 

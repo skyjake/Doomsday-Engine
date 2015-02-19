@@ -48,14 +48,32 @@ macro (strict_warnings target)
     endif ()
 endmacro (strict_warnings)
 
+macro (relaxed_warnings target)
+    if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
+        set_property (TARGET ${target}
+            APPEND PROPERTY COMPILE_OPTIONS
+                -Wno-missing-field-initializers 
+                -Wno-missing-braces
+                -Wno-nested-anon-types
+                -Wno-gnu-anonymous-struct
+                -Wno-deprecated-declarations
+        )
+    endif ()
+endmacro (relaxed_warnings)
+
 macro (deng_target_defaults target)
-    set_target_properties (${target} PROPERTIES 
-        VERSION   ${DENG_VERSION}
-        SOVERSION ${DENG_COMPAT_VERSION}
-    )
-    if (APPLE)
+    # OS X version numbers come from the Info.plist, we don't need version symlinks.
+    if (NOT APPLE)        
+        set_target_properties (${target} PROPERTIES 
+            VERSION   ${DENG_VERSION}
+            SOVERSION ${DENG_COMPAT_VERSION}
+        )
+    else ()
         deng_xcode_attribs (${target})
-        set_property (TARGET ${target} PROPERTY INSTALL_RPATH "@loader_path/../Frameworks")
+        set_target_properties (${target} PROPERTIES
+            BUILD_WITH_INSTALL_RPATH ON
+            INSTALL_RPATH "@loader_path/../Frameworks"
+        )
     elseif (UNIX)
         set_property (TARGET ${target} 
             PROPERTY INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}
@@ -135,7 +153,7 @@ function (deng_find_resources)
         endif ()
         if (NOT EXISTS ${fn})
             # Just ignore it.
-            message (STATUS "Ignoring ${fn} -- not found")
+            message (STATUS "deng_find_resources: Ignoring ${fn} -- not found")
         elseif (NOT IS_DIRECTORY ${fn})
             list (APPEND src ${origFn})
             # Just add as a single file.
@@ -204,6 +222,9 @@ endfunction (deng_add_package)
 function (deng_find_packages fullPaths)
     set (PKG_DIR "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}")
     sublist (names 1 -1 ${ARGV})
+    if (NOT names)
+        return ()
+    endif ()
     list (REMOVE_DUPLICATES names)
     foreach (name ${names})
         if (TARGET ${name})
@@ -275,7 +296,7 @@ macro (deng_add_application target)
         add_executable (${target} MACOSX_BUNDLE ${src} ${DENG_RESOURCES})
         deng_bundle_resources ()
         install (TARGETS ${target} DESTINATION .)
-        set (MACOSX_BUNDLE_BUNDLE_NAME "net.dengine.${target}")
+        macx_set_bundle_name ("net.dengine.${target}")
         set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE ${target})
     else ()
         add_executable (${target} ${src})
@@ -322,26 +343,41 @@ function (add_pkgconfig_interface_library target)
     target_link_libraries (${target} INTERFACE ${libs})
 endfunction (add_pkgconfig_interface_library)
 
-# Mac OS X -------------------------------------------------------------------
-
 function (fix_bundled_install_names binaryFile)
     if (NOT EXISTS ${binaryFile})
         message (FATAL_ERROR "fix_bundled_install_names: ${binaryFile} not found")
     endif ()
     sublist (libs 1 -1 ${ARGV})
+    list (GET libs -1 last)
+    if (last STREQUAL "VERBATIM")
+        set (verbatim ON)
+        list (REMOVE_AT libs -1)
+    endif ()
     find_program (OTOOL_EXECUTABLE otool)
     execute_process (COMMAND ${OTOOL_EXECUTABLE} 
         -L ${binaryFile}
         OUTPUT_VARIABLE deps
     )
+    if (binaryFile MATCHES ".*\\.bundle")
+        set (ref "@loader_path")
+    else ()
+        set (ref "@executable_path")
+    endif ()
     foreach (fn ${libs})
-        get_filename_component (base "${fn}" NAME)
+        if (NOT verbatim)
+            get_filename_component (base "${fn}" NAME)
+        else ()
+            set (base "${fn}")
+        endif ()
         string (REGEX MATCH "([^\n]+/${base}) \\(compatibility version" matched ${deps})
-        string (STRIP ${CMAKE_MATCH_1} depPath)
-        execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
-            -change ${depPath} @loader_path/../Frameworks/${base}
-            ${binaryFile}
-        )
+        if (CMAKE_MATCH_1)
+            string (STRIP ${CMAKE_MATCH_1} depPath)
+            message (STATUS "Changing install name: ${depPath}")
+            execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
+                -change ${depPath} ${ref}/../Frameworks/${base}
+                ${binaryFile}
+            )
+        endif ()
     endforeach (fn)    
 endfunction (fix_bundled_install_names)
 
@@ -364,3 +400,68 @@ fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle/Conten
     set (scriptName)        
     set (libs)
 endmacro (deng_bundle_install_names)
+
+# Install the libraries of a dependency.
+macro (deng_install_deps target)
+    sublist (_deps 1 -1 ${ARGV})
+    get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+    set (_fwDir "${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks")
+    foreach (_dep ${_deps})
+        if (TARGET ${_dep})
+            if (APPLE)
+                if (_dep MATCHES "Deng::(.*)")
+                    install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
+                else ()
+                    install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
+                        DESTINATION ${_fwDir}
+                    )
+                endif ()
+            endif ()
+        endif ()
+    endforeach (_dep)
+endmacro (deng_install_deps)
+
+function (deng_install_deployqt target)
+    if (UNIX AND NOT APPLE)
+        return () # No need to deploy Qt.
+    endif ()
+    get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+    if (APPLE) # AND NOT DENG_DEVELOPER) # don't run this on a dev build
+        if (NOT MACDEPLOYQT_EXECUTABLE)
+            message (FATAL_ERROR "macdeployqt not available")
+        endif ()
+        install (CODE "message (STATUS \"Running macdeployqt on ${_outName}.app...\")
+            execute_process (COMMAND ${MACDEPLOYQT_EXECUTABLE} \"${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+                OUTPUT_QUIET ERROR_QUIET)")
+    elseif (WIN32)
+        # run windeployqt
+    endif ()
+endfunction (deng_install_deployqt)
+
+macro (deng_install_tools app)
+    sublist (_tools 1 -1 ${ARGV})
+    get_property (_outName TARGET ${app} PROPERTY OUTPUT_NAME)
+    set (_dest "${_outName}.app/Contents/MacOS")
+    foreach (_tool ${_tools})
+        if (TARGET ${_tool})
+            get_property (_name TARGET ${_tool} PROPERTY OUTPUT_NAME)
+            if (NOT _name)
+                set (_name ${_tool})
+            endif()
+            install (FILES $<TARGET_FILE:${_tool}> DESTINATION ${_dest}
+                PERMISSIONS 
+                    OWNER_READ GROUP_READ WORLD_READ
+                    OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
+                    OWNER_WRITE
+            )
+            install (CODE "
+                include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
+                set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+                fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${_dest}/${_name}\"
+                    QtCore.framework/Versions/5/QtCore
+                    QtNetwork.framework/Versions/5/QtNetwork
+                    VERBATIM)
+                ")
+        endif ()      
+    endforeach (_tool)  
+endmacro (deng_install_tools)

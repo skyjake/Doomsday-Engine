@@ -2,19 +2,19 @@
 set (QMAKE qmake CACHE STRING "Path of the qmake executable to use")
 
 # Runs qmake to query one of its configuration variables.
-function (qmake_query qvar outvar)
-    execute_process (COMMAND "${QMAKE}" -query ${qvar} 
-        OUTPUT_VARIABLE result 
+function (qmake_query result qtvar)
+    execute_process (COMMAND "${QMAKE}" -query ${qtvar} 
+        OUTPUT_VARIABLE output 
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    set (${outvar} "${result}" PARENT_SCOPE)
+    set (${result} "${output}" PARENT_SCOPE)
 endfunction (qmake_query)
 
 # Check Qt version.
 if (NOT DEFINED QT_PREFIX_DIR)
     message (STATUS "QMake path: ${QMAKE}")
 
-    qmake_query ("QT_VERSION" QT_VERSION)
+    qmake_query (QT_VERSION "QT_VERSION")
     message (STATUS "  Qt version: ${QT_VERSION}")
     if (NOT DENG_QT5_OPTIONAL)
         if (QT_VERSION VERSION_LESS "5.0")
@@ -23,7 +23,12 @@ if (NOT DEFINED QT_PREFIX_DIR)
     endif ()
 
     # Path for CMake config modules.
-    qmake_query ("QT_INSTALL_PREFIX" QT_PREFIX)
+    qmake_query (QT_PREFIX "QT_INSTALL_PREFIX")
     message (STATUS "  Qt install prefix: ${QT_PREFIX}")
     set (QT_PREFIX_DIR "${QT_PREFIX}" CACHE PATH "Qt install prefix")
+    
+    if (APPLE)
+        qmake_query (QT_BINS "QT_INSTALL_BINS")
+        set (MACDEPLOYQT_EXECUTABLE "${QT_BINS}/macdeployqt" CACHE PATH "Qt's macdeployqt executable path")
+    endif ()
 endif ()

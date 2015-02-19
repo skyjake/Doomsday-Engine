@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_TEST_GLSANDBOX)
 include (../TestConfig.cmake)
 
-find_package (DengAppfw)
+find_package (DengAppfw QUIET)
 include (OpenGL)
 
 deng_add_package (net.dengine.test.glsandbox)

@@ -1,3 +1,8 @@
+if (NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL Debug)
+    # For single-configuration generators.
+    set (DENG_DEVELOPER ON)
+endif ()
+
 # Debug ----------------------------------------------------------------------
 
 set (DENG_DEBUG_FLAGS "-D_DEBUG")

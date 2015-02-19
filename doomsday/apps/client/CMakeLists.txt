@@ -50,39 +50,17 @@ endif ()
 
 deng_add_package (net.dengine.client)
 
-# OS X: Resources, plugins, and other files to bundle with the application.
+# OS X: Packages and other resources to bundle with the application.
 set (MACX_RESOURCES 
     res/macx/deng.icns
     res/macx/English.lproj
     doomsday.pk3
-    plugin-idtech1converter,DengPlugins
-    plugin-savegameconverter,DengPlugins
-    plugin-dehread,DengPlugins
-    plugin-audio_fmod,DengPlugins
-    plugin-audio_openal,DengPlugins
-    plugin-audio_fluidsynth,DengPlugins
-    plugin-doom,DengPlugins
-    plugin-doom64,DengPlugins
-    plugin-heretic,DengPlugins
-    plugin-hexen,DengPlugins
 )
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    list (APPEND MACX_RESOURCES plugin-example,DengPlugins)
-endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
 # There's some old code here so relax the warnings a bit.
-if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
-    set_property (TARGET client
-        APPEND PROPERTY COMPILE_OPTIONS
-            -Wno-missing-field-initializers 
-            -Wno-missing-braces
-            -Wno-nested-anon-types
-            -Wno-gnu-anonymous-struct
-            -Wno-deprecated-declarations
-    )
-endif ()
+relaxed_warnings (client)
 
 if (WIN32 OR APPLE)
     set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
@@ -103,4 +81,33 @@ if (TARGET SDL2)
 endif ()
 if (TARGET SDL2_mixer)
     target_link_libraries (client PUBLIC SDL2_mixer)
+endif ()
+
+deng_install_deps (client 
+    Deng::libcore Deng::libshell
+    Deng::libgui Deng::libappfw
+    Deng::liblegacy Deng::libdoomsday
+    SDL2 SDL2_mixer
+)
+
+# Bundle deployment.
+if (APPLE)
+    set_target_properties (client PROPERTIES
+        INSTALL_RPATH "@executable_path/../Frameworks"
+    )
+    
+    # Tools will be installed in the app bundle, too.
+    deng_install_tools (client server savegametool doomsdayscript md2tool shell-text texc wadtool)
+    
+    # Plugins are bundled inside the client app. We'll run macdeployqt on the 
+    # installed app before the plugins are there so it won't do unnecessary 
+    # work on them -- plugins are already self-contained.
+    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
+    set (stageDir "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_STAGING_DIR}/DengPlugins")
+    set (destDir "${CMAKE_INSTALL_PREFIX}/${outName}.app/Contents/DengPlugins")
+    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory \"${destDir}\")")
+    deng_install_deployqt (client)
+    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\" \"${destDir}\")")
+else ()
+    deng_install_deployqt (client)
 endif ()

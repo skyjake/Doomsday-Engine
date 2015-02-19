@@ -1,7 +1,7 @@
 # Doomsday SDK 
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_SDK)
+project (SDK)
 include (../cmake/Config.cmake)
 
 add_subdirectory (libcore)

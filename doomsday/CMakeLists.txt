@@ -2,7 +2,7 @@
 # This CMakeLists builds everything.
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG)
+project (Doomsday)
 
 option (DENG_ENABLE_TOOLS "Compile the Doomsday tools" ON)
 

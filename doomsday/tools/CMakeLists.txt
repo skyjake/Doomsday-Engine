@@ -1,7 +1,7 @@
 # Doomsday Engine - Tools
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_TOOLS)
+project (Tools)
 include (../cmake/Config.cmake)
 
 add_subdirectory (doomsdayscript)

@@ -2,10 +2,12 @@
 # Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
 
 cmake_minimum_required (VERSION 3.0)
-project (DENG_PLUGINS)
+project (Plugins)
 include (../../cmake/Config.cmake)
 
-add_subdirectory (example)
+if (DENG_DEVELOPER)
+    add_subdirectory (example)
+endif ()
 
 add_subdirectory (idtech1converter)
 add_subdirectory (savegameconverter)
