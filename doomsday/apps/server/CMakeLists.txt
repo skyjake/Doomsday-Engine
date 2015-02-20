@@ -249,15 +249,8 @@ if (UNIX)
     if (AMETHYST_FOUND)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-server.6)
         list (APPEND SOURCES ${MAN_PAGE})
-        set (DOC_DIR ${DENG_SOURCE_DIR}/doc/server)
-        add_custom_command (
-            OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST_COMMAND}" -dMAN -dUNIX -odoomsday-server.6 ${DOC_DIR}/server.ame
-            DEPENDS ${DOC_DIR}/server.ame ${DOC_DIR}/manpage.ame
-            COMMENT "Compiling manual page..."
-        )
-        install (FILES ${MAN_PAGE} DESTINATION share/man/man6)
-    endif ()
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/server server.ame)
+    endif ()        
 endif ()
 
 add_executable (server ${SOURCES} ${HEADERS} ${API_HEADERS} ${SHARED_WITH_CLIENT})

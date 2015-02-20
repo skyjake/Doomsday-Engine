@@ -27,15 +27,8 @@ file (GLOB SOURCES src/*.cpp src/*.h)
 if (AMETHYST_FOUND)
     if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-shell-text.6)
-        set (DOC_DIR ${DENG_SOURCE_DIR}/doc/shell-text)
-        add_custom_command (
-            OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST_COMMAND}" -dMAN -dUNIX -odoomsday-shell-text.6 ${DOC_DIR}/shell-text.ame
-            DEPENDS ${DOC_DIR}/shell-text.ame
-            COMMENT "Compiling manual page..."
-        )
-        install (FILES ${MAN_PAGE} DESTINATION share/man/man6)
         list (APPEND SOURCES ${MAN_PAGE})
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/shell-text shell-text.ame)
     endif ()
 endif ()
 

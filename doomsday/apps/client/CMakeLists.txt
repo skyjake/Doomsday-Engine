@@ -28,24 +28,27 @@ if (APPLE)
     include_directories (include/macx)
     list (APPEND HEADERS include/macx/MusicPlayer.h)
     list (APPEND SOURCES src/macx/MusicPlayer.mm)
+    
+    set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.rtf")
+    deng_add_amedoc (RTF ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+    install (FILES ${readme} DESTINATION .)
+    list (APPEND SOURCES ${readme})
+else ()
+    # Plain text readme for other platforms.
+    set (readme "${CMAKE_CURRENT_BINARY_DIR}/readme.txt")
+    deng_add_amedoc (TXT ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+    list (APPEND SOURCES ${readme})
 endif ()
 
 deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 if (UNIX)
     include_directories (include/unix)
+
     if (AMETHYST_FOUND)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
+        deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND src ${MAN_PAGE})
-        set (DOC_DIR ${DENG_SOURCE_DIR}/doc/readme)
-        file (GLOB ameSrc ${DOC_DIR}/*.ame)
-        add_custom_command (
-            OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST_COMMAND}" -dMAN -dUNIX -odoomsday.6 ${DOC_DIR}/readme.ame
-            DEPENDS ${ameSrc}
-            COMMENT "Compiling manual page..."
-        )
-        install (FILES ${MAN_PAGE} DESTINATION share/man/man6)
     endif ()
 endif ()
 

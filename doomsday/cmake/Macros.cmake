@@ -93,13 +93,14 @@ endmacro (relaxed_warnings)
 macro (deng_target_rpath target)
     if (APPLE)
         set_target_properties (${target} PROPERTIES
-            INSTALL_RPATH "@loader_path/../Frameworks"
+            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DENG_INSTALL_LIB_DIR}"
         )
         if (${target} MATCHES "test_.*")
+            # These won't be deployed, so we can use the full path.
             set_property (TARGET ${target} APPEND PROPERTY
                 INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
             )
-        endif ()
+        endif ()        
     elseif (UNIX)
         set_property (TARGET ${target} 
             PROPERTY INSTALL_RPATH                 
@@ -487,7 +488,7 @@ function (deng_install_deployqt target)
         return () # No need to deploy Qt.
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
-    if (APPLE) # AND NOT DENG_DEVELOPER) # don't run this on a dev build
+    if (APPLE AND NOT DENG_DEVELOPER) # dev builds are not deployed elsewhere
         if (NOT MACDEPLOYQT_COMMAND)
             message (FATAL_ERROR "macdeployqt not available")
         endif ()
@@ -533,3 +534,30 @@ macro (deng_install_library library)
     endif ()        
 endmacro (deng_install_library)
 
+function (deng_add_amedoc type file ameSourceDir mainSrc)
+    if (AMETHYST_FOUND)     
+        set (pfm ${DENG_AMETHYST_PLATFORM})
+        if (type STREQUAL MAN)
+            set (descText "manual page")   
+            set (pfm UNIX) # man pages are always for Unix
+        elseif (type STREQUAL RTF)
+            set (descText "rich text document")
+        else ()
+            set (descText "text document")
+        endif ()
+        file (GLOB_RECURSE _ameSrc ${ameSourceDir}/*.ame)
+        get_filename_component (_name ${file} NAME)
+        add_custom_command (
+            OUTPUT ${file}
+            COMMAND "${AMETHYST_COMMAND}" -d${type} -d${pfm} 
+                -o${_name} ${ameSourceDir}/${mainSrc}
+            DEPENDS ${_ameSrc}
+            COMMENT "Compiling ${descText}..."
+        )        
+        if (${type} STREQUAL MAN)
+            install (FILES ${file} DESTINATION share/man/man6)
+        else ()
+            install (FILES ${file} DESTINATION ${DENG_INSTALL_DOC_DIR}/doomsday)
+        endif ()
+    endif ()
+endfunction (deng_add_amedoc)

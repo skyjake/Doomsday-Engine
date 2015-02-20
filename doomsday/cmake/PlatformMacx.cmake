@@ -1,6 +1,7 @@
 include (PlatformGenericUnix)
 
 set (DENG_PLATFORM_SUFFIX macx)
+set (DENG_AMETHYST_PLATFORM MACOSX)
 
 add_definitions (
     -DMACOSX
