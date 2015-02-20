@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_TEST_GLSANDBOX)
 include (../TestConfig.cmake)
 
+find_package (Qt5 COMPONENTS Gui OpenGL Widgets)
 find_package (DengAppfw QUIET)
 include (OpenGL)
 

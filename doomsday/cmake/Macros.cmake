@@ -29,6 +29,16 @@ function (sublist outputVariable startIndex length)
     set (${outputVariable} ${_sublist} PARENT_SCOPE)
 endfunction (sublist)
 
+# Removes matching items from the list.
+function (list_remove_matches listName expr)
+    foreach (item ${${listName}})
+        if (NOT item MATCHES ${expr})
+            list (APPEND result ${item})
+        endif ()
+    endforeach (item)
+    set (${listName} ${result} PARENT_SCOPE)
+endfunction (list_remove_matches)
+
 macro (clean_paths outputVariable text)
     string (REGEX REPLACE "${CMAKE_BINARY_DIR}/([A-Za-z0-9]+)"
         "\\1" ${outputVariable} ${text}
@@ -36,7 +46,8 @@ macro (clean_paths outputVariable text)
 endmacro ()
 
 macro (enable_cxx11 target)
-    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    if (NOT CMAKE_VERSION VERSION_LESS 3.1 AND 
+        NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
         set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
     else ()
@@ -44,12 +55,19 @@ macro (enable_cxx11 target)
         append (CMAKE_C_FLAGS   "-std=c11")
         append (CMAKE_CXX_FLAGS "-std=c++11")
     endif ()
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        append (CMAKE_C_FLAGS "-fms-extensions")
+    endif ()
 endmacro (enable_cxx11)
 
 macro (strict_warnings target)
     if (CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
         set_property (TARGET ${target} 
             APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra -pedantic
+        )
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set_property (TARGET ${target} 
+            APPEND PROPERTY COMPILE_OPTIONS -Wall -Wextra
         )
     endif ()
 endmacro (strict_warnings)
@@ -63,6 +81,11 @@ macro (relaxed_warnings target)
                 -Wno-nested-anon-types
                 -Wno-gnu-anonymous-struct
                 -Wno-deprecated-declarations
+        )
+    elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set_property (TARGET ${target}
+            APPEND PROPERTY COMPILE_OPTIONS
+                -Wno-missing-field-initializers 
         )
     endif ()
 endmacro (relaxed_warnings)
@@ -79,7 +102,8 @@ macro (deng_target_rpath target)
         endif ()
     elseif (UNIX)
         set_property (TARGET ${target} 
-            PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
+            PROPERTY INSTALL_RPATH                 
+                "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
         )
     endif ()        
 endmacro (deng_target_rpath)
@@ -438,14 +462,14 @@ fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle/Conten
     )    
 endfunction (deng_bundle_install_names)
 
-# Install the libraries of a dependency.
-macro (deng_install_deps target)
-    sublist (_deps 1 -1 ${ARGV})
-    get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
-    set (_fwDir "${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks")
-    foreach (_dep ${_deps})
-        if (TARGET ${_dep})
-            if (APPLE)
+# OS X: Install the libraries of a dependency target into the application bundle.
+macro (deng_install_bundle_deps target)
+    if (APPLE)
+        sublist (_deps 1 -1 ${ARGV})
+        get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+        set (_fwDir "${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks")
+        foreach (_dep ${_deps})
+            if (TARGET ${_dep})
                 if (_dep MATCHES "Deng::(.*)")
                     install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
                 else ()
@@ -454,9 +478,9 @@ macro (deng_install_deps target)
                     )
                 endif ()
             endif ()
-        endif ()
-    endforeach (_dep)
-endmacro (deng_install_deps)
+        endforeach (_dep)
+    endif ()
+endmacro (deng_install_bundle_deps)
 
 function (deng_install_deployqt target)
     if (UNIX AND NOT APPLE)
@@ -495,3 +519,17 @@ function (deng_install_tool target)
             ")
     endif ()
 endfunction (deng_install_tool)
+
+# Install an external library that exists at configuration time.
+# Used with dependencies.
+macro (deng_install_library library)
+    if (UNIX AND NOT APPLE)
+        string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})            
+        message ("${library}: ${versioned}")
+        file (GLOB _links ${library}.* ${versioned})
+        install (FILES ${library} ${_links}
+            DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
+        )
+    endif ()        
+endmacro (deng_install_library)
+

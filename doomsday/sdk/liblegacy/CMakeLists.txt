@@ -5,7 +5,7 @@ project (DENG_LIBLEGACY)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Qt5Core)
+find_package (Qt5 COMPONENTS Core Network)
 find_package (DengCore QUIET)
 
 # Options.

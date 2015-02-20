@@ -4,12 +4,18 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_LIBGUI)
 include (../../cmake/Config.cmake)
 
+option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode" ON)
+
 # Dependencies.
 find_package (DengCore QUIET)
-find_package (Qt5Gui REQUIRED)
-find_package (Qt5OpenGL REQUIRED)
+find_package (Qt5 COMPONENTS Network Gui OpenGL REQUIRED)
 find_package (Assimp REQUIRED)
 include (OpenGL)
+
+if (DENG_X11)
+    find_package (X11 REQUIRED)
+    find_package (Qt5X11Extras REQUIRED)
+endif ()
 
 deng_add_package (net.dengine.stdlib.gui)
 
@@ -20,14 +26,44 @@ add_definitions (-D__LIBGUI__)
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
+# Choose which DisplayMode sources to use.
+list_remove_matches (SOURCES ".*/displaymode_.*")
+if (NOT DENG_ENABLE_DISPLAYMODE)
+    list (APPEND SOURCES src/displaymode_dummy.cpp)
+else ()
+    list (APPEND SOURCES src/displaymode_${DENG_PLATFORM_SUFFIX}.cpp)
+endif ()
+
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui 
     PUBLIC Deng::libcore Qt5::Gui Qt5::OpenGL  
     PRIVATE opengl assimp 
 )
+
 if (APPLE)
     link_framework (libgui PRIVATE Cocoa)
+endif ()
+
+if (DENG_X11)
+    target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
+    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES} Qt5::X11Extras)
+    if (DENG_ENABLE_DISPLAYMODE)
+        if (NOT X11_Xrandr_FOUND)
+            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension")
+        endif ()
+        if (NOT X11_xf86vmode_FOUND)
+            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension")
+        endif ()
+        target_include_directories (libgui PRIVATE
+            ${X11_Xrandr_INCLUDE_PATH}
+            ${X11_xf86vmode_INCLUDE_PATH}
+        )
+        target_link_libraries (libgui PRIVATE
+            ${X11_Xrandr_LIB}
+            ${X11_Xxf86vm_LIB}
+        )
+    endif ()    
 endif ()
 
 deng_deploy_library (libgui DengGui)

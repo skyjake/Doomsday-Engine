@@ -1,5 +1,7 @@
 include (PlatformGenericUnix)
 
+set (DENG_PLATFORM_SUFFIX macx)
+
 add_definitions (
     -DMACOSX
     # Fallback basedir for command line apps.

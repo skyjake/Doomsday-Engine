@@ -1,5 +1,13 @@
 # Qmake is used to find out the Qt install location.
-set (QMAKE qmake CACHE STRING "Path of the qmake executable to use")
+if (NOT DEFINED QMAKE)
+    find_program (QMAKE qmake-qt5 qt5-qmake qmake
+        DOC "Path of the qmake executable to use"
+    ) 
+endif ()
+
+if (NOT QMAKE)
+    message (FATAL_ERROR "qmake not found -- set the QMAKE variable manually")
+endif ()
 
 # Runs qmake to query one of its configuration variables.
 function (qmake_query result qtvar)

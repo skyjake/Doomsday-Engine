@@ -5,8 +5,7 @@ project (DENG_LIBAPPFW)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Qt5Widgets)
-find_package (Qt5OpenGL)
+find_package (Qt5 COMPONENTS Network Widgets OpenGL)
 find_package (DengCore QUIET)
 find_package (DengGui QUIET)
 find_package (DengShell QUIET)

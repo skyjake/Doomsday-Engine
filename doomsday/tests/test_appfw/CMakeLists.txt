@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_TEST_APPFW)
 include (../TestConfig.cmake)
 
+find_package (Qt5 COMPONENTS Gui OpenGL Widgets)
 find_package (DengAppfw QUIET)
 
 deng_add_package (net.dengine.test.appfw)

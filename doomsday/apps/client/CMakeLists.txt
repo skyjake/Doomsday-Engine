@@ -8,6 +8,7 @@ set (DENG_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
+find_package (Qt5 COMPONENTS Gui OpenGL Widgets)
 find_package (DengAppfw QUIET)
 find_package (DengDoomsday QUIET)
 find_package (Amethyst QUIET)
@@ -83,7 +84,7 @@ if (TARGET SDL2_mixer)
     target_link_libraries (client PUBLIC SDL2_mixer)
 endif ()
 
-deng_install_deps (client 
+deng_install_bundle_deps (client 
     Deng::libcore Deng::libshell
     Deng::libgui Deng::libappfw
     Deng::liblegacy Deng::libdoomsday
@@ -108,3 +109,4 @@ if (APPLE)
 else ()
     deng_install_deployqt (client)
 endif ()
+

@@ -42,6 +42,10 @@ if (NOT APPLE)
     )
 endif ()
 
-target_link_libraries (libcore Qt5::Core Qt5::Network ZLIB::ZLIB)
+target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
+target_link_libraries (libcore 
+    PUBLIC Qt5::Core Qt5::Network 
+    PRIVATE ${ZLIB_LIBRARIES}
+)
 
 deng_deploy_library (libcore DengCore)

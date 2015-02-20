@@ -36,7 +36,7 @@ endif ()
 target_link_libraries (shell Deng::libcore Deng::libshell Qt5::Widgets)
 
 # Deployment.
-deng_install_deps (shell Deng::libcore Deng::libshell)
+deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
 deng_install_deployqt (shell)
 
 # include(../../../config.pri)
