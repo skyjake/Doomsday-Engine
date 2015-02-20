@@ -1,11 +1,11 @@
-if (NOT DEFINED AMETHYST_EXECUTABLE)
-    find_program (AMETHYST_EXECUTABLE amethyst 
+if (NOT DEFINED AMETHYST_COMMAND)
+    find_program (AMETHYST_COMMAND amethyst 
         DOC "Amethyst document processor executable"
     )
-    mark_as_advanced (AMETHYST_EXECUTABLE)
-    message (STATUS "Found Amethyst: ${AMETHYST_EXECUTABLE}")
+    mark_as_advanced (AMETHYST_COMMAND)
+    message (STATUS "Found Amethyst: ${AMETHYST_COMMAND}")
 endif ()
 
-if (NOT AMETHYST_EXECUTABLE STREQUAL AMETHYST_EXECUTABLE-NOTFOUND)
+if (NOT AMETHYST_COMMAND STREQUAL AMETHYST_COMMAND-NOTFOUND)
     set (AMETHYST_FOUND YES)
 endif ()

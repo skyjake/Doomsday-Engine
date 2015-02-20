@@ -29,6 +29,12 @@ function (sublist outputVariable startIndex length)
     set (${outputVariable} ${_sublist} PARENT_SCOPE)
 endfunction (sublist)
 
+macro (clean_paths outputVariable text)
+    string (REGEX REPLACE "${CMAKE_BINARY_DIR}/([A-Za-z0-9]+)"
+        "\\1" ${outputVariable} ${text}
+    )
+endmacro ()
+
 macro (enable_cxx11 target)
     if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -219,6 +225,7 @@ function (deng_add_package packName)
         OUTPUT_VARIABLE msg
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+    clean_paths (msg ${msg})
     message (STATUS "${msg}")
     add_custom_target (${packName} ALL DEPENDS ${outName})
     set_target_properties (${packName} PROPERTIES
@@ -365,7 +372,18 @@ function (fix_bundled_install_names binaryFile)
     if (NOT EXISTS ${binaryFile})
         message (FATAL_ERROR "fix_bundled_install_names: ${binaryFile} not found")
     endif ()
+    if (binaryFile MATCHES ".*\\.bundle")
+        set (ref "@loader_path/../Frameworks")
+    else ()
+        set (ref "@executable_path/../Frameworks")
+    endif ()
     sublist (libs 1 -1 ${ARGV})
+    # Check for arguments.
+    list (GET libs 0 first)
+    if (first STREQUAL "LD_PATH")
+        list (GET libs 1 ref)
+        list (REMOVE_AT libs 1 0)        
+    endif ()
     list (GET libs -1 last)
     if (last STREQUAL "VERBATIM")
         set (verbatim ON)
@@ -376,11 +394,6 @@ function (fix_bundled_install_names binaryFile)
         -L ${binaryFile}
         OUTPUT_VARIABLE deps
     )
-    if (binaryFile MATCHES ".*\\.bundle")
-        set (ref "@loader_path")
-    else ()
-        set (ref "@executable_path")
-    endif ()
     foreach (fn ${libs})
         if (NOT verbatim)
             get_filename_component (base "${fn}" NAME)
@@ -392,8 +405,8 @@ function (fix_bundled_install_names binaryFile)
             string (STRIP ${CMAKE_MATCH_1} depPath)
             message (STATUS "Changing install name: ${depPath}")
             execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
-                -change ${depPath} ${ref}/../Frameworks/${base}
-                ${binaryFile}
+                -change "${depPath}" "${ref}/${base}"
+                "${binaryFile}"
             )
         endif ()
     endforeach (fn)    
@@ -401,9 +414,17 @@ endfunction (fix_bundled_install_names)
 
 # Fixes the install names of the listed libraries that have been bundled into
 # the target.
-macro (deng_bundle_install_names target)
+function (deng_bundle_install_names target)
     sublist (libs 1 -1 ${ARGV})
-    set (scriptName "${CMAKE_CURRENT_BINARY_DIR}/postbuild-${target}.cmake")
+    # Check for arguments.
+    list (GET libs 0 first)
+    if (first STREQUAL "SCRIPT_NAME")
+        list (GET libs 1 _s)
+        set (_suffix "-${_s}")
+        list (REMOVE_AT libs 0)
+        list (REMOVE_AT libs 0)
+    endif ()
+    set (scriptName "${CMAKE_CURRENT_BINARY_DIR}/postbuild${_suffix}-${target}.cmake")
     # Correct the install names of the dependent libraries.
     file (GENERATE OUTPUT "${scriptName}" CONTENT "\
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)\n\
@@ -415,9 +436,7 @@ fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle/Conten
         COMMAND ${CMAKE_COMMAND} -P "${scriptName}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )    
-    set (scriptName)        
-    set (libs)
-endmacro (deng_bundle_install_names)
+endfunction (deng_bundle_install_names)
 
 # Install the libraries of a dependency.
 macro (deng_install_deps target)
@@ -445,44 +464,16 @@ function (deng_install_deployqt target)
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
     if (APPLE) # AND NOT DENG_DEVELOPER) # don't run this on a dev build
-        if (NOT MACDEPLOYQT_EXECUTABLE)
+        if (NOT MACDEPLOYQT_COMMAND)
             message (FATAL_ERROR "macdeployqt not available")
         endif ()
         install (CODE "message (STATUS \"Running macdeployqt on ${_outName}.app...\")
-            execute_process (COMMAND ${MACDEPLOYQT_EXECUTABLE} \"${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+            execute_process (COMMAND ${MACDEPLOYQT_COMMAND} \"${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
                 OUTPUT_QUIET ERROR_QUIET)")
     elseif (WIN32)
         # run windeployqt
     endif ()
 endfunction (deng_install_deployqt)
-
-# macro (deng_install_tools app)
-#     sublist (_tools 1 -1 ${ARGV})
-#     get_property (_outName TARGET ${app} PROPERTY OUTPUT_NAME)
-#     set (_dest "${_outName}.app/Contents/MacOS")
-#     foreach (_tool ${_tools})
-#         if (TARGET ${_tool})
-#             get_property (_name TARGET ${_tool} PROPERTY OUTPUT_NAME)
-#             if (NOT _name)
-#                 set (_name ${_tool})
-#             endif()
-#             install (FILES $<TARGET_FILE:${_tool}> DESTINATION ${_dest}
-#                 PERMISSIONS
-#                     OWNER_READ GROUP_READ WORLD_READ
-#                     OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-#                     OWNER_WRITE
-#             )
-#             install (CODE "
-#                 include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
-#                 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
-#                 fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${_dest}/${_name}\"
-#                     QtCore.framework/Versions/5/QtCore
-#                     QtNetwork.framework/Versions/5/QtNetwork
-#                     VERBATIM)
-#                 ")
-#         endif ()
-#     endforeach (_tool)
-# endmacro (deng_install_tools)
 
 function (deng_install_tool target)
     install (TARGETS ${target} DESTINATION bin)

@@ -26,7 +26,7 @@ target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL 
     PRIVATE opengl
 )
-if (LIBOVR_FOUND)
+if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()
 

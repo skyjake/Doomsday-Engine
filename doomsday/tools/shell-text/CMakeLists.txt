@@ -30,7 +30,7 @@ if (AMETHYST_FOUND)
         set (DOC_DIR ${DENG_SOURCE_DIR}/doc/shell-text)
         add_custom_command (
             OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST_EXECUTABLE}" -dMAN -dUNIX -odoomsday-shell-text.6 ${DOC_DIR}/shell-text.ame
+            COMMAND "${AMETHYST_COMMAND}" -dMAN -dUNIX -odoomsday-shell-text.6 ${DOC_DIR}/shell-text.ame
             DEPENDS ${DOC_DIR}/shell-text.ame
             COMMENT "Compiling manual page..."
         )

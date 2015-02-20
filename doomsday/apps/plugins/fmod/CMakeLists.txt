@@ -7,7 +7,7 @@ include (../PluginConfig.cmake)
 
 find_package (FMOD QUIET)
 
-if (FMOD_FOUND)
+if (TARGET fmodex)
     # Deploy the FMOD library.
     get_property (libPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
     if (APPLE)

@@ -40,7 +40,7 @@ if (UNIX)
         file (GLOB ameSrc ${DOC_DIR}/*.ame)
         add_custom_command (
             OUTPUT ${MAN_PAGE}
-            COMMAND "${AMETHYST_EXECUTABLE}" -dMAN -dUNIX -odoomsday.6 ${DOC_DIR}/readme.ame
+            COMMAND "${AMETHYST_COMMAND}" -dMAN -dUNIX -odoomsday.6 ${DOC_DIR}/readme.ame
             DEPENDS ${ameSrc}
             COMMENT "Compiling manual page..."
         )

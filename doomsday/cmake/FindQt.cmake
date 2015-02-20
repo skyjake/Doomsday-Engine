@@ -29,6 +29,6 @@ if (NOT DEFINED QT_PREFIX_DIR)
     
     if (APPLE)
         qmake_query (QT_BINS "QT_INSTALL_BINS")
-        set (MACDEPLOYQT_EXECUTABLE "${QT_BINS}/macdeployqt" CACHE PATH "Qt's macdeployqt executable path")
+        set (MACDEPLOYQT_COMMAND "${QT_BINS}/macdeployqt" CACHE PATH "Qt's macdeployqt executable path")
     endif ()
 endif ()
