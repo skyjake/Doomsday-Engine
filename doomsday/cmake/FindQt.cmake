@@ -1,6 +1,7 @@
 # Qmake is used to find out the Qt install location.
-if (NOT DEFINED QMAKE)
+if (NOT QMAKE)
     find_program (QMAKE qmake-qt5 qt5-qmake qmake
+        HINTS ENV PATH
         DOC "Path of the qmake executable to use"
     ) 
 endif ()

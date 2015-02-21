@@ -4,7 +4,16 @@ cmake_minimum_required (VERSION 3.0)
 project (DENG_LIBGUI)
 include (../../cmake/Config.cmake)
 
-option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode" ON)
+if (APPLE)
+    # Don't change display modes on OS X. We'll instead resize the 
+    # framebuffer  and scale up.
+    set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
+else ()
+    set (DENG_ENABLE_DISPLAYMODE_DEFAULT ON)
+endif ()
+option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
+    ${DENG_ENABLE_DISPLAYMODE_DEFAULT}
+)
 
 # Dependencies.
 find_package (DengCore QUIET)
@@ -31,7 +40,8 @@ list_remove_matches (SOURCES ".*/displaymode_.*")
 if (NOT DENG_ENABLE_DISPLAYMODE)
     list (APPEND SOURCES src/displaymode_dummy.cpp)
 else ()
-    list (APPEND SOURCES src/displaymode_${DENG_PLATFORM_SUFFIX}.cpp)
+    file (GLOB src src/displaymode_${DENG_PLATFORM_SUFFIX}.*)
+    list (APPEND SOURCES ${src})
 endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})

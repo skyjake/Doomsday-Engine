@@ -22,10 +22,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifdef _DEBUG
-
 #include "de_base.h"
 #include "de_graphics.h"
+
+#ifdef DENG_DEBUG
 
 #include <de/Rectangle>
 #include <de/Vector>

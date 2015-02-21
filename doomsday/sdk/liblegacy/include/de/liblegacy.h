@@ -59,6 +59,9 @@
 #endif
 
 #ifndef NDEBUG
+#  ifndef _DEBUG
+#    define _DEBUG 1
+#  endif
 #  define DENG_DEBUG
 #  ifdef DENG_USE_QT
 #    define DENG_ASSERT(x) Q_ASSERT(x)

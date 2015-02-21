@@ -22,7 +22,8 @@
 #ifndef CLIENT_ZONEDEBUG_H
 #define CLIENT_ZONEDEBUG_H
 
-#ifdef _DEBUG
+#include <de/liblegacy.h>
+#ifdef DENG_DEBUG
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +35,6 @@ void Z_DebugDrawer(void);
 } // extern "C"
 #endif
 
-#endif // _DEBUG
+#endif // DENG_DEBUG
 
 #endif // CLIENT_ZONEDEBUG_H

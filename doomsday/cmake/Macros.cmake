@@ -7,6 +7,14 @@ macro (append var str)
     endif ()
 endmacro (append)
 
+macro (append_unique var str)
+    string (REPLACE "+" "\\+" _match ${str})
+    if (NOT ${var} MATCHES ".*${_match}.*")
+        append (${var} ${str})
+    endif ()
+    set (_match)
+endmacro (append_unique)
+
 # Returns a subset of a list. If length is -1, the entire remainder
 # of the list is returned.
 function (sublist outputVariable startIndex length)
@@ -50,10 +58,6 @@ macro (enable_cxx11 target)
         NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
         set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
-    else ()
-        # This should be unnecessary with CMake 3.2+; the above should be enough.
-        append (CMAKE_C_FLAGS   "-std=c11")
-        append (CMAKE_CXX_FLAGS "-std=c++11")
     endif ()
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         append (CMAKE_C_FLAGS "-fms-extensions")
@@ -323,7 +327,7 @@ endmacro (deng_deploy_library)
 
 # Defines a new GUI application target that includes all the required Doomsday
 # 2 packages.)
-macro (deng_add_application target)
+function (deng_add_application target)
     sublist (src 1 -1 ${ARGV})
     # Check for additional bundle resources.
     list (FIND src EXTRA_RESOURCES idx)
@@ -355,12 +359,7 @@ macro (deng_add_application target)
             )
         endif ()        
     endif ()
-    set (src)
-    set (pkgs)
-    set (idx)
-    set (pos)
-    set (extraRes)
-endmacro (deng_add_application)
+endfunction (deng_add_application)
 
 function (add_pkgconfig_interface_library target)
     sublist (pkgNames 1 -1 ${ARGV})
@@ -483,12 +482,14 @@ macro (deng_install_bundle_deps target)
     endif ()
 endmacro (deng_install_bundle_deps)
 
+# Run the Qt deploy utility on the target, resolving any local system 
+# dependencies.
 function (deng_install_deployqt target)
     if (UNIX AND NOT APPLE)
         return () # No need to deploy Qt.
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
-    if (APPLE AND NOT DENG_DEVELOPER) # dev builds are not deployed elsewhere
+    if (APPLE)
         if (NOT MACDEPLOYQT_COMMAND)
             message (FATAL_ERROR "macdeployqt not available")
         endif ()
@@ -500,6 +501,9 @@ function (deng_install_deployqt target)
     endif ()
 endfunction (deng_install_deployqt)
 
+# Installs a tool executable into the approprite place(s). 
+# OS X: Also fix the Qt framework install names that wouldn't be touched by 
+# the qt deploy utility because they aren't the app bundle binary.
 function (deng_install_tool target)
     install (TARGETS ${target} DESTINATION bin)
     # OS X: Also install to the client application bundle.
@@ -522,7 +526,8 @@ function (deng_install_tool target)
 endfunction (deng_install_tool)
 
 # Install an external library that exists at configuration time.
-# Used with dependencies.
+# Used to deploy third-party libraries of dependencies. `library` is the
+# full path to the shared library to install.
 macro (deng_install_library library)
     if (UNIX AND NOT APPLE)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})            
@@ -534,6 +539,11 @@ macro (deng_install_library library)
     endif ()        
 endmacro (deng_install_library)
 
+# Defines a command for generating a source file from an Amethyst document project.
+# `ameSourceDir` is expected to contain a number of .ame files, with `mainSrc` 
+# being the name of the main one. The contents of `ameSourceDir` are used (only)
+# as dependencies to know when the output file needs regenerating. `type` is the
+# amestd output generator def (e.g., TXT or RTF).
 function (deng_add_amedoc type file ameSourceDir mainSrc)
     if (AMETHYST_FOUND)     
         set (pfm ${DENG_AMETHYST_PLATFORM})

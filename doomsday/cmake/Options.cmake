@@ -1,5 +1,4 @@
 option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functionality" ON)
-option (DENG_ENABLE_TESTS "Enable/disable the test suite" OFF)
 
 option (DENG_FIXED_ASM 
     "Use inline assembler for fixed-point math"

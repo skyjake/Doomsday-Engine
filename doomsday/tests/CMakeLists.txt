@@ -5,6 +5,8 @@ cmake_minimum_required (VERSION 3.0)
 project (Tests)
 include (../cmake/Config.cmake)
 
+option (DENG_ENABLE_TESTS "Enable/disable the test suite" OFF)
+
 if (DENG_ENABLE_TESTS)
     add_subdirectory (test_archive)
     add_subdirectory (test_bitfield)
