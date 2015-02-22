@@ -282,9 +282,11 @@ StringList ScriptSystem::nativeModules() const
     return d->nativeModules.keys();
 }
 
-static int sortFilesByModifiedAt(File const *a, File const *b)
-{
-    return de::cmp(a->status().modifiedAt, b->status().modifiedAt);
+namespace internal {
+    static bool sortFilesByModifiedAt(File *a, File *b) {
+        DENG2_ASSERT(a != b);
+        return de::cmp(a->status().modifiedAt, b->status().modifiedAt) < 0;
+    }
 }
 
 File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
@@ -337,7 +339,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
             {
                 continue;
             }
-            matching.sort(sortFilesByModifiedAt);
+            matching.sort(internal::sortFilesByModifiedAt);
             found = matching.back();
             LOG_SCR_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size())
                                       << " candidates (latest modified)";
