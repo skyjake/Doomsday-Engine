@@ -15,6 +15,9 @@ find_package (Amethyst QUIET)
 find_package (SDL2)
 find_package (LZSS)
 include (OpenGL)
+if (WIN32)
+    find_package (DirectX)
+endif ()
 
 include_directories (include ${DENG_API_DIR})
 
@@ -30,6 +33,8 @@ if (APPLE)
     list (APPEND SOURCES src/macx/MusicPlayer.mm)
 elseif (WIN32)
     include_directories (include/windows)
+else ()
+    include_directories (include/unix)
 endif ()
 
 if (AMETHYST_FOUND)
@@ -44,19 +49,15 @@ if (AMETHYST_FOUND)
         deng_add_amedoc (TXT ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND SOURCES ${readme})
     endif ()
-endif ()
-
-deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
-
-if (UNIX)
-    include_directories (include/unix)
-
-    if (AMETHYST_FOUND)
+    # Manual page.
+    if (UNIX)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday.6)
         deng_add_amedoc (MAN ${MAN_PAGE} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         list (APPEND src ${MAN_PAGE})
     endif ()
 endif ()
+
+deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 deng_add_package (net.dengine.client)
 
@@ -72,14 +73,6 @@ deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)
 
-if (WIN32 OR APPLE)
-    set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
-    set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
-    set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
-else ()
-    set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
-endif ()
-
 # Libraries.
 target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday lzss opengl)
 if (APPLE)
@@ -92,16 +85,28 @@ endif ()
 if (TARGET SDL2_mixer)
     target_link_libraries (client PUBLIC SDL2_mixer)
 endif ()
+if (TARGET DirectX)
+    target_link_libraries (client PUBLIC DirectX)
+endif ()
 
-deng_install_bundle_deps (client 
-    Deng::libcore Deng::libshell
-    Deng::libgui Deng::libappfw
-    Deng::liblegacy Deng::libdoomsday
-    SDL2 SDL2_mixer
-)
+# Deployment -----------------------------------------------------------------
 
-# Bundle deployment.
+if (WIN32 OR APPLE)
+    set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
+    set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
+    set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+else ()
+    set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
+endif ()
+
 if (APPLE)
+    deng_install_bundle_deps (client 
+        Deng::libcore Deng::libshell
+        Deng::libgui Deng::libappfw
+        Deng::liblegacy Deng::libdoomsday
+        SDL2 SDL2_mixer
+    )
+    
     set_target_properties (client PROPERTIES
         INSTALL_RPATH "@executable_path/../Frameworks"
     )

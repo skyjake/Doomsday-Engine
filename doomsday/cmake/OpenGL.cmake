@@ -5,6 +5,7 @@ if (NOT TARGET opengl)
         HINTS ${OPENGL_DIR}
         PATH_SUFFIXES .. OpenGL include OpenGL/include
     )
+    mark_as_advanced (OPENGL_GLEXT_H)
     if (NOT OPENGL_GLEXT_H)
         message (FATAL_ERROR "OpenGL \"GL/glext.h\" header not found.")
     endif ()

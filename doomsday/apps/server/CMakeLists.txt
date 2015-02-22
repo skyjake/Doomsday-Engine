@@ -16,10 +16,6 @@ find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DENG_API_DIR})
 
-if (WIN32)
-    include_directories (../client/include/windows)
-endif ()
-
 add_definitions (-D__DOOMSDAY__ -D__SERVER__)
 
 file (GLOB API_HEADERS ../api/*.h)
@@ -245,6 +241,11 @@ set (SHARED_WITH_CLIENT
     ${src}/src/world/vertex.cpp
     ${src}/src/world/worldsystem.cpp
 )
+
+if (WIN32)
+    include_directories (../client/include/windows)    
+    list (APPEND SHARED_WITH_CLIENT ${src}/src/windows/dd_winit.cpp)
+endif ()
 
 if (UNIX)
     include_directories (../client/include/unix)

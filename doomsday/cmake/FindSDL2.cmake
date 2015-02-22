@@ -7,6 +7,7 @@ elseif (WIN32)
     # Try to locate SDL2 from the local system (assuming Windows).
     set (_oldPath ${SDL2_LIBRARY})
     find_library (SDL2_LIBRARY SDL2 HINTS ${SDL2_DIR} PATH_SUFFIXES lib/x86 lib)    
+    mark_as_advanced (SDL2_LIBRARY)
     if (NOT SDL2_LIBRARY)
         message (FATAL_ERROR "SDL2 not found. Set the SDL2_DIR variable to help locate it.\n")
     endif ()    
@@ -31,6 +32,7 @@ elseif (WIN32)
         HINTS ${SDL2_DIR} ${SDL2_MIXER_DIR}
         PATH_SUFFIXES lib/x86 lib
     )    
+    mark_as_advanced (SDL2_MIXER_LIBRARY)
     if (NOT _oldPath STREQUAL SDL2_MIXER_LIBRARY)
         message (STATUS "Found SDL2_mixer: ${SDL2_MIXER_LIBRARY}")
     endif ()

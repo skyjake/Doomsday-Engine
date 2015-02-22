@@ -59,6 +59,7 @@ if (NOT TARGET assimp)
         find_file (LIBASSIMP_DLL assimp.dll HINTS ${_assimpBase}/..
             PATH_SUFFIXES bin ../bin/Release ../bin/Debug
         )
+        mark_as_advanced (LIBASSIMP_DLL)
         get_filename_component (LIBASSIMP_DLL ${LIBASSIMP_DLL} REALPATH)
         deng_install_library (${LIBASSIMP_DLL})
     endif ()

@@ -39,6 +39,8 @@
 #  include <QIODevice>
 #  include <QFile>
 #  include <QTemporaryFile>
+#  include <QSaveFile>
+#  include <QProcess>
 #  ifndef DENG2_QT_5_0_OR_NEWER
 #    include <QAbstractFileEngine>
 #  endif
