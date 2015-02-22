@@ -100,8 +100,8 @@ END
 
 #ifndef APSTUDIO_INVOKED
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION     LIBDENG2_VERSION_NUMBER
-PRODUCTVERSION  LIBDENG2_VERSION_NUMBER
+FILEVERSION     ${DENG_LIBCORE_VERSION_WINDOWS}
+PRODUCTVERSION  ${DENG_LIBCORE_VERSION_WINDOWS}
 # if defined(_DEBUG)
 FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
 # elif !defined(LIBDENG2_RELEASE_FULL)
@@ -119,16 +119,16 @@ BEGIN
         BEGIN
             VALUE "CompanyName",    "\0"
 #if defined(UNICODE)
-            VALUE "FileDescription", LIBDENG2_DESC_WSTR "\0"
+            VALUE "FileDescription", "Doomsday 2 Core Library" "\0"
 #else
-            VALUE "FileDescription", LIBDENG2_DESC "\0"
+            VALUE "FileDescription", "Doomsday 2 Core Library" "\0"
 #endif
-            VALUE "FileVersion",    LIBDENG2_VERSION_TEXT "\0"
-            VALUE "InternalName",   LIBDENG2_NICENAME "\0"
-            VALUE "LegalCopyright", "Copyright (c) " LIBDENG2_COPYRIGHT "\0"
-            VALUE "OriginalFilename", LIBDENG2_FILENAME "\0"
-            VALUE "ProductName",    LIBDENG2_NICENAME "\0"
-            VALUE "ProductVersion", LIBDENG2_VERSION_TEXT "\0"
+            VALUE "FileVersion",    "${DENG_LIBCORE_VERSION}.${DENG_BUILD}" "\0"
+            VALUE "InternalName",   "libcore" "\0"
+            VALUE "LegalCopyright", "${DENG_TEAM_COPYRIGHT}" "\0"
+            VALUE "OriginalFilename", "deng_core.dll" "\0"
+            VALUE "ProductName",    "libcore" "\0"
+            VALUE "ProductVersion", "${DENG_LIBCORE_VERSION}.${DENG_BUILD}" "\0"
 #if !defined(_DEBUG) && !defined(LIBDENG2_RELEASE_FULL) && defined(LIBDENG2_RELEASE_NAME)
             VALUE "SpecialBuild",   LIBDENG2_RELEASE_NAME "\0"
 #endif

@@ -24,8 +24,12 @@ set (MAC_RES
     res/macx/English.lproj,Resources
 )
 set (MACOSX_BUNDLE_ICON_FILE "shell.icns")
+if (WIN32)
+    list (APPEND SOURCES res/windows/shell.rc)
+endif ()
 
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
+
 if (APPLE OR WIN32)
     set_property (TARGET shell PROPERTY OUTPUT_NAME "Doomsday Shell")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday Shell")

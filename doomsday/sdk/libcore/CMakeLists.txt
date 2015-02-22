@@ -28,6 +28,17 @@ endif ()
 file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 
+if (WIN32)
+    # Update the resource file.
+    string (REPLACE . , DENG_LIBCORE_VERSION_WINDOWS "${DENG_LIBCORE_VERSION}.${DENG_BUILD}")
+    if (NOT DEFINED DENG_BUILD)
+        append (DENG_LIBCORE_VERSION_WINDOWS 0)
+    endif ()
+    configure_file (res/win32/core.rc.in core.rc)
+    list (APPEND SOURCES ${CMAKE_CURRENT_BINARY_DIR}/core.rc)
+    include_directories (res/win32)
+endif ()
+
 deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
