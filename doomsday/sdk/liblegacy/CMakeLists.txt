@@ -31,6 +31,9 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.c)
 include_directories (include include/de)
 
 deng_add_library (liblegacy ${SOURCES} ${HEADERS})
-target_link_libraries (liblegacy Deng::libcore)
+target_link_libraries (liblegacy PUBLIC Deng::libcore)
+if (WIN32)
+    target_link_libraries (liblegacy PRIVATE winmm)
+endif ()
 
 deng_deploy_library (liblegacy DengLegacy)

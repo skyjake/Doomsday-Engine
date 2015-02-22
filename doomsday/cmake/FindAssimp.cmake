@@ -1,17 +1,26 @@
-find_package (PkgConfig)
+find_package (PkgConfig QUIET)
 
 set (_oldPath ${LIBASSIMP})
 
 if (NOT TARGET assimp)
-    pkg_check_modules (ASSIMP QUIET assimp)
-    if (NOT ASSIMP_LIBRARIES)
-        set (ASSIMP_LIBRARIES assimp)
+    if (PKG_CONFIG_FOUND)
+        # Try to find assimp using pkg-config.
+        pkg_check_modules (ASSIMP QUIET assimp)
+        if (NOT ASSIMP_LIBRARIES)
+            set (ASSIMP_LIBRARIES assimp)
+        endif ()
+        find_library (LIBASSIMP ${ASSIMP_LIBRARIES} 
+            HINTS 
+                ${ASSIMP_LIBRARY_DIRS}
+                /usr/local/lib
+        )
+    else ()
+        # Try to find assimp manually.
+        find_library (LIBASSIMP assimp
+            HINTS ${DENG_EXTERNAL_SOURCE_DIR}/assimp
+            PATH_SUFFIXES lib/Release lib/Debug lib
+        )        
     endif ()
-    find_library (LIBASSIMP ${ASSIMP_LIBRARIES} 
-        HINTS 
-            ${ASSIMP_LIBRARY_DIRS}
-            /usr/local/lib
-    )
     mark_as_advanced (LIBASSIMP)
     
     if (NOT LIBASSIMP)
@@ -25,10 +34,12 @@ if (NOT TARGET assimp)
     else ()
         # Try to deduce include dir from the library location.
         get_filename_component (_assimpBase ${LIBASSIMP} DIRECTORY)
-        get_filename_component (_assimpBase ${_assimpBase} DIRECTORY)
-        find_file (LIBASSIMP_IMPORTER_HPP assimp/Importer.hpp
+        find_file (LIBASSIMP_IMPORTER_HPP 
+            assimp/Importer.hpp
             HINTS /usr/include /usr/local/include
                 ${_assimpBase}/include
+                ${_assimpBase}/../include
+                ${_assimpBase}/../../include
         )
         mark_as_advanced (LIBASSIMP_IMPORTER_HPP)
         if (NOT LIBASSIMP_IMPORTER_HPP)
@@ -41,7 +52,16 @@ if (NOT TARGET assimp)
     
     target_link_libraries (assimp INTERFACE ${LIBASSIMP})
 
-    deng_install_library (${LIBASSIMP})
+    if (NOT WIN32)
+        deng_install_library (${LIBASSIMP})
+    else ()
+        # Locate the DLL.
+        find_file (LIBASSIMP_DLL assimp.dll HINTS ${_assimpBase}/..
+            PATH_SUFFIXES bin ../bin/Release ../bin/Debug
+        )
+        get_filename_component (LIBASSIMP_DLL ${LIBASSIMP_DLL} REALPATH)
+        deng_install_library (${LIBASSIMP_DLL})
+    endif ()
 endif ()
 
 if (NOT _oldPath STREQUAL ${LIBASSIMP})

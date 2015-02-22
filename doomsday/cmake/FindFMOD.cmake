@@ -5,6 +5,7 @@ set (_oldPath ${FMOD_FMOD_H})
 find_file (FMOD_FMOD_H api/inc/fmod.h
     PATHS 
         "${FMOD_DIR}"
+        "${FMOD_DIR}/FMOD"        
         "${FMOD_DIR}/FMOD Programmers API"
     NO_DEFAULT_PATH
 )
@@ -26,14 +27,19 @@ if (NOT FMOD_FMOD_H STREQUAL "FMOD_FMOD_H-NOTFOUND" AND NOT TARGET fmodex)
     target_include_directories (fmodex INTERFACE ${fmodInc})
     if (APPLE)
         set (fmodLib "${fmodApi}/lib/libfmodex.dylib")
+        set (fmodInstLib ${fmodLib})
+    elseif (MSVC)
+        set (fmodLib "${fmodApi}/lib/fmodex_vc.lib")
+        set (fmodInstLib "${fmodApi}/fmodex.dll")
     elseif (UNIX)
         if (ARCH_BITS EQUAL 64)
             set (fmodLib ${fmodApi}/lib/libfmodex64.so)
         else ()
             set (fmodLib ${fmodApi}/lib/libfmodex.so)
         endif ()
+        set (fmodInstLib ${fmodLib})
     endif ()
     target_link_libraries (fmodex INTERFACE ${fmodLib})
-    deng_install_library (${fmodLib})
+    deng_install_library (${fmodInstLib})
 endif ()
 

@@ -16,6 +16,10 @@ find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DENG_API_DIR})
 
+if (WIN32)
+    include_directories (../client/include/windows)
+endif ()
+
 add_definitions (-D__DOOMSDAY__ -D__SERVER__)
 
 file (GLOB API_HEADERS ../api/*.h)

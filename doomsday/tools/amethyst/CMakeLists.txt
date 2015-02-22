@@ -14,7 +14,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 cmake_minimum_required (VERSION 3.0)
-project (AMETHYST)
+project (Amethyst)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)
 set (CMAKE_AUTOMOC ON)
@@ -58,6 +58,10 @@ endif ()
 install (TARGETS amethyst DESTINATION bin)
 install (DIRECTORY lib DESTINATION ${LIB_PREFIX})
 install (FILES changelog.txt DESTINATION ${DOC_PREFIX})
+
+if (WIN32)
+    deng_install_deployqt (amethyst)
+endif ()
 
 # install (FILES
 #     ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/Macros.cmake

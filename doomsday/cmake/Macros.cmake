@@ -55,7 +55,8 @@ endmacro ()
 
 macro (enable_cxx11 target)
     if (NOT CMAKE_VERSION VERSION_LESS 3.1 AND 
-        NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+        NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" AND
+        NOT MSVC)
         set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
         set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
     endif ()
@@ -316,6 +317,7 @@ endmacro (deng_add_library)
 macro (deng_deploy_library target name)
     install (TARGETS ${target}
         EXPORT ${name} 
+        RUNTIME DESTINATION bin
         LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR}
         INCLUDES DESTINATION include)
     install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::)
@@ -489,6 +491,9 @@ function (deng_install_deployqt target)
         return () # No need to deploy Qt.
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+    if (NOT _outName)
+        set (_outName ${target})
+    endif ()
     if (APPLE)
         if (NOT MACDEPLOYQT_COMMAND)
             message (FATAL_ERROR "macdeployqt not available")
@@ -497,7 +502,13 @@ function (deng_install_deployqt target)
             execute_process (COMMAND ${MACDEPLOYQT_COMMAND} \"${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
                 OUTPUT_QUIET ERROR_QUIET)")
     elseif (WIN32)
-        # run windeployqt
+        if (NOT WINDEPLOYQT_COMMAND)
+            message (FATAL_ERROR "windeployqt not available")            
+        endif ()
+        install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
+            execute_process (COMMAND ${WINDEPLOYQT_COMMAND} --no-translations 
+                \"${CMAKE_INSTALL_PREFIX}/bin/${_outName}.exe\"
+                OUTPUT_QUIET ERROR_QUIET)")
     endif ()
 endfunction (deng_install_deployqt)
 
@@ -531,11 +542,13 @@ endfunction (deng_install_tool)
 macro (deng_install_library library)
     if (UNIX AND NOT APPLE)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})            
-        message ("${library}: ${versioned}")
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
             DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
         )
+    elseif (MSVC)
+        message (STATUS "Library will be installed: ${library}")
+        install (FILES ${library} DESTINATION ${DENG_INSTALL_LIB_DIR})
     endif ()        
 endmacro (deng_install_library)
 
@@ -547,6 +560,7 @@ endmacro (deng_install_library)
 function (deng_add_amedoc type file ameSourceDir mainSrc)
     if (AMETHYST_FOUND)     
         set (pfm ${DENG_AMETHYST_PLATFORM})
+        set (opts)
         if (type STREQUAL MAN)
             set (descText "manual page")   
             set (pfm UNIX) # man pages are always for Unix
@@ -554,12 +568,15 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
             set (descText "rich text document")
         else ()
             set (descText "text document")
+            if (WIN32)
+                set (opts "-dCR_NL")
+            endif ()
         endif ()
         file (GLOB_RECURSE _ameSrc ${ameSourceDir}/*.ame)
         get_filename_component (_name ${file} NAME)
         add_custom_command (
             OUTPUT ${file}
-            COMMAND "${AMETHYST_COMMAND}" -d${type} -d${pfm} 
+            COMMAND "${AMETHYST_COMMAND}" -d${type} -d${pfm} ${opts}
                 -o${_name} ${ameSourceDir}/${mainSrc}
             DEPENDS ${_ameSrc}
             COMMENT "Compiling ${descText}..."

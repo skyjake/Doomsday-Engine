@@ -1,0 +1,10 @@
+cmake_minimum_required (VERSION 3.0)
+project (DENG_WINMM)
+include (../PluginConfig.cmake)
+
+include_directories (include)
+file (GLOB SOURCES src/*.cpp include/*.h)
+
+deng_add_plugin (audio_winmm ${SOURCES} api/dswinmm.def)
+
+target_link_libraries (audio_winmm PRIVATE winmm)

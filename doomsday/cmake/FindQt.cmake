@@ -20,7 +20,9 @@ function (qmake_query result qtvar)
 endfunction (qmake_query)
 
 # Check Qt version.
-if (NOT DEFINED QT_PREFIX_DIR)
+if (NOT DEFINED QT_PREFIX_DIR OR 
+    (WIN32 AND NOT WINDEPLOYQT_COMMAND) OR
+    (APPLE AND NOT MACDEPLOYQT_COMMAND))
     message (STATUS "QMake path: ${QMAKE}")
 
     qmake_query (QT_VERSION "QT_VERSION")
@@ -36,8 +38,10 @@ if (NOT DEFINED QT_PREFIX_DIR)
     message (STATUS "  Qt install prefix: ${QT_PREFIX}")
     set (QT_PREFIX_DIR "${QT_PREFIX}" CACHE PATH "Qt install prefix")
     
+    qmake_query (QT_BINS "QT_INSTALL_BINS")
     if (APPLE)
-        qmake_query (QT_BINS "QT_INSTALL_BINS")
         set (MACDEPLOYQT_COMMAND "${QT_BINS}/macdeployqt" CACHE PATH "Qt's macdeployqt executable path")
+    elseif (WIN32)
+        set (WINDEPLOYQT_COMMAND "${QT_BINS}/windeployqt" CACHE PATH "Qt's windeployqt executable path")
     endif ()
 endif ()

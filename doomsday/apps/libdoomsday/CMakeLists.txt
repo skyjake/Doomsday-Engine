@@ -8,6 +8,7 @@ include (../../cmake/Config.cmake)
 find_package (DengCore QUIET)
 find_package (DengLegacy QUIET)
 find_package (DengShell QUIET)
+include (ZLIB)
 
 # Definitions.
 add_definitions (
@@ -34,6 +35,7 @@ relaxed_warnings (libdoomsday)
 target_link_libraries (libdoomsday 
     PUBLIC Deng::libcore Deng::liblegacy Deng::libshell
 )
+target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
 install (DIRECTORY include/doomsday DESTINATION include)
 deng_deploy_library (libdoomsday DengDoomsday)

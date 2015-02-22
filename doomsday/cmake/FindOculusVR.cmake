@@ -34,6 +34,12 @@ if (NOT LIBOVR_OVR_H STREQUAL "LIBOVR_OVR_H-NOTFOUND")
             )
             link_framework (LibOVR INTERFACE Cocoa)
             link_framework (LibOVR INTERFACE IOKit)
+        elseif (MSVC12)
+            target_link_libraries (LibOVR INTERFACE
+                debug     "${ovrDir}/Lib/Win32/VS2013/libovrd.lib"
+                optimized "${ovrDir}/Lib/Win32/VS2013/libovr.lib"
+                general   winmm shell32 ws2_32
+            )
         endif ()
     endif ()
 endif ()
