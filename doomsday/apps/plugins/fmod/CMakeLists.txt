@@ -18,7 +18,7 @@ if (TARGET fmodex)
     
     include_directories (include)
     file (GLOB SOURCES src/*.cpp include/*.h)
-    deng_add_plugin (audio_fmod ${SOURCES} api/dsfmod.def)
+    deng_add_plugin (audio_fmod ${SOURCES})
     target_link_libraries (audio_fmod PRIVATE fmodex)
     
     if (APPLE)

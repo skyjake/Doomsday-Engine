@@ -14,4 +14,4 @@ file (GLOB SOURCES src/*.c src/*.cpp include/*.h)
 
 deng_find_resources (libheretic.pk3)
 
-deng_add_plugin (heretic ${SOURCES} ${COMMON_SOURCES} api/heretic.def)
+deng_add_plugin (heretic ${SOURCES} ${COMMON_SOURCES})

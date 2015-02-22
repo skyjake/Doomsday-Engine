@@ -5,6 +5,6 @@ include (../PluginConfig.cmake)
 include_directories (include)
 file (GLOB SOURCES src/*.cpp include/*.h)
 
-deng_add_plugin (audio_winmm ${SOURCES} api/dswinmm.def)
+deng_add_plugin (audio_winmm ${SOURCES})
 
 target_link_libraries (audio_winmm PRIVATE winmm)

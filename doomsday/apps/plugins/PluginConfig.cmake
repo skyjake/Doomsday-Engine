@@ -9,6 +9,19 @@ find_package (DengDoomsday QUIET)
 
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})
+    if (WIN32)
+        # Find the exports .def and .rc files.
+        set (_exports "${CMAKE_CURRENT_SOURCE_DIR}/api/${target}.def")
+        if (NOT EXISTS ${_exports})
+            message (WARNING "Plugin \"${target}\" is missing the exports .def file.")
+        endif ()
+        list (APPEND _src ${_exports})
+        set (_winres "${CMAKE_CURRENT_SOURCE_DIR}/res/${target}.rc")
+        if (NOT EXISTS ${_winres})
+            message (WARNING "Plugin \"${target}\" is missing the resource .rc file.")
+        endif ()
+        list (APPEND _src ${_winres})
+    endif ()
     add_library (${target} MODULE ${_src} ${DENG_RESOURCES})
     target_include_directories (${target} 
         PUBLIC "${DENG_API_DIR}" 

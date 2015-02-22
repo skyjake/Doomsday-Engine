@@ -9,6 +9,6 @@ if (TARGET EAX2)
     include_directories (include)
     file (GLOB SOURCES src/*.cpp include/*.h)
 
-    deng_add_plugin (audio_directsound ${SOURCES} api/dsdirectsound.def)
+    deng_add_plugin (audio_directsound ${SOURCES})
     target_link_libraries (audio_directsound PRIVATE DirectX EAX2)
 endif ()

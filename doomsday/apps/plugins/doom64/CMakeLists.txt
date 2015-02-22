@@ -14,4 +14,4 @@ file (GLOB SOURCES src/*.c src/*.cpp include/*.h)
 
 deng_find_resources (libdoom64.pk3)
 
-deng_add_plugin (doom64 ${SOURCES} ${COMMON_SOURCES} api/doom64.def)
+deng_add_plugin (doom64 ${SOURCES} ${COMMON_SOURCES})
