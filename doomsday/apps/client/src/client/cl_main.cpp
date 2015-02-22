@@ -66,7 +66,7 @@ void Cl_InitID()
     {
         if(fread(&clientID, sizeof(clientID), 1, file))
         {
-            clientID = ULONG(clientID);
+            clientID = DD_ULONG(clientID);
             fclose(file);
             return;
         }
@@ -75,7 +75,7 @@ void Cl_InitID()
 
     // Ah-ha, we need to generate a new ID.
     clientID = (ident_t)
-        ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
+        DD_ULONG(Timer_RealMilliseconds() * rand() + (rand() & 0xfff) +
               ((rand() & 0xfff) << 12) + ((rand() & 0xff) << 24));
 
     // Write it to the file.

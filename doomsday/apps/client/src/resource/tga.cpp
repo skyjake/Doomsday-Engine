@@ -34,11 +34,11 @@ enum {
     TGA_TARGA32 // rgba8888
 };
 
-#undef SHORT
+#undef DD_SHORT
 #ifdef __BIG_ENDIAN__
-#define SHORT(x)            shortSwap(x)
+#define DD_SHORT(x)            shortSwap(x)
 # else // Little-endian.
-#define SHORT(x)            (x)
+#define DD_SHORT(x)            (x)
 #endif
 
 #pragma pack(1)
@@ -106,7 +106,7 @@ static void writeByte(FILE *f, uint8_t b)
 
 static void writeShort(FILE *f, int16_t s)
 {
-    int16_t v = SHORT(s);
+    int16_t v = DD_SHORT(s);
     fwrite(&v, sizeof(v), 1, f);
 }
 
@@ -121,7 +121,7 @@ static int16_t readShort(FileHandle &f)
 {
     int16_t v;
     f.read((uint8_t *)&v, sizeof(v));
-    return SHORT(v);
+    return DD_SHORT(v);
 }
 
 /**

@@ -47,6 +47,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>
+#undef min
+#undef max
 
 #define INTEGER64 __int64
 

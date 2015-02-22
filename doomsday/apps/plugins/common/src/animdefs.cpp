@@ -177,7 +177,7 @@ static void loadAnimDefs(TextureAnimDef const *defs, bool customDefs)
         int const groupNum     = R_CreateAnimGroup(AGF_SMOOTH);
         AutoStr const *from    = Uri_ToString(startUri);
         AutoStr const *to      = Uri_ToString(endUri);
-        int const ticsPerFrame = LONG(defs[i].speed);
+        int const ticsPerFrame = DD_LONG(defs[i].speed);
 
         LOG_RES_AT_LEVEL(customDefs? LogEntry::Verbose : LogEntry::XVerbose,
                          "  %d: From:\"%s\" To:\"%s\" Tics:%i")

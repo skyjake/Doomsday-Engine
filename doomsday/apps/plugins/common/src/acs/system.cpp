@@ -180,10 +180,10 @@ void System::loadBytecode(File1 &file)
         BytecodeHeader const *header = (BytecodeHeader const *) region;
         d->pcode = (byte const *) header;
 
-        if(LONG(header->infoOffset) < (int)file.size())
+        if(DD_LONG(header->infoOffset) < (int)file.size())
         {
-            readBuf = (int *) ((byte const *) header + LONG(header->infoOffset));
-            numScripts = LONG(*readBuf++);
+            readBuf = (int *) ((byte const *) header + DD_LONG(header->infoOffset));
+            numScripts = DD_LONG(*readBuf++);
         }
     }
 
@@ -200,24 +200,24 @@ void System::loadBytecode(File1 &file)
     {
         Script::EntryPoint ep;
 
-        ep.scriptNumber = LONG(*readBuf++);
+        ep.scriptNumber = DD_LONG(*readBuf++);
         if(ep.scriptNumber >= OPEN_SCRIPTS_BASE)
         {
             ep.scriptNumber -= OPEN_SCRIPTS_BASE;
             ep.startWhenMapBegins = true;
         }
-        ep.pcodePtr = (int const *)(d->pcode + LONG(*readBuf++));
-        ep.scriptArgCount = LONG(*readBuf++);
+        ep.pcodePtr = (int const *)(d->pcode + DD_LONG(*readBuf++));
+        ep.scriptArgCount = DD_LONG(*readBuf++);
         if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
             throw Error("acs::System::loadBytecode", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
 
         d->scripts << new Script(ep/*make a copy*/);
     }
 
-    int const numStrings = LONG(*readBuf++);
+    int const numStrings = DD_LONG(*readBuf++);
     for(int i = 0; i < numStrings; ++i)
     {
-        d->strings << String((char const *)(d->pcode + LONG(*readBuf++)));
+        d->strings << String((char const *)(d->pcode + DD_LONG(*readBuf++)));
     }
 
 #undef OPEN_SCRIPTS_BASE

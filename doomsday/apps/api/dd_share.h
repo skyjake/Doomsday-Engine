@@ -91,9 +91,9 @@ int32_t         LongSwap(int32_t);
 float           FloatSwap(float);
 
 #ifdef __BIG_ENDIAN__
-#define SHORT(x)            ShortSwap(x)
-#define LONG(x)             LongSwap(x)
-#define FLOAT(x)            FloatSwap(x)
+#define DD_SHORT(x)         ShortSwap(x)
+#define DD_LONG(x)          LongSwap(x)
+#define DD_FLOAT(x)         FloatSwap(x)
 
 #define BIGSHORT(x)         (x)
 #define BIGLONG(x)          (x)
@@ -106,9 +106,9 @@ float           FloatSwap(float);
                                        (( ((int32_t)(x)) & 0xff0000) >> 8) | (( ((int32_t)(x)) & 0xff000000) >> 24) ))
 #else
 /// Byte order conversion from native to little-endian. @{
-#define SHORT(x)            (x)
-#define LONG(x)             (x)
-#define FLOAT(x)            (x)
+#define DD_SHORT(x)         (x)
+#define DD_LONG(x)          (x)
+#define DD_FLOAT(x)         (x)
 ///@}
 
 /// Byte order conversion from native to big-endian. @{
@@ -122,8 +122,8 @@ float           FloatSwap(float);
 #endif
 
 /// Byte order conversion from native to little-endian. @{
-#define USHORT(x)           ((uint16_t) SHORT(x))
-#define ULONG(x)            ((uint32_t) LONG(x))
+#define DD_USHORT(x)        ((uint16_t) DD_SHORT(x))
+#define DD_ULONG(x)         ((uint32_t) DD_LONG(x))
 ///@}
 
 /// Integer values for Set/Get

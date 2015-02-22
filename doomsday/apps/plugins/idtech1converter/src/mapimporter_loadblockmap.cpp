@@ -74,10 +74,10 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
     blockmapLump = (short*) W_CacheLump(lumpInfo->lump, PU_GAMESTATIC);
 
-    v[VX] = (float) SHORT(blockmapLump[0]);
-    v[VY] = (float) SHORT(blockmapLump[1]);
-    width  = ((SHORT(blockmapLump[2])) & 0xffff);
-    height = ((SHORT(blockmapLump[3])) & 0xffff);
+    v[VX] = (float) DD_SHORT(blockmapLump[0]);
+    v[VY] = (float) DD_SHORT(blockmapLump[1]);
+    width  = ((DD_SHORT(blockmapLump[2])) & 0xffff);
+    height = ((DD_SHORT(blockmapLump[3])) & 0xffff);
 
     numBlocks = (long) width * (long) height;
 
@@ -93,7 +93,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
     n = 4;
     for(i = 0; i < numBlocks; ++i)
     {
-        short t = SHORT(blockmapLump[n++]);
+        short t = DD_SHORT(blockmapLump[n++]);
         lineListOffsets[i] = (t == -1? -1 : (long) t & 0xffff);
     }
 
@@ -121,7 +121,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
             uint count;
 
 #if _DEBUG
-            if(SHORT(blockmapLump[offset]) != 0)
+            if(DD_SHORT(blockmapLump[offset]) != 0)
             {
                 throw de::Error("IdTech1Converter::loadBlockmap",
                                 QString("Offset (%1) for block %2 [%3, %4] does not index the beginning of a line list!")
@@ -134,7 +134,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
 
             // Count the number of lines in this block.
             count = 0;
-            while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
+            while((idx = DD_SHORT(blockmapLump[offset + 1 + count])) != -1)
             {
                 count++;
             }
@@ -149,7 +149,7 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
                 // Copy pointers to the array, delete the nodes.
                 ptr = lines;
                 count = 0;
-                while((idx = SHORT(blockmapLump[offset + 1 + count])) != -1)
+                while((idx = DD_SHORT(blockmapLump[offset + 1 + count])) != -1)
                 {
 #if _DEBUG
                     if(idx < 0 || idx >= (long) map->numLines)

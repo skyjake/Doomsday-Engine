@@ -429,23 +429,23 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
             localfileheader_t localHeader;
 
             // Advance the cursor past the variable sized fields.
-            pos += USHORT(header->fileNameSize) + USHORT(header->extraFieldSize) + USHORT(header->commentSize);
+            pos += DD_USHORT(header->fileNameSize) + DD_USHORT(header->extraFieldSize) + DD_USHORT(header->commentSize);
 
-            String filePath = NativePath(nameStart, USHORT(header->fileNameSize)).withSeparators('/');
+            String filePath = NativePath(nameStart, DD_USHORT(header->fileNameSize)).withSeparators('/');
 
             // Skip directories (we don't presently model these).
-            if(ULONG(header->size) == 0 && filePath.last() == '/') continue;
+            if(DD_ULONG(header->size) == 0 && filePath.last() == '/') continue;
 
             // Do we support the format of this lump?
-            if(USHORT(header->compression) != ZFC_NO_COMPRESSION &&
-               USHORT(header->compression) != ZFC_DEFLATED)
+            if(DD_USHORT(header->compression) != ZFC_NO_COMPRESSION &&
+               DD_USHORT(header->compression) != ZFC_DEFLATED)
             {
                 if(pass != 0) continue;
                 LOG_RES_WARNING("Zip %s:'%s' uses an unsupported compression algorithm")
                         << NativePath(composePath()).pretty() << NativePath(filePath).pretty();
             }
 
-            if(USHORT(header->flags) & ZFH_ENCRYPTED)
+            if(DD_USHORT(header->flags) & ZFH_ENCRYPTED)
             {
                 if(pass != 0) continue;
                 LOG_RES_WARNING("Zip %s:'%s' is encrypted; encryption is not supported")
@@ -460,21 +460,21 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
             }
 
             // Read the local file header, which contains the extra field size (Info-ZIP!).
-            handle_->seek(ULONG(header->relOffset), SeekSet);
+            handle_->seek(DD_ULONG(header->relOffset), SeekSet);
             handle_->read((uint8_t *)&localHeader, sizeof(localHeader));
 
-            size_t baseOffset = ULONG(header->relOffset) + sizeof(localfileheader_t)
-                              + USHORT(header->fileNameSize) + USHORT(localHeader.extraFieldSize);
+            size_t baseOffset = DD_ULONG(header->relOffset) + sizeof(localfileheader_t)
+                              + DD_USHORT(header->fileNameSize) + DD_USHORT(localHeader.extraFieldSize);
 
             size_t compressedSize;
-            if(USHORT(header->compression) == ZFC_DEFLATED)
+            if(DD_USHORT(header->compression) == ZFC_DEFLATED)
             {
                 // Compressed using the deflate algorithm.
-                compressedSize = ULONG(header->compressedSize);
+                compressedSize = DD_ULONG(header->compressedSize);
             }
             else // No compression.
             {
-                compressedSize = ULONG(header->size);
+                compressedSize = DD_ULONG(header->size);
             }
 
             if(!App::game().isNull())
@@ -501,7 +501,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
             Entry &entry = d->entries.insert(Path(filePath));
 
             entry.offset         = baseOffset;
-            entry.size           = ULONG(header->size);
+            entry.size           = DD_ULONG(header->size);
             entry.compressedSize = compressedSize;
 
             FileHandle *dummy = 0; /// @todo Fixme!

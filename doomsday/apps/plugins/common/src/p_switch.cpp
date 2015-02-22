@@ -230,9 +230,9 @@ void P_InitSwitchList()
             switchlist = (Material **) M_Realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
-        if(SHORT(sList[i].episode) <= episode)
+        if(DD_SHORT(sList[i].episode) <= episode)
         {
-            if(!SHORT(sList[i].episode)) break;
+            if(!DD_SHORT(sList[i].episode)) break;
 
             Str_PercentEncode(Str_StripRight(Str_Set(&path, sList[i].name1)));
             Uri_SetPath(uri, Str_Text(&path));
@@ -243,7 +243,7 @@ void P_InitSwitchList()
             switchlist[index++] = (Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
 
             App_Log(lump? DE2_RES_VERBOSE : DE2_RES_XVERBOSE,
-                    "  %d: Epi:%d A:\"%s\" B:\"%s\"", i, SHORT(sList[i].episode),
+                    "  %d: Epi:%d A:\"%s\" B:\"%s\"", i, DD_SHORT(sList[i].episode),
                     sList[i].name1, sList[i].name2);
         }
     }

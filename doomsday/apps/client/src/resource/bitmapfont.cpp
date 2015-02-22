@@ -42,7 +42,7 @@ static ushort inShort(FileHandle *file)
 {
     ushort s;
     file->read((uint8_t *)&s, sizeof(s));
-    return USHORT(s);
+    return DD_USHORT(s);
 }
 
 struct Glyph
@@ -221,7 +221,7 @@ DENG2_PIMPL(BitmapFont)
                 byte blue  = inByte(file);
                 byte alpha = inByte(file);
 
-                *ptr++ = ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
+                *ptr++ = DD_ULONG(red | (green << 8) | (blue << 16) | (alpha << 24));
             }
         }
         else if(bitmapFormat == 1)
@@ -231,7 +231,7 @@ DENG2_PIMPL(BitmapFont)
             {
                 byte luminance = inByte(file);
                 byte alpha     = inByte(file);
-                *ptr++ = ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
+                *ptr++ = DD_ULONG(luminance | (luminance << 8) | (luminance << 16) | (alpha << 24));
             }
         }
 

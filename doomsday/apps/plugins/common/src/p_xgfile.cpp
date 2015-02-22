@@ -59,7 +59,7 @@ static short ReadShort()
     readptr += 2;
     // Swap the bytes.
     //s = (s<<8) + (s>>8);
-    return SHORT(s);
+    return DD_SHORT(s);
 }
 
 static long ReadLong()
@@ -68,7 +68,7 @@ static long ReadLong()
     readptr += 4;
     // Swap the bytes.
     //l = (l<<24) + (l>>24) + ((l & 0xff0000) >> 8) + ((l & 0xff00) << 8);
-    return LONG(l);
+    return DD_LONG(l);
 }
 
 static float ReadFloat()

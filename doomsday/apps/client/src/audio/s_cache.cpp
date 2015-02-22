@@ -624,9 +624,9 @@ static sfxsample_t *cacheSample(int id, sfxinfo_t const *info)
         {
             uint8_t hdr[8];
             lump.read(hdr, 0, 8);
-            int head   = SHORT(*(short const *) (hdr));
-            rate       = SHORT(*(short const *) (hdr + 2));
-            numSamples = de::max(0, LONG(*(int const *) (hdr + 4)));
+            int head   = DD_SHORT(*(short const *) (hdr));
+            rate       = DD_SHORT(*(short const *) (hdr + 2));
+            numSamples = de::max(0, DD_LONG(*(int const *) (hdr + 4)));
 
             bytesPer = 1; // 8-bit.
 

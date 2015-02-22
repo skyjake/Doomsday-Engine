@@ -104,7 +104,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
         WReadAndAdvance(data, &riff_chunk, sizeof(riff_chunk));
 
         // Correct endianness.
-        riff_chunk.len = ULONG(riff_chunk.len);
+        riff_chunk.len = DD_ULONG(riff_chunk.len);
 
         // What have we got here?
         if(!strncmp(riff_chunk.id, "fmt ", 4))
@@ -113,12 +113,12 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             WReadAndAdvance(data, &wave_format, sizeof(wave_format));
 
             // Correct endianness.
-            wave_format.wFormatTag       = USHORT(wave_format.wFormatTag      );
-            wave_format.wChannels        = USHORT(wave_format.wChannels       );
-            wave_format.dwSamplesPerSec  = ULONG (wave_format.dwSamplesPerSec );
-            wave_format.dwAvgBytesPerSec = ULONG (wave_format.dwAvgBytesPerSec);
-            wave_format.wBlockAlign      = USHORT(wave_format.wBlockAlign     );
-            wave_format.wBitsPerSample   = USHORT(wave_format.wBitsPerSample  );
+            wave_format.wFormatTag       = DD_USHORT(wave_format.wFormatTag      );
+            wave_format.wChannels        = DD_USHORT(wave_format.wChannels       );
+            wave_format.dwSamplesPerSec  = DD_ULONG (wave_format.dwSamplesPerSec );
+            wave_format.dwAvgBytesPerSec = DD_ULONG (wave_format.dwAvgBytesPerSec);
+            wave_format.wBlockAlign      = DD_USHORT(wave_format.wBlockAlign     );
+            wave_format.wBitsPerSample   = DD_USHORT(wave_format.wBitsPerSample  );
 
             assert(wave_format.wFormatTag == WAVE_FORMAT_PCM); // linear PCM
 
@@ -171,7 +171,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits, int* rate, 
             {
                 ushort* sample = sampledata;
                 for(; sample < ((short*)sampledata) + *samples; ++sample)
-                    *sample = USHORT(*sample);
+                    *sample = DD_USHORT(*sample);
             }*/
 #endif
             // We're satisfied with this! Let's get out of here.

@@ -298,23 +298,23 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
         { int x;
         for(x = 0; x < width; ++x)
         {
-            w[5] = ULONG( *( (uint32_t*)(src + OFFSET(x, y)) ) );
+            w[5] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x, y)) ) );
 
             // Horizontal neighbors.
             if(wrapH)
             {
-                w[4] = ULONG( *( (uint32_t*)(src + OFFSET(x == 0? width-1 : x-1, y)) ) );
-                w[6] = ULONG( *( (uint32_t*)(src + OFFSET(x == width-1? 0 : x+1, y)) ) );
+                w[4] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x == 0? width-1 : x-1, y)) ) );
+                w[6] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x == width-1? 0 : x+1, y)) ) );
             }
             else
             {
                 if(x != 0)
-                    w[4] = ULONG( *( (uint32_t*)(src + OFFSET(x-1, y)) ) );
+                    w[4] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x-1, y)) ) );
                 else
                     w[4] = w[5];
 
                 if(x != width-1)
-                    w[6] = ULONG( *( (uint32_t*)(src + OFFSET(x+1, y)) ) );
+                    w[6] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x+1, y)) ) );
                 else
                     w[6] = w[5];
             }
@@ -322,18 +322,18 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
             // Vertical neighbors.
             if(wrapV)
             {
-                w[2] = ULONG( *( (uint32_t*)(src + OFFSET(x, y == 0? height-1 : y-1)) ) );
-                w[8] = ULONG( *( (uint32_t*)(src + OFFSET(x, y == height-1? 0 : y+1)) ) );
+                w[2] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x, y == 0? height-1 : y-1)) ) );
+                w[8] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x, y == height-1? 0 : y+1)) ) );
             }
             else
             {
                 if(y != 0)
-                    w[2] = ULONG( *( (uint32_t*)(src + OFFSET(x, y-1)) ) );
+                    w[2] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x, y-1)) ) );
                 else
                     w[2] = w[5];
 
                 if(y != height-1)
-                    w[8] = ULONG( *( (uint32_t*)(src + OFFSET(x, y+1)) ) );
+                    w[8] = DD_ULONG( *( (uint32_t*)(src + OFFSET(x, y+1)) ) );
                 else
                     w[8] = w[5];
             }
@@ -344,10 +344,10 @@ uint8_t* GL_SmartFilterHQ2x(const uint8_t* src, int width, int height, int flags
             yA =        y == 0? ( wrapV? height-1 : 0) : y-1;
             yB = y == height-1? (!wrapV? height-1 : 0) : y+1;
 
-            w[1] = ULONG( *( (uint32_t*)(src + OFFSET(xA, yA)) ) );
-            w[7] = ULONG( *( (uint32_t*)(src + OFFSET(xA, yB)) ) );
-            w[3] = ULONG( *( (uint32_t*)(src + OFFSET(xB, yA)) ) );
-            w[9] = ULONG( *( (uint32_t*)(src + OFFSET(xB, yB)) ) );
+            w[1] = DD_ULONG( *( (uint32_t*)(src + OFFSET(xA, yA)) ) );
+            w[7] = DD_ULONG( *( (uint32_t*)(src + OFFSET(xA, yB)) ) );
+            w[3] = DD_ULONG( *( (uint32_t*)(src + OFFSET(xB, yA)) ) );
+            w[9] = DD_ULONG( *( (uint32_t*)(src + OFFSET(xB, yB)) ) );
 
             pattern = 0;
             flag = 1;

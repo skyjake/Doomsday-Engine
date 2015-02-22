@@ -74,13 +74,13 @@ namespace internal {
 
     ACS_COMMAND(PushNumber)
     {
-        interp.locals.push(LONG(*interp.pcodePtr++));
+        interp.locals.push(DD_LONG(*interp.pcodePtr++));
         return Continue;
     }
 
     ACS_COMMAND(LSpec1)
     {
-        int special = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
         specArgs[0] = interp.locals.pop();
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side, interp.activator);
 
@@ -89,7 +89,7 @@ namespace internal {
 
     ACS_COMMAND(LSpec2)
     {
-        int special = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
         specArgs[1] = interp.locals.pop();
         specArgs[0] = interp.locals.pop();
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side, interp.activator);
@@ -99,7 +99,7 @@ namespace internal {
 
     ACS_COMMAND(LSpec3)
     {
-        int special = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
         specArgs[2] = interp.locals.pop();
         specArgs[1] = interp.locals.pop();
         specArgs[0] = interp.locals.pop();
@@ -110,7 +110,7 @@ namespace internal {
 
     ACS_COMMAND(LSpec4)
     {
-        int special = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
         specArgs[3] = interp.locals.pop();
         specArgs[2] = interp.locals.pop();
         specArgs[1] = interp.locals.pop();
@@ -122,7 +122,7 @@ namespace internal {
 
     ACS_COMMAND(LSpec5)
     {
-        int special = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
         specArgs[4] = interp.locals.pop();
         specArgs[3] = interp.locals.pop();
         specArgs[2] = interp.locals.pop();
@@ -136,8 +136,8 @@ namespace internal {
 
     ACS_COMMAND(LSpec1Direct)
     {
-        int special = LONG(*interp.pcodePtr++);
-        specArgs[0] = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
+        specArgs[0] = DD_LONG(*interp.pcodePtr++);
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side,
                              interp.activator);
 
@@ -146,9 +146,9 @@ namespace internal {
 
     ACS_COMMAND(LSpec2Direct)
     {
-        int special = LONG(*interp.pcodePtr++);
-        specArgs[0] = LONG(*interp.pcodePtr++);
-        specArgs[1] = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
+        specArgs[0] = DD_LONG(*interp.pcodePtr++);
+        specArgs[1] = DD_LONG(*interp.pcodePtr++);
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side,
                              interp.activator);
 
@@ -157,10 +157,10 @@ namespace internal {
 
     ACS_COMMAND(LSpec3Direct)
     {
-        int special = LONG(*interp.pcodePtr++);
-        specArgs[0] = LONG(*interp.pcodePtr++);
-        specArgs[1] = LONG(*interp.pcodePtr++);
-        specArgs[2] = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
+        specArgs[0] = DD_LONG(*interp.pcodePtr++);
+        specArgs[1] = DD_LONG(*interp.pcodePtr++);
+        specArgs[2] = DD_LONG(*interp.pcodePtr++);
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side,
                              interp.activator);
 
@@ -169,11 +169,11 @@ namespace internal {
 
     ACS_COMMAND(LSpec4Direct)
     {
-        int special = LONG(*interp.pcodePtr++);
-        specArgs[0] = LONG(*interp.pcodePtr++);
-        specArgs[1] = LONG(*interp.pcodePtr++);
-        specArgs[2] = LONG(*interp.pcodePtr++);
-        specArgs[3] = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
+        specArgs[0] = DD_LONG(*interp.pcodePtr++);
+        specArgs[1] = DD_LONG(*interp.pcodePtr++);
+        specArgs[2] = DD_LONG(*interp.pcodePtr++);
+        specArgs[3] = DD_LONG(*interp.pcodePtr++);
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side,
                              interp.activator);
 
@@ -182,12 +182,12 @@ namespace internal {
 
     ACS_COMMAND(LSpec5Direct)
     {
-        int special = LONG(*interp.pcodePtr++);
-        specArgs[0] = LONG(*interp.pcodePtr++);
-        specArgs[1] = LONG(*interp.pcodePtr++);
-        specArgs[2] = LONG(*interp.pcodePtr++);
-        specArgs[3] = LONG(*interp.pcodePtr++);
-        specArgs[4] = LONG(*interp.pcodePtr++);
+        int special = DD_LONG(*interp.pcodePtr++);
+        specArgs[0] = DD_LONG(*interp.pcodePtr++);
+        specArgs[1] = DD_LONG(*interp.pcodePtr++);
+        specArgs[2] = DD_LONG(*interp.pcodePtr++);
+        specArgs[3] = DD_LONG(*interp.pcodePtr++);
+        specArgs[4] = DD_LONG(*interp.pcodePtr++);
         P_ExecuteLineSpecial(special, specArgs, interp.line, interp.side,
                              interp.activator);
 
@@ -269,169 +269,169 @@ namespace internal {
 
     ACS_COMMAND(AssignScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] = interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] = interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(AssignMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] = interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] = interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(AssignWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] = interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] = interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(PushScriptVar)
     {
-        interp.locals.push(interp.args[LONG(*interp.pcodePtr++)]);
+        interp.locals.push(interp.args[DD_LONG(*interp.pcodePtr++)]);
         return Continue;
     }
 
     ACS_COMMAND(PushMapVar)
     {
-        interp.locals.push(interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)]);
+        interp.locals.push(interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)]);
         return Continue;
     }
 
     ACS_COMMAND(PushWorldVar)
     {
-        interp.locals.push(interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)]);
+        interp.locals.push(interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)]);
         return Continue;
     }
 
     ACS_COMMAND(AddScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] += interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] += interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(AddMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] += interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] += interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(AddWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] += interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] += interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(SubScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] -= interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] -= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(SubMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] -= interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] -= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(SubWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] -= interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] -= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(MulScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] *= interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] *= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(MulMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] *= interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] *= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(MulWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] *= interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] *= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(DivScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] /= interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] /= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(DivMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] /= interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] /= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(DivWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] /= interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] /= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(ModScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)] %= interp.locals.pop();
+        interp.args[DD_LONG(*interp.pcodePtr++)] %= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(ModMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)] %= interp.locals.pop();
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)] %= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(ModWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)] %= interp.locals.pop();
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)] %= interp.locals.pop();
         return Continue;
     }
 
     ACS_COMMAND(IncScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)]++;
+        interp.args[DD_LONG(*interp.pcodePtr++)]++;
         return Continue;
     }
 
     ACS_COMMAND(IncMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)]++;
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)]++;
         return Continue;
     }
 
     ACS_COMMAND(IncWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)]++;
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)]++;
         return Continue;
     }
 
     ACS_COMMAND(DecScriptVar)
     {
-        interp.args[LONG(*interp.pcodePtr++)]--;
+        interp.args[DD_LONG(*interp.pcodePtr++)]--;
         return Continue;
     }
 
     ACS_COMMAND(DecMapVar)
     {
-        interp.scriptSys().mapVars[LONG(*interp.pcodePtr++)]--;
+        interp.scriptSys().mapVars[DD_LONG(*interp.pcodePtr++)]--;
         return Continue;
     }
 
     ACS_COMMAND(DecWorldVar)
     {
-        interp.scriptSys().worldVars[LONG(*interp.pcodePtr++)]--;
+        interp.scriptSys().worldVars[DD_LONG(*interp.pcodePtr++)]--;
         return Continue;
     }
 
     ACS_COMMAND(Goto)
     {
-        interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+        interp.pcodePtr = (int *) (interp.scriptSys().pcode() + DD_LONG(*interp.pcodePtr));
         return Continue;
     }
 
@@ -439,7 +439,7 @@ namespace internal {
     {
         if(interp.locals.pop())
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + DD_LONG(*interp.pcodePtr));
         }
         else
         {
@@ -462,7 +462,7 @@ namespace internal {
 
     ACS_COMMAND(DelayDirect)
     {
-        interp.delayCount = LONG(*interp.pcodePtr++);
+        interp.delayCount = DD_LONG(*interp.pcodePtr++);
         return Stop;
     }
 
@@ -476,8 +476,8 @@ namespace internal {
 
     ACS_COMMAND(RandomDirect)
     {
-        int low  = LONG(*interp.pcodePtr++);
-        int high = LONG(*interp.pcodePtr++);
+        int low  = DD_LONG(*interp.pcodePtr++);
+        int high = DD_LONG(*interp.pcodePtr++);
         interp.locals.push(low + (P_Random() % (high - low + 1)));
         return Continue;
     }
@@ -496,8 +496,8 @@ namespace internal {
 
     ACS_COMMAND(ThingCountDirect)
     {
-        int type = LONG(*interp.pcodePtr++);
-        int tid  = LONG(*interp.pcodePtr++);
+        int type = DD_LONG(*interp.pcodePtr++);
+        int tid  = DD_LONG(*interp.pcodePtr++);
         // Anything to count?
         if(type + tid)
         {
@@ -514,7 +514,7 @@ namespace internal {
 
     ACS_COMMAND(TagWaitDirect)
     {
-        interp.script().waitForSector(LONG(*interp.pcodePtr++));
+        interp.script().waitForSector(DD_LONG(*interp.pcodePtr++));
         return Stop;
     }
 
@@ -526,7 +526,7 @@ namespace internal {
 
     ACS_COMMAND(PolyWaitDirect)
     {
-        interp.script().waitForPolyobj(LONG(*interp.pcodePtr++));
+        interp.script().waitForPolyobj(DD_LONG(*interp.pcodePtr++));
         return Stop;
     }
 
@@ -557,9 +557,9 @@ namespace internal {
 
     ACS_COMMAND(ChangeFloorDirect)
     {
-        int tag = LONG(*interp.pcodePtr++);
+        int tag = DD_LONG(*interp.pcodePtr++);
 
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(DD_LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -607,9 +607,9 @@ namespace internal {
 
     ACS_COMMAND(ChangeCeilingDirect)
     {
-        int tag = LONG(*interp.pcodePtr++);
+        int tag = DD_LONG(*interp.pcodePtr++);
 
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(DD_LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -700,7 +700,7 @@ namespace internal {
         }
         else
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + DD_LONG(*interp.pcodePtr));
         }
         return Continue;
     }
@@ -719,7 +719,7 @@ namespace internal {
 
     ACS_COMMAND(ScriptWaitDirect)
     {
-        interp.script().waitForScript(LONG(*interp.pcodePtr++));
+        interp.script().waitForScript(DD_LONG(*interp.pcodePtr++));
         return Stop;
     }
 
@@ -734,9 +734,9 @@ namespace internal {
 
     ACS_COMMAND(CaseGoto)
     {
-        if(interp.locals.top() == LONG(*interp.pcodePtr++))
+        if(interp.locals.top() == DD_LONG(*interp.pcodePtr++))
         {
-            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int *) (interp.scriptSys().pcode() + DD_LONG(*interp.pcodePtr));
             interp.locals.drop();
         }
         else
@@ -1106,7 +1106,7 @@ void Interpreter::think()
             return;
         }
 
-        while((action = findCommand(LONG(*pcodePtr++))(*this)) == Continue)
+        while((action = findCommand(DD_LONG(*pcodePtr++))(*this)) == Continue)
         {}
     }
 

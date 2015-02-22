@@ -244,7 +244,7 @@ DENG2_PIMPL(Model)
         uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
         for(uint8_t const *pos = commandData; *pos;)
         {
-            int count = LONG( *(int *) pos ); pos += 4;
+            int count = DD_LONG( *(int *) pos ); pos += 4;
 
             lod0.primitives.append(Model::Primitive());
             Model::Primitive &prim = lod0.primitives.last();
@@ -264,7 +264,7 @@ DENG2_PIMPL(Model)
                 prim.elements.append(Model::Primitive::Element());
                 Model::Primitive::Element &elem = prim.elements.last();
                 elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
-                elem.index    = LONG(v->index);
+                elem.index    = DD_LONG(v->index);
             }
         }
         M_Free(commandData);
@@ -365,31 +365,31 @@ DENG2_PIMPL(Model)
         file.read((uint8_t *)&chunk, sizeof(chunk));
 
         dmd_info_t info; zap(info);
-        while(LONG(chunk.type) != DMC_END)
+        while(DD_LONG(chunk.type) != DMC_END)
         {
-            switch(LONG(chunk.type))
+            switch(DD_LONG(chunk.type))
             {
             case DMC_INFO: // Standard DMD information chunk.
-                file.read((uint8_t *)&info, LONG(chunk.length));
+                file.read((uint8_t *)&info, DD_LONG(chunk.length));
 
-                info.skinWidth       = LONG(info.skinWidth);
-                info.skinHeight      = LONG(info.skinHeight);
-                info.frameSize       = LONG(info.frameSize);
-                info.numSkins        = LONG(info.numSkins);
-                info.numVertices     = LONG(info.numVertices);
-                info.numTexCoords    = LONG(info.numTexCoords);
-                info.numFrames       = LONG(info.numFrames);
-                info.numLODs         = LONG(info.numLODs);
-                info.offsetSkins     = LONG(info.offsetSkins);
-                info.offsetTexCoords = LONG(info.offsetTexCoords);
-                info.offsetFrames    = LONG(info.offsetFrames);
-                info.offsetLODs      = LONG(info.offsetLODs);
-                info.offsetEnd       = LONG(info.offsetEnd);
+                info.skinWidth       = DD_LONG(info.skinWidth);
+                info.skinHeight      = DD_LONG(info.skinHeight);
+                info.frameSize       = DD_LONG(info.frameSize);
+                info.numSkins        = DD_LONG(info.numSkins);
+                info.numVertices     = DD_LONG(info.numVertices);
+                info.numTexCoords    = DD_LONG(info.numTexCoords);
+                info.numFrames       = DD_LONG(info.numFrames);
+                info.numLODs         = DD_LONG(info.numLODs);
+                info.offsetSkins     = DD_LONG(info.offsetSkins);
+                info.offsetTexCoords = DD_LONG(info.offsetTexCoords);
+                info.offsetFrames    = DD_LONG(info.offsetFrames);
+                info.offsetLODs      = DD_LONG(info.offsetLODs);
+                info.offsetEnd       = DD_LONG(info.offsetEnd);
                 break;
 
             default:
                 // Skip unknown chunks.
-                file.seek(LONG(chunk.length), SeekCur);
+                file.seek(DD_LONG(chunk.length), SeekCur);
                 break;
             }
             // Read the next chunk header.
@@ -430,7 +430,7 @@ DENG2_PIMPL(Model)
                               * scale + translation;
                 vtx.pos.y *= aspectScale; // Aspect undo.
 
-                vtx.norm = unpackVector(USHORT(pVtx->normal));
+                vtx.norm = unpackVector(DD_USHORT(pVtx->normal));
 
                 if(!k)
                 {
@@ -454,10 +454,10 @@ DENG2_PIMPL(Model)
         {
             file.read((uint8_t *)&lodInfo[i], sizeof(dmd_levelOfDetail_t));
 
-            lodInfo[i].numTriangles     = LONG(lodInfo[i].numTriangles);
-            lodInfo[i].numGlCommands    = LONG(lodInfo[i].numGlCommands);
-            lodInfo[i].offsetTriangles  = LONG(lodInfo[i].offsetTriangles);
-            lodInfo[i].offsetGlCommands = LONG(lodInfo[i].offsetGlCommands);
+            lodInfo[i].numTriangles     = DD_LONG(lodInfo[i].numTriangles);
+            lodInfo[i].numGlCommands    = DD_LONG(lodInfo[i].numGlCommands);
+            lodInfo[i].offsetTriangles  = DD_LONG(lodInfo[i].offsetTriangles);
+            lodInfo[i].offsetGlCommands = DD_LONG(lodInfo[i].offsetGlCommands);
         }
 
         dmd_triangle_t **triangles = new dmd_triangle_t*[info.numLODs];
@@ -474,7 +474,7 @@ DENG2_PIMPL(Model)
                                                             4 * lodInfo[i].numGlCommands);
             for(uint8_t const *pos = commandData; *pos;)
             {
-                int count = LONG( *(int *) pos ); pos += 4;
+                int count = DD_LONG( *(int *) pos ); pos += 4;
 
                 lod.primitives.append(Primitive());
                 Primitive &prim = lod.primitives.last();
@@ -495,7 +495,7 @@ DENG2_PIMPL(Model)
                     Primitive::Element &elem = prim.elements.last();
 
                     elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
-                    elem.index    = LONG(v->index);
+                    elem.index    = DD_LONG(v->index);
                 }
             }
             M_Free(commandData);
@@ -509,7 +509,7 @@ DENG2_PIMPL(Model)
         for(int k = 0; k < lodInfo[i].numTriangles; ++k)
         for(int m = 0; m < 3; ++m)
         {
-            int vertexIndex = SHORT(triangles[i][k].vertexIndices[m]);
+            int vertexIndex = DD_SHORT(triangles[i][k].vertexIndices[m]);
             mdl->d->lodVertexUsage.setBit(vertexIndex * info.numLODs + i);
         }
 
@@ -609,7 +609,7 @@ static bool recogniseDmd(FileHandle &file)
     size_t initPos = file.tell();
     // Seek to the start of the header.
     file.seek(0, SeekSet);
-    bool result = (readHeaderDmd(file, hdr) && LONG(hdr.magic) == DMD_MAGIC);
+    bool result = (readHeaderDmd(file, hdr) && DD_LONG(hdr.magic) == DMD_MAGIC);
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
     return result;
@@ -621,7 +621,7 @@ static bool recogniseMd2(FileHandle &file)
     size_t initPos = file.tell();
     // Seek to the start of the header.
     file.seek(0, SeekSet);
-    bool result = (readMd2Header(file, hdr) && LONG(hdr.magic) == MD2_MAGIC);
+    bool result = (readMd2Header(file, hdr) && DD_LONG(hdr.magic) == MD2_MAGIC);
     // Return the stream to its original position.
     file.seek(initPos, SeekSet);
     return result;
