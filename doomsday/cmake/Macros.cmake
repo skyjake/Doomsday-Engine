@@ -95,6 +95,17 @@ macro (relaxed_warnings target)
     endif ()
 endmacro (relaxed_warnings)
 
+# Apply cotire to improve build efficiency.
+macro (deng_cotire target precompiledHeader)
+    if (DENG_ENABLE_COTIRE)
+        set_target_properties (${target} PROPERTIES 
+            COTIRE_ADD_UNITY_BUILD        FALSE
+            COTIRE_CXX_PREFIX_HEADER_INIT ${precompiledHeader}
+        )
+        cotire (${target})
+    endif ()
+endmacro (deng_cotire)
+
 macro (deng_target_rpath target)
     if (APPLE)
         set_target_properties (${target} PROPERTIES
@@ -351,6 +362,9 @@ function (deng_add_application target)
         install (TARGETS ${target} DESTINATION bin)
         install (FILES ${pkgs} DESTINATION ${DENG_INSTALL_DATA_DIR})
     endif ()
+    if (WIN32)
+        set_property (TARGET ${target} PROPERTY WIN32_EXECUTABLE ON)
+    endif ()
     deng_target_defaults (${target})
     set_property (TARGET ${target} PROPERTY FOLDER Apps)
     if (target MATCHES "test_.*")
@@ -539,6 +553,8 @@ endfunction (deng_install_tool)
 # Install an external library that exists at configuration time.
 # Used to deploy third-party libraries of dependencies. `library` is the
 # full path to the shared library to install.
+# Not applicable to OS X because libraries are not installed but instead
+# bundled with the applicatino.
 macro (deng_install_library library)
     if (UNIX AND NOT APPLE)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})            

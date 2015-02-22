@@ -30,3 +30,5 @@ if (TARGET LibOVR)
 endif ()
 
 deng_deploy_library (libappfw DengAppfw)
+
+deng_cotire (libappfw src/precompiled.h)

@@ -1,8 +1,8 @@
 if (WIN32 AND NOT TARGET DirectX)
     find_library (DIRECTX_GUID_LIBRARY dxguid
-        HINTS 
-            ${DIRECTX_DIR}
-            # TODO: look in the registry?
+        PATHS ${DIRECTX_DIR}
+        HINTS ENV DXSDK_DIR
+        # TODO: look in the registry?
         PATH_SUFFIXES Lib/x86 x86
     )
     mark_as_advanced (DIRECTX_GUID_LIBRARY)

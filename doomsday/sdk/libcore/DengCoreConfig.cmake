@@ -1,4 +1,3 @@
-find_package (ZLIB)
 find_package (Qt5Core)
 find_package (Qt5Network)
 

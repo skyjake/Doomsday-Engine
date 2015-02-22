@@ -19,3 +19,5 @@ deng_add_library (libshell ${SOURCES} ${HEADERS})
 target_link_libraries (libshell Deng::libcore)
 
 deng_deploy_library (libshell DengShell)
+
+deng_cotire (libshell src/precompiled.h)

@@ -49,3 +49,5 @@ target_link_libraries (libcore
 )
 
 deng_deploy_library (libcore DengCore)
+
+deng_cotire (libcore src/precompiled.h)

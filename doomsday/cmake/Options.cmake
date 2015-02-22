@@ -1,4 +1,5 @@
 option (DENG_ENABLE_GUI "Enable/disable the client and all GUI related functionality" ON)
+option (DENG_ENABLE_COTIRE "Enable/disable precompiled headers (cotire) for faster builds" ON)
 
 option (DENG_FIXED_ASM 
     "Use inline assembler for fixed-point math"

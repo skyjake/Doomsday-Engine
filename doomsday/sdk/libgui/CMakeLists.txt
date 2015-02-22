@@ -77,3 +77,5 @@ if (DENG_X11)
 endif ()
 
 deng_deploy_library (libgui DengGui)
+
+deng_cotire (libgui src/precompiled.h)

@@ -12,8 +12,6 @@ if (TARGET fmodex)
     get_property (libPath TARGET fmodex PROPERTY INTERFACE_LINK_LIBRARIES)
     if (APPLE)
         deng_find_resources (${libPath},Frameworks)
-    else ()
-        install (FILES ${libPath} DESTINATION ${DENG_INSTALL_PLUGIN_DIR})
     endif ()
     
     append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSFMOD_DEBUG")    

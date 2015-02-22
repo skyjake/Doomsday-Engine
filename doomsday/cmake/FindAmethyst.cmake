@@ -1,6 +1,6 @@
 if (NOT AMETHYST_COMMAND)
     find_program (AMETHYST_COMMAND amethyst 
-        HINTS
+        PATHS
             /usr/local/bin
             /usr/bin
             ${AMETHYST_DIR}

@@ -10,14 +10,14 @@ if (NOT TARGET assimp)
             set (ASSIMP_LIBRARIES assimp)
         endif ()
         find_library (LIBASSIMP ${ASSIMP_LIBRARIES} 
-            HINTS 
+            PATHS
                 ${ASSIMP_LIBRARY_DIRS}
                 /usr/local/lib
         )
     else ()
         # Try to find assimp manually.
         find_library (LIBASSIMP assimp
-            HINTS ${DENG_EXTERNAL_SOURCE_DIR}/assimp
+            PATHS ${DENG_EXTERNAL_SOURCE_DIR}/assimp
             PATH_SUFFIXES lib/Release lib/Debug lib
         )        
     endif ()

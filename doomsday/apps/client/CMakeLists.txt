@@ -124,3 +124,5 @@ else ()
     deng_install_deployqt (client)
 endif ()
 
+deng_cotire (client include/precompiled.h)
+

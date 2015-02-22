@@ -285,3 +285,5 @@ target_link_libraries (server
 )
 
 deng_install_tool (server)
+
+deng_cotire (server include/precompiled.h)
