@@ -110,7 +110,7 @@ append (CMAKE_CXX_FLAGS_DEBUG "-DDENG_DSFLUIDSYNTH_DEBUG")
 include_directories (include)
 file (GLOB src src/*.cpp include/*.h)
 
-deng_add_plugin (${tgt} ${src} ${SOURCES})
+deng_add_plugin (${tgt} ${src} ${SOURCES} api/dsfluidsynth.def)
 
 # Additional compiler options.
 if (DENG_FLUIDSYNTH_EMBEDDED)

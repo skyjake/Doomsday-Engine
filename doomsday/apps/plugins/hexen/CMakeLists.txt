@@ -14,4 +14,4 @@ file (GLOB SOURCES src/*.c src/*.cpp include/*.h)
 
 deng_find_resources (libhexen.pk3)
 
-deng_add_plugin (hexen ${SOURCES} ${COMMON_SOURCES})
+deng_add_plugin (hexen ${SOURCES} ${COMMON_SOURCES} api/hexen.def)

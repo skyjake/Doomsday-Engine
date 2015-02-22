@@ -22,6 +22,6 @@ if (OPENAL_FOUND)
     include_directories (SYSTEM ${OPENAL_INCLUDE_DIR})
         
     file (GLOB SOURCES src/*.cpp include/*.h)
-    deng_add_plugin (audio_openal ${SOURCES})
+    deng_add_plugin (audio_openal ${SOURCES} api/dsopenal.def)
     target_link_libraries (audio_openal PRIVATE ${OPENAL_LIBRARY})
 endif ()

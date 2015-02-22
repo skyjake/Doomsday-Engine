@@ -7,4 +7,4 @@ include (../PluginConfig.cmake)
 
 include_directories (include)
 
-deng_add_plugin (example src/example.c include/version.h)
+deng_add_plugin (example src/example.c include/version.h api/example.def)

@@ -519,10 +519,14 @@ function (deng_install_deployqt target)
         if (NOT WINDEPLOYQT_COMMAND)
             message (FATAL_ERROR "windeployqt not available")            
         endif ()
+        set (script "${CMAKE_CURRENT_BINARY_DIR}/deploy-${target}.bat")
+        string (REPLACE "/" "\\" qtPath ${QT_PREFIX_DIR})
+        file (WRITE ${script} "
+            set PATH=${qtPath}\\bin
+            windeployqt --no-translations \"${CMAKE_INSTALL_PREFIX}/bin/${_outName}.exe\"
+        ")
         install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
-            execute_process (COMMAND ${WINDEPLOYQT_COMMAND} --no-translations 
-                \"${CMAKE_INSTALL_PREFIX}/bin/${_outName}.exe\" )")
-               # OUTPUT_QUIET ERROR_QUIET)")
+            execute_process (COMMAND ${script} OUTPUT_QUIET ERROR_QUIET)")
     endif ()
 endfunction (deng_install_deployqt)
 
