@@ -19,16 +19,14 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"           // IS_CLIENT
 #include "acs/module.h"
 
 #include <QList>
 #include <QMap>
 #include <QVector>
-#include <de/ISerializable>
 #include <de/Log>
-#include <de/NativePath>
-#include "acs/interpreter.h"
-#include "acs/script.h"
+#include "acs/interpreter.h"  // ACS_INTERPRETER_MAX_SCRIPT_ARGS
 #include "gamesession.h"
 
 using namespace de;
@@ -39,15 +37,15 @@ DENG2_PIMPL_NOREF(Module)
 {
     Block pcode;
     QVector<EntryPoint> entryPoints;
-    QMap<int, EntryPoint *> entryPointsByScriptNumber;
+    QMap<int, EntryPoint *> epByScriptNumberLut;
     QList<String> constants;
 
-    void buildEntryPointsByScriptNumber()
+    void buildEntryPointLut()
     {
-        entryPointsByScriptNumber.clear();
+        epByScriptNumberLut.clear();
         for(auto &ep : entryPoints)
         {
-            entryPointsByScriptNumber.insert(ep.scriptNumber, &ep);
+            epByScriptNumberLut.insert(ep.scriptNumber, &ep);
         }
     }
 };
@@ -121,7 +119,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
 #undef OPEN_SCRIPTS_BASE
     }
     // Prepare a ScriptNumber => EntryPoint LUT.
-    module->d->buildEntryPointsByScriptNumber();
+    module->d->buildEntryPointLut();
 
     // Read constant (string-)values.
     dint32 numConstants;
@@ -177,12 +175,12 @@ int Module::entryPointCount() const
 
 bool Module::hasEntryPoint(int scriptNumber) const
 {
-    return d->entryPointsByScriptNumber.contains(scriptNumber);
+    return d->epByScriptNumberLut.contains(scriptNumber);
 }
 
 Module::EntryPoint const &Module::entryPoint(int scriptNumber) const
 {
-    if(hasEntryPoint(scriptNumber)) return *d->entryPointsByScriptNumber[scriptNumber];
+    if(hasEntryPoint(scriptNumber)) return *d->epByScriptNumberLut[scriptNumber];
     /// @throw MissingEntryPointError  Invalid script number specified.
     throw MissingEntryPointError("acs::Module::entryPoint", "Unknown script #" + String::number(scriptNumber));
 }
