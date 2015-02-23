@@ -262,12 +262,12 @@ DENG2_PIMPL(OculusRift)
 
         // Configure OpenGL.
         ovrGLConfig cfg;
-        cfg.OGL.Header.API         = ovrRenderAPI_OpenGL;
-        cfg.OGL.Header.RTSize      = hmd->Resolution;
-        cfg.OGL.Header.Multisample = buf.sampleCount();
+        cfg.OGL.Header.API            = ovrRenderAPI_OpenGL;
+        cfg.OGL.Header.BackBufferSize = hmd->Resolution;
+        cfg.OGL.Header.Multisample    = buf.sampleCount();
 #ifdef WIN32
-        cfg.OGL.Window             = (HWND) window->nativeHandle();
-        cfg.OGL.DC                 = wglGetCurrentDC();
+        cfg.OGL.Window                = (HWND) window->nativeHandle();
+        cfg.OGL.DC                    = wglGetCurrentDC();
 #endif
         if(!ovrHmd_ConfigureRendering(hmd, &cfg.Config, distortionCaps, fov, render))
         {

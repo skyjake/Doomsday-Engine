@@ -1,3 +1,6 @@
+# This is the version of LibOVR that is required.
+set (LIBOVR_REQUIRED_VERSION 0.4.4)
+
 set (LIBOVR_DIR "" CACHE PATH "Location of the LibOVR library (in the Oculus SDK)")
 
 set (_oldPath ${LIBOVR_OVR_H})
@@ -12,7 +15,19 @@ mark_as_advanced (LIBOVR_OVR_H)
 
 if (NOT _oldPath STREQUAL LIBOVR_OVR_H)
     if (LIBOVR_OVR_H)
-        message (STATUS "Looking for LibOVR - found")
+        # Check the version.
+        get_filename_component (ovrDir "${LIBOVR_OVR_H}" DIRECTORY)
+        file (READ ${ovrDir}/OVR_Version.h _ovrVersionHeader)
+        string (REGEX MATCH ".*#define OVR_VERSION_STRING \"([0-9\\.-]+)\".*" _match 
+            ${_ovrVersionHeader}
+        )
+        set (ovrVersion ${CMAKE_MATCH_1})
+        set (_match)
+        set (_ovrVersionHeader)
+        message (STATUS "Looking for LibOVR - found version ${ovrVersion}")
+        if (NOT ovrVersion VERSION_EQUAL LIBOVR_REQUIRED_VERSION)
+            message (WARNING "LibOVR ${LIBOVR_REQUIRED_VERSION} is required!")
+        endif ()
     else ()
         message (STATUS "Looking for LibOVR - not found (set the LIBOVR_DIR variable)")
     endif ()
