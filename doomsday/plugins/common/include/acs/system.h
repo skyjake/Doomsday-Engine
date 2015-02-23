@@ -30,9 +30,8 @@
 #  include <de/Block>
 #  include <de/Reader>
 #  include <de/Writer>
-#  include <doomsday/filesys/file.h>
 #  include <doomsday/uri.h>
-#  include "acs/interpreter.h"
+#  include "acs/module.h"
 #  include "acs/script.h"
 #  include "mapstatereader.h"
 #  include "mapstatewriter.h"
@@ -51,14 +50,8 @@ public:  /// @todo make private:
     std::array<int, 64> worldVars;
 
 public:
-    /// Failed to load bytecode data from source. @ingroup errors
-    DENG2_ERROR(LoadError);
-
     /// Required/referenced script is missing. @ingroup errors
     DENG2_ERROR(MissingScriptError);
-
-    /// Required/referenced string-constant is missing. @ingroup errors
-    DENG2_ERROR(MissingStringError);
 
 public:
     System();
@@ -69,20 +62,20 @@ public:
      */
     void reset();
 
-    /**
-     * Returns @c true if data @a file appears to be valid ACS bytecode.
-     */
-    static bool recognizeBytecode(/*de::IByteArray const &data*/ de::File1 const &file);
+public:  // Modules: -----------------------------------------------------------
 
     /**
-     * Loads ACS @a bytecode (a copy is made).
+     * Discard the currently loaded ACS code module and attempt to load the module
+     * associated with the given @a mapUri reference.
      */
-    void loadBytecode(de::Block const &bytecode);
+    void loadModuleForMap(de::Uri const &mapUri);
 
     /**
-     * Loads ACS bytecode from the specified @a file.
+     * Provides readonly access to the currently loaded bytecode module.
      */
-    void loadBytecodeFromFile(de::File1 const &file);
+    Module const &module() const;
+
+public:  // Scripts: -----------------------------------------------------------
 
     /**
      * Returns the total number of script entry points in the loaded bytecode.
@@ -92,7 +85,7 @@ public:
     /**
      * Returns @c true iff @a scriptNumber is a known entry point.
      */
-    bool hasScript(int scriptNumber);
+    bool hasScript(int scriptNumber) const;
 
     /**
      * Lookup the Script info for the given @a scriptNumber.
@@ -115,15 +108,7 @@ public:
      */
     bool deferScriptStart(de::Uri const &mapUri, int scriptNumber, Script::Args const &args);
 
-    /**
-     * Provides readonly access to the loaded bytecode.
-     */
-    de::Block const &pcode() const;
-
-    /**
-     * Provides readonly access to a string constant from the loaded bytecode.
-     */
-    de::String stringConstant(int stringNumber) const;
+public:  // (De)serialization: -------------------------------------------------
 
     de::Block serializeWorldState() const;
     void readWorldState(de::Reader &from);

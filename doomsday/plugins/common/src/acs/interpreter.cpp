@@ -34,8 +34,8 @@
 
 using namespace de;
 
-namespace internal {
-
+namespace internal
+{
     /// Status to return from ACScript command functions.
     enum CommandResult
     {
@@ -431,7 +431,7 @@ namespace internal {
 
     ACS_COMMAND(Goto)
     {
-        interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
+        interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + LONG(*interp.pcodePtr));
         return Continue;
     }
 
@@ -439,7 +439,7 @@ namespace internal {
     {
         if(interp.locals.pop())
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + LONG(*interp.pcodePtr));
         }
         else
         {
@@ -532,7 +532,7 @@ namespace internal {
 
     ACS_COMMAND(ChangeFloor)
     {
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -559,7 +559,7 @@ namespace internal {
     {
         int tag = LONG(*interp.pcodePtr++);
 
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -582,7 +582,7 @@ namespace internal {
 
     ACS_COMMAND(ChangeCeiling)
     {
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -609,7 +609,7 @@ namespace internal {
     {
         int tag = LONG(*interp.pcodePtr++);
 
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(LONG(*interp.pcodePtr++)).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Flats", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -700,7 +700,7 @@ namespace internal {
         }
         else
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + LONG(*interp.pcodePtr));
         }
         return Continue;
     }
@@ -736,7 +736,7 @@ namespace internal {
     {
         if(interp.locals.top() == LONG(*interp.pcodePtr++))
         {
-            interp.pcodePtr = (int const *) (interp.scriptSys().pcode().constData() + LONG(*interp.pcodePtr));
+            interp.pcodePtr = (int const *) (interp.scriptSys().module().pcode().constData() + LONG(*interp.pcodePtr));
             interp.locals.drop();
         }
         else
@@ -789,7 +789,7 @@ namespace internal {
 
     ACS_COMMAND(PrintString)
     {
-        printBuffer += interp.scriptSys().stringConstant(interp.locals.pop());
+        printBuffer += interp.scriptSys().module().constant(interp.locals.pop());
         return Continue;
     }
 
@@ -862,7 +862,7 @@ namespace internal {
         }
         int volume = interp.locals.pop();
 
-        S_StartSoundAtVolume(S_GetSoundID(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData()),
+        S_StartSoundAtVolume(S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()),
                              emitter, volume / 127.0f);
         return Continue;
     }
@@ -870,7 +870,7 @@ namespace internal {
     ACS_COMMAND(ThingSound)
     {
         int volume   = interp.locals.pop();
-        int sound    = S_GetSoundID(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData());
+        int sound    = S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData());
         int tid      = interp.locals.pop();
         int searcher = -1;
 
@@ -905,7 +905,7 @@ namespace internal {
             }
         }
 
-        int sound = S_GetSoundID(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData());
+        int sound = S_GetSoundID(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData());
         S_StartSoundAtVolume(sound, emitter, volume / 127.0f);
 
         return Continue;
@@ -919,7 +919,7 @@ namespace internal {
             auto *sector = (Sector *) P_GetPtrp(interp.line, DMU_FRONT_SECTOR);
             emitter = (mobj_t *) P_GetPtrp(sector, DMU_EMITTER);
         }
-        SN_StartSequenceName(emitter, interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData());
+        SN_StartSequenceName(emitter, interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData());
 
         return Continue;
     }
@@ -930,7 +930,7 @@ namespace internal {
 #define TEXTURE_MIDDLE 1
 #define TEXTURE_BOTTOM 2
 
-        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().stringConstant(interp.locals.pop()).toUtf8().constData()));
+        AutoStr *path = Str_PercentEncode(AutoStr_FromTextStd(interp.scriptSys().module().constant(interp.locals.pop()).toUtf8().constData()));
         uri_s *uri = Uri_NewWithPath3("Textures", Str_Text(path));
 
         Material *mat = (Material *) P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(uri));
@@ -1070,7 +1070,7 @@ namespace acs {
 thinker_t *Interpreter::newThinker(Script &script, Script::Args const &scriptArgs,
     mobj_t *activator, Line *line, int side, int delayCount)
 {
-    Script::EntryPoint const &ep = script.entryPoint();
+    Module::EntryPoint const &ep = script.entryPoint();
 
     Interpreter *th = (Interpreter *) Z_Calloc(sizeof(*th), PU_MAP, nullptr);
     th->thinker.function = (thinkfunc_t) acs_Interpreter_Think;
@@ -1187,7 +1187,7 @@ void Interpreter::write(MapStateWriter *msw) const
     {
         Writer_WriteInt32(writer, args[i]);
     }
-    Writer_WriteInt32(writer, ((dbyte const *)pcodePtr) - (dbyte const *)scriptSys().pcode().constData());
+    Writer_WriteInt32(writer, ((dbyte const *)pcodePtr) - (dbyte const *)scriptSys().module().pcode().constData());
 }
 
 int Interpreter::read(MapStateReader *msr)
@@ -1242,7 +1242,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int const *) (scriptSys().pcode().constData() + Reader_ReadInt32(reader));
+        pcodePtr = (int const *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
     }
     else
     {
@@ -1282,7 +1282,7 @@ int Interpreter::read(MapStateReader *msr)
             args[i] = Reader_ReadInt32(reader);
         }
 
-        pcodePtr = (int const *) (scriptSys().pcode().constData() + Reader_ReadInt32(reader));
+        pcodePtr = (int const *) (scriptSys().module().pcode().constData() + Reader_ReadInt32(reader));
     }
 
     thinker.function = (thinkfunc_t) acs_Interpreter_Think;

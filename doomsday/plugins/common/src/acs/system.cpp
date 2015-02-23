@@ -25,38 +25,45 @@
 #include <de/Log>
 #include <de/NativePath>
 #include "acs/interpreter.h"
+#include "acs/module.h"
 #include "acs/script.h"
 #include "gamesession.h"
 
 using namespace de;
 
-namespace internal
+namespace acs {
+
+DENG2_PIMPL(System)
 {
+    std::unique_ptr<Module> currentModule;
+    QList<Script *> scripts;  ///< Scripts for the current module (if any).
+
     /**
-     * A deferred task is enqueued when a script is started on a map not currently loaded.
+     * When a script must be started on a map that is not currently loaded -
+     * a deferred task is enqueued.
      */
-    class DeferredTask : public ISerializable
+    class ScriptStartTask : public ISerializable
     {
     public:
         de::Uri mapUri;                ///< Unique identifier of the target map.
         dint32 scriptNumber;           ///< Script number to execute on the target map.
         acs::Script::Args scriptArgs;
 
-        DeferredTask() : scriptNumber(-1) {}
-        DeferredTask(de::Uri const &mapUri, dint32 scriptNumber, acs::Script::Args const &scriptArgs)
+        ScriptStartTask() : scriptNumber(-1) {}
+        ScriptStartTask(de::Uri const &mapUri, dint32 scriptNumber, acs::Script::Args const &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
         {}
-        DeferredTask(DeferredTask const &other)
+        ScriptStartTask(ScriptStartTask const &other)
             : mapUri      (other.mapUri)
             , scriptNumber(other.scriptNumber)
             , scriptArgs  (other.scriptArgs)
         {}
 
-        static DeferredTask *newFromReader(de::Reader &from)
+        static ScriptStartTask *newFromReader(de::Reader &from)
         {
-            std::unique_ptr<DeferredTask> task(new DeferredTask);
+            std::unique_ptr<ScriptStartTask> task(new ScriptStartTask);
             from >> *task;
             return task.release();
         }
@@ -79,37 +86,62 @@ namespace internal
             for(dbyte &arg : scriptArgs) from >> arg;
         }
     };
-
-}  // namespace internal
-using namespace internal;
-
-namespace acs {
-
-DENG2_PIMPL(System)
-{
-    Block pcode;  ///< Loaded bytecode (if any).
-    QList<Script *> scripts;
-    QList<String> strings;
-
-    QList<DeferredTask *> deferredTasks;
+    QList<ScriptStartTask *> tasks;
 
     Instance(Public *i) : Base(i) {}
     ~Instance()
     {
-        clearDeferredTasks();
-        clearBytecode();
+        clearScripts();
+        clearTasks();
     }
 
-    void clearDeferredTasks()
+    void loadModule(Block const &bytecode)
     {
-        qDeleteAll(deferredTasks); deferredTasks.clear();
-    }
+        // Only one module may be loaded at once...
+        clearScripts();
 
-    void runDeferredTasks(de::Uri const &mapUri)
-    {
-        for(int i = 0; i < deferredTasks.count(); ++i)
+        // Attempt to load the new module.
+        currentModule.reset(Module::newFromBytecode(bytecode));
+
+        // Make scripts.
+        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
         {
-            DeferredTask *task = deferredTasks[i];
+            scripts << new Script(ep);
+            return LoopContinue;
+        });
+    }
+
+    void loadModuleFromFile(de::File1 const &file)
+    {
+        // Only one module may be loaded at once...
+        clearScripts();
+
+        // Attempt to load the new module.
+        currentModule.reset(Module::newFromFile(file));
+
+        // Make scripts.
+        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
+        {
+            scripts << new Script(ep);
+            return LoopContinue;
+        });
+    }
+
+    void clearScripts()
+    {
+        qDeleteAll(scripts); scripts.clear();
+    }
+
+    void clearTasks()
+    {
+        qDeleteAll(tasks); tasks.clear();
+    }
+
+    void runAllTasks(de::Uri const &mapUri)
+    {
+        for(int i = 0; i < tasks.count(); ++i)
+        {
+            ScriptStartTask *task = tasks[i];
             if(task->mapUri != mapUri) continue;
 
             if(self.hasScript(task->scriptNumber))
@@ -122,83 +154,8 @@ DENG2_PIMPL(System)
                 LOG_SCR_WARNING("Unknown script #%i") << task->scriptNumber;
             }
 
-            delete deferredTasks.takeAt(i);
+            delete tasks.takeAt(i);
             i -= 1;
-        }
-    }
-
-    void clearBytecode()
-    {
-        pcode.clear();
-        qDeleteAll(scripts); scripts.clear();
-        strings.clear();
-    }
-
-    void loadBytecode(Block const &bytecode)
-    {
-        clearBytecode();
-
-        // Copy the complete bytecode data into a local buffer (we'll be randomly
-        // accessing this frequently).
-        pcode = bytecode;
-
-        de::Reader from(pcode);
-        dint32 magic, scriptInfoOffset;
-        from >> magic >> scriptInfoOffset;
-
-        // Read script entry point info.
-        from.seek(scriptInfoOffset - from.offset());
-        dint32 numScripts;
-        from >> numScripts;
-        for(dint32 i = 0; i < numScripts; ++i)
-        {
-#define OPEN_SCRIPTS_BASE 1000
-
-            Script::EntryPoint ep;
-
-            from >> ep.scriptNumber;
-            if(ep.scriptNumber >= OPEN_SCRIPTS_BASE)
-            {
-                ep.scriptNumber -= OPEN_SCRIPTS_BASE;
-                ep.startWhenMapBegins = true;
-            }
-
-            dint32 offset;
-            from >> offset;
-            if(offset > pcode.size())
-            {
-                throw LoadError("acs::System::loadBytecode", "Invalid script entrypoint offset");
-            }
-            ep.pcodePtr = (int const *)(pcode.constData() + offset);
-
-            from >> ep.scriptArgCount;
-            if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
-            {
-                throw LoadError("acs::System::loadBytecode", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
-            }
-
-            scripts << new Script(ep/*make a copy*/);
-
-#undef OPEN_SCRIPTS_BASE
-        }
-
-        // Read string constant values.
-        dint32 numStrings;
-        from >> numStrings;
-        QVector<dint32> stringOffsets;
-        stringOffsets.reserve(numStrings);
-        for(dint32 i = 0; i < numStrings; ++i)
-        {
-            dint32 offset;
-            from >> offset;
-            stringOffsets << offset;
-        }
-        for(auto const &offset : stringOffsets)
-        {
-            Block utf;
-            from.setOffset(offset);
-            from.readUntil(utf, 0);
-            strings << String::fromUtf8(utf);
         }
     }
 };
@@ -209,56 +166,51 @@ System::System() : d(new Instance(this))
     worldVars.fill(0);
 }
 
-bool System::recognizeBytecode(File1 const &file) // static
-{
-    if(file.size() <= 4) return false;
-
-    // ACS bytecode begins with the magic identifier "ACS".
-    Block magic(4);
-    const_cast<File1 &>(file).read(magic.data(), 0, 4);
-    if(!magic.startsWith("ACS")) return false;
-
-    // ZDoom uses the fourth byte for versioning of their extended formats.
-    // Currently such formats are not supported.
-    return magic.at(3) == 0;
-}
-
-void System::loadBytecode(Block const &bytecode)
-{
-    DENG2_ASSERT(!IS_CLIENT);
-    LOG_AS("acs::System");
-    try
-    {
-        d->loadBytecode(bytecode);
-    }
-    catch(IByteArray::OffsetError const &er)
-    {
-        d->clearBytecode();
-        throw LoadError("acs::System::loadBytecode", er.asText());
-    }
-}
-
-void System::loadBytecodeFromFile(File1 const &file)
-{
-    DENG2_ASSERT(!IS_CLIENT);
-    LOG_AS("acs::System");
-    LOG_SCR_VERBOSE("Loading bytecode from %s:%s...")
-            << NativePath(file.container().composePath()).pretty()
-            << file.name();
-
-    // Buffer the whole file.
-    Block bytecode(file.size());
-    const_cast<File1 &>(file).read(bytecode.data());
-
-    loadBytecode(bytecode);
-}
-
 void System::reset()
 {
-    worldVars.fill(0);
+    d->clearTasks();
+    d->clearScripts();
+    d->currentModule.release();
     mapVars.fill(0);
-    d->clearDeferredTasks();
-    d->clearBytecode();
+    worldVars.fill(0);
+}
+
+void System::loadModuleForMap(de::Uri const &mapUri)
+{
+#if __JHEXEN__
+    if(IS_CLIENT) return;
+
+    if(mapUri.isEmpty()) return;
+
+    /// @todo Should be using MapDef here...
+    lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
+    lumpnum_t bytecodeLumpNum        = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
+    if(!CentralLumpIndex().hasLump(bytecodeLumpNum)) return;
+
+    de::File1 &file = CentralLumpIndex()[bytecodeLumpNum];
+    if(!Module::recognize(file)) return;
+
+    try
+    {
+        d->loadModuleFromFile(file);
+    }
+    catch(Module::FormatError const &er)
+    {
+        // Empty file / invalid bytecode.
+        LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode\n")
+                << NativePath(file.container().composePath())
+                << file.name()
+                << er.asText();
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+}
+
+Module const &System::module() const
+{
+    DENG2_ASSERT(bool( d->currentModule ));
+    return *d->currentModule;
 }
 
 int System::scriptCount() const
@@ -266,7 +218,7 @@ int System::scriptCount() const
     return d->scripts.count();
 }
 
-bool System::hasScript(int scriptNumber)
+bool System::hasScript(int scriptNumber) const
 {
     for(Script const *script : d->scripts)
     {
@@ -313,7 +265,7 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
         return true;
 
     // Don't allow duplicates.
-    for(DeferredTask const *task : d->deferredTasks)
+    for(Instance::ScriptStartTask const *task : d->tasks)
     {
         if(task->scriptNumber == scriptNumber &&
            task->mapUri       == mapUri)
@@ -323,23 +275,8 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
     }
 
     // Add it to the store to be started when that map is next entered.
-    d->deferredTasks << new DeferredTask(mapUri, scriptNumber, scriptArgs);
+    d->tasks << new Instance::ScriptStartTask(mapUri, scriptNumber, scriptArgs);
     return true;
-}
-
-Block const &System::pcode() const
-{
-    return d->pcode;
-}
-
-String System::stringConstant(int stringNumber) const
-{
-    if(stringNumber >= 0 && stringNumber < d->strings.count())
-    {
-        return d->strings[stringNumber];
-    }
-    /// @throw MissingStringError  Invalid string-constant number specified.
-    throw MissingStringError("acs::System::stringConstant", "Unknown string-constant #" + String::number(stringNumber));
 }
 
 de::Block System::serializeWorldState() const
@@ -348,11 +285,11 @@ de::Block System::serializeWorldState() const
     de::Writer writer(data);
 
     // Write the world-global variable namespace.
-    for(int const &var : worldVars) writer << var;
+    for(auto const &var : worldVars) writer << var;
 
     // Write the deferred task queue.
-    writer << d->deferredTasks.count();
-    for(DeferredTask const *task : d->deferredTasks) writer << *task;
+    writer << d->tasks.count();
+    for(auto const *task : d->tasks) writer << *task;
 
     return data;
 }
@@ -360,15 +297,15 @@ de::Block System::serializeWorldState() const
 void System::readWorldState(de::Reader &from)
 {
     // Read the world-global variable namespace.
-    for(int &var : worldVars) from >> var;
+    for(auto &var : worldVars) from >> var;
 
     // Read the deferred task queue.
-    d->clearDeferredTasks();
-    int numDeferredTasks;
-    from >> numDeferredTasks;
-    for(int i = 0; i < numDeferredTasks; ++i)
+    d->clearTasks();
+    int numTasks;
+    from >> numTasks;
+    for(int i = 0; i < numTasks; ++i)
     {
-        d->deferredTasks << DeferredTask::newFromReader(from);
+        d->tasks << Instance::ScriptStartTask::newFromReader(from);
     }
 }
 
@@ -377,10 +314,10 @@ void System::writeMapState(MapStateWriter *msw) const
     writer_s *writer = msw->writer();
 
     // Write each script state.
-    for(Script const *script : d->scripts) script->write(writer);
+    for(auto const *script : d->scripts) script->write(writer);
 
     // Write each variable.
-    for(int const &var : mapVars) Writer_WriteInt32(writer, var);
+    for(auto const &var : mapVars) Writer_WriteInt32(writer, var);
 }
 
 void System::readMapState(MapStateReader *msr)
@@ -388,16 +325,16 @@ void System::readMapState(MapStateReader *msr)
     reader_s *reader = msr->reader();
 
     // Read each script state.
-    for(Script *script : d->scripts) script->read(reader);
+    for(auto *script : d->scripts) script->read(reader);
 
     // Read each variable.
-    for(int &var : mapVars) var = Reader_ReadInt32(reader);
+    for(auto &var : mapVars) var = Reader_ReadInt32(reader);
 }
 
 void System::runDeferredTasks(de::Uri const &mapUri)
 {
     LOG_AS("acs::System");
-    d->runDeferredTasks(mapUri);
+    d->runAllTasks(mapUri);
 }
 
 void System::worldSystemMapChanged()
