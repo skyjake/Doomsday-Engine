@@ -203,8 +203,8 @@ DENG2_PIMPL(Model)
         for(int i = 0; i < hdr.numFrames; ++i)
         {
             md2_packedFrame_t const *pfr = (md2_packedFrame_t const *) (frameData + hdr.frameSize * i);
-            Vector3f const scale(FLOAT(pfr->scale[0]), FLOAT(pfr->scale[2]), FLOAT(pfr->scale[1]));
-            Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
+            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
             ModelFrame *frame = new ModelFrame(*mdl, frameName);
@@ -263,7 +263,7 @@ DENG2_PIMPL(Model)
 
                 prim.elements.append(Model::Primitive::Element());
                 Model::Primitive::Element &elem = prim.elements.last();
-                elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
+                elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                 elem.index    = DD_LONG(v->index);
             }
         }
@@ -412,8 +412,8 @@ DENG2_PIMPL(Model)
         for(int i = 0; i < info.numFrames; ++i)
         {
             dmd_packedFrame_t const *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
-            Vector3f const scale(FLOAT(pfr->scale[0]), FLOAT(pfr->scale[2]), FLOAT(pfr->scale[1]));
-            Vector3f const translation(FLOAT(pfr->translate[0]), FLOAT(pfr->translate[2]), FLOAT(pfr->translate[1]));
+            Vector3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
+            Vector3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
 
             Frame *frame = new Frame(*mdl, frameName);
@@ -494,7 +494,7 @@ DENG2_PIMPL(Model)
                     prim.elements.append(Primitive::Element());
                     Primitive::Element &elem = prim.elements.last();
 
-                    elem.texCoord = Vector2f(FLOAT(v->s), FLOAT(v->t));
+                    elem.texCoord = Vector2f(DD_FLOAT(v->s), DD_FLOAT(v->t));
                     elem.index    = DD_LONG(v->index);
                 }
             }
