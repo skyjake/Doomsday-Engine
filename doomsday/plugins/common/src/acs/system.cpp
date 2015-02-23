@@ -95,10 +95,16 @@ DENG2_PIMPL(System)
         clearTasks();
     }
 
+    void unloadModule()
+    {
+        clearScripts();
+        currentModule.release();
+    }
+
     void loadModule(Block const &bytecode)
     {
         // Only one module may be loaded at once...
-        clearScripts();
+        unloadModule();
 
         // Attempt to load the new module.
         currentModule.reset(Module::newFromBytecode(bytecode));
@@ -114,7 +120,7 @@ DENG2_PIMPL(System)
     void loadModuleFromFile(de::File1 const &file)
     {
         // Only one module may be loaded at once...
-        clearScripts();
+        unloadModule();
 
         // Attempt to load the new module.
         currentModule.reset(Module::newFromFile(file));
