@@ -15,7 +15,7 @@ if (NOT _oldPath STREQUAL FMOD_FMOD_H)
     if (FMOD_FMOD_H)
         message (STATUS "Looking for FMOD Ex - found")
     else ()
-        message (STATUS "Looking for FMOD Ex - not found")
+        message (STATUS "Looking for FMOD Ex - not found (set the FMOD_DIR variable)")
     endif ()
 endif ()
 

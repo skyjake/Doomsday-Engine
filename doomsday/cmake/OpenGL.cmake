@@ -7,7 +7,7 @@ if (NOT TARGET opengl)
     )
     mark_as_advanced (OPENGL_GLEXT_H)
     if (NOT OPENGL_GLEXT_H)
-        message (FATAL_ERROR "OpenGL \"GL/glext.h\" header not found.")
+        message (FATAL_ERROR "OpenGL \"GL/glext.h\" header not found. Set the OPENGL_DIR variable to specify the location of the OpenGL headers.")
     endif ()
     
     get_filename_component (glIncDir ${OPENGL_GLEXT_H} DIRECTORY)    

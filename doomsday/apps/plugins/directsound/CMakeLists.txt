@@ -11,4 +11,6 @@ if (TARGET EAX2)
 
     deng_add_plugin (audio_directsound ${SOURCES})
     target_link_libraries (audio_directsound PRIVATE DirectX EAX2)
+else ()	
+	message (STATUS "audio_directsound will not be built because EAX2 is missing.")
 endif ()
