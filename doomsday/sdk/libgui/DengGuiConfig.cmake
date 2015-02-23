@@ -1,7 +1,10 @@
+find_package (Qt5 COMPONENTS Gui OpenGL REQUIRED)
 find_package (DengCore REQUIRED)
-find_package (Qt5Gui REQUIRED)
-find_package (Qt5OpenGL REQUIRED)
 
-include ("${CMAKE_CURRENT_LIST_DIR}/DengGui.cmake")
+# Deng::libgui may exist in the current build, in which case using 
+# a previously installed version is inappropriate.
+if (NOT TARGET Deng::libgui)
+    include ("${CMAKE_CURRENT_LIST_DIR}/DengGui.cmake")
+endif ()
 
 list (APPEND DENG_REQUIRED_PACKAGES net.dengine.stdlib.gui)
