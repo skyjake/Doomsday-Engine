@@ -118,7 +118,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
 
 #undef OPEN_SCRIPTS_BASE
     }
-    // Prepare a ScriptNumber => EntryPoint LUT.
+    // Prepare a script-number => EntryPoint LUT.
     module->d->buildEntryPointLut();
 
     // Read constant (string-)values.

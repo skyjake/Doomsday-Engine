@@ -45,20 +45,15 @@ DENG2_PIMPL(System)
     class ScriptStartTask : public ISerializable
     {
     public:
-        de::Uri mapUri;                ///< Unique identifier of the target map.
-        dint32 scriptNumber;           ///< Script number to execute on the target map.
-        acs::Script::Args scriptArgs;
+        de::Uri mapUri;           ///< Unique identifier of the target map.
+        dint32 scriptNumber;      ///< Script number to execute on the target map.
+        Script::Args scriptArgs;
 
         ScriptStartTask() : scriptNumber(-1) {}
-        ScriptStartTask(de::Uri const &mapUri, dint32 scriptNumber, acs::Script::Args const &scriptArgs)
+        ScriptStartTask(de::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
-        {}
-        ScriptStartTask(ScriptStartTask const &other)
-            : mapUri      (other.mapUri)
-            , scriptNumber(other.scriptNumber)
-            , scriptArgs  (other.scriptArgs)
         {}
 
         static ScriptStartTask *newFromReader(de::Reader &from)
@@ -175,8 +170,7 @@ System::System() : d(new Instance(this))
 void System::reset()
 {
     d->clearTasks();
-    d->clearScripts();
-    d->currentModule.release();
+    d->unloadModule();
     mapVars.fill(0);
     worldVars.fill(0);
 }
