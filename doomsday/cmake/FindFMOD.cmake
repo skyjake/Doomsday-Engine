@@ -3,10 +3,9 @@ set (FMOD_DIR "" CACHE PATH "Location of the FMOD Programmer's API SDK")
 set (_oldPath ${FMOD_FMOD_H})
 
 find_file (FMOD_FMOD_H api/inc/fmod.h
-    PATHS 
-        "${FMOD_DIR}"
-        "${FMOD_DIR}/FMOD"        
-        "${FMOD_DIR}/FMOD Programmers API"
+    PATHS "${FMOD_DIR}"
+    HINTS ENV DENG_DEPEND_PATH
+    PATH_SUFFIXES "FMOD" "FMOD Programmers API"
     NO_DEFAULT_PATH
 )
 mark_as_advanced (FMOD_FMOD_H)
@@ -19,7 +18,7 @@ if (NOT _oldPath STREQUAL FMOD_FMOD_H)
     endif ()
 endif ()
 
-if (NOT FMOD_FMOD_H STREQUAL "FMOD_FMOD_H-NOTFOUND" AND NOT TARGET fmodex)
+if (FMOD_FMOD_H AND NOT TARGET fmodex)
     get_filename_component (fmodInc "${FMOD_FMOD_H}" DIRECTORY)
     get_filename_component (fmodApi "${fmodInc}" DIRECTORY)
 

@@ -2,6 +2,7 @@
 if (NOT QMAKE)
     find_program (QMAKE qmake-qt5 qt5-qmake qmake
         PATHS ENV PATH
+        HINTS ENV DENG_DEPEND_PATH
         DOC "Path of the qmake executable to use"
     ) 
 endif ()

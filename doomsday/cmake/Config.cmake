@@ -71,5 +71,7 @@ endif ()
 set (Python_ADDITIONAL_VERSIONS 2.7)
 find_package (PythonInterp REQUIRED)
 
-include (cotire)
+if (DENG_ENABLE_COTIRE)
+    include (cotire)
+endif ()
 include (LegacyPK3s)

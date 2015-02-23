@@ -6,7 +6,12 @@ if (PKG_CONFIG_FOUND)
 elseif (WIN32)
     # Try to locate SDL2 from the local system (assuming Windows).
     set (_oldPath ${SDL2_LIBRARY})
-    find_library (SDL2_LIBRARY SDL2 HINTS ${SDL2_DIR} PATH_SUFFIXES lib/x86 lib)    
+    file (GLOB _hints ${SDL2_DIR}/SDL2*)
+    find_library (SDL2_LIBRARY SDL2 
+        PATHS ${SDL2_DIR} 
+        HINTS ${_hints} ENV DENG_DEPEND_PATH
+        PATH_SUFFIXES lib/x86 lib
+    )
     mark_as_advanced (SDL2_LIBRARY)
     if (NOT SDL2_LIBRARY)
         message (FATAL_ERROR "SDL2 not found. Set the SDL2_DIR variable to help locate it.\n")
@@ -28,8 +33,10 @@ elseif (WIN32)
     
     # Also attempt to locate SLD2_mixer.
     set (_oldPath ${SDL_MIXER_LIBRARY})
+    file (GLOB _hints ${SDL2_DIR}/SDL2_mixer* ${SDL2_MIXER_DIR}/SDL2_mixer*)
     find_library (SDL2_MIXER_LIBRARY SDL2_mixer
-        HINTS ${SDL2_DIR} ${SDL2_MIXER_DIR}
+        PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
+        HINTS ${_hints} ENV DENG_DEPEND_PATH
         PATH_SUFFIXES lib/x86 lib
     )    
     mark_as_advanced (SDL2_MIXER_LIBRARY)

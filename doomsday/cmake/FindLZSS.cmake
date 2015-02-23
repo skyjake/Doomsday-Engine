@@ -6,6 +6,7 @@ if (TARGET lzss)
 endif ()
 
 if (WIN32)
+    # Use the prebuilt library.
     add_library (lzss INTERFACE)
     target_include_directories (lzss INTERFACE "${DENG_LZSS_DIR}/portable/include")
     target_link_libraries (lzss INTERFACE "${DENG_LZSS_DIR}/win32/lzss.lib")

@@ -3,10 +3,9 @@ set (LIBOVR_DIR "" CACHE PATH "Location of the LibOVR library (in the Oculus SDK
 set (_oldPath ${LIBOVR_OVR_H})
 
 find_file (LIBOVR_OVR_H Include/OVR.h
-    PATHS 
-        "${LIBOVR_DIR}"
-        "${LIBOVR_DIR}/LibOVR"
-        "${LIBOVR_DIR}/OculusSDK/LibOVR"
+    PATHS "${LIBOVR_DIR}" 
+    HINTS ENV DENG_DEPEND_PATH
+    PATH_SUFFIXES LibOVR OculusSDK/LibOVR
     NO_DEFAULT_PATH
 )
 mark_as_advanced (LIBOVR_OVR_H)
@@ -15,11 +14,11 @@ if (NOT _oldPath STREQUAL LIBOVR_OVR_H)
     if (LIBOVR_OVR_H)
         message (STATUS "Looking for LibOVR - found")
     else ()
-        message (STATUS "Looking for LibOVR - not found")
+        message (STATUS "Looking for LibOVR - not found (set the LIBOVR_DIR variable)")
     endif ()
 endif ()
 
-if (NOT LIBOVR_OVR_H STREQUAL "LIBOVR_OVR_H-NOTFOUND")
+if (LIBOVR_OVR_H)
     if (NOT TARGET LibOVR)
         get_filename_component (ovrDir "${LIBOVR_OVR_H}" DIRECTORY)
         get_filename_component (ovrDir "${ovrDir}" DIRECTORY)
