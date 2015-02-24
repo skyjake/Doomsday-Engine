@@ -1444,15 +1444,15 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
-    target->height /= 2*2;
+    target->height /= 2 * 2;
+
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
     {
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
-            Game_ACScriptSystem_StartScript(target->special, 0/*current-map*/,
-                                            NULL, target, NULL, 0);
+            Game_ACScriptSystem_StartScript(target->special, NULL, target, NULL, 0);
         }
         else
         {

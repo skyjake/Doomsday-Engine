@@ -4231,7 +4231,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        Game_ACScriptSystem_StartScript(249, 0/*current-map*/, NULL, actor, NULL, 0);
+        Game_ACScriptSystem_StartScript(249, NULL, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4305,7 +4305,7 @@ void C_DECL A_KoraxBonePop(mobj_t *actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    Game_ACScriptSystem_StartScript(255, 0/*current-map*/, NULL, actor, NULL, 0); // Death script.
+    Game_ACScriptSystem_StartScript(255, NULL, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4450,36 +4450,24 @@ void C_DECL A_KoraxMissile(mobj_t* mo)
 /**
  * Call action code scripts (250-254).
  */
-void C_DECL A_KoraxCommand(mobj_t* mo)
+void C_DECL A_KoraxCommand(mobj_t *mob)
 {
-    int numScripts, scriptNumber = -1;
-    coord_t pos[3];
+    int numScripts, scriptNumber;
+    vec3d_t offset, pos;
     uint an;
 
-    S_StartSound(SFX_KORAX_COMMAND, mo);
+    S_StartSound(SFX_KORAX_COMMAND, mob);
 
     // Shoot stream of lightning to ceiling.
-    an = (mo->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+    an = (mob->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+    V3d_Set(offset, KORAX_COMMAND_OFFSET * FIX2FLT(finecosine[an]),
+                    KORAX_COMMAND_OFFSET * FIX2FLT(finesine  [an]),
+                    KORAX_COMMAND_HEIGHT);
+    V3d_Sum(pos, mob->origin, offset);
+    P_SpawnMobj(MT_KORAX_BOLT, pos, mob->angle, 0);
 
-    pos[VX] = mo->origin[VX];
-    pos[VY] = mo->origin[VY];
-    pos[VZ] = mo->origin[VZ];
-
-    pos[VX] += KORAX_COMMAND_OFFSET * FIX2FLT(finecosine[an]);
-    pos[VY] += KORAX_COMMAND_OFFSET * FIX2FLT(finesine[an]);
-    pos[VZ] += KORAX_COMMAND_HEIGHT;
-
-    P_SpawnMobj(MT_KORAX_BOLT, pos, mo->angle, 0);
-
-    if(mo->health <= mo->info->spawnHealth / 2)
-    {
-        numScripts = 5;
-    }
-    else
-    {
-        numScripts = 4;
-    }
-
+    // Start a randomly chosen script.
+    numScripts = (mob->health <= mob->info->spawnHealth / 2)? 5 : 4;
     switch(P_Random() % numScripts)
     {
     case 0: scriptNumber = 250; break;
@@ -4488,9 +4476,7 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     case 3: scriptNumber = 253; break;
     case 4: scriptNumber = 254; break;
     }
-
-    DENG_ASSERT(scriptNumber >= 0);
-    Game_ACScriptSystem_StartScript(scriptNumber, 0/*current-map*/, NULL, mo, NULL, 0);
+    Game_ACScriptSystem_StartScript(scriptNumber, NULL, mob, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

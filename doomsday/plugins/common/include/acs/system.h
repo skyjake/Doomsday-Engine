@@ -157,8 +157,8 @@ acs::System &Game_ACScriptSystem();
 extern "C" {
 #endif
 
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, Uri const *mapUri,
-    byte const args[4], struct mobj_s *activator, Line *line, int side);
+dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[4],
+    struct mobj_s *activator, Line *line, int side);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -433,20 +433,14 @@ acs::System &Game_ACScriptSystem()
 
 // C wrapper API: --------------------------------------------------------------
 
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, uri_s const *mapUri_,
-    byte const args[], mobj_t *activator, Line *line, int side)
+dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[],
+    mobj_t *activator, Line *line, int side)
 {
-    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
-    acs::Script::Args scriptArgs(args, 4);
-
-    if(!mapUri || COMMON_GAMESESSION->mapUri() == *mapUri)
+    if(scriptSys.hasScript(scriptNumber))
     {
-        if(scriptSys.hasScript(scriptNumber))
-        {
-            return scriptSys.script(scriptNumber).start(scriptArgs, activator, line, side);
-        }
-        return false;
+        return scriptSys.script(scriptNumber)
+                            .start(acs::Script::Args(args, 4), activator,
+                                   line, side);
     }
-
-    return scriptSys.deferScriptStart(*mapUri, scriptNumber, scriptArgs);
+    return false;
 }

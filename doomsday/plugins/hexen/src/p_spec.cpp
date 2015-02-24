@@ -420,10 +420,30 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         }
         break;
 
+    case 83: // ACS_LockedExecute
+
+        // Only players can operate locks.
+        if(!mo->player) break;
+
+        // Is a lock in effect?
+        if(int lock = args[4])
+        {
+            // Does the player possess the necessary key(s)?
+            if(!(mo->player->keys & (1 << (lock - 1))))
+            {
+                auto const msg = String("You need the ") + String(GET_TXT(TextKeyMessages[lock - 1]));
+                P_SetMessage(mo->player, 0, msg.toUtf8().constData());
+                S_StartSound(SFX_DOOR_LOCKED, mo);
+                break;
+            }
+        }
+
+        // Intentional fall-through.
+
     case 80: /* ACS_Execute */ {
-        int scriptNumber = args[0];
-        de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
-        acs::Script::Args scriptArgs(&args[2], 3);
+        int const scriptNumber = args[0];
+        de::Uri const mapUri   = getMapUriForWarpNumber(args[1]);
+        acs::Script::Args const scriptArgs(&args[2], 3);
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
             if(acScriptSys().hasScript(scriptNumber))
@@ -438,8 +458,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break; }
 
     case 81: /* ACS_Suspend */ {
-        int scriptNumber = args[0];
-        //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        int const scriptNumber = args[0];
         if(acScriptSys().hasScript(scriptNumber))
         {
             success = acScriptSys().script(scriptNumber).suspend();
@@ -447,42 +466,10 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break; }
 
     case 82: /* ACS_Terminate */ {
-        int scriptNumber = args[0];
-        //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
+        int const scriptNumber = args[0];
         if(acScriptSys().hasScript(scriptNumber))
         {
             success = acScriptSys().script(scriptNumber).terminate();
-        }
-        break; }
-
-    case 83: /* ACS_LockedExecute */ {
-        if(!mo->player) break;
-
-        if(int lock = args[4])
-        {
-            if(!(mo->player->keys & (1 << (lock - 1))))
-            {
-                char LockedBuffer[80];
-                sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
-                P_SetMessage(mo->player, 0, LockedBuffer);
-                S_StartSound(SFX_DOOR_LOCKED, mo);
-                break;
-            }
-        }
-
-        int scriptNumber = args[0];
-        de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
-        acs::Script::Args scriptArgs(args, 4);
-        if(COMMON_GAMESESSION->mapUri() == mapUri)
-        {
-            if(acScriptSys().hasScript(scriptNumber))
-            {
-                success = acScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
-            }
-        }
-        else
-        {
-            success = acScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
         }
         break; }
 
