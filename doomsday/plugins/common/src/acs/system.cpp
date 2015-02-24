@@ -288,7 +288,7 @@ de::Block System::serializeWorldState() const
     for(auto const &var : worldVars) writer << var;
 
     // Write the deferred task queue.
-    writer << d->tasks.count();
+    writer << dint32( d->tasks.count() );
     for(auto const *task : d->tasks) writer << *task;
 
     return data;
@@ -301,9 +301,9 @@ void System::readWorldState(de::Reader &from)
 
     // Read the deferred task queue.
     d->clearTasks();
-    int numTasks;
+    dint32 numTasks;
     from >> numTasks;
-    for(int i = 0; i < numTasks; ++i)
+    for(dint32 i = 0; i < numTasks; ++i)
     {
         d->tasks << Instance::ScriptStartTask::newFromReader(from);
     }

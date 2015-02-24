@@ -46,8 +46,8 @@ namespace acs {
 class System
 {
 public:  /// @todo make private:
-    std::array<int, 32> mapVars;
-    std::array<int, 64> worldVars;
+    std::array<de::dint32, 32> mapVars;
+    std::array<de::dint32, 64> worldVars;
 
 public:
     /// Required/referenced script is missing. @ingroup errors
