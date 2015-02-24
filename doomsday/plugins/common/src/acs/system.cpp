@@ -86,8 +86,8 @@ DENG2_PIMPL(System)
     Instance(Public *i) : Base(i) {}
     ~Instance()
     {
-        clearScripts();
         clearTasks();
+        unloadModule();
     }
 
     void unloadModule()
@@ -96,41 +96,20 @@ DENG2_PIMPL(System)
         currentModule.release();
     }
 
-    void loadModule(Block const &bytecode)
-    {
-        // Only one module may be loaded at once...
-        unloadModule();
-
-        // Attempt to load the new module.
-        currentModule.reset(Module::newFromBytecode(bytecode));
-
-        // Make scripts.
-        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
-        {
-            scripts << new Script(ep);
-            return LoopContinue;
-        });
-    }
-
-    void loadModuleFromFile(de::File1 const &file)
-    {
-        // Only one module may be loaded at once...
-        unloadModule();
-
-        // Attempt to load the new module.
-        currentModule.reset(Module::newFromFile(file));
-
-        // Make scripts.
-        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
-        {
-            scripts << new Script(ep);
-            return LoopContinue;
-        });
-    }
-
     void clearScripts()
     {
         qDeleteAll(scripts); scripts.clear();
+    }
+
+    void makeScripts()
+    {
+        clearScripts();
+
+        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
+        {
+            scripts << new Script(ep);
+            return LoopContinue;
+        });
     }
 
     void clearTasks()
@@ -180,19 +159,24 @@ void System::loadModuleForMap(de::Uri const &mapUri)
 #if __JHEXEN__
     if(IS_CLIENT) return;
 
+    // Only one module may be loaded at once...
+    d->unloadModule();
+
     if(mapUri.isEmpty()) return;
 
     /// @todo Should be using MapDef here...
-    lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
-    lumpnum_t bytecodeLumpNum        = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
-    if(!CentralLumpIndex().hasLump(bytecodeLumpNum)) return;
+    lumpnum_t const markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
+    lumpnum_t moduleLumpNum       = markerLumpNum + 11 /*ML_BEHAVIOR*/;
+    if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
 
-    de::File1 &file = CentralLumpIndex()[bytecodeLumpNum];
+    de::File1 &file = CentralLumpIndex()[moduleLumpNum];
     if(!Module::recognize(file)) return;
 
+    // Attempt to load the new module.
     try
     {
-        d->loadModuleFromFile(file);
+        d->currentModule.reset(Module::newFromFile(file));
+        d->makeScripts();
     }
     catch(Module::FormatError const &er)
     {
