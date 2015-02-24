@@ -47,7 +47,7 @@
 using namespace de;
 using namespace common;
 
-static inline acs::System &acsScriptSys()
+static inline acs::System &acScriptSys()
 {
     return Game_ACScriptSystem();
 }
@@ -426,32 +426,32 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         acs::Script::Args scriptArgs(&args[2], 3);
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
-            if(acsScriptSys().hasScript(scriptNumber))
+            if(acScriptSys().hasScript(scriptNumber))
             {
-               success = acsScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
+               success = acScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
             }
         }
         else
         {
-            success = acsScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
+            success = acScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
         }
         break; }
 
     case 81: /* ACS_Suspend */ {
         int scriptNumber = args[0];
         //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
-        if(acsScriptSys().hasScript(scriptNumber))
+        if(acScriptSys().hasScript(scriptNumber))
         {
-            success = acsScriptSys().script(scriptNumber).suspend();
+            success = acScriptSys().script(scriptNumber).suspend();
         }
         break; }
 
     case 82: /* ACS_Terminate */ {
         int scriptNumber = args[0];
         //de::Uri mapUri   = getMapUriForWarpNumber(args[1]);
-        if(acsScriptSys().hasScript(scriptNumber))
+        if(acScriptSys().hasScript(scriptNumber))
         {
-            success = acsScriptSys().script(scriptNumber).terminate();
+            success = acScriptSys().script(scriptNumber).terminate();
         }
         break; }
 
@@ -475,14 +475,14 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         acs::Script::Args scriptArgs(args, 4);
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
-            if(acsScriptSys().hasScript(scriptNumber))
+            if(acScriptSys().hasScript(scriptNumber))
             {
-                success = acsScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
+                success = acScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
             }
         }
         else
         {
-            success = acsScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
+            success = acScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
         }
         break; }
 
