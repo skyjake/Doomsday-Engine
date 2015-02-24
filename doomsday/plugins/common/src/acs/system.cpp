@@ -24,7 +24,6 @@
 #include <de/ISerializable>
 #include <de/Log>
 #include <de/NativePath>
-#include "acs/interpreter.h"
 #include "acs/module.h"
 #include "acs/script.h"
 #include "gamesession.h"
@@ -33,7 +32,7 @@ using namespace de;
 
 namespace acs {
 
-DENG2_PIMPL(System)
+DENG2_PIMPL_NOREF(System)
 {
     std::unique_ptr<Module> currentModule;
     QList<Script *> scripts;  ///< Scripts for the current module (if any).
@@ -83,7 +82,6 @@ DENG2_PIMPL(System)
     };
     QList<ScriptStartTask *> tasks;
 
-    Instance(Public *i) : Base(i) {}
     ~Instance()
     {
         clearTasks();
@@ -116,31 +114,9 @@ DENG2_PIMPL(System)
     {
         qDeleteAll(tasks); tasks.clear();
     }
-
-    void runAllTasks(de::Uri const &mapUri)
-    {
-        for(int i = 0; i < tasks.count(); ++i)
-        {
-            ScriptStartTask *task = tasks[i];
-            if(task->mapUri != mapUri) continue;
-
-            if(self.hasScript(task->scriptNumber))
-            {
-                self.script(task->scriptNumber)
-                        .start(task->scriptArgs, nullptr, nullptr, 0, TICSPERSEC);
-            }
-            else
-            {
-                LOG_SCR_WARNING("Unknown script #%i") << task->scriptNumber;
-            }
-
-            delete tasks.takeAt(i);
-            i -= 1;
-        }
-    }
 };
 
-System::System() : d(new Instance(this))
+System::System() : d(new Instance)
 {
     mapVars.fill(0);
     worldVars.fill(0);
@@ -166,7 +142,7 @@ void System::loadModuleForMap(de::Uri const &mapUri)
 
     /// @todo Should be using MapDef here...
     lumpnum_t const markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
-    lumpnum_t moduleLumpNum       = markerLumpNum + 11 /*ML_BEHAVIOR*/;
+    lumpnum_t const moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
     if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
 
     de::File1 &file = CentralLumpIndex()[moduleLumpNum];
@@ -263,9 +239,9 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
     return true;
 }
 
-de::Block System::serializeWorldState() const
+Block System::serializeWorldState() const
 {
-    de::Block data;
+    Block data;
     de::Writer writer(data);
 
     // Write the world-global variable namespace.
@@ -318,7 +294,24 @@ void System::readMapState(MapStateReader *msr)
 void System::runDeferredTasks(de::Uri const &mapUri)
 {
     LOG_AS("acs::System");
-    d->runAllTasks(mapUri);
+    for(int i = 0; i < d->tasks.count(); ++i)
+    {
+        Instance::ScriptStartTask *task = d->tasks[i];
+        if(task->mapUri != mapUri) continue;
+
+        if(hasScript(task->scriptNumber))
+        {
+            script(task->scriptNumber)
+                .start(task->scriptArgs, nullptr, nullptr, 0, TICSPERSEC);
+        }
+        else
+        {
+            LOG_SCR_WARNING("Unknown script #%i") << task->scriptNumber;
+        }
+
+        delete d->tasks.takeAt(i);
+        i -= 1;
+    }
 }
 
 void System::worldSystemMapChanged()
