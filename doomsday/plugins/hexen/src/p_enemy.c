@@ -4221,7 +4221,6 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 void C_DECL A_KoraxChase(mobj_t *actor)
 {
     mobj_t *spot;
-    byte args[3] = { 0, 0, 0 };
 
     if(!actor->special2 && actor->health <= actor->info->spawnHealth / 2)
     {
@@ -4232,7 +4231,7 @@ void C_DECL A_KoraxChase(mobj_t *actor)
             P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        Game_ACScriptSystem_StartScript(249, 0/*current-map*/, args, actor, NULL, 0);
+        Game_ACScriptSystem_StartScript(249, 0/*current-map*/, NULL, actor, NULL, 0);
         actor->special2 = 1; // Don't run again.
 
         return;
@@ -4277,12 +4276,9 @@ void C_DECL A_KoraxStep2(mobj_t* actor)
     A_Chase(actor);
 }
 
-void C_DECL A_KoraxBonePop(mobj_t* actor)
+void C_DECL A_KoraxBonePop(mobj_t *actor)
 {
-    mobj_t*             mo;
-    byte                args[5];
-
-    args[0] = args[1] = args[2] = args[3] = args[4] = 0;
+    mobj_t *mo;
 
     // Spawn 6 spirits equalangularly.
     mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT1, actor, ANGLE_60 * 0, 5);
@@ -4309,7 +4305,7 @@ void C_DECL A_KoraxBonePop(mobj_t* actor)
     if(mo)
         KSpiritInit(mo, actor);
 
-    Game_ACScriptSystem_StartScript(255, 0/*current-map*/, args, actor, NULL, 0); // Death script.
+    Game_ACScriptSystem_StartScript(255, 0/*current-map*/, NULL, actor, NULL, 0); // Death script.
 }
 
 void KSpiritInit(mobj_t* spirit, mobj_t* korax)
@@ -4458,7 +4454,6 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
 {
     int numScripts, scriptNumber = -1;
     coord_t pos[3];
-    byte args[5];
     uint an;
 
     S_StartSound(SFX_KORAX_COMMAND, mo);
@@ -4475,8 +4470,6 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     pos[VZ] += KORAX_COMMAND_HEIGHT;
 
     P_SpawnMobj(MT_KORAX_BOLT, pos, mo->angle, 0);
-
-    args[0] = args[1] = args[2] = args[3] = args[4] = 0;
 
     if(mo->health <= mo->info->spawnHealth / 2)
     {
@@ -4496,8 +4489,8 @@ void C_DECL A_KoraxCommand(mobj_t* mo)
     case 4: scriptNumber = 254; break;
     }
 
-    assert(scriptNumber >= 0);
-    Game_ACScriptSystem_StartScript(scriptNumber, 0/*current-map*/, args, mo, NULL, 0);
+    DENG_ASSERT(scriptNumber >= 0);
+    Game_ACScriptSystem_StartScript(scriptNumber, 0/*current-map*/, NULL, mo, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t* mo)

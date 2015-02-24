@@ -83,6 +83,11 @@ static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
 /// Sector >= Sector line-of-sight rejection.
 static byte *rejectMatrix;
 
+static inline acs::System &acScriptSys()
+{
+    return Game_ACScriptSystem();
+}
+
 coord_t P_GetGravity()
 {
     if(cfg.common.netGravity != -1)
@@ -3189,64 +3194,86 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
 {
     int const USE_PUZZLE_ITEM_SPECIAL = 129;
 
-    ptr_puzzleitemtraverse_params_t &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
+    auto &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
 
     switch(icpt->type)
     {
     case ICPT_LINE: {
         xline_t *xline = P_ToXLine(icpt->line);
+        DENG2_ASSERT(xline);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
+            // Items cannot be used through a wall.
             if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
             {
+                // No opening.
                 S_StartSound(usePuzzleItemFailSound(parm.useMobj), parm.useMobj);
-                return true; // Can't use through a wall.
+                return true;
             }
 
-            return false; // Continue searching...
+            return false;
         }
 
+        // Don't use the back side of lines.
         if(Line_PointOnSide(icpt->line, parm.useMobj->origin) < 0)
         {
-            return true; // Don't use back sides.
+            return true;
         }
 
+        // Item type must match.
         if(parm.itemType != xline->arg1)
         {
-            return true; // Item type doesn't match.
+            return true;
         }
 
-        Game_ACScriptSystem_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
-                                        parm.useMobj, icpt->line, 0);
+        // A known ACScript?
+        if(acScriptSys().hasScript(xline->arg2))
+        {
+            /// @todo fixme: Really interpret the first byte of xline_t::flags as a
+            /// script argument? (I wonder if any scripts rely on this). -ds
+            acScriptSys().script(xline->arg2)
+                            .start(acs::Script::Args(&xline->arg3, 4/*3*/),
+                                   parm.useMobj, icpt->line, 0);
+        }
         xline->special = 0;
-
         parm.activated = true;
 
-        return true; // Stop searching.
-        }
+        // Stop searching.
+        return true; }
 
-    case ICPT_MOBJ:
-        if(icpt->mobj->special != USE_PUZZLE_ITEM_SPECIAL)
+    case ICPT_MOBJ: {
+        DENG2_ASSERT(icpt->mobj);
+        mobj_t &mob = *icpt->mobj;
+
+        // Special id must match.
+        if(mob.special != USE_PUZZLE_ITEM_SPECIAL)
         {
-            return false; // Wrong special...
+            return false;
         }
 
-        if(parm.itemType != icpt->mobj->args[0])
+        // Item type must match.
+        if(mob.args[0] != parm.itemType)
         {
-            return false; // Item type doesn't match...
+            return false;
         }
 
-        Game_ACScriptSystem_StartScript(icpt->mobj->args[1], 0/*current-map*/,
-                                        &icpt->mobj->args[2], parm.useMobj, NULL, 0);
-        icpt->mobj->special = 0;
-
+        // A known ACScript?
+        if(acScriptSys().hasScript(mob.args[1]))
+        {
+            /// @todo fixme: Really interpret the first byte of mobj_t::turnTime as a
+            /// script argument? (I wonder if any scripts rely on this). -ds
+            acScriptSys().script(mob.args[1])
+                            .start(acs::Script::Args(&mob.args[2], 4/*3*/),
+                                   parm.useMobj, nullptr, 0);
+        }
+        mob.special = 0;
         parm.activated = true;
 
-        return true; // Stop searching.
+        // Stop searching.
+        return true; }
 
-    default:
-        DENG_ASSERT(false);
+    default: DENG2_ASSERT(!"Unknown intercept type");
         return false;
     }
 }

@@ -1436,12 +1436,10 @@ mobj_t* ActiveMinotaur(player_t* master)
 
 void P_KillMobj(mobj_t *source, mobj_t *target)
 {
-    int dummy;
-    mobj_t *master;
     statenum_t state;
 
-    if(!target)
-        return; // Nothing to kill.
+    // Nothing to kill?
+    if(!target) return;
 
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
@@ -1453,9 +1451,8 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
-            dummy = 0;
             Game_ACScriptSystem_StartScript(target->special, 0/*current-map*/,
-                                                 (byte *) &dummy, target, NULL, 0);
+                                            NULL, target, NULL, 0);
         }
         else
         {
@@ -1693,7 +1690,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
     if(target->type == MT_MINOTAUR)
     {
-        master = target->tracer;
+        mobj_t *master = target->tracer;
         if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))
