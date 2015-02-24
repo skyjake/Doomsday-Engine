@@ -318,6 +318,17 @@ macro (deng_add_library target)
     set (_outName)
     # Compiler settings.
     deng_target_defaults (${target})
+    if (APPLE)
+        set_property (TARGET ${target} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
+        add_custom_command (TARGET ${target} POST_BUILD 
+            COMMAND ${CMAKE_COMMAND}
+                "-DDENG_SOURCE_DIR=${DENG_SOURCE_DIR}"
+                "-DCMAKE_INSTALL_NAME_TOOL=${CMAKE_INSTALL_NAME_TOOL}"
+                "-DBINARY_FILE=$<TARGET_FILE:${target}>"
+                -P "${DENG_SOURCE_DIR}/cmake/QtInstallNames.cmake"
+            COMMENT "Fixing Qt install names..."
+        )
+    endif ()
     target_include_directories (${target} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
         $<INSTALL_INTERFACE:include/>
@@ -466,14 +477,14 @@ function (deng_bundle_install_names target)
     endif ()
     set (scriptName "${CMAKE_CURRENT_BINARY_DIR}/postbuild${_suffix}-${target}.cmake")
     # Correct the install names of the dependent libraries.
-    file (GENERATE OUTPUT "${scriptName}" CONTENT "\
-set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)\n\
-set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})\n\
-include (Macros)\n\
-fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle/Contents/MacOS/${target}\"\
+    file (GENERATE OUTPUT "${scriptName}" CONTENT "
+set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)
+set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+include (Macros)
+fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/Contents/MacOS/${target}\"
     \"${libs}\")\n")
     add_custom_command (TARGET ${target} POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -P "${scriptName}"
+        COMMAND ${CMAKE_COMMAND} -DINT_DIR=${CMAKE_CFG_INTDIR} -P "${scriptName}"
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )    
 endfunction (deng_bundle_install_names)

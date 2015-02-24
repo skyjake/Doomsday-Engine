@@ -48,7 +48,7 @@ macro (deng_add_plugin target)
         add_custom_command (TARGET ${target} POST_BUILD 
             COMMAND ${CMAKE_COMMAND} -E make_directory "${stage}"
             COMMAND ${CMAKE_COMMAND} -E create_symlink 
-                "${CMAKE_CURRENT_BINARY_DIR}/${target}.bundle" 
+                "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${target}.bundle" 
                 "${stage}/${target}.bundle"
         )
         # Fix the Qt framework install names manually.
