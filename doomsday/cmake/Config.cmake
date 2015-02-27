@@ -38,8 +38,10 @@ if (ARCH_BITS EQUAL 64)
     endif ()
 endif ()    
 set (DENG_INSTALL_PLUGIN_DIR "${DENG_INSTALL_LIB_DIR}/doomsday")
-set (DENG_INSTALL_STAGING_DIR "bundle-staging")
-set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "runtime")
+
+set (DENG_BUILD_STAGING_DIR "${CMAKE_BINARY_DIR}/bundle-staging")
+
+set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
 
 # Qt Configuration -----------------------------------------------------------
 

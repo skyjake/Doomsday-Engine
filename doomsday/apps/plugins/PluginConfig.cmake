@@ -44,7 +44,7 @@ macro (deng_add_plugin target)
         # This is needed because we want access to these even in a build where the
         # plugins are not installed yet -- the staging directory symlinks to the
         # individual build directories.
-        set (stage "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_STAGING_DIR}/DengPlugins")
+        set (stage "${DENG_BUILD_STAGING_DIR}/DengPlugins")
         add_custom_command (TARGET ${target} POST_BUILD 
             COMMAND ${CMAKE_COMMAND} -E make_directory "${stage}"
             COMMAND ${CMAKE_COMMAND} -E create_symlink 
@@ -68,7 +68,9 @@ macro (deng_add_plugin target)
         deng_target_rpath (${target})
     endif ()
     
-    install (TARGETS ${target} LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR})
+    install (TARGETS ${target} 
+        LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
+    )
     set (_src)
     set (_script)
 endmacro (deng_add_plugin)

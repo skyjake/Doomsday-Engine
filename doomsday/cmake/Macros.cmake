@@ -273,7 +273,10 @@ function (deng_add_package packName)
         LOCATION "${outDir}/${outName}"
         FOLDER Packages
     )
-    install (FILES ${outDir}/${outName} DESTINATION ${DENG_INSTALL_DATA_DIR})
+    install (FILES ${outDir}/${outName}
+        DESTINATION ${DENG_INSTALL_DATA_DIR}
+        COMPONENT packs
+    )
     set (DENG_REQUIRED_PACKAGES ${DENG_REQUIRED_PACKAGES} ${packName} PARENT_SCOPE)
 endfunction (deng_add_package)
 
@@ -301,6 +304,7 @@ function (deng_find_packages fullPaths)
     set (${fullPaths} ${result} PARENT_SCOPE)
 endfunction (deng_find_packages)
 
+# Adds an SDK library target.
 macro (deng_add_library target)
     # Form the list of source files.
     sublist (_src 1 -1 ${ARGV})
@@ -339,13 +343,17 @@ endmacro (deng_add_library)
 macro (deng_deploy_library target name)
     install (TARGETS ${target}
         EXPORT ${name} 
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR}
-        INCLUDES DESTINATION include)
-    install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::)
-    install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name})
+        RUNTIME DESTINATION bin COMPONENT libs
+        LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
+        INCLUDES DESTINATION include COMPONENT sdk
+        ARCHIVE DESTINATION lib COMPONENT sdk
+    )
+    install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::
+        COMPONENT sdk
+    )
+    install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name} COMPONENT sdk)
     if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
-        install (DIRECTORY include/de DESTINATION include)
+        install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
     endif ()
 endmacro (deng_deploy_library)
 
@@ -494,7 +502,7 @@ macro (deng_install_bundle_deps target)
     if (APPLE)
         sublist (_deps 1 -1 ${ARGV})
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
-        set (_fwDir "${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks")
+        set (_fwDir "${_outName}.app/Contents/Frameworks")
         foreach (_dep ${_deps})
             if (TARGET ${_dep})
                 if (_dep MATCHES "Deng::(.*)")
@@ -523,8 +531,10 @@ function (deng_install_deployqt target)
         if (NOT MACDEPLOYQT_COMMAND)
             message (FATAL_ERROR "macdeployqt not available")
         endif ()
-        install (CODE "message (STATUS \"Running macdeployqt on ${_outName}.app...\")
-            execute_process (COMMAND ${MACDEPLOYQT_COMMAND} \"${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+        install (CODE "
+            message (STATUS \"Running macdeployqt on ${_outName}.app...\")
+            execute_process (COMMAND ${MACDEPLOYQT_COMMAND} 
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
                 OUTPUT_QUIET ERROR_QUIET)")
     elseif (WIN32)
         if (NOT WINDEPLOYQT_COMMAND)
@@ -534,10 +544,10 @@ function (deng_install_deployqt target)
         string (REPLACE "/" "\\" qtPath ${QT_PREFIX_DIR})
         file (WRITE ${script} "
             set PATH=${qtPath}\\bin
-            windeployqt --no-translations \"${CMAKE_INSTALL_PREFIX}/bin/${_outName}.exe\"
+            windeployqt --no-translations \"%1/bin/${_outName}.exe\"
         ")
         install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
-            execute_process (COMMAND ${script} OUTPUT_QUIET ERROR_QUIET)")
+            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\" OUTPUT_QUIET ERROR_QUIET)")
     endif ()
 endfunction (deng_install_deployqt)
 
@@ -557,7 +567,7 @@ function (deng_install_tool target)
         install (CODE "
             include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
             set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
-            fix_bundled_install_names (\"${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
+            fix_bundled_install_names (\"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
                 QtCore.framework/Versions/5/QtCore
                 QtNetwork.framework/Versions/5/QtNetwork
                 VERBATIM)
@@ -579,7 +589,7 @@ macro (deng_install_library library)
         )
     elseif (MSVC)
         message (STATUS "Library will be installed: ${library}")
-        install (FILES ${library} DESTINATION ${DENG_INSTALL_LIB_DIR})
+        install (PROGRAMS ${library} DESTINATION ${DENG_INSTALL_LIB_DIR})
     endif ()        
 endmacro (deng_install_library)
 

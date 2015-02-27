@@ -117,11 +117,13 @@ if (APPLE)
     # installed app before the plugins are there so it won't do unnecessary 
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
-    set (stageDir "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_STAGING_DIR}/DengPlugins")
-    set (destDir "${CMAKE_INSTALL_PREFIX}/${outName}.app/Contents/DengPlugins")
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory \"${destDir}\")")
+    set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
+    set (destDir "${outName}.app/Contents/DengPlugins")
+    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory 
+        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
     deng_install_deployqt (client)
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\" \"${destDir}\")")
+    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
+        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
 else ()
     deng_install_deployqt (client)
 endif ()

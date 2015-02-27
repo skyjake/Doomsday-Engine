@@ -1,4 +1,8 @@
-set (DENG_VERSION 1.15.0)
+set (DENG_VERSION_MAJOR 1)
+set (DENG_VERSION_MINOR 15)
+set (DENG_VERSION_PATCH 0)
+
+set (DENG_VERSION ${DENG_VERSION_MAJOR}.${DENG_VERSION_MINOR}.${DENG_VERSION_PATCH})
 
 # Binary compatibility version for shared libraries / APIs.
 set (DENG_COMPAT_VERSION 1.15)
