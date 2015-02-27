@@ -1,6 +1,6 @@
 # Doomsday Engine - Texture Compiler
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_TEXC)
 include (../../cmake/Config.cmake)
 

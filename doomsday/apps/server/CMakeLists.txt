@@ -2,7 +2,7 @@
 # Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
 # Copyright (c) 2012-2014 Daniel Swanson <danij@dengine.net>
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_SERVER)
 include (../../cmake/Config.cmake)
 

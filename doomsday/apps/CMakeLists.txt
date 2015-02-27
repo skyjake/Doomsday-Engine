@@ -1,6 +1,6 @@
 # Doomsday Engine - Applications
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (Apps)
 include (../cmake/Config.cmake)
 

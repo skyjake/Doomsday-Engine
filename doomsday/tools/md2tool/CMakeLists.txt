@@ -1,6 +1,6 @@
 # Doomsday Engine - MD2 Tool
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_MD2TOOL)
 include (../../cmake/Config.cmake)
 

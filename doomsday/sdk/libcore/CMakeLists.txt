@@ -1,6 +1,6 @@
 # Doomsday Engine -- libcore
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_LIBCORE VERSION 2.0.0)
 include (../../cmake/Config.cmake)
 

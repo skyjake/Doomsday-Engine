@@ -1,7 +1,7 @@
 # The Doomsday Engine Project
 # Copyright (c) 2015 Jaakko Keränen <jaakko.keranen@iki.fi>
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_DOOM)
 set (DENG_ENABLE_PK3S ON) # uses the legacy libdoom.pk3
 include (../PluginConfig.cmake)

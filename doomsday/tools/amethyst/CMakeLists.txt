@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (Amethyst)
 
 set (CMAKE_INCLUDE_CURRENT_DIR ON)

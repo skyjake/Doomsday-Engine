@@ -26,7 +26,9 @@ include (InstallPrefix)
 include (Version)
 find_package (Ccache)
 include (Options)
+include (Packaging)
 
+# Install directories.
 set (DENG_INSTALL_DATA_DIR "share/doomsday")
 set (DENG_INSTALL_DOC_DIR "share/doc")
 set (DENG_INSTALL_LIB_DIR "lib")

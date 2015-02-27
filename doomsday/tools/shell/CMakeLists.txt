@@ -5,7 +5,7 @@
 # version 2 (or, at your option, any later version). Please visit
 # http://www.gnu.org/licenses/gpl.html for details.
 
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.1)
 project (DENG_SHELL)
 include (../../cmake/Config.cmake)
 
