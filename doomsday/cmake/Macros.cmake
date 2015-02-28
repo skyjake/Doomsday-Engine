@@ -563,8 +563,6 @@ function (deng_install_deployqt target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"                
                 OUTPUT_QUIET ERROR_QUIET)
             ")        
-        # TODO: Add symlinks to binaries to comply with codesign's requirements: 
-        # QtCore -> Versions/5/QtCore
     elseif (WIN32)
         if (NOT WINDEPLOYQT_COMMAND)
             message (FATAL_ERROR "windeployqt not available")            
