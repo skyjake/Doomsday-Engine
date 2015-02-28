@@ -31,6 +31,7 @@ include (Packaging)
 # Install directories.
 set (DENG_INSTALL_DATA_DIR "share/doomsday")
 set (DENG_INSTALL_DOC_DIR "share/doc")
+set (DENG_INSTALL_MAN_DIR "share/man/man6")
 set (DENG_INSTALL_LIB_DIR "lib")
 if (ARCH_BITS EQUAL 64)
     if (EXISTS ${CMAKE_INSTALL_PREFIX}/lib64)

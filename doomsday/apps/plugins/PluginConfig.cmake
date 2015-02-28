@@ -68,9 +68,9 @@ macro (deng_add_plugin target)
         deng_target_rpath (${target})
     endif ()
     
-    install (TARGETS ${target} 
-        LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR}
-    )
+    if (NOT APPLE)
+        install (TARGETS ${target} LIBRARY DESTINATION ${DENG_INSTALL_PLUGIN_DIR})
+    endif ()
     set (_src)
     set (_script)
 endmacro (deng_add_plugin)

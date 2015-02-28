@@ -15,6 +15,7 @@ set (CURSES_NEED_NCURSES TRUE)
 find_package (DengCore QUIET)
 find_package (DengShell QUIET)
 find_package (Curses REQUIRED)
+mark_as_advanced (CURSES_FORM_LIBRARY)
 find_package (Amethyst QUIET)
 
 include_directories (${CURSES_INCLUDE_DIRS})

@@ -273,10 +273,12 @@ function (deng_add_package packName)
         LOCATION "${outDir}/${outName}"
         FOLDER Packages
     )
-    install (FILES ${outDir}/${outName}
-        DESTINATION ${DENG_INSTALL_DATA_DIR}
-        COMPONENT packs
-    )
+    if (NOT APPLE)
+        install (FILES ${outDir}/${outName}
+            DESTINATION ${DENG_INSTALL_DATA_DIR}
+            COMPONENT packs
+        )
+    endif ()
     set (DENG_REQUIRED_PACKAGES ${DENG_REQUIRED_PACKAGES} ${packName} PARENT_SCOPE)
 endfunction (deng_add_package)
 
@@ -341,19 +343,28 @@ macro (deng_add_library target)
 endmacro (deng_add_library)
 
 macro (deng_deploy_library target name)
-    install (TARGETS ${target}
-        EXPORT ${name} 
-        RUNTIME DESTINATION bin COMPONENT libs
-        LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
-        INCLUDES DESTINATION include COMPONENT sdk
-        ARCHIVE DESTINATION lib COMPONENT sdk
-    )
-    install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::
-        COMPONENT sdk
-    )
-    install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name} COMPONENT sdk)
-    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
-        install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
+    if (DENG_ENABLE_SDK)
+        install (TARGETS ${target}
+            EXPORT ${name} 
+            RUNTIME DESTINATION bin COMPONENT libs
+            LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
+            INCLUDES DESTINATION include COMPONENT sdk
+            ARCHIVE DESTINATION lib COMPONENT sdk
+        )
+        install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::
+            COMPONENT sdk
+        )
+        install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name} COMPONENT sdk)
+        if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
+            install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
+        endif ()
+    else ()
+        if (NOT APPLE)
+            # When the SDK is disabled, only the runtime binary is installed.
+            install (TARGETS ${target}
+                LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
+            )
+        endif ()
     endif ()
 endmacro (deng_deploy_library)
 
@@ -583,7 +594,6 @@ endfunction (deng_install_deployqt)
 # OS X: Also fix the Qt framework install names that wouldn't be touched by 
 # the qt deploy utility because they aren't the app bundle binary.
 function (deng_install_tool target)
-    install (TARGETS ${target} DESTINATION bin)
     # OS X: Also install to the client application bundle.
     if (APPLE)
         set (dest "Doomsday.app/Contents/MacOS")
@@ -608,6 +618,8 @@ function (deng_install_tool target)
                 )
             ")
         endif ()
+    else ()
+        install (TARGETS ${target} DESTINATION bin)        
     endif ()
 endfunction (deng_install_tool)
 
@@ -659,7 +671,7 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
             COMMENT "Compiling ${descText}..."
         )        
         if (${type} STREQUAL MAN)
-            install (FILES ${file} DESTINATION share/man/man6)
+            install (FILES ${file} DESTINATION ${DENG_INSTALL_MAN_DIR})
         elseif (UNIX)
             install (FILES ${file} DESTINATION ${DENG_INSTALL_DOC_DIR}/doomsday)
         else ()

@@ -37,5 +37,7 @@ target_link_libraries (libdoomsday
 )
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
-install (DIRECTORY include/doomsday DESTINATION include)
+if (DENG_ENABLE_SDK)
+    install (DIRECTORY include/doomsday DESTINATION include)
+endif ()
 deng_deploy_library (libdoomsday DengDoomsday)
