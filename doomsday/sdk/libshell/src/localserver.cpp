@@ -106,7 +106,7 @@ void LocalServer::start(duint16 port,
     cmd.append("}Data");
     cmd.append("-basedir");
     cmd.append(bin.fileNamePath() / "../Resources");
-    String plugDir = bin.fileNamePath() / "../DengPlugins";
+    String plugDir = bin.fileNamePath() / "../PlugIns/Doomsday";
     cmd.append("-vdmap");
     cmd.append(plugDir / "doom.bundle/Contents/Resources");
     cmd.append("}Data/jDoom/");

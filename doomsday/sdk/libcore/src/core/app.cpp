@@ -485,7 +485,7 @@ NativePath App::nativePluginBinaryPath()
     path = d->appPath.fileNamePath() / "plugins";
 #else
 # ifdef MACOSX
-    path = d->appPath.fileNamePath() / "../DengPlugins";
+    path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
 # else
     path = DENG_LIBRARY_DIR;
 # endif

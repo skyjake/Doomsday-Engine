@@ -3,6 +3,10 @@ include (PlatformGenericUnix)
 set (DENG_PLATFORM_SUFFIX macx)
 set (DENG_AMETHYST_PLATFORM MACOSX)
 
+set (DENG_CODESIGN_APP_CERT "" CACHE STRING "ID of the certificate for signing applications.")
+find_program (CODESIGN_COMMAND codesign)
+mark_as_advanced (CODESIGN_COMMAND)
+
 add_definitions (
     -DMACOSX
     # Fallback basedir for command line apps.

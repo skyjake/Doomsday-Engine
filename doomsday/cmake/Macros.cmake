@@ -357,6 +357,32 @@ macro (deng_deploy_library target name)
     endif ()
 endmacro (deng_deploy_library)
 
+macro (deng_codesign target)
+    if (APPLE AND DENG_CODESIGN_APP_CERT)
+        get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
+        install (CODE "
+            file (GLOB fw 
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/MacOS/*\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle/Contents/Frameworks/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/Doomsday/*.bundle\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
+            )
+            foreach (fn IN LISTS fw)
+                message (STATUS \"Signing \${fn}...\")
+                execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
+                    -s \"${DENG_CODESIGN_APP_CERT}\" \"\${fn}\"
+                )
+            endforeach (fn)
+            message (STATUS \"Signing ${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
+            execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
+                -s \"${DENG_CODESIGN_APP_CERT}\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
+            )")
+    endif ()    
+endmacro ()
+
 # Defines a new GUI application target that includes all the required Doomsday
 # 2 packages.)
 function (deng_add_application target)
@@ -534,8 +560,11 @@ function (deng_install_deployqt target)
         install (CODE "
             message (STATUS \"Running macdeployqt on ${_outName}.app...\")
             execute_process (COMMAND ${MACDEPLOYQT_COMMAND} 
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
-                OUTPUT_QUIET ERROR_QUIET)")
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"                
+                OUTPUT_QUIET ERROR_QUIET)
+            ")        
+        # TODO: Add symlinks to binaries to comply with codesign's requirements: 
+        # QtCore -> Versions/5/QtCore
     elseif (WIN32)
         if (NOT WINDEPLOYQT_COMMAND)
             message (FATAL_ERROR "windeployqt not available")            
@@ -547,7 +576,8 @@ function (deng_install_deployqt target)
             windeployqt --no-translations \"%1/bin/${_outName}.exe\"
         ")
         install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
-            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\" OUTPUT_QUIET ERROR_QUIET)")
+            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\"
+                OUTPUT_QUIET ERROR_QUIET)")
     endif ()
 endfunction (deng_install_deployqt)
 
@@ -567,11 +597,19 @@ function (deng_install_tool target)
         install (CODE "
             include (${DENG_SOURCE_DIR}/cmake/Macros.cmake)
             set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
-            fix_bundled_install_names (\"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
+            fix_bundled_install_names (\"\${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
                 QtCore.framework/Versions/5/QtCore
                 QtNetwork.framework/Versions/5/QtNetwork
                 VERBATIM)
             ")
+        if (DENG_CODESIGN_APP_CERT)
+            install (CODE "
+                execute_process (COMMAND ${CODESIGN_COMMAND}
+                    --verbose -s \"${DENG_CODESIGN_APP_CERT}\"
+                    \"\${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
+                )
+            ")
+        endif ()
     endif ()
 endfunction (deng_install_tool)
 

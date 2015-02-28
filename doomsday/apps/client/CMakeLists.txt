@@ -118,7 +118,7 @@ if (APPLE)
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
     set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
-    set (destDir "${outName}.app/Contents/DengPlugins")
+    set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory 
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
     deng_install_deployqt (client)
@@ -128,5 +128,5 @@ else ()
     deng_install_deployqt (client)
 endif ()
 
+deng_codesign (client)
 deng_cotire (client include/precompiled.h)
-
