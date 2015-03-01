@@ -36,6 +36,7 @@ if (NOT CPack_CMake_INCLUDED)
     )
     cpack_add_component (libs
         DISPLAY_NAME "Runtime Libraries"
+        REQUIRED
         INSTALL_TYPES gui
     )
     cpack_add_component (client

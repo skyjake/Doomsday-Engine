@@ -128,5 +128,21 @@ else ()
     deng_install_deployqt (client)
 endif ()
 
+if (VC_REDIST_LIBS_DEBUG)
+    install (PROGRAMS ${VC_REDIST_LIBS_DEBUG}
+        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        CONFIGURATIONS Debug
+        COMPONENT libs
+    )
+endif ()
+
+if (VC_REDIST_LIBS)
+    install (PROGRAMS ${VC_REDIST_LIBS}
+        DESTINATION ${DENG_INSTALL_LIB_DIR}
+        CONFIGURATIONS Release
+        COMPONENT libs
+    )
+endif ()
+
 deng_codesign (client)
 deng_cotire (client include/precompiled.h)
