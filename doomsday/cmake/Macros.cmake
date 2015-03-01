@@ -202,7 +202,7 @@ function (deng_find_resources)
         endif ()
         if (TARGET ${fn})
             # Use the location of the target.
-            get_property (fn TARGET ${fn} PROPERTY LOCATION)
+            get_property (fn TARGET ${fn} PROPERTY DENG_LOCATION)
         endif ()
         set (origFn ${fn})
         if (NOT IS_ABSOLUTE ${fn})
@@ -268,9 +268,9 @@ function (deng_add_package packName)
     )
     clean_paths (msg ${msg})
     message (STATUS "${msg}")
-    add_custom_target (${packName} ALL DEPENDS ${outName})
+    add_custom_target (${packName})
     set_target_properties (${packName} PROPERTIES
-        LOCATION "${outDir}/${outName}"
+        DENG_LOCATION "${outDir}/${outName}"
         FOLDER Packages
     )
     if (NOT APPLE)

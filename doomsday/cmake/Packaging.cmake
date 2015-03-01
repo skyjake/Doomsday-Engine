@@ -17,7 +17,8 @@ if (APPLE)
 elseif (UNIX)
     set (CPACK_GENERATOR TGZ)
 else ()
-    set (CPACK_GENERATOR ZIP)
+    set (CPACK_GENERATOR WIX)
+    set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
 endif ()
 
 # Install types.
@@ -34,11 +35,11 @@ if (NOT CPack_CMake_INCLUDED)
         HIDDEN        
     )
     cpack_add_component (libs
-        DISPLAY_NAME "Doomsday 2 Libraries"
+        DISPLAY_NAME "Runtime Libraries"
         INSTALL_TYPES gui
     )
     cpack_add_component (client
-        DISPLAY_NAME "Doomsday Engine and Plugins"
+        DISPLAY_NAME "Engine and Plugins"
         DESCRIPTION "The client and server executables plus game, audio, and other plugins."
         DEPENDS packs libs
         INSTALL_TYPES gui        
@@ -50,7 +51,7 @@ if (NOT CPack_CMake_INCLUDED)
         INSTALL_TYPES gui        
     )
     cpack_add_component (sdk
-        DISPLAY_NAME "Doomsday 2 SDK"
+        DISPLAY_NAME "SDK"
         DESCRIPTION "C++ headers and build configuration files for Doomsday 2."
         DEPENDS libs packs
         INSTALL_TYPES sdk
@@ -63,6 +64,6 @@ if (NOT CPack_CMake_INCLUDED)
         INSTALL_TYPES sdk
     )
     
-    cpack_add_install_type (gui DISPLAY_NAME "Normal")
+    cpack_add_install_type (gui DISPLAY_NAME "Standard")
     cpack_add_install_type (sdk DISPLAY_NAME "Developer")
 endif ()

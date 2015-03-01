@@ -17,9 +17,9 @@ execute_process (COMMAND ${PYTHON_EXECUTABLE}
 message (STATUS "Compiling legacy PK3s...")
 
 macro (deng_add_pk3 target)
-    add_custom_target (${target} ALL)
+    add_custom_target (${target})
     set_target_properties (${target} PROPERTIES
-        LOCATION ${outDir}/${target}
+        DENG_LOCATION ${outDir}/${target}
         FOLDER Packages
     )
     if (NOT APPLE)
