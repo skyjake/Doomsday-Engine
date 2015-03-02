@@ -285,6 +285,8 @@ namespace de {
 DENG2_PIMPL(WorldSystem)
 {
     Map *map = nullptr;          ///< Current map.
+    Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
+
     timespan_t time = 0;         ///< World-wide time.
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
@@ -292,7 +294,10 @@ DENG2_PIMPL(WorldSystem)
 #endif
 
     Instance(Public *i) : Base(i)
-    {}
+    {
+        // One time init of the fallback MapInfo definition.
+        defn::MapInfo(fallbackMapInfo).resetToDefaults();
+    }
 
     /**
      * Compose the relative path (relative to the runtime directory) to the
@@ -457,48 +462,22 @@ DENG2_PIMPL(WorldSystem)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        defn::MapInfo mapInfo;
+        Record const &mapInfo = map->mapInfo();
 
-        if(MapDef *mapDef = map->def())
-        {
-            int idx = defs.getMapInfoNum(mapDef->composeUri());
-            if(idx >= 0) mapInfo = defs.mapInfos[idx];
-        }
-
-        if(!mapInfo)
-        {
-            // Use the default def instead.
-            int idx = defs.getMapInfoNum(Uri("Maps", Path("*")));
-            if(idx >= 0) mapInfo = defs.mapInfos[idx];
-        }
-
-        if(mapInfo)
-        {
-            map->_globalGravity     = mapInfo.getf("gravity");
-            map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
-        }
-        else
-        {
-            // No map info found -- apply defaults.
-            map->_globalGravity     = 1.0f;
-            map->_ambientLightLevel = 0;
-        }
-
-        map->_effectiveGravity = map->_globalGravity;
+        map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
+        map->_globalGravity     = mapInfo.getf("gravity");
+        map->_effectiveGravity  = map->_globalGravity;
 
 #ifdef __CLIENT__
         // Reconfigure the sky.
         defn::Sky skyDef;
-        if(mapInfo)
+        if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
         {
-            if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
-            {
-                skyDef = *def;
-            }
-            else
-            {
-                skyDef = mapInfo.subrecord("sky");
-            }
+            skyDef = *def;
+        }
+        else
+        {
+            skyDef = mapInfo.subrecord("sky");
         }
         map->sky().configure(&skyDef);
 
@@ -526,10 +505,9 @@ DENG2_PIMPL(WorldSystem)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
+        de::Uri const mapUri = (map->def()? map->def()->composeUri() : de::Uri("Maps:", RC_NULL));
         if(gx.FinalizeMapChange)
         {
-            de::Uri mapUri("Maps:", RC_NULL);
-            if(map->def()) mapUri = map->def()->composeUri();
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
         }
 
@@ -641,20 +619,17 @@ DENG2_PIMPL(WorldSystem)
          */
 
         // Run any commands specified in MapInfo.
-        if(mapInfo)
+        String execute = mapInfo.gets("execute");
+        if(!execute.isEmpty())
         {
-            String execute = mapInfo.gets("execute");
-            if(!execute.isEmpty())
-            {
-                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
-            }
+            Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
         }
 
         // Run the special map setup command, which the user may alias to do
         // something useful.
-        if(MapDef *mapDef = map->def())
+        if(!mapUri.isEmpty())
         {
-            String cmd = String("init-") + mapDef->composeUri().path();
+            String cmd = String("init-") + mapUri.path();
             if(Con_IsValidCommand(cmd.toUtf8().constData()))
             {
                 Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
@@ -891,6 +866,22 @@ void WorldSystem::update()
     {
         d->map->update();
     }
+}
+
+Record const &WorldSystem::mapInfoForMapUri(de::Uri const &mapUri) const
+{
+    // Is there a MapInfo definition for the given URI?
+    if(Record const *def = defs.mapInfos.tryFind("id", mapUri.compose()))
+    {
+        return *def;
+    }
+    // Is there is a default definition (for all maps)?
+    if(Record const *def = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    {
+        return *def;
+    }
+    // Use the fallback.
+    return d->fallbackMapInfo;
 }
 
 void WorldSystem::advanceTime(timespan_t delta)

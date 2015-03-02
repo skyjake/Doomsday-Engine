@@ -78,14 +78,11 @@ CHEAT_FUNC(Music)
     }
 
     // Lookup and try to enqueue the Music for the referenced episode and map.
-    de::Uri const mapUri = TranslateMapWarpNumber(episodeId, warpNumber);
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    Record const &mapInfo = G_MapInfoForMapUri(TranslateMapWarpNumber(episodeId, warpNumber));
+    if(S_StartMusic(mapInfo.gets("music").toUtf8().constData(), true /*loop it*/))
     {
-        if(S_StartMusic(mapInfo->gets("music").toUtf8().constData(), true /*loop it*/))
-        {
-            P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
-            return true;
-        }
+        P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
+        return true;
     }
 
     P_SetMessage(plr, LMF_NO_HIDE, STSTR_NOMUS);

@@ -32,6 +32,7 @@
 #include <de/NativePath>
 #include <de/RecordValue>
 #include <doomsday/defs/episode.h>
+#include <doomsday/defs/mapinfo.h>
 #include <doomsday/uri.h>
 
 #include "acs/system.h"
@@ -1192,12 +1193,9 @@ static sfxenum_t randomQuitSound()
 static bool intermissionEnabled()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
+    if(COMMON_GAMESESSION->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
     {
-        if(mapInfo->geti("flags") & MIF_NO_INTERMISSION)
-        {
-            return false;
-        }
+        return false;
     }
 #elif __JHEXEN__
     if(!COMMON_GAMESESSION->rules().deathmatch)
@@ -1232,15 +1230,8 @@ void G_PrepareWIData()
     info->maxFrags = 0;
 
     // See if there is a par time definition.
-    info->parTime = -1; // Unknown.
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
-    {
-        float parTime = mapInfo->getf("parTime");
-        if(parTime > 0)
-        {
-            info->parTime = TICRATE * int(parTime);
-        }
-    }
+    float parTime = COMMON_GAMESESSION->mapInfo().getf("parTime");
+    info->parTime = (parTime > 0? TICRATE * int(parTime) : -1 /*N/A*/);
 
     info->pNum = CONSOLEPLAYER;
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -1991,6 +1982,23 @@ String G_DefaultSavedSessionUserDescription(String const &saveName, bool autogen
     return description;
 }
 
+String G_EpisodeTitle(String episodeId)
+{
+    String title;
+    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    {
+        title = episodeDef->gets("title");
+
+        // Perhaps the title string is a reference to a Text definition?
+        int textIdx = Defs().getTextNum(title.toUtf8().constData());
+        if(textIdx >= 0)
+        {
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
+        }
+    }
+    return title;
+}
+
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
     String path = mapUri.path();
@@ -2040,38 +2048,41 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-String G_EpisodeTitle(String episodeId)
+Record const &G_MapInfoForMapUri(de::Uri const &mapUri)
 {
-    String title;
-    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    // Is there a MapInfo definition for the given URI?
+    if(Record const *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
-        title = episodeDef->gets("title");
-
-        // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNum(title.toUtf8().constData());
-        if(textIdx >= 0)
-        {
-            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
-        }
+        return *def;
     }
-    return title;
+    // Is there is a default definition (for all maps)?
+    if(Record const *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    {
+        return *def;
+    }
+    // Use the fallback.
+    {
+        static Record fallbackDef;
+        static bool needInitFallbackDef = true;
+        if(needInitFallbackDef)
+        {
+            needInitFallbackDef = false;
+            defn::MapInfo(fallbackDef).resetToDefaults();
+        }
+        return fallbackDef;
+    }
 }
 
 String G_MapTitle(de::Uri const &mapUri)
 {
-    String title;
-
     // Perhaps a MapInfo definition exists for the map?
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
-    {
-        title = mapInfo->gets("title");
+    String title = G_MapInfoForMapUri(mapUri).gets("title");
 
-        // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNum(title.toUtf8().constData());
-        if(textIdx >= 0)
-        {
-            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
-        }
+    // Perhaps the title string is a reference to a Text definition?
+    int textIdx = Defs().getTextNum(title.toUtf8().constData());
+    if(textIdx >= 0)
+    {
+        title = Defs().text[textIdx].text; // Yes, use the resolved text string.
     }
 
     // Skip the "ExMx" part, if present.
@@ -2089,14 +2100,8 @@ String G_MapTitle(de::Uri const &mapUri)
 
 String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 {
-    String author;
-
     // Perhaps a MapInfo definition exists for the map?
-    String mapUriAsText = mapUri.compose();
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUriAsText))
-    {
-        author = mapInfo->gets("author");
-    }
+    String author = G_MapInfoForMapUri(mapUri).gets("author");
 
     if(!author.isEmpty())
     {
@@ -2104,7 +2109,7 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
         /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        if(supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
         {
             if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
@@ -2116,11 +2121,7 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 
 de::Uri G_MapTitleImage(de::Uri const &mapUri)
 {
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
-    {
-        return de::Uri(mapInfo->gets("titleImage"), RC_NULL);
-    }
-    return de::Uri();
+    return de::Uri(G_MapInfoForMapUri(mapUri).gets("titleImage"), RC_NULL);
 }
 
 String G_MapDescription(String episodeId, de::Uri const &mapUri)

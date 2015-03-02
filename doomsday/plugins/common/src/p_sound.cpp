@@ -34,14 +34,11 @@ using namespace de;
 
 void S_MapMusic(de::Uri const &mapUri)
 {
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    Block const musicIdUtf8 = G_MapInfoForMapUri(mapUri).gets("music").toUtf8();
+    if(S_StartMusic(musicIdUtf8.constData(), true))
     {
-        Block const musicIdUtf8 = mapInfo->gets("music").toUtf8();
-        if(S_StartMusic(musicIdUtf8.constData(), true))
-        {
-            // Set the game status cvar for the map music.
-            Con_SetInteger2("map-music", Defs().getMusicNum(musicIdUtf8.constData()), SVF_WRITE_OVERRIDE);
-        }
+        // Set the game status cvar for the map music.
+        Con_SetInteger2("map-music", Defs().getMusicNum(musicIdUtf8.constData()), SVF_WRITE_OVERRIDE);
     }
 }
 
@@ -107,12 +104,10 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    if(Record *mapInfo = Defs().mapInfos.tryFind("id", G_ComposeMapUri(0, mapNumber - 1).compose()))
+                    Record const &mapInfo = G_MapInfoForMapUri(G_ComposeMapUri(0, mapNumber - 1));
+                    if(Record *music = Defs().musics.tryFind("id", mapInfo.gets("music")))
                     {
-                        if(Record *music = Defs().musics.tryFind("id", mapInfo->gets("music")))
-                        {
-                            music->set("lumpName", Str_Text(lumpName));
-                        }
+                        music->set("lumpName", Str_Text(lumpName));
                     }
                 }
                 continue;

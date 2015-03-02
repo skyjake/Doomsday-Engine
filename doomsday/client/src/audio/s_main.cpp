@@ -493,7 +493,10 @@ int S_StartMusic(char const *musicID, dd_bool looped)
     int idx = Def_GetMusicNum(musicID);
     if(idx < 0)
     {
-        LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
+        if(musicID && qstrlen(musicID))
+        {
+            LOG_AUDIO_WARNING("Song \"%s\" not defined, cannot start playback") << musicID;
+        }
         return false;
     }
     return S_StartMusicNum(idx, looped);

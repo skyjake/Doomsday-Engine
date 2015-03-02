@@ -93,7 +93,7 @@ public:
     void update();
 
     /**
-     * Returns @c true iff a map is currently loaded.
+     * Returns @c true if a map is currently loaded.
      */
     bool hasMap() const;
 
@@ -103,6 +103,11 @@ public:
      * @see hasMap()
      */
     Map &map() const;
+
+    /**
+     * Returns a pointer to the currently loaded map, if any.
+     */
+    inline Map *mapPtr() const { return hasMap()? &map() : nullptr; }
 
     /**
      * @param uri  Universal resource identifier (URI) for the map to change to.
@@ -118,6 +123,14 @@ public:
      * @see changeMap()
      */
     inline void unloadMap() { changeMap(Uri()); }
+
+    /**
+     * Returns the effective map-info definition Record associated with the given
+     * @a mapUri (which may be the default definition, if invalid/unknown).
+     *
+     * @param mapUri  Unique identifier for the map to lookup map-info data for.
+     */
+    Record const &mapInfoForMapUri(Uri const &mapUri) const;
 
     /**
      * Advance time in the world.

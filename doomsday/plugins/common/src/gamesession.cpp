@@ -858,7 +858,7 @@ GameSession &GameSession::gameSession()
     return *singleton;
 }
 
-bool GameSession::hasBegun()
+bool GameSession::hasBegun() const
 {
     return d->inProgress;
 }
@@ -882,46 +882,46 @@ bool GameSession::savingPossible()
     return true;
 }
 
-Record *GameSession::episodeDef()
+Record const *GameSession::episodeDef() const
 {
     if(hasBegun())
     {
         /// @todo cache this result?
         return Defs().episodes.tryFind("id", d->episodeId);
     }
-    return 0;
+    return nullptr;
 }
 
-String GameSession::episodeId()
+String GameSession::episodeId() const
 {
     return hasBegun()? d->episodeId : "";
 }
 
-Record *GameSession::mapGraphNodeDef()
+Record const *GameSession::mapGraphNodeDef() const
 {
     if(Record const *episode = episodeDef())
     {
         return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
     }
-    return 0;
+    return nullptr;
 }
 
-Record *GameSession::mapInfo()
+Record const &GameSession::mapInfo() const
 {
-    return Defs().mapInfos.tryFind("id", mapUri().compose());
+    return G_MapInfoForMapUri(mapUri());
 }
 
-de::Uri GameSession::mapUri()
+de::Uri GameSession::mapUri() const
 {
-    return hasBegun()? d->mapUri : de::Uri();
+    return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
 }
 
-uint GameSession::mapEntryPoint()
+uint GameSession::mapEntryPoint() const
 {
     return d->mapEntryPoint;
 }
 
-GameSession::VisitedMaps GameSession::allVisitedMaps()
+GameSession::VisitedMaps GameSession::allVisitedMaps() const
 {
     if(hasBegun() && d->rememberVisitedMaps)
     {
@@ -930,7 +930,7 @@ GameSession::VisitedMaps GameSession::allVisitedMaps()
     return VisitedMaps();
 }
 
-de::Uri GameSession::mapUriForNamedExit(String name)
+de::Uri GameSession::mapUriForNamedExit(String name) const
 {
     LOG_AS("GameSession");
     if(Record const *mgNode = mapGraphNodeDef())
