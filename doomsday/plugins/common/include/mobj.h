@@ -1,7 +1,7 @@
 /** @file mobj.h  Common playsim map object (mobj) functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MOBJ
-#define LIBCOMMON_MOBJ
+#ifndef LIBCOMMON_MOBJ_H
+#define LIBCOMMON_MOBJ_H
 
 #include "common.h"
 
@@ -87,21 +87,22 @@ dd_bool Mobj_IsPlayer(mobj_t const *mob);
  *
  * @param mob  Map-object instance.
  *
- * @return @c true iff the map-object is a voodoo doll.
+ * @return  @c true if the map-object is a voodoo doll.
  */
 dd_bool Mobj_IsVoodooDoll(mobj_t const *mob);
 
 /**
- * Determines if the mobj is currently touching the floor or on an object.
+ * Determines if the map-object is currently in mid air (i.e., not touching the floor
+ * or, stood on some other object).
  *
- * @param mo  Object.
+ * @param mob  Map-object instance.
  *
- * @return @c true if the map-object is considered to be airborne/flying.
+ * @return  @c true if the map-object is considered to be airborne/flying.
  */
 dd_bool Mobj_IsAirborne(mobj_t const *mob);
 
 /**
- * Determines the world space angle between @em this mobj and the given @a point.
+ * Determines the world space angle between @em this map-object and the given @a point.
  *
  * @param mob            Map-object instance.
  * @param point          World space point being aimed at.
@@ -156,8 +157,8 @@ dd_bool P_MobjChangeStateNoAction(mobj_t *mob, statenum_t stateNum);
 /**
  * Launch the given map-object @a missile (if any) at the specified @a angle.
  *
- * @param mob        Map-object hurler of @a missile.
  * @param missile    Map-object to be launched.
+ * @param angle      World space angle at which to launch.
  * @param targetPos  World space point being targeted (for determining speed).
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
@@ -177,6 +178,7 @@ mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob);
  * enqueuing a new launch sound and recording @em this map-object as the source.
  *
  * @param mob        Map-object hurler of @a missile.
+ * @param angle      World space angle at which to launch.
  * @param missile    Map-object to be launched.
  * @param targetPos  World space point being targeted (for determining speed).
  * @param extraMomZ  Additional momentum to apply to the missile.
@@ -203,7 +205,7 @@ mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPo
 mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3]/*, coord_t extraMomZ = 0*/);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif // LIBCOMMON_MOBJ
+#endif  // LIBCOMMON_MOBJ_H
