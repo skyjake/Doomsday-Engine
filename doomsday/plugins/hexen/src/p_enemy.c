@@ -71,18 +71,14 @@
 #define KORAX_FIRST_TELEPORT_TID    (248)
 #define KORAX_TELEPORT_TID          (249)
 
-#define KORAX_DELTAANGLE            (85*ANGLE_1)
-#define KORAX_ARM_EXTENSION_SHORT   (40)
-#define KORAX_ARM_EXTENSION_LONG    (55)
-
-#define KORAX_ARM1_HEIGHT           (108)
-#define KORAX_ARM2_HEIGHT           (82)
-#define KORAX_ARM3_HEIGHT           (54)
-#define KORAX_ARM4_HEIGHT           (104)
-#define KORAX_ARM5_HEIGHT           (86)
-#define KORAX_ARM6_HEIGHT           (53)
-
-void KSpiritInit(mobj_t *spirit, mobj_t *korax);
+/**
+ * Describes a relative spawn point for a missile (POD).
+ */
+typedef struct MissileSpawnPoint_s {
+    angle_t angle;
+    coord_t distance;
+    coord_t height;
+} MissileSpawnPoint;
 
 int maulatorSeconds = 25;
 //dd_bool fastMonsters = false;
@@ -3147,36 +3143,34 @@ void C_DECL A_IceGuyChase(mobj_t* actor)
     }
 }
 
-void C_DECL A_IceGuyAttack(mobj_t* mo)
+void C_DECL A_IceGuyAttack(mobj_t *mob)
 {
+    mobj_t *target;
+    vec3d_t pos, offset;
     uint an;
-    coord_t pos[3];
 
-    if(!mo->target) return;
+    target = mob->target;
+    if(!target) return;
 
-    pos[VX] = mo->origin[VX];
-    pos[VY] = mo->origin[VY];
-    pos[VZ] = mo->origin[VZ];
+    // Right FX:
+    an = (mob->angle + ANG90) >> ANGLETOFINESHIFT;
+    V3d_Set(offset, (mob->radius / 2) * FIX2FLT(finecosine[an]),
+                    (mob->radius / 2) * FIX2FLT(finesine  [an]),
+                    40 - mob->floorClip);
+    V3d_Sum(pos, mob->origin, offset);
+    Mobj_LaunchMissile(mob, P_SpawnMobj(MT_ICEGUY_FX, pos, Mobj_AimAtTarget(mob), 0),
+                       target->origin);
 
-    an = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
-    pos[VX] += (mo->radius / 2) * FIX2FLT(finecosine[an]);
-    pos[VY] += (mo->radius / 2) * FIX2FLT(finesine[an]);
-    pos[VZ] += 40;
+    // Left FX:
+    an = (mob->angle - ANG90) >> ANGLETOFINESHIFT;
+    V3d_Set(offset, (mob->radius / 2) * FIX2FLT(finecosine[an]),
+                    (mob->radius / 2) * FIX2FLT(finesine  [an]),
+                    40 - mob->floorClip);
+    V3d_Sum(pos, mob->origin, offset);
+    Mobj_LaunchMissile(mob, P_SpawnMobj(MT_ICEGUY_FX, pos, Mobj_AimAtTarget(mob), 0),
+                       target->origin);
 
-    P_SpawnMissileXYZ(MT_ICEGUY_FX, pos[VX], pos[VY], pos[VZ], mo, mo->target);
-
-    pos[VX] = mo->origin[VX];
-    pos[VY] = mo->origin[VY];
-    pos[VZ] = mo->origin[VZ];
-
-    an = (mo->angle - ANG90) >> ANGLETOFINESHIFT;
-    pos[VX] += (mo->radius / 2) * FIX2FLT(finecosine[an]);
-    pos[VY] += (mo->radius / 2) * FIX2FLT(finesine[an]);
-    pos[VZ] += 40;
-
-    P_SpawnMissileXYZ(MT_ICEGUY_FX, pos[VX], pos[VY], pos[VZ], mo, mo->target);
-
-    S_StartSound(mo->info->attackSound, mo);
+    S_StartSound(mob->info->attackSound, mob);
 }
 
 void C_DECL A_IceGuyMissilePuff(mobj_t *mo)
@@ -4276,175 +4270,164 @@ void C_DECL A_KoraxStep2(mobj_t* actor)
     A_Chase(actor);
 }
 
-void C_DECL A_KoraxBonePop(mobj_t *actor)
+static void Korax_InitSpirit(mobj_t *spirit, mobj_t *korax)
 {
-    mobj_t *mo;
+    mobj_t *tail;
+    DENG_ASSERT(spirit);
 
-    // Spawn 6 spirits equalangularly.
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT1, actor, ANGLE_60 * 0, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT2, actor, ANGLE_60 * 1, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT3, actor, ANGLE_60 * 2, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT4, actor, ANGLE_60 * 3, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT5, actor, ANGLE_60 * 4, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    mo = P_SpawnMissileAngle(MT_KORAX_SPIRIT6, actor, ANGLE_60 * 5, 5);
-    if(mo)
-        KSpiritInit(mo, actor);
-
-    Game_ACScriptSystem_StartScript(255, NULL, actor, NULL, 0); // Death script.
-}
-
-void KSpiritInit(mobj_t* spirit, mobj_t* korax)
-{
-    mobj_t* tail;
-
-    spirit->health = KORAX_SPIRIT_LIFETIME;
-
-    spirit->tracer = korax; // Swarm around korax.
+    spirit->health   = KORAX_SPIRIT_LIFETIME;
+    spirit->tracer   = korax; // Swarm around korax.
     spirit->special2 = 32 + (P_Random() & 7); // Float bob index.
-    spirit->args[0] = 10; // Initial turn value.
-    spirit->args[1] = 0; // Initial look angle.
+    spirit->args[0]  = 10;  // Initial turn value.
+    spirit->args[1]  = 0;   // Initial look angle.
 
     // Spawn a tail for spirit.
     if((tail = P_SpawnMobj(MT_HOLY_TAIL, spirit->origin, spirit->angle + ANG180, 0)))
     {
-        int i;
+        tail->target = spirit;  // Parent.
 
-        tail->target = spirit; // Parent.
-
+        { int i;
         for(i = 1; i < 3; ++i)
         {
-            mobj_t* next;
-
-            if((next = P_SpawnMobj(MT_HOLY_TAIL, spirit->origin,
-                                   spirit->angle + ANG180, 0)))
+            mobj_t *next = P_SpawnMobj(MT_HOLY_TAIL, spirit->origin, spirit->angle + ANG180, 0);
+            if(next)
             {
                 P_MobjChangeState(next, P_GetState(next->type, SN_SPAWN) + 1);
                 tail->tracer = next;
                 tail = next;
             }
-        }
+        }}
 
-        tail->tracer = NULL; // Last tail bit.
+        tail->tracer = NULL;  // Last tail bit.
     }
 }
 
-void C_DECL A_KoraxDecide(mobj_t* actor)
+void C_DECL A_KoraxBonePop(mobj_t *mob)
 {
-    if(P_Random() < 220)
-    {
-        P_MobjChangeState(actor, S_KORAX_MISSILE1);
-    }
-    else
-    {
-        P_MobjChangeState(actor, S_KORAX_COMMAND1);
-    }
+    mobj_t *spit;
+
+    // Spawn 6 spirits equalangularly.
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT1, mob, ANGLE_60 * 0, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT2, mob, ANGLE_60 * 1, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT3, mob, ANGLE_60 * 2, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT4, mob, ANGLE_60 * 3, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT5, mob, ANGLE_60 * 4, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    spit = P_SpawnMissileAngle(MT_KORAX_SPIRIT6, mob, ANGLE_60 * 5, 5);
+    if(spit) Korax_InitSpirit(spit, mob);
+
+    // Start the on-death ACScript.
+    Game_ACScriptSystem_StartScript(255, NULL, mob, NULL, 0);
 }
 
-static void spawnKoraxMissile(mobjtype_t type, angle_t angle, coord_t distance,
-    coord_t height, mobj_t* source, mobj_t* target)
+void C_DECL A_KoraxDecide(mobj_t *mob)
 {
-    uint an;
-    coord_t pos[3];
-
-    pos[VX] = source->origin[VX];
-    pos[VY] = source->origin[VY];
-    pos[VZ] = source->origin[VZ];
-
-    an = angle >> ANGLETOFINESHIFT;
-    pos[VX] += distance * FIX2FLT(finecosine[an]);
-    pos[VY] += distance * FIX2FLT(finesine[an]);
-    pos[VZ] += height;
-
-    P_SpawnKoraxMissile(type, pos[VX], pos[VY], pos[VZ], source, target);
+    P_MobjChangeState(mob, P_Random() < 220 ? S_KORAX_MISSILE1 : S_KORAX_COMMAND1);
 }
 
 /**
- * Korax: Six missile attack.
+ * Randomly chooses one of the six available missile types.
  *
- * Arm indices:
- * 1 = top left.
- * 2 = middle left.
- * 3 = lower left.
- * 4 = top right.
- * 5 = middle right.
- * 6 = lower right.
+ * @param fireSound  If not @c nullptr, the sound to play when fired is written here.
+ *
+ * @return  Map-object type for the choosen missile.
  */
-void C_DECL A_KoraxMissile(mobj_t* mo)
+static mobjtype_t Korax_ChooseMissileType(sfxenum_t *fireSound)
 {
-    int                 type = P_Random() % 6;
-    int                 sound = 0;
-
-    S_StartSound(SFX_KORAX_ATTACK, mo);
-
-    switch(type)
+    struct MissileData { mobjtype_t type; sfxenum_t fireSound; } static const missileData[] =
     {
-    case 0:
-        type = MT_WRAITHFX1;
-        sound = SFX_WRAITH_MISSILE_FIRE;
-        break;
+        { MT_WRAITHFX1,     SFX_WRAITH_MISSILE_FIRE  },
+        { MT_DEMONFX1,      SFX_DEMON_MISSILE_FIRE   },
+        { MT_DEMON2FX1,     SFX_DEMON_MISSILE_FIRE   },
+        { MT_FIREDEMON_FX6, SFX_FIRED_ATTACK         },
+        { MT_CENTAUR_FX,    SFX_CENTAURLEADER_ATTACK },
+        { MT_SERPENTFX,     SFX_CENTAURLEADER_ATTACK }
+    };
+    static size_t const numMissileTypes = sizeof(missileData) / sizeof(missileData[0]);
 
-    case 1:
-        type = MT_DEMONFX1;
-        sound = SFX_DEMON_MISSILE_FIRE;
-        break;
+    int const missileNum = P_Random() % numMissileTypes;
+    if(fireSound) *fireSound = missileData[missileNum].fireSound;
+    return missileData[missileNum].type;
+}
 
-    case 2:
-        type = MT_DEMON2FX1;
-        sound = SFX_DEMON_MISSILE_FIRE;
-        break;
+/**
+ * Determines the relative spawn point @a offset, in world space, for a missile
+ * to be launched with the referenced @a arm.
+ *
+ * @param mob     Map-object (Korax).
+ * @param arm     Logical arm number [0..5] where:
+ *                [0: top left, 1: mid left, 2: bottom left, 3: top right, 4: mid right, 5: bottom right]
+ * @param offset  Relative offset in 3D relative
+ */
+static pvec3d_t Korax_MissileSpawnPoint(mobj_t const *mob, int arm, pvec3d_t offset)
+{
+#define ARM_ANGLE            ( 85 * ANGLE_1 )
+#define ARM_EXTENSION_SHORT  ( 40 )
+#define ARM_EXTENSION_LONG   ( 55 )
 
-    case 3:
-        type = MT_FIREDEMON_FX6;
-        sound = SFX_FIRED_ATTACK;
-        break;
+    static MissileSpawnPoint const relSpawnPointByArm[] =
+    {
+        /* top left */     { -ARM_ANGLE, ARM_EXTENSION_SHORT, 108 },
+        /* mid left */     { -ARM_ANGLE, ARM_EXTENSION_LONG,   82 },
+        /* bottom left */  { -ARM_ANGLE, ARM_EXTENSION_LONG,   54 },
+        /* top right */    { ARM_ANGLE,  ARM_EXTENSION_SHORT, 104 },
+        /* mid right */    { ARM_ANGLE,  ARM_EXTENSION_LONG,   86 },
+        /* bottom right */ { ARM_ANGLE,  ARM_EXTENSION_LONG,   53 }
+    };
+    static size_t const numSpawnPoints = sizeof(relSpawnPointByArm) / sizeof(relSpawnPointByArm[0]);
 
-    case 4:
-        type = MT_CENTAUR_FX;
-        sound = SFX_CENTAURLEADER_ATTACK;
-        break;
+    MissileSpawnPoint const *relSpawn = &relSpawnPointByArm[MAX_OF(arm, 0) % numSpawnPoints];
+    uint an;
+    DENG_ASSERT(mob && offset);
 
-    case 5:
-        type = MT_SERPENTFX;
-        sound = SFX_CENTAURLEADER_ATTACK;
-        break;
+    an = (mob->angle + relSpawn->angle) >> ANGLETOFINESHIFT;
+    V3d_Set(offset, relSpawn->distance * FIX2FLT(finecosine[an]),
+                    relSpawn->distance * FIX2FLT(finesine  [an]),
+                    relSpawn->height);
+
+    return offset;  // For caller convenience.
+
+#undef ARM_EXTENSION_LONG
+#undef ARM_EXTENSION_SHORT
+#undef ARM_ANGLE
+}
+
+/**
+ * Korax's six missile attack.
+ */
+void C_DECL A_KoraxMissile(mobj_t *mob)
+{
+    mobj_t *target = mob->target;
+    sfxenum_t fireSound;
+    mobjtype_t missileType;
+    int arm;
+
+    target = mob->target;
+    if(!target) return;
+
+    S_StartSound(SFX_KORAX_ATTACK, mob);
+
+    // Throw a missile with each of our 6 arms, all at once.
+    missileType = Korax_ChooseMissileType(&fireSound);
+    S_StartSound(fireSound, NULL);
+    for(arm = 0; arm < 6; ++arm)
+    {
+        vec3d_t pos, offset;
+        V3d_Sum(pos, mob->origin, Korax_MissileSpawnPoint(mob, arm, offset));
+        pos[VZ] -= mob->floorClip;
+
+        Mobj_LaunchMissile2(mob, P_SpawnMobj(missileType, pos, P_AimAtPoint2(pos, target->origin, target->flags & MF_SHADOW), 0),
+                            target->origin, 30 /*extra z-momentum*/);
     }
-
-    S_StartSound(sound, NULL);
-
-    // Fire all 6 missiles at once.
-    spawnKoraxMissile(type, mo->angle - KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_SHORT,
-                      KORAX_ARM1_HEIGHT - mo->floorClip, mo, mo->target);
-    spawnKoraxMissile(type, mo->angle - KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_LONG,
-                      KORAX_ARM2_HEIGHT - mo->floorClip, mo, mo->target);
-    spawnKoraxMissile(type, mo->angle - KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_LONG,
-                      KORAX_ARM3_HEIGHT - mo->floorClip, mo, mo->target);
-    spawnKoraxMissile(type, mo->angle + KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_SHORT,
-                      KORAX_ARM4_HEIGHT - mo->floorClip, mo, mo->target);
-    spawnKoraxMissile(type, mo->angle + KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_LONG,
-                      KORAX_ARM5_HEIGHT - mo->floorClip, mo, mo->target);
-    spawnKoraxMissile(type, mo->angle + KORAX_DELTAANGLE,
-                      KORAX_ARM_EXTENSION_LONG,
-                      KORAX_ARM6_HEIGHT - mo->floorClip, mo, mo->target);
 }
 
 /**
@@ -4479,40 +4462,38 @@ void C_DECL A_KoraxCommand(mobj_t *mob)
     Game_ACScriptSystem_StartScript(scriptNumber, NULL, mob, NULL, 0);
 }
 
-void C_DECL A_KSpiritWeave(mobj_t* mo)
+void C_DECL A_KSpiritWeave(mobj_t *mob)
 {
+    uint const an = (mob->angle + ANG90) >> ANGLETOFINESHIFT;
     coord_t pos[3];
-    uint weaveXY, weaveZ;
-    uint an;
-
-    pos[VX] = mo->origin[VX];
-    pos[VY] = mo->origin[VY];
-    pos[VZ] = mo->origin[VZ];
-    an = (mo->angle + ANG90) >> ANGLETOFINESHIFT;
 
     // Unpack the last weave vector.
-    weaveXY = mo->special2 >> 16;
-    weaveZ  = mo->special2 & 0xFFFF;
+    uint weaveXY = mob->special2 >> 16;
+    uint weaveZ  = mob->special2 & 0xFFFF;
 
-    pos[VX] -= FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
-    pos[VY] -= FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
-    pos[VZ] -= FLOATBOBOFFSET(weaveZ) * 2;
+    pos[VX] = mob->origin[VX];
+    pos[VY] = mob->origin[VY];
+    pos[VZ] = mob->origin[VZ];
+
+    pos[VX] -= (FLOATBOBOFFSET(weaveXY) * 4) * FIX2FLT(finecosine[an]);
+    pos[VY] -= (FLOATBOBOFFSET(weaveXY) * 4) * FIX2FLT(finesine  [an]);
+    pos[VZ] -= (FLOATBOBOFFSET(weaveZ ) * 2);
 
     weaveXY = (weaveXY + (P_Random() % 5)) & 63;
-    weaveZ  = (weaveZ + (P_Random() % 5)) & 63;
+    weaveZ  = (weaveZ  + (P_Random() % 5)) & 63;
 
-    pos[VX] += FIX2FLT(finecosine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
-    pos[VY] += FIX2FLT(finesine[an]) * (FLOATBOBOFFSET(weaveXY) * 4);
-    pos[VZ] += FLOATBOBOFFSET(weaveZ) * 2;
+    pos[VX] += (FLOATBOBOFFSET(weaveXY) * 4) * FIX2FLT(finecosine[an]);
+    pos[VY] += (FLOATBOBOFFSET(weaveXY) * 4) * FIX2FLT(finesine  [an]);
+    pos[VZ] += (FLOATBOBOFFSET(weaveZ ) * 2);
 
-    P_TryMoveXY(mo, pos[VX], pos[VY]);
+    P_TryMoveXY(mob, pos[VX], pos[VY]);
 
     // P_TryMoveXY won't update the z height, so set it manually.
-    // Should this not be clipped vs the floor/ceiling? - DJS
-    mo->origin[VZ] = pos[VZ];
+    /// @todo Should this not be clipped vs the floor/ceiling? - ds
+    mob->origin[VZ] = pos[VZ];
 
     // Store the weave vector.
-    mo->special2 = weaveZ + (weaveXY << 16);
+    mob->special2 = weaveZ + (weaveXY << 16);
 }
 
 void C_DECL A_KSpiritSeeker(mobj_t* mo, angle_t thresh, angle_t turnMax)

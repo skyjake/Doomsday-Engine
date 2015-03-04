@@ -148,6 +148,22 @@ dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target)
     return P_CheckLineSight(from, target->origin, 0, target->height, 0);
 }
 
+angle_t P_AimAtPoint2(coord_t const from[], coord_t const to[], dd_bool shadowed)
+{
+    angle_t angle = M_PointToAngle2(from, to);
+    if(shadowed)
+    {
+        // Accuracy is reduced when the target is partially shadowed.
+        angle += (P_Random() - P_Random()) << 21;
+    }
+    return angle;
+}
+
+angle_t P_AimAtPoint(coord_t const from[], coord_t const to[])
+{
+    return P_AimAtPoint2(from, to, false/* not shadowed*/);
+}
+
 struct pit_stompthing_params_t
 {
     mobj_t *stompMobj; ///< Mobj doing the stomping.
