@@ -56,7 +56,7 @@ extern "C" {
 dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target);
 
 /**
- * Determines the world space angle between @em this mobj and the given @a point.
+ * Determines the world space angle between the points @a from and @a to.
  *
  * @param from      World space vanatage point to look from.
  * @param to        World space point to look to.

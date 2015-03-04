@@ -957,6 +957,12 @@ mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[
     DENG_ASSERT(targetPos);
     if(missile)
     {
+        // Play the launch sound.
+        if(missile->info->seeSound)
+        {
+            S_StartSound(missile->info->seeSound, missile);
+        }
+
         // Determine speed.
         /// @todo Should optionally calculate this in true 3D.
         coord_t dist;
@@ -982,11 +988,6 @@ mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
     {
         // Remember the source (i.e., us) for tracking kills, etc...
         missile->target = mob;
-
-        if(missile->info->seeSound)
-        {
-            S_StartSound(missile->info->seeSound, missile);
-        }
     }
 
     return P_LaunchMissile(missile, angle, targetPos, extraMomZ);
