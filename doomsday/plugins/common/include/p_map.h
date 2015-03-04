@@ -60,7 +60,7 @@ dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target);
  *
  * @param from      World space vanatage point to look from.
  * @param to        World space point to look to.
- * @param shadowed  @c true= @a point is considered "shadowed", meaning that the
+ * @param shadowed  @c true= @a to is considered "shadowed", meaning that the
  *                  final angle should include some random variance to simulate
  *                  inaccuracy (e.g., the partial-invisibility sphere in DOOM makes
  *                  the player harder to aim at).

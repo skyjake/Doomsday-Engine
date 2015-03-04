@@ -4366,7 +4366,9 @@ static mobjtype_t Korax_ChooseMissileType(sfxenum_t *fireSound)
  * @param mob     Map-object (Korax).
  * @param arm     Logical arm number [0..5] where:
  *                [0: top left, 1: mid left, 2: bottom left, 3: top right, 4: mid right, 5: bottom right]
- * @param offset  Relative offset in 3D relative
+ * @param offset  Relative offset in world space is written here.
+ *
+ * @return  Same as @a offset for caller convenience.
  */
 static pvec3d_t Korax_MissileSpawnPoint(mobj_t const *mob, int arm, pvec3d_t offset)
 {
