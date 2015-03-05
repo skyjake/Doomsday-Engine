@@ -787,8 +787,9 @@ DENG2_PIMPL(ClientWindow)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && vrCfg().mode() == VRConfig::OculusRift);
+        cursor->show(!self.canvas().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
+        // Show or hide the native mouse cursor.
         if(cursor->isVisible())
         {
             if(!cursorHasBeenHidden)
