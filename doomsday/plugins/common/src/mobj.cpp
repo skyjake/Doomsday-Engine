@@ -229,10 +229,10 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
     return false;
 }
 
-dd_bool Mobj_IsPlayer(mobj_t const *mo)
+dd_bool Mobj_IsPlayer(mobj_t const *mob)
 {
-    if(!mo) return false;
-    return (mo->player != 0);
+    if(!mob) return false;
+    return (mob->player != 0);
 }
 
 angle_t Mobj_AimAtPoint2(mobj_t *mob, coord_t const point[], dd_bool pointShadowed)
@@ -954,9 +954,11 @@ mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob)
 mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[],
     coord_t extraMomZ)
 {
-    DENG_ASSERT(targetPos);
+    DENG2_ASSERT(targetPos);
     if(missile)
     {
+        DENG2_ASSERT(missile->info);
+
         // Play the launch sound.
         if(missile->info->seeSound)
         {

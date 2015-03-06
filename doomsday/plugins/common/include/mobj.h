@@ -155,6 +155,13 @@ dd_bool P_MobjChangeState(mobj_t *mob, statenum_t stateNum);
 dd_bool P_MobjChangeStateNoAction(mobj_t *mob, statenum_t stateNum);
 
 /**
+ * Check whether the mobj is currently obstructed and explode immediately if so.
+ *
+ * @return  Pointer to @em this mobj iff it survived, otherwise @c nullptr.
+ */
+mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob);
+
+/**
  * Launch the given map-object @a missile (if any) at the specified @a angle.
  *
  * @param missile    Map-object to be launched.
@@ -167,19 +174,12 @@ dd_bool P_MobjChangeStateNoAction(mobj_t *mob, statenum_t stateNum);
 mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t extraMomZ);
 
 /**
- * Check whether the mobj is currently obstructed and explode immediately if so.
- *
- * @return  Pointer to @em this mobj iff it survived, otherwise @c nullptr.
- */
-mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob);
-
-/**
  * Launch the given map-object @a missile (if any) at the specified @a angle,
  * enqueuing a new launch sound and recording @em this map-object as the source.
  *
  * @param mob        Map-object hurler of @a missile.
- * @param angle      World space angle at which to launch.
  * @param missile    Map-object to be launched.
+ * @param angle      World space angle at which to launch.
  * @param targetPos  World space point being targeted (for determining speed).
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
@@ -195,8 +195,8 @@ mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, 
  * @a missile is presently facing.
  *
  * @param mob        Map-object hurler of @a missile.
- * @param missile    Map-object to be hurdled.
- * @param targetPos  World space point being launchd at (for determining speed).
+ * @param missile    Map-object to be launched.
+ * @param targetPos  World space point being targeted (for determining speed).
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
  * @return  Same as @a missile, for caller convenience.
