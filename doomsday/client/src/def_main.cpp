@@ -959,6 +959,39 @@ static void redecorateMaterial(Material &material, Record const &def)
 
 #endif // __CLIENT__
 
+static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
+{
+    if(uri.isEmpty()) return nullptr;
+
+    // Reverse iteration (later defs override earlier ones).
+    for(int i = defs.groups.size(); i--> 0; )
+    {
+        ded_group_t &grp = defs.groups[i];
+
+        // We aren't interested in precache groups.
+        if(grp.flags & AGF_PRECACHE) continue;
+
+        // Or empty/single-frame groups.
+        if(grp.members.size() < 2) continue;
+
+        // The referenced material must be a member.
+        if(!grp.tryFindFirstMemberWithMaterial(uri)) continue;
+
+        // Only consider groups where each frame has a valid duration.
+        int k;
+        for(k = 0; k < grp.members.size(); ++k)
+        {
+            if(grp.members[k].tics < 0) break;
+        }
+        if(k < grp.members.size()) continue;
+
+        // Found a suitable Group.
+        return &grp;
+    }
+
+    return nullptr;  // Not found.
+}
+
 static void configureMaterial(Material &mat, Record const &definition)
 {
     defn::Material matDef(definition);
@@ -997,7 +1030,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                 // Possibly; see if there is a compatible definition with
                 // a member named similarly to the texture for layer #0.
 
-                if(ded_group_t const *grp = defs.findGroupForFrameTexture(textureUri))
+                if(ded_group_t const *grp = findGroupForMaterialLayerAnimation(textureUri))
                 {
                     // Determine the start frame.
                     int startFrame = 0;
@@ -1010,7 +1043,7 @@ static void configureMaterial(Material &mat, Record const &definition)
                     // Configure the first stage.
                     ded_group_member_t const &gm0 = grp->members[startFrame];
                     stage0.tics     = gm0.tics;
-                    stage0.variance = gm0.randomTics / float( gm0.tics );
+                    stage0.variance = de::max(gm0.randomTics, 0) / float( gm0.tics );
 
                     // Add further stages for each frame in the group.
                     startFrame++;
@@ -1021,7 +1054,10 @@ static void configureMaterial(Material &mat, Record const &definition)
 
                         if(gm.material)
                         {
-                            layer0.addStage(MaterialTextureLayer::AnimationStage(*gm.material, gm.tics, gm.randomTics / float( gm.tics )));
+                            int const tics       = gm.tics;
+                            float const variance = de::max(gm.randomTics, 0) / float( gm.tics );
+
+                            layer0.addStage(MaterialTextureLayer::AnimationStage(*gm.material, tics, variance));
                         }
                     }
                 }

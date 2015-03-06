@@ -2692,39 +2692,47 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Group"))
             {
-                int                 sub;
-                ded_group_t*        grp;
-
                 idx = DED_AddGroup(ded);
-                grp = &ded->groups[idx];
-                sub = 0;
+                ded_group_t *grp = &ded->groups[idx];
 
+                int sub = 0;
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     if(ISLABEL("Texture") || ISLABEL("Flat"))
                     {
-                        ded_group_member_t* memb;
-                        ddstring_t schemeName; Str_Init(&schemeName);
-                        Str_Set(&schemeName, ISLABEL("Texture")? "Textures" : "Flats");
+                        bool const haveTexture = ISLABEL("Texture");
 
                         // Need to allocate new stage?
                         if(sub >= grp->members.size())
+                        {
                             sub = DED_AddGroupMember(grp);
-                        memb = &grp->members[sub];
+                        }
+                        ded_group_member_t *memb = &grp->members[sub];
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("ID", &memb->material, Str_Text(&schemeName))
-                            RV_INT("Tics", memb->tics)
+                            RV_URI("ID", &memb->material, (haveTexture? "Textures" : "Flats"))
+                            if(ISLABEL("Tics"))
+                            {
+                                READINT(memb->tics);
+                                if(memb->tics < 0)
+                                {
+                                    LOG_RES_WARNING("Invalid Group.%s.Tics: %i (< min: 0) in \"%s\" on line #%i"
+                                                    "\nWill ignore this Group if used for Material animation")
+                                            << (haveTexture ? "Texture" : "Flat")
+                                            << memb->tics
+                                            << (source ? source->fileName : "?") << (source ? source->lineNumber : 0);
+                                }
+                            }
+                            else
                             RV_INT("Random", memb->randomTics)
                             RV_END
                             CHECKSC;
                         }
-                        Str_Free(&schemeName);
                         ++sub;
                     }
                     else RV_FLAGS("Flags", grp->flags, "tgf_")
