@@ -2503,14 +2503,7 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            if(MapDef *mapDef = App_WorldSystem().map().def())
-            {
-                int idx = defs.getMapInfoNum(mapDef->composeUri());
-                if(idx >= 0)
-                {
-                    return Def_GetMusicNum(defs.mapInfos[idx].gets("music").toUtf8().constData());
-                }
-            }
+            return Def_GetMusicNum(App_WorldSystem().map().mapInfo().gets("music").toUtf8().constData());
         }
         return -1;
 

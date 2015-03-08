@@ -1779,47 +1779,7 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     return NULL;
 }
 
-mobj_t* P_SpawnMissileXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
-    mobj_t* source, mobj_t* dest)
-{
-    uint an;
-    mobj_t* th;
-    angle_t angle;
-    coord_t dist;
-
-    z -= source->floorClip;
-
-    angle = M_PointToAngle2(source->origin, dest->origin);
-    if(dest->flags & MF_SHADOW)
-    {
-        // Invisible target
-        angle += (P_Random() - P_Random()) << 21;
-    }
-
-    if(!(th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
-        return NULL;
-
-    if(th->info->seeSound)
-        S_StartSound(th->info->seeSound, th);
-
-    th->target = source; // Originator
-    an = angle >> ANGLETOFINESHIFT;
-    th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
-    th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
-    dist = M_ApproxDistance(dest->origin[VX] - source->origin[VX],
-                            dest->origin[VY] - source->origin[VY]);
-    dist /= th->info->speed;
-    if(dist < 1)
-        dist = 1;
-    th->mom[MZ] = (dest->origin[VZ] - source->origin[VZ]) / dist;
-
-    if(P_CheckMissileSpawn(th))
-        return th;
-
-    return NULL;
-}
-
-mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momz)
+mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle, coord_t momz)
 {
     unsigned int an;
     coord_t pos[3], spawnZOff = 0;
@@ -2100,46 +2060,6 @@ mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
         th->mom[MX] = movfac * th->info->speed * FIX2FLT(finecosine[an]);
         th->mom[MY] = movfac * th->info->speed * FIX2FLT(finesine[an]);
         th->mom[MZ] = th->info->speed * slope;
-
-        if(P_CheckMissileSpawn(th))
-            return th;
-    }
-
-    return NULL;
-}
-
-mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z,
-    mobj_t* source, mobj_t* dest)
-{
-    uint an;
-    mobj_t* th;
-    angle_t angle;
-    coord_t dist;
-
-    z -= source->floorClip;
-
-    angle = M_PointXYToAngle2(x, y, dest->origin[VX], dest->origin[VY]);
-    if(dest->flags & MF_SHADOW)
-    {
-        // Invisible target
-        angle += (P_Random() - P_Random()) << 21;
-    }
-
-    if((th = P_SpawnMobjXYZ(type, x, y, z, angle, 0)))
-    {
-        if(th->info->seeSound)
-            S_StartSound(th->info->seeSound, th);
-
-        th->target = source; // Originator
-        an = angle >> ANGLETOFINESHIFT;
-        th->mom[MX] = th->info->speed * FIX2FLT(finecosine[an]);
-        th->mom[MY] = th->info->speed * FIX2FLT(finesine[an]);
-
-        dist = M_ApproxDistance(dest->origin[VX] - x, dest->origin[VY] - y);
-        dist /= th->info->speed;
-        if(dist < 1)
-            dist = 1;
-        th->mom[MZ] = (dest->origin[VZ] - z + 30) / dist;
 
         if(P_CheckMissileSpawn(th))
             return th;

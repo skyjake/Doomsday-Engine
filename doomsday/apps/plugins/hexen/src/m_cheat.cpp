@@ -52,7 +52,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 /// Helper macro for registering new cheat event sequence command handlers.
 #define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
 
-static inline acs::System &acsScriptSys()
+static inline acs::System &acScriptSys()
 {
     return Game_ACScriptSystem();
 }
@@ -813,10 +813,10 @@ D_CMD(CheatRunScript)
             /// @todo Don't do this here.
             if(scriptNum < 1 || scriptNum > 99) return false;
 
-            if(acsScriptSys().hasScript(scriptNum))
+            if(acScriptSys().hasScript(scriptNum))
             {
-                if(acsScriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
-                                                          plr->plr->mo, nullptr, 0))
+                if(acScriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
+                                                         plr->plr->mo, nullptr, 0))
                 {
                     de::String msg = de::String("Running script %1").arg(scriptNum);
                     P_SetMessage(plr, LMF_NO_HIDE, msg.toUtf8().constData());

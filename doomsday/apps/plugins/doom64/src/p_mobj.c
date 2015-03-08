@@ -850,10 +850,6 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  */
 dd_bool P_CheckMissileSpawn(mobj_t* mo)
 {
-    mo->tics -= P_Random() & 3;
-    if(mo->tics < 1)
-        mo->tics = 1;
-
     // Move forward slightly so an angle can be computed if it explodes
     // immediately.
     mo->origin[VX] += mo->mom[MX] / 2;
@@ -961,6 +957,10 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest)
     th->mom[MY] *= dist;
     th->mom[MZ] *= dist;
 
+    th->tics -= P_Random() & 3;
+    if(th->tics < 1)
+        th->tics = 1;
+
     if(P_CheckMissileSpawn(th))
         return th;
 
@@ -1028,6 +1028,10 @@ mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t sourceAngle)
         if(th->info->seeSound)
             S_StartSound(th->info->seeSound, th);
 
+        th->tics -= P_Random() & 3;
+        if(th->tics < 1)
+            th->tics = 1;
+
         P_CheckMissileSpawn(th);
     }
 
@@ -1070,6 +1074,10 @@ mobj_t* P_SpawnMotherMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     if(dist < 1)
         dist = 1;
     th->mom[MZ] = (dest->origin[VZ] - z + 30) / dist;
+
+    th->tics -= P_Random() & 3;
+    if(th->tics < 1)
+        th->tics = 1;
 
     P_CheckMissileSpawn(th);
     return th;

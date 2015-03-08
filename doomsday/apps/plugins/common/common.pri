@@ -10,6 +10,7 @@ INCLUDEPATH += \
 
 HEADERS += \
     $$common_inc/acs/interpreter.h \
+    $$common_inc/acs/module.h \
     $$common_inc/acs/script.h \
     $$common_inc/acs/system.h \
     $$common_inc/am_map.h \
@@ -97,6 +98,7 @@ HEADERS += \
 
 SOURCES += \
     $$common_src/acs/interpreter.cpp \
+    $$common_src/acs/module.cpp \
     $$common_src/acs/script.cpp \
     $$common_src/acs/system.cpp \
     $$common_src/am_map.c \

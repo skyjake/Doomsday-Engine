@@ -34,8 +34,8 @@ MaterialTextureLayer::AnimationStage::AnimationStage(de::Uri const &texture, int
     resetToDefaults();
 
     set("origin", new ArrayValue(origin));
-    set("texture", texture.asText());
-    set("maskTexture", maskTexture.asText());
+    set("texture", texture.compose());
+    set("maskTexture", maskTexture.compose());
     set("maskDimensions", new ArrayValue(maskDimensions));
     set("blendMode", blendMode);
     set("opacity", opacity);

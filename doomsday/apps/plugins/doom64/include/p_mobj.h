@@ -49,6 +49,10 @@ class MapStateWriter;
 #endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
+
+/// Threshold for killing momentum of a freely moving object affected by friction.
+#define WALKSTOP_THRESHOLD   (0.062484741) // FIX2FLT(0x1000-1)
+
 #define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
 #define MAXMOM              (30) // 30*FRACUNIT
 #define MAXMOMSTEP          (15) // 30*FRACUNIT/2
@@ -262,6 +266,7 @@ typedef struct mobj_s {
 extern "C" {
 #endif
 
+dd_bool P_CheckMissileSpawn(mobj_t *mo);
 void P_ExplodeMissile(mobj_t *mo);
 
 mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);

@@ -195,8 +195,6 @@ public:
 
     ded_compositefont_t *getCompositeFont(char const *uriCString) const;
 
-    ded_group_t *findGroupForFrameTexture(de::Uri const &uri) const;
-
 protected:
     void release();
 

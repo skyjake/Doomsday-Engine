@@ -167,6 +167,13 @@ public:
     void setDef(MapDef *newMapDefinition);
 
     /**
+     * Returns the effective map-info definition Record for the map.
+     *
+     * @see WorldSystem::mapInfoForMapUri()
+     */
+    de::Record const &mapInfo() const;
+
+    /**
      * Returns the points which describe the boundary of the map coordinate
      * space, which, are defined by the minimal and maximal vertex coordinates
      * of the non-editable, non-polyobj line geometries).

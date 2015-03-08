@@ -3673,13 +3673,14 @@ void ResourceSystem::initSprites()
 
     d->clearSprites();
 
+    /// @todo It should no longer be necessary to split this into two phases -ds
     SpriteDefs defs = generateSpriteDefs();
 
     if(!defs.isEmpty())
     {
         // Build the final sprites.
         int customIdx = 0;
-        foreach(SpriteDef const &def, defs)
+        for(SpriteDef const &def : defs)
         {
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
             if(spriteId == -1)
@@ -3687,66 +3688,64 @@ void ResourceSystem::initSprites()
                 spriteId = runtimeDefs.sprNames.size() + customIdx++;
             }
 
-            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
+            // Generate new sprites from this definition:
+            QMap<int, Sprite *> newSprites;
 
-            Sprite sprTemp[29];
-
-            int maxSprite = -1;
-            foreach(SpriteFrameDef const &frameDef, def.frames)
+            for(SpriteFrameDef const &frameDef : def.frames)
+            for(int i = 0; i < 2; ++i)
             {
-                int frame = frameDef.frame[0] - 1;
-                DENG2_ASSERT(frame >= 0);
-                if(frame < 29)
+                int const frame = frameDef.frame[i] - 1;
+                if(frame < 0) continue;
+
+                auto const found = newSprites.find(frame);
+                Sprite *sprite;
+                if(found != newSprites.end())
                 {
-                    sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
-                    if(frame > maxSprite)
-                    {
-                        maxSprite = frame;
-                    }
+                    sprite = found.value();
+                }
+                else
+                {
+                    sprite = newSprites.insert(frame, new Sprite).value();
                 }
 
-                if(frameDef.frame[1])
-                {
-                    frame = frameDef.frame[1] - 1;
-                    DENG2_ASSERT(frame >= 0);
-                    if(frame < 29)
-                    {
-                        sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
-                        if(frame > maxSprite)
-                        {
-                            maxSprite = frame;
-                        }
-                    }
-                }
+                sprite->newViewAngle(frameDef.mat, frameDef.rotation[i], i == 1);
             }
-            ++maxSprite;
 
             // Duplicate view angles to complete the rotation set (if defined).
-            for(int frame = 0; frame < maxSprite; ++frame)
+            for(Sprite *sprite : newSprites)
             {
-                Sprite &sprite = sprTemp[frame];
-
-                if(sprite.viewAngleCount() < 2)
+                if(sprite->viewAngleCount() < 2)
                     continue;
 
                 for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
                 {
-                    if(!sprite.hasViewAngle(rot * 2 + 1))
+                    if(!sprite->hasViewAngle(rot * 2 + 1))
                     {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2);
-                        sprite.newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
+                        auto const &src = sprite->viewAngle(rot * 2);
+                        sprite->newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
                     }
-                    if(!sprite.hasViewAngle(rot * 2))
+                    if(!sprite->hasViewAngle(rot * 2))
                     {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2 + 1);
-                        sprite.newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
+                        auto const &src = sprite->viewAngle(rot * 2 + 1);
+                        sprite->newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
                     }
                 }
             }
 
-            for(int k = 0; k < maxSprite; ++k)
+            // Append the completed sprites to the relevant group (frame set).
+            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
+            int lastFrame = -1;
+            while(!newSprites.isEmpty())
             {
-                group.sprites.append(new Sprite(sprTemp[k]));
+                int frame = newSprites.firstKey();
+                // Insert dummy sprites to fill any gaps in the frame set.
+                for(int i = lastFrame + 1; i < frame; ++i)
+                {
+                    group.sprites << new Sprite;
+                }
+
+                group.sprites << newSprites.take(frame);
+                lastFrame = frame;
             }
         }
     }

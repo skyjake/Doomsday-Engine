@@ -27,10 +27,9 @@
 #include <de/reader.h>
 #include <de/writer.h>
 #include <de/String>
+#include "acs/module.h"
 
 namespace acs {
-
-class System;
 
 /**
  * Models the high-level state of an Action Code Script (ACS).
@@ -40,17 +39,6 @@ class System;
 class Script
 {
 public:
-    /**
-     * Stores information about an ACS byte/p-code entry point.
-     */
-    struct EntryPoint
-    {
-        int const *pcodePtr     = nullptr;
-        bool startWhenMapBegins = false;
-        int scriptNumber        = 0;
-        int scriptArgCount      = 0;
-    };
-
     /**
      * Script arguments.
      */
@@ -79,7 +67,7 @@ public:
 
 public:
     Script();
-    Script(EntryPoint const &ep);
+    Script(Module::EntryPoint const &ep);
 
     /**
      * Composes the human-friendly, styled, textual name of the object.
@@ -144,12 +132,12 @@ public:
     /**
      * Returns the entry point info for the script.
      */
-    EntryPoint const &entryPoint() const;
+    Module::EntryPoint const &entryPoint() const;
 
     /**
      * Reconfigure the entry point info for the script.
      */
-    void applyEntryPoint(EntryPoint const &epToCopy);
+    void setEntryPoint(Module::EntryPoint const &entryPoint);
 
     void read(Reader *reader);
     void write(Writer *writer) const;

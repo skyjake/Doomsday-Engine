@@ -830,10 +830,6 @@ void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle)
  */
 dd_bool P_CheckMissileSpawn(mobj_t* th)
 {
-    th->tics -= P_Random() & 3;
-    if(th->tics < 1)
-        th->tics = 1;
-
     // Move forward slightly so an angle can be computed if it explodes
     // immediately.
     /// @todo Optimize: Why not simply spawn at this location? -ds
@@ -970,6 +966,10 @@ mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
     th->mom[MX] *= dist;
     th->mom[MY] *= dist;
     th->mom[MZ] *= dist;
+
+    th->tics -= P_Random() & 3;
+    if(th->tics < 1)
+        th->tics = 1;
 
     if(P_CheckMissileSpawn(th))
         return th;

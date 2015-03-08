@@ -903,34 +903,8 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     XG_Init();
 #endif
 
-#if __JHEXEN__
-    if(!IS_CLIENT)
-    {
-        /// @todo Should be translated by the map converter.
-        lumpnum_t const mapMarkerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
-        lumpnum_t acsLumpNum = mapMarkerLumpNum + 11 /*ML_BEHAVIOR*/;
-        if(acsLumpNum < CentralLumpIndex().size())
-        {
-            acs::System &acscriptSys = Game_ACScriptSystem();
-
-            acscriptSys.loadBytecode(CentralLumpIndex()[acsLumpNum]);
-            acscriptSys.mapVars.fill(0);
-
-            // Start all scripts flagged to begin immediately.
-            // (allow a 1 second delay for map initialization to complete).
-            acscriptSys.forAllScripts([] (acs::Script &script)
-            {
-                if(script.entryPoint().startWhenMapBegins)
-                {
-                    bool justStarted = script.start(acs::Script::Args()/*default args*/, nullptr, nullptr, 0, TICSPERSEC);
-                    DENG2_ASSERT(justStarted);
-                    DENG2_UNUSED(justStarted);
-                }
-                return LoopContinue;
-            });
-        }
-    }
-#endif
+    Game_ACScriptSystem().loadModuleForMap(mapUri);
+    Game_ACScriptSystem().worldSystemMapChanged();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     P_FindSecrets();

@@ -1,29 +1,21 @@
-/**\file p_mobj.h
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file p_mobj.h  Specialized world map-objects, for Hexen.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
-/**
- * Map Objects, MObj, definition and handling.
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
 #ifndef LIBHEXEN_P_MOBJ_H
@@ -41,30 +33,33 @@ class MapStateReader;
 class MapStateWriter;
 #endif
 
-#define NOMOM_THRESHOLD     (0.0001) // (integer) 0
-#define WALKSTOP_THRESHOLD  (0.062484741) // FIX2FLT(0x1000-1)
-#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
-#define MAXMOM              (30) // 30*FRACUNIT
-#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
+#define NOMOM_THRESHOLD      ( 0.0001 )      ///< @c (integer) 0
 
-#define FRICTION_LOW        (0.97265625) // 0xf900
-#define FRICTION_FLY        (0.91796875) // 0xeb00
-#define FRICTION_NORMAL     (0.90625000) // 0xe800
-#define FRICTION_HIGH       (0.41992187) // 0xd700/2
+/// Threshold for killing momentum of a freely moving object affected by friction.
+#define WALKSTOP_THRESHOLD   ( 0.062484741 ) ///< @c FIX2FLT(0x1000 - 1)
+
+#define DROPOFFMOM_THRESHOLD ( 0.25 )        ///< @c FRACUNIT / 4
+#define MAXMOM               ( 30 )          ///< @c 30 * FRACUNIT
+#define MAXMOMSTEP           ( 15 )          ///< @c 30 * FRACUNIT / 2
+
+#define FRICTION_LOW         ( 0.97265625 )  ///< @c 0xf900
+#define FRICTION_FLY         ( 0.91796875 )  ///< @c 0xeb00
+#define FRICTION_NORMAL      ( 0.90625000 )  ///< @c 0xe800
+#define FRICTION_HIGH        ( 0.41992187 )  ///< @c 0xd700 / 2
 
 /**
  * Mobj flags
  *
- * \attention IMPORTANT - Keep this current!!!
+ * @attention IMPORTANT - Keep this current!!!
  * LEGEND:
  * p    = Flag is persistent (never changes in-game).
  * i    = Internal use (not to be used in defintions).
  *
- * \todo Persistent flags (p) don't need to be included in save games or sent to
+ * @todo Persistent flags (p) don't need to be included in save games or sent to
  * clients in netgames. We should collect those in to a const flags setting which
  * is set only once when the mobj is spawned.
  *
- * \todo All flags for internal use only (i) should be put in another var and the
+ * @todo All flags for internal use only (i) should be put in another var and the
  * flags removed from those defined in GAME/objects.DED
  */
 
@@ -185,33 +180,33 @@ typedef struct mobj_s {
     DD_BASE_MOBJ_ELEMENTS()
 
     // Hexen-specific data:
-    struct player_s* player; // Only valid if type == MT_PLAYER
-    int             damage; // For missiles
-    int             special1; // Special info
-    int             special2; // Special info
-    int             moveDir; // 0-7
-    int             moveCount; // When 0, select a new dir
-    struct mobj_s*  target; // Thing being chased/attacked (or NULL)
-                            // also the originator for missiles
-                            // used by player to freeze a bit after
-                            // teleporting
-    int             threshold; // if > 0, the target will be chased
-                               // no matter what (even if shot)
-    int             lastLook; // player number last looked for
-    short           tid; // thing identifier
-    byte            special; // special
+    struct player_s *player;   ///< Only valid if type == MT_PLAYER.
+    int damage;                ///< For missiles.
+
+    int special1;
+    int special2;
+
+    int moveDir;               ///< [0..7]
+    int moveCount;             ///< When @c 0 - select a new dir.
+    struct mobj_s *target;     /** Thing being chased/attacked (or @c nullptr)
+                                   also the originator for missiles used by the
+                                   player to freeze a bit after teleporting. */
+    int threshold;             /** @c > 0 if the target will be chased no matter
+                                   what (even if shot). */
+    int lastLook;              ///< Player number last looked for.
+    short tid;                 ///< Thing identifier.
+
+    byte special;
     union {
-        byte        args[5]; // special arguments
-        uint        argsUInt; // used with minotaur
+        byte args[5];          ///< Special arguments
+        uint argsUInt;         ///< Used with minotaur
     };
-    int             turnTime; // $visangle-facetarget
-    int             alpha; // $mobjalpha
 
-    // Thing being chased/attacked for tracers.
-    struct mobj_s*  tracer;
+    int turnTime;              ///< $visangle-facetarget
+    int alpha;                 ///< $mobjalpha
 
-    // Used by lightning zap
-    struct mobj_s*  lastEnemy;
+    struct mobj_s *tracer;     ///< Thing being chased/attacked for tracers.
+    struct mobj_s *lastEnemy;  ///< Used by lightning zap
 
 #ifdef __cplusplus
     void write(MapStateWriter *msw) const;
@@ -232,34 +227,27 @@ mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
 mobj_t *P_SpawnMobj(mobjtype_t type, coord_t const pos[3], angle_t angle, int spawnFlags);
 
 void P_SpawnBlood(coord_t x, coord_t y, coord_t z, int damage, angle_t angle);
-
-void P_SpawnDirt(mobj_t* actor, coord_t radius);
-
-void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t* origin);
-void P_SpawnBloodSplatter2(coord_t x, coord_t y, coord_t z, mobj_t* origin);
+void P_SpawnDirt(mobj_t *actor, coord_t radius);
+void P_SpawnBloodSplatter(coord_t x, coord_t y, coord_t z, mobj_t *origin);
+void P_SpawnBloodSplatter2(coord_t x, coord_t y, coord_t z, mobj_t *origin);
+mobj_t *P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
 
 /**
- * @return  @c NULL, if the missile exploded immediately, otherwise returns a
- *          mobj_t pointer to the spawned missile.
+ * @return  The newly-spawned missile, or @c nullptr if it exploded immediately.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest);
-mobj_t* P_SpawnMissileXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
-mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momZ);
-mobj_t* P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t* source, angle_t angle, coord_t momZ, float speed);
+mobj_t *P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t *P_SpawnMissileAngle(mobjtype_t type, mobj_t *source, angle_t angle, coord_t momZ);
+mobj_t *P_SpawnMissileAngleSpeed(mobjtype_t type, mobj_t *source, angle_t angle, coord_t momZ, float speed);
 
-mobj_t* P_SpawnPlayerMissile(mobjtype_t type, mobj_t* source);
+mobj_t *P_SpawnPlayerMissile(mobjtype_t type, mobj_t *source);
 
-mobj_t* P_SPMAngle(mobjtype_t type, mobj_t* source, angle_t angle);
-mobj_t* P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, angle_t angle);
+mobj_t *P_SPMAngle(mobjtype_t type, mobj_t *source, angle_t angle);
+mobj_t *P_SPMAngleXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t *source, angle_t angle);
 
-mobj_t* P_SpawnTeleFog(coord_t x, coord_t y, angle_t angle);
-
-mobj_t* P_SpawnKoraxMissile(mobjtype_t type, coord_t x, coord_t y, coord_t z, mobj_t* source, mobj_t* dest);
-
-void P_ExplodeMissile(mobj_t* mo);
+void P_ExplodeMissile(mobj_t *mo);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif // LIBHEXEN_P_MOBJ_H
+#endif  // LIBHEXEN_P_MOBJ_H

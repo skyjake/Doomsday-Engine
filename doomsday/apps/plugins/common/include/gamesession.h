@@ -55,7 +55,7 @@ public:
     GameSession();
     virtual ~GameSession();
 
-    bool hasBegun();
+    bool hasBegun() const;
     bool savingPossible();
     bool loadingPossible();
 
@@ -63,49 +63,50 @@ public:
      * Returns the current Episode definition for the game session in progress. If the session
      * has not yet begun then @c nullptr is returned.
      */
-    de::Record *episodeDef();
+    de::Record const *episodeDef() const;
 
     /**
      * Returns the current episode id for the game session in progress. If the session has not
      * yet begun then a zero-length string is returned.
      */
-    de::String episodeId();
+    de::String episodeId() const;
 
     /**
      * Returns the current MapGraphNode definition for the game session in progress. If the
      * session has not yet begun then @c nullptr is returned.
      */
-    de::Record *mapGraphNodeDef();
+    de::Record const *mapGraphNodeDef() const;
 
     /**
      * Returns the current MapInfo definition for the game session in progress. If the session
-     * has not yet begun, or no definition exists for the current map then @c nullptr is returned.
+     * has not yet begun, or no definition exists for the current map then the default definition
+     * is returned instead.
      */
-    de::Record *mapInfo();
+    de::Record const &mapInfo() const;
 
     /**
      * Returns the current map URI for the game session in progress. If the session has not
      * yet begun then an empty URI is returned.
      */
-    de::Uri mapUri();
+    de::Uri mapUri() const;
 
     /**
      * Returns the player entry point for the current map, for the game session in progress.
      * The entry point determines where players will be reborn.
      */
-    uint mapEntryPoint();
+    uint mapEntryPoint() const;
 
     /**
      * Returns a list of all the maps that have been visited, for the game session in progress.
      * @note Older versions of the saved session format did not record this information (it may
      * be empty).
      */
-    VisitedMaps allVisitedMaps();
+    VisitedMaps allVisitedMaps() const;
 
     /**
      * Resolves a named exit according to the map progression.
      */
-    de::Uri mapUriForNamedExit(de::String name);
+    de::Uri mapUriForNamedExit(de::String name) const;
 
     /**
      * Returns the current ruleset for the game session.

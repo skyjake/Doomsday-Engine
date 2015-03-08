@@ -44,7 +44,7 @@ Script::Args::Args(dbyte const *cArr, dint length)
 
 DENG2_PIMPL_NOREF(Script)
 {
-    std::unique_ptr<EntryPoint> entrypoint;
+    Module::EntryPoint const *entryPoint = nullptr;
     State state   = Inactive;
     int waitValue = 0;
 
@@ -70,14 +70,14 @@ DENG2_PIMPL_NOREF(Script)
 Script::Script() : d(new Instance)
 {}
 
-Script::Script(EntryPoint const &ep) : d(new Instance)
+Script::Script(Module::EntryPoint const &ep) : d(new Instance)
 {
-    applyEntryPoint(ep);
+    setEntryPoint(ep);
 }
 
 String Script::describe() const
 {
-    EntryPoint const &ep = entryPoint();
+    Module::EntryPoint const &ep = entryPoint();
     return "ACScript #" DE2_ESC(b) + String::number(ep.scriptNumber)
          + DE2_ESC(l) " Args: " DE2_ESC(.) DE2_ESC(i) + String::number(ep.scriptArgCount)
          + DE2_ESC(l) " Open: " DE2_ESC(.) DE2_ESC(i) + DENG2_BOOL_YESNO(ep.startWhenMapBegins);
@@ -85,8 +85,8 @@ String Script::describe() const
 
 String Script::description() const
 {
-    return DE2_ESC(l) "State: "     DE2_ESC(.) DE2_ESC(i) + stateAsText(d->state) + DE2_ESC(.)
-         + DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + d->waitValue;
+    return DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) + stateAsText(d->state) + DE2_ESC(.)
+         + (isWaiting()? DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + String::number(d->waitValue) : "");
 }
 
 bool Script::start(Args const &args, mobj_t *activator, Line *line, int side, int delayCount)
@@ -188,15 +188,15 @@ void Script::sectorFinished(int tag)
     }
 }
 
-Script::EntryPoint const &Script::entryPoint() const
+Module::EntryPoint const &Script::entryPoint() const
 {
-    DENG2_ASSERT(d->entrypoint.get());
-    return *d->entrypoint;
+    DENG2_ASSERT(d->entryPoint);
+    return *d->entryPoint;
 }
 
-void Script::applyEntryPoint(EntryPoint const &epToCopy)
+void Script::setEntryPoint(Module::EntryPoint const &entryPoint)
 {
-    d->entrypoint.reset(new EntryPoint(epToCopy));
+    d->entryPoint = &entryPoint;
 }
 
 void Script::write(writer_s *writer) const

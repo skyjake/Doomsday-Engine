@@ -71,7 +71,7 @@ void LocalServer::start(duint16 port,
 
 #ifdef MACOSX
     // First locate the server executable.
-    NativePath bin = NativePath(qApp->applicationDirPath()) / "../Resources/doomsday-server";
+    NativePath bin = NativePath(qApp->applicationDirPath()) / "../MacOS/doomsday-server";
     if(!bin.exists())
     {
         // Try another location: Doomsday-Shell.app -> Doomsday Engine.app/Contents/Doomsday.app
@@ -82,40 +82,13 @@ void LocalServer::start(duint16 port,
     {
         // Yet another possibility: Doomsday-Shell.app -> Doomsday.app
         bin = NativePath(qApp->applicationDirPath()) /
-                "../../../Doomsday.app/Contents/Resources/doomsday-server";
-    }
-    if(!bin.exists())
-    {
-        // Undeployed, e.g., a developer build.
-        bin = NativePath(qApp->applicationDirPath()) /
-                "../../../../../../client/Doomsday.app/Contents/Resources/doomsday-server";
+                "../../../Doomsday.app/Contents/MacOS/doomsday-server";
     }
     if(!bin.exists())
     {
         throw NotFoundError("LocalServer::start", "Could not find Doomsday.app");
     }
-
-    /**
-     * @todo These options will be much simpler when FS2 is used for
-     * all file access.
-     */
-
     cmd.append(bin);
-    cmd.append("-vdmap");
-    cmd.append("..");
-    cmd.append("}Data");
-    cmd.append("-basedir");
-    cmd.append(bin.fileNamePath() / "../Resources");
-    String plugDir = bin.fileNamePath() / "../PlugIns/Doomsday";
-    cmd.append("-vdmap");
-    cmd.append(plugDir / "doom.bundle/Contents/Resources");
-    cmd.append("}Data/jDoom/");
-    cmd.append("-vdmap");
-    cmd.append(plugDir / "heretic.bundle/Contents/Resources");
-    cmd.append("}Data/jHeretic/");
-    cmd.append("-vdmap");
-    cmd.append(plugDir / "hexen.bundle/Contents/Resources");
-    cmd.append("}Data/jHexen/");
 
 #elif WIN32
     NativePath bin = NativePath(qApp->applicationDirPath()) / "doomsday-server.exe";

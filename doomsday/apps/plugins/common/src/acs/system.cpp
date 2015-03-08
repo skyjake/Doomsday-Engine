@@ -24,51 +24,40 @@
 #include <de/ISerializable>
 #include <de/Log>
 #include <de/NativePath>
-#include "acs/interpreter.h"
+#include "acs/module.h"
 #include "acs/script.h"
 #include "gamesession.h"
 
 using namespace de;
 
-namespace internal
+namespace acs {
+
+DENG2_PIMPL_NOREF(System)
 {
-    /**
-     * Bytecode header. Read directly from the data resource file.
-     */
-#pragma pack(1)
-    struct BytecodeHeader
-    {
-        dint32 marker;
-        dint32 infoOffset;
-        dint32 code;
-    };
-#pragma pack()
+    std::unique_ptr<Module> currentModule;
+    QList<Script *> scripts;  ///< Scripts for the current module (if any).
 
     /**
-     * A deferred task is enqueued when a script is started on a map not currently loaded.
+     * When a script must be started on a map that is not currently loaded -
+     * a deferred task is enqueued.
      */
-    class DeferredTask : public ISerializable
+    class ScriptStartTask : public ISerializable
     {
     public:
-        de::Uri mapUri;                ///< Unique identifier of the target map.
-        dint32 scriptNumber;           ///< Script number to execute on the target map.
-        acs::Script::Args scriptArgs;
+        de::Uri mapUri;           ///< Unique identifier of the target map.
+        dint32 scriptNumber;      ///< Script number to execute on the target map.
+        Script::Args scriptArgs;
 
-        DeferredTask() : scriptNumber(-1) {}
-        DeferredTask(de::Uri const &mapUri, dint32 scriptNumber, acs::Script::Args const &scriptArgs)
+        ScriptStartTask() : scriptNumber(-1) {}
+        ScriptStartTask(de::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
         {}
-        DeferredTask(DeferredTask const &other)
-            : mapUri      (other.mapUri)
-            , scriptNumber(other.scriptNumber)
-            , scriptArgs  (other.scriptArgs)
-        {}
 
-        static DeferredTask *newFromReader(de::Reader &from)
+        static ScriptStartTask *newFromReader(de::Reader &from)
         {
-            std::unique_ptr<DeferredTask> task(new DeferredTask);
+            std::unique_ptr<ScriptStartTask> task(new ScriptStartTask);
             from >> *task;
             return task.release();
         }
@@ -91,25 +80,18 @@ namespace internal
             for(dbyte &arg : scriptArgs) from >> arg;
         }
     };
+    QList<ScriptStartTask *> tasks;
 
-}  // namespace internal
-using namespace internal;
-
-namespace acs {
-
-DENG2_PIMPL(System)
-{
-    byte const *pcode = nullptr;  ///< Loaded bytecode (if any).
-    QList<Script *> scripts;
-    QList<String> strings;
-
-    QList<DeferredTask *> deferredTasks;
-
-    Instance(Public *i) : Base(i) {}
     ~Instance()
     {
-        clearDeferredTasks();
+        clearTasks();
+        unloadModule();
+    }
+
+    void unloadModule()
+    {
         clearScripts();
+        currentModule.release();
     }
 
     void clearScripts()
@@ -117,117 +99,78 @@ DENG2_PIMPL(System)
         qDeleteAll(scripts); scripts.clear();
     }
 
-    void clearStrings()
+    void makeScripts()
     {
-        strings.clear();
-    }
+        clearScripts();
 
-    void clearDeferredTasks()
-    {
-        qDeleteAll(deferredTasks); deferredTasks.clear();
-    }
-
-    void runDeferredTasks(de::Uri const &mapUri)
-    {
-        for(int i = 0; i < deferredTasks.count(); ++i)
+        currentModule->forAllEntryPoints([this] (Module::EntryPoint const &ep)
         {
-            DeferredTask *task = deferredTasks[i];
-            if(task->mapUri != mapUri) continue;
+            scripts << new Script(ep);
+            return LoopContinue;
+        });
+    }
 
-            if(self.hasScript(task->scriptNumber))
-            {
-                self.script(task->scriptNumber)
-                        .start(task->scriptArgs, nullptr, nullptr, 0, TICSPERSEC);
-            }
-            else
-            {
-                LOG_SCR_WARNING("Unknown script #%i") << task->scriptNumber;
-            }
-
-            delete deferredTasks.takeAt(i);
-            i -= 1;
-        }
+    void clearTasks()
+    {
+        qDeleteAll(tasks); tasks.clear();
     }
 };
 
-System::System() : d(new Instance(this))
+System::System() : d(new Instance)
 {
     mapVars.fill(0);
     worldVars.fill(0);
-}
-
-void System::loadBytecode(File1 &file)
-{
-#define OPEN_SCRIPTS_BASE 1000
-
-    DENG2_ASSERT(!IS_CLIENT);
-
-    LOG_AS("acs::System");
-    LOG_SCR_VERBOSE("Loading bytecode from %s:%s...")
-            << NativePath(file.container().composePath()).pretty()
-            << file.name();
-
-    d->clearScripts();
-    d->clearStrings();
-
-    int numScripts = 0;
-
-    int const *readBuf = 0;
-    if(file.size() >= sizeof(BytecodeHeader))
-    {
-        void *region = Z_Malloc(file.size(), PU_MAP, nullptr);
-        file.read((uint8_t *)region);
-        BytecodeHeader const *header = (BytecodeHeader const *) region;
-        d->pcode = (byte const *) header;
-
-        if(DD_LONG(header->infoOffset) < (int)file.size())
-        {
-            readBuf = (int *) ((byte const *) header + DD_LONG(header->infoOffset));
-            numScripts = DD_LONG(*readBuf++);
-        }
-    }
-
-    if(!numScripts)
-    {
-        // Empty file / invalid bytecode.
-        LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode")
-                << NativePath(file.container().composePath())
-                << file.name();
-        return;
-    }
-
-    for(int i = 0; i < numScripts; ++i)
-    {
-        Script::EntryPoint ep;
-
-        ep.scriptNumber = DD_LONG(*readBuf++);
-        if(ep.scriptNumber >= OPEN_SCRIPTS_BASE)
-        {
-            ep.scriptNumber -= OPEN_SCRIPTS_BASE;
-            ep.startWhenMapBegins = true;
-        }
-        ep.pcodePtr = (int const *)(d->pcode + DD_LONG(*readBuf++));
-        ep.scriptArgCount = DD_LONG(*readBuf++);
-        if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
-            throw Error("acs::System::loadBytecode", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
-
-        d->scripts << new Script(ep/*make a copy*/);
-    }
-
-    int const numStrings = DD_LONG(*readBuf++);
-    for(int i = 0; i < numStrings; ++i)
-    {
-        d->strings << String((char const *)(d->pcode + DD_LONG(*readBuf++)));
-    }
-
-#undef OPEN_SCRIPTS_BASE
 }
 
 void System::reset()
 {
-    worldVars.fill(0);
+    d->clearTasks();
+    d->unloadModule();
     mapVars.fill(0);
-    d->clearDeferredTasks();
+    worldVars.fill(0);
+}
+
+void System::loadModuleForMap(de::Uri const &mapUri)
+{
+#if __JHEXEN__
+    if(IS_CLIENT) return;
+
+    // Only one module may be loaded at once...
+    d->unloadModule();
+
+    if(mapUri.isEmpty()) return;
+
+    /// @todo Should be using MapDef here...
+    lumpnum_t const markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
+    lumpnum_t const moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
+    if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
+
+    de::File1 &file = CentralLumpIndex()[moduleLumpNum];
+    if(!Module::recognize(file)) return;
+
+    // Attempt to load the new module.
+    try
+    {
+        d->currentModule.reset(Module::newFromFile(file));
+        d->makeScripts();
+    }
+    catch(Module::FormatError const &er)
+    {
+        // Empty file / invalid bytecode.
+        LOG_SCR_WARNING("File %s:%s does not appear to be valid ACS bytecode\n")
+                << NativePath(file.container().composePath())
+                << file.name()
+                << er.asText();
+    }
+#else
+    DENG2_UNUSED(mapUri);
+#endif
+}
+
+Module const &System::module() const
+{
+    DENG2_ASSERT(bool( d->currentModule ));
+    return *d->currentModule;
 }
 
 int System::scriptCount() const
@@ -235,7 +178,7 @@ int System::scriptCount() const
     return d->scripts.count();
 }
 
-bool System::hasScript(int scriptNumber)
+bool System::hasScript(int scriptNumber) const
 {
     for(Script const *script : d->scripts)
     {
@@ -282,7 +225,7 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
         return true;
 
     // Don't allow duplicates.
-    for(DeferredTask const *task : d->deferredTasks)
+    for(Instance::ScriptStartTask const *task : d->tasks)
     {
         if(task->scriptNumber == scriptNumber &&
            task->mapUri       == mapUri)
@@ -292,36 +235,21 @@ bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
     }
 
     // Add it to the store to be started when that map is next entered.
-    d->deferredTasks << new DeferredTask(mapUri, scriptNumber, scriptArgs);
+    d->tasks << new Instance::ScriptStartTask(mapUri, scriptNumber, scriptArgs);
     return true;
 }
 
-byte const *System::pcode() const
+Block System::serializeWorldState() const
 {
-    return d->pcode;
-}
-
-String System::stringConstant(int stringNumber) const
-{
-    if(stringNumber >= 0 && stringNumber < d->strings.count())
-    {
-        return d->strings[stringNumber];
-    }
-    /// @throw MissingStringError  Invalid string-constant number specified.
-    throw MissingStringError("acs::System::stringConstant", "Unknown string-constant #" + String::number(stringNumber));
-}
-
-de::Block System::serializeWorldState() const
-{
-    de::Block data;
+    Block data;
     de::Writer writer(data);
 
     // Write the world-global variable namespace.
-    for(int const &var : worldVars) writer << var;
+    for(auto const &var : worldVars) writer << var;
 
     // Write the deferred task queue.
-    writer << d->deferredTasks.count();
-    for(DeferredTask const *task : d->deferredTasks) writer << *task;
+    writer << dint32( d->tasks.count() );
+    for(auto const *task : d->tasks) writer << *task;
 
     return data;
 }
@@ -329,15 +257,15 @@ de::Block System::serializeWorldState() const
 void System::readWorldState(de::Reader &from)
 {
     // Read the world-global variable namespace.
-    for(int &var : worldVars) from >> var;
+    for(auto &var : worldVars) from >> var;
 
     // Read the deferred task queue.
-    d->clearDeferredTasks();
-    int numDeferredTasks;
-    from >> numDeferredTasks;
-    for(int i = 0; i < numDeferredTasks; ++i)
+    d->clearTasks();
+    dint32 numTasks;
+    from >> numTasks;
+    for(dint32 i = 0; i < numTasks; ++i)
     {
-        d->deferredTasks << DeferredTask::newFromReader(from);
+        d->tasks << Instance::ScriptStartTask::newFromReader(from);
     }
 }
 
@@ -346,10 +274,10 @@ void System::writeMapState(MapStateWriter *msw) const
     writer_s *writer = msw->writer();
 
     // Write each script state.
-    for(Script const *script : d->scripts) script->write(writer);
+    for(auto const *script : d->scripts) script->write(writer);
 
     // Write each variable.
-    for(int const &var : mapVars) Writer_WriteInt32(writer, var);
+    for(auto const &var : mapVars) Writer_WriteInt32(writer, var);
 }
 
 void System::readMapState(MapStateReader *msr)
@@ -357,16 +285,49 @@ void System::readMapState(MapStateReader *msr)
     reader_s *reader = msr->reader();
 
     // Read each script state.
-    for(Script *script : d->scripts) script->read(reader);
+    for(auto *script : d->scripts) script->read(reader);
 
     // Read each variable.
-    for(int &var : mapVars) var = Reader_ReadInt32(reader);
+    for(auto &var : mapVars) var = Reader_ReadInt32(reader);
 }
 
 void System::runDeferredTasks(de::Uri const &mapUri)
 {
     LOG_AS("acs::System");
-    d->runDeferredTasks(mapUri);
+    for(int i = 0; i < d->tasks.count(); ++i)
+    {
+        Instance::ScriptStartTask *task = d->tasks[i];
+        if(task->mapUri != mapUri) continue;
+
+        if(hasScript(task->scriptNumber))
+        {
+            script(task->scriptNumber)
+                .start(task->scriptArgs, nullptr, nullptr, 0, TICSPERSEC);
+        }
+        else
+        {
+            LOG_SCR_WARNING("Unknown script #%i") << task->scriptNumber;
+        }
+
+        delete d->tasks.takeAt(i);
+        i -= 1;
+    }
+}
+
+void System::worldSystemMapChanged()
+{
+    mapVars.fill(0);
+
+    for(Script *script : d->scripts)
+    {
+        if(script->entryPoint().startWhenMapBegins)
+        {
+            bool justStarted = script->start(Script::Args()/*default args*/,
+                                             nullptr, nullptr, 0, TICSPERSEC);
+            DENG2_ASSERT(justStarted);
+            DENG2_UNUSED(justStarted);
+        }
+    }
 }
 
 D_CMD(InspectACScript)
@@ -389,7 +350,7 @@ D_CMD(InspectACScript)
     }
 
     Script const &script = scriptSys.script(scriptNumber);
-    LOG_SCR_MSG("%s\n%s") << script.describe() << script.description();
+    LOG_SCR_MSG("%s\n  %s") << script.describe() << script.description();
     return true;
 }
 
@@ -400,6 +361,14 @@ D_CMD(ListACScripts)
 
     if(scriptSys.scriptCount())
     {
+        LOG_SCR_MSG("Available ACScripts:");
+        scriptSys.forAllScripts([&scriptSys] (Script const &script)
+        {
+            LOG_SCR_MSG("  %s") << script.describe();
+            return LoopContinue;
+        });
+
+#ifdef DENG2_DEBUG
         LOG_SCR_MSG("World variables:");
         int idx = 0;
         for(int const &var : scriptSys.worldVars)
@@ -413,13 +382,7 @@ D_CMD(ListACScripts)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
-
-        LOG_SCR_MSG("Available ACScripts:");
-        scriptSys.forAllScripts([&scriptSys] (Script const &script)
-        {
-            LOG_SCR_MSG("  %s") << script.describe();
-            return LoopContinue;
-        });
+#endif
     }
     else
     {
@@ -430,8 +393,10 @@ D_CMD(ListACScripts)
 
 void System::consoleRegister()  // static
 {
-    C_CMD("scriptinfo",  "i",    InspectACScript);
-    C_CMD("scriptinfo",  "",     ListACScripts);
+    C_CMD("inspectacscript",        "i", InspectACScript);
+    /* Alias */ C_CMD("scriptinfo", "i", InspectACScript);
+    C_CMD("listacscripts",          "",  ListACScripts);
+    /* Alias */ C_CMD("scriptinfo", "",  ListACScripts);
 }
 
 }  // namespace acs
@@ -445,20 +410,14 @@ acs::System &Game_ACScriptSystem()
 
 // C wrapper API: --------------------------------------------------------------
 
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, uri_s const *mapUri_,
-    byte const args[], mobj_t *activator, Line *line, int side)
+dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[],
+    mobj_t *activator, Line *line, int side)
 {
-    de::Uri const *mapUri = reinterpret_cast<de::Uri const *>(mapUri_);
-    acs::Script::Args scriptArgs(args, 4);
-
-    if(!mapUri || COMMON_GAMESESSION->mapUri() == *mapUri)
+    if(scriptSys.hasScript(scriptNumber))
     {
-        if(scriptSys.hasScript(scriptNumber))
-        {
-            return scriptSys.script(scriptNumber).start(scriptArgs, activator, line, side);
-        }
-        return false;
+        return scriptSys.script(scriptNumber)
+                            .start(acs::Script::Args(args, 4), activator,
+                                   line, side);
     }
-
-    return scriptSys.deferScriptStart(*mapUri, scriptNumber, scriptArgs);
+    return false;
 }

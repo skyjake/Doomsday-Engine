@@ -85,6 +85,16 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 de::String G_EpisodeTitle(de::String episodeId);
 
 /**
+ * Returns the effective map-info definition Record associated with the given
+ * @a mapUri (which may be the default definition, if invalid/unknown).
+ *
+ * @param mapUri  Unique identifier for the map to lookup map-info data for.
+ *
+ * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
+ */
+de::Record const &G_MapInfoForMapUri(de::Uri const &mapUri);
+
+/**
  * @param mapUri  Identifier of the map to lookup the author of.
  */
 de::String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor = false);

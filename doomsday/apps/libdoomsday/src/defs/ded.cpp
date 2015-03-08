@@ -599,41 +599,6 @@ ded_compositefont_t* ded_s::getCompositeFont(char const* uriCString) const
     return def;
 }
 
-ded_group_t *ded_s::findGroupForFrameTexture(de::Uri const &uri) const
-{
-    if(uri.isEmpty()) return nullptr;
-
-    // Reverse iteration (later defs override earlier ones).
-    for(int i = groups.size(); i--> 0; )
-    {
-        ded_group_t &grp = groups[i];
-
-        // We aren't interested in precache groups.
-        if(grp.flags & AGF_PRECACHE) continue;
-
-        // Or empty/single-frame groups.
-        if(grp.members.size() < 2) continue;
-
-        for(int k = 0; k < grp.members.size(); ++k)
-        {
-            ded_group_member_t &gm = grp.members[k];
-
-            if(!gm.material) continue;
-
-            if(*gm.material == uri)
-            {
-                // Found one.
-                return &grp;
-            }
-
-            // Only animate if the first frame in the group?
-            if(grp.flags & AGF_FIRST_ONLY) break;
-        }
-    }
-
-    return nullptr;  // Not found.
-}
-
 int ded_s::getTextNum(char const *id) const
 {
     if(id && id[0])

@@ -30,9 +30,8 @@
 #  include <de/Block>
 #  include <de/Reader>
 #  include <de/Writer>
-#  include <doomsday/filesys/file.h>
 #  include <doomsday/uri.h>
-#  include "acs/interpreter.h"
+#  include "acs/module.h"
 #  include "acs/script.h"
 #  include "mapstatereader.h"
 #  include "mapstatewriter.h"
@@ -47,15 +46,12 @@ namespace acs {
 class System
 {
 public:  /// @todo make private:
-    std::array<int, 32> mapVars;
-    std::array<int, 64> worldVars;
+    std::array<de::dint32, 32> mapVars;
+    std::array<de::dint32, 64> worldVars;
 
 public:
     /// Required/referenced script is missing. @ingroup errors
     DENG2_ERROR(MissingScriptError);
-
-    /// Required/referenced string-constant is missing. @ingroup errors
-    DENG2_ERROR(MissingStringError);
 
 public:
     System();
@@ -66,10 +62,20 @@ public:
      */
     void reset();
 
+public:  // Modules: -----------------------------------------------------------
+
     /**
-     * Load new ACS bytecode from the specified @a file.
+     * Discard the currently loaded ACS code module and attempt to load the module
+     * associated with the given @a mapUri reference.
      */
-    void loadBytecode(de::File1 &file);
+    void loadModuleForMap(de::Uri const &mapUri);
+
+    /**
+     * Provides readonly access to the currently loaded bytecode module.
+     */
+    Module const &module() const;
+
+public:  // Scripts: -----------------------------------------------------------
 
     /**
      * Returns the total number of script entry points in the loaded bytecode.
@@ -79,7 +85,7 @@ public:
     /**
      * Returns @c true iff @a scriptNumber is a known entry point.
      */
-    bool hasScript(int scriptNumber);
+    bool hasScript(int scriptNumber) const;
 
     /**
      * Lookup the Script info for the given @a scriptNumber.
@@ -102,15 +108,7 @@ public:
      */
     bool deferScriptStart(de::Uri const &mapUri, int scriptNumber, Script::Args const &args);
 
-    /**
-     * Provides readonly access to the loaded bytecode.
-     */
-    byte const *pcode() const;
-
-    /**
-     * Provides readonly access to a string constant from the loaded bytecode.
-     */
-    de::String stringConstant(int stringNumber) const;
+public:  // (De)serialization: -------------------------------------------------
 
     de::Block serializeWorldState() const;
     void readWorldState(de::Reader &from);
@@ -125,6 +123,14 @@ public:  /// @todo make private: -----------------------------------------------
      * which should now begin/resume.
      */
     void runDeferredTasks(de::Uri const &mapUri);
+
+    /**
+     * Start all scripts flagged to begin immediately (but allow a 1 second delay
+     * for map initialization to complete).
+     *
+     * @todo Run deferred tasks at this time also?
+     */
+    void worldSystemMapChanged();
 
 public:
     /**
@@ -151,8 +157,8 @@ acs::System &Game_ACScriptSystem();
 extern "C" {
 #endif
 
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, Uri const *mapUri,
-    byte const args[4], struct mobj_s *activator, Line *line, int side);
+dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[4],
+    struct mobj_s *activator, Line *line, int side);
 
 #ifdef __cplusplus
 }  // extern "C"

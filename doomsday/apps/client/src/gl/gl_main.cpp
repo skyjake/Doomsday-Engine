@@ -648,18 +648,8 @@ void GL_TotalRestore()
     //Con_Resize();
 
     // Restore the fog settings.
-    Record const *mapInfo = 0;
-    if(App_WorldSystem().hasMap())
-    {
-        Map &map = App_WorldSystem().map();
-        mapInfo = defs.mapInfos.tryFind("id", map.def()->composeUri());
-        if(!mapInfo)
-        {
-            // Use the default def instead.
-            mapInfo = defs.mapInfos.tryFind("id", de::Uri("Maps", Path("*")));
-        }
-    }
-    GL_SetupFogFromMapInfo(mapInfo);
+    Map const *map = App_WorldSystem().mapPtr();
+    GL_SetupFogFromMapInfo(map? &map->mapInfo() : nullptr);
 
 #if _DEBUG
     Z_CheckHeap();

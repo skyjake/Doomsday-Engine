@@ -216,8 +216,7 @@ bool LightningAnimator::initForMap()
     d->nextFlash = 0;
     d->sectorLightLevels.clear();
 
-    Record const *mapInfo = COMMON_GAMESESSION->mapInfo();
-    if(mapInfo && (mapInfo->geti("flags") & MIF_LIGHTNING))
+    if(COMMON_GAMESESSION->mapInfo().geti("flags") & MIF_LIGHTNING)
     {
         int numLightningSectors = 0;
         for(int i = 0; i < numsectors; ++i)
