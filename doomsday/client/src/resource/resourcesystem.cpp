@@ -774,6 +774,11 @@ DENG2_PIMPL(ResourceSystem)
         spritesByFrame.clear();
     }
 
+    inline bool hasSpriteFrameSet(spritenum_t spriteId) const
+    {
+        return spritesByFrame.contains(spriteId);
+    }
+
     SpriteSet *tryFindSpriteFrameSet(spritenum_t spriteId)
     {
         auto found = spritesByFrame.find(spriteId);
@@ -1093,7 +1098,7 @@ DENG2_PIMPL(ResourceSystem)
     void queueCacheTasksForSprite(spritenum_t spriteId, MaterialVariantSpec const &contextSpec,
         bool cacheGroups = true)
     {
-        if(!spritesByFrame.contains(spriteId)) return;
+        if(!hasSpriteFrameSet(spriteId)) return;
 
         for(Sprite *sprite : findSpriteFrameSet(spriteId))
         for(SpriteViewAngle const &viewAngle : sprite->viewAngles())
@@ -2371,16 +2376,17 @@ int ResourceSystem::spriteCount()
 
 bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
 {
-    if(SpriteSet *frameSet = d->tryFindSpriteFrameSet(spriteId))
+    if(d->hasSpriteFrameSet(spriteId))
     {
-        if(frame >= 0 && frame < frameSet->count()) return true;
+        if(frame >= 0 && frame < d->findSpriteFrameSet(spriteId).count())
+            return true;
     }
     return false;
 }
 
 Sprite &ResourceSystem::sprite(spritenum_t spriteId, int frame)
 {
-    return *spriteSet(spriteId).at(frame);
+    return *d->findSpriteFrameSet(spriteId).at(frame);
 }
 
 ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
