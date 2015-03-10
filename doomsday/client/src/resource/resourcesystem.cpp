@@ -548,15 +548,7 @@ DENG2_PIMPL(ResourceSystem)
     CacheQueue cacheQueue;
 #endif
 
-    struct SpriteGroup {
-        SpriteSet sprites;
-
-        ~SpriteGroup() {
-            qDeleteAll(sprites);
-        }
-    };
-    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
-    SpriteGroups spriteGroups;
+    QMap<spritenum_t, SpriteSet> spritesByFrame;
 
     NativePath nativeSavePath;
 
@@ -775,23 +767,34 @@ DENG2_PIMPL(ResourceSystem)
 
     void clearSprites()
     {
-        spriteGroups.clear();
+        for(SpriteSet &sprFrames : spritesByFrame)
+        {
+            qDeleteAll(sprFrames);
+        }
+        spritesByFrame.clear();
     }
 
-    SpriteGroup *spriteGroup(spritenum_t spriteId)
+    SpriteSet *tryFindSpriteFrameSet(spritenum_t spriteId)
     {
-        SpriteGroups::iterator found = spriteGroups.find(spriteId);
-        if(found != spriteGroups.end())
+        auto found = spritesByFrame.find(spriteId);
+        if(found != spritesByFrame.end())
         {
             return &found.value();
         }
-        return 0;
+        return nullptr;
     }
 
-    SpriteGroup &newSpriteGroup(spritenum_t spriteId)
+    SpriteSet &findSpriteFrameSet(spritenum_t spriteId)
     {
-        DENG2_ASSERT(!spriteGroup(spriteId)); // sanity check.
-        return spriteGroups.insert(spriteId, SpriteGroup()).value();
+        if(SpriteSet *sprFrames = tryFindSpriteFrameSet(spriteId)) return *sprFrames;
+        /// @throw MissingResourceError An unknown/invalid id was specified.
+        throw MissingResourceError("ResourceSystem::findSpriteFrameSet", "Unknown sprite id " + String::number(spriteId));
+    }
+
+    SpriteSet &newSpriteFrameSet(spritenum_t spriteId)
+    {
+        DENG2_ASSERT(!tryFindSpriteFrameSet(spriteId)); // sanity check.
+        return spritesByFrame.insert(spriteId, SpriteSet()).value();
     }
 
 #ifdef __CLIENT__
@@ -1090,15 +1093,14 @@ DENG2_PIMPL(ResourceSystem)
     void queueCacheTasksForSprite(spritenum_t spriteId, MaterialVariantSpec const &contextSpec,
         bool cacheGroups = true)
     {
-        if(SpriteGroup *group = spriteGroup(spriteId))
+        if(!spritesByFrame.contains(spriteId)) return;
+
+        for(Sprite *sprite : findSpriteFrameSet(spriteId))
+        for(SpriteViewAngle const &viewAngle : sprite->viewAngles())
         {
-            foreach(Sprite *sprite, group->sprites)
-            foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
+            if(Material *material = viewAngle.material)
             {
-                if(Material *material = viewAngle.material)
-                {
-                    queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
-                }
+                queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
             }
         }
     }
@@ -2364,17 +2366,14 @@ void ResourceSystem::clearAllSystemResources()
 
 int ResourceSystem::spriteCount()
 {
-    return d->spriteGroups.count();
+    return d->spritesByFrame.count();
 }
 
 bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    if(SpriteSet *frameSet = d->tryFindSpriteFrameSet(spriteId))
     {
-        if(frame >= 0 && frame < group->sprites.count())
-        {
-            return true;
-        }
+        if(frame >= 0 && frame < frameSet->count()) return true;
     }
     return false;
 }
@@ -2386,12 +2385,7 @@ Sprite &ResourceSystem::sprite(spritenum_t spriteId, int frame)
 
 ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
-    {
-        return group->sprites;
-    }
-    /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
+    return d->findSpriteFrameSet(spriteId);
 }
 
 void ResourceSystem::initTextures()
@@ -3598,15 +3592,12 @@ typedef QHash<String, SpriteDef> SpriteDefs;
  * CLOCKWISE around the axis. This is not the same as the angle, which increases
  * counter clockwise (protractor).
  */
-static SpriteDefs generateSpriteDefs()
+static SpriteDefs buildSpriteDefsForTextures(TextureScheme::Index const &texIndex)
 {
-    ResourceSystem &resSys = App_ResourceSystem();
-    TextureScheme::Index const &spriteTexIndex = resSys.textureScheme("Sprites").index();
+    SpriteDefs sprDefs;
+    sprDefs.reserve(texIndex.leafNodes().count() / 8); // overestimate
 
-    SpriteDefs spriteDefs;
-    spriteDefs.reserve(spriteTexIndex.leafNodes().count() / 8); // overestimate
-
-    PathTreeIterator<TextureScheme::Index> iter(spriteTexIndex.leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(texIndex.leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -3615,7 +3606,7 @@ static SpriteDefs generateSpriteDefs()
         String const name = desc.left(4).toLower();
 
         // Have we already encountered this name?
-        SpriteDef *def = &spriteDefs[name];
+        SpriteDef *def = &sprDefs[name];
         if(def->frames.isEmpty())
         {
             // An entirely new sprite.
@@ -3644,7 +3635,7 @@ static SpriteDefs generateSpriteDefs()
             frameDef = &def->addFrame();
         }
 
-        frameDef->mat         = &resSys.material(de::Uri("Sprites", manifest.path()));
+        frameDef->mat         = &App_ResourceSystem().material(de::Uri("Sprites", manifest.path()));
         frameDef->frame[0]    = frameNumber;
         frameDef->rotation[0] = rotationNumber;
 
@@ -3661,7 +3652,82 @@ static SpriteDefs generateSpriteDefs()
         }
     }
 
-    return spriteDefs;
+    return sprDefs;
+}
+
+/**
+ * Generates a Sprite frame set from the given sprite @a definition.
+ *
+ * @note Gaps in the frame number range used in @a definition will be filled
+ * with dummy Sprite instances (no view angles added).
+ *
+ * @param definition  SpriteDef description of one or more Sprites.
+ *
+ * @return  Built Sprites in frame order. Ownership of the Sprite instances
+ * is given to the caller.
+ */
+static QList<Sprite *> buildSpritesFromDefinition(SpriteDef const &definition)
+{
+    // Build sprite frames and add view angles.
+    QMap<int, Sprite *> spritesByFrame;
+    for(SpriteFrameDef const &frameDef : definition.frames)
+    for(int i = 0; i < 2; ++i)
+    {
+        int const frame = frameDef.frame[i] - 1;
+        if(frame < 0) continue;
+
+        auto const found = spritesByFrame.find(frame);
+        Sprite *sprite;
+        if(found != spritesByFrame.end())
+        {
+            sprite = found.value();
+        }
+        else
+        {
+            sprite = spritesByFrame.insert(frame, new Sprite).value();
+        }
+
+        sprite->newViewAngle(frameDef.mat, frameDef.rotation[i], i == 1);
+    }
+    // Duplicate view angles to complete rotation sets (if defined).
+    for(Sprite *sprite : spritesByFrame)
+    {
+        if(sprite->viewAngleCount() < 2)
+            continue;
+
+        for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
+        {
+            if(!sprite->hasViewAngle(rot * 2 + 1))
+            {
+                auto const &src = sprite->viewAngle(rot * 2);
+                sprite->newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
+            }
+            if(!sprite->hasViewAngle(rot * 2))
+            {
+                auto const &src = sprite->viewAngle(rot * 2 + 1);
+                sprite->newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
+            }
+        }
+    }
+
+    // Output a frame ordered list.
+    QList<Sprite *> sprites;
+    int lastFrame = -1;
+    auto it = spritesByFrame.constBegin();
+    while(it != spritesByFrame.constEnd())
+    {
+        int frame = it.key();
+        // Insert dummy sprites to fill any gaps in the frame set.
+        for(int i = lastFrame + 1; i < frame; ++i)
+        {
+            sprites << new Sprite;
+        }
+
+        sprites << it.value();
+        lastFrame = frame;
+        ++it;
+    }
+    return sprites;
 }
 
 void ResourceSystem::initSprites()
@@ -3674,84 +3740,23 @@ void ResourceSystem::initSprites()
     d->clearSprites();
 
     /// @todo It should no longer be necessary to split this into two phases -ds
-    SpriteDefs defs = generateSpriteDefs();
-
-    if(!defs.isEmpty())
+    SpriteDefs spriteDefs = buildSpriteDefsForTextures(App_ResourceSystem().textureScheme("Sprites").index());
+    if(!spriteDefs.isEmpty())
     {
-        // Build the final sprites.
+        // Build Sprite frame sets from their definitions.
         int customIdx = 0;
-        for(SpriteDef const &def : defs)
+        for(SpriteDef const &def : spriteDefs)
         {
+            // Format or generate an id for the sprite.
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
-            if(spriteId == -1)
-            {
-                spriteId = runtimeDefs.sprNames.size() + customIdx++;
-            }
+            if(spriteId == -1) spriteId = (runtimeDefs.sprNames.size() + customIdx++);
 
-            // Generate new sprites from this definition:
-            QMap<int, Sprite *> newSprites;
-
-            for(SpriteFrameDef const &frameDef : def.frames)
-            for(int i = 0; i < 2; ++i)
-            {
-                int const frame = frameDef.frame[i] - 1;
-                if(frame < 0) continue;
-
-                auto const found = newSprites.find(frame);
-                Sprite *sprite;
-                if(found != newSprites.end())
-                {
-                    sprite = found.value();
-                }
-                else
-                {
-                    sprite = newSprites.insert(frame, new Sprite).value();
-                }
-
-                sprite->newViewAngle(frameDef.mat, frameDef.rotation[i], i == 1);
-            }
-
-            // Duplicate view angles to complete the rotation set (if defined).
-            for(Sprite *sprite : newSprites)
-            {
-                if(sprite->viewAngleCount() < 2)
-                    continue;
-
-                for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
-                {
-                    if(!sprite->hasViewAngle(rot * 2 + 1))
-                    {
-                        auto const &src = sprite->viewAngle(rot * 2);
-                        sprite->newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
-                    }
-                    if(!sprite->hasViewAngle(rot * 2))
-                    {
-                        auto const &src = sprite->viewAngle(rot * 2 + 1);
-                        sprite->newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
-                    }
-                }
-            }
-
-            // Append the completed sprites to the relevant group (frame set).
-            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
-            int lastFrame = -1;
-            while(!newSprites.isEmpty())
-            {
-                int frame = newSprites.firstKey();
-                // Insert dummy sprites to fill any gaps in the frame set.
-                for(int i = lastFrame + 1; i < frame; ++i)
-                {
-                    group.sprites << new Sprite;
-                }
-
-                group.sprites << newSprites.take(frame);
-                lastFrame = frame;
-            }
+            // Append another frame set to the relevant sprite.
+            d->newSpriteFrameSet(spriteId).append(buildSpritesFromDefinition(def));
         }
     }
-
     // We're done with the definitions.
-    defs.clear();
+    spriteDefs.clear();
 
     LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
 }
