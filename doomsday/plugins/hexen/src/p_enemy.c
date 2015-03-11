@@ -4212,31 +4212,31 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
  * 255          For use in death script (spawn spots).
  */
 
-void C_DECL A_KoraxChase(mobj_t *actor)
+void C_DECL A_KoraxChase(mobj_t *mob)
 {
     mobj_t *spot;
 
-    if(!actor->special2 && actor->health <= actor->info->spawnHealth / 2)
+    if(!mob->special2 && mob->health <= mob->info->spawnHealth / 2)
     {
-        actor->special1 = 0;
-        spot = P_FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, &actor->special1);
+        int lastFound = 0;
+        spot = P_FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, &lastFound);
         if(spot)
         {
-            P_Teleport(actor, spot->origin[VX], spot->origin[VY], spot->angle, true);
+            P_Teleport(mob, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        Game_ACScriptSystem_StartScript(249, NULL, actor, NULL, 0);
-        actor->special2 = 1; // Don't run again.
+        Game_ACScriptSystem_StartScript(249, NULL, mob, NULL, 0);
+        mob->special2 = 1; // Don't run again.
 
         return;
     }
 
-    if(!actor->target)
+    if(!mob->target)
         return;
 
     if(P_Random() < 30)
     {
-        P_MobjChangeState(actor, P_GetState(actor->type, SN_MISSILE));
+        P_MobjChangeState(mob, P_GetState(mob->type, SN_MISSILE));
     }
     else if(P_Random() < 30)
     {
@@ -4244,15 +4244,15 @@ void C_DECL A_KoraxChase(mobj_t *actor)
     }
 
     // Teleport away.
-    if(actor->health < actor->info->spawnHealth / 2)
+    if(mob->health < mob->info->spawnHealth / 2)
     {
         if(P_Random() < 10)
         {
-            spot = P_FindMobjFromTID(KORAX_TELEPORT_TID, &actor->special1);
-            actor->tracer = spot;
+            spot = P_FindMobjFromTID(KORAX_TELEPORT_TID, &mob->special1);
+            mob->tracer = spot;
             if(spot)
             {
-                P_Teleport(actor, spot->origin[VX], spot->origin[VY],
+                P_Teleport(mob, spot->origin[VX], spot->origin[VY],
                            spot->angle, true);
             }
         }
