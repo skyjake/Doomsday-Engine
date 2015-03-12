@@ -303,7 +303,7 @@ void P_MobjMoveZ(mobj_t* mo)
         //
         // So we need to check that this is either retail or commercial
         // (but not doom2)
-        int correctLostSoulBounce = (gameMode == GM_DOOM2_PLUT || gameMode == GM_DOOM2_TNT);
+        dd_bool const correctLostSoulBounce = (gameMode == doom2_plut || gameMode == doom2_tnt);
 
         if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
