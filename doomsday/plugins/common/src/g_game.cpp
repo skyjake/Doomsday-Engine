@@ -446,7 +446,8 @@ void R_LoadColorPalettes()
             }
             xlatNum++;
 
-            LOGDEV_RES_MSG("Reading translation table '%s' as tclass=%i tmap=%i")
+            LOG_AS("R_LoadColorPalettes")
+            LOG_RES_XVERBOSE("Reading translation table '%s' as tclass=%i tmap=%i")
                     << lumpName << cl << i;
 
             lumpName += ".lmp";
