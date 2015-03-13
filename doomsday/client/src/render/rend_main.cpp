@@ -772,18 +772,18 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 {
     switch(renderTextures)
     {
-    case 0: // No texture mode.
-    case 1: // Normal mode.
-        if(devNoTexFix && surface.hasFixMaterial())
+    case 0:  // No texture mode.
+    case 1:  // Normal mode.
+        if(!(devNoTexFix && surface.hasFixMaterial()))
         {
-            // Missing material debug mode -- use special "missing" material.
-            return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+            if(surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
+                return surface.materialPtr();
         }
 
-        // Use the surface-bound material.
-        return surface.materialPtr();
+        // Use special "missing" material.
+        return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-    case 2: // Lighting debug mode.
+    case 2:  // Lighting debug mode.
         if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
         {
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)
