@@ -54,11 +54,15 @@ macro (clean_paths outputVariable text)
 endmacro ()
 
 macro (enable_cxx11 target)
-    if (NOT CMAKE_VERSION VERSION_LESS 3.1 AND 
-        NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" AND
-        NOT MSVC)
-        set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
-        set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
+    if (NOT MSVC)
+        if (NOT CMAKE_VERSION VERSION_LESS 3.2 OR # Clang/GCC & CMake 3.2+
+            (NOT CMAKE_VERSION VERSION_LESS 3.1 AND 
+                NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
+            set_property (TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
+            set_property (TARGET ${target} PROPERTY CXX_STANDARD 11)
+            set_property (TARGET ${target} PROPERTY C_STANDARD_REQUIRED ON)
+            set_property (TARGET ${target} PROPERTY C_STANDARD 11)
+        endif ()
     endif ()
     if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
         append (CMAKE_C_FLAGS "-fms-extensions")
