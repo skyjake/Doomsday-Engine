@@ -1,7 +1,7 @@
 /** @file linesighttest.cpp  World map line of sight testing.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,9 +21,14 @@
 #include "de_base.h"
 #include "world/linesighttest.h"
 
+#include <cmath>
+#include <de/aabox.h>
+#include <de/fixedpoint.h>
+#include <de/vector1.h>
+
 #include "Face"
 
-#include "world/worldsystem.h" /// For validCount, @todo Remove me.
+#include "world/worldsystem.h"  /// For validCount, @todo Remove me.
 #include "BspLeaf"
 #include "BspNode"
 #include "ConvexSubspace"
@@ -31,20 +36,15 @@
 #include "Polyobj"
 #include "Sector"
 
-#include <de/aabox.h>
-#include <de/fixedpoint.h>
-#include <de/vector1.h> /// @todo remove me
-#include <cmath>
-
 using namespace de;
 
-DENG2_PIMPL(LineSightTest)
+DENG2_PIMPL_NOREF(LineSightTest)
 {
-    dint flags;         ///< LS_* flags @ref lineSightFlags
-    Vector3d from;      ///< Ray origin.
-    Vector3d to;        ///< Ray target.
-    dfloat bottomSlope; ///< Slope to bottom of target.
-    dfloat topSlope;    ///< Slope to top of target.
+    dint flags = 0;      ///< LS_* flags @ref lineSightFlags
+    Vector3d from;       ///< Ray origin.
+    Vector3d to;         ///< Ray target.
+    dfloat bottomSlope;  ///< Slope to bottom of target.
+    dfloat topSlope;     ///< Slope to top of target.
 
     /// The ray to be traced.
     struct Ray
@@ -55,10 +55,10 @@ DENG2_PIMPL(LineSightTest)
 
         Ray(Vector3d const &from, Vector3d const &to)
         {
-            origin[VX]    = DBL2FIX(from.x);
-            origin[VY]    = DBL2FIX(from.y);
-            direction[VX] = DBL2FIX(to.x - from.x);
-            direction[VY] = DBL2FIX(to.y - from.y);
+            origin[0]    = DBL2FIX(from.x);
+            origin[1]    = DBL2FIX(from.y);
+            direction[0] = DBL2FIX(to.x - from.x);
+            direction[1] = DBL2FIX(to.y - from.y);
 
             ddouble v1From[2] = { from.x, from.y };
             V2d_InitBox(aabox.arvec2, v1From);
@@ -68,15 +68,12 @@ DENG2_PIMPL(LineSightTest)
         }
     } ray;
 
-    Instance(Public *i, Vector3d const &from, Vector3d const to,
-             dfloat bottomSlope, dfloat topSlope, dint flags)
-        : Base(i)
-        , flags(flags)
-        , from(from)
-        , to(to)
+    Instance(Vector3d const &from, Vector3d const to, dfloat bottomSlope, dfloat topSlope)
+        : from       (from)
+        , to         (to)
         , bottomSlope(bottomSlope)
-        , topSlope(topSlope)
-        , ray(from, to)
+        , topSlope   (topSlope)
+        , ray        (from, to)
     {}
 
     /**
@@ -87,13 +84,13 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossLine(LineSide &side)
     {
-#define RTOP                    0x1 ///< Top range.
-#define RBOTTOM                 0x2 ///< Bottom range.
+#define RTOP                    0x1  ///< Top range.
+#define RBOTTOM                 0x2  ///< Bottom range.
 
         Line &line = side.line();
 
         if(line.validCount() == validCount)
-            return true; // Ignore
+            return true;  // Ignore
 
         line.setValidCount(validCount);
 
@@ -105,8 +102,8 @@ DENG2_PIMPL(LineSightTest)
            line.aaBox().maxY < ray.aabox.minY)
             return true;
 
-        fixed_t lineV1OriginX[2]  = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
-        fixed_t lineV2OriginX[2]  = { DBL2FIX(line.toOrigin().x), DBL2FIX(line.toOrigin().y) };
+        fixed_t const lineV1OriginX[2]  = { DBL2FIX(line.fromOrigin().x), DBL2FIX(line.fromOrigin().y) };
+        fixed_t const lineV2OriginX[2]  = { DBL2FIX(line.toOrigin  ().x), DBL2FIX(line.toOrigin  ().y) };
 
         if(V2x_PointOnLineSide(lineV1OriginX, ray.origin, ray.direction) ==
            V2x_PointOnLineSide(lineV2OriginX, ray.origin, ray.direction))
@@ -114,8 +111,8 @@ DENG2_PIMPL(LineSightTest)
 
         fixed_t lineDirectionX[2] = { DBL2FIX(line.direction().x), DBL2FIX(line.direction().y) };
 
-        fixed_t fromPointX[2] = { DBL2FIX(from.x), DBL2FIX(from.y) };
-        fixed_t toPointX[2]   = { DBL2FIX(to.x),   DBL2FIX(to.y) };
+        fixed_t const fromPointX[2] = { DBL2FIX(from.x), DBL2FIX(from.y) };
+        fixed_t const toPointX[2]   = { DBL2FIX(to  .x), DBL2FIX(to  .y) };
 
         if(V2x_PointOnLineSide(fromPointX, lineV1OriginX, lineDirectionX) ==
            V2x_PointOnLineSide(toPointX, lineV1OriginX, lineDirectionX))
@@ -229,15 +226,10 @@ DENG2_PIMPL(LineSightTest)
     }
 
     /**
-     * @return  @c true if the ray passes @a bspLeaf; otherwise @c false.
+     * @return  @c true if the ray passes @a subspace; otherwise @c false.
      */
-    bool crossBspLeaf(BspLeaf const &bspLeaf)
+    bool crossSubspace(ConvexSubspace const &subspace)
     {
-        if(!bspLeaf.hasSubspace())
-            return false;
-
-        ConvexSubspace const &subspace = bspLeaf.subspace();
-
         // Check polyobj lines.
         LoopResult blocked = subspace.forAllPolyobjs([this] (Polyobj &pob)
         {
@@ -251,7 +243,7 @@ DENG2_PIMPL(LineSightTest)
         if(blocked) return false;
 
         // Check lines for the edges of the subspace geometry.
-        HEdge *base = subspace.poly().hedge();
+        HEdge *base  = subspace.poly().hedge();
         HEdge *hedge = base;
         do
         {
@@ -285,10 +277,11 @@ DENG2_PIMPL(LineSightTest)
      */
     bool crossBspNode(BspTree const *bspTree)
     {
-        DENG2_ASSERT(bspTree != 0);
+        DENG2_ASSERT(bspTree);
 
         while(!bspTree->isLeaf())
         {
+            DENG2_ASSERT(bspTree->userData());
             BspNode const &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
@@ -299,9 +292,9 @@ DENG2_PIMPL(LineSightTest)
             {
                 // Yes.
                 if(!crossBspNode(bspTree->childPtr(BspTree::ChildId(fromSide))))
-                    return false; // Cross the From side.
+                    return false;  // Cross the From side.
 
-                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide ^ 1)); // Cross the To side.
+                bspTree = bspTree->childPtr(BspTree::ChildId(fromSide ^ 1));  // Cross the To side.
             }
             else
             {
@@ -311,14 +304,24 @@ DENG2_PIMPL(LineSightTest)
         }
 
         // We've arrived at a leaf.
-        return crossBspLeaf(bspTree->userData()->as<BspLeaf>());
+        auto const &bspLeaf = bspTree->userData()->as<BspLeaf>();
+
+        if(bspLeaf.hasSubspace())
+        {
+            return crossSubspace(bspLeaf.subspace());
+        }
+
+        // No subspace geometry implies a mapping error.
+        return false;
     }
 };
 
-LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to,
-    dfloat bottomSlope, dfloat topSlope, dint flags)
-    : d(new Instance(this, from, to, bottomSlope, topSlope, flags))
-{}
+LineSightTest::LineSightTest(Vector3d const &from, Vector3d const &to, dfloat bottomSlope,
+    dfloat topSlope, dint flags)
+    : d(new Instance(from, to, bottomSlope, topSlope))
+{
+    d->flags = flags;
+}
 
 bool LineSightTest::trace(BspTree const &bspRoot)
 {
