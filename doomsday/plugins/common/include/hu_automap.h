@@ -214,7 +214,7 @@ dd_bool UIAutomap_SetCameraRotation(uiwidget_t* obj, dd_bool on);
 dd_bool UIAutomap_PanMode(uiwidget_t* obj);
 dd_bool UIAutomap_SetPanMode(uiwidget_t* obj, dd_bool on);
 
-mobj_t* UIAutomap_FollowMobj(uiwidget_t* obj);
+struct mobj_s *UIAutomap_FollowMobj(uiwidget_t *wi);
 
 dd_bool UIAutomap_ZoomMax(uiwidget_t* obj);
 dd_bool UIAutomap_SetZoomMax(uiwidget_t* obj, dd_bool on);

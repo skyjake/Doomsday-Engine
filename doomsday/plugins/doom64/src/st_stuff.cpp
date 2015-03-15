@@ -1,48 +1,44 @@
-/**\file st_stuff.c
- *\section License
- * License: GPL
- * Online License Link: http://www.gnu.org/licenses/gpl.html
+/** @file st_stuff.cpp  DOOM 64, player head-up display (HUD) management.
  *
- *\author Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
+ * @authors Copyright © 1993-1996 by id Software, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * @par License
+ * GPL: http://www.gnu.org/licenses/gpl.html
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
+ * <small>This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version. This program is distributed in the hope that it
+ * will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details. You should have received a copy of the GNU
+ * General Public License along with this program; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA</small>
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include "jdoom64.h"
+#include "st_stuff.h"
 
-#include "dmu_lib.h"
-#include "d_net.h"
-#include "hu_stuff.h"
-#include "hu_lib.h"
-#include "hu_chat.h"
-#include "hu_log.h"
-#include "hu_automap.h"
-#include "p_mapsetup.h"
-#include "p_tick.h" // for Pause_IsPaused
-#include "p_inventory.h"
-#include "player.h"
 #include "am_map.h"
+#include "d_net.h"
+#include "dmu_lib.h"
+#include "hu_automap.h"
+#include "hu_chat.h"
+#include "hu_lib.h"
+#include "hu_log.h"
+#include "hu_stuff.h"
+#include "p_inventory.h"
+#include "p_mapsetup.h"
+#include "p_tick.h"       // for Pause_IsPaused
+#include "player.h"
 #include "r_common.h"
 
 // Frags pos.
@@ -61,98 +57,55 @@ enum {
     NUM_UIWIDGET_GROUPS
 };
 
-typedef struct {
+struct hudstate_t
+{
     dd_bool inited;
     dd_bool stopped;
     int hideTics;
     float hideAmount;
-    float alpha; // Fullscreen hud alpha value.
-    dd_bool statusbarActive; // Whether the HUD is on.
-    int automapCheatLevel; /// \todo Belongs in player state?
+    float alpha;              ///< Fullscreen hud alpha value.
+    dd_bool statusbarActive;  ///< Whether the HUD is on.
+    int automapCheatLevel;    ///< @todo Belongs in player state?
 
     int widgetGroupIds[NUM_UIWIDGET_GROUPS];
     int automapWidgetId;
     int chatWidgetId;
     int logWidgetId;
 
-    dd_bool firstTime;  // ST_Start() has just been called.
-    int currentFragsCount; // Number of frags so far in deathmatch.
+    dd_bool firstTime;        ///< ST_Start() has just been called.
+    int currentFragsCount;    ///< Number of frags so far in deathmatch.
 
     // Other:
     guidata_automap_t automap;
     guidata_chat_t chat;
     guidata_log_t log;
-} hudstate_t;
+};
 
-typedef enum hotloc_e {
+enum hotloc_t
+{
     HOT_TLEFT,
     HOT_TRIGHT,
     HOT_BRIGHT,
     HOT_BLEFT
-} hotloc_t;
+};
 
-int ST_ChatResponder(int player, event_t* ev);
-void unhideHUD(void);
+int ST_ChatResponder(int player, event_t *ev);
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-void ST_Register(void)
-{
-    C_VAR_FLOAT2( "hud-color-r", &cfg.common.hudColor[0], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-g", &cfg.common.hudColor[1], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-b", &cfg.common.hudColor[2], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-a", &cfg.common.hudColor[3], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.common.hudIconAlpha, 0, 0, 1, unhideHUD )
-    C_VAR_INT(    "hud-patch-replacement", &cfg.common.hudPatchReplaceMode, 0, 0, 1 )
-    C_VAR_FLOAT2( "hud-scale", &cfg.common.hudScale, 0, 0.1f, 1, unhideHUD )
-    C_VAR_FLOAT(  "hud-timer", &cfg.common.hudTimer, 0, 0, 60 )
-
-    // Displays
-    C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.common.hudShownCheatCounters, 0, 0, 63, unhideHUD )
-    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.common.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.common.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-power", &cfg.hudShown[HUD_INVENTORY], 0, 0, 1, unhideHUD )
-
-    // Events.
-    C_VAR_BYTE(   "hud-unhide-damage", &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-ammo", &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-armor", &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-health", &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-key", &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-powerup", &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-weapon", &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
-
-    C_CMD("beginchat",       NULL,   ChatOpen )
-    C_CMD("chatcancel",      "",     ChatAction )
-    C_CMD("chatcomplete",    "",     ChatAction )
-    C_CMD("chatdelete",      "",     ChatAction )
-    C_CMD("chatsendmacro",   NULL,   ChatSendMacro )
-}
-
-static int fullscreenMode(int player)
+static int fullscreenMode(int /*player*/)
 {
     return (cfg.common.screenBlocks < 10? 0 : cfg.common.screenBlocks - 10);
 }
 
 void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    player_t* plr;
+    DENG2_ASSERT(ev >= HUE_FORCE && ev < NUMHUDUNHIDEEVENTS);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
 
-    if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
-    {
-        DENG_ASSERT(!"ST_HUDUnHide: Invalid event type");
-        return;
-    }
-
-    plr = &players[player];
+    player_t *plr = &players[player];
     if(!plr->plr->inGame) return;
 
     if(ev == HUE_FORCE || cfg.hudUnHide[ev])
@@ -162,16 +115,15 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     }
 }
 
-void ST_updateWidgets(int player)
+static void updateWidgets(int player)
 {
-    int                 i;
-    player_t*           plr = &players[player];
-    hudstate_t*         hud = &hudStates[player];
+    player_t *plr   = &players[player];
+    hudstate_t *hud = &hudStates[player];
 
     // Used by wFrags widget.
     hud->currentFragsCount = 0;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         if(!players[i].plr->inGame)
             continue;
@@ -180,25 +132,23 @@ void ST_updateWidgets(int player)
     }
 }
 
-int ST_Responder(event_t* ev)
+int ST_Responder(event_t *ev)
 {
-    int i, eaten = false;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        eaten = ST_ChatResponder(i, ev);
-        if(eaten) break;
+        if(int eaten = ST_ChatResponder(i, ev))
+            return eaten;
     }
-    return eaten;
+    return false;
 }
 
 void ST_Ticker(timespan_t ticLength)
 {
-    const dd_bool isSharpTic = DD_IsSharpTick();
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    bool const isSharpTic = DD_IsSharpTick();
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t* plr = &players[i];
-        hudstate_t* hud = &hudStates[i];
+        player_t *plr   = &players[i];
+        hudstate_t *hud = &hudStates[i];
 
         if(!plr->plr->inGame)
             continue;
@@ -243,31 +193,30 @@ void ST_Ticker(timespan_t ticLength)
                     hud->hideAmount += 0.1f;
             }
 
-            /// \todo Refactor me away.
-            ST_updateWidgets(i);
+            /// @todo Refactor away.
+            updateWidgets(i);
         }
 
         if(hud->inited)
         {
-            int j;
-            for(j = 0; j < NUM_UIWIDGET_GROUPS; ++j)
+            for(int k = 0; k < NUM_UIWIDGET_GROUPS; ++k)
             {
-                UIWidget_RunTic(GUI_MustFindObjectById(hud->widgetGroupIds[j]), ticLength);
+                UIWidget_RunTic(GUI_MustFindObjectById(hud->widgetGroupIds[k]), ticLength);
             }
         }
     }
 }
 
-static void drawWidgets(hudstate_t* hud)
+static void drawWidgets(hudstate_t *hud)
 {
 #define MAXDIGITS           ST_FRAGSWIDTH
 
     if(G_Ruleset_Deathmatch())
     {
-        char buf[20];
         if(hud->currentFragsCount == 1994)
             return;
-        dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
+
+        char buf[20]; dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
 
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -285,12 +234,9 @@ static void drawWidgets(hudstate_t* hud)
 
 void ST_doRefresh(int player)
 {
-    hudstate_t* hud;
+    if(player < 0 || player > MAXPLAYERS) return;
 
-    if(player < 0 || player > MAXPLAYERS)
-        return;
-
-    hud = &hudStates[player];
+    hudstate_t *hud = &hudStates[player];
     hud->firstTime = false;
 
     drawWidgets(hud);
@@ -474,11 +420,8 @@ Draw_EndZoom();
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        ammotype_t ammotype;
-
-        //// \todo Only supports one type of ammo per weapon.
-        //// for each type of ammo this weapon takes.
-        for(ammotype=0; ammotype < NUM_AMMO_TYPES; ++ammotype)
+        /// @todo Only supports one type of ammo per weapon.
+        for(int ammotype = 0; ammotype < NUM_AMMO_TYPES; ++ammotype)
         {
             if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammotype])
                 continue;
@@ -562,7 +505,7 @@ void ST_Drawer(int player)
     drawUIWidgetsForPlayer(players + player);
 }
 
-void ST_loadData(void)
+void ST_loadData()
 {
     // Nothing to do.
 }
@@ -709,63 +652,54 @@ void ST_Start(int player)
 
 void ST_Stop(int player)
 {
-    hudstate_t* hud;
+    if(player < 0 || player >= MAXPLAYERS) return;
+    hudstate_t *hud = &hudStates[player];
 
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    hud = &hudStates[player];
-    if(hud->stopped)
-        return;
+    if(hud->stopped) return;
 
     hud->stopped = true;
 }
 
 void ST_BuildWidgets(int player)
 {
-    assert(player >= 0 && player < MAXPLAYERS);
-    {
-#define PADDING 2 // In fixed 320x200 units.
+    if(player < 0 || player >= MAXPLAYERS) return;
+    hudstate_t *hud = &hudStates[player];
 
-    hudstate_t* hud = &hudStates[player];
-    const uiwidgetgroupdef_t widgetGroupDefs[] = {
-        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_AUTOMAP,      ALIGN_TOPLEFT }
+    uiwidgetgroupdef_t const widgetGroupDefs[] = {
+        { UWG_MAPNAME, ALIGN_BOTTOMLEFT },
+        { UWG_AUTOMAP, ALIGN_TOPLEFT }
     };
-    size_t i;
-
-    for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+    for(auto const &def : widgetGroupDefs)
     {
-        const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, 0, def->padding);
+        hud->widgetGroupIds[def.group]
+                = GUI_CreateGroup(def.groupFlags, player, def.alignFlags, ORDER_NONE, def.padding);
     }
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
-
-#undef PADDING
-    }
+    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]),
+                      GUI_FindObjectById(
+                          hud->automapWidgetId
+                                  = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1,
+                                                     UIAutomap_UpdateGeometry, UIAutomap_Drawer,
+                                                     UIAutomap_Ticker, &hud->automap)));
 }
 
-void ST_Init(void)
+void ST_Init()
 {
-    int i;
     ST_InitAutomapConfig();
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        hudstate_t* hud = &hudStates[i];
+        hudstate_t *hud = &hudStates[i];
         ST_BuildWidgets(i);
         hud->inited = true;
     }
     ST_loadData();
 }
 
-void ST_Shutdown(void)
+void ST_Shutdown()
 {
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        hudstate_t* hud = &hudStates[i];
+        hudstate_t *hud = &hudStates[i];
         hud->inited = false;
     }
 }
@@ -782,7 +716,7 @@ uiwidget_t* ST_UIChatForPlayer(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
-        hudstate_t* hud = &hudStates[player];
+        hudstate_t *hud = &hudStates[player];
         return GUI_FindObjectById(hud->chatWidgetId);
     }
     Con_Error("ST_UIChatForPlayer: Invalid player #%i.", player);
@@ -800,80 +734,77 @@ uiwidget_t* ST_UILogForPlayer(int player)
     exit(1); // Unreachable.
 }
 
-uiwidget_t* ST_UIAutomapForPlayer(int player)
+uiwidget_t *ST_UIAutomapForPlayer(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
-        hudstate_t* hud = &hudStates[player];
+        hudstate_t *hud = &hudStates[player];
         return GUI_FindObjectById(hud->automapWidgetId);
     }
     Con_Error("ST_UIAutomapForPlayer: Invalid player #%i.", player);
     exit(1); // Unreachable.
 }
 
-int ST_ChatResponder(int player, event_t* ev)
+int ST_ChatResponder(int player, event_t *ev)
 {
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+    if(uiwidget_t *chat = ST_UIChatForPlayer(player))
     {
-        return UIChat_Responder(obj, ev);
+        return UIChat_Responder(chat, ev);
     }
     return false;
 }
 
 dd_bool ST_ChatIsActive(int player)
 {
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+    if(uiwidget_t *chat = ST_UIChatForPlayer(player))
     {
-        return UIChat_IsActive(obj);
+        return UIChat_IsActive(chat);
     }
     return false;
 }
 
-void ST_LogPost(int player, byte flags, const char* msg)
+void ST_LogPost(int player, byte flags, char const *msg)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
-
-    UILog_Post(obj, flags, msg);
+    if(uiwidget_t *log = ST_UILogForPlayer(player))
+    {
+        UILog_Post(log, flags, msg);
+    }
 }
 
 void ST_LogRefresh(int player)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
-    UILog_Refresh(obj);
+    if(uiwidget_t *log = ST_UILogForPlayer(player))
+    {
+        UILog_Refresh(log);
+    }
 }
 
 void ST_LogEmpty(int player)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
-    UILog_Empty(obj);
+    if(uiwidget_t *log = ST_UILogForPlayer(player))
+    {
+        UILog_Empty(log);
+    }
 }
 
-void ST_LogPostVisibilityChangeNotification(void)
+void ST_LogPostVisibilityChangeNotification()
 {
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_LogPost(i, LMF_NO_HIDE, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON);
     }
 }
 
-void ST_LogUpdateAlignment(void)
+void ST_LogUpdateAlignment()
 {
     // Stub.
 #if 0
-    short flags;
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        hudstate_t* hud = &hudStates[i];
+        hudstate_t *hud = &hudStates[i];
         if(!hud->inited) continue;
 
-        flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]));
+        short flags = UIGroup_Flags(GUI_MustFindObjectById(hud->widgetGroupNames[UWG_TOP]));
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.common.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
@@ -886,23 +817,27 @@ void ST_LogUpdateAlignment(void)
 
 void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_Open(obj, yes, fast);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        UIAutomap_Open(automap, yes, fast);
+    }
 }
 
 dd_bool ST_AutomapIsActive(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    return UIAutomap_Active(obj);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        return UIAutomap_Active(automap);
+    }
+    return false;
 }
 
-dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
+dd_bool ST_AutomapObscures2(int player, RectRaw const * /*region*/)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    if(UIAutomap_Active(obj))
+    uiwidget_t *automap = ST_UIAutomapForPlayer(player);
+    if(!automap) return false;
+
+    if(UIAutomap_Active(automap))
     {
         if(cfg.common.automapOpacity * ST_AutomapOpacity(player) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
         {
@@ -1000,11 +935,12 @@ void ST_SetAutomapCameraRotation(int player, dd_bool on)
 
 void ST_ToggleAutomapPanMode(int player)
 {
-    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
-    if(!ob) return;
-    if(UIAutomap_SetPanMode(ob, !UIAutomap_PanMode(ob)))
+    uiwidget_t *automap = ST_UIAutomapForPlayer(player);
+    if(!automap) return;
+
+    if(UIAutomap_SetPanMode(automap, !UIAutomap_PanMode(automap)))
     {
-        P_SetMessage(&players[player], LMF_NO_HIDE, (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON));
+        P_SetMessage(&players[player], LMF_NO_HIDE, (UIAutomap_PanMode(automap)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON));
     }
 }
 
@@ -1012,160 +948,195 @@ void ST_CycleAutomapCheatLevel(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
-        hudstate_t* hud = &hudStates[player];
+        hudstate_t *hud = &hudStates[player];
         ST_SetAutomapCheatLevel(player, (hud->automapCheatLevel + 1) % 3);
     }
 }
 
 void ST_SetAutomapCheatLevel(int player, int level)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    setAutomapCheatLevel(obj, level);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        setAutomapCheatLevel(automap, level);
+    }
 }
 
 void ST_RevealAutomap(int player, dd_bool on)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_SetReveal(obj, on);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        UIAutomap_SetReveal(automap, on);
+    }
 }
 
 dd_bool ST_AutomapHasReveal(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    return UIAutomap_Reveal(obj);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        return UIAutomap_Reveal(automap);
+    }
+    return false;
 }
 
 void ST_RebuildAutomap(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_Rebuild(obj);
+    if(uiwidget_t *automap = ST_UIAutomapForPlayer(player))
+    {
+        UIAutomap_Rebuild(automap);
+    }
 }
 
 int ST_AutomapCheatLevel(int player)
 {
-    if(player >=0 && player < MAXPLAYERS)
+    if(player >= 0 && player < MAXPLAYERS)
+    {
         return hudStates[player].automapCheatLevel;
+    }
     return 0;
 }
 
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
-void unhideHUD(void)
+static void unhideHUD()
 {
-    int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
         ST_HUDUnHide(i, HUE_FORCE);
+    }
+}
+
+void ST_Register()
+{
+    C_VAR_FLOAT2( "hud-color-r",                    &cfg.common.hudColor[0], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-g",                    &cfg.common.hudColor[1], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-b",                    &cfg.common.hudColor[2], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-a",                    &cfg.common.hudColor[3], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-icon-alpha",                 &cfg.common.hudIconAlpha, 0, 0, 1, unhideHUD )
+    C_VAR_INT   ( "hud-patch-replacement",          &cfg.common.hudPatchReplaceMode, 0, 0, 1 )
+    C_VAR_FLOAT2( "hud-scale",                      &cfg.common.hudScale, 0, 0.1f, 1, unhideHUD )
+    C_VAR_FLOAT ( "hud-timer",                      &cfg.common.hudTimer, 0, 0, 60 )
+
+    // Displays
+    C_VAR_BYTE2 ( "hud-ammo",                       &cfg.hudShown[HUD_AMMO     ], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-armor",                      &cfg.hudShown[HUD_ARMOR    ], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-cheat-counter",              &cfg.common.hudShownCheatCounters,          0,   0, 63, unhideHUD )
+    C_VAR_FLOAT2( "hud-cheat-counter-scale",        &cfg.common.hudCheatCounterScale,           0, .1f,  1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-cheat-counter-show-mapopen", &cfg.common.hudCheatCounterShowWithAutomap, 0,   0,  1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-frags",                      &cfg.hudShown[HUD_FRAGS    ], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-health",                     &cfg.hudShown[HUD_HEALTH   ], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-keys",                       &cfg.hudShown[HUD_KEYS     ], 0, 0, 1, unhideHUD )
+    C_VAR_BYTE2 ( "hud-power",                      &cfg.hudShown[HUD_INVENTORY], 0, 0, 1, unhideHUD )
+
+    // Events.
+    C_VAR_BYTE  ( "hud-unhide-damage",              &cfg.hudUnHide[HUE_ON_DAMAGE       ], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-ammo",         &cfg.hudUnHide[HUE_ON_PICKUP_AMMO  ], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-armor",        &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR ], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-health",       &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-key",          &cfg.hudUnHide[HUE_ON_PICKUP_KEY   ], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-powerup",      &cfg.hudUnHide[HUE_ON_PICKUP_POWER ], 0, 0, 1 )
+    C_VAR_BYTE  ( "hud-unhide-pickup-weapon",       &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
+
+    C_CMD("beginchat",       nullptr,   ChatOpen )
+    C_CMD("chatcancel",      "",        ChatAction )
+    C_CMD("chatcomplete",    "",        ChatAction )
+    C_CMD("chatdelete",      "",        ChatAction )
+    C_CMD("chatsendmacro",   nullptr,   ChatSendMacro )
 }
 
 D_CMD(ChatOpen)
 {
-    int player = CONSOLEPLAYER, destination = 0;
-    uiwidget_t* obj;
+    DENG2_UNUSED(src);
 
-    if(G_QuitInProgress())
-    {
-        return false;
-    }
+    if(G_QuitInProgress()) return false;
 
-    obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
+    uiwidget_t *chat = ST_UIChatForPlayer(CONSOLEPLAYER);
+    if(!chat) return false;
 
+    int destination = 0;
     if(argc == 2)
     {
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
+            LOG_SCR_ERROR("Invalid team number #%i (valid range: 0..%i)")
+                    << destination << NUMTEAMS;
             return false;
         }
     }
-    UIChat_SetDestination(obj, destination);
-    UIChat_Activate(obj, true);
+    UIChat_SetDestination(chat, destination);
+    UIChat_Activate(chat, true);
     return true;
 }
 
 D_CMD(ChatAction)
 {
-    int player = CONSOLEPLAYER;
-    const char* cmd = argv[0] + 4;
-    uiwidget_t* obj;
+    DENG2_UNUSED2(argc, src);
 
-    if(G_QuitInProgress())
+    if(G_QuitInProgress()) return false;
+
+    uiwidget_t *chat = ST_UIChatForPlayer(CONSOLEPLAYER);
+    if(!chat) return false;
+
+    if(!UIChat_IsActive(chat)) return false;
+
+    de::String const cmd(argv[0] + 4);
+    if(!cmd.compareWithoutCase("complete"))  // Send the message.
     {
-        return false;
+        return UIChat_CommandResponder(chat, MCMD_SELECT);
+    }
+    if(!cmd.compareWithoutCase("cancel"))    // Close chat.
+    {
+        return UIChat_CommandResponder(chat, MCMD_CLOSE);
+    }
+    if(!cmd.compareWithoutCase("delete"))
+    {
+        return UIChat_CommandResponder(chat, MCMD_DELETE);
     }
 
-    obj = ST_UIChatForPlayer(player);
-    if(NULL == obj || !UIChat_IsActive(obj))
-    {
-        return false;
-    }
-    if(!stricmp(cmd, "complete")) // Send the message.
-    {
-        return UIChat_CommandResponder(obj, MCMD_SELECT);
-    }
-    else if(!stricmp(cmd, "cancel")) // Close chat.
-    {
-        return UIChat_CommandResponder(obj, MCMD_CLOSE);
-    }
-    else if(!stricmp(cmd, "delete"))
-    {
-        return UIChat_CommandResponder(obj, MCMD_DELETE);
-    }
     return true;
 }
 
 D_CMD(ChatSendMacro)
 {
-    int player = CONSOLEPLAYER, macroId, destination = 0;
-    uiwidget_t* obj;
+    DENG2_UNUSED(src);
 
-    if(G_QuitInProgress())
-        return false;
+    if(G_QuitInProgress()) return false;
 
     if(argc < 2 || argc > 3)
     {
-        App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
-        App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
-                "If (team) is omitted, the message will be sent to all players.");
+        LOG_SCR_NOTE("Usage: %s (team) (macro number)") << argv[0];
+        LOG_SCR_MSG("Send a chat macro to other player(s)"
+                    ". If (team) is omitted, the message will be sent to all players");
         return true;
     }
 
-    obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
+    uiwidget_t *chat = ST_UIChatForPlayer(CONSOLEPLAYER);
+    if(!chat) return false;
 
+    int destination = 0;
     if(argc == 3)
     {
         destination = UIChat_ParseDestination(argv[1]);
         if(destination < 0)
         {
-            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
+            LOG_SCR_ERROR("Invalid team number #%i (valid range: 0..%i)")
+                    << destination << NUMTEAMS;
             return false;
         }
     }
 
-    macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
-    if(-1 == macroId)
+    int const macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
+    if(macroId == -1)
     {
-        App_Log(DE2_SCR_ERROR, "Invalid macro id");
+        LOG_SCR_ERROR("Invalid macro id");
         return false;
     }
 
-    UIChat_Activate(obj, true);
-    UIChat_SetDestination(obj, destination);
-    UIChat_LoadMacro(obj, macroId);
-    UIChat_CommandResponder(obj, MCMD_SELECT);
-    UIChat_Activate(obj, false);
+    UIChat_Activate(chat, true);
+    UIChat_SetDestination(chat, destination);
+    UIChat_LoadMacro(chat, macroId);
+    UIChat_CommandResponder(chat, MCMD_SELECT);
+    UIChat_Activate(chat, false);
     return true;
 }
