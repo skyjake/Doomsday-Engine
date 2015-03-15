@@ -27,6 +27,7 @@
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/busywidget.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "dd_loop.h"
@@ -152,8 +153,12 @@ void GameWidget::update()
 
     GL_ProcessDeferredTasks(FRAME_DEFERRED_UPLOAD_TIMEOUT);
 
-    // Request update of window contents.
-    //root().as<ClientRootWidget>().window().draw();
+    // Release the busy transition frame now when we can be sure that busy mode
+    // is over / didn't start at all.
+    if(!Con_TransitionInProgress())
+    {
+        ClientWindow::main().busy().releaseTransitionFrame();
+    }
 }
 
 void GameWidget::drawContent()
