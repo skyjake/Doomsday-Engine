@@ -22,7 +22,6 @@
 #define LIBCOMMON_PLAYER_H
 
 #include "common.h"
-#include "hu_log.h" /// for @ref logMessageFlags
 
 #if __JDOOM64__
 #define NUM_WEAPON_SLOTS        (8)
@@ -169,23 +168,32 @@ void P_PlayerChangeClass(player_t *plr, playerclass_t newClass);
 #endif
 
 /**
+ * @defgroup logMessageFlags  Log Message Flags.
+ */
+///@{
+#define LMF_NO_HIDE  0x1 ///< Always displayed (cannot be hidden by the user).
+///@}
+
+/**
  * Send a message to the given player and maybe echos it to the console.
  *
  * @param player  The player to send the message to.
- * @param flags   @ref logMessageFlags
  * @param msg     The message to be sent.
+ * @param flags   @ref logMessageFlags
  */
-void P_SetMessage(player_t *plr, int flags, char const *msg);
+void P_SetMessage2(player_t *plr, char const *msg, int flags);
+void P_SetMessage (player_t *plr, char const *msg/*, int flags = 0*/);
 
 /**
  * Send a yellow message to the given player and maybe echos it to the console.
  *
  * @param player  The player to send the message to.
- * @param flags   @ref logMessageFlags
  * @param msg     The message to be sent.
+ * @param flags   @ref logMessageFlags
  */
 #if __JHEXEN__
-void P_SetYellowMessage(player_t *plr, int flags, char const *msg);
+void P_SetYellowMessage2(player_t *plr, char const *msg, int flags);
+void P_SetYellowMessage (player_t *plr, char const *msg/*, int flags = 0*/);
 #endif
 
 /**

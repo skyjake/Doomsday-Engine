@@ -30,7 +30,6 @@
 #ifdef UNIX
 # include <cerrno>
 #endif
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -79,7 +78,7 @@ void Cht_GodFunc(player_t *plr)
         plr->update |= PSF_HEALTH;
     }
 
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
+    P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), LMF_NO_HIDE);
 }
 
 void Cht_SuicideFunc(player_t *plr)
@@ -125,7 +124,7 @@ void Cht_NoClipFunc(player_t *plr)
 {
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
+    P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), LMF_NO_HIDE);
 }
 
 dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat)
@@ -142,12 +141,12 @@ dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat)
         if(!plr->powers[type])
         {
             P_GivePower(plr, type);
-            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
+            P_SetMessage2(plr, STSTR_BEHOLDX, LMF_NO_HIDE);
         }
         else if(type == PT_STRENGTH || type == PT_FLIGHT || type == PT_ALLMAP)
         {
             P_TakePower(plr, type);
-            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
+            P_SetMessage2(plr, STSTR_BEHOLDX, LMF_NO_HIDE);
         }
 
         return true;
@@ -170,7 +169,7 @@ void printDebugInfo(player_t *plr)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
                         COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
-    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
+    P_SetMessage2(plr, textBuffer, LMF_NO_HIDE);
 
     // Also print some information to the console.
     App_Log(DE2_MAP_NOTE, "%s", textBuffer);
@@ -200,18 +199,18 @@ void Cht_LaserFunc(player_t *p)
 {
     if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
     {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        P_SetMessage2(p, STSTR_BEHOLDX, LMF_NO_HIDE);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
     {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        P_SetMessage2(p, STSTR_BEHOLDX, LMF_NO_HIDE);
         return;
     }
 
     if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        P_SetMessage2(p, STSTR_BEHOLDX, LMF_NO_HIDE);
 }
 
 D_CMD(CheatGod)

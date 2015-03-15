@@ -36,7 +36,6 @@
 #include <doomsday/uri.h>
 
 #include "acs/system.h"
-#include "am_map.h"
 #include "animdefs.h"
 #include "d_net.h"
 #include "d_netcl.h"
@@ -48,9 +47,7 @@
 #include "g_update.h"
 #include "gamesession.h"
 #include "hu_lib.h"
-#include "hu_chat.h"
 #include "hu_inventory.h"
-#include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
@@ -227,7 +224,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
          nextMapUri.path() == "MAP04"))
     {
         // Not possible in the 4-map demo.
-        P_SetMessage(&players[CONSOLEPLAYER], 0, "PORTAL INACTIVE -- DEMO");
+        P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO");
         return;
     }
 #endif
@@ -1450,7 +1447,7 @@ static void runGameAction()
                 ///       The engine should implement it's own notification UI system for
                 ///       this sort of thing.
                 String msg = "Saved screenshot: " + NativePath(fileName).pretty();
-                P_SetMessage(&::players[CONSOLEPLAYER], LMF_NO_HIDE, msg.toLatin1().constData());
+                P_SetMessage2(&::players[CONSOLEPLAYER], msg.toLatin1().constData(), LMF_NO_HIDE);
             }
             else
             {
@@ -2708,7 +2705,7 @@ D_CMD(WarpMap)
         if(argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
         else          msg += String(" \"%1\"").arg(argv[1]);
 
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg.toUtf8().constData());
+        P_SetMessage2(&players[CONSOLEPLAYER], msg.toUtf8().constData(), LMF_NO_HIDE);
         return false;
     }
 
@@ -2725,7 +2722,7 @@ D_CMD(WarpMap)
     // Hexen does not allow warping to the current map.
     if(!forceNewSession && COMMON_GAMESESSION->mapUri() == mapUri)
     {
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, "Cannot warp to the current map.");
+        P_SetMessage2(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
         return false;
     }
 #endif
@@ -2775,7 +2772,7 @@ D_CMD(WarpMap)
         char const *msg = STSTR_CLEV;
         int soundId     = SFX_NONE;
 #endif
-        P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, msg);
+        P_SetMessage2(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
         S_LocalSound(soundId, nullptr);
     }
 
@@ -2809,7 +2806,7 @@ int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 #endif
 
 #if __JHEXEN__
-int gsvWPieces[4];
+int gsvWPieces[WEAPON_FOURTH_PIECE_COUNT + 1];
 #endif
 }
 
@@ -2919,11 +2916,6 @@ static void registerGameStatusCVars()
         {"player-weapon-second", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SECOND], 0, 0, 0},
         {"player-weapon-third", READONLYCVAR, CVT_INT, &gsvWeapons[WT_THIRD], 0, 0, 0},
         {"player-weapon-fourth", READONLYCVAR, CVT_INT, &gsvWeapons[WT_FOURTH], 0, 0, 0},
-        // Weapon Pieces
-        {"player-weapon-piece1", READONLYCVAR, CVT_INT, &gsvWPieces[0], 0, 0, 0},
-        {"player-weapon-piece2", READONLYCVAR, CVT_INT, &gsvWPieces[1], 0, 0, 0},
-        {"player-weapon-piece3", READONLYCVAR, CVT_INT, &gsvWPieces[2], 0, 0, 0},
-        {"player-weapon-allpieces", READONLYCVAR, CVT_INT, &gsvWPieces[3], 0, 0, 0},
         // Inventory items
         {"player-artifact-defender", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_INVULNERABILITY], 0, 0, 0},
         {"player-artifact-quartzflask", READONLYCVAR, CVT_INT, &gsvInvItems[IIT_HEALTH], 0, 0, 0},
@@ -2961,6 +2953,16 @@ static void registerGameStatusCVars()
         {NULL, 0, CVT_NULL, 0, 0, 0, 0}
     };
     Con_AddVariableList(cvars);
+
+#if __JHEXEN__
+    // Fourth-weapon pieces:
+    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    {
+        Block const cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
+        C_VAR_INT(cvarName.constData(), &gsvWPieces[i], READONLYCVAR, 0, 1);
+    }
+    C_VAR_INT("player-weapon-allpieces", &gsvWPieces[WEAPON_FOURTH_PIECE_COUNT], READONLYCVAR, 0, 1);
+#endif
 }
 
 void G_ConsoleRegister()

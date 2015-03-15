@@ -21,13 +21,16 @@
 #include "common.h"
 #include "player.h"
 
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#include <de/memory.h>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "hu_log.h"
 #if __JHERETIC__ || __JHEXEN__
 #  include "hu_inventory.h"
 #endif
@@ -36,10 +39,6 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_start.h"
-#include <de/memory.h>
-#include <cstdlib>
-#include <cstring>
-#include <cstdio>
 
 using namespace de;
 
@@ -693,9 +692,9 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessage(player_t *pl, int flags, char const *msg)
+void P_SetMessage2(player_t *pl, char const *msg, int flags)
 {
-    DENG_ASSERT(pl != 0);
+    DENG2_ASSERT(pl);
 
     if(!msg || !msg[0]) return;
 
@@ -710,8 +709,13 @@ void P_SetMessage(player_t *pl, int flags, char const *msg)
     NetSv_SendMessage(pl - players, msg);
 }
 
+void P_SetMessage(player_t *plr, char const *msg)
+{
+    P_SetMessage2(plr, msg, 0);
+}
+
 #if __JHEXEN__
-void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
+void P_SetYellowMessage2(player_t *pl, char const *msg, int flags)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
@@ -740,6 +744,11 @@ void P_SetYellowMessage(player_t *pl, int flags, char const *msg)
 
 #undef YELLOW_FMT_LEN
 #undef YELLOW_FMT
+}
+
+void P_SetYellowMessage(player_t *pl, char const *msg)
+{
+    P_SetYellowMessage2(pl, msg, 0);
 }
 #endif
 
@@ -1882,16 +1891,17 @@ void Player_UpdateStatusCVars(player_t const *player)
     };
     for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
-        String cvarName = String("player-weapon-%1").arg(weaponIds[i]);
-        Con_SetInteger2(cvarName.toUtf8().constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
+        Block cvarName = String("player-weapon-%1").arg(weaponIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->weapons[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHEXEN__
-    // Weapon pieces.
-    Con_SetInteger2("player-weapon-piece1",    (player->pieces & WPIECE1)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-piece2",    (player->pieces & WPIECE2)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-piece3",    (player->pieces & WPIECE3)? 1 : 0, SVF_WRITE_OVERRIDE);
-    Con_SetInteger2("player-weapon-allpieces", (player->pieces == 7)? 1 : 0,      SVF_WRITE_OVERRIDE);
+    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    {
+        Block cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
+        Con_SetInteger2(cvarName.constData(),  (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
+    }
+    Con_SetInteger2("player-weapon-allpieces", (player->pieces == WEAPON_FOURTH_COMPLETE)? 1 : 0, SVF_WRITE_OVERRIDE);
 #endif
 
     // Current ammo amounts.
@@ -1915,8 +1925,8 @@ void Player_UpdateStatusCVars(player_t const *player)
     };
     for(int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        String cvarName = String("player-ammo-%1").arg(ammoIds[i]);
-        Con_SetInteger2(cvarName.toUtf8().constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
+        Block cvarName = String("player-ammo-%1").arg(ammoIds[i]).toUtf8();
+        Con_SetInteger2(cvarName.constData(), player->ammo[i].owned, SVF_WRITE_OVERRIDE);
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__

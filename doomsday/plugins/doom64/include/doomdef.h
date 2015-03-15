@@ -122,7 +122,7 @@ typedef enum {
     NUM_PLAYER_CLASSES
 } playerclass_t;
 
-#define PCLASS_INFO(class)  (&classInfo[class])
+#define PCLASS_INFO(plrClass)  (&classInfo[plrClass])
 
 typedef struct classinfo_s{
     playerclass_t plrClass;

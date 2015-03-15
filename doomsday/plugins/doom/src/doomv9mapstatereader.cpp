@@ -22,7 +22,9 @@
 #include "jdoom.h"
 #include "doomv9mapstatereader.h"
 
-#include "am_map.h"
+#include <de/ArrayValue>
+#include <de/NativePath>
+#include <de/NumberValue>
 #include "dmu_lib.h"
 #include "g_game.h"
 #include "p_ceiling.h"
@@ -35,9 +37,6 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "r_common.h"    // R_UpdateConsoleView
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/NumberValue>
 
 #define PADSAVEP()                      savePtr += (4 - ((savePtr - saveBuffer) & 3)) & 3
 

@@ -81,11 +81,11 @@ CHEAT_FUNC(Music)
     Record const &mapInfo = G_MapInfoForMapUri(TranslateMapWarpNumber(episodeId, warpNumber));
     if(S_StartMusic(mapInfo.gets("music").toUtf8().constData(), true /*loop it*/))
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_MUS);
+        P_SetMessage2(plr, STSTR_MUS, LMF_NO_HIDE);
         return true;
     }
 
-    P_SetMessage(plr, LMF_NO_HIDE, STSTR_NOMUS);
+    P_SetMessage2(plr, STSTR_NOMUS, LMF_NO_HIDE);
     return false;
 }
 
@@ -104,7 +104,7 @@ CHEAT_FUNC(Reveal)
     // Dead players can't cheat.
     if(plr->health <= 0) return false;
 
-    if(ST_AutomapIsActive(player))
+    if(ST_AutomapIsOpen(player))
     {
         ST_CycleAutomapCheatLevel(player);
     }
@@ -117,7 +117,7 @@ CHEAT_FUNC(Powerup)
     if(player < 0 || player >= MAXPLAYERS)
         return false;
 
-    P_SetMessage(&players[player], LMF_NO_HIDE, STSTR_BEHOLD);
+    P_SetMessage2(&players[player], STSTR_BEHOLD, LMF_NO_HIDE);
     return true;
 }
 
@@ -162,7 +162,7 @@ CHEAT_FUNC(MyPos)
     String const text = String("angle:0x%1 position:%2")
                             .arg(mob->angle, 0, 16)
                             .arg(Vector3d(mob->origin).asText());
-    P_SetMessage(&players[player], LMF_NO_HIDE, text.toUtf8().constData());
+    P_SetMessage2(&players[player], text.toUtf8().constData(), LMF_NO_HIDE);
     return true;
 }
 
@@ -228,7 +228,7 @@ D_CMD(CheatGod)
                 plr->update |= PSF_HEALTH;
             }
 
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
+            P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), LMF_NO_HIDE);
         }
     }
     return true;
@@ -266,7 +266,7 @@ D_CMD(CheatNoClip)
 
             plr->cheats ^= CF_NOCLIP;
             plr->update |= PSF_STATE;
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
+            P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), LMF_NO_HIDE);
         }
     }
     return true;
@@ -353,14 +353,14 @@ static void giveWeapon(player_t *player, weapontype_t weaponType)
     P_GiveWeapon(player, weaponType, false/*not dropped*/);
     if(weaponType == WT_EIGHTH)
     {
-        P_SetMessage(player, LMF_NO_HIDE, STSTR_CHOPPERS);
+        P_SetMessage2(player, STSTR_CHOPPERS, LMF_NO_HIDE);
     }
 }
 
 static void togglePower(player_t *player, powertype_t powerType)
 {
     P_TogglePower(player, powerType);
-    P_SetMessage(player, LMF_NO_HIDE, STSTR_BEHOLDX);
+    P_SetMessage2(player, STSTR_BEHOLDX, LMF_NO_HIDE);
 }
 
 D_CMD(CheatGive)
@@ -532,11 +532,11 @@ D_CMD(CheatGive)
     /// @todo fixme: Somewhat of kludge...
     if(stuff == "war2")
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_FAADDED);
+        P_SetMessage2(plr, STSTR_FAADDED, LMF_NO_HIDE);
     }
     else if(stuff == "wakr3")
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_KFAADDED);
+        P_SetMessage2(plr, STSTR_KFAADDED, LMF_NO_HIDE);
     }
 
     return true;
@@ -580,7 +580,7 @@ D_CMD(CheatWhere)
     String const text = String("Map:%1 position:%2")
                             .arg(COMMON_GAMESESSION->mapUri().asText())
                             .arg(Vector3d(plrMo->origin).asText());
-    P_SetMessage(plr, LMF_NO_HIDE, text.toUtf8().constData());
+    P_SetMessage2(plr, text.toUtf8().constData(), LMF_NO_HIDE);
 
     // Also print the some information to the console.
     LOG_SCR_NOTE("%s") << text;

@@ -28,8 +28,6 @@
 #include "hu_menu.h"
 #include "hu_pspr.h"
 #include "hu_msg.h"
-#include "hu_log.h"
-#include "hu_automap.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"

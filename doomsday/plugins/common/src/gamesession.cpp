@@ -1321,7 +1321,7 @@ void GameSession::save(String const &saveName, String const &userDescription)
         // Copy the internal saved session to the destination slot.
         Session::copySaved(savePath, internalSavePath);
 
-        P_SetMessage(&players[CONSOLEPLAYER], 0, TXT_GAMESAVED);
+        P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED);
 
         // Notify the engine that the game was saved.
         /// @todo After the engine has the primary responsibility of saving the game,
@@ -1341,7 +1341,7 @@ void GameSession::load(String const &saveName)
     String const savePath = d->userSavePath(saveName);
     LOG_MSG("Loading game from \"%s\"...") << savePath;
     d->loadSaved(savePath);
-    P_SetMessage(&players[CONSOLEPLAYER], 0, "Game loaded");
+    P_SetMessage(&players[CONSOLEPLAYER], "Game loaded");
 }
 
 void GameSession::copySaved(String const &destName, String const &sourceName)

@@ -757,7 +757,7 @@ namespace internal
     {
         if(interp.activator && interp.activator->player)
         {
-            P_SetMessage(interp.activator->player, 0, printBuffer.toUtf8().constData());
+            P_SetMessage(interp.activator->player, printBuffer.toUtf8().constData());
         }
         else
         {
@@ -766,7 +766,7 @@ namespace internal
             {
                 if(players[i].plr->inGame)
                 {
-                    P_SetMessage(&players[i], 0, printBuffer.toUtf8().constData());
+                    P_SetMessage(&players[i], printBuffer.toUtf8().constData());
                 }
             }
         }
@@ -781,7 +781,7 @@ namespace internal
         {
             if(players[i].plr->inGame)
             {
-                P_SetYellowMessage(&players[i], 0, printBuffer.toUtf8().constData());
+                P_SetYellowMessage(&players[i], printBuffer.toUtf8().constData());
             }
         }
         return Continue;

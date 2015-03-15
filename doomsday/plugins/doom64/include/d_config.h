@@ -37,7 +37,7 @@
 
 #include "doomsday.h"
 #include "doomdef.h"
-#include "hu_lib.h"
+//#include "hu_lib.h"
 #include "../../common/include/config.h"
 
 #ifdef __cplusplus

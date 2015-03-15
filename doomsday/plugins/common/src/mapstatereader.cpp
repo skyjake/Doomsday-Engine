@@ -28,7 +28,6 @@
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
 #include "g_game.h"
-#include "hu_log.h"
 #include "mapstatewriter.h"    // ChunkId
 #include "p_actor.h"
 #include "p_mapsetup.h"
@@ -282,7 +281,7 @@ DENG2_PIMPL(MapStateReader)
                 {
                     // If the CONSOLEPLAYER isn't in the save, it must be some
                     // other player's file?
-                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                    P_SetMessage2(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
                 }
                 else
                 {
@@ -295,7 +294,7 @@ DENG2_PIMPL(MapStateReader)
             {
                 if(!i)
                 {
-                    P_SetMessage(players, LMF_NO_HIDE, GET_TXT(TXT_LOADMISSING));
+                    P_SetMessage2(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
                 }
                 else
                 {

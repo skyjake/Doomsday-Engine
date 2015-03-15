@@ -41,14 +41,13 @@
 #  include "jhexen.h"
 #endif
 
-#include "am_map.h"
-#include "p_actor.h"
-#include "player.h"
 #include "g_common.h"
 #include "g_controls.h"
-#include "x_hair.h"
-
+#include "hu_stuff.h"
+#include "p_actor.h"
+#include "player.h"
 #include "r_common.h"
+#include "x_hair.h"
 
 Size2Rawf viewScale = { 1, 1 };
 float aspectScale = 1;
@@ -260,7 +259,7 @@ void R_CycleGammaLevel(void)
         gammaLevel = 0;
 
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(players + CONSOLEPLAYER, LMF_NO_HIDE, gammamsg[gammaLevel]);
+    P_SetMessage2(&players[CONSOLEPLAYER], gammamsg[gammaLevel], LMF_NO_HIDE);
 #endif
 
     sprintf(buf, "rend-tex-gamma %f", ((float) gammaLevel / 8.0f) * 1.5f);
