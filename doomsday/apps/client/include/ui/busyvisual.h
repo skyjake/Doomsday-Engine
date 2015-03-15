@@ -29,16 +29,7 @@
 extern "C" {
 #endif
 
-//void BusyVisual_LoadTextures(void);
-void BusyVisual_ReleaseTextures(void);
-
-//void BusyVisual_PrepareFont(void);
 void BusyVisual_PrepareResources(void);
-
-/**
- * Busy Mode visual drawer function. The entire frame is drawn here.
- */
-//void BusyVisual_Render(void);
 
 /**
  * @todo Does the console transition animation really belong in the busy visual?

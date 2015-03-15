@@ -36,15 +36,6 @@ static void releaseScreenshotTexture()
     ClientWindow::main().busy().releaseTransitionFrame();
 }
 
-void BusyVisual_ReleaseTextures()
-{
-    // Don't release yet if doing a transition.
-    if(!Con_TransitionInProgress())
-    {
-        releaseScreenshotTexture();
-    }
-}
-
 void BusyVisual_PrepareResources(void)
 {
     BusyTask* task = BusyMode_CurrentTask();

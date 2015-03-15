@@ -258,8 +258,6 @@ void BusyMode_FreezeGameForBusyMode(void)
 static void preBusySetup(int initialMode)
 {
 #ifdef __CLIENT__
-    //ClientWindow::main().busy().renderTransitionFrame();
-
     // Are we doing a transition effect?
     busyWillAnimateTransition = animatedTransitionActive(initialMode);
     if(busyWillAnimateTransition)
@@ -268,12 +266,6 @@ static void preBusySetup(int initialMode)
     }
 
     busyWasIgnoringInput = ClientApp::inputSystem().ignoreEvents();
-
-    // Load any resources needed beforehand.
-    //BusyVisual_PrepareResources();
-
-    //BusyVisual_PrepareFont();
-    //BusyVisual_LoadTextures();
 
     // Limit frame rate to 60, no point pushing it any faster while busy.
     ClientApp::app().loop().setRate(60);   
@@ -293,18 +285,11 @@ static void postBusyCleanup()
     ClientApp::inputSystem().ignoreEvents(busyWasIgnoringInput);
     DD_ResetTimer();
 
-    //BusyVisual_ReleaseTextures();
-
     // Back to unlimited frame rate.
     ClientApp::app().loop().setRate(0);
 
     // Switch the window to normal UI.
     ClientWindowSystem::main().setMode(ClientWindow::Normal);
-
-    if(!Con_TransitionInProgress())
-    {
-        ClientWindow::main().busy().releaseTransitionFrame();
-    }
 #endif
 }
 
