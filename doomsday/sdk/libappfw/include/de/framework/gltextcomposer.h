@@ -108,6 +108,21 @@ public:
                       ui::Alignment const &lineAlign,
                       Vector4f const &color = Vector4f(1, 1, 1, 1));
 
+    /**
+     * Returns the maximum width of the generated vertices. This is only valid after
+     * makeVertices() has been called.
+     *
+     * This may be larger than the maximum width as determined by FontLineWrapping if
+     * tabbed lines are used in the text. This is because text segments are aligned
+     * with tab stops only during makeVertices().
+     *
+     * @todo Ideally tap stop alignment should be done in FontLineWrapping, so that the
+     * maximum width would be known prior to generating the vertices.
+     *
+     * @return Maximum width of the generated vertices.
+     */
+    int verticesMaxWidth() const;
+
 private:
     DENG2_PRIVATE(d)
 };
