@@ -575,7 +575,7 @@ void FontLineWrapping::wrapTextToWidth(String const &text, Font::RichFormat cons
             pos = wholeLine.end + 1;
         }
 
-        // Process the content is distinct ranges divided by untabbed content.
+        // Process the content in distinct ranges divided by untabbed content.
         Rangei tabRange = d->findNextTabbedRange(0);
         forever
         {
