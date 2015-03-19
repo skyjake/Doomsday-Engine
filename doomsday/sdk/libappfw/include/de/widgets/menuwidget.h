@@ -93,6 +93,8 @@ public:
 
     void useDefaultItems();
 
+    bool isUsingDefaultItems() const;
+
     ChildWidgetOrganizer &organizer();
     ChildWidgetOrganizer const &organizer() const;
 
