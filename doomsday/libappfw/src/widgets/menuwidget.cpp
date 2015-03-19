@@ -416,6 +416,11 @@ void MenuWidget::useDefaultItems()
     d->setContext(&d->defaultItems);
 }
 
+bool MenuWidget::isUsingDefaultItems() const
+{
+    return d->items == &d->defaultItems;
+}
+
 int MenuWidget::count() const
 {
     return d->countVisible();
