@@ -27,6 +27,7 @@
 #include "../GridLayout"
 #include "../ScrollAreaWidget"
 #include "../ButtonWidget"
+#include "../PanelWidget"
 
 namespace de {
 
@@ -138,6 +139,14 @@ public:
 
 public slots:
     void dismissPopups();
+
+signals:
+    /**
+     * Called when a submenu/widget is opened by one of the items.
+     *
+     * @param panel  Panel that was opened.
+     */
+    void subWidgetOpened(de::PanelWidget *panel);
 
 private:
     DENG2_PRIVATE(d)
