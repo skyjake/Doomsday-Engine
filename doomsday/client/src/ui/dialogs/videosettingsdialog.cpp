@@ -57,10 +57,10 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
     ChoiceWidget *depths;
 #endif
     ListData stretchChoices;
-    CVarChoiceWidget *finaleAspect;
-    CVarChoiceWidget *hudAspect;
+    CVarChoiceWidget *finaleAspect = nullptr;
+    CVarChoiceWidget *hudAspect    = nullptr;
     CVarChoiceWidget *inludeAspect = nullptr;
-    CVarChoiceWidget *menuAspect = nullptr;
+    CVarChoiceWidget *menuAspect   = nullptr;
 
     Instance(Public *i)
         : Base(i)
