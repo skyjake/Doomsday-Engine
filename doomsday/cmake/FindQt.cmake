@@ -1,6 +1,6 @@
 # Qmake is used to find out the Qt install location.
 if (NOT QMAKE)
-    find_program (QMAKE qmake-qt5 qt5-qmake qmake
+    find_program (QMAKE qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake
         PATHS ENV PATH
         HINTS ENV DENG_DEPEND_PATH
         DOC "Path of the qmake executable to use"
@@ -28,11 +28,17 @@ if (NOT DEFINED QT_PREFIX_DIR OR
 
     qmake_query (QT_VERSION "QT_VERSION")
     message (STATUS "  Qt version: ${QT_VERSION}")
-    if (NOT DENG_QT5_OPTIONAL)
-        if (QT_VERSION VERSION_LESS "5.0")
-            message (FATAL_ERROR "Qt 5.0 or later required!")
-        endif ()
+
+    if (QT_VERSION VERSION_LESS "4.8")
+        message (FATAL_ERROR "Qt 4.8 or later required! (Qt 5 recommended)")
     endif ()
+
+    if (NOT QT_VERSION VERSION_LESS "5.0")
+	set (QT_MODULE "Qt5" CACHE STRING "Qt CMake module to use")
+    else ()
+	set (QT_MODULE "Qt4" CACHE STRING "Qt CMake module to use")
+    endif ()
+    mark_as_advanced (QT_MODULE)
 
     # Path for CMake config modules.
     qmake_query (QT_PREFIX "QT_INSTALL_PREFIX")
@@ -45,10 +51,12 @@ if (NOT DEFINED QT_PREFIX_DIR OR
     
     qmake_query (QT_BINS "QT_INSTALL_BINS")
     if (APPLE)
-        set (MACDEPLOYQT_COMMAND "${QT_BINS}/macdeployqt" CACHE PATH "Qt's macdeployqt executable path")
+        set (MACDEPLOYQT_COMMAND "${QT_BINS}/macdeployqt" CACHE PATH 
+	     "Qt's macdeployqt executable path")
         mark_as_advanced (MACDEPLOYQT_COMMAND)
     elseif (WIN32)
-        set (WINDEPLOYQT_COMMAND "${QT_BINS}/windeployqt" CACHE PATH "Qt's windeployqt executable path")
+        set (WINDEPLOYQT_COMMAND "${QT_BINS}/windeployqt" CACHE PATH 
+	     "Qt's windeployqt executable path")
         mark_as_advanced (WINDEPLOYQT_COMMAND)
     endif ()
 endif ()

@@ -1,4 +1,4 @@
-find_package (Qt5 COMPONENTS Gui OpenGL REQUIRED)
+# find_package (Qt5 COMPONENTS Gui OpenGL REQUIRED)
 find_package (DengCore REQUIRED)
 
 # Deng::libgui may exist in the current build, in which case using 

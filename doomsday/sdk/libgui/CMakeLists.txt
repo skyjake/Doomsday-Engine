@@ -17,13 +17,11 @@ option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
 
 # Dependencies.
 find_package (DengCore QUIET)
-find_package (Qt5 COMPONENTS Network Gui OpenGL REQUIRED)
 find_package (Assimp REQUIRED)
 include (OpenGL)
 
 if (DENG_X11)
     find_package (X11 REQUIRED)
-    find_package (Qt5X11Extras REQUIRED)
 endif ()
 
 deng_add_package (net.dengine.stdlib.gui)
@@ -46,9 +44,10 @@ endif ()
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui 
-    PUBLIC Deng::libcore Qt5::Gui Qt5::OpenGL  
+    PUBLIC Deng::libcore
     PRIVATE opengl assimp 
 )
+deng_target_link_qt (libgui PUBLIC Gui OpenGL)
 
 if (APPLE)
     link_framework (libgui PRIVATE Cocoa)
@@ -56,7 +55,8 @@ endif ()
 
 if (DENG_X11)
     target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
-    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES} Qt5::X11Extras)
+    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
+    deng_target_link_qt (libgui PRIVATE X11Extras)
     if (DENG_ENABLE_DISPLAYMODE)
         if (NOT X11_Xrandr_FOUND)
             message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension")

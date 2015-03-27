@@ -145,6 +145,28 @@ macro (deng_target_defaults target)
     #cotire (${target})
 endmacro (deng_target_defaults)
 
+# Links Qt components to the target.
+function (deng_target_link_qt target linkType)
+    sublist (comps 2 -1 ${ARGV})
+    if (QT_MODULE STREQUAL Qt4)
+	list (FIND comps Widgets idx)
+	if (idx GREATER -1)
+	    list (REMOVE_AT comps ${idx})
+	    list (APPEND comps Gui)
+	endif ()
+    endif ()
+    list (REMOVE_DUPLICATES comps)
+    if (QT_MODULE STREQUAL Qt5)
+	find_package (${QT_MODULE} COMPONENTS ${comps} REQUIRED)
+	set (_prefix)
+    else ()
+	set (_prefix Qt)
+    endif ()
+    foreach (comp ${comps})
+	target_link_libraries (${target} ${linkType} ${QT_MODULE}::${_prefix}${comp})
+    endforeach (comp)
+endfunction (deng_target_link_qt)
+
 # Checks all the files in the arguments and removes the ones that
 # are not applicable to the current platform.
 function (deng_filter_platform_sources outName)

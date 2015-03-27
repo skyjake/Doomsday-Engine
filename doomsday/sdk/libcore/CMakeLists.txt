@@ -8,8 +8,6 @@ set (DENG_LIBCORE_RELEASE_LABEL  "Dev")
 
 # Dependencies.
 include (ZLIB)
-find_package (Qt5Core REQUIRED)
-find_package (Qt5Network REQUIRED)
 
 # Definitions.
 add_definitions (
@@ -54,10 +52,8 @@ if (NOT APPLE)
 endif ()
 
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
-target_link_libraries (libcore 
-    PUBLIC Qt5::Core Qt5::Network 
-    PUBLIC ${ZLIB_LIBRARIES}
-)
+deng_target_link_qt (libcore PUBLIC Core Network)
+target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES})
 
 deng_deploy_library (libcore DengCore)
 

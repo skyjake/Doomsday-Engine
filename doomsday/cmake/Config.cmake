@@ -59,7 +59,11 @@ find_package (Qt)
 list (APPEND CMAKE_PREFIX_PATH "${QT_PREFIX_DIR}")
 
 # This will ensure automoc works in all projects.
-find_package (Qt5 COMPONENTS Core Network)
+if (QT_MODULE STREQUAL Qt5)
+    find_package (Qt5 COMPONENTS Core Network)
+else ()
+    find_package (Qt4 REQUIRED)
+endif ()
 
 # Platform-Specific Configuration --------------------------------------------
 
