@@ -372,16 +372,12 @@ endmacro (deng_add_library)
 
 macro (deng_deploy_library target name)
     if (DENG_ENABLE_SDK)
-        install (TARGETS ${target}
-            EXPORT ${name} 
+        install (TARGETS ${target} EXPORT ${name}
             RUNTIME DESTINATION bin COMPONENT libs
             LIBRARY DESTINATION ${DENG_INSTALL_LIB_DIR} COMPONENT libs
-            INCLUDES DESTINATION include COMPONENT sdk
             ARCHIVE DESTINATION lib COMPONENT sdk
         )
-        install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng::
-            COMPONENT sdk
-        )
+        install (EXPORT ${name} DESTINATION lib/cmake/${name} NAMESPACE Deng:: COMPONENT sdk)
         install (FILES ${name}Config.cmake DESTINATION lib/cmake/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
