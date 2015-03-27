@@ -171,6 +171,7 @@ de::String UpdaterSettings::lastCheckAgo() const
     if(!when.isValid()) return ""; // Never checked.
 
     de::TimeDelta delta = when.since();
+    if(delta < 0.0) return "";
 
     int t;
     if(delta < 60.0)
