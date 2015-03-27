@@ -5,7 +5,6 @@ project (DENG_LIBAPPFW)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Qt5 COMPONENTS Network Widgets OpenGL)
 find_package (DengCore QUIET)
 find_package (DengGui QUIET)
 find_package (DengShell QUIET)
@@ -22,9 +21,10 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
 deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
 target_link_libraries (libappfw 
-    PUBLIC Deng::libcore Deng::libgui Deng::libshell Qt5::Widgets Qt5::OpenGL 
+    PUBLIC Deng::libcore Deng::libgui Deng::libshell
     PRIVATE opengl
 )
+deng_target_link_qt (libappfw PUBLIC Widgets OpenGL)
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()

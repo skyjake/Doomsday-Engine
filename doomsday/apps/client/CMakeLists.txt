@@ -8,7 +8,6 @@ set (DENG_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Qt5 COMPONENTS Gui OpenGL Widgets)
 find_package (DengAppfw QUIET)
 find_package (DengDoomsday QUIET)
 find_package (Amethyst QUIET)

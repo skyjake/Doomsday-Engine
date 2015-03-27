@@ -12,7 +12,6 @@ include (../../cmake/Config.cmake)
 # Dependencies.
 find_package (DengCore QUIET)
 find_package (DengShell QUIET)
-find_package (Qt5Widgets REQUIRED)
 
 add_definitions (
     -DSHELL_VERSION="${DENG_VERSION}"
@@ -37,7 +36,8 @@ else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()
 
-target_link_libraries (shell Deng::libcore Deng::libshell Qt5::Widgets)
+target_link_libraries (shell PUBLIC Deng::libcore Deng::libshell)
+deng_target_link_qt (shell PUBLIC Widgets)
 
 # Deployment.
 deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
