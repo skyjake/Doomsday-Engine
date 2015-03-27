@@ -24,22 +24,19 @@ Q_DECLARE_METATYPE(de::ui::Item const *)
 
 namespace de {
 
-DENG2_PIMPL(TabWidget)
+DENG_GUI_PIMPL(TabWidget)
 , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DENG2_OBSERVES(ui::Data,             Addition)
 , DENG2_OBSERVES(ui::Data,             OrderChange)
 , DENG2_OBSERVES(ButtonWidget,         Press)
 {
-    ui::Data::Pos current;
-    MenuWidget *buttons;
-    bool needUpdate;
-    bool invertedStyle;
+    ui::Data::Pos current = 0;
+    MenuWidget *buttons = nullptr;
+    bool needUpdate = false;
+    bool invertedStyle = false;
+    LabelWidget *selected = nullptr;
 
-    Instance(Public *i)
-        : Base(i)
-        , current(0)
-        , needUpdate(false)
-        , invertedStyle(false)
+    Instance(Public *i) : Base(i)
     {
         self.add(buttons = new MenuWidget);
         buttons->enableScrolling(false);
@@ -55,6 +52,8 @@ DENG2_PIMPL(TabWidget)
                 .setInput(Rule::AnchorX, self.rule().left() + self.rule().width() / 2)
                 .setInput(Rule::Top, self.rule().top())
                 .setAnchorPoint(Vector2f(.5f, 0));
+        
+        self.add(selected = new LabelWidget);
     }
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
@@ -64,11 +63,7 @@ DENG2_PIMPL(TabWidget)
         btn.setSizePolicy(ui::Expand, ui::Expand);
         btn.setFont("tab.label");
         btn.margins().set("dialog.gap");
-
-        if(invertedStyle)
-        {
-            btn.useInfoStyle();
-        }
+        btn.set(Background());
 
         btn.audienceForPress() += this;
     }
@@ -100,11 +95,14 @@ DENG2_PIMPL(TabWidget)
 
     void updateSelected()
     {
+        selected->set(Background(style().colors().colorf(invertedStyle? "tab.inverted.selected" : "tab.selected")));
+        
         for(ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
             bool const sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
             w.setFont(sel? "tab.selected" : "tab.label");
+            w.setOpacity(sel? 1 : 0.7, 0.4);
             if(!invertedStyle)
             {
                 w.setTextColor(sel? "tab.selected" : "text");
@@ -114,6 +112,14 @@ DENG2_PIMPL(TabWidget)
             {
                 w.setTextColor(sel? "tab.inverted.selected" : "inverted.text");
                 w.setHoverTextColor(sel? "tab.inverted.selected" : "inverted.text");
+            }
+            if(sel)
+            {
+                selected->rule()
+                    .setInput(Rule::Width,  w.rule().width())
+                    .setInput(Rule::Height, style().rules().rule("halfunit"))
+                    .setInput(Rule::Left,   w.rule().left())
+                    .setInput(Rule::Top,    w.rule().bottom());
             }
         }
     }
@@ -128,11 +134,6 @@ TabWidget::TabWidget(String const &name)
 void TabWidget::useInvertedStyle()
 {
     d->invertedStyle = true;
-    foreach(Widget *w, d->buttons->childWidgets())
-    {
-        // Restyle each existing button.
-        w->as<ButtonWidget>().useInfoStyle();
-    }
 }
 
 ui::Data &TabWidget::items()

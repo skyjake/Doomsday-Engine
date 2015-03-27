@@ -67,13 +67,15 @@ DENG_GUI_PIMPL(GameFilterWidget)
 
         sortLabel->setFont("small");
         sortLabel->margins().setLeft("");
-        sortBy->setFont("tab.label");
+        sortBy->setFont("small");
         sortBy->setOpeningDirection(ui::Down);
         sortBy->items()
                 << new ChoiceItem(tr("Title"),        SortByTitle)
                 << new ChoiceItem(tr("Identity key"), SortByIdentityKey);
 
-        SequentialLayout layout(self.rule().left(), self.rule().top(), ui::Right);
+        SequentialLayout layout(self.rule().left(),
+                                self.rule().midY() - sortBy->rule().height()/2,
+                                ui::Right);
         layout << *sortLabel << *sortBy;
 
         tabs->rule()

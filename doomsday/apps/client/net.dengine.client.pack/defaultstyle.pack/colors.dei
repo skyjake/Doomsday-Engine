@@ -43,8 +43,8 @@ group choice {
 }
 
 group tab {
-    color selected          { rgb $= accent.rgb }
-    color inverted.selected { rgb $= inverted.accent.rgb }
+    color selected          { rgb $= text.rgb }
+    color inverted.selected { rgb $= inverted.text.rgb }
 }
 
 group progress {

@@ -18,9 +18,11 @@
 
 #include "ui/dialogs/videosettingsdialog.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/widgets/cvarchoicewidget.h"
 #include "ui/clientwindow.h"
 #include "CommandAction"
 #include "clientapp.h"
+#include "dd_main.h"
 
 #include <doomsday/console/exec.h>
 #include <de/VariableToggleWidget>
@@ -54,6 +56,11 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
 #ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
 #endif
+    ListData stretchChoices;
+    CVarChoiceWidget *finaleAspect = nullptr;
+    CVarChoiceWidget *hudAspect    = nullptr;
+    CVarChoiceWidget *inludeAspect = nullptr;
+    CVarChoiceWidget *menuAspect   = nullptr;
 
     Instance(Public *i)
         : Base(i)
@@ -73,10 +80,37 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         area.add(depths       = new ChoiceWidget);
 #endif
         win.audienceForAttributeChange() += this;
+
+        if(App_GameLoaded())
+        {
+            stretchChoices
+                << new ChoiceItem(tr("Smart"),        SCALEMODE_SMART_STRETCH)
+                << new ChoiceItem(tr("Original 1:1"), SCALEMODE_NO_STRETCH)
+                << new ChoiceItem(tr("Stretched"),    SCALEMODE_STRETCH);
+
+            area.add(finaleAspect = new CVarChoiceWidget("rend-finale-stretch"));
+            area.add(hudAspect    = new CVarChoiceWidget("rend-hud-stretch"));
+            area.add(inludeAspect = new CVarChoiceWidget("inlude-stretch"));
+            area.add(menuAspect   = new CVarChoiceWidget("menu-stretch"));
+
+            finaleAspect->setItems(stretchChoices);
+            hudAspect->setItems(stretchChoices);
+            inludeAspect->setItems(stretchChoices);
+            menuAspect->setItems(stretchChoices);
+        }
     }
 
     ~Instance()
     {
+        // The common stretchChoices is being deleted now, before the widget tree.
+        if(finaleAspect)
+        {
+            finaleAspect->useDefaultItems();
+            hudAspect->useDefaultItems();
+            inludeAspect->useDefaultItems();
+            menuAspect->useDefaultItems();
+        }
+        
         win.audienceForAttributeChange() -= this;
     }
 
@@ -115,6 +149,12 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         // Select the current color depth in the depth list.
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
+
+        foreach(Widget *child, self.area().childWidgets())
+        {
+            if(ICVarWidget *cw = child->maybeAs<ICVarWidget>())
+                cw->updateFromCVar();
+        }
     }
 
     void windowAttributesChanged(PersistentCanvasWindow &)
@@ -257,6 +297,20 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         area().add(adjustButton);
 
         modeLayout << Const(0) << *adjustButton;
+    }
+
+    if(d->inludeAspect)
+    {
+        // Aspect ratio options.
+        auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());
+        aspectLabel->setFont("separator.label");
+        aspectLabel->margins().setTop("gap");
+        modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
+        modeLayout.append(*aspectLabel, 2)
+                << *LabelWidget::newWithText(tr("Player Weapons:"), &area()) << *d->hudAspect
+                << *LabelWidget::newWithText(tr("Menus:"), &area()) << *d->menuAspect
+                << *LabelWidget::newWithText(tr("Intermissions:"), &area()) << *d->inludeAspect
+                << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect;
     }
 
     area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),

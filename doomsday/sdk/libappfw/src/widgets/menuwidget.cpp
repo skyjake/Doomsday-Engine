@@ -329,6 +329,14 @@ DENG2_PIMPL(MenuWidget)
 
         w->audienceForClose() += this;
         w->audienceForDeletion() += this;
+
+        emit self.subWidgetOpened(w);
+
+        // Automatically close other subwidgets when one is opened.
+        foreach(auto *panel, openSubs)
+        {
+            if(panel != w) panel->close();
+        }
     }
 
     bool isVisibleItem(Widget const *child) const
@@ -414,6 +422,11 @@ void MenuWidget::setItems(Data const &items)
 void MenuWidget::useDefaultItems()
 {
     d->setContext(&d->defaultItems);
+}
+
+bool MenuWidget::isUsingDefaultItems() const
+{
+    return d->items == &d->defaultItems;
 }
 
 int MenuWidget::count() const
