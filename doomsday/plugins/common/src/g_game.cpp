@@ -1405,7 +1405,7 @@ static void runGameAction()
 
             if(!IS_DEDICATED)
             {
-                GL_SetFilter(false);
+                GL_ResetViewEffects();
             }
 
             // Go to an intermission?
@@ -2358,6 +2358,7 @@ D_CMD(LoadSession)
             if(Hu_IsMessageActive()) return false;
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
+
             // Compose the confirmation message.
             String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,

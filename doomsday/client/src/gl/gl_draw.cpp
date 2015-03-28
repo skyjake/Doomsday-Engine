@@ -300,6 +300,14 @@ DENG_EXTERN_C void GL_SetFilter(dd_bool enabled)
     drawFilter = CPP_BOOL(enabled);
 }
 
+#undef GL_ResetViewEffects
+DENG_EXTERN_C void GL_ResetViewEffects()
+{
+    GL_SetFilter(false);
+    Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
+    DD_SetInteger(DD_FULLBRIGHT, false);
+}
+
 #undef GL_SetFilterColor
 DENG_EXTERN_C void GL_SetFilterColor(float r, float g, float b, float a)
 {

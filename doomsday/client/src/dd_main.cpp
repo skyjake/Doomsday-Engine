@@ -1487,7 +1487,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Rend_ParticleLoadSystemTextures();
     }
 
-    GL_SetFilter(false);
+    GL_ResetViewEffects();
 
     if(!game.isNull())
     {
