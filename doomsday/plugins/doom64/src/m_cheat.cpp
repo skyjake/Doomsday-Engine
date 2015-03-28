@@ -20,28 +20,29 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-#ifdef UNIX
-# include <errno.h>
-#endif
-
 #include "jdoom64.h"
+#include "m_cheat.h"
 
-#include "gamesession.h"
-#include "d_net.h"
-#include "g_common.h"
-#include "player.h"
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#ifdef UNIX
+# include <cerrno>
+#endif
 #include "am_map.h"
+#include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
+#include "dmu_lib.h"
+#include "g_common.h"
+#include "gamesession.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
-#include "dmu_lib.h"
-#include "p_user.h"
-#include "p_start.h"
-
+#include "player.h"
 #include "p_inventory.h"
+#include "p_start.h"
+#include "p_user.h"
 
 typedef struct {
     unsigned char *sequence;

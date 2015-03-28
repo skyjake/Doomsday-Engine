@@ -17,11 +17,11 @@ win32 {
     sdllibs.files = $$sdlLibDir/SDL2.dll
     sdllibs.path = $$DENG_LIB_DIR
 }
-else:macx {
+else:macx:!isEmpty(SDL2_FRAMEWORK_DIR) {
     # Mac OS X.
-    isEmpty(SDL2_FRAMEWORK_DIR) {
-        error("dep_sdl: SDL2 framework path not defined, check your config_user.pri (SDL2_FRAMEWORK_DIR)")
-    }
+    #isEmpty(SDL2_FRAMEWORK_DIR) {
+    #    error("dep_sdl: SDL2 framework path not defined, check your config_user.pri (SDL2_FRAMEWORK_DIR)")
+    #}
 
     INCLUDEPATH += $${SDL2_FRAMEWORK_DIR}/SDL2.framework/Headers
     QMAKE_LFLAGS += -F$${SDL2_FRAMEWORK_DIR}
@@ -29,7 +29,10 @@ else:macx {
     LIBS += -framework SDL2
 }
 else {
-    # Generic Unix.
+    # Generic setup via pkg-config.
+    !system(pkg-config --exists sdl2) {
+        error(Missing dependency: SDL2)
+    }
     sdlflags = $$system(pkg-config sdl2 --cflags)
     QMAKE_CFLAGS += $$sdlflags
     QMAKE_CXXFLAGS += $$sdlflags
@@ -61,13 +64,16 @@ else {
             $$sdlMixerLibDir/smpeg2.dll
         sdlmixerlibs.path = $$DENG_LIB_DIR
     }
-    else:macx {
+    else:macx:!isEmpty(SDL2_FRAMEWORK_DIR) {
         INCLUDEPATH += $${SDL2_FRAMEWORK_DIR}/SDL2_mixer.framework/Headers
         QMAKE_LFLAGS += -F$${SDL2_FRAMEWORK_DIR}/SDL2_mixer.framework/Frameworks
         LIBS += -framework SDL2_mixer
     }
     else {
-        LIBS += -lSDL2_mixer
+        !system(pkg-config --exists SDL2_mixer) {
+            error(Missing dependency: SDL2_mixer)
+        }
+        LIBS += $$system(pkg-config --libs SDL2_mixer)
     }
 }
 

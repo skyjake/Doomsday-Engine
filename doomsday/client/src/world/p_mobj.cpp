@@ -288,10 +288,10 @@ SectorCluster *Mobj_ClusterPtr(mobj_t const &mobj)
 }
 
 #undef Mobj_Sector
-DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj)
+DENG_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
 {
-    if(!mobj) return 0;
-    return Mobj_BspLeafAtOrigin(*mobj).sectorPtr();
+    if(!mob || !Mobj_IsLinked(*mob)) return nullptr;
+    return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
 void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def)
@@ -416,7 +416,8 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
 
 static inline Texture *lightmap(de::Uri const *textureUri)
 {
-    return App_ResourceSystem().texture("Lightmaps", textureUri);
+    if(!textureUri) return nullptr;
+    return App_ResourceSystem().texture("Lightmaps", *textureUri);
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mo)
@@ -567,19 +568,22 @@ float Mobj_ShadowStrength(mobj_t *mo)
 
                 TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
                 DENG2_ASSERT(texture);
-                auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
-                DENG2_ASSERT(aa);
+                if(texture)
+                {
+                    auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(Texture::AverageAlphaAnalysis);
+                    DENG2_ASSERT(aa);
 
-                // We use an average which factors in the coverage ratio
-                // of alpha:non-alpha pixels.
-                /// @todo Constant weights could stand some tweaking...
-                float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
+                    // We use an average which factors in the coverage ratio
+                    // of alpha:non-alpha pixels.
+                    /// @todo Constant weights could stand some tweaking...
+                    float weightedSpriteAlpha = aa->alpha * (0.4f + (1 - aa->coverage) * 0.6f);
 
-                // Almost entirely translucent sprite? => no shadow.
-                if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
+                    // Almost entirely translucent sprite? => no shadow.
+                    if(weightedSpriteAlpha < minSpriteAlphaLimit) return 0;
 
-                // Apply this factor.
-                strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                    // Apply this factor.
+                    strength *= de::min(1.f, .2f + weightedSpriteAlpha);
+                }
             }
         }
     }

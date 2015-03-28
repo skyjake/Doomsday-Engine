@@ -432,6 +432,10 @@ macx {
 
 # Installation ---------------------------------------------------------------
 
+deng_noclient {
+    # Packages are usually deployed by the client project.
+    deployPackages($$DENG_PACKAGES, $$OUT_PWD/..)
+}
 deployTarget()
 
 !macx {

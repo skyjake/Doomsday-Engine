@@ -23,6 +23,7 @@
 #include <de/Error>
 #include <de/Path>
 #include <de/String>
+#include <de/game/SavedSession>
 
 /**
  * Maps saved game session file names into a finite set of "save slots".
@@ -193,4 +194,4 @@ private:
 
 typedef SaveSlots::Slot SaveSlot;
 
-#endif // LIBCOMMON_SAVESLOTS_H
+#endif  // LIBCOMMON_SAVESLOTS_H

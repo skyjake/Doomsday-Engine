@@ -385,9 +385,7 @@ void T_MoveFloor(void *floorThinkerPtr)
             }
         }
 #endif
-#if __JHEXEN__
-        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
-#endif
+        P_NotifySectorFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
     }
 }
@@ -1488,8 +1486,8 @@ static int stopFloorCrush(thinker_t *th, void *context)
     {
         // Completely remove the crushing floor
         SN_StopSequence((mobj_t *)P_GetPtrp(floor->sector, DMU_EMITTER));
-        P_ToXSector(floor->sector)->specialData = NULL;
-        Game_ACScriptInterpreter().tagFinished(P_ToXSector(floor->sector)->tag);
+        P_ToXSector(floor->sector)->specialData = nullptr;
+        P_NotifySectorFinished(P_ToXSector(floor->sector)->tag);
         Thinker_Remove(&floor->thinker);
         (*found) = true;
     }

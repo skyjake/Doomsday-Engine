@@ -63,6 +63,9 @@ public:
     /// Notified when a new game is added.
     DENG2_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
 
+    /// Notified after game resources have been located.
+    DENG2_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
+
 public:
     Games();
 
@@ -121,6 +124,11 @@ public:
      * Try to locate all startup resources for all registered games.
      */
     void locateAllResources();
+
+    /**
+     * Forgets the previously located resources of all registered games.
+     */
+    void forgetAllResources();
 
     /**
      * Collects all games.

@@ -223,6 +223,9 @@ public Font::RichFormat::IStyle
                 VertexBuf::Builder verts;
                 glText.makeVertices(verts, Vector2i(0, 0), ui::AlignLeft);
                 drawable.buffer<VertexBuf>(ID_TEXT).setVertices(gl::TriangleStrip, verts, gl::Static);
+
+                // Update content size to match the generated vertices exactly.
+                self.setContentWidth(glText.verticesMaxWidth());
             }
 
             uScrollMvpMatrix = root().projMatrix2D() *

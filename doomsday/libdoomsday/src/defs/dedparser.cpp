@@ -1,6 +1,4 @@
-/** @file defs/dedparser.cpp
- *
- * Doomsday Engine Definition File Reader.
+/** @file dedparser.cpp  Doomsday Engine Definition File Reader.
  *
  * A GHASTLY MESS!!! This should be rewritten.
  *
@@ -17,8 +15,8 @@
  * a bunch of tokens, and the same parsing rules would be applied for
  * everything.
  *
- * @authors Copyright &copy; 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2010-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -36,13 +34,30 @@
  */
 
 #define DENG_NO_API_MACROS_URI
+
 #include "doomsday/defs/dedparser.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+
+#include <de/memory.h>
+#include <de/vector1.h>
+#include <de/App>
+#include <de/NativePath>
+#include <de/ArrayValue>
+#include <de/RecordValue>
+#include <de/game/Game>
+
+#include "doomsday/defs/decoration.h"
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/dedfile.h"
 #include "doomsday/defs/episode.h"
 #include "doomsday/defs/finale.h"
 #include "doomsday/defs/mapgraphnode.h"
 #include "doomsday/defs/mapinfo.h"
+#include "doomsday/defs/material.h"
 #include "doomsday/defs/model.h"
 #include "doomsday/defs/music.h"
 #include "doomsday/defs/sky.h"
@@ -51,19 +66,6 @@
 #include "doomsday/filesys/sys_direc.h"
 #include "doomsday/uri.h"
 #include "xgclass.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
-#include <de/App>
-#include <de/NativePath>
-#include <de/ArrayValue>
-#include <de/RecordValue>
-#include <de/game/Game>
-#include <de/memory.h>
-#include <de/vector1.h>
 
 #ifdef WIN32
 #  define stricmp _stricmp
@@ -1415,27 +1417,30 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Material"))
             {
+                Record dummyMat;
+                Record *mat  = nullptr;
                 bool bModify = false;
-                ded_material_t *mat;
-                Dummy<ded_material_t> dummyMat;
 
                 ReadToken();
                 if(!ISTOKEN("Mods"))
                 {
-                    // A new material.
+                    // New materials are appended to the end of the list.
                     idx = ded->addMaterial();
                     mat = &ded->materials[idx];
                 }
                 else if(!bCopyNext)
                 {
-                    de::Uri *otherMat = 0;
-
-                    READURI(&otherMat, NULL);
+                    de::Uri *otherMat = nullptr;
+                    READURI(&otherMat, nullptr);
                     ReadToken();
 
-                    mat = ded->getMaterial(otherMat->compose().toLatin1());
-
-                    if(!mat)
+                    idx = ded->getMaterialNum(*otherMat);
+                    if(idx >= 0)
+                    {
+                        mat     = &ded->materials[idx];
+                        bModify = true;
+                    }
+                    else
                     {
                         LOG_RES_WARNING("Ignoring unknown Material \"%s\" in %s on line #%i")
                                 << otherMat->asText()
@@ -1443,15 +1448,10 @@ DENG2_PIMPL(DEDParser)
                                 << (source? source->lineNumber : 0);
 
                         // We'll read into a dummy definition.
-                        idx = -1;
-                        dummyMat.clear();
+                        defn::Material(dummyMat).resetToDefaults();
                         mat = &dummyMat;
                     }
-                    else
-                    {
-                        idx = ded->materials.indexOf(mat);
-                        bModify = true;
-                    }
+
                     delete otherMat;
                 }
                 else
@@ -1460,16 +1460,17 @@ DENG2_PIMPL(DEDParser)
                     retVal = false;
                     goto ded_end_read;
                 }
+                DENG2_ASSERT(mat);
 
                 // Should we copy the previous definition?
                 if(prevMaterialDefIdx >= 0 && bCopyNext)
                 {
-                    ded->materials.copyTo(mat, prevMaterialDefIdx);
+                    ded->materials.copy(prevMaterialDefIdx, *mat);
                 }
 
-                uint layer = 0;
-                uint light = 0;
-
+                defn::Material mainDef(*mat);
+                int decor = 0;
+                int layer      = 0;
                 FINDBEGIN;
                 forever
                 {
@@ -1477,22 +1478,34 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if(!bModify && ISLABEL("ID"))
                     {
-                        READURI(&mat->uri, NULL);
+                        READURI((*mat)["id"], nullptr);
                     }
-                    else RV_FLAGS("Flags", mat->flags, "matf_")
-                    RV_INT("Width", mat->width)
-                    RV_INT("Height", mat->height)
-                    if(ISLABEL("Layer"))
+                    else
+                    RV_FLAGS("Flags", (*mat)["flags"], "matf_")
+                    if(ISLABEL("Width"))
                     {
-                        int layerStage = 0;
-
+                        int width; READINT(width);
+                        (*mat)["dimensions"].value<ArrayValue>().setElement(0, width);
+                    }
+                    else if(ISLABEL("Height"))
+                    {
+                        int height; READINT(height);
+                        (*mat)["dimensions"].value<ArrayValue>().setElement(1, height);
+                    }
+                    else if(ISLABEL("Layer"))
+                    {
                         if(layer >= DED_MAX_MATERIAL_LAYERS)
                         {
-                            setError("Too many Material layers");
+                            setError("Too many Material.Layers");
                             retVal = false;
                             goto ded_end_read;
                         }
 
+                        // Add another layer.
+                        if(layer >= mainDef.layerCount()) mainDef.addLayer();
+                        defn::MaterialLayer layerDef(mainDef.layer(layer));
+
+                        int stage = 0;
                         FINDBEGIN;
                         forever
                         {
@@ -1500,45 +1513,33 @@ DENG2_PIMPL(DEDParser)
                             if(ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(layerStage >= mat->layers[layer].stages.size())
+                                if(stage >= layerDef.stageCount())
                                 {
-                                    mat->layers[layer].addStage();
+                                    layerDef.addStage();
 
-                                    if(mat->autoGenerated && layerStage > 0)
+                                    if(mainDef.getb("autoGenerated") && stage > 0)
                                     {
                                         // When adding a new stage to an autogenerated material
                                         // initialize by copying values from the previous stage.
-                                        ded_material_layer_stage_t const
-                                            &prevSt = mat->layers[layer].stages[layerStage - 1];
-                                        ded_material_layer_stage_t
-                                            &st     = mat->layers[layer].stages[layerStage];
-
-                                        if(prevSt.texture)
-                                            st.texture = new de::Uri(*prevSt.texture);
-                                        st.tics                 = prevSt.tics;
-                                        st.variance             = prevSt.variance;
-                                        st.glowStrength         = prevSt.glowStrength;
-                                        st.glowStrengthVariance = prevSt.glowStrengthVariance;
-                                        V2f_Copy(st.texOrigin,    prevSt.texOrigin);
+                                        layerDef.stage(stage).copyMembersFrom(layerDef.stage(stage - 1));
                                     }
                                 }
-
-                                ded_material_layer_stage_t *st = &mat->layers[layer].stages[layerStage];
+                                Record &st = layerDef.stage(stage);
 
                                 FINDBEGIN;
                                 forever
                                 {
                                     READLABEL;
-                                    RV_URI("Texture", &st->texture, 0) // Default to "any" scheme.
-                                    RV_INT("Tics", st->tics)
-                                    RV_FLT("Rnd", st->variance)
-                                    RV_VEC("Offset", st->texOrigin, 2)
-                                    RV_FLT("Glow Rnd", st->glowStrengthVariance)
-                                    RV_FLT("Glow", st->glowStrength)
+                                    RV_URI("Texture", st["texture"], 0) // Default to "any" scheme.
+                                    RV_INT("Tics", st["tics"])
+                                    RV_FLT("Rnd", st["variance"])
+                                    RV_VEC_VAR("Offset", st["texOrigin"], 2)
+                                    RV_FLT("Glow Rnd", st["glowStrengthVariance"])
+                                    RV_FLT("Glow", st["glowStrength"])
                                     RV_END
                                     CHECKSC;
                                 }
-                                layerStage++;
+                                stage++;
                             }
                             else RV_END
                             CHECKSC;
@@ -1547,71 +1548,72 @@ DENG2_PIMPL(DEDParser)
                     }
                     else if(ISLABEL("Light"))
                     {
-                        int lightStage = 0;
-
-                        if(light == DED_MAX_MATERIAL_DECORATIONS)
+                        if(decor >= DED_MAX_MATERIAL_DECORATIONS)
                         {
-                            setError("Too many lights in material");
+                            setError("Too many Material.Lights");
                             retVal = false;
                             goto ded_end_read;
                         }
 
-                        ded_material_lightdecoration_t *dl = &mat->decorations[light];
+                        // Add another decoration.
+                        if(decor >= mainDef.decorationCount()) mainDef.addDecoration();
+                        defn::MaterialDecoration decorDef(mainDef.decoration(decor));
+
+                        int stage = 0;
                         FINDBEGIN;
                         forever
                         {
                             READLABEL;
-                            RV_IVEC("Pattern offset", dl->patternOffset, 2)
-                            RV_IVEC("Pattern skip", dl->patternSkip, 2)
+                            RV_VEC_VAR("Pattern offset", decorDef.def()["patternOffset"], 2)
+                            RV_VEC_VAR("Pattern skip", decorDef.def()["patternSkip"], 2)
                             if(ISLABEL("Stage"))
                             {
                                 // Need to allocate a new stage?
-                                if(lightStage >= dl->stages.size())
+                                if(stage >= decorDef.stageCount())
                                 {
-                                    lightStage = dl->addStage();
+                                    decorDef.addStage();
                                 }
+                                Record &st = decorDef.stage(stage);
 
-                                ded_decorlight_stage_t *st = &dl->stages[lightStage];
                                 FINDBEGIN;
                                 forever
                                 {
                                     READLABEL;
-                                    RV_INT("Tics", st->tics)
-                                    RV_FLT("Rnd", st->variance)
-                                    RV_VEC("Offset", st->pos, 2)
-                                    RV_FLT("Distance", st->elevation)
-                                    RV_VEC("Color", st->color, 3)
-                                    RV_FLT("Radius", st->radius)
-                                    RV_FLT("Halo radius", st->haloRadius)
+                                    RV_INT("Tics", st["tics"])
+                                    RV_FLT("Rnd", st["variance"])
+                                    RV_VEC_VAR("Offset", st["origin"], 2)
+                                    RV_FLT("Distance", st["elevation"])
+                                    RV_VEC_VAR("Color", st["color"], 3)
+                                    RV_FLT("Radius", st["radius"])
+                                    RV_FLT("Halo radius", st["haloRadius"])
                                     if(ISLABEL("Levels"))
                                     {
                                         FINDBEGIN;
+                                        Vector2f levels;
                                         for(int b = 0; b < 2; ++b)
                                         {
-                                            READFLT(st->lightLevels[b])
-                                            st->lightLevels[b] /= 255.0f;
-                                            if(st->lightLevels[b] < 0)
-                                                st->lightLevels[b] = 0;
-                                            else if(st->lightLevels[b] > 1)
-                                                st->lightLevels[b] = 1;
+                                            float val;
+                                            READFLT(val)
+                                            levels[b] = de::clamp(0.f, val / 255.0f, 1.f);
                                         }
                                         ReadToken();
+                                        st["lightLevels"] = new ArrayValue(levels);
                                     }
                                     else
-                                    RV_INT("Flare texture", st->sysFlareIdx)
-                                    RV_URI("Flare map", &st->flare, "LightMaps")
-                                    RV_URI("Top map", &st->up, "LightMaps")
-                                    RV_URI("Bottom map", &st->down, "LightMaps")
-                                    RV_URI("Side map", &st->sides, "LightMaps")
+                                    RV_INT("Flare texture", st["haloTextureIndex"])
+                                    RV_URI("Flare map", st["haloTexture"], "LightMaps")
+                                    RV_URI("Top map", st["lightmapUp"], "LightMaps")
+                                    RV_URI("Bottom map", st["lightmapDown"], "LightMaps")
+                                    RV_URI("Side map", st["lightmapSide"], "LightMaps")
                                     RV_END
                                     CHECKSC;
                                 }
-                                lightStage++;
+                                stage++;
                             }
                             else RV_END
                             CHECKSC;
                         }
-                        light++;
+                        decor++;
                     }
                     else RV_END
                     CHECKSC;
@@ -1621,10 +1623,6 @@ DENG2_PIMPL(DEDParser)
                 if(idx > 0)
                 {
                     prevMaterialDefIdx = idx;
-                }
-                else
-                {
-                    /// @todo fixme: Free memory allocated for the dummy.
                 }
             }
 
@@ -2609,77 +2607,82 @@ DENG2_PIMPL(DEDParser)
             if(ISTOKEN("Decoration"))
             {
                 idx = ded->addDecoration();
-                ded_decoration_t *decor = &ded->decorations[idx];
+                Record &decor = ded->decorations[idx];
 
                 // Should we copy the previous definition?
                 if(prevDecorDefIdx >= 0 && bCopyNext)
                 {
-                    ded->decorations.copyTo(decor, prevDecorDefIdx);
+                    ded->decorations.copy(prevDecorDefIdx, decor);
                 }
 
-                uint sub = 0;
+                defn::Decoration mainDef(decor);
+                int light = 0;
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
-                    RV_FLAGS("Flags", decor->flags, "dcf_")
+                    RV_FLAGS("Flags", decor["flags"], "dcf_")
                     if(ISLABEL("Material"))
                     {
-                        READURI(&decor->material, 0)
+                        READURI(decor["texture"], 0)
                     }
                     else if(ISLABEL("Texture"))
                     {
-                        READURI(&decor->material, "Textures")
+                        READURI(decor["texture"], "Textures")
                     }
                     else if(ISLABEL("Flat"))
                     {
-                        READURI(&decor->material, "Flats")
+                        READURI(decor["texture"], "Flats")
                     }
                     else if(ISLABEL("Light"))
                     {
-                        if(sub == DED_DECOR_NUM_LIGHTS)
+                        if(light == DED_MAX_MATERIAL_DECORATIONS)
                         {
-                            setError("Too many lights in decoration");
+                            setError("Too many Decoration.Lights");
                             retVal = false;
                             goto ded_end_read;
                         }
 
-                        ded_decorlight_t *dl = &decor->lights[sub];
+                        // Add another light.
+                        if(light >= mainDef.lightCount()) mainDef.addLight();
+                        defn::MaterialDecoration lightDef(mainDef.light(light));
+
+                        // One implicit stage.
+                        Record &st = (lightDef.stageCount()? lightDef.stage(0) : lightDef.addStage());
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_VEC("Offset",        dl->stage.pos, 2)
-                            RV_FLT("Distance",      dl->stage.elevation)
-                            RV_VEC("Color",         dl->stage.color, 3)
-                            RV_FLT("Radius",        dl->stage.radius)
-                            RV_FLT("Halo radius",   dl->stage.haloRadius)
-                            RV_IVEC("Pattern offset", dl->patternOffset, 2)
-                            RV_IVEC("Pattern skip", dl->patternSkip, 2)
+                            RV_VEC_VAR("Offset", st["origin"], 2)
+                            RV_FLT("Distance", st["elevation"])
+                            RV_VEC_VAR("Color", st["color"], 3)
+                            RV_FLT("Radius", st["radius"])
+                            RV_FLT("Halo radius", st["haloRadius"])
+                            RV_VEC_VAR("Pattern offset", lightDef.def()["patternOffset"], 2)
+                            RV_VEC_VAR("Pattern skip", lightDef.def()["patternSkip"], 2)
                             if(ISLABEL("Levels"))
                             {
                                 FINDBEGIN;
+                                Vector2f levels;
                                 for(int b = 0; b < 2; ++b)
                                 {
-                                    READFLT(dl->stage.lightLevels[b])
-                                    dl->stage.lightLevels[b] /= 255.0f;
-                                    if(dl->stage.lightLevels[b] < 0)
-                                        dl->stage.lightLevels[b] = 0;
-                                    else if(dl->stage.lightLevels[b] > 1)
-                                        dl->stage.lightLevels[b] = 1;
+                                    float val;
+                                    READFLT(val)
+                                    levels[b] = de::clamp(0.f, val / 255.0f, 1.f);
                                 }
                                 ReadToken();
+                                st["lightLevels"] = new ArrayValue(levels);
                             }
                             else
-                            RV_INT("Flare texture", dl->stage.sysFlareIdx)
-                            RV_URI("Flare map",     &dl->stage.flare, "LightMaps")
-                            RV_URI("Top map",       &dl->stage.up,    "LightMaps")
-                            RV_URI("Bottom map",    &dl->stage.down,  "LightMaps")
-                            RV_URI("Side map",      &dl->stage.sides, "LightMaps")
+                            RV_INT("Flare texture", st["haloTextureIndex"])
+                            RV_URI("Flare map", st["haloTexture"], "LightMaps")
+                            RV_URI("Top map", st["lightmapUp"], "LightMaps")
+                            RV_URI("Bottom map", st["lightmapDown"], "LightMaps")
+                            RV_URI("Side map", st["lightmapSide"], "LightMaps")
                             RV_END
                             CHECKSC;
                         }
-                        sub++;
+                        light++;
                     }
                     else RV_END
                     CHECKSC;
@@ -2689,39 +2692,47 @@ DENG2_PIMPL(DEDParser)
 
             if(ISTOKEN("Group"))
             {
-                int                 sub;
-                ded_group_t*        grp;
-
                 idx = DED_AddGroup(ded);
-                grp = &ded->groups[idx];
-                sub = 0;
+                ded_group_t *grp = &ded->groups[idx];
 
+                int sub = 0;
                 FINDBEGIN;
-                for(;;)
+                forever
                 {
                     READLABEL;
                     if(ISLABEL("Texture") || ISLABEL("Flat"))
                     {
-                        ded_group_member_t* memb;
-                        ddstring_t schemeName; Str_Init(&schemeName);
-                        Str_Set(&schemeName, ISLABEL("Texture")? "Textures" : "Flats");
+                        bool const haveTexture = ISLABEL("Texture");
 
                         // Need to allocate new stage?
                         if(sub >= grp->members.size())
+                        {
                             sub = DED_AddGroupMember(grp);
-                        memb = &grp->members[sub];
+                        }
+                        ded_group_member_t *memb = &grp->members[sub];
 
                         FINDBEGIN;
-                        for(;;)
+                        forever
                         {
                             READLABEL;
-                            RV_URI("ID", &memb->material, Str_Text(&schemeName))
-                            RV_INT("Tics", memb->tics)
+                            RV_URI("ID", &memb->material, (haveTexture? "Textures" : "Flats"))
+                            if(ISLABEL("Tics"))
+                            {
+                                READINT(memb->tics);
+                                if(memb->tics < 0)
+                                {
+                                    LOG_RES_WARNING("Invalid Group.%s.Tics: %i (< min: 0) in \"%s\" on line #%i"
+                                                    "\nWill ignore this Group if used for Material animation")
+                                            << (haveTexture ? "Texture" : "Flat")
+                                            << memb->tics
+                                            << (source ? source->fileName : "?") << (source ? source->lineNumber : 0);
+                                }
+                            }
+                            else
                             RV_INT("Random", memb->randomTics)
                             RV_END
                             CHECKSC;
                         }
-                        Str_Free(&schemeName);
                         ++sub;
                     }
                     else RV_FLAGS("Flags", grp->flags, "tgf_")

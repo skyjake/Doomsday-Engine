@@ -1,6 +1,6 @@
 /** @file materiallightdecoration.cpp   Logical material, light decoration.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,6 +18,8 @@
  */
 
 #include "resource/materiallightdecoration.h"
+
+#include <doomsday/defs/material.h>
 #include "clientapp.h"
 
 using namespace de;
@@ -61,63 +63,69 @@ MaterialLightDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 {}
 
 MaterialLightDecoration::AnimationStage *
-MaterialLightDecoration::AnimationStage::fromDef(ded_decorlight_stage_t const &def)
+MaterialLightDecoration::AnimationStage::fromDef(Record const &stageDef)
 {
-    Texture *upTexture    = resSys().texture("Lightmaps", def.up);
-    Texture *downTexture  = resSys().texture("Lightmaps", def.down);
-    Texture *sidesTexture = resSys().texture("Lightmaps", def.sides);
+    Texture *lightmapUp   = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapUp"  ), RC_NULL));
+    Texture *lightmapDown = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapDown"), RC_NULL));
+    Texture *lightmapSide = resSys().texture("Lightmaps", de::Uri(stageDef.gets("lightmapSide"), RC_NULL));
 
-    Texture *flareTexture = nullptr;
-    int sysFlareIdx = def.sysFlareIdx;
-
-    if(def.flare && !def.flare->isEmpty())
+    int haloTextureIndex  = stageDef.geti("haloTextureIndex");
+    Texture *haloTexture  = nullptr;
+    de::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
+    if(!haloTextureUri.isEmpty())
     {
-        de::Uri const *resourceUri = def.flare;
-
         // Select a system flare by numeric identifier?
-        if(resourceUri->path().length() == 1 &&
-           resourceUri->path().toStringRef().first().isDigit())
+        if(haloTextureUri.path().length() == 1 &&
+           haloTextureUri.path().toStringRef().first().isDigit())
         {
-            sysFlareIdx = resourceUri->path().toStringRef().first().digitValue();
+            haloTextureIndex = haloTextureUri.path().toStringRef().first().digitValue();
         }
         else
         {
-            flareTexture = resSys().texture("Flaremaps", resourceUri);
+            haloTexture = resSys().texture("Flaremaps", haloTextureUri);
         }
     }
 
-    return new AnimationStage(def.tics, def.variance, Vector2f(def.pos), def.elevation,
-                              Vector3f(def.color), def.radius, def.haloRadius,
-                              LightRange(def.lightLevels),
-                              upTexture, downTexture, sidesTexture, flareTexture, sysFlareIdx);
+    return new AnimationStage(stageDef.geti("tics"), stageDef.getf("variance"),
+                              Vector2f(stageDef.geta("origin")), stageDef.getf("elevation"),
+                              Vector3f(stageDef.geta("color")), stageDef.getf("radius"),
+                              stageDef.getf("haloRadius"),
+                              LightRange(Vector2f(stageDef.geta("lightLevels"))),
+                              lightmapUp, lightmapDown, lightmapSide,
+                              haloTexture, haloTextureIndex);
 }
 
 String MaterialLightDecoration::AnimationStage::description() const
 {
-    return String(_E(l)   "Tics: ")        + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
-                + _E(l) + " Origin: "      + _E(.) + origin.asText()
-                + _E(l) + " Elevation: "   + _E(.) + String::number(elevation, 'f', 2)
-                + _E(l) + " LightLevels: " + _E(.) + lightLevels.asText()
-                + _E(l) + "\nColor: "      + _E(.) + color.asText()
-                + _E(l) + " Radius: "      + _E(.) + String::number(radius, 'f', 2)
-                + _E(l) + " HaloRadius: "  + _E(.) + String::number(haloRadius, 'f', 2);
+    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
+                + _E(l) " Origin: "      _E(.) + origin.asText()
+                + _E(l) " Elevation: "   _E(.) + String::number(elevation, 'f', 2)
+                + _E(l) " LightLevels: " _E(.) + lightLevels.asText()
+                + _E(l) "\nColor: "      _E(.) + color.asText()
+                + _E(l) " Radius: "      _E(.) + String::number(radius, 'f', 2)
+                + _E(l) " HaloRadius: "  _E(.) + String::number(haloRadius, 'f', 2);
 }
 
 // ------------------------------------------------------------------------------------
 
-MaterialLightDecoration::MaterialLightDecoration(Vector2i const &patternSkip, Vector2i const &patternOffset)
+MaterialLightDecoration::MaterialLightDecoration(Vector2i const &patternSkip,
+    Vector2i const &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
+    , _useInterpolation(useInterpolation)
 {}
 
 MaterialLightDecoration::~MaterialLightDecoration()
 {}
 
-MaterialLightDecoration *MaterialLightDecoration::fromDef(ded_material_lightdecoration_t const &def)
+MaterialLightDecoration *MaterialLightDecoration::fromDef(Record const &definition)
 {
-    auto *decor = new MaterialLightDecoration(Vector2i(def.patternSkip), Vector2i(def.patternOffset));
-    for(int i = 0; i < def.stages.size(); ++i)
+    defn::MaterialDecoration decorDef(definition);
+
+    auto *decor = new MaterialLightDecoration(Vector2i(decorDef.geta("patternSkip")),
+                                              Vector2i(decorDef.geta("patternOffset")));
+    for(int i = 0; i < decorDef.stageCount(); ++i)
     {
-        decor->_stages.append(AnimationStage::fromDef(def.stages[i]));
+        decor->_stages.append(AnimationStage::fromDef(decorDef.stage(i)));
     }
     return decor;
 }
@@ -136,4 +144,9 @@ MaterialLightDecoration::AnimationStage &MaterialLightDecoration::stage(int inde
 String MaterialLightDecoration::describe() const
 {
     return "Light decoration";
+}
+
+bool MaterialLightDecoration::useInterpolation() const
+{
+    return _useInterpolation;
 }

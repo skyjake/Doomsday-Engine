@@ -19,19 +19,22 @@
  * 02110-1301 USA</small>
  */
 
+#include <string.h>
+#include <math.h>
+
 #include "jhexen.h"
 #include "p_inter.h"
 
+#include "acs/system.h"
 #include "am_map.h"
-#include "p_inventory.h"
+#include "d_netsv.h"
+#include "g_common.h"
 #include "hu_inventory.h"
-#include "player.h"
-#include "p_map.h"
 #include "mobj.h"
+#include "p_inventory.h"
+#include "p_map.h"
 #include "p_user.h"
-
-#include <string.h>
-#include <math.h>
+#include "player.h"
 
 #define BONUSADD                (6)
 
@@ -1433,26 +1436,23 @@ mobj_t* ActiveMinotaur(player_t* master)
 
 void P_KillMobj(mobj_t *source, mobj_t *target)
 {
-    int dummy;
-    mobj_t *master;
     statenum_t state;
 
-    if(!target)
-        return; // Nothing to kill.
+    // Nothing to kill?
+    if(!target) return;
 
     target->flags &= ~(MF_SHOOTABLE | MF_FLOAT | MF_SKULLFLY | MF_NOGRAVITY);
     target->flags |= MF_CORPSE | MF_DROPOFF;
     target->flags2 &= ~MF2_PASSMOBJ;
-    target->height /= 2*2;
+    target->height /= 2 * 2;
+
     if((target->flags & MF_COUNTKILL || target->type == MT_ZBELL) &&
        target->special)
     {
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
-            dummy = 0;
-            Game_ACScriptInterpreter_StartScript(target->special, 0/*current-map*/,
-                                                 (byte *) &dummy, target, NULL, 0);
+            Game_ACScriptSystem_StartScript(target->special, NULL, target, NULL, 0);
         }
         else
         {
@@ -1690,7 +1690,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
 
     if(target->type == MT_MINOTAUR)
     {
-        master = target->tracer;
+        mobj_t *master = target->tracer;
         if(master && master->health > 0)
         {
             if(!ActiveMinotaur(master->player))

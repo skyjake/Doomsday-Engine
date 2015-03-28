@@ -24,6 +24,8 @@
 #include <cstring>
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "gamesession.h"
 #include "hu_stuff.h"
 #include "p_mapsetup.h"

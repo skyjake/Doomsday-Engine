@@ -69,6 +69,7 @@
 #include "api_server.h"
 #include "api_sound.h"
 #include "api_svg.h"
+#include "api_uri.h"
 
 #include <de/memoryzone.h>
 #include <de/point.h>

@@ -28,8 +28,11 @@
 #include <de/ZipArchive>
 #include <de/game/SavedSession>
 #include <doomsday/defs/episode.h>
+#include "acs/system.h"
+#include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
+#include "g_game.h"
 #include "hu_menu.h"
 #include "hu_inventory.h"
 #include "mapstatewriter.h"
@@ -263,7 +266,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Save the current game state to the .save package.
 #if __JHEXEN__
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptInterpreter().serializeWorldState();
+                << Game_ACScriptSystem().serializeWorldState();
 #endif
 
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
@@ -536,7 +539,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         if(rememberVisitedMaps)
         {
             ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
-            foreach(Value const *value, vistedMapsArray.elements())
+            for(Value const *value : vistedMapsArray.elements())
             {
                 visitedMaps << de::Uri(value->as<TextValue>(), RC_NULL);
             }
@@ -546,7 +549,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Deserialize the world ACS state.
         if(File const *state = saved.tryLocateStateFile("ACScript"))
         {
-            Game_ACScriptInterpreter().readWorldState(de::Reader(*state).withHeader());
+            Game_ACScriptSystem()
+                    .readWorldState(de::Reader(*state).withHeader());
         }
 #endif
 
@@ -855,7 +859,7 @@ GameSession &GameSession::gameSession()
     return *singleton;
 }
 
-bool GameSession::hasBegun()
+bool GameSession::hasBegun() const
 {
     return d->inProgress;
 }
@@ -879,46 +883,46 @@ bool GameSession::savingPossible()
     return true;
 }
 
-Record *GameSession::episodeDef()
+Record const *GameSession::episodeDef() const
 {
     if(hasBegun())
     {
         /// @todo cache this result?
         return Defs().episodes.tryFind("id", d->episodeId);
     }
-    return 0;
+    return nullptr;
 }
 
-String GameSession::episodeId()
+String GameSession::episodeId() const
 {
     return hasBegun()? d->episodeId : "";
 }
 
-Record *GameSession::mapGraphNodeDef()
+Record const *GameSession::mapGraphNodeDef() const
 {
     if(Record const *episode = episodeDef())
     {
         return defn::Episode(*episode).tryFindMapGraphNode(mapUri().compose());
     }
-    return 0;
+    return nullptr;
 }
 
-Record *GameSession::mapInfo()
+Record const &GameSession::mapInfo() const
 {
-    return Defs().mapInfos.tryFind("id", mapUri().compose());
+    return G_MapInfoForMapUri(mapUri());
 }
 
-de::Uri GameSession::mapUri()
+de::Uri GameSession::mapUri() const
 {
-    return hasBegun()? d->mapUri : de::Uri();
+    return hasBegun()? d->mapUri : de::Uri("Maps:", RC_NULL);
 }
 
-uint GameSession::mapEntryPoint()
+uint GameSession::mapEntryPoint() const
 {
     return d->mapEntryPoint;
 }
 
-GameSession::VisitedMaps GameSession::allVisitedMaps()
+GameSession::VisitedMaps GameSession::allVisitedMaps() const
 {
     if(hasBegun() && d->rememberVisitedMaps)
     {
@@ -927,7 +931,7 @@ GameSession::VisitedMaps GameSession::allVisitedMaps()
     return VisitedMaps();
 }
 
-de::Uri GameSession::mapUriForNamedExit(String name)
+de::Uri GameSession::mapUriForNamedExit(String name) const
 {
     LOG_AS("GameSession");
     if(Record const *mgNode = mapGraphNodeDef())
@@ -1010,9 +1014,15 @@ void GameSession::end()
 {
     if(!hasBegun()) return;
 
+    // Reset state of relevant subsystems.
 #if __JHEXEN__
-    Game_ACScriptInterpreter().reset();
+    Game_ACScriptSystem().reset();
 #endif
+    if(!IS_DEDICATED)
+    {
+        GL_ResetViewEffects();
+    }
+
     Session::removeSaved(internalSavePath);
 
     d->inProgress = false;
@@ -1061,17 +1071,28 @@ void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
     d->rules = newRules; // make a copy
     d->applyCurrentRules();
     d->setEpisode(episodeId);
-
     d->visitedMaps.clear();
     d->rememberVisitedMaps = true;
 
     // Begin the session.
     d->inProgress = true;
     d->setMapAndEntryPoint(mapUri, mapEntryPoint);
+
+    SessionMetadata metadata = d->metadata();
+
+    // Print a session banner to the log.
+    LOG_MSG(DE2_ESC(R));
+    LOG_NOTE("Episode: " DE2_ESC(i) DE2_ESC(b) "%s" DE2_ESC(.) " (%s)")
+            << G_EpisodeTitle(episodeId)
+            << d->rules.description();
+    LOG_VERBOSE("%s") << metadata.asStyledText();
+    LOG_MSG(DE2_ESC(R));
+
+    // Load the start map.
     d->reloadMap();
 
     // Create the internal .save session package.
-    d->updateSavedSession(internalSavePath, d->metadata());
+    d->updateSavedSession(internalSavePath, metadata);
 }
 
 void GameSession::reloadMap()
@@ -1233,7 +1254,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptInterpreter().runDeferredTasks(d->mapUri);
+    Game_ACScriptSystem().runDeferredTasks(d->mapUri);
 #endif
 
     if(saved)
@@ -1247,9 +1268,9 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
         saved->replaceFile("Info") << composeSaveInfo(metadata).toUtf8();
 
 #if __JHEXEN__
-        // Save the world-state of the ACScript interpreter.
+        // Save the world-state of the Script interpreter.
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptInterpreter().serializeWorldState();
+                << Game_ACScriptSystem().serializeWorldState();
 #endif
 
         // Save the state of the current map.

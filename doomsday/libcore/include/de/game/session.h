@@ -74,7 +74,7 @@ public:
      * Determines whether the currently configured game session is in progress. Usually this
      * will not be the case during title sequences (for example).
      */
-    virtual bool hasBegun() = 0;
+    virtual bool hasBegun() const = 0;
 
     /**
      * Determines whether the game state currently allows the session to be saved.
@@ -102,7 +102,7 @@ public:
      */
     virtual void load(String const &saveName) = 0;
 
-protected: // Saved session management -------------------------------------------------------
+protected:  // Saved session management: ---------------------------------------------------
 
     /**
      * Makes a copy of the saved session specified.
@@ -117,7 +117,7 @@ protected: // Saved session management -----------------------------------------
      */
     static void removeSaved(String const &path);
 
-public: // Saved session index ---------------------------------------------------------------
+public:  // Saved session index: -----------------------------------------------------------
 
     /// @todo Integrate this functionality into the filesystem.
     class DENG2_PUBLIC SavedIndex

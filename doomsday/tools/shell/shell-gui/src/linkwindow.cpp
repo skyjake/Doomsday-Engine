@@ -170,7 +170,7 @@ DENG2_PIMPL(LinkWindow)
         // Show a message box.
         ErrorLogDialog dlg;
         dlg.setLogContent(text);
-        dlg.setMessage(tr("Starting of the local server failed. This may explain why:"));
+        dlg.setMessage(tr("Failed to start the server. This may explain why:"));
         dlg.exec();
     }
 

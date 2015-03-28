@@ -118,7 +118,11 @@ for fn in allProjs:
     fileRegex(fn,
               r'</ResourceCompile>\n',
               r"""  <AdditionalIncludeDirectories>""" + rcDirs + """</AdditionalIncludeDirectories>\n    </ResourceCompile>\n""", 
-              1, start)    
+              1, start)
+              
+    # Enable debug symbols in all configs, not just Debug.
+    fileRegex(fn, r'<GenerateDebugInformation>false</GenerateDebugInformation>', 
+              '<GenerateDebugInformation>true</GenerateDebugInformation>')
     
 print "\nAll done!\n"
 print 'Solution generated:', os.path.join(solPath, 'doomsday.sln')

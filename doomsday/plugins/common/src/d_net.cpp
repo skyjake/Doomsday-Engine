@@ -18,17 +18,18 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "common.h"
 #include "d_net.h"
 
 #include <de/RecordValue>
+#include "d_netcl.h"
+#include "d_netsv.h"
+#include "fi_lib.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "player.h"
 #include "hu_menu.h"
 #include "p_mapsetup.h"
 #include "p_start.h"
-#include "fi_lib.h"
+#include "player.h"
 
 using namespace de;
 using namespace common;

@@ -21,7 +21,9 @@
 #include "common.h"
 #include "mapstatewriter.h"
 
+#include "acs/system.h"
 #include "dmu_lib.h"
+#include "g_game.h"
 #include "p_savedef.h"   // MY_SAVE_VERSION
 #include "p_saveg.h"     // SV_WriteSector, SV_WriteLine
 #include "polyobjs.h"
@@ -231,7 +233,7 @@ DENG2_PIMPL(MapStateWriter)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptInterpreter().writeMapState(thisPublic);
+        Game_ACScriptSystem().writeMapState(thisPublic);
         // endSegment();
 #endif
     }

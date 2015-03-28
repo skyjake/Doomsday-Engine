@@ -107,7 +107,11 @@ void Cl_CleanUp()
     // Discard the translation tables for the server we've just left.
     Cl_ResetTransTables();
 
-    GL_SetFilter(false);
+    // Reset any view effects.
+    GL_ResetViewEffects();
+    
+    // Forget all packets we've received but haven't yet handled.
+    N_ClearMessages();
 }
 
 void Cl_SendHello()

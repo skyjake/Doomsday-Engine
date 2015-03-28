@@ -64,6 +64,7 @@ HEADERS += \
     include/doomsday/console/exec.h \
     include/doomsday/console/knownword.h \
     include/doomsday/console/var.h \
+    include/doomsday/defs/decoration.h \
     include/doomsday/defs/ded.h \
     include/doomsday/defs/dedarray.h \
     include/doomsday/defs/dedfile.h \
@@ -75,6 +76,7 @@ HEADERS += \
     include/doomsday/defs/finale.h \
     include/doomsday/defs/mapgraphnode.h \
     include/doomsday/defs/mapinfo.h \
+    include/doomsday/defs/material.h \
     include/doomsday/defs/model.h \
     include/doomsday/defs/music.h \
     include/doomsday/defs/sky.h \
@@ -113,6 +115,7 @@ SOURCES += \
     src/console/exec.cpp \
     src/console/knownword.cpp \
     src/console/var.cpp \
+    src/defs/decoration.cpp \
     src/defs/ded.cpp \
     src/defs/dedfile.cpp \
     src/defs/definition.cpp \
@@ -122,6 +125,7 @@ SOURCES += \
     src/defs/finale.cpp \
     src/defs/mapgraphnode.cpp \
     src/defs/mapinfo.cpp \
+    src/defs/material.cpp \
     src/defs/model.cpp \
     src/defs/music.cpp \
     src/defs/sky.cpp \

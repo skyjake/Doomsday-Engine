@@ -1379,6 +1379,9 @@ void InputSystem::bindDefaults()
     bindCommand("global:key-f11-down + key-alt-down", "releasemouse");
     bindCommand("global:key-f11-down", "togglefullscreen");
     bindCommand("global:key-tilde-down + key-shift-up", "taskbar");
+#ifdef WIN32
+    bindCommand("global:key-winmenu-down", "taskbar");
+#endif
 
     // Console bindings (when open).
     bindCommand("console:key-tilde-down + key-shift-up", "taskbar"); // without this, key would be entered into command line

@@ -4,7 +4,7 @@
  * to a public API function.
  *
  * @authors Copyright © 2006-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -376,7 +376,7 @@ int P_Count(int type)
     case DMU_SUBSPACE:  return App_WorldSystem().hasMap()? App_WorldSystem().map().subspaceCount() : 0;
     case DMU_SKY:       return 1; // Only one sky per map presently.
 
-    case DMU_MATERIAL:  return (int)App_ResourceSystem().materialCount();
+    case DMU_MATERIAL:  return App_ResourceSystem().materialCount();
 
     default:
         /// @throw Invalid/unknown DMU element type.

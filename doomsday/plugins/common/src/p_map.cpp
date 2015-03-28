@@ -1,4 +1,4 @@
-/** @file p_map.cpp Common map routines.
+/** @file p_map.cpp  Common map routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -19,13 +19,16 @@
  * 02110-1301 USA</small>
  */
 
+#include "common.h"
+#include "p_map.h"
+
 #include <cmath>
 #include <cstdio>
 #include <cstring>
-
-#include "common.h"
-
+#include "acs/system.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "g_common.h"
 #include "gamesession.h"
 #include "dmu_lib.h"
@@ -35,8 +38,6 @@
 #include "p_actor.h"
 #include "player.h"
 #include "p_mapsetup.h"
-
-#include "p_map.h"
 
 /*
  * Try move variables:
@@ -75,12 +76,17 @@ static coord_t attackRange;
 mobj_t *PuffSpawned;
 #endif
 static coord_t shootZ; ///< Height if not aiming up or down.
-static mobj_t *shootThing;
+static mobj_t *shooterThing;
 static float aimSlope;
 static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
 
 /// Sector >= Sector line-of-sight rejection.
 static byte *rejectMatrix;
+
+static inline acs::System &acScriptSys()
+{
+    return Game_ACScriptSystem();
+}
 
 coord_t P_GetGravity()
 {
@@ -140,6 +146,22 @@ dd_bool P_CheckSight(mobj_t const *beholder, mobj_t const *target)
     }
 
     return P_CheckLineSight(from, target->origin, 0, target->height, 0);
+}
+
+angle_t P_AimAtPoint2(coord_t const from[], coord_t const to[], dd_bool shadowed)
+{
+    angle_t angle = M_PointToAngle2(from, to);
+    if(shadowed)
+    {
+        // Accuracy is reduced when the target is partially shadowed.
+        angle += (P_Random() - P_Random()) << 21;
+    }
+    return angle;
+}
+
+angle_t P_AimAtPoint(coord_t const from[], coord_t const to[])
+{
+    return P_AimAtPoint2(from, to, false/* not shadowed*/);
 }
 
 struct pit_stompthing_params_t
@@ -2036,19 +2058,23 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
     }
 
     // Intercepted a mobj.
-
     mobj_t *th = icpt->mobj;
 
-    if(th == shootThing) return false; // Can't aim at oneself.
-    if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something?
+    if(th == shooterThing) return false; // Can't aim at oneself.
+
+    if(!(th->flags & MF_SHOOTABLE)) return false; // Corpse or something (not shootable)?
+
 #if __JHERETIC__
     if(th->type == MT_POD) return false; // Can't auto-aim at pods.
 #endif
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
-    if(th->player && IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
+    if(Mobj_IsPlayer(shooterThing) && Mobj_IsPlayer(th) &&
+       IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
     {
-        return false; // Don't aim at fellow co-op players.
+        // In co-op, players don't aim at fellow players (although manually aiming is
+        // always possible).
+        return false;
     }
 #endif
 
@@ -2133,13 +2159,14 @@ float P_AimLineAttack(mobj_t *t1, angle_t angle, coord_t distance)
     {
         shootZ += (t1->height / 2) + 8;
     }
+
     /// @todo What about t1->floorClip ? -ds
 
-    topSlope    = 100.0/160;
-    bottomSlope = -100.0/160;
-    attackRange = distance;
-    lineTarget  = 0;
-    shootThing  = t1;
+    topSlope     = 100.0/160;
+    bottomSlope  = -100.0/160;
+    attackRange  = distance;
+    lineTarget   = 0;
+    shooterThing = t1;
 
     P_PathTraverse(t1->origin, target, PTR_AimTraverse, 0);
 
@@ -3183,64 +3210,86 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
 {
     int const USE_PUZZLE_ITEM_SPECIAL = 129;
 
-    ptr_puzzleitemtraverse_params_t &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
+    auto &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
 
     switch(icpt->type)
     {
     case ICPT_LINE: {
         xline_t *xline = P_ToXLine(icpt->line);
+        DENG2_ASSERT(xline);
 
         if(xline->special != USE_PUZZLE_ITEM_SPECIAL)
         {
+            // Items cannot be used through a wall.
             if(!Interceptor_AdjustOpening(icpt->trace, icpt->line))
             {
+                // No opening.
                 S_StartSound(usePuzzleItemFailSound(parm.useMobj), parm.useMobj);
-                return true; // Can't use through a wall.
+                return true;
             }
 
-            return false; // Continue searching...
+            return false;
         }
 
+        // Don't use the back side of lines.
         if(Line_PointOnSide(icpt->line, parm.useMobj->origin) < 0)
         {
-            return true; // Don't use back sides.
+            return true;
         }
 
+        // Item type must match.
         if(parm.itemType != xline->arg1)
         {
-            return true; // Item type doesn't match.
+            return true;
         }
 
-        Game_ACScriptInterpreter_StartScript(xline->arg2, 0/*current-map*/, &xline->arg3,
-                                             parm.useMobj, icpt->line, 0);
+        // A known ACScript?
+        if(acScriptSys().hasScript(xline->arg2))
+        {
+            /// @todo fixme: Really interpret the first byte of xline_t::flags as a
+            /// script argument? (I wonder if any scripts rely on this). -ds
+            acScriptSys().script(xline->arg2)
+                            .start(acs::Script::Args(&xline->arg3, 4/*3*/),
+                                   parm.useMobj, icpt->line, 0);
+        }
         xline->special = 0;
-
         parm.activated = true;
 
-        return true; // Stop searching.
-        }
+        // Stop searching.
+        return true; }
 
-    case ICPT_MOBJ:
-        if(icpt->mobj->special != USE_PUZZLE_ITEM_SPECIAL)
+    case ICPT_MOBJ: {
+        DENG2_ASSERT(icpt->mobj);
+        mobj_t &mob = *icpt->mobj;
+
+        // Special id must match.
+        if(mob.special != USE_PUZZLE_ITEM_SPECIAL)
         {
-            return false; // Wrong special...
+            return false;
         }
 
-        if(parm.itemType != icpt->mobj->args[0])
+        // Item type must match.
+        if(mob.args[0] != parm.itemType)
         {
-            return false; // Item type doesn't match...
+            return false;
         }
 
-        Game_ACScriptInterpreter_StartScript(icpt->mobj->args[1], 0/*current-map*/,
-                                             &icpt->mobj->args[2], parm.useMobj, NULL, 0);
-        icpt->mobj->special = 0;
-
+        // A known ACScript?
+        if(acScriptSys().hasScript(mob.args[1]))
+        {
+            /// @todo fixme: Really interpret the first byte of mobj_t::turnTime as a
+            /// script argument? (I wonder if any scripts rely on this). -ds
+            acScriptSys().script(mob.args[1])
+                            .start(acs::Script::Args(&mob.args[2], 4/*3*/),
+                                   parm.useMobj, nullptr, 0);
+        }
+        mob.special = 0;
         parm.activated = true;
 
-        return true; // Stop searching.
+        // Stop searching.
+        return true; }
 
-    default:
-        DENG_ASSERT(false);
+    default: DENG2_ASSERT(!"Unknown intercept type");
         return false;
     }
 }

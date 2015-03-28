@@ -37,6 +37,7 @@
 #include <de/Drawable>
 #include <de/CompositorWidget>
 #include <de/NotificationAreaWidget>
+#include <de/SignalAction>
 #include <de/VRWindowTransform>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
@@ -72,63 +73,47 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(Canvas,   FocusChange)
 , DENG2_OBSERVES(App,      GameChange)
 , DENG2_OBSERVES(App,      StartupComplete)
+, DENG2_OBSERVES(Games,    Readiness)
 , DENG2_OBSERVES(Variable, Change)
 {
-    bool needMainInit;
-    bool needRecreateCanvas;
-    bool needRootSizeUpdate;
+    bool needMainInit       = true;
+    bool needRecreateCanvas = false;
+    bool needRootSizeUpdate = false;
 
-    Mode mode;
+    Mode mode = Normal;
 
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
-    CompositorWidget *compositor;
-    GameWidget *game;
-    GameUIWidget *gameUI;
-    TaskBarWidget *taskBar;
-    LabelWidget *taskBarBlur; ///< Blur everything below the task bar.
-    NotificationAreaWidget *notifications;
-    AlertDialog *alerts;
-    ColorAdjustmentDialog *colorAdjust;
-    LabelWidget *background;
-    GameSelectionWidget *gameSelMenu;
-    BusyWidget *busy;
-    GuiWidget *sidebar;
-    LabelWidget *cursor;
+    CompositorWidget *compositor = nullptr;
+    GameWidget *game = nullptr;
+    GameUIWidget *gameUI = nullptr;
+    TaskBarWidget *taskBar = nullptr;
+    LabelWidget *taskBarBlur = nullptr; ///< Blur everything below the task bar.
+    NotificationAreaWidget *notifications = nullptr;
+    AlertDialog *alerts = nullptr;
+    ColorAdjustmentDialog *colorAdjust = nullptr;
+    LabelWidget *background = nullptr;
+    GuiWidget *iwadNotice = nullptr;
+    GameSelectionWidget *gameSelMenu = nullptr;
+    BusyWidget *busy = nullptr;
+    GuiWidget *sidebar = nullptr;
+    LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
     ConstantRule *cursorY;
-    bool cursorHasBeenHidden;
+    bool cursorHasBeenHidden = false;
 
     // FPS notifications.
     UniqueWidgetPtr<LabelWidget> fpsCounter;
-    float oldFps;
+    float oldFps = 0;
 
     /// @todo Switch dynamically between VR and plain.
     VRWindowTransform contentXf;
 
     Instance(Public *i)
         : Base(i)
-        , needMainInit(true)
-        , needRecreateCanvas(false)
-        , needRootSizeUpdate(false)
-        , mode(Normal)
         , root(thisPublic)
-        , compositor(0)
-        , game(0)
-        , gameUI(0)
-        , taskBar(0)
-        , taskBarBlur(0)
-        , notifications(0)
-        , alerts(0)
-        , colorAdjust(0)
-        , background(0)
-        , gameSelMenu(0)
-        , sidebar(0)
-        , cursor(0)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
-        , cursorHasBeenHidden(false)
-        , oldFps(0)
         , contentXf(*i)
     {
         self.setTransform(contentXf);
@@ -138,6 +123,7 @@ DENG2_PIMPL(ClientWindow)
 
         App::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
+        App_Games().audienceForReadiness() += this;
 
         // Listen to input.
         self.canvas().audienceForMouseStateChange() += this;
@@ -157,6 +143,7 @@ DENG2_PIMPL(ClientWindow)
 
         App::app().audienceForGameChange() -= this;
         App::app().audienceForStartupComplete() -= this;
+        App_Games().audienceForReadiness() -= this;
 
         self.canvas().audienceForFocusChange() -= this;
         self.canvas().audienceForMouseStateChange() -= this;
@@ -222,7 +209,7 @@ DENG2_PIMPL(ClientWindow)
         gameSelMenu = new GameSelectionWidget;
         gameSelMenu->enableActionOnSelection(true);
         gameSelMenu->rule()
-                .setInput(Rule::AnchorX, root.viewLeft() + root.viewWidth() / 2)
+                .setInput(Rule::AnchorX, root.viewRule().midX())
                 .setInput(Rule::Width,   root.viewWidth())
                 .setAnchorPoint(Vector2f(.5f, .5f));
         AutoRef<Rule> pad(OperatorRule::maximum(style.rules().rule("gap"),
@@ -237,6 +224,32 @@ DENG2_PIMPL(ClientWindow)
                 .setInput(Rule::Top,   root.viewTop() + style.rules().rule("gap"));
         container().add(gameSelMenu);
         gameSelMenu->filter().enableBackground(gameSelMenu->scrollPositionY());
+
+        // As an alternative to game selection, a notice to pick the IWAD folder.
+        ButtonWidget *chooseIwad = nullptr;
+        iwadNotice = new GuiWidget;
+        {
+            LabelWidget *notice = LabelWidget::newWithText(_E(b) + tr("No playable games were found.\n") + _E(.) +
+                                                           tr("Please select the folder where you have one or more game WAD files."),
+                                                           iwadNotice);
+            notice->setTextColor("inverted.text");
+            notice->setSizePolicy(ui::Expand, ui::Expand);
+            notice->rule()
+                    .setMidAnchorX(root.viewRule().midX())
+                    .setInput(Rule::Bottom, root.viewRule().midY());
+
+            chooseIwad = new ButtonWidget;
+            chooseIwad->setText(tr("Select IWAD Folder..."));
+            chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
+            chooseIwad->rule()
+                    .setMidAnchorX(root.viewRule().midX())
+                    .setInput(Rule::Top, notice->rule().bottom());
+            iwadNotice->add(chooseIwad);
+
+            iwadNotice->rule().setRect(root.viewRule());
+            iwadNotice->hide();
+            container().add(iwadNotice);
+        }
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -282,6 +295,9 @@ DENG2_PIMPL(ClientWindow)
 
         taskBar->hide();
 
+        // Task bar provides the IWAD selection feature.
+        chooseIwad->setAction(new SignalAction(taskBar, SLOT(chooseIWADFolder())));
+
         // Mouse cursor is used with transformed content.
         cursor = new LabelWidget;
         cursor->setBehavior(Widget::Unhittable);
@@ -310,13 +326,39 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
+    void gameReadinessUpdated()
+    {
+        DENG2_ASSERT(!App_GameLoaded());
+        showGameSelectionMenu(true);
+    }
+
+    void showGameSelectionMenu(bool show)
+    {
+        bool gotPlayable = App_Games().numPlayable();
+        if(show && gotPlayable)
+        {
+            gameSelMenu->show();
+            iwadNotice->hide();
+        }
+        else if(show && !gotPlayable)
+        {
+            gameSelMenu->hide();
+            iwadNotice->show();
+        }
+        else if(!show)
+        {
+            gameSelMenu->hide();
+            iwadNotice->hide();
+        }
+    }
+
     void currentGameChanged(game::Game const &newGame)
     {
         if(newGame.isNull())
         {
             //game->hide();
             background->show();
-            gameSelMenu->show();
+            showGameSelectionMenu(true);
 
             gameSelMenu->restoreState();
         }
@@ -324,7 +366,7 @@ DENG2_PIMPL(ClientWindow)
         {
             //game->show();
             background->hide();
-            gameSelMenu->hide();
+            showGameSelectionMenu(false);
 
             gameSelMenu->saveState();
         }
@@ -366,7 +408,7 @@ DENG2_PIMPL(ClientWindow)
             game->disable();
             gameUI->hide();
             gameUI->disable();
-            gameSelMenu->hide();
+            showGameSelectionMenu(false);
             taskBar->disable();
 
             busy->show();
@@ -382,7 +424,7 @@ DENG2_PIMPL(ClientWindow)
             game->enable();
             gameUI->show();
             gameUI->enable();
-            if(!App_GameLoaded()) gameSelMenu->show();
+            if(!App_GameLoaded()) showGameSelectionMenu(true);
             taskBar->enable();
             break;
         }
@@ -640,6 +682,7 @@ DENG2_PIMPL(ClientWindow)
         // All the children of the compositor need to be relocated.
         container().remove(*gameUI);
         container().remove(*gameSelMenu);
+        container().remove(*iwadNotice);
         if(sidebar) container().remove(*sidebar);
         container().remove(*notifications);
         container().remove(*taskBarBlur);
@@ -687,6 +730,7 @@ DENG2_PIMPL(ClientWindow)
         }
 
         container().add(gameSelMenu);
+        container().add(iwadNotice);
         if(sidebar) container().add(sidebar);
         container().add(notifications);
         container().add(taskBarBlur);
@@ -743,8 +787,9 @@ DENG2_PIMPL(ClientWindow)
     void updateMouseCursor()
     {
         // The cursor is only needed if the content is warped.
-        cursor->show(!self.canvas().isMouseTrapped() && vrCfg().mode() == VRConfig::OculusRift);
+        cursor->show(!self.canvas().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
+        // Show or hide the native mouse cursor.
         if(cursor->isVisible())
         {
             if(!cursorHasBeenHidden)

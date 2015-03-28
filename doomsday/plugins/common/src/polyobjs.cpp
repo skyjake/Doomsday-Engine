@@ -22,16 +22,14 @@
 #include "common.h"
 #include "polyobjs.h"
 
+#include "acs/script.h"
 #include "dmu_lib.h"
-#include "p_actor.h"
-#include "p_mapsetup.h"
-#include "p_map.h"
-#include "p_start.h"
 #include "g_common.h"
-
-#ifdef __JHEXEN__
-#  include "acscript.h"
-#endif
+#include "p_actor.h"
+#include "p_map.h"
+#include "p_mapspec.h"
+#include "p_mapsetup.h"
+#include "p_start.h"
 
 #define POBJ_PERPETUAL  0xffffffffu  // -1
 
@@ -51,15 +49,6 @@ static int findMirrorPolyobj(int tag)
     DENG_UNUSED(tag);
 #endif
     return 0;
-}
-
-static void notifyPolyobjFinished(int tag)
-{
-#if __JHEXEN__
-    Game_ACScriptInterpreter().polyobjFinished(tag);
-#else
-    DENG_UNUSED(tag);
-#endif
 }
 
 static void startSoundSequence(Polyobj *poEmitter)
@@ -126,7 +115,7 @@ void T_RotatePoly(void *polyThinker)
                 po->specialData = 0;
 
             stopSoundSequence(po);
-            notifyPolyobjFinished(po->tag);
+            P_NotifyPolyobjFinished(po->tag);
             Thinker_Remove(&pe->thinker);
             po->angleSpeed = 0;
         }
@@ -260,7 +249,7 @@ void T_MovePoly(void *polyThinker)
                 po->specialData = NULL;
 
             stopSoundSequence(po);
-            notifyPolyobjFinished(po->tag);
+            P_NotifyPolyobjFinished(po->tag);
             Thinker_Remove(&pe->thinker);
             po->speed = 0;
         }
@@ -504,7 +493,7 @@ void T_PolyDoor(void *polyDoorThinker)
                     if(po->specialData == pd)
                         po->specialData = NULL;
 
-                    notifyPolyobjFinished(po->tag);
+                    P_NotifyPolyobjFinished(po->tag);
                     Thinker_Remove(&pd->thinker);
                 }
             }
@@ -557,7 +546,7 @@ void T_PolyDoor(void *polyDoorThinker)
                     if(po->specialData == pd)
                         po->specialData = NULL;
 
-                    notifyPolyobjFinished(po->tag);
+                    P_NotifyPolyobjFinished(po->tag);
                     Thinker_Remove(&pd->thinker);
                 }
             }

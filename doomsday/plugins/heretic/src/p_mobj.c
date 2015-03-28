@@ -40,7 +40,6 @@
 #define MAX_BOB_OFFSET          (8)
 
 #define NOMOMENTUM_THRESHOLD    (0.000001)
-#define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
 mobj_t *missileMobj;
 

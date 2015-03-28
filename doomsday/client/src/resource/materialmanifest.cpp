@@ -1,6 +1,6 @@
 /** @file materialmanifest.cpp  Description of a logical material resource.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -77,14 +77,20 @@ void MaterialManifest::setId(materialid_t id)
 MaterialScheme &MaterialManifest::scheme() const
 {
     LOG_AS("MaterialManifest::scheme");
+
     /// @todo Optimize: MaterialManifest should contain a link to the owning MaterialScheme.
-    for(MaterialScheme *scheme : App_ResourceSystem().allMaterialSchemes())
+    MaterialScheme *found = nullptr;
+    App_ResourceSystem().forAllMaterialSchemes([this, &found] (MaterialScheme &scheme)
     {
-        if(&scheme->index() == &tree())
+        if(&scheme.index() == &tree())
         {
-            return *scheme;
+            found = &scheme;
+            return LoopAbort;
         }
-    }
+        return LoopContinue;
+    });
+    if(found) return *found;
+
     /// @throw Error Failed to determine the scheme of the manifest (should never happen...).
     throw Error("MaterialManifest::scheme", String("Failed to determine scheme for manifest [%1]").arg(de::dintptr(this)));
 }

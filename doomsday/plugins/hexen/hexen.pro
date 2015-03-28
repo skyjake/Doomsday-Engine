@@ -28,7 +28,6 @@ INCLUDEPATH += include
 HEADERS += \
     include/a_action.h \
     include/acfnlink.h \
-    include/acscript.h \
     include/dstrings.h \
     include/g_game.h \
     include/h2def.h \
@@ -72,7 +71,6 @@ HEADERS += \
 SOURCES += \
     src/a_action.c \
     src/acfnlink.c \
-    src/acscript.cpp \
     src/h2_main.cpp \
     src/hconsole.cpp \
     src/hrefresh.cpp \

@@ -2099,12 +2099,10 @@ DEFFC(TextFromDef)
 {
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
+    int textIdx          = defs.getTextNum((char *)OP_CSTRING(3));
 
-    char const *str = "(undefined)"; // Not found.
-    Def_Get(DD_DEF_TEXT, (char *)OP_CSTRING(3), &str);
-
-    text.setText(str)
-        .setCursorPos(0) // Restart the text.
+    text.setText(textIdx >= 0? defs.text[textIdx].text : "(undefined)")
+        .setCursorPos(0) // Restart the type-in animation (if any).
         .setOrigin(Vector3f(OP_FLOAT(1), OP_FLOAT(2), 0));
 }
 
@@ -2161,11 +2159,9 @@ DEFFC(SetTextDef)
 {
     DENG2_UNUSED(cmd);
     FinaleTextWidget &text = fi.findOrCreateWidget(FI_TEXT, OP_CSTRING(0)).as<FinaleTextWidget>();
+    int textIdx            = defs.getTextNum((char *)OP_CSTRING(1));
 
-    char const *str = "(undefined)"; // Not found.
-    Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str);
-
-    text.setText(str);
+    text.setText(textIdx >= 0? defs.text[textIdx].text : "(undefined)");
 }
 
 DEFFC(DeleteText)

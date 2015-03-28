@@ -505,17 +505,26 @@ float Rend_FieldOfView()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
     {
-        // fieldOfView = VR::riftFovX(); // Update for culling
-        // return VR::riftFovX();
-
         // OVR tells us which FOV to use.
         return vrCfg().oculusRift().fovX();
     }
     else
     {
+        /*
+         * Correction is applied for wide screens so that when the FOV is kept
+         * at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
+         * than a 4:3, but not just scaled linearly since that would go too far
+         * into the fish eye territory.
+         */
         float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-        widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-        return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+        if(widescreenCorrection < 1.5) // up to ~16:9
+        {
+            widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
+            return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
+        }
+        // This is an unusually wide (perhaps multimonitor) setup, so just use the
+        // configured FOV as is.
+        return de::clamp(1.f, fieldOfView, 179.f);
     }
 }
 
@@ -763,18 +772,18 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
 {
     switch(renderTextures)
     {
-    case 0: // No texture mode.
-    case 1: // Normal mode.
-        if(devNoTexFix && surface.hasFixMaterial())
+    case 0:  // No texture mode.
+    case 1:  // Normal mode.
+        if(!(devNoTexFix && surface.hasFixMaterial()))
         {
-            // Missing material debug mode -- use special "missing" material.
-            return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
+            if(surface.hasMaterial() || surface.parent().type() != DMU_PLANE)
+                return surface.materialPtr();
         }
 
-        // Use the surface-bound material.
-        return surface.materialPtr();
+        // Use special "missing" material.
+        return &ClientApp::resourceSystem().material(de::Uri("System", Path("missing")));
 
-    case 2: // Lighting debug mode.
+    case 2:  // Lighting debug mode.
         if(surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
         {
             if(!surface.hasSkyMaskedMaterial() || devRendSkyMode)

@@ -21,6 +21,7 @@
 
 #include <QMessageBox>
 #include <QPainter>
+#include <QGLFormat>
 
 #include <de/ImageBank>
 #include <de/GLState>
@@ -552,6 +553,8 @@ TestWindow::TestWindow() : d(new Instance(this))
 
 void TestWindow::canvasGLDraw(Canvas &canvas)
 {
+    LIBGUI_ASSERT_GL_OK();
+
     d->draw(canvas);
     canvas.swapBuffers();
 

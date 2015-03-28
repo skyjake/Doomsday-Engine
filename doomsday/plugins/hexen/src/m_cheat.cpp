@@ -19,21 +19,24 @@
  * 02110-1301 USA</small>
  */
 
-#include <stdlib.h>
-#include <errno.h>
-
 #include "jhexen.h"
+#include "m_cheat.h"
 
-#include "d_net.h"
-#include "g_common.h"
-#include "gamesession.h"
-#include "player.h"
+#include <cerrno>
+#include <cstdlib>
+#include "acs/system.h"
 #include "am_map.h"
-#include "hu_msg.h"
+#include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
-#include "p_user.h"
-#include "p_inventory.h"
+#include "g_common.h"
 #include "g_eventsequence.h"
+#include "gamesession.h"
+#include "hu_msg.h"
+#include "p_inventory.h"
+#include "p_user.h"
+#include "player.h"
 
 typedef eventsequencehandler_t cheatfunc_t;
 
@@ -48,6 +51,11 @@ typedef eventsequencehandler_t cheatfunc_t;
 
 /// Helper macro for registering new cheat event sequence command handlers.
 #define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
+
+static inline acs::System &acScriptSys()
+{
+    return Game_ACScriptSystem();
+}
 
 CHEAT_FUNC(Class);
 CHEAT_FUNC(IDKFA);
@@ -545,7 +553,7 @@ D_CMD(CheatGive)
         case 'p':
             for(int k = IIT_FIRSTPUZZITEM; k < NUM_INVENTORYITEM_TYPES; ++k)
             {
-                P_InventoryGive(player, inventoryitemtype_t(i), false);
+                P_InventoryGive(player, inventoryitemtype_t(k), false);
             }
 
             P_SetMessage(plr, LMF_NO_HIDE, TXT_CHEATINVITEMS3);
@@ -805,13 +813,14 @@ D_CMD(CheatRunScript)
             /// @todo Don't do this here.
             if(scriptNum < 1 || scriptNum > 99) return false;
 
-            byte scriptArgs[3]; /// @todo Only 3 args?? -ds
-            scriptArgs[0] = scriptArgs[1] = scriptArgs[2] = 0;
-            if(Game_ACScriptInterpreter_StartScript(scriptNum, 0/*current-map*/,
-                                                    scriptArgs, plr->plr->mo, NULL, 0))
+            if(acScriptSys().hasScript(scriptNum))
             {
-                AutoStr *cmd = Str_Appendf(AutoStr_NewStd(), "Running script %i", scriptNum);
-                P_SetMessage(plr, LMF_NO_HIDE, Str_Text(cmd));
+                if(acScriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
+                                                         plr->plr->mo, nullptr, 0))
+                {
+                    de::String msg = de::String("Running script %1").arg(scriptNum);
+                    P_SetMessage(plr, LMF_NO_HIDE, msg.toUtf8().constData());
+                }
             }
 
             S_LocalSound(SFX_PLATFORM_STOP, NULL);

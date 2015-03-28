@@ -100,7 +100,8 @@ enum {
 
     DE_API_GL_v1                = 800,     // 1.10
     DE_API_GL_v2                = 801,     // 1.13
-    DE_API_GL                   = DE_API_GL_v2,
+    DE_API_GL_v3                = 802,     // 1.15
+    DE_API_GL                   = DE_API_GL_v3,
 
     DE_API_INFINE_v1            = 900,     // 1.10
     DE_API_INFINE               = DE_API_INFINE_v1,

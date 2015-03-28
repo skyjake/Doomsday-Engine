@@ -21,10 +21,13 @@
 
 #include "common.h"
 #include "pause.h"
+
+#include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
-#include "d_net.h"
 
 using namespace de;
 using namespace common;

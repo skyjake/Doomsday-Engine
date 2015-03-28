@@ -22,13 +22,14 @@
 #include "common.h"
 #include "p_inventory.h"
 
+#include <cstring>
+#include <de/memory.h>
+#include "d_net.h"
+#include "d_netcl.h"
 #include "g_common.h"
 #include "gamesession.h"
-#include "player.h"
-#include "d_net.h"
 #include "hu_inventory.h"
-#include <de/memory.h>
-#include <cstring>
+#include "player.h"
 
 struct inventoryitem_t
 {
@@ -303,7 +304,7 @@ void P_InitInventory()
             continue;
 
         data->type     = type;
-        data->niceName = textenum_t(Defs().getTextNumForName(def->niceName));
+        data->niceName = textenum_t(Defs().getTextNum(def->niceName));
         data->action   = getActionPtr(def->action);
         data->useSnd   = sfxenum_t(Defs().getSoundNum(def->useSnd));
         data->patchId  = R_DeclarePatch(def->patch);

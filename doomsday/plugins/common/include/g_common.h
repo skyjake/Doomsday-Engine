@@ -22,10 +22,10 @@
 #define LIBCOMMON_GAME_H
 
 #include "dd_share.h"
+#include <doomsday/uri.h>
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
-#include <doomsday/uri.h>
 
 #if __cplusplus
 class SaveSlots;
@@ -85,6 +85,16 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 de::String G_EpisodeTitle(de::String episodeId);
 
 /**
+ * Returns the effective map-info definition Record associated with the given
+ * @a mapUri (which may be the default definition, if invalid/unknown).
+ *
+ * @param mapUri  Unique identifier for the map to lookup map-info data for.
+ *
+ * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
+ */
+de::Record const &G_MapInfoForMapUri(de::Uri const &mapUri);
+
+/**
  * @param mapUri  Identifier of the map to lookup the author of.
  */
 de::String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor = false);
@@ -98,6 +108,17 @@ de::String G_MapTitle(de::Uri const &mapUri);
  * @param mapUri  Identifier of the map to lookup the title of.
  */
 de::Uri G_MapTitleImage(de::Uri const &mapUri);
+
+/**
+ * Compose a textual, rich-formatted description of the the referenced map, containing
+ * pertinent information and/or metadata (such as the title and author).
+ *
+ * @param episodeId  Unique episode identifier.
+ * @param mapUri     Unique map identifier.
+ *
+ * @return  Rich-formatted description of the map.
+ */
+de::String G_MapDescription(de::String episodeId, de::Uri const &mapUri);
 
 /**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
@@ -216,4 +237,4 @@ D_CMD( CCmdExitLevel );
 
 DENG_EXTERN_C dd_bool singledemo;
 
-#endif // LIBCOMMON_GAME_H
+#endif  // LIBCOMMON_GAME_H

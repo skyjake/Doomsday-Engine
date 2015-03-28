@@ -282,7 +282,7 @@ float Reader_ReadFloat(Reader *reader)
 
 void Reader_Read(Reader *reader, void *buffer, size_t len)
 {
-    if(!len) return;
+    if(!len || !buffer) return;
 
     if(Reader_Check(reader, len))
     {

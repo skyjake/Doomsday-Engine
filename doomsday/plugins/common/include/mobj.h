@@ -1,7 +1,7 @@
 /** @file mobj.h  Common playsim map object (mobj) functionality.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 1993-1996 id Software, Inc.
  *
  * @par License
@@ -19,10 +19,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_MOBJ
-#define LIBCOMMON_MOBJ
+#ifndef LIBCOMMON_MOBJ_H
+#define LIBCOMMON_MOBJ_H
 
-#include "g_common.h"
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,22 +32,22 @@ extern "C" {
  * Determines the current friction affecting @a mo, given the sector it is in and
  * whether it is on the floor.
  *
- * @param mo  Object.
+ * @param mob  Map-object instance.
  *
  * @return Friction factor to apply to the momentum.
  */
-coord_t Mobj_Friction(mobj_t const *mo);
+coord_t Mobj_Friction(mobj_t const *mob);
 
 /**
  * Calculates the thrust multiplier for the mobj, to be applied when the mobj momentum
  * changes under thrust. The multiplier adjusts thrust behavior to account for slippery
  * or sticky surfaces.
  *
- * @param mo  Object.
+ * @param mob  Map-object instance.
  *
  * @return Thrust multiplier.
  */
-coord_t Mobj_ThrustMul(mobj_t const *mo);
+coord_t Mobj_ThrustMul(mobj_t const *mob);
 
 /**
  * Calculates the mobj thrust multiplier given a certain friction. The thrust multiplier
@@ -62,72 +62,150 @@ coord_t Mobj_ThrustMulForFriction(coord_t friction);
 /**
  * Handles the stopping of mobj movement. Also stops player walking animation.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object instance.
  */
-void Mobj_XYMoveStopping(mobj_t *mobj);
+void Mobj_XYMoveStopping(mobj_t *mob);
 
 /**
  * Checks if @a thing is a clmobj of one of the players.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object instance.
  */
-dd_bool Mobj_IsPlayerClMobj(mobj_t *mobj);
+dd_bool Mobj_IsPlayerClMobj(mobj_t *mob);
 
 /**
  * Determines if a mobj is a player mobj. It could still be a voodoo doll, also.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object instance.
  *
- * @return @c true, iff the mobj is a player.
+ * @return @c true iff the mobj is a player.
  */
-dd_bool Mobj_IsPlayer(mobj_t const *mobj);
+dd_bool Mobj_IsPlayer(mobj_t const *mob);
 
 /**
- * Determines if a mobj is a voodoo doll.
+ * Determines if a map-object is a voodoo doll.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object instance.
  *
- * @return @c true, iff the mobj is a voodoo doll.
+ * @return  @c true if the map-object is a voodoo doll.
  */
-dd_bool Mobj_IsVoodooDoll(mobj_t const *mobj);
+dd_bool Mobj_IsVoodooDoll(mobj_t const *mob);
 
 /**
- * Determines if the mobj is currently touching the floor or on an object.
+ * Determines if the map-object is currently in mid air (i.e., not touching the floor
+ * or, stood on some other object).
  *
- * @param mo  Object.
+ * @param mob  Map-object instance.
  *
- * @return @c true, if the object is considered to be airborne/flying.
+ * @return  @c true if the map-object is considered to be airborne/flying.
  */
-dd_bool Mobj_IsAirborne(mobj_t const *mo);
+dd_bool Mobj_IsAirborne(mobj_t const *mob);
 
 /**
- * @param mobj       Mobj instance.
+ * Determines the world space angle between @em this map-object and the given @a point.
+ *
+ * @param mob            Map-object instance.
+ * @param point          World space point being aimed at.
+ * @param pointShadowed  @c true= @a point is considered "shadowed", meaning that
+ *                       the final angle should include some random variance to
+ *                       simulate inaccuracy (e.g., the partial-invisibility sphere
+ *                       in DOOM makes the player harder to aim at).
+ *
+ * @return  The final angle of aim.
+ */
+angle_t Mobj_AimAtPoint2(mobj_t *mob, coord_t const point[3], dd_bool pointShadowed);
+angle_t Mobj_AimAtPoint (mobj_t *mob, coord_t const point[3]/*, dd_bool pointShadowed = false*/);
+
+/**
+ * Behavior akin to @ref Mobj_AimAtPoint() however the parameters of the point to
+ * be aimed at is taken from the currently targeted map-object. If no map-object
+ * is presently targeted then @em this map-object's own angle is returned instead
+ * (i.e., aim in the direction currently faced).
+ *
+ * @param mob  Map-object instance.
+ *
+ * @return  The final angle of aim.
+ */
+angle_t Mobj_AimAtTarget(mobj_t *mob);
+
+/**
+ * @param mob        Map-object instance.
  * @param allAround  @c false= only look 180 degrees in front.
  *
  * @return  @c true iff a player was targeted.
  */
-dd_bool Mobj_LookForPlayers(mobj_t *mobj, dd_bool allAround);
+dd_bool Mobj_LookForPlayers(mobj_t *mob, dd_bool allAround);
 
 /**
- * @param mobj      Mobj instance.
+ * @param mob       Map-object instance.
  * @param stateNum  Unique identifier of the state to change to.
  *
- * @return  @c true, if the mobj is still present.
+ * @return  @c true if the mobj is still present.
  */
-dd_bool P_MobjChangeState(mobj_t *mobj, statenum_t stateNum);
+dd_bool P_MobjChangeState(mobj_t *mob, statenum_t stateNum);
 
 /**
  * Same as P_MobjChangeState but does not call action functions.
  *
- * @param mobj      Mobj instance.
+ * @param mob       Map-object instance.
  * @param stateNum  Unique identifier of the state to change to.
  *
- * @return  @c true, if the mobj is still present.
+ * @return  @c true if the mobj is still present.
  */
-dd_bool P_MobjChangeStateNoAction(mobj_t *mobj, statenum_t stateNum);
+dd_bool P_MobjChangeStateNoAction(mobj_t *mob, statenum_t stateNum);
+
+/**
+ * Check whether the mobj is currently obstructed and explode immediately if so.
+ *
+ * @return  Pointer to @em this mobj iff it survived, otherwise @c nullptr.
+ */
+mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob);
+
+/**
+ * Launch the given map-object @a missile (if any) at the specified @a angle.
+ *
+ * @param missile    Map-object to be launched.
+ * @param angle      World space angle at which to launch.
+ * @param targetPos  World space point being targeted (for determining speed).
+ * @param extraMomZ  Additional momentum to apply to the missile.
+ *
+ * @return  Same as @a missile, for caller convenience.
+ */
+mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t extraMomZ);
+
+/**
+ * Launch the given map-object @a missile (if any) at the specified @a angle,
+ * enqueuing a new launch sound and recording @em this map-object as the source.
+ *
+ * @param mob        Map-object hurler of @a missile.
+ * @param missile    Map-object to be launched.
+ * @param angle      World space angle at which to launch.
+ * @param targetPos  World space point being targeted (for determining speed).
+ * @param extraMomZ  Additional momentum to apply to the missile.
+ *
+ * @return  Same as @a missile, for caller convenience.
+ *
+ * @see P_LaunchMissile()
+ */
+mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t extraMomZ);
+mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3]/*, coord_t extraMomZ = 0*/);
+
+/**
+ * Same as @ref Mobj_LaunchMissileAtAngle() except the angle is that which the
+ * @a missile is presently facing.
+ *
+ * @param mob        Map-object hurler of @a missile.
+ * @param missile    Map-object to be launched.
+ * @param targetPos  World space point being targeted (for determining speed).
+ * @param extraMomZ  Additional momentum to apply to the missile.
+ *
+ * @return  Same as @a missile, for caller convenience.
+ */
+mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t extraMomZ);
+mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3]/*, coord_t extraMomZ = 0*/);
 
 #ifdef __cplusplus
-} // extern "C"
+}  // extern "C"
 #endif
 
-#endif // LIBCOMMON_MOBJ
+#endif  // LIBCOMMON_MOBJ_H

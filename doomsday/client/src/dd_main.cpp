@@ -1,12 +1,10 @@
 /** @file dd_main.cpp  Engine core.
  *
- * @ingroup core
- *
  * @todo Much of this should be refactored and merged into the App classes.
  * @todo The rest should be split into smaller, perhaps domain-specific files.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -1489,7 +1487,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         Rend_ParticleLoadSystemTextures();
     }
 
-    GL_SetFilter(false);
+    GL_ResetViewEffects();
 
     if(!game.isNull())
     {
@@ -1941,6 +1939,8 @@ dd_bool DD_Init(void)
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }
 
+    App_ResourceSystem().updateOverrideIWADPathFromConfig();
+
     // Try to locate all required data files for all registered games.
 #ifdef __CLIENT__
     Con_InitProgress2(200, .25f, 1); // Second half.
@@ -2387,14 +2387,14 @@ void DD_UpdateEngineState()
     }
 
 #ifdef __CLIENT__
-    for(Material *material : App_ResourceSystem().allMaterials())
+    App_ResourceSystem().forAllMaterials([] (Material &material)
     {
-        material->forAllAnimators([] (MaterialAnimator &animator)
+        return material.forAllAnimators([] (MaterialAnimator &animator)
         {
             animator.rewind();
             return LoopContinue;
         });
-    }
+    });
 #endif
 }
 
@@ -2503,14 +2503,7 @@ int DD_GetInteger(int ddvalue)
     case DD_MAP_MUSIC:
         if(App_WorldSystem().hasMap())
         {
-            if(MapDef *mapDef = App_WorldSystem().map().def())
-            {
-                int idx = defs.getMapInfoNum(mapDef->composeUri());
-                if(idx >= 0)
-                {
-                    return Def_GetMusicNum(defs.mapInfos[idx].gets("music").toUtf8().constData());
-                }
-            }
+            return Def_GetMusicNum(App_WorldSystem().map().mapInfo().gets("music").toUtf8().constData());
         }
         return -1;
 

@@ -327,8 +327,9 @@ public:
      * this is an asynchronous operation. audienceForLevelChanged is notified
      * when the data has been stored.
      *
-     * @param path     Identifier of the data.
-     * @param toLevel  Destination level for the data.
+     * @param path        Identifier of the data.
+     * @param toLevel     Destination level for the data.
+     * @param importance  Priority for choosing appropriate queued behavior.
      */
     void unload(DotPath const &path, CacheLevel toLevel = InHotStorage,
                 Importance importance = AfterQueued);

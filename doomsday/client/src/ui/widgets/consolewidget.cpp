@@ -345,14 +345,16 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Instance(this))
     d->logMenu = new PopupMenuWidget;
     d->logMenu->setAnchor(d->button->rule().midX(), d->button->rule().top());
     d->logMenu->items()
-            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear Log"),
-                                  new CommandAction("clear"))
             << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
+            << new ui::ActionItem(tr("Close Log"), new SignalAction(this, SLOT(closeLogAndUnfocusCommandLine())))
             << new ui::ActionItem(tr("Go to Latest"), new SignalAction(d->log, SLOT(scrollToBottom())))
             << new ui::ActionItem(tr("Copy Path to Clipboard"),
                                   new SignalAction(this, SLOT(copyLogPathToClipboard())))
             << new ui::Item(ui::Item::Annotation,
                             tr("Copies the location of the log output file to the OS clipboard."))
+            << new ui::Item(ui::Item::Separator)
+            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear Log"),
+                                  new CommandAction("clear"))
             << new ui::Item(ui::Item::Separator)
             << new ui::VariableToggleItem(tr("Snap to Latest Entry"), App::config("console.snap"))
             << new ui::Item(ui::Item::Annotation, tr("Running a command or script causes the log to scroll down to the latest entry."))
@@ -544,6 +546,12 @@ void ConsoleWidget::closeLog()
     d->opened = false;
     d->horizShift->set(-rule().width().valuei() - 1, LOG_OPEN_CLOSE_SPAN);
     d->log->setBehavior(DisableEventDispatch);
+}
+
+void ConsoleWidget::closeLogAndUnfocusCommandLine()
+{
+    closeLog();
+    root().setFocus(nullptr);
 }
 
 void ConsoleWidget::clearLog()

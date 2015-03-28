@@ -134,8 +134,8 @@ group choice {
 }
 
 group tab {
-    font label inherits small {
-        weight: bold
+    font label inherits title {
+        size $: gui.scale(self.size, 0.75)
     }
     font selected inherits tab.label {}
 }

@@ -1,7 +1,7 @@
 /** @file resourcesystem.cpp  Resource subsystem.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -434,8 +434,8 @@ Value *Function_SavedSession_ConvertAll(Context &, Function::ArgumentValues cons
 }
 
 DENG2_PIMPL(ResourceSystem)
-, DENG2_OBSERVES(Loop,             Iteration)       // post savegame conversion FS population
-, DENG2_OBSERVES(Games,            Addition)        // savegames folder setup
+, DENG2_OBSERVES(Loop,             Iteration)        // post savegame conversion FS population
+, DENG2_OBSERVES(Games,            Addition)         // savegames folder setup
 , DENG2_OBSERVES(MaterialScheme,   ManifestDefined)
 , DENG2_OBSERVES(MaterialManifest, MaterialDerived)
 , DENG2_OBSERVES(MaterialManifest, Deletion)
@@ -475,16 +475,16 @@ DENG2_PIMPL(ResourceSystem)
     RawTextureHash rawTexHash;
 
     /// System subspace schemes containing the manifests/resources.
-    MaterialSchemes materialSchemes;
+    QMap<String, MaterialScheme *> materialSchemes;
     QList<MaterialScheme *> materialSchemeCreationOrder;
 
-    AllMaterials materials; ///< From all schemes.
-    uint materialManifestCount; ///< Total number of material manifests (in all schemes).
+    QList<Material *> materials;       ///< From all schemes.
+    int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
 
     MaterialManifestGroups materialGroups;
 
     uint materialManifestIdMapSize;
-    MaterialManifest **materialManifestIdMap; ///< Index with materialid_t-1
+    MaterialManifest **materialManifestIdMap;  ///< Index with materialid_t-1
 
     MapDefs mapDefs;
 
@@ -493,18 +493,18 @@ DENG2_PIMPL(ResourceSystem)
     FontSchemes fontSchemes;
     QList<FontScheme *> fontSchemeCreationOrder;
 
-    AllFonts fonts; ///< From all schemes.
-    uint fontManifestCount; ///< Total number of font manifests (in all schemes).
+    AllFonts fonts;                    ///< From all schemes.
+    uint fontManifestCount;            ///< Total number of font manifests (in all schemes).
 
     uint fontManifestIdMapSize;
-    FontManifest **fontManifestIdMap; ///< Index with fontid_t-1
+    FontManifest **fontManifestIdMap;  ///< Index with fontid_t-1
 
     typedef QVector<ModelDef> ModelDefs;
     ModelDefs modefs;
-    QVector<int> stateModefs; // Index to the modefs array.
+    QVector<int> stateModefs;          ///< Index to the modefs array.
 
     typedef StringPool ModelRepository;
-    ModelRepository *modelRepository; // Owns Model instances.
+    ModelRepository *modelRepository;  ///< Owns Model instances.
 
     /// A list of specifications for material variants.
     typedef QList<MaterialVariantSpec *> MaterialSpecs;
@@ -548,15 +548,7 @@ DENG2_PIMPL(ResourceSystem)
     CacheQueue cacheQueue;
 #endif
 
-    struct SpriteGroup {
-        SpriteSet sprites;
-
-        ~SpriteGroup() {
-            qDeleteAll(sprites);
-        }
-    };
-    typedef QMap<spritenum_t, SpriteGroup> SpriteGroups;
-    SpriteGroups spriteGroups;
+    QMap<spritenum_t, SpriteSet> spritesByFrame;
 
     NativePath nativeSavePath;
 
@@ -566,7 +558,6 @@ DENG2_PIMPL(ResourceSystem)
     Instance(Public *i)
         : Base(i)
         , defaultColorPalette      (0)
-        , materialManifestCount    (0)
         , materialManifestIdMapSize(0)
         , materialManifestIdMap    (0)
 #ifdef __CLIENT__
@@ -776,23 +767,39 @@ DENG2_PIMPL(ResourceSystem)
 
     void clearSprites()
     {
-        spriteGroups.clear();
+        for(SpriteSet &sprFrames : spritesByFrame)
+        {
+            qDeleteAll(sprFrames);
+        }
+        spritesByFrame.clear();
     }
 
-    SpriteGroup *spriteGroup(spritenum_t spriteId)
+    inline bool hasSpriteFrameSet(spritenum_t spriteId) const
     {
-        SpriteGroups::iterator found = spriteGroups.find(spriteId);
-        if(found != spriteGroups.end())
+        return spritesByFrame.contains(spriteId);
+    }
+
+    SpriteSet *tryFindSpriteFrameSet(spritenum_t spriteId)
+    {
+        auto found = spritesByFrame.find(spriteId);
+        if(found != spritesByFrame.end())
         {
             return &found.value();
         }
-        return 0;
+        return nullptr;
     }
 
-    SpriteGroup &newSpriteGroup(spritenum_t spriteId)
+    SpriteSet &findSpriteFrameSet(spritenum_t spriteId)
     {
-        DENG2_ASSERT(!spriteGroup(spriteId)); // sanity check.
-        return spriteGroups.insert(spriteId, SpriteGroup()).value();
+        if(SpriteSet *sprFrames = tryFindSpriteFrameSet(spriteId)) return *sprFrames;
+        /// @throw MissingResourceError An unknown/invalid id was specified.
+        throw MissingResourceError("ResourceSystem::findSpriteFrameSet", "Unknown sprite id " + String::number(spriteId));
+    }
+
+    SpriteSet &newSpriteFrameSet(spritenum_t spriteId)
+    {
+        DENG2_ASSERT(!tryFindSpriteFrameSet(spriteId)); // sanity check.
+        return spritesByFrame.insert(spriteId, SpriteSet()).value();
     }
 
 #ifdef __CLIENT__
@@ -1091,15 +1098,14 @@ DENG2_PIMPL(ResourceSystem)
     void queueCacheTasksForSprite(spritenum_t spriteId, MaterialVariantSpec const &contextSpec,
         bool cacheGroups = true)
     {
-        if(SpriteGroup *group = spriteGroup(spriteId))
+        if(!hasSpriteFrameSet(spriteId)) return;
+
+        for(Sprite *sprite : findSpriteFrameSet(spriteId))
+        for(SpriteViewAngle const &viewAngle : sprite->viewAngles())
         {
-            foreach(Sprite *sprite, group->sprites)
-            foreach(SpriteViewAngle const &viewAngle, sprite->viewAngles())
+            if(Material *material = viewAngle.material)
             {
-                if(Material *material = viewAngle.material)
-                {
-                    queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
-                }
+                queueCacheTasksForMaterial(*material, contextSpec, cacheGroups);
             }
         }
     }
@@ -2078,7 +2084,7 @@ DENG2_PIMPL(ResourceSystem)
         manifest.setId(id);
 
         // Add the new manifest to the id index/map.
-        if(materialManifestCount > materialManifestIdMapSize)
+        if(materialManifestCount > (int)materialManifestIdMapSize)
         {
             // Allocate more memory.
             materialManifestIdMapSize += MANIFESTIDMAP_BLOCK_ALLOC;
@@ -2327,6 +2333,20 @@ ResourceClass &ResourceSystem::resClass(resourceclassid_t id)
     throw UnknownResourceClassError("ResourceSystem::toClass", QString("Invalid id '%1'").arg(int(id)));
 }
 
+void ResourceSystem::updateOverrideIWADPathFromConfig()
+{
+    String path = App::config().gets("resource.iwadFolder", "");
+    if(!path.isEmpty())
+    {
+        LOG_RES_NOTE("Using user-selected primary IWAD folder: \"%s\"") << path;
+
+        FS1::Scheme &ps = App_FileSystem().scheme(App_ResourceClass("RC_PACKAGE").defaultScheme());
+        ps.clearSearchPathGroup(FS1::OverridePaths);
+        ps.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path, RC_PACKAGE),
+                                    SearchPath::NoDescend), FS1::OverridePaths);
+    }
+}
+
 void ResourceSystem::clearAllResources()
 {
     clearAllRuntimeResources();
@@ -2351,34 +2371,27 @@ void ResourceSystem::clearAllSystemResources()
 
 int ResourceSystem::spriteCount()
 {
-    return d->spriteGroups.count();
+    return d->spritesByFrame.count();
 }
 
 bool ResourceSystem::hasSprite(spritenum_t spriteId, int frame)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
+    if(d->hasSpriteFrameSet(spriteId))
     {
-        if(frame >= 0 && frame < group->sprites.count())
-        {
+        if(frame >= 0 && frame < d->findSpriteFrameSet(spriteId).count())
             return true;
-        }
     }
     return false;
 }
 
 Sprite &ResourceSystem::sprite(spritenum_t spriteId, int frame)
 {
-    return *spriteSet(spriteId).at(frame);
+    return *d->findSpriteFrameSet(spriteId).at(frame);
 }
 
 ResourceSystem::SpriteSet const &ResourceSystem::spriteSet(spritenum_t spriteId)
 {
-    if(Instance::SpriteGroup *group = d->spriteGroup(spriteId))
-    {
-        return group->sprites;
-    }
-    /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ResourceSystem::spriteSet", "Invalid sprite id " + String::number(spriteId));
+    return d->findSpriteFrameSet(spriteId);
 }
 
 void ResourceSystem::initTextures()
@@ -2426,22 +2439,25 @@ void ResourceSystem::initSystemTextures()
     d->deriveAllTexturesInScheme("System");
 }
 
-Texture *ResourceSystem::texture(String schemeName, de::Uri const *resourceUri)
+Texture *ResourceSystem::texture(String schemeName, de::Uri const &resourceUri)
 {
-    if(resourceUri && !resourceUri->isEmpty())
+    if(!resourceUri.isEmpty())
     {
-        if(!resourceUri->path().toStringRef().compareWithoutCase("-")) return 0;
+        if(!resourceUri.path().toStringRef().compareWithoutCase("-"))
+        {
+            return nullptr;
+        }
 
         try
         {
-            return &textureScheme(schemeName).findByResourceUri(*resourceUri).texture();
+            return &textureScheme(schemeName).findByResourceUri(resourceUri).texture();
         }
         catch(TextureManifest::MissingTextureError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
         catch(TextureScheme::NotFoundError const &)
-        {} // Ignore this error.
+        {}  // Ignore this error.
     }
-    return 0;
+    return nullptr;
 }
 
 Texture *ResourceSystem::defineTexture(String schemeName, de::Uri const &resourceUri,
@@ -2620,11 +2636,8 @@ MaterialScheme &ResourceSystem::materialScheme(String name) const
     LOG_AS("ResourceSystem::materialScheme");
     if(!name.isEmpty())
     {
-        MaterialSchemes::iterator found = d->materialSchemes.find(name.toLower());
-        if(found != d->materialSchemes.end())
-        {
-            return **found;
-        }
+        auto found = d->materialSchemes.find(name.toLower());
+        if(found != d->materialSchemes.end()) return **found;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ResourceSystem::materialScheme", "No scheme found matching '" + name + "'");
@@ -2639,15 +2652,24 @@ bool ResourceSystem::knownMaterialScheme(String name) const
     return false;
 }
 
-ResourceSystem::MaterialSchemes const &ResourceSystem::allMaterialSchemes() const
+int ResourceSystem::materialSchemeCount() const
 {
-    return d->materialSchemes;
+    return d->materialSchemes.count();
+}
+
+LoopResult ResourceSystem::forAllMaterialSchemes(std::function<LoopResult (MaterialScheme &)> func) const
+{
+    for(MaterialScheme *scheme : d->materialSchemes)
+    {
+        if(auto result = func(*scheme)) return result;
+    }
+    return LoopContinue;
 }
 
 MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
 {
     duint32 idx = id - 1; // 1-based index.
-    if(idx < d->materialManifestCount)
+    if(idx < (duint32)d->materialManifestCount)
     {
         if(d->materialManifestIdMap[idx])
         {
@@ -2657,7 +2679,7 @@ MaterialManifest &ResourceSystem::toMaterialManifest(materialid_t id) const
         DENG2_ASSERT(false);
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
-    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangeui(1, d->materialManifestCount + 1).asText());
+    throw UnknownMaterialIdError("ResourceSystem::toMaterialManifest", "Invalid material ID " + String::number(id) + ", valid range " + Rangei(1, d->materialManifestCount + 1).asText());
 }
 
 bool ResourceSystem::hasMaterialManifest(de::Uri const &path) const
@@ -2701,9 +2723,18 @@ MaterialManifest &ResourceSystem::materialManifest(de::Uri const &uri) const
     throw MissingManifestError("ResourceSystem::materialManifest", "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-ResourceSystem::AllMaterials const &ResourceSystem::allMaterials() const
+int ResourceSystem::materialCount() const
 {
-    return d->materials;
+    return d->materials.count();
+}
+
+LoopResult ResourceSystem::forAllMaterials(std::function<LoopResult (Material &)> func) const
+{
+    for(Material *mat : d->materials)
+    {
+        if(auto result = func(*mat)) return result;
+    }
+    return LoopContinue;
 }
 
 ResourceSystem::MaterialManifestGroup &ResourceSystem::newMaterialGroup()
@@ -3505,7 +3536,7 @@ AnimGroup *ResourceSystem::animGroup(int uniqueId)
     return nullptr;
 }
 
-AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest &textureManifest)
+AnimGroup *ResourceSystem::animGroupForTexture(TextureManifest const &textureManifest)
 {
     // Group ids are 1-based.
     // Search backwards to allow patching.
@@ -3567,15 +3598,12 @@ typedef QHash<String, SpriteDef> SpriteDefs;
  * CLOCKWISE around the axis. This is not the same as the angle, which increases
  * counter clockwise (protractor).
  */
-static SpriteDefs generateSpriteDefs()
+static SpriteDefs buildSpriteDefsForTextures(TextureScheme::Index const &texIndex)
 {
-    ResourceSystem &resSys = App_ResourceSystem();
-    TextureScheme::Index const &spriteTexIndex = resSys.textureScheme("Sprites").index();
+    SpriteDefs sprDefs;
+    sprDefs.reserve(texIndex.leafNodes().count() / 8); // overestimate
 
-    SpriteDefs spriteDefs;
-    spriteDefs.reserve(spriteTexIndex.leafNodes().count() / 8); // overestimate
-
-    PathTreeIterator<TextureScheme::Index> iter(spriteTexIndex.leafNodes());
+    PathTreeIterator<TextureScheme::Index> iter(texIndex.leafNodes());
     while(iter.hasNext())
     {
         TextureManifest &manifest = iter.next();
@@ -3584,7 +3612,7 @@ static SpriteDefs generateSpriteDefs()
         String const name = desc.left(4).toLower();
 
         // Have we already encountered this name?
-        SpriteDef *def = &spriteDefs[name];
+        SpriteDef *def = &sprDefs[name];
         if(def->frames.isEmpty())
         {
             // An entirely new sprite.
@@ -3613,7 +3641,7 @@ static SpriteDefs generateSpriteDefs()
             frameDef = &def->addFrame();
         }
 
-        frameDef->mat         = &resSys.material(de::Uri("Sprites", manifest.path()));
+        frameDef->mat         = &App_ResourceSystem().material(de::Uri("Sprites", manifest.path()));
         frameDef->frame[0]    = frameNumber;
         frameDef->rotation[0] = rotationNumber;
 
@@ -3630,7 +3658,82 @@ static SpriteDefs generateSpriteDefs()
         }
     }
 
-    return spriteDefs;
+    return sprDefs;
+}
+
+/**
+ * Generates a Sprite frame set from the given sprite @a definition.
+ *
+ * @note Gaps in the frame number range used in @a definition will be filled
+ * with dummy Sprite instances (no view angles added).
+ *
+ * @param definition  SpriteDef description of one or more Sprites.
+ *
+ * @return  Built Sprites in frame order. Ownership of the Sprite instances
+ * is given to the caller.
+ */
+static QList<Sprite *> buildSpritesFromDefinition(SpriteDef const &definition)
+{
+    // Build sprite frames and add view angles.
+    QMap<int, Sprite *> spritesByFrame;
+    for(SpriteFrameDef const &frameDef : definition.frames)
+    for(int i = 0; i < 2; ++i)
+    {
+        int const frame = frameDef.frame[i] - 1;
+        if(frame < 0) continue;
+
+        auto const found = spritesByFrame.find(frame);
+        Sprite *sprite;
+        if(found != spritesByFrame.end())
+        {
+            sprite = found.value();
+        }
+        else
+        {
+            sprite = spritesByFrame.insert(frame, new Sprite).value();
+        }
+
+        sprite->newViewAngle(frameDef.mat, frameDef.rotation[i], i == 1);
+    }
+    // Duplicate view angles to complete rotation sets (if defined).
+    for(Sprite *sprite : spritesByFrame)
+    {
+        if(sprite->viewAngleCount() < 2)
+            continue;
+
+        for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
+        {
+            if(!sprite->hasViewAngle(rot * 2 + 1))
+            {
+                auto const &src = sprite->viewAngle(rot * 2);
+                sprite->newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
+            }
+            if(!sprite->hasViewAngle(rot * 2))
+            {
+                auto const &src = sprite->viewAngle(rot * 2 + 1);
+                sprite->newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
+            }
+        }
+    }
+
+    // Output a frame ordered list.
+    QList<Sprite *> sprites;
+    int lastFrame = -1;
+    auto it = spritesByFrame.constBegin();
+    while(it != spritesByFrame.constEnd())
+    {
+        int frame = it.key();
+        // Insert dummy sprites to fill any gaps in the frame set.
+        for(int i = lastFrame + 1; i < frame; ++i)
+        {
+            sprites << new Sprite;
+        }
+
+        sprites << it.value();
+        lastFrame = frame;
+        ++it;
+    }
+    return sprites;
 }
 
 void ResourceSystem::initSprites()
@@ -3642,86 +3745,24 @@ void ResourceSystem::initSprites()
 
     d->clearSprites();
 
-    SpriteDefs defs = generateSpriteDefs();
-
-    if(!defs.isEmpty())
+    /// @todo It should no longer be necessary to split this into two phases -ds
+    SpriteDefs spriteDefs = buildSpriteDefsForTextures(App_ResourceSystem().textureScheme("Sprites").index());
+    if(!spriteDefs.isEmpty())
     {
-        // Build the final sprites.
+        // Build Sprite frame sets from their definitions.
         int customIdx = 0;
-        foreach(SpriteDef const &def, defs)
+        for(SpriteDef const &def : spriteDefs)
         {
+            // Format or generate an id for the sprite.
             spritenum_t spriteId = Def_GetSpriteNum(def.name.toUtf8().constData());
-            if(spriteId == -1)
-            {
-                spriteId = runtimeDefs.sprNames.size() + customIdx++;
-            }
+            if(spriteId == -1) spriteId = (runtimeDefs.sprNames.size() + customIdx++);
 
-            Instance::SpriteGroup &group = d->newSpriteGroup(spriteId);
-
-            Sprite sprTemp[29];
-
-            int maxSprite = -1;
-            foreach(SpriteFrameDef const &frameDef, def.frames)
-            {
-                int frame = frameDef.frame[0] - 1;
-                DENG2_ASSERT(frame >= 0);
-                if(frame < 29)
-                {
-                    sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[0], false);
-                    if(frame > maxSprite)
-                    {
-                        maxSprite = frame;
-                    }
-                }
-
-                if(frameDef.frame[1])
-                {
-                    frame = frameDef.frame[1] - 1;
-                    DENG2_ASSERT(frame >= 0);
-                    if(frame < 29)
-                    {
-                        sprTemp[frame].newViewAngle(frameDef.mat, frameDef.rotation[1], true);
-                        if(frame > maxSprite)
-                        {
-                            maxSprite = frame;
-                        }
-                    }
-                }
-            }
-            ++maxSprite;
-
-            // Duplicate view angles to complete the rotation set (if defined).
-            for(int frame = 0; frame < maxSprite; ++frame)
-            {
-                Sprite &sprite = sprTemp[frame];
-
-                if(sprite.viewAngleCount() < 2)
-                    continue;
-
-                for(int rot = 0; rot < Sprite::max_angles / 2; ++rot)
-                {
-                    if(!sprite.hasViewAngle(rot * 2 + 1))
-                    {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2);
-                        sprite.newViewAngle(src.material, rot * 2 + 2, src.mirrorX);
-                    }
-                    if(!sprite.hasViewAngle(rot * 2))
-                    {
-                        SpriteViewAngle const &src = sprite.viewAngle(rot * 2 + 1);
-                        sprite.newViewAngle(src.material, rot * 2 + 1, src.mirrorX);
-                    }
-                }
-            }
-
-            for(int k = 0; k < maxSprite; ++k)
-            {
-                group.sprites.append(new Sprite(sprTemp[k]));
-            }
+            // Append another frame set to the relevant sprite.
+            d->newSpriteFrameSet(spriteId).append(buildSpritesFromDefinition(def));
         }
     }
-
     // We're done with the definitions.
-    defs.clear();
+    spriteDefs.clear();
 
     LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
 }
@@ -4132,10 +4173,11 @@ static int printMaterialIndex2(MaterialScheme *scheme, Path const &like,
     }
     else // Consider resources in any scheme.
     {
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        App_ResourceSystem().forAllMaterialSchemes([&found, &like] (MaterialScheme &scheme)
         {
-            scheme->index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
-        }
+            scheme.index().findAll(found, pathBeginsWithComparator, const_cast<Path *>(&like));
+            return LoopContinue;
+        });
     }
     if(found.isEmpty()) return 0;
 
@@ -4294,15 +4336,16 @@ static void printMaterialIndex(de::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+        App_ResourceSystem().forAllMaterialSchemes([&search, &flags, &printTotal] (MaterialScheme &scheme)
         {
-            int numPrinted = printMaterialIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
             if(numPrinted)
             {
                 LOG_MSG(_E(R));
                 printTotal += numPrinted;
             }
-        }
+            return LoopContinue;
+        });
     }
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
@@ -4488,16 +4531,17 @@ D_CMD(PrintMaterialStats)
     DENG2_UNUSED3(src, argc, argv);
 
     LOG_MSG(_E(b) "Material Statistics:");
-    foreach(MaterialScheme *scheme, App_ResourceSystem().allMaterialSchemes())
+    App_ResourceSystem().forAllMaterialSchemes([] (MaterialScheme &scheme)
     {
-        MaterialScheme::Index const &index = scheme->index();
+        MaterialScheme::Index const &index = scheme.index();
 
         uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "material" : "materials");
+                << scheme.name() << count << (count == 1? "material" : "materials");
         index.debugPrintHashDistribution();
         index.debugPrint();
-    }
+        return LoopContinue;
+    });
     return true;
 }
 

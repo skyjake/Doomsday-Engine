@@ -28,21 +28,17 @@
 #include "common.h"
 #include "mobj.h"
 
+#include <cmath>
+#include <de/mathutil.h>
 #include "dmu_lib.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 #include "p_actor.h"
-#include "player.h"
 #include "p_map.h"
 #include "p_saveg.h"
-#include "p_actor.h"
-
-#include <de/mathutil.h>
-#include <cmath>
-#include <cassert>
+#include "player.h"
 
 #define DROPOFFMOMENTUM_THRESHOLD (1.0 / 4)
-
-/// Threshold for killing momentum of a freely moving object affected by friction.
-#define WALKSTOP_THRESHOLD      (0.062484741) // FIX2FLT(0x1000-1)
 
 /// Threshold for stopping walk animation.
 #define STANDSPEED              (1.0 / 2) // FIX2FLT(0x8000)
@@ -233,10 +229,31 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
     return false;
 }
 
-dd_bool Mobj_IsPlayer(mobj_t const *mo)
+dd_bool Mobj_IsPlayer(mobj_t const *mob)
 {
-    if(!mo) return false;
-    return (mo->player != 0);
+    if(!mob) return false;
+    return (mob->player != 0);
+}
+
+angle_t Mobj_AimAtPoint2(mobj_t *mob, coord_t const point[], dd_bool pointShadowed)
+{
+    DENG2_ASSERT(mob);
+    return P_AimAtPoint2(mob->origin, point, pointShadowed);
+}
+
+angle_t Mobj_AimAtPoint(mobj_t *mob, coord_t const point[])
+{
+    return Mobj_AimAtPoint2(mob, point, false/* not shadowed*/);
+}
+
+angle_t Mobj_AimAtTarget(mobj_t *mob)
+{
+    DENG2_ASSERT(mob);
+    if(auto const *target = mob->target)
+    {
+        return Mobj_AimAtPoint2(mob, target->origin, target->flags & MF_SHADOW);
+    }
+    return mob->angle;
 }
 
 dd_bool Mobj_LookForPlayers(mobj_t *mo, dd_bool allAround)
@@ -927,4 +944,69 @@ int mobj_s::read(MapStateReader *msr)
 
 #undef FF_FRAMEMASK
 #undef FF_FULLBRIGHT
+}
+
+mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob)
+{
+    return P_CheckMissileSpawn(mob)? mob : NULL;
+}
+
+mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[],
+    coord_t extraMomZ)
+{
+    DENG2_ASSERT(targetPos);
+    if(missile)
+    {
+        DENG2_ASSERT(missile->info);
+
+        // Play the launch sound.
+        if(missile->info->seeSound)
+        {
+            S_StartSound(missile->info->seeSound, missile);
+        }
+
+        // Determine speed.
+        /// @todo Should optionally calculate this in true 3D.
+        coord_t dist;
+        uint an = angle >> ANGLETOFINESHIFT;
+        missile->mom[MX] = missile->info->speed * FIX2FLT(finecosine[an]);
+        missile->mom[MY] = missile->info->speed * FIX2FLT(finesine  [an]);
+
+        dist = M_ApproxDistance(targetPos[VX] - missile->origin[VX], targetPos[VY] - missile->origin[VY]);
+        dist /= missile->info->speed;
+        if(dist < 1) dist = 1;
+
+        missile->mom[MZ] = (targetPos[VZ] - missile->origin[VZ] + extraMomZ) / dist;
+    }
+    return Mobj_ExplodeIfObstructed(missile);
+}
+
+mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
+    coord_t const targetPos[], coord_t extraMomZ)
+{
+    DENG2_ASSERT(mob);
+
+    if(missile)
+    {
+        // Remember the source (i.e., us) for tracking kills, etc...
+        missile->target = mob;
+    }
+
+    return P_LaunchMissile(missile, angle, targetPos, extraMomZ);
+}
+
+mobj_t *Mobj_LaunchMissileAtAngle(mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[])
+{
+    return Mobj_LaunchMissileAtAngle2(mob, missile, angle, targetPos, 0/*no extra z-momentum*/);
+}
+
+mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[], coord_t extraMomZ)
+{
+    DENG2_ASSERT(mob);
+    return Mobj_LaunchMissileAtAngle2(mob, missile, missile? missile->angle : mob->angle, targetPos, extraMomZ);
+}
+
+mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos[])
+{
+    return Mobj_LaunchMissile2(mob, missile, targetPos, 0/*no extra z-momentum*/);
 }

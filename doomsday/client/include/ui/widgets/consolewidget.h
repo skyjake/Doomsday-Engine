@@ -76,6 +76,7 @@ signals:
 public slots:
     void openLog();
     void closeLog();
+    void closeLogAndUnfocusCommandLine();
     void clearLog();
     void zeroLogHeight();
     void showFullLog();

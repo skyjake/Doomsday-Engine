@@ -19,17 +19,16 @@
 
 #ifndef LIBHEXEN_INTERMISSION_H
 #define LIBHEXEN_INTERMISSION_H
+
+#include "jhexen.h"
+#include <doomsday/uri.h>
+
+struct wbstartstruct_t;
+
 #ifdef __cplusplus
-
-#ifndef __JHEXEN__
-#  error "Using jHexen headers without __JHEXEN__"
-#endif
-
-#include "h2def.h"
 
 struct wbstartstruct_t
 {
-    //de::Uri currentMap;
     de::Uri nextMap;
     uint nextMapEntryPoint;
 };
@@ -43,6 +42,9 @@ struct wbstartstruct_t
  *                       is in progress.
  */
 void IN_Begin(wbstartstruct_t const &wbstartstruct);
+
+extern "C" {
+#endif
 
 /**
  * End the current intermission.
@@ -76,5 +78,8 @@ void IN_SkipToNext();
 /// To be called to register the console commands and variables of this module.
 void IN_ConsoleRegister();
 
-#endif // __cplusplus
-#endif // LIBHEXEN_INTERMISSION_H
+#ifdef __cplusplus
+} // extern "C
+#endif
+
+#endif  // LIBHEXEN_INTERMISSION_H

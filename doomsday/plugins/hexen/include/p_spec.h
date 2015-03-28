@@ -42,8 +42,6 @@ void P_SpawnSectorSpecialThinkers(void);
 void P_SpawnLineSpecialThinkers(void);
 void P_SpawnAllSpecialThinkers(void);
 
-dd_bool P_SectorTagIsBusy(int tag);
-
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo);
 
 dd_bool P_ActivateLine(Line *ld, mobj_t *mo, int side, int activationType);

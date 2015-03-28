@@ -84,7 +84,7 @@ DENG2_PIMPL_NOREF(GLInfo)
         return false;
     }
 
-    bool query(char const *ext)
+    bool doQuery(char const *ext)
     {
         bool gotIt = extQuery(ext);
         LIBGUI_ASSERT_GL_OK();
@@ -117,8 +117,17 @@ DENG2_PIMPL_NOREF(GLInfo)
         return false; // return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
     }
 
+    bool query(char const *ext)
+    {
+        bool found = doQuery(ext);
+        LOGDEV_GL_VERBOSE("%s: %b") << ext << found;
+        return found;
+    }
+
     void init()
     {
+        LOG_AS("GLInfo");
+
         if(inited) return;
 
         // Extensions.
@@ -172,6 +181,21 @@ DENG2_PIMPL_NOREF(GLInfo)
 
             LOG_GL_NOTE("Using requested maximum texture size of %i x %i") << lim.maxTexSize << lim.maxTexSize;
         }
+
+        // Check default OpenGL format attributes.
+        QGLContext const *ctx = QGLContext::currentContext();
+        QGLFormat form = ctx->format();
+
+        LOGDEV_GL_MSG("Initial OpenGL format:");
+        LOGDEV_GL_MSG(" - OpenGL supported: %b") << form.hasOpenGL();
+        LOGDEV_GL_MSG(" - version: %i.%i") << form.majorVersion() << form.minorVersion();
+        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QGLFormat::CompatibilityProfile? "Compatibility" : "Core");
+        LOGDEV_GL_MSG(" - samples: %b %i") << form.sampleBuffers() << form.samples();
+        LOGDEV_GL_MSG(" - color: %i %i %i %i") << form.redBufferSize() << form.greenBufferSize() << form.blueBufferSize() << form.alphaBufferSize();
+        LOGDEV_GL_MSG(" - depth: %b %i") << form.depth() << form.depthBufferSize();
+        LOGDEV_GL_MSG(" - stencil: %b %i") << form.stencil() << form.stencilBufferSize();
+        LOGDEV_GL_MSG(" - accum: %b %i") << form.accum() << form.accumBufferSize();
+        LOGDEV_GL_MSG(" - double buffering: %b") << form.doubleBuffer();
 
         inited = true;
 

@@ -1,7 +1,7 @@
-/** @file defs/ded.h  Definition namespace.
+/** @file ded.h  Definition namespace.
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,7 +53,6 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     float       modelOffset;
 
     // Flag values (for all types of data).
-    //DEDArray<ded_flag_t> flags;
     DEDRegister flags;
 
     // Episodes.
@@ -72,26 +71,21 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_light_t> lights;
 
     // Materials.
-    DEDArray<ded_material_t> materials;
+    DEDRegister materials;
 
     // Models.
-    //typedef std::vector<ded_model_t> Models;
-    //Models models;
     DEDRegister models;
 
     // Skies.
-    //DEDArray<ded_sky_t> skies;
     DEDRegister skies;
 
     // Sounds.
     DEDArray<ded_sound_t> sounds;
 
     // Music.
-    //DEDArray<ded_music_t> music;
     DEDRegister musics;
 
     // Map information.
-    //DEDArray<ded_mapinfo_t> mapInfo;
     DEDRegister mapInfos;
 
     // Text.
@@ -110,11 +104,10 @@ struct LIBDOOMSDAY_PUBLIC ded_s
     DEDArray<ded_ptcgen_t> ptcGens;
 
     // Finales.
-    //DEDArray<ded_finale_t> finales;
     DEDRegister finales;
 
     // Decorations.
-    DEDArray<ded_decoration_t> decorations;
+    DEDRegister decorations;
 
     // Reflections.
     DEDArray<ded_reflection_t> reflections;
@@ -161,12 +154,6 @@ public:
 
     int evalFlags2(char const *ptr) const;
 
-    int getTextNumForName(const char* name) const;
-
-    ded_material_t *findMaterialDef(de::Uri const &uri) const;
-
-    ded_material_t *getMaterial(char const *uriCString) const;
-
     int getMobjNum(char const *id) const;
 
     int getMobjNumForName(char const *name) const;
@@ -181,7 +168,11 @@ public:
 
     int getMapInfoNum(de::Uri const &uri) const;
 
+    int getMaterialNum(de::Uri const &uri) const;
+
     int getModelNum(char const *id) const;
+
+    int getMusicNum(char const *id) const;
 
     int getSkyNum(char const *id) const;
 
@@ -194,7 +185,7 @@ public:
      */
     int getSoundNumForName(char const *name) const;
 
-    int getMusicNum(char const *id) const;
+    int getTextNum(char const *id) const;
 
     ded_value_t *getValueById(char const *id) const;
 
@@ -203,8 +194,6 @@ public:
     ded_compositefont_t *findCompositeFontDef(de::Uri const &uri) const;
 
     ded_compositefont_t *getCompositeFont(char const *uriCString) const;
-
-    ded_group_t *findGroupForFrameTexture(de::Uri const &uri) const;
 
 protected:
     void release();

@@ -16,6 +16,13 @@ group label {
 
 rule scrollarea.bar { constant $= UNIT }
 
+group popup {
+    group menu {
+        rule margin { constant $= UNIT }
+        rule paddedmargin { constant $= UNIT * 8 }
+    }
+}
+
 group document {
     rule progress    { constant $= UNIT * 30 }
     rule popup.width { constant $= UNIT * 120 }

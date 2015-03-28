@@ -82,6 +82,10 @@ def setDefaults(d)
     record d.masterServer
     d.masterServer.apiUrl = "www.dengine.net/master.php"
     
+    # Resource settings.
+    record d.resource
+    d.resource.iwadFolder = ''
+    
     # Renderer settings.
     record d.render
     d.render.pixelDensity = 1.0     # Overall pixel density.

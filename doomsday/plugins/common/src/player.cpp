@@ -21,8 +21,9 @@
 #include "common.h"
 #include "player.h"
 
-#include "d_netsv.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "gamesession.h"

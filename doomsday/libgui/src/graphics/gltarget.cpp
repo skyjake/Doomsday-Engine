@@ -534,7 +534,10 @@ void GLTarget::glBind() const
 
 void GLTarget::glRelease() const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // both read and write FBOs
+    LIBGUI_ASSERT_GL_OK();
 
     d->updateFromProxy();
 }

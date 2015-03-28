@@ -120,8 +120,8 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     d->syncInput->setText(tr("Vanilla 35Hz Input Rate"));
     d->syncMouse->setText(tr("Uniform Mouse Axis Sensitivity"));
 
-    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(D) + tr("Mouse X"), &area());
-    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(D) + tr("Mouse Y"), &area());
+    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Horizontal"), &area());
+    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Vertical"), &area());
     mouseXLabel->setFont("separator.label");
     mouseYLabel->setFont("separator.label");
 

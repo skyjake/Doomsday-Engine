@@ -12,10 +12,10 @@ Values {
     WIF      = "{tracking=-1}Finished";
     WIENTER  = "{tracking=-1}Entering";
     WIOSTK   = "{tracking=-1}Kills";
-    WIOSTS   = "{tracking=-1}Secret";
+    WIOSTS   = "{tracking=-1}Scrt";
     WISCRT2  = "{tracking=-1}Secret";
     WIOSTI   = "{tracking=-1}Items";
-    WIFRGS   = "{tracking=-1}Frags";
+    WIFRGS   = "{tracking=-1}Frgs";
     WITIME   = "{tracking=-1}Time";
     WISUCKS  = "{tracking=-1}Sucks";
     WIPAR    = "{tracking=-1}PAR";

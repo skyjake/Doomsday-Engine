@@ -1,7 +1,7 @@
-/** @file r_util.h Refresh Utility Routines.
+/** @file r_util.h  Refresh Utility Routines.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -40,8 +40,9 @@ struct LightRange
     float min;
     float max;
 
-    LightRange(float _min = 0, float _max = 0) : min(_min), max(_max) {}
-    LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1]) {}
+    LightRange(float _min = 0, float _max = 0) : min(_min), max(_max)    {}
+    LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1])   {}
+    LightRange(de::Vector2f const &minMax) : min(minMax.x), max(minMax.y) {}
     LightRange(LightRange const &other) : min(other.min), max(other.max) {}
 
     /// Returns a textual representation of the lightlevels.

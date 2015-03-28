@@ -41,20 +41,25 @@
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
+
 #ifdef __cplusplus
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+class MapStateReader;
+class MapStateWriter;
 #endif
 
 #define NOMOM_THRESHOLD     (0.0001) // (integer) 0
-#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
-#define MAXMOM              (30) // 30*FRACUNIT
-#define MAXMOMSTEP          (15) // 30*FRACUNIT/2
 
-#define FRICTION_LOW        (0.97265625) // 0xf900
-#define FRICTION_FLY        (0.91796875) // 0xeb00
-#define FRICTION_NORMAL     (0.90625000) // 0xe800
-#define FRICTION_HIGH       (0.41992187) // 0xd700/2
+/// Threshold for killing momentum of a freely moving object affected by friction.
+#define WALKSTOP_THRESHOLD   (0.062484741) // FIX2FLT(0x1000-1)
+
+#define DROPOFFMOM_THRESHOLD (0.25) // FRACUNIT/4
+#define MAXMOM               (30) // 30*FRACUNIT
+#define MAXMOMSTEP           (15) // 30*FRACUNIT/2
+
+#define FRICTION_LOW         (0.97265625) // 0xf900
+#define FRICTION_FLY         (0.91796875) // 0xeb00
+#define FRICTION_NORMAL      (0.90625000) // 0xe800
+#define FRICTION_HIGH        (0.41992187) // 0xd700/2
 
 /**
  * Mobj flags

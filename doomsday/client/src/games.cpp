@@ -93,9 +93,11 @@ DENG2_PIMPL(Games)
     }
 
     DENG2_PIMPL_AUDIENCE(Addition)
+    DENG2_PIMPL_AUDIENCE(Readiness)
 };
 
 DENG2_AUDIENCE_METHOD(Games, Addition)
+DENG2_AUDIENCE_METHOD(Games, Readiness)
 
 Games::Games() : d(new Instance(this))
 {}
@@ -265,6 +267,25 @@ void Games::locateAllResources()
 {
     BusyMode_RunNewTaskWithName(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                                 locateAllResourcesWorker, (void *)this, "Locating game resources...");
+
+    DENG2_FOR_AUDIENCE2(Readiness, i)
+    {
+        i->gameReadinessUpdated();
+    }
+}
+
+void Games::forgetAllResources()
+{
+    foreach(Game *game, d->games)
+    {
+        foreach(ResourceManifest *manifest, game->manifests())
+        {
+            if(manifest->fileFlags() & FF_STARTUP)
+            {
+                manifest->forgetFile();
+            }
+        }
+    }
 }
 
 D_CMD(ListGames)

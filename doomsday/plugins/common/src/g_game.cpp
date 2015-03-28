@@ -32,11 +32,15 @@
 #include <de/NativePath>
 #include <de/RecordValue>
 #include <doomsday/defs/episode.h>
+#include <doomsday/defs/mapinfo.h>
 #include <doomsday/uri.h>
 
+#include "acs/system.h"
 #include "am_map.h"
 #include "animdefs.h"
 #include "d_net.h"
+#include "d_netcl.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
 #include "g_controls.h"
@@ -315,14 +319,15 @@ void G_CommonPreInit()
 
     // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();      // Main command list.
-    D_NetConsoleRegister();       // For network.
-    G_ConsoleRegister();          // Top level game cvars and commands.
+    acs::System::consoleRegister();
+    D_NetConsoleRegister();
+    G_ConsoleRegister();
     Pause_Register();
-    G_ControlRegister();          // For controls/input.
-    SaveSlots::consoleRegister(); // Game-save system.
-    Hu_MenuConsoleRegister();     // For the menu.
-    GUI_Register();               // For the UI library.
-    Hu_MsgRegister();             // For the game messages.
+    G_ControlRegister();
+    SaveSlots::consoleRegister();
+    Hu_MenuConsoleRegister();
+    GUI_Register();
+    Hu_MsgRegister();
     ST_Register();                // For the hud/statusbar.
     IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
@@ -441,7 +446,8 @@ void R_LoadColorPalettes()
             }
             xlatNum++;
 
-            LOGDEV_RES_MSG("Reading translation table '%s' as tclass=%i tmap=%i")
+            LOG_AS("R_LoadColorPalettes")
+            LOG_RES_XVERBOSE("Reading translation table '%s' as tclass=%i tmap=%i")
                     << lumpName << cl << i;
 
             lumpName += ".lmp";
@@ -1041,44 +1047,6 @@ void G_StartHelp()
     LOG_SCR_WARNING("InFine script '%s' not defined") << scriptId;
 }
 
-/**
- * Prints a banner to the console containing information pertinent to the referenced map
- * (e.g., title, author...).
- */
-static void printMapBanner(String episodeId, de::Uri const &mapUri)
-{
-    LOG_MSG(DE2_ESC(R));
-
-    String const title = G_MapTitle(mapUri);
-    if(!title.isEmpty())
-    {
-        Record const *mgNodeDef = 0;
-        if(Record const *episode = Defs().episodes.tryFind("id", episodeId))
-        {
-            mgNodeDef = defn::Episode(*episode).tryFindMapGraphNode(mapUri.compose());
-        }
-
-        LOG_NOTE("Map: " DE2_ESC(i) DE2_ESC(b) "%s" DE2_ESC(.) " (%s%s)")
-                << title << mapUri
-                << (mgNodeDef? String(", warp: %1").arg(mgNodeDef->geti("warpNumber")) : "");
-    }
-
-    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose().toUtf8().constData()));
-    if(!author.isEmpty())
-    {
-        LOG_NOTE("Author: " DE2_ESC(i)) << author;
-    }
-
-    String const episodeTitle = G_EpisodeTitle(episodeId);
-    if(!episodeTitle.isEmpty())
-    {
-        LOG_NOTE("Episode: " DE2_ESC(i) "%s (id: %s)")
-                << episodeTitle << episodeId;
-    }
-
-    LOG_MSG(DE2_ESC(R));
-}
-
 void G_BeginMap()
 {
     G_ChangeGameState(GS_MAP);
@@ -1089,8 +1057,8 @@ void G_BeginMap()
         R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
     }
 
-    // Clear all controls for all local players.
-    G_ControlReset(-1);
+    // Reset controls for all local players.
+    G_ControlReset();
 
     // Time can now progress in this map.
     mapTime = actualMapTime = 0;
@@ -1098,7 +1066,11 @@ void G_BeginMap()
     // The music may have been paused for the briefing; unpause.
     S_PauseMusic(false);
 
-    printMapBanner(COMMON_GAMESESSION->episodeId(), COMMON_GAMESESSION->mapUri());
+    // Print a map banner to the log.
+    LOG_MSG(DE2_ESC(R));
+    LOG_NOTE("%s") << G_MapDescription(COMMON_GAMESESSION->episodeId(),
+                                       COMMON_GAMESESSION->mapUri());
+    LOG_MSG(DE2_ESC(R));
 }
 
 int G_Responder(event_t *ev)
@@ -1222,12 +1194,9 @@ static sfxenum_t randomQuitSound()
 static bool intermissionEnabled()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
+    if(COMMON_GAMESESSION->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
     {
-        if(mapInfo->geti("flags") & MIF_NO_INTERMISSION)
-        {
-            return false;
-        }
+        return false;
     }
 #elif __JHEXEN__
     if(!COMMON_GAMESESSION->rules().deathmatch)
@@ -1262,15 +1231,8 @@ void G_PrepareWIData()
     info->maxFrags = 0;
 
     // See if there is a par time definition.
-    info->parTime = -1; // Unknown.
-    if(Record const *mapInfo = COMMON_GAMESESSION->mapInfo())
-    {
-        float parTime = mapInfo->getf("parTime");
-        if(parTime > 0)
-        {
-            info->parTime = TICRATE * int(parTime);
-        }
-    }
+    float parTime = COMMON_GAMESESSION->mapInfo().getf("parTime");
+    info->parTime = (parTime > 0? TICRATE * int(parTime) : -1 /*N/A*/);
 
     info->pNum = CONSOLEPLAYER;
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -1443,7 +1405,7 @@ static void runGameAction()
 
             if(!IS_DEDICATED)
             {
-                GL_SetFilter(false);
+                GL_ResetViewEffects();
             }
 
             // Go to an intermission?
@@ -2021,6 +1983,23 @@ String G_DefaultSavedSessionUserDescription(String const &saveName, bool autogen
     return description;
 }
 
+String G_EpisodeTitle(String episodeId)
+{
+    String title;
+    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    {
+        title = episodeDef->gets("title");
+
+        // Perhaps the title string is a reference to a Text definition?
+        int textIdx = Defs().getTextNum(title.toUtf8().constData());
+        if(textIdx >= 0)
+        {
+            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
+        }
+    }
+    return title;
+}
+
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
     String path = mapUri.path();
@@ -2070,38 +2049,41 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-String G_EpisodeTitle(String episodeId)
+Record const &G_MapInfoForMapUri(de::Uri const &mapUri)
 {
-    String title;
-    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    // Is there a MapInfo definition for the given URI?
+    if(Record const *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
-        title = episodeDef->gets("title");
-
-        // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
-        if(textIdx >= 0)
-        {
-            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
-        }
+        return *def;
     }
-    return title;
+    // Is there is a default definition (for all maps)?
+    if(Record const *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    {
+        return *def;
+    }
+    // Use the fallback.
+    {
+        static Record fallbackDef;
+        static bool needInitFallbackDef = true;
+        if(needInitFallbackDef)
+        {
+            needInitFallbackDef = false;
+            defn::MapInfo(fallbackDef).resetToDefaults();
+        }
+        return fallbackDef;
+    }
 }
 
 String G_MapTitle(de::Uri const &mapUri)
 {
-    String title;
-
     // Perhaps a MapInfo definition exists for the map?
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
-    {
-        title = mapInfo->gets("title");
+    String title = G_MapInfoForMapUri(mapUri).gets("title");
 
-        // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNumForName(title.toUtf8().constData());
-        if(textIdx >= 0)
-        {
-            title = Defs().text[textIdx].text; // Yes, use the resolved text string.
-        }
+    // Perhaps the title string is a reference to a Text definition?
+    int textIdx = Defs().getTextNum(title.toUtf8().constData());
+    if(textIdx >= 0)
+    {
+        title = Defs().text[textIdx].text; // Yes, use the resolved text string.
     }
 
     // Skip the "ExMx" part, if present.
@@ -2119,14 +2101,8 @@ String G_MapTitle(de::Uri const &mapUri)
 
 String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 {
-    String author;
-
     // Perhaps a MapInfo definition exists for the map?
-    String mapUriAsText = mapUri.compose();
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUriAsText))
-    {
-        author = mapInfo->gets("author");
-    }
+    String author = G_MapInfoForMapUri(mapUri).gets("author");
 
     if(!author.isEmpty())
     {
@@ -2134,7 +2110,7 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
         /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        if(supressGameAuthor || P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+        if(supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
         {
             if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
@@ -2146,11 +2122,44 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 
 de::Uri G_MapTitleImage(de::Uri const &mapUri)
 {
-    if(Record const *mapInfo = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    return de::Uri(G_MapInfoForMapUri(mapUri).gets("titleImage"), RC_NULL);
+}
+
+String G_MapDescription(String episodeId, de::Uri const &mapUri)
+{
+    Block mapUriUtf8 = mapUri.compose().toUtf8();
+    if(!P_MapExists(mapUriUtf8.constData()))
     {
-        return de::Uri(mapInfo->gets("titleImage"), RC_NULL);
+        return String("Unknown map (Episode: ") + episodeId + ", Uri: " + mapUri + ")";
     }
-    return de::Uri();
+
+    String desc;
+    QTextStream os(&desc);
+
+    String const title = G_MapTitle(mapUri);
+    if(!title.isEmpty())
+    {
+        os << "Map: " DE2_ESC(i) DE2_ESC(b) << title << DE2_ESC(.)
+           << " (Uri: " << mapUri;
+
+        if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
+        {
+            if(Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
+            {
+                os << ", warp: " << String::number(mgNodeDef->geti("warpNumber"));
+            }
+        }
+
+        os << ")" << DE2_ESC(.);
+    }
+
+    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUriUtf8.constData()));
+    if(!author.isEmpty())
+    {
+        os << "\n - Author: " DE2_ESC(i) << author;
+    }
+
+    return desc;
 }
 
 /**
@@ -2349,6 +2358,7 @@ D_CMD(LoadSession)
             if(Hu_IsMessageActive()) return false;
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
+
             // Compose the confirmation message.
             String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,

@@ -906,6 +906,7 @@ static keyname_t const keyNames[] = {
     { DDKEY_DIVIDE,      "divide" },
     { DDKEY_MULTIPLY,    "multiply" },
     { DDKEY_SECTION,     "section" },
+    { DDKEY_WINMENU,     "winmenu" },
     { 0, nullptr}
 };
 

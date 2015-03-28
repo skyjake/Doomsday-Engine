@@ -54,9 +54,9 @@ public:
         virtual void resetToDefaults();
 
         /**
-         * Construct a new AnimationStage from the given @a definition.
+         * Construct a new AnimationStage from the given @a stageDef.
          */
-        static AnimationStage *fromDef(ded_material_layer_stage_t const &definition);
+        static AnimationStage *fromDef(de::Record const &stageDef);
 
         de::String description() const;
     };
@@ -65,9 +65,9 @@ public:
     virtual ~MaterialTextureLayer() {}
 
     /**
-     * Construct a new TextureLayer from the given @a definition.
+     * Construct a new TextureLayer from the given @a layerDef.
      */
-    static MaterialTextureLayer *fromDef(ded_material_layer_t const &definition);
+    static MaterialTextureLayer *fromDef(de::Record const &layerDef);
 
     /**
      * Returns @c true if glow is enabled for one or more animation stages.

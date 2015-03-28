@@ -36,7 +36,7 @@ using de::game::Session;
 using de::game::SavedSession;
 
 DENG_GUI_PIMPL(SavedSessionMenuWidget)
-, DENG2_OBSERVES(App,                 StartupComplete)
+, DENG2_OBSERVES(Games,               Readiness)
 , DENG2_OBSERVES(Session::SavedIndex, AvailabilityUpdate)
 , DENG2_OBSERVES(Loop,                Iteration) // deferred refresh
 {
@@ -172,18 +172,18 @@ DENG_GUI_PIMPL(SavedSessionMenuWidget)
 
     Instance(Public *i) : Base(i)
     {
-        App::app().audienceForStartupComplete() += this;
+        App_Games().audienceForReadiness() += this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() += this;
     }
 
     ~Instance()
     {
         Loop::get().audienceForIteration() -= this;
-        App::app().audienceForStartupComplete() -= this;
+        App_Games().audienceForReadiness() -= this;
         game::Session::savedIndex().audienceForAvailabilityUpdate() -= this;
     }
 
-    void appStartupCompleted()
+    void gameReadinessUpdated()
     {
         // Startup resources for all games have been located.
         // We can now determine which of the saved sessions are loadable.

@@ -1,6 +1,6 @@
 /** @file materiallightdecoration.h  Logical material, light decoration.
  *
- * @authors Copyright © 2011-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2011-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -66,22 +66,23 @@ public:
         virtual ~AnimationStage() {}
 
         /**
-         * Construct a new AnimationStage from the given @a definition.
+         * Construct a new AnimationStage from the given @a stageDef.
          */
-        static AnimationStage *fromDef(ded_decorlight_stage_t const &definition);
+        static AnimationStage *fromDef(de::Record const &stageDef);
 
         de::String description() const;
     };
 
 public:
     MaterialLightDecoration(de::Vector2i const &patternSkip   = de::Vector2i(),
-                            de::Vector2i const &patternOffset = de::Vector2i());
+                            de::Vector2i const &patternOffset = de::Vector2i(),
+                            bool useInterpolation             = true);
     virtual ~MaterialLightDecoration();
 
     /**
      * Construct a new material decoration from the specified definition.
      */
-    static MaterialLightDecoration *fromDef(ded_material_lightdecoration_t const &def);
+    static MaterialLightDecoration *fromDef(de::Record const &decorationDef);
 
     de::String describe() const;
 
@@ -100,6 +101,14 @@ public:
      * @param index  Index of the AnimationStage to lookup. Will be cycled into valid range.
      */
     AnimationStage &stage(int index) const;
+
+    /**
+     * Returns @c true if interpolation should be used with this decoration.
+     */
+    bool useInterpolation() const;
+
+private:
+    bool _useInterpolation;
 };
 
 #endif  // CLIENT_RESOURCE_MATERIALLIGHTDECORATION_H

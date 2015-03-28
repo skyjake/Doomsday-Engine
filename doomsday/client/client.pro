@@ -867,7 +867,7 @@ macx {
     FW_DIR = Doomsday.app/Contents/Frameworks/
     doPostLink("rm -rf $$FW_DIR")
     doPostLink("mkdir $$FW_DIR")
-    !deng_nosdl {
+    !deng_nosdl:!isEmpty(SDL2_FRAMEWORK_DIR) {
         doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2.framework $$FW_DIR")
         !deng_nosdlmixer: doPostLink("cp -fRp $${SDL2_FRAMEWORK_DIR}/SDL2_mixer.framework $$FW_DIR")
     }

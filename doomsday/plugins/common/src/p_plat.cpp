@@ -58,10 +58,9 @@
  */
 static void stopPlat(plat_t *plat)
 {
-    P_ToXSector(plat->sector)->specialData = 0;
-#if __JHEXEN__
-    Game_ACScriptInterpreter().tagFinished(P_ToXSector(plat->sector)->tag);
-#endif
+    DENG2_ASSERT(plat);
+    P_ToXSector(plat->sector)->specialData = nullptr;
+    P_NotifySectorFinished(P_ToXSector(plat->sector)->tag);
     Thinker_Remove(&plat->thinker);
 }
 

@@ -24,19 +24,19 @@
 #  pragma optimize("g", off)
 #endif
 
+#include "common.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "common.h"
-
 #include "d_net.h"
+#include "d_netcl.h"
 #include "g_defs.h"
-#include "player.h"
-#include "p_map.h"
-#include "p_tick.h"
-#include "p_terraintype.h"
 #include "p_inventory.h"
+#include "p_map.h"
+#include "p_terraintype.h"
+#include "p_tick.h"
+#include "player.h"
 
 #define LOWERSPEED          (6)
 #define RAISESPEED          (6)

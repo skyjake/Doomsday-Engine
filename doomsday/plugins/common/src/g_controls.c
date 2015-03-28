@@ -1092,15 +1092,9 @@ static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum,
 }
 #endif
 
-/**
- * Clear all controls for the given player.
- *
- * @param player        Player number of whose controls to reset. If
- *                      negative; clear ALL player's controls.
- */
-void G_ControlReset(int player)
+void G_ControlReset(void)
 {
-    DD_Execute(true, "resetctlaccum");
+    if(IS_CLIENT) DD_Execute(true, "resetctlaccum");
 }
 
 /**

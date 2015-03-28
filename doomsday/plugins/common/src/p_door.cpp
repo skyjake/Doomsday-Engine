@@ -183,10 +183,8 @@ void T_Door(void *doorThinkerPtr)
 #endif
             case DT_NORMAL:
             case DT_CLOSE:
-                xsec->specialData = 0;
-#if __JHEXEN__
-                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
-#endif
+                xsec->specialData = nullptr;
+                P_NotifySectorFinished(P_ToXSector(door->sector)->tag);
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_PlaneSound((Plane *)P_GetPtrp(door->sector, DMU_CEILING_PLANE), SFX_DOORCLOSED);
@@ -264,10 +262,8 @@ void T_Door(void *doorThinkerPtr)
 #endif
             case DT_CLOSE30THENOPEN:
             case DT_OPEN:
-                xsec->specialData = 0;
-#if __JHEXEN__
-                Game_ACScriptInterpreter().tagFinished(P_ToXSector(door->sector)->tag);
-#endif
+                xsec->specialData = nullptr;
+                P_NotifySectorFinished(P_ToXSector(door->sector)->tag);
                 Thinker_Remove(&door->thinker); // Unlink and free.
 #if __JHERETIC__
                 S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector, DMU_CEILING_EMITTER));

@@ -3,7 +3,7 @@
  * @ingroup defs
  *
  * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -177,7 +177,6 @@ int Def_GetMusicNum(char const *id);
 int Def_GetSoundNum(char const *id);
 ded_value_t *Def_GetValueById(char const *id);
 ded_value_t *Def_GetValueByUri(Uri const *uri);
-ded_material_t *Def_GetMaterial(char const *uri);
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 
@@ -230,11 +229,6 @@ StringArray *Def_ListMobjTypeIDs(void);
  * @return StringArray instance. Caller gets ownership.
  */
 StringArray *Def_ListStateIDs(void);
-
-/**
- * Returns @c true iff @a def is compatible with the specified context.
- */
-bool Def_IsAllowedDecoration(ded_decoration_t const *def, /*bool hasExternal,*/ bool isCustom);
 
 /**
  * Returns @c true iff @a def is compatible with the specified context.

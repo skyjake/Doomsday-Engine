@@ -1,6 +1,6 @@
 /** @file resourcesystem.h  Resource subsystem.
  *
- * @authors Copyright © 2013-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -114,9 +114,6 @@ public:
     typedef MaterialManifestSet MaterialManifestGroup; // Alias
     typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
 
-    typedef QMap<de::String, de::MaterialScheme *> MaterialSchemes;
-    typedef QList<Material *> AllMaterials;
-
     typedef QMap<de::String, de::TextureScheme *> TextureSchemes;
     typedef QList<de::Texture *> AllTextures;
 
@@ -148,6 +145,12 @@ public:
      * @todo Refactor away.
      */
     ResourceClass &resClass(resourceclassid_t id);
+
+    /**
+     * Gets the path from "Config.resource.iwadFolder" and makes it the sole override
+     * path for the Packages scheme.
+     */
+    void updateOverrideIWADPathFromConfig();
 
     void clearAllResources();
     void clearAllRuntimeResources();
@@ -251,7 +254,7 @@ public:
     /**
      * Returns the total number of unique materials in the collection.
      */
-    uint materialCount() const { return allMaterials().count(); }
+    int materialCount() const;
 
     /**
      * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
@@ -271,25 +274,28 @@ public:
     de::MaterialScheme &materialScheme(de::String name) const;
 
     /**
-     * Returns a list of all the schemes for efficient traversal.
-     */
-    MaterialSchemes const &allMaterialSchemes() const;
-
-    /**
      * Returns the total number of material manifest schemes in the collection.
      */
-    inline int materialSchemeCount() const { return allMaterialSchemes().count(); }
+    int materialSchemeCount() const;
+
+    /**
+     * Iterate through all the material resource schemes of the resource system.
+     *
+     * @param func  Callback to make for each MaterialScheme.
+     */
+    de::LoopResult forAllMaterialSchemes(std::function<de::LoopResult (de::MaterialScheme &)> func) const;
 
     /**
      * Clear all materials (and their manifests) in all schemes.
      *
-     * @see allMaterialSchemes(), MaterialScheme::clear().
+     * @see forAllMaterialSchemes(), MaterialScheme::clear().
      */
     inline void clearAllMaterialSchemes() {
-        foreach(de::MaterialScheme *scheme, allMaterialSchemes()) {
-            scheme->clear();
-        }
-        DENG2_ASSERT(allMaterials().isEmpty()); // sanity check
+        forAllMaterialSchemes([] (de::MaterialScheme &scheme) {
+            scheme.clear();
+            return de::LoopContinue;
+        });
+        DENG2_ASSERT(materialCount() == 0); // sanity check
     }
 
     /**
@@ -331,10 +337,11 @@ public:
     }
 
     /**
-     * Returns a list of all the unique material instances in the collection,
-     * from all schemes.
+     * Iterate through all the materials of the resource system.
+     *
+     * @param func  Callback to make for each Material.
      */
-    AllMaterials const &allMaterials() const;
+    de::LoopResult forAllMaterials(std::function<de::LoopResult (Material &)> func) const;
 
     /**
      * Determines if a texture exists for @a path.
@@ -373,12 +380,12 @@ public:
      * Convenient method of searching the texture collection for a texture with
      * the specified @a schemeName and @a resourceUri.
      *
-     * @param schemeName  Unique name of the scheme in which to search.
+     * @param schemeName   Unique name of the scheme in which to search.
      * @param resourceUri  Path to the (image) resource to find the texture for.
      *
-     * @return  The found texture; otherwise @c 0.
+     * @return  The found texture; otherwise @c nullptr.
      */
-    de::Texture *texture(de::String schemeName, de::Uri const *resourceUri);
+    de::Texture *texture(de::String schemeName, de::Uri const &resourceUri);
 
     /**
      * Determines if a texture manifest exists for a declared texture on @a path.
@@ -780,7 +787,7 @@ public:
      */
     de::AnimGroup *animGroup(int uniqueId);
 
-    de::AnimGroup *animGroupForTexture(de::TextureManifest &textureManifest);
+    de::AnimGroup *animGroupForTexture(de::TextureManifest const &textureManifest);
 
     /**
      * Returns the total number of color palettes.

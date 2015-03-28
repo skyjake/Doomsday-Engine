@@ -1,7 +1,7 @@
 /** @file p_ticker.cpp Timed world events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -110,14 +110,14 @@ static void materialsTicker(timespan_t elapsed)
     /// @todo Each context animator should be driven by a more relevant ticker, rather
     /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
     /// context should be driven separately).
-    for(Material *material : App_ResourceSystem().allMaterials())
+    App_ResourceSystem().forAllMaterials([&elapsed] (Material &material)
     {
-        material->forAllAnimators([&elapsed] (MaterialAnimator &animator)
+        return material.forAllAnimators([&elapsed] (MaterialAnimator &animator)
         {
             animator.animate(elapsed);
             return LoopContinue;
         });
-    }
+    });
 }
 
 #endif // __CLIENT__
@@ -126,8 +126,6 @@ void P_Ticker(timespan_t elapsed)
 {
 #ifdef __CLIENT__
     materialsTicker(elapsed);
-#else
-    DENG2_UNUSED(elapsed);
 #endif
     App_WorldSystem().tick(elapsed);
 }

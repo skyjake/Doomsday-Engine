@@ -96,14 +96,17 @@ static int lgMXSample  = 1; ///< 5 samples per block. Cvar.
 #define CLMOBJ_TIMEOUT  4000
 #endif
 
-namespace de {
-
-#ifdef __CLIENT__
-static inline WorldSystem &worldSys()
+namespace internal
 {
-    return App_WorldSystem();
-}
-#endif
+    static inline de::WorldSystem &worldSys()
+    {
+        return App_WorldSystem();
+    }
+
+}  // namespace internal
+using namespace internal;
+
+namespace de {
 
 struct EditableElements
 {
@@ -1579,6 +1582,11 @@ MapDef *Map::def() const
 void Map::setDef(MapDef *newMapDefinition)
 {
     d->def = newMapDefinition;
+}
+
+Record const &Map::mapInfo() const
+{
+    return worldSys().mapInfoForMapUri(def()? def()->composeUri() : de::Uri("Maps:", RC_NULL));
 }
 
 Mesh const &Map::mesh() const
@@ -3132,34 +3140,11 @@ void Map::update()
 #endif // __CLIENT__
 
     // Reapply values defined in MapInfo (they may have changed).
-    defn::MapInfo mapInfo;
+    Record const &inf = mapInfo();
 
-    if(MapDef *mapDef = d->def)
-    {
-        int idx = defs.getMapInfoNum(mapDef->composeUri());
-        if(idx >= 0) mapInfo = defs.mapInfos[idx];
-    }
-
-    if(!mapInfo)
-    {
-        // Use the default def instead.
-        int idx = defs.getMapInfoNum(Uri("Maps", Path("*")));
-        if(idx >= 0) mapInfo = defs.mapInfos[idx];
-    }
-
-    if(mapInfo)
-    {
-        _globalGravity     = mapInfo.getf("gravity");
-        _ambientLightLevel = mapInfo.getf("ambient") * 255;
-    }
-    else
-    {
-        // No map info found -- apply defaults.
-        _globalGravity = 1.0f;
-        _ambientLightLevel = 0;
-    }
-
-    _effectiveGravity = _globalGravity;
+    _ambientLightLevel = inf.getf("ambient") * 255;
+    _globalGravity     = inf.getf("gravity");
+    _effectiveGravity  = _globalGravity;
 
 #ifdef __CLIENT__
     // Reconfigure the sky.
@@ -3167,16 +3152,13 @@ void Map::update()
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
     defn::Sky skyDef;
-    if(mapInfo)
+    if(Record const *def = defs.skies.tryFind("id", inf.gets("skyId")))
     {
-        if(Record const *def = defs.skies.tryFind("id", mapInfo.gets("skyId")))
-        {
-            skyDef = *def;
-        }
-        else
-        {
-            skyDef = mapInfo.subrecord("sky");
-        }
+        skyDef = *def;
+    }
+    else
+    {
+        skyDef = inf.subrecord("sky");
     }
     sky().configure(&skyDef);
 #endif

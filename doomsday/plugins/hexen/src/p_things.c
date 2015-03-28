@@ -20,9 +20,11 @@
  */
 
 #include "jhexen.h"
+#include "p_things.h"
 
-#include "p_map.h"
+#include "g_common.h"
 #include "mobj.h"
+#include "p_map.h"
 
 static dd_bool ActivateThing(mobj_t *mobj);
 static dd_bool DeactivateThing(mobj_t *mobj);
