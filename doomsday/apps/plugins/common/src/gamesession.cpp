@@ -29,6 +29,7 @@
 #include <de/game/SavedSession>
 #include <doomsday/defs/episode.h>
 #include "acs/system.h"
+#include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
 #include "g_game.h"
@@ -1013,9 +1014,15 @@ void GameSession::end()
 {
     if(!hasBegun()) return;
 
+    // Reset state of relevant subsystems.
 #if __JHEXEN__
     Game_ACScriptSystem().reset();
 #endif
+    if(!IS_DEDICATED)
+    {
+        GL_ResetViewEffects();
+    }
+
     Session::removeSaved(internalSavePath);
 
     d->inProgress = false;

@@ -647,7 +647,7 @@ void NetCl_Intermission(reader_s *msg)
             ST_CloseAll(i, true/*fast*/);
         }
 
-        GL_SetFilter(false);
+        GL_ResetViewEffects();
 
 #if __JHEXEN__
         SN_StopAllSequences();
