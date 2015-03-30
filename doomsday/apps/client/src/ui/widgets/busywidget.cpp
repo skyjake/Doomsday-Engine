@@ -176,7 +176,7 @@ void BusyWidget::renderTransitionFrame()
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    Rectanglei grabRect = Rectanglei::fromSize(root().window().canvas().size());
+    Rectanglei grabRect = Rectanglei::fromSize(root().window().glSize());
 
     LOGDEV_GL_VERBOSE("Rendering transition frame, size ") << grabRect.size().asText();
 

@@ -120,7 +120,7 @@ static void Mouse_Qt_GetState(mousestate_t *state)
 
 static void Mouse_Qt_ShowCursor(bool yes)
 {
-    de::Canvas &canvas = ClientWindowSystem::main().canvas();
+    de::Canvas &canvas = ClientWindowSystem::main();
 
     LOG_INPUT_VERBOSE("%s cursor (presently visible? %b)")
             << (yes? "showing" : "hiding") << !cursorHidden;
@@ -141,17 +141,17 @@ static void Mouse_Qt_ShowCursor(bool yes)
 
 static void Mouse_Qt_InitTrap()
 {
-    de::Canvas &canvas = ClientWindowSystem::main().canvas();
+    de::Canvas &canvas = ClientWindowSystem::main();
 
-    QCursor::setPos(canvas.mapToGlobal(canvas.rect().center()));
-    canvas.grabMouse();
+    QCursor::setPos(canvas.mapToGlobal(QPoint(canvas.width()/2, canvas.height()/2)));
+    canvas.setMouseGrabEnabled(true);
 
     Mouse_Qt_ShowCursor(false);
 }
 
 static void Mouse_Qt_DeinitTrap()
 {
-    ClientWindowSystem::main().canvas().releaseMouse();
+    ClientWindowSystem::main().setMouseGrabEnabled(false);
 
     Mouse_Qt_ShowCursor(true);
 }

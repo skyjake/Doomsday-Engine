@@ -23,7 +23,7 @@
 #include "de/GLTexture"
 #include "de/GLState"
 #include "de/GLInfo"
-#include "de/CanvasWindow"
+#include "de/Canvas"
 #include <de/Asset>
 
 namespace de {
@@ -543,7 +543,7 @@ QImage GLTarget::toImage() const
 {
     if(!d->fbo)
     {
-        return CanvasWindow::main().canvas().grabImage();
+        return Canvas::main().grabImage();
     }
     else if(d->flags & Color)
     {
@@ -668,7 +668,7 @@ GLTarget::Size GLTarget::size() const
     {
         return d->size;
     }
-    return CanvasWindow::main().canvas().size();
+    return Canvas::main().glSize();
 }
 
 void GLTarget::setActiveRect(Rectangleui const &rect, bool applyGLState)

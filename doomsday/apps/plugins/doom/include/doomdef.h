@@ -196,7 +196,8 @@ typedef enum {
 
 // Ammunition types defined.
 typedef enum {
-    AT_FIRST,
+    AT_ENUM_SIGNED = -1, // Compiler should use a signed int.
+    AT_FIRST = 0,
     AT_CLIP = AT_FIRST, // Pistol / chaingun ammo.
     AT_SHELL, // Shotgun / double barreled shotgun.
     AT_CELL, // Plasma rifle, BFG.

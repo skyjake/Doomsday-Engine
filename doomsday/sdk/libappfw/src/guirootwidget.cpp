@@ -22,7 +22,7 @@
 #include "de/Style"
 #include "de/BaseWindow"
 
-#include <de/CanvasWindow>
+#include <de/Canvas>
 #include <de/TextureBank>
 #include <de/GLUniform>
 #include <de/GLTarget>
@@ -100,13 +100,13 @@ DENG2_PIMPL(GuiRootWidget)
         }
     };
 
-    CanvasWindow *window;
+    Canvas *window;
     QScopedPointer<AtlasTexture> atlas; ///< Shared atlas for most UI graphics/text.
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
     bool noFramesDrawnYet;
 
-    Instance(Public *i, CanvasWindow *win)
+    Instance(Public *i, Canvas *win)
         : Base(i)
         , window(win)
         , atlas(0)
@@ -170,16 +170,16 @@ DENG2_PIMPL(GuiRootWidget)
     }
 };
 
-GuiRootWidget::GuiRootWidget(CanvasWindow *window)
+GuiRootWidget::GuiRootWidget(Canvas *window)
     : d(new Instance(this, window))
 {}
 
-void GuiRootWidget::setWindow(CanvasWindow *window)
+void GuiRootWidget::setWindow(Canvas *window)
 {
     d->window = window;
 }
 
-CanvasWindow &GuiRootWidget::window()
+Canvas &GuiRootWidget::window()
 {
     DENG2_ASSERT(d->window != 0);
     return *d->window;
@@ -315,10 +315,10 @@ GuiWidget const *GuiRootWidget::guiFind(String const &name) const
 
 void GuiRootWidget::update()
 {
-    if(window().canvas().isGLReady())
+    if(window().isReady())
     {
         // Allow GL operations.
-        window().canvas().makeCurrent();
+        window().glActivate();
 
         RootWidget::update();
 
@@ -333,7 +333,7 @@ void GuiRootWidget::draw()
     {
         // Widgets may not yet be ready on the first frame; make sure
         // we don't show garbage.
-        window().canvas().renderTarget().clear(GLTarget::Color);
+        window().target().clear(GLTarget::Color);
 
         d->noFramesDrawnYet = false;
     }

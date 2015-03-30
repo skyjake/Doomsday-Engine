@@ -476,7 +476,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
             setMain(thisPublic);
         }
 
-        self.setMinimumSize(MIN_WIDTH, MIN_HEIGHT);
+        self.setMinimumSize(QSize(MIN_WIDTH, MIN_HEIGHT));
     }
 
     ~Instance()
@@ -579,7 +579,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
      */
     void applyToWidget(State const &newState)
     {
-        bool trapped = self.canvas().isMouseTrapped();
+        bool trapped = self.input().isMouseTrapped();
 
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
@@ -742,7 +742,7 @@ DENG2_PIMPL(PersistentCanvasWindow)
                     break;
 
                 case Task::TrapMouse:
-                    self.canvas().trapMouse();
+                    self.input().trapMouse();
                     break;
                 }
 
@@ -843,11 +843,12 @@ Rectanglei PersistentCanvasWindow::windowRect() const
         return d->state.windowRect;
     }
 
-    QRect geom = normalGeometry();
+    //QRect geom = normalGeometry();
+    QRect geom = geometry();
     return Rectanglei(geom.left(), geom.top(), geom.width(), geom.height());
 }
 
-CanvasWindow::Size PersistentCanvasWindow::fullscreenSize() const
+Canvas::Size PersistentCanvasWindow::fullscreenSize() const
 {
     return d->state.fullSize;
 }
@@ -927,14 +928,14 @@ PersistentCanvasWindow &PersistentCanvasWindow::main()
         throw InvalidIdError("PersistentCanvasWindow::main",
                              "No window found with id \"" + MAIN_WINDOW_ID + "\"");
     }
-    return static_cast<PersistentCanvasWindow &>(CanvasWindow::main());
+    return static_cast<PersistentCanvasWindow &>(Canvas::main());
 }
 
 void PersistentCanvasWindow::moveEvent(QMoveEvent *)
 {
     if(isCentered() && !isMaximized() && !isFullScreen())
     {
-        int len = (geometry().topLeft() - centeredQRect(size()).topLeft()).manhattanLength();
+        int len = (geometry().topLeft() - centeredQRect(glSize()).topLeft()).manhattanLength();
 
         if(len > BREAK_CENTERING_THRESHOLD)
         {
@@ -949,7 +950,7 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
         else
         {
             // Recenter.
-            setGeometry(centeredQRect(size()));
+            setGeometry(centeredQRect(glSize()));
         }        
     }
 }

@@ -492,7 +492,7 @@ void App_Error(char const *error, ...)
     va_list argptr;
 
 #ifdef __CLIENT__
-    ClientWindow::main().canvas().trapMouse(false);
+    ClientWindow::main().input().trapMouse(false);
 #endif
 
     // Already in an error?
@@ -1497,7 +1497,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
         // Trap the mouse automatically when loading a game in fullscreen.
         if(mainWin.isFullScreen())
         {
-            mainWin.canvas().trapMouse();
+            mainWin.input().trapMouse();
         }
     }
 #endif
@@ -1600,7 +1600,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     Library_ReleaseGames();
 
 #ifdef __CLIENT__
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 #endif
 
     if(!DD_IsShuttingDown())
@@ -1620,7 +1620,7 @@ bool App_ChangeGame(Game &game, bool allowReload)
     game::Session::profile().gameId = game.id();
 
 #ifdef __CLIENT__
-    ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+    ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
 #endif
 
     /*
@@ -1820,7 +1820,7 @@ void DD_FinishInitializationAfterWindowReady()
     }
     else
     {
-        ClientWindow::main().setWindowTitle(DD_ComposeMainWindowTitle());
+        ClientWindow::main().setTitle(DD_ComposeMainWindowTitle());
     }
 #endif
 

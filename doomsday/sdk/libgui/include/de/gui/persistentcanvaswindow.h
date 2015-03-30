@@ -21,7 +21,7 @@
 #define LIBGUI_PERSISTENTCANVASWINDOW_H
 
 #include <de/Error>
-#include <de/CanvasWindow>
+#include <de/Canvas>
 #include <de/Rectangle>
 
 namespace de {
@@ -34,8 +34,10 @@ namespace de {
  * window's state to Config.
  *
  * Supports fullscreen display modes (using DisplayMode).
+ *
+ * @todo Rename to PersistentCanvas.
  */
-class LIBGUI_PUBLIC PersistentCanvasWindow : public CanvasWindow
+class LIBGUI_PUBLIC PersistentCanvasWindow : public Canvas
 {
     Q_OBJECT
 

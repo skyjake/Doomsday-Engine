@@ -29,7 +29,7 @@
 
 namespace de {
 
-static Loop *loopSingleton = 0;
+static Loop *theLoop = 0;
 
 DENG2_PIMPL(Loop)
 {
@@ -39,8 +39,8 @@ DENG2_PIMPL(Loop)
 
     Instance(Public *i) : Base(i), interval(0), running(false)
     {
-        DENG2_ASSERT(!loopSingleton);
-        loopSingleton = i;
+        DENG2_ASSERT(!theLoop);
+        theLoop = i;
 
         timer = new QTimer(thisPublic);
         QObject::connect(timer, SIGNAL(timeout()), thisPublic, SLOT(nextLoopIteration()));
@@ -48,7 +48,7 @@ DENG2_PIMPL(Loop)
 
     ~Instance()
     {
-        loopSingleton = 0;
+        theLoop = 0;
     }
 
     DENG2_PIMPL_AUDIENCE(Iteration)
@@ -96,8 +96,8 @@ void Loop::timer(TimeDelta const &delay, void (*func)(void))
 
 Loop &Loop::get()
 {
-    DENG2_ASSERT(loopSingleton != 0);
-    return *loopSingleton;
+    DENG2_ASSERT(theLoop != 0);
+    return *theLoop;
 }
 
 void Loop::nextLoopIteration()

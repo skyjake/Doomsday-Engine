@@ -566,7 +566,7 @@ GLTarget &GLState::target() const
     {
         return *d->target;
     }
-    return CanvasWindow::main().canvas().renderTarget();
+    return Canvas::main().target();
 }
 
 Rectangleui GLState::viewport() const

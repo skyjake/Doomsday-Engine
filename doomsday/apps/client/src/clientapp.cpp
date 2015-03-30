@@ -388,7 +388,7 @@ void ClientApp::initialize()
     Plug_LoadAll();
 
     // Create the main window.
-    d->winSys->createWindow()->setWindowTitle(DD_ComposeMainWindowTitle());
+    d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
 
     // Create the input system.
     d->inputSys = new InputSystem;

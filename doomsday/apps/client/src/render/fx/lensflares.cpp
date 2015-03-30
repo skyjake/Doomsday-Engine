@@ -511,7 +511,7 @@ void LensFlares::draw()
     Rectanglef const rect = viewRect();
     float const aspect = rect.height() / rect.width();
 
-    Canvas &canvas = ClientWindow::main().canvas();
+    Canvas &canvas = ClientWindow::main();
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / canvas.width(), 1.f / canvas.height());

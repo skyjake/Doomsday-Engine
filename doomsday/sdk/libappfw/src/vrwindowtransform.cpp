@@ -46,12 +46,12 @@ DENG2_PIMPL(VRWindowTransform)
 
     Canvas &canvas() const
     {
-        return self.window().canvas();
+        return self.window();
     }
 
     GLTarget &target() const
     {
-        return canvas().renderTarget();
+        return canvas().target();
     }
 
     int width() const
@@ -323,7 +323,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
 
     Vector2f pos = winPos;
 
-    Vector2f const size = window().canvas().size();
+    Vector2f const size = window().glSize();
     Vector2f const viewSize = window().windowContentSize();
 
     switch(d->vrCfg.mode())

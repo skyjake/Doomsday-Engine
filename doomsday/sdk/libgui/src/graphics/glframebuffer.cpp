@@ -221,6 +221,7 @@ noMultisampling:
         bufSwap.draw();
     }
 
+#if 0 // needs to be part of the draw
     void swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
     {
         GLTarget defaultTarget;
@@ -284,6 +285,7 @@ noMultisampling:
 
         GLState::pop().apply();
     }
+#endif
 };
 
 GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
@@ -379,7 +381,7 @@ int GLFramebuffer::sampleCount() const
 
 void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
 {
-    d->swapBuffers(canvas, swapMode);
+    //d->swapBuffers(canvas, swapMode);
 }
 
 void GLFramebuffer::drawBuffer(float opacity)

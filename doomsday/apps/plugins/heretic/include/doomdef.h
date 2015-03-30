@@ -192,7 +192,8 @@ typedef enum {
  * Ammunition type identifier.
  */
 typedef enum {
-    AT_FIRST,
+    AT_ENUM_SIGNED = -1,    // Compiler should use a signed int.
+    AT_FIRST = 0,
     AT_CRYSTAL = AT_FIRST,
     AT_ARROW,
     AT_ORB,

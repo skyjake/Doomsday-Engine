@@ -46,7 +46,7 @@ Vector3f quaternionToPRYAngles(Quatf const &q)
 #endif
 
 DENG2_PIMPL(OculusRift)
-, DENG2_OBSERVES(Canvas, KeyEvent)
+, DENG2_OBSERVES(KeyEventSource, KeyEvent)
 #ifdef DENG_HAVE_OCULUS_API
 , DENG2_OBSERVES(Variable, Change)
 #endif

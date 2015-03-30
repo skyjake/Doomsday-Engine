@@ -104,7 +104,7 @@ void CVarNativePathWidget::chooseUsingNativeFileDialog()
     // Use a native dialog to pick the path.
     QDir dir(d->path);
     if(d->path.isEmpty()) dir = QDir::home();
-    QFileDialog dlg(&ClientWindow::main(), tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
+    QFileDialog dlg(nullptr, tr("Select File for \"%1\"").arg(d->cvar), dir.absolutePath());
     if(!d->filters.isEmpty())
     {
         dlg.setNameFilters(d->filters);

@@ -524,10 +524,10 @@ void TaskBarWidget::drawContent()
 
 bool TaskBarWidget::handleEvent(Event const &event)
 {
-    Canvas &canvas = root().window().canvas();
+    Canvas &canvas = root().window();
     ClientWindow &window = root().window().as<ClientWindow>();
 
-    if(!canvas.isMouseTrapped() && event.type() == Event::MouseButton &&
+    if(!canvas.input().isMouseTrapped() && event.type() == Event::MouseButton &&
        !window.hasSidebar())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
@@ -545,7 +545,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             if(App_GameLoaded())
             {
                 // Allow game to use the mouse.
-                canvas.trapMouse();
+                canvas.input().trapMouse();
             }
 
             window.taskBar().close();
@@ -632,11 +632,11 @@ void TaskBarWidget::open()
     // Untrap the mouse if it is trapped.
     if(hasRoot())
     {
-        Canvas &canvas = root().window().canvas();
-        d->mouseWasTrappedWhenOpening = canvas.isMouseTrapped();
-        if(canvas.isMouseTrapped())
+        Canvas &canvas = root().window();
+        d->mouseWasTrappedWhenOpening = canvas.input().isMouseTrapped();
+        if(canvas.input().isMouseTrapped())
         {
-            canvas.trapMouse(false);
+            canvas.input().trapMouse(false);
         }
 
         if(!App_GameLoaded())
@@ -682,10 +682,10 @@ void TaskBarWidget::close()
         // Retrap the mouse if it was trapped when opening.
         if(hasRoot() && App_GameLoaded() && !root().window().as<ClientWindow>().hasSidebar())
         {
-            Canvas &canvas = root().window().canvas();
+            Canvas &canvas = root().window();
             if(d->mouseWasTrappedWhenOpening)
             {
-                canvas.trapMouse();
+                canvas.input().trapMouse();
             }
         }
     }
@@ -722,7 +722,7 @@ void TaskBarWidget::chooseIWADFolder()
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
 
-    QFileDialog dlg(&ClientWindow::main(),
+    QFileDialog dlg(nullptr,
                     tr("Select IWAD Folder"),
                     App::config().gets("resource.iwadFolder", ""));
     dlg.setFileMode(QFileDialog::Directory);

@@ -39,14 +39,14 @@ DENG2_PIMPL(BaseWindow)
         , xf(&defaultXf)
     {
         // Listen to input.
-        self.canvas().audienceForKeyEvent()   += this;
-        self.canvas().audienceForMouseEvent() += this;
+        self.input().audienceForKeyEvent()   += this;
+        self.input().audienceForMouseEvent() += this;
     }
 
     ~Instance()
     {
-        self.canvas().audienceForKeyEvent()   -= this;
-        self.canvas().audienceForMouseEvent() -= this;
+        self.input().audienceForKeyEvent()   -= this;
+        self.input().audienceForMouseEvent() -= this;
     }
 
     void keyEvent(KeyEvent const &ev)
@@ -128,19 +128,19 @@ void BaseWindow::draw()
     auto &vr = DENG2_BASE_GUI_APP->vr();
     if(vr.mode() == VRConfig::OculusRift)
     {
-        if(canvas().isGLReady())
+        if(isReady())
         {
-            canvas().makeCurrent();
+            glActivate();
             vr.oculusRift().init();
         }
     }
     else
     {
-        canvas().makeCurrent();
+        glActivate();
         vr.oculusRift().deinit();
     }
 
-    if(shouldRepaintManually())
+    /*if(shouldRepaintManually())
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
 
@@ -148,28 +148,28 @@ void BaseWindow::draw()
         canvas().makeCurrent();
         canvas().updateGL();
     }
-    else
+    else*/
     {
         // Request update at the earliest convenience.
-        canvas().update();
+        update();
     }
 }
 
-void BaseWindow::canvasGLDraw(Canvas &cv)
+void BaseWindow::drawCanvas()
 {
     preDraw();
     d->xf->drawTransformed();
     postDraw();
 
-    PersistentCanvasWindow::canvasGLDraw(cv);
+    PersistentCanvasWindow::drawCanvas();
 }
 
 void BaseWindow::swapBuffers()
 {
-    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
+/*    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
 
     PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
-                                            gl::SwapStereoBuffers : gl::SwapMonoBuffer);
+                                            gl::SwapStereoBuffers : gl::SwapMonoBuffer);*/
 }
 
 void BaseWindow::preDraw()

@@ -24,7 +24,7 @@
 #include <de/GLShaderBank>
 #include <de/GLUniform>
 #include <de/Matrix>
-#include <de/CanvasWindow>
+#include <de/Canvas>
 
 #include "../libappfw.h"
 
@@ -40,19 +40,19 @@ class GuiWidget;
 class LIBAPPFW_PUBLIC GuiRootWidget : public RootWidget
 {
 public:
-    GuiRootWidget(CanvasWindow *window = 0);
+    GuiRootWidget(Canvas *window = 0);
 
     /**
      * Sets the window in which the root widget resides.
      *
      * @param window  Client window instance.
      */
-    void setWindow(CanvasWindow *window);
+    void setWindow(Canvas *window);
 
     /**
      * Returns the window in which the root widget resides.
      */
-    CanvasWindow &window();
+    Canvas &window();
 
     AtlasTexture &atlas();
     GLUniform &uAtlas();

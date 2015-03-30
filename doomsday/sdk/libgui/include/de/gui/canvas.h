@@ -1,6 +1,7 @@
-/** @file canvas.h  OpenGL drawing surface (QWidget).
+/** @file canvas.h  Top-level window with an OpenGL drawing surface.
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -13,56 +14,54 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBGUI_CANVAS_H
 #define LIBGUI_CANVAS_H
 
+#include <QOpenGLWindow>
+#include <de/GLTexture>
+#include <de/NativeFile>
+#include <de/NativePath>
 #include <de/Observers>
-#include <de/libcore.h>
+#include <de/Rectangle>
 #include <de/Vector>
-#include <QGLWidget>
+#include <de/libcore.h>
 
-#include "../KeyEventSource"
-#include "../MouseEventSource"
 #include "../GLTarget"
 #include "../GLFramebuffer"
+#include "../QtInputSource"
+
+#ifdef WIN32
+#  undef min
+#  undef max
+#endif
 
 namespace de {
 
-class CanvasWindow;
-
 /**
- * Drawing canvas with an OpenGL context and window surface. Each CanvasWindow
- * creates one Canvas instance on which to draw. Buffer swapping must be done
- * manually when appropriate.
+ * Top-level window that contains an OpenGL drawing surface. @ingroup base
  *
- * As Canvas is derived from KeyEventSource and MouseEventSource so that it
- * can submit user input to interested parties.
+ * Canvas represents the entire native window. It (re)constructs the native surface,
+ * handles incoming window events (passing them forward), and owns a GLFramebuffer
+ * representing the default framebuffer (i.e., the window surface).
  *
- * @ingroup gui
+ * @see Canvas
  */
-class LIBGUI_PUBLIC Canvas : public QGLWidget, public KeyEventSource, public MouseEventSource
+class LIBGUI_PUBLIC Canvas : public QOpenGLWindow, public Asset
 {
     Q_OBJECT
 
 public:
     typedef Vector2ui Size;
 
-    /**
-     * Notified when the canvas is ready for GL operations. The OpenGL context
-     * and drawing surface are not ready to be used before that. The
-     * notification occurs soon after the widget first becomes visible on
-     * screen. Note that the notification comes straight from the event loop
-     * (timer signal) instead of during a paint event.
-     */
-    DENG2_DEFINE_AUDIENCE2(GLReady, void canvasGLReady(Canvas &))
+    DENG2_AS_IS_METHODS()
 
     /**
-     * Notified when the canvas's GL state needs to be initialized. This is
-     * called immediately before drawing the contents of the canvas for the
-     * first time (during a paint event).
+     * Notified when GL state needs to be initialized. This is called immediately
+     * before drawing the contents of the canvas for the first time (during a paint
+     * event).
      */
     DENG2_DEFINE_AUDIENCE2(GLInit, void canvasGLInit(Canvas &))
 
@@ -71,25 +70,64 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(GLResize, void canvasGLResized(Canvas &))
 
-    /**
-     * Notified when drawing of the canvas contents has been requested.
-     */
-    DENG2_DEFINE_AUDIENCE2(GLDraw, void canvasGLDraw(Canvas &))
-
-    /**
-     * Notified when the canvas gains or loses input focus.
-     */
-    DENG2_DEFINE_AUDIENCE2(FocusChange, void canvasFocusChanged(Canvas &, bool hasFocus))
-
 public:
-    explicit Canvas(CanvasWindow *parent, QGLWidget* shared = 0);
+    Canvas();
 
     /**
-     * Sets or changes the CanvasWindow that owns this Canvas.
-     *
-     * @param parent  Canvas window instance.
+     * Determines the current top left corner (origin) of the window.
      */
-    void setParent(CanvasWindow *parent);
+    inline Vector2i pos() const { return Vector2i(x(), y()); }
+
+    float frameRate() const;
+
+    QtInputSource &input();
+    QtInputSource const &input() const;
+
+    /**
+     * Recreates the contained Canvas with an updated GL format. The context is
+     * shared with the old Canvas.
+     */
+    void recreateCanvas();
+
+    /*
+    // Events.
+#ifdef WIN32
+    bool event(QEvent *); // Alt key kludge
+#endif
+    void hideEvent(QHideEvent *);
+    */
+
+    /**
+     * Called when the Canvas is ready for OpenGL drawing (and visible).
+     *
+     * @param canvas  Canvas.
+     */
+    //virtual void canvasGLReady(Canvas &canvas);
+
+    /**
+     * Called from Canvas when a GL draw is requested. Overriding methods
+     * must call this as the last operation (updates frame rate statistics).
+     */
+    //virtual void canvasGLDraw(Canvas &);
+
+    /**
+     * Activates the window's GL context so that OpenGL API calls can be made.
+     * The GL context is automatically active during the drawing of the window's
+     * contents; at other times it needs to be manually activated.
+     */
+    void glActivate();
+
+    /**
+     * Dectivates the window's GL context after OpenGL API calls have been done.
+     * The GL context is automatically deactived after the drawing of the window's
+     * contents; at other times it needs to be manually deactivated.
+     */
+    void glDeactivate();
+
+    /**
+     * Returns a handle to the native window instance. (Platform-specific.)
+     */
+    void *nativeHandle() const;
 
     /**
      * Grabs the contents of the canvas framebuffer.
@@ -99,7 +137,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    QImage grabImage(QSize const &outputSize = QSize());
+    QImage grabImage(QSize const &outputSize = QSize()) const;
 
     /**
      * Grabs a portion of the contents of the canvas framebuffer.
@@ -110,7 +148,7 @@ public:
      *
      * @return  Framebuffer contents (no alpha channel).
      */
-    QImage grabImage(QRect const &area, QSize const &outputSize = QSize());
+    QImage grabImage(QRect const &area, QSize const &outputSize = QSize()) const;
 
     /**
      * Grabs the contents of the canvas framebuffer and creates an OpenGL
@@ -121,81 +159,90 @@ public:
      *
      * @return  OpenGL texture name. Caller is responsible for deleting the texture.
      */
-    GLuint grabAsTexture(QSize const &outputSize = QSize());
+    void grab(GLTexture &dest, QSize const &outputSize = QSize()) const;
 
-    GLuint grabAsTexture(QRect const &area, QSize const &outputSize = QSize());
+    void grab(GLTexture &dest, QRect const &area, QSize const &outputSize = QSize()) const;
+
+    enum GrabMode { GrabNormal, GrabHalfSized };
 
     /**
-     * Returns the size of the canvas in device pixels.
+     * Grab the contents of the window into an OpenGL texture.
+     *
+     * @param grabMode  How to do the grabbing.
+     *
+     * @return OpenGL texture name. Caller is reponsible for deleting the texture.
      */
-    Size size() const;
+    void grab(GLTexture &dest, GrabMode grabMode) const;
+
+    void grab(GLTexture &dest, Rectanglei const &area, GrabMode grabMode) const;
+
+    /**
+     * Grabs the contents of the window and saves it into a native image file.
+     *
+     * @param path  Name of the file to save. May include a file extension
+     *              that indicates which format to use (e.g, "screenshot.jpg").
+     *              If omitted, defaults to PNG.
+     *
+     * @return @c true if successful, otherwise @c false.
+     */
+    bool grabToFile(NativePath const &path) const;
+
+    /**
+     * Returns the size of the OpenGL drawing surface in device pixels.
+     */
+    Size glSize() const;
 
     /**
      * Returns the width of the canvas in device pixels.
      */
-    inline int width() const { return size().x; }
+    inline int width() const { return glSize().x; }
 
     /**
      * Returns the height of the canvas in device pixels.
      */
-    inline int height() const { return size().y; }
+    inline int height() const { return glSize().y; }
 
-    /**
-     * When the mouse is trapped, all mouse input is grabbed, the mouse cursor
-     * is hidden, and mouse movement is submitted as deltas via EventSource.
-     *
-     * @param trap  Enable or disable the mouse trap.
-     */
-    void trapMouse(bool trap = true);
-
-    /**
-     * Determines if the mouse is presently trapped by the canvas.
-     */
-    bool isMouseTrapped() const;
-
-    bool isGLReady() const;
-
-    /**
-     * Replaces the current audiences of this canvas with another canvas's
-     * audiences.
-     *
-     * @param other  Canvas instance.
-     */
-    void copyAudiencesFrom(Canvas const &other);
+    GLFramebuffer &framebuffer() const;
 
     /**
      * Returns a render target that renders to this canvas.
      *
      * @return GL render target.
      */
-    GLTarget &renderTarget() const;
-
-    GLFramebuffer &framebuffer();
+    inline GLTarget &target() const { return framebuffer().target(); }
 
     /**
      * Copies or swaps the back buffer to the front, making it visible.
      */
-    void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
+    //void swapBuffers(gl::SwapBufferMode swapMode = gl::SwapMonoBuffer);
+
+/*protected slots:
+    void notifyReady();
+    void updateSize();*/
+
+    bool isFullScreen() const { return windowState() & Qt::WindowFullScreen; }
+    bool isMaximized() const  { return windowState() & Qt::WindowMaximized; }
+    bool isMinimized() const  { return windowState() & Qt::WindowMinimized; }
+    bool isHidden() const { return !isVisible(); }
 
 protected:
+    void exposeEvent(QExposeEvent *);
+
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
 
-    // Native events.
-    void focusInEvent(QFocusEvent *ev);
-    void focusOutEvent(QFocusEvent *ev);
-    void keyPressEvent(QKeyEvent *ev);
-    void keyReleaseEvent(QKeyEvent *ev);
-    void mousePressEvent(QMouseEvent *ev);
-    void mouseReleaseEvent(QMouseEvent *ev);
-    void mouseMoveEvent(QMouseEvent *ev);
-    void wheelEvent(QWheelEvent *ev);
-    void showEvent(QShowEvent *ev);
+    /**
+     * Draw the contents of the window. The contents are drawn immediately and the method
+     * does not return until everything has been drawn. The method should draw an entire
+     * frame using the non-transformed logical size of the view.
+     */
+    virtual void drawCanvas();
 
-protected slots:
-    void notifyReady();
-    void updateSize();
+public:
+    static bool mainExists();
+    static Canvas &main();
+    static void setMain(Canvas *canvas);
 
 private:
     DENG2_PRIVATE(d)

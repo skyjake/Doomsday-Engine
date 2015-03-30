@@ -86,6 +86,8 @@ public:
     void swapBuffers();
 
 protected:
+    void drawCanvas() override;
+
     /**
      * Called when a draw request has been received. This method should carry out any
      * preparations necessary before the frame can be drawn. It can also cancel the
