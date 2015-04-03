@@ -30,8 +30,6 @@
 
 namespace de {
 
-class CanvasWindow;
-
 /**
  * Listens to incoming input events and produces suitable notifications. Works as
  * a Qt event filter. This is intended to be installed on a CanvasWindow.
@@ -72,6 +70,11 @@ public:
      */
     bool isMouseTrapped() const;
 
+    /**
+     * Handles/converts incoming events and passes them to appropriate audiences.
+     * @param watched  Target object.
+     * @param event    Event.
+     */
     bool eventFilter(QObject *watched, QEvent *event);
 
 private:

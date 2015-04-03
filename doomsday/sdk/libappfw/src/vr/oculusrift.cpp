@@ -239,13 +239,13 @@ DENG2_PIMPL(OculusRift)
         LOG_GL_MSG("Initializing Oculus Rift for rendering");
 
         // We will be rendering into the main window.
-        window = &CanvasWindow::main().as<BaseWindow>();
+        window = &Canvas::main().as<BaseWindow>();
         DENG2_ASSERT(window->isVisible());
 
         DENG2_ASSERT(QGLContext::currentContext() != 0);
 
         // Observe key events for dismissing the Health and Safety warning.
-        window->canvas().audienceForKeyEvent() += this;
+        window->input().audienceForKeyEvent() += this;
 
         // Set up the rendering target according to the OVR parameters.
         auto &buf = framebuffer();
@@ -367,7 +367,7 @@ DENG2_PIMPL(OculusRift)
             framebuffer().glDeinit();
 
             moveWindow(PreviousScreen);
-            window->canvas().audienceForKeyEvent() -= this;
+            window->input().audienceForKeyEvent() -= this;
             window = 0;
 
             ovrHmd_Destroy(hmd);
@@ -427,7 +427,7 @@ DENG2_PIMPL(OculusRift)
         {
             if(dismissHealthAndSafetyWarning())
             {
-                window->canvas().audienceForKeyEvent() -= this;
+                window->input().audienceForKeyEvent() -= this;
             }
         }
 #endif

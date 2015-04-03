@@ -379,7 +379,7 @@ int GLFramebuffer::sampleCount() const
     return d->sampleCount();
 }
 
-void GLFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
+void GLFramebuffer::swapBuffers(Canvas &/*canvas*/, gl::SwapBufferMode /*swapMode*/)
 {
     //d->swapBuffers(canvas, swapMode);
 }

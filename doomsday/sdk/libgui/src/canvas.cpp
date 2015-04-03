@@ -91,6 +91,8 @@ DENG2_PIMPL(Canvas)
     void makeReady()
     {
         if(self.isReady()) return;
+        
+        qDebug() << "Canvas: making ready";
 
         glInit();
         //d->reconfigureFramebuffer();
@@ -364,7 +366,10 @@ void Canvas::paintGL()
     // Make sure any changes to the state stack become effective.
     GLState::current().apply();
     drawCanvas();
-
+    
+    glClearColor(1, 0, 1, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
     LIBGUI_ASSERT_GL_OK();
 }
 
@@ -484,6 +489,8 @@ void *Canvas::nativeHandle() const
 void Canvas::exposeEvent(QExposeEvent *event)
 {
     LOG_AS("Canvas");
+    
+    qDebug() << "Canvas: expose!" << isExposed();
 
     QOpenGLWindow::exposeEvent(event);
 
