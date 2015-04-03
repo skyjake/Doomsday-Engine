@@ -64,6 +64,14 @@ DENG2_PIMPL(VRWindowTransform)
         return canvas().height();
     }
 
+    float displayModeDependentUIScalingFactor() const
+    {
+        // Since the UI style doesn't yet support scaling at runtime based on
+        // display resolution (or any other factor).
+        return 1.f / Rangef(.5f, 1.0f).clamp((self.window().width() - GuiWidget::toDevicePixels(256.f)) /
+                                             GuiWidget::toDevicePixels(768.f));
+    }
+
     void drawContent() const
     {
         LIBGUI_ASSERT_GL_OK();
@@ -313,6 +321,8 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalCanvasSize
         break;
     }
 
+    size *= d->displayModeDependentUIScalingFactor();
+
     return size;
 }
 
@@ -324,7 +334,7 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
     Vector2f pos = winPos;
 
     Vector2f const size = window().canvas().size();
-    Vector2f const viewSize = window().windowContentSize();
+    Vector2f viewSize = window().windowContentSize();
 
     switch(d->vrCfg.mode())
     {
@@ -339,9 +349,6 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
             pos.x -= size.x/2;
         }
         pos.x *= 2;
-
-        // Scale to logical size.
-        pos = pos / size * viewSize;
         break;
 
     // Top-bottom screen split modes
@@ -352,15 +359,15 @@ Vector2f VRWindowTransform::windowToLogicalCoords(Vector2i const &winPos) const
             pos.y -= size.y/2;
         }
         pos.y *= 2;
-
-        // Scale to logical size.
-        pos = pos / size * viewSize;
         break;
 
     default:
         // Not transformed.
         break;
     }
+
+    // Scale to logical size.
+    pos = pos / size * viewSize;
 
     return pos;
 }
