@@ -31,6 +31,7 @@
 #include <de/SignalAction>
 #include <de/DialogContentStylist>
 #include <de/InputDialog>
+#include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace ui;
@@ -133,10 +134,6 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     appearLabel->setName("appearance-label"); // for lookup from tutorial
     LabelWidget *fovLabel = LabelWidget::newWithText(tr("Field of View:"), &area());
 
-    /*LabelWidget *capLabel = LabelWidget::newWithText(_E(D) + tr("Behavior"), &area());
-    capLabel->setFont("separator.label");
-    capLabel->margins().setTop("gap");*/
-
     // Layout.
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
     layout.setGridSize(2, 0);
@@ -148,9 +145,15 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
 
     layout << *fovLabel << *d->fov;
 
-    // Label for the tech caps.
-    //layout.setCellAlignment(Vector2i(0, 2), ui::AlignLeft);
-    //layout.append(*capLabel, 2);
+    // Slider for modifying the global pixel density factor. This allows slower
+    // GPUs to compensate for large resolutions.
+    {
+        auto *pd = new VariableSliderWidget(App::config("render.pixelDensity"), Ranged(0, 1), .05);
+        pd->setPrecision(2);
+        area().add(pd);
+
+        layout << *LabelWidget::newWithText(tr("Pixel Density:"), &area()) << *pd;
+    }
 
     area().setContentSize(layout.width(), layout.height());
 
