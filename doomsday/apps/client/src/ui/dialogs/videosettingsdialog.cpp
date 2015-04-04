@@ -308,9 +308,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
         modeLayout.append(*aspectLabel, 2)
                 << *LabelWidget::newWithText(tr("Player Weapons:"), &area()) << *d->hudAspect
-                << *LabelWidget::newWithText(tr("Menus:"), &area()) << *d->menuAspect
                 << *LabelWidget::newWithText(tr("Intermissions:"), &area()) << *d->inludeAspect
-                << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect;
+                << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect
+                << *LabelWidget::newWithText(tr("Menus:"), &area()) << *d->menuAspect;
     }
 
     area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
