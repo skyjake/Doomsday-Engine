@@ -118,7 +118,8 @@ DENG2_PIMPL(RenderSystem)
         typedef SettingsRegister SReg;
 
         // Initialize settings.
-        settings.define(SReg::FloatCVar, "rend-camera-fov", 95.f)
+        settings.define(SReg::FloatCVar,      "rend-camera-fov", 95.f)
+                .define(SReg::ConfigVariable, "render.pixelDensity")
                 .define(SReg::IntCVar,   "rend-model-mirror-hud", 0)
                 .define(SReg::IntCVar,   "rend-model-precache", 1)
                 .define(SReg::IntCVar,   "rend-sprite-precache", 1)
