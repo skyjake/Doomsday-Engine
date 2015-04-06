@@ -1405,7 +1405,7 @@ static void runGameAction()
 
             if(!IS_DEDICATED)
             {
-                GL_ResetViewEffects();
+                G_ResetViewEffects();
             }
 
             // Go to an intermission?

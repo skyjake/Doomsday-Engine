@@ -33,6 +33,7 @@
 #include "d_netsv.h"
 #include "g_common.h"
 #include "g_game.h"
+#include "r_common.h"
 #include "hu_menu.h"
 #include "hu_inventory.h"
 #include "mapstatewriter.h"
@@ -1020,7 +1021,7 @@ void GameSession::end()
 #endif
     if(!IS_DEDICATED)
     {
-        GL_ResetViewEffects();
+        G_ResetViewEffects();
     }
 
     Session::removeSaved(internalSavePath);
