@@ -361,3 +361,11 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
         break;
     }
 }
+
+void G_ResetViewEffects()
+{
+    GL_ResetViewEffects();
+#if __JDOOM__
+    G_InitSpecialFilter();
+#endif
+}

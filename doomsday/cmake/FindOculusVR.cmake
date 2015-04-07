@@ -48,12 +48,15 @@ if (LIBOVR_OVR_H AND DENG_ENABLE_OCULUS)
         get_filename_component (ovrDir "${ovrDir}" DIRECTORY)
 
         add_library (LibOVR INTERFACE)
-        target_include_directories (LibOVR INTERFACE "${ovrDir}/Include" "${ovrDir}/Src")
         target_compile_definitions (LibOVR INTERFACE -DDENG_HAVE_OCULUS_API)
+        target_include_directories (LibOVR INTERFACE
+            "${ovrDir}/Include"
+            "${ovrDir}/../LibOVRKernel/Src"
+        )
         if (APPLE)
             target_link_libraries (LibOVR INTERFACE
-                debug     "${ovrDir}/Lib/Mac/Debug/libovr.a"
-                optimized "${ovrDir}/Lib/Mac/Release/libovr.a"
+                debug     "${ovrDir}/Lib/Mac/Debug/LibOVR.framework"
+                optimized "${ovrDir}/Lib/Mac/Release/LibOVR.framework"
             )
             link_framework (LibOVR INTERFACE Cocoa)
             link_framework (LibOVR INTERFACE IOKit)

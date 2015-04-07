@@ -75,6 +75,12 @@ void R_StatusBarSize(int player, Size2Raw *statusBarSize);
 void G_DrawViewPort(int port, RectRaw const *portGeometry,
                     RectRaw const *windowGeometry, int player, int layer);
 
+/**
+ * Remove all visual effects applied to the view, e.g., post-processing shader,
+ * fullbright, or color filter.
+ */
+void G_ResetViewEffects();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

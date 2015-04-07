@@ -255,8 +255,7 @@ DENG2_PIMPL(OculusRift)
         resizeFramebuffer();
 
         uint distortionCaps = hmd->DistortionCaps &
-                ( ovrDistortionCap_Chromatic
-                | ovrDistortionCap_TimeWarp
+                ( ovrDistortionCap_TimeWarp
                 | ovrDistortionCap_Vignette
                 | ovrDistortionCap_Overdrive );
 

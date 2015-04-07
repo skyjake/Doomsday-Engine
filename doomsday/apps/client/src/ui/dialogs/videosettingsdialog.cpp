@@ -254,29 +254,6 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
 
-#ifdef DENG2_QT_5_0_OR_NEWER
-    // With HiDPI, allow specifying a global pixel density factor. This allows slower
-    // GPUs to generally compensate for the large resolution. This is always shown on
-    // OS X because there the native video mode is not configurable.
-# ifndef MACOSX
-    if(ClientApp::app().devicePixelRatio() > 1)
-# endif
-    {
-        // Overall pixel density adjustment replaces the distinct display modes.
-        auto *pd = new VariableSliderWidget(App::config("render.pixelDensity"), Ranged(0, 1), .05);
-        pd->setPrecision(2);
-        area().add(pd);
-
-        auto *note = LabelWidget::newWithText(tr("Only affects the game view."), &area());
-        note->margins().setTop("");
-        note->setTextColor("label.altaccent");
-        note->setFont("separator.annotation");
-
-        modeLayout << *LabelWidget::newWithText(tr("Pixel Density:"), &area()) << *pd
-                   << Const(0) << *note;
-    }
-#endif
-
     if(gotDisplayMode)
     {
         modeLayout << *LabelWidget::newWithText(tr("Resolution:"), &area());
@@ -308,9 +285,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
         modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
         modeLayout.append(*aspectLabel, 2)
                 << *LabelWidget::newWithText(tr("Player Weapons:"), &area()) << *d->hudAspect
-                << *LabelWidget::newWithText(tr("Menus:"), &area()) << *d->menuAspect
                 << *LabelWidget::newWithText(tr("Intermissions:"), &area()) << *d->inludeAspect
-                << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect;
+                << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect
+                << *LabelWidget::newWithText(tr("Menus:"), &area()) << *d->menuAspect;
     }
 
     area().setContentSize(OperatorRule::maximum(layout.width(), modeLayout.width()),
