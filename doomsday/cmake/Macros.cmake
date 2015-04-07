@@ -446,14 +446,16 @@ function (deng_add_application target)
         set_property (TARGET ${target} PROPERTY WIN32_EXECUTABLE ON)
     endif ()
     deng_target_defaults (${target})
-    set_property (TARGET ${target} PROPERTY FOLDER Apps)
     if (target MATCHES "test_.*")
+        set_property (TARGET ${target} PROPERTY FOLDER Tests)
         if (APPLE)
             # Tests should be runnable from distrib/products.
             set_property (TARGET ${target} APPEND PROPERTY 
                 INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR}"
             )
         endif ()        
+    else ()
+        set_property (TARGET ${target} PROPERTY FOLDER Apps)        
     endif ()
 endfunction (deng_add_application)
 
