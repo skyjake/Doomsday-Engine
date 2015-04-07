@@ -16,3 +16,7 @@ deng_add_application (test_glsandbox
 )
 
 target_link_libraries (test_glsandbox PRIVATE Deng::libappfw opengl)
+
+if (APPLE)
+    deng_install_deployqt (test_glsandbox)
+endif ()
