@@ -21,6 +21,8 @@
 #include "approotwidget.h"
 #include "globalshortcuts.h"
 
+#include <QWidget>
+
 #include <de/Garbage>
 #include <de/GLState>
 #include <de/VRConfig>
@@ -35,27 +37,23 @@ DENG2_PIMPL(MainWindow)
 , DENG2_OBSERVES(Canvas, GLResize)
 {
     AppRootWidget root;
-    bool needRootSizeUpdate;
+    bool needRootSizeUpdate = false;
     VRWindowTransform contentXf;
 
-    GlobalShortcuts *shortcuts;
-    CompositorWidget *compositor;
-    LabelWidget *test;
+    GlobalShortcuts *shortcuts = nullptr;
+    CompositorWidget *compositor = nullptr;
+    LabelWidget *test = nullptr;
 
     // Faux mouse cursor for transformed VR mode.
-    LabelWidget *cursor;
-    LabelWidget *camPos;
-    ConstantRule *cursorX;
-    ConstantRule *cursorY;
+    LabelWidget *cursor = nullptr;
+    LabelWidget *camPos = nullptr;
+    ConstantRule *cursorX = nullptr;
+    ConstantRule *cursorY = nullptr;
 
     Instance(Public *i)
         : Base(i)
         , root(&self)
-        , needRootSizeUpdate(false)
         , contentXf(self)
-        , compositor(0)
-        , test(0)
-        , cursor(0)
         , cursorX(new ConstantRule(0))
         , cursorY(new ConstantRule(0))
     {

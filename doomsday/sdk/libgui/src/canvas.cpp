@@ -323,6 +323,9 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
+    w *= qApp->devicePixelRatio();
+    h *= qApp->devicePixelRatio();
+    
     d->currentSize = Size(max(0, w), max(0, h));
 
     DENG2_FOR_AUDIENCE2(GLResize, i) i->canvasGLResized(*this);

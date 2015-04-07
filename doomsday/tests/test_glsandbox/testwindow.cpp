@@ -21,7 +21,6 @@
 
 #include <QMessageBox>
 #include <QPainter>
-#include <QGLFormat>
 
 #include <de/ImageBank>
 #include <de/GLState>
@@ -43,6 +42,7 @@ DENG2_OBSERVES(Canvas, GLResize),
 DENG2_OBSERVES(Clock, TimeChange),
 DENG2_OBSERVES(Bank, Load)
 {
+    QWidget *tools;
     QToolBar *modelChoice;
 
     enum Mode
@@ -92,6 +92,8 @@ DENG2_OBSERVES(Bank, Load)
                                                           Atlas::BackingStore |
                                                           Atlas::WrapBordersInBackingStore))
     {
+        tools = new QWidget;
+        
         // Use this as the main window.
         setMain(i);
 
@@ -118,6 +120,7 @@ DENG2_OBSERVES(Bank, Load)
     ~Instance()
     {
         model.glDeinit();
+        delete tools;
     }
 
     void canvasGLInit(Canvas &cv)
@@ -314,9 +317,7 @@ DENG2_OBSERVES(Bank, Load)
     {
         LOG_GL_VERBOSE("GLResized: %i x %i") << cv.width() << cv.height();
 
-        GLState &st = GLState::current();
-        //st.setViewport(Rectangleui::fromSize(cv.size()));
-        st.setViewport(Rectangleui(0, 0, cv.width(), cv.height()));
+        GLState::current().setViewport(Rectangleui::fromSize(cv.glSize()));
 
         updateProjection(cv);
     }
@@ -528,18 +529,28 @@ TestWindow::TestWindow() : d(new Instance(this))
 
     setTitle("libgui GL Sandbox");
     setMinimumSize(QSize(640, 480));
-#if 0
-    QToolBar *tools = addToolBar(tr("Tests"));
+
+    auto *layout = new QHBoxLayout;
+    layout->setSpacing(0);
+    layout->setContentsMargins(0, 0, 0, 0);
+    d->tools->setLayout(layout);
+    
+    QToolBar *tools = new QToolBar(tr("Tests"));
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
     tools->addAction("Model", this, SLOT(testModel()));
 
-    d->modelChoice = addToolBar(tr("Models"));
+    d->modelChoice = new QToolBar(tr("Models"));
     d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
     d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
-#endif
-    //addToolBar(Qt::TopToolBarArea, d->modelChoice);
-    //d->modelChoice->hide();
+
+    layout->addWidget(tools);
+    layout->addWidget(d->modelChoice);
+    
+    d->tools->show();
+    d->tools->move(30, 30);
+    
+    d->modelChoice->hide();
 }
 
 void TestWindow::drawCanvas()

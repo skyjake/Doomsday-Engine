@@ -18,6 +18,7 @@
 
 #include "de/GuiApp"
 #include "de/graphics/opengl.h"
+#include <QSurfaceFormat>
 #include <de/Log>
 
 #ifdef DENG2_QT_5_0_OR_NEWER
@@ -35,6 +36,13 @@ DENG2_PIMPL(GuiApp)
     Instance(Public *i) : Base(i)
     {
         loop.audienceForIteration() += self;
+        
+        // Setup a reasonable default format for canvases.
+        QSurfaceFormat format;
+        format.setRenderableType(QSurfaceFormat::OpenGL);
+        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+        format.setDepthBufferSize(16);
+        QSurfaceFormat::setDefaultFormat(format);
     }
 
     DENG2_PIMPL_AUDIENCE(GLContextChange)
