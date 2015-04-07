@@ -12,3 +12,7 @@ file (GLOB SOURCES src/*.cpp src/*.h)
 deng_add_application (test_appfw ${SOURCES})
 
 target_link_libraries (test_appfw Deng::libappfw opengl)
+
+if (APPLE)
+    deng_install_deployqt (test_appfw)
+endif ()
