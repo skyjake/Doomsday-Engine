@@ -365,10 +365,12 @@ void Canvas::paintGL()
 
     // Make sure any changes to the state stack become effective.
     GLState::current().apply();
+
+    // Derived classes will draw contents now.
     drawCanvas();
     
-    glClearColor(1, 0, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
+    //glClearColor(1, 0, 1, 1);
+    //glClear(GL_COLOR_BUFFER_BIT);
     
     LIBGUI_ASSERT_GL_OK();
 }

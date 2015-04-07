@@ -27,7 +27,7 @@ DENG2_PIMPL(AppRootWidget)
     Instance(Public *i) : Base(i) {}
 };
 
-AppRootWidget::AppRootWidget(CanvasWindow *window)
+AppRootWidget::AppRootWidget(Canvas *window)
     : GuiRootWidget(window), d(new Instance(this))
 {}
 

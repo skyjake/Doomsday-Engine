@@ -282,7 +282,7 @@
     template <typename T_> \
     T_ *maybeAs() { return dynamic_cast<T_ *>(this); } \
     template <typename T_> \
-    T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); } \
+    T_ const *maybeAs() const { return dynamic_cast<T_ const *>(this); }
 
 /**
  * Macro for starting the definition of a private implementation struct. The

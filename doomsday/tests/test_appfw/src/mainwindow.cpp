@@ -31,6 +31,7 @@
 using namespace de;
 
 DENG2_PIMPL(MainWindow)
+, DENG2_OBSERVES(Asset, StateChange)
 , DENG2_OBSERVES(Canvas, GLResize)
 {
     AppRootWidget root;
@@ -59,7 +60,8 @@ DENG2_PIMPL(MainWindow)
         , cursorY(new ConstantRule(0))
     {
         self.setTransform(contentXf);
-        self.canvas().audienceForGLResize() += this;
+        self.audienceForStateChange() += this;
+        self.audienceForGLResize() += this;
     }
 
     ~Instance()
@@ -112,8 +114,8 @@ DENG2_PIMPL(MainWindow)
         contentXf.glInit();
 
         self.raise();
-        self.activateWindow();
-        self.canvas().setFocus();
+        self.requestActivate();
+        //self.canvas().setFocus();
     }
 
     void updateMouseCursor()
@@ -130,7 +132,7 @@ DENG2_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vector2ui const size = contentXf.logicalRootSize(self.canvas().size());
+        Vector2ui const size = contentXf.logicalRootSize(self.glSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -162,13 +164,28 @@ DENG2_PIMPL(MainWindow)
     {
         LOG_AS("MainWindow");
 
-        Canvas::Size size = canvas.size();
+        Canvas::Size size = canvas.glSize();
         LOG_TRACE("Canvas resized to ") << size.asText();
 
         // Update viewport.
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
         updateRootSize();
+    }
+
+    void assetStateChanged(Asset &asset)
+    {
+        if(asset.isReady())
+        {
+            // Configure a viewport immediately.
+            GLState::current()
+                    .setViewport(Rectangleui(0, 0, self.width(), self.height()))
+                    .setDepthTest(true);
+
+            LOGDEV_MSG("MainWindow GL ready");
+
+            glInit();
+        }
     }
 };
 
@@ -187,7 +204,7 @@ MainWindow::MainWindow(String const &id)
         setCursor(Qt::BlankCursor);
     }
 
-    setWindowTitle("test_appfw");
+    setTitle("test_appfw");
 
     d->setupUI();
 }
@@ -209,20 +226,6 @@ void MainWindow::drawWindowContent()
 
     d->updateCompositor();
     d->root.draw();
-}
-
-void MainWindow::canvasGLReady(Canvas &canvas)
-{
-    BaseWindow::canvasGLReady(canvas);
-
-    // Configure a viewport immediately.
-    GLState::current()
-            .setViewport(Rectangleui(0, 0, canvas.width(), canvas.height()))
-            .setDepthTest(true);
-
-    LOGDEV_MSG("MainWindow GL ready");
-
-    d->glInit();
 }
 
 void MainWindow::preDraw()

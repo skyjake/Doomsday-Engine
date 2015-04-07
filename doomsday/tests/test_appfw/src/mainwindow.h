@@ -34,7 +34,6 @@ public:
 
     de::Vector2f windowContentSize() const;
 
-    void canvasGLReady(de::Canvas &canvas);
     void addOnTop(de::GuiWidget *widget);
     void drawWindowContent();
     void preDraw();

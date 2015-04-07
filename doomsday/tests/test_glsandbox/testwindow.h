@@ -20,16 +20,16 @@
 #ifndef GLSANDBOX_TESTWINDOW_H
 #define GLSANDBOX_TESTWINDOW_H
 
-#include <de/CanvasWindow>
+#include <de/Canvas>
 
-class TestWindow : public de::CanvasWindow
+class TestWindow : public de::Canvas
 {
     Q_OBJECT
 
 public:
     TestWindow();
 
-    void canvasGLDraw(de::Canvas &canvas);
+    void drawCanvas();
 
 public slots:
     void testRenderToTexture();

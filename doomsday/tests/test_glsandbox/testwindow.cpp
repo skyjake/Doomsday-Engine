@@ -95,8 +95,8 @@ DENG2_OBSERVES(Bank, Load)
         // Use this as the main window.
         setMain(i);
 
-        self.canvas().audienceForGLInit() += this;
-        self.canvas().audienceForGLResize() += this;
+        self.audienceForGLInit() += this;
+        self.audienceForGLResize() += this;
         Clock::get().audienceForTimeChange() += this;
 
         uColor = Vector4f(.5f, .75f, .5f, 1);
@@ -131,7 +131,7 @@ DENG2_OBSERVES(Bank, Load)
         {
             qWarning() << er.asText();
 
-            QMessageBox::critical(thisPublic, "GL Init Error", er.asText());
+            QMessageBox::critical(nullptr, "GL Init Error", er.asText());
             exit(1);
         }
     }
@@ -250,7 +250,7 @@ DENG2_OBSERVES(Bank, Load)
                 << uMvpMatrix // note: uniforms shared between programs
                 << uTex;
 
-        cv.renderTarget().setClearColor(Vector4f(.2f, .2f, .2f, 0));
+        cv.target().setClearColor(Vector4f(.2f, .2f, .2f, 0));
 
         modelProgram.build(
                     ByteRefArray::fromCStr(
@@ -302,7 +302,7 @@ DENG2_OBSERVES(Bank, Load)
         {
             DENG2_ASSERT_IN_MAIN_THREAD();
 
-            self.canvas().makeCurrent();
+            self.glActivate();
             testpic.setImage(imageBank.image(path));
             //self.canvas().doneCurrent();
 
@@ -351,7 +351,7 @@ DENG2_OBSERVES(Bank, Load)
     void setMode(Mode newMode)
     {
         mode = newMode;
-        updateProjection(self.canvas());
+        updateProjection(self);
 
         modelChoice->hide();
 
@@ -371,7 +371,7 @@ DENG2_OBSERVES(Bank, Load)
         }
     }
 
-    void draw(Canvas &)
+    void draw()
     {
         switch(mode)
         {
@@ -477,7 +477,7 @@ DENG2_OBSERVES(Bank, Load)
             break;
         }
 
-        self.canvas().update();
+        self.update();
     }
 
     void nextAtlasAlloc()
@@ -526,9 +526,9 @@ TestWindow::TestWindow() : d(new Instance(this))
 {
     qsrand(Time().asDateTime().toTime_t());
 
-    setWindowTitle("libgui GL Sandbox");
-    setMinimumSize(640, 480);
-
+    setTitle("libgui GL Sandbox");
+    setMinimumSize(QSize(640, 480));
+#if 0
     QToolBar *tools = addToolBar(tr("Tests"));
     tools->addAction("RTT", this, SLOT(testRenderToTexture()));
     tools->addAction("Atlas", this, SLOT(testDynamicAtlas()));
@@ -537,18 +537,19 @@ TestWindow::TestWindow() : d(new Instance(this))
     d->modelChoice = addToolBar(tr("Models"));
     d->modelChoice->addAction("MD2", this, SLOT(loadMD2Model()));
     d->modelChoice->addAction("MD5", this, SLOT(loadMD5Model()));
+#endif
     //addToolBar(Qt::TopToolBarArea, d->modelChoice);
     //d->modelChoice->hide();
 }
 
-void TestWindow::canvasGLDraw(Canvas &canvas)
+void TestWindow::drawCanvas()
 {
     LIBGUI_ASSERT_GL_OK();
 
-    d->draw(canvas);
-    canvas.swapBuffers();
+    d->draw();
+    //canvas.swapBuffers();
 
-    CanvasWindow::canvasGLDraw(canvas);
+    Canvas::drawCanvas();
 }
 
 void TestWindow::testRenderToTexture()

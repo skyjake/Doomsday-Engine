@@ -236,6 +236,8 @@ protected:
      * Draw the contents of the window. The contents are drawn immediately and the method
      * does not return until everything has been drawn. The method should draw an entire
      * frame using the non-transformed logical size of the view.
+     *
+     * Overriding methods must call Canvas::drawCanvas().
      */
     virtual void drawCanvas();
 
