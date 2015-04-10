@@ -1,6 +1,6 @@
 /** @file canvas.cpp  OpenGL drawing surface (QWidget).
  *
- * @authors Copyright (c) 2012-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2012-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -21,6 +21,7 @@
 #include "de/GLTexture"
 #include "de/QtInputSource"
 #include "de/graphics/opengl.h"
+#include "de/gui/canvas_macx.h"
 
 #include <de/App>
 #include <de/Log>
@@ -311,7 +312,11 @@ GLFramebuffer &Canvas::framebuffer() const
 void Canvas::initializeGL()
 {
     LOG_AS("Canvas");
-    LOGDEV_GL_NOTE("Notifying GL init");
+    LOGDEV_GL_NOTE("OpenGL initialization");
+    
+#ifdef MACOSX
+    Canvas_OSX_EnableFullScreenMode(this);
+#endif
 
 #ifdef LIBGUI_USE_GLENTRYPOINTS
     getAllOpenGLEntryPoints();

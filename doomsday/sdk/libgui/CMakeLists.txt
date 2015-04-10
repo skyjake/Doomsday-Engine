@@ -31,7 +31,7 @@ add_definitions (-D__LIBGUI__)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
-file (GLOB_RECURSE SOURCES src/*.cpp src/*.h)
+file (GLOB_RECURSE SOURCES src/*.cpp src/*.h src/*.mm)
 
 # Choose which DisplayMode sources to use.
 list_remove_matches (SOURCES ".*/displaymode_.*")
