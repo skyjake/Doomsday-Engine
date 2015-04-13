@@ -17,17 +17,19 @@
  */
 
 #include "de_platform.h"
-#include "clientapp.h"
 #include "render/rendersystem.h"
-#include "render/modelrenderer.h"
+
+#include <de/memory.h>
+#include <de/ScriptedInfo>
+#include "clientapp.h"
 #include "render/rend_main.h"
 #include "render/rend_halo.h"
+#include "render/angleclipper.h"
+#include "render/modelrenderer.h"
 #include "render/skydrawable.h"
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
-#include <de/memory.h>
-#include <de/ScriptedInfo>
 
 using namespace de;
 
@@ -94,6 +96,9 @@ DENG2_PIMPL(RenderSystem)
     SettingsRegister settings;
     SettingsRegister appearanceSettings;
     ImageBank images;
+
+    AngleClipper clipper;
+
     Store buffer;
     DrawLists drawLists;
 
@@ -300,6 +305,11 @@ SettingsRegister &RenderSystem::settings()
 SettingsRegister &RenderSystem::appearanceSettings()
 {
     return d->appearanceSettings;
+}
+
+AngleClipper &RenderSystem::angleClipper() const
+{
+    return d->clipper;
 }
 
 Store &RenderSystem::buffer()

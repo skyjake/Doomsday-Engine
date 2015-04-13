@@ -26,6 +26,7 @@
 #include "DrawLists"
 #include "settingsregister.h"
 
+class AngleClipper;
 class ModelRenderer;
 class SkyDrawable;
 
@@ -77,6 +78,8 @@ public:
 
     SettingsRegister &settings();
     SettingsRegister &appearanceSettings();
+
+    AngleClipper &angleClipper() const;
 
     ModelRenderer &modelRenderer();
 

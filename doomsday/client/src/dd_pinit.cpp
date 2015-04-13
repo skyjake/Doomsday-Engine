@@ -34,6 +34,10 @@
 #include "de_ui.h"
 #include "de_filesys.h"
 
+#ifdef __CLIENT__
+#  include "clientapp.h"
+#endif
+
 #include "def_main.h"
 #include "gl/svg.h"
 
@@ -170,7 +174,10 @@ void DD_ShutdownAll()
     R_ShutdownSvgs();
 #ifdef __CLIENT__
     R_ShutdownViewWindow();
-    Rend_Shutdown();
+    if(ClientApp::hasRenderSystem())
+    {
+        ClientApp::renderSystem().clearDrawLists();
+    }
 #endif
     Def_Destroy();
     F_Shutdown();

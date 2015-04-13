@@ -265,6 +265,7 @@ DENG_HEADERS += \
     include/network/sys_network.h \
     include/partition.h \
     include/r_util.h \
+    include/render/angleclipper.h \
     include/render/biasdigest.h \
     include/render/biasillum.h \
     include/render/biassource.h \
@@ -294,7 +295,6 @@ DENG_HEADERS += \
     include/render/r_draw.h \
     include/render/r_main.h \
     include/render/r_things.h \
-    include/render/rend_clip.h \
     include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
@@ -597,6 +597,7 @@ SOURCES += \
     src/network/serverlink.cpp \
     src/network/sys_network.cpp \
     src/r_util.cpp \
+    src/render/angleclipper.cpp \
     src/render/api_render.cpp \
     src/render/biasdigest.cpp \
     src/render/biasillum.cpp \
@@ -626,7 +627,6 @@ SOURCES += \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
     src/render/r_things.cpp \
-    src/render/rend_clip.cpp \
     src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \

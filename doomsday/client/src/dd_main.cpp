@@ -65,8 +65,8 @@
 #  include "render/cameralensfx.h"
 #  include "render/r_draw.h" // R_InitViewWindow
 #  include "render/r_main.h" // R_Init, R_ResetViewer
-#  include "render/rend_font.h"
 #  include "render/rend_main.h"
+#  include "render/rend_font.h"
 #  include "render/rend_particle.h" // Rend_ParticleLoadSystemTextures
 #  include "render/vr.h"
 #  include "Contact"
@@ -2202,7 +2202,6 @@ static int DD_StartupWorker(void * /*context*/)
     R_InitSvgs();
 #ifdef __CLIENT__
     R_InitViewWindow();
-    Rend_Init();
     R_ResetFrameCount();
 #endif
     Con_SetProgress(165);
