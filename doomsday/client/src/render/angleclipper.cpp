@@ -1,4 +1,4 @@
-/** @file angleclipper.cpp  Angle Clipper (clipnodes and oranges).
+/** @file angleclipper.cpp  Angle Clipper.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -39,16 +39,6 @@ namespace internal
     {
         // Shift for more accuracy;
         return bamsAtan2(dint(point.y * 100), dint(point.x * 100));
-    }
-
-    static inline dint occlusionRelationship(binangle_t start, binangle_t startAngle,
-        binangle_t end, binangle_t endAngle)
-    {
-        if(start >= startAngle && end   <= endAngle) return 0;
-        if(start >= startAngle && start <  endAngle) return 1;
-        if(end    > startAngle && end   <= endAngle) return 2;
-        if(start <= startAngle && end   >= endAngle) return 3;
-        return -1;
     }
 
     /**
@@ -160,28 +150,28 @@ using namespace ::internal;
 
 DENG2_PIMPL_NOREF(AngleClipper)
 {
-    /// Describes an inclusive => inclusive binary angle range.
-    struct AngleRange : public ElementPool::Element
+    /// Specialized AngleRange for half-space clipping.
+    struct Clipper : public ElementPool::Element, AngleRange
     {
-        AngleRange *prev;
-        AngleRange *next;
-
-        binangle_t from;
-        binangle_t to;
+        Clipper *prev;
+        Clipper *next;
     };
-    ElementPool clipNodes;            ///< The list of clipnodes.
-    AngleRange *clipHead = nullptr;  ///< Head of the clipped-range list.
+    ElementPool clipNodes;         ///< The list of clipnodes.
+    Clipper *clipHead = nullptr;   ///< Head of the clipped-range list.
 
-    /// Describes a specialized binary angle range for half-space occlusion.
-    struct Occluder : public AngleRange
+    /// Specialized AngleRange for half-space occlusion.
+    struct Occluder : public ElementPool::Element, AngleRange
     {
-        bool topHalf;                ///< @c true= top, rather than bottom, half.
-        Vector3f normal;             ///< Of the occlusion plane.
-    };
-    ElementPool occNodes;             ///< The list of occlusion nodes.
-    Occluder *occHead = nullptr;     ///< Head of the occlusion-range list.
+        Occluder *prev;
+        Occluder *next;
 
-    QVector<binangle_t> angleBuf;    ///< Scratch buffer for sorting angles.
+        bool topHalf;              ///< @c true= top, rather than bottom, half.
+        Vector3f normal;           ///< Of the occlusion plane.
+    };
+    ElementPool occNodes;          ///< The list of occlusion nodes.
+    Occluder *occHead = nullptr;   ///< Head of the occlusion-range list.
+
+    QVector<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
 
     ~Instance()
     {
@@ -204,11 +194,11 @@ DENG2_PIMPL_NOREF(AngleClipper)
     /**
      * The specified range must be safe!
      */
-    dint isRangeVisible(binangle_t startAngle, binangle_t endAngle) const
+    dint isRangeVisible(binangle_t from, binangle_t to) const
     {
-        for(AngleRange *i = clipHead; i; i = i->next)
+        for(Clipper *i = clipHead; i; i = i->next)
         {
-            if(startAngle >= i->from && endAngle <= i->to)
+            if(from >= i->from && to <= i->to)
                 return false;
         }
         // No clip-node fully contained the specified range.
@@ -218,51 +208,48 @@ DENG2_PIMPL_NOREF(AngleClipper)
     /**
      * @return  Non-zero iff the range is not entirely clipped; otherwise @c 0.
      */
-    dint safeCheckRange(binangle_t startAngle, binangle_t endAngle) const
+    dint safeCheckRange(binangle_t from, binangle_t to) const
     {
-        if(startAngle > endAngle)
+        if(from > to)
         {
             // The range wraps around.
-            return (isRangeVisible(startAngle, BANG_MAX) ||
-                    isRangeVisible(0, endAngle));
+            return (isRangeVisible(from, BANG_MAX) || isRangeVisible(0, to));
         }
-        return isRangeVisible(startAngle, endAngle);
+        return isRangeVisible(from, to);
     }
 
-    AngleRange *newClipNode(binangle_t stAng, binangle_t endAng)
-    {
-        // Perhaps a previously-used clip-node can be reused?
-        auto *crange = reinterpret_cast<AngleRange *>(clipNodes.get());
-        if(!crange)
-        {
-            // No, allocate another.
-            crange = new AngleRange;
-            clipNodes.add(crange);
-        }
-
-        // (Re)Configure.
-        crange->from = stAng;
-        crange->to   = endAng;
-        crange->prev = crange->next = nullptr;
-
-        return crange;
-    }
-
-    void removeRange(AngleRange *crange)
+    void removeRange(Clipper *crange)
     {
         // If this is the head, move it.
         if(clipHead == crange)
             clipHead = crange->next;
 
-        // Unlink from the clipper.
         if(crange->prev)
             crange->prev->next = crange->next;
         if(crange->next)
             crange->next->prev = crange->prev;
-        crange->prev = crange->next = nullptr;
 
-        // Insert this to the free node rover.
+        // We're done with this range - mark it as free for reuse.
         clipNodes.release(crange);
+    }
+
+    Clipper *newClipNode(binangle_t from, binangle_t to)
+    {
+        // Perhaps a previously-used clip-node can be reused?
+        auto *crange = reinterpret_cast<Clipper *>(clipNodes.get());
+        if(!crange)
+        {
+            // No, allocate another.
+            clipNodes.add(crange = new Clipper);
+        }
+
+        // (Re)Configure.
+        crange->from = from;
+        crange->to   = to;
+        crange->prev = nullptr;
+        crange->next = nullptr;
+
+        return crange;
     }
 
     void addRange(binangle_t from, binangle_t to)
@@ -287,7 +274,7 @@ DENG2_PIMPL_NOREF(AngleClipper)
 
         // There are previous ranges. Check that the new range isn't contained
         // by any of them.
-        for(AngleRange *i = clipHead; i; i = i->next)
+        for(Clipper *i = clipHead; i; i = i->next)
         {
             /*
             LOG_AS("AngleClipper::addRange");
@@ -316,19 +303,19 @@ DENG2_PIMPL_NOREF(AngleClipper)
         }
 
         // Now check if any of the old ranges are contained by the new one.
-        for(AngleRange *i = clipHead; i;)
+        for(Clipper *i = clipHead; i;)
         {
             if(i->from >= from && i->to <= to)
             {
+                Clipper *contained = i;
+
                 /*
                 LOG_AS("AngleClipper::addRange");
                 LOG_DEBUG(String("Removing contained range %1 => %2")
-                            .arg(i->from, 0, 16)
-                            .arg(i->to,   0, 16));
+                            .arg(contained->from, 0, 16)
+                            .arg(contained->to,   0, 16));
                 */
 
-                // We must do this in order to keep the loop from breaking.
-                AngleRange *contained = i;
                 i = i->next;
                 removeRange(contained);
                 continue;
@@ -340,8 +327,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
         // Now it is possible that the new range overlaps one or two old ranges.
         // If two are overlapped, they are consecutive. First we'll try to find
         // a range that overlaps the beginning.
-        AngleRange *crange = nullptr;
-        for(AngleRange *i = clipHead; i; i = i->next)
+        Clipper *crange = nullptr;
+        for(Clipper *i = clipHead; i; i = i->next)
         {
             // In preparation for the next stage, find a good spot for the range.
             if(i->from < to)
@@ -372,8 +359,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
             // Check an overlapping end.
             if(i->to >= from && i->to <= to)
             {
-                // Now it's possible that the i->next's beginning overlaps the new
-                // range's end. In that case there will be a merger.
+                // Now it's possible that the i->next's beginning overlaps the
+                // new range's end. In that case there will be a merger.
 
                 /*
                 LOG_AS("AngleClipper::addRange");
@@ -430,8 +417,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
         }
 
         // Still here? Now we know for sure that the range is disconnected from
-        // the others. We still need to find a good place for it. Crange will mark
-        // the spot.
+        // the others. We still need to find a good place for it. Crange will
+        // mark the spot.
 
         if(!crange)
         {
@@ -445,26 +432,27 @@ DENG2_PIMPL_NOREF(AngleClipper)
         else
         {
             // Add the new range after crange.
-            AngleRange *i = newClipNode(from, to);
-            i->next = crange->next;
-            if(i->next)
-                i->next->prev = i;
-            i->prev = crange;
-            crange->next = i;
+            Clipper *added = newClipNode(from, to);
+            added->next = crange->next;
+            if(added->next)
+                added->next->prev = added;
+            added->prev = crange;
+            crange->next = added;
         }
     }
 
     void removeOcclusionRange(Occluder *orange)
     {
-        // If this is the head, move it to the next one.
+        // If this is the head, move it.
         if(occHead == orange)
-            occHead = static_cast<Occluder *>(orange->next);
+            occHead = orange->next;
 
         if(orange->prev)
             orange->prev->next = orange->next;
         if(orange->next)
             orange->next->prev = orange->prev;
 
+        // We're done with this range - mark it as free for reuse.
         occNodes.release(orange);
     }
 
@@ -476,13 +464,14 @@ DENG2_PIMPL_NOREF(AngleClipper)
         if(!orange)
         {
             // No, allocate another.
-            orange = new Occluder;
-            occNodes.add(orange);
+            occNodes.add(orange = new Occluder);
         }
 
         // (Re)Configure.
         orange->from    = from;
         orange->to      = to;
+        orange->prev    = nullptr;
+        orange->next    = nullptr;
         orange->topHalf = topHalf;
         orange->normal  = normal;
 
@@ -514,10 +503,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
         /// the new orange. But how to do the check efficiently?
 
         // Add the new occlusion range to the appropriate position.
-        Occluder *orange = occHead;
-        Occluder *last = nullptr;
-        bool done = false;
-        while(orange && !done)
+        Occluder *after = nullptr;
+        for(Occluder *orange = occHead; orange; orange = orange->next)
         {
             // The list of oranges is sorted by the start angle.
             // Find the first range whose start is greater than the new one.
@@ -533,20 +520,15 @@ DENG2_PIMPL_NOREF(AngleClipper)
                 else
                     occHead = newor;  // We have a new head.
 
-                done = true;
+                return;
             }
-            else
-            {
-                last = orange;
-                orange = static_cast<Occluder *>(orange->next);
-            }
+
+            after = orange;
         }
 
-        if(done) return;
-
         // Add the new range to the end of the list.
-        last->next = newor;
-        newor->prev = last;
+        after->next = newor;
+        newor->prev = after;
         newor->next = nullptr;
     }
 
@@ -603,10 +585,10 @@ DENG2_PIMPL_NOREF(AngleClipper)
         // The cross angle must be outside the range.
         binangle_t crossAngle = bamsAtan2(dint(cross.y), dint(cross.x));
         if(crossAngle >= orange->from && crossAngle <= orange->to)
-            return 0; // Inside the range, can't do a thing.
+            return 0;  // Inside the range, can't do a thing.
 
-        /// @todo Is it not possible to consistently determine the direction at which
-        /// cross (vector) is pointing?
+        /// @todo Is it not possible to consistently determine the direction at
+        /// which cross (vector) is pointing?
         crossAngle += BANG_180;
         if(crossAngle >= orange->from && crossAngle <= orange->to)
             return 0;  // Inside the range, can't do a thing.
@@ -634,173 +616,121 @@ DENG2_PIMPL_NOREF(AngleClipper)
     }
 
     /**
-     * Try to merge oranges with matching ranges. (Quite a number may be
-     * produced as a result of the cuts.)
+     * Try to merge oranges with matching ranges. (Quite a number may be produced
+     * as a result of the cuts.)
      */
     void mergeOccludes()
     {
-        Occluder *orange = occHead;
-        bool stopScan = false;
-        while(!stopScan)
+        for(Occluder *orange = occHead; orange && orange->next; )
         {
-            if(orange && orange->next)
-            {
-                auto *next = static_cast<Occluder *>(orange->next);
+            // As orange might be removed - remember the next one.
+            auto *next = orange->next;
 
-                // Find a good one to test with.
-                Occluder *other = next;
-                bool isDone = false;
-                while(!isDone)
+            // Find a good one to test with.
+            for(Occluder *other = next; other && orange->from == other->from; other = other->next)
+            {
+                if(other->topHalf != orange->topHalf) continue;
+                if(orange->to != other->to) continue;
+
+                // It is a candidate for merging.
+                dint result = tryMergeOccludes(orange, other);
+                if(result == 2)
                 {
-                    if(other && orange->from == other->from)
-                    {
-                        if(orange->to == other->to &&
-                           other->topHalf == orange->topHalf)
-                        {
-                            // It is a candidate for merging.
-                            dint result = tryMergeOccludes(orange, other);
-                            if(result == 2)
-                                next = static_cast<Occluder *>(next->next);
-
-                            isDone = true;
-                        }
-                        else
-                        {
-                            // Move on to the next candidate.
-                            other = static_cast<Occluder *>(other->next);
-                        }
-                    }
-                    else
-                    {
-                        isDone = true;
-                    }
+                    next = next->next;
                 }
+                break;
+            }
 
-                orange = next;
-            }
-            else
-            {
-                stopScan = true;
-            }
+            orange = next;
         }
     }
 
     /**
      * Everything in the given range is removed from the occlusion nodes.
      */
-    void cutOcclusionRange(binangle_t startAngle, binangle_t endAngle)
+    void cutOcclusionRange(binangle_t from, binangle_t to)
     {
         DENG2_DEBUG_ONLY(occlusionRanger(1));
 
         // Find the range after which it's OK to add oranges cut in half.
-        // (Must preserve the ascending order of the start angles.)
+        // (Must preserve the ascending order of the start angles.) We want the
+        // orange with the smallest start angle, but one that starts after the
+        // cut range has ended.
         Occluder *after  = nullptr;
-        Occluder *orange = occHead;
-        bool isDone = false;
-        while(!isDone)
+        for(Occluder *orange = occHead; orange && orange->from < to; orange = orange->next)
         {
-            // We want the orange with the smallest start angle, but one that
-            // starts after the cut range has ended.
-            if(orange && orange->from < endAngle)
-            {
-                after = orange;
-            }
-            else
-            {
-                isDone = true;
-            }
-
-            if(!isDone)
-                orange = static_cast<Occluder *>(orange->next);
+            after = orange;
         }
 
-        Occluder *next = nullptr;
-        orange = occHead;
-        isDone = false;
-        while(!isDone)
+        for(Occluder *orange = occHead; orange; )
         {
-            if(orange)
+            // As orange might be removed - remember the next one.
+            auto *next = orange->next;
+
+            // Does the cut range include this orange?
+            if(from <= orange->to)
             {
-                // In case orange is removed, take a copy of the next one.
-                next = static_cast<Occluder *>(orange->next);
+                // No more cuts possible?
+                if(orange->from >= to) break;
 
-                // Does the cut range include this orange?
-                if(startAngle <= orange->to)
+                // Four options:
+                switch(orange->relationship(AngleRange(from, to)))
                 {
-                    if(orange->from < endAngle)
+                case 0:  // The cut range completely includes this orange.
+
+                    // Fully contained; this orange will be removed.
+                    removeOcclusionRange(orange);
+                    break;
+
+                case 1:  // The cut range contains the beginning of the orange.
+
+                    // Cut away the beginning of this orange.
+                    orange->from = to;
+                    // Even though the start angle is modified, we don't need to
+                    // move this orange anywhere. This is because after the cut
+                    // there will be no oranges beginning inside the cut range.
+                    break;
+
+                case 2:  // The cut range contains the end of the orange.
+
+                    // Cut away the end of this orange.
+                    orange->to = from;
+                    break;
+
+                case 3: {  // The orange contains the whole cut range.
+
+                    // The orange gets cut in two parts. Create a new orange that
+                    // represents the end, and add it after the 'after' range, or
+                    // to the head of the list.
+                    Occluder *part = newOcclusionRange(to, orange->to, orange->normal,
+                                                       orange->topHalf);
+
+                    part->prev = after;
+                    if(after)
                     {
-                        // Four options:
-                        switch(occlusionRelationship(orange->from, startAngle,
-                                                     orange->to, endAngle))
-                        {
-                        case 0:  // The cut range completely includes this orange.
-
-                            // Fully contained; this orange will be removed.
-                            removeOcclusionRange(orange);
-                            break;
-
-                        case 1:  // The cut range contains the beginning of the orange.
-
-                            // Cut away the beginning of this orange.
-                            orange->from = endAngle;
-                            // Even thought the start angle is modified, we don't
-                            // need to move this orange anywhere. This is because
-                            // after the cut there will be no oranges beginning inside
-                            // the cut range.
-                            break;
-
-                        case 2:  // The cut range contains the end of the orange.
-
-                            // Cut away the end of this orange.
-                            orange->to = startAngle;
-                            break;
-
-                        case 3: {  // The orange contains the whole cut range.
-
-                            // The orange gets cut in two parts. Create a new orange
-                            // that represents the end, and add it after the 'after'
-                            // range, or to the head of the list.
-                            Occluder *part = newOcclusionRange(endAngle, orange->to,
-                                                               orange->normal,
-                                                               orange->topHalf);
-
-                            part->prev = after;
-                            if(after)
-                            {
-                                part->next = after->next;
-                                after->next = part;
-                            }
-                            else
-                            {
-                                // Add to the head.
-                                part->next = occHead;
-                                occHead = part;
-                            }
-
-                            if(part->next)
-                                part->next->prev = part;
-
-                            // Modify the start part.
-                            orange->to = startAngle;
-                            break; }
-
-                        default:  // No meaningful relationship (in this context).
-                            break;
-                        }
+                        part->next = after->next;
+                        after->next = part;
                     }
                     else
                     {
-                        isDone = true;  // No more possible cuts.
+                        // Add to the head.
+                        part->next = occHead;
+                        occHead = part;
                     }
-                }
 
-                if(!isDone)
-                    orange = next;
+                    if(part->next)
+                        part->next->prev = part;
+
+                    // Modify the start part.
+                    orange->to = from;
+                    break; }
+
+                default:  // No meaningful relationship (in this context).
+                    break;
+                }
             }
-            else
-            {
-                isDone = true;
-            }
+
+            orange = next;
         }
 
         DENG2_DEBUG_ONLY(occlusionRanger(2));
@@ -813,9 +743,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
 #ifdef DENG2_DEBUG
     void occlusionLister()
     {
-        for(AngleRange *i = occHead; i; i = i->next)
+        for(Occluder *orange = occHead; orange; orange = orange->next)
         {
-            auto *orange = static_cast<Occluder *>(i);
             LOG_MSG(String("from: %1 to: %2 topHalf: %3")
                         .arg(orange->from, 0, 16)
                         .arg(orange->to,   0, 16)
@@ -825,9 +754,8 @@ DENG2_PIMPL_NOREF(AngleClipper)
 
     void occlusionRanger(int mark)
     {
-        for(AngleRange *i = occHead; i; i = i->next)
+        for(Occluder *orange = occHead; orange; orange = orange->next)
         {
-            auto *orange = static_cast<Occluder *>(i);
             if(orange->prev && orange->prev->from > orange->from)
             {
                 occlusionLister();
@@ -843,18 +771,18 @@ AngleClipper::AngleClipper() : d(new Instance)
 
 dint AngleClipper::isFull() const
 {
-    if(devNoCulling) return false;
+    if(::devNoCulling) return false;
 
     return d->clipHead && d->clipHead->from == 0 && d->clipHead->to == BANG_MAX;
 }
 
 dint AngleClipper::isAngleVisible(binangle_t bang) const
 {
-    if(devNoCulling) return true;
+    if(::devNoCulling) return true;
 
-    for(Instance::AngleRange const *i = d->clipHead; i; i = i->next)
+    for(Instance::Clipper const *crange = d->clipHead; crange; crange = crange->next)
     {
-        if(bang > i->from && bang < i->to)
+        if(bang > crange->from && bang < crange->to)
             return false;
     }
 
@@ -863,7 +791,7 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
 
 dint AngleClipper::isPointVisible(Vector3d const &point) const
 {
-    if(devNoCulling) return true;
+    if(::devNoCulling) return true;
 
     Vector3d const viewRelPoint = point - Rend_EyeOrigin().xzy();
     binangle_t const angle      = pointToAngle(viewRelPoint);
@@ -871,10 +799,8 @@ dint AngleClipper::isPointVisible(Vector3d const &point) const
     if(!isAngleVisible(angle)) return false;
 
     // Not clipped by the clipnodes. Perhaps it's occluded by an orange.
-    for(Instance::AngleRange const *crange = d->occHead; crange; crange = crange->next)
+    for(Instance::Occluder const *orange = d->occHead; orange; orange = orange->next)
     {
-        auto const *orange = static_cast<Instance::Occluder const *>(crange);
-
         if(angle >= orange->from && angle <= orange->to)
         {
             if(orange->from > angle)
@@ -894,7 +820,7 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
 {
     DENG2_ASSERT(poly.isConvex());
 
-    if(devNoCulling) return true;
+    if(::devNoCulling) return true;
 
     // Do we need to resize the angle list buffer?
     if(poly.hedgeCount() > d->angleBuf.count())
@@ -917,11 +843,9 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
     // range is always already covered by the previous edges.
     for(dint i = 0; i < poly.hedgeCount() - 1; ++i)
     {
-        dint const end = i + 1;
-
         // If even one of the edges is not contained by a clipnode, the leaf is at
         // least partially visible.
-        binangle_t angLen = d->angleBuf.at(end) - d->angleBuf.at(i);
+        binangle_t angLen = d->angleBuf.at(i + 1) - d->angleBuf.at(i);
 
         // The viewer is on an edge, the leaf should be visible.
         if(angLen == BANG_180) return true;
@@ -929,12 +853,12 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
         // Choose the start and end points so that length is < 180.
         if(angLen < BANG_180)
         {
-            if(d->safeCheckRange(d->angleBuf.at(i), d->angleBuf.at(end)))
+            if(d->safeCheckRange(d->angleBuf.at(i), d->angleBuf.at(i + 1)))
                 return true;
         }
         else
         {
-            if(d->safeCheckRange(d->angleBuf.at(end), d->angleBuf.at(i)))
+            if(d->safeCheckRange(d->angleBuf.at(i + 1), d->angleBuf.at(i)))
                 return true;
         }
     }
@@ -945,12 +869,10 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
 void AngleClipper::clearRanges()
 {
     d->clipHead = nullptr;
-    // Rewind the rover.
-    d->clipNodes.rewind();
+    d->clipNodes.rewind();  // Start reusing ranges.
 
     d->occHead = nullptr;
-    // Rewind the rover.
-    d->occNodes.rewind();
+    d->occNodes.rewind();   // Start reusing ranges.
 }
 
 dint AngleClipper::safeAddRange(binangle_t from, binangle_t to)
@@ -983,9 +905,9 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
 {
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    Vector3d const eyeOrigin = Rend_EyeOrigin().xzy();
-    auto const eyeToV1       = Vector3d(from, height) - eyeOrigin;
-    auto const eyeToV2       = Vector3d(to,   height) - eyeOrigin;
+    Vector3d const eyeOrigin    = Rend_EyeOrigin().xzy();
+    auto const eyeToV1          = Vector3d(from, height) - eyeOrigin;
+    auto const eyeToV2          = Vector3d(to,   height) - eyeOrigin;
 
     binangle_t const startAngle = pointToAngle(eyeToV2);
     binangle_t const endAngle   = pointToAngle(eyeToV1);
@@ -999,7 +921,6 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
 #ifdef DENG2_DEBUG
     if(Vector3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
     {
-        // Uh-oh.
         LOG_AS("AngleClipper::addViewRelOcclusion");
         LOGDEV_GL_WARNING("Wrong side v1:%s v2:%s eyeOrigin:%s!")
                 << from.asText() << to.asText()
@@ -1014,7 +935,7 @@ void AngleClipper::addViewRelOcclusion(Vector2d const &from, Vector2d const &to,
 
 dint AngleClipper::checkRangeFromViewRelPoints(Vector2d const &from, Vector2d const &to)
 {
-    if(devNoCulling) return true;
+    if(::devNoCulling) return true;
 
     Vector2d const eyeOrigin = Rend_EyeOrigin().xz();
     return d->safeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
@@ -1024,7 +945,7 @@ dint AngleClipper::checkRangeFromViewRelPoints(Vector2d const &from, Vector2d co
 #ifdef DENG2_DEBUG
 void AngleClipper::validate()
 {
-    for(Instance::AngleRange *i = d->clipHead; i; i = i->next)
+    for(Instance::Clipper *i = d->clipHead; i; i = i->next)
     {
         if(i == d->clipHead)
         {

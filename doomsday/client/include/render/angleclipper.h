@@ -26,6 +26,35 @@
 #include "Face"
 
 /**
+ * Inclusive > inclusive binary angle range.
+ *
+ * @ingroup data
+ */
+struct AngleRange
+{
+    binangle_t from;
+    binangle_t to;
+
+    explicit AngleRange(binangle_t a = 0, binangle_t b = 0) : from(a), to(b) {}
+
+    /**
+     * @return @c  0= "this" completely includes @a other.
+     *         @c  1= "this" contains the beginning of @a other.
+     *         @c  2= "this" contains the end of @a other.
+     *         @c  3= @other completely contains "this".
+     *         @c -1= No meaningful relationship.
+     */
+    de::dint relationship(AngleRange const &other)
+    {
+        if(from >= other.from && to   <= other.to) return 0;
+        if(from >= other.from && from <  other.to) return 1;
+        if(to    > other.from && to   <= other.to) return 2;
+        if(from <= other.from && to   >= other.to) return 3;
+        return -1;
+    }
+};
+
+/**
  * 360 degree, polar angle(-range) clipper.
  *
  * The idea is to keep track of occluded angles around the camera. Since BSP leafs are
@@ -75,9 +104,10 @@ public:  // --------------------------------------------------------------------
     void clearRanges();
 
     /**
-     *
+     * @param from
+     * @param to
      */
-    de::dint safeAddRange(binangle_t startAngle, binangle_t endAngle);
+    de::dint safeAddRange(binangle_t from, binangle_t to);
 
     /**
      * Add a segment relative to the current viewpoint.
@@ -95,8 +125,8 @@ public:  // --------------------------------------------------------------------
      * @param height
      * @param topHalf
      */
-    void addViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to, coord_t height,
-                             bool topHalf);
+    void addViewRelOcclusion(de::Vector2d const &from, de::Vector2d const &to,
+                             coord_t height, bool topHalf);
 
     /**
      * Check a segment relative to the current viewpoint.
