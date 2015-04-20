@@ -218,14 +218,6 @@ Vector2f MainWindow::windowContentSize() const
     return d->root.viewRule().size();
 }
 
-void MainWindow::drawWindowContent()
-{
-    GLState::current().target().clear(GLTarget::ColorDepth);
-
-    d->updateCompositor();
-    d->root.draw();
-}
-
 void MainWindow::preDraw()
 {
     // NOTE: This occurs during the Canvas paintGL event.
@@ -240,12 +232,20 @@ void MainWindow::preDraw()
     }
 }
 
+void MainWindow::drawWindowContent()
+{
+    GLState::current().target().clear(GLTarget::ColorDepth);
+    
+    d->updateCompositor();
+    d->root.draw();
+}
+
 void MainWindow::postDraw()
 {
-    if(TestApp::vr().mode() != VRConfig::OculusRift)
+    /*if(TestApp::vr().mode() != VRConfig::OculusRift)
     {
         swapBuffers();
-    }
+    }*/
     BaseWindow::postDraw();
 
     Garbage_Recycle();

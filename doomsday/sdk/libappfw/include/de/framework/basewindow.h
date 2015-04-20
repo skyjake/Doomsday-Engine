@@ -81,8 +81,6 @@ public:
      */
     virtual void draw();
 
-    void canvasGLDraw(Canvas &);
-
     void swapBuffers();
 
 protected:
