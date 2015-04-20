@@ -21,7 +21,7 @@
 #ifndef CLIENT_CLIENTWINDOW_H
 #define CLIENT_CLIENTWINDOW_H
 
-#include <de/PersistentCanvasWindow>
+#include <de/PersistentCanvas>
 #include <de/BaseWindow>
 #include <de/NotificationAreaWidget>
 

@@ -42,7 +42,7 @@ using namespace ui;
 #endif
 
 DENG2_PIMPL(VideoSettingsDialog),
-DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
+DENG2_OBSERVES(PersistentCanvas, AttributeChange)
 {
     ClientWindow &win;
     VariableToggleWidget *showFps;
@@ -157,7 +157,7 @@ DENG2_OBSERVES(PersistentCanvasWindow, AttributeChange)
         }
     }
 
-    void windowAttributesChanged(PersistentCanvasWindow &)
+    void windowAttributesChanged(PersistentCanvas &)
     {
         fetch();
     }

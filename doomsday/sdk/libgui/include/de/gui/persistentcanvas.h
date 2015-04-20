@@ -1,6 +1,6 @@
-/** @file persistentcanvaswindow.h  Canvas window with persistent state.
+/** @file persistentcanvas.h  Canvas with persistent state.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2015 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small> 
  */
 
-#ifndef LIBGUI_PERSISTENTCANVASWINDOW_H
-#define LIBGUI_PERSISTENTCANVASWINDOW_H
+#ifndef LIBGUI_PERSISTENTCANVAS_H
+#define LIBGUI_PERSISTENTCANVAS_H
 
 #include <de/Error>
 #include <de/Canvas>
@@ -34,10 +34,8 @@ namespace de {
  * window's state to Config.
  *
  * Supports fullscreen display modes (using DisplayMode).
- *
- * @todo Rename to PersistentCanvas.
  */
-class LIBGUI_PUBLIC PersistentCanvasWindow : public Canvas
+class LIBGUI_PUBLIC PersistentCanvas : public Canvas
 {
     Q_OBJECT
 
@@ -82,7 +80,7 @@ public:
      * changes are queued, the notification is made only after all the changes
      * have been applied.
      */
-    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentCanvasWindow &))
+    DENG2_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentCanvas &))
 
 public:    
     /**
@@ -95,7 +93,7 @@ public:
      *
      * @param id  Identifier of the window.
      */
-    PersistentCanvasWindow(String const &id);
+    PersistentCanvas(String const &id);
 
     String id() const;
 
@@ -157,7 +155,7 @@ public:
      */
     void restoreState();
 
-    static PersistentCanvasWindow &main();
+    static PersistentCanvas &main();
 
     // Events.
     void moveEvent(QMoveEvent *);
@@ -183,4 +181,4 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_PERSISTENTCANVASWINDOW_H
+#endif // LIBGUI_PERSISTENTCANVAS_H

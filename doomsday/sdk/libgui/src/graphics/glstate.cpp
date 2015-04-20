@@ -21,7 +21,7 @@
  */
 
 #include "de/GLState"
-#include "de/PersistentCanvasWindow"
+#include "de/PersistentCanvas"
 #include "de/graphics/opengl.h"
 #include <de/BitField>
 

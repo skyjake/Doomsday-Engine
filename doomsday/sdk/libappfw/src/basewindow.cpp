@@ -83,7 +83,7 @@ DENG2_PIMPL(BaseWindow)
 };
 
 BaseWindow::BaseWindow(String const &id)
-    : PersistentCanvasWindow(id)
+    : PersistentCanvas(id)
     , d(new Instance(this))
 {}
 
@@ -161,14 +161,14 @@ void BaseWindow::drawCanvas()
     d->xf->drawTransformed();
     postDraw();
 
-    PersistentCanvasWindow::drawCanvas();
+    PersistentCanvas::drawCanvas();
 }
 
 void BaseWindow::swapBuffers()
 {
 /*    DENG2_ASSERT(DENG2_BASE_GUI_APP->vr().mode() != VRConfig::OculusRift);
 
-    PersistentCanvasWindow::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
+    PersistentCanvas::swapBuffers(DENG2_BASE_GUI_APP->vr().needsStereoGLFormat()?
                                             gl::SwapStereoBuffers : gl::SwapMonoBuffer);*/
 }
 

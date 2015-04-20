@@ -23,7 +23,7 @@
 
 #include <de/Canvas>
 #include <de/Vector>
-#include <de/PersistentCanvasWindow>
+#include <de/PersistentCanvas>
 
 namespace de {
 
@@ -37,7 +37,7 @@ class WindowTransform;
  * will override the built-in transformation. The built-in transformation specifies an
  * "identity" transformation that doesn't differ from the logical layout.
  */
-class LIBAPPFW_PUBLIC BaseWindow : public PersistentCanvasWindow
+class LIBAPPFW_PUBLIC BaseWindow : public PersistentCanvas
 {
 public:
     BaseWindow(String const &id);
