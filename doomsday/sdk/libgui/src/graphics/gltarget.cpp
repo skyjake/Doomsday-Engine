@@ -390,7 +390,7 @@ DENG2_OBSERVES(Asset, Deletion)
 
 GLTarget::GLTarget() : d(new Instance(this))
 {
-    setState(Ready);
+    configure();
 }
 
 GLTarget::GLTarget(GLTexture &colorTarget, Flags const &otherAttachments)
@@ -429,6 +429,7 @@ void GLTarget::configure()
     LOG_AS("GLTarget");
 
     d->releaseAndReset();
+    d->flags |= ColorDepthStencil; // Buffers in the Canvas.
     setState(Ready);
 }
 

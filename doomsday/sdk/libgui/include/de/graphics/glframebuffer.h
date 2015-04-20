@@ -61,6 +61,15 @@ public:
                   Size const &          initialSize = Size(),
                   int                   sampleCount = 0 /*default*/);
 
+    /**
+     * Sets up the framebuffer to represent the default framebuffer of a Canvas.
+     * The framebuffer's configuration (including size) is taken automatically 
+     * from the Canvas.
+     *
+     * @param canvas  Canvas to represent.
+     */
+    void setCanvas(Canvas &canvas);
+
     void glInit();
     void glDeinit();
 

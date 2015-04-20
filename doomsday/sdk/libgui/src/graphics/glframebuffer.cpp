@@ -31,11 +31,12 @@ DENG2_STATIC_PROPERTY(DefaultSampleCount, int)
 
 DENG2_PIMPL(GLFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
-, DENG2_OBSERVES(GuiApp, GLContextChange)
+, DENG2_OBSERVES(Canvas, GLResize)
 {
-    Image::Format colorFormat;
+    Canvas *representing = nullptr;
+    Image::Format colorFormat = Image::RGB_888;
     Size size;
-    int _samples; ///< don't touch directly (0 == default)
+    int _samples = 0; ///< don't touch directly (0 == default)
     GLTarget target;
     GLTexture color;
     GLTexture depthStencil;
@@ -43,38 +44,26 @@ DENG2_PIMPL(GLFramebuffer)
     GLTarget multisampleTarget;
 
     Drawable bufSwap;
-    GLUniform uMvpMatrix;
-    GLUniform uBufTex;
-    GLUniform uColor;
+    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
+    GLUniform uBufTex    { "uTex",       GLUniform::Sampler2D };
+    GLUniform uColor     { "uColor",     GLUniform::Vec4 };
+
     typedef GLBufferT<Vertex2Tex> VBuf;
 
-    Instance(Public *i)
-        : Base(i)
-        , colorFormat(Image::RGB_888)
-        , _samples(0)
-        , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
-        , uBufTex   ("uTex",       GLUniform::Sampler2D)
-        , uColor    ("uColor",     GLUniform::Vec4)
+    Instance(Public *i) : Base(i)
     {
         pDefaultSampleCount.audienceForChange() += this;
-        //DENG2_GUI_APP->audienceForGLContextChange += this;
     }
-
+    
     ~Instance()
     {
+        if(representing)
+        {
+            representing->audienceForGLResize() -= this;
+        }
         pDefaultSampleCount.audienceForChange() -= this;
-        //DENG2_GUI_APP->audienceForGLContextChange -= this;
 
         release();
-    }
-
-    void appGLContextChanged()
-    {
-        /*
-        qDebug() << "rebooting FB" << thisPublic << self.isReady() << target.glName() << target.isReady() << size.asText();
-        self.glDeinit();
-        self.glInit();
-        */
     }
 
     int sampleCount() const
@@ -141,9 +130,26 @@ DENG2_PIMPL(GLFramebuffer)
 
     void reconfigure()
     {
+        if(!representing)
+        {
+            reconfigureTextureBased();
+        }
+        else
+        {
+            // Get the canvas's current properties.
+            size = representing->glSize();
+        }
+    }
+    
+    /**
+     * Sets up the framebuffer for texture-based rendering. The color buffer is 
+     * stored in one texture and the depth-stencil buffers are in another texture.
+     */
+    void reconfigureTextureBased()
+    {
         if(!self.isReady() || size == Size()) return;
 
-        LOGDEV_GL_VERBOSE("Reconfiguring framebuffer: %s ms:%i")
+        LOGDEV_GL_VERBOSE("Reconfiguring texture-based framebuffer: %s ms:%i")
                 << size.asText() << sampleCount();
 
         // Configure textures for the framebuffer.
@@ -219,6 +225,12 @@ noMultisampling:
             target.updateFromProxy();
         }
         bufSwap.draw();
+    }
+    
+    void canvasGLResized(Canvas &canvas)
+    {
+        DENG2_ASSERT(representing == &canvas);
+        resize(canvas.glSize());
     }
 
 #if 0 // needs to be part of the draw
@@ -296,6 +308,13 @@ GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initi
     d->_samples    = sampleCount;
 }
 
+void GLFramebuffer::setCanvas(Canvas &canvas)
+{
+    d->release();
+    d->representing = &canvas;
+    canvas.audienceForGLResize() += d;
+}
+    
 void GLFramebuffer::glInit()
 {
     if(isReady()) return;

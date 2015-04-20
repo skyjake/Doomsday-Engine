@@ -227,6 +227,8 @@ DENG2_AUDIENCE_METHOD(Canvas, GLResize)
 
 Canvas::Canvas() : QOpenGLWindow(), d(new Instance(this))
 {
+    d->framebuf.setCanvas(*this);
+    
     //LOG_AS("Canvas");
     //LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
     //LOGDEV_GL_VERBOSE("Multisampling: %b") << (GLFramebuffer::defaultMultisampling() > 1);
@@ -377,9 +379,6 @@ void Canvas::paintGL()
     // Derived classes will draw contents now.
     drawCanvas();
     
-    //glClearColor(1, 0, 1, 1);
-    //glClear(GL_COLOR_BUFFER_BIT);
-    
     LIBGUI_ASSERT_GL_OK();
 }
 
@@ -500,8 +499,6 @@ void Canvas::exposeEvent(QExposeEvent *event)
 {
     LOG_AS("Canvas");
     
-    qDebug() << "Canvas: expose!" << isExposed();
-
     QOpenGLWindow::exposeEvent(event);
 
     // The first time the window is shown, run the initialization callback. On

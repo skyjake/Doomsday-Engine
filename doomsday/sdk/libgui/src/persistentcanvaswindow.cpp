@@ -957,6 +957,8 @@ void PersistentCanvasWindow::moveEvent(QMoveEvent *)
 
 void PersistentCanvasWindow::resizeEvent(QResizeEvent *ev)
 {
+    Canvas::resizeEvent(ev);
+    
     LOGDEV_GL_XVERBOSE("Window resized: maximized:%b old:%ix%i new:%ix%i")
             << isMaximized() << ev->oldSize().width() << ev->oldSize().height()
             << ev->size().width() << ev->size().height();
