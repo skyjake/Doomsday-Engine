@@ -20,6 +20,9 @@
 #include "testwindow.h"
 
 #include <QMessageBox>
+#include <QHBoxLayout>
+#include <QCloseEvent>
+#include <QToolBar>
 #include <QPainter>
 
 #include <de/ImageBank>

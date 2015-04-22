@@ -47,7 +47,7 @@ target_link_libraries (libgui
     PUBLIC Deng::libcore
     PRIVATE opengl assimp 
 )
-deng_target_link_qt (libgui PUBLIC Gui OpenGL)
+deng_target_link_qt (libgui PUBLIC Gui Widgets)
 
 if (APPLE)
     link_framework (libgui PRIVATE Cocoa)

@@ -17,20 +17,20 @@
  */
 
 #include "de/Canvas"
+#include "de/GuiApp"
 #include "de/GLState"
 #include "de/GLTexture"
 #include "de/QtInputSource"
 #include "de/graphics/opengl.h"
 #include "de/gui/canvas_macx.h"
 
-#include <de/App>
 #include <de/Log>
 #include <de/Drawable>
 #include <de/GLInfo>
 #include <de/Loop>
 #include <de/GLFramebuffer>
 
-#include <QApplication>
+//#include <QApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
@@ -80,6 +80,7 @@ DENG2_PIMPL(Canvas)
 
     ~Instance()
     {
+        framebuf.setCanvas(nullptr);
         self.removeEventFilter(&input);
 
         glDeinit();
@@ -227,7 +228,7 @@ DENG2_AUDIENCE_METHOD(Canvas, GLResize)
 
 Canvas::Canvas() : QOpenGLWindow(), d(new Instance(this))
 {
-    d->framebuf.setCanvas(*this);
+    d->framebuf.setCanvas(this);
     
     //LOG_AS("Canvas");
     //LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
@@ -370,7 +371,7 @@ void Canvas::updateSize()
 
 void Canvas::paintGL()
 {
-    DENG2_ASSERT(QGLContext::currentContext() != 0);
+    DENG2_ASSERT(QOpenGLContext::currentContext() != 0);
     LIBGUI_ASSERT_GL_OK();
 
     // Make sure any changes to the state stack become effective.
@@ -507,18 +508,24 @@ void Canvas::exposeEvent(QExposeEvent *event)
     if(isExposed() && !isReady())
     {
         LOGDEV_GL_XVERBOSE("Window has been exposed, notifying about GL being ready");
-
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        glActivate();
-        getAllOpenGLEntryPoints();
-#endif
-        GLInfo::glInit();
-        d->makeReady();
+        QTimer::singleShot(1, this, SLOT(makeReady()));
     }
     else if(!isExposed() && isReady())
     {
         /// @todo Might be prudent to release (some) resources?
     }
+}
+
+void Canvas::makeReady()
+{
+    DENG2_ASSERT(isExposed() && isVisible());
+
+    glActivate();
+#ifdef LIBGUI_USE_GLENTRYPOINTS
+    getAllOpenGLEntryPoints();
+#endif
+    GLInfo::glInit();
+    d->makeReady();
 }
 
 bool Canvas::mainExists()

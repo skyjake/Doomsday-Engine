@@ -26,6 +26,8 @@
 #include <de/math.h>
 #include <de/c_wrapper.h>
 
+#include <QOpenGLContext>
+
 namespace de {
 
 static GLInfo info;
@@ -164,19 +166,19 @@ DENG2_PIMPL_NOREF(GLInfo)
         }
 
         // Check default OpenGL format attributes.
-        QGLContext const *ctx = QGLContext::currentContext();
-        QGLFormat form = ctx->format();
+        QOpenGLContext const *ctx = QOpenGLContext::currentContext();
+        QSurfaceFormat form = ctx->format();
 
         LOGDEV_GL_MSG("Initial OpenGL format:");
-        LOGDEV_GL_MSG(" - OpenGL supported: %b") << form.hasOpenGL();
+        //LOGDEV_GL_MSG(" - OpenGL supported: %b") << form.hasOpenGL();
         LOGDEV_GL_MSG(" - version: %i.%i") << form.majorVersion() << form.minorVersion();
-        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QGLFormat::CompatibilityProfile? "Compatibility" : "Core");
-        LOGDEV_GL_MSG(" - samples: %b %i") << form.sampleBuffers() << form.samples();
+        LOGDEV_GL_MSG(" - profile: %s") << (form.profile() == QSurfaceFormat::CompatibilityProfile? "Compatibility" : "Core");
+        LOGDEV_GL_MSG(" - samples: %i") << form.samples();
         LOGDEV_GL_MSG(" - color: %i %i %i %i") << form.redBufferSize() << form.greenBufferSize() << form.blueBufferSize() << form.alphaBufferSize();
-        LOGDEV_GL_MSG(" - depth: %b %i") << form.depth() << form.depthBufferSize();
-        LOGDEV_GL_MSG(" - stencil: %b %i") << form.stencil() << form.stencilBufferSize();
-        LOGDEV_GL_MSG(" - accum: %b %i") << form.accum() << form.accumBufferSize();
-        LOGDEV_GL_MSG(" - double buffering: %b") << form.doubleBuffer();
+        LOGDEV_GL_MSG(" - depth: %i") << form.depthBufferSize();
+        LOGDEV_GL_MSG(" - stencil: %i") << form.stencilBufferSize();
+        //LOGDEV_GL_MSG(" - accum: %i") << form.saccumBufferSize();
+        //LOGDEV_GL_MSG(" - double buffering: %b") << form.swapBehavior();
 
         inited = true;
     }

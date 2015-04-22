@@ -29,6 +29,8 @@
 #include "resource/image.h"
 #include "ui/widgets/gamewidget.h"
 
+#include <QCloseEvent>
+
 #undef main
 
 /**
@@ -56,9 +58,7 @@ class AlertDialog;
 /**
  * Top-level window that contains UI widgets. @ingroup gui
  */
-class ClientWindow : public de::BaseWindow,
-                     DENG2_OBSERVES(de::Canvas, GLInit),
-                     DENG2_OBSERVES(de::Canvas, GLResize)
+class ClientWindow : public de::BaseWindow
 {
     Q_OBJECT
 
@@ -161,9 +161,9 @@ public:
 
     // Events.
     void closeEvent(QCloseEvent *);
-    void canvasGLReady(de::Canvas &);
-    void canvasGLInit(de::Canvas &);
-    void canvasGLResized(de::Canvas &);
+    //void canvasGLReady(de::Canvas &);
+    //void canvasGLInit(de::Canvas &);
+    //void canvasGLResized(de::Canvas &);
 
     // Implements BaseWindow.
     de::Vector2f windowContentSize() const;

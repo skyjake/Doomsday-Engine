@@ -68,7 +68,7 @@ public:
      *
      * @param canvas  Canvas to represent.
      */
-    void setCanvas(Canvas &canvas);
+    void setCanvas(Canvas const *canvas);
 
     void glInit();
     void glDeinit();

@@ -24,7 +24,7 @@ target_link_libraries (libappfw
     PUBLIC Deng::libcore Deng::libgui Deng::libshell
     PRIVATE opengl
 )
-deng_target_link_qt (libappfw PUBLIC Widgets OpenGL)
+deng_target_link_qt (libappfw PUBLIC Widgets)
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()

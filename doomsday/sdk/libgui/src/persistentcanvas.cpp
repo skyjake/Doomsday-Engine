@@ -27,11 +27,11 @@
 #include "de/DisplayMode"
 #include <de/ArrayValue>
 #include <de/NumberValue>
-#include <QDesktopWidget>
 #include <QResizeEvent>
 #include <QTimer>
 #include <QVector>
 #include <QList>
+#include <QScreen>
 
 namespace de {
 
@@ -45,7 +45,7 @@ static int const BREAK_CENTERING_THRESHOLD = 5;
 static QRect desktopRect()
 {
     /// @todo Multimonitor? This checks the default screen.
-    return QApplication::desktop()->screenGeometry();
+    return QGuiApplication::primaryScreen()->geometry();
 }
 
 static QRect centeredQRect(Vector2ui const &size)

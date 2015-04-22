@@ -28,6 +28,9 @@
 #include <de/App>
 #include <de/Log>
 
+#include <QGuiApplication>
+#include <QScreen>
+
 #ifdef DENG_HAVE_OCULUS_API
 #  include <OVR.h>
 #  include <OVR_CAPI_GL.h>
@@ -242,7 +245,7 @@ DENG2_PIMPL(OculusRift)
         window = &Canvas::main().as<BaseWindow>();
         DENG2_ASSERT(window->isVisible());
 
-        DENG2_ASSERT(QGLContext::currentContext() != 0);
+        DENG2_ASSERT(QOpenGLContext::currentContext() != 0);
 
         // Observe key events for dismissing the Health and Safety warning.
         window->input().audienceForKeyEvent() += this;

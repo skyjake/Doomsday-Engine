@@ -26,6 +26,7 @@
 #include <de/Block>
 #include <de/Log>
 
+#include <QOpenGLContext>
 #include <QSet>
 #include <QList>
 
@@ -404,7 +405,7 @@ void GLProgram::beginUse() const
 {
     LIBGUI_ASSERT_GL_OK();
     DENG2_ASSERT_IN_MAIN_THREAD();
-    DENG2_ASSERT(QGLContext::currentContext() != 0);
+    DENG2_ASSERT(QOpenGLContext::currentContext() != 0);
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
 

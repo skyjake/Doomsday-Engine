@@ -27,7 +27,7 @@
 #include "ui/clientwindow.h"
 #include "ui/clientrootwidget.h"
 #include "clientapp.h"
-#include <QGLFormat>
+#include <QSurfaceFormat>
 #include <QCloseEvent>
 #include <de/DisplayMode>
 #include <de/NumberValue>
@@ -59,6 +59,8 @@
 #include "dd_main.h"
 #include "render/vr.h"
 
+#include <QTimer>
+
 using namespace de;
 
 static inline InputSystem &inputSys()
@@ -76,6 +78,8 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(Games,    Readiness)
 , DENG2_OBSERVES(Variable, Change)
 , DENG2_OBSERVES(Asset,    StateChange)
+, DENG2_OBSERVES(Canvas,   GLInit)
+, DENG2_OBSERVES(Canvas,   GLResize)
 {
     bool needMainInit       = true;
     bool needRecreateCanvas = false;
@@ -124,7 +128,7 @@ DENG2_PIMPL(ClientWindow)
 
         App::app().audienceForGameChange() += this;
         App::app().audienceForStartupComplete() += this;
-        App_Games().audienceForReadiness() += this;
+        App_Games().audienceForReadiness() += this;        
 
         // Listen to input.
         self.input().audienceForMouseStateChange() += this;
@@ -135,12 +139,12 @@ DENG2_PIMPL(ClientWindow)
         }
 
         self.audienceForStateChange() += this;
+        self.audienceForGLInit() += this;
+        self.audienceForGLResize() += this;
     }
 
     ~Instance()
     {
-        self.audienceForStateChange() -= this;
-
         foreach(String s, configVariableNames())
         {
             App::config(s).audienceForChange() -= this;
@@ -343,6 +347,24 @@ DENG2_PIMPL(ClientWindow)
             needMainInit = false;
             finishMainWindowInit();
         }
+    }
+
+    void canvasGLInit(Canvas &)
+    {
+        Sys_GLConfigureDefaultState();
+        GL_Init2DState();
+    }
+
+    void canvasGLResized(Canvas &)
+    {
+        LOG_AS("ClientWindow");
+
+        Canvas::Size size = self.glSize();
+        LOG_TRACE("Canvas resized to ") << size.asText();
+
+        GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
+
+        updateRootSize();
     }
 
     void appStartupCompleted()
@@ -851,9 +873,6 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Instance(this))
 {
-    audienceForGLResize() += this;
-    audienceForGLInit() += this;
-
 #ifdef WIN32
     // Set an icon for the window.
     Path iconPath = DENG2_APP->nativeBasePath() / "data\\graphics\\doomsday.ico";
@@ -942,12 +961,6 @@ void ClientWindow::closeEvent(QCloseEvent *ev)
     ev->ignore(); // don't close
 }
 
-void ClientWindow::canvasGLInit(Canvas &)
-{
-    Sys_GLConfigureDefaultState();
-    GL_Init2DState();
-}
-
 void ClientWindow::preDraw()
 {
     // NOTE: This occurs during the Canvas paintGL event.
@@ -978,14 +991,14 @@ void ClientWindow::drawWindowContent()
 void ClientWindow::postDraw()
 {
     /// @note This method is called during the Canvas paintGL event.
-
+/*
     // OVR will handle presentation in Oculus Rift mode.
     if(ClientApp::vr().mode() != VRConfig::OculusRift)
     {
         // Finish GL drawing and swap it on to the screen. Blocks until buffers
         // swapped.
         GL_DoUpdate();
-    }
+    }*/
 
     BaseWindow::postDraw();
 
@@ -993,31 +1006,18 @@ void ClientWindow::postDraw()
     d->updateFpsNotification(frameRate());
 }
 
-void ClientWindow::canvasGLResized(Canvas &)
-{
-    LOG_AS("ClientWindow");
-
-    Canvas::Size size = glSize();
-    LOG_TRACE("Canvas resized to ") << size.asText();
-
-    GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
-
-    d->updateRootSize();
-}
-
 bool ClientWindow::setDefaultGLFormat() // static
 {
     LOG_AS("DefaultGLFormat");
 
     // Configure the GL settings for all subsequently created canvases.
-    QGLFormat fmt;
-    fmt.setProfile(QGLFormat::CompatibilityProfile);
+    QSurfaceFormat fmt;
+    fmt.setRenderableType(QSurfaceFormat::OpenGL);
+    fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
     fmt.setVersion(2, 1);
-    fmt.setDepth(false); // depth and stencil handled in GLFramebuffer
-    fmt.setStencil(false);
-    //fmt.setDepthBufferSize(16);
-    //fmt.setStencilBufferSize(8);
-    fmt.setDoubleBuffer(true);
+    fmt.setDepthBufferSize(16);
+    fmt.setStencilBufferSize(8);
+    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
 
     if(vrCfg().needsStereoGLFormat())
     {
@@ -1050,10 +1050,10 @@ bool ClientWindow::setDefaultGLFormat() // static
     }
     GLFramebuffer::setDefaultMultisampling(sampleCount);
 
-    if(fmt != QGLFormat::defaultFormat())
+    if(fmt != QSurfaceFormat::defaultFormat())
     {
         LOG_GL_VERBOSE("Applying new format...");
-        QGLFormat::setDefaultFormat(fmt);
+        QSurfaceFormat::setDefaultFormat(fmt);
         return true;
     }
     else
@@ -1209,6 +1209,6 @@ bool ClientWindow::handleFallbackEvent(Event const &event)
 #if defined(UNIX) && !defined(MACOSX)
 void GL_AssertContextActive()
 {
-    DENG_ASSERT(QGLContext::currentContext() != 0);
+    DENG_ASSERT(QOpenGLContext::currentContext() != 0);
 }
 #endif

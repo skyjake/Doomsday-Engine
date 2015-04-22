@@ -29,8 +29,6 @@
 #  include "glentrypoints.h"
 #endif
 
-#include <QtOpenGL>
-
 // Defined in GLES2.
 #ifndef GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS
 #  define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS 0x8CD9

@@ -27,7 +27,7 @@
 #include <de/GLInfo>
 #include <de/GLFramebuffer>
 
-#include <QApplication>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>

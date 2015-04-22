@@ -40,6 +40,7 @@
 #include <de/NativeFile>
 #include <QCursor>
 #include <QClipboard>
+#include <QGuiApplication>
 
 using namespace de;
 

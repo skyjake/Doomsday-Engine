@@ -246,6 +246,9 @@ public:
     static Canvas &main();
     static void setMain(Canvas *canvas);
 
+protected slots:
+    void makeReady();
+
 private:
     DENG2_PRIVATE(d)
 };

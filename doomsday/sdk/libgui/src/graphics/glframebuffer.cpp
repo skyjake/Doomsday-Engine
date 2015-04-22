@@ -33,7 +33,7 @@ DENG2_PIMPL(GLFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
 , DENG2_OBSERVES(Canvas, GLResize)
 {
-    Canvas *representing = nullptr;
+    Canvas const *representing = nullptr;
     Image::Format colorFormat = Image::RGB_888;
     Size size;
     int _samples = 0; ///< don't touch directly (0 == default)
@@ -308,11 +308,18 @@ GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initi
     d->_samples    = sampleCount;
 }
 
-void GLFramebuffer::setCanvas(Canvas &canvas)
+void GLFramebuffer::setCanvas(Canvas const *canvas)
 {
+    if(d->representing)
+    {
+        d->representing->audienceForGLResize() -= d;
+    }
     d->release();
-    d->representing = &canvas;
-    canvas.audienceForGLResize() += d;
+    d->representing = canvas;
+    if(canvas)
+    {
+        canvas->audienceForGLResize() += d;
+    }
 }
     
 void GLFramebuffer::glInit()
