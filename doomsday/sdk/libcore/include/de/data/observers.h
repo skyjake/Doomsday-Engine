@@ -25,6 +25,7 @@
 #include "../Guard"
 
 #include <QSet>
+#include <QFlags>
 
 /**
  * Macro that forms the name of an observer interface.
@@ -145,6 +146,15 @@
 
 namespace de {
 
+#ifdef DENG2_DEBUG
+enum ObserversFlag {
+    ObserversDefaultBehavior = 0,
+    AssertRemovedObserverExists = 0x1
+};
+Q_DECLARE_FLAGS(ObserversFlags, ObserversFlag)
+Q_DECLARE_OPERATORS_FOR_FLAGS(ObserversFlags)
+#endif
+    
 /**
  * Template for observer sets. The template type should be an interface
  * implemented by all the observers. @ingroup data
@@ -297,6 +307,11 @@ public:
 
     void remove(Type *observer) {
         DENG2_GUARD(this);
+#ifdef DENG2_DEBUG
+        if(_flags.testFlag(AssertRemovedObserverExists)) {
+            DENG2_ASSERT(_members.contains(observer));
+        }
+#endif
         _members.remove(observer);
     }
 
@@ -350,10 +365,19 @@ public:
         return _members.constEnd();
     }
 
+#ifdef DENG2_DEBUG
+    void setFlags(ObserversFlags const &flags) {
+        _flags = flags;
+    }
+#endif
+
 private:
     Members _members;
+#ifdef DENG2_DEBUG
+    ObserversFlags _flags = ObserversDefaultBehavior;
+#endif
 };
-
+    
 } // namespace de
 
 #endif /* LIBDENG2_OBSERVERS_H */
