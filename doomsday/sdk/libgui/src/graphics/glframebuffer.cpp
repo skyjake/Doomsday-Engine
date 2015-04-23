@@ -57,18 +57,23 @@ DENG2_PIMPL(GLFramebuffer)
     
     ~Instance()
     {
+        pDefaultSampleCount.audienceForChange() -= this;
         if(representing)
         {
             representing->audienceForGLResize() -= this;
         }
-        pDefaultSampleCount.audienceForChange() -= this;
 
         release();
     }
 
+    bool isUsingDefaultSampleCount() const
+    {
+        return _samples <= 0;
+    }
+
     int sampleCount() const
     {
-        if(_samples <= 0) return pDefaultSampleCount;
+        if(isUsingDefaultSampleCount()) return pDefaultSampleCount;
         return _samples;
     }
 
@@ -85,6 +90,14 @@ DENG2_PIMPL(GLFramebuffer)
     void valueOfDefaultSampleCountChanged()
     {
         reconfigure();
+
+        if(isUsingDefaultSampleCount())
+        {
+            DENG2_FOR_PUBLIC_AUDIENCE2(SampleCountChange, i)
+            {
+                i->framebufferSampleCountChanged(self);
+            }
+        }
     }
 
     void alloc()
@@ -298,7 +311,11 @@ noMultisampling:
         GLState::pop().apply();
     }
 #endif
+
+    DENG2_PIMPL_AUDIENCE(SampleCountChange)
 };
+
+DENG2_AUDIENCE_METHOD(GLFramebuffer, SampleCountChange)
 
 GLFramebuffer::GLFramebuffer(Image::Format const &colorFormat, Size const &initialSize, int sampleCount)
     : d(new Instance(this))
@@ -363,6 +380,11 @@ void GLFramebuffer::setSampleCount(int sampleCount)
 
         d->_samples = sampleCount;
         d->reconfigure();
+
+        DENG2_FOR_AUDIENCE2(SampleCountChange, i)
+        {
+            i->framebufferSampleCountChanged(*this);
+        }
     }
 }
 

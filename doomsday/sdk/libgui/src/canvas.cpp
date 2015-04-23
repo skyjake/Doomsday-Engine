@@ -53,6 +53,7 @@ namespace de {
 static Canvas *mainCanvas = 0;
 
 DENG2_PIMPL(Canvas)
+, DENG2_OBSERVES(GLFramebuffer, SampleCountChange)
 {
     QtInputSource input;
     GLFramebuffer framebuf; ///< Represents the default FBO (the window surface).
@@ -80,6 +81,7 @@ DENG2_PIMPL(Canvas)
 
     ~Instance()
     {
+        framebuf.audienceForSampleCountChange() -= this;
         framebuf.setCanvas(nullptr);
         self.removeEventFilter(&input);
 
@@ -94,8 +96,6 @@ DENG2_PIMPL(Canvas)
     {
         if(self.isReady()) return;
         
-        qDebug() << "Canvas: making ready";
-
         glInit();
         //d->reconfigureFramebuffer();
 
@@ -169,6 +169,18 @@ DENG2_PIMPL(Canvas)
         }
     }
 
+    void framebufferSampleCountChanged(GLFramebuffer &fb)
+    {
+        LOG_AS("Canvas");
+        
+        QSurfaceFormat format = self.format();
+        format.setSamples(fb.sampleCount());
+        self.setFormat(format);
+        LOGDEV_GL_MSG("Format's sample count changed to %i") << fb.sampleCount();
+        
+        QTimer::singleShot(1, &self, SLOT(recreateCanvas()));
+    }
+
     void finishCanvasRecreation()
     {
         DENG2_ASSERT_IN_MAIN_THREAD();
@@ -229,6 +241,7 @@ DENG2_AUDIENCE_METHOD(Canvas, GLResize)
 Canvas::Canvas() : QOpenGLWindow(), d(new Instance(this))
 {
     d->framebuf.setCanvas(this);
+    d->framebuf.audienceForSampleCountChange() += d;
     
     //LOG_AS("Canvas");
     //LOGDEV_GL_VERBOSE("Swap interval: ") << format().swapInterval();
@@ -402,22 +415,22 @@ QtInputSource const &Canvas::input() const
 {
     return d->input;
 }
-
+    
 void Canvas::recreateCanvas()
 {
+    LOG_AS("Canvas");
+    LOGDEV_GL_MSG("Recreating native window");
+
     DENG2_ASSERT_IN_MAIN_THREAD();
 
     GLState::considerNativeStateUndefined();
 
-    bool const wasVisible = isVisible();
+    auto oldVisibility = visibility();
 
     destroy();
     create();
 
-    if(wasVisible)
-    {
-        setVisible(true);
-    }
+    setVisibility(oldVisibility);
 
     // TODO: Need to setup GL state again?
 
@@ -507,7 +520,6 @@ void Canvas::exposeEvent(QExposeEvent *event)
     // actually appears on screen.
     if(isExposed() && !isReady())
     {
-        LOGDEV_GL_XVERBOSE("Window has been exposed, notifying about GL being ready");
         QTimer::singleShot(1, this, SLOT(makeReady()));
     }
     else if(!isExposed() && isReady())
@@ -519,6 +531,9 @@ void Canvas::exposeEvent(QExposeEvent *event)
 void Canvas::makeReady()
 {
     DENG2_ASSERT(isExposed() && isVisible());
+
+    LOG_AS("Canvas");
+    LOGDEV_GL_VERBOSE("Window has been exposed, notifying about GL being ready");
 
     glActivate();
 #ifdef LIBGUI_USE_GLENTRYPOINTS

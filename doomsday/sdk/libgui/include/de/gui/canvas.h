@@ -83,12 +83,6 @@ public:
     QtInputSource &input();
     QtInputSource const &input() const;
 
-    /**
-     * Recreates the contained Canvas with an updated GL format. The context is
-     * shared with the old Canvas.
-     */
-    void recreateCanvas();
-
     /*
     // Events.
 #ifdef WIN32
@@ -225,6 +219,13 @@ public:
     bool isMinimized() const  { return windowState() & Qt::WindowMinimized; }
     bool isHidden() const { return !isVisible(); }
 
+public slots:
+    /**
+     * Recreates the contained Canvas with an updated GL format. The context is
+     * shared with the old Canvas.
+     */
+    void recreateCanvas();
+    
 protected:
     void exposeEvent(QExposeEvent *);
 

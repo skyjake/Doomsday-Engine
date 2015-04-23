@@ -56,6 +56,9 @@ class LIBGUI_PUBLIC GLFramebuffer : public Asset
 public:
     typedef Vector2ui Size;
 
+    /// Notified when the sample count of the framebuffer changes.
+    DENG2_DEFINE_AUDIENCE2(SampleCountChange, void framebufferSampleCountChanged(GLFramebuffer &))
+
 public:
     GLFramebuffer(Image::Format const & colorFormat = Image::RGB_888,
                   Size const &          initialSize = Size(),
