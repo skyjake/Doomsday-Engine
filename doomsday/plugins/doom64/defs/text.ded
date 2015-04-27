@@ -47,7 +47,7 @@ Text {
 
 Text {
   ID = "QLPROMPT";
-  Text = Really load the game in slot %s named\n\n'%s' ?";
+  Text = "Really load the game in slot %s named\n\n'%s' ?";
 }
 
 Text {
