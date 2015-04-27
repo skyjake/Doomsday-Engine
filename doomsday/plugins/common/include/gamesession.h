@@ -24,6 +24,7 @@
 #include <de/String>
 #include <doomsday/uri.h>
 #include "doomsday.h"
+#include "acs/system.h"
 #include "gamerules.h"
 
 namespace common {
@@ -176,7 +177,14 @@ public:
      */
     de::String userDescription();
 
-public: // Saved session management ----------------------------------------------------------
+public:  // Systems and data structures ------------------------------------------------------
+
+    /**
+     * Returns the "ACS" scripting system.
+     */
+    acs::System &acsSystem();
+
+public:  // Saved session management ---------------------------------------------------------
 
     /**
      * Save the current game state to a new @em user saved session.

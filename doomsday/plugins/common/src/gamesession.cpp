@@ -28,7 +28,6 @@
 #include <de/ZipArchive>
 #include <de/game/SavedSession>
 #include <doomsday/defs/episode.h>
-#include "acs/system.h"
 #include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
@@ -124,6 +123,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
     bool rememberVisitedMaps = false;
     QSet<de::Uri> visitedMaps;
+
+    acs::System acscriptSys;  ///< The One acs::System instance.
 
     Instance(Public *i) : Base(i)
     {
@@ -265,7 +266,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Save the current game state to the .save package.
 #if __JHEXEN__
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptSystem().serializeWorldState();
+                << acscriptSys.serializeWorldState();
 #endif
 
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
@@ -544,8 +545,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Deserialize the world ACS state.
         if(File const *state = saved.tryLocateStateFile("ACScript"))
         {
-            Game_ACScriptSystem()
-                    .readWorldState(de::Reader(*state).withHeader());
+            acscriptSys.readWorldState(de::Reader(*state).withHeader());
         }
 #endif
 
@@ -1008,7 +1008,7 @@ void GameSession::end()
 
     // Reset state of relevant subsystems.
 #if __JHEXEN__
-    Game_ACScriptSystem().reset();
+    d->acscriptSys.reset();
 #endif
     if(!IS_DEDICATED)
     {
@@ -1244,7 +1244,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptSystem().runDeferredTasks(d->mapUri);
+    d->acscriptSys.runDeferredTasks(d->mapUri);
 #endif
 
     if(saved)
@@ -1260,7 +1260,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #if __JHEXEN__
         // Save the world-state of the Script interpreter.
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptSystem().serializeWorldState();
+                << d->acscriptSys.serializeWorldState();
 #endif
 
         // Save the state of the current map.
@@ -1361,6 +1361,11 @@ String GameSession::savedUserDescription(String const &saveName)
         return saved->metadata().gets("userDescription", "");
     }
     return ""; // Not found.
+}
+
+acs::System &GameSession::acsSystem()
+{
+    return d->acscriptSys;
 }
 
 namespace {

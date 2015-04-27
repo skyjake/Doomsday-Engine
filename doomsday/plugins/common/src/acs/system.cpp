@@ -333,7 +333,7 @@ void System::worldSystemMapChanged()
 D_CMD(InspectACScript)
 {
     DENG2_UNUSED2(src, argc);
-    System &scriptSys      = Game_ACScriptSystem();
+    System &scriptSys      = COMMON_GAMESESSION->acsSystem();
     int const scriptNumber = String(argv[1]).toInt();
 
     if(!scriptSys.hasScript(scriptNumber))
@@ -357,7 +357,7 @@ D_CMD(InspectACScript)
 D_CMD(ListACScripts)
 {
     DENG2_UNUSED3(src, argc, argv);
-    System &scriptSys = Game_ACScriptSystem();
+    System &scriptSys = COMMON_GAMESESSION->acsSystem();
 
     if(scriptSys.scriptCount())
     {
@@ -400,24 +400,3 @@ void System::consoleRegister()  // static
 }
 
 }  // namespace acs
-
-static acs::System scriptSys;  ///< The One acs::System instance.
-
-acs::System &Game_ACScriptSystem()
-{
-    return scriptSys;
-}
-
-// C wrapper API: --------------------------------------------------------------
-
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[],
-    mobj_t *activator, Line *line, int side)
-{
-    if(scriptSys.hasScript(scriptNumber))
-    {
-        return scriptSys.script(scriptNumber)
-                            .start(acs::Script::Args(args, 4), activator,
-                                   line, side);
-    }
-    return false;
-}
