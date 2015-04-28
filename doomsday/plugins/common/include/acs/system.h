@@ -23,18 +23,17 @@
 #define LIBCOMMON_ACS_SYSTEM_H
 
 #include "common.h"
-#ifdef __cplusplus
-#  include <array>
-#  include <functional>
-#  include <de/Error>
-#  include <de/Block>
-#  include <de/Reader>
-#  include <de/Writer>
-#  include <doomsday/uri.h>
-#  include "acs/module.h"
-#  include "acs/script.h"
-#  include "mapstatereader.h"
-#  include "mapstatewriter.h"
+#include <array>
+#include <functional>
+#include <de/Error>
+#include <de/Block>
+#include <de/Reader>
+#include <de/Writer>
+#include <doomsday/uri.h>
+#include "acs/module.h"
+#include "acs/script.h"
+#include "mapstatereader.h"
+#include "mapstatewriter.h"
 
 namespace acs {
 
@@ -142,26 +141,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace acs
-
-/**
- * Returns the game's global acs::System.
- */
-acs::System &Game_ACScriptSystem();
-
-#endif  // __cplusplus
-
-// C wrapper API: --------------------------------------------------------------
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[4],
-    struct mobj_s *activator, Line *line, int side);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
+}  // namespace acs
 
 #endif  // LIBCOMMON_ACS_SYSTEM_H

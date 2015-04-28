@@ -119,6 +119,7 @@ DENG_EXTERN_C dd_bool noHighResPatches;
 DENG_EXTERN_C dd_bool highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
+DENG_EXTERN_C int devNoCulling;
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C byte devDrawLums;
@@ -127,8 +128,6 @@ DENG_EXTERN_C byte freezeRLs;
 
 void Rend_Register();
 
-void Rend_Init();
-void Rend_Shutdown();
 void Rend_Reset();
 
 /// @return @c true iff multitexturing is currently enabled for lights.

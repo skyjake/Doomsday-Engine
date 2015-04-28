@@ -52,6 +52,9 @@ void P_PlayerOnSpecialFloor(player_t *plr);
 void P_InitLightning(void);
 void P_AnimateLightning(void);
 
+dd_bool P_StartACScript(int scriptNumber, byte const args[4], struct mobj_s *activator,
+    Line *line, int side);
+
 typedef enum {
     ok,
     crushed,

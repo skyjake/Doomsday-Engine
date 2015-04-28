@@ -173,12 +173,12 @@ Module const &System::module() const
     return *d->currentModule;
 }
 
-int System::scriptCount() const
+dint System::scriptCount() const
 {
     return d->scripts.count();
 }
 
-bool System::hasScript(int scriptNumber) const
+bool System::hasScript(dint scriptNumber) const
 {
     for(Script const *script : d->scripts)
     {
@@ -190,7 +190,7 @@ bool System::hasScript(int scriptNumber) const
     return false;
 }
 
-Script &System::script(int scriptNumber) const
+Script &System::script(dint scriptNumber) const
 {
     for(Script const *script : d->scripts)
     {
@@ -212,7 +212,7 @@ LoopResult System::forAllScripts(std::function<LoopResult (Script &)> func) cons
     return LoopContinue;
 }
 
-bool System::deferScriptStart(de::Uri const &mapUri, int scriptNumber,
+bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
     Script::Args const &scriptArgs)
 {
     DENG2_ASSERT(!IS_CLIENT);
@@ -256,6 +256,8 @@ Block System::serializeWorldState() const
 
 void System::readWorldState(de::Reader &from)
 {
+    from.seek(sizeof(duint32)); /// @todo fixme: Where is this being written?
+
     // Read the world-global variable namespace.
     for(auto &var : worldVars) from >> var;
 
@@ -294,7 +296,7 @@ void System::readMapState(MapStateReader *msr)
 void System::runDeferredTasks(de::Uri const &mapUri)
 {
     LOG_AS("acs::System");
-    for(int i = 0; i < d->tasks.count(); ++i)
+    for(dint i = 0; i < d->tasks.count(); ++i)
     {
         Instance::ScriptStartTask *task = d->tasks[i];
         if(task->mapUri != mapUri) continue;
@@ -333,8 +335,8 @@ void System::worldSystemMapChanged()
 D_CMD(InspectACScript)
 {
     DENG2_UNUSED2(src, argc);
-    System &scriptSys      = Game_ACScriptSystem();
-    int const scriptNumber = String(argv[1]).toInt();
+    System &scriptSys       = COMMON_GAMESESSION->acsSystem();
+    dint const scriptNumber = String(argv[1]).toInt();
 
     if(!scriptSys.hasScript(scriptNumber))
     {
@@ -357,7 +359,7 @@ D_CMD(InspectACScript)
 D_CMD(ListACScripts)
 {
     DENG2_UNUSED3(src, argc, argv);
-    System &scriptSys = Game_ACScriptSystem();
+    System &scriptSys = COMMON_GAMESESSION->acsSystem();
 
     if(scriptSys.scriptCount())
     {
@@ -370,15 +372,15 @@ D_CMD(ListACScripts)
 
 #ifdef DENG2_DEBUG
         LOG_SCR_MSG("World variables:");
-        int idx = 0;
-        for(int const &var : scriptSys.worldVars)
+        dint idx = 0;
+        for(dint const &var : scriptSys.worldVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
 
         LOG_SCR_MSG("Map variables:");
         idx = 0;
-        for(int const &var : scriptSys.mapVars)
+        for(dint const &var : scriptSys.mapVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
@@ -400,24 +402,3 @@ void System::consoleRegister()  // static
 }
 
 }  // namespace acs
-
-static acs::System scriptSys;  ///< The One acs::System instance.
-
-acs::System &Game_ACScriptSystem()
-{
-    return scriptSys;
-}
-
-// C wrapper API: --------------------------------------------------------------
-
-dd_bool Game_ACScriptSystem_StartScript(int scriptNumber, byte const args[],
-    mobj_t *activator, Line *line, int side)
-{
-    if(scriptSys.hasScript(scriptNumber))
-    {
-        return scriptSys.script(scriptNumber)
-                            .start(acs::Script::Args(args, 4), activator,
-                                   line, side);
-    }
-    return false;
-}
