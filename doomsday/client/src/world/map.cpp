@@ -1920,23 +1920,55 @@ void Map::buildMaterialLists()
 {
     d->surfaceDecorator().reset();
 
-    for(Line *line : d->lines)
-    for(int i = 0; i < 2; ++i)
+    for(ConvexSubspace const *subspace : d->subspaces)
     {
-        LineSide &side = line->side(i);
-        if(!side.hasSections()) continue;
+        HEdge *base  = subspace->poly().hedge();
+        HEdge *hedge = base;
+        do
+        {
+            if(hedge->hasMapElement())
+            {
+                LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
+                if(side.hasSections())
+                {
+                    linkInMaterialLists(&side.middle());
+                    linkInMaterialLists(&side.top());
+                    linkInMaterialLists(&side.bottom());
+                }
+                if(side.back().hasSections())
+                {
+                    linkInMaterialLists(&side.back().middle());
+                    linkInMaterialLists(&side.back().top());
+                    linkInMaterialLists(&side.back().bottom());
+                }
+            }
+        } while((hedge = &hedge->next()) != base);
 
-        linkInMaterialLists(&side.middle());
-        linkInMaterialLists(&side.top());
-        linkInMaterialLists(&side.bottom());
-    }
+        subspace->forAllExtraMeshes([this] (Mesh &mesh)
+        {
+            for(HEdge *hedge : mesh.hedges())
+            {
+                // Is this on the back of a one-sided line?
+                if(!hedge->hasMapElement()) continue;
 
-    for(Sector *sector : d->sectors)
-    {
-        // Skip sectors with no lines as their planes will never be drawn.
-        if(!sector->sideCount()) continue;
+                LineSide &side = hedge->mapElementAs<LineSideSegment>().lineSide();
+                if(side.hasSections())
+                {
+                    linkInMaterialLists(&side.middle());
+                    linkInMaterialLists(&side.top());
+                    linkInMaterialLists(&side.bottom());
+                }
+                if(side.back().hasSections())
+                {
+                    linkInMaterialLists(&side.back().middle());
+                    linkInMaterialLists(&side.back().top());
+                    linkInMaterialLists(&side.back().bottom());
+                }
+            }
+            return LoopContinue;
+        });
 
-        sector->forAllPlanes([this] (Plane &plane)
+        subspace->sector().forAllPlanes([this] (Plane &plane)
         {
             linkInMaterialLists(&plane.surface());
             return LoopContinue;
