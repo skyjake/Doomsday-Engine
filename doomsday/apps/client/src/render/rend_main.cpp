@@ -19,9 +19,9 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/GLState>
-
 #include "de_base.h"
+#include "render/rend_main.h"
+
 #include "de_console.h"
 #include "de_render.h"
 #include "de_resource.h"
@@ -61,7 +61,7 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
-#include "render/rend_main.h"
+#include "render/angleclipper.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
@@ -73,16 +73,17 @@
 #include "gl/gl_texmanager.h"
 #include "gl/sys_opengl.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
-#include <QtAlgorithms>
-#include <QBitArray>
-
+#include <de/GLState>
 #include <de/vector1.h>
 #include <de/libcore.h>
 #include <de/concurrency.h>
 #include <de/timer.h>
+
+#include <QtAlgorithms>
+#include <QBitArray>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
 
 using namespace de;
 
@@ -184,6 +185,7 @@ float vang, vpitch;
 float viewsidex, viewsidey;
 
 byte freezeRLs;
+int devNoCulling;       ///< @c 1= disabled (cvar).
 int devRendSkyMode;
 byte devRendSkyAlways;
 
@@ -271,9 +273,19 @@ static Vector3f curSectorLightColor;
 static float curSectorLightLevel;
 static bool firstSubspace; // No range checking for the first one.
 
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
+
 static inline ResourceSystem &resSys()
 {
     return ClientApp::resourceSystem();
+}
+
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
 }
 
 static void scheduleFullLightGridUpdate()
@@ -462,18 +474,6 @@ static void reportWallSectionDrawn(Line &line)
         gx.HandleMapObjectStatusReport(DMUSC_LINE_FIRSTRENDERED, line.indexInMap(),
                                        DMU_LINE, &playerNum);
     }
-}
-
-void Rend_Init()
-{
-    C_Init();
-}
-
-void Rend_Shutdown()
-{
-    if(!ClientApp::hasRenderSystem()) return;
-
-    ClientApp::renderSystem().clearDrawLists();
 }
 
 /// World/map renderer reset.
@@ -2606,7 +2606,7 @@ static void writeAllWallSections(HEdge *hedge)
     if(!P_IsInVoid(viewPlayer) &&
        coveredOpenRange(*hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
-        C_AddRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
+        rendSys().angleClipper().addRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin());
     }
 }
 
@@ -2704,12 +2704,14 @@ static inline bool canOccludeEdgeBetweenPlanes(Plane &frontPlane, Plane const &b
  */
 static void occludeSubspace(bool frontFacing)
 {
-    SectorCluster &cluster = curSubspace->cluster();
-
     if(devNoCulling) return;
     if(P_IsInVoid(viewPlayer)) return;
 
-    HEdge *base = curSubspace->poly().hedge();
+    AngleClipper &clipper  = rendSys().angleClipper();
+
+    SectorCluster &cluster = curSubspace->cluster();
+
+    HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
     do
     {
@@ -2763,7 +2765,7 @@ static void occludeSubspace(bool frontFacing)
             || (openBottom >  backCluster.visFloor().heightSmoothed() && Rend_EyeOrigin().y >= openBottom))
            && canOccludeEdgeBetweenPlanes(cluster.visFloor(), backCluster.visFloor()))
         {
-            C_AddViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
+            clipper.addViewRelOcclusion(from.origin(), to.origin(), openBottom, false);
         }
 
         // Does the ceiling create an occlusion?
@@ -2771,7 +2773,7 @@ static void occludeSubspace(bool frontFacing)
             || (openTop <  backCluster.visCeiling().heightSmoothed() && Rend_EyeOrigin().y <= openTop))
            && canOccludeEdgeBetweenPlanes(cluster.visCeiling(), backCluster.visCeiling()))
         {
-            C_AddViewRelOcclusion(from.origin(), to.origin(), openTop, true);
+            clipper.addViewRelOcclusion(from.origin(), to.origin(), openTop, true);
         }
     } while((hedge = &hedge->next()) != base);
 }
@@ -2813,7 +2815,7 @@ static void clipFrontFacingWalls(HEdge *hedge)
     LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
     if(seg.isFrontFacing())
     {
-        if(!C_CheckRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
+        if(!rendSys().angleClipper().checkRangeFromViewRelPoints(hedge->origin(), hedge->twin().origin()))
         {
             seg.setFrontFacing(false);
         }
@@ -2981,7 +2983,9 @@ static void makeCurrent(ConvexSubspace &subspace)
 
 static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
 {
-    DENG2_ASSERT(bspTree != 0);
+    DENG2_ASSERT(bspTree);
+
+    AngleClipper &clipper = rendSys().angleClipper();
 
     while(!bspTree->isLeaf())
     {
@@ -2997,7 +3001,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         // If the clipper is full we're pretty much done. This means no geometry
         // will be visible in the distance because every direction has already
         // been fully covered by geometry.
-        if(!firstSubspace && C_IsFull())
+        if(!firstSubspace && clipper.isFull())
             return;
 
         // ...and back space.
@@ -3016,7 +3020,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
             return;
 
         // Is this subspace visible?
-        if(!firstSubspace && !C_IsPolyVisible(subspace->poly()))
+        if(!firstSubspace && !clipper.isPolyVisible(subspace->poly()))
             return;
 
         // This is now the current subspace.
@@ -3493,16 +3497,6 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     popGLStateForPass(mode);
 }
 
-static inline RenderSystem &rendSys()
-{
-    return ClientApp::renderSystem();
-}
-
-static inline WorldSystem &worldSys()
-{
-    return ClientApp::worldSystem();
-}
-
 static void drawSky()
 {
     DrawLists::FoundLists lists;
@@ -3888,8 +3882,11 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        ClientApp::renderSystem().resetDrawLists(); // Clear the lists for new geometry.
-        C_ClearRanges(); // Clear the clipper.
+        AngleClipper &clipper = rendSys().angleClipper();
+
+        rendSys().resetDrawLists();  // Clear the lists for new geometry.
+
+        clipper.clearRanges();  // Clear the clipper.
 
         // Recycle the vlight lists. Currently done here as the lists are
         // not shared by all viewports.
@@ -3911,8 +3908,8 @@ void Rend_RenderMap(Map &map)
             binangle_t angLen = BANG_180 - startAngle;
 
             binangle_t viewside = (viewData->current.angle() >> (32 - BAMS_BITS)) + startAngle;
-            C_SafeAddRange(viewside, viewside + angLen);
-            C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
+            clipper.safeAddRange(viewside, viewside + angLen);
+            clipper.safeAddRange(viewside + angLen, viewside + 2 * angLen);
         }
 
         // The viewside line for the depth cue.

@@ -28,7 +28,6 @@
 #include <de/ZipArchive>
 #include <de/game/SavedSession>
 #include <doomsday/defs/episode.h>
-#include "acs/system.h"
 #include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
@@ -94,13 +93,13 @@ namespace internal
      */
     static Record const *finaleBriefing(de::Uri const &mapUri)
     {
-        if(::briefDisabled) return 0;
+        if(::briefDisabled) return nullptr;
 
         // In a networked game the server will schedule the brief.
-        if(IS_CLIENT || Get(DD_PLAYBACK)) return 0;
+        if(IS_CLIENT || Get(DD_PLAYBACK)) return nullptr;
 
         // If we're already in the INFINE state, don't start a finale.
-        if(G_GameState() == GS_INFINE) return 0;
+        if(G_GameState() == GS_INFINE) return nullptr;
 
         // Is there such a finale definition?
         return Defs().finales.tryFind("before", mapUri.compose());
@@ -120,14 +119,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     bool inProgress = false;  ///< @c true= session is in progress / internal.save exists.
 
     de::Uri mapUri;
-    uint mapEntryPoint = 0;   ///< Player entry point, for reborn.
+    duint mapEntryPoint = 0;  ///< Player entry point, for reborn.
 
     bool rememberVisitedMaps = false;
     QSet<de::Uri> visitedMaps;
 
+    acs::System acscriptSys;  ///< The One acs::System instance.
+
     Instance(Public *i) : Base(i)
     {
-        DENG2_ASSERT(singleton == 0);
+        DENG2_ASSERT(singleton == nullptr);
         singleton = thisPublic;
     }
 
@@ -165,17 +166,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         if(!IS_CLIENT)
         {
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for(player_t &plr : players)
             {
-                player_t *plr = &players[i];
-                if(!plr->plr->inGame) continue;
+                if(!plr.plr->inGame) continue;
 
                 // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
+                plr.playerState = PST_REBORN;
 #if __JHEXEN__
-                plr->worldTimer  = 0;
+                plr.worldTimer  = 0;
 #else
-                plr->didSecret   = false;
+                plr.didSecret   = false;
 #endif
             }
         }
@@ -202,27 +202,26 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         SessionMetadata meta;
 
-        meta.set("sessionId",       uint(Timer_RealMilliseconds() + (mapTime << 24)));
+        meta.set("sessionId",       duint(Timer_RealMilliseconds() + (mapTime << 24)));
         meta.set("gameIdentityKey", Session::gameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          mapUri.compose());
         meta.set("mapTime",         ::mapTime);
 
-        meta.add("gameRules",       self.rules().toRecord()); // Takes ownership.
+        meta.add("gameRules",       self.rules().toRecord());  // Takes ownership.
 
         ArrayValue *playersArray = new ArrayValue;
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(player_t &plr : players)
         {
-            bool playerIsPresent = CPP_BOOL(players[i].plr->inGame);
-            *playersArray << NumberValue(playerIsPresent, NumberValue::Boolean);
+            *playersArray << NumberValue(CPP_BOOL(plr.plr->inGame), NumberValue::Boolean);
         }
-        meta.set("players", playersArray); // Takes ownership.
+        meta.set("players", playersArray);  // Takes ownership.
 
         if(rememberVisitedMaps)
         {
             ArrayValue *visitedMapsArray = new ArrayValue;
-            foreach(de::Uri const &visitedMap, visitedMaps)
+            for(de::Uri const &visitedMap : visitedMaps)
             {
                 *visitedMapsArray << TextValue(visitedMap.compose());
             }
@@ -244,7 +243,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         LOG_RES_VERBOSE("Serializing to \"%s\"...") << path;
 
         // Does the .save already exist?
-        SavedSession *saved = App::rootFolder().tryLocate<SavedSession>(path);
+        auto *saved = App::rootFolder().tryLocate<SavedSession>(path);
         if(saved)
         {
             DENG2_ASSERT(saved->mode().testFlag(File::Write));
@@ -267,7 +266,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Save the current game state to the .save package.
 #if __JHEXEN__
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptSystem().serializeWorldState();
+                << acscriptSys.serializeWorldState();
 #endif
 
         Folder &mapsFolder = App::fileSystem().makeFolder(saved->path() / "maps");
@@ -276,87 +275,84 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         mapsFolder.replaceFile(mapUri.path() + "State")
                 << serializeCurrentMapState();
 
-        saved->flush(); // No need to populate; FS2 Files already in sync with source data.
-        saved->cacheMetadata(metadata); // Avoid immediately reopening the .save package.
+        saved->flush();  // No need to populate; FS2 Files already in sync with source data.
+        saved->cacheMetadata(metadata);  // Avoid immediately reopening the .save package.
 
         return *saved;
     }
 
 #if __JDOOM__ || __JDOOM64__
-    void applyRuleFastMonsters(dd_bool fast)
+    /**
+     * @todo fixme: (Kludge) Assumes the original mobj info tic timing values have
+     * not been modified!
+     */
+    void applyRuleFastMonsters(bool fast)
     {
-        static dd_bool oldFast = false;
+        static bool oldFast = false;
 
         // Only modify when the rule changes state.
         if(fast == oldFast) return;
         oldFast = fast;
 
-        /// @fixme Kludge: Assumes the original speed values haven't been modified!
-        for(int i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
+        for(dint i = S_SARG_RUN1; i <= S_SARG_RUN8; ++i)
         {
             STATES[i].tics = fast? 1 : 2;
         }
-        for(int i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
+        for(dint i = S_SARG_ATK1; i <= S_SARG_ATK3; ++i)
         {
             STATES[i].tics = fast? 4 : 8;
         }
-        for(int i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
+        for(dint i = S_SARG_PAIN; i <= S_SARG_PAIN2; ++i)
         {
             STATES[i].tics = fast? 1 : 2;
         }
-        // Kludge end.
     }
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    void applyRuleFastMissiles(dd_bool fast)
+    /**
+     * @todo fixme: (Kludge) Assumes the original mobj info speed values have
+     * not been modified!
+     */
+    void applyRuleFastMissiles(bool fast)
     {
-        struct missileinfo_s {
-            mobjtype_t  type;
-            float       speed[2];
-        }
-        MonsterMissileInfo[] =
+        struct MissileData { mobjtype_t type; dfloat speed[2]; } const missileData[] =
         {
 #if __JDOOM__ || __JDOOM64__
-            { MT_BRUISERSHOT, {15, 20} },
-            { MT_HEADSHOT, {10, 20} },
-            { MT_TROOPSHOT, {10, 20} },
+            { MT_BRUISERSHOT,       { 15, 20 } },
+            { MT_HEADSHOT,          { 10, 20 } },
+            { MT_TROOPSHOT,         { 10, 20 } },
 # if __JDOOM64__
-            { MT_BRUISERSHOTRED, {15, 20} },
-            { MT_NTROSHOT, {20, 40} },
+            { MT_BRUISERSHOTRED,    { 15, 20 } },
+            { MT_NTROSHOT,          { 20, 40 } },
 # endif
 #elif __JHERETIC__
-            { MT_IMPBALL, {10, 20} },
-            { MT_MUMMYFX1, {9, 18} },
-            { MT_KNIGHTAXE, {9, 18} },
-            { MT_REDAXE, {9, 18} },
-            { MT_BEASTBALL, {12, 20} },
-            { MT_WIZFX1, {18, 24} },
-            { MT_SNAKEPRO_A, {14, 20} },
-            { MT_SNAKEPRO_B, {14, 20} },
-            { MT_HEADFX1, {13, 20} },
-            { MT_HEADFX3, {10, 18} },
-            { MT_MNTRFX1, {20, 26} },
-            { MT_MNTRFX2, {14, 20} },
-            { MT_SRCRFX1, {20, 28} },
-            { MT_SOR2FX1, {20, 28} },
+            { MT_IMPBALL,           { 10, 20 } },
+            { MT_MUMMYFX1,          {  9, 18 } },
+            { MT_KNIGHTAXE,         {  9, 18 } },
+            { MT_REDAXE,            {  9, 18 } },
+            { MT_BEASTBALL,         { 12, 20 } },
+            { MT_WIZFX1,            { 18, 24 } },
+            { MT_SNAKEPRO_A,        { 14, 20 } },
+            { MT_SNAKEPRO_B,        { 14, 20 } },
+            { MT_HEADFX1,           { 13, 20 } },
+            { MT_HEADFX3,           { 10, 18 } },
+            { MT_MNTRFX1,           { 20, 26 } },
+            { MT_MNTRFX2,           { 14, 20 } },
+            { MT_SRCRFX1,           { 20, 28 } },
+            { MT_SOR2FX1,           { 20, 28 } },
 #endif
-            { mobjtype_t(-1), {-1, -1} }
         };
-
-        static dd_bool oldFast = false;
+        static bool oldFast = false;
 
         // Only modify when the rule changes state.
         if(fast == oldFast) return;
         oldFast = fast;
 
-        /// @fixme Kludge: Assumes the original values speed values haven't been modified!
-        for(int i = 0; MonsterMissileInfo[i].type != -1; ++i)
+        for(MissileData const &mdata : missileData)
         {
-            MOBJINFO[MonsterMissileInfo[i].type].speed =
-                MonsterMissileInfo[i].speed[fast? 1 : 0];
+            MOBJINFO[mdata.type].speed = mdata.speed[dint( fast )];
         }
-        // Kludge end.
     }
 #endif
 
@@ -365,15 +361,15 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         if(rules.skill < SM_NOTHINGS)
             rules.skill = SM_NOTHINGS;
         if(rules.skill > NUM_SKILL_MODES - 1)
-            rules.skill = skillmode_t(NUM_SKILL_MODES - 1);
+            rules.skill = skillmode_t( NUM_SKILL_MODES - 1 );
 
         if(!IS_NETGAME)
         {
 #if !__JHEXEN__
             rules.deathmatch      = false;
-            rules.respawnMonsters = CommandLine_Check("-respawn")? true : false;
+            rules.respawnMonsters = dbyte( App::commandLine().has("-respawn") );
 
-            rules.noMonsters      = CommandLine_Exists("-nomonsters")? true : false;
+            rules.noMonsters      = dbyte( App::commandLine().has("-nomonsters") );
 #endif
 #if __JDOOM__ || __JHERETIC__
             // Is respawning enabled at all in nightmare skill?
@@ -398,7 +394,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-        dd_bool fastMonsters = rules.fast;
+        bool fastMonsters = CPP_BOOL(rules.fast);
 # if __JDOOM__
         if(rules.skill == SM_NIGHTMARE)
         {
@@ -410,7 +406,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        dd_bool fastMissiles = rules.fast;
+        bool fastMissiles = CPP_BOOL(rules.fast);
 # if !__JDOOM64__
         if(rules.skill == SM_NIGHTMARE)
         {
@@ -433,7 +429,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         SavedSession const &session, String const &mapUriAsText)
     {
         de::Uri const mapUri(mapUriAsText, RC_NULL);
-        File const &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
+        auto const &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
         if(!SV_OpenFileForRead(mapStateFile))
         {
             /// @throw Error The serialized map state file could not be opened for read.
@@ -442,19 +438,19 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
         std::unique_ptr<SavedSession::MapStateReader> p;
         reader_s *reader = SV_NewReader();
-        int const magic = Reader_ReadInt32(reader);
-        if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC) // Native format.
+        dint const magic = Reader_ReadInt32(reader);
+        if(magic == MY_SAVE_MAGIC || MY_CLIENT_SAVE_MAGIC)  // Native format.
         {
             p.reset(new MapStateReader(session));
         }
 #if __JDOOM__
-        else if(magic == 0x1DEAD600) // DoomV9
+        else if(magic == 0x1DEAD600)  // DoomV9
         {
             p.reset(new DoomV9MapStateReader(session));
         }
 #endif
 #if __JHERETIC__
-        else if(magic == 0x7D9A1200) // HereticV13
+        else if(magic == 0x7D9A1200)  // HereticV13
         {
             p.reset(new HereticV13MapStateReader(session));
         }
@@ -480,17 +476,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         M_ResetRandom();
         if(!IS_CLIENT)
         {
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for(player_t &plr : players)
             {
-                player_t *plr = &players[i];
-                if(!plr->plr->inGame) continue;
+                if(!plr.plr->inGame) continue;
 
                 // Force players to be initialized upon first map load.
-                plr->playerState = PST_REBORN;
+                plr.playerState = PST_REBORN;
 #if __JHEXEN__
-                plr->worldTimer  = 0;
+                plr.worldTimer  = 0;
 #else
-                plr->didSecret   = false;
+                plr.didSecret   = false;
 #endif
             }
         }
@@ -506,10 +501,10 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             Session::copySaved(internalSavePath, savePath);
         }
 
-        /*
-         * SavedSession deserialization begins.
-         */
-        SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
+        //
+        // SavedSession deserialization begins.
+        //
+        auto const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
         SessionMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
@@ -550,8 +545,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         // Deserialize the world ACS state.
         if(File const *state = saved.tryLocateStateFile("ACScript"))
         {
-            Game_ACScriptSystem()
-                    .readWorldState(de::Reader(*state).withHeader());
+            acscriptSys.readWorldState(de::Reader(*state).withHeader());
         }
 #endif
 
@@ -598,7 +592,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
     }
 
-    inline void setMapAndEntryPoint(de::Uri const &newMapUri, uint newMapEntryPoint)
+    inline void setMapAndEntryPoint(de::Uri const &newMapUri, duint newMapEntryPoint)
     {
         setMap(newMapUri);
         mapEntryPoint = newMapEntryPoint;
@@ -617,7 +611,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         Pause_End();
 
         // Close open HUDs.
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(dint i = 0; i < MAXPLAYERS; ++i)
         {
             ST_CloseAll(i, true/*fast*/);
         }
@@ -645,11 +639,11 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
         {
             // We've been here before; deserialize the saved map state.
 #if __JHEXEN__
-            targetPlayerAddrs = 0; // player mobj redirection...
+            targetPlayerAddrs = nullptr; // player mobj redirection...
 #endif
 
             String const mapUriAsText = mapUri.compose();
-            SavedSession const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
+            auto const &saved = App::rootFolder().locate<SavedSession>(internalSavePath);
             std::unique_ptr<SavedSession::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             reader->read(mapUriAsText);
         }
@@ -668,23 +662,23 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
     struct playerbackup_t
     {
         player_t player;
-        uint numInventoryItems[NUM_INVENTORYITEM_TYPES];
+        duint numInventoryItems[NUM_INVENTORYITEM_TYPES];
         inventoryitemtype_t readyItem;
     };
 
     void backupPlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
-        DENG2_ASSERT(playerBackup != 0);
+        DENG2_ASSERT(playerBackup);
 
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(dint i = 0; i < MAXPLAYERS; ++i)
         {
-            playerbackup_t *pb  = playerBackup + i;
-            player_t const *plr = players + i;
+            playerbackup_t *pb  = &playerBackup[i];
+            player_t const *plr = &players[i];
 
             std::memcpy(&pb->player, plr, sizeof(player_t));
 
             // Make a copy of the inventory states also.
-            for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+            for(dint k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
             {
                 pb->numInventoryItems[k] = P_InventoryCount(i, inventoryitemtype_t(k));
             }
@@ -697,16 +691,16 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
      */
     void restorePlayersInHub(playerbackup_t playerBackup[MAXPLAYERS])
     {
-        DENG2_ASSERT(playerBackup != 0);
+        DENG2_ASSERT(playerBackup);
 
-        mobj_t *targetPlayerMobj = 0;
+        mobj_t *targetPlayerMobj = nullptr;
 
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(dint i = 0; i < MAXPLAYERS; ++i)
         {
-            playerbackup_t *pb = playerBackup + i;
-            player_t *plr      = players + i;
+            playerbackup_t *pb = &playerBackup[i];
+            player_t *plr      = &players[i];
             ddplayer_t *ddplr  = plr->plr;
-            int oldKeys = 0, oldPieces = 0;
+            dint oldKeys = 0, oldPieces = 0;
             dd_bool oldWeaponOwned[NUM_WEAPON_TYPES];
 
             if(!ddplr->inGame) continue;
@@ -716,13 +710,13 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             // Reset the inventory as it will now be restored from the backup.
             P_InventoryEmpty(i);
 
-            for(int k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
+            for(dint k = 0; k < NUM_INVENTORYITEM_TYPES; ++k)
             {
                 // Don't give back the wings of wrath if reborn.
                 if(k == IIT_FLY && plr->playerState == PST_REBORN)
                     continue;
 
-                for(uint m = 0; m < pb->numInventoryItems[k]; ++m)
+                for(duint m = 0; m < pb->numInventoryItems[k]; ++m)
                 {
                     P_InventoryGive(i, inventoryitemtype_t(k), true);
                 }
@@ -730,8 +724,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             P_InventorySetReadyItem(i, pb->readyItem);
 
             ST_LogEmpty(i);
-            plr->attacker = 0;
-            plr->poisoner = 0;
+            plr->attacker = nullptr;
+            plr->poisoner = nullptr;
 
             if(IS_NETGAME || rules.deathmatch)
             {
@@ -747,7 +741,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     oldKeys   = plr->keys;
                     oldPieces = plr->pieces;
 
-                    for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
+                    for(dint k = 0; k < NUM_WEAPON_TYPES; ++k)
                     {
                         oldWeaponOwned[k] = plr->weapons[k].owned;
                     }
@@ -759,7 +753,7 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             if(rules.deathmatch)
             {
                 de::zap(plr->frags);
-                ddplr->mo = 0;
+                ddplr->mo = nullptr;
                 G_DeathMatchSpawnPlayer(i);
             }
             else
@@ -767,8 +761,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                 if(playerstart_t const *start = P_GetPlayerStart(mapEntryPoint, i, false))
                 {
                     mapspot_t const *spot = &mapSpots[start->spot];
-                    P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[VX],
-                                  spot->origin[VY], spot->origin[VZ], spot->angle,
+                    P_SpawnPlayer(i, cfg.playerClass[i], spot->origin[0],
+                                  spot->origin[1], spot->origin[2], spot->angle,
                                   spot->flags, false, true);
                 }
                 else
@@ -780,13 +774,13 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
 
             if(wasReborn && IS_NETGAME && !rules.deathmatch)
             {
-                int bestWeapon = 0;
+                dint bestWeapon = 0;
 
                 // Restore keys and weapons when reborn in co-op.
                 plr->keys   = oldKeys;
                 plr->pieces = oldPieces;
 
-                for(int k = 0; k < NUM_WEAPON_TYPES; ++k)
+                for(dint k = 0; k < NUM_WEAPON_TYPES; ++k)
                 {
                     if(oldWeaponOwned[k])
                     {
@@ -795,8 +789,8 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
                     }
                 }
 
-                plr->ammo[AT_BLUEMANA].owned  = 25; /// @todo values.ded
-                plr->ammo[AT_GREENMANA].owned = 25; /// @todo values.ded
+                plr->ammo[AT_BLUEMANA].owned  = 25;  /// @todo values.ded
+                plr->ammo[AT_GREENMANA].owned = 25;  /// @todo values.ded
 
                 // Bring up the best weapon.
                 if(bestWeapon)
@@ -806,21 +800,18 @@ DENG2_PIMPL(GameSession), public SavedSession::IMapStateReaderFactory
             }
         }
 
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(player_t const &plr : players)
         {
-            player_t *plr     = players + i;
-            ddplayer_t *ddplr = plr->plr;
-
-            if(!ddplr->inGame) continue;
+            if(!plr.plr->inGame) continue;
 
             if(!targetPlayerMobj)
             {
-                targetPlayerMobj = ddplr->mo;
+                targetPlayerMobj = plr.plr->mo;
             }
         }
 
-        /// @todo Redirect anything targeting a player mobj
-        /// FIXME! This only supports single player games!!
+        // Redirect anything targeting a player mobj.
+        /// @todo fixme: This only supports single player games!!
         if(targetPlayerAddrs)
         {
             for(targetplraddress_t *p = targetPlayerAddrs; p; p = p->next)
@@ -851,12 +842,12 @@ GameSession::~GameSession()
 {
     LOG_AS("~GameSession");
     d.reset();
-    singleton = 0;
+    singleton = nullptr;
 }
 
 GameSession &GameSession::gameSession()
 {
-    DENG2_ASSERT(singleton != 0);
+    DENG2_ASSERT(singleton);
     return *singleton;
 }
 
@@ -877,7 +868,7 @@ bool GameSession::savingPossible()
     if(!hasBegun()) return false;
     if(GS_MAP != G_GameState()) return false;
 
-    /// @todo fixme: what about splitscreen!
+    /// @todo fixme: What about splitscreen!
     player_t *player = &players[CONSOLEPLAYER];
     if(PST_DEAD == player->playerState) return false;
 
@@ -951,7 +942,7 @@ de::Uri GameSession::mapUriForNamedExit(String name) const
         //qDebug() << "map exits" << exits;
 
         // Locate the named exit record.
-        Record const *chosenExit = 0;
+        Record const *chosenExit = nullptr;
         if(exits.count() > 1)
         {
             auto found = exits.constFind(name.toLower());
@@ -1017,7 +1008,7 @@ void GameSession::end()
 
     // Reset state of relevant subsystems.
 #if __JHEXEN__
-    Game_ACScriptSystem().reset();
+    d->acscriptSys.reset();
 #endif
     if(!IS_DEDICATED)
     {
@@ -1164,16 +1155,16 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    byte oldRandomClassesRule = d->rules.randomClasses;
+    dbyte oldRandomClassesRule = d->rules.randomClasses;
     d->rules.randomClasses = false;
 #endif
 
     // Are we saving progress?
-    SavedSession *saved = 0;
+    SavedSession *saved = nullptr;
     if(!d->rules.deathmatch) // Never save in deathmatch.
     {
         saved = &App::rootFolder().locate<SavedSession>(internalSavePath);
-        Folder &mapsFolder = saved->locate<Folder>("maps");
+        auto &mapsFolder = saved->locate<Folder>("maps");
 
         DENG2_ASSERT(saved->mode().testFlag(File::Write));
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
@@ -1210,13 +1201,12 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     if(!IS_CLIENT)
     {
         // Force players to be initialized upon first map load.
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(player_t &plr : players)
         {
-            player_t *plr = &players[i];
-            if(plr->plr->inGame)
+            if(plr.plr->inGame)
             {
-                plr->playerState = PST_REBORN;
-                plr->worldTimer = 0;
+                plr.playerState = PST_REBORN;
+                plr.worldTimer = 0;
             }
         }
     }
@@ -1239,12 +1229,11 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     if(!revisit)
     {
         // First visit; destroy all freshly spawned players (??).
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for(player_t &plr : players)
         {
-            player_t *plr = &players[i];
-            if(plr->plr->inGame)
+            if(plr.plr->inGame)
             {
-                P_MobjRemove(plr->plr->mo, true);
+                P_MobjRemove(plr.plr->mo, true);
             }
         }
     }
@@ -1255,7 +1244,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->rules.randomClasses = oldRandomClassesRule;
 
     // Launch waiting scripts.
-    Game_ACScriptSystem().runDeferredTasks(d->mapUri);
+    d->acscriptSys.runDeferredTasks(d->mapUri);
 #endif
 
     if(saved)
@@ -1271,11 +1260,11 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 #if __JHEXEN__
         // Save the world-state of the Script interpreter.
         de::Writer(saved->replaceFile("ACScriptState")).withHeader()
-                << Game_ACScriptSystem().serializeWorldState();
+                << d->acscriptSys.serializeWorldState();
 #endif
 
         // Save the state of the current map.
-        Folder &mapsFolder = saved->locate<Folder>("maps");
+        auto &mapsFolder = saved->locate<Folder>("maps");
         DENG2_ASSERT(mapsFolder.mode().testFlag(File::Write));
 
         File &outFile = mapsFolder.replaceFile(d->mapUri.path() + "State");
@@ -1289,7 +1278,8 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
 String GameSession::userDescription()
 {
     if(!hasBegun()) return "";
-    return App::rootFolder().locate<SavedSession>(internalSavePath).metadata().gets("userDescription", "");
+    return App::rootFolder().locate<SavedSession>(internalSavePath)
+                                .metadata().gets("userDescription", "");
 }
 
 static String chooseSaveDescription(String const &savePath, String const &userDescription)
@@ -1366,21 +1356,26 @@ void GameSession::removeSaved(String const &saveName)
 String GameSession::savedUserDescription(String const &saveName)
 {
     String const savePath = d->userSavePath(saveName);
-    if(SavedSession const *saved = App::rootFolder().tryLocate<SavedSession>(savePath))
+    if(auto const *saved = App::rootFolder().tryLocate<SavedSession>(savePath))
     {
         return saved->metadata().gets("userDescription", "");
     }
     return ""; // Not found.
 }
 
+acs::System &GameSession::acsSystem()
+{
+    return d->acscriptSys;
+}
+
 namespace {
-int gsvRuleSkill;
+dint gsvRuleSkill;
 char *gsvEpisode = (char *)"";
 uri_s *gsvMap;
 char *gsvHub = (char *)"";
 }
 
-void GameSession::consoleRegister() //static
+void GameSession::consoleRegister()  // static
 {
 #define READONLYCVAR  (CVF_READ_ONLY | CVF_NO_MAX | CVF_NO_MIN | CVF_NO_ARCHIVE)
 
@@ -1392,4 +1387,4 @@ void GameSession::consoleRegister() //static
 #undef READONLYCVAR
 }
 
-} // namespace common
+}  // namespace common

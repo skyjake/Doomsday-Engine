@@ -30,6 +30,7 @@
 #include "api_render.h"
 
 #include "render/fx/bloom.h"
+#include "render/angleclipper.h"
 #include "render/skydrawable.h"
 #include "render/vr.h"
 #include "network/net_demo.h"
@@ -85,6 +86,11 @@ static int gridCols, gridRows;
 static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
 
 static int resetNextViewer = true;
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 
 void Viewports_Register()
 {
@@ -1327,7 +1333,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     if(!lum) return;
 
     // Has this already been occluded?
-    int lumIdx = lum->indexInMap();
+    dint lumIdx = lum->indexInMap();
     if(luminousClipped[lumIdx] > 1)
         return;
 
@@ -1339,7 +1345,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
 
     if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
     {
-        if(!C_IsPointVisible(origin))
+        if(!rendSys().angleClipper().isPointVisible(origin))
         {
             markLumobjClipped(*lum); // Won't have a halo.
         }

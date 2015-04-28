@@ -25,7 +25,6 @@
 #include "jhexen.h"
 #include "p_inter.h"
 
-#include "acs/system.h"
 #include "am_map.h"
 #include "d_netsv.h"
 #include "g_common.h"
@@ -1452,7 +1451,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         // Initiate monster death actions.
         if(target->type == MT_SORCBOSS)
         {
-            Game_ACScriptSystem_StartScript(target->special, NULL, target, NULL, 0);
+            P_StartACScript(target->special, NULL, target, NULL, 0);
         }
         else
         {

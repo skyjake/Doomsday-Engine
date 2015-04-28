@@ -23,6 +23,10 @@
 #include "de_platform.h"
 #include "render/r_things.h"
 
+#include <de/vector1.h>
+#include <de/ModelDrawable>
+
+#include "clientapp.h"
 #include "de_render.h"
 #include "dd_main.h" // App_WorldSystem()
 #include "dd_loop.h" // frameTimePos
@@ -33,8 +37,9 @@
 
 #include "network/net_main.h" // clients[]
 
-#include "render/vissprite.h"
+#include "render/angleclipper.h"
 #include "render/mobjanimator.h"
+#include "render/vissprite.h"
 
 #include "world/map.h"
 #include "world/p_object.h"
@@ -44,10 +49,12 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 
-#include <de/vector1.h>
-#include <de/ModelDrawable>
-
 using namespace de;
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vector4f &ambientColor, uint *vLightListIdx)
@@ -287,7 +294,7 @@ void R_ProjectSprite(mobj_t *mo)
                                 v1, v2);
 
     // Not visible?
-    if(!C_CheckRangeFromViewRelPoints(v1, v2))
+    if(!rendSys().angleClipper().checkRangeFromViewRelPoints(v1, v2))
     {
 #define MAX_OBJECT_RADIUS       128
 
