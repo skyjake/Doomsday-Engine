@@ -903,8 +903,8 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     XG_Init();
 #endif
 
-    Game_ACScriptSystem().loadModuleForMap(mapUri);
-    Game_ACScriptSystem().worldSystemMapChanged();
+    COMMON_GAMESESSION->acsSystem().loadModuleForMap(mapUri);
+    COMMON_GAMESESSION->acsSystem().worldSystemMapChanged();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     P_FindSecrets();

@@ -83,11 +83,6 @@ static float topSlope, bottomSlope; ///< Slopes to top and bottom of target.
 /// Sector >= Sector line-of-sight rejection.
 static byte *rejectMatrix;
 
-static inline acs::System &acScriptSys()
-{
-    return Game_ACScriptSystem();
-}
-
 coord_t P_GetGravity()
 {
     if(cfg.common.netGravity != -1)
@@ -3244,13 +3239,14 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(acScriptSys().hasScript(xline->arg2))
+        if(COMMON_GAMESESSION->acsSystem().hasScript(xline->arg2))
         {
             /// @todo fixme: Really interpret the first byte of xline_t::flags as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            acScriptSys().script(xline->arg2)
-                            .start(acs::Script::Args(&xline->arg3, 4/*3*/),
-                                   parm.useMobj, icpt->line, 0);
+            COMMON_GAMESESSION->acsSystem()
+                    .script(xline->arg2)
+                        .start(acs::Script::Args(&xline->arg3, 4/*3*/), parm.useMobj,
+                               icpt->line, 0);
         }
         xline->special = 0;
         parm.activated = true;
@@ -3275,13 +3271,14 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(acScriptSys().hasScript(mob.args[1]))
+        if(COMMON_GAMESESSION->acsSystem().hasScript(mob.args[1]))
         {
             /// @todo fixme: Really interpret the first byte of mobj_t::turnTime as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            acScriptSys().script(mob.args[1])
-                            .start(acs::Script::Args(&mob.args[2], 4/*3*/),
-                                   parm.useMobj, nullptr, 0);
+            COMMON_GAMESESSION->acsSystem()
+                    .script(mob.args[1])
+                        .start(acs::Script::Args(&mob.args[2], 4/*3*/), parm.useMobj,
+                               nullptr, 0);
         }
         mob.special = 0;
         parm.activated = true;

@@ -112,7 +112,7 @@ DENG2_PIMPL(ClientApp)
     SettingsRegister logSettings;
     QMenuBar *menuBar;
     InputSystem *inputSys;
-    RenderSystem *renderSys;
+    RenderSystem *rendSys;
     ResourceSystem *resourceSys;
     ClientWindowSystem *winSys;
     InFineSystem infineSys; // instantiated at construction time
@@ -187,7 +187,7 @@ DENG2_PIMPL(ClientApp)
         : Base(i)
         , menuBar    (0)
         , inputSys   (0)
-        , renderSys  (0)
+        , rendSys  (0)
         , resourceSys(0)
         , winSys     (0)
         //, infineSys  (0)
@@ -213,7 +213,7 @@ DENG2_PIMPL(ClientApp)
         //delete infineSys;
         delete winSys;
         delete svLink;
-        delete renderSys;
+        delete rendSys;
         delete resourceSys;
         delete inputSys;
         delete menuBar;
@@ -369,8 +369,8 @@ void ClientApp::initialize()
 #endif
 
     // Create the render system.
-    d->renderSys = new RenderSystem;
-    addSystem(*d->renderSys);
+    d->rendSys = new RenderSystem;
+    addSystem(*d->rendSys);
 
     // Create the window system.
     d->winSys = new ClientWindowSystem;
@@ -508,12 +508,12 @@ RenderSystem &ClientApp::renderSystem()
 {
     ClientApp &a = ClientApp::app();
     DENG2_ASSERT(hasRenderSystem());
-    return *a.d->renderSys;
+    return *a.d->rendSys;
 }
 
 bool ClientApp::hasRenderSystem()
 {
-    return ClientApp::app().d->renderSys != 0;
+    return ClientApp::app().d->rendSys != 0;
 }
 
 ResourceSystem &ClientApp::resourceSystem()

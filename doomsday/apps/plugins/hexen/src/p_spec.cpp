@@ -47,9 +47,9 @@
 using namespace de;
 using namespace common;
 
-static inline acs::System &acScriptSys()
+static inline acs::System &acscriptSys()
 {
-    return Game_ACScriptSystem();
+    return COMMON_GAMESESSION->acsSystem();
 }
 
 LightningAnimator lightningAnimator;
@@ -446,30 +446,30 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         acs::Script::Args const scriptArgs(&args[2], 3);
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
-            if(acScriptSys().hasScript(scriptNumber))
+            if(acscriptSys().hasScript(scriptNumber))
             {
-               success = acScriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
+               success = acscriptSys().script(scriptNumber).start(scriptArgs, mo, line, side);
             }
         }
         else
         {
-            success = acScriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
+            success = acscriptSys().deferScriptStart(mapUri, scriptNumber, scriptArgs);
         }
         break; }
 
     case 81: /* ACS_Suspend */ {
         int const scriptNumber = args[0];
-        if(acScriptSys().hasScript(scriptNumber))
+        if(acscriptSys().hasScript(scriptNumber))
         {
-            success = acScriptSys().script(scriptNumber).suspend();
+            success = acscriptSys().script(scriptNumber).suspend();
         }
         break; }
 
     case 82: /* ACS_Terminate */ {
         int const scriptNumber = args[0];
-        if(acScriptSys().hasScript(scriptNumber))
+        if(acscriptSys().hasScript(scriptNumber))
         {
-            success = acScriptSys().script(scriptNumber).terminate();
+            success = acscriptSys().script(scriptNumber).terminate();
         }
         break; }
 
@@ -804,4 +804,15 @@ void P_InitLightning()
 void P_AnimateLightning()
 {
     ::lightningAnimator.advanceTime();
+}
+
+dd_bool P_StartACScript(int scriptNumber, byte const args[],
+    mobj_t *activator, Line *line, int side)
+{
+    if(acscriptSys().hasScript(scriptNumber))
+    {
+        return acscriptSys().script(scriptNumber)
+                                .start(acs::Script::Args(args, 4), activator, line, side);
+    }
+    return false;
 }
