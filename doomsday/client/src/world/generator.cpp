@@ -1,7 +1,7 @@
 /** @file generator.cpp  World map (particle) generator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -106,7 +106,7 @@ Generator::Id Generator::id() const
 
 void Generator::setId(Id newId)
 {
-    DENG_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
+    DENG2_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
     _id = newId;
 }
 
