@@ -43,7 +43,7 @@ struct ListNode
     VectorLight vlight;
 };
 
-struct List
+struct ProjectionList
 {
     ListNode *head;
 };
@@ -53,7 +53,7 @@ static ListNode *firstNode, *cursorNode;
 
 // VectorLight lists.
 static uint listCount, cursorList;
-static List *lists;
+static ProjectionList *lists;
 
 /**
  * Create a new vlight list.
@@ -67,10 +67,10 @@ static uint newList()
         listCount *= 2;
         if(!listCount) listCount = 2;
 
-        lists = (List *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
+        lists = (ProjectionList *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
     }
 
-    List *list = &lists[cursorList - 1];
+    ProjectionList *list = &lists[cursorList - 1];
     list->head = 0;
 
     return cursorList - 1;
@@ -114,7 +114,7 @@ static ListNode *newVLight()
 
 static void linkNodeInList(ListNode *node, uint listIdx)
 {
-    List *list = &lists[listIdx];
+    ProjectionList *list = &lists[listIdx];
 
     if(list->head)
     {
@@ -159,7 +159,7 @@ void VL_InitForNewFrame()
     // Clear the mobj vlight link lists.
     cursorList = 0;
     if(listCount)
-        std::memset(lists, 0, listCount * sizeof(List));
+        std::memset(lists, 0, listCount * sizeof(ProjectionList));
 }
 
 /**
@@ -195,69 +195,46 @@ static void lightWithWorldLight(Vector3f const &color, bool starkLight, uint lis
 }
 
 /**
- * Interpret a vlight from the lumobj and add it to the identified list.
- *
- * @param origin   Point in the map being evaluated.
- * @param lum      Luminous object to interpret.
- * @param listIdx  Identifier of the vlight list to update.
- */
-static void lightWithLumobj(Vector3d const &origin, Lumobj *lum, uint listIdx)
-{
-    DENG_ASSERT(lum != 0);
-
-    Vector3d lumCenter = lum->origin();
-    lumCenter.z += lum->zOffset();
-
-    // Is this light close enough?
-    double dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - origin.x,
-                                                    lumCenter.y - origin.y),
-                                   origin.z - lumCenter.z);
-    float intensity = 0;
-    if(dist < Lumobj::radiusMax())
-    {
-        intensity = de::clamp(0.f, float(1 - dist / lum->radius()) * 2, 1.f);
-    }
-
-    if(intensity < .05f)
-        return;
-
-    ListNode *node      = newVLight();
-    VectorLight *vlight = &node->vlight;
-
-    vlight->direction         = (lumCenter - origin) / dist;
-    vlight->color             = lum->color() * intensity;
-    vlight->affectedByAmbient = true;
-    vlight->approxDist        = dist;
-    vlight->lightSide         = 1;
-    vlight->darkSide          = 0;
-    vlight->offset            = 0;
-
-    linkNodeInList(node, listIdx);
-}
-
-struct lightwithlumobjs_params_t
-{
-    Vector3d origin;
-    uint listIdx;
-};
-
-static int lightWithLumobjsWorker(Lumobj &lum, void *context)
-{
-    lightwithlumobjs_params_t *p = static_cast<lightwithlumobjs_params_t *>(context);
-    lightWithLumobj(p->origin, &lum, p->listIdx);
-    return false; // Continue iteration.
-}
-
-/**
  * Interpret vlights from lumobjs near the @a origin which contact the specified
  * @a subspace and add them to the identified list.
+ *
+ * @param origin   Point in the map being evaluated.
+ * @param listIdx  Identifier of the vlight list to update.
  */
-static void lightWithLumobjs(Vector3d const &origin, ConvexSubspace &subspace, uint listIdx)
+static void lightWithLumobjs(Vector3d const &origin, ConvexSubspace &subspace, duint listIdx)
 {
-    lightwithlumobjs_params_t parms; zap(parms);
-    parms.origin  = origin;
-    parms.listIdx = listIdx;
-    R_SubspaceLumobjContactIterator(subspace, lightWithLumobjsWorker, &parms);
+    R_ForAllSubspaceLumContacts(subspace, [&origin, &listIdx] (Lumobj &lum)
+    {
+        Vector3d lumCenter = lum.origin();
+        lumCenter.z += lum.zOffset();
+
+        // Is this light close enough?
+        ddouble dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - origin.x,
+                                                         lumCenter.y - origin.y),
+                                        origin.z - lumCenter.z);
+        dfloat intensity = 0;
+        if(dist < Lumobj::radiusMax())
+        {
+            intensity = de::clamp(0.f, dfloat(1 - dist / lum.radius()) * 2, 1.f);
+        }
+
+        if(intensity < .05f)
+            return LoopContinue;
+
+        ListNode *node      = newVLight();
+        VectorLight *vlight = &node->vlight;
+
+        vlight->direction         = (lumCenter - origin) / dist;
+        vlight->color             = lum.color() * intensity;
+        vlight->affectedByAmbient = true;
+        vlight->approxDist        = dist;
+        vlight->lightSide         = 1;
+        vlight->darkSide          = 0;
+        vlight->offset            = 0;
+
+        linkNodeInList(node, listIdx);
+        return LoopContinue;
+    });
 }
 
 /**

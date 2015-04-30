@@ -182,11 +182,9 @@ static void findMobjZOrigin(mobj_t *mo, bool floorAdjust, vissprite_t *vis)
 
 void R_ProjectSprite(mobj_t *mo)
 {
-    /**
-     * @todo Lots of stuff here! This needs to be broken down into multiple functions
-     * and/or classes that handle preprocessing of visible entities. Keep in mind that
-     * data/state can persist across frames in the mobjs' private data. -jk
-     */
+    /// @todo Lots of stuff here! This needs to be broken down into multiple functions
+    /// and/or classes that handle preprocessing of visible entities. Keep in mind that
+    /// data/state can persist across frames in the mobjs' private data. -jk
 
     if(!mo) return;
 
@@ -201,7 +199,7 @@ void R_ProjectSprite(mobj_t *mo)
     Sprite *sprite = Mobj_Sprite(*mo);
     if(!sprite) return;
     // ...fully transparent?
-    float const alpha = Mobj_Alpha(mo);
+    float const alpha = Mobj_Alpha(*mo);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
     ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(*mo).subspace();
@@ -339,7 +337,7 @@ void R_ProjectSprite(mobj_t *mo)
     if(mo->ddFlags & DDMF_BOB)
     {
         // Bobbing is applied using floorclip.
-        floorClip += Mobj_BobOffset(mo);
+        floorClip += Mobj_BobOffset(*mo);
     }
 
     // Determine angles.

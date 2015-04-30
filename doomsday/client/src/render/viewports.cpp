@@ -1,7 +1,7 @@
 /** @file viewports.cpp  Player viewports and related low-level rendering.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -53,43 +53,48 @@
 using namespace de;
 
 #ifdef LIBDENG_CAMERA_MOVEMENT_ANALYSIS
-float devCameraMovementStartTime = 0; // sysTime
-float devCameraMovementStartTimeRealSecs = 0;
+dfloat devCameraMovementStartTime;  ///< sysTime
+dfloat devCameraMovementStartTimeRealSecs;
 #endif
 
 D_CMD(ViewGrid);
 
 dd_bool firstFrameAfterLoad;
 
-static int loadInStartupMode = false;
-static int rendCameraSmooth = true; // Smoothed by default.
-static byte showFrameTimePos = false;
-static byte showViewAngleDeltas = false;
-static byte showViewPosDeltas = false;
+static dint loadInStartupMode;
+static dint rendCameraSmooth = true;  ///< Smoothed by default.
+static dbyte showFrameTimePos;
+static dbyte showViewAngleDeltas;
+static dbyte showViewPosDeltas;
 
-int rendInfoTris = 0;
+dint rendInfoTris;
 
 static viewport_t *currentViewport;
 
 static coord_t *luminousDist;
-static byte *luminousClipped;
-static uint *luminousOrder;
+static dbyte *luminousClipped;
+static duint *luminousOrder;
 static QBitArray subspacesVisible;
 
 static QBitArray generatorsVisible(Map::MAX_GENERATORS);
 
-static viewdata_t viewDataOfConsole[DDMAXPLAYERS]; // Indexed by console number.
+static viewdata_t viewDataOfConsole[DDMAXPLAYERS];  ///< Indexed by console number.
 
-static int frameCount; // Just for profiling purposes.
+static dint frameCount;
 
-static int gridCols, gridRows;
+static dint gridCols, gridRows;
 static viewport_t viewportOfLocalPlayer[DDMAXPLAYERS];
 
-static int resetNextViewer = true;
+static dint resetNextViewer = true;
 
 static inline RenderSystem &rendSys()
 {
     return ClientApp::renderSystem();
+}
+
+static inline WorldSystem &worldSys()
+{
+    return ClientApp::worldSystem();
 }
 
 void Viewports_Register()
@@ -523,9 +528,9 @@ void R_NewSharpWorld()
         R_CheckViewerLimits(vd->lastSharp, &sharpView);
     }
 
-    if(ClientApp::worldSystem().hasMap())
+    if(worldSys().hasMap())
     {
-        Map &map = ClientApp::worldSystem().map();
+        Map &map = worldSys().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -903,7 +908,7 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     setupPlayerSprites();
 
     if(ClientApp::vr().mode() == VRConfig::OculusRift &&
-       ClientApp::worldSystem().isPointInVoid(Rend_EyeOrigin().xzy()))
+       worldSys().isPointInVoid(Rend_EyeOrigin().xzy()))
     {
         // Putting one's head in the wall will cause a blank screen.
         GLState::current().target().clear(GLTarget::Color);
@@ -927,9 +932,9 @@ DENG_EXTERN_C void R_RenderPlayerView(int num)
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentViewport, vd);
 
-    if(ClientApp::worldSystem().hasMap())
+    if(worldSys().hasMap())
     {
-        Rend_RenderMap(ClientApp::worldSystem().map());
+        Rend_RenderMap(worldSys().map());
     }
 
     // Orthogonal projection to the view window.
@@ -1043,7 +1048,7 @@ static void clearViewPorts()
             if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
                 continue;
 
-            if(P_IsInVoid(plr) || !ClientApp::worldSystem().hasMap())
+            if(P_IsInVoid(plr) || !worldSys().hasMap())
             {
                 bits |= GL_COLOR_BUFFER_BIT;
                 break;
@@ -1161,13 +1166,13 @@ void R_ClearViewData()
 DENG_EXTERN_C void R_SkyParams(int layerIndex, int param, void * /*data*/)
 {
     LOG_AS("R_SkyParams");
-    if(!ClientApp::worldSystem().hasMap())
+    if(!worldSys().hasMap())
     {
         LOG_GL_WARNING("No map currently loaded, ignoring");
         return;
     }
 
-    Sky &sky = ClientApp::worldSystem().map().sky();
+    Sky &sky = worldSys().map().sky();
     if(layerIndex >= 0 && layerIndex < sky.layerCount())
     {
         SkyLayer *layer = sky.layer(layerIndex);
@@ -1211,7 +1216,7 @@ void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
 double R_ViewerLumobjDistance(int idx)
 {
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
+    if(idx >= 0 && idx < worldSys().map().lumobjCount())
     {
         return luminousDist[idx];
     }
@@ -1224,7 +1229,7 @@ bool R_ViewerLumobjIsClipped(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
+    if(idx >= 0 && idx < worldSys().map().lumobjCount())
     {
         return CPP_BOOL(luminousClipped[idx]);
     }
@@ -1237,7 +1242,7 @@ bool R_ViewerLumobjIsHidden(int idx)
     if(!luminousClipped) return true;
 
     /// @todo Do not assume the current map.
-    if(idx >= 0 && idx < ClientApp::worldSystem().map().lumobjCount())
+    if(idx >= 0 && idx < worldSys().map().lumobjCount())
     {
         return luminousClipped[idx] == 2;
     }
@@ -1263,13 +1268,11 @@ static int lumobjSorter(void const *e1, void const *e2)
 
 void R_BeginFrame()
 {
-    /*
-     * Clear the projected texture lists. This is done here as the projections
-     * are sensitive to distance from the viewer.
-     */
-    Rend_ProjectorReset();
+    // Clear the projected texture lists. This is done here as the projections
+    // are sensitive to distance from the viewer.
+    rendSys().projectorReset();
 
-    Map &map = ClientApp::worldSystem().map();
+    Map &map = worldSys().map();
 
     subspacesVisible.resize(map.subspaceCount());
     subspacesVisible.fill(false);

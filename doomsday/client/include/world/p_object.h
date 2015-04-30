@@ -177,18 +177,18 @@ void Mobj_UnlinkLumobjs(mobj_t *mobj);
 void Mobj_GenerateLumobjs(mobj_t *mobj);
 
 /**
- * Calculate the strength of the shadow this mobj should cast.
+ * Calculate the strength of the shadow this map-object should cast.
  *
  * @note Implemented using a greatly simplified version of the lighting equation;
  *       no light diminishing or light range compression.
  */
-float Mobj_ShadowStrength(mobj_t *mobj);
+de::dfloat Mobj_ShadowStrength(mobj_t const &mob);
 
 /**
  * Determines which of the available sprites is in effect for the current mobj
  * state and frame. May return @c 0 if the state and/or frame is not valid.
  */
-Sprite *Mobj_Sprite(mobj_t const &mobj);
+Sprite *Mobj_Sprite(mobj_t const &mob);
 
 /**
  * Determines which of the available model definitions (if any), are in effect
@@ -220,31 +220,30 @@ coord_t Mobj_ApproxPointDistance(mobj_t *start, coord_t const *point);
 dd_bool Mobj_IsSectorLinked(mobj_t *mobj);
 
 /**
- * @return  The current floatbob offset for the mobj, if the mobj is flagged
- *          for bobbing; otherwise @c 0.
+ * Returns the current "float bob" offset for the given map-object @a mob (if enabled); otherwise @c 0.
  */
-coord_t Mobj_BobOffset(mobj_t *mobj);
+coord_t Mobj_BobOffset(mobj_t const &mob);
 
-float Mobj_Alpha(mobj_t *mobj);
+de::dfloat Mobj_Alpha(mobj_t const &mob);
 
 /**
  * Returns the physical radius of the mobj.
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object.
  *
  * @see Mobj_VisualRadius()
  */
-coord_t Mobj_Radius(mobj_t const &mobj);
+coord_t Mobj_Radius(mobj_t const &mob);
 
 /**
  * Returns the radius of the mobj as it would visually appear to be, according
  * to the current visualization (either a sprite or a 3D model).
  *
- * @param mobj  Mobj instance.
+ * @param mob  Map-object.
  *
  * @see Mobj_Radius()
  */
-coord_t Mobj_VisualRadius(mobj_t const &mobj);
+coord_t Mobj_VisualRadius(mobj_t const &mob);
 
 /**
  * Returns an axis-aligned bounding box for the mobj in map space, centered

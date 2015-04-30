@@ -365,7 +365,7 @@ int Generator::newParticle()
         pinfo->origin[VZ] += originAtSpawn[VZ];
 
         // Include bobbing in the spawn height.
-        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(source));
+        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(*source));
 
         // Calculate XY center with mobj angle.
         angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[VY]) / 180.0f * ANG180);

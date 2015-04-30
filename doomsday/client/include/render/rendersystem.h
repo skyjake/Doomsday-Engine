@@ -1,6 +1,6 @@
 /** @file rendersystem.h  Render subsystem.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,12 +19,14 @@
 #ifndef CLIENT_RENDERSYSTEM_H
 #define CLIENT_RENDERSYSTEM_H
 
-#include <de/System>
-#include <de/Vector>
+#include <functional>
 #include <de/GLShaderBank>
 #include <de/ImageBank>
+#include <de/Vector>
+#include <de/System>
 #include "DrawLists"
 #include "settingsregister.h"
+#include "projectedtexturedata.h"
 
 class AngleClipper;
 class ModelRenderer;
@@ -62,6 +64,36 @@ private:
     uint vertCount, vertMax;
 };
 
+struct ProjectionList
+{
+    struct Node
+    {
+        Node *next, *nextUsed;
+        ProjectedTextureData projection;
+    };
+
+    Node *head = nullptr;
+    bool sortByLuma;  ///< @c true= Sort from brightest to darkest.
+
+    static void init();
+
+    static void reset();
+
+    inline ProjectionList &operator << (ProjectedTextureData &texp) { return add(texp); }
+
+    ProjectionList &add(ProjectedTextureData &texp);
+
+private:
+    // Projection list nodes.
+    static Node *firstNode;
+    static Node *cursorNode;
+
+    static Node *newNode();
+
+    /// Average color * alpha.
+    static dfloat luminosity(ProjectedTextureData const &texp);
+};
+
 /**
  * Renderer subsystems, draw lists, etc... @ingroup render
  */
@@ -69,6 +101,9 @@ class RenderSystem : public de::System
 {
 public:
     RenderSystem();
+
+    // System.
+    void timeChanged(de::Clock const &);
 
     void glInit();
     void glDeinit();
@@ -96,8 +131,40 @@ public:
 
     DrawLists &drawLists();
 
-    // System.
-    void timeChanged(de::Clock const &);
+public:  // Texture => surface projection lists -----------------------------------
+
+    /**
+     * To be called to initialize the projector when the current map changes.
+     * @todo make private
+     */
+    void projectorInitForMap(de::Map &map);
+
+    /**
+     * To be called at the start of a render frame to clear the projection lists
+     * to prepare for subsequent drawing.
+     */
+    void projectorReset();
+
+    /**
+     * Find/create a new projection list.
+     *
+     * @param listIdx     Address holding the list index to retrieve. If the referenced
+     *                    list index is non-zero return the associated list. Otherwise
+     *                    allocate a new list and write it's index back to this address.
+     *
+     * @param sortByLuma  @c true= The list should maintain luma-sorted order.
+     *
+     * @return  ProjectionList associated with the (possibly newly attributed) index.
+     */
+    ProjectionList &findSurfaceProjectionList(de::duint *listIdx, bool sortByLuma = false);
+
+    /**
+     * Iterate through the referenced list of texture => surface projections.
+     *
+     * @param listIdx  Unique identifier of the projection list to process.
+     * @param func     Callback to make for each TexProjection.
+     */
+    de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (ProjectedTextureData const &)> func) const;
 
 public:
     /**
@@ -109,4 +176,4 @@ private:
     DENG2_PRIVATE(d)
 };
 
-#endif // CLIENT_RENDERSYSTEM_H
+#endif  // CLIENT_RENDERSYSTEM_H

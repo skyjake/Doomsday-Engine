@@ -242,8 +242,9 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
+TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
 
+TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
 void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,

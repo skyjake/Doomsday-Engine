@@ -993,12 +993,6 @@ DENG2_PIMPL(Map)
         }
     }
 
-    static dint linkContactWorker(Contact &contact, void *context)
-    {
-        static_cast<Instance *>(context)->contactBlockmap(contact.type()).link(contact);
-        return false;  // Continue iteration.
-    }
-
     /**
      * To be called to link all contacts into the contact blockmaps.
      *
@@ -1006,7 +1000,11 @@ DENG2_PIMPL(Map)
      */
     void linkAllContacts()
     {
-        R_ContactIterator(linkContactWorker, this);
+        R_ForAllContacts([this] (Contact const &contact)
+        {
+            contactBlockmap(contact.type()).link(const_cast<Contact &>(contact));
+            return LoopContinue;
+        });
     }
 
     // Clear the "contact" blockmaps (BSP leaf => object).

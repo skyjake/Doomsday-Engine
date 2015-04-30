@@ -1,9 +1,7 @@
-/**
- * @file de_render.h
- * Rendering subsystem. @ingroup render
+/** @file projectedtexturedata.h  Projected texture data.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -19,28 +17,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DOOMSDAY_CLIENT_RENDERER
-#define DOOMSDAY_CLIENT_RENDERER
+#ifndef CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
+#define CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
 
-#ifdef __CLIENT__
-#include "render/viewports.h"
-#include "render/lightgrid.h"
-#include "render/r_draw.h"
-#include "render/r_main.h"
-#include "render/r_things.h"
-#include "render/rend_halo.h"
-#include "render/rend_particle.h"
-#include "render/rend_main.h"
-#include "render/rend_model.h"
-#include "render/rend_fakeradio.h"
-#include "render/rend_font.h"
-#include "render/rendpoly.h"
-#include "render/billboard.h"
-#include "render/cameralensfx.h"
-#include "render/vissprite.h"
-#include "render/vlight.h"
-#endif
+#include <de/Vector>
+#include "api_gl.h"  // DGLuint
 
-#include "r_util.h"
+/**
+ * POD for a texture => surface projection.
+ */
+struct ProjectedTextureData
+{
+    DGLuint texture;
+    de::Vector2f topLeft;
+    de::Vector2f bottomRight;
+    de::Vector4f color;
+};
 
-#endif /* DOOMSDAY_CLIENT_RENDERER */
+#endif  // CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
