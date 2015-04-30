@@ -103,74 +103,73 @@ using namespace de;
 #define SOF_SIDE                0x04
 ///@}
 
-void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, float a,
-    float const color[3], float alpha, float br, bool alignToBase = true);
+void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h, dfloat a,
+    dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase = true);
 
-void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color3f[3], float alpha);
+void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color3f[3], dfloat alpha);
 
 D_CMD(OpenRendererAppearanceEditor);
 D_CMD(LowRes);
 D_CMD(MipMap);
 D_CMD(TexReset);
 
-int useBias; // Shadow Bias enabled? cvar
+dint useBias;  ///< Shadow Bias enabled? cvar
 
-dd_bool usingFog; // Is the fog in use?
-float fogColor[4];
-float fieldOfView = 95.0f;
-byte smoothTexAnim = true;
+dd_bool usingFog;  ///< Is the fog in use?
+dfloat fogColor[4];
+dfloat fieldOfView = 95.0f;
+dbyte smoothTexAnim = true;
 
-int renderTextures = true;
-int renderWireframe = false;
-int useMultiTexLights = true;
-int useMultiTexDetails = true;
+dint renderTextures = true;
+dint renderWireframe;
+dint useMultiTexLights = true;
+dint useMultiTexDetails = true;
 
-// Rendering paramaters for dynamic lights.
-int dynlightBlend = 0;
+dint dynlightBlend;
 
 Vector3f torchColor(1, 1, 1);
-int torchAdditive = true;
+dint torchAdditive = true;
 
-int useShinySurfaces = true;
+dint useShinySurfaces = true;
 
-int useDynLights = true;
-float dynlightFactor = .5f;
-float dynlightFogBright = .15f;
+dint useDynLights = true;
+dfloat dynlightFactor = .5f;
+dfloat dynlightFogBright = .15f;
 
-int useGlowOnWalls = true;
-float glowFactor = .8f;
-float glowHeightFactor = 3; // Glow height as a multiplier.
-int glowHeightMax = 100; // 100 is the default (0-1024).
+dint useGlowOnWalls = true;
+dfloat glowFactor = .8f;
+dfloat glowHeightFactor = 3;  ///< Glow height as a multiplier.
+dint glowHeightMax = 100;     ///< 100 is the default (0-1024).
 
-int useShadows = true;
-float shadowFactor = 1.2f;
-int shadowMaxRadius = 80;
-int shadowMaxDistance = 1000;
+dint useShadows = true;
+dfloat shadowFactor = 1.2f;
+dint shadowMaxRadius = 80;
+dint shadowMaxDistance = 1000;
 
-byte useLightDecorations = true; ///< cvar
+dbyte useLightDecorations = true;  ///< cvar
 
-float detailFactor = .5f;
-float detailScale = 4;
+dfloat detailFactor = .5f;
+dfloat detailScale = 4;
 
-int mipmapping = 5;
-int filterUI   = 1;
-int texQuality = TEXQ_BEST;
+dint mipmapping = 5;
+dint filterUI   = 1;
+dint texQuality = TEXQ_BEST;
 
-int ratioLimit = 0; // Zero if none.
+dint ratioLimit;      ///< Zero if none.
 dd_bool fillOutlines = true;
-int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int filterSprites = true;
-int texMagMode = 1; // Linear.
-int texAniso = -1; // Use best.
+dint useSmartFilter;  ///< Smart filter mode (cvar: 1=hq2x)
+dint filterSprites = true;
+dint texMagMode = 1;  ///< Linear.
+dint texAniso = -1;   ///< Use best.
 
-dd_bool noHighResTex = false;
-dd_bool noHighResPatches = false;
-dd_bool highResWithPWAD = false;
-byte loadExtAlways = false; // Always check for extres (cvar)
+dd_bool noHighResTex;
+dd_bool noHighResPatches;
+dd_bool highResWithPWAD;
+dbyte loadExtAlways;  ///< Always check for extres (cvar)
 
-float texGamma = 0;
+dfloat texGamma;
 
-int glmode[6] = // Indexed by 'mipmapping'.
+dint glmode[6] = // Indexed by 'mipmapping'.
 {
     GL_NEAREST,
     GL_LINEAR,
@@ -181,26 +180,26 @@ int glmode[6] = // Indexed by 'mipmapping'.
 };
 
 Vector3d vOrigin;
-float vang, vpitch;
-float viewsidex, viewsidey;
+dfloat vang, vpitch;
+dfloat viewsidex, viewsidey;
 
-byte freezeRLs;
-int devNoCulling;       ///< @c 1= disabled (cvar).
-int devRendSkyMode;
-byte devRendSkyAlways;
+dbyte freezeRLs;
+dint devNoCulling;  ///< @c 1= disabled (cvar).
+dint devRendSkyMode;
+dbyte devRendSkyAlways;
 
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
 // used to store the value of the ambient light cvar.
 // The value chosen for rAmbient occurs in Rend_UpdateLightModMatrix
 // for convenience (since we would have to recalculate the matrix anyway).
-int rAmbient, ambientLight;
+dint rAmbient, ambientLight;
 
-int viewpw, viewph; // Viewport size, in pixels.
-int viewpx, viewpy; // Viewpoint top left corner, in pixels.
+dint viewpw, viewph;  ///< Viewport size, in pixels.
+dint viewpx, viewpy;  ///< Viewpoint top left corner, in pixels.
 
-float yfov;
+dfloat yfov;
 
-int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be drawn
+dint gameDrawHUD = 1;  ///< Set to zero when we advise that the HUD should not be drawn
 
 /**
  * Implements a pre-calculated LUT for light level limiting and range
@@ -210,51 +209,49 @@ int gameDrawHUD = 1; // Set to zero when we advise that the HUD should not be dr
  * that when summed with the original light value the result remains in
  * the normalized range [0..1].
  */
-float lightRangeCompression;
-float lightModRange[255];
+dfloat lightRangeCompression;
+dfloat lightModRange[255];
 byte devLightModRange;
 
-float rendLightDistanceAttenuation = 924;
-int rendLightAttenuateFixedColormap = 1;
+dfloat rendLightDistanceAttenuation = 924;
+dint rendLightAttenuateFixedColormap = 1;
 
-float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
-byte rendLightWallAngleSmooth = true;
+dfloat rendLightWallAngle = 1.2f; ///< Intensity of angle-based wall lighting.
+dbyte rendLightWallAngleSmooth = true;
 
-float rendSkyLight = .273f; // Intensity factor.
-byte rendSkyLightAuto = true;
+dfloat rendSkyLight = .273f;     ///< Intensity factor.
+dbyte rendSkyLightAuto = true;
+dint rendMaxLumobjs;             ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
 
-int rendMaxLumobjs; ///< Max lumobjs per viewer, per frame. @c 0= no maximum.
+dint extraLight;  ///< Bumped light from gun blasts.
+dfloat extraLightDelta;
 
-int extraLight; // Bumped light from gun blasts.
-float extraLightDelta;
-
-// Display list id for the active-textured bbox model.
-DGLuint dlBBox;
+DGLuint dlBBox;  ///< Display list id for the active-textured bbox model.
 
 /*
  * Debug/Development cvars:
  */
 
-byte devMobjVLights;            ///< @c 1= Draw mobj vertex lighting vector.
-int devMobjBBox;                ///< @c 1= Draw mobj bounding boxes.
-int devPolyobjBBox;             ///< @c 1= Draw polyobj bounding boxes.
+dbyte devMobjVLights;            ///< @c 1= Draw mobj vertex lighting vector.
+dint devMobjBBox;                ///< @c 1= Draw mobj bounding boxes.
+dint devPolyobjBBox;             ///< @c 1= Draw polyobj bounding boxes.
 
-byte devVertexIndices;          ///< @c 1= Draw vertex indices.
-byte devVertexBars;             ///< @c 1= Draw vertex position bars.
+dbyte devVertexIndices;          ///< @c 1= Draw vertex indices.
+dbyte devVertexBars;             ///< @c 1= Draw vertex position bars.
 
-byte devDrawGenerators;         ///< @c 1= Draw active generators.
-byte devSoundEmitters;          ///< @c 1= Draw sound emitters.
-byte devSurfaceVectors;         ///< @c 1= Draw tangent space vectors for surfaces.
-byte devNoTexFix;               ///< @c 1= Draw "missing" rather than fix materials.
+dbyte devDrawGenerators;         ///< @c 1= Draw active generators.
+dbyte devSoundEmitters;          ///< @c 1= Draw sound emitters.
+dbyte devSurfaceVectors;         ///< @c 1= Draw tangent space vectors for surfaces.
+dbyte devNoTexFix;               ///< @c 1= Draw "missing" rather than fix materials.
 
-byte devSectorIndices;          ///< @c 1= Draw sector indicies.
-byte devThinkerIds;             ///< @c 1= Draw (mobj) thinker indicies.
+dbyte devSectorIndices;          ///< @c 1= Draw sector indicies.
+dbyte devThinkerIds;             ///< @c 1= Draw (mobj) thinker indicies.
 
-byte rendInfoLums;              ///< @c 1= Print lumobj debug info to the console.
-byte devDrawLums;               ///< @c 1= Draw lumobjs origins.
+dbyte rendInfoLums;              ///< @c 1= Print lumobj debug info to the console.
+dbyte devDrawLums;               ///< @c 1= Draw lumobjs origins.
 
-byte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
-float devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
+dbyte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
+dfloat devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 
 static void drawMobjBoundingBoxes(Map &map);
 static void drawSoundEmitters(Map &map);
@@ -267,11 +264,11 @@ static void drawThinkers(Map &map);
 static void drawVertexes(Map &map);
 
 // Draw state:
-static Vector3d eyeOrigin; // Viewer origin.
-static ConvexSubspace *curSubspace; // Subspace currently being drawn.
+static Vector3d eyeOrigin;  ///< Viewer origin.
+static ConvexSubspace *curSubspace;  ///< Subspace currently being drawn.
 static Vector3f curSectorLightColor;
-static float curSectorLightLevel;
-static bool firstSubspace; // No range checking for the first one.
+static dfloat curSectorLightLevel;
+static bool firstSubspace;  ///< No range checking for the first one.
 
 static inline RenderSystem &rendSys()
 {
@@ -298,7 +295,7 @@ static void scheduleFullLightGridUpdate()
     }
 }
 
-static int unlinkMobjLumobjWorker(thinker_t *th, void *)
+static dint unlinkMobjLumobjWorker(thinker_t *th, void *)
 {
     Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
     return false; // Continue iteration.
@@ -462,7 +459,7 @@ void Rend_Register()
 static void reportWallSectionDrawn(Line &line)
 {
     // Already been here?
-    int playerNum = viewPlayer - ddPlayers;
+    dint playerNum = viewPlayer - ddPlayers;
     if(line.isMappedByPlayer(playerNum)) return;
 
     // Mark as drawn.
@@ -501,7 +498,7 @@ bool Rend_IsMTexDetails()
     return IS_MTEX_DETAILS;
 }
 
-float Rend_FieldOfView()
+dfloat Rend_FieldOfView()
 {
     if(vrCfg().mode() == VRConfig::OculusRift)
     {
@@ -510,14 +507,12 @@ float Rend_FieldOfView()
     }
     else
     {
-        /*
-         * Correction is applied for wide screens so that when the FOV is kept
-         * at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
-         * than a 4:3, but not just scaled linearly since that would go too far
-         * into the fish eye territory.
-         */
-        float widescreenCorrection = float(viewpw)/float(viewph) / (4.f / 3.f);
-        if(widescreenCorrection < 1.5) // up to ~16:9
+        // Correction is applied for wide screens so that when the FOV is kept
+        // at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
+        // than a 4:3, but not just scaled linearly since that would go too far
+        // into the fish eye territory.
+        dfloat widescreenCorrection = dfloat(viewpw) / dfloat(viewph) / (4.f / 3.f);
+        if(widescreenCorrection < 1.5)  // up to ~16:9
         {
             widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
             return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
@@ -535,16 +530,16 @@ Vector3d Rend_EyeOrigin()
     return vEyeOrigin;
 }
 
-Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace)
+Matrix4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
     viewdata_t const *viewData = R_ViewData(consoleNum);
 
-    float bodyAngle = viewData->current.angleWithoutHeadTracking() / (float) ANGLE_MAX * 360 - 90;
+    dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
 
     /// @todo vOrigin et al. shouldn't be changed in a getter function. -jk
 
     vOrigin = viewData->current.origin.xzy();
-    vang    = viewData->current.angle() / (float) ANGLE_MAX * 360 - 90; // head tracking included
+    vang    = viewData->current.angle() / (dfloat) ANGLE_MAX * 360 - 90;  // head tracking included
     vpitch  = viewData->current.pitch * 85.0 / 110.0;
 
     vEyeOrigin = vOrigin;
@@ -568,18 +563,16 @@ Matrix4f Rend_GetModelViewMatrix(int consoleNum, bool inWorldSpace)
 
     if(inWorldSpace)
     {
-        float yaw   = vang;
-        float pitch = vpitch;
-        float roll  = 0;
+        dfloat yaw   = vang;
+        dfloat pitch = vpitch;
+        dfloat roll  = 0;
 
         /// @todo Elevate roll angle use into viewer_t, and maybe all the way up into player
         /// model.
 
-        /*
-         * Pitch and yaw can be taken directly from the head tracker, as the game is aware of
-         * these values and is syncing with them independently (however, game has more
-         * latency).
-         */
+        // Pitch and yaw can be taken directly from the head tracker, as the game is aware of
+        // these values and is syncing with them independently (however, game has more
+        // latency).
         if(applyHead)
         {
             // Use angles directly from the Rift for best response.
@@ -615,18 +608,18 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
     glLoadMatrixf(Rend_GetModelViewMatrix(viewPlayer - ddPlayers, inWorldSpace).values());
 }
 
-static inline double viewFacingDot(Vector2d const &v1, Vector2d const &v2)
+static inline ddouble viewFacingDot(Vector2d const &v1, Vector2d const &v2)
 {
     // The dot product.
     return (v1.y - v2.y) * (v1.x - Rend_EyeOrigin().x) + (v2.x - v1.x) * (v1.y - Rend_EyeOrigin().z);
 }
 
-float Rend_ExtraLightDelta()
+dfloat Rend_ExtraLightDelta()
 {
     return extraLightDelta;
 }
 
-void Rend_ApplyTorchLight(Vector4f &color, float distance)
+void Rend_ApplyTorchLight(Vector4f &color, dfloat distance)
 {
     ddplayer_t *ddpl = &viewPlayer->shared;
 
@@ -638,7 +631,7 @@ void Rend_ApplyTorchLight(Vector4f &color, float distance)
     {
         // Colormap 1 is the brightest. I'm guessing 16 would be
         // the darkest.
-        float d = (16 - ddpl->fixedColorMap) / 15.0f;
+        dfloat d = (16 - ddpl->fixedColorMap) / 15.0f;
         if(rendLightAttenuateFixedColormap)
         {
             d *= (1024 - distance) / 1024.0f;
@@ -655,25 +648,25 @@ void Rend_ApplyTorchLight(Vector4f &color, float distance)
     }
 }
 
-void Rend_ApplyTorchLight(float *color3, float distance)
+void Rend_ApplyTorchLight(dfloat *color3, dfloat distance)
 {
     Vector4f tmp(color3, 0);
     Rend_ApplyTorchLight(tmp, distance);
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         color3[i] = tmp[i];
     }
 }
 
-float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
+dfloat Rend_AttenuateLightLevel(dfloat distToViewer, dfloat lightLevel)
 {
     if(distToViewer > 0 && rendLightDistanceAttenuation > 0)
     {
-        float real = lightLevel -
+        dfloat real = lightLevel -
             (distToViewer - 32) / rendLightDistanceAttenuation *
                 (1 - lightLevel);
 
-        float minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
+        dfloat minimum = de::max(0.f, de::squared(lightLevel) + (lightLevel - .63f) * .5f);
         if(real < minimum)
             real = minimum; // Clamp it.
 
@@ -683,7 +676,7 @@ float Rend_AttenuateLightLevel(float distToViewer, float lightLevel)
     return lightLevel;
 }
 
-float Rend_ShadowAttenuationFactor(coord_t distance)
+dfloat Rend_ShadowAttenuationFactor(coord_t distance)
 {
     if(shadowMaxDistance > 0 && distance > 3 * shadowMaxDistance / 4)
     {
@@ -694,7 +687,7 @@ float Rend_ShadowAttenuationFactor(coord_t distance)
 
 static Vector3f skyLightColor;
 static Vector3f oldSkyAmbientColor(-1.f, -1.f, -1.f);
-static float oldRendSkyLight = -1;
+static dfloat oldRendSkyLight = -1;
 
 bool Rend_SkyLightIsEnabled()
 {
@@ -717,7 +710,7 @@ Vector3f Rend_SkyLightColor()
             R_AmplifyColor(skyLightColor);
 
             // Apply the intensity factor cvar.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 skyLightColor[i] = skyLightColor[i] + (1 - rendSkyLight) * (1.f - skyLightColor[i]);
             }
@@ -752,7 +745,7 @@ static Vector3f Rend_AmbientLightColor(Sector const &sector)
     return sector.lightColor();
 }
 
-Vector3f Rend_LuminousColor(Vector3f const &color, float light)
+Vector3f Rend_LuminousColor(Vector3f const &color, dfloat light)
 {
     light = de::clamp(0.f, light, 1.f) * dynlightFactor;
 
@@ -763,9 +756,9 @@ Vector3f Rend_LuminousColor(Vector3f const &color, float light)
     return color * light;
 }
 
-coord_t Rend_PlaneGlowHeight(float intensity)
+coord_t Rend_PlaneGlowHeight(dfloat intensity)
 {
-    return de::clamp<double>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
+    return de::clamp<ddouble>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
 }
 
 Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
@@ -798,13 +791,13 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
     }
 
     // No material, then.
-    return 0;
+    return nullptr;
 }
 
-static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
+static void lightVertex(Vector4f &color, Vector3f const &vtx, dfloat lightLevel,
                         Vector3f const &ambientColor)
 {
-    float const dist = Rend_PointDist2D(vtx);
+    dfloat const dist = Rend_PointDist2D(vtx);
 
     // Apply distance attenuation.
     lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
@@ -814,16 +807,16 @@ static void lightVertex(Vector4f &color, Vector3f const &vtx, float lightLevel,
 
     Rend_ApplyLightAdaptation(lightLevel);
 
-    for(int i = 0; i < 3; ++i)
+    for(dint i = 0; i < 3; ++i)
     {
         color[i] = lightLevel * ambientColor[i];
     }
 }
 
-static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
-                          float lightLevel, Vector3f const &ambientColor)
+static void lightVertices(duint num, Vector4f *colors, Vector3f const *verts,
+                          dfloat lightLevel, Vector3f const &ambientColor)
 {
-    for(uint i = 0; i < num; ++i)
+    for(duint i = 0; i < num; ++i)
     {
         lightVertex(colors[i], verts[i], lightLevel, ambientColor);
     }
@@ -837,15 +830,15 @@ static void lightVertices(uint num, Vector4f *colors, Vector3f const *verts,
  */
 void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     coord_t wallLength, MaterialAnimator *matAnimator, Vector2f const &materialOrigin,
-    blendmode_t blendMode, uint lightListIdx, float glow)
+    blendmode_t blendMode, duint lightListIdx, dfloat glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
 
     vis->pose.origin   = (rvertices[0] + rvertices[3]) / 2;
     vis->pose.distance = Rend_PointDist2D(vis->pose.origin);
 
-    VS_WALL(vis)->texOffset[0] = materialOrigin[VX];
-    VS_WALL(vis)->texOffset[1] = materialOrigin[VY];
+    VS_WALL(vis)->texOffset[0] = materialOrigin[0];
+    VS_WALL(vis)->texOffset[1] = materialOrigin[1];
 
     // Masked walls are sometimes used for special effects like arcs,
     // cobwebs and bottoms of sails. In order for them to look right,
@@ -860,25 +853,25 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
 
         Vector2i const &matDimensions = matAnimator->dimensions();
 
-        VS_WALL(vis)->texCoord[0][VX] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
-        VS_WALL(vis)->texCoord[1][VX] = VS_WALL(vis)->texCoord[0][VX] + wallLength / matDimensions.x;
-        VS_WALL(vis)->texCoord[0][VY] = VS_WALL(vis)->texOffset[1] / matDimensions.y;
-        VS_WALL(vis)->texCoord[1][VY] = VS_WALL(vis)->texCoord[0][VY] +
+        VS_WALL(vis)->texCoord[0][0] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
+        VS_WALL(vis)->texCoord[1][0] = VS_WALL(vis)->texCoord[0][0] + wallLength / matDimensions.x;
+        VS_WALL(vis)->texCoord[0][1] = VS_WALL(vis)->texOffset[1] / matDimensions.y;
+        VS_WALL(vis)->texCoord[1][1] = VS_WALL(vis)->texCoord[0][1] +
                 (rvertices[3].z - rvertices[0].z) / matDimensions.y;
 
-        int wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        dint wrapS = GL_REPEAT, wrapT = GL_REPEAT;
         if(!matAnimator->isOpaque())
         {
-            if(!(VS_WALL(vis)->texCoord[0][VX] < 0 || VS_WALL(vis)->texCoord[0][VX] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VX] < 0 || VS_WALL(vis)->texCoord[1][VX] > 1))
+            if(!(VS_WALL(vis)->texCoord[0][0] < 0 || VS_WALL(vis)->texCoord[0][0] > 1 ||
+                 VS_WALL(vis)->texCoord[1][0] < 0 || VS_WALL(vis)->texCoord[1][0] > 1))
             {
                 // Visible portion is within the actual [0..1] range.
                 wrapS = GL_CLAMP_TO_EDGE;
             }
 
             // Clamp on the vertical axis if the coords are in the normal [0..1] range.
-            if(!(VS_WALL(vis)->texCoord[0][VY] < 0 || VS_WALL(vis)->texCoord[0][VY] > 1 ||
-                 VS_WALL(vis)->texCoord[1][VY] < 0 || VS_WALL(vis)->texCoord[1][VY] > 1))
+            if(!(VS_WALL(vis)->texCoord[0][1] < 0 || VS_WALL(vis)->texCoord[0][1] > 1 ||
+                 VS_WALL(vis)->texCoord[1][1] < 0 || VS_WALL(vis)->texCoord[1][1] > 1))
             {
                 wrapT = GL_CLAMP_TO_EDGE;
             }
@@ -891,13 +884,13 @@ void Rend_AddMaskedPoly(Vector3f const *rvertices, Vector4f const *rcolors,
     VS_WALL(vis)->animator  = matAnimator;
     VS_WALL(vis)->blendMode = blendMode;
 
-    for(int i = 0; i < 4; ++i)
+    for(dint i = 0; i < 4; ++i)
     {
-        VS_WALL(vis)->vertices[i].pos[VX] = rvertices[i].x;
-        VS_WALL(vis)->vertices[i].pos[VY] = rvertices[i].y;
-        VS_WALL(vis)->vertices[i].pos[VZ] = rvertices[i].z;
+        VS_WALL(vis)->vertices[i].pos[0] = rvertices[i].x;
+        VS_WALL(vis)->vertices[i].pos[1] = rvertices[i].y;
+        VS_WALL(vis)->vertices[i].pos[2] = rvertices[i].z;
 
-        for(int c = 0; c < 4; ++c)
+        for(dint c = 0; c < 4; ++c)
         {
             /// @todo Do not clamp here.
             VS_WALL(vis)->vertices[i].color[c] = de::clamp(0.f, rcolors[i][c], 1.f);
@@ -951,40 +944,39 @@ static void quadLightCoords(Vector2f *tc, Vector2f const &topLeft, Vector2f cons
     tc[2].y = tc[0].y = bottomRight.y;
 }
 
-static float shinyVertical(float dy, float dx)
+static dfloat shinyVertical(dfloat dy, dfloat dx)
 {
-    return ((atan(dy/dx) / (PI/2)) + 1) / 2;
+    return ((std::atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
 static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
     Vector3f const *bottomRight, coord_t wallLength)
 {
-    vec2f_t surface, normal, projected, s, reflected, view;
-    float distance, angle, prevAngle = 0;
-    uint i;
-
     // Quad surface vector.
-    V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
-                     (bottomRight->y - topLeft->y) / wallLength);
+    vec2f_t surface; V2f_Set(surface, (bottomRight->x - topLeft->x) / wallLength,
+                                      (bottomRight->y - topLeft->y) / wallLength);
 
-    V2f_Set(normal, surface[VY], -surface[VX]);
+    vec2f_t normal; V2f_Set(normal, surface[1], -surface[0]);
 
     // Calculate coordinates based on viewpoint and surface normal.
-    for(i = 0; i < 2; ++i)
+    dfloat prevAngle = 0;
+    for(duint i = 0; i < 2; ++i)
     {
         // View vector.
-        V2f_Set(view, Rend_EyeOrigin().x - (i == 0? topLeft->x : bottomRight->x),
-                      Rend_EyeOrigin().z - (i == 0? topLeft->y : bottomRight->y));
+        vec2f_t view; V2f_Set(view, Rend_EyeOrigin().x - (i == 0? topLeft->x : bottomRight->x),
+                                    Rend_EyeOrigin().z - (i == 0? topLeft->y : bottomRight->y));
 
-        distance = V2f_Normalize(view);
+        dfloat distance = V2f_Normalize(view);
 
-        V2f_Project(projected, view, normal);
-        V2f_Subtract(s, projected, view);
+        vec2f_t projected; V2f_Project(projected, view, normal);
+
+        vec2f_t s; V2f_Subtract(s, projected, view);
         V2f_Scale(s, 2);
-        V2f_Sum(reflected, view, s);
 
-        angle = acos(reflected[VY]) / PI;
-        if(reflected[VX] < 0)
+        vec2f_t reflected; V2f_Sum(reflected, view, s);
+
+        dfloat angle = std::acos(reflected[1]) / PI;
+        if(reflected[0] < 0)
         {
             angle = 1 - angle;
         }
@@ -1001,7 +993,7 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
 
         // Horizontal coordinates.
         tc[ (i == 0 ? 1 : 2) ].x =
-            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*acos(-dot)/PI*/
+            tc[ (i == 0 ? 0 : 3) ].x = angle + .3f; /*std::acos(-dot)/PI*/
 
         // Vertical coordinates.
         tc[ (i == 0 ? 0 : 2) ].y = shinyVertical(Rend_EyeOrigin().y - bottomRight->z, distance);
@@ -1011,11 +1003,11 @@ static void quadShinyTexCoords(Vector2f *tc, Vector3f const *topLeft,
 
 static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
 {
-    DENG_ASSERT(tc);
+    DENG2_ASSERT(tc);
 
     // Determine distance to viewer.
-    float distToEye = Vector2f(Rend_EyeOrigin().x - point.x, Rend_EyeOrigin().z - point.y)
-                          .normalize().length();
+    dfloat distToEye = Vector2f(Rend_EyeOrigin().x - point.x, Rend_EyeOrigin().z - point.y)
+                           .normalize().length();
     if(distToEye < 10)
     {
         // Too small distances cause an ugly 'crunch' below and above
@@ -1026,8 +1018,8 @@ static void flatShinyTexCoords(Vector2f *tc, Vector3f const &point)
     // Offset from the normal view plane.
     Vector2f start(Rend_EyeOrigin().x, Rend_EyeOrigin().z);
 
-    float offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[VX]*/ -
-                    (start.x - point.x) * cos(.4f)/*viewFrontVec[VZ]*/);
+    dfloat offset = ((start.y - point.y) * sin(.4f)/*viewFrontVec[0]*/ -
+                     (start.x - point.x) * cos(.4f)/*viewFrontVec[2]*/);
 
     tc->x = ((shinyVertical(offset, distToEye) - .5f) * 2) + .5f;
     tc->y = shinyVertical(Rend_EyeOrigin().y - point.z, distToEye);
@@ -1295,37 +1287,36 @@ static void drawProjectedShadows(duint listIdx, drawprojectedshadows_parameters_
 
 struct rendworldpoly_params_t
 {
-    //int             flags; /// @ref rendpolyFlags
     bool            skyMasked;
     blendmode_t     blendMode;
     Vector3d const *topLeft;
     Vector3d const *bottomRight;
     Vector2f const *materialOrigin;
     Vector2f const *materialScale;
-    float           alpha;
-    float           surfaceLightLevelDL;
-    float           surfaceLightLevelDR;
+    dfloat          alpha;
+    dfloat          surfaceLightLevelDL;
+    dfloat          surfaceLightLevelDR;
     Vector3f const *surfaceColor;
     Matrix3f const *surfaceTangentMatrix;
 
-    uint            lightListIdx; // List of lights that affect this poly.
-    uint            shadowListIdx; // List of shadows that affect this poly.
-    float           glowing;
+    duint           lightListIdx;   ///< List of lights that affect this poly.
+    duint           shadowListIdx;  ///< List of shadows that affect this poly.
+    dfloat          glowing;
     bool            forceOpaque;
     MapElement     *mapElement;
-    int             geomGroup;
+    dint            geomGroup;
 
     bool            isWall;
 // Wall only:
     struct {
         coord_t sectionWidth;
-        Vector3f const *surfaceColor2; // Secondary color.
+        Vector3f const *surfaceColor2;  ///< Secondary color.
         WallEdge const *leftEdge;
         WallEdge const *rightEdge;
     } wall;
 };
 
-static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
+static bool renderWorldPoly(Vector3f *posCoords, duint numVertices,
     rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
 {
     DENG2_ASSERT(posCoords);
@@ -1335,7 +1326,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    uint const realNumVertices   = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
+    duint const realNumVertices  = (p.isWall? 3 + p.wall.leftEdge->divisionCount() + 3 + p.wall.rightEdge->divisionCount() : numVertices);
     bool const mustSubdivide     = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
 
     bool const skyMaskedMaterial = (p.skyMasked || (matAnimator.material().isSkyMasked()));
@@ -1351,9 +1342,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     GLTextureUnit const *shineRTU       = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
     GLTextureUnit const *shineMaskRTU   = (useShinySurfaces && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
-    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : 0;
+    Vector4f *colorCoords    = !skyMaskedMaterial? R_AllocRendColors(realNumVertices) : nullptr;
     Vector2f *primaryCoords  = R_AllocRendTexCoords(realNumVertices);
-    Vector2f *interCoords    = layer0InterRTU? R_AllocRendTexCoords(realNumVertices) : 0;
+    Vector2f *interCoords    = layer0InterRTU? R_AllocRendTexCoords(realNumVertices) : nullptr;
 
     Vector4f *shinyColors    = nullptr;
     Vector2f *shinyTexCoords = nullptr;
@@ -1419,7 +1410,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     }
     else
     {
-        for(uint i = 0; i < numVertices; ++i)
+        for(duint i = 0; i < numVertices; ++i)
         {
             Vector3f const &vtx = posCoords[i];
             Vector3f const delta(vtx - *p.topLeft);
@@ -1445,8 +1436,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             // First light texture coordinates.
             if(modTex && Rend_IsMTexLights())
             {
-                float const width  = p.bottomRight->x - p.topLeft->x;
-                float const height = p.bottomRight->y - p.topLeft->y;
+                dfloat const width  = p.bottomRight->x - p.topLeft->x;
+                dfloat const height = p.bottomRight->y - p.topLeft->y;
 
                 modCoords[i] = Vector2f(((p.bottomRight->x - vtx.x) / width  * modTexSt[0].x) + (delta.x / width  * modTexSt[1].x),
                                         ((p.bottomRight->y - vtx.y) / height * modTexSt[0].y) + (delta.y / height * modTexSt[1].y));
@@ -1460,9 +1451,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         if(levelFullBright || !(p.glowing < 1))
         {
             // Uniform color. Apply to all vertices.
-            float ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
+            dfloat ll = de::clamp(0.f, curSectorLightLevel + (levelFullBright? 1 : p.glowing), 1.f);
             Vector4f *colorIt = colorCoords;
-            for(uint i = 0; i < numVertices; ++i, colorIt++)
+            for(duint i = 0; i < numVertices; ++i, colorIt++)
             {
                 colorIt->x = colorIt->y = colorIt->z = ll;
             }
@@ -1480,7 +1471,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 {
                     Vector3f const *posIt = posCoords;
                     Vector4f *colorIt     = colorCoords;
-                    for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                    for(duint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                     {
                         *colorIt = map.lightGrid().evaluate(*posIt);
                     }
@@ -1495,7 +1486,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 {
                     Vector4f const glow(p.glowing, p.glowing, p.glowing, 0);
                     Vector4f *colorIt = colorCoords;
-                    for(uint i = 0; i < numVertices; ++i, colorIt++)
+                    for(duint i = 0; i < numVertices; ++i, colorIt++)
                     {
                         *colorIt += glow;
                     }
@@ -1504,9 +1495,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
                 // Apply light range compression and clamp.
                 Vector3f const *posIt = posCoords;
                 Vector4f *colorIt     = colorCoords;
-                for(uint i = 0; i < numVertices; ++i, posIt++, colorIt++)
+                for(duint i = 0; i < numVertices; ++i, posIt++, colorIt++)
                 {
-                    for(int i = 0; i < 3; ++i)
+                    for(dint i = 0; i < 3; ++i)
                     {
                         (*colorIt)[i] = de::clamp(0.f, (*colorIt)[i] + Rend_LightAdaptationDelta((*colorIt)[i]), 1.f);
                     }
@@ -1514,8 +1505,8 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             }
             else
             {
-                float llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
-                float llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
+                dfloat llL = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDL + p.glowing, 1.f);
+                dfloat llR = de::clamp(0.f, curSectorLightLevel + p.surfaceLightLevelDR + p.glowing, 1.f);
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p.surfaceColor->x < 1 || p.surfaceColor->y < 1 || p.surfaceColor->z < 1)
@@ -1567,7 +1558,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
             {
                 Vector3f const *posIt = posCoords;
                 Vector4f *colorIt = colorCoords;
-                for(uint i = 0; i < numVertices; ++i, colorIt++, posIt++)
+                for(duint i = 0; i < numVertices; ++i, colorIt++, posIt++)
                 {
                     Rend_ApplyTorchLight(*colorIt, Rend_PointDist2D(*posIt));
                 }
@@ -1578,7 +1569,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         {
             // Strength of the shine.
             Vector3f const &minColor = matAnimator.shineMinColor();
-            for(uint i = 0; i < numVertices; ++i)
+            for(duint i = 0; i < numVertices; ++i)
             {
                 Vector4f &color = shinyColors[i];
                 color = Vector3f(colorCoords[i]).max(minColor);
@@ -1588,7 +1579,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
         // Apply uniform alpha (overwritting luminance factors).
         Vector4f *colorIt = colorCoords;
-        for(uint i = 0; i < numVertices; ++i, colorIt++)
+        for(duint i = 0; i < numVertices; ++i, colorIt++)
         {
             colorIt->w = p.alpha;
         }
@@ -1596,13 +1587,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
 
     if(useLights || useShadows)
     {
-        /*
-         * Surfaces lit by dynamic lights may need to be rendered differently
-         * than non-lit surfaces. Determine the average light level of this rend
-         * poly, if too bright; do not bother with lights.
-         */
-        float avgLightlevel = 0;
-        for(uint i = 0; i < numVertices; ++i)
+        // Surfaces lit by dynamic lights may need to be rendered differently
+        // than non-lit surfaces. Determine the average light level of this rend
+        // poly, if too bright; do not bother with lights.
+        dfloat avgLightlevel = 0;
+        for(duint i = 0; i < numVertices; ++i)
         {
             avgLightlevel += colorCoords[i].x;
             avgLightlevel += colorCoords[i].y;
@@ -1624,11 +1613,9 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     {
         DENG2_ASSERT(p.isWall);
 
-        /*
-         * Masked polys (walls) get a special treatment (=> vissprite). This is
-         * needed because all masked polys must be sorted (sprites are masked
-         * polys). Otherwise there will be artifacts.
-         */
+        // Masked polys (walls) get a special treatment (=> vissprite). This is
+        // needed because all masked polys must be sorted (sprites are masked
+        // polys). Otherwise there will be artifacts.
         Rend_AddMaskedPoly(posCoords, colorCoords, p.wall.sectionWidth, &matAnimator,
                            *p.materialOrigin, p.blendMode, p.lightListIdx, p.glowing);
 
@@ -1639,15 +1626,13 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
         R_FreeRendTexCoords(shinyTexCoords);
         R_FreeRendColors(shinyColors);
 
-        return false; // We HAD to use a vissprite, so it MUST not be opaque.
+        return false;  // We HAD to use a vissprite, so it MUST not be opaque.
     }
 
     if(useLights)
     {
         // Render all lights projected onto this surface.
-        drawprojectedlights_parameters_t parm;
-
-        zap(parm);
+        drawprojectedlights_parameters_t parm; de::zap(parm);
         parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1667,9 +1652,7 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     if(useShadows)
     {
         // Render all shadows projected onto this surface.
-        drawprojectedshadows_parameters_t parm;
-
-        zap(parm);
+        drawprojectedshadows_parameters_t parm; de::zap(parm);
         parm.rvertices       = posCoords;
         parm.numVertices     = numVertices;
         parm.realNumVertices = realNumVertices;
@@ -1688,13 +1671,11 @@ static bool renderWorldPoly(Vector3f *posCoords, uint numVertices,
     // Write multiple polys depending on rend params.
     if(mustSubdivide)
     {
-        WallEdge const &leftEdge = *p.wall.leftEdge;
+        WallEdge const &leftEdge  = *p.wall.leftEdge;
         WallEdge const &rightEdge = *p.wall.rightEdge;
 
-        /*
-         * Need to swap indices around into fans set the position of the division
-         * vertices, interpolate texcoords and color.
-         */
+        // Need to swap indices around into fans set the position of the division
+        // vertices, interpolate texcoords and color.
 
         Vector3f origVerts[4];
         std::memcpy(origVerts, posCoords, sizeof(origVerts));
@@ -1995,7 +1976,7 @@ static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
 {
     if(surface.parent().type() == DMU_SIDE) return Lumobj::Side;
     // Must be a plane then.
-    Plane const &plane = surface.parent().as<Plane>();
+    auto const &plane = surface.parent().as<Plane>();
     return plane.isSectorFloor()? Lumobj::Down : Lumobj::Up;
 }
 
@@ -2210,7 +2191,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
     bool noLights, bool noShadows, bool sortLights,
     duint &lightListIdx, duint &shadowListIdx)
 {
-    if(!curSubspace) return;
+    DENG2_ASSERT(curSubspace);
 
     if(levelFullBright) return;
     if(glowStrength >= 1) return;
@@ -2279,7 +2260,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
                                  projected))
                 {
                     rendSys().findSurfaceProjectionList(&shadowListIdx)
-                                << projected;  // a copy is made
+                                << projected;  // a copy is made.
                 }
                 return LoopContinue;
             });
@@ -2298,7 +2279,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
 static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
-                            float &opacity)
+                            dfloat &opacity)
 {
     if(Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
@@ -2309,14 +2290,14 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
     coord_t linePoint[2]     = { line.fromOrigin().x, line.fromOrigin().y };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
     vec2d_t result;
-    double pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
+    ddouble pos = V2d_ProjectOnLine(result, mo->origin, linePoint, lineDirection);
 
     if(!(pos > 0 && pos < 1))
         return false;
 
     coord_t const maxDistance = Mobj_Radius(*mo) * .8f;
 
-    Vector2d delta = Vector2d(result) - Vector2d(mo->origin);
+    auto delta       = Vector2d(result) - Vector2d(mo->origin);
     coord_t distance = delta.length();
 
     if(de::abs(distance) > maxDistance)
@@ -2337,13 +2318,13 @@ static bool nearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
  *
  * @todo WallEdge should encapsulate.
  */
-static float calcLightLevelDelta(Vector3f const &normal)
+static dfloat calcLightLevelDelta(Vector3f const &normal)
 {
-    return (1.0f / 255) * (normal.x * 18) * rendLightWallAngle;
+    return (1.0f / 255) * (normal.x * 18) * ::rendLightWallAngle;
 }
 
 static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
-    float &leftDelta, float &rightDelta)
+    dfloat &leftDelta, dfloat &rightDelta)
 {
     leftDelta = calcLightLevelDelta(leftEdge.normal());
 
@@ -2361,19 +2342,19 @@ static void wallSectionLightLevelDeltas(WallEdge const &leftEdge, WallEdge const
         coord_t const sectionOffset = leftEdge.mapLineSideOffset();
         coord_t const sectionWidth  = de::abs(Vector2d(rightEdge.origin() - leftEdge.origin()).length());
 
-        float deltaDiff = rightDelta - leftDelta;
+        dfloat deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
         leftDelta += (sectionOffset / lineLength) * deltaDiff;
     }
 }
 
-static void writeWallSection(HEdge &hedge, int section,
-    bool *retWroteOpaque = 0, coord_t *retBottomZ = 0, coord_t *retTopZ = 0)
+static void writeWallSection(HEdge &hedge, dint section,
+    bool *retWroteOpaque = nullptr, coord_t *retBottomZ = nullptr, coord_t *retTopZ = nullptr)
 {
     SectorCluster &cluster = curSubspace->cluster();
 
-    LineSideSegment &segment = hedge.mapElementAs<LineSideSegment>();
-    DENG_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
+    auto &segment = hedge.mapElementAs<LineSideSegment>();
+    DENG2_ASSERT(segment.isFrontFacing() && segment.lineSide().hasSections());
 
     if(retWroteOpaque) *retWroteOpaque = false;
     if(retBottomZ)     *retBottomZ     = 0;
@@ -2383,7 +2364,7 @@ static void writeWallSection(HEdge &hedge, int section,
     Surface &surface  = side.surface(section);
 
     // Skip nearly transparent surfaces.
-    float opacity = surface.opacity();
+    dfloat opacity = surface.opacity();
     if(opacity < .001f)
         return;
 
@@ -2395,7 +2376,7 @@ static void writeWallSection(HEdge &hedge, int section,
         return;
 
     // Generate edge geometries.
-    WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+    auto const wallSpec = WallSpec::fromMapSide(side, section);
 
     WallEdge leftEdge(wallSpec, hedge, Line::From);
     WallEdge rightEdge(wallSpec, hedge, Line::To);
@@ -2466,7 +2447,7 @@ static void writeWallSection(HEdge &hedge, int section,
                 parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
-            parm.glowing *= glowFactor; // Global scale factor.
+            parm.glowing *= ::glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
@@ -2479,15 +2460,15 @@ static void writeWallSection(HEdge &hedge, int section,
         {
             parm.blendMode = surface.blendMode();
             if(parm.blendMode == BM_NORMAL && noSpriteTrans)
-                parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+                parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
         side.chooseSurfaceTintColors(wallSpec.section, &parm.surfaceColor, &parm.wall.surfaceColor2);
     }
 
-    /*
-     * Geometry write/drawing begins.
-     */
+    //
+    // Geometry write/drawing begins.
+    //
 
     if(twoSidedMiddle && side.sectorPtr() != &cluster.sector())
     {
@@ -2527,8 +2508,8 @@ static void writeWallSection(HEdge &hedge, int section,
 
             // Determine the shadow properties.
             /// @todo Make cvars out of constants.
-            float shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
-            float shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
+            dfloat shadowSize = 2 * (8 + 16 - curSectorLightLevel * 16);
+            dfloat shadowDark = Rend_RadioCalcShadowDarkness(curSectorLightLevel);
 
             Rend_RadioWallSection(leftEdge, rightEdge, shadowDark, shadowSize);
         }
@@ -2562,18 +2543,18 @@ static void writeWallSection(HEdge &hedge, int section,
  *
  * @return  Number of built vertices.
  */
-static uint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
+static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height,
     Vector3f **verts)
 {
-    DENG2_ASSERT(verts != 0);
+    DENG2_ASSERT(verts);
 
-    Face const &poly      = curSubspace->poly();
-    HEdge *fanBase        = curSubspace->fanBase();
-    uint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
+    Face const &poly       = curSubspace->poly();
+    HEdge *fanBase         = curSubspace->fanBase();
+    duint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
-    uint n = 0;
+    duint n = 0;
     if(!fanBase)
     {
         (*verts)[n] = Vector3f(poly.center(), height);
@@ -2604,7 +2585,7 @@ static void writeSubspacePlane(Plane &plane)
     Surface const &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
-    float const opacity = surface.opacity();
+    dfloat const opacity = surface.opacity();
     if(opacity < .001f) return;
 
     // Determine which Material to use.
@@ -2640,14 +2621,13 @@ static void writeSubspacePlane(Plane &plane)
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vector3d topLeft(poly.aaBox().minX,
-                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][VY],
+                     poly.aaBox().arvec2[plane.isSectorFloor()? 1 : 0][1],
                      plane.heightSmoothed());
     Vector3d bottomRight(poly.aaBox().maxX,
-                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][VY],
+                         poly.aaBox().arvec2[plane.isSectorFloor()? 0 : 1][1],
                          plane.heightSmoothed());
 
-    rendworldpoly_params_t parm; zap(parm);
-
+    rendworldpoly_params_t parm; de::zap(parm);
     parm.mapElement           = curSubspace;
     parm.geomGroup            = plane.indexInSector();
     parm.topLeft              = &topLeft;
@@ -2683,7 +2663,7 @@ static void writeSubspacePlane(Plane &plane)
         parm.blendMode = surface.blendMode();
         if(parm.blendMode == BM_NORMAL && noSpriteTrans)
         {
-            parm.blendMode = BM_ZEROALPHA; // "no translucency" mode
+            parm.blendMode = BM_ZEROALPHA;  // "no translucency" mode
         }
 
         parm.alpha = surface.opacity();
@@ -2706,7 +2686,7 @@ static void writeSubspacePlane(Plane &plane)
                 parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
 
-            parm.glowing *= glowFactor; // Global scale factor.
+            parm.glowing *= ::glowFactor;
         }
 
         projectDynamics(surface, parm.glowing, *parm.topLeft, *parm.bottomRight,
@@ -2714,9 +2694,9 @@ static void writeSubspacePlane(Plane &plane)
                         parm.lightListIdx, parm.shadowListIdx);
     }
 
-    /*
-     * Geometry write/drawing begins.
-     */
+    //
+    // Geometry write/drawing begins.
+    //
 
     if(&plane.sector() != &curSubspace->sector())
     {
@@ -2727,8 +2707,8 @@ static void writeSubspacePlane(Plane &plane)
 
     // Allocate position coordinates.
     Vector3f *posCoords;
-    uint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
-                                                plane.heightSmoothed(), &posCoords);
+    duint vertCount = buildSubspacePlaneGeometry((plane.isSectorCeiling())? Anticlockwise : Clockwise,
+                                                 plane.heightSmoothed(), &posCoords);
 
     // Draw this section.
     renderWorldPoly(posCoords, vertCount, parm, matAnimator);
@@ -2744,7 +2724,7 @@ static void writeSubspacePlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(int vertCount, Vector3f const *posCoords,
+static void writeSkyMaskStrip(dint vertCount, Vector3f const *posCoords,
     Vector2f const *texCoords, Material *material)
 {
     DENG2_ASSERT(posCoords);
@@ -2804,14 +2784,14 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 
     // Configure the strip build state (we'll most likely need to break
     // edge loop into multiple strips).
-    HEdge *startNode          = 0;
-    coord_t startZBottom      = 0;
-    coord_t startZTop         = 0;
-    Material *startMaterial   = 0;
-    float startMaterialOffset = 0;
+    HEdge *startNode           = nullptr;
+    coord_t startZBottom       = 0;
+    coord_t startZTop          = 0;
+    Material *startMaterial    = nullptr;
+    dfloat startMaterialOffset = 0;
 
     // Determine the relative sky plane (for monitoring material changes).
-    int relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
+    dint relPlane = fixType == SkyFixEdge::Upper? Sector::Ceiling : Sector::Floor;
 
     // Begin generating geometry.
     HEdge *base  = curSubspace->poly().hedge();
@@ -2819,7 +2799,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
     forever
     {
         // Are we monitoring material changes?
-        Material *skyMaterial = 0;
+        Material *skyMaterial = nullptr;
         if(splitOnMaterialChange)
         {
             skyMaterial = hedge->face().mapElementAs<ConvexSubspace>()
@@ -2827,7 +2807,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         }
 
         // Add a first (left) edge to the current strip?
-        if(startNode == 0 && hedge->hasMapElement())
+        if(!startNode && hedge->hasMapElement())
         {
             startMaterialOffset = hedge->mapElementAs<LineSideSegment>().lineSideOffset();
 
@@ -2852,7 +2832,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
         bool beginNewStrip = false;
 
         // Add the i'th (right) edge to the current strip?
-        if(startNode != 0)
+        if(startNode)
         {
             // Stop if we've reached a "null" edge.
             bool endStrip = false;
@@ -2892,16 +2872,17 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
             if(endStrip || &hedge->neighbor(direction) == base)
             {
                 // End the current strip.
-                startNode = 0;
+                startNode = nullptr;
 
                 // Take ownership of the built geometry.
-                PositionBuffer *positions = 0;
-                TexCoordBuffer *texcoords = 0;
-                int numVerts = stripBuilder.take(&positions, &texcoords);
+                PositionBuffer *positions = nullptr;
+                TexCoordBuffer *texcoords = nullptr;
+                dint numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
                 writeSkyMaskStrip(numVerts, positions->constData(),
-                                  texcoords? texcoords->constData() : 0, startMaterial);
+                                  texcoords? texcoords->constData() : nullptr,
+                                  startMaterial);
 
                 delete positions;
                 delete texcoords;
@@ -2924,15 +2905,15 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
  * @ingroup flags
  */
 ///@{
-#define SKYCAP_LOWER 0x1
-#define SKYCAP_UPPER 0x2
+#define SKYCAP_LOWER        0x1
+#define SKYCAP_UPPER        0x2
 ///@}
 
-static coord_t skyPlaneZ(int skyCap)
+static coord_t skyPlaneZ(dint skyCap)
 {
     SectorCluster &cluster = curSubspace->cluster();
 
-    int const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
+    dint const relPlane = (skyCap & SKYCAP_UPPER)? Sector::Ceiling : Sector::Floor;
     if(!P_IsInVoid(viewPlayer))
     {
         return cluster.sector().map().skyFix(relPlane == Sector::Ceiling);
@@ -2942,15 +2923,15 @@ static coord_t skyPlaneZ(int skyCap)
 }
 
 /// @param skyCap  @ref skyCapFlags.
-static void writeSubspaceSkyMaskCap(int skyCap)
+static void writeSubspaceSkyMaskCap(dint skyCap)
 {
     // Caps are unnecessary in sky debug mode (will be drawn as regular planes).
     if(devRendSkyMode) return;
     if(!skyCap) return;
 
     Vector3f *posCoords;
-    uint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
-                                                skyPlaneZ(skyCap), &posCoords);
+    duint vertCount = buildSubspacePlaneGeometry((skyCap & SKYCAP_UPPER)? Anticlockwise : Clockwise,
+                                                 skyPlaneZ(skyCap), &posCoords);
 
     ClientApp::renderSystem().drawLists()
               .find(DrawListSpec(SkyMaskGeom))
@@ -2963,7 +2944,7 @@ static void writeSubspaceSkyMaskCap(int skyCap)
 }
 
 /// @param skyCap  @ref skyCapFlags
-static void writeSubspaceSkyMask(int skyCap = SKYCAP_LOWER|SKYCAP_UPPER)
+static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 {
     SectorCluster &cluster = curSubspace->cluster();
 
@@ -3144,7 +3125,7 @@ static void writeSubspacePlanes()
 {
     SectorCluster &cluster = curSubspace->cluster();
 
-    for(int i = 0; i < cluster.visPlaneCount(); ++i)
+    for(dint i = 0; i < cluster.visPlaneCount(); ++i)
     {
         Plane &plane = cluster.visPlane(i);
 
@@ -3160,7 +3141,7 @@ static void writeSubspacePlanes()
 static void markFrontFacingWalls(HEdge *hedge)
 {
     if(!hedge || !hedge->hasMapElement()) return;
-    LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+    auto &seg = hedge->mapElementAs<LineSideSegment>();
     // Which way is the line segment facing?
     seg.setFrontFacing(viewFacingDot(hedge->origin(), hedge->twin().origin()) >= 0);
 }
@@ -3221,7 +3202,7 @@ static void occludeSubspace(bool frontFacing)
         if(!hedge->hasMapElement())
             continue;
 
-        LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+        auto &seg = hedge->mapElementAs<LineSideSegment>();
 
         // Edges without line segment surface sections can never occlude.
         if(!seg.lineSide().hasSections())
@@ -3422,11 +3403,9 @@ static void drawCurrentSubspace()
 
     Rend_RadioSubspaceEdges(*curSubspace);
 
-    /*
-     * Before clip testing lumobjs (for halos), range-occlude the back facing edges.
-     * After testing, range-occlude the front facing edges. Done before drawing wall
-     * sections so that opening occlusions cut out unnecessary oranges.
-     */
+    // Before clip testing lumobjs (for halos), range-occlude the back facing edges.
+    // After testing, range-occlude the front facing edges. Done before drawing wall
+    // sections so that opening occlusions cut out unnecessary oranges.
 
     occludeSubspace(false /* back facing */);
     clipSubspaceLumobjs();
@@ -3441,16 +3420,14 @@ static void drawCurrentSubspace()
         sector.map().generatorListIterator(sector.indexInMap(), generatorMarkVisibleWorker);
     }
 
-    /*
-     * Sprites for this subspace have to be drawn.
-     *
-     * Must be done BEFORE the wall segments of this subspace are added to the
-     * clipper. Otherwise the sprites would get clipped by them, and that wouldn't
-     * be right.
-     *
-     * Must be done AFTER the lumobjs have been clipped as this affects the projection
-     * of halos.
-     */
+    // Sprites for this subspace have to be drawn.
+    //
+    // Must be done BEFORE the wall segments of this subspace are added to the
+    // clipper. Otherwise the sprites would get clipped by them, and that wouldn't
+    // be right.
+    //
+    // Must be done AFTER the lumobjs have been clipped as this affects the projection
+    // of halos.
     projectSubspaceSprites();
 
     writeSubspaceSkyMask();
@@ -3491,7 +3468,7 @@ static void traverseBspTreeAndDrawSubspaces(Map::BspTree const *bspTree)
         BspNode &bspNode = bspTree->userData()->as<BspNode>();
 
         // Decide which side the view point is on.
-        int eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
+        dint eyeSide = bspNode.partition().pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
         traverseBspTreeAndDrawSubspaces(bspTree->childPtr(Map::BspTree::ChildId(eyeSide)));
@@ -3551,9 +3528,9 @@ static void generateDecorationFlares(Map &map)
  */
 static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
 {
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
-    zap(texUnitMap);
+    de::zap(texUnitMap);
 
     switch(mode)
     {
@@ -3596,13 +3573,13 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         {
             texUnitMap[0] = Store::TCA_LIGHT + 1;
             texUnitMap[1] = Store::TCA_MAIN + 1;
-            GL_ModulateTexture(4); // Light * texture.
+            GL_ModulateTexture(4);  // Light * texture.
         }
         else
         {
             texUnitMap[0] = Store::TCA_MAIN + 1;
             texUnitMap[1] = Store::TCA_LIGHT + 1;
-            GL_ModulateTexture(5); // Texture + light.
+            GL_ModulateTexture(5);  // Texture + light.
         }
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_TRUE);
@@ -3635,7 +3612,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // One additive light, no texture.
         GL_SelectTexUnits(1);
         texUnitMap[0] = Store::TCA_LIGHT + 1;
-        GL_ModulateTexture(7); // Add light, no color.
+        GL_ModulateTexture(7);  // Add light, no color.
         glEnable(GL_ALPHA_TEST);
         glAlphaFunc(GL_GREATER, 1 / 255.0f);
         glDepthMask(GL_FALSE);
@@ -3739,7 +3716,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(usingFog)
         {
             glEnable(GL_FOG);
-            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -3761,7 +3738,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         if(usingFog)
         {
             glEnable(GL_FOG);
-            float const midGray[4] = { .5f, .5f, .5f, fogColor[3] }; // The alpha is probably meaningless?
+            dfloat const midGray[] = { .5f, .5f, .5f, fogColor[3] };  // The alpha is probably meaningless?
             glFogfv(GL_FOG_COLOR, midGray);
         }
         break;
@@ -3789,26 +3766,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_SHINY:
         GL_SelectTexUnits(1);
         texUnitMap[0] = Store::TCA_MAIN + 1;
-        GL_ModulateTexture(1); // 8 for multitexture
-        glDisable(GL_ALPHA_TEST);
-        glDepthMask(GL_FALSE);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-
-        if(usingFog)
-        {   // Fog makes the shininess diminish in the distance.
-            glEnable(GL_FOG);
-            glFogfv(GL_FOG_COLOR, black);
-        }
-        glEnable(GL_BLEND);
-        GL_BlendMode(BM_ADD); // Purely additive.
-        break;
-
-    case DM_MASKED_SHINY:
-        GL_SelectTexUnits(2);
-        texUnitMap[0] = Store::TCA_MAIN + 1;
-        texUnitMap[1] = Store::TCA_BLEND + 1; // the mask
-        GL_ModulateTexture(8); // same as with details
+        GL_ModulateTexture(1);  // 8 for multitexture
         glDisable(GL_ALPHA_TEST);
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
@@ -3821,7 +3779,27 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             glFogfv(GL_FOG_COLOR, black);
         }
         glEnable(GL_BLEND);
-        GL_BlendMode(BM_ADD); // Purely additive.
+        GL_BlendMode(BM_ADD);  // Purely additive.
+        break;
+
+    case DM_MASKED_SHINY:
+        GL_SelectTexUnits(2);
+        texUnitMap[0] = Store::TCA_MAIN + 1;
+        texUnitMap[1] = Store::TCA_BLEND + 1;  // the mask
+        GL_ModulateTexture(8);  // same as with details
+        glDisable(GL_ALPHA_TEST);
+        glDepthMask(GL_FALSE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        if(usingFog)
+        {
+            // Fog makes the shininess diminish in the distance.
+            glEnable(GL_FOG);
+            glFogfv(GL_FOG_COLOR, black);
+        }
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
     default: break;
@@ -3987,7 +3965,7 @@ static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
     pushGLStateForPass(mode, texUnitMap);
 
     // Draw each given list.
-    for(int i = 0; i < lists.count(); ++i)
+    for(dint i = 0; i < lists.count(); ++i)
     {
         lists.at(i)->draw(mode, texUnitMap);
     }
@@ -4048,7 +4026,7 @@ static void drawSky()
 
 static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
 {
-    float occlusionFactor;
+    dfloat occlusionFactor;
 
     if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
     {
@@ -4057,11 +4035,9 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
 
     if(spr->data.flare.isDecoration)
     {
-        /*
-         * Surface decorations do not yet persist over frames, so we do
-         * not smoothly occlude their flares. Instead, we will have to
-         * put up with them instantly appearing/disappearing.
-         */
+        // Surface decorations do not yet persist over frames, so we do
+        // not smoothly occlude their flares. Instead, we will have to
+        // put up with them instantly appearing/disappearing.
         occlusionFactor = R_ViewerLumobjIsClipped(spr->data.flare.lumIdx)? 0 : 1;
     }
     else
@@ -4154,14 +4130,14 @@ static void drawMasked()
     }
 }
 
-/*
+/**
  * We have several different paths to accommodate both multitextured details and
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
  */
 static void drawAllLists(Map &map)
 {
-    DENG_ASSERT(!Sys_GLCheckError());
+    DENG2_ASSERT(!Sys_GLCheckError());
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -4169,10 +4145,9 @@ static void drawAllLists(Map &map)
 
     // Render the real surfaces of the visible world.
 
-    /*
-     * Pass: Unlit geometries (all normal lists).
-     */
-
+    //
+    // Pass: Unlit geometries (all normal lists).
+    //
     DrawLists::FoundLists lists;
     ClientApp::renderSystem().drawLists().findAll(UnlitGeom, lists);
     if(IS_MTEX_DETAILS)
@@ -4189,10 +4164,9 @@ static void drawAllLists(Map &map)
         drawLists(lists, DM_ALL);
     }
 
-    /*
-     * Pass: Lit geometries.
-     */
-
+    //
+    // Pass: Lit geometries.
+    //
     ClientApp::renderSystem().drawLists().findAll(LitGeom, lists);
 
     // If multitexturing is available, we'll use it to our advantage when
@@ -4249,18 +4223,18 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: All light geometries (always additive).
-     */
+    //
+    // Pass: All light geometries (always additive).
+    //
     if(dynlightBlend != 2)
     {
         ClientApp::renderSystem().drawLists().findAll(LightGeom, lists);
         drawLists(lists, DM_LIGHTS);
     }
 
-    /*
-     * Pass: Geometries with texture modulation.
-     */
+    //
+    // Pass: Geometries with texture modulation.
+    //
     if(IS_MUL)
     {
         // Finish the lit surfaces that didn't yet get a texture.
@@ -4284,12 +4258,12 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: Geometries with details & modulation.
-     *
-     * If multitexturing is not available for details, we need to apply them as
-     * an extra pass over all the detailed surfaces.
-     */
+    //
+    // Pass: Geometries with details & modulation.
+    //
+    // If multitexturing is not available for details, we need to apply them as
+    // an extra pass over all the detailed surfaces.
+    //
     if(r_detail)
     {
         // Render detail textures for all surfaces that need them.
@@ -4308,14 +4282,14 @@ static void drawAllLists(Map &map)
         }
     }
 
-    /*
-     * Pass: Shiny geometries.
-     *
-     * If we have two texture units, the shiny masks will be enabled. Otherwise
-     * the masks are ignored. The shine is basically specular environmental
-     * additive light, multiplied by the mask so that black texels from the mask
-     * produce areas without shine.
-     */
+    //
+    // Pass: Shiny geometries.
+    //
+    // If we have two texture units, the shiny masks will be enabled. Otherwise
+    // the masks are ignored. The shine is basically specular environmental
+    // additive light, multiplied by the mask so that black texels from the mask
+    // produce areas without shine.
+    //
 
     ClientApp::renderSystem().drawLists().findAll(ShineGeom, lists);
     if(numTexUnits > 1)
@@ -4329,10 +4303,10 @@ static void drawAllLists(Map &map)
         drawLists(lists, DM_ALL_SHINY);
     }
 
-    /*
-     * Pass: Shadow geometries (objects and Fake Radio).
-     */
-    int const oldRenderTextures = renderTextures;
+    //
+    // Pass: Shadow geometries (objects and Fake Radio).
+    //
+    dint const oldRenderTextures = renderTextures;
 
     renderTextures = true;
 
@@ -4401,7 +4375,7 @@ void Rend_RenderMap(Map &map)
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
-            float a = de::abs(vpitch) / (90 - yfov / 2);
+            dfloat a = de::abs(vpitch) / (90 - yfov / 2);
             binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
@@ -4418,7 +4392,7 @@ void Rend_RenderMap(Map &map)
         firstSubspace = true;
 
         // No current subspace as of yet.
-        curSubspace = 0;
+        curSubspace = nullptr;
 
         // Draw the world!
         traverseBspTreeAndDrawSubspaces(&map.bspTree());
@@ -4439,9 +4413,9 @@ void Rend_RenderMap(Map &map)
     GL_SetMultisample(false);
 }
 
-static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
+static void drawStar(Vector3d const &origin, dfloat size, Vector4f const &color)
 {
-    float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -4468,7 +4442,7 @@ static void drawStar(Vector3d const &origin, float size, Vector4f const &color)
     glEnd();
 }
 
-static void drawLabel(Vector3d const &origin, String const &label, float scale, float alpha)
+static void drawLabel(Vector3d const &origin, String const &label, dfloat scale, dfloat alpha)
 {
     if(label.isEmpty()) return;
 
@@ -4525,7 +4499,7 @@ static void drawSource(BiasSource *s)
     drawLabel(s->origin(), labelForSource(s));
 }
 
-static void drawLock(Vector3d const &origin, double unit, double t)
+static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
 {
     glColor4f(1, 1, 1, 1);
 
@@ -4563,7 +4537,7 @@ static void drawBiasEditingVisuals(Map &map)
     if(!map.biasSourceCount())
         return;
 
-    double const t = Timer_RealMilliseconds() / 100.0f;
+    ddouble const t = Timer_RealMilliseconds() / 100.0f;
 
     if(HueCircle *hueCircle = SBE_HueCircle())
     {
@@ -4599,7 +4573,7 @@ static void drawBiasEditingVisuals(Map &map)
         grabbedColor = Vector4f(.7f, .7f, .5f, .4f);
 
     BiasSource *nearSource = map.biasSourceNear(hand.origin());
-    DENG_ASSERT(nearSource != 0);
+    DENG2_ASSERT(nearSource);
 
     if((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
     {
@@ -4663,7 +4637,7 @@ void Rend_UpdateLightModMatrix()
 {
     if(novideo) return;
 
-    zap(lightModRange);
+    de::zap(lightModRange);
 
     if(!App_WorldSystem().hasMap())
     {
@@ -4671,7 +4645,7 @@ void Rend_UpdateLightModMatrix()
         return;
     }
 
-    int mapAmbient = App_WorldSystem().map().ambientLightLevel();
+    dint mapAmbient = App_WorldSystem().map().ambientLightLevel();
     if(mapAmbient > ambientLight)
     {
         rAmbient = mapAmbient;
@@ -4681,21 +4655,21 @@ void Rend_UpdateLightModMatrix()
         rAmbient = ambientLight;
     }
 
-    for(int i = 0; i < 255; ++i)
+    for(dint i = 0; i < 255; ++i)
     {
         // Adjust the white point/dark point?
-        float lightlevel = 0;
+        dfloat lightlevel = 0;
         if(lightRangeCompression != 0)
         {
             if(lightRangeCompression >= 0)
             {
                 // Brighten dark areas.
-                lightlevel = float(255 - i) * lightRangeCompression;
+                lightlevel = dfloat(255 - i) * lightRangeCompression;
             }
             else
             {
                 // Darken bright areas.
-                lightlevel = float(-i) * -lightRangeCompression;
+                lightlevel = dfloat(-i) * -lightRangeCompression;
             }
         }
 
@@ -4723,22 +4697,22 @@ void Rend_UpdateLightModMatrix()
     }
 }
 
-float Rend_LightAdaptationDelta(float val)
+dfloat Rend_LightAdaptationDelta(dfloat val)
 {
-    int clampedVal = de::clamp(0, ROUND(255.0f * val), 254);
+    dint clampedVal = de::clamp(0, de::roundi(255.0f * val), 254);
     return lightModRange[clampedVal];
 }
 
-void Rend_ApplyLightAdaptation(float &val)
+void Rend_ApplyLightAdaptation(dfloat &val)
 {
     val += Rend_LightAdaptationDelta(val);
 }
 
 void Rend_DrawLightModMatrix()
 {
-#define BLOCK_WIDTH             (1.0f)
-#define BLOCK_HEIGHT            (BLOCK_WIDTH * 255.0f)
-#define BORDER                  (20)
+#define BLOCK_WIDTH             ( 1.0f )
+#define BLOCK_HEIGHT            ( BLOCK_WIDTH * 255.0f )
+#define BORDER                  ( 20 )
 
     // Disabled?
     if(!devLightModRange) return;
@@ -4749,12 +4723,6 @@ void Rend_DrawLightModMatrix()
     glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
-
-    /*
-    color.red = 0.2f;
-    color.green = 0;
-    color.blue = 0.6f;
-    */
 
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);
@@ -4770,11 +4738,11 @@ void Rend_DrawLightModMatrix()
     glEnd();
 
     glBegin(GL_QUADS);
-    float c = 0;
-    for(int i = 0; i < 255; ++i, c += (1.0f/255.0f))
+    dfloat c = 0;
+    for(dint i = 0; i < 255; ++i, c += (1.0f/255.0f))
     {
         // Get the result of the source light level + offset.
-        float off = lightModRange[i];
+        dfloat off = lightModRange[i];
 
         glColor4f(c + off, c + off, c + off, 1);
         glVertex2f(i * BLOCK_WIDTH, 0);
@@ -4792,7 +4760,7 @@ void Rend_DrawLightModMatrix()
 #undef BLOCK_WIDTH
 }
 
-static DGLuint constructBBox(DGLuint name, float br)
+static DGLuint constructBBox(DGLuint name, dfloat br)
 {
     if(GL_NewList(name, GL_COMPILE))
     {
@@ -4839,19 +4807,18 @@ static DGLuint constructBBox(DGLuint name, float br)
  * Draws a textured cube using the currently bound gl texture.
  * Used to draw mobj bounding boxes.
  *
- * @param pos           Coordinates of the center of the box (in map space units).
- * @param w             Width of the box.
- * @param l             Length of the box.
- * @param h             Height of the box.
- * @param a             Angle of the box.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
- * @param br            Border amount to overlap box faces.
- * @param alignToBase   If @c true, align the base of the box
- *                      to the Z coordinate.
+ * @param pos          Coordinates of the center of the box (in map space units).
+ * @param w            Width of the box.
+ * @param l            Length of the box.
+ * @param h            Height of the box.
+ * @param a            Angle of the box.
+ * @param color        Color to make the box (uniform vertex color).
+ * @param alpha        Alpha to make the box (uniform vertex color).
+ * @param br           Border amount to overlap box faces.
+ * @param alignToBase  @c true= align the base of the box to the Z coordinate.
  */
 void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
-    float a, float const color[3], float alpha, float br, bool alignToBase)
+    dfloat a, dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase)
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4867,7 +4834,7 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
     glRotatef(a, 0, 1, 0);
 
     glScaled(w - br - br, h - br - br, l - br - br);
-    glColor4f(color[CR], color[CG], color[CB], alpha);
+    glColor4f(color[0], color[1], color[2], alpha);
 
     GL_CallList(dlBBox);
 
@@ -4879,15 +4846,14 @@ void Rend_DrawBBox(Vector3d const &pos, coord_t w, coord_t l, coord_t h,
  * Draws a textured triangle using the currently bound gl texture.
  * Used to draw mobj angle direction arrow.
  *
- * @param pos           Coordinates of the center of the base of the
- *                      triangle (in "world" coordinates [VX, VY, VZ]).
- * @param a             Angle to point the triangle in.
- * @param s             Scale of the triangle.
- * @param color         Color to make the box (uniform vertex color).
- * @param alpha         Alpha to make the box (uniform vertex color).
+ * @param pos    World space coordinates of the center of the base of the triangle.
+ * @param a      Angle to point the triangle in.
+ * @param s      Scale of the triangle.
+ * @param color  Color to make the box (uniform vertex color).
+ * @param alpha  Alpha to make the box (uniform vertex color).
  */
-void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
-    float alpha)
+void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[3],
+    dfloat alpha)
 {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -4920,40 +4886,40 @@ void Rend_DrawArrow(Vector3d const &pos, float a, float s, float const color[3],
     glPopMatrix();
 }
 
-static int drawMobjBBox(thinker_t *th, void * /*context*/)
+static dint drawMobjBBox(thinker_t *th, void * /*context*/)
 {
-    static float const red[3]    = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
+    static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
+    static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
-    mobj_t *mo = (mobj_t *) th;
+    auto *mob = (mobj_t *) th;
 
     // We don't want the console player.
-    if(mo == ddPlayers[consolePlayer].shared.mo)
+    if(mob == ddPlayers[consolePlayer].shared.mo)
         return false;
 
     // Is it vissible?
-    if(!Mobj_IsLinked(*mo))
+    if(!Mobj_IsLinked(*mob))
         return false;
-    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(*mo);
+    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(*mob);
     if(!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
         return false;
 
-    ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mo)).length();
-    float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+    ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mob)).length();
+    dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
     // Draw a bounding box in an appropriate color.
-    coord_t size = Mobj_Radius(*mo);
-    Rend_DrawBBox(mo->origin, size, size, mo->height/2, 0,
-                  (mo->ddFlags & DDMF_MISSILE)? yellow :
-                  (mo->ddFlags & DDMF_SOLID)? green : red,
+    coord_t size = Mobj_Radius(*mob);
+    Rend_DrawBBox(mob->origin, size, size, mob->height/2, 0,
+                  (mob->ddFlags & DDMF_MISSILE)? yellow :
+                  (mob->ddFlags & DDMF_SOLID)? green : red,
                   alpha, .08f);
 
-    Rend_DrawArrow(mo->origin, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
-                   (mo->ddFlags & DDMF_MISSILE)? yellow :
-                   (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
+    Rend_DrawArrow(mob->origin, ((mob->angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
+                   (mob->ddFlags & DDMF_MISSILE)? yellow :
+                   (mob->ddFlags & DDMF_SOLID)? green : red, alpha);
     return false;
 }
 
@@ -4966,9 +4932,9 @@ static int drawMobjBBox(thinker_t *th, void * /*context*/)
  */
 static void drawMobjBoundingBoxes(Map &map)
 {
-    //static float const red[3]   = { 1, 0.2f, 0.2f}; // non-solid objects
-    static float const green[3]  = { 0.2f, 1, 0.2f}; // solid objects
-    static float const yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+    //static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
+    static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
+    static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
     if(!devMobjBBox && !devPolyobjBBox) return;
 
@@ -5014,7 +4980,7 @@ static void drawMobjBoundingBoxes(Map &map)
                          sec.floor().height());
 
             ddouble const distToEye = (eyeOrigin - pos).length();
-            float alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
+            dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
 
@@ -5040,9 +5006,9 @@ static void drawMobjBoundingBoxes(Map &map)
     glEnable(GL_DEPTH_TEST);
 }
 
-static void drawVector(Vector3f const &vector, float scalar, const float color[3])
+static void drawVector(Vector3f const &vector, dfloat scalar, dfloat const color[3])
 {
-    static const float black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -5054,11 +5020,10 @@ static void drawVector(Vector3f const &vector, float scalar, const float color[3
 
 static void drawTangentVectorsForSurface(Surface const &suf, Vector3d const &origin)
 {
-    int const VISUAL_LENGTH = 20;
-
-    static float const red[3]   = { 1, 0, 0 };
-    static float const green[3] = { 0, 1, 0 };
-    static float const blue[3]  = { 0, 0, 1 };
+    static dint const VISUAL_LENGTH = 20;
+    static dfloat const red  [] = { 1, 0, 0 };
+    static dfloat const green[] = { 0, 1, 0 };
+    static dfloat const blue [] = { 0, 0, 1 };
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -5172,8 +5137,8 @@ static void drawSurfaceTangentVectors(SectorCluster &cluster)
         });
     }
 
-    int const planeCount = cluster.sector().planeCount();
-    for(int i = 0; i < planeCount; ++i)
+    dint const planeCount = cluster.sector().planeCount();
+    for(dint i = 0; i < planeCount; ++i)
     {
         Plane const &plane = cluster.visPlane(i);
         coord_t height     = 0;
@@ -5212,9 +5177,7 @@ static void drawAllSurfaceTangentVectors(Map &map)
 
 static void drawLumobjs(Map &map)
 {
-    DENG_UNUSED(map);
-
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     if(!devDrawLums) return;
 
@@ -5268,9 +5231,9 @@ static void drawLumobjs(Map &map)
 
 static void drawSoundEmitter(SoundEmitter &emitter, String const &label)
 {
-#define MAX_SOUNDORIGIN_DIST 384
+#define MAX_SOUNDORIGIN_DIST  384
 
-    Vector3d const &origin  = Vector3d(emitter.origin);
+    Vector3d const &origin(emitter.origin);
     ddouble const distToEye = (eyeOrigin - origin).length();
     if(distToEye < MAX_SOUNDORIGIN_DIST)
     {
@@ -5293,7 +5256,7 @@ static void drawSoundEmitters(Map &map)
     {
         map.forAllLines([] (Line &line)
         {
-            for(int i = 0; i < 2; ++i)
+            for(dint i = 0; i < 2; ++i)
             {
                 LineSide &side = line.side(i);
                 if(!side.hasSections()) continue;
@@ -5345,11 +5308,11 @@ static void drawSoundEmitters(Map &map)
 
 static String labelForGenerator(Generator const *gen)
 {
-    DENG2_ASSERT(gen != 0);
+    DENG2_ASSERT(gen);
     return String("%1").arg(gen->id());
 }
 
-static int drawGenerator(Generator *gen, void * /*context*/)
+static dint drawGenerator(Generator *gen, void * /*context*/)
 {
 #define MAX_GENERATOR_DIST  2048
 
@@ -5379,7 +5342,7 @@ static void drawGenerators(Map &map)
     map.generatorIterator(drawGenerator);
 }
 
-static void drawPoint(Vector3d const &origin, float opacity)
+static void drawPoint(Vector3d const &origin, dfloat opacity)
 {
     glBegin(GL_POINTS);
         glColor4f(.7f, .7f, .2f, opacity * 2);
@@ -5387,11 +5350,10 @@ static void drawPoint(Vector3d const &origin, float opacity)
     glEnd();
 }
 
-static void drawBar(Vector3d const &origin, coord_t height, float opacity)
+static void drawBar(Vector3d const &origin, coord_t height, dfloat opacity)
 {
-    int const EXTEND_DIST = 64;
-
-    static float const black[4] = { 0, 0, 0, 0 };
+    static dint const EXTEND_DIST = 64;
+    static dfloat const black[] = { 0, 0, 0, 0 };
 
     glBegin(GL_LINES);
         glColor4fv(black);
@@ -5408,13 +5370,13 @@ static void drawBar(Vector3d const &origin, coord_t height, float opacity)
 
 static String labelForVertex(Vertex const *vtx)
 {
-    DENG_ASSERT(vtx != 0);
+    DENG2_ASSERT(vtx);
     return String("%1").arg(vtx->indexInMap());
 }
 
-struct drawVertexVisual_params_t
+struct drawvertexvisual_parameters_t
 {
-    int maxDistance;
+    dint maxDistance;
     bool drawOrigin;
     bool drawBar;
     bool drawLabel;
@@ -5422,7 +5384,7 @@ struct drawVertexVisual_params_t
 };
 
 static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble maxHeight,
-    drawVertexVisual_params_t &parms)
+    drawvertexvisual_parameters_t &parms)
 {
     if(!parms.drawOrigin && !parms.drawBar && !parms.drawLabel)
         return;
@@ -5445,7 +5407,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
         return;
 
     Vector3d const origin(vertex.origin(), minHeight);
-    float const opacity = 1 - distToEye / parms.maxDistance;
+    dfloat const opacity = 1 - distToEye / parms.maxDistance;
 
     if(parms.drawBar)
     {
@@ -5469,16 +5431,16 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
  * @param base  Base half-edge to find heights for.
  * @param edge  Edge of the half-edge.
  * @param min   Current minimal height to use as a base (will be overwritten).
- *              Use DDMAXFLOAT if the base is unknown. Can be @c 0.
+ *              Use DDMAXFLOAT if the base is unknown.
  * @param min   Current maximal height to use as a base (will be overwritten).
- *              Use DDMINFLOAT if the base is unknown. Can be @c 0.
+ *              Use DDMINFLOAT if the base is unknown.
  *
  * @todo Don't stop when a zero-volume back neighbor is found; process all of
  * the neighbors at the specified vertex (the half-edge geometry will need to
  * be linked such that "outside" edges are neighbor-linked similarly to those
  * with a face).
  */
-static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
+static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     ddouble &min, ddouble &max)
 {
     if(!base) return;
@@ -5496,7 +5458,7 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
         while((hedge = &SectorClusterCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
             // Stop if there is no back subspace.
-            ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : 0;
+            ConvexSubspace *subspace = hedge->hasFace()? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
             if(!subspace) break;
 
             if(subspace->cluster().visFloor().heightSmoothed() < min)
@@ -5508,7 +5470,7 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, int edge,
     }
 }
 
-static void drawSubspaceVertexs(ConvexSubspace &sub, drawVertexVisual_params_t &parms)
+static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
     SectorCluster &cluster = sub.cluster();
     ddouble const min      = cluster.  visFloor().heightSmoothed();
@@ -5552,9 +5514,9 @@ static void drawSubspaceVertexs(ConvexSubspace &sub, drawVertexVisual_params_t &
  */
 static void drawVertexes(Map &map)
 {
-#define MAX_DISTANCE            1280 ///< From the viewer.
+#define MAX_DISTANCE            1280  ///< From the viewer.
 
-    float oldLineWidth = -1;
+    dfloat oldLineWidth = -1;
 
     if(!devVertexBars && !devVertexIndices)
         return;
@@ -5563,7 +5525,7 @@ static void drawVertexes(Map &map)
                eyeOrigin.x + MAX_DISTANCE, eyeOrigin.y + MAX_DISTANCE);
 
     QBitArray drawnVerts(map.vertexCount());
-    drawVertexVisual_params_t parms;
+    drawvertexvisual_parameters_t parms;
     parms.maxDistance = MAX_DISTANCE;
     parms.drawnVerts  = &drawnVerts;
 
@@ -5580,15 +5542,15 @@ static void drawVertexes(Map &map)
 
         map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
         {
-            ConvexSubspace &sub   = *(ConvexSubspace *)object;
             // Check the bounds.
-            AABoxd const &polyBox = sub.poly().aaBox();
+            auto &subspace = *(ConvexSubspace *)object;
+            AABoxd const &polyBox = subspace.poly().aaBox();
             if(!(polyBox.maxX < box.minX ||
                  polyBox.minX > box.maxX ||
                  polyBox.minY > box.maxY ||
                  polyBox.maxY < box.minY))
             {
-                drawSubspaceVertexs(sub, parms);
+                drawSubspaceVertexs(subspace, parms);
             }
             return LoopContinue;
         });
@@ -5597,27 +5559,27 @@ static void drawVertexes(Map &map)
     }
 
     // Draw the vertex origins.
-    float const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
     glEnable(GL_POINT_SMOOTH);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
     glDisable(GL_DEPTH_TEST);
 
-    parms.drawnVerts->fill(false); // Process all again.
+    parms.drawnVerts->fill(false);  // Process all again.
     parms.drawOrigin = true;
     parms.drawBar    = parms.drawLabel = false;
     map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
     {
-        ConvexSubspace &sub   = *(ConvexSubspace *)object;
         // Check the bounds.
-        AABoxd const &polyBox = sub.poly().aaBox();
+        auto &subspace = *(ConvexSubspace *)object;
+        AABoxd const &polyBox = subspace.poly().aaBox();
         if(!(polyBox.maxX < box.minX ||
              polyBox.minX > box.maxX ||
              polyBox.minY > box.maxY ||
              polyBox.maxY < box.minY))
         {
-            drawSubspaceVertexs(sub, parms);
+            drawSubspaceVertexs(subspace, parms);
         }
         return LoopContinue;
     });
@@ -5626,20 +5588,20 @@ static void drawVertexes(Map &map)
 
     if(devVertexIndices)
     {
-        parms.drawnVerts->fill(false); // Process all again.
+        parms.drawnVerts->fill(false);  // Process all again.
         parms.drawLabel = true;
         parms.drawBar   = parms.drawOrigin = false;
         map.subspaceBlockmap().forAllInBox(box, [&box, &parms] (void *object)
         {
-            ConvexSubspace &sub   = *(ConvexSubspace *)object;
+            auto &subspace = *(ConvexSubspace *)object;
             // Check the bounds.
-            AABoxd const &polyBox = sub.poly().aaBox();
+            AABoxd const &polyBox = subspace.poly().aaBox();
             if(!(polyBox.maxX < box.minX ||
                  polyBox.minX > box.maxX ||
                  polyBox.minY > box.maxY ||
                  polyBox.maxY < box.minY))
             {
-                drawSubspaceVertexs(sub, parms);
+                drawSubspaceVertexs(subspace, parms);
             }
             return LoopContinue;
         });
@@ -5690,11 +5652,11 @@ static void drawSectors(Map &map)
 
 static String labelForThinker(thinker_t *thinker)
 {
-    DENG_ASSERT(thinker != 0);
+    DENG2_ASSERT(thinker);
     return String("%1").arg(thinker->id);
 }
 
-static int drawThinkersWorker(thinker_t *thinker, void *context)
+static dint drawThinkersWorker(thinker_t *thinker, void *context)
 {
     DENG2_UNUSED(context);
 
@@ -5704,7 +5666,7 @@ static int drawThinkersWorker(thinker_t *thinker, void *context)
     if(!Thinker_IsMobjFunc(thinker->function))
         return false;
 
-    Vector3d const origin = Mobj_Center(*(mobj_t *)thinker);
+    Vector3d const origin   = Mobj_Center(*(mobj_t *)thinker);
     ddouble const distToEye = (eyeOrigin - origin).length();
     if(distToEye < MAX_THINKER_DIST)
     {
@@ -5724,13 +5686,13 @@ static int drawThinkersWorker(thinker_t *thinker, void *context)
 static void drawThinkers(Map &map)
 {
     if(!devThinkerIds) return;
-    map.thinkers().iterate(NULL, 0x1 | 0x2, drawThinkersWorker);
+    map.thinkers().iterate(nullptr, 0x1 | 0x2, drawThinkersWorker);
 }
 
 void Rend_LightGridVisual(LightGrid &lg)
 {
     static Vector3f const red(1, 0, 0);
-    static int blink = 0;
+    static dint blink = 0;
 
     // Disabled?
     if(!devLightGrid) return;
@@ -5752,10 +5714,10 @@ void Rend_LightGridVisual(LightGrid &lg)
     glLoadIdentity();
     glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
 
-    for(int y = 0; y < lg.dimensions().y; ++y)
+    for(dint y = 0; y < lg.dimensions().y; ++y)
     {
         glBegin(GL_QUADS);
-        for(int x = 0; x < lg.dimensions().x; ++x)
+        for(dint x = 0; x < lg.dimensions().x; ++x)
         {
             LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
             bool const isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
@@ -5787,11 +5749,10 @@ void Rend_LightGridVisual(LightGrid &lg)
     glPopMatrix();
 }
 
-MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT)
+MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
 {
-    return resSys().materialSpec(MapSurfaceContext, 0, 0, 0, 0,
-                                                    wrapS, wrapT, -1, -1, -1, true,
-                                                    true, false, false);
+    return resSys().materialSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
+                                 -1, -1, -1, true, true, false, false);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
@@ -5808,15 +5769,14 @@ TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec()
 
 TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec()
 {
-    return resSys().textureSpec(TC_MAPSURFACE_REFLECTION,
-        TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, 1, -1, false,
-        false, false, false);
+    return resSys().textureSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION, 0, 0, 0,
+                                GL_REPEAT, GL_REPEAT, 1, 1, -1, false, false, false, false);
 }
 
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec()
 {
-    return resSys().textureSpec(TC_MAPSURFACE_REFLECTIONMASK,
-        0, 0, 0, 0, GL_REPEAT, GL_REPEAT, -1, -1, -1, true, false, false, false);
+    return resSys().textureSpec(TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
+                                -1, -1, -1, true, false, false, false);
 }
 
 D_CMD(OpenRendererAppearanceEditor)
@@ -5877,7 +5837,7 @@ D_CMD(MipMap)
 {
     DENG2_UNUSED2(src, argc);
 
-    int newMipMode = String(argv[1]).toInt();
+    dint newMipMode = String(argv[1]).toInt();
     if(newMipMode < 0 || newMipMode > 5)
     {
         LOG_SCR_ERROR("Invalid mipmapping mode %i; the valid range is 0...5") << newMipMode;
