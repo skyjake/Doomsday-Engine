@@ -297,6 +297,22 @@ void D_EndFrame()
     }
 }
 
+/*  Update color map for MOBJ.
+ *  Brought in from jDoom plugin on 2015-04-30
+ */
+void Mobj_UpdateColorMap(mobj_t *mo)
+{
+    DENG2_ASSERT(mo != 0);
+
+    if(mo->flags & MF_TRANSLATION)
+    {
+        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+    }
+    else
+    {
+        mo->tmap = 0;
+    }
+}
 /**
  * Updates the mobj flags used by Doomsday with the state of our local flags
  * for the given mobj.
@@ -307,8 +323,11 @@ void P_SetDoomsdayFlags(mobj_t *mo)
 
     // Client mobjs can't be set here.
     if(IS_CLIENT && mo->ddFlags & DDMF_REMOTE)
+    {
+        // Color translation can be applied for remote mobjs, too.
+        Mobj_UpdateColorMap(mo);    
         return;
-
+    }
     // Reset the flags for a new frame.
     mo->ddFlags &= DDMF_CLEAR_MASK;
 
@@ -364,8 +383,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
                                 !(mo->flags & MF_VIEWALIGN)))
         mo->ddFlags |= DDMF_VIEWALIGN;
 
-    if(mo->flags & MF_TRANSLATION)
-        mo->tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
+    Mobj_UpdateColorMap(mo);
 }
 
 /**
