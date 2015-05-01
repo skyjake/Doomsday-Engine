@@ -135,6 +135,10 @@ void D_PreInit()
     cfg.common.menuTextGlitter = .5f;
     cfg.common.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
+    // TODO: Config options present in jDoom but not here:
+    //          - menuSlam
+    //          - menuShortcutsEnabled
+    //          - menuGameSaveSuggestDescription
     cfg.common.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
     cfg.common.menuTextFlashColor[0] = .7f;
     cfg.common.menuTextFlashColor[1] = .9f;
@@ -145,6 +149,7 @@ void D_PreInit()
     cfg.common.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.common.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    // TODO: jDoom parity: hudKeysCombine
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_AMMO] = true;
@@ -221,6 +226,11 @@ void D_PreInit()
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
+    // TODO jDoom feature parity
+    //      - ouchFace
+    //      - statusbarScale
+    //      - statusbarOpacity
+    //      - statusbarCounterAlpha
 
     cfg.common.automapCustomColors = 0; // Never.
     cfg.common.automapL0[0] = .4f; // Unseen areas.
