@@ -791,7 +791,11 @@ uiwidget_t* ST_UILogForPlayer(int player)
     if(player >= 0 && player < MAXPLAYERS)
     {
         hudstate_t* hud = &hudStates[player];
-        return GUI_FindObjectById(hud->logWidgetId);
+        uiwidget_t* uiLog =  GUI_FindObjectById(hud->logWidgetId);
+
+        DENG_ASSERT(uiLog != 0);
+
+        return uiLog;
     }
     Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
     exit(1); // Unreachable.
