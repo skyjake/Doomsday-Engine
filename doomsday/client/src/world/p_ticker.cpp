@@ -1,4 +1,4 @@
-/** @file p_ticker.cpp Timed world events.
+/** @file p_ticker.cpp  Timed world events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -20,93 +20,16 @@
 #include "de_base.h"
 #include "world/p_ticker.h"
 
-#include "de_network.h"
-#include "de_render.h"
-#include "de_play.h"
-#include "de_misc.h"
 #ifdef __CLIENT__
-#  include "clientapp.h"
-#  include "render/rendersystem.h"
-#  include "render/skydrawable.h"
+#  include "MaterialAnimator"
 #endif
-#include "world/map.h"
-#include "world/sky.h"
 
 using namespace de;
 
-int P_MobjTicker(thinker_t *th, void *context)
+void P_Ticker(timespan_t elapsed)
 {
-    DENG_UNUSED(context);
-
 #ifdef __CLIENT__
-
-    mobj_t *mo = (mobj_t*) th;
-
-    for(uint i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        int f;
-        byte *haloFactor = &mo->haloFactors[i];
-
-        // Set the high bit of halofactor if the light is clipped. This will
-        // make P_Ticker diminish the factor to zero. Take the first step here
-        // and now, though.
-        if(mo->lumIdx == Lumobj::NoIndex || R_ViewerLumobjIsClipped(mo->lumIdx))
-        {
-            if(*haloFactor & 0x80)
-            {
-                f = (*haloFactor & 0x7f); // - haloOccludeSpeed;
-                if(f < 0)
-                    f = 0;
-                *haloFactor = f;
-            }
-        }
-        else
-        {
-            if(!(*haloFactor & 0x80))
-            {
-                f = (*haloFactor & 0x7f); // + haloOccludeSpeed;
-                if(f > 127)
-                    f = 127;
-                *haloFactor = 0x80 | f;
-            }
-        }
-
-        // Handle halofactor.
-        f = *haloFactor & 0x7f;
-        if(*haloFactor & 0x80)
-        {
-            // Going up.
-            f += haloOccludeSpeed;
-            if(f > 127)
-                f = 127;
-        }
-        else
-        {
-            // Going down.
-            f -= haloOccludeSpeed;
-            if(f < 0)
-                f = 0;
-        }
-
-        *haloFactor &= ~0x7f;
-        *haloFactor |= f;
-    }
-
-#else
-    DENG_UNUSED(th);
-#endif
-
-    return false; // Continue iteration.
-}
-
-#ifdef __CLIENT__
-
-/**
- * Process a tic of @a elapsed length, animating all materials.
- * @param elapsed  Length of tic to be processed.
- */
-static void materialsTicker(timespan_t elapsed)
-{
+    // Animate materials.
     /// @todo Each context animator should be driven by a more relevant ticker, rather
     /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
     /// context should be driven separately).
@@ -118,14 +41,7 @@ static void materialsTicker(timespan_t elapsed)
             return LoopContinue;
         });
     });
-}
-
-#endif // __CLIENT__
-
-void P_Ticker(timespan_t elapsed)
-{
-#ifdef __CLIENT__
-    materialsTicker(elapsed);
 #endif
+
     App_WorldSystem().tick(elapsed);
 }

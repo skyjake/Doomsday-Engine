@@ -45,6 +45,7 @@
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
+#  include "render/rend_halo.h"
 #  include "render/billboard.h"
 
 #  include "gl/gl_tex.h"
@@ -519,6 +520,56 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     // Insert a copy of the temporary lumobj in the map and remember it's unique
     // index in the mobj (this'll allow a halo to be rendered).
     mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
+}
+
+void Mobj_AnimateHaloOcclussion(mobj_t &mob)
+{
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        dbyte *haloFactor = &mob.haloFactors[i];
+
+        // Set the high bit of halofactor if the light is clipped. This will
+        // make P_Ticker diminish the factor to zero. Take the first step here
+        // and now, though.
+        if(mob.lumIdx == Lumobj::NoIndex || R_ViewerLumobjIsClipped(mob.lumIdx))
+        {
+            if(*haloFactor & 0x80)
+            {
+                dint f = (*haloFactor & 0x7f);  // - haloOccludeSpeed;
+                if(f < 0) f = 0;
+                *haloFactor = f;
+            }
+        }
+        else
+        {
+            if(!(*haloFactor & 0x80))
+            {
+                dint f = (*haloFactor & 0x7f);  // + haloOccludeSpeed;
+                if(f > 127) f = 127;
+                *haloFactor = 0x80 | f;
+            }
+        }
+
+        // Handle halofactor.
+        dint f = *haloFactor & 0x7f;
+        if(*haloFactor & 0x80)
+        {
+            // Going up.
+            f += ::haloOccludeSpeed;
+            if(f > 127)
+                f = 127;
+        }
+        else
+        {
+            // Going down.
+            f -= ::haloOccludeSpeed;
+            if(f < 0)
+                f = 0;
+        }
+
+        *haloFactor &= ~0x7f;
+        *haloFactor |= f;
+    }
 }
 
 dfloat Mobj_ShadowStrength(mobj_t const &mob)

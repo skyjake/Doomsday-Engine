@@ -1,7 +1,7 @@
-/** @file p_ticker.h Timed world events.
+/** @file p_ticker.h  Timed world events.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,13 +20,11 @@
 #ifndef DENG_WORLD_P_TICKER_H
 #define DENG_WORLD_P_TICKER_H
 
-#include "world/thinkers.h"
-
-int P_MobjTicker(thinker_t *th, void *context);
+#include <de/types.h>
 
 /**
  * Doomsday's own play-ticker.
  */
 void P_Ticker(timespan_t time);
 
-#endif // DENG_WORLD_P_TICKER_H
+#endif  // DENG_WORLD_P_TICKER_H

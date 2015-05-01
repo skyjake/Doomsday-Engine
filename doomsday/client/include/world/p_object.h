@@ -176,6 +176,8 @@ void Mobj_UnlinkLumobjs(mobj_t *mobj);
  */
 void Mobj_GenerateLumobjs(mobj_t *mobj);
 
+void Mobj_AnimateHaloOcclussion(mobj_t &mob);
+
 /**
  * Calculate the strength of the shadow this map-object should cast.
  *

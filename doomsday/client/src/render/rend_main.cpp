@@ -295,20 +295,16 @@ static void scheduleFullLightGridUpdate()
     }
 }
 
-static dint unlinkMobjLumobjWorker(thinker_t *th, void *)
-{
-    Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
-    return false; // Continue iteration.
-}
-
 static void unlinkMobjLumobjs()
 {
-    if(App_WorldSystem().hasMap())
+    if(!worldSys().hasMap()) return;
+
+    worldSys().map().thinkers()
+            .forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
     {
-        Map &map = App_WorldSystem().map();
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               unlinkMobjLumobjWorker);
-    }
+        Mobj_UnlinkLumobjs(reinterpret_cast<mobj_t *>(th));
+        return LoopContinue;
+    });
 }
 
 /*
@@ -4886,41 +4882,38 @@ void Rend_DrawArrow(Vector3d const &pos, dfloat a, dfloat s, dfloat const color[
     glPopMatrix();
 }
 
-static dint drawMobjBBox(thinker_t *th, void * /*context*/)
+static void drawMobjBBox(mobj_t &mob)
 {
     static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
     static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
     static dfloat const yellow[] = { 0.7f, 0.7f, 0.2f };  // missiles
 
-    auto *mob = (mobj_t *) th;
-
     // We don't want the console player.
-    if(mob == ddPlayers[consolePlayer].shared.mo)
-        return false;
+    if(&mob == ddPlayers[consolePlayer].shared.mo)
+        return;
 
     // Is it vissible?
-    if(!Mobj_IsLinked(*mob))
-        return false;
-    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(*mob);
-    if(!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
-        return false;
+    if(!Mobj_IsLinked(mob)) return;
 
-    ddouble const distToEye = (eyeOrigin - Mobj_Origin(*mob)).length();
+    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    if(!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
+        return;
+
+    ddouble const distToEye = (eyeOrigin - Mobj_Origin(mob)).length();
     dfloat alpha = 1 - ((distToEye / (DENG_GAMEVIEW_WIDTH/2)) / 4);
     if(alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
 
     // Draw a bounding box in an appropriate color.
-    coord_t size = Mobj_Radius(*mob);
-    Rend_DrawBBox(mob->origin, size, size, mob->height/2, 0,
-                  (mob->ddFlags & DDMF_MISSILE)? yellow :
-                  (mob->ddFlags & DDMF_SOLID)? green : red,
+    coord_t size = Mobj_Radius(mob);
+    Rend_DrawBBox(mob.origin, size, size, mob.height/2, 0,
+                  (mob.ddFlags & DDMF_MISSILE)? yellow :
+                  (mob.ddFlags & DDMF_SOLID)? green : red,
                   alpha, .08f);
 
-    Rend_DrawArrow(mob->origin, ((mob->angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
-                   (mob->ddFlags & DDMF_MISSILE)? yellow :
-                   (mob->ddFlags & DDMF_SOLID)? green : red, alpha);
-    return false;
+    Rend_DrawArrow(mob.origin, ((mob.angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
+                   (mob.ddFlags & DDMF_MISSILE)? yellow :
+                   (mob.ddFlags & DDMF_SOLID)? green : red, alpha);
 }
 
 /**
@@ -4961,8 +4954,11 @@ static void drawMobjBoundingBoxes(Map &map)
 
     if(devMobjBBox)
     {
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               drawMobjBBox);
+        map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        {
+            drawMobjBBox(*reinterpret_cast<mobj_t *>(th));
+            return LoopContinue;
+        });
     }
 
     if(devPolyobjBBox)
@@ -5656,37 +5652,31 @@ static String labelForThinker(thinker_t *thinker)
     return String("%1").arg(thinker->id);
 }
 
-static dint drawThinkersWorker(thinker_t *thinker, void *context)
-{
-    DENG2_UNUSED(context);
-
-#define MAX_THINKER_DIST 2048
-
-    // Skip non-mobjs.
-    if(!Thinker_IsMobjFunc(thinker->function))
-        return false;
-
-    Vector3d const origin   = Mobj_Center(*(mobj_t *)thinker);
-    ddouble const distToEye = (eyeOrigin - origin).length();
-    if(distToEye < MAX_THINKER_DIST)
-    {
-        drawLabel(origin, labelForThinker(thinker),
-                  distToEye / (DENG_GAMEVIEW_WIDTH / 2),
-                  1 - distToEye / MAX_THINKER_DIST);
-    }
-
-    return false; // Continue iteration.
-
-#undef MAX_THINKER_DIST
-}
-
 /**
  * Debugging aid for visualizing thinker IDs.
  */
 static void drawThinkers(Map &map)
 {
+    static coord_t const MAX_THINKER_DIST = 2048;
+
     if(!devThinkerIds) return;
-    map.thinkers().iterate(nullptr, 0x1 | 0x2, drawThinkersWorker);
+
+    map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
+    {
+        // Ignore non-mobjs.
+        if(Thinker_IsMobjFunc(th->function))
+        {
+            Vector3d const origin   = Mobj_Center(*(mobj_t *)th);
+            ddouble const distToEye = (eyeOrigin - origin).length();
+            if(distToEye < MAX_THINKER_DIST)
+            {
+                drawLabel(origin, labelForThinker(th),
+                          distToEye / (DENG_GAMEVIEW_WIDTH / 2),
+                          1 - distToEye / MAX_THINKER_DIST);
+            }
+        }
+        return LoopContinue;
+    });
 }
 
 void Rend_LightGridVisual(LightGrid &lg)

@@ -912,16 +912,18 @@ void WorldSystem::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
     d->skyAnimator.advanceTime(elapsed);
-#else
-    DENG2_UNUSED(elapsed);
-#endif
 
     if(DD_IsSharpTick() && d->map)
     {
-        // Check all mobjs (always public).
-        d->map->thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                                   P_MobjTicker);
+        d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        {
+            Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
+            return LoopContinue;
+        });
     }
+#else
+    DENG2_UNUSED(elapsed);
+#endif
 }
 
 #ifdef __CLIENT__
