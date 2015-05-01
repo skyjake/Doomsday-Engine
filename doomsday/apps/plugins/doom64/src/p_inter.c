@@ -340,6 +340,21 @@ dd_bool P_TakePower(player_t* player, int power)
     return true;
 }
 
+dd_bool P_TogglePower(player_t *player, powertype_t powerType)
+{
+    DENG_ASSERT(player != 0);
+    DENG_ASSERT(powerType >= PT_FIRST && powerType < NUM_POWER_TYPES);
+
+    if(!player->powers[powerType])
+    {
+        return P_GivePower(player, powerType);
+    }
+    else
+    {
+        return P_TakePower(player, powerType);
+    }
+}
+
 typedef enum {
     IT_NONE = 0,
     IT_HEALTH_PACK,

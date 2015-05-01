@@ -44,8 +44,10 @@ DENG_EXTERN_C int clipAmmo[];
 extern "C" {
 #endif
 
-dd_bool         P_GivePower(player_t* plr, int);
-dd_bool         P_TakePower(player_t* plr, int power);
+dd_bool         P_GivePower(player_t*,      int);
+dd_bool         P_TakePower(player_t*,      int);
+dd_bool         P_TogglePower(player_t *,   powertype_t)
+
 void            P_GiveKey(player_t* plr, keytype_t keyType);
 dd_bool         P_GiveBody(player_t* plr, int num);
 void            P_GiveBackpack(player_t* plr);
