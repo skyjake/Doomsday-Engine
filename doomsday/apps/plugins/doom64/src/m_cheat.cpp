@@ -20,8 +20,15 @@
  * 02110-1301 USA</small>
  */
 
+// TODO : Header cleanup. After the makeover, a lot of these are probably unused
+
 #include "jdoom64.h"
 #include "m_cheat.h"
+
+#include <de/Log>
+#include <de/Range>
+#include <de/String>
+#include <de/Vector>
 
 #include <cstdlib>
 #include <cstring>
@@ -44,119 +51,449 @@
 #include "p_start.h"
 #include "p_user.h"
 
-typedef struct {
-    unsigned char *sequence;
-    size_t length;
-    size_t pos;
-    int args[2];
-    int currentArg;
-} cheatseq_t;
+/*
+ * Doom64 Cheats.
+ * Unlike the other doom games, Doom64 does not have `cheat xxx` style cheats, as it was released for
+ * the N64, which did not have a keyboard.
+ *
+ * It did, however, have konami-style codes, though I doubt that it is within the realm of possibility
+ * to implement them (in truest form) using a keyboard.
+ */
 
-void Cht_LaserFunc(player_t *plr);
-void Cht_GodFunc(player_t *plr);
-void Cht_GiveWeaponsFunc(player_t *plr);
-void Cht_GiveAmmoFunc(player_t *plr);
-void Cht_GiveKeysFunc(player_t *plr);
-void Cht_NoClipFunc(player_t *plr);
-void Cht_GiveArmorFunc(player_t *plr);
-dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat);
+using namespace de;
 
-static dd_bool cheatsEnabled()
+typedef eventsequencehandler_t cheatfunt_t;
+
+// God
+// ===============================================================================================================
+
+D_CMD(CheatGod)
 {
-    return !IS_NETGAME;
-}
+    DENG2_UNUSED(src);
 
-void Cht_GodFunc(player_t *plr)
-{
-    plr->cheats ^= CF_GODMODE;
-    plr->update |= PSF_STATE;
-
-    if(P_GetPlayerCheats(plr) & CF_GODMODE)
+    if(G_GameState() == GS_MAP)
     {
-        if(plr->plr->mo)
-            plr->plr->mo->health = maxHealth;
-        plr->health = godModeHealth;
-        plr->update |= PSF_HEALTH;
-    }
-
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
-}
-
-void Cht_SuicideFunc(player_t *plr)
-{
-    P_DamageMobj(plr->plr->mo, NULL, NULL, 10000, false);
-}
-
-void Cht_GiveArmorFunc(player_t *plr)
-{
-    plr->armorPoints = armorPoints[1];
-    plr->armorType = armorClass[1];
-    plr->update |= PSF_STATE | PSF_ARMOR_POINTS;
-}
-
-void Cht_GiveWeaponsFunc(player_t *plr)
-{
-    plr->update |= PSF_OWNED_WEAPONS;
-    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
-    {
-        plr->weapons[i].owned = true;
-    }
-}
-
-void Cht_GiveAmmoFunc(player_t *plr)
-{
-    plr->update |= PSF_AMMO;
-    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
-    {
-        plr->ammo[i].owned = plr->ammo[i].max;
-    }
-}
-
-void Cht_GiveKeysFunc(player_t *plr)
-{
-    plr->update |= PSF_KEYS;
-    for(int i = 0; i < NUM_KEY_TYPES; ++i)
-    {
-        plr->keys[i] = true;
-    }
-}
-
-void Cht_NoClipFunc(player_t *plr)
-{
-    plr->cheats ^= CF_NOCLIP;
-    plr->update |= PSF_STATE;
-    P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
-}
-
-dd_bool Cht_PowerUpFunc(player_t *plr, cheatseq_t *cheat)
-{
-    static char const args[] = { 'v', 's', 'i', 'r', 'a', 'l' };
-    size_t i, numArgs = sizeof(args) / sizeof(args[0]);
-
-    for(i = 0; i < numArgs; ++i)
-    {
-        powertype_t type = (powertype_t) i;
-
-        if(cheat->args[0] != args[i]) continue;
-
-        if(!plr->powers[type])
+        if(IS_CLIENT)
         {
-            P_GivePower(plr, type);
-            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
+            NetCl_CheatRequest("god");
         }
-        else if(type == PT_STRENGTH || type == PT_FLIGHT || type == PT_ALLMAP)
+        else if((IS_NETGAME && !netSvAllowCheats) 
+                || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
         {
-            P_TakePower(plr, type);
-            P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
+            return false;
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+            if(argc == 2)
+            {
+                player = String(argv[1]).toInt();
+                if(i < 0 || i >= MAXPLAYERS) return false;
+            }
+
+            player_t *plr = &players[player];
+            if(!plr->plr->inGame) return false;
+
+            // Prevent dead players from cheating
+            if(plr->health <= 0) return false;
+
+            plr->cheats ^= CF_GODMODE;
+            plr->update |= PSF_STATE;
+
+            if(P_GetPlayerCheats(plr) & CF_GODMODE)
+            {
+                if(plr->plr->mo)
+                    plr->plr->mo->health = maxHealth;
+                plr->health = godModeHealth;
+                plr->update |= PSF_HEALTH;
+            }
+
+            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
+        }
+    }
+    return true;
+}
+
+// NoClip
+// ===============================================================================================================
+
+D_CMD(CheatNoClip)
+{
+    DENG2_UNUSED(src);
+
+    if(G_GameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("noclip");
+        }
+        else if((IS_NETGAME && !netSvAllowCheats)
+                || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+        {
+            return false;
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+            if(argc == 2)
+            {
+                player = String(argv[1]).toInt();
+                if(i < 0 || i >= MAXPLAYERS) return false;
+            }
+
+            player_t *plr = &players[CONSOLEPLAYER];
+            if(!plr->plr->inGame) return false;
+
+            // Prevent dead from cheating
+            if(plr->health <= 0) return false;
+
+            plr->cheats ^= CF_NOCLIP;
+            plr->update |= PSF_STATE;
+            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
+        }
+    }
+    return true;
+}
+
+// Suicide
+// ===============================================================================================================
+
+static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
+{
+    if(response == MSG_YES)
+    {
+        if(IS_NETGAME && IS_CLIENT)
+        {
+            NetCl_CheatRequest("suicide");
+        }
+        else
+        {
+            P_DamageMobj(&players[CONSOLEPLAYER], nullptr, nullptr, 10000, false);
+        }
+    }
+    return true;
+}
+
+D_CMD(CheatSuicide)
+{
+    DENG2_UNUSED(src);
+
+    if(G_GameState() == GS_MAP)
+    {
+        int player = CONSOLEPLAYER;
+        if(!IS_CLIENT || argc == 2)
+        {
+            player = String(argv[1]).toInt();
+            if(player < 0 || player >= MAXPLAYERS) return false;
         }
 
+        player_t *plr = &players[player];
+        if(!plr->plr->inGame) return false;
+        if(plr->playerState == PST_DEAD) return false;
+
+        if(!IS_NETGAME || IS_CLIENT)
+        {
+            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, 0, nullptr);
+        }
+        else
+        {
+            P_DamageMobj(plr->plr->mo, nullptr, nullptr, 10000, false);
+        }
+        return true;
+    }
+    else
+    {
+        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, nullptr, 0, nullptr);
+        return true;
+    }
+}
+
+// Reveal
+// ===============================================================================================================
+
+D_CMD(CheatReveal)
+{
+    DENG2_UNUSED2(src, argc);
+
+    if(IS_NETGAME && !IS_NETWORK_SERVER)
+        return false;
+
+    int option = String(argv[1]).toInt();   
+    if(option < 0 || option > 3) return false;
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
+    {
+        ST_SetAutomapCheatLevel(i, 0);
+        ST_RevealAutomap(i, false);
+        if(option == 1)
+        {
+            ST_RevealAutomap(i, true);
+        }
+        else if(option != 0)
+        {
+            ST_SetAutomapCheatLevel(i, option -1);
+        }
+    }
+
+    return true;
+}
+
+// Give
+// ===============================================================================================================
+
+{
+    if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
+    {
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        return;
+    }
+
+    if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
+    {
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        return;
+    }
+
+    if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+}
+static void giveWeapon(player_t *plr, weapontype_t weaponType)
+{
+    P_GiveWeapon(player, weaponType, false /* not collecting a drop */);
+    if(weaponType = WT_EIGHTH)
+    {
+        P_SetMessage(plr, LMF_NO_HIDE, STSTR_CHOPPERS);
+    }
+}
+
+static void giveLaserUpgrade(player_t *plr, inventoryitemtype_t upgrade)
+{
+    if(P_InventoryGive(plr - players, upgrade, true /* silent */))
+    {
+        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+    }
+}
+
+static void togglePower(player_t* player, powertype_t powerType)
+{
+    P_TogglePower(player, powerType);
+    P_SetMessage(player, LMF_NO_HIDE, STSTR_BEHOLDX);
+}
+
+D_CMD(CheatGive)
+{
+    DENG2_UNUSED(src);
+
+    if(G_GameState() != GS_MAP)
+    {
+        LOG_SCR_ERROR("Can only \"give\" when in a game!");
+        return true;
+    }
+    else if(argc != 2 && argc != 3)
+    {
+        LOG_SCR_NOTE("Usage:\n give (stuff) give (stuff) (player number)");
+
+#define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
+        LOG_SCR_MSG("Where (stuff) is one or more type:id codes"
+                    "(id no id, give all of that type):")
+                << TABBED("a", "Ammo")
+                << TABBED("b", "Berserk")
+                << TABBED("f", "Flight ability")
+                << TABBED("g", "Light amplification visor")
+                << TABBED("h", "Health")
+                << TABBED("k", "Keys")
+                << TABBED("l", "Laser Upgrades (1, 2, 3)")
+                << TABBED("m", "Computer area map")
+                << TABBED("p", "Backpack full of ammo")
+                << TABBED("r", "Armor")
+                << TABBED("s", "Radiation shielding suit")
+                << TABBED("v", "Invisibility")
+                << TABBED("w", "Weapons");
+#undef TABBED
+
+        LOG_SCR_MSG(_E(D) "Examples:");
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "give arw"  _E(.) " for full ammo and armor " _E(l) "(equivalent to cheat IDFA)"); 
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "give w2k1" _E(.) " for weapon two and key one");
         return true;
     }
 
-    return false;
+    int player = CONSOLEPLAYER;
+    if(argc == 3)
+    {
+        player = String(argv[1]).toInt();
+        if(player < 0 || player >= MAXPLAYERS) return false;
+    }
+
+    if(IS_CLIENT)
+    {
+        if(argc < 2) return false;
+
+        String const request = String("give ") + argv[1];
+        NetCl_CheatRequest(request.toUtf8().constData());
+        return true;
+    } 
+    else if(IS_NETGAME && !netSvAllowCheats)
+    {
+        return false;
+    }
+    else if(COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE) 
+    {
+        return false;
+    }
+    
+    player_t* plr = &players[player];
+
+    // Can't give to a plr who's not playing
+    if(!plr->plr->inGame) return false;
+    // Can't give to a dead player
+    if(plr->health <= 0) return false;
+
+    // Stuff is the 2nd arg.
+    String const stuff = String(argv[1]).toLower();
+    for(int i = 0; i < stuff.length(); ++i)
+    {
+        QChar const mnemonic = stuff.at(i);
+        switch(mnemonic.toLatin1())
+        {
+        case 'a': { // Ammo
+            ammotype_t ammos = NUM_AMMO_TYPES;
+
+            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit()) 
+            {
+                int const arg = stuff.at(++i).digitValue();
+                if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
+                {
+                    LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
+                            << arg << Rangei(AT_FIRST, NUM_AMMO_TYPES).asText();
+                    break;
+                }
+                ammos = ammotype_t(arg);
+            }
+
+            P_GiveAmmo(plr, ammos, -1 /* max rounds */); 
+            break;
+        }
+
+        case 'r': { // Armor
+            int armor = 1;
+
+            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            {
+                int const arg = stuff.at(++i).digitValue();
+                if(arg < 0 || arg >= 4)
+                {
+                    LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
+                            << arg << Rangei(0, 4).asText();
+                    break;
+                }
+                armor = arg
+            }
+            P_GiveArmor(plr, armorClass[armor], armorPoints[armor]);
+            break;
+        }
+
+        case 'k': { // Keys
+            keytype_t keys = NUM_KEY_TYPES;
+
+            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            {
+                int const arg = stuff.att(++i).digitValue();
+                if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
+                {
+                    LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
+                            << arg << Rangei(KT_FIRST, NUM_KEY_TYPES).asText();
+                    break;
+                }
+                keys = keytype_t(arg);
+            }
+            P_GiveKey(plr, keys);
+            break;
+        }
+
+        case 'w': { // Weapons
+            weapontype_t weapons = NUM_WEAPON_TYPES;
+
+            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            {
+                int const arg = stuff.at(++i).digitValue();
+                if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
+                {
+                    LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")
+                            << arg << Rangei(WT_FIRST, NUM_WEAPON_TYPES).asText();
+                    break;
+                }
+                weapons = weapontype_t(arg);
+            }
+            giveWeapon(plr, weapons);
+            break;
+        }        
+
+        case 'l': { // Laser Upgrades
+            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            {
+                switch (sutff.at(++i).digitValue())
+                {
+                    case 1: // DEMONKEY1
+                        giveLaserUpgrade(plr, IIT_DEMONKEY1);
+                        break;
+                    case 2: // DEMONKEY2
+                        giveLaserUpgrade(plr, IIT_DEMONKEY2);
+                        break;
+                    case 3: // DEMONKEY3
+                        giveLaserUpgrade(plr, IIT_DEMONKEY3);
+                        break;
+                    default:
+                        LOG_SCR_ERROR("Laser upgrade #%d does not exist. Valid upgrades: %s")
+                                << upgradeId << Rangei(1, 3).asText();
+                }
+            }
+            else
+            {
+                // All the laser upgrades!
+                giveLaserUpgrade(plr, IIT_DEMONKEY1);
+                giveLaserUpgrade(plr, IIT_DEMONKEY2);
+                giveLaserUpgrade(plr, IIT_DEMONKEY3);
+            }
+
+           break; 
+        }
+
+        // Other Items
+        case 'p': P_GiveBackpack(plr); break;
+        case 'h': P_GiveHealth(plr, healthLimit); break;
+                
+        // Powers
+        case 'm': togglePower(plr, PT_ALLMAP); break;
+        case 'f': togglePower(plr, PT_FLIGHT); break;
+        case 'g': togglePower(plr, PT_INFRARED); break;
+        case 'v': togglePower(plr, PT_INVISIBILITY); break;
+        case 'i': togglePower(plr, PT_INVULNERABILITY); break;
+        case 's': togglePower(plr, PT_IRONFEET); break;
+        case 'b': togglePower(plr, PT_STRENGTH); break;
+
+        default: // Unrecognized.
+            LOG_SCR_ERROR("No such cheat `%c` found.") << mnemonic.toLatin1();
+            break;
+        }
+    }
+
+    return true;
 }
 
-void printDebugInfo(player_t *plr)
+// Massacre
+// ===============================================================================================================
+
+D_CMD(CheatMassacre)
+{
+    DENG2_UNUSED3(src, argc, argv);
+    App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
+    return true;
+}
+
+// Where
+// ===============================================================================================================
+
+static void printDebugInfo(player_t *plr)
 {
     DENG2_ASSERT(plr != 0);
 
@@ -189,413 +526,6 @@ void printDebugInfo(player_t *plr)
 
     App_Log(DE2_MAP_MSG, "Player height:%g Player radius:%g",
                           plrMo->height, plrMo->radius);
-}
-
-/**
- * Laser powerup cheat code ddslia for all laser powerups.
- * Each time the plr enters the code, plr gains a powerup.
- * When entered again, plr recieves next powerup.
- */
-void Cht_LaserFunc(player_t *p)
-{
-    if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
-    {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-        return;
-    }
-
-    if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
-    {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-        return;
-    }
-
-    if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-}
-
-D_CMD(CheatGod)
-{
-    DENG2_UNUSED(src);
-
-    if(G_GameState() == GS_MAP)
-    {
-        if(IS_CLIENT)
-        {
-            NetCl_CheatRequest("god");
-        }
-        else
-        {
-            player_t *plr = &players[CONSOLEPLAYER];
-
-            if(IS_NETGAME && !netSvAllowCheats)
-                return false;
-
-            if(argc == 2)
-            {
-                int i = atoi(argv[1]);
-                if(i < 0 || i >= MAXPLAYERS)
-                    return false;
-
-                plr = &players[i];
-            }
-            else
-            {
-                plr = &players[CONSOLEPLAYER];
-            }
-
-            if(!plr->plr->inGame)
-                return false;
-
-            Cht_GodFunc(plr);
-        }
-    }
-    return true;
-}
-
-D_CMD(CheatNoClip)
-{
-    DENG2_UNUSED(src);
-
-    if(G_GameState() == GS_MAP)
-    {
-        if(IS_CLIENT)
-        {
-            NetCl_CheatRequest("noclip");
-        }
-        else
-        {
-            player_t *plr = &players[CONSOLEPLAYER];
-
-            if(IS_NETGAME && !netSvAllowCheats)
-                return false;
-
-            if(argc == 2)
-            {
-                int i = atoi(argv[1]);
-                if(i < 0 || i >= MAXPLAYERS)
-                    return false;
-
-                plr = &players[i];
-            }
-            else
-            {
-                plr = &players[CONSOLEPLAYER];
-            }
-
-            if(!plr->plr->inGame)
-                return false;
-
-            Cht_NoClipFunc(&players[CONSOLEPLAYER]);
-        }
-    }
-    return true;
-}
-
-static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
-{
-    if(response == MSG_YES)
-    {
-        if(IS_NETGAME && IS_CLIENT)
-        {
-            NetCl_CheatRequest("suicide");
-        }
-        else
-        {
-            Cht_SuicideFunc(&players[CONSOLEPLAYER]);
-        }
-    }
-    return true;
-}
-
-D_CMD(CheatSuicide)
-{
-    DENG2_UNUSED(src);
-
-    if(G_GameState() == GS_MAP)
-    {
-        player_t *plr;
-
-        if(IS_NETGAME && !netSvAllowCheats)
-            return false;
-
-        if(argc == 2)
-        {
-            int i = atoi(argv[1]);
-            if(i < 0 || i >= MAXPLAYERS)
-                return false;
-
-            plr = &players[i];
-        }
-        else
-        {
-            plr = &players[CONSOLEPLAYER];
-        }
-
-        if(!plr->plr->inGame)
-            return false;
-
-        if(plr->playerState == PST_DEAD)
-            return false;
-
-        if(!IS_NETGAME || IS_CLIENT)
-        {
-            Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, 0, NULL);
-            return true;
-        }
-
-        Cht_SuicideFunc(plr);
-        return true;
-    }
-    else
-    {
-        Hu_MsgStart(MSG_ANYKEY, SUICIDEOUTMAP, NULL, 0, NULL);
-    }
-
-    return true;
-}
-
-D_CMD(CheatReveal)
-{
-    DENG2_UNUSED2(src, argc);
-
-    if(!cheatsEnabled())
-        return false;
-
-    int option = atoi(argv[1]);
-    if(option < 0 || option > 3)
-        return false;
-
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        ST_SetAutomapCheatLevel(i, 0);
-        ST_RevealAutomap(i, false);
-        if(option == 1)
-        {
-            ST_RevealAutomap(i, true);
-        }
-        else if(option != 0)
-        {
-            ST_SetAutomapCheatLevel(i, option -1);
-        }
-    }
-
-    return true;
-}
-
-D_CMD(CheatGive)
-{
-    DENG2_UNUSED(src);
-
-    if(IS_CLIENT)
-    {
-        if(argc != 2)
-            return false;
-
-        char buf[100]; sprintf(buf, "give %s", argv[1]);
-        NetCl_CheatRequest(buf);
-        return true;
-    }
-
-    if(IS_NETGAME && !netSvAllowCheats)
-        return false;
-
-    if(argc != 2 && argc != 3)
-    {
-        App_Log(DE2_SCR_NOTE, "Usage:\n  give (stuff)\n  give (stuff) (plr)\n");
-        App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
-                             "If no id; give all of type:");
-        App_Log(DE2_LOG_SCR, " a - ammo");
-        App_Log(DE2_LOG_SCR, " b - berserk");
-        App_Log(DE2_LOG_SCR, " f - the power of flight");
-        App_Log(DE2_LOG_SCR, " g - light amplification visor");
-        App_Log(DE2_LOG_SCR, " h - health");
-        App_Log(DE2_LOG_SCR, " i - invulnerability");
-        App_Log(DE2_LOG_SCR, " k - key cards/skulls");
-        App_Log(DE2_LOG_SCR, " m - computer area map");
-        App_Log(DE2_LOG_SCR, " p - backpack full of ammo");
-        App_Log(DE2_LOG_SCR, " r - armor");
-        App_Log(DE2_LOG_SCR, " s - radiation shielding suit");
-        App_Log(DE2_LOG_SCR, " v - invisibility");
-        App_Log(DE2_LOG_SCR, " w - weapons");
-        App_Log(DE2_LOG_SCR, "Example: 'give arw' corresponds the cheat IDFA.");
-        App_Log(DE2_LOG_SCR, "Example: 'give w2k1' gives weapon two and key one.");
-        return true;
-    }
-
-    int player = CONSOLEPLAYER;
-    if(argc == 3)
-    {
-        player = atoi(argv[2]);
-        if(player < 0 || player >= MAXPLAYERS)
-            return false;
-    }
-
-    if(G_GameState() != GS_MAP)
-    {
-        App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
-        return true;
-    }
-
-    if(!players[player].plr->inGame)
-        return true; // Can't give to a plr who's not playing
-    player_t *plr = &players[player];
-
-    char buf[100]; strcpy(buf, argv[1]); // Stuff is the 2nd arg.
-    strlwr(buf);
-    size_t const stuffLen = strlen(buf);
-    for(size_t i = 0; buf[i]; ++i)
-    {
-        switch(buf[i])
-        {
-        case 'a':
-            if(i < stuffLen)
-            {
-                char *end;
-                errno = 0;
-                long idx = strtol(&buf[i+1], &end, 0);
-                if(end != &buf[i+1] && errno != ERANGE)
-                {
-                    i += end - &buf[i+1];
-                    if(idx < AT_FIRST || idx >= NUM_AMMO_TYPES)
-                    {
-                        App_Log(DE2_SCR_ERROR, "Unknown ammo #%d (valid range %d-%d)",
-                                (int)idx, AT_FIRST, NUM_AMMO_TYPES-1);
-                        break;
-                    }
-
-                    // Give one specific ammo type.
-                    plr->update |= PSF_AMMO;
-                    plr->ammo[idx].owned = plr->ammo[idx].max;
-                    break;
-                }
-            }
-
-            // Give all ammo.
-            Cht_GiveAmmoFunc(plr);
-            break;
-
-        case 'b': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_STRENGTH;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'f': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_FLIGHT;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'g': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_INFRARED;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'h':
-            P_GiveBody(plr, healthLimit);
-            break;
-
-        case 'i': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_INVULNERABILITY;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'k':
-            if(i < stuffLen)
-            {
-                char *end;
-                errno = 0;
-                long idx = strtol(&buf[i+1], &end, 0);
-                if(end != &buf[i+1] && errno != ERANGE)
-                {
-                    i += end - &buf[i+1];
-                    if(idx < KT_FIRST || idx >= NUM_KEY_TYPES)
-                    {
-                        App_Log(DE2_SCR_ERROR, "Unknown key #%d (valid range %d-%d)",
-                                (int)idx, KT_FIRST, NUM_KEY_TYPES-1);
-                        break;
-                    }
-
-                    // Give one specific key.
-                    plr->update |= PSF_KEYS;
-                    plr->keys[idx] = true;
-                    break;
-                }
-            }
-
-            // Give all keys.
-            Cht_GiveKeysFunc(plr);
-            break;
-
-        case 'm': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_ALLMAP;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'p':
-            P_GiveBackpack(plr);
-            break;
-
-        case 'r':
-            Cht_GiveArmorFunc(plr);
-            break;
-
-        case 's': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_IRONFEET;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'v': {
-            cheatseq_t cheat;
-            cheat.args[0] = PT_INVISIBILITY;
-            Cht_PowerUpFunc(plr, &cheat);
-            break; }
-
-        case 'w':
-            if(i < stuffLen)
-            {
-                char *end;
-                errno = 0;
-                long idx = strtol(&buf[i+1], &end, 0);
-                if(end != &buf[i+1] && errno != ERANGE)
-                {
-                    i += end - &buf[i+1];
-                    if(idx < WT_FIRST || idx >= NUM_WEAPON_TYPES)
-                    {
-                        App_Log(DE2_SCR_ERROR, "Unknown weapon #%d (valid range %d-%d)",
-                                (int)idx, WT_FIRST, NUM_WEAPON_TYPES-1);
-                        break;
-                    }
-
-                    // Give one specific weapon.
-                    P_GiveWeapon(plr, weapontype_t(idx), false);
-                    break;
-                }
-            }
-
-            // Give all weapons.
-            Cht_GiveWeaponsFunc(plr);
-            break;
-
-        default: // Unrecognized.
-            App_Log(DE2_SCR_ERROR, "Cannot give '%c': unknown letter", buf[i]);
-            break;
-        }
-    }
-
-    return true;
-}
-
-D_CMD(CheatMassacre)
-{
-    DENG2_UNUSED3(src, argc, argv);
-    App_Log(DE2_LOG_MAP, "%i monsters killed", P_Massacre());
-    return true;
 }
 
 D_CMD(CheatWhere)
