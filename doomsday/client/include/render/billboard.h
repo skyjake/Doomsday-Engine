@@ -3,7 +3,7 @@
  * @ingroup render
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2007-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -61,12 +61,12 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms);
  */
 struct rendpspriteparams_t
 {
-    float pos[2]; // {X, Y} Screen-space position.
+    float pos[2];           ///< [X, Y] Screen-space position.
     float width, height;
 
     Material *mat;
     float texOffset[2];
-    dd_bool texFlip[2]; // {X, Y} Flip along the specified axis.
+    dd_bool texFlip[2];     ///< [X, Y] Flip along the specified axis.
 
     float ambientColor[4];
     uint vLightListIdx;
@@ -79,25 +79,10 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms);
  */
 struct drawspriteparams_t
 {
-// Position/Orientation/Scale
-    //coord_t center[3]; // The real center point.
-    //coord_t srvo[3]; // Short-range visual offset.
-    //coord_t distance; // Distance from viewer.
-    //dd_bool viewAligned;
-
-// Appearance
     dd_bool noZWrite;
     blendmode_t blendMode;
-
-    // Material:
     MaterialAnimator *matAnimator;
     dd_bool matFlip[2];             ///< [S, T] Flip along the specified axis.
-
-    // Lighting/color:
-    //float ambientColor[4];
-    //uint vLightListIdx;
-
-// Misc
     BspLeaf *bspLeaf;
 };
 
@@ -109,8 +94,8 @@ de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap 
  * @defgroup rendFlareFlags  Flare renderer flags
  * @{
  */
-#define RFF_NO_PRIMARY      0x1 ///< Do not draw a primary flare (aka halo).
-#define RFF_NO_TURN         0x2 ///< Flares do not turn in response to viewangle/viewdir
+#define RFF_NO_PRIMARY      0x1  ///< Do not draw a primary flare (aka halo).
+#define RFF_NO_TURN         0x2  ///< Flares do not turn in response to viewangle/viewdir
 /**@}*/
 
 /**
@@ -120,13 +105,13 @@ de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(int tclass = 0, int tmap 
  */
 struct drawflareparams_t
 {
-    byte flags; // @ref rendFlareFlags.
+    byte flags;            ///< @ref rendFlareFlags.
     int size;
     float color[3];
     byte factor;
     float xOff;
-    DGLuint tex; // Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
-    float mul; // Flare brightness factor.
+    DGLuint tex;           ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
+    float mul;             ///< Flare brightness factor.
     dd_bool isDecoration;
     int lumIdx;
 };
@@ -139,4 +124,4 @@ DENG_EXTERN_C byte devNoSprites;
 
 DENG_EXTERN_C void Rend_SpriteRegister();
 
-#endif // DENG_CLIENT_RENDER_BILLBOARD_H
+#endif  // DENG_CLIENT_RENDER_BILLBOARD_H
