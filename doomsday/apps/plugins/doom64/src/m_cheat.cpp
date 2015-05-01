@@ -78,7 +78,7 @@ D_CMD(CheatGod)
             NetCl_CheatRequest("god");
         }
         else if((IS_NETGAME && !netSvAllowCheats) 
-                || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+                || COMMON_GAMESESSION->rules().skill == SM_HARD)
         {
             return false;
         }
@@ -128,7 +128,7 @@ D_CMD(CheatNoClip)
             NetCl_CheatRequest("noclip");
         }
         else if((IS_NETGAME && !netSvAllowCheats)
-                || COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+                || COMMON_GAMESESSION->rules().skill == SM_HARD)
         {
             return false;
         }
@@ -336,7 +336,7 @@ D_CMD(CheatGive)
     {
         return false;
     }
-    else if(COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE) 
+    else if(COMMON_GAMESESSION->rules().skill == SM_HARD) 
     {
         return false;
     }
