@@ -3342,7 +3342,7 @@ static void projectSubspaceSprites()
         {
             mob.addFrameCount = R_FrameCount();
 
-            R_ProjectSprite(&mob);
+            R_ProjectSprite(mob);
 
             // Hack: Sprites have a tendency to extend into the ceiling in
             // sky sectors. Here we will raise the skyfix dynamically, to make sure
