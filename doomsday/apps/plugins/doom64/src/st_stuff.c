@@ -579,6 +579,7 @@ static void initData(hudstate_t* hud)
     hud->log._msgCount = 0;
     hud->log._nextUsedMsg = 0;
     hud->log._pvisMsgCount = 0;
+
     memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
 
     ST_HUDUnHide(player, HUE_FORCE);
@@ -627,14 +628,6 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
         UIAutomap_SetScale(obj, 0);
 
     UIAutomap_ClearPoints(obj);
-
-#if !__JHEXEN__
-    if(G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
-    {
-        int flags = UIAutomap_Flags(obj);
-        UIAutomap_SetFlags(obj, flags|AMF_REND_KEYS);
-    }
-#endif
 
 #if __JDOOM__
     if(!IS_NETGAME && hud->automapCheatLevel)
@@ -798,6 +791,8 @@ uiwidget_t* ST_UILogForPlayer(int player)
         return uiLog;
     }
     Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
+
+    // TODO This is quite bad error handling
     exit(1); // Unreachable.
 }
 
