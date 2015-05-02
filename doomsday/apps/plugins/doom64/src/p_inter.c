@@ -174,6 +174,8 @@ dd_bool P_GiveWeapon(player_t *player, weapontype_t weapon, dd_bool dropped)
 
 /**
  * Returns false if the body isn't needed at all
+ *
+ * XXX This is P_GiveHealth in doom/p_inter.c
  */
 dd_bool P_GiveBody(player_t *player, int num)
 {
@@ -876,6 +878,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     }
 
     P_MobjRemove(special, false);
+
+    //XXX doom plugin checks value of mapSetup
     player->bonusCount += BONUSADD;
 }
 
