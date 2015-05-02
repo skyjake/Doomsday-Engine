@@ -103,6 +103,11 @@ static float deltaBaseScores[NUM_DELTA_TYPES];
 // the mobj being compared.
 static ThinkerT<dt_mobj_t> dummyZeroMobj;
 
+static inline WorldSystem &worldSys()
+{
+    return App_WorldSystem();
+}
+
 /**
  * Called once for each map, from R_SetupMap(). Initialize the world
  * register and drain all pools.
@@ -419,7 +424,7 @@ void Sv_RegisterPlayer(dt_player_t* reg, uint number)
 void Sv_RegisterSector(dt_sector_t *reg, int number)
 {
     DENG2_ASSERT(reg);
-    Sector &sector = App_WorldSystem().map().sector(number);
+    Sector &sector = worldSys().map().sector(number);
 
     reg->lightLevel = sector.lightLevel();
     for(int i = 0; i < 3; ++i)
@@ -459,7 +464,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 {
     DENG2_ASSERT(reg != 0);
 
-    LineSide *side = App_WorldSystem().map().sidePtr(number);
+    LineSide *side = worldSys().map().sidePtr(number);
 
     if(side->hasSections())
     {
@@ -490,7 +495,7 @@ void Sv_RegisterSide(dt_side_t *reg, int number)
 void Sv_RegisterPoly(dt_poly_t *reg, uint number)
 {
     DENG_ASSERT(reg);
-    Polyobj const &pob = App_WorldSystem().map().polyobj(number);
+    Polyobj const &pob = worldSys().map().polyobj(number);
 
     reg->dest[VX]   = pob.dest[VX];
     reg->dest[VY]   = pob.dest[VY];
@@ -632,7 +637,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
 {
     DENG2_ASSERT(reg && d);
     dt_sector_t *r  = &reg->sectors[number];
-    Sector const &s = App_WorldSystem().map().sector(number);
+    Sector const &s = worldSys().map().sector(number);
     int df = 0;
 
     // Determine which data is different.
@@ -754,7 +759,7 @@ dd_bool Sv_RegisterCompareSector(cregister_t *reg, int number, sectordelta_t *d,
 dd_bool Sv_RegisterCompareSide(cregister_t *reg, uint number,
     sidedelta_t *d, byte doUpdate)
 {
-    LineSide const *side = App_WorldSystem().map().sidePtr(number);
+    LineSide const *side = worldSys().map().sidePtr(number);
     dt_side_t *r = &reg->sides[number];
     byte lineFlags = side->line().flags() & 0xff;
     byte sideFlags = side->flags() & 0xff;
@@ -919,19 +924,17 @@ dd_bool Sv_RegisterComparePoly(cregister_t* reg, int number,
 }
 
 /**
- * @return              @c true, if the mobj can be excluded from delta
- *                      processing.
+ * Returns @c true if the map-object can be excluded from delta processing.
  */
-dd_bool Sv_IsMobjIgnored(mobj_t* mo)
+dd_bool Sv_IsMobjIgnored(mobj_t const &mob)
 {
-    return (mo->ddFlags & DDMF_LOCAL) != 0;
+    return (mob.ddFlags & DDMF_LOCAL) != 0;
 }
 
 /**
- * @return              @c true, if the player can be excluded from delta
- *                      processing.
+ * Returns @c true if the player can be excluded from delta processing.
  */
-dd_bool Sv_IsPlayerIgnored(int plrNum)
+dd_bool Sv_IsPlayerIgnored(dint plrNum)
 {
     return !ddPlayers[plrNum].shared.inGame;
 }
@@ -949,7 +952,7 @@ void Sv_RegisterWorld(cregister_t *reg, dd_bool isInitial)
 {
     DENG_ASSERT(reg != 0);
 
-    Map &map = App_WorldSystem().map();
+    Map &map = worldSys().map();
 
     de::zapPtr(reg);
     reg->gametic = SECONDS_TO_TICKS(gameTime);
@@ -1533,7 +1536,7 @@ coord_t Sv_MobjDistance(mobj_t const *mo, ownerinfo_t const *info, dd_bool isRea
 coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 {
     DENG2_ASSERT(info);
-    Sector const &sector = App_WorldSystem().map().sector(index);
+    Sector const &sector = worldSys().map().sector(index);
 
     return M_ApproxDistance3(info->origin[0] - sector.soundEmitter().origin[0],
                              info->origin[1] - sector.soundEmitter().origin[1],
@@ -1543,7 +1546,7 @@ coord_t Sv_SectorDistance(int index, ownerinfo_t const *info)
 coord_t Sv_SideDistance(int index, int deltaFlags, ownerinfo_t const *info)
 {
     DENG2_ASSERT(info);
-    LineSide const *side = App_WorldSystem().map().sidePtr(index);
+    LineSide const *side = worldSys().map().sidePtr(index);
 
     SoundEmitter const &emitter = (  deltaFlags & SNDDF_SIDE_MIDDLE? side->middleSoundEmitter()
                                    : deltaFlags & SNDDF_SIDE_TOP   ? side->topSoundEmitter()
@@ -1585,7 +1588,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_SIDE)
     {
-        LineSide *side = App_WorldSystem().map().sidePtr(delta->id);
+        LineSide *side = worldSys().map().sidePtr(delta->id);
         Line &line = side->line();
         return M_ApproxDistance(info->origin[VX] - line.center().x,
                                 info->origin[VY] - line.center().y);
@@ -1593,7 +1596,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY)
     {
-        Polyobj const &pob = App_WorldSystem().map().polyobj(delta->id);
+        Polyobj const &pob = worldSys().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
                                 info->origin[VY] - pob.origin[VY]);
     }
@@ -1616,7 +1619,7 @@ coord_t Sv_DeltaDistance(void const *deltaPtr, ownerinfo_t const *info)
 
     if(delta->type == DT_POLY_SOUND)
     {
-        Polyobj const &pob = App_WorldSystem().map().polyobj(delta->id);
+        Polyobj const &pob = worldSys().map().polyobj(delta->id);
         return M_ApproxDistance(info->origin[VX] - pob.origin[VX],
                                 info->origin[VY] - pob.origin[VY]);
     }
@@ -2078,7 +2081,7 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
             next = obj->next;
 
             /// @todo Do not assume mobj is from the CURRENT map.
-            if(!App_WorldSystem().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
+            if(!worldSys().map().thinkers().isUsedMobjId(obj->mo.thinker.id))
             {
                 // This object no longer exists!
                 Sv_NewDelta(&null, DT_MOBJ, obj->mo.thinker.id);
@@ -2099,55 +2102,34 @@ void Sv_NewNullDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     }
 }
 
-typedef struct {
-    cregister_t*        reg;
-    dd_bool             doUpdate;
-    pool_t**            targets;
-} newmobjdeltaparams_t;
-
-static int newMobjDelta(thinker_t* th, void* context)
-{
-    newmobjdeltaparams_t* params = (newmobjdeltaparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
-
-    // Some objects should not be processed.
-    if(!Sv_IsMobjIgnored(mo))
-    {
-        mobjdelta_t         delta;
-
-        // Compare to produce a delta.
-        if(Sv_RegisterCompareMobj(params->reg, mo, &delta))
-        {
-            Sv_AddDeltaToPools(&delta, params->targets);
-
-            if(params->doUpdate)
-            {
-                reg_mobj_t*         obj;
-
-                // This'll add a new register-mobj if it doesn't
-                // already exist.
-                obj = Sv_RegisterAddMobj(params->reg, mo->thinker.id);
-                Sv_RegisterMobj(&obj->mo, mo);
-            }
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
 /**
  * Mobj deltas are generated for all mobjs that have changed.
  */
 void Sv_NewMobjDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
-    newmobjdeltaparams_t parm;
+    worldSys().map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                       0x1 /*public*/, [&reg, &doUpdate, &targets] (thinker_t *th)
+    {
+        auto &mob = *reinterpret_cast<mobj_t *>(th);
 
-    parm.reg = reg;
-    parm.doUpdate = doUpdate;
-    parm.targets = targets;
+        // Some objects should not be processed.
+        if(!Sv_IsMobjIgnored(mob))
+        {
+            // Compare to produce a delta.
+            mobjdelta_t delta;
+            if(Sv_RegisterCompareMobj(reg, &mob, &delta))
+            {
+                Sv_AddDeltaToPools(&delta, targets);
 
-    App_WorldSystem().map().thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                         0x1 /*mobjs are public*/, newMobjDelta, &parm);
+                if(doUpdate)
+                {
+                    // This'll add a new register-mobj if it doesn't already exist.
+                    Sv_RegisterMobj(&Sv_RegisterAddMobj(reg, mob.thinker.id)->mo, &mob);
+                }
+            }
+        }
+        return LoopContinue;
+    });
 }
 
 /**
@@ -2238,7 +2220,7 @@ void Sv_NewSectorDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
 {
     sectordelta_t delta;
 
-    for(int i = 0; i < App_WorldSystem().map().sectorCount(); ++i)
+    for(int i = 0; i < worldSys().map().sectorCount(); ++i)
     {
         if(Sv_RegisterCompareSector(reg, i, &delta, doUpdate))
         {
@@ -2257,7 +2239,7 @@ void Sv_NewSideDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     static uint numShifts = 2, shift = 0;
 
     /// @todo fixme: Do not assume the current map.
-    Map &map = App_WorldSystem().map();
+    Map &map = worldSys().map();
 
     // When comparing against an initial register, always compare all
     // sides (since the comparing is only done once, not continuously).
@@ -2297,7 +2279,7 @@ void Sv_NewPolyDeltas(cregister_t *reg, dd_bool doUpdate, pool_t **targets)
     polydelta_t delta;
 
     /// @todo fixme: Do not assume the current map.
-    for(int i = 0; i < App_WorldSystem().map().polyobjCount(); ++i)
+    for(int i = 0; i < worldSys().map().polyobjCount(); ++i)
     {
         if(Sv_RegisterComparePoly(reg, i, &delta))
         {
