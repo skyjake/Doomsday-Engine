@@ -37,7 +37,6 @@
 #include "render/rendpoly.h"
 #include "render/billboard.h"
 #include "render/cameralensfx.h"
-#include "render/vissprite.h"
 #endif
 
 #include "r_util.h"

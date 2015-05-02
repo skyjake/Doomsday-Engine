@@ -1,7 +1,7 @@
 /** @file r_main.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,11 +21,14 @@
 #include "de_platform.h"
 #include "render/r_main.h"
 
+#include <de/vector1.h>
+#include <de/GLState>
 #include "dd_def.h" // finesine
 #include "clientapp.h"
 
 #include "render/billboard.h"
 #include "render/rend_main.h"
+#include "render/rend_model.h"
 #include "render/vissprite.h"
 
 #include "world/map.h"
@@ -33,9 +36,6 @@
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "SectorCluster"
-
-#include <de/GLState>
-#include <de/vector1.h>
 
 using namespace de;
 
@@ -65,8 +65,7 @@ static inline ResourceSystem &resSys()
 
 static MaterialVariantSpec const &pspriteMaterialSpec()
 {
-    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
@@ -155,7 +154,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
         params->vLightListIdx =
-                Rend_CollectAffectingLights(Vector3d(spr->origin), Vector3f(params->ambientColor),
+                Rend_CollectAffectingLights(spr->origin, Vector3f(params->ambientColor),
                                             spr->data.sprite.bspLeaf->subspacePtr());
     }
 }
@@ -210,9 +209,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
     params->id = spr->data.model.id;
     params->selector = spr->data.model.selector;
     params->flags = spr->data.model.flags;
-    vis.pose.origin[0] = spr->origin[0];
-    vis.pose.origin[1] = spr->origin[1];
-    vis.pose.origin[2] = spr->origin[2];
+    vis.pose.origin = spr->origin;
     vis.pose.srvo[0] = spr->data.model.visOff[0];
     vis.pose.srvo[1] = spr->data.model.visOff[1];
     vis.pose.srvo[2] = spr->data.model.visOff[2] - spr->data.model.floorClip;
@@ -278,7 +275,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         Rend_ApplyTorchLight(vis.light.ambientColor, vis.pose.distance);
 
         vis.light.vLightListIdx =
-                Rend_CollectAffectingLights(Vector3d(spr->origin), vis.light.ambientColor,
+                Rend_CollectAffectingLights(spr->origin, vis.light.ambientColor,
                                             spr->data.model.bspLeaf->subspacePtr(),
                                             true /*stark world light*/);
     }
@@ -293,7 +290,7 @@ void Rend_Draw3DPlayerSprites()
     GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
                                          GLTarget::DepthStencil);
 
-    for(int i = 0; i < DDMAXPSPRITES; ++i)
+    for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
@@ -306,7 +303,7 @@ void Rend_Draw3DPlayerSprites()
         }
 
         //drawmodelparams_t parms; zap(parms);
-        vissprite_t temp; zap(temp);
+        vissprite_t temp; de::zap(temp);
         setupModelParamsForVisPSprite(temp, spr);
         Rend_DrawModel(temp);
     }
