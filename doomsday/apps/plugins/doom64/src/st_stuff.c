@@ -51,11 +51,14 @@
 #define ST_FRAGSWIDTH       2
 
 enum {
-    UWG_MAPNAME = 0,
+    UWG_MAPNAME,
+    UWG_BOTTOM,
     UWG_BOTTOMLEFT,
+    UWG_BOTTOMLEFT2,
     UWG_BOTTOMRIGHT,
     UWG_BOTTOMCENTER,
-    UWG_TOP,
+    UWG_TOPCENTER,
+    UWG_TOP = UWG_TOPCENTER,
     UWG_COUNTERS,
     UWG_AUTOMAP,
     NUM_UIWIDGET_GROUPS
@@ -521,22 +524,6 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-typedef struct {
-    guiwidgettype_t type;
-    int group;
-    gamefontid_t fontIdx;
-    void (*updateGeometry) (uiwidget_t* obj);
-    void (*drawer) (uiwidget_t* obj, int x, int y);
-    void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
-    void* typedata;
-} uiwidgetdef_t;
-
-typedef struct {
-    int group;
-    int alignFlags;
-    int groupFlags;
-    int padding; // In fixed 320x200 pixels.
-} uiwidgetgroupdef_t;
 
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
@@ -579,7 +566,6 @@ static void initData(hudstate_t* hud)
     hud->log._msgCount = 0;
     hud->log._nextUsedMsg = 0;
     hud->log._pvisMsgCount = 0;
-
     memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
 
     ST_HUDUnHide(player, HUE_FORCE);
@@ -716,15 +702,43 @@ void ST_Stop(int player)
 
 void ST_BuildWidgets(int player)
 {
-    assert(player >= 0 && player < MAXPLAYERS);
-    {
 #define PADDING 2 // In fixed 320x200 units.
 
+    typedef struct {
+        int     group;
+        int     alignFlags;
+        order_t order;
+        int     groupFlags;
+        int     padding; // In fixed 320x200 pixels.
+    } uiwidgetgroupdef_t;
+
+    typedef struct {
+        guiwidgettype_t type;
+        int alignFlags;
+        int group;
+        gamefontid_t fontIdx;
+        void (*updateGeometry) (uiwidget_t* obj);
+        void (*drawer) (uiwidget_t* obj, int x, int y);
+        void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
+        void* typedata;
+    } uiwidgetdef_t;
+
     hudstate_t* hud = &hudStates[player];
-    const uiwidgetgroupdef_t widgetGroupDefs[] = {
-        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT },
-        { UWG_AUTOMAP,      ALIGN_TOPLEFT }
+
+    uiwidgetgroupdef_t const widgetGroupDefs[] = {
+        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT,   ORDER_NONE,         0,              0       },
+        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,   ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              PADDING },
+        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT,  ORDER_RIGHTTOLEFT,  0,              PADDING },
+        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,       ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              0       },
+        { UWG_TOPCENTER,    ALIGN_TOPLEFT,      ORDER_LEFTTORIGHT,  UWGF_VERTICAL,  PADDING },
+        { UWG_COUNTERS,     ALIGN_LEFT,         ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+        { UWG_AUTOMAP,      ALIGN_TOPLEFT,      ORDER_NONE,         0,              0       }
     };
+
+    DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
+
     size_t i;
 
     for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
@@ -733,11 +747,34 @@ void ST_BuildWidgets(int player)
         hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, 0, def->padding);
     }
 
-    hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
-    UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
+    { // Bottom Widget Groups
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]));
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]));
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
+                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
+
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]),
+                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]));
+    }
+
+    { // Log
+        hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->logWidgetId));
+    }
+
+    { // Chat
+        hud->chatWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->chatWidgetId));
+    }
+
+    { // Automap
+        hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
+        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
+    }
 
 #undef PADDING
-    }
 }
 
 void ST_Init(void)
