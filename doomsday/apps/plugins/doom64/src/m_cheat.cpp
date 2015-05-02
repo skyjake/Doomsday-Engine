@@ -62,8 +62,6 @@
 
 using namespace de;
 
-typedef eventsequencehandler_t cheatfunt_t;
-
 // God
 // ===============================================================================================================
 
@@ -88,7 +86,7 @@ D_CMD(CheatGod)
             if(argc == 2)
             {
                 player = String(argv[1]).toInt();
-                if(i < 0 || i >= MAXPLAYERS) return false;
+                if(player < 0 || player >= MAXPLAYERS) return false;
             }
 
             player_t *plr = &players[player];
@@ -138,7 +136,7 @@ D_CMD(CheatNoClip)
             if(argc == 2)
             {
                 player = String(argv[1]).toInt();
-                if(i < 0 || i >= MAXPLAYERS) return false;
+                if(player < 0 || player >= MAXPLAYERS) return false;
             }
 
             player_t *plr = &players[CONSOLEPLAYER];
@@ -168,7 +166,7 @@ static int suicideResponse(msgresponse_t response, int /*userValue*/, void * /*u
         }
         else
         {
-            P_DamageMobj(&players[CONSOLEPLAYER], nullptr, nullptr, 10000, false);
+            P_DamageMobj(players[CONSOLEPLAYER].plr->mo, nullptr, nullptr, 10000, false);
         }
     }
     return true;
@@ -241,25 +239,9 @@ D_CMD(CheatReveal)
 // Give
 // ===============================================================================================================
 
-{
-    if(P_InventoryGive(p - players, IIT_DEMONKEY1, true))
-    {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-        return;
-    }
-
-    if(P_InventoryGive(p - players, IIT_DEMONKEY2, true))
-    {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-        return;
-    }
-
-    if(P_InventoryGive(p - players, IIT_DEMONKEY3, true))
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
-}
 static void giveWeapon(player_t *plr, weapontype_t weaponType)
 {
-    P_GiveWeapon(player, weaponType, false /* not collecting a drop */);
+    P_GiveWeapon(plr, weaponType, false /* not collecting a drop */);
     if(weaponType = WT_EIGHTH)
     {
         P_SetMessage(plr, LMF_NO_HIDE, STSTR_CHOPPERS);
@@ -270,7 +252,7 @@ static void giveLaserUpgrade(player_t *plr, inventoryitemtype_t upgrade)
 {
     if(P_InventoryGive(plr - players, upgrade, true /* silent */))
     {
-        P_SetMessage(p, LMF_NO_HIDE, STSTR_BEHOLDX);
+        P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
     }
 }
 
@@ -386,7 +368,7 @@ D_CMD(CheatGive)
                             << arg << Rangei(0, 4).asText();
                     break;
                 }
-                armor = arg
+                armor = arg;
             }
             P_GiveArmor(plr, armorClass[armor], armorPoints[armor]);
             break;
@@ -397,7 +379,7 @@ D_CMD(CheatGive)
 
             if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
             {
-                int const arg = stuff.att(++i).digitValue();
+                int const arg = stuff.at(++i).digitValue();
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -431,7 +413,7 @@ D_CMD(CheatGive)
         case 'l': { // Laser Upgrades
             if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
             {
-                switch (sutff.at(++i).digitValue())
+                switch (stuff.at(++i).digitValue())
                 {
                     case 1: // DEMONKEY1
                         giveLaserUpgrade(plr, IIT_DEMONKEY1);
@@ -443,8 +425,8 @@ D_CMD(CheatGive)
                         giveLaserUpgrade(plr, IIT_DEMONKEY3);
                         break;
                     default:
-                        LOG_SCR_ERROR("Laser upgrade #%d does not exist. Valid upgrades: %s")
-                                << upgradeId << Rangei(1, 3).asText();
+                        LOG_SCR_ERROR("That upgrade does not exist. Valid upgrades: %s")
+                                 << Rangei(1, 3).asText();
                 }
             }
             else
@@ -460,7 +442,7 @@ D_CMD(CheatGive)
 
         // Other Items
         case 'p': P_GiveBackpack(plr); break;
-        case 'h': P_GiveHealth(plr, healthLimit); break;
+        case 'h': P_GiveBody(plr, healthLimit); break;
                 
         // Powers
         case 'm': togglePower(plr, PT_ALLMAP); break;
@@ -510,13 +492,15 @@ static void printDebugInfo(player_t *plr)
     P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
 
     // Also print some information to the console.
-    App_Log(DE2_MAP_NOTE, "%s", textBuffer);
+    LOG_SCR_NOTE(textBuffer);
 
     Sector *sector = Mobj_Sector(plrMo);
 
-    Uri *matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
-    App_Log(DE2_MAP_MSG, "FloorZ:%g Material:%s",
-                         P_GetDoublep(sector, DMU_FLOOR_HEIGHT), Str_Text(Uri_ToString(matUri)));
+    ::Uri *matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_FLOOR_MATERIAL));
+    LOG_SCR_MSG("FloorZ:%g Material:%s")
+            << P_GetDoublep(sector, DMU_FLOOR_HEIGHT)
+            << Str_Text(Uri_ToString(matUri));
+
     Uri_Delete(matUri);
 
     matUri = Materials_ComposeUri(P_GetIntp(sector, DMU_CEILING_MATERIAL));
