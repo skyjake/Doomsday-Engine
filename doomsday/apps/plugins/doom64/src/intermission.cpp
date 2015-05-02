@@ -80,8 +80,8 @@ namespace internal
                                          patchId, text);
     }
 
-    static void drawChar(QChar const ch, Vector const &origin,
-                         int alignFlags = ALIGN_TOPLEFT, int textFalgs = DTF_NO_TYPEIN)
+    static void drawChar(QChar const ch, Vector2i const &origin,
+                         int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         Point2Raw const rawOrigin(origin.x, origin.y);
         FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
@@ -98,7 +98,7 @@ namespace internal
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-        drawChar(String::number(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+        drawText(String::number(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
     }
 
     /**
@@ -419,7 +419,7 @@ static void drawDeathmatchStats(Vector2i origin = Vector2i(DM_MATRIXX + DM_SPACI
 
                 FR_SetFont(FID(GF_FONTA));
                 drawText(count, Vector2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
-                drawText(count, Vector2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y   + info.geometry.size.height - 8);
+                drawText(count, Vector2i(DM_MATRIXX - info.geometry.size.width / 2 + 1, origin.y   + info.geometry.size.height - 8));
             }
         }
         else
@@ -667,9 +667,11 @@ static void drawNetgameStats()
 
         int x = ORIGINX;
         
-        patchinfo_t info;
-        R_GetPatchInfo(pTeamBackrounds[i], &info);
-        WI_DrawPatch(patchId, patchReplacementText(patchId), Vector2i(x - info.geometry.size.width, y));
+        {
+            patchid_t ptb = pTeamBackgrounds[i];
+            R_GetPatchInfo(ptb, &info);
+            WI_DrawPatch(ptb, patchReplacementText(ptb), Vector2i(x - info.geometry.size.width, y));
+        }
 
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
@@ -694,7 +696,7 @@ static void drawNetgameStats()
         drawPercent(cntItems[i], Vector2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
-        drawPercent(cntSecrets[i], Vector2i(x - pwidth, y + 10));
+        drawPercent(cntSecret[i], Vector2i(x - pwidth, y + 10));
         x += NG_SPACINGX;
 
         if(doFrags)
