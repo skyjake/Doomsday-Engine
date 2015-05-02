@@ -499,10 +499,10 @@ typedef struct {
 static int countMobjWorker(thinker_t* th, void* parms)
 {
     mobj_t* mo = (mobj_t*) th;
-    countmobjworker_params* p = (countmobjworker_params_t*) parms;
+    countmobjworker_params_t* p = (countmobjworker_params_t*) parms;
 
     if(p->excludedMobj == mo)       return false;   // Exluded Mobj Check
-    if(p->type != mo-type)          return false;   // Type Check
+    if(p->type != mo->type)          return false;   // Type Check
     if(mo->health < p->minHealth)   return false;   // Minimum Health Check
 
     if(p->count < 0)                return true;    // Early out
@@ -598,9 +598,6 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     {
         P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
     }
-
-    // Check if there are no more Bitches left in the map.
-    params.type = actor->type;
     
     if(countMobjsWithType(actor->type) > 0)
     {   // No Bitches left alive.
@@ -1605,7 +1602,7 @@ void C_DECL A_SkelMissile(mobj_t* actor)
 
     A_FaceTarget(actor);
 
-    mobj_t* mo = P_SpawnMissile(MT_TRACER, actor, actor->target)
+    mobj_t* mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
     if(mo)
     {
         mo->origin[VX] += mo->mom[MX];
