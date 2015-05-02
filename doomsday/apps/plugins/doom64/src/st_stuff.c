@@ -739,9 +739,7 @@ void ST_BuildWidgets(int player)
 
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    size_t i;
-
-    for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+    for(size_t i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
     {
         const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
         hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, 0, def->padding);
