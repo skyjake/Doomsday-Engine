@@ -70,7 +70,6 @@
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/skydrawable.h"
-#  include "render/vlight.h"
 #endif
 
 #ifdef __SERVER__
@@ -609,8 +608,7 @@ DENG2_PIMPL(WorldSystem)
 
         map->initContactBlockmaps();
         R_InitContactLists(*map);
-        rendSys().projectorInitForMap(*map);
-        VL_InitForMap(*map);  // Converted vlights (from lumobjs).
+        rendSys().worldSystemMapChanged(*map);
         map->initBias();      // Shadow bias sources and surfaces.
 
         // Rewind/restart material animators.

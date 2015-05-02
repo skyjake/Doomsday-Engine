@@ -57,7 +57,7 @@ static inline RenderSystem &rendSys()
 }
 
 static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtOrigin,
-    coord_t distToEye, bool fullbright, Vector4f &ambientColor, uint *vLightListIdx)
+    coord_t distToEye, bool fullbright, Vector4f &ambientColor, duint *vLightListIdx)
 {
     if(fullbright)
     {
@@ -74,7 +74,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
             // Evaluate the position in the light grid.
             Vector4f color = map.lightGrid().evaluate(origin);
             // Apply light range compression.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -84,7 +84,7 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
         {
             Vector4f const color = cluster.lightSourceColorfIntensity();
 
-            float lightLevel = color.w;
+            dfloat lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
             {
                 // Wall decorations receive an additional light delta.
@@ -102,35 +102,25 @@ static void evaluateLighting(Vector3d const &origin, ConvexSubspace &subspaceAtO
             // Determine the final color.
             ambientColor = color * lightLevel;
         }
-
         Rend_ApplyTorchLight(ambientColor, distToEye);
 
-        collectaffectinglights_params_t parm; zap(parm);
-        parm.origin[VX]      = origin.x;
-        parm.origin[VY]      = origin.y;
-        parm.origin[VZ]      = origin.z;
-        parm.subspace        = &subspaceAtOrigin;
-        parm.ambientColor[0] = ambientColor.x;
-        parm.ambientColor[1] = ambientColor.y;
-        parm.ambientColor[2] = ambientColor.z;
-
-        *vLightListIdx = R_CollectAffectingLights(&parm);
+        *vLightListIdx = Rend_CollectAffectingLights(origin, ambientColor, &subspaceAtOrigin);
     }
 }
 
 /// @todo use Mobj_OriginSmoothed
-static Vector3d mobjOriginSmoothed(mobj_t *mo)
+static Vector3d mobjOriginSmoothed(mobj_t *mob)
 {
-    DENG_ASSERT(mo != 0);
-    coord_t moPos[] = { mo->origin[VX], mo->origin[VY], mo->origin[VZ] };
+    DENG2_ASSERT(mob);
+    coord_t origin[] = { mob->origin[0], mob->origin[1], mob->origin[2] };
 
     // The client may have a Smoother for this object.
-    if(isClient && mo->dPlayer && P_GetDDPlayerIdx(mo->dPlayer) != consolePlayer)
+    if(isClient && mob->dPlayer && P_GetDDPlayerIdx(mob->dPlayer) != consolePlayer)
     {
-        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mo->dPlayer)].smoother, moPos);
+        Smoother_Evaluate(clients[P_GetDDPlayerIdx(mob->dPlayer)].smoother, origin);
     }
 
-    return moPos;
+    return origin;
 }
 
 /**

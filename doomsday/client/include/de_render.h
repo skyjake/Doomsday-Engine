@@ -38,7 +38,6 @@
 #include "render/billboard.h"
 #include "render/cameralensfx.h"
 #include "render/vissprite.h"
-#include "render/vlight.h"
 #endif
 
 #include "r_util.h"

@@ -27,6 +27,7 @@
 #include "DrawLists"
 #include "settingsregister.h"
 #include "projectedtexturedata.h"
+#include "vectorlightdata.h"
 
 class AngleClipper;
 class ModelRenderer;
@@ -64,6 +65,7 @@ private:
     uint vertCount, vertMax;
 };
 
+/// @todo make private to RenderSystem
 struct ProjectionList
 {
     struct Node
@@ -73,25 +75,45 @@ struct ProjectionList
     };
 
     Node *head = nullptr;
-    bool sortByLuma;  ///< @c true= Sort from brightest to darkest.
+    bool sortByLuma;       ///< @c true= Sort from brightest to darkest.
 
     static void init();
-
-    static void reset();
+    static void rewind();
 
     inline ProjectionList &operator << (ProjectedTextureData &texp) { return add(texp); }
 
     ProjectionList &add(ProjectedTextureData &texp);
 
 private:
-    // Projection list nodes.
     static Node *firstNode;
     static Node *cursorNode;
 
     static Node *newNode();
+};
 
-    /// Average color * alpha.
-    static dfloat luminosity(ProjectedTextureData const &texp);
+/// @todo make private to RenderSystem
+struct VectorLightList
+{
+    struct Node
+    {
+        Node *next, *nextUsed;
+        VectorLightData vlight;
+    };
+
+    Node *head = nullptr;
+
+    static void init();
+    static void rewind();
+
+    inline VectorLightList &operator << (VectorLightData &texp) { return add(texp); }
+
+    VectorLightList &add(VectorLightData &texp);
+
+private:
+    static Node *firstNode;
+    static Node *cursorNode;
+
+    static Node *newNode();
 };
 
 /**
@@ -125,25 +147,30 @@ public:
      */
     Store &buffer();
 
-    void clearDrawLists();
-
-    void resetDrawLists();
-
+    /**
+     * Provides access to the DrawLists collection for conveniently writing geometry.
+     */
     DrawLists &drawLists();
 
+    /**
+     * To be called manually, to clear all persistent data held by/for the draw lists
+     * (e.g., during re-initialization).
+     *
+     * @todo Use a de::Observers based mechanism.
+     */
+    void clearDrawLists();
+
+    /**
+     * @todo Use a de::Observers based mechanism.
+     */
+    void worldSystemMapChanged(de::Map &map);
+
+    /**
+     * @todo Use a de::Observers based mechanism.
+     */
+    void beginFrame();
+
 public:  // Texture => surface projection lists -----------------------------------
-
-    /**
-     * To be called to initialize the projector when the current map changes.
-     * @todo make private
-     */
-    void projectorInitForMap(de::Map &map);
-
-    /**
-     * To be called at the start of a render frame to clear the projection lists
-     * to prepare for subsequent drawing.
-     */
-    void projectorReset();
 
     /**
      * Find/create a new projection list.
@@ -152,7 +179,7 @@ public:  // Texture => surface projection lists --------------------------------
      *                    list index is non-zero return the associated list. Otherwise
      *                    allocate a new list and write it's index back to this address.
      *
-     * @param sortByLuma  @c true= The list should maintain luma-sorted order.
+     * @param sortByLuma  @c true= Maintain a luminosity sorted order (descending).
      *
      * @return  ProjectionList associated with the (possibly newly attributed) index.
      */
@@ -165,6 +192,27 @@ public:  // Texture => surface projection lists --------------------------------
      * @param func     Callback to make for each TexProjection.
      */
     de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (ProjectedTextureData const &)> func) const;
+
+public:  // VectorLight affection lists -------------------------------------------
+
+    /**
+     * Find/create a new vector light list.
+     *
+     * @param listIdx  Address holding the list index to retrieve. If the referenced
+     *                 list index is non-zero return the associated list. Otherwise
+     *                 allocate a new list and write it's index back to this address.
+     *
+     * @return  VectorLightList associated with the (possibly newly attributed) index.
+     */
+    VectorLightList &findVectorLightList(de::duint *listIdx);
+
+    /**
+     * Iterate through the referenced vector light list.
+     *
+     * @param listIdx  Unique identifier of the list to process.
+     * @param func     Callback to make for each VectorLight.
+     */
+    de::LoopResult forAllVectorLights(de::duint listIdx, std::function<de::LoopResult (VectorLightData const &)> func);
 
 public:
     /**

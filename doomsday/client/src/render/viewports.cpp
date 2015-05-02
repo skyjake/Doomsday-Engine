@@ -1268,10 +1268,6 @@ static int lumobjSorter(void const *e1, void const *e2)
 
 void R_BeginFrame()
 {
-    // Clear the projected texture lists. This is done here as the projections
-    // are sensitive to distance from the viewer.
-    rendSys().projectorReset();
-
     Map &map = worldSys().map();
 
     subspacesVisible.resize(map.subspaceCount());
@@ -1280,14 +1276,14 @@ void R_BeginFrame()
     // Clear all generator visibility flags.
     generatorsVisible.fill(false);
 
-    int numLuminous = map.lumobjCount();
+    dint numLuminous = map.lumobjCount();
     if(!(numLuminous > 0)) return;
 
     // Resize the associated buffers used for per-frame stuff.
-    int maxLuminous = numLuminous;
-    luminousDist    = (coord_t *) M_Realloc(luminousDist,    sizeof(*luminousDist)    * maxLuminous);
-    luminousClipped =    (byte *) M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
-    luminousOrder   =    (uint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
+    dint maxLuminous = numLuminous;
+    luminousDist    = (coord_t *)  M_Realloc(luminousDist,    sizeof(*luminousDist)    * maxLuminous);
+    luminousClipped =    (dbyte *) M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
+    luminousOrder   =    (duint *) M_Realloc(luminousOrder,   sizeof(*luminousOrder)   * maxLuminous);
 
     // Update viewer => lumobj distances ready for linking and sorting.
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -1305,17 +1301,17 @@ void R_BeginFrame()
         // so that only the closest are visible (max loMaxLumobjs).
 
         // Init the lumobj indices, sort array.
-        for(int i = 0; i < numLuminous; ++i)
+        for(dint i = 0; i < numLuminous; ++i)
         {
             luminousOrder[i] = i;
         }
-        qsort(luminousOrder, numLuminous, sizeof(uint), lumobjSorter);
+        qsort(luminousOrder, numLuminous, sizeof(duint), lumobjSorter);
 
         // Mark all as hidden.
         std::memset(luminousClipped, 2, numLuminous * sizeof(*luminousClipped));
 
-        int n = 0;
-        for(int i = 0; i < numLuminous; ++i)
+        dint n = 0;
+        for(dint i = 0; i < numLuminous; ++i)
         {
             if(n++ > rendMaxLumobjs)
                 break;

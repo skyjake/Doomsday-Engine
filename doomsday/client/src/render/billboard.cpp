@@ -31,7 +31,6 @@
 #include "r_util.h"
 #include "render/rend_main.h"
 #include "render/vissprite.h"
-#include "render/vlight.h"
 
 #include "MaterialVariantSpec"
 #include "Texture"
@@ -53,6 +52,11 @@ dint alwaysAlign;
 dint noSpriteZWrite;
 
 dbyte devNoSprites;
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 
 static inline ResourceSystem &resSys()
 {
@@ -243,67 +247,44 @@ static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgb
     }
 }
 
-struct lightspriteworker_params_t
-{
-    Vector3f color, extra;
-    Vector3f normal;
-    duint numProcessed, max;
-};
-
-static void lightSprite(VectorLight const &vlight, lightspriteworker_params_t &parms)
-{
-    dfloat strength = vlight.direction.dot(parms.normal)
-                    + vlight.offset; // Shift toward the light a little.
-
-    // Ability to both light and shade.
-    if(strength > 0)
-    {
-        strength *= vlight.lightSide;
-    }
-    else
-    {
-        strength *= vlight.darkSide;
-    }
-
-    Vector3f &dest = vlight.affectedByAmbient? parms.color : parms.extra;
-    dest += vlight.color * de::clamp(-1.f, strength, 1.f);
-}
-
-static dint lightSpriteWorker(VectorLight const *vlight, void *context)
-{
-    auto &parms = *static_cast<lightspriteworker_params_t *>(context);
-
-    lightSprite(*vlight, parms);
-    parms.numProcessed += 1;
-
-    // Time to stop?
-    return parms.max && parms.numProcessed == parms.max;
-}
-
 /**
  * Calculate vertex lighting.
  */
-static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normal,
-    duint vLightListIdx, duint maxLights, dfloat const *ambient)
+static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normalIt,
+    duint lightListIdx, duint maxLights, dfloat const *ambient)
 {
-    DENG2_ASSERT(out && normal);
+    DENG2_ASSERT(out && normalIt);
 
     Vector3f const saturated(1, 1, 1);
-    lightspriteworker_params_t parms;
 
-    for(dint i = 0; i < count; ++i, out++, normal++)
+    for(dint i = 0; i < count; ++i, out++, normalIt++)
     {
-        // Begin with total darkness.
-        parms.color        = Vector3f();
-        parms.extra        = Vector3f();
-        parms.normal       = Vector3f(normal->xyz);
-        parms.max          = maxLights;
-        parms.numProcessed = 0;
+        Vector3f const normal(normalIt->xyz);
 
-        VL_ListIterator(vLightListIdx, lightSpriteWorker, &parms);
+        // Accumulate contributions from all affecting lights.
+        Vector3f accum[2];  // Begin with total darkness [color, extra].
+        dint numProcessed = 0;
+        rendSys().forAllVectorLights(lightListIdx, [&maxLights, &normal
+                                                      , &accum, &numProcessed] (VectorLightData const &vlight)
+        {
+            numProcessed += 1;
+
+            dfloat strength = vlight.direction.dot(normal)
+                            + vlight.offset;  // Shift toward the light a little.
+
+            // Ability to both light and shade.
+            if(strength > 0) strength *= vlight.lightSide;
+            else             strength *= vlight.darkSide;
+
+            accum[vlight.affectedByAmbient? 0 : 1]
+                += vlight.color * de::clamp(-1.f, strength, 1.f);
+
+            // Time to stop?
+            return (maxLights && numProcessed == maxLights);
+        });
 
         // Check for ambient and convert to ubyte.
-        Vector3f color = (parms.color.max(ambient) + parms.extra).min(saturated);
+        Vector3f color = (accum[0].max(ambient) + accum[1]).min(saturated);
 
         out->rgba[0] = dbyte( 255 * color.x );
         out->rgba[1] = dbyte( 255 * color.y );
@@ -413,16 +394,6 @@ MaterialVariantSpec const &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
 {
     return resSys().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  1, -2, -1, true, true, true, false);
-}
-
-static dint drawVectorLightWorker(VectorLight const *vlight, void *context)
-{
-    auto const distFromViewer = *static_cast<coord_t *>(context);
-    if(distFromViewer < 1600 - 8)
-    {
-        Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
-    }
-    return false; // Continue iteration.
 }
 
 void Rend_DrawSprite(vissprite_t const &spr)
@@ -647,8 +618,15 @@ void Rend_DrawSprite(vissprite_t const &spr)
 
         glTranslatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t distFromViewer = de::abs(spr.pose.distance);
-        VL_ListIterator(spr.light.vLightListIdx, drawVectorLightWorker, &distFromViewer);
+        coord_t const distFromViewer = de::abs(spr.pose.distance);
+        rendSys().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        {
+            if(distFromViewer < 1600 - 8)
+            {
+                Rend_DrawVectorLight(vlight, 1 - distFromViewer / 1600);
+            }
+            return LoopContinue;
+        });
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

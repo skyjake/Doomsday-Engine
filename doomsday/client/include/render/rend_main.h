@@ -33,6 +33,7 @@
 
 class Sector;
 class SectorCluster;
+struct VectorLightData;
 
 namespace de {
 class Map;
@@ -232,6 +233,20 @@ de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
  * @return Calculated result.
  */
 coord_t Rend_PlaneGlowHeight(float intensity);
+
+/**
+ * @param point         World space point to evaluate.
+ * @param ambientColor  Ambient color of the object being lit.
+ * @param subspace      Subspace in which @a origin resides.
+ * @param starkLight    @c true= World light has a more pronounced affect.
+ *
+ * @todo Does not belong here.
+ */
+de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
+    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), ConvexSubspace *subspace = nullptr,
+    bool starkLight = false);
+
+void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha);
 
 /**
  * Selects a Material for the given map @a surface considering the current map

@@ -309,9 +309,9 @@ DENG_HEADERS += \
     include/render/skyfixedge.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
+    include/render/vectorlightdata.h \
     include/render/viewports.h \
     include/render/vissprite.h \
-    include/render/vlight.h \
     include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
@@ -640,7 +640,6 @@ SOURCES += \
     src/render/trianglestripbuilder.cpp \
     src/render/viewports.cpp \
     src/render/vissprite.cpp \
-    src/render/vlight.cpp \
     src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \

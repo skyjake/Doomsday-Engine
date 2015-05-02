@@ -2265,6 +2265,145 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
 }
 
 /**
+ * World light can both light and shade. Normal objects get more shade than light
+ * (preventing them from ending up too bright compared to the ambient light).
+ */
+static bool lightWithWorldLight(Vector3d const & /*point*/, Vector3f const &ambientColor,
+    bool starkLight, VectorLightData &vlight)
+{
+    static Vector3f const worldLight(-.400891f, -.200445f, .601336f);
+
+    de::zap(vlight);
+    vlight.direction         = worldLight;
+    vlight.color             = ambientColor;
+    vlight.affectedByAmbient = false;
+    vlight.approxDist        = 0;
+    if(starkLight)
+    {
+        vlight.lightSide = .35f;
+        vlight.darkSide  = .5f;
+        vlight.offset    = 0;
+    }
+    else
+    {
+        vlight.lightSide = .2f;
+        vlight.darkSide  = .8f;
+        vlight.offset    = .3f;
+    }
+    return true;
+}
+
+static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLightData &vlight)
+{
+    Vector3d const lumCenter(lum.x(), lum.y(), lum.z() + lum.zOffset());
+
+    // Is this light close enough?
+    ddouble const dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - point.x,
+                                                           lumCenter.y - point.y),
+                                          point.z - lumCenter.z);
+    dfloat intensity = 0;
+    if(dist < Lumobj::radiusMax())
+    {
+        intensity = de::clamp(0.f, dfloat(1 - dist / lum.radius()) * 2, 1.f);
+    }
+    if(intensity < .05f) return false;
+
+    de::zap(vlight);
+    vlight.direction         = (lumCenter - point) / dist;
+    vlight.color             = lum.color() * intensity;
+    vlight.affectedByAmbient = true;
+    vlight.approxDist        = dist;
+    vlight.lightSide         = 1;
+    vlight.darkSide          = 0;
+    vlight.offset            = 0;
+    return true;
+}
+
+static bool lightWithPlaneGlow(Vector3d const &point, SectorCluster const &cluster,
+    dint visPlaneIndex, VectorLightData &vlight)
+{
+    Plane const &plane     = cluster.visPlane(visPlaneIndex);
+    Surface const &surface = plane.surface();
+
+    // Glowing at this moment?
+    Vector3f glowColor;
+    dfloat intensity = surface.glow(glowColor);
+    if(intensity < .05f) return false;
+
+    coord_t const glowHeight = Rend_PlaneGlowHeight(intensity);
+    if(glowHeight < 2) return false;  // Not too small!
+
+    // In front of the plane?
+    Vector3d const pointOnPlane(cluster.center(), plane.heightSmoothed());
+    ddouble const dist = (point - pointOnPlane).dot(surface.normal());
+    if(dist < 0) return false;
+
+    intensity *= 1 - dist / glowHeight;
+    if(intensity < .05f) return false;
+
+    Vector3f const color = Rend_LuminousColor(glowColor, intensity);
+    if(color == Vector3f()) return false;
+
+    de::zap(vlight);
+    vlight.direction         = Vector3f(surface.normal().x, surface.normal().y, -surface.normal().z);
+    vlight.color             = color;
+    vlight.affectedByAmbient = true;
+    vlight.approxDist        = dist;
+    vlight.lightSide         = 1;
+    vlight.darkSide          = 0;
+    vlight.offset            = 0.3f;
+    return true;
+}
+
+duint Rend_CollectAffectingLights(Vector3d const &point, Vector3f const &ambientColor,
+    ConvexSubspace *subspace, bool starkLight)
+{
+    duint lightListIdx = 0;
+
+    // Always apply an ambient world light.
+    {
+        VectorLightData vlight;
+        if(lightWithWorldLight(point, ambientColor, starkLight, vlight))
+        {
+            rendSys().findVectorLightList(&lightListIdx)
+                    << vlight;  // a copy is made.
+        }
+    }
+
+    // Add extra light by interpreting nearby sources.
+    if(subspace)
+    {
+        // Interpret lighting from luminous-objects near the origin and which
+        // are in contact the specified subspace and add them to the identified list.
+        R_ForAllSubspaceLumContacts(*subspace, [&point, &lightListIdx] (Lumobj &lum)
+        {
+            VectorLightData vlight;
+            if(lightWithLumobj(point, lum, vlight))
+            {
+                rendSys().findVectorLightList(&lightListIdx)
+                        << vlight;  // a copy is made.
+            }
+            return LoopContinue;
+        });
+
+        // Interpret vlights from glowing planes at the origin in the specfified
+        // subspace and add them to the identified list.
+        SectorCluster const &cluster = subspace->cluster();
+        for(dint i = 0; i < cluster.sector().planeCount(); ++i)
+        {
+            VectorLightData vlight;
+            if(lightWithPlaneGlow(point, cluster, i, vlight))
+            {
+                rendSys().findVectorLightList(&lightListIdx)
+                        << vlight;  // a copy is made.
+            }
+        }
+    }
+
+    return lightListIdx;
+}
+
+/**
  * Fade the specified @a opacity value to fully transparent the closer the view
  * player is to the geometry.
  *
@@ -4350,17 +4489,7 @@ void Rend_RenderMap(Map &map)
     if(!freezeRLs)
     {
         // Prepare for rendering.
-        AngleClipper &clipper = rendSys().angleClipper();
-
-        rendSys().resetDrawLists();  // Clear the lists for new geometry.
-
-        clipper.clearRanges();  // Clear the clipper.
-
-        // Recycle the vlight lists. Currently done here as the lists are
-        // not shared by all viewports.
-        VL_InitForNewFrame();
-
-        R_BeginFrame();
+        rendSys().beginFrame();
 
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
@@ -4371,6 +4500,8 @@ void Rend_RenderMap(Map &map)
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
+            AngleClipper &clipper = rendSys().angleClipper();
+
             dfloat a = de::abs(vpitch) / (90 - yfov / 2);
             binangle_t startAngle = binangle_t(BANG_45 * Rend_FieldOfView() / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
@@ -5300,6 +5431,19 @@ static void drawSoundEmitters(Map &map)
             return LoopContinue;
         });
     }
+}
+
+void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
+{
+    if(alpha < .0001f) return;
+
+    dfloat const unitLength = 100;
+    glBegin(GL_LINES);
+        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
+        glVertex3f(unitLength * vlight.direction.x, unitLength * vlight.direction.z, unitLength * vlight.direction.y);
+        glColor4f(vlight.color.x, vlight.color.y, vlight.color.z, 0);
+        glVertex3f(0, 0, 0);
+    glEnd();
 }
 
 static String labelForGenerator(Generator const *gen)

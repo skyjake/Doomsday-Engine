@@ -98,8 +98,8 @@ duint Store::allocateVertices(duint count)
     return base;
 }
 
-ProjectionList::Node* ProjectionList::firstNode = nullptr;
-ProjectionList::Node* ProjectionList::cursorNode = nullptr;
+ProjectionList::Node *ProjectionList::firstNode = nullptr;
+ProjectionList::Node *ProjectionList::cursorNode = nullptr;
 
 void ProjectionList::init()  // static
 {
@@ -112,10 +112,16 @@ void ProjectionList::init()  // static
     }
 }
 
-void ProjectionList::reset()  // static
+void ProjectionList::rewind()  // static
 {
     // Start reusing nodes.
     cursorNode = firstNode;
+}
+
+/// Averaged-color * alpha.
+static dfloat luminosity(ProjectedTextureData const &pt)  // static
+{
+    return (pt.color.x + pt.color.y + pt.color.z) / 3 * pt.color.w;
 }
 
 ProjectionList &ProjectionList::add(ProjectedTextureData &texp)
@@ -156,7 +162,7 @@ ProjectionList::Node *ProjectionList::newNode()  // static
 {
     Node *node;
 
-    // Do we need to allocate mode nodes?
+    // Do we need to allocate more nodes?
     if(!cursorNode)
     {
         node = (Node *) Z_Malloc(sizeof(*node), PU_APPSTATIC, nullptr);
@@ -175,10 +181,82 @@ ProjectionList::Node *ProjectionList::newNode()  // static
     return node;
 }
 
-/// Average color * alpha.
-dfloat ProjectionList::luminosity(ProjectedTextureData const &texp)  // static
+VectorLightList::Node *VectorLightList::firstNode  = nullptr;
+VectorLightList::Node *VectorLightList::cursorNode = nullptr;
+
+void VectorLightList::init()  // static
 {
-    return (texp.color.x + texp.color.y + texp.color.z) / 3 * texp.color.w;
+    static bool firstTime = true;
+    if(firstTime)
+    {
+        firstNode  = 0;
+        cursorNode = 0;
+        firstTime  = false;
+    }
+}
+
+void VectorLightList::rewind()  // static
+{
+    // Start reusing nodes from the first one in the list.
+    cursorNode = firstNode;
+}
+
+VectorLightList &VectorLightList::add(VectorLightData &vlight)
+{
+    Node *node = newNode();
+    node->vlight = vlight;
+
+    if(head)
+    {
+        Node *iter = head;
+        Node *last = iter;
+        do
+        {
+            VectorLightData *vlight = &node->vlight;
+
+            // Is this closer than the one being added?
+            if(node->vlight.approxDist > vlight->approxDist)
+            {
+                last = iter;
+                iter = iter->next;
+            }
+            else
+            {
+                // Insert it here.
+                node->next = last->next;
+                last->next = node;
+                return *this;
+            }
+        } while(iter);
+    }
+
+    node->next = head;
+    head = node;
+
+    return *this;
+}
+
+VectorLightList::Node *VectorLightList::newNode()  // static
+{
+    Node *node;
+
+    // Do we need to allocate more nodes?
+    if(!cursorNode)
+    {
+        node = (Node *) Z_Malloc(sizeof(*node), PU_APPSTATIC, nullptr);
+
+        // Link the new node to the list.
+        node->nextUsed = firstNode;
+        firstNode = node;
+    }
+    else
+    {
+        node = cursorNode;
+        cursorNode = cursorNode->nextUsed;
+    }
+
+    node->next = nullptr;
+    return node;
 }
 
 DENG2_PIMPL(RenderSystem)
@@ -201,7 +279,7 @@ DENG2_PIMPL(RenderSystem)
         duint cursorList = 0;
         ProjectionList *lists = nullptr;
 
-        void initForMap(Map & /*map*/)
+        void init()
         {
             ProjectionList::init();
 
@@ -213,7 +291,7 @@ DENG2_PIMPL(RenderSystem)
 
         void reset()
         {
-            ProjectionList::reset();
+            ProjectionList::rewind();  // start reusing list nodes.
 
             // Clear the lists.
             cursorList = 0;
@@ -236,7 +314,7 @@ DENG2_PIMPL(RenderSystem)
         {
             if(ProjectionList *found = tryFindList(listIdx)) return *found;
             /// @throw MissingListError  Invalid index specified.
-            throw Error("ProjectionLists::findList", "Invalid index #" + String::number(listIdx));
+            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::number(listIdx));
         }
 
         ProjectionList &findOrCreateList(duint *listIdx, bool sortByLuma)
@@ -265,6 +343,77 @@ DENG2_PIMPL(RenderSystem)
             return lists[(*listIdx) - 1];  // 1-based index.
         }
     } projector;
+
+    /// VectorLight => object affection lists.
+    struct VectorLights
+    {
+        duint listCount = 0;
+        duint cursorList = 0;
+        VectorLightList *lists = nullptr;
+
+        void init()
+        {
+            VectorLightList::init();
+
+            // All memory for the lists is allocated from Zone so we can "forget" it.
+            lists = nullptr;
+            listCount = 0;
+            cursorList = 0;
+        }
+
+        void reset()
+        {
+            VectorLightList::rewind();  // start reusing list nodes.
+
+            // Clear the lists.
+            cursorList = 0;
+            if(listCount)
+            {
+                std::memset(lists, 0, listCount * sizeof *lists);
+            }
+        }
+
+        VectorLightList *tryFindList(duint listIdx) const
+        {
+            if(listIdx > 0 && listIdx <= listCount)
+            {
+                return &lists[listIdx - 1];
+            }
+            return nullptr;  // not found.
+        }
+
+        VectorLightList &findList(duint listIdx) const
+        {
+            if(VectorLightList *found = tryFindList(listIdx)) return *found;
+            /// @throw MissingListError  Invalid index specified.
+            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::number(listIdx));
+        }
+
+        VectorLightList &findOrCreateList(duint *listIdx)
+        {
+            DENG2_ASSERT(listIdx);
+
+            // Do we need to allocate a list?
+            if(!(*listIdx))
+            {
+                // Do we need to allocate more lists?
+                if(++cursorList >= listCount)
+                {
+                    listCount *= 2;
+                    if(!listCount) listCount = 2;
+
+                    lists = (VectorLightList *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
+                }
+
+                VectorLightList *list = &lists[cursorList - 1];
+                list->head = nullptr;
+
+                *listIdx = cursorList;
+            }
+
+            return lists[(*listIdx) - 1];  // 1-based index.
+        }
+    } vlights;
 
     Instance(Public *i) : Base(i)
     {
@@ -489,27 +638,31 @@ void RenderSystem::clearDrawLists()
     d->buffer.clear();
 }
 
-void RenderSystem::resetDrawLists()
-{
-    d->drawLists.reset();
-
-    // Start reallocating storage from the global vertex buffer, also.
-    d->buffer.rewind();
-}
-
 DrawLists &RenderSystem::drawLists()
 {
     return d->drawLists;
 }
 
-void RenderSystem::projectorInitForMap(Map &map)
+void RenderSystem::worldSystemMapChanged(de::Map &)
 {
-    d->projector.initForMap(map);
+    d->projector.init();
+    d->vlights.init();
 }
 
-void RenderSystem::projectorReset()
+void RenderSystem::beginFrame()
 {
+    // Clear the draw lists ready for new geometry.
+    d->drawLists.reset();
+    d->buffer.rewind();  // Start reallocating storage from the global vertex buffer.
+
+    // Clear the clipper - we're drawing from a new point of view.
+    d->clipper.clearRanges();
+
+    // Recycle view dependent list data.
     d->projector.reset();
+    d->vlights.reset();
+
+    R_BeginFrame();
 }
 
 ProjectionList &RenderSystem::findSurfaceProjectionList(duint *listIdx, bool sortByLuma)
@@ -524,6 +677,24 @@ LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<L
         for(ProjectionList::Node *node = list->head; node; node = node->next)
         {
             if(auto result = func(node->projection))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+VectorLightList &RenderSystem::findVectorLightList(duint *listIdx)
+{
+    return d->vlights.findOrCreateList(listIdx);
+}
+
+LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (VectorLightData const &)> func)
+{
+    if(VectorLightList *list = d->vlights.tryFindList(listIdx))
+    {
+        for(VectorLightList::Node *node = list->head; node; node = node->next)
+        {
+            if(auto result = func(node->vlight))
                 return result;
         }
     }

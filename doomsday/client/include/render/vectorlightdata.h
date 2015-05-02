@@ -1,6 +1,6 @@
-/** @file projectedtexturedata.h  Projected texture data.
+/** @file vectorlightdata.h  Vector light source data.
  *
- * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -17,22 +17,24 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
-#define CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
+#ifndef CLIENT_RENDER_VECTORLIGHTDATA_H
+#define CLIENT_RENDER_VECTORLIGHTDATA_H
 
 #include <de/Vector>
-#include "api_gl.h"  // DGLuint
 
 /**
- * POD for a texture => surface projection.
+ * POD for a vector light source affection.
  * @ingroup render
  */
-struct ProjectedTextureData
+struct VectorLightData
 {
-    DGLuint texture;
-    de::Vector2f topLeft;
-    de::Vector2f bottomRight;
-    de::Vector4f color;
+    de::dfloat approxDist;   ///< Only an approximation.
+    de::Vector3f direction;  ///< Normalized vector from light origin to illumination point.
+    de::Vector3f color;      ///< How intense the light is (0..1, RGB).
+    de::dfloat offset;
+    de::dfloat lightSide;
+    de::dfloat darkSide;     ///< Factors for world light.
+    bool affectedByAmbient;
 };
 
-#endif  // CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
+#endif  // CLIENT_RENDER_VECTORLIGHTDATA_H
