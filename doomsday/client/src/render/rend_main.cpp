@@ -27,16 +27,28 @@
 #include "de_resource.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <QtAlgorithms>
+#include <QBitArray>
+//#include <de/libcore.h>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <de/vector1.h>
+#include <de/GLState>
+
 #include "clientapp.h"
 #include "sys_system.h"
-#include "ui/editors/rendererappearanceeditor.h"
-
 #include "api_fontrender.h"
-#include "edit_bias.h" /// @todo remove me
-#include "network/net_main.h" /// @todo remove me
+
+#include "edit_bias.h"         /// @todo remove me
+//#include "network/net_main.h"  /// @todo remove me
 
 #include "MaterialVariantSpec"
 #include "Texture"
+
 #include "Face"
 #include "world/map.h"
 #include "world/blockmap.h"
@@ -61,29 +73,22 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
+
+#include "gl/gl_texmanager.h"
+#include "gl/sys_opengl.h"
+
+#include "render/fx/bloom.h"
+#include "render/fx/vignette.h"
+#include "render/fx/lensflares.h"
+#include "render/rend_particle.h"
 #include "render/angleclipper.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
-#include "render/fx/bloom.h"
-#include "render/fx/vignette.h"
-#include "render/fx/lensflares.h"
 #include "render/skydrawable.h"
 #include "render/vr.h"
-#include "gl/gl_texmanager.h"
-#include "gl/sys_opengl.h"
 
-#include <de/GLState>
-#include <de/vector1.h>
-#include <de/libcore.h>
-#include <de/concurrency.h>
-#include <de/timer.h>
-
-#include <QtAlgorithms>
-#include <QBitArray>
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
+#include "ui/editors/rendererappearanceeditor.h"
 
 using namespace de;
 

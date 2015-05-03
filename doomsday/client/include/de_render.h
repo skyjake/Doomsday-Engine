@@ -29,7 +29,6 @@
 #include "render/r_main.h"
 #include "render/r_things.h"
 #include "render/rend_halo.h"
-#include "render/rend_particle.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
 #include "render/rend_fakeradio.h"
