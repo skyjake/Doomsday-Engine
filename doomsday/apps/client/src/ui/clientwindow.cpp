@@ -521,7 +521,7 @@ DENG2_PIMPL(ClientWindow)
         if(self.isFullScreen())
         {
             // It would seem we must manually give our canvas focus. Bug in Qt?
-            self.canvas().setFocus();
+            //self.canvas().setFocus();
         }
 #endif
 
@@ -877,7 +877,7 @@ ClientWindow::ClientWindow(String const &id)
     // Set an icon for the window.
     Path iconPath = DENG2_APP->nativeBasePath() / "data\\graphics\\doomsday.ico";
     LOG_DEBUG("Window icon: ") << NativePath(iconPath).pretty();
-    setWindowIcon(QIcon(iconPath));
+    setIcon(QIcon(iconPath));
 #endif
 
     d->setupUI();

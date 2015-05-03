@@ -29,7 +29,7 @@
 #include <vector>
 
 #include "de/gui/displaymode_native.h"
-#include "de/PersistentCanvasWindow"
+#include "de/PersistentCanvas"
 
 static std::vector<DEVMODE> devModes;
 static DEVMODE currentDevMode;
@@ -115,9 +115,9 @@ int DisplayMode_Native_Change(const DisplayMode* mode, int shouldCapture)
 
 void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 {
-    if(!de::CanvasWindow::mainExists()) return;
+    if(!de::Canvas::mainExists()) return;
 
-    HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::Canvas::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
@@ -130,7 +130,7 @@ void DisplayMode_Native_SetColorTransfer(DisplayColorTransfer const *colors)
 
 void DisplayMode_Native_GetColorTransfer(DisplayColorTransfer *colors)
 {
-    HWND hWnd = (HWND) de::CanvasWindow::main().nativeHandle();
+    HWND hWnd = (HWND) de::Canvas::main().nativeHandle();
     DENG2_ASSERT(hWnd != 0);
 
     HDC hDC = GetDC(hWnd);
