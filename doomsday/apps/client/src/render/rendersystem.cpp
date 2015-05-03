@@ -1,6 +1,7 @@
 /** @file rendersystem.cpp  Renderer subsystem.
  *
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2003-2014 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,6 +21,7 @@
 #include "render/rendersystem.h"
 
 #include <de/memory.h>
+#include <de/memoryzone.h>
 #include <de/ScriptedInfo>
 #include "clientapp.h"
 #include "render/rend_main.h"
@@ -30,6 +32,13 @@
 
 #include "gl/gl_main.h"
 #include "gl/gl_texmanager.h"
+
+#include "ConvexSubspace"
+#include "SectorCluster"
+#include "Surface"
+
+#include "Contact"
+#include "r_util.h"
 
 using namespace de;
 
@@ -55,15 +64,15 @@ void Store::clear()
     M_Free(posCoords); posCoords = 0;
     M_Free(colorCoords); colorCoords = 0;
 
-    for(int i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+    for(dint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
     {
         M_Free(texCoords[i]); texCoords[i] = 0;
     }
 }
 
-uint Store::allocateVertices(uint count)
+duint Store::allocateVertices(duint count)
 {
-    uint const base = vertCount;
+    duint const base = vertCount;
 
     // Do we need to allocate more memory?
     vertCount += count;
@@ -80,13 +89,174 @@ uint Store::allocateVertices(uint count)
 
         posCoords = (Vector4f *) M_Realloc(posCoords, sizeof(*posCoords) * vertMax);
         colorCoords = (Vector4ub *) M_Realloc(colorCoords, sizeof(*colorCoords) * vertMax);
-        for(int i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
+        for(dint i = 0; i < NUM_TEXCOORD_ARRAYS; ++i)
         {
             texCoords[i] = (Vector2f *) M_Realloc(texCoords[i], sizeof(Vector2f) * vertMax);
         }
     }
 
     return base;
+}
+
+ProjectionList::Node *ProjectionList::firstNode = nullptr;
+ProjectionList::Node *ProjectionList::cursorNode = nullptr;
+
+void ProjectionList::init()  // static
+{
+    static bool firstTime = true;
+    if(firstTime)
+    {
+        firstNode  = 0;
+        cursorNode = 0;
+        firstTime  = false;
+    }
+}
+
+void ProjectionList::rewind()  // static
+{
+    // Start reusing nodes.
+    cursorNode = firstNode;
+}
+
+/// Averaged-color * alpha.
+static dfloat luminosity(ProjectedTextureData const &pt)  // static
+{
+    return (pt.color.x + pt.color.y + pt.color.z) / 3 * pt.color.w;
+}
+
+ProjectionList &ProjectionList::add(ProjectedTextureData &texp)
+{
+    Node *node = newNode();
+    node->projection = texp;
+
+    if(head && sortByLuma)
+    {
+        dfloat luma = luminosity(node->projection);
+        Node *iter = head;
+        Node *last = iter;
+        do
+        {
+            // Is this brighter than that being added?
+            if(luminosity(iter->projection) > luma)
+            {
+                last = iter;
+                iter = iter->next;
+            }
+            else
+            {
+                // Insert it here.
+                node->next = last->next;
+                last->next = node;
+                return *this;
+            }
+        } while(iter);
+    }
+
+    node->next = head;
+    head = node;
+
+    return *this;
+}
+
+ProjectionList::Node *ProjectionList::newNode()  // static
+{
+    Node *node;
+
+    // Do we need to allocate more nodes?
+    if(!cursorNode)
+    {
+        node = (Node *) Z_Malloc(sizeof(*node), PU_APPSTATIC, nullptr);
+
+        // Link the new node to the list.
+        node->nextUsed = firstNode;
+        firstNode = node;
+    }
+    else
+    {
+        node = cursorNode;
+        cursorNode = cursorNode->nextUsed;
+    }
+
+    node->next = nullptr;
+    return node;
+}
+
+VectorLightList::Node *VectorLightList::firstNode  = nullptr;
+VectorLightList::Node *VectorLightList::cursorNode = nullptr;
+
+void VectorLightList::init()  // static
+{
+    static bool firstTime = true;
+    if(firstTime)
+    {
+        firstNode  = 0;
+        cursorNode = 0;
+        firstTime  = false;
+    }
+}
+
+void VectorLightList::rewind()  // static
+{
+    // Start reusing nodes from the first one in the list.
+    cursorNode = firstNode;
+}
+
+VectorLightList &VectorLightList::add(VectorLightData &vlight)
+{
+    Node *node = newNode();
+    node->vlight = vlight;
+
+    if(head)
+    {
+        Node *iter = head;
+        Node *last = iter;
+        do
+        {
+            VectorLightData *vlight = &node->vlight;
+
+            // Is this closer than the one being added?
+            if(node->vlight.approxDist > vlight->approxDist)
+            {
+                last = iter;
+                iter = iter->next;
+            }
+            else
+            {
+                // Insert it here.
+                node->next = last->next;
+                last->next = node;
+                return *this;
+            }
+        } while(iter);
+    }
+
+    node->next = head;
+    head = node;
+
+    return *this;
+}
+
+VectorLightList::Node *VectorLightList::newNode()  // static
+{
+    Node *node;
+
+    // Do we need to allocate more nodes?
+    if(!cursorNode)
+    {
+        node = (Node *) Z_Malloc(sizeof(*node), PU_APPSTATIC, nullptr);
+
+        // Link the new node to the list.
+        node->nextUsed = firstNode;
+        firstNode = node;
+    }
+    else
+    {
+        node = cursorNode;
+        cursorNode = cursorNode->nextUsed;
+    }
+
+    node->next = nullptr;
+    return node;
 }
 
 DENG2_PIMPL(RenderSystem)
@@ -101,6 +271,149 @@ DENG2_PIMPL(RenderSystem)
 
     Store buffer;
     DrawLists drawLists;
+
+    // Texture => world surface projection lists.
+    struct ProjectionLists
+    {
+        duint listCount = 0;
+        duint cursorList = 0;
+        ProjectionList *lists = nullptr;
+
+        void init()
+        {
+            ProjectionList::init();
+
+            // All memory for the lists is allocated from Zone so we can "forget" it.
+            lists = nullptr;
+            listCount = 0;
+            cursorList = 0;
+        }
+
+        void reset()
+        {
+            ProjectionList::rewind();  // start reusing list nodes.
+
+            // Clear the lists.
+            cursorList = 0;
+            if(listCount)
+            {
+                std::memset(lists, 0, listCount * sizeof *lists);
+            }
+        }
+
+        ProjectionList *tryFindList(duint listIdx) const
+        {
+            if(listIdx > 0 && listIdx <= listCount)
+            {
+                return &lists[listIdx - 1];
+            }
+            return nullptr;  // not found.
+        }
+
+        ProjectionList &findList(duint listIdx) const
+        {
+            if(ProjectionList *found = tryFindList(listIdx)) return *found;
+            /// @throw MissingListError  Invalid index specified.
+            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::number(listIdx));
+        }
+
+        ProjectionList &findOrCreateList(duint *listIdx, bool sortByLuma)
+        {
+            DENG2_ASSERT(listIdx);
+
+            // Do we need to allocate a list?
+            if(!(*listIdx))
+            {
+                // Do we need to allocate more lists?
+                if(++cursorList >= listCount)
+                {
+                    listCount *= 2;
+                    if(!listCount) listCount = 2;
+
+                    lists = (ProjectionList *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
+                }
+
+                ProjectionList *list = &lists[cursorList - 1];
+                list->head       = nullptr;
+                list->sortByLuma = sortByLuma;
+
+                *listIdx = cursorList;
+            }
+
+            return lists[(*listIdx) - 1];  // 1-based index.
+        }
+    } projector;
+
+    /// VectorLight => object affection lists.
+    struct VectorLights
+    {
+        duint listCount = 0;
+        duint cursorList = 0;
+        VectorLightList *lists = nullptr;
+
+        void init()
+        {
+            VectorLightList::init();
+
+            // All memory for the lists is allocated from Zone so we can "forget" it.
+            lists = nullptr;
+            listCount = 0;
+            cursorList = 0;
+        }
+
+        void reset()
+        {
+            VectorLightList::rewind();  // start reusing list nodes.
+
+            // Clear the lists.
+            cursorList = 0;
+            if(listCount)
+            {
+                std::memset(lists, 0, listCount * sizeof *lists);
+            }
+        }
+
+        VectorLightList *tryFindList(duint listIdx) const
+        {
+            if(listIdx > 0 && listIdx <= listCount)
+            {
+                return &lists[listIdx - 1];
+            }
+            return nullptr;  // not found.
+        }
+
+        VectorLightList &findList(duint listIdx) const
+        {
+            if(VectorLightList *found = tryFindList(listIdx)) return *found;
+            /// @throw MissingListError  Invalid index specified.
+            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::number(listIdx));
+        }
+
+        VectorLightList &findOrCreateList(duint *listIdx)
+        {
+            DENG2_ASSERT(listIdx);
+
+            // Do we need to allocate a list?
+            if(!(*listIdx))
+            {
+                // Do we need to allocate more lists?
+                if(++cursorList >= listCount)
+                {
+                    listCount *= 2;
+                    if(!listCount) listCount = 2;
+
+                    lists = (VectorLightList *) Z_Realloc(lists, listCount * sizeof(*lists), PU_MAP);
+                }
+
+                VectorLightList *list = &lists[cursorList - 1];
+                list->head = nullptr;
+
+                *listIdx = cursorList;
+            }
+
+            return lists[(*listIdx) - 1];  // 1-based index.
+        }
+    } vlights;
 
     Instance(Public *i) : Base(i)
     {
@@ -325,17 +638,67 @@ void RenderSystem::clearDrawLists()
     d->buffer.clear();
 }
 
-void RenderSystem::resetDrawLists()
-{
-    d->drawLists.reset();
-
-    // Start reallocating storage from the global vertex buffer, also.
-    d->buffer.rewind();
-}
-
 DrawLists &RenderSystem::drawLists()
 {
     return d->drawLists;
+}
+
+void RenderSystem::worldSystemMapChanged(de::Map &)
+{
+    d->projector.init();
+    d->vlights.init();
+}
+
+void RenderSystem::beginFrame()
+{
+    // Clear the draw lists ready for new geometry.
+    d->drawLists.reset();
+    d->buffer.rewind();  // Start reallocating storage from the global vertex buffer.
+
+    // Clear the clipper - we're drawing from a new point of view.
+    d->clipper.clearRanges();
+
+    // Recycle view dependent list data.
+    d->projector.reset();
+    d->vlights.reset();
+
+    R_BeginFrame();
+}
+
+ProjectionList &RenderSystem::findSurfaceProjectionList(duint *listIdx, bool sortByLuma)
+{
+    return d->projector.findOrCreateList(listIdx, sortByLuma);
+}
+
+LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<LoopResult (ProjectedTextureData const &)> func) const
+{
+    if(ProjectionList *list = d->projector.tryFindList(listIdx))
+    {
+        for(ProjectionList::Node *node = list->head; node; node = node->next)
+        {
+            if(auto result = func(node->projection))
+                return result;
+        }
+    }
+    return LoopContinue;
+}
+
+VectorLightList &RenderSystem::findVectorLightList(duint *listIdx)
+{
+    return d->vlights.findOrCreateList(listIdx);
+}
+
+LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (VectorLightData const &)> func)
+{
+    if(VectorLightList *list = d->vlights.tryFindList(listIdx))
+    {
+        for(VectorLightList::Node *node = list->head; node; node = node->next)
+        {
+            if(auto result = func(node->vlight))
+                return result;
+        }
+    }
+    return LoopContinue;
 }
 
 void RenderSystem::consoleRegister()

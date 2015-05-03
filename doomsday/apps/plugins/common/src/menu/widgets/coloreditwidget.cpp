@@ -21,7 +21,8 @@
 #include "common.h"
 #include "menu/widgets/coloreditwidget.h"
 
-#include "hu_menu.h" // menu sounds
+#include "hu_menu.h"   // menu sounds
+#include "hu_stuff.h"  // borderPatches
 #include "menu/page.h" // mnRendState
 
 using namespace de;

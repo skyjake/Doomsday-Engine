@@ -22,7 +22,11 @@
 #include "jheretic.h"
 #include "hereticv13mapstatereader.h"
 
-#include "am_map.h"
+#include <cstdio>
+#include <cstring>
+#include <de/ArrayValue>
+#include <de/NativePath>
+#include <de/NumberValue>
 #include "dmu_lib.h"
 #include "hu_inventory.h"
 #include "p_ceiling.h"
@@ -36,11 +40,6 @@
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "r_common.h"       // R_UpdateConsoleView
-#include <de/ArrayValue>
-#include <de/NativePath>
-#include <de/NumberValue>
-#include <cstdio>
-#include <cstring>
 
 #define SIZEOF_V13_THINKER_T            12
 #define V13_THINKER_T_FUNC_OFFSET       8

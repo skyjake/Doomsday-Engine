@@ -21,12 +21,12 @@
 
 #include <de/types.h>
 
-#include "hu_lib.h"
 #if __JHEXEN__
 #  include "h2def.h"
 #else
 #  include "doomdef.h"
 #endif
+#include "hu_menu.h"
 
 typedef struct libcommon_config_s {
     // Player movement:

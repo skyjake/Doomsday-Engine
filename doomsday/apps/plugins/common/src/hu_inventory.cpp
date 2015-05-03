@@ -240,7 +240,7 @@ static void inventoryIndexes(player_t const * /*plr*/, hud_inventory_t const *in
     if(toSlot)       *toSlot       = (unsigned) to;
 }
 
-void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha)
+void Hu_InventoryDraw(int player, int x, int y, float textOpacity, float iconOpacity)
 {
 #define BORDER                  (1)
 #if __JHERETIC__
@@ -300,7 +300,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
         float a = (i == selected? .5f : light / 2);
 
-        DGL_Color4f(light, light, light, a * iconAlpha);
+        DGL_Color4f(light, light, light, a * iconOpacity);
         GL_DrawPatch(pInvItemBox, Vector2i(x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0), y));
 
         if(i >= startSlot && i < endSlot)
@@ -314,13 +314,13 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 #else
                 int posX = x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0);
 #endif
-                DGL_Color4f(1, 1, 1, slot == selected? iconAlpha : iconAlpha / 2);
+                DGL_Color4f(1, 1, 1, slot == selected? iconOpacity : iconOpacity / 2);
                 GL_DrawPatch(item->patchId, Vector2i(posX, y + ST_INVICONOFFY));
 
                 if(count > 1)
                 {
                     char buf[20];
-                    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], slot == selected? textAlpha : textAlpha / 2);
+                    FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], slot == selected? textOpacity : textOpacity / 2);
                     dd_snprintf(buf, 20, "%i", count);
                     FR_DrawTextXY3(buf, posX + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
                 }
@@ -332,7 +332,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         slot++;
     }
 
-    DGL_Color4f(1, 1, 1, iconAlpha);
+    DGL_Color4f(1, 1, 1, iconOpacity);
     GL_DrawPatch(pInvSelectBox, Vector2i(x + selected * ST_INVSLOTWIDTH + (selected > 1? (selected-1) * ST_INVSLOTOFFX : 0), y + ST_INVSELECTOFFY - BORDER));
 
     if(inv->numUsedSlots > maxVisSlots)
@@ -342,13 +342,13 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
         if(cfg.inventoryWrap || first != 0)
         {
-            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconOpacity);
             GL_DrawPatch(pInvPageLeft[!(mapTime & 4)? 1 : 0], Vector2i(x - ARROW_RELXOFF, y + ARROW_YOFFSET), ALIGN_TOPRIGHT, 0);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
-            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconOpacity);
             GL_DrawPatch(pInvPageRight[!(mapTime & 4)? 1 : 0], Vector2i(x + numVisSlots * ST_INVSLOTWIDTH + (numVisSlots > 1? (numVisSlots-1) * ST_INVSLOTOFFX : 0) + ARROW_RELXOFF - 2, y + ARROW_YOFFSET));
         }
 

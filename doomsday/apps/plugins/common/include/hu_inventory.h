@@ -38,7 +38,7 @@ dd_bool Hu_InventorySelect(int player, inventoryitemtype_t type);
 
 dd_bool Hu_InventoryMove(int player, int dir, dd_bool canWrap, dd_bool silent);
 
-void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha);
+void Hu_InventoryDraw(int player, int x, int y, float textOpacity, float iconOpacity);
 void Hu_InventoryDraw2(int player, int x, int y, float alpha);
 
 /**

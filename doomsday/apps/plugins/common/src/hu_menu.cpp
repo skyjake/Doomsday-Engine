@@ -30,12 +30,9 @@
 #include <QtAlgorithms>
 #include <de/memory.h>
 #include <de/RecordValue>
-#include "am_map.h"
 #include "g_common.h"
 #include "g_controls.h"
 #include "gamesession.h"
-#include "hu_chat.h"
-#include "hu_log.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
 #include "m_argv.h"
@@ -3216,7 +3213,7 @@ void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
 
     if(IS_NETGAME)
     {
-        P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, "You can't start a new game from within a netgame!");
+        P_SetMessage2(&players[CONSOLEPLAYER], "You can't start a new game from within a netgame!", LMF_NO_HIDE);
         return;
     }
 
@@ -3233,23 +3230,23 @@ void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
 
     ButtonWidget *btn;
     btn = &skillPage.findWidget(Widget::Id0).as<ButtonWidget>();
-    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_BABY]));
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_BABY]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     btn = &skillPage.findWidget(Widget::Id1).as<ButtonWidget>();
-    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_EASY]));
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_EASY]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     btn = &skillPage.findWidget(Widget::Id2).as<ButtonWidget>();
-    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_MEDIUM]));
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_MEDIUM]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     btn = &skillPage.findWidget(Widget::Id3).as<ButtonWidget>();
-    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_HARD]));
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_HARD]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     btn = &skillPage.findWidget(Widget::Id4).as<ButtonWidget>();
-    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeNames[SM_NIGHTMARE]));
+    btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_NIGHTMARE]));
     if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
 
     switch(mnPlrClass)

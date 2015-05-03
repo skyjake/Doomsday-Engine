@@ -21,18 +21,15 @@
 #include "common.h"
 #include "fi_lib.h"
 
+#include <cstring>
 #include <doomsday/defs/episode.h>
+#include "d_net.h"
+#include "gamesession.h"
+#include "g_common.h"
+#include "hu_stuff.h"
 #include "p_sound.h"
 #include "p_tick.h"
-#include "hu_log.h"
-#include "hu_stuff.h"
-#include "am_map.h"
-#include "g_common.h"
-#include "gamesession.h"
 #include "r_common.h"
-#include "d_net.h"
-
-#include <cstring>
 
 using namespace de;
 using namespace common;

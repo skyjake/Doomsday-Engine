@@ -21,7 +21,8 @@
 #include "common.h"
 #include "menu/widgets/labelwidget.h"
 
-#include "hu_menu.h" // Hu_MenuMergeEffectWithDrawTextFlags
+#include "hu_menu.h"   // Hu_MenuMergeEffectWithDrawTextFlags
+#include "hu_stuff.h"
 #include "menu/page.h" // mnRendState
 
 using namespace de;

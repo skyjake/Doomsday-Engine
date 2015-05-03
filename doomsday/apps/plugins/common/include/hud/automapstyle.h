@@ -1,7 +1,7 @@
-/** @file am_map.h  UI Automap widget.
+/** @file automapstyle.h  Style configuration for AutomapWidget.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,10 +18,10 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBCOMMON_AUTOMAP_CONFIG
-#define LIBCOMMON_AUTOMAP_CONFIG
+#ifndef LIBCOMMON_UI_AUTOMAPSTYLE_H
+#define LIBCOMMON_UI_AUTOMAPSTYLE_H
 
-#define AUTOMAP_OPEN_SECONDS    (.3f)
+#include "doomsday.h"
 
 #if __JDOOM__ || __JDOOM64__
 #define BLACK                   (0)
@@ -122,7 +122,8 @@
 
 #endif
 
-typedef enum {
+enum automapcfg_objectname_t
+{
     AMO_NONE = -1,
     AMO_THING = 0,
     AMO_THINGPLAYER,
@@ -132,16 +133,18 @@ typedef enum {
     AMO_FLOORCHANGELINE,
     AMO_CEILINGCHANGELINE,
     AMO_NUMOBJECTS
-} automapcfg_objectname_t;
+};
 
-typedef enum glowtype_e {
+enum glowtype_t
+{
     GLOW_NONE,
     GLOW_BOTH,
     GLOW_BACK,
     GLOW_FRONT
-} glowtype_t;
+};
 
-enum {
+enum
+{
     MOL_LINEDEF = 0,
     MOL_LINEDEF_TWOSIDED,
     MOL_LINEDEF_FLOOR,
@@ -152,7 +155,8 @@ enum {
 
 #define AUTOMAPCFG_MAX_LINEINFO         32
 
-typedef struct {
+struct automapcfg_lineinfo_t
+{
     int reqSpecial;
     int reqSided;
     int reqNotFlagged;
@@ -162,40 +166,44 @@ typedef struct {
     float glowStrength, glowSize;
     glowtype_t glow;
     dd_bool scaleWithView;
-} automapcfg_lineinfo_t;
+};
 
-typedef struct automapcfg_s {
-    automapcfg_lineinfo_t lineInfo[AUTOMAPCFG_MAX_LINEINFO];
-    uint lineInfoCount;
+/**
+ * @ingroup ui
+ */
+class AutomapStyle
+{
+    DENG2_NO_ASSIGN(AutomapStyle)
+    DENG2_NO_COPY(AutomapStyle)
 
-    svgid_t vectorGraphicForPlayer;
-    svgid_t vectorGraphicForThing;
+public:
+    AutomapStyle();
+    ~AutomapStyle();
 
-    automapcfg_lineinfo_t mapObjectInfo[NUM_MAP_OBJECTLISTS];
-} automapcfg_t;
+    void applyDefaults();
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    automapcfg_lineinfo_t const &lineInfo(int lineType);
 
-void ST_InitAutomapConfig(void);
-automapcfg_t* ST_AutomapConfig(void);
+    automapcfg_lineinfo_t const *tryFindLineInfo(automapcfg_objectname_t name) const;
+    automapcfg_lineinfo_t const *tryFindLineInfo_special(int special, int flags, Sector const *frontsector, Sector const *backsector, int automapFlags) const;
+
+    void objectColor(automapcfg_objectname_t name, float *r, float *g, float *b, float *a) const;
+    void setObjectColor(automapcfg_objectname_t name, float r, float g, float b);
+    void setObjectColorAndOpacity(automapcfg_objectname_t name, float r, float g, float b, float a);
+
+    void setObjectGlow(automapcfg_objectname_t name, glowtype_t type, float size, float alpha, dd_bool canScale);
+
+    svgid_t objectSvg(automapcfg_objectname_t name) const;
+    void setObjectSvg(automapcfg_objectname_t name, svgid_t svg);
+
+private:
+    DENG2_PRIVATE(d)
+};
+
+void ST_InitAutomapStyle();
+
+AutomapStyle *ST_AutomapStyle();
 
 void AM_GetMapColor(float *rgb, float const *uColor, int palidx, dd_bool customPal);
 
-automapcfg_lineinfo_t const *AM_GetInfoForLine(automapcfg_t *mcfg, automapcfg_objectname_t name);
-
-automapcfg_lineinfo_t const *AM_GetInfoForSpecialLine(automapcfg_t *mcfg, int special,
-    int flags, Sector const *frontsector, Sector const *backsector, int automapFlags);
-
-void AM_GetColorAndOpacity(automapcfg_t *mcfg, automapcfg_objectname_t name, float *r, float *g, float *b, float *a);
-void AM_SetColorAndOpacity(automapcfg_t *mcfg, automapcfg_objectname_t name, float r, float g, float b, float a);
-
-svgid_t AM_GetVectorGraphic(automapcfg_t *mcfg, automapcfg_objectname_t name);
-void AM_SetVectorGraphic(automapcfg_t *mcfg, automapcfg_objectname_t name, svgid_t svg);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif // LIBCOMMON_AUTOMAP_CONFIG
+#endif  // LIBCOMMON_UI_AUTOMAPSTYLE_H

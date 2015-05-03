@@ -21,8 +21,9 @@
 #include "common.h"
 #include "menu/widgets/inputbindingwidget.h"
 
-#include "hu_menu.h" // menu sounds
-#include "m_ctrl.h" // controlconfig_t, etc..
+#include "hu_menu.h"   // menu sounds
+#include "hu_stuff.h"
+#include "m_ctrl.h"    // controlconfig_t, etc..
 #include "menu/page.h" // mnRendState
 
 using namespace de;

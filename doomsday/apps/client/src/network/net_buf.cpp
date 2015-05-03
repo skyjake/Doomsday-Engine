@@ -39,7 +39,7 @@ netbuffer_t netBuffer;
 
 // The message queue: list of incoming messages waiting for processing.
 static netmessage_t *msgHead, *msgTail;
-static int msgCount;
+static int entryCount;
 
 // A mutex is used to protect the addition and removal of messages from
 // the message queue.
@@ -133,7 +133,7 @@ void N_PostMessage(netmessage_t *msg)
         msgHead = msg;
 
     // One new message available.
-    msgCount++;
+    entryCount++;
 
     N_LockQueue(false);
 }
@@ -178,7 +178,7 @@ netmessage_t *N_GetMessage(void)
             if(msg)
             {
                 // One less message available.
-                msgCount--;
+                entryCount--;
             }
         }
     }
@@ -225,7 +225,7 @@ void N_ClearMessages(void)
 
     // The queue is now empty.
     msgHead = msgTail = NULL;
-    msgCount = 0;
+    entryCount = 0;
 }
 
 /**

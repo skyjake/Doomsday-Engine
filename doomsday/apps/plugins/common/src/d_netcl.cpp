@@ -808,7 +808,7 @@ void NetCl_SaveGame(reader_s *msg)
     SV_SaveGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], LMF_NO_HIDE, TXT_GAMESAVED);
+    P_SetMessage2(&players[CONSOLEPLAYER], TXT_GAMESAVED, LMF_NO_HIDE);
 #endif
 }
 
@@ -824,7 +824,7 @@ void NetCl_LoadGame(reader_s *msg)
     SV_LoadGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage(&players[CONSOLEPLAYER], 0, GET_TXT(TXT_CLNETLOAD));
+    P_SetMessage(&players[CONSOLEPLAYER], GET_TXT(TXT_CLNETLOAD));
 #endif
 }
 

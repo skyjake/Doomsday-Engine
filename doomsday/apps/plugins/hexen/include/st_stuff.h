@@ -1,7 +1,7 @@
-/** @file st_stuff.cpp  Hexen specific HUD and statusbar widgets.
+/** @file st_stuff.cpp  Hexen specific HUD.
  *
  * @authors Copyright © 2005-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2005-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2005-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,12 +25,7 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "hu_lib.h"
 #include "x_config.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Size of statusbar.
 #define ST_HEIGHT                   (38*SCREEN_MUL)
@@ -38,6 +33,22 @@ extern "C" {
 #define ST_Y                        (SCREENHEIGHT - ST_HEIGHT)
 
 #define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
+
+#define HUD_ITEM_FLASH_TICS         ( 4 )
+
+#ifdef __cplusplus
+#  include "hu_lib.h"
+
+class AutomapWidget;
+class ChatWidget;
+class PlayerLogWidget;
+
+AutomapWidget *ST_TryFindAutomapWidget(int localPlayer);
+ChatWidget *ST_TryFindChatWidget(int localPlayer);
+PlayerLogWidget *ST_TryFindPlayerLogWidget(int localPlayer);
+
+extern "C" {
+#endif
 
 /// Register the console commands, variables, etc..., of this module.
 void ST_Register(void);
@@ -47,96 +58,101 @@ void ST_Shutdown(void);
 
 int ST_Responder(event_t *ev);
 void ST_Ticker(timespan_t ticLength);
-void ST_Drawer(int player);
+void ST_Drawer(int localPlayer);
 
-void ST_Start(int player);
-void ST_Stop(int player);
+/**
+ * Returns the unique identifier of the active HUD configuration.
+ *
+ * (Each independent HUD configuration is attributed a unique identifier. The
+ * statusbar and fullscreen-HUD are examples of HUD configurations).
+ *
+ * @param localPlayer  Player to lookup the active HUD for.
+ */
+int ST_ActiveHud(int localPlayer);
 
-void ST_CloseAll(int player, dd_bool fast);
+void ST_Start(int localPlayer);
+void ST_Stop(int localPlayer);
+void HU_WakeWidgets(int localPlayer);
 
-uiwidget_t *ST_UIChatForPlayer(int player);
-uiwidget_t *ST_UILogForPlayer(int player);
-uiwidget_t *ST_UIAutomapForPlayer(int player);
+void ST_CloseAll(int localPlayer, dd_bool fast);
 
-dd_bool ST_ChatIsActive(int player);
-dd_bool ST_StatusBarIsActive(int player);
+dd_bool ST_ChatIsActive(int localPlayer);
+dd_bool ST_StatusBarIsActive(int localPlayer);
+float ST_StatusBarShown(int localPlayer);
 
 /**
  * Post a message to the specified player's log.
  *
- * @param player  Player (local) number whose log to post to.
- * @param flags   @ref logMessageFlags
- * @param text    Message Text to be posted. Messages may include encoded parameters
- *                to control how the messae is presented.
+ * @param localPlayer  Player number whose log to post to.
+ * @param flags        @ref logMessageFlags
+ * @param text         Message Text to be posted. Messages may include encoded
+ * parameters to control how the messae is presented.
  */
-void ST_LogPost(int player, byte flags, char const *text);
+void ST_LogPost(int localPlayer, byte flags, char const *text);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
  * visible once again.
  *
- * @param player  Local player number whose message log to refresh.
+ * @param localPlayer  Player number whose message log to refresh.
  */
-void ST_LogRefresh(int player);
+void ST_LogRefresh(int localPlayer);
 
 /**
  * Empty the message log of the specified player.
  *
- * @param player  Local player number whose message log to empty.
+ * @param localPlayer  Player number whose message log to empty.
  */
-void ST_LogEmpty(int player);
+void ST_LogEmpty(int localPlayer);
 
 void ST_LogUpdateAlignment(void);
-void ST_LogPostVisibilityChangeNotification(void);
 
 /**
  * Start the automap.
  */
-void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast);
+void ST_AutomapOpen(int localPlayer, dd_bool yes, dd_bool fast);
 
-dd_bool ST_AutomapIsActive(int player);
+dd_bool ST_AutomapIsOpen(int localPlayer);
 
-void ST_ToggleAutomapPanMode(int player);
-void ST_ToggleAutomapMaxZoom(int player);
+void ST_AutomapFollowMode(int localPlayer);
+void ST_AutomapZoomMode(int localPlayer);
 
-float ST_AutomapOpacity(int player);
+float ST_AutomapOpacity(int localPlayer);
 
 /**
  * Does the player's automap obscure this region completely?
  * @pre Window dimensions use the fixed coordinate space {x} 0 - 320, {y} 0 - 200.
  *
- * @param player  Local player number whose automap to check.
- * @param region  Window region.
+ * @param localPlayer  Player number whose automap to check.
+ * @param region       Window region.
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures2(int player, RectRaw const *region);
-dd_bool ST_AutomapObscures(int player, int x, int y, int width, int height);
+dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const *region);
+dd_bool ST_AutomapObscures(int localPlayer, int x, int y, int width, int height);
 
-int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z);
-void ST_AutomapClearPoints(int player);
-dd_bool ST_AutomapPointOrigin(int player, int point, coord_t *x, coord_t *y, coord_t *z);
+int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z);
+void ST_AutomapClearPoints(int localPlayer);
 
-void ST_SetAutomapCameraRotation(int player, dd_bool on);
+void ST_SetAutomapCameraRotation(int localPlayer, dd_bool on);
 
-int ST_AutomapCheatLevel(int player);
-void ST_SetAutomapCheatLevel(int player, int level);
-void ST_CycleAutomapCheatLevel(int player);
+int ST_AutomapCheatLevel(int localPlayer);
+void ST_SetAutomapCheatLevel(int localPlayer, int level);
+void ST_CycleAutomapCheatLevel(int localPlayer);
 
-void ST_RevealAutomap(int player, dd_bool on);
-dd_bool ST_AutomapHasReveal(int player);
-
-void ST_RebuildAutomap(int player);
+void ST_RevealAutomap(int localPlayer, dd_bool on);
+dd_bool ST_AutomapIsRevealed(int localPlayer);
 
 /**
  * Unhides the current HUD display if hidden.
  *
- * @param player  Player whoose HUD to (maybe) unhide.
- * @param event  Event type trigger.
+ * @param localPlayer  Player whoose HUD to (maybe) unhide.
+ * @param event        Event type trigger.
  */
- void ST_HUDUnHide(int player, hueevent_t ev);
+void ST_HUDUnHide(int localPlayer, hueevent_t ev);
 
-void ST_FlashCurrentItem(int player);
+void ST_FlashCurrentItem(int localPlayer);
+int ST_ReadyItemFlashCounter(int localPlayer);
 
 #ifdef __cplusplus
 } // extern "C"

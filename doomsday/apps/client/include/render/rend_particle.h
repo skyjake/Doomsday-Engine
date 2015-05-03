@@ -1,9 +1,7 @@
 /** @file rend_particle.h  Particle effect rendering.
  *
- * @ingroup render
- *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -20,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DENG_CLIENT_RENDER_PARTICLE_H
-#define DENG_CLIENT_RENDER_PARTICLE_H
+#ifndef CLIENT_RENDER_PARTICLE_H
+#define CLIENT_RENDER_PARTICLE_H
 
 #include "world/map.h"
 
@@ -31,6 +29,7 @@
 // Maximum number of particle models (not instances).
 #define MAX_PTC_MODELS          100
 
+/// @ingroup render
 enum ParticleType
 {
     PTC_NONE,
@@ -42,7 +41,7 @@ enum ParticleType
     PTC_MODEL = 1000
 };
 
-DENG_EXTERN_C byte useParticles;
+DENG_EXTERN_C de::dbyte useParticles;
 
 void Rend_ParticleRegister();
 
@@ -69,4 +68,4 @@ void Rend_ParticleReleaseExtraTextures();
  */
 void Rend_RenderParticles(de::Map &map);
 
-#endif // DENG_CLIENT_RENDER_PARTICLE_H
+#endif  // CLIENT_RENDER_PARTICLE_H

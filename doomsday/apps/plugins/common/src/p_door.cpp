@@ -510,7 +510,7 @@ static void sendNeedKeyMessage(player_t *p, textenum_t msgTxt, int keyNum)
         strcat(buf, tmp);
     }
 
-    P_SetMessage(p, 0, buf);
+    P_SetMessage(p, buf);
 }
 #endif
 
@@ -565,7 +565,7 @@ static dd_bool tryLockedDoor(Line *line, player_t *p)
     case 343:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY1))
         {
-            P_SetMessage(p, 0, PD_OPNPOWERUP);
+            P_SetMessage(p, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -574,7 +574,7 @@ static dd_bool tryLockedDoor(Line *line, player_t *p)
     case 344:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY2))
         {
-            P_SetMessage(p, 0, PD_OPNPOWERUP);
+            P_SetMessage(p, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }
@@ -583,7 +583,7 @@ static dd_bool tryLockedDoor(Line *line, player_t *p)
     case 345:
         if(!P_InventoryCount(p - players, IIT_DEMONKEY3))
         {
-            P_SetMessage(p, 0, PD_OPNPOWERUP);
+            P_SetMessage(p, PD_OPNPOWERUP);
             S_StartSound(SFX_DOORLOCKED, p->plr->mo);
             return false;
         }

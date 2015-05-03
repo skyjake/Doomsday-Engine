@@ -3311,7 +3311,7 @@ dd_bool P_UsePuzzleItem(player_t *player, int itemType)
 
     if(!parm.activated)
     {
-        P_SetYellowMessage(player, 0, TXT_USEPUZZLEFAILED);
+        P_SetYellowMessage(player, TXT_USEPUZZLEFAILED);
     }
 
     return parm.activated;
