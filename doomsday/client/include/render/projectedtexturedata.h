@@ -1,4 +1,4 @@
-/** @file p_ticker.cpp  Timed world events.
+/** @file projectedtexturedata.h  Projected texture data.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -17,31 +17,22 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de_base.h"
-#include "world/p_ticker.h"
+#ifndef CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
+#define CLIENT_RENDER_PROJECTEDTEXTUREDATA_H
 
-#ifdef __CLIENT__
-#  include "MaterialAnimator"
-#endif
+#include <de/Vector>
+#include "api_gl.h"  // DGLuint
 
-using namespace de;
-
-void P_Ticker(timespan_t elapsed)
+/**
+ * POD for a texture => surface projection.
+ * @ingroup render
+ */
+struct ProjectedTextureData
 {
-#ifdef __CLIENT__
-    // Animate materials.
-    /// @todo Each context animator should be driven by a more relevant ticker, rather
-    /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
-    /// context should be driven separately).
-    App_ResourceSystem().forAllMaterials([&elapsed] (Material &material)
-    {
-        return material.forAllAnimators([&elapsed] (MaterialAnimator &animator)
-        {
-            animator.animate(elapsed);
-            return LoopContinue;
-        });
-    });
-#endif
+    DGLuint texture;
+    de::Vector2f topLeft;
+    de::Vector2f bottomRight;
+    de::Vector4f color;
+};
 
-    App_WorldSystem().tick(elapsed);
-}
+#endif  // CLIENT_RENDER_PROJECTEDTEXTUREDATA_H

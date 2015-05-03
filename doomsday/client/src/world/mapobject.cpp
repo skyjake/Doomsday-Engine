@@ -1,7 +1,7 @@
 /** @file mapobject.cpp  Base class for all map objects.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -27,21 +27,16 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(MapObject)
 {
-    Map *map;
-    int indexInMap;
-    Vector3d origin;    ///< Position in map space.
-    BspLeaf *bspLeaf;   ///< BSP leaf at @ref origin in the map (not owned).
-
-    Instance(Vector3d const &origin)
-        : map(0)
-        , indexInMap(NoIndex)
-        , origin(origin)
-        , bspLeaf(0)
-    {}
+    Map *map = nullptr;
+    dint indexInMap = NoIndex;
+    Vector3d origin;             ///< Position in map space.
+    BspLeaf *bspLeaf = nullptr;  ///< BSP leaf at @ref origin in the map (not owned).
 };
 
-MapObject::MapObject(Vector3d const &origin) : d(new Instance(origin))
-{}
+MapObject::MapObject(Vector3d const &origin) : d(new Instance)
+{
+    d->origin = origin;
+}
 
 MapObject::~MapObject()
 {}
@@ -59,7 +54,7 @@ void MapObject::setOrigin(Vector3d const &newOrigin)
         if(!de::fequal(d->origin.x, newOrigin.x) ||
            !de::fequal(d->origin.y, newOrigin.y))
         {
-            d->bspLeaf = 0;
+            d->bspLeaf = nullptr;
         }
 
         d->origin = newOrigin;
@@ -83,15 +78,12 @@ BspLeaf &MapObject::bspLeafAtOrigin() const
 
 bool MapObject::hasMap() const
 {
-    return d->map != 0;
+    return d->map != nullptr;
 }
 
 Map &MapObject::map() const
 {
-    if(d->map)
-    {
-        return *d->map;
-    }
+    if(d->map) return *d->map;
     /// @throw MissingMapError  Attempted with no map attributed.
     throw MissingMapError("MapObject::map", "No map is attributed");
 }
@@ -101,12 +93,12 @@ void MapObject::setMap(Map *newMap)
     d->map = newMap;
 }
 
-int MapObject::indexInMap() const
+dint MapObject::indexInMap() const
 {
     return d->indexInMap;
 }
 
-void MapObject::setIndexInMap(int newIndex)
+void MapObject::setIndexInMap(dint newIndex)
 {
     d->indexInMap = newIndex;
 }
