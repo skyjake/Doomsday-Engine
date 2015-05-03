@@ -180,7 +180,7 @@ DENG2_PIMPL(Material)
 {
     MaterialManifest *manifest = nullptr;  ///< Source manifest (always valid, not owned).
     Vector2i dimensions;                   ///< World dimensions in map coordinate space units.
-    MaterialFlags flags { DefaultFlags };
+    MaterialFlags flags = DefaultFlags;
     AudioEnvironmentId audioEnvironment { AE_NONE };
 
     /// Layers (owned), from bottom-most to top-most draw order.
