@@ -450,29 +450,20 @@ public:  // Particle generators ------------------------------------------------
     Generator *newGenerator();
 
     /**
-     * Iterate over all generators in the map making a callback for each. Iteration
-     * ends when all generators have been processed or a callback returns non-zero.
+     * Iterate over all generators in the map making a callback for each.
      *
-     * @param callback  Callback to make for each iteration.
-     * @param context   User data to be passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
+     * @param func  Callback to make for each Generator.
      */
-    dint generatorIterator(dint (*callback) (Generator *, void *), void *context = nullptr);
+    LoopResult forAllGenerators(std::function<LoopResult (Generator &)> func) const;
 
     /**
      * Iterate over all generators in the map which are present in the identified
-     * list making a callback for each. Iteration ends when all targeted generators
-     * have been processed or a callback returns non-zero.
+     * sector making a callback for each.
      *
-     * @param listIndex  Index of the list to traverse.
-     * @param callback   Callback to make for each iteration.
-     * @param context    User data to be passed to the callback.
-     *
-     * @return  @c 0 iff iteration completed wholly.
+     * @param sector  Sector containing the generators to process.
+     * @param func    Callback to make for each Generator.
      */
-    dint generatorListIterator(duint listIndex, dint (*callback) (Generator *, void *),
-                               void *context = nullptr);
+    LoopResult forAllGeneratorsInSector(Sector const &sector, std::function<LoopResult (Generator &)> func) const;
 
     void unlink(Generator &generator);
 

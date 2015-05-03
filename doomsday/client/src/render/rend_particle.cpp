@@ -58,12 +58,12 @@ using namespace de;
 
 static DGLuint pointTex, ptctexname[MAX_PTC_TEXTURES];
 
-static bool hasPoints, hasLines, hasModels, hasNoBlend, hasBlend;
+static bool hasPoints, hasLines, hasModels, hasNoBlend, hasAdditive;
 static bool hasPointTexs[NUM_TEX_NAMES];
 
 struct OrderedParticle
 {
-    Generator *generator;
+    Generator const *generator;
     dint particleId;
     dfloat distance;
 };
@@ -256,83 +256,20 @@ static void expandOrderBuffer(size_t max)
     }
 }
 
-static dint countActiveGeneratorParticlesWorker(Generator *gen, void *context)
+/**
+ * Determines whether the given particle is potentially visible for the current viewer.
+ */
+static bool particlePVisible(ParticleInfo const &pinfo)
 {
-    if(R_ViewerGeneratorIsVisible(*gen))
-    {
-        *static_cast<size_t *>(context) += gen->activeParticleCount();
-    }
-    return false; // Continue iteration.
-}
+    // Never if it has already expired.
+    if(pinfo.stage < 0) return false;
 
-static dint populateSortBuffer(Generator *gen, void *context)
-{
-    auto *sortIndex = (size_t *) context;
+    // Never if the origin lies outside the map.
+    if(!pinfo.bspLeaf || !pinfo.bspLeaf->hasSubspace())
+        return false;
 
-    if(!R_ViewerGeneratorIsVisible(*gen))
-        return false; // Continue iteration.
-
-    ded_ptcgen_t const *def = gen->def;
-    ParticleInfo const *pinfo = gen->particleInfo();
-    for(dint p = 0; p < gen->count; ++p, pinfo++)
-    {
-        if(pinfo->stage < 0) continue;
-
-        ConvexSubspace *subspace = pinfo->bspLeaf? pinfo->bspLeaf->subspacePtr() : 0;
-        if(!subspace) continue;
-
-        // Is the BSP leaf at the particle's origin visible?
-        if(!R_ViewerSubspaceIsVisible(*subspace))
-            continue;  // No; this particle can't be seen.
-
-        // Don't allow zero distance.
-        dfloat dist = de::max(pointDist(pinfo->origin), 1.f);
-        if(def->maxDist != 0 && dist > def->maxDist)
-            continue;  // Too far.
-        if(dist < dfloat( particleNearLimit ))
-            continue;  // Too near.
-
-        // This particle is visible. Add it to the sort buffer.
-        OrderedParticle *slot = &order[(*sortIndex)++];
-
-        slot->generator  = gen;
-        slot->particleId = p;
-        slot->distance   = dist;
-
-        // Determine what type of particle this is, as this will affect how
-        // we go order our render passes and manipulate the render state.
-        dint stagetype = gen->stages[pinfo->stage].type;
-        if(stagetype == PTC_POINT)
-        {
-            hasPoints = true;
-        }
-        else if(stagetype == PTC_LINE)
-        {
-            hasLines = true;
-        }
-        else if(stagetype >= PTC_TEXTURE && stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
-        {
-            if(ptctexname[stagetype - PTC_TEXTURE])
-                hasPointTexs[stagetype - PTC_TEXTURE] = true;
-            else
-                hasPoints = true;
-        }
-        else if(stagetype >= PTC_MODEL && stagetype < PTC_MODEL + MAX_PTC_MODELS)
-        {
-            hasModels = true;
-        }
-
-        if(gen->blendmode() == BM_ADD)
-        {
-            hasBlend = true;
-        }
-        else
-        {
-            hasNoBlend = true;
-        }
-    }
-
-    return false; // Continue iteration.
+    // Potentially, if the subspace at the origin is visible.
+    return R_ViewerSubspaceIsVisible(pinfo.bspLeaf->subspace());
 }
 
 /**
@@ -340,32 +277,96 @@ static dint populateSortBuffer(Generator *gen, void *context)
  */
 static dint listVisibleParticles(Map &map)
 {
-    size_t numVisibleParticles;
+    ::hasPoints = ::hasModels = ::hasLines = false;
+    ::hasAdditive = ::hasNoBlend = false;
+    de::zap(::hasPointTexs);
 
-    hasPoints = hasModels = hasLines = hasBlend = hasNoBlend = false;
-    de::zap(hasPointTexs);
-
-    // First count how many particles are in the visible generators.
-    numParts = 0;
-    map.generatorIterator(countActiveGeneratorParticlesWorker, &numParts);
-    if(!numParts)
-        return false;  // No visible generators.
+    // Count the total number of particles used by generators marked 'visible'.
+    ::numParts = 0;
+    map.forAllGenerators([] (Generator &gen)
+    {
+        if(R_ViewerGeneratorIsVisible(gen))
+        {
+            ::numParts += gen.activeParticleCount();
+        }
+        return LoopContinue;
+    });
+    if(!::numParts) return false;
 
     // Allocate the particle depth sort buffer.
-    expandOrderBuffer(numParts);
+    expandOrderBuffer(::numParts);
 
     // Populate the particle sort buffer and determine what type(s) of
     // particle (model/point/line/etc...) we'll need to draw.
-    numVisibleParticles = 0;
-    map.generatorIterator(populateSortBuffer, &numVisibleParticles);
-    if(!numVisibleParticles)
-        return false;  // No visible particles (all too far?).
+    size_t numVisibleParts = 0;
+    map.forAllGenerators([&numVisibleParts] (Generator &gen)
+    {
+        if(!R_ViewerGeneratorIsVisible(gen)) return LoopContinue;  // Skip.
+
+        for(dint i = 0; i < gen.count; ++i)
+        {
+            ParticleInfo const &pinfo = gen.particleInfo()[i];
+
+            if(!particlePVisible(pinfo)) continue;  // Skip.
+
+            // Skip particles too far from, or near to, the viewer.
+            dfloat const dist = de::max(pointDist(pinfo.origin), 1.f);
+            if(gen.def->maxDist != 0 && dist > gen.def->maxDist) continue;
+            if(dist < dfloat( ::particleNearLimit )) continue;
+
+            // This particle is visible. Add it to the sort buffer.
+            OrderedParticle *slot = &::order[numVisibleParts++];
+            slot->generator  = &gen;
+            slot->particleId = i;
+            slot->distance   = dist;
+
+            // Determine what type of particle this is, as this will affect how
+            // we go order our render passes and manipulate the render state.
+            dint const psType = gen.stages[pinfo.stage].type;
+            if(psType == PTC_POINT)
+            {
+                ::hasPoints = true;
+            }
+            else if(psType == PTC_LINE)
+            {
+                ::hasLines = true;
+            }
+            else if(psType >= PTC_TEXTURE && psType < PTC_TEXTURE + MAX_PTC_TEXTURES)
+            {
+                if(::ptctexname[psType - PTC_TEXTURE])
+                {
+                    ::hasPointTexs[psType - PTC_TEXTURE] = true;
+                }
+                else
+                {
+                    ::hasPoints = true;
+                }
+            }
+            else if(psType >= PTC_MODEL && psType < PTC_MODEL + MAX_PTC_MODELS)
+            {
+                ::hasModels = true;
+            }
+
+            if(gen.blendmode() == BM_ADD)
+            {
+                ::hasAdditive = true;
+            }
+            else
+            {
+                ::hasNoBlend = true;
+            }
+        }
+        return LoopContinue;
+    });
+
+    // No visible particles?
+    if(!numVisibleParts) return false;
 
     // This is the real number of possibly visible particles.
-    numParts = numVisibleParticles;
+    ::numParts = numVisibleParts;
 
     // Sort the order list back->front. A quicksort is fast enough.
-    qsort(order, numParts, sizeof(OrderedParticle), comparePOrder);
+    qsort(::order, ::numParts, sizeof(OrderedParticle), comparePOrder);
 
     return true;
 }
@@ -854,7 +855,7 @@ void Rend_RenderParticles(Map &map)
         renderPass(false);
     }
 
-    if(hasBlend)
+    if(hasAdditive)
     {
         // A second pass with additive blending.
         // This makes the additive particles 'glow' through all other

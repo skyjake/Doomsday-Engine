@@ -3520,12 +3520,6 @@ static void projectSubspaceSprites()
     curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
 
-static dint generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
-{
-    R_ViewerGeneratorMarkVisible(*generator);
-    return 0;  // Continue iteration.
-}
-
 /**
  * @pre Assumes the subspace is at least partially visible.
  */
@@ -3557,7 +3551,11 @@ static void drawCurrentSubspace()
     // Mark generators in the sector visible.
     if(useParticles)
     {
-        sector.map().generatorListIterator(sector.indexInMap(), generatorMarkVisibleWorker);
+        sector.map().forAllGeneratorsInSector(sector, [] (Generator &gen)
+        {
+            R_ViewerGeneratorMarkVisible(gen);
+            return LoopContinue;
+        });
     }
 
     // Sprites for this subspace have to be drawn.
@@ -5451,19 +5449,18 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
     glEnd();
 }
 
-static String labelForGenerator(Generator const *gen)
+static String labelForGenerator(Generator const &gen)
 {
-    DENG2_ASSERT(gen);
-    return String("%1").arg(gen->id());
+    return String("%1").arg(gen.id());
 }
 
-static dint drawGenerator(Generator *gen, void * /*context*/)
+static void drawGenerator(Generator const &gen)
 {
-#define MAX_GENERATOR_DIST  2048
+    static dint const MAX_GENERATOR_DIST = 2048;
 
-    if(gen->source || gen->isUntriggered())
+    if(gen.source || gen.isUntriggered())
     {
-        Vector3d const origin   = gen->origin();
+        Vector3d const origin   = gen.origin();
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
@@ -5472,10 +5469,6 @@ static dint drawGenerator(Generator *gen, void * /*context*/)
                       1 - distToEye / MAX_GENERATOR_DIST);
         }
     }
-
-    return false; // Continue iteration.
-
-#undef MAX_GENERATOR_DIST
 }
 
 /**
@@ -5484,7 +5477,12 @@ static dint drawGenerator(Generator *gen, void * /*context*/)
 static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
-    map.generatorIterator(drawGenerator);
+
+    map.forAllGenerators([] (Generator &gen)
+    {
+        drawGenerator(gen);
+        return LoopContinue;
+    });
 }
 
 static void drawPoint(Vector3d const &origin, dfloat opacity)
