@@ -1,7 +1,7 @@
 /** @file r_main.cpp
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,13 +21,15 @@
 #include "de_platform.h"
 #include "render/r_main.h"
 
+#include <de/vector1.h>
+#include <de/GLState>
 #include "dd_def.h" // finesine
 #include "clientapp.h"
 
 #include "render/billboard.h"
 #include "render/rend_main.h"
+#include "render/rend_model.h"
 #include "render/vissprite.h"
-#include "render/vlight.h"
 
 #include "world/map.h"
 #include "world/p_players.h"
@@ -35,24 +37,26 @@
 #include "ConvexSubspace"
 #include "SectorCluster"
 
-#include <de/GLState>
-#include <de/vector1.h>
-
 using namespace de;
 
-int levelFullBright;
-int weaponOffsetScaleY = 1000;
-int psp3d;
+dint levelFullBright;
+dint weaponOffsetScaleY = 1000;
+dint psp3d;
 
-float pspLightLevelMultiplier = 1;
-float pspOffset[2];
+dfloat pspLightLevelMultiplier = 1;
+dfloat pspOffset[2];
 
 /*
  * Console variables:
  */
-float weaponFOVShift    = 45;
-float weaponOffsetScale = 0.3183f; // 1/Pi
-byte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
+dfloat weaponFOVShift    = 45;
+dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
+dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
+
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 
 static inline ResourceSystem &resSys()
 {
@@ -61,20 +65,19 @@ static inline ResourceSystem &resSys()
 
 static MaterialVariantSpec const &pspriteMaterialSpec()
 {
-    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0,
-                                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+    return resSys().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
 static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
 {
-#define WEAPONTOP   32   /// @todo Currently hardcoded here and in the plugins.
+    static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    ddpsprite_t *psp      = spr->psp;
-    float const offScaleY = weaponOffsetScaleY / 1000.0f;
-    int const spriteIdx   = psp->statePtr->sprite;
-    int const frameIdx    = psp->statePtr->frame;
-    Sprite const &sprite  = resSys().sprite(spriteIdx, frameIdx);
+    ddpsprite_t *psp       = spr->psp;
+    dfloat const offScaleY = weaponOffsetScaleY / 1000.0f;
+    dint const spriteIdx   = psp->statePtr->sprite;
+    dint const frameIdx    = psp->statePtr->frame;
+    Sprite const &sprite   = resSys().sprite(spriteIdx, frameIdx);
 
     SpriteViewAngle const &sprViewAngle = sprite.viewAngle(0);
     MaterialAnimator &matAnimator       = sprViewAngle.material->getAnimator(pspriteMaterialSpec());
@@ -88,9 +91,9 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
     variantspecification_t const &texSpec = tex.spec().variant;
 
 
-    params->pos[VX] = psp->pos[VX] + texOrigin.x + pspOffset[VX] - texSpec.border;
-    params->pos[VY] = WEAPONTOP + offScaleY * (psp->pos[VY] - WEAPONTOP) + texOrigin.y +
-                      pspOffset[VY] - texSpec.border;
+    params->pos[0] = psp->pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
+    params->pos[1] = WEAPONTOP + offScaleY * (psp->pos[1] - WEAPONTOP) + texOrigin.y +
+                      pspOffset[1] - texSpec.border;
 
     params->width  = matDimensions.x + texSpec.border * 2;
     params->height = matDimensions.y + texSpec.border * 2;
@@ -120,7 +123,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Vector4f color = map.lightGrid().evaluate(spr->origin);
 
             // Apply light range compression.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -132,7 +135,7 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Vector4f const color = spr->data.sprite.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            float lightLevel = color.w;
+            dfloat lightLevel = color.w;
 
             // Add extra light plus bonus.
             lightLevel += Rend_ExtraLightDelta();
@@ -143,23 +146,17 @@ static void setupPSpriteParams(rendpspriteparams_t *params, vispsprite_t *spr)
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 params->ambientColor[i] = lightLevel * color[i];
             }
         }
-
         Rend_ApplyTorchLight(params->ambientColor, 0);
 
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(spr->origin);
-        lparams.subspace     = spr->data.sprite.bspLeaf->subspacePtr();
-        lparams.ambientColor = Vector3f(params->ambientColor);
-
-        params->vLightListIdx = R_CollectAffectingLights(&lparams);
+        params->vLightListIdx =
+                Rend_CollectAffectingLights(spr->origin, Vector3f(params->ambientColor),
+                                            spr->data.sprite.bspLeaf->subspacePtr());
     }
-
-#undef WEAPONTOP
 }
 
 void Rend_Draw2DPlayerSprites()
@@ -212,12 +209,10 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
     params->id = spr->data.model.id;
     params->selector = spr->data.model.selector;
     params->flags = spr->data.model.flags;
-    vis.pose.origin[VX] = spr->origin[VX];
-    vis.pose.origin[VY] = spr->origin[VY];
-    vis.pose.origin[VZ] = spr->origin[VZ];
-    vis.pose.srvo[VX] = spr->data.model.visOff[VX];
-    vis.pose.srvo[VY] = spr->data.model.visOff[VY];
-    vis.pose.srvo[VZ] = spr->data.model.visOff[VZ] - spr->data.model.floorClip;
+    vis.pose.origin = spr->origin;
+    vis.pose.srvo[0] = spr->data.model.visOff[0];
+    vis.pose.srvo[1] = spr->data.model.visOff[1];
+    vis.pose.srvo[2] = spr->data.model.visOff[2] - spr->data.model.floorClip;
     vis.pose.topZ = spr->data.model.topZ;
     vis.pose.distance = -10;
     vis.pose.yaw = spr->data.model.yaw;
@@ -233,12 +228,12 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
     params->shinePitchOffset = vpitch + 90;
     params->shineTranslateWithViewerPos = false;
     params->shinepspriteCoordSpace = true;
-    vis.light.ambientColor[CA] = spr->data.model.alpha;
+    vis.light.ambientColor[3] = spr->data.model.alpha;
 
     if((levelFullBright || spr->data.model.stateFullBright) &&
        !spr->data.model.mf->testSubFlag(0, MFF_DIM))
     {
-        vis.light.ambientColor[CR] = vis.light.ambientColor[CG] = vis.light.ambientColor[CB] = 1;
+        vis.light.ambientColor[0] = vis.light.ambientColor[1] = vis.light.ambientColor[2] = 1;
         vis.light.vLightListIdx = 0;
     }
     else
@@ -249,7 +244,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
         {
             Vector4f color = map.lightGrid().evaluate(vis.pose.origin);
             // Apply light range compression.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -262,7 +257,7 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
             Vector4f const color = spr->data.model.bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
             // No need for distance attentuation.
-            float lightLevel = color.w;
+            dfloat lightLevel = color.w;
 
             // Add extra light.
             lightLevel += Rend_ExtraLightDelta();
@@ -272,21 +267,17 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const *
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 vis.light.ambientColor[i] = lightLevel * color[i];
             }
         }
-
         Rend_ApplyTorchLight(vis.light.ambientColor, vis.pose.distance);
 
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(spr->origin);
-        lparams.subspace     = spr->data.model.bspLeaf->subspacePtr();
-        lparams.ambientColor = Vector3f(vis.light.ambientColor);
-        lparams.starkLight   = true;
-
-        vis.light.vLightListIdx = R_CollectAffectingLights(&lparams);
+        vis.light.vLightListIdx =
+                Rend_CollectAffectingLights(spr->origin, vis.light.ambientColor,
+                                            spr->data.model.bspLeaf->subspacePtr(),
+                                            true /*stark world light*/);
     }
 }
 
@@ -299,7 +290,7 @@ void Rend_Draw3DPlayerSprites()
     GLTarget::AlternativeBuffer altDepth(GLState::current().target(), localDepth,
                                          GLTarget::DepthStencil);
 
-    for(int i = 0; i < DDMAXPSPRITES; ++i)
+    for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
         vispsprite_t *spr = &visPSprites[i];
 
@@ -312,7 +303,7 @@ void Rend_Draw3DPlayerSprites()
         }
 
         //drawmodelparams_t parms; zap(parms);
-        vissprite_t temp; zap(temp);
+        vissprite_t temp; de::zap(temp);
         setupModelParamsForVisPSprite(temp, spr);
         Rend_DrawModel(temp);
     }

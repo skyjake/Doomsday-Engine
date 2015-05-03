@@ -43,7 +43,6 @@
 #include "render/viewports.h"
 #include "render/rend_main.h"
 #include "render/rend_model.h"
-#include "render/vlight.h"
 #include "render/vissprite.h"
 
 #include <de/vector1.h>
@@ -65,8 +64,8 @@ static bool hasPointTexs[NUM_TEX_NAMES];
 struct OrderedParticle
 {
     Generator *generator;
-    int ptID; // Particle id.
-    float distance;
+    dint ptID; // Particle id.
+    dfloat distance;
 };
 static OrderedParticle *order;
 static size_t orderSize;
@@ -76,10 +75,10 @@ static size_t numParts;
 /*
  * Console variables:
  */
-byte useParticles = true;
-static int maxParticles; ///< @c 0= Unlimited.
-static int particleNearLimit;
-static float particleDiffuse = 4;
+dbyte useParticles = true;
+static dint maxParticles;  ///< @c 0= Unlimited.
+static dint particleNearLimit;
+static dfloat particleDiffuse = 4;
 
 void Rend_ParticleRegister()
 {
@@ -90,20 +89,20 @@ void Rend_ParticleRegister()
     C_VAR_INT  ("rend-particle-visible-near",      &particleNearLimit, CVF_NO_MAX,     0, 0);
 }
 
-static float pointDist(fixed_t const c[3])
+static dfloat pointDist(fixed_t const c[3])
 {
     viewdata_t const *viewData = R_ViewData(viewPlayer - ddPlayers);
-    float dist = ((viewData->current.origin.y - FIX2FLT(c[VY])) * -viewData->viewSin) -
-        ((viewData->current.origin.x - FIX2FLT(c[VX])) * viewData->viewCos);
+    dfloat dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin) -
+        ((viewData->current.origin.x - FIX2FLT(c[0])) * viewData->viewCos);
 
-    return de::abs(dist); // Always return positive.
+    return de::abs(dist);  // Always return positive.
 }
 
 static Path tryFindImage(String name)
 {
-    /*
-     * First look for a colorkeyed version.
-     */
+    //
+    // First look for a colorkeyed version.
+    //
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri("Textures", name + "-ck"),
@@ -112,11 +111,11 @@ static Path tryFindImage(String name)
         return App_BasePath() / foundPath;
     }
     catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    /*
-     * Look for the regular version.
-     */
+    //
+    // Look for the regular version.
+    //
     try
     {
         String foundPath = App_FileSystem().findPath(de::Uri("Textures", name),
@@ -125,13 +124,13 @@ static Path tryFindImage(String name)
         return App_BasePath() / foundPath;
     }
     catch(FS1::NotFoundError const&)
-    {} // Ignore this error.
+    {}  // Ignore this error.
 
-    return Path(); // Not found.
+    return Path();  // Not found.
 }
 
 // Try to load the texture.
-static byte loadParticleTexture(uint particleTex)
+static dbyte loadParticleTexture(duint particleTex)
 {
     DENG2_ASSERT(particleTex < MAX_PTC_TEXTURES);
 
@@ -380,22 +379,19 @@ static int listVisibleParticles(Map &map)
 
 static void setupModelParamsForParticle(vissprite_t &spr,
     ParticleInfo const *pinfo, GeneratorParticleStage const *st,
-    ded_ptcstage_t const *dst, Vector3f const &origin, float dist, float size,
-    float mark, float alpha)
+    ded_ptcstage_t const *dst, Vector3f const &origin, dfloat dist, dfloat size,
+    dfloat mark, dfloat alpha)
 {
     drawmodelparams_t &parm = *VS_MODEL(&spr);
 
-    // Render the particle as a model.
-    spr.pose.origin[VX] = origin.x;
-    spr.pose.origin[VY] = origin.z;
-    spr.pose.origin[VZ] = spr.pose.topZ = origin.y;
-    spr.pose.distance = dist;
+    spr.pose.origin     = Vector3d(origin.xz(), spr.pose.topZ = origin.y);
+    spr.pose.distance   = dist;
+    spr.pose.extraScale = size;  // Extra scaling factor.
 
-    spr.pose.extraScale = size; // Extra scaling factor.
     parm.mf = &ClientApp::resourceSystem().modelDef(dst->model);
     parm.alwaysInterpolate = true;
 
-    int frame;
+    dint frame;
     if(dst->endFrame < 0)
     {
         frame = dst->frame;
@@ -427,11 +423,11 @@ static void setupModelParamsForParticle(vissprite_t &spr,
         spr.pose.pitch = pinfo->pitch / 32768.0f * 180;
     }
 
-    spr.light.ambientColor[CA] = alpha;
+    spr.light.ambientColor[3] = alpha;
 
     if(st->flags.testFlag(GeneratorParticleStage::Bright) || levelFullBright)
     {
-        spr.light.ambientColor[CR] = spr.light.ambientColor[CG] = spr.light.ambientColor[CB] = 1;
+        spr.light.ambientColor[0] = spr.light.ambientColor[1] = spr.light.ambientColor[2] = 1;
         spr.light.vLightListIdx = 0;
     }
     else
@@ -442,7 +438,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
         {
             Vector4f color = map.lightGrid().evaluate(spr.pose.origin);
             // Apply light range compression.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 color[i] += Rend_LightAdaptationDelta(color[i]);
             }
@@ -454,7 +450,7 @@ static void setupModelParamsForParticle(vissprite_t &spr,
         {
             Vector4f const color = pinfo->bspLeaf->subspace().cluster().lightSourceColorfIntensity();
 
-            float lightLevel = color.w;
+            dfloat lightLevel = color.w;
 
             // Apply distance attenuation.
             lightLevel = Rend_AttenuateLightLevel(spr.pose.distance, lightLevel);
@@ -467,20 +463,16 @@ static void setupModelParamsForParticle(vissprite_t &spr,
             Rend_ApplyLightAdaptation(lightLevel);
 
             // Determine the final ambientColor.
-            for(int i = 0; i < 3; ++i)
+            for(dint i = 0; i < 3; ++i)
             {
                 spr.light.ambientColor[i] = lightLevel * color[i];
             }
         }
-
         Rend_ApplyTorchLight(spr.light.ambientColor, spr.pose.distance);
 
-        collectaffectinglights_params_t lparams; zap(lparams);
-        lparams.origin       = Vector3d(spr.pose.origin);
-        lparams.subspace     = map.bspLeafAt(lparams.origin).subspacePtr();
-        lparams.ambientColor = Vector3f(spr.light.ambientColor);
-
-        spr.light.vLightListIdx = R_CollectAffectingLights(&lparams);
+        spr.light.vLightListIdx =
+                Rend_CollectAffectingLights(spr.pose.origin, spr.light.ambientColor,
+                                            map.bspLeafAt(spr.pose.origin).subspacePtr());
     }
 }
 
@@ -498,7 +490,7 @@ static Vector2f lineUnitVector(Line const &line)
     {
         return line.direction() / len;
     }
-    return Vector2f(0, 0);
+    return Vector2f();
 }
 
 static void renderParticles(int rtype, bool withBlend)

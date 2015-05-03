@@ -45,6 +45,7 @@
 #  include "render/viewports.h"
 #  include "render/rend_main.h"
 #  include "render/rend_model.h"
+#  include "render/rend_halo.h"
 #  include "render/billboard.h"
 
 #  include "gl/gl_tex.h"
@@ -508,7 +509,7 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     lum->move(mo->origin);
 
     // Does the mobj need a Z origin offset?
-    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(mo);
+    coord_t zOffset = -mo->floorClip - Mobj_BobOffset(*mo);
     if(!(mo->ddFlags & DDMF_NOFITBOTTOM) && impacted < 0)
     {
         // Raise the light out of the impacted surface.
@@ -521,30 +522,78 @@ void Mobj_GenerateLumobjs(mobj_t *mo)
     mo->lumIdx = cluster.sector().map().addLumobj(*lum).indexInMap();
 }
 
-float Mobj_ShadowStrength(mobj_t *mo)
+void Mobj_AnimateHaloOcclussion(mobj_t &mob)
 {
-    if(!mo) return 0;
+    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        dbyte *haloFactor = &mob.haloFactors[i];
 
-    float const minSpriteAlphaLimit = .1f;
-    float ambientLightLevel, strength = .65f; ///< Default strength factor.
+        // Set the high bit of halofactor if the light is clipped. This will
+        // make P_Ticker diminish the factor to zero. Take the first step here
+        // and now, though.
+        if(mob.lumIdx == Lumobj::NoIndex || R_ViewerLumobjIsClipped(mob.lumIdx))
+        {
+            if(*haloFactor & 0x80)
+            {
+                dint f = (*haloFactor & 0x7f);  // - haloOccludeSpeed;
+                if(f < 0) f = 0;
+                *haloFactor = f;
+            }
+        }
+        else
+        {
+            if(!(*haloFactor & 0x80))
+            {
+                dint f = (*haloFactor & 0x7f);  // + haloOccludeSpeed;
+                if(f > 127) f = 127;
+                *haloFactor = 0x80 | f;
+            }
+        }
+
+        // Handle halofactor.
+        dint f = *haloFactor & 0x7f;
+        if(*haloFactor & 0x80)
+        {
+            // Going up.
+            f += ::haloOccludeSpeed;
+            if(f > 127)
+                f = 127;
+        }
+        else
+        {
+            // Going down.
+            f -= ::haloOccludeSpeed;
+            if(f < 0)
+                f = 0;
+        }
+
+        *haloFactor &= ~0x7f;
+        *haloFactor |= f;
+    }
+}
+
+dfloat Mobj_ShadowStrength(mobj_t const &mob)
+{
+    dfloat const minSpriteAlphaLimit = .1f;
+    dfloat ambientLightLevel, strength = .65f; ///< Default strength factor.
 
     // Is this mobj in a valid state for shadow casting?
-    if(!mo->state) return 0;
-    if(!Mobj_HasSubspace(*mo)) return 0;
+    if(!mob.state) return 0;
+    if(!Mobj_HasSubspace(mob)) return 0;
 
     // Should this mobj even have a shadow?
-    if((mo->state->flags & STF_FULLBRIGHT) ||
-       (mo->ddFlags & DDMF_DONTDRAW) || (mo->ddFlags & DDMF_ALWAYSLIT))
+    if((mob.state->flags & STF_FULLBRIGHT) ||
+       (mob.ddFlags & DDMF_DONTDRAW) || (mob.ddFlags & DDMF_ALWAYSLIT))
         return 0;
 
-    SectorCluster &cluster = Mobj_Cluster(*mo);
+    SectorCluster &cluster = Mobj_Cluster(mob);
 
     // Sample the ambient light level at the mobj's position.
     Map &map = cluster.sector().map();
     if(useBias && map.hasLightGrid())
     {
         // Evaluate in the light grid.
-        ambientLightLevel = map.lightGrid().evaluateIntensity(mo->origin);
+        ambientLightLevel = map.lightGrid().evaluateIntensity(mob.origin);
     }
     else
     {
@@ -553,9 +602,9 @@ float Mobj_ShadowStrength(mobj_t *mo)
     Rend_ApplyLightAdaptation(ambientLightLevel);
 
     // Sprites have their own shadow strength factor.
-    if(!useModels || !Mobj_ModelDef(*mo))
+    if(!useModels || !Mobj_ModelDef(mob))
     {
-        if(Sprite *sprite = Mobj_Sprite(*mo))
+        if(Sprite *sprite = Mobj_Sprite(mob))
         {
             if(sprite->hasViewAngle(0))
             {
@@ -589,7 +638,7 @@ float Mobj_ShadowStrength(mobj_t *mo)
     }
 
     // Factor in Mobj alpha.
-    strength *= Mobj_Alpha(mo);
+    strength *= Mobj_Alpha(mob);
 
     /// @note This equation is the same as that used for fakeradio.
     return (0.6f - ambientLightLevel * 0.4f) * strength;
@@ -785,37 +834,34 @@ coord_t Mobj_ApproxPointDistance(mobj_t* mo, coord_t const* point)
                                              point[VY] - mo->origin[VY]));
 }
 
-coord_t Mobj_BobOffset(mobj_t *mo)
+coord_t Mobj_BobOffset(mobj_t const &mob)
 {
-    if(mo->ddFlags & DDMF_BOB)
+    if(mob.ddFlags & DDMF_BOB)
     {
-        return (sin(MOBJ_TO_ID(mo) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
+        return (sin(MOBJ_TO_ID(&mob) + App_WorldSystem().time() / 1.8286 * 2 * PI) * 8);
     }
     return 0;
 }
 
-float Mobj_Alpha(mobj_t *mo)
+dfloat Mobj_Alpha(mobj_t const &mob)
 {
-    DENG_ASSERT(mo);
+    dfloat alpha = (mob.ddFlags & DDMF_BRIGHTSHADOW)? .80f :
+                   (mob.ddFlags & DDMF_SHADOW      )? .33f :
+                   (mob.ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
 
-    float alpha = (mo->ddFlags & DDMF_BRIGHTSHADOW)? .80f :
-                  (mo->ddFlags & DDMF_SHADOW      )? .33f :
-                  (mo->ddFlags & DDMF_ALTSHADOW   )? .66f : 1;
-    /**
-     * The three highest bits of the selector are used for alpha.
-     * 0 = opaque (alpha -1)
-     * 1 = 1/8 transparent
-     * 4 = 1/2 transparent
-     * 7 = 7/8 transparent
-     */
-    int selAlpha = mo->selector >> DDMOBJ_SELECTOR_SHIFT;
+    // The three highest bits of the selector are used for alpha.
+    // 0 = opaque (alpha -1)
+    // 1 = 1/8 transparent
+    // 4 = 1/2 transparent
+    // 7 = 7/8 transparent
+    dint selAlpha = mob.selector >> DDMOBJ_SELECTOR_SHIFT;
     if(selAlpha & 0xe0)
     {
         alpha *= 1 - ((selAlpha & 0xe0) >> 5) / 8.0f;
     }
-    else if(mo->translucency)
+    else if(mob.translucency)
     {
-        alpha *= 1 - mo->translucency * reciprocal255;
+        alpha *= 1 - mob.translucency * reciprocal255;
     }
     return alpha;
 }
