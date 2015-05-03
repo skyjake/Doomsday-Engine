@@ -27,16 +27,28 @@
 #include "de_resource.h"
 #include "de_graphics.h"
 #include "de_ui.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <QtAlgorithms>
+#include <QBitArray>
+//#include <de/libcore.h>
+#include <de/concurrency.h>
+#include <de/timer.h>
+#include <de/vector1.h>
+#include <de/GLState>
+
 #include "clientapp.h"
 #include "sys_system.h"
-#include "ui/editors/rendererappearanceeditor.h"
-
 #include "api_fontrender.h"
-#include "edit_bias.h" /// @todo remove me
-#include "network/net_main.h" /// @todo remove me
+
+#include "edit_bias.h"         /// @todo remove me
+//#include "network/net_main.h"  /// @todo remove me
 
 #include "MaterialVariantSpec"
 #include "Texture"
+
 #include "Face"
 #include "world/map.h"
 #include "world/blockmap.h"
@@ -61,29 +73,22 @@
 #include "SurfaceDecorator"
 #include "TriangleStripBuilder"
 #include "WallEdge"
+
+#include "gl/gl_texmanager.h"
+#include "gl/sys_opengl.h"
+
+#include "render/fx/bloom.h"
+#include "render/fx/vignette.h"
+#include "render/fx/lensflares.h"
+#include "render/rend_particle.h"
 #include "render/angleclipper.h"
 #include "render/blockmapvisual.h"
 #include "render/billboard.h"
 #include "render/vissprite.h"
-#include "render/fx/bloom.h"
-#include "render/fx/vignette.h"
-#include "render/fx/lensflares.h"
 #include "render/skydrawable.h"
 #include "render/vr.h"
-#include "gl/gl_texmanager.h"
-#include "gl/sys_opengl.h"
 
-#include <de/GLState>
-#include <de/vector1.h>
-#include <de/libcore.h>
-#include <de/concurrency.h>
-#include <de/timer.h>
-
-#include <QtAlgorithms>
-#include <QBitArray>
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
+#include "ui/editors/rendererappearanceeditor.h"
 
 using namespace de;
 
@@ -3515,12 +3520,6 @@ static void projectSubspaceSprites()
     curSubspace->setLastSpriteProjectFrame(R_FrameCount());
 }
 
-static dint generatorMarkVisibleWorker(Generator *generator, void * /*context*/)
-{
-    R_ViewerGeneratorMarkVisible(*generator);
-    return 0;  // Continue iteration.
-}
-
 /**
  * @pre Assumes the subspace is at least partially visible.
  */
@@ -3552,7 +3551,11 @@ static void drawCurrentSubspace()
     // Mark generators in the sector visible.
     if(useParticles)
     {
-        sector.map().generatorListIterator(sector.indexInMap(), generatorMarkVisibleWorker);
+        sector.map().forAllGeneratorsInSector(sector, [] (Generator &gen)
+        {
+            R_ViewerGeneratorMarkVisible(gen);
+            return LoopContinue;
+        });
     }
 
     // Sprites for this subspace have to be drawn.
@@ -5446,19 +5449,18 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
     glEnd();
 }
 
-static String labelForGenerator(Generator const *gen)
+static String labelForGenerator(Generator const &gen)
 {
-    DENG2_ASSERT(gen);
-    return String("%1").arg(gen->id());
+    return String("%1").arg(gen.id());
 }
 
-static dint drawGenerator(Generator *gen, void * /*context*/)
+static void drawGenerator(Generator const &gen)
 {
-#define MAX_GENERATOR_DIST  2048
+    static dint const MAX_GENERATOR_DIST = 2048;
 
-    if(gen->source || gen->isUntriggered())
+    if(gen.source || gen.isUntriggered())
     {
-        Vector3d const origin   = gen->origin();
+        Vector3d const origin   = gen.origin();
         ddouble const distToEye = (eyeOrigin - origin).length();
         if(distToEye < MAX_GENERATOR_DIST)
         {
@@ -5467,10 +5469,6 @@ static dint drawGenerator(Generator *gen, void * /*context*/)
                       1 - distToEye / MAX_GENERATOR_DIST);
         }
     }
-
-    return false; // Continue iteration.
-
-#undef MAX_GENERATOR_DIST
 }
 
 /**
@@ -5479,7 +5477,12 @@ static dint drawGenerator(Generator *gen, void * /*context*/)
 static void drawGenerators(Map &map)
 {
     if(!devDrawGenerators) return;
-    map.generatorIterator(drawGenerator);
+
+    map.forAllGenerators([] (Generator &gen)
+    {
+        drawGenerator(gen);
+        return LoopContinue;
+    });
 }
 
 static void drawPoint(Vector3d const &origin, dfloat opacity)

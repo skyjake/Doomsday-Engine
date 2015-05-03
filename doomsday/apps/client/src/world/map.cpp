@@ -271,7 +271,7 @@ DENG2_PIMPL(Map)
          *
          * @param listCount  Number of lists the collection must support.
          */
-        void resize(uint listCount)
+        void resize(duint listCount)
         {
             if(!linkStore)
             {
@@ -2914,28 +2914,32 @@ void Map::unlink(Generator &generator)
     }
 }
 
-dint Map::generatorIterator(dint (*callback) (Generator *, void *), void *context)
+LoopResult Map::forAllGenerators(std::function<LoopResult (Generator &)> func) const
 {
     for(Generator *gen : d->getGenerators().activeGens)
     {
         if(!gen) continue;
 
-        if(dint result = callback(gen, context))
+        if(auto result = func(*gen))
             return result;
     }
-    return 0;  // Continue iteration.
+    return LoopContinue;
 }
 
-dint Map::generatorListIterator(duint listIndex, dint (*callback) (Generator *, void *),
-    void *context)
+LoopResult Map::forAllGeneratorsInSector(Sector const &sector, std::function<LoopResult (Generator &)> func) const
 {
-    Instance::Generators &gens = d->getGenerators();
-    for(Instance::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+    if(sector.mapPtr() == this)  // Ignore 'alien' sectors.
     {
-        if(int result = callback(it->gen, context))
-            return result;
+        duint const listIndex = sector.indexInMap();
+
+        Instance::Generators &gens = d->getGenerators();
+        for(Instance::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
+        {
+            if(auto result = func(*it->gen))
+                return result;
+        }
     }
-    return 0;  // Continue iteration.
+    return LoopContinue;
 }
 
 dint Map::lumobjCount() const
