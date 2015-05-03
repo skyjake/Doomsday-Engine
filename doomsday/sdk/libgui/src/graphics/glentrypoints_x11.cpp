@@ -20,7 +20,7 @@
 
 #ifdef DENG_X11
 
-#include "de/CanvasWindow"
+#include "de/Canvas"
 
 #include <QX11Info>
 #include <GL/glx.h>
@@ -46,8 +46,8 @@ void setXSwapInterval(int interval)
 {
     if(glXSwapIntervalEXT)
     {
-        DENG2_ASSERT(de::CanvasWindow::mainExists());
-        glXSwapIntervalEXT(QX11Info::display(), de::CanvasWindow::main().canvas().winId(), interval);
+        DENG2_ASSERT(de::Canvas::mainExists());
+        glXSwapIntervalEXT(QX11Info::display(), de::Canvas::main().winId(), interval);
     }
 }
 
