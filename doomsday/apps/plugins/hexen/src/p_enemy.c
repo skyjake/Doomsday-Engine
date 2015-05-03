@@ -26,7 +26,6 @@
 #include "jhexen.h"
 #include "p_enemy.h"
 
-#include "acs/system.h"
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
@@ -4225,7 +4224,7 @@ void C_DECL A_KoraxChase(mobj_t *mob)
             P_Teleport(mob, spot->origin[VX], spot->origin[VY], spot->angle, true);
         }
 
-        Game_ACScriptSystem_StartScript(249, NULL, mob, NULL, 0);
+        P_StartACScript(249, NULL, mob, NULL, 0);
         mob->special2 = 1; // Don't run again.
 
         return;
@@ -4326,7 +4325,7 @@ void C_DECL A_KoraxBonePop(mobj_t *mob)
     if(spit) Korax_InitSpirit(spit, mob);
 
     // Start the on-death ACScript.
-    Game_ACScriptSystem_StartScript(255, NULL, mob, NULL, 0);
+    P_StartACScript(255, NULL, mob, NULL, 0);
 }
 
 void C_DECL A_KoraxDecide(mobj_t *mob)
@@ -4461,7 +4460,7 @@ void C_DECL A_KoraxCommand(mobj_t *mob)
     case 3: scriptNumber = 253; break;
     case 4: scriptNumber = 254; break;
     }
-    Game_ACScriptSystem_StartScript(scriptNumber, NULL, mob, NULL, 0);
+    P_StartACScript(scriptNumber, NULL, mob, NULL, 0);
 }
 
 void C_DECL A_KSpiritWeave(mobj_t *mob)

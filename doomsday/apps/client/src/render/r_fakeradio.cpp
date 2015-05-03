@@ -32,6 +32,7 @@
 #include "world/lineowner.h"
 #include "world/map.h"
 #include "ConvexSubspace"
+#include "Face"
 #include "SectorCluster"
 #include "Surface"
 #include "Vertex"

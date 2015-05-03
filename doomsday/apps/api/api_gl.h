@@ -338,6 +338,11 @@ DENG_API_TYPEDEF(GL)
     void (*ConfigureBorderedProjection)(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
     void (*BeginBorderedProjection)(dgl_borderedprojectionstate_t* bp);
     void (*EndBorderedProjection)(dgl_borderedprojectionstate_t* bp);
+
+    /**
+     * Disable the color filter and clear PostFX (for consoleplayer).
+     */
+    void (*ResetViewEffects)();
 }
 DENG_API_T(GL);
 
@@ -415,6 +420,7 @@ DENG_API_T(GL);
 #define GL_ConfigureBorderedProjection  _api_GL.ConfigureBorderedProjection
 #define GL_BeginBorderedProjection  _api_GL.BeginBorderedProjection
 #define GL_EndBorderedProjection    _api_GL.EndBorderedProjection
+#define GL_ResetViewEffects         _api_GL.ResetViewEffects
 #endif
 
 #if defined __DOOMSDAY__ && defined __CLIENT__

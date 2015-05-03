@@ -929,6 +929,7 @@ DENG_EXTERN_C void GL_ConfigureBorderedProjection2(dgl_borderedprojectionstate_t
 DENG_EXTERN_C void GL_ConfigureBorderedProjection(dgl_borderedprojectionstate_t* bp, int flags, int width, int height, int availWidth, int availHeight, scalemode_t overrideMode);
 DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp);
 DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp);
+DENG_EXTERN_C void GL_ResetViewEffects();
 
 DENG_DECLARE_API(GL) =
 {
@@ -1005,5 +1006,6 @@ DENG_DECLARE_API(GL) =
     GL_ConfigureBorderedProjection2,
     GL_ConfigureBorderedProjection,
     GL_BeginBorderedProjection,
-    GL_EndBorderedProjection
+    GL_EndBorderedProjection,
+    GL_ResetViewEffects
 };

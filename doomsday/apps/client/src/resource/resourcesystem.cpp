@@ -3903,61 +3903,6 @@ MaterialVariantSpec const &ResourceSystem::materialSpec(MaterialContextId contex
                                         mipmapped, gammaCorrection, noStretch, toAlpha);
 }
 
-static int findSpriteOwner(thinker_t *th, void *context)
-{
-    mobj_t *mo = reinterpret_cast<mobj_t *>(th);
-    int const sprite = *static_cast<int *>(context);
-
-    if(mo->type >= 0 && mo->type < defs.mobjs.size())
-    {
-        /// @todo optimize: traverses the entire state list!
-        for(int i = 0; i < defs.states.size(); ++i)
-        {
-            if(runtimeDefs.stateInfo[i].owner != &runtimeDefs.mobjInfo[mo->type])
-            {
-                continue;
-            }
-
-            state_t *state = Def_GetState(i);
-            DENG2_ASSERT(state != 0);
-
-            if(state->sprite == sprite)
-            {
-                return true; // Found one.
-            }
-        }
-    }
-
-    return false; // Continue iteration.
-}
-
-/**
- * @note The skins are also bound here once so they should be ready for use
- *       the next time they are needed.
- */
-static int cacheModelsForMobj(thinker_t *th, void *context)
-{
-    mobj_t *mo = (mobj_t *) th;
-    ResourceSystem &resSys = *static_cast<ResourceSystem *>(context);
-
-    if(!(useModels && precacheSkins))
-        return true;
-
-    // Check through all the model definitions.
-    for(int i = 0; i < resSys.modelDefCount(); ++i)
-    {
-        ModelDef &modef = resSys.modelDef(i);
-
-        if(!modef.state) continue;
-        if(mo->type < 0 || mo->type >= defs.mobjs.size()) continue; // Hmm?
-        if(runtimeDefs.stateInfo[runtimeDefs.states.indexOf(modef.state)].owner != &runtimeDefs.mobjInfo[mo->type]) continue;
-
-        resSys.cache(&modef);
-    }
-
-    return false; // Used as iterator.
-}
-
 void ResourceSystem::cacheForCurrentMap()
 {
     // Don't precache when playing a demo (why not? -ds).
@@ -4008,26 +3953,63 @@ void ResourceSystem::cacheForCurrentMap()
 
     if(precacheSprites)
     {
-        MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
+        MaterialVariantSpec const &matSpec = Rend_SpriteMaterialSpec();
 
-        for(int i = 0; i < spriteCount(); ++i)
+        for(dint i = 0; i < spriteCount(); ++i)
         {
-            if(map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
-                                      0x1/*mobjs are public*/,
-                                      findSpriteOwner, &i))
+            auto const sprite = spritenum_t(i);
+
+            // Is this sprite used by a state of at least one mobj?
+            LoopResult found = map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                                                     0x1/*public*/, [&sprite] (thinker_t *th)
             {
-                // This sprite is used by some state of at least one mobj.
-                cache(spritenum_t(i), spec);
+                auto const &mob = *reinterpret_cast<mobj_t *>(th);
+                if(mob.type >= 0 && mob.type < defs.mobjs.size())
+                {
+                    /// @todo optimize: traverses the entire state list!
+                    for(dint k = 0; k < defs.states.size(); ++k)
+                    {
+                        if(runtimeDefs.stateInfo[k].owner != &runtimeDefs.mobjInfo[mob.type])
+                            continue;
+
+                        if(Def_GetState(k)->sprite == sprite)
+                        {
+                            return LoopAbort;  // Found one.
+                        }
+                    }
+                }
+                return LoopContinue;
+            });
+
+            if(found)
+            {
+                cache(sprite, matSpec);
             }
         }
     }
 
     // Precache model skins?
+    /// @note The skins are also bound here once so they should be ready
+    /// for use the next time they are needed.
     if(useModels && precacheSkins)
     {
-        // All mobjs are public.
-        map.thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                               cacheModelsForMobj, this);
+        map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
+                              0x1/*public*/, [this] (thinker_t *th)
+        {
+            auto const &mob = *reinterpret_cast<mobj_t *>(th);
+            // Check through all the model definitions.
+            for(dint i = 0; i < modelDefCount(); ++i)
+            {
+                ModelDef &modef = modelDef(i);
+
+                if(!modef.state) continue;
+                if(mob.type < 0 || mob.type >= defs.mobjs.size()) continue; // Hmm?
+                if(runtimeDefs.stateInfo[runtimeDefs.states.indexOf(modef.state)].owner != &runtimeDefs.mobjInfo[mob.type]) continue;
+
+                cache(&modef);
+            }
+            return LoopContinue;
+        });
     }
 }
 

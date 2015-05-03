@@ -24,7 +24,6 @@
 
 #include <cerrno>
 #include <cstdlib>
-#include "acs/system.h"
 #include "am_map.h"
 #include "d_net.h"
 #include "d_netcl.h"
@@ -44,7 +43,7 @@ typedef eventsequencehandler_t cheatfunc_t;
 #define CHEAT(x) G_Cheat##x
 
 /// Helper macro for declaring cheat callback functions.
-#define CHEAT_FUNC(x) int G_Cheat##x(int player, const EventSequenceArg* args, int numArgs)
+#define CHEAT_FUNC(x) int G_Cheat##x(int player, EventSequenceArg const *args, int numArgs)
 
 /// Helper macro for registering new cheat event sequence handlers.
 #define ADDCHEAT(name, callback) G_AddEventSequence((name), CHEAT(callback))
@@ -52,9 +51,9 @@ typedef eventsequencehandler_t cheatfunc_t;
 /// Helper macro for registering new cheat event sequence command handlers.
 #define ADDCHEATCMD(name, cmdTemplate) G_AddEventSequenceCommand((name), cmdTemplate)
 
-static inline acs::System &acScriptSys()
+static inline acs::System &acscriptSys()
 {
-    return Game_ACScriptSystem();
+    return COMMON_GAMESESSION->acsSystem();
 }
 
 CHEAT_FUNC(Class);
@@ -813,9 +812,9 @@ D_CMD(CheatRunScript)
             /// @todo Don't do this here.
             if(scriptNum < 1 || scriptNum > 99) return false;
 
-            if(acScriptSys().hasScript(scriptNum))
+            if(acscriptSys().hasScript(scriptNum))
             {
-                if(acScriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
+                if(acscriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
                                                          plr->plr->mo, nullptr, 0))
                 {
                     de::String msg = de::String("Running script %1").arg(scriptNum);

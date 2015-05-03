@@ -1,7 +1,7 @@
 /** @file mapobject.h  Base class for all world map objects.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2013-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -73,6 +73,10 @@ public:
      */
     de::Vector3d const &origin() const;
 
+    inline de::ddouble x() const { return origin().x; }
+    inline de::ddouble y() const { return origin().y; }
+    inline de::ddouble z() const { return origin().z; }
+
     /**
      * Change the origin of the object in map space.
      *
@@ -119,7 +123,7 @@ public:
      *
      * @see setIndexInMap()
      */
-    int indexInMap() const;
+    de::dint indexInMap() const;
 
     /**
      * Change the "in-map" index attributed to the map object.
@@ -129,12 +133,12 @@ public:
      *
      * @see indexInMap()
      */
-    void setIndexInMap(int newIndex = NoIndex);
+    void setIndexInMap(de::dint newIndex = NoIndex);
 
 private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace de
+}  // namespace de
 
-#endif // DENG_WORLD_MAPOBJECT_H
+#endif  // DENG_WORLD_MAPOBJECT_H

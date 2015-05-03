@@ -1,7 +1,7 @@
-/** @file r_things.h Map Object => Vissprite Projection.
+/** @file r_things.h  Map Object => Vissprite Projection.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -25,9 +25,9 @@
 #include "world/p_object.h"
 
 /**
- * Generates a vissprite for a mobj if it might be visible.
+ * Generates vissprite(s) for given map-object if they might be visible.
  */
-void R_ProjectSprite(mobj_t *mobj);
+void R_ProjectSprite(mobj_t &mob);
 
-#endif // DENG_CLIENT_RENDER_THINGS_H
-#endif // __CLIENT__
+#endif  // DENG_CLIENT_RENDER_THINGS_H
+#endif  // __CLIENT__

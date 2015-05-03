@@ -1,7 +1,7 @@
-/** @file thinkers.cpp World map thinker management.
+/** @file thinkers.cpp  World map thinker management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -86,15 +86,15 @@ struct ThinkerList
         sentinel.prev = &th;
     }
 
-    int count(int *numInStasis) const
+    dint count(dint *numInStasis) const
     {
-        int num = 0;
+        dint num = 0;
         thinker_t *th = sentinel.next;
         while(th != &sentinel.base() && th)
         {
 #ifdef LIBDENG_FAKE_MEMORY_ZONE
-            DENG_ASSERT(th->next != 0);
-            DENG_ASSERT(th->prev != 0);
+            DENG2_ASSERT(th->next);
+            DENG2_ASSERT(th->prev);
 #endif
             num += 1;
             if(numInStasis && Thinker_InStasis(th))
@@ -104,28 +104,6 @@ struct ThinkerList
             th = th->next;
         }
         return num;
-    }
-
-    int iterate(int (*callback) (thinker_t *, void *), void *parameters = 0)
-    {
-        int result = false;
-
-        thinker_t *th = sentinel.next;
-        while(th != &sentinel.base() && th)
-        {
-#ifdef LIBDENG_FAKE_MEMORY_ZONE
-            DENG_ASSERT(th->next != 0);
-            DENG_ASSERT(th->prev != 0);
-#endif
-            thinker_t *next = th->next;
-
-            result = callback(th, parameters);
-            if(result) break;
-
-            th = next;
-        }
-
-        return result;
     }
 
     void releaseAll()
@@ -141,20 +119,16 @@ typedef QHash<thid_t, mobj_t *> MobjHash;
 
 DENG2_PIMPL(Thinkers)
 {
-    typedef QList<ThinkerList *> Lists;
+    dint idtable[2048];     ///< 65536 bits telling which IDs are in use.
+    dushort iddealer = 0;
 
-    int idtable[2048]; // 65536 bits telling which IDs are in use.
-    ushort iddealer;
+    QList<ThinkerList *> lists;
 
-    Lists lists;
-    bool inited;
+    MobjHash mobjIdLookup;  ///< public only
 
-    MobjHash mobjIdLookup; // public only
+    bool inited = false;
 
-    Instance(Public *i)
-        : Base(i),
-          iddealer(0),
-          inited(false)
+    Instance(Public *i) : Base(i)
     {
         clearMobjIds();
     }
@@ -172,7 +146,7 @@ DENG2_PIMPL(Thinkers)
 
     void releaseAllThinkers()
     {
-        foreach(ThinkerList *list, lists)
+        for(ThinkerList *list : lists)
         {
             list->releaseAll();
         }
@@ -180,8 +154,8 @@ DENG2_PIMPL(Thinkers)
 
     void clearMobjIds()
     {
-        zap(idtable);
-        idtable[0] |= 1; // ID zero is always "used" (it's not a valid ID).
+        de::zap(idtable);
+        idtable[0] |= 1;  // ID zero is always "used" (it's not a valid ID).
 
         mobjIdLookup.clear();
     }
@@ -201,14 +175,14 @@ DENG2_PIMPL(Thinkers)
     ThinkerList *listForThinkFunc(thinkfunc_t func, bool makePublic = true,
                                   bool canCreate = false)
     {
-        for(int i = 0; i < lists.count(); ++i)
+        for(dint i = 0; i < lists.count(); ++i)
         {
             ThinkerList *list = lists[i];
             if(list->function() == func && list->isPublic == makePublic)
                 return list;
         }
 
-        if(!canCreate) return 0;
+        if(!canCreate) return nullptr;
 
         // A new thinker type.
         lists.append(new ThinkerList(func, makePublic));
@@ -226,20 +200,20 @@ bool Thinkers::isUsedMobjId(thid_t id)
 
 void Thinkers::setMobjId(thid_t id, bool inUse)
 {
-    int c = id >> 5, bit = 1 << (id & 31); //(id % 32);
+    dint c = id >> 5, bit = 1 << (id & 31); //(id % 32);
 
     if(inUse) d->idtable[c] |= bit;
     else      d->idtable[c] &= ~bit;
 }
 
-struct mobj_s *Thinkers::mobjById(int id)
+struct mobj_s *Thinkers::mobjById(dint id)
 {
     MobjHash::const_iterator found = d->mobjIdLookup.constFind(id);
     if(found != d->mobjIdLookup.constEnd())
     {
         return found.value();
     }
-    return 0;
+    return nullptr;
 }
 
 void Thinkers::add(thinker_t &th, bool makePublic)
@@ -266,7 +240,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
     }
     else
     {
-        th.id = 0; // Zero is not a valid ID.
+        th.id = 0;  // Zero is not a valid ID.
     }
 
     // Link the thinker to the thinker list.
@@ -286,12 +260,12 @@ void Thinkers::remove(thinker_t &th)
 
 #ifdef __SERVER__
         // Then it must be a mobj.
-        mobj_t *mo = reinterpret_cast<mobj_t *>(&th);
+        auto  *mob = reinterpret_cast<mobj_t *>(&th);
 
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
-        if(!mo->state || !runtimeDefs.states.indexOf(mo->state))
+        if(!mob->state || !runtimeDefs.states.indexOf(mob->state))
         {
             Sv_MobjRemoved(th.id);
         }
@@ -303,7 +277,7 @@ void Thinkers::remove(thinker_t &th)
     Thinker::release(th);
 }
 
-void Thinkers::initLists(byte flags)
+void Thinkers::initLists(dbyte flags)
 {
     if(!d->inited)
     {
@@ -311,7 +285,7 @@ void Thinkers::initLists(byte flags)
     }
     else
     {
-        for(int i = 0; i < d->lists.count(); ++i)
+        for(dint i = 0; i < d->lists.count(); ++i)
         {
             ThinkerList *list = d->lists[i];
 
@@ -331,53 +305,95 @@ bool Thinkers::isInited() const
     return d->inited;
 }
 
-int Thinkers::iterate(thinkfunc_t func, byte flags,
-    int (*callback) (thinker_t *, void *), void *context)
+LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)> func) const
 {
-    if(!d->inited) return false;
+    if(!d->inited) return LoopContinue;
 
-    int result = false;
-    if(func)
-    {
-        // We might have both public and shared lists for this func.
-        if(flags & 0x1)
-        {
-            if(ThinkerList *list = d->listForThinkFunc(func))
-            {
-                result = list->iterate(callback, context);
-            }
-        }
-
-        if(!result && (flags & 0x2))
-        {
-            if(ThinkerList *list = d->listForThinkFunc(func, false /*not public*/))
-            {
-                result = list->iterate(callback, context);
-            }
-        }
-
-        return result;
-    }
-
-    for(int i = 0; i < d->lists.count(); ++i)
+    for(dint i = 0; i < d->lists.count(); ++i)
     {
         ThinkerList *list = d->lists[i];
 
-        if(list->isPublic && !(flags & 0x1)) continue;
+        if( list->isPublic && !(flags & 0x1)) continue;
         if(!list->isPublic && !(flags & 0x2)) continue;
 
-        result = list->iterate(callback, context);
-        if(result) break;
+        thinker_t *th = list->sentinel.next;
+        while(th != &list->sentinel.base() && th)
+        {
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
+            DENG2_ASSERT(th->next);
+            DENG2_ASSERT(th->prev);
+#endif
+            thinker_t *next = th->next;
+
+            if(auto result = func(th))
+                return result;
+
+            th = next;
+        }
     }
-    return result;
+
+    return LoopContinue;
 }
 
-int Thinkers::count(int *numInStasis) const
+LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<LoopResult (thinker_t *)> func) const
 {
-    int total = 0;
+    if(!d->inited) return LoopContinue;
+
+    if(!thinkFunc)
+    {
+        return forAll(flags, func);
+    }
+
+    if(flags & 0x1 /*public*/)
+    {
+        if(ThinkerList *list = d->listForThinkFunc(thinkFunc))
+        {
+            thinker_t *th = list->sentinel.next;
+            while(th != &list->sentinel.base() && th)
+            {
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
+                DENG2_ASSERT(th->next);
+                DENG2_ASSERT(th->prev);
+#endif
+                thinker_t *next = th->next;
+
+                if(auto result = func(th))
+                    return result;
+
+                th = next;
+            }
+        }
+    }
+    if(flags & 0x2 /*private*/)
+    {
+        if(ThinkerList *list = d->listForThinkFunc(thinkFunc, false /*private*/))
+        {
+            thinker_t *th = list->sentinel.next;
+            while(th != &list->sentinel.base() && th)
+            {
+#ifdef LIBDENG_FAKE_MEMORY_ZONE
+                DENG2_ASSERT(th->next);
+                DENG2_ASSERT(th->prev);
+#endif
+                thinker_t *next = th->next;
+
+                if(auto result = func(th))
+                    return result;
+
+                th = next;
+            }
+        }
+    }
+
+    return LoopContinue;
+}
+
+dint Thinkers::count(dint *numInStasis) const
+{
+    dint total = 0;
     if(isInited())
     {
-        for(int i = 0; i < d->lists.count(); ++i)
+        for(dint i = 0; i < d->lists.count(); ++i)
         {
             ThinkerList *list = d->lists[i];
             total += list->count(numInStasis);
@@ -390,41 +406,6 @@ static void unlinkThinkerFromList(thinker_t *th)
 {
     th->next->prev = th->prev;
     th->prev->next = th->next;
-}
-
-static int runThinker(thinker_t *th, void * /*context*/)
-{
-    if(Thinker_InStasis(th)) return false; // Skip and continue.
-
-    // Time to remove it?
-    if(th->function == (thinkfunc_t) -1)
-    {
-        unlinkThinkerFromList(th);
-
-        if(th->id)
-        {
-            // Recycle for reduced allocation overhead.
-            P_MobjRecycle((mobj_t *) th);
-        }
-        else
-        {
-            // Non-mobjs are just deleted right away.
-            Thinker::destroy(th);
-        }
-    }
-    else if(th->function)
-    {
-        // Create a private data instance of appropriate type.
-        if(th->d == nullptr) Thinker_InitPrivateData(th);
-
-        // Public thinker callback.
-        th->function(th);
-
-        // Private thinking.
-        if(th->d) THINKER_DATA(*th, Thinker::IData).think();
-    }
-
-    return false; // Continue iteration.
 }
 
 } // namespace de
@@ -458,10 +439,10 @@ void Thinker_InitPrivateData(thinker_t *th)
  * Locates a mobj by it's unique identifier in the CURRENT map.
  */
 #undef Mobj_ById
-DENG_EXTERN_C struct mobj_s *Mobj_ById(int id)
+DENG_EXTERN_C struct mobj_s *Mobj_ById(dint id)
 {
     /// @todo fixme: Do not assume the current map.
-    if(!App_WorldSystem().hasMap()) return 0;
+    if(!App_WorldSystem().hasMap()) return nullptr;
     return App_WorldSystem().map().thinkers().mobjById(id);
 }
 
@@ -470,7 +451,7 @@ void Thinker_Init()
 {
     /// @todo fixme: Do not assume the current map.
     if(!App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().initLists(0x1); // Init the public thinker lists.
+    App_WorldSystem().map().thinkers().initLists(0x1);  // Init the public thinker lists.
 }
 
 #undef Thinker_Run
@@ -478,7 +459,40 @@ void Thinker_Run()
 {
     /// @todo fixme: Do not assume the current map.
     if(!App_WorldSystem().hasMap()) return;
-    App_WorldSystem().map().thinkers().iterate(NULL, 0x1 | 0x2, runThinker);
+
+    App_WorldSystem().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
+    {
+        if(Thinker_InStasis(th)) return LoopContinue; // Skip.
+
+        // Time to remove it?
+        if(th->function == (thinkfunc_t) -1)
+        {
+            unlinkThinkerFromList(th);
+
+            if(th->id)
+            {
+                // Recycle for reduced allocation overhead.
+                P_MobjRecycle((mobj_t *) th);
+            }
+            else
+            {
+                // Non-mobjs are just deleted right away.
+                Thinker::destroy(th);
+            }
+        }
+        else if(th->function)
+        {
+            // Create a private data instance of appropriate type.
+            if(th->d == nullptr) Thinker_InitPrivateData(th);
+
+            // Public thinker callback.
+            th->function(th);
+
+            // Private thinking.
+            if(th->d) THINKER_DATA(*th, Thinker::IData).think();
+        }
+        return LoopContinue;
+    });
 }
 
 #undef Thinker_Add
@@ -496,10 +510,14 @@ void Thinker_Remove(thinker_t *th)
 }
 
 #undef Thinker_Iterate
-int Thinker_Iterate(thinkfunc_t func, int (*callback) (thinker_t *, void *), void *context)
+dint Thinker_Iterate(thinkfunc_t func, dint (*callback) (thinker_t *, void *), void *context)
 {
-    if(!App_WorldSystem().hasMap()) return false; // Continue iteration.
-    return App_WorldSystem().map().thinkers().iterate(func, 0x1, callback, context);
+    if(!App_WorldSystem().hasMap()) return false;  // Continue iteration.
+
+    return App_WorldSystem().map().thinkers().forAll(func, 0x1, [&callback, &context] (thinker_t *th)
+    {
+        return callback(th, context);
+    });
 }
 
 DENG_DECLARE_API(Thinker) =

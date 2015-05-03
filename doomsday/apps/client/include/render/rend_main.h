@@ -33,6 +33,7 @@
 
 class Sector;
 class SectorCluster;
+struct VectorLightData;
 
 namespace de {
 class Map;
@@ -119,6 +120,7 @@ DENG_EXTERN_C dd_bool noHighResPatches;
 DENG_EXTERN_C dd_bool highResWithPWAD;
 DENG_EXTERN_C byte loadExtAlways;
 
+DENG_EXTERN_C int devNoCulling;
 DENG_EXTERN_C byte devRendSkyAlways;
 DENG_EXTERN_C byte rendInfoLums;
 DENG_EXTERN_C byte devDrawLums;
@@ -127,8 +129,6 @@ DENG_EXTERN_C byte freezeRLs;
 
 void Rend_Register();
 
-void Rend_Init();
-void Rend_Shutdown();
 void Rend_Reset();
 
 /// @return @c true iff multitexturing is currently enabled for lights.
@@ -235,6 +235,20 @@ de::Vector3f Rend_LuminousColor(de::Vector3f const &color, float light);
 coord_t Rend_PlaneGlowHeight(float intensity);
 
 /**
+ * @param point         World space point to evaluate.
+ * @param ambientColor  Ambient color of the object being lit.
+ * @param subspace      Subspace in which @a origin resides.
+ * @param starkLight    @c true= World light has a more pronounced affect.
+ *
+ * @todo Does not belong here.
+ */
+de::duint Rend_CollectAffectingLights(de::Vector3d const &point,
+    de::Vector3f const &ambientColor = de::Vector3f(1, 1, 1), ConvexSubspace *subspace = nullptr,
+    bool starkLight = false);
+
+void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha);
+
+/**
  * Selects a Material for the given map @a surface considering the current map
  * renderer configuration.
  */
@@ -243,8 +257,9 @@ Material *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
+TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
 
+TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
 TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
 
 void R_DivVerts(de::Vector3f *dst, de::Vector3f const *src,
