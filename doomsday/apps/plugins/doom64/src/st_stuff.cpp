@@ -67,24 +67,38 @@ enum {
 typedef struct {
     dd_bool inited;
     dd_bool stopped;
-    int hideTics;
-    float hideAmount;
-    float alpha; // Fullscreen hud alpha value.
-    dd_bool statusbarActive; // Whether the HUD is on.
-    int automapCheatLevel; /// \todo Belongs in player state?
+    int     hideTics;
+    float   hideAmount;
+    // Fullscreen HUD alpha
+    float   alpha; 
+    // HUD enabled?
+    dd_bool statusbarActive; 
+    int     automapCheatLevel; 
+    int     widgetGroupIds[NUM_UIWIDGET_GROUPS];
+    int     automapWidgetId;
+    int     chatWidgetId;
+    int     logWidgetId;
+    // TODO extract
+    int     currentFragsCount; 
 
-    int widgetGroupIds[NUM_UIWIDGET_GROUPS];
-    int automapWidgetId;
-    int chatWidgetId;
-    int logWidgetId;
+    // HUD UI State
+    // ==============================================
 
-    dd_bool firstTime;  // ST_Start() has just been called.
-    int currentFragsCount; // Number of frags so far in deathmatch.
+    // Statusbar 
+    guidata_health_t        health;
+    guidata_readyammoicon_t ammoIcon;
+    guidata_readyammo_t     ammoCount;
+    guidata_armor_t         sbarArmor;
+    guidata_keys_t          keys;
+    guidata_keys_t          demonKeys;
 
     // Other:
-    guidata_automap_t automap;
-    guidata_chat_t chat;
-    guidata_log_t log;
+    guidata_automap_t       automap;
+    guidata_chat_t          chat;
+    guidata_log_t           log;
+    guidata_secrets_t       secrets;
+    guidata_items_t         items;
+    guidata_kills_t         kills;
 } hudstate_t;
 
 typedef enum hotloc_e {
@@ -296,7 +310,6 @@ void ST_doRefresh(int player)
         return;
 
     hud = &hudStates[player];
-    hud->firstTime = false;
 
     drawWidgets(hud);
 }
@@ -540,7 +553,6 @@ void ST_Drawer(int player)
     R_UpdateViewFilter(player);
 
     hudstate_t* hud = &hudStates[player];
-    hud->firstTime = hud->firstTime;
     hud->statusbarActive = (headupDisplayMode(player) < 2) || (ST_AutomapIsActive(player) && (cfg.common.automapHudDisplay == 0 || cfg.common.automapHudDisplay == 2));
 
     drawUIWidgetsForPlayer(players + player);
@@ -555,7 +567,6 @@ static void initData(hudstate_t* hud)
 {
     int player = hud - hudStates;
 
-    hud->firstTime = true;
     hud->statusbarActive = true;
     hud->stopped = true;
     hud->alpha = 0.f;
