@@ -1,7 +1,7 @@
-/** @file vissprite.cpp Projected visible sprite ("vissprite") management.
+/** @file vissprite.cpp  Projected visible sprite ("vissprite") management.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  * @authors Copyright © 1993-1996 by id Software, Inc.
  *
@@ -21,9 +21,6 @@
  */
 
 #include "de_base.h"
-#include "de_render.h"
-#include "de_resource.h"
-
 #include "render/vissprite.h"
 
 using namespace de;
@@ -55,16 +52,16 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
         spr = visSpriteP - 1;
     }
 
-    zapPtr(spr);
+    de::zapPtr(spr);
     spr->type = type;
 
     return spr;
 }
 
 void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    float /*secFloor*/, float /*secCeil*/, float /*floorClip*/, float /*top*/,
+    dfloat /*secFloor*/, dfloat /*secCeil*/, dfloat /*floorClip*/, dfloat /*top*/,
     Material &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
-    int tClass, int tMap, BspLeaf *bspLeafAtOrigin,
+    dint tClass, dint tMap, BspLeaf *bspLeafAtOrigin,
     bool /*floorAdjust*/, bool /*fitTop*/, bool /*fitBottom*/)
 {
     drawspriteparams_t &p = *VS_SPRITE(spr);
@@ -76,21 +73,21 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
                  (spec.primarySpec->variant.flags & TSF_HAS_COLORPALETTE_XLAT));
 
     spr->pose = pose;
-    p.bspLeaf         = bspLeafAtOrigin;
-    p.noZWrite        = noSpriteZWrite;
+    p.bspLeaf     = bspLeafAtOrigin;
+    p.noZWrite    = noSpriteZWrite;
 
-    p.matAnimator     = matAnimator;
-    p.matFlip[0]      = matFlipS;
-    p.matFlip[1]      = matFlipT;
-    p.blendMode       = (useSpriteBlend? blendMode : BM_NORMAL);
+    p.matAnimator = matAnimator;
+    p.matFlip[0]  = matFlipS;
+    p.matFlip[1]  = matFlipT;
+    p.blendMode   = (useSpriteBlend? blendMode : BM_NORMAL);
 
     spr->light = light;
     spr->light.ambientColor[3] = (useSpriteAlpha? light.ambientColor.w : 1);
 }
 
 void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
-    ModelDef *mf, ModelDef *nextMF, float inter,
-    int id, int selector, BspLeaf * /*bspLeafAtOrigin*/, int mobjDDFlags, int tmap,
+    ModelDef *mf, ModelDef *nextMF, dfloat inter,
+    dint id, dint selector, BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
 {
     drawmodelparams_t &p = *VS_MODEL(spr);
@@ -115,7 +112,7 @@ void R_SortVisSprites()
 {
     if(!visSpriteP) return;
 
-    int const count = visSpriteP - visSprites;
+    dint const count = visSpriteP - visSprites;
     if(!count) return;
 
     vissprite_t unsorted;
@@ -134,19 +131,17 @@ void R_SortVisSprites()
     // Pull the vissprites out by distance.
     visSprSortedHead.next = visSprSortedHead.prev = &visSprSortedHead;
 
-    /**
-     * @todo Optimize:
-     * Profile results from nuts.wad show over 25% of total execution time
-     * was spent sorting vissprites (nuts.wad map01 is a perfect pathological
-     * test case).
-     *
-     * Rather than try to speed up the sort, it would make more sense to
-     * actually construct the vissprites in z order if it can be done in
-     * linear time.
-     */
+    /// @todo Optimize:
+    /// Profile results from nuts.wad show over 25% of total execution time
+    /// was spent sorting vissprites (nuts.wad map01 is a perfect pathological
+    /// test case).
+    ///
+    /// Rather than try to speed up the sort, it would make more sense to
+    /// actually construct the vissprites in z order if it can be done in
+    /// linear time.
 
-    vissprite_t *best = 0;
-    for(int i = 0; i < count; ++i)
+    vissprite_t *best = nullptr;
+    for(dint i = 0; i < count; ++i)
     {
         coord_t bestdist = 0;
         for(vissprite_t *ds = unsorted.next; ds != &unsorted; ds = ds->next)

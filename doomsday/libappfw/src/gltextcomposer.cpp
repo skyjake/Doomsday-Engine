@@ -28,13 +28,14 @@ static Rangei const MAX_VISIBLE_RANGE(0, 0x7fffffff);
 
 DENG2_PIMPL(GLTextComposer)
 {    
-    Font const *font;
-    Atlas *atlas;
+    Font const *font = nullptr;
+    Atlas *atlas = nullptr;
     String text;
-    FontLineWrapping const *wraps;
+    FontLineWrapping const *wraps = nullptr;
     Font::RichFormat format;
-    bool needRedo;
-    Rangei visibleLineRange; ///< Only these lines will be updated/drawn.
+    bool needRedo = false;
+    Rangei visibleLineRange { MAX_VISIBLE_RANGE }; ///< Only these lines will be updated/drawn.
+    int maxGeneratedWidth = 0;
 
     struct Line {
         struct Segment {
@@ -53,10 +54,7 @@ DENG2_PIMPL(GLTextComposer)
     typedef QList<Line> Lines;
     Lines lines;
 
-    Instance(Public *i)
-        : Base(i), font(0), atlas(0), wraps(0), needRedo(false),
-          visibleLineRange(MAX_VISIBLE_RANGE)
-    {}
+    Instance(Public *i) : Base(i) {}
 
     ~Instance()
     {
@@ -489,6 +487,8 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
         }
     }
 
+    d->maxGeneratedWidth = 0;
+
     // Generate vertices for each line.
     for(int i = 0; i < d->wraps->height(); ++i)
     {
@@ -528,13 +528,21 @@ void GLTextComposer::makeVertices(Vertices &triStrip,
 
                 Rectanglef const uv = d->atlas->imageRectf(seg.id);
 
-                triStrip.makeQuad(Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size),
-                                  color, uv);
+                auto const segRect = Rectanglef::fromSize(linePos + Vector2f(seg.x, 0), size);
+                triStrip.makeQuad(segRect, color, uv);
+
+                // Keep track of how wide the geometry really is.
+                d->maxGeneratedWidth = de::max(d->maxGeneratedWidth, int(segRect.right() - p.x));
             }
         }
 
         p.y += d->font->lineSpacing().value();
     }
+}
+
+int GLTextComposer::verticesMaxWidth() const
+{
+    return d->maxGeneratedWidth;
 }
 
 } // namespace de

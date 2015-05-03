@@ -1130,7 +1130,7 @@ void Interpreter::think()
 
 System &Interpreter::scriptSys() const
 {
-    return Game_ACScriptSystem();
+    return COMMON_GAMESESSION->acsSystem();
 }
 
 Script &Interpreter::script() const

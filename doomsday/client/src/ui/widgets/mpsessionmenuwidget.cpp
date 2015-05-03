@@ -146,12 +146,12 @@ DENG_GUI_PIMPL(MPSessionMenuWidget)
                 }
 
                 serverinfo_t const &sv = item.info();
-                loadButton().setText(String(_E(F)_E(s) "%2\n" _E(.)_E(.)_E(C) "(%4) " _E(.)
-                                            _E(1)_E(>) "%1" _E(.)_E(<)_E(D)_E(l) "\n%5 %3")
+                loadButton().setText(String(_E(F)_E(s) "%2\n" _E(.)_E(.)
+                                            _E(1) "%1" _E(.)_E(C) "%4" _E(.)_E(D)_E(l) "\n%5 %3")
                                .arg(sv.name)
                                .arg(svGame.title())
                                .arg(sv.gameConfig)
-                               .arg(sv.numPlayers)
+                               .arg(sv.numPlayers? QString(" " DENG2_CHAR_MDASH " %1").arg(sv.numPlayers) : QString())
                                .arg(sv.map));
 
                 // Extra information.

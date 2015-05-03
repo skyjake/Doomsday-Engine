@@ -44,10 +44,14 @@ DENG2_PIMPL(ClientWindowSystem)
         self.setStyle(new ClientStyle);
         self.style().load(App::packageLoader().load("net.dengine.client.defaultstyle"));
 
-        settings.define(SettingsRegister::ConfigVariable, "window.main.showFps")
-                .define(SettingsRegister::ConfigVariable, "window.main.fsaa")
-                .define(SettingsRegister::ConfigVariable, "window.main.vsync")
-                .define(SettingsRegister::ConfigVariable, "render.pixelDensity");
+        using SReg = SettingsRegister;
+        settings.define(SReg::ConfigVariable, "window.main.showFps")
+                .define(SReg::ConfigVariable, "window.main.fsaa")
+                .define(SReg::ConfigVariable, "window.main.vsync")
+                .define(SReg::IntCVar,        "rend-finale-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "rend-hud-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "inlude-stretch", SCALEMODE_SMART_STRETCH)
+                .define(SReg::IntCVar,        "menu-stretch", SCALEMODE_SMART_STRETCH);
     }
 };
 

@@ -71,7 +71,7 @@ static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     if(G_Ruleset_Skill() == SM_BABY ||
        G_Ruleset_Skill() == SM_NIGHTMARE)
     {
-        numRounds += numRounds / 1;
+        numRounds += numRounds >> 1;
     }
 
     // Given the new ammo the player may want to change weapon automatically.

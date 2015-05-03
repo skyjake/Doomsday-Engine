@@ -103,6 +103,14 @@ static int loadPlugin(void * /*libraryFile*/, char const *fileName, char const *
     ::Library *plugin = Library_New(pluginPath);
     if(!plugin)
     {
+#ifdef UNIX
+        String const fn = Path(pluginPath).fileName();
+        if(fn.contains("libfmodex") || fn.contains("libassimp"))
+        {
+            // No need to warn about these shared libs.
+            return 0;
+        }
+#endif
         LOG_RES_WARNING("Failed to load \"%s\": %s") << pluginPath << Library_LastError();
         return 0; // Continue iteration.
     }

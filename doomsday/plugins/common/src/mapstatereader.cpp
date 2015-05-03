@@ -23,7 +23,6 @@
 #include <de/ArrayValue>
 #include <de/NativePath>
 #include <de/String>
-#include "acs/system.h"
 #include "d_netsv.h"           /// @todo remove me
 #include "dmu_lib.h"
 #include "dmu_archiveindex.h"
@@ -666,7 +665,7 @@ DENG2_PIMPL(MapStateReader)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        Game_ACScriptSystem().readMapState(thisPublic);
+        COMMON_GAMESESSION->acsSystem().readMapState(thisPublic);
         // endSegment();
 #endif
     }

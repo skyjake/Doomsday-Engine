@@ -108,8 +108,7 @@ void Cl_CleanUp()
     Cl_ResetTransTables();
 
     // Reset any view effects.
-    GL_SetFilter(false);
-    Con_Executef(CMDS_DDAY, true, "postfx %i none", consolePlayer);
+    GL_ResetViewEffects();
     
     // Forget all packets we've received but haven't yet handled.
     N_ClearMessages();

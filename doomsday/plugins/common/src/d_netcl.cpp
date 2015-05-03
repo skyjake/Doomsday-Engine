@@ -32,6 +32,7 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_start.h"
+#include "r_common.h"
 #include "player.h"
 #include "st_stuff.h"
 
@@ -647,7 +648,7 @@ void NetCl_Intermission(reader_s *msg)
             ST_CloseAll(i, true/*fast*/);
         }
 
-        GL_SetFilter(false);
+        G_ResetViewEffects();
 
 #if __JHEXEN__
         SN_StopAllSequences();

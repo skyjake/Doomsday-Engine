@@ -67,11 +67,9 @@
 #  include "Lumobj"
 #  include "MaterialAnimator"
 #  include "render/viewports.h" // R_ResetViewer
-#  include "render/projector.h"
 #  include "render/rend_fakeradio.h"
 #  include "render/rend_main.h"
 #  include "render/skydrawable.h"
-#  include "render/vlight.h"
 #endif
 
 #ifdef __SERVER__
@@ -84,6 +82,18 @@ int validCount = 1; // Increment every time a check is made.
 
 #ifdef __CLIENT__
 static float handDistance = 300; //cvar
+#endif
+
+static inline ResourceSystem &resSys()
+{
+    return App_ResourceSystem();
+}
+
+#ifdef __CLIENT__
+static inline RenderSystem &rendSys()
+{
+    return ClientApp::renderSystem();
+}
 #endif
 
 /**
@@ -482,7 +492,7 @@ DENG2_PIMPL(WorldSystem)
         map->sky().configure(&skyDef);
 
         // Set up the SkyDrawable to get its config from the map's Sky.
-        skyAnimator.setSky(&ClientApp::renderSystem().sky().configure(&map->sky()));
+        skyAnimator.setSky(&rendSys().sky().configure(&map->sky()));
 #endif
 
         // Init the thinker lists (public and private).
@@ -585,12 +595,12 @@ DENG2_PIMPL(WorldSystem)
         Con_SetProgress(100);
         Time begunPrecacheAt;
         // Sky models usually have big skins.
-        ClientApp::renderSystem().sky().cacheAssets();
-        App_ResourceSystem().cacheForCurrentMap();
-        App_ResourceSystem().processCacheQueue();
+        rendSys().sky().cacheAssets();
+        resSys().cacheForCurrentMap();
+        resSys().processCacheQueue();
         LOG_RES_VERBOSE("Precaching completed in %.2f seconds") << begunPrecacheAt.since();
 
-        ClientApp::renderSystem().clearDrawLists();
+        rendSys().clearDrawLists();
         R_InitRendPolyPools();
         Rend_UpdateLightModMatrix();
 
@@ -598,13 +608,12 @@ DENG2_PIMPL(WorldSystem)
 
         map->initContactBlockmaps();
         R_InitContactLists(*map);
-        Rend_ProjectorInitForMap(*map);
-        VL_InitForMap(*map); // Converted vlights (from lumobjs).
-        map->initBias(); // Shadow bias sources and surfaces.
+        rendSys().worldSystemMapChanged(*map);
+        map->initBias();      // Shadow bias sources and surfaces.
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
-        App_ResourceSystem().forAllMaterials([] (Material &material)
+        resSys().forAllMaterials([] (Material &material)
         {
             return material.forAllAnimators([] (MaterialAnimator &animator)
             {
@@ -794,7 +803,7 @@ bool WorldSystem::changeMap(de::Uri const &mapUri)
 
     if(!mapUri.path().isEmpty())
     {
-        mapDef = App_ResourceSystem().mapDef(mapUri);
+        mapDef = resSys().mapDef(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.
@@ -901,16 +910,18 @@ void WorldSystem::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
     d->skyAnimator.advanceTime(elapsed);
-#else
-    DENG2_UNUSED(elapsed);
-#endif
 
     if(DD_IsSharpTick() && d->map)
     {
-        // Check all mobjs (always public).
-        d->map->thinkers().iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1,
-                                   P_MobjTicker);
+        d->map->thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
+        {
+            Mobj_AnimateHaloOcclussion(*reinterpret_cast<mobj_t *>(th));
+            return LoopContinue;
+        });
     }
+#else
+    DENG2_UNUSED(elapsed);
+#endif
 }
 
 #ifdef __CLIENT__
