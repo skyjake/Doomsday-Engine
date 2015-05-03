@@ -35,7 +35,7 @@ DENG2_PIMPL_NOREF(InputDevice::Control)
 {
     String name;  ///< Symbolic
     InputDevice *device = nullptr;
-    BindContextAssociation flags { DefaultFlags };
+    BindContextAssociation flags = DefaultFlags;
     BindContext *bindContext     = nullptr;
     BindContext *prevBindContext = nullptr;
 };
