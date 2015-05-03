@@ -1,7 +1,7 @@
 /** @file plane.h  World map plane.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -35,7 +35,7 @@ DENG2_PIMPL(Plane)
     Surface surface;
     ThinkerT<SoundEmitter> soundEmitter;
 
-    int indexInSector = -1;           ///< Index in the owning sector.
+    dint indexInSector = -1;          ///< Index in the owning sector.
 
     coord_t height = 0;               ///< Current @em sharp height.
     coord_t targetHeight = 0;         ///< Target @em sharp height.
@@ -111,31 +111,20 @@ DENG2_PIMPL(Plane)
     }
 
 #ifdef __CLIENT__
-    struct findgeneratorworker_params_t
-    {
-        Plane *plane;
-        Generator *found;
-    };
-
-    static int findGeneratorWorker(Generator *gen, void *context)
-    {
-        findgeneratorworker_params_t *p = (findgeneratorworker_params_t *)context;
-        if(gen->plane == p->plane)
-        {
-            p->found = gen;
-            return true; // Stop iteration.
-        }
-        return false; // Continue iteration.
-    }
-
     /// @todo Cache this result.
-    Generator *findGenerator()
+    Generator *tryFindGenerator()
     {
-        findgeneratorworker_params_t parm;
-        parm.plane = thisPublic;
-        parm.found = 0;
-        map().generatorIterator(findGeneratorWorker, &parm);
-        return parm.found;
+        Generator *found = nullptr;
+        map().forAllGenerators([this, &found] (Generator &gen)
+        {
+            if(gen.plane == thisPublic)
+            {
+                found = &gen;
+                return LoopAbort;  // Found it.
+            }
+            return LoopContinue;
+        });
+        return found;
     }
 #endif
 
@@ -182,12 +171,12 @@ Sector const &Plane::sector() const
     return parent().as<Sector>();
 }
 
-int Plane::indexInSector() const
+dint Plane::indexInSector() const
 {
     return d->indexInSector;
 }
 
-void Plane::setIndexInSector(int newIndex)
+void Plane::setIndexInSector(dint newIndex)
 {
     d->indexInSector = newIndex;
 }
@@ -231,9 +220,9 @@ void Plane::updateSoundEmitterOrigin()
 {
     LOG_AS("Plane::updateSoundEmitterOrigin");
 
-    d->soundEmitter->origin[VX] = sector().soundEmitter().origin[VX];
-    d->soundEmitter->origin[VY] = sector().soundEmitter().origin[VY];
-    d->soundEmitter->origin[VZ] = d->height;
+    d->soundEmitter->origin[0] = sector().soundEmitter().origin[0];
+    d->soundEmitter->origin[1] = sector().soundEmitter().origin[1];
+    d->soundEmitter->origin[2] = d->height;
 }
 
 coord_t Plane::height() const
@@ -310,15 +299,12 @@ void Plane::updateHeightTracking()
 
 bool Plane::hasGenerator() const
 {
-    return d->findGenerator() != 0;
+    return d->tryFindGenerator() != nullptr;
 }
 
 Generator &Plane::generator() const
 {
-    if(Generator *gen = d->findGenerator())
-    {
-        return *gen;
-    }
+    if(Generator *gen = d->tryFindGenerator()) return *gen;
     /// @throw MissingGeneratorError No generator is attached.
     throw MissingGeneratorError("Plane::generator", "No generator is attached");
 }
@@ -330,7 +316,7 @@ void Plane::spawnParticleGen(ded_ptcgen_t const *def)
     if(!def) return;
 
     // Plane we spawn relative to may not be this one.
-    int relPlane = indexInSector();
+    dint relPlane = indexInSector();
     if(def->flags & Generator::SpawnCeiling)
         relPlane = Sector::Ceiling;
     if(def->flags & Generator::SpawnFloor)
@@ -393,13 +379,13 @@ void Plane::removeMover(ClPlaneMover &mover)
 {
     if(d->mover == &mover)
     {
-        d->mover = 0;
+        d->mover = nullptr;
     }
 }
 
 #endif // __CLIENT__
 
-int Plane::property(DmuArgs &args) const
+dint Plane::property(DmuArgs &args) const
 {
     switch(args.prop)
     {
@@ -423,10 +409,10 @@ int Plane::property(DmuArgs &args) const
         return MapElement::property(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }
 
-int Plane::setProperty(DmuArgs const &args)
+dint Plane::setProperty(DmuArgs const &args)
 {
     switch(args.prop)
     {
@@ -445,5 +431,5 @@ int Plane::setProperty(DmuArgs const &args)
         return MapElement::setProperty(args);
     }
 
-    return false; // Continue iteration.
+    return false;  // Continue iteration.
 }

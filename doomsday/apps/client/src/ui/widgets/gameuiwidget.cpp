@@ -1,7 +1,7 @@
 /** @file gameuiwidget.cpp  Widget for legacy game UI elements.
  *
  * @authors Copyright © 2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2014-2015 Daniel Swanson <danij@dengine.net>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -17,21 +17,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "de_base.h"
 #include "ui/widgets/gameuiwidget.h"
 
-#include "de_base.h"
-#include "de_console.h"
-#include "de_ui.h"
-#include "de_render.h"
+#include <de/GLState>
+
+#include "api_console.h"
+#include "edit_bias.h"
+
 #include "audio/s_main.h"
 #include "network/net_main.h"
 #include "gl/gl_main.h"
-#include "edit_bias.h"
+
+#include "world/map.h"
+
+#include "render/rend_main.h"
+
 #include "ui/busyvisual.h"
 #include "ui/infine/finaleinterpreter.h"
 #include "ui/infine/finalepagewidget.h"
-
-#include <de/GLState>
 
 using namespace de;
 
