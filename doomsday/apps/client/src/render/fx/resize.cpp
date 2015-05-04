@@ -17,6 +17,7 @@
  */
 
 #include "render/fx/resize.h"
+#include "render/fx/bloom.h"
 #include "ui/clientwindow.h"
 #include "clientapp.h"
 
@@ -64,6 +65,10 @@ DENG2_PIMPL(Resize)
 
     float factor() const
     {
+        // This kind of scaling is not compatible with Oculus Rift -- LibOVR does its
+        // own pixel density scaling.
+        if(ClientApp::vr().mode() == VRConfig::OculusRift) return 1.f;
+
         getConfig();
     
         double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
@@ -73,10 +78,13 @@ DENG2_PIMPL(Resize)
     /// Determines if the post-processing shader will be applied.
     bool isActive() const
     {
-        // This kind of scaling is not compatible with Oculus Rift -- LibOVR does its
-        // own pixel density scaling.
-        if(ClientApp::vr().mode() == VRConfig::OculusRift) return false;
-
+        // The resize filter is at the bottom of the effects stack. The bloom filter
+        // requires a texture-backed framebuffer, so that the frame contents can be
+        // processed in a shader. However, the default window framebuffer is not
+        // texture-backed, so if bloom is on we must always activate the resizing
+        // filter's framebuffer so bloom can access its contents.
+        if(Bloom::isEnabled()) return true;
+        
         return !fequal(factor(), 1.f);
     }
     
