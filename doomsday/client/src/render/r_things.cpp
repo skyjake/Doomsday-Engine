@@ -215,7 +215,7 @@ void R_ProjectSprite(mobj_t &mob)
     try
     {
         SpriteViewAngle const &sprViewAngle =
-            sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin), !mf);
+            sprite->closestViewAngle(mob.angle, R_ViewPointToAngle(mob.origin), !!mf);
 
         mat      = sprViewAngle.material;
         matFlipS = sprViewAngle.mirrorX;
