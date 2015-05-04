@@ -428,10 +428,10 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         // Assume the referenced map is from the current episode.
         dint epIdx  = COMMON_GAMESESSION->episodeId().toInt();
         if(epIdx > 0) epIdx -= 1;
-        dint mapIdx = args[1];
-        if(mapIdx > 0) mapIdx -= 1;
 
-        de::Uri const mapUri = G_ComposeMapUri(epIdx, mapIdx);
+        dint mapIdx = args[1];
+        de::Uri const mapUri = (mapIdx == 0? COMMON_GAMESESSION->mapUri()
+                                           : G_ComposeMapUri(epIdx, mapIdx - 1) );
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
             if(acscriptSys().hasScript(scriptNumber))
