@@ -948,11 +948,11 @@ int mobj_s::read(MapStateReader *msr)
 
 mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob)
 {
-    return P_CheckMissileSpawn(mob)? mob : NULL;
+    return P_CheckMissileSpawn(mob)? mob : nullptr;
 }
 
 mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[],
-    coord_t extraMomZ)
+    coord_t const sourcePos[], coord_t extraMomZ)
 {
     DENG2_ASSERT(targetPos);
     if(missile)
@@ -965,24 +965,29 @@ mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[
             S_StartSound(missile->info->seeSound, missile);
         }
 
+        if(!sourcePos)
+        {
+            sourcePos = missile->origin;
+        }
+
         // Determine speed.
         /// @todo Should optionally calculate this in true 3D.
         coord_t dist;
         uint an = angle >> ANGLETOFINESHIFT;
-        missile->mom[MX] = missile->info->speed * FIX2FLT(finecosine[an]);
-        missile->mom[MY] = missile->info->speed * FIX2FLT(finesine  [an]);
+        missile->mom[0] = missile->info->speed * FIX2FLT(finecosine[an]);
+        missile->mom[1] = missile->info->speed * FIX2FLT(finesine  [an]);
 
-        dist = M_ApproxDistance(targetPos[VX] - missile->origin[VX], targetPos[VY] - missile->origin[VY]);
+        dist = M_ApproxDistance(targetPos[0] - sourcePos[0], targetPos[1] - sourcePos[1]);
         dist /= missile->info->speed;
         if(dist < 1) dist = 1;
 
-        missile->mom[MZ] = (targetPos[VZ] - missile->origin[VZ] + extraMomZ) / dist;
+        missile->mom[2] = (targetPos[2] - sourcePos[2] + extraMomZ) / dist;
     }
     return Mobj_ExplodeIfObstructed(missile);
 }
 
 mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
-    coord_t const targetPos[], coord_t extraMomZ)
+    coord_t const targetPos[], coord_t const sourcePos[], coord_t extraMomZ)
 {
     DENG2_ASSERT(mob);
 
@@ -992,21 +997,26 @@ mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle,
         missile->target = mob;
     }
 
-    return P_LaunchMissile(missile, angle, targetPos, extraMomZ);
+    return P_LaunchMissile(missile, angle, targetPos, sourcePos, extraMomZ);
 }
 
-mobj_t *Mobj_LaunchMissileAtAngle(mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[])
+mobj_t *Mobj_LaunchMissileAtAngle(mobj_t *mob, mobj_t *missile, angle_t angle,
+    coord_t const targetPos[], coord_t const sourcePos[])
 {
-    return Mobj_LaunchMissileAtAngle2(mob, missile, angle, targetPos, 0/*no extra z-momentum*/);
+    return Mobj_LaunchMissileAtAngle2(mob, missile, angle, targetPos, sourcePos,
+                                      0/*no extra z-momentum*/);
 }
 
-mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[], coord_t extraMomZ)
+mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[],
+    coord_t const sourcePos[], coord_t extraMomZ)
 {
     DENG2_ASSERT(mob);
-    return Mobj_LaunchMissileAtAngle2(mob, missile, missile? missile->angle : mob->angle, targetPos, extraMomZ);
+    return Mobj_LaunchMissileAtAngle2(mob, missile, missile? missile->angle : mob->angle,
+                                      targetPos, sourcePos, extraMomZ);
 }
 
-mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos[])
+mobj_t *Mobj_LaunchMissile(mobj_t *mob, mobj_t *missile, coord_t const targetPos[],
+    coord_t const sourcePos[])
 {
-    return Mobj_LaunchMissile2(mob, missile, targetPos, 0/*no extra z-momentum*/);
+    return Mobj_LaunchMissile2(mob, missile, targetPos, sourcePos, 0/*no extra z-momentum*/);
 }
