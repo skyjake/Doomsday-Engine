@@ -120,22 +120,22 @@ namespace internal
         Vector2d const &topRight, Vector2d const &bottomRight,
         Vector2d const &bottomLeft, Vector2d const &viewPoint)
     {
-        coord_t pointV1[2];
+        ddouble pointV1[2];
         point.decompose(pointV1);
 
-        coord_t topLeftV1[2];
+        ddouble topLeftV1[2];
         topLeft.decompose(topLeftV1);
 
-        coord_t topRightV1[2];
+        ddouble topRightV1[2];
         topRight.decompose(topRightV1);
 
-        coord_t bottomRightV1[2];
+        ddouble bottomRightV1[2];
         bottomRight.decompose(bottomRightV1);
 
-        coord_t bottomLeftV1[2];
+        ddouble bottomLeftV1[2];
         bottomLeft.decompose(bottomLeftV1);
 
-        coord_t viewPointV1[2];
+        ddouble viewPointV1[2];
         viewPoint.decompose(viewPointV1);
 
         // Trace a vector from the view location to the marked point and intercept
