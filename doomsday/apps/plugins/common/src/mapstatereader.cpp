@@ -37,6 +37,7 @@
 #include "polyobjs.h"
 #include "r_common.h"
 #include "thinkerinfo.h"
+#include "gamesession.h"
 
 namespace internal
 {
