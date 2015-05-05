@@ -1447,7 +1447,7 @@ static void runGameAction()
                 ///       The engine should implement it's own notification UI system for
                 ///       this sort of thing.
                 String msg = "Saved screenshot: " + NativePath(fileName).pretty();
-                P_SetMessage2(&::players[CONSOLEPLAYER], msg.toLatin1().constData(), LMF_NO_HIDE);
+                P_SetMessageWithFlags(&::players[CONSOLEPLAYER], msg.toLatin1().constData(), LMF_NO_HIDE);
             }
             else
             {
@@ -2706,7 +2706,7 @@ D_CMD(WarpMap)
         if(argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
         else          msg += String(" \"%1\"").arg(argv[1]);
 
-        P_SetMessage2(&players[CONSOLEPLAYER], msg.toUtf8().constData(), LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg.toUtf8().constData(), LMF_NO_HIDE);
         return false;
     }
 
@@ -2723,7 +2723,7 @@ D_CMD(WarpMap)
     // Hexen does not allow warping to the current map.
     if(!forceNewSession && COMMON_GAMESESSION->mapUri() == mapUri)
     {
-        P_SetMessage2(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
         return false;
     }
 #endif
@@ -2773,7 +2773,7 @@ D_CMD(WarpMap)
         char const *msg = STSTR_CLEV;
         int soundId     = SFX_NONE;
 #endif
-        P_SetMessage2(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
         S_LocalSound(soundId, nullptr);
     }
 

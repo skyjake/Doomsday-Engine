@@ -674,7 +674,7 @@ static void D_NetMessageEx(int player, char const *msg, dd_bool playSound)
         return;
 
     // This is intended to be a local message.
-    // Let's make sure P_SetMessage2 doesn't forward it anywhere.
+    // Let's make sure P_SetMessageWithFlags doesn't forward it anywhere.
     netSvAllowSendMsg = false;
     P_SetMessage(plr, msg);
 

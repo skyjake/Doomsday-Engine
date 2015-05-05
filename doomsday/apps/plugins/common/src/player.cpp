@@ -692,7 +692,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessage2(player_t *pl, char const *msg, int flags)
+void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
 {
     DENG2_ASSERT(pl);
 
@@ -711,7 +711,7 @@ void P_SetMessage2(player_t *pl, char const *msg, int flags)
 
 void P_SetMessage(player_t *plr, char const *msg)
 {
-    P_SetMessage2(plr, msg, 0);
+    P_SetMessageWithFlags(plr, msg, 0);
 }
 
 #if __JHEXEN__

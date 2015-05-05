@@ -281,7 +281,7 @@ DENG2_PIMPL(MapStateReader)
                 {
                     // If the CONSOLEPLAYER isn't in the save, it must be some
                     // other player's file?
-                    P_SetMessage2(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
+                    P_SetMessageWithFlags(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
                 }
                 else
                 {
@@ -294,7 +294,7 @@ DENG2_PIMPL(MapStateReader)
             {
                 if(!i)
                 {
-                    P_SetMessage2(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
+                    P_SetMessageWithFlags(players, GET_TXT(TXT_LOADMISSING), LMF_NO_HIDE);
                 }
                 else
                 {

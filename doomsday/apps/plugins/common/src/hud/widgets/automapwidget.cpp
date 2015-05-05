@@ -1806,7 +1806,7 @@ dint AutomapWidget::addPoint(Vector3d const &origin)
     if(player() >= 0)
     {
         String msg = String(AMSTR_MARKEDSPOT) + " " + String::number(pointNum);
-        P_SetMessage2(&players[player()], msg.toUtf8().constData(), LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[player()], msg.toUtf8().constData(), LMF_NO_HIDE);
     }
     return pointNum;
 }
@@ -1838,7 +1838,7 @@ void AutomapWidget::clearAllPoints(bool silent)
 
     if(!silent && player() >= 0)
     {
-        P_SetMessage2(&players[player()], AMSTR_MARKSCLEARED, LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[player()], AMSTR_MARKSCLEARED, LMF_NO_HIDE);
     }
 }
 
@@ -1882,7 +1882,7 @@ void AutomapWidget::setCameraFollowMode(bool yes)
     {
         d->follow = yes;
         DD_Executef(true, "%sactivatebcontext map-freepan", d->follow? "de" : "");
-        P_SetMessage2(&players[player()], (d->follow ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[player()], (d->follow ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF), LMF_NO_HIDE);
     }
 }
 

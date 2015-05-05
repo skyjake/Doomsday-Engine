@@ -3213,7 +3213,7 @@ void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
 
     if(IS_NETGAME)
     {
-        P_SetMessage2(&players[CONSOLEPLAYER], "You can't start a new game from within a netgame!", LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[CONSOLEPLAYER], "You can't start a new game from within a netgame!", LMF_NO_HIDE);
         return;
     }
 

@@ -808,7 +808,7 @@ void NetCl_SaveGame(reader_s *msg)
     SV_SaveGameClient(Reader_ReadUInt32(msg));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    P_SetMessage2(&players[CONSOLEPLAYER], TXT_GAMESAVED, LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[CONSOLEPLAYER], TXT_GAMESAVED, LMF_NO_HIDE);
 #endif
 }
 

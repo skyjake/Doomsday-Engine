@@ -106,7 +106,7 @@ CHEAT_FUNC(Init)
     if(plr->health <= 0) return false;
 
     G_SetGameAction(GA_RESTARTMAP);
-    P_SetMessage2(plr, TXT_CHEATWARP, LMF_NO_HIDE);
+    P_SetMessageWithFlags(plr, TXT_CHEATWARP, LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -129,7 +129,7 @@ CHEAT_FUNC(IDKFA)
     }
 
     plr->pendingWeapon = WT_FIRST;
-    P_SetMessage2(plr, TXT_CHEATIDKFA, LMF_NO_HIDE);
+    P_SetMessageWithFlags(plr, TXT_CHEATIDKFA, LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -139,7 +139,7 @@ CHEAT_FUNC(Quicken)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    P_SetMessage2(&players[player], "Trying to cheat? That's one...", LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[player], "Trying to cheat? That's one...", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -149,7 +149,7 @@ CHEAT_FUNC(Quicken2)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    P_SetMessage2(&players[player], "That's two...", LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[player], "That's two...", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -166,7 +166,7 @@ CHEAT_FUNC(Quicken3)
     if(plr->health <= 0) return false;
 
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
-    P_SetMessage2(plr, "That's three! Time to die.", LMF_NO_HIDE);
+    P_SetMessageWithFlags(plr, "That's three! Time to die.", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -176,7 +176,7 @@ CHEAT_FUNC(Class)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    P_SetMessage2(&players[player], "Enter new player class number", LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[player], "Enter new player class number", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -186,7 +186,7 @@ CHEAT_FUNC(Script)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    P_SetMessage2(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -196,7 +196,7 @@ CHEAT_FUNC(Script2)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    P_SetMessage2(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
+    P_SetMessageWithFlags(&players[player], "Run which script (01-99)?", LMF_NO_HIDE);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
 
     return true;
@@ -275,7 +275,7 @@ D_CMD(CheatGod)
             plr->cheats ^= CF_GODMODE;
             plr->update |= PSF_STATE;
 
-            P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
@@ -314,7 +314,7 @@ D_CMD(CheatNoClip)
             plr->cheats ^= CF_NOCLIP;
             plr->update |= PSF_STATE;
 
-            P_SetMessage2(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
@@ -503,7 +503,7 @@ D_CMD(CheatGive)
 
         case 'h':
             P_GiveHealth(plr, -1 /*maximum amount*/);
-            P_SetMessage2(plr, TXT_CHEATHEALTH, LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, TXT_CHEATHEALTH, LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
@@ -514,7 +514,7 @@ D_CMD(CheatGive)
                 P_InventoryGive(player, inventoryitemtype_t(k), false);
             }
 
-            P_SetMessage2(plr, TXT_CHEATINVITEMS3, LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, TXT_CHEATINVITEMS3, LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
@@ -542,7 +542,7 @@ D_CMD(CheatGive)
 
             // Give all keys.
             P_GiveKey(plr, NUM_KEY_TYPES /*all types*/);
-            P_SetMessage2(plr, TXT_CHEATKEYS, LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, TXT_CHEATKEYS, LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
@@ -552,7 +552,7 @@ D_CMD(CheatGive)
                 P_InventoryGive(player, inventoryitemtype_t(k), false);
             }
 
-            P_SetMessage2(plr, TXT_CHEATINVITEMS3, LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, TXT_CHEATINVITEMS3, LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
             break;
 
@@ -620,7 +620,7 @@ D_CMD(CheatGive)
     /// @todo fixme: Somewhat of kludge...
     if(!strcmp(buf, "war"))
     {
-        P_SetMessage2(plr, TXT_CHEATWEAPONS, LMF_NO_HIDE);
+        P_SetMessageWithFlags(plr, TXT_CHEATWEAPONS, LMF_NO_HIDE);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
 
@@ -645,7 +645,7 @@ D_CMD(CheatMassacre)
         {
             int killCount = P_Massacre();
             AutoStr *msg  = Str_Appendf(AutoStr_NewStd(), "%d monsters killed.", killCount);
-            P_SetMessage2(&players[CONSOLEPLAYER], Str_Text(msg), LMF_NO_HIDE);
+            P_SetMessageWithFlags(&players[CONSOLEPLAYER], Str_Text(msg), LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
@@ -667,7 +667,7 @@ D_CMD(CheatWhere)
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
                         COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
-    P_SetMessage2(plr, textBuffer, LMF_NO_HIDE);
+    P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 
     // Also print some information to the console.
     App_Log(DE2_MAP_NOTE, "%s", textBuffer);
@@ -728,7 +728,7 @@ D_CMD(CheatMorph)
                 P_MorphPlayer(plr);
             }
 
-            P_SetMessage2(plr, "Squeal!!", LMF_NO_HIDE);
+            P_SetMessageWithFlags(plr, "Squeal!!", LMF_NO_HIDE);
             S_LocalSound(SFX_PLATFORM_STOP, NULL);
         }
     }
@@ -815,7 +815,7 @@ D_CMD(CheatRunScript)
                                                          plr->plr->mo, nullptr, 0))
                 {
                     de::String msg = de::String("Running script %1").arg(scriptNum);
-                    P_SetMessage2(plr, msg.toUtf8().constData(), LMF_NO_HIDE);
+                    P_SetMessageWithFlags(plr, msg.toUtf8().constData(), LMF_NO_HIDE);
                 }
             }
 

@@ -181,7 +181,7 @@ void P_PlayerChangeClass(player_t *plr, playerclass_t newClass);
  * @param msg     The message to be sent.
  * @param flags   @ref logMessageFlags
  */
-void P_SetMessage2(player_t *plr, char const *msg, int flags);
+void P_SetMessageWithFlags(player_t *plr, char const *msg, int flags);
 void P_SetMessage (player_t *plr, char const *msg/*, int flags = 0*/);
 
 /**
