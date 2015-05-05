@@ -202,130 +202,166 @@ void PlayerLogWidget::tick(timespan_t /*tickLength*/)
 
 void PlayerLogWidget::draw(Vector2i const &offset)
 {
-    dint const alignFlags    = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
-    dshort const textFlags   = DTF_NO_EFFECTS;
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
-    //dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     dint pvisEntryCount = de::min(d->pvisEntryCount, de::max(0, cfg.common.msgCount));
-    if(!pvisEntryCount) return;
+    dint firstEntry     = d->firstPVisEntryIdx();
 
-    dfloat offsetDueToMapTitle = 0;
-    if(Hu_IsMapTitleVisible() && !cfg.common.automapTitleAtBottom)
-    {
-        offsetDueToMapTitle = Hu_MapTitleHeight();
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(offset.x, offset.y, 0);
-    DGL_Translatef(0, offsetDueToMapTitle, 0);
-    DGL_Scalef(cfg.common.msgScale, cfg.common.msgScale, 1);
-
-    dint firstPVisEntry = d->firstPVisEntryIdx();
-    dint firstEntry = firstPVisEntry;
+    // Flow control note:
+    // This block may or may not exit the method early.
+    // It was refactored so as not to use GOTO. 
+    // If it does not exit the method early, it will modify the value of firstEntry
     if(!cfg.hudShown[HUD_LOG])
     {
-        // Advance to the first non-hidden entry.
-        dint i = 0;
-        while(!d->entries[firstEntry].dontHide && ++i < pvisEntryCount)
+        // Linear search for the first visible entry
+        // Traverses forward and updates firstEntry until it reaches an entry marked as dontHide
+        // If it traverses all entries and fails to find a visible entry, it will exit the method
         {
-            firstEntry = d->nextEntryIdx(firstEntry);
+            dint hiddenEntryCount = 0;
+            while(!d->entries[firstEntry].dontHide && ++hiddenEntryCount < pvisEntryCount)
+            {
+                firstEntry = d->nextEntryIdx(firstEntry);
+            }
+
+            // Nothing visible?
+            if(hiddenEntryCount == pvisEntryCount) return;
         }
-        // Nothing visible?
-        if(i == pvisEntryCount) goto stateCleanup;
 
         // There is possibly fewer potentially-visible entry now.
-        pvisEntryCount -= firstEntry - firstPVisEntry;
+        pvisEntryCount -= firstEntry - d->firstPVisEntryIdx();
     }
 
-    dint lastEntry = firstEntry + pvisEntryCount - 1;
-    if(lastEntry > LOG_MAX_ENTRIES - 1)
-        lastEntry -= LOG_MAX_ENTRIES;  // Wrap around.
-
-    if(!cfg.hudShown[HUD_LOG])
+    if(pvisEntryCount > 0) 
     {
-        // Rewind to the last non-hidden entry.
-        dint i = 0;
-        while(!d->entries[lastEntry].dontHide && ++i < pvisEntryCount)
+        // GL Setup
+        // ================================================================================================
         {
-            lastEntry = d->prevEntryIdx(lastEntry);
-        }
-    }
-
-    FR_SetFont(font());
-    /// @todo Query line height from the font.
-    dint const lineHeight = FR_CharHeight('Q') + 1;
-
-    // Scroll offset is calculated using the timeout of the first visible entry.
-    LogEntry *entry = &d->entries[firstEntry];
-    dfloat yOffset      = 0;
-    dfloat scrollFactor = 0;
-    if(entry->ticsRemain > 0 && entry->ticsRemain <= (unsigned) lineHeight)
-    {
-        scrollFactor = 1.0f - (((dfloat)entry->ticsRemain) / lineHeight);
-        yOffset = -lineHeight * scrollFactor;
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, yOffset, 0);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    dint n = firstEntry;
-    dint drawnEntryCount = 0;
-    dfloat y = 0;
-
-    for(dint i = 0; i < pvisEntryCount; ++i, n = d->nextEntryIdx(n))
-    {
-        LogEntry *entry = &d->entries[n];
-
-        if(!cfg.hudShown[HUD_LOG] && !entry->dontHide)
-            continue;
-
-        // Default color and alpha.
-        Vector4f rgba(cfg.common.msgColor, textOpacity);
-        if(n == firstEntry)
-        {
-            // Fade out.
-            rgba.w = textOpacity * 1.f - scrollFactor * (4/3.f);
-            rgba.w = de::clamp(0.f, rgba.w, 1.f);
-        }
-
-        if(entry->justAdded && cfg.common.msgBlink)
-        {
-            duint const blinkSpeed = cfg.common.msgBlink;
-            duint const msgTics    = entry->tics - entry->ticsRemain;
-
-            if(msgTics < blinkSpeed)
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
+            DGL_Translatef(offset.x, offset.y, 0);
+           
+            // Calculate Y offset for map title and translate the origin
             {
-                duint const td = (cfg.common.msgUptime * TICSPERSEC) - entry->ticsRemain;
-                if(n == lastEntry && (0 == msgTics || (td & 2)))
+                dfloat offsetDueToMapTitle = 0;
+                if(Hu_IsMapTitleVisible() && !cfg.common.automapTitleAtBottom)
                 {
-                    // Use the "flash" color.
-                    rgba.x = rgba.y = rgba.z = 1;
+                    offsetDueToMapTitle = Hu_MapTitleHeight();
+                }
+                DGL_Translatef(0, offsetDueToMapTitle, 0);
+            }
+
+            DGL_Scalef(cfg.common.msgScale, cfg.common.msgScale, 1);
+        }
+
+        // Render  
+        // ================================================================================================
+        {
+            dint firstEntryVisibleToPlayer  = firstEntry;
+            
+            dint lastEntry = firstEntry + pvisEntryCount - 1;
+            if(lastEntry > LOG_MAX_ENTRIES - 1)
+                lastEntry -= LOG_MAX_ENTRIES;  // Wrap around.
+
+            if(!cfg.hudShown[HUD_LOG])
+            {
+                // Rewind to the last non-hidden entry.
+                dint i = 0;
+                while(!d->entries[lastEntry].dontHide && ++i < pvisEntryCount)
+                {
+                    lastEntry = d->prevEntryIdx(lastEntry);
                 }
             }
-            else if(msgTics < blinkSpeed + LOG_MESSAGE_FLASHFADETICS && msgTics >= blinkSpeed)
+
+            FR_SetFont(font());
+            /// @todo Query line height from the font.
+            dint const lineHeight = FR_CharHeight('Q') + 1;
+
+            // Scroll offset is calculated using the timeout of the first visible entry.
+            LogEntry *entry = &d->entries[firstEntry];
+            dfloat yOffset      = 0;
+            dfloat scrollFactor = 0;
+            if(entry->ticsRemain > 0 && entry->ticsRemain <= (unsigned) lineHeight)
             {
-                // Fade color to normal.
-                dfloat const fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
-                rgba.x += (1.0f - rgba.x) / LOG_MESSAGE_FLASHFADETICS * fade;
-                rgba.y += (1.0f - rgba.y) / LOG_MESSAGE_FLASHFADETICS * fade;
-                rgba.z += (1.0f - rgba.z) / LOG_MESSAGE_FLASHFADETICS * fade;
+                scrollFactor = 1.0f - (((dfloat)entry->ticsRemain) / lineHeight);
+                yOffset = -lineHeight * scrollFactor;
             }
+
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_Translatef(0, yOffset, 0);
+            DGL_Enable(DGL_TEXTURE_2D);
+
+            dint n = firstEntry;
+            dint drawnEntryCount = 0;
+            dfloat y = 0;
+
+            for(dint i = 0; i < pvisEntryCount; ++i, n = d->nextEntryIdx(n))
+            {
+                LogEntry *entry = &d->entries[n];
+
+                if(!cfg.hudShown[HUD_LOG] && !entry->dontHide)
+                    continue;
+
+                dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+
+                // ::w is used for opacity
+                Vector4f rgba(cfg.common.msgColor, textOpacity);
+                
+                // Fading HUD messages:
+                // If fading, update colour opacity each pass until it has completely faded
+                if(n == firstEntry)
+                {
+                    rgba.w = textOpacity * 1.f - scrollFactor * (4/3.f);
+                    rgba.w = de::clamp(0.f, rgba.w, 1.f);
+                }
+
+                // Flash new messages
+                // Will either set the message text to white every n tics, or transition to the correct value
+                if(entry->justAdded && cfg.common.msgBlink)
+                {
+                    duint const blinkSpeed = cfg.common.msgBlink;
+                    duint const msgTics    = entry->tics - entry->ticsRemain;
+
+                    if(msgTics < blinkSpeed)
+                    {
+                        duint const td = (cfg.common.msgUptime * TICSPERSEC) - entry->ticsRemain;
+                        if(n == lastEntry && (0 == msgTics || (td & 2)))
+                        {
+                            // Use the "flash" color.
+                            rgba.x = rgba.y = rgba.z = 1;
+                        }
+                    }
+                    else if(msgTics < blinkSpeed + LOG_MESSAGE_FLASHFADETICS && msgTics >= blinkSpeed)
+                    {
+                        // Fade color to normal.
+                        dfloat const fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
+                        rgba.x += (1.0f - rgba.x) / LOG_MESSAGE_FLASHFADETICS * fade;
+                        rgba.y += (1.0f - rgba.y) / LOG_MESSAGE_FLASHFADETICS * fade;
+                        rgba.z += (1.0f - rgba.z) / LOG_MESSAGE_FLASHFADETICS * fade;
+                    }
+                }
+
+                // Draw entry text
+                {
+                    dint const alignFlags    = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
+                    dshort const textFlags   = DTF_NO_EFFECTS;
+                    FR_SetColorAndAlpha(rgba.x, rgba.y, rgba.z, rgba.w);
+                    FR_DrawTextXY3(entry->text.toUtf8().constData(), 0, y, alignFlags, textFlags);
+                }
+
+                ++drawnEntryCount;
+                y += lineHeight;
         }
 
-        FR_SetColorAndAlpha(rgba.x, rgba.y, rgba.z, rgba.w);
-        FR_DrawTextXY3(entry->text.toUtf8().constData(), 0, y, alignFlags, textFlags);
+        }
 
-        ++drawnEntryCount;
-        y += lineHeight;
+        // GL Cleanup
+        // ================================================================================================
+        { 
+            DGL_Disable(DGL_TEXTURE_2D);
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
+        }
     }
 
-stateCleanup:
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
 }
 
 void PlayerLogWidget::updateGeometry()
