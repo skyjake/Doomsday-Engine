@@ -105,7 +105,7 @@ D_CMD(CheatGod)
                 plr->update |= PSF_HEALTH;
             }
 
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF));
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_GODMODE) ? STSTR_DQDON : STSTR_DQDOFF), LMF_NO_HIDE);
         }
     }
     return true;
@@ -146,7 +146,7 @@ D_CMD(CheatNoClip)
 
             plr->cheats ^= CF_NOCLIP;
             plr->update |= PSF_STATE;
-            P_SetMessage(plr, LMF_NO_HIDE, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF));
+            P_SetMessageWithFlags(plr, ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? STSTR_NCON : STSTR_NCOFF), LMF_NO_HIDE);
         }
     }
     return true;
@@ -243,7 +243,7 @@ static void giveWeapon(player_t *plr, weapontype_t weaponType)
     P_GiveWeapon(plr, weaponType, false /* not collecting a drop */);
     if(weaponType = WT_EIGHTH)
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_CHOPPERS);
+        P_SetMessageWithFlags(plr, STSTR_CHOPPERS, LMF_NO_HIDE);
     }
 }
 
@@ -251,14 +251,14 @@ static void giveLaserUpgrade(player_t *plr, inventoryitemtype_t upgrade)
 {
     if(P_InventoryGive(plr - players, upgrade, true /* silent */))
     {
-        P_SetMessage(plr, LMF_NO_HIDE, STSTR_BEHOLDX);
+        P_SetMessageWithFlags(plr, STSTR_BEHOLDX, LMF_NO_HIDE);
     }
 }
 
 static void togglePower(player_t* player, powertype_t powerType)
 {
     P_TogglePower(player, powerType);
-    P_SetMessage(player, LMF_NO_HIDE, STSTR_BEHOLDX);
+    P_SetMessageWithFlags(player, STSTR_BEHOLDX, LMF_NO_HIDE);
 }
 
 D_CMD(CheatGive)
@@ -484,14 +484,18 @@ static void printDebugInfo(player_t *plr)
     mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return;
 
-    char textBuffer[256];
-    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
-                        plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
-    P_SetMessage(plr, LMF_NO_HIDE, textBuffer);
+    // Output debug info to HUD and console
+    {
+        char textBuffer[256];
+        sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
+                            COMMON_GAMESESSION->mapUri().path().toUtf8().constData(),
+                            plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
 
-    // Also print some information to the console.
-    LOG_SCR_NOTE(textBuffer);
+        P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
+
+        // Also print some information to the console.
+        LOG_SCR_NOTE(textBuffer);
+    }
 
     Sector *sector = Mobj_Sector(plrMo);
 
