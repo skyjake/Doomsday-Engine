@@ -192,7 +192,7 @@ void P_SetMessage (player_t *plr, char const *msg/*, int flags = 0*/);
  * @param flags   @ref logMessageFlags
  */
 #if __JHEXEN__
-void P_SetYellowMessage2(player_t *plr, char const *msg, int flags);
+void P_SetYellowMessageWithFlags(player_t *plr, char const *msg, int flags);
 void P_SetYellowMessage (player_t *plr, char const *msg/*, int flags = 0*/);
 #endif
 

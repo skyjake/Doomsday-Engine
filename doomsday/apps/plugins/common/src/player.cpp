@@ -715,7 +715,7 @@ void P_SetMessage(player_t *plr, char const *msg)
 }
 
 #if __JHEXEN__
-void P_SetYellowMessage2(player_t *pl, char const *msg, int flags)
+void P_SetYellowMessageWithFlags(player_t *pl, char const *msg, int flags)
 {
 #define YELLOW_FMT      "{r=1;g=0.7;b=0.3;}"
 #define YELLOW_FMT_LEN  18
@@ -748,7 +748,7 @@ void P_SetYellowMessage2(player_t *pl, char const *msg, int flags)
 
 void P_SetYellowMessage(player_t *pl, char const *msg)
 {
-    P_SetYellowMessage2(pl, msg, 0);
+    P_SetYellowMessageWithFlags(pl, msg, 0);
 }
 #endif
 
