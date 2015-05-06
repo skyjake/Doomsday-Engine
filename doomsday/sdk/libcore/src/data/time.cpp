@@ -417,6 +417,7 @@ void Time::operator >> (Writer &to) const
     {
         Block bytes;
         QDataStream s(&bytes, QIODevice::WriteOnly);
+        s.setVersion(QDataStream::Qt_4_8);
         s << d->dateTime;
         to << bytes;
     }
@@ -448,6 +449,7 @@ void Time::operator << (Reader &from)
             Block bytes;
             from >> bytes;
             QDataStream s(bytes);
+            s.setVersion(QDataStream::Qt_4_8);
             s >> d->dateTime;
         }
 
@@ -480,6 +482,7 @@ void Time::operator << (Reader &from)
         Block bytes;
         from >> bytes;
         QDataStream s(bytes);
+        s.setVersion(QDataStream::Qt_4_8);
         s >> d->dateTime;
         d->flags = Instance::DateTime;
     }
