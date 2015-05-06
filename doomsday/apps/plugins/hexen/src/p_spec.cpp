@@ -123,29 +123,6 @@ dd_bool EV_LineSearchForPuzzleItem(Line *line, byte * /*args*/, mobj_t *mo)
     return P_InventoryUse(mo->player - players, type, false);
 }
 
-static de::Uri getMapUriForWarpNumber(int warpNumber)
-{
-    /// @c <= 0 means the current map.
-    if(warpNumber <= 0) return COMMON_GAMESESSION->mapUri();
-
-    // See if a translation exists for this.
-    String episodeId = COMMON_GAMESESSION->episodeId();
-    de::Uri mapUri   = TranslateMapWarpNumber(episodeId, warpNumber);
-    if(!mapUri.isEmpty()) return mapUri;
-
-    // If the episode ID is a number - interpret this as a map number
-    // for vanilla compat (ugh...).
-    bool isNumber;
-    int oldEpisodeNum = episodeId.toInt(&isNumber);
-    if(isNumber && oldEpisodeNum > 0)
-    {
-        return G_ComposeMapUri(oldEpisodeNum - 1, warpNumber - 1);
-    }
-
-    // There is no auto-logical translation possible.
-    return de::Uri();
-}
-
 dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mobj_t *mo)
 {
     dd_bool success = false;
@@ -393,7 +370,11 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo && mo->player && mo->player->playerState == PST_DEAD))
             {
                 // Assume the referenced map is from the current episode.
-                G_SetGameActionMapCompleted(getMapUriForWarpNumber(args[0]), args[1]);
+                dint epIdx  = COMMON_GAMESESSION->episodeId().toInt();
+                if(epIdx > 0) epIdx -= 1;
+                dint mapIdx = args[0];
+                if(mapIdx > 0) mapIdx -= 1;
+                G_SetGameActionMapCompleted(G_ComposeMapUri(epIdx, mapIdx), args[1]);
                 success = true;
             }
         }
@@ -441,9 +422,16 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         // Intentional fall-through.
 
     case 80: /* ACS_Execute */ {
-        int const scriptNumber = args[0];
-        de::Uri const mapUri   = getMapUriForWarpNumber(args[1]);
+        dint const scriptNumber = args[0];
         acs::Script::Args const scriptArgs(&args[2], 3);
+
+        // Assume the referenced map is from the current episode.
+        dint epIdx  = COMMON_GAMESESSION->episodeId().toInt();
+        if(epIdx > 0) epIdx -= 1;
+
+        dint mapIdx = args[1];
+        de::Uri const mapUri = (mapIdx == 0? COMMON_GAMESESSION->mapUri()
+                                           : G_ComposeMapUri(epIdx, mapIdx - 1) );
         if(COMMON_GAMESESSION->mapUri() == mapUri)
         {
             if(acscriptSys().hasScript(scriptNumber))

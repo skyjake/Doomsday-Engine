@@ -3158,7 +3158,7 @@ void C_DECL A_IceGuyAttack(mobj_t *mob)
                     40 - mob->floorClip);
     V3d_Sum(pos, mob->origin, offset);
     Mobj_LaunchMissile(mob, P_SpawnMobj(MT_ICEGUY_FX, pos, Mobj_AimAtTarget(mob), 0),
-                       target->origin);
+                       target->origin, mob->origin);
 
     // Left FX:
     an = (mob->angle - ANG90) >> ANGLETOFINESHIFT;
@@ -3167,7 +3167,7 @@ void C_DECL A_IceGuyAttack(mobj_t *mob)
                     40 - mob->floorClip);
     V3d_Sum(pos, mob->origin, offset);
     Mobj_LaunchMissile(mob, P_SpawnMobj(MT_ICEGUY_FX, pos, Mobj_AimAtTarget(mob), 0),
-                       target->origin);
+                       target->origin, mob->origin);
 
     S_StartSound(mob->info->attackSound, mob);
 }
@@ -4424,10 +4424,10 @@ void C_DECL A_KoraxMissile(mobj_t *mob)
     {
         vec3d_t pos, offset;
         V3d_Sum(pos, mob->origin, Korax_MissileSpawnPoint(mob, arm, offset));
-        pos[VZ] -= mob->floorClip;
+        pos[2] -= mob->floorClip;
 
         Mobj_LaunchMissile2(mob, P_SpawnMobj(missileType, pos, P_AimAtPoint2(pos, target->origin, target->flags & MF_SHADOW), 0),
-                            target->origin, 30 /*extra z-momentum*/);
+                            target->origin, NULL/*use missile origin to calculate speed*/, 30 /*extra z-momentum*/);
     }
 }
 
