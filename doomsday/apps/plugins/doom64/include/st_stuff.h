@@ -28,21 +28,13 @@
 
 #include "d_config.h"
 
-// DOOM 64 does not have a status bar.
-#define ST_WIDTH                    ( 0 )
-#define ST_HEIGHT                   ( 0 )
-
 // Palette indices.
 // For damage/bonus red-/gold-shifts
-#define STARTREDPALS                (1)
-#define STARTBONUSPALS              (9)
-#define NUMREDPALS                  (8)
-#define NUMBONUSPALS                (4)
+extern const int STARTREDPALS;
+extern const int NUMREDPALS;
 
-#define HUDBORDERX                  (14)
-#define HUDBORDERY                  (18)
-
-#define ST_AUTOMAP_OBSCURE_TOLERANCE (.9999f)
+extern const int STARTBONUSPALS;
+extern const int NUMBONUSPALS;
 
 #ifdef __cplusplus
 #  include "hu_lib.h"
@@ -137,8 +129,8 @@ float ST_AutomapOpacity(int localPlayer);
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const *region);
 dd_bool ST_AutomapObscures(int localPlayer, int x, int y, int width, int height);
+dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const *region);
 
 int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z);
 void ST_AutomapClearPoints(int localPlayer);
