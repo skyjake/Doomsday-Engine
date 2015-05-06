@@ -903,52 +903,21 @@ struct uiwidgetdef_t
         switch(def.type)
         {
         case GUI_BOX:           wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        //case GUI_GROUP:         wi = new GroupWidget(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_HEALTH:        wi = new guidata_health_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_ARMOR:         wi = new guidata_armor_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_KEYS:          wi = new guidata_keys_t(localPlayer); break;
         case GUI_READYAMMO:     wi = new guidata_readyammo_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_FRAGS:         wi = new guidata_frags_t(def.updateGeometry, def.drawer, localPlayer); break;
-        //case GUI_LOG:           wi = new guidata_log_t(def.updateGeometry, def.drawer, localPlayer); break;
-        //case GUI_CHAT:          wi = new ChatWidget(def.updateGeometry, def.drawer, localPlayer); break;
-#if __JDOOM__
-        case GUI_AMMO:          wi = new guidata_ammo_t(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_WEAPONSLOT:    wi = new guidata_weaponslot_t(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_FACE:          wi = new guidata_face_t(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_ARMORICON:     wi = new guidata_armoricon_t(localPlayer); break;
-#endif
-#if __JHERETIC__
         case GUI_TOME:          wi = new guidata_tomeofpower_t(localPlayer); break;
-#endif
-#if __JHEXEN__
-        case GUI_ARMORICONS:    wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_WEAPONPIECES:  wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_BLUEMANAICON:  wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_BLUEMANA:      wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_BLUEMANAVIAL:  wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_GREENMANAICON: wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_GREENMANA:     wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_GREENMANAVIAL: wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_BOOTS:         wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_SERVANT:       wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_DEFENSE:       wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-        case GUI_WORLDTIME:     wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
-#endif
-#if __JDOOM__ || __JHERETIC__
         case GUI_READYAMMOICON: wi = new guidata_readyammoicon_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_KEYSLOT:       wi = new guidata_keyslot_t(localPlayer); break;
         case GUI_SECRETS:       wi = new guidata_secrets_t(localPlayer); break;
         case GUI_ITEMS:         wi = new guidata_items_t(localPlayer); break;
         case GUI_KILLS:         wi = new guidata_kills_t(localPlayer); break;
-#endif
-#if __JHERETIC__ || __JHEXEN__
         case GUI_INVENTORY:     wi = new HudWidget(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_CHAIN:         wi = new guidata_chain_t(localPlayer); break;
         case GUI_READYITEM:     wi = new guidata_readyitem_t(def.updateGeometry, def.drawer, localPlayer); break;
         case GUI_FLIGHT:        wi = new guidata_flight_t(localPlayer); break;
-#endif
-        //case GUI_AUTOMAP:       wi = new AutomapWidget(localPlayer); break;
-
         default: DENG2_ASSERT(!"Unknown widget type"); break;
         }
 
