@@ -43,9 +43,9 @@ class AutomapWidget;
 class ChatWidget;
 class PlayerLogWidget;
 
-AutomapWidget *ST_TryFindAutomapWidget(int localPlayer);
-ChatWidget *ST_TryFindChatWidget(int localPlayer);
-PlayerLogWidget *ST_TryFindPlayerLogWidget(int localPlayer);
+AutomapWidget*      ST_GetPlayerAutomap(int);
+ChatWidget*         ST_GetPlayerChatWidget(int);
+PlayerLogWidget*    ST_GetPlayerLogWidget(int);
 
 extern "C" {
 #endif
