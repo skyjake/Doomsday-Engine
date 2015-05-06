@@ -81,42 +81,46 @@ enum {
     NUM_UIWIDGET_GROUPS
 };
 
-typedef struct {
+struct hudstate_t {
     dd_bool inited;
     dd_bool stopped;
     int     hideTics;
     float   hideAmount;
     // Fullscreen HUD alpha
     float   alpha; 
-    // HUD enabled?
-    dd_bool statusbarActive; 
     int     automapCheatLevel; 
-    int     widgetGroupIds[NUM_UIWIDGET_GROUPS];
-    int     automapWidgetId;
-    int     chatWidgetId;
-    int     logWidgetId;
-    // TODO extract
-    int     currentFragsCount; 
 
-    // HUD UI State
-    // ==============================================
+    /*
+     * UI Widgets
+     */
 
-    // Statusbar 
-    guidata_health_t        health;
-    guidata_readyammoicon_t ammoIcon;
-    guidata_readyammo_t     ammoCount;
-    guidata_armor_t         sbarArmor;
-    guidata_keys_t          keys;
-    guidata_keys_t          demonKeys;
+    uiwidgetid_t groupIds[NUM_UIWIDGET_GROUPS];
 
-    // Other:
-    guidata_automap_t       automap;
-    guidata_chat_t          chat;
-    guidata_log_t           log;
-    guidata_secrets_t       secrets;
-    guidata_items_t         items;
-    guidata_kills_t         kills;
-} hudstate_t;
+    // No statusbar, just fullscreen, for maximum d64 experience
+    uiwidgetid_t healthIconId;
+    uiwidgetid_t healthId;
+
+    uiwidgetid_t armorIconId;
+    uiwidgetid_t armorId;
+
+    uiwidgetid_t readyAmmoIconId;
+    uiwidgetid_t readyAmmoId;
+
+    uiwidgetid_t fragsId;
+
+    // Keys should be able to hold our demon key
+    uiwidgetid_t keysId;
+
+    // Secrets, Items, Kills status panel
+    uiwidgetid_t secretsId;
+    uiwidgetid_t itemsId;
+    uiwidgetid_t killsId;
+
+    // Other things
+    uiwidgetid_t automapId;
+    uiwidgetid_t chatId;
+    uiwidgetid_t logId;
+};
 
 static hudstate_t hudStates[MAXPLAYERS];
 
@@ -133,32 +137,6 @@ static void unhideHUD(void)
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)
         ST_HUDUnHide(i, HUE_FORCE);
-}
-
-static void drawWidgets(hudstate_t* hud)
-{
-    static const int ST_FRAGSX = 138;
-    static const int ST_FRAGSY = 171;
-
-    if(G_Ruleset_Deathmatch())
-    {
-        // TODO Eradicate this C String
-        char buf[20];
-        if(hud->currentFragsCount == 1994)
-            return;
-
-        dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
-
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        FR_SetFont(FID(GF_STATUS));
-        FR_LoadDefaultAttrib();
-        FR_SetColorAndAlpha(1, 1, 1, hud->alpha);
-
-        FR_DrawTextXY3(buf, ST_FRAGSX, ST_FRAGSY, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
-
-        DGL_Disable(DGL_TEXTURE_2D);
-    }
 }
 
 static void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
@@ -212,197 +190,146 @@ static void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     if(drawnHeight) *drawnHeight = info.geometry.size.height * scale;
 }
 
-static void ST_doFullscreenStuff(int player)
-{
-    static const int HUDBORDERX             = 14;
-    static const int HUDBORDERY             = 18;
-
-    hudstate_t *hud = &hudStates[player];
-    player_t *plr = &players[player];
-
-    char buf[20];
-    int w, h, pos = 0, oldPos = 0, spr,i;
-    int h_width = 320 / cfg.common.hudScale;
-    int h_height = 200 / cfg.common.hudScale;
-    float textalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.common.hudColor[3]);
-    float iconalpha = hud->alpha - hud->hideAmount - ( 1 - cfg.common.hudIconAlpha);
-
-    textalpha = MINMAX_OF(0.f, textalpha, 1.f);
-    iconalpha = MINMAX_OF(0.f, iconalpha, 1.f);
-
-    FR_LoadDefaultAttrib();
-
-    if(IS_NETGAME && G_Ruleset_Deathmatch() && cfg.hudShown[HUD_FRAGS])
-    {
-        // Display the frag counter.
-        i = 199 - HUDBORDERY;
-        if(cfg.hudShown[HUD_HEALTH])
-        {
-            i -= 18 * cfg.common.hudScale;
-        }
-
-        sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-
-        DGL_Enable(DGL_TEXTURE_2D);
-        FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
-
-        FR_DrawTextXY3(buf, HUDBORDERX, i, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
-
-        DGL_Disable(DGL_TEXTURE_2D);
-    }
-
-    // Setup the scaling matrix.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Scalef(cfg.common.hudScale, cfg.common.hudScale, 1);
-
-    // Draw the visible HUD data, first health.
-    if(cfg.hudShown[HUD_HEALTH])
-    {
-
-        sprintf(buf, "HEALTH");
-
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(1, 1, 1, iconalpha);
-
-        pos = FR_TextWidth(buf)/2;
-        FR_DrawTextXY3(buf, HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOM, DTF_NO_EFFECTS);
-
-        sprintf(buf, "%i", plr->health);
-
-        FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
-        FR_DrawTextXY3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, ALIGN_BOTTOM, DTF_NO_EFFECTS);
-
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        oldPos = pos;
-        pos = HUDBORDERX * 2 + FR_TextWidth(buf);
-    }
-
-    // Keys  | use a bit of extra scale.
-    if(cfg.hudShown[HUD_KEYS])
-    {
-        Draw_BeginZoom(0.75f, pos , h_height - HUDBORDERY);
-        for(i = 0; i < 3; ++i)
-        {
-            spr = 0;
-            if(plr->
-               keys[i == 0 ? KT_REDCARD : i ==
-                     1 ? KT_YELLOWCARD : KT_BLUECARD])
-                spr = i == 0 ? SPR_RKEY : i == 1 ? SPR_YKEY : SPR_BKEY;
-            if(plr->
-               keys[i == 0 ? KT_REDSKULL : i ==
-                     1 ? KT_YELLOWSKULL : KT_BLUESKULL])
-                spr = i == 0 ? SPR_RSKU : i == 1 ? SPR_YSKU : SPR_BSKU;
-            if(spr)
-            {
-                ST_drawHUDSprite(spr, pos, h_height - 2, HOT_BLEFT, 1,
-                    iconalpha, false, &w, &h);
-                pos += w + 2;
-            }
-        }
-        Draw_EndZoom();
-    }
-    pos = oldPos;
-
-    // Inventory
-    if(cfg.hudShown[HUD_INVENTORY])
-    {
-        if(P_InventoryCount(player, IIT_DEMONKEY1))
-        {
-            spr = SPR_ART1;
-            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 44,
-                HOT_BLEFT, 1, iconalpha, false, &w, &h);
-        }
-
-        if(P_InventoryCount(player, IIT_DEMONKEY2))
-        {
-            spr = SPR_ART2;
-            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 84,
-                HOT_BLEFT, 1, iconalpha, false, &w, &h);
-        }
-
-        if(P_InventoryCount(player, IIT_DEMONKEY3))
-        {
-            spr = SPR_ART3;
-            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124,
-                HOT_BLEFT, 1, iconalpha, false, &w, &h);
-        }
-    }
-
-    if(cfg.hudShown[HUD_AMMO])
-    {
-        //// \todo Only supports one type of ammo per weapon.
-        //// for each type of ammo this weapon takes.
-        for(ammotype_t ammotype = AT_FIRST; ammotype < NUM_AMMO_TYPES; ++ammotype)
-        {
-            if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammotype])
-                continue;
-
-            sprintf(buf, "%i", plr->ammo[ammotype].owned);
-            pos = h_width/2;
-
-            DGL_Enable(DGL_TEXTURE_2D);
-
-            FR_SetFont(FID(GF_FONTB));
-            FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
-            FR_DrawTextXY3(buf, pos, h_height - HUDBORDERY, ALIGN_TOP, DTF_NO_EFFECTS);
-
-            DGL_Disable(DGL_TEXTURE_2D);
-            break;
-        }
-    }
-
-    pos = h_width - 1;
-    if(cfg.hudShown[HUD_ARMOR])
-    {
-        sprintf(buf, "ARMOR");
-
-        DGL_Enable(DGL_TEXTURE_2D);
-        FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(1, 1, 1, iconalpha);
-        w = FR_TextWidth(buf);
-        FR_DrawTextXY3(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
-
-        sprintf(buf, "%i", plr->armorPoints);
-        FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textalpha);
-        FR_DrawTextXY3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, ALIGN_BOTTOMRIGHT, DTF_NO_EFFECTS);
-
-        DGL_Disable(DGL_TEXTURE_2D);
-    }
-
-    DGL_Disable(DGL_TEXTURE_2D);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
+/**
+ * Draw the ingame heads-up display and the automap.
+ * This is called for each render pass.
+ */
 static void drawUIWidgetsForPlayer(player_t* plr)
 {
-    const int playerNum = plr - players;
-    assert(plr);
-    ST_doFullscreenStuff(playerNum);
+    // UI Widgets are drawn N units from the edge of the screen on all sides in order to look pleasent
+    static const int    INSET       = 2;
+
+    // Magic (not really -- standard 1.2:1 anamporphic) aspect ratio used to adjust render height
+    static const float  ASPECT_TRIM = 1.2F;
+    
+    DENG2_ASSERT(plr);
+
+    int const playerId    = (plr - players);
+    int const hudMode     = ST_ActiveHud(playerId);
+    hudstate_t* hud       = &hudStates[player];
+
+    Size2Raw portSize; R_ViewPortSize(playerId, &portSize);
+
+    // TODO float const automapOpacity
+    // Automap Group
+    {
+        HudWidget& amGroup = GUI_FindWidgetById(hud->groupIds[UWG_AUTOMAP]);
+        amGroup.setOpacity(ST_AutomapOpacity(playerId));
+        amGroup.setMaximumSize(portSize);
+        
+        GUI_DrawWidgetXY(amGroup, 0, 0);
+    }
+
+    // Ingame UI
+    // displayMode >= 3 presumeable refers to `No-Hud` 
+    // There ought to be some constants for this
+    if (hud->alpha > 0 || displayMode < 3) {
+        float uiScale;
+        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT, 
+                                        portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
+
+        float opacity = de::min(1.0F, hud->alpha) * (1 - hud->hideAmount);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Scalef(uiScale, uiScale * ASPECT_TRIM, 1);
+       
+        RectRaw displayRegion;
+        {
+            displayRegion.origin.x    = INSET;
+            displayRegion.origin.y    = INSET;
+            displayRegion.size.width  = (0.5F + portSize.width / uiScale) - (2 * INSET);
+            displayRegion.size.height = (0.5F + portSize.height / (uiScale * ASPECT_TRIM)) - (2 * INSET);
+        }
+
+        // This is used to calculate a suitable offset for the map name group
+        Size2Raw regionRendered;
+
+        // Bottom widget group
+        {
+            HudWidget& bottomGroup  = GUI_FindWidgetById(hud->groupIds[UWG_BOTTOM]);
+            bottomGroup.setOpacity(opacity);
+            bottomGroup.setMaximumSize(displayRegion.size);
+
+            GUI_DrawWidget(&bottomGroup, &displayRegion.origin);
+            
+            Size2_Raw(Rect_Size(&bottomGroup.geometry()), &regionRendered)
+        }
+
+        // Map name widget group
+        {
+            HudWidget& mapNameGroup = GUI_FindWidgetById(hud->groupIds[UWG_MAPNAME]);
+            mapNameGroup.setOpacity(ST_AutomapOpacity(playerId));
+
+            Size2Raw remainingVertical(displayRegion.size.width,
+                                       displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0));
+            
+            mapNameGroup.setMaximumSize(remainingVertical);
+
+            GUI_DrawWidget(&mapNameGroup, &displayRegion.origin);
+        }
+
+
+        // Remaining widgets: Top Center, Counters (Kills, Secrets, Items)
+        {
+            // Kills widget, etc, are always visible unless no-hud
+            if (displayMode < 3)
+            {
+                opacity = 1F;
+            }
+
+            // Top Center 
+            {
+                HudWidget& topCenter = GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]);
+                topCenter.setOpacity(opacity);
+                topCenter.setMaximumSize(displayRegion.size);
+
+                GUI_DrawWidget(&topCenter, &displayRegion.origin);
+            }
+
+            // Counters
+            {
+                HudWidget& counters = GUI_FindWidgetById(hud->groupIds[UWG_COUNTERS]);
+                counters.setOpacity(opacity);
+                counters.setMaximumSize(displayRegion.size);
+
+                GUI_DrawWidget(&counter, &displayRegion.origin);
+            }
+        }
+
+        // Clean up GL context
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+    }
 }
 
-// TODO inline
+/**
+ * This initializes widgets used by the provided heads-up display to zero-values
+ * or the equivalent thereof
+ */
 static void initData(hudstate_t* hud)
 {
-    int player = hud - hudStates;
+    DENG2_ASSERT(hud);
 
     hud->statusbarActive = true;
-    hud->stopped = true;
-    hud->alpha = 0.f;
+    hud->stopped         = true;
 
-    hud->log._msgCount = 0;
-    hud->log._nextUsedMsg = 0;
-    hud->log._pvisMsgCount = 0;
-    memset(hud->log._msgs, 0, sizeof(hud->log._msgs));
+    // Reset/Initialize Elements
+    {
+        GUI_FindWidgetById(hud->healthId).as<guidata_health_t>().reset();
+        GUI_FindWidgetById(hud->armorIconId).as<guidata_armoricon_t>().reset();
+        GUI_FindWidgetById(hud->armorId).as<guidata_armor_t>().reset();
+        GUI_FindWidgetById(hud->keysId).as<guidata_keys_t>().reset();
+        GUI_FindWidgetById(hud->fragsId).as<guidata_frags_t>().reset();
 
-    ST_HUDUnHide(player, HUE_FORCE);
+        GUI_FindWidgetById(hud->secretsId).as<guidata_secrets_t>().reset();
+        GUI_FindWidgetById(hud->itemsId).as<guidata_items_t>().reset();
+        GUI_FindWidgetById(hud->killsId).as<guidata_kills_t>().reset();
+
+        GUI_FindWidgetById(hud->logId).as<PlayerLogWidget>().clear();
+    }
+
+    ST_HUDUnHide(hud - hudStates, HUE_FORCE);
 }
 
 static void setAutomapCheatLevel(uiwidget_t* obj, int level)
@@ -480,77 +407,156 @@ static void initAutomapForCurrentMap(uiwidget_t* obj)
 
 static void ST_BuildWidgets(int player)
 {
-#define PADDING 2 // In fixed 320x200 units.
-
-    typedef struct {
+    struct uiwidgetgroupdef_t {
         int     group;
         int     alignFlags;
         order_t order;
         int     groupFlags;
         int     padding; // In fixed 320x200 pixels.
-    } uiwidgetgroupdef_t;
+    };
 
-    typedef struct {
+    struct uiwidgetdef_t {
         guiwidgettype_t type;
-        int alignFlags;
-        int group;
-        gamefontid_t fontIdx;
+        int             alignFlags;
+        int             group;
+        gamefontid_t    fontIdx;
+
         void (*updateGeometry) (uiwidget_t* obj);
         void (*drawer) (uiwidget_t* obj, int x, int y);
         void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
         void* typedata;
-    } uiwidgetdef_t;
+    };
 
     hudstate_t* hud = &hudStates[player];
 
-    uiwidgetgroupdef_t const widgetGroupDefs[] = {
-        { UWG_MAPNAME,      ALIGN_BOTTOMLEFT,   ORDER_NONE,         0,              0       },
-        { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,   ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
-        { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              PADDING },
-        { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT,  ORDER_RIGHTTOLEFT,  0,              PADDING },
-        { UWG_BOTTOMCENTER, ALIGN_BOTTOM,       ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
-        { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              0       },
-        { UWG_TOPCENTER,    ALIGN_TOPLEFT,      ORDER_LEFTTORIGHT,  UWGF_VERTICAL,  PADDING },
-        { UWG_COUNTERS,     ALIGN_LEFT,         ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
-        { UWG_AUTOMAP,      ALIGN_TOPLEFT,      ORDER_NONE,         0,              0       }
-    };
+    // Create a table of positioning constraints for widgets and add them to the HUD
+    {
+        static const int PADDING = 2;
+        uiwidgetgroupdef_t const widgetGroupDefs[] = {
+            { UWG_MAPNAME,      ALIGN_BOTTOMLEFT,   ORDER_NONE,         0,              0       },
+            { UWG_BOTTOMLEFT,   ALIGN_BOTTOMLEFT,   ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+            { UWG_BOTTOMLEFT2,  ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              PADDING },
+            { UWG_BOTTOMRIGHT,  ALIGN_BOTTOMRIGHT,  ORDER_RIGHTTOLEFT,  0,              PADDING },
+            { UWG_BOTTOMCENTER, ALIGN_BOTTOM,       ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+            { UWG_BOTTOM,       ALIGN_BOTTOMLEFT,   ORDER_LEFTTORIGHT,  0,              0       },
+            { UWG_TOPCENTER,    ALIGN_TOPLEFT,      ORDER_LEFTTORIGHT,  UWGF_VERTICAL,  PADDING },
+            { UWG_COUNTERS,     ALIGN_LEFT,         ORDER_RIGHTTOLEFT,  UWGF_VERTICAL,  PADDING },
+            { UWG_AUTOMAP,      ALIGN_TOPLEFT,      ORDER_NONE,         0,              0       }
+        };
+
+        for (uiwidgetgroupdef_t const &def : widgetGroupDefs)
+        {
+            HudWidget* grp           = makeGroupWidget(def.groupFlags, player, def.alignFlags, def.order, def.padding);
+            hud->groupIds[def.group] = grp->id();
+            GUI_AddWidget(grp);
+        }
+    }
+
+    // Configure the bottom row of groups by adding UWG_BOTTOM{LEFT, CENTER, RIGHT} to UWG_BOTTOM in that order
+    {
+        GroupWidget& bottom = GUI_FindWidgetById(hud->groupIds[UWG_BOTTOM]).as<GroupWidget>();
+
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]));
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMCENTER]));
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMRIGHT]));
+
+
+        // Add BOTTOMLEFT2 to BOTTOMLEFT
+        GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]).as<GroupWidget>().addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
+    }
 
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
 
-    for(size_t i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+    // Create a table of needed widgets and initialize them
     {
-        const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
-        hud->widgetGroupIds[def->group] = GUI_CreateGroup(def->groupFlags, player, def->alignFlags, 0, def->padding);
+        uiwidgetdef_t const widgetDefs[] = {
+            { GUI_HEALTHICON,       ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->healthIconId      },
+            { GUI_HEALTH,           ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   function_cast<UpdateGeometryFunc>(HealthWidget_UpdateGeometry),         function_cast<DrawFunc>(HealthWidget_Draw),             &hud->healthId          },
+            { GUI_READYAMMOICON,    ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    function_cast<UpdateGeometryFunc>(ReadyAmmoIconWidget_UpdateGeometry),  function_cast<DrawFunc>(ReadyAmmoIconWidget_Drawer),    &hud->readyAmmoIconId   },        
+            { GUI_READYAMMO,        ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   function_cast<UpdateGeometryFunc>(ReadyAmmo_UpdateGeometry),            function_cast<DrawFunc>(ReadyAmmo_Drawer),              &hud->readyAmmoId       },
+
+            // { GUI_FRAGS,            ALIGN_BOTTOMCENTER, UWG_BOTTOMCENTER,   GF_FONTA,   function_cast<UpdateGeometryFunc>(FragsWidget_UpdateGeometry),          function_cast<DrawFunc>(FragsWidget_Draw),              &hud->fragsId           },
+            
+            { GUI_KEYS,             ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->keysId            },
+            { GUI_ARMOR,            ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_FONTB,   function_cast<UpdateGeometryFunc>(Armor_UpdateGeometry),                function_cast<DrawFunc>(ArmorWidget_Draw),              &hud->armorId           },
+            { GUI_ARMORICON,        ALIGN_BOTTOMRIGHT,  UWG_BOTTOMRIGHT,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->armorIconId       },
+
+            { GUI_SECRETS,          ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   nullptr,                                                                nullptr,                                                &hud->secretsId         },
+            { GUI_ITEMS,            ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   nullptr,                                                                nullptr,                                                &hud->itemsId           },
+            { GUI_KILLS,            ALIGN_TOPLEFT,      UWG_COUNTERS,       GF_FONTA,   nullptr,                                                                nullptr,                                                &hud->killsId           }
+        };
+
+        // Initialize widgets
+        for (uiwidgetdef_t const &def : widgetDefs)
+        {
+            HudWidget* widget = nullptr;
+            switch (def.type)
+            {
+                case GUI_HEALTHICON:    widget = new guidata_healthicon_t                                   (player); break;
+                case GUI_HEALTH:        widget = new guidata_health_t       (def.updateGeometry, def.drawer, player); break;
+                case GUI_ARMORICON:     widget = new guidata_armoricon_t                                    (player); break;
+                case GUI_ARMOR:         widget = new guidata_armor_t        (def.updateGeometry, def.drawer, player); break;
+                case GUI_KEYS:          widget = new guidata_keys_t                                         (player); break;
+                case GUI_HEALTHICON:    widget = new guidata_healthicon_t   (def.updateGeometry, def.drawer, player); break;    
+                case GUI_READYAMMOICON: widget = new guidata_readyammoicon_t(def.updateGeometry, def.drawer, player); break;
+                case GUI_READYAMMO:     widget = new guidata_readyammo_t    (def.updateGeometry, def.drawer, player); break;
+                case GUI_FRAGS:         widget = new guidata_frags_t        (def.updateGeometry, def.drawer, player); break;
+                case GUI_SECRETS:       widget = new guidata_secrets_t                                      (player); break;
+                case GUI_ITEMS:         widget = new guidata_items_t                                        (player); break;
+                case GUI_KILLS:         widget = new guidata_kills_t                                        (player); break; 
+
+                // Handled specially
+                // case GUI_AUTOMAP:       widget = new AutomapWidget          (def.updateGeometry, def.drawer, player); break;
+                // case GUI_LOG:           widget = new PlayerLogWidget        (def.updateGeometry, def.drawer, player); break;
+                // case GUI_CHAT:          widget = new ChatWidget             (def.updateGeometry, def.drawer, player); break;
+                
+                default:
+                    LOG_SCR_ERROR ("Unknown widget type: %i. Skipping")
+                        << def.type;
+                    continue;
+            }
+
+            widget->setAlignment(def.alignFlags).setFont(FID(def.fontIdx));
+            GUI_AddWidget(wi);
+            GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>().addChild();
+
+            if (def.id) 
+            {
+                *def.id = wi->id();
+            }
+        }
     }
 
-    { // Bottom Widget Groups
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
-                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]));
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
-                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMCENTER]));
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOM]),
-                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMRIGHT]));
+    // Configure special widgets (Log, Chat, Map)
+    {
+        {
+            PlayerLogWidget* log = new PlayerLogWidget(player);
+            log->setFont(FID(GF_FONTA));
+            GUI_AddWidget(log);
+            hud->logId = log->id();
+            GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]).as<GroupWidget>().addChild(chat);
+        }
 
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT]),
-                          GUI_MustFindObjectById(hud->widgetGroupIds[UWG_BOTTOMLEFT2]));
+        {
+            ChatWidget* chat = new ChatWidget(player);
+            chat->setFont(FID(GF_FONTA));
+            GUI_AddWidget(chat);
+            hud->chatId = chat->id();
+            GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]).as<GroupWidget>().addChild(chat);
+        }
+
+        {
+            AutomapWidget* map = new AutomapWidget(player);
+            map->setFont(FID(GF_FONTA));
+            map->setCameraFollowPlayer(player);
+
+            // TODO Possibly unneeded
+            Rect_SetWidthHeight(&map->geometry(), SCREENWIDTH, SCREENHEIGHT);
+            GUI_AddWidget(map);
+            hud->automapId = map->id();
+            GUI_FindWidgetById(hud->groupIds[UWG_AUTOMAP]).as<GroupWidget>().addChild(map);
+        }
     }
-
-    { // Log
-        hud->logWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UILog_UpdateGeometry, UILog_Drawer, UILog_Ticker, &hud->log);
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->logWidgetId));
-    }
-
-    { // Chat
-        hud->chatWidgetId = GUI_CreateWidget(GUI_LOG, player, ALIGN_TOPLEFT, FID(GF_FONTA), 1, UIChat_UpdateGeometry, UIChat_Drawer, NULL, &hud->chat);
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOPCENTER]), GUI_FindObjectById(hud->chatWidgetId));
-    }
-
-    { // Automap
-        hud->automapWidgetId = GUI_CreateWidget(GUI_AUTOMAP, player, 0, FID(GF_FONTB), 1, UIAutomap_UpdateGeometry, UIAutomap_Drawer, UIAutomap_Ticker, &hud->automap);
-        UIGroup_AddWidget(GUI_MustFindObjectById(hud->widgetGroupIds[UWG_AUTOMAP]), GUI_FindObjectById(hud->automapWidgetId));
-    }
-
-#undef PADDING
 }
 
 static uiwidget_t* ST_UIChatForPlayer(int player)
@@ -591,7 +597,6 @@ static uiwidget_t* ST_UIAutomapForPlayer(int player)
     Con_Error("ST_UIAutomapForPlayer: Invalid player #%i.", player);
     exit(1); // Unreachable.
 }
-
 
 static int ST_ChatResponder(int player, event_t* ev)
 {
@@ -739,26 +744,24 @@ void ST_Ticker(timespan_t ticLength)
                 if(hud->hideTics == 0 && cfg.common.hudTimer > 0 && hud->hideAmount < 1)
                     hud->hideAmount += 0.1f;
             }
-
-            // Update frag count
-            hud->currentFragsCount = 0;
-
-            for(int playerId = 0; playerId < MAXPLAYERS; ++playerId)
-            {
-                if(players[i].plr->inGame)
-                {
-                    hud->currentFragsCount += plr->frags[i] * (i != player ? 1 : -1);
-                }
-            }
-
         }
 
         if(hud->inited)
         {
-            int j;
-            for(j = 0; j < NUM_UIWIDGET_GROUPS; ++j)
+            for(int j = 0; j < NUM_UIWIDGET_GROUPS; ++j)
             {
-                UIWidget_RunTic(GUI_MustFindObjectById(hud->widgetGroupIds[j]), ticLength);
+                GUI_FindWidgetById(hud->groupIds[k]).tick(ticLength);
+            }
+        }
+        else
+        {
+            if(hud->hideTics > 0)
+            {
+                --hud->hideTics;
+            }
+            if(hud->hideTics == 0 && cfg.common.hudTimer > 0 && hud->hideAmount < 1)
+            {
+                hud->hideAmount += 0.1F;
             }
         }
     }
@@ -784,7 +787,7 @@ void ST_Drawer(int player)
  * HUD Control
  */
 
-int ST_ActiveHud(int player)
+int ST_ActiveHud(int /* player */)
 {
     return (cfg.common.screenBlocks < 10? 0 : cfg.common.screenBlocks - 10);
 }
