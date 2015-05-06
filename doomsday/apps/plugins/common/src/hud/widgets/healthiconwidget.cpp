@@ -37,11 +37,13 @@ static void HealthIconWidget_UpdateGeometry(guidata_healthicon_t *icon)
     icon->updateGeometry();
 }
 
-guidata_healthicon_t::guidata_healthicon_t(dint player)
+guidata_healthicon_t::guidata_healthicon_t(dint player, int sprite)
     : HudWidget(function_cast<UpdateGeometryFunc>(HealthIconWidget_UpdateGeometry),
                 function_cast<DrawFunc>(HealthIconWidget_Draw),
                 player)
-{}
+{
+    this->iconSpriteId = sprite; 
+}
 
 guidata_healthicon_t::~guidata_healthicon_t()
 {}
@@ -64,7 +66,7 @@ void guidata_healthicon_t::draw(Vector2i const &offset) const
     DGL_Translatef(offset.x, offset.y, 0);
     DGL_Scalef(::cfg.common.hudScale, ::cfg.common.hudScale, 1);
 
-    GUI_DrawSprite(SPR_STIM, 0, 0, HOT_TLEFT, 1, iconOpacity, false, nullptr, nullptr);
+    GUI_DrawSprite(this->iconSpriteId, 0, 0, HOT_TLEFT, 1, iconOpacity, false, nullptr, nullptr);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -79,7 +81,7 @@ void guidata_healthicon_t::updateGeometry()
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     Size2Raw iconSize;
-    GUI_SpriteSize(SPR_STIM, 1, &iconSize.width, &iconSize.height);
+    GUI_SpriteSize(this->iconSpriteId, 1, &iconSize.width, &iconSize.height);
     iconSize.width  *= ::cfg.common.hudScale;
     iconSize.height *= ::cfg.common.hudScale;
     Rect_SetWidthHeight(&geometry(), iconSize.width, iconSize.height);
