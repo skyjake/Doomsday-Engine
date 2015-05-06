@@ -36,6 +36,10 @@ extern const int NUMREDPALS;
 extern const int STARTBONUSPALS;
 extern const int NUMBONUSPALS;
 
+// Statusbar width/height -- these are here to make the widget library behave
+extern const int ST_WIDTH;
+extern const int ST_HEIGHT;
+
 #ifdef __cplusplus
 #  include "hu_lib.h"
 
@@ -43,9 +47,9 @@ class AutomapWidget;
 class ChatWidget;
 class PlayerLogWidget;
 
-AutomapWidget*      ST_GetPlayerAutomap(int);
-ChatWidget*         ST_GetPlayerChatWidget(int);
-PlayerLogWidget*    ST_GetPlayerLogWidget(int);
+AutomapWidget*      ST_TryFindAutomapWidget(int);
+ChatWidget*         ST_TryFindChatWidget(int);
+PlayerLogWidget*    ST_TryFindLogWidget(int);
 
 extern "C" {
 #endif

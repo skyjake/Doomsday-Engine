@@ -73,10 +73,12 @@ using namespace de;
 // Types / Constants
 // ============================================================================
 
-const int STARTREDPALS                  = 1;
-const int NUMREDPALS                    = 8;
-const int STARTBONUSPALS                = 9;
-const int NUMBONUSPALS                  = 4;
+const int STARTREDPALS   = 1;
+const int NUMREDPALS     = 8;
+const int STARTBONUSPALS = 9;
+const int NUMBONUSPALS   = 4;
+const int ST_WIDTH       = SCREENWIDTH;
+const int ST_HEIGHT      = SCREENHEIGHT;
 
 enum {
     UWG_MAPNAME,
@@ -595,7 +597,7 @@ D_CMD(ChatOpen)
         return false;
     }
 
-    ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+    ChatWidget* chat = ST_TryFindChatWidget(CONSOLEPLAYER);
 
     if (chat)
     {
@@ -633,7 +635,7 @@ D_CMD(ChatAction)
         return false;
     }
 
-    ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+    ChatWidget* chat = ST_TryFindChatWidget(CONSOLEPLAYER);
 
     // TODO Design a more extensible and modular means of doing this
     if (chat && !chat->isActive())
@@ -684,7 +686,7 @@ D_CMD(ChatSendMacro)
     }
     else
     {
-        ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+        ChatWidget* chat = ST_TryFindChatWidget(CONSOLEPLAYER);
 
         if (chat)
         {
@@ -805,7 +807,7 @@ int ST_Responder(event_t* ev)
 {
     for (int playerId = 0; playerId < MAXPLAYERS; ++playerId)
     {
-        ChatWidget* chat = ST_GetPlayerChatWidget(playerId);
+        ChatWidget* chat = ST_TryFindChatWidget(playerId);
         if (chat)
         {
             int nEaten = chat->handleEvent(*ev);
@@ -968,7 +970,7 @@ void ST_CloseAll(int player, dd_bool fast)
 
 dd_bool ST_ChatIsActive(int player)
 {
-    ChatWidget* chat = ST_GetPlayerChatWidget(player);
+    ChatWidget* chat = ST_TryFindChatWidget(player);
 
     if (chat)
     {
@@ -1010,7 +1012,7 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
 void ST_LogPost(int player, byte flags, const char* msg)
 {
-    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
+    PlayerLogWidget* log = ST_TryFindLogWidget(player);
 
     if (log)
     {
@@ -1020,7 +1022,7 @@ void ST_LogPost(int player, byte flags, const char* msg)
 
 void ST_LogRefresh(int player)
 {
-    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
+    PlayerLogWidget* log = ST_TryFindLogWidget(player);
 
     if (log)
     {
@@ -1030,7 +1032,7 @@ void ST_LogRefresh(int player)
 
 void ST_LogEmpty(int player)
 {
-    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
+    PlayerLogWidget* log = ST_TryFindLogWidget(player);
 
     if (log)
     {
@@ -1071,7 +1073,7 @@ void ST_LogUpdateAlignment(void)
 // referenced in p_inter.c
 void ST_AutomapOpen(int player, dd_bool yes, dd_bool instant)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1081,7 +1083,7 @@ void ST_AutomapOpen(int player, dd_bool yes, dd_bool instant)
 
 dd_bool ST_AutomapIsOpen(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1096,7 +1098,7 @@ dd_bool ST_AutomapIsOpen(int player)
 
 float ST_AutomapOpacity(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1111,7 +1113,7 @@ float ST_AutomapOpacity(int player)
 
 static void ST_ToggleAutomapMaxZoom(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1121,7 +1123,7 @@ static void ST_ToggleAutomapMaxZoom(int player)
 
 static void ST_ToggleAutomapPanMode(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1145,7 +1147,7 @@ dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 {
     static const float AM_OBSCURE_TOLERANCE = 0.9999F;
 
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map && map->isOpen())
     {
@@ -1163,7 +1165,7 @@ dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 
 int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1177,7 +1179,7 @@ int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 
 void ST_AutomapClearPoints(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1191,7 +1193,7 @@ void ST_AutomapClearPoints(int player)
 
 void ST_SetAutomapCameraRotation(int player, dd_bool on)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1215,7 +1217,7 @@ int ST_AutomapCheatLevel(int player)
 // referenced in m_cheat.cpp
 void ST_SetAutomapCheatLevel(int player, int level)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1235,7 +1237,7 @@ void ST_CycleAutomapCheatLevel(int player)
 // referenced in m_cheat.cpp, p_inter.c
 void ST_RevealAutomap(int player, dd_bool on)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1245,7 +1247,7 @@ void ST_RevealAutomap(int player, dd_bool on)
 
 dd_bool ST_AutomapIsRevealed(int player)
 {
-    AutomapWidget* map = ST_GetPlayerAutomap(player);
+    AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
     if (map)
     {
@@ -1261,7 +1263,7 @@ dd_bool ST_AutomapIsRevealed(int player)
  * HUD Widget Access
  */
 
-ChatWidget* ST_GetPlayerChatWidget(int player)
+ChatWidget* ST_TryFindChatWidget(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
@@ -1276,7 +1278,7 @@ ChatWidget* ST_GetPlayerChatWidget(int player)
     return nullptr;
 }
 
-PlayerLogWidget* ST_GetPlayerLogWidget(int player)
+PlayerLogWidget* ST_TryFindLogWidget(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
@@ -1291,7 +1293,7 @@ PlayerLogWidget* ST_GetPlayerLogWidget(int player)
     return nullptr;
 }
 
-AutomapWidget* ST_GetPlayerAutomap(int player)
+AutomapWidget* ST_TryFindAutomapWidget(int player)
 {
     if(player >= 0 && player < MAXPLAYERS)
     {
