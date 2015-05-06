@@ -23,6 +23,10 @@
 
 #include "hud/hudwidget.h"
 
+// TODO If HudElementName needs to be this specific, then it it needs to be refactored
+//      in to something that's not an enum.
+//      If HudElementName is the means to refer to hud elements, and plugins can create their
+//      own, then this is severely broken
 enum HudElementName
 {
     GUI_NONE,
@@ -35,14 +39,12 @@ enum HudElementName
     GUI_FRAGS,
     GUI_LOG,
     GUI_CHAT,
-#if __JDOOM__
     GUI_AMMO,
     GUI_MAXAMMO,
     GUI_WEAPONSLOT,
     GUI_FACE,
     GUI_HEALTHICON,
     GUI_ARMORICON,
-#endif
 #if __JHERETIC__
     GUI_TOME,
 #endif
@@ -60,13 +62,11 @@ enum HudElementName
     GUI_DEFENSE,
     GUI_WORLDTIME,
 #endif
-#if __JDOOM__ || __JHERETIC__
     GUI_READYAMMOICON,
     GUI_KEYSLOT,
     GUI_SECRETS,
     GUI_ITEMS,
     GUI_KILLS,
-#endif
 #if __JHERETIC__ || __JHEXEN__
     GUI_INVENTORY,
     GUI_CHAIN,

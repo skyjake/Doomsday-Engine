@@ -77,9 +77,7 @@ enum {
     VG_KEY = VG_FIRST,
     VG_TRIANGLE,
     VG_ARROW,
-#if __JDOOM__
     VG_CHEATARROW,
-#endif
     VG_XHAIR1,
     VG_XHAIR2,
     VG_XHAIR3,
