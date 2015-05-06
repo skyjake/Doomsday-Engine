@@ -150,57 +150,6 @@ static void unhideHUD(void)
         ST_HUDUnHide(i, HUE_FORCE);
 }
 
-static void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-    float scale, float alpha, dd_bool flip, int* drawnWidth, int* drawnHeight)
-{
-    spriteinfo_t info;
-
-    if(!(alpha > 0))
-        return;
-
-    alpha = MINMAX_OF(0.f, alpha, 1.f);
-    R_GetSpriteInfo(sprite, 0, &info);
-
-    switch(hotspot)
-    {
-    case HOT_BRIGHT:
-        y -= info.geometry.size.height * scale;
-
-    case HOT_TRIGHT:
-        x -= info.geometry.size.width * scale;
-        break;
-
-    case HOT_BLEFT:
-        y -= info.geometry.size.height * scale;
-        break;
-    default:
-        break;
-    }
-
-    DGL_SetPSprite(info.material);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    DGL_Color4f(1, 1, 1, alpha);
-    DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, flip * info.texCoord[0], 0);
-        DGL_Vertex2f(x, y);
-
-        DGL_TexCoord2f(0, !flip * info.texCoord[0], 0);
-        DGL_Vertex2f(x + info.geometry.size.width * scale, y);
-
-        DGL_TexCoord2f(0, !flip * info.texCoord[0], info.texCoord[1]);
-        DGL_Vertex2f(x + info.geometry.size.width * scale, y + info.geometry.size.height * scale);
-
-        DGL_TexCoord2f(0, flip * info.texCoord[0], info.texCoord[1]);
-        DGL_Vertex2f(x, y + info.geometry.size.height * scale);
-    DGL_End();
-
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    if(drawnWidth)  *drawnWidth  = info.geometry.size.width  * scale;
-    if(drawnHeight) *drawnHeight = info.geometry.size.height * scale;
-}
-
 /**
  * Draw the ingame heads-up display and the automap.
  * This is called for each render pass.
