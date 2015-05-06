@@ -39,25 +39,36 @@
 #include "player.h"
 #include "r_common.h"
 
+using namespace de;
+
 // Widgets
 // ============================================================================
 
 #include "hu_stuff.h"
 
+#include "hud/widgets/groupwidget.h"
+
+#include "hud/automapstyle.h"
 #include "hud/widgets/automapwidget.h"
+
 #include "hud/widgets/playerlogwidget.h"
 #include "hud/widgets/chatwidget.h"
 
 #include "hud/widgets/readyammoiconwidget.h"
 #include "hud/widgets/readyammowidget.h"
 #include "hud/widgets/keyswidget.h"
-#include "hud/widgets/itemswidget.h"
 
+#include "hud/widgets/healthiconwidget.h"
 #include "hud/widgets/healthwidget.h"
+
+#include "hud/widgets/armoriconwidget.h"
 #include "hud/widgets/armorwidget.h"
 
+#include "hud/widgets/itemswidget.h"
 #include "hud/widgets/killswidget.h"
 #include "hud/widgets/secretswidget.h"
+
+#include "hud/widgets/fragswidget.h"
 
 // Types / Constants
 // ============================================================================
@@ -319,7 +330,7 @@ static void initData(hudstate_t* hud)
         GUI_FindWidgetById(hud->armorIconId).as<guidata_armoricon_t>().reset();
         GUI_FindWidgetById(hud->armorId).as<guidata_armor_t>().reset();
         GUI_FindWidgetById(hud->keysId).as<guidata_keys_t>().reset();
-        GUI_FindWidgetById(hud->fragsId).as<guidata_frags_t>().reset();
+        // GUI_FindWidgetById(hud->fragsId).as<guidata_frags_t>().reset();
 
         GUI_FindWidgetById(hud->secretsId).as<guidata_secrets_t>().reset();
         GUI_FindWidgetById(hud->itemsId).as<guidata_items_t>().reset();
@@ -331,76 +342,100 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(hud - hudStates, HUE_FORCE);
 }
 
-static void setAutomapCheatLevel(uiwidget_t* obj, int level)
+static void setAutomapCheatLevel(AutomapWidget& map, int level)
 {
-    hudstate_t* hud = &hudStates[UIWidget_Player(obj)];
-    int flags;
+    hudstate_t* hud = &hudStates[map.player()];
 
     hud->automapCheatLevel = level;
 
-    flags = UIAutomap_Flags(obj) & ~(AMF_REND_ALLLINES|AMF_REND_THINGS|AMF_REND_SPECIALLINES|AMF_REND_VERTEXES|AMF_REND_LINE_NORMALS);
-    if(hud->automapCheatLevel >= 1)
-        flags |= AMF_REND_ALLLINES;
-    if(hud->automapCheatLevel == 2)
-        flags |= AMF_REND_THINGS | AMF_REND_SPECIALLINES;
-    if(hud->automapCheatLevel > 2)
-        flags |= (AMF_REND_VERTEXES | AMF_REND_LINE_NORMALS);
-    UIAutomap_SetFlags(obj, flags);
+    dint flags = map.flags()
+        & ~ (AWF_SHOW_ALLLINES 
+            |AWF_SHOW_THINGS
+            |AWF_SHOW_SPECIALLINES
+            |AWF_SHOW_VERTEXES
+            |AWF_SHOW_LINE_NORMALS);
+
+    if (hud->automapCheatLevel >= 1)
+    {
+        flags |= AWF_SHOW_ALLLINES;
+    }
+
+    if (hud->automapCheatLevel == 2)
+    {
+        flags |= AWF_SHOW_THINGS 
+              |  AWF_SHOW_SPECIALLINES;
+    }
+    else if (hud->automapCheatLevel > 2)
+    {
+        flags |= AWF_SHOW_VERTEXES 
+              |  AWF_SHOW_LINE_NORMALS;
+    }
+
+    map.setFlags(flags);
 }
 
-static void initAutomapForCurrentMap(uiwidget_t* obj)
+static void initAutomapForCurrentMap(AutomapWidget& map)
 {
-#ifdef __JDOOM__
-    hudstate_t *hud = &hudStates[UIWidget_Player(obj)];
-    automapcfg_t *mcfg;
-#endif
-    mobj_t *followMobj;
-    int i;
+    hudstate_t* hud = &hudStates[map.player()];
 
-    UIAutomap_Reset(obj);
+    map.reset();
 
-    UIAutomap_SetMinScale(obj, 2 * PLAYERRADIUS);
-    UIAutomap_SetWorldBounds(obj, *((coord_t*) DD_GetVariable(DD_MAP_MIN_X)),
-                                  *((coord_t*) DD_GetVariable(DD_MAP_MAX_X)),
-                                  *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
-                                  *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
+    map.setMapBounds(*((coord_t*) DD_GetVariable(DD_MAP_MIN_X)),
+                     *((coord_t*) DD_GetVariable(DD_MAP_MAX_X)),
+                     *((coord_t*) DD_GetVariable(DD_MAP_MIN_Y)),
+                     *((coord_t*) DD_GetVariable(DD_MAP_MAX_Y)));
 
-#ifdef __JDOOM__
-    mcfg = UIAutomap_Config(obj);
-#endif
 
-    // Determine the obj view scale factors.
-    if(UIAutomap_ZoomMax(obj))
-        UIAutomap_SetScale(obj, 0);
-
-    UIAutomap_ClearPoints(obj);
-
-#if __JDOOM__
-    if(!IS_NETGAME && hud->automapCheatLevel)
-        AM_SetVectorGraphic(mcfg, AMO_THINGPLAYER, VG_CHEATARROW);
-#endif
-
-    // Are we re-centering on a followed mobj?
-    followMobj = UIAutomap_FollowMobj(obj);
-    if(followMobj)
+    // Disable cheats for network games
+    if (IS_NETGAME)
     {
-        UIAutomap_SetCameraOrigin(obj, followMobj->origin[VX], followMobj->origin[VY]);
+        setAutomapCheatLevel(map, 0);
     }
 
-    if(IS_NETGAME)
+    // Silent clear POI's
+    map.clearAllPoints(true);
+
+    // Reset map scale
+    if (map.cameraZoomMode())
     {
-        setAutomapCheatLevel(obj, 0);
+        map.setScale(0);
     }
 
-    UIAutomap_SetReveal(obj, false);
-
-    // Add all immediately visible lines.
-    for(i = 0; i < numlines; ++i)
+    // Enable keyboard guide for "baby" mode
+    if (G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
     {
-        xline_t *xline = &xlines[i];
-        if(!(xline->flags & ML_MAPPED)) continue;
+        map.setFlags(map.flags() | AWF_SHOW_KEYS);
+    }
 
-        P_SetLineAutomapVisibility(UIWidget_Player(obj), i, true);
+    // Show player arrow in cheat/dev mode
+    if (hud->automapCheatLevel > 0)
+    {
+        AutomapStyle* mapStyle = map.style();
+        mapStyle->setObjectSvg(AMO_THINGPLAYER, VG_CHEATARROW);
+    }
+
+    // Focus camera on currently followed map object, if applicable
+    {
+        mobj_t* followTarget = map.followMobj();
+
+        if (followTarget)
+        {
+            map.setCameraOrigin(Vector2d(followTarget->origin));
+        }
+    }
+
+    // Hide things that need not be seen
+    map.reveal(false);
+
+    // Add initially visible lines (i.e. those immediately present when player has spawned
+    for (int lineNumber = 0; lineNumber < numlines; ++lineNumber)
+    {
+        xline_t* xline = &xline[lineNumber];
+
+        if (xline->flags & ML_MAPPED)
+        {
+            P_SetLineAutomapVisibility(map.player(), lineNumber, true);
+        }
     }
 }
 
@@ -415,15 +450,15 @@ static void ST_BuildWidgets(int player)
     };
 
     struct uiwidgetdef_t {
-        guiwidgettype_t type;
+        HudElementName  type;
         int             alignFlags;
         int             group;
         gamefontid_t    fontIdx;
 
-        void (*updateGeometry) (uiwidget_t* obj);
-        void (*drawer) (uiwidget_t* obj, int x, int y);
-        void (*ticker) (uiwidget_t* obj, timespan_t ticLength);
-        void* typedata;
+        void (*updateGeometry) (HudWidget* obj);
+        void (*drawer) (HudWidget* obj, Point2Raw const* origin);
+        
+        uiwidgetid_t* id;
     };
 
     hudstate_t* hud = &hudStates[player];
@@ -445,7 +480,17 @@ static void ST_BuildWidgets(int player)
 
         for (uiwidgetgroupdef_t const &def : widgetGroupDefs)
         {
-            HudWidget* grp           = makeGroupWidget(def.groupFlags, player, def.alignFlags, def.order, def.padding);
+            HudWidget* grp;
+            {
+                GroupWidget* groupWidget = new GroupWidget(player);
+                groupWidget->setAlignment(def.alignFlags).setFont(1);
+                groupWidget->setFlags(def.groupFlags);
+                groupWidget->setOrder(def.order);
+                groupWidget->setPadding(def.padding);
+
+                grp = groupWidget;
+            }
+
             hud->groupIds[def.group] = grp->id();
             GUI_AddWidget(grp);
         }
@@ -496,7 +541,6 @@ static void ST_BuildWidgets(int player)
                 case GUI_ARMORICON:     widget = new guidata_armoricon_t                                    (player); break;
                 case GUI_ARMOR:         widget = new guidata_armor_t        (def.updateGeometry, def.drawer, player); break;
                 case GUI_KEYS:          widget = new guidata_keys_t                                         (player); break;
-                case GUI_HEALTHICON:    widget = new guidata_healthicon_t   (def.updateGeometry, def.drawer, player); break;    
                 case GUI_READYAMMOICON: widget = new guidata_readyammoicon_t(def.updateGeometry, def.drawer, player); break;
                 case GUI_READYAMMO:     widget = new guidata_readyammo_t    (def.updateGeometry, def.drawer, player); break;
                 case GUI_FRAGS:         widget = new guidata_frags_t        (def.updateGeometry, def.drawer, player); break;
@@ -516,12 +560,13 @@ static void ST_BuildWidgets(int player)
             }
 
             widget->setAlignment(def.alignFlags).setFont(FID(def.fontIdx));
-            GUI_AddWidget(wi);
-            GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>().addChild();
+            GUI_AddWidget(widget);
+            GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>()
+                .addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
 
             if (def.id) 
             {
-                *def.id = wi->id();
+                *def.id = widget->id();
             }
         }
     }
@@ -533,7 +578,7 @@ static void ST_BuildWidgets(int player)
             log->setFont(FID(GF_FONTA));
             GUI_AddWidget(log);
             hud->logId = log->id();
-            GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]).as<GroupWidget>().addChild(chat);
+            GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]).as<GroupWidget>().addChild(log);
         }
 
         {
@@ -558,56 +603,178 @@ static void ST_BuildWidgets(int player)
     }
 }
 
-static uiwidget_t* ST_UIChatForPlayer(int player)
+// TODO This is used everywhere, and could probably be added to libcommon
+static int parseTeamNumber(String const &str)
 {
-    if(player >= 0 && player < MAXPLAYERS)
+    if(!str.isEmpty())
     {
-        hudstate_t* hud = &hudStates[player];
-        return GUI_FindObjectById(hud->chatWidgetId);
+        bool isNumber = false;
+        int const num = str.toInt(&isNumber);
+        if(isNumber && num >= 0 && num <= NUMTEAMS)
+        {
+            return num;
+        }
     }
-    Con_Error("ST_UIChatForPlayer: Invalid player #%i.", player);
-    exit(1); // Unreachable.
+    return -1;
 }
 
-static uiwidget_t* ST_UILogForPlayer(int player)
+static int parseMacroId(String const &str) // static
 {
-    if(player >= 0 && player < MAXPLAYERS)
+    if(!str.isEmpty())
     {
-        hudstate_t* hud = &hudStates[player];
-        uiwidget_t* uiLog =  GUI_FindObjectById(hud->logWidgetId);
-
-        DENG_ASSERT(uiLog != 0);
-
-        return uiLog;
+        bool isNumber = false;
+        int const id  = str.toInt(&isNumber);
+        if(isNumber && id >= 0 && id <= 9)
+        {
+            return id;
+        }
     }
-    Con_Error("ST_UILogForPlayer: Invalid player #%i.", player);
-
-    // TODO This is quite bad error handling
-    exit(1); // Unreachable.
-}
-
-static uiwidget_t* ST_UIAutomapForPlayer(int player)
-{
-    if(player >= 0 && player < MAXPLAYERS)
-    {
-        hudstate_t* hud = &hudStates[player];
-        return GUI_FindObjectById(hud->automapWidgetId);
-    }
-    Con_Error("ST_UIAutomapForPlayer: Invalid player #%i.", player);
-    exit(1); // Unreachable.
-}
-
-static int ST_ChatResponder(int player, event_t* ev)
-{
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
-    {
-        return UIChat_Responder(obj, ev);
-    }
-    return false;
+    return -1;
 }
 
 // }}}
+
+// Commands (must be declared before ST_Register)
+// ============================================================================
+
+D_CMD(ChatOpen)
+{
+    DENG2_UNUSED(src);
+
+    if (G_QuitInProgress()) 
+    {
+        return false;
+    }
+
+    ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+
+    if (chat)
+    {
+        int destination = 0;
+        {
+            if (argc == 2)
+            {
+                destination = parseTeamNumber(argv[1]);
+                if (destination < 0)
+                {
+                    LOG_SCR_ERROR("Invalid team number: %i (valid numbers in range 0 through %i")
+                            << destination 
+                            << NUMTEAMS;
+                    return false;
+                }
+            }
+        }
+    
+        chat->setDestination(destination);
+        chat->activate();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+D_CMD(ChatAction)
+{
+    DENG2_UNUSED2(src, argc);
+
+    if (G_QuitInProgress())
+    {
+        return false;
+    }
+
+    ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+
+    // TODO Design a more extensible and modular means of doing this
+    if (chat && !chat->isActive())
+    {
+        String const command = String(argv[0] + 4 /* ghetto substring */);
+        
+        if (command.compareWithoutCase("complete") == 0)
+        {
+            return chat->handleMenuCommand(MCMD_SELECT);
+        }
+        else if (command.compareWithoutCase("cancel") == 0)
+        {
+            return chat->handleMenuCommand(MCMD_CLOSE);
+        }
+        else if (command.compareWithoutCase("delete") == 0)
+        {
+            return chat->handleMenuCommand(MCMD_DELETE);
+        }
+        else
+        {
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+D_CMD(ChatSendMacro)
+{
+    DENG2_UNUSED(src);
+
+    if (G_QuitInProgress())
+    {
+        return false;
+    }
+
+    if (argc < 2 || argc > 3)
+    {
+        LOG_SCR_NOTE("Usage: %s (team) (macro number)")
+                << argv[0];
+    
+        LOG_SCR_MSG("Send a chat macro to other player(s). "
+                    "If (team) is omitted, the message with be broadcast to all players.");
+
+        return true;        
+    }
+    else
+    {
+        ChatWidget* chat = ST_GetPlayerChatWidget(CONSOLEPLAYER);
+
+        if (chat)
+        {
+            int destination = 0;
+            {
+                if (argc == 3)
+                {
+                    destination = parseTeamNumber(argv[1]);
+
+                    if (destination < 0)
+                    {
+                        LOG_SCR_ERROR("Invalid team number: %i. Valid numbers are within the range 0 through %i")
+                            << destination
+                            << NUMTEAMS;
+
+                        return false;
+                    }
+                }
+            }
+            
+            int macroId = parseMacroId(argc == 3 ? argv[2] : argv[1]);
+
+            if (macroId >= 0)
+            {
+                chat->activate();
+                chat->setDestination(destination);
+                chat->messageAppendMacro(macroId);
+                chat->handleMenuCommand(MCMD_SELECT);
+                chat->activate(false);
+            }
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+}
 
 // Public Logic
 // ============================================================================
@@ -618,47 +785,51 @@ static int ST_ChatResponder(int player, event_t* ev)
 
 void ST_Register(void)
 {
-    C_VAR_FLOAT2( "hud-color-r", &cfg.common.hudColor[0], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-g", &cfg.common.hudColor[1], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-b", &cfg.common.hudColor[2], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-color-a", &cfg.common.hudColor[3], 0, 0, 1, unhideHUD )
-    C_VAR_FLOAT2( "hud-icon-alpha", &cfg.common.hudIconAlpha, 0, 0, 1, unhideHUD )
-    C_VAR_INT(    "hud-patch-replacement", &cfg.common.hudPatchReplaceMode, 0, 0, 1 )
-    C_VAR_FLOAT2( "hud-scale", &cfg.common.hudScale, 0, 0.1f, 1, unhideHUD )
-    C_VAR_FLOAT(  "hud-timer", &cfg.common.hudTimer, 0, 0, 60 )
+    /*
+     * Convars
+     */
 
-    // Displays
-    C_VAR_BYTE2(  "hud-ammo", &cfg.hudShown[HUD_AMMO], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-armor", &cfg.hudShown[HUD_ARMOR], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter", &cfg.common.hudShownCheatCounters, 0, 0, 63, unhideHUD )
-    C_VAR_FLOAT2( "hud-cheat-counter-scale", &cfg.common.hudCheatCounterScale, 0, .1f, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.common.hudCheatCounterShowWithAutomap, 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-frags", &cfg.hudShown[HUD_FRAGS], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-health", &cfg.hudShown[HUD_HEALTH], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-keys", &cfg.hudShown[HUD_KEYS], 0, 0, 1, unhideHUD )
-    C_VAR_BYTE2(  "hud-power", &cfg.hudShown[HUD_INVENTORY], 0, 0, 1, unhideHUD )
+    C_VAR_FLOAT2( "hud-color-r",                    &cfg.common.hudColor[0],                    0, 0,       1,     unhideHUD    );
+    C_VAR_FLOAT2( "hud-color-g",                    &cfg.common.hudColor[1],                    0, 0,       1,     unhideHUD    );
+    C_VAR_FLOAT2( "hud-color-b",                    &cfg.common.hudColor[2],                    0, 0,       1,     unhideHUD    );
+    C_VAR_FLOAT2( "hud-color-a",                    &cfg.common.hudColor[3],                    0, 0,       1,     unhideHUD    );
+    C_VAR_FLOAT2( "hud-icon-alpha",                 &cfg.common.hudIconAlpha,                   0, 0,       1,     unhideHUD    );
+    C_VAR_INT(    "hud-patch-replacement",          &cfg.common.hudPatchReplaceMode,            0, 0,       1                   );
+    C_VAR_FLOAT2( "hud-scale",                      &cfg.common.hudScale,                       0, 0.1F,    1,     unhideHUD    );
+    C_VAR_FLOAT(  "hud-timer",                      &cfg.common.hudTimer,                       0, 0,       60                  );
+    C_VAR_BYTE2(  "hud-ammo",                       &cfg.hudShown[HUD_AMMO],                    0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-armor",                      &cfg.hudShown[HUD_ARMOR],                   0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-cheat-counter",              &cfg.common.hudShownCheatCounters,          0, 0,       63,    unhideHUD    );
+    C_VAR_FLOAT2( "hud-cheat-counter-scale",        &cfg.common.hudCheatCounterScale,           0, 0.1F,    1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-cheat-counter-show-mapopen", &cfg.common.hudCheatCounterShowWithAutomap, 0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-frags",                      &cfg.hudShown[HUD_FRAGS],                   0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-health",                     &cfg.hudShown[HUD_HEALTH],                  0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-keys",                       &cfg.hudShown[HUD_KEYS],                    0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE2(  "hud-power",                      &cfg.hudShown[HUD_INVENTORY],               0, 0,       1,     unhideHUD    );
+    C_VAR_BYTE(   "hud-unhide-damage",              &cfg.hudUnHide[HUE_ON_DAMAGE],              0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-ammo",         &cfg.hudUnHide[HUE_ON_PICKUP_AMMO],         0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-armor",        &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR],        0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-health",       &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH],       0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-key",          &cfg.hudUnHide[HUE_ON_PICKUP_KEY],          0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-powerup",      &cfg.hudUnHide[HUE_ON_PICKUP_POWER],        0, 0,       1                   );
+    C_VAR_BYTE(   "hud-unhide-pickup-weapon",       &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON],       0, 0,       1                   );
 
-    // Events.
-    C_VAR_BYTE(   "hud-unhide-damage", &cfg.hudUnHide[HUE_ON_DAMAGE], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-ammo", &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-armor", &cfg.hudUnHide[HUE_ON_PICKUP_ARMOR], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-health", &cfg.hudUnHide[HUE_ON_PICKUP_HEALTH], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-key", &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-powerup", &cfg.hudUnHide[HUE_ON_PICKUP_POWER], 0, 0, 1 )
-    C_VAR_BYTE(   "hud-unhide-pickup-weapon", &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 0, 1 )
+    /*
+     * Commands
+     */
 
-    C_CMD("beginchat",       NULL,   ChatOpen )
-    C_CMD("chatcancel",      "",     ChatAction )
-    C_CMD("chatcomplete",    "",     ChatAction )
-    C_CMD("chatdelete",      "",     ChatAction )
-    C_CMD("chatsendmacro",   NULL,   ChatSendMacro )
+    C_CMD("beginchat",       nullptr,    ChatOpen       )
+    C_CMD("chatcancel",      "",         ChatAction     )
+    C_CMD("chatcomplete",    "",         ChatAction     )
+    C_CMD("chatdelete",      "",         ChatAction     )
+    C_CMD("chatsendmacro",   nullptr,    ChatSendMacro  )
 }
 
 void ST_Init(void)
 {
-    int i;
-    ST_InitAutomapConfig();
-    for(i = 0; i < MAXPLAYERS; ++i)
+    ST_InitAutomapStyle();
+
+    for(int i = 0; i < MAXPLAYERS; ++i)
     {
         hudstate_t* hud = &hudStates[i];
         ST_BuildWidgets(i);
@@ -680,15 +851,23 @@ void ST_Shutdown(void)
  * HUD Runtime Callbacks
  */
 
+// Handles chat events
 int ST_Responder(event_t* ev)
 {
-    int i, eaten = false; // WTF
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for (int playerId = 0; playerId < MAXPLAYERS; ++playerId)
     {
-        eaten = ST_ChatResponder(i, ev);
-        if(eaten) break;
+        ChatWidget* chat = ST_GetPlayerChatWidget(playerId);
+        if (chat)
+        {
+            int nEaten = chat->handleEvent(*ev);
+            if (nEaten > 0)
+            {
+                return nEaten;
+            }
+        }
     }
-    return eaten;
+
+    return 0;
 }
 
 void ST_Ticker(timespan_t ticLength)
@@ -736,7 +915,7 @@ void ST_Ticker(timespan_t ticLength)
         {
             for(int j = 0; j < NUM_UIWIDGET_GROUPS; ++j)
             {
-                GUI_FindWidgetById(hud->groupIds[k]).tick(ticLength);
+                GUI_FindWidgetById(hud->groupIds[j]).tick(ticLength);
             }
         }
         else
@@ -776,58 +955,61 @@ int ST_ActiveHud(int /* player */)
 
 void ST_Start(int player)
 {
-    uiwidget_t* obj;
-    hudstate_t* hud;
-    int flags;
-
-    if(player < 0 || player >= MAXPLAYERS)
+    if (player > 0 && player < MAXPLAYERS)
     {
-        Con_Error("ST_Start: Invalid player #%i.", player);
-        exit(1); // Unreachable.
+        hudstate_t* hud = &hudStates[player];
+
+        if (!hud->stopped)
+        {
+            ST_Stop(player);
+        }
+
+        // Initialize all widgets to default values
+        initData(hud);
+    
+        /*
+         * Set user preferences for layout, etc...
+         */
+
+        // Top Center widget group
+        {
+            HudWidget& topCenter = GUI_FindWidgetById(hud->groupIds[UWG_TOPCENTER]);
+
+            int alignFlags = topCenter.alignment() & ~(ALIGN_LEFT | ALIGN_RIGHT);
+
+            if (cfg.common.msgAlign == 0)
+            {
+                alignFlags |= ALIGN_LEFT;
+            }
+            else if (cfg.common.msgAlign == 2)
+            {
+                alignFlags |= ALIGN_RIGHT;
+            }
+
+            topCenter.setAlignment(alignFlags);
+        }
+
+        // Automap
+        {
+            AutomapWidget& map = GUI_FindWidgetById(hud->automapId).as<AutomapWidget>();
+            
+            // Reset automap open state to closed
+            map.open(false, true /* close instantly */);
+
+            initAutomapForCurrentMap(map);
+            map.setCameraRotationMode(CPP_BOOL(cfg.common.automapRotate));
+        }
+
+        hud->stopped = false;
     }
-    hud = &hudStates[player];
-
-    if(!hud->stopped)
-    {
-        ST_Stop(player);
-    }
-
-    initData(hud);
-
-    /**
-     * Initialize widgets according to player preferences.
-     */
-
-    obj = GUI_MustFindObjectById(hud->widgetGroupIds[UWG_TOP]);
-    flags = UIWidget_Alignment(obj);
-    flags &= ~(ALIGN_LEFT|ALIGN_RIGHT);
-    if(cfg.common.msgAlign == 0)
-        flags |= ALIGN_LEFT;
-    else if(cfg.common.msgAlign == 2)
-        flags |= ALIGN_RIGHT;
-    UIWidget_SetAlignment(obj, flags);
-
-    obj = GUI_MustFindObjectById(hud->automapWidgetId);
-    // If the automap was left open; close it.
-    UIAutomap_Open(obj, false, true);
-    initAutomapForCurrentMap(obj);
-    UIAutomap_SetCameraRotation(obj, cfg.common.automapRotate);
-
-    hud->stopped = false;
 }
 
 void ST_Stop(int player)
 {
-    hudstate_t* hud;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    hud = &hudStates[player];
-    if(hud->stopped)
-        return;
-
-    hud->stopped = true;
+    if (player > 0 && player < MAXPLAYERS)
+    {
+        hudStates[player].stopped = true;
+    }
 }
 
 void ST_CloseAll(int player, dd_bool fast)
@@ -837,12 +1019,16 @@ void ST_CloseAll(int player, dd_bool fast)
 
 dd_bool ST_ChatIsActive(int player)
 {
-    uiwidget_t* obj = ST_UIChatForPlayer(player);
-    if(NULL != obj)
+    ChatWidget* chat = ST_GetPlayerChatWidget(player);
+
+    if (chat)
     {
-        return UIChat_IsActive(obj);
+        return chat->isActive();
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 // referenced in p_inter.c
@@ -875,24 +1061,32 @@ void ST_HUDUnHide(int player, hueevent_t ev)
 
 void ST_LogPost(int player, byte flags, const char* msg)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
+    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
 
-    UILog_Post(obj, flags, msg);
+    if (log)
+    {
+        log->post(flags, msg);
+    }
 }
 
 void ST_LogRefresh(int player)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
-    UILog_Refresh(obj);
+    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
+
+    if (log)
+    {
+        log->refresh();
+    }
 }
 
 void ST_LogEmpty(int player)
 {
-    uiwidget_t* obj = ST_UILogForPlayer(player);
-    if(!obj) return;
-    UILog_Empty(obj);
+    PlayerLogWidget* log = ST_GetPlayerLogWidget(player);
+
+    if (log)
+    {
+        log->clear();
+    }
 }
 
 void ST_LogUpdateAlignment(void)
@@ -926,46 +1120,63 @@ void ST_LogUpdateAlignment(void)
 /////////////////
 
 // referenced in p_inter.c
-void ST_AutomapOpen(int player, dd_bool yes, dd_bool fast)
+void ST_AutomapOpen(int player, dd_bool yes, dd_bool instant)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_Open(obj, yes, fast);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        map->open(CPP_BOOL(yes), CPP_BOOL(instant));
+    }
 }
 
 dd_bool ST_AutomapIsOpen(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    return UIAutomap_Active(obj);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        return map->isOpen();
+    }
+    else
+    {
+        return false;
+    }
 }
 
 
 float ST_AutomapOpacity(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return 0;
-    return UIAutomap_Opacity(obj);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        return map->opacityEX();
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 
 static void ST_ToggleAutomapMaxZoom(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    if(UIAutomap_SetZoomMax(obj, !UIAutomap_ZoomMax(obj)))
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
     {
-        App_Log(0, "Maximum zoom %s in automap", UIAutomap_ZoomMax(obj)? "ON":"OFF");
+        map->setCameraZoomMode(!map->cameraZoomMode());
     }
 }
 
 static void ST_ToggleAutomapPanMode(int player)
 {
-    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
-    if(!ob) return;
-    if(UIAutomap_SetPanMode(ob, !UIAutomap_PanMode(ob)))
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
     {
-        P_SetMessage(&players[player], LMF_NO_HIDE, (UIAutomap_PanMode(ob)? AMSTR_FOLLOWOFF : AMSTR_FOLLOWON));
+        map->setCameraFollowMode(!map->cameraFollowMode());
     }
 }
 
@@ -985,33 +1196,16 @@ dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 {
     static const float AM_OBSCURE_TOLERANCE = 0.9999F;
 
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    if(UIAutomap_Active(obj))
-    {
-        if(cfg.common.automapOpacity * ST_AutomapOpacity(player) >= AM_OBSCURE_TOLERANCE)
-        {
-            /*if(UIAutomap_Fullscreen(obj))
-            {*/
-                return true;
-            /*}
-            else
-            {
-                // We'll have to compare the dimensions.
-                const int scrwidth  = Get(DD_WINDOW_WIDTH);
-                const int scrheight = Get(DD_WINDOW_HEIGHT);
-                const Rect* rect = UIWidget_Geometry(obj);
-                float fx = FIXXTOSCREENX(region->origin.x);
-                float fy = FIXYTOSCREENY(region->origin.y);
-                float fw = FIXXTOSCREENX(region->size.width);
-                float fh = FIXYTOSCREENY(region->size.height);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
 
-                if(dims->origin.x >= fx && dims->origin.y >= fy && dims->size.width >= fw && dims->size.height >= fh)
-                    return true;
-            }*/
-        }
+    if (map && map->isOpen())
+    {
+        return (cfg.common.automapOpacity * ST_AutomapOpacity(player) >= AM_OBSCURE_TOLERANCE);
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 /////////
@@ -1020,27 +1214,26 @@ dd_bool ST_AutomapObscures2(int player, const RectRaw* region)
 
 int ST_AutomapAddPoint(int player, coord_t x, coord_t y, coord_t z)
 {
-    static char buffer[20];
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    int newPoint;
-    if(!obj) return - 1;
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
 
-    if(UIAutomap_PointCount(obj) == MAX_MAP_POINTS) return -1;
-
-    newPoint = UIAutomap_AddPoint(obj, x, y, z);
-    sprintf(buffer, "%s %d", AMSTR_MARKEDSPOT, newPoint);
-    P_SetMessage(&players[player], LMF_NO_HIDE, buffer);
-
-    return newPoint;
+    if (map)
+    {
+        return map->addPoint(Vector3d(x, y, z));
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 void ST_AutomapClearPoints(int player)
 {
-    uiwidget_t* ob = ST_UIAutomapForPlayer(player);
-    if(!ob) return;
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
 
-    UIAutomap_ClearPoints(ob);
-    P_SetMessage(&players[player], LMF_NO_HIDE, AMSTR_MARKSCLEARED);
+    if (map)
+    {
+        map->clearAllPoints();
+    }
 }
 
 ////////////////
@@ -1049,33 +1242,43 @@ void ST_AutomapClearPoints(int player)
 
 void ST_SetAutomapCameraRotation(int player, dd_bool on)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_SetCameraRotation(obj, on);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        map->setCameraRotationMode(CPP_BOOL(on));
+    }
 }
 
 int ST_AutomapCheatLevel(int player)
 {
-    if(player >=0 && player < MAXPLAYERS)
+    if (player >= 0 && player < MAXPLAYERS)
+    {
         return hudStates[player].automapCheatLevel;
-    return 0;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 
 // referenced in m_cheat.cpp
 void ST_SetAutomapCheatLevel(int player, int level)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    setAutomapCheatLevel(obj, level);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        setAutomapCheatLevel(*map, level);
+    }
 }
 
 void ST_CycleAutomapCheatLevel(int player)
 {
-    if(player >= 0 && player < MAXPLAYERS)
+    if (player >= 0 && player < MAXPLAYERS)
     {
-        hudstate_t* hud = &hudStates[player];
-        ST_SetAutomapCheatLevel(player, (hud->automapCheatLevel + 1) % 3);
+        ST_SetAutomapCheatLevel(player, (hudStates[player].automapCheatLevel + 1) % 3);
     }
 }
 
@@ -1083,122 +1286,73 @@ void ST_CycleAutomapCheatLevel(int player)
 // referenced in m_cheat.cpp, p_inter.c
 void ST_RevealAutomap(int player, dd_bool on)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return;
-    UIAutomap_SetReveal(obj, on);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        map->reveal(on);
+    }
 }
 
 dd_bool ST_AutomapIsRevealed(int player)
 {
-    uiwidget_t* obj = ST_UIAutomapForPlayer(player);
-    if(!obj) return false;
-    return UIAutomap_Reveal(obj);
+    AutomapWidget* map = ST_GetPlayerAutomap(player);
+
+    if (map)
+    {
+        return map->isRevealed();
+    }
+    else
+    {
+        return false;
+    }
 }
 
-D_CMD(ChatOpen)
+/*
+ * HUD Widget Access
+ */
+
+ChatWidget* ST_GetPlayerChatWidget(int player)
 {
-    int player = CONSOLEPLAYER, destination = 0;
-    uiwidget_t* obj;
-
-    if(G_QuitInProgress())
+    if(player >= 0 && player < MAXPLAYERS)
     {
-        return false;
-    }
-
-    obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
-
-    if(argc == 2)
-    {
-        destination = UIChat_ParseDestination(argv[1]);
-        if(destination < 0)
+        HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].chatId);
+        
+        if (widgetPointer)
         {
-            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
-            return false;
-        }
-    }
-    UIChat_SetDestination(obj, destination);
-    UIChat_Activate(obj, true);
-    return true;
-}
-
-D_CMD(ChatAction)
-{
-    int player = CONSOLEPLAYER;
-    const char* cmd = argv[0] + 4;
-    uiwidget_t* obj;
-
-    if(G_QuitInProgress())
-    {
-        return false;
-    }
-
-    obj = ST_UIChatForPlayer(player);
-    if(NULL == obj || !UIChat_IsActive(obj))
-    {
-        return false;
-    }
-    if(!stricmp(cmd, "complete")) // Send the message.
-    {
-        return UIChat_CommandResponder(obj, MCMD_SELECT);
-    }
-    else if(!stricmp(cmd, "cancel")) // Close chat.
-    {
-        return UIChat_CommandResponder(obj, MCMD_CLOSE);
-    }
-    else if(!stricmp(cmd, "delete"))
-    {
-        return UIChat_CommandResponder(obj, MCMD_DELETE);
-    }
-    return true;
-}
-
-D_CMD(ChatSendMacro)
-{
-    int player = CONSOLEPLAYER, macroId, destination = 0;
-    uiwidget_t* obj;
-
-    if(G_QuitInProgress())
-        return false;
-
-    if(argc < 2 || argc > 3)
-    {
-        App_Log(DE2_SCR_NOTE, "Usage: %s (team) (macro number)", argv[0]);
-        App_Log(DE2_SCR_MSG, "Send a chat macro to other player(s). "
-                "If (team) is omitted, the message will be sent to all players.");
-        return true;
-    }
-
-    obj = ST_UIChatForPlayer(player);
-    if(!obj)
-    {
-        return false;
-    }
-
-    if(argc == 3)
-    {
-        destination = UIChat_ParseDestination(argv[1]);
-        if(destination < 0)
-        {
-            App_Log(DE2_SCR_ERROR, "Invalid team number #%i (valid range: 0...%i)", destination, NUMTEAMS);
-            return false;
+            return widgetPointer->maybeAs<ChatWidget>();
         }
     }
 
-    macroId = UIChat_ParseMacroId(argc == 3? argv[2] : argv[1]);
-    if(-1 == macroId)
+    return nullptr;
+}
+
+PlayerLogWidget* ST_GetPlayerLogWidget(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
     {
-        App_Log(DE2_SCR_ERROR, "Invalid macro id");
-        return false;
+        HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].logId);
+        
+        if (widgetPointer)
+        {
+            return widgetPointer->maybeAs<PlayerLogWidget>();
+        }
     }
 
-    UIChat_Activate(obj, true);
-    UIChat_SetDestination(obj, destination);
-    UIChat_LoadMacro(obj, macroId);
-    UIChat_CommandResponder(obj, MCMD_SELECT);
-    UIChat_Activate(obj, false);
-    return true;
+    return nullptr;
+}
+
+AutomapWidget* ST_GetPlayerAutomap(int player)
+{
+    if(player >= 0 && player < MAXPLAYERS)
+    {
+        HudWidget* widgetPointer = GUI_TryFindWidgetById(hudStates[player].automapId);
+        
+        if (widgetPointer)
+        {
+            return widgetPointer->maybeAs<AutomapWidget>();
+        }
+    }
+
+    return nullptr;
 }
