@@ -206,7 +206,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     int const playerId    = (plr - players);
     int const hudMode     = ST_ActiveHud(playerId);
-    hudstate_t* hud       = &hudStates[player];
+    hudstate_t* hud       = &hudStates[playerId];
 
     Size2Raw portSize; R_ViewPortSize(playerId, &portSize);
 
