@@ -353,7 +353,13 @@ QList<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    return d->allFound(mask).contains(host);
+    Address addr = host;
+    if(!addr.port())
+    {
+        // Zero means default port.
+        addr.setPort(shell::DEFAULT_PORT);
+    }
+    return d->allFound(mask).contains(addr);
 }
 
 bool ServerLink::foundServerInfo(int index, serverinfo_t *info, FoundMask mask) const
