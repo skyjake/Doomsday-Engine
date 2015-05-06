@@ -1,6 +1,6 @@
 # Qmake is used to find out the Qt install location.
 if (NOT QMAKE)
-    find_program (QMAKE qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake
+    find_program (QMAKE NAMES qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake
         PATHS ENV PATH
         HINTS ENV DENG_DEPEND_PATH
         DOC "Path of the qmake executable to use"
@@ -21,7 +21,8 @@ function (qmake_query result qtvar)
 endfunction (qmake_query)
 
 # Check Qt version.
-if (NOT DEFINED QT_PREFIX_DIR OR 
+if (NOT DEFINED QT_MODULE OR 
+    NOT DEFINED QT_PREFIX_DIR OR 
     (WIN32 AND NOT WINDEPLOYQT_COMMAND) OR
     (APPLE AND NOT MACDEPLOYQT_COMMAND))
     message (STATUS "QMake path: ${QMAKE}")
