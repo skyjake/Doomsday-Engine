@@ -487,9 +487,9 @@ static void ST_BuildWidgets(int player)
             HudWidget* widget = nullptr;
             switch (def.type)
             {
-                case GUI_HEALTHICON:    widget = new guidata_healthicon_t                                   (player); break;
+                case GUI_HEALTHICON:    widget = new guidata_healthicon_t                         (player, SPR_STIM); break;
                 case GUI_HEALTH:        widget = new guidata_health_t       (def.updateGeometry, def.drawer, player); break;
-                case GUI_ARMORICON:     widget = new guidata_armoricon_t                                    (player); break;
+                case GUI_ARMORICON:     widget = new guidata_armoricon_t                (player, SPR_ARM1, SPR_ARM2); break;
                 case GUI_ARMOR:         widget = new guidata_armor_t        (def.updateGeometry, def.drawer, player); break;
                 case GUI_KEYS:          widget = new guidata_keys_t                                         (player); break;
                 case GUI_READYAMMOICON: widget = new guidata_readyammoicon_t(def.updateGeometry, def.drawer, player); break;
