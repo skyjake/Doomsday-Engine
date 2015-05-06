@@ -644,7 +644,7 @@ void Image::operator >> (Writer &to) const
     {
         Block block;
         QDataStream os(&block, QIODevice::WriteOnly);
-        os.setVersion(QDataStream::Qt_4_7);
+        os.setVersion(QDataStream::Qt_4_8);
         os << d->image;
         to << block;
     }
@@ -666,7 +666,7 @@ void Image::operator << (Reader &from)
         Block block;
         from >> block;
         QDataStream is(block);
-        is.setVersion(QDataStream::Qt_4_7);
+        is.setVersion(QDataStream::Qt_4_8);
         is >> d->image;
 
         d->size.x = d->image.width();
