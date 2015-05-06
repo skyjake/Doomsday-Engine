@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_UI_ARMORICONWIDGET_H
-#define LIBDOOM_UI_ARMORICONWIDGET_H
+#ifndef LIBCOMMON_UI_ARMORICONWIDGET_H
+#define LIBCOMMON_UI_ARMORICONWIDGET_H
 
 #include "hud/hudwidget.h"
 
@@ -29,7 +29,7 @@
 class guidata_armoricon_t : public HudWidget
 {
 public:
-    guidata_armoricon_t(de::dint player);
+    guidata_armoricon_t(de::dint player, int sprite1, int sprite2);
     virtual ~guidata_armoricon_t();
 
     void reset();
@@ -39,7 +39,9 @@ public:
     void draw(de::Vector2i const &offset = de::Vector2i()) const;
 
 private:
-    de::dint _sprite = 0;
+    de::dint currentSprite = 0;
+    int armorSprite1       = 0;
+    int armorSprite2       = 0;
 };
 
-#endif  // LIBDOOM_UI_ARMORICONWIDGET_H
+#endif  // LIBCOMMON_UI_ARMORICONWIDGET_H
