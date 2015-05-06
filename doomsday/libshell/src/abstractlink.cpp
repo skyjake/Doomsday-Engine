@@ -69,7 +69,7 @@ void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
     // Fallback to default port.
     d->tryingToConnectToHost = domain;
     d->socket->setQuiet(true); // we'll be retrying a few times
-    d->socket->connectToDomain(d->tryingToConnectToHost, 13209 /* default port */);
+    d->socket->connectToDomain(d->tryingToConnectToHost, DEFAULT_PORT);
 
     d->status = Connecting;
     d->startedTryingAt = Time();
@@ -88,7 +88,7 @@ void AbstractLink::connectHost(Address const &address)
     connect(d->socket.get(), SIGNAL(messagesReady()), this, SIGNAL(packetsReady()));
 
     // Fallback to default port.
-    if(!d->peerAddress.port()) d->peerAddress.setPort(13209);
+    if(!d->peerAddress.port()) d->peerAddress.setPort(DEFAULT_PORT);
 
     d->socket->connect(d->peerAddress);
 
