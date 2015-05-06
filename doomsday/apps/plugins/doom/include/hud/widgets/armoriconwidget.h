@@ -18,6 +18,10 @@
  * 02110-1301 USA</small>
  */
 
+#if defined(__JHEXEN__) || defined(__JHERETIC__)
+#   define LIBCOMMON_UI_ARMORICONWIDGET_H
+#endif
+
 #ifndef LIBCOMMON_UI_ARMORICONWIDGET_H
 #define LIBCOMMON_UI_ARMORICONWIDGET_H
 
