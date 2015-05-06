@@ -18,8 +18,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef LIBDOOM_UI_HEALTHICONWIDGET_H
-#define LIBDOOM_UI_HEALTHICONWIDGET_H
+#ifndef LIBCOMMON_UI_HEALTHICONWIDGET_H
+#define LIBCOMMON_UI_HEALTHICONWIDGET_H
 
 #include "hud/hudwidget.h"
 
@@ -28,8 +28,11 @@
  */
 class guidata_healthicon_t : public HudWidget
 {
+private:
+    int iconSpriteId;
+
 public:
-    guidata_healthicon_t(de::dint player);
+    guidata_healthicon_t(de::dint player, int sprite);
     virtual ~guidata_healthicon_t();
 
     void reset();
@@ -39,4 +42,4 @@ public:
     void draw(de::Vector2i const &offset = de::Vector2i()) const;
 };
 
-#endif  // LIBDOOM_UI_HEALTHICONWIDGET_H
+#endif  // LIBCOMMON_UI_HEALTHICONWIDGET_H
