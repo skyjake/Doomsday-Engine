@@ -225,7 +225,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
     // There ought to be some constants for this
     if (hud->alpha > 0 || hudMode < 3) {
         float uiScale;
-        R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT, 
+        R_ChooseAlignModeAndScaleFactor(&uiScale, SCREENWIDTH, SCREENHEIGHT, 
                                         portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
 
         float opacity = de::min(1.0F, hud->alpha) * (1 - hud->hideAmount);
@@ -253,7 +253,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
             GUI_DrawWidget(&bottomGroup, &displayRegion.origin);
             
-            Size2_Raw(Rect_Size(&bottomGroup.geometry()), &regionRendered)
+            Size2_Raw(Rect_Size(&bottomGroup.geometry()), &regionRendered);
         }
 
         // Map name widget group
@@ -262,7 +262,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
             mapNameGroup.setOpacity(ST_AutomapOpacity(playerId));
 
             Size2Raw remainingVertical(displayRegion.size.width,
-                                       displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0));
+                                       displayRegion.size.height - (regionRendered.height > 0 ? regionRendered.height : 0));
             
             mapNameGroup.setMaximumSize(remainingVertical);
 
@@ -275,7 +275,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
             // Kills widget, etc, are always visible unless no-hud
             if (hudMode < 3)
             {
-                opacity = 1F;
+                opacity = 1.0F;
             }
 
             // Top Center 
@@ -293,7 +293,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
                 counters.setOpacity(opacity);
                 counters.setMaximumSize(displayRegion.size);
 
-                GUI_DrawWidget(&counter, &displayRegion.origin);
+                GUI_DrawWidget(&counters, &displayRegion.origin);
             }
         }
 
@@ -311,7 +311,6 @@ static void initData(hudstate_t* hud)
 {
     DENG2_ASSERT(hud);
 
-    hud->statusbarActive = true;
     hud->stopped         = true;
 
     // Reset/Initialize Elements
@@ -704,30 +703,17 @@ void ST_Ticker(timespan_t ticLength)
         if(!plr->plr->inGame)
             continue;
 
-        // Fade in/out the fullscreen HUD.
-        // TODO slide in / fade out?
-        if(hud->statusbarActive)
+        if(cfg.common.screenBlocks == 13)
         {
             if(hud->alpha > 0.0f)
             {
-                hud->statusbarActive = 0;
                 hud->alpha-=0.1f;
             }
         }
         else
         {
-            if(cfg.common.screenBlocks == 13)
-            {
-                if(hud->alpha > 0.0f)
-                {
-                    hud->alpha-=0.1f;
-                }
-            }
-            else
-            {
-                if(hud->alpha < 1.0f)
-                    hud->alpha += 0.1f;
-            }
+            if(hud->alpha < 1.0f)
+                hud->alpha += 0.1f;
         }
 
         // The following is restricted to fixed 35 Hz ticks.
@@ -775,10 +761,6 @@ void ST_Drawer(int player)
     if(!players[player].plr->inGame) return;
 
     R_UpdateViewFilter(player);
-
-    hudStates[player].statusbarActive = 
-        (ST_ActiveHud(player) < 2) 
-        || (ST_AutomapIsActive(player) && (cfg.common.automapHudDisplay == 0 || cfg.common.automapHudDisplay == 2));
 
     drawUIWidgetsForPlayer(players + player);
 }
