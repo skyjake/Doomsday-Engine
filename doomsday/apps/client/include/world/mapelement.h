@@ -127,6 +127,8 @@ public:
      */
     Map &map() const;
 
+    inline Map *mapPtr() const { return hasMap()? &map() : nullptr; }
+
     /**
      * Change the map attributed to the map element. Note that if the map
      * element has a @em parent that attempting to change the map property of

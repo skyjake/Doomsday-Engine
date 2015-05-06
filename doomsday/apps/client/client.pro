@@ -291,18 +291,16 @@ DENG_HEADERS += \
     include/render/materialcontext.h \
     include/render/mobjanimator.h \
     include/render/modelrenderer.h \
-    include/render/projector.h \
+    include/render/projectedtexturedata.h \
     include/render/r_draw.h \
     include/render/r_main.h \
     include/render/r_things.h \
-    include/render/rend_dynlight.h \
     include/render/rend_fakeradio.h \
     include/render/rend_font.h \
     include/render/rend_halo.h \
     include/render/rend_main.h \
     include/render/rend_model.h \
     include/render/rend_particle.h \
-    include/render/rend_shadow.h \
     include/render/rendpoly.h \
     include/render/rendersystem.h \
     include/render/shadowedge.h \
@@ -311,9 +309,9 @@ DENG_HEADERS += \
     include/render/skyfixedge.h \
     include/render/surfacedecorator.h \
     include/render/trianglestripbuilder.h \
+    include/render/vectorlightdata.h \
     include/render/viewports.h \
     include/render/vissprite.h \
-    include/render/vlight.h \
     include/render/vr.h \
     include/render/walledge.h \
     include/render/wallspec.h \
@@ -622,19 +620,16 @@ SOURCES += \
     src/render/lumobj.cpp \
     src/render/mobjanimator.cpp \
     src/render/modelrenderer.cpp \
-    src/render/projector.cpp \
     src/render/r_draw.cpp \
     src/render/r_fakeradio.cpp \
     src/render/r_main.cpp \
     src/render/r_things.cpp \
-    src/render/rend_dynlight.cpp \
     src/render/rend_fakeradio.cpp \
     src/render/rend_font.cpp \
     src/render/rend_halo.cpp \
     src/render/rend_main.cpp \
     src/render/rend_model.cpp \
     src/render/rend_particle.cpp \
-    src/render/rend_shadow.cpp \
     src/render/rendpoly.cpp \
     src/render/rendersystem.cpp \
     src/render/shadowedge.cpp \
@@ -645,7 +640,6 @@ SOURCES += \
     src/render/trianglestripbuilder.cpp \
     src/render/viewports.cpp \
     src/render/vissprite.cpp \
-    src/render/vlight.cpp \
     src/render/vr.cpp \
     src/render/walledge.cpp \
     src/render/wallspec.cpp \

@@ -1,7 +1,7 @@
 /** @file generator.cpp  World map (particle) generator.
  *
  * @authors Copyright © 2003-2013 Jaakko Keränen <jaakko.keranen@iki.fi>
- * @authors Copyright © 2006-2014 Daniel Swanson <danij@dengine.net>
+ * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * @par License
@@ -106,7 +106,7 @@ Generator::Id Generator::id() const
 
 void Generator::setId(Id newId)
 {
-    DENG_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
+    DENG2_ASSERT(newId >= 1 && newId <= Map::MAX_GENERATORS); // 1-based
     _id = newId;
 }
 
@@ -365,7 +365,7 @@ int Generator::newParticle()
         pinfo->origin[VZ] += originAtSpawn[VZ];
 
         // Include bobbing in the spawn height.
-        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(source));
+        pinfo->origin[VZ] -= FLT2FIX(Mobj_BobOffset(*source));
 
         // Calculate XY center with mobj angle.
         angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[VY]) / 180.0f * ANG180);
@@ -560,25 +560,6 @@ static int newGeneratorParticlesWorker(mobj_t *cmo, void *context)
 }
 
 #endif
-
-/**
- * Spawn multiple new particles using all applicable sources.
- */
-static int manyNewParticlesWorker(thinker_t *th, void *context)
-{
-    Generator *gen = (Generator *) context;
-    mobj_t *mo = (mobj_t *) th;
-
-    // Type match?
-    if(gen->type == DED_PTCGEN_ANY_MOBJ_TYPE || mo->type == gen->type || mo->type == gen->type2)
-    {
-        // Someone might think this is a slight hack...
-        gen->source = mo;
-        gen->newParticle();
-    }
-
-    return false; // Continue iteration.
-}
 
 /**
  * Particle touches something solid. Returns false iff the particle dies.
@@ -1042,11 +1023,11 @@ void Generator::runTick()
     if(!isUntriggered() && !map().thinkers().isUsedMobjId(srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
-        source = 0;
+        source = nullptr;
     }
 
     // Time to die?
-    DENG2_ASSERT(def != 0);
+    DENG2_ASSERT(def);
     if(++_age > def->maxAge && def->maxAge >= 0)
     {
         Generator_Delete(this);
@@ -1054,7 +1035,7 @@ void Generator::runTick()
     }
 
     // Spawn new particles?
-    float newParts = 0;
+    dfloat newParts = 0;
     if((_age <= def->spawnAge || def->spawnAge < 0) &&
        (source || plane || type >= 0 || type == DED_PTCGEN_ANY_MOBJ_TYPE ||
         isUntriggered()))
@@ -1068,7 +1049,7 @@ void Generator::runTick()
         while(_spawnCount >= 1)
         {
             // Spawn a new particle.
-            if(type == DED_PTCGEN_ANY_MOBJ_TYPE || type >= 0) // Type-triggered?
+            if(type == DED_PTCGEN_ANY_MOBJ_TYPE || type >= 0)  // Type-triggered?
             {
 #ifdef __CLIENT__
                 // Client's should also check the client mobjs.
@@ -1077,12 +1058,23 @@ void Generator::runTick()
                     map().clMobjIterator(newGeneratorParticlesWorker, this);
                 }
 #endif
-                map().thinkers()
-                    .iterate(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*mobjs are public*/,
-                             manyNewParticlesWorker, this);
+
+                // Spawn new particles using all applicable sources.
+                map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1 /*public*/, [this] (thinker_t *th)
+                {
+                    // Type match?
+                    auto &mob = *reinterpret_cast<mobj_t *>(th);
+                    if(type == DED_PTCGEN_ANY_MOBJ_TYPE || mob.type == type || mob.type == type2)
+                    {
+                        // Someone might think this is a slight hack...
+                        source = &mob;
+                        newParticle();
+                    }
+                    return LoopContinue;
+                });
 
                 // The generator has no real source.
-                source = 0;
+                source = nullptr;
             }
             else
             {
@@ -1095,7 +1087,7 @@ void Generator::runTick()
 
     // Move particles.
     ParticleInfo *pinfo = _pinfo;
-    for(int i = 0; i < count; ++i, pinfo++)
+    for(dint i = 0; i < count; ++i, pinfo++)
     {
         if(pinfo->stage < 0) continue; // Not in use.
 
