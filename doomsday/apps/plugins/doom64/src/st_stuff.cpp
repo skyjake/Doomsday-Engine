@@ -217,13 +217,13 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         amGroup.setOpacity(ST_AutomapOpacity(playerId));
         amGroup.setMaximumSize(portSize);
         
-        GUI_DrawWidgetXY(amGroup, 0, 0);
+        GUI_DrawWidgetXY(&amGroup, 0, 0);
     }
 
     // Ingame UI
-    // displayMode >= 3 presumeable refers to `No-Hud` 
+    // hudMode >= 3 presumeable refers to `No-Hud` 
     // There ought to be some constants for this
-    if (hud->alpha > 0 || displayMode < 3) {
+    if (hud->alpha > 0 || hudMode < 3) {
         float uiScale;
         R_ChooseAlignModeAndScaleFactor(&scale, SCREENWIDTH, SCREENHEIGHT, 
                                         portSize.width, portSize.height, SCALEMODE_SMART_STRETCH);
@@ -273,7 +273,7 @@ static void drawUIWidgetsForPlayer(player_t* plr)
         // Remaining widgets: Top Center, Counters (Kills, Secrets, Items)
         {
             // Kills widget, etc, are always visible unless no-hud
-            if (displayMode < 3)
+            if (hudMode < 3)
             {
                 opacity = 1F;
             }
