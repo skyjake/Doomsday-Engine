@@ -122,7 +122,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
 
 void R_UpdateViewFilter(int player)
 {
-#define RADIATIONPAL (13) /// Radiation suit, green shift.
+    static const int RADIATIONPAL = 13;
 
     player_t *plr = players + player;
     if(player < 0 || player >= MAXPLAYERS)
@@ -177,7 +177,6 @@ void R_UpdateViewFilter(int player)
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
     }
 
-#undef RADIATIONPAL
 }
 
 void G_RendPlayerView(int player)
@@ -277,6 +276,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
         Mobj_UpdateColorMap(mo);    
         return;
     }
+
     // Reset the flags for a new frame.
     mo->ddFlags &= DDMF_CLEAR_MASK;
 
