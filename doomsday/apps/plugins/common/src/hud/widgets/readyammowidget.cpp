@@ -22,6 +22,7 @@
 #include "hud/widgets/readyammowidget.h"
 
 #include "player.h"
+#include "p_actor.h"
 #if __JHERETIC__
 #  include "hu_inventory.h"
 #endif
@@ -70,7 +71,7 @@ void guidata_readyammo_t::tick(timespan_t /*elapsed*/)
     }
 }
 
-#if __JDOOM__
+#if defined(__JDOOM__) || defined(__JDOOM64__)
 
 void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 {
@@ -102,12 +103,12 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 
 void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 {
-#define ORIGINX             (-ST_WIDTH / 2 )
-#define ORIGINY             (-ST_HEIGHT )
-#define ST_READYAMMOX       ( 44 )
-#define ST_READYAMMOY       (  3 )
-#define X                   ( ORIGINX + ST_READYAMMOX )
-#define Y                   ( ORIGINY + ST_READYAMMOY )
+    static const int ORIGINX       = -ST_WIDTH / 2;
+    static const int ORIGINY       = -ST_HEIGHT;
+    static const int ST_READYAMMOX = 44;
+    static const int ST_READYAMMOY = 3;
+    static const int X             = ORIGINX + ST_READYAMMOX;
+    static const int Y             = ORIGINY + ST_READYAMMOY;
 
     DENG2_ASSERT(ammo);
     if(ammo->_value == 1994) return;
@@ -131,11 +132,16 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(ammo->font());
+
+    // XXX TODO This is precisely the reason we can't have nice things
+    //          I will come through and untangle this mess of live power cabling and venomous snakes later
+#   if defined(__JDOOM__)
     if(::gameMode == doom_chex)
     {
         FR_SetColorAndAlpha(::defFontRGB3[0], ::defFontRGB3[1], ::defFontRGB3[2], textOpacity);
     }
     else
+#   endif
     {
         FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
     }
@@ -145,13 +151,6 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-
-#undef Y
-#undef X
-#undef ST_READYAMMOY
-#undef ST_READYAMMOX
-#undef ORIGINY
-#undef ORIGINX
 }
 
 void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
@@ -199,7 +198,7 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 
 void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 {
-#define TRACKING                ( 1 )
+    static const int TRACKING = 1;
 
     DENG2_ASSERT(ammo);
     if(ammo->_value == 1994) return;
@@ -228,8 +227,6 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-
-#undef TRACKING
 }
 
 void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
@@ -285,7 +282,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
 
 void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
-#define TRACKING                ( 1 )
+    static const int TRACKING = 1;
 
     DENG2_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
@@ -307,12 +304,11 @@ void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     Rect_SetWidthHeight(&ammo->geometry(), textSize.width  * ::cfg.common.hudScale,
                                            textSize.height * ::cfg.common.hudScale);
 
-#undef TRACKING
 }
 
 void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
 {
-#define TRACKING                ( 1 )
+    static const int TRACKING = 1;
 
     DENG2_ASSERT(ammo);
     Rect_SetWidthHeight(&ammo->geometry(), 0, 0);
@@ -331,7 +327,6 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     Rect_SetWidthHeight(&ammo->geometry(), textSize.width  * ::cfg.common.statusbarScale,
                                            textSize.height * ::cfg.common.statusbarScale);
 
-#undef TRACKING
 }
 
 #endif  // __JHERETIC__
