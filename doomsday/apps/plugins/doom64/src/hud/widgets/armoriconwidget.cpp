@@ -21,6 +21,7 @@
 #include "hud/widgets/armoriconwidget.h"
 
 #include "player.h"
+#include "p_actor.h"
 
 using namespace de;
 
