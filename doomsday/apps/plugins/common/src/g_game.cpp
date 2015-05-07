@@ -2026,6 +2026,8 @@ AutoStr *G_CurrentMapUriPath()
     return AutoStr_FromTextStd(COMMON_GAMESESSION->mapUri().path().toStringRef().toUtf8().constData());
 }
 
+
+// TODO This is a great example o f a function that could be refactored out to each individual plugin via a callback (NOT a function contract!!!!)
 de::Uri G_ComposeMapUri(uint episode, uint map)
 {
     String mapId;
