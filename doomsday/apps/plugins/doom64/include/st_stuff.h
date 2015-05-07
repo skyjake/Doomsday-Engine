@@ -54,15 +54,25 @@ PlayerLogWidget*    ST_TryFindLogWidget(int);
 extern "C" {
 #endif
 
-/// Register the console commands, variables, etc..., of this module.
-void ST_Register(void);
+/*
+ * HUD Lifecycle
+ */
 
-void ST_Init(void);
-void ST_Shutdown(void);
+void    ST_Register(void);
+void    ST_Init(void);
+void    ST_Shutdown(void);
 
-int ST_Responder(event_t *ev);
-void ST_Ticker(timespan_t ticLength);
-void ST_Drawer(int localPlayer);
+/*
+ * HUD Runtime Callbacks
+ */
+
+int     ST_Responder(event_t*);
+void    ST_Ticker(timespan_t);
+void    ST_Drawer(int);
+
+/*
+ * HUD Control
+ */
 
 /**
  * Returns the unique identifier of the active HUD configuration.
@@ -72,18 +82,26 @@ void ST_Drawer(int localPlayer);
  *
  * @param localPlayer  Player to lookup the active HUD for.
  */
-int ST_ActiveHud(int localPlayer);
+int     ST_ActiveHud(int);
+void    ST_Start(int);
+void    ST_Stop(int);
+void    ST_CloseAll(int, dd_bool);
+void    HU_WakeWidgets(int);
 
-/// Call when the console player is spawned on each map.
-void ST_Start(int localPlayer);
-void ST_Stop(int localPlayer);
-void HU_WakeWidgets(int localPlayer);
+// XXX libcommon expects to link against things we implement (?????????????????????????????????????????????????????)
+dd_bool ST_StatusBarIsActive(int);
+float   ST_StatusBarShown(int); 
 
-void ST_CloseAll(int localPlayer, dd_bool fast);
+/*
+ * Chat
+ */
 
-dd_bool ST_ChatIsActive(int localPlayer);
-dd_bool ST_StatusBarIsActive(int localPlayer);
-float ST_StatusBarShown(int localPlayer);
+dd_bool ST_ChatIsActive(int);
+dd_bool ST_StatusBarIsActive(int);
+
+/*
+ * Log
+ */
 
 /**
  * Post a message to the specified player's log.
@@ -93,7 +111,7 @@ float ST_StatusBarShown(int localPlayer);
  * @param text         Message Text to be posted. Messages may use the same
  * parameter control blocks as with the engine's Text rendering API.
  */
-void ST_LogPost(int localPlayer, byte flags, char const *text);
+void    ST_LogPost(int, byte, char const *);
 
 /**
  * Rewind the message log of the specified player, making the last few messages
@@ -101,28 +119,29 @@ void ST_LogPost(int localPlayer, byte flags, char const *text);
  *
  * @param localPlayer  Player number whose message log to refresh.
  */
-void ST_LogRefresh(int localPlayer);
+void    ST_LogRefresh(int);
 
 /**
  * Empty the message log of the specified player.
  *
  * @param localPlayer  Player number whose message log to empty.
  */
-void ST_LogEmpty(int localPlayer);
+void    ST_LogEmpty(int);
 
-void ST_LogUpdateAlignment(void);
+void    ST_LogUpdateAlignment(void);
+
+/*
+ * HUD Map
+ */
 
 /**
  * Start the automap.
  */
-void ST_AutomapOpen(int localPlayer, dd_bool yes, dd_bool fast);
-
-dd_bool ST_AutomapIsOpen(int localPlayer);
-
-void ST_AutomapFollowMode(int localPlayer);
-void ST_AutomapZoomMode(int localPlayer);
-
-float ST_AutomapOpacity(int localPlayer);
+void    ST_AutomapOpen(int, dd_bool, dd_bool);
+dd_bool ST_AutomapIsOpen(int);
+void    ST_AutomapFollowMode(int);
+void    ST_AutomapZoomMode(int);
+float   ST_AutomapOpacity(int);
 
 /**
  * Does the player's automap obscure this region completely?
@@ -133,20 +152,16 @@ float ST_AutomapOpacity(int localPlayer);
  *
  * @return  @true= there is no point even partially visible.
  */
-dd_bool ST_AutomapObscures(int localPlayer, int x, int y, int width, int height);
-dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const *region);
-
-int ST_AutomapAddPoint(int localPlayer, coord_t x, coord_t y, coord_t z);
-void ST_AutomapClearPoints(int localPlayer);
-
-void ST_SetAutomapCameraRotation(int localPlayer, dd_bool on);
-
-int ST_AutomapCheatLevel(int localPlayer);
-void ST_SetAutomapCheatLevel(int localPlayer, int level);
-void ST_CycleAutomapCheatLevel(int localPlayer);
-
-void ST_RevealAutomap(int localPlayer, dd_bool on);
-dd_bool ST_AutomapIsRevealed(int localPlayer);
+dd_bool ST_AutomapObscures(int, int, int, int, int);
+dd_bool ST_AutomapObscures2(int, RectRaw const *);
+int     ST_AutomapAddPoint(int, coord_t, coord_t, coord_t);
+void    ST_AutomapClearPoints(int);
+void    ST_SetAutomapCameraRotation(int, dd_bool);
+void    ST_SetAutomapCheatLevel(int, int);
+int     ST_AutomapCheatLevel(int);
+void    ST_CycleAutomapCheatLevel(int);
+void    ST_RevealAutomap(int, dd_bool);
+dd_bool ST_AutomapIsRevealed(int);
 
 /**
  * Unhides the current HUD display if hidden.
@@ -154,7 +169,7 @@ dd_bool ST_AutomapIsRevealed(int localPlayer);
  * @param localPlayer  Player whoose HUD to (maybe) unhide.
  * @param event        Event type trigger.
  */
-void ST_HUDUnHide(int localPlayer, hueevent_t event);
+void    ST_HUDUnHide(int, hueevent_t);
 
 #ifdef __cplusplus
 }  // extern "C"
