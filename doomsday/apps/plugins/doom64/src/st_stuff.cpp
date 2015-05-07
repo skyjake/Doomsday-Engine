@@ -442,22 +442,13 @@ static void ST_BuildWidgets(int player)
                 grp = groupWidget;
             }
 
-            hud->groupIds[def.group] = grp->id();
             GUI_AddWidget(grp);
+            hud->groupIds[def.group] = grp->id();
         }
-    }
-
-    // Configure the bottom row of groups by adding UWG_BOTTOM{LEFT, CENTER, RIGHT} to UWG_BOTTOM in that order
-    {
-        GroupWidget& bottom = GUI_FindWidgetById(hud->groupIds[UWG_BOTTOM]).as<GroupWidget>();
-
-        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]));
-        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMCENTER]));
-        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMRIGHT]));
-
 
         // Add BOTTOMLEFT2 to BOTTOMLEFT
-        GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]).as<GroupWidget>().addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
+        GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]).as<GroupWidget>()
+            .addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
     }
 
     DENG2_ASSERT(player >= 0 && player < MAXPLAYERS);
@@ -468,7 +459,7 @@ static void ST_BuildWidgets(int player)
             { GUI_HEALTHICON,       ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    nullptr,                                                                nullptr,                                                &hud->healthIconId      },
             { GUI_HEALTH,           ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   function_cast<UpdateGeometryFunc>(HealthWidget_UpdateGeometry),         function_cast<DrawFunc>(HealthWidget_Draw),             &hud->healthId          },
             { GUI_READYAMMOICON,    ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_NONE,    function_cast<UpdateGeometryFunc>(ReadyAmmoIconWidget_UpdateGeometry),  function_cast<DrawFunc>(ReadyAmmoIconWidget_Drawer),    &hud->readyAmmoIconId   },        
-            { GUI_READYAMMO,        ALIGN_BOTTOMLEFT,   UWG_BOTTOMLEFT2,    GF_FONTB,   function_cast<UpdateGeometryFunc>(ReadyAmmo_UpdateGeometry),            function_cast<DrawFunc>(ReadyAmmo_Drawer),              &hud->readyAmmoId       },
+            { GUI_READYAMMO,        ALIGN_BOTTOM,       UWG_BOTTOMCENTER,   GF_FONTB,   function_cast<UpdateGeometryFunc>(ReadyAmmo_UpdateGeometry),            function_cast<DrawFunc>(ReadyAmmo_Drawer),              &hud->readyAmmoId       },
 
             // { GUI_FRAGS,            ALIGN_BOTTOMCENTER, UWG_BOTTOMCENTER,   GF_FONTA,   function_cast<UpdateGeometryFunc>(FragsWidget_UpdateGeometry),          function_cast<DrawFunc>(FragsWidget_Draw),              &hud->fragsId           },
             
@@ -512,14 +503,22 @@ static void ST_BuildWidgets(int player)
 
             widget->setAlignment(def.alignFlags).setFont(FID(def.fontIdx));
             GUI_AddWidget(widget);
-            GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>()
-                .addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT2]));
+            GUI_FindWidgetById(hud->groupIds[def.group]).as<GroupWidget>().addChild(widget);
 
             if (def.id) 
             {
                 *def.id = widget->id();
             }
         }
+    }
+
+    // Configure the bottom row of groups by adding UWG_BOTTOM{LEFT, CENTER, RIGHT} to UWG_BOTTOM in that order
+    {
+        GroupWidget& bottom = GUI_FindWidgetById(hud->groupIds[UWG_BOTTOM]).as<GroupWidget>();
+
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMLEFT]));
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMCENTER]));
+        bottom.addChild(&GUI_FindWidgetById(hud->groupIds[UWG_BOTTOMRIGHT]));
     }
 
     // Configure special widgets (Log, Chat, Map)
@@ -968,6 +967,50 @@ void ST_CloseAll(int player, dd_bool fast)
     ST_AutomapOpen(player, false, fast);
 }
 
+void HU_WakeWidgets(int player)
+{
+    if (player < 0)
+    {
+        for (uint i = 0; i < MAXPLAYERS; ++i)
+        {
+            if (players[i].plr->inGame)
+            {
+                HU_WakeWidgets(i);
+            }
+        }
+    }
+    else
+    {
+        if (players[player].plr->inGame)
+        {
+            ST_Start(player);
+        }
+    }
+}
+
+/*
+ * Fuck the statusbar.
+ * I don't have one, libcommon -- leave me alone
+ */
+
+/**
+ * No
+ */
+dd_bool ST_StatusBarIsActive(int)
+{
+    // No.
+    return false;
+}
+
+/**
+ * No
+ */
+float ST_StatusBarShown(int)
+{
+    // No.
+    return 0;
+}
+
 dd_bool ST_ChatIsActive(int player)
 {
     ChatWidget* chat = ST_TryFindChatWidget(player);
@@ -1111,7 +1154,7 @@ float ST_AutomapOpacity(int player)
 }
 
 
-static void ST_ToggleAutomapMaxZoom(int player)
+void ST_AutomapZoomMode(int player)
 {
     AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
@@ -1121,7 +1164,7 @@ static void ST_ToggleAutomapMaxZoom(int player)
     }
 }
 
-static void ST_ToggleAutomapPanMode(int player)
+void ST_AutomapFollowMode(int player)
 {
     AutomapWidget* map = ST_TryFindAutomapWidget(player);
 
