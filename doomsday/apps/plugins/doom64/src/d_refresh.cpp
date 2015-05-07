@@ -213,55 +213,6 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-#if 0
-static void rendHUD(int player, RectRaw const *portGeometry)
-{
-    if(player < 0 || player >= MAXPLAYERS) return;
-    if(G_GameState() != GS_MAP) return;
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
-
-    ST_Drawer(player);
-    HU_DrawScoreBoard(player);
-    Hu_MapTitleDrawer(portGeometry);
-}
-
-void D_DrawViewPort(int port, RectRaw const *portGeometry,
-    RectRaw const *windowGeometry, int player, int layer)
-{
-    if(layer != 0)
-    {
-        rendHUD(player, portGeometry);
-        return;
-    }
-
-    switch(G_GameState())
-    {
-    case GS_MAP: {
-        player_t *plr = players + player;
-
-        if(!ST_AutomapObscures2(player, windowGeometry))
-        {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-
-            rendPlayerView(player);
-            rendSpecialFilter(player, windowGeometry);
-
-            // Crosshair.
-            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
-                X_Drawer(player);
-        }
-        break;
-      }
-    case GS_STARTUP:
-        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
-        break;
-
-    default: break;
-    }
-}
-#endif
-
 void D_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
