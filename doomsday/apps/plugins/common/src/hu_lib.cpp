@@ -121,8 +121,7 @@ void GUI_UpdateWidgetGeometry(HudWidget *wi)
         Rect_SetY(&wi->geometry(), Rect_Y(&wi->geometry()) - Rect_Height(&wi->geometry()) / 2);
 }
 
-#if 0 //def DENG2_DEBUG
-static void drawWidgetGeometry(GroupWidget *wi)
+static void drawWidgetGeometry(HudWidget *wi)
 {
     DENG2_ASSERT(wi);
 
@@ -146,17 +145,16 @@ static void drawWidgetAvailableSpace(HudWidget *wi)
 {
     DENG2_ASSERT(wi);
     DGL_Color4f(0, .4f, 0, .1f);
-    DGL_DrawRectf2(Rect_X(&wi->geometry()), Rect_Y(&wi->geometry()), wi->maxSize.width, wi->maxSize.height);
+    DGL_DrawRectf2(Rect_X(&wi->geometry()), Rect_Y(&wi->geometry()), wi->maximumSize().width, wi->maximumSize().height);
 }
-#endif
 
 static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
 {
     DENG2_ASSERT(wi);
 
-/*#if _DEBUG
+#if defined(UI_DEBUG)
     drawWidgetAvailableSpace(wi);
-#endif*/
+#endif
 
     if(wi->drawer && wi->opacity() > .0001f)
     {
@@ -180,9 +178,9 @@ static void drawWidget2(HudWidget *wi, Point2Raw const *offset = nullptr)
         DGL_Translatef(-origin.x, -origin.y, 0);
     }
 
-/*#if _DEBUG
+#if defined(UI_DEBUG)
     drawWidgetGeometry(wi);
-#endif*/
+#endif
 }
 
 static void drawWidget(HudWidget *wi, Point2Raw const *origin = nullptr)
