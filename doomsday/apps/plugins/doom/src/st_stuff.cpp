@@ -1154,25 +1154,7 @@ dd_bool ST_AutomapObscures2(int localPlayer, RectRaw const * /*region*/)
     {
         if(cfg.common.automapOpacity * ST_AutomapOpacity(localPlayer) >= ST_AUTOMAP_OBSCURE_TOLERANCE)
         {
-            /*if(AutomapWidget_Fullscreen(obj))
-            {*/
                 return true;
-            /*}
-            else
-            {
-                // We'll have to compare the dimensions.
-                int const scrwidth  = Get(DD_WINDOW_WIDTH);
-                int const scrheight = Get(DD_WINDOW_HEIGHT);
-
-                Rect const *rect = UIWidget_Geometry(automap);
-                float fx = FIXXTOSCREENX(region->origin.x);
-                float fy = FIXYTOSCREENY(region->origin.y);
-                float fw = FIXXTOSCREENX(region->size.width);
-                float fh = FIXYTOSCREENY(region->size.height);
-
-                if(dims->origin.x >= fx && dims->origin.y >= fy && dims->size.width >= fw && dims->size.height >= fh)
-                    return true;
-            }*/
         }
     }
     return false;
