@@ -1,4 +1,9 @@
-*~
+*
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist~
 .directory
 .DS_Store
 macx_release_build
