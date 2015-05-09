@@ -57,6 +57,13 @@
  */
 #define MAX_FRAME_TIME (1.0/MIN_TIC_RATE)
 
+/**
+ * If the loop is stuck for more than this number of seconds, the elapsed time is
+ * ignored. The assumption is that the app was suspended or was not able to run,
+ * so no point in running tics.
+ */
+#define MAX_ELAPSED_TIME 5
+
 float frameTimePos; // 0...1: fractional part for sharp game tics.
 
 int maxFrameRate = 120; // Zero means 'unlimited'.
@@ -393,6 +400,11 @@ void Loop_RunTics(void)
     // Let's see how much time has passed. This is affected by "settics".
     nowTime = Timer_Seconds();
     elapsedTime = nowTime - lastRunTicsTime;
+    if(elapsedTime > MAX_ELAPSED_TIME)
+    {
+        // It was too long ago, no point in running individual ticks. Just do one.
+        elapsedTime = MAX_FRAME_TIME;
+    }
 
     // Remember when this frame started.
     lastRunTicsTime = nowTime;
