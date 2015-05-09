@@ -876,13 +876,6 @@ void NetCl_FloorHitRequest(player_t *player)
     Net_SendPacket(0, GPT_FLOOR_HIT_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }
 
-/**
- * Sends a player action request. The server will execute the action.
- * This is more reliable than sending via the ticcmds, as the client will
- * determine exactly when and where the action takes place. On serverside,
- * the clients position and angle may not be up to date when a ticcmd
- * arrives.
- */
 void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam)
 {
     writer_s *msg;
