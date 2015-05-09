@@ -919,15 +919,7 @@ void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam
         Writer_WriteFloat(msg, 0);
     }
 
-    if(actionType == GPA_CHANGE_WEAPON || actionType == GPA_USE_FROM_INVENTORY)
-    {
-        Writer_WriteInt32(msg, actionParam);
-    }
-    else
-    {
-        // Currently active weapon.
-        Writer_WriteInt32(msg, player->readyWeapon);
-    }
+    Writer_WriteInt32(msg, actionParam);
 
     Net_SendPacket(0, GPT_ACTION_REQUEST, Writer_Data(msg), Writer_Size(msg));
 }

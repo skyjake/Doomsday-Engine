@@ -617,7 +617,7 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
-    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+    NetCl_PlayerActionRequest(player, GPA_FIRE, player->refire);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
     App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: Setting player %i to attack state",
@@ -1690,7 +1690,7 @@ void C_DECL A_FirePhoenixPL2(player_t* player, pspdef_t* psp)
 
         if(!player->refire || !(mapTime % 38))
         {
-            S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
+            S_StartSound(SFX_PHOPOW, player->plr->mo);
         }
 
         P_CheckMissileSpawn(mo);
@@ -1699,6 +1699,9 @@ void C_DECL A_FirePhoenixPL2(player_t* player, pspdef_t* psp)
 
 void C_DECL A_ShutdownPhoenixPL2(player_t *player, pspdef_t *psp)
 {
+    if(IS_CLIENT)
+        return;
+    
     P_ShotAmmo(player);
 }
 
