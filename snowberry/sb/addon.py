@@ -834,7 +834,7 @@ class GLBSPAddon (WADAddon):
     def getType(self):
         return 'addon-type-glbsp'
 
-    def getCommandLine(self):
+    def getCommandLine(self, profile):
         """GWA are just WAD files with partial definitions"""
         return '-file ' + paths.quote(self.source)
 
