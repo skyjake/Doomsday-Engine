@@ -167,11 +167,15 @@ mobj_t *Mobj_ExplodeIfObstructed(mobj_t *mob);
  * @param missile    Map-object to be launched.
  * @param angle      World space angle at which to launch.
  * @param targetPos  World space point being targeted (for determining speed).
+ * @param sourcePos  World space point to use as the source (for determining
+ *                   speed). Can be @c nullptr in which case the origin coords
+ *                   of @a missile are used instead.
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
  * @return  Same as @a missile, for caller convenience.
  */
-mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t extraMomZ);
+mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[3],
+    coord_t const sourcePos[3], coord_t extraMomZ);
 
 /**
  * Launch the given map-object @a missile (if any) at the specified @a angle,
@@ -181,14 +185,17 @@ mobj_t *P_LaunchMissile(mobj_t *missile, angle_t angle, coord_t const targetPos[
  * @param missile    Map-object to be launched.
  * @param angle      World space angle at which to launch.
  * @param targetPos  World space point being targeted (for determining speed).
+ * @param sourcePos  World space point to use as the source (for determining
+ *                   speed). Can be @c nullptr in which case the origin coords
+ *                   of @a missile are used instead.
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
  * @return  Same as @a missile, for caller convenience.
  *
  * @see P_LaunchMissile()
  */
-mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t extraMomZ);
-mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3]/*, coord_t extraMomZ = 0*/);
+mobj_t *Mobj_LaunchMissileAtAngle2(mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t const sourcePos[3], coord_t extraMomZ);
+mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, coord_t const targetPos[3], coord_t const sourcePos[3]/*, coord_t extraMomZ = 0*/);
 
 /**
  * Same as @ref Mobj_LaunchMissileAtAngle() except the angle is that which the
@@ -197,12 +204,15 @@ mobj_t *Mobj_LaunchMissileAtAngle (mobj_t *mob, mobj_t *missile, angle_t angle, 
  * @param mob        Map-object hurler of @a missile.
  * @param missile    Map-object to be launched.
  * @param targetPos  World space point being targeted (for determining speed).
+ * @param sourcePos  World space point to use as the source (for determining
+ *                   speed). Can be @c nullptr in which case the origin coords
+ *                   of @a missile are used instead.
  * @param extraMomZ  Additional momentum to apply to the missile.
  *
  * @return  Same as @a missile, for caller convenience.
  */
-mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t extraMomZ);
-mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3]/*, coord_t extraMomZ = 0*/);
+mobj_t *Mobj_LaunchMissile2(mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3], coord_t extraMomZ);
+mobj_t *Mobj_LaunchMissile (mobj_t *mob, mobj_t *missile, coord_t const targetPos[3], coord_t const sourcePos[3]/*, coord_t extraMomZ = 0*/);
 
 #ifdef __cplusplus
 }  // extern "C"
