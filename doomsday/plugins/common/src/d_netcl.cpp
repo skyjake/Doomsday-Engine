@@ -852,6 +852,12 @@ void NetCl_UpdateJumpPower(reader_s *msg)
     App_Log(DE2_LOG_VERBOSE, "Jump power: %g", netJumpPower);
 }
 
+void NetCl_DismissHUDs(reader_s *msg)
+{
+    dd_bool fast = Reader_ReadByte(msg)? true : false;
+    ST_CloseAll(CONSOLEPLAYER, fast);
+}
+
 void NetCl_FloorHitRequest(player_t *player)
 {
     writer_s *msg;

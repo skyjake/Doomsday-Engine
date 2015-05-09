@@ -77,7 +77,8 @@ enum {
     GPT_MAYBE_CHANGE_WEAPON,       // Server suggests weapon change.
     GPT_FINALE_STATE,              // State of the InFine script.
     GPT_LOCAL_MOBJ_STATE,          // Set a state on a mobj and enable local actions.
-    GPT_TOTAL_COUNTS               // Total kill, item, secret counts in the map.
+    GPT_TOTAL_COUNTS,              // Total kill, item, secret counts in the map.
+    GPT_DISMISS_HUDS               // Hide client's automap, inventory (added in 1.15)
 };
 
 #if 0

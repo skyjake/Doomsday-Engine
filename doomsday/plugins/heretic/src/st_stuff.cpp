@@ -34,6 +34,7 @@
 
 #include "am_map.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "hu_stuff.h"
 #include "p_mapsetup.h"
@@ -2772,10 +2773,10 @@ void ST_Shutdown()
 
 void ST_CloseAll(int player, dd_bool fast)
 {
+    NetSv_DismissHUDs(player, fast);
+    
     ST_AutomapOpen(player, false, fast);
-#if __JHERETIC__ || __JHEXEN__
     Hu_InventoryOpen(player, false);
-#endif
 }
 
 uiwidget_t *ST_UIChatForPlayer(int player)

@@ -45,6 +45,8 @@ void NetCl_UpdatePSpriteState(Reader *msg);
  * Set the jump power used in client mode.
  */
 void NetCl_UpdateJumpPower(Reader *msg);
+    
+void NetCl_DismissHUDs(Reader *msg);
 
 void NetCl_Intermission(Reader *msg);
 
