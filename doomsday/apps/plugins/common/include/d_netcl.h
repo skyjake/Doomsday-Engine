@@ -65,6 +65,13 @@ void NetCl_MobjImpulse(Reader *msg);
 
 void NetCl_SendPlayerInfo(void);
 
+/**
+ * Sends a player action request. The server will execute the action.
+ * This is more reliable than sending via the ticcmds, as the client will
+ * determine exactly when and where the action takes place. On serverside,
+ * the clients position and angle may not be up to date when a ticcmd
+ * arrives.
+ */
 void NetCl_PlayerActionRequest(player_t *player, int actionType, int actionParam);
 
 void NetCl_DamageRequest(mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage);
