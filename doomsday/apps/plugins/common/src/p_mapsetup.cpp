@@ -865,6 +865,7 @@ static void precacheResources()
 #  else // __JHERETIC__
         Rend_CacheForMobjType(MT_RAINPLR1);
         Rend_CacheForMobjType(MT_RAINPLR2);
+        Rend_CacheForMobjType(MT_RAINPLR3);
         Rend_CacheForMobjType(MT_RAINPLR4);
 #  endif
     }
