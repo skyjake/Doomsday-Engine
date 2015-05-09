@@ -1322,10 +1322,10 @@ void NetSv_DoAction(int player, reader_s *msg)
     angle_t angle   = Reader_ReadUInt32(msg);
     float lookDir   = Reader_ReadFloat(msg);
     int actionParam = Reader_ReadInt32(msg);
-
+    
     App_Log(DE2_DEV_MAP_VERBOSE,
-            "NetSv_DoAction: player=%i, type=%i, xyz=(%.1f,%.1f,%.1f)\n  "
-            "angle=%x lookDir=%g weapon=%i",
+            "NetSv_DoAction: player=%i, action=%i, xyz=(%.1f,%.1f,%.1f)\n  "
+            "angle=%x lookDir=%g param=%i",
             player, type, pos[VX], pos[VY], pos[VZ],
             angle, lookDir, actionParam);
 
@@ -1355,11 +1355,17 @@ void NetSv_DoAction(int player, reader_s *msg)
     case GPA_FIRE:
         if(pl->plr->mo)
         {
-            // Update lookdir.
+            // Update lookdir to match client's direction at the time of the action.
             pl->plr->lookDir = lookDir;
+            
+            if(type == GPA_FIRE)
+            {
+                pl->refire = actionParam;
+            }
 
             NetSv_TemporaryPlacedCallback(pl->plr->mo, pl, pos, angle,
-                                          type == GPA_USE? NetSv_UseActionCallback : NetSv_FireWeaponCallback);
+                                          type == GPA_USE? NetSv_UseActionCallback :
+                                                           NetSv_FireWeaponCallback);
         }
         break;
 

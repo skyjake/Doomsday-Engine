@@ -432,7 +432,7 @@ void P_FireWeapon(player_t *plr)
     if(!P_CheckAmmo(plr))
         return;
 
-    NetCl_PlayerActionRequest(plr, GPA_FIRE, 0);
+    NetCl_PlayerActionRequest(plr, GPA_FIRE, plr->refire);
 
     // Psprite state.
     P_MobjChangeState(plr->plr->mo, PCLASS_INFO(plr->class_)->attackState);
