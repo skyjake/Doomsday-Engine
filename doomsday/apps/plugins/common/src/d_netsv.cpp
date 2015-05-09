@@ -736,6 +736,17 @@ void NetSv_PlayerMobjImpulse(mobj_t *mobj, float mx, float my, float mz)
     Net_SendPacket(plrNum, GPT_MOBJ_IMPULSE, Writer_Data(writer), Writer_Size(writer));
 }
 
+void NetSv_DismissHUDs(int plrNum, dd_bool fast)
+{
+    if(!IS_SERVER) return;
+    if(plrNum < 1 || plrNum >= DDMAXPLAYERS) return;
+    
+    writer_s *writer = D_NetWrite();
+    Writer_WriteByte(writer, fast? 1 : 0);
+    
+    Net_SendPacket(plrNum, GPT_DISMISS_HUDS, Writer_Data(writer), Writer_Size(writer));
+}
+
 void NetSv_SendPlayerSpawnPosition(int plrNum, float x, float y, float z, int angle)
 {
     if(!IS_SERVER) return;
