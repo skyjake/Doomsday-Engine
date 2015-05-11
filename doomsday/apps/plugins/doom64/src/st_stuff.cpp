@@ -988,11 +988,6 @@ void HU_WakeWidgets(int player)
     }
 }
 
-/*
- * Fuck the statusbar.
- * I don't have one, libcommon -- leave me alone
- */
-
 /**
  * No
  */

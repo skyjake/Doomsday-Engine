@@ -33,6 +33,7 @@
 #include <cstdlib>
 #include <cstring>
 #include "d_net.h"
+#include "d_netsv.h"
 #include "dmu_lib.h"
 #include "g_common.h"
 #include "hu_lib.h"
@@ -912,10 +913,10 @@ void HU_WakeWidgets(int localPlayer)
 
 void ST_CloseAll(int localPlayer, dd_bool fast)
 {
+    NetSv_DismissHUDs(localPlayer, fast);
+    
     ST_AutomapOpen(localPlayer, false, fast);
-#if __JHERETIC__ || __JHEXEN__
     Hu_InventoryOpen(localPlayer, false);
-#endif
 }
 
 /// @note May be called prior to HUD init / outside game session.

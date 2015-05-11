@@ -42,7 +42,7 @@ DENG2_PIMPL_NOREF(ServerFinder)
     };
     QMap<Address, Found> servers;
 
-    Instance() : beacon(13209) {}
+    Instance() : beacon(DEFAULT_PORT) {}
 
     ~Instance()
     {

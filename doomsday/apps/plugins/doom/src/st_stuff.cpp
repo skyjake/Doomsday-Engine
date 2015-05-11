@@ -34,6 +34,7 @@
 
 #include "dmu_lib.h"
 #include "d_net.h"
+#include "d_netsv.h"
 #include "hu_stuff.h"
 #include "hu_lib.h"
 #include "hud/automapstyle.h"
@@ -1016,29 +1017,9 @@ void ST_Shutdown()
 
 void HU_WakeWidgets(int localPlayer)
 {
-    if(localPlayer < 0)
-    {
-        // Wake the widgets of all players.
-        for(uint i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(!players[i].plr->inGame) continue;
-            HU_WakeWidgets(i);
-        }
-        return;
-    }
-    if(localPlayer < MAXPLAYERS)
-    {
-        if(!players[localPlayer].plr->inGame) return;
-        ST_Start(localPlayer);
-    }
-}
-
-void ST_CloseAll(int localPlayer, dd_bool fast)
-{
-    ST_AutomapOpen(localPlayer, false, fast);
-#if __JHERETIC__ || __JHEXEN__
-    Hu_InventoryOpen(player, false);
-#endif
+    NetSv_DismissHUDs(localPlayer, true);
+    
+    ST_AutomapOpen(localPlayer, false, true);
 }
 
 /// @note May be called prior to HUD init / outside game session.

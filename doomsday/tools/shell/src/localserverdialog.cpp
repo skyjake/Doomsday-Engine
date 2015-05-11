@@ -99,7 +99,7 @@ DENG2_PIMPL(LocalServerDialog)
         port = new QLineEdit;
         port->setMinimumWidth(90);
         port->setMaximumWidth(90);
-        port->setText(QString::number(st.value("LocalServer/port", 13209).toInt()));
+        port->setText(QString::number(st.value("LocalServer/port", DEFAULT_PORT).toInt()));
         /*
         // Find an unused port.
         if(isPortInUse())
@@ -115,7 +115,7 @@ DENG2_PIMPL(LocalServerDialog)
         }
         */
         portChanged = false;
-        port->setToolTip(tr("The default port is 13209."));
+        port->setToolTip(tr("The default port is %1.").arg(DEFAULT_PORT));
         portMsg = new QLabel;
         portMsg->setPalette(pal);
         hb->addWidget(port, 0);

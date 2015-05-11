@@ -518,7 +518,12 @@ void LensFlares::draw()
     d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     DENG2_ASSERT(console() == displayPlayer);
-    DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
+    //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
+    if(viewPlayer - ddPlayers != displayPlayer)
+    {
+        qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
+        return;
+    }
 
     // Depth information is required for occlusion.
     GLTarget &target = GLState::current().target();

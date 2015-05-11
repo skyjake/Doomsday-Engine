@@ -633,6 +633,10 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_UpdateJumpPower(reader);
         break;
 
+    case GPT_DISMISS_HUDS:
+        NetCl_DismissHUDs(reader);
+        break;
+            
     default:
         App_Log(DE2_NET_WARNING, "Game received unknown packet (type:%i)", type);
     }

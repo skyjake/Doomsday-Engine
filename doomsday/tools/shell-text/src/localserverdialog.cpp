@@ -84,7 +84,7 @@ LocalServerDialog::LocalServerDialog() : d(new Instance)
 
     // Values.
     d->choice->select (PersistentData::geti("LocalServer/gameMode"));
-    d->port->setText  (PersistentData::get ("LocalServer/port", "13209"));
+    d->port->setText  (PersistentData::get ("LocalServer/port", QString::number(DEFAULT_PORT)));
     lineEdit().setText(PersistentData::get ("LocalServer/options"));
 }
 

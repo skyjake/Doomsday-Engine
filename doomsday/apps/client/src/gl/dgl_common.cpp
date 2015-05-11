@@ -613,8 +613,9 @@ int DGL_Enable(int cap)
     case DGL_POINT_SMOOTH:
         glEnable(GL_POINT_SMOOTH);
         break;
-
+            
     default:
+        DENG_ASSERT(!"DGL_Enable: Invalid cap");
         return 0;
     }
 
@@ -650,8 +651,9 @@ void DGL_Disable(int cap)
     case DGL_POINT_SMOOTH:
         glDisable(GL_POINT_SMOOTH);
         break;
-
+            
     default:
+        DENG_ASSERT(!"DGL_Disable: Invalid cap");
         break;
     }
 }
@@ -704,6 +706,7 @@ void DGL_MatrixMode(int mode)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
 
     glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
                  mode == DGL_TEXTURE ? GL_TEXTURE :

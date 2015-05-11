@@ -235,7 +235,7 @@ static void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
             continue;
 
         // Is this an empty quote?
-        if(cargs->cmdLine[i] == SC_EMPTY_QUOTE)
+        if(cargs->cmdLine[i] == char(SC_EMPTY_QUOTE))
             cargs->cmdLine[i] = 0;  // Just an empty string.
 
         cargs->argv[cargs->argc++] = cargs->cmdLine + i;

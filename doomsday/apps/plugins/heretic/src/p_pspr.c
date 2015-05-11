@@ -617,7 +617,7 @@ void P_FireWeapon(player_t *player)
     if(!P_CheckAmmo(player))
         return;
 
-    NetCl_PlayerActionRequest(player, GPA_FIRE, 0);
+    NetCl_PlayerActionRequest(player, GPA_FIRE, player->refire);
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
     App_Log(DE2_DEV_MAP_XVERBOSE, "P_FireWeapon: Setting player %i to attack state",
@@ -1522,6 +1522,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     coord_t pos[3];
     mobj_t* mo;
     int playerNum;
+    int rainColor = 2; // Singleplayer default (red).
     player_t* player;
 
     if(actor->special3-- == 0)
@@ -1561,8 +1562,15 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     pos[VX] = actor->origin[VX] + ((P_Random() & 127) - 64);
     pos[VY] = actor->origin[VY] + ((P_Random() & 127) - 64);
 
-    if((mo = P_SpawnMobjXYZ(MT_RAINPLR1 + actor->special2, pos[VX], pos[VY],
-                           0, P_Random() << 24, MSF_Z_CEIL)))
+    if(IS_NETGAME)
+    {
+        // Rain color matches the player's color.
+        rainColor = cfg.playerColor[actor->special2 /*plrnum*/];
+    }
+    
+    // Rain colors match the player colors.
+    if((mo = P_SpawnMobjXYZ(MT_RAINPLR1 + rainColor, pos[VX], pos[VY], 0,
+                            P_Random() << 24, MSF_Z_CEIL)))
     {
         mo->flags |= MF_BRIGHTSHADOW;
         mo->target = actor->target;
@@ -1682,7 +1690,7 @@ void C_DECL A_FirePhoenixPL2(player_t* player, pspdef_t* psp)
 
         if(!player->refire || !(mapTime % 38))
         {
-            S_StartSoundEx(SFX_PHOPOW, player->plr->mo);
+            S_StartSound(SFX_PHOPOW, player->plr->mo);
         }
 
         P_CheckMissileSpawn(mo);
@@ -1691,6 +1699,9 @@ void C_DECL A_FirePhoenixPL2(player_t* player, pspdef_t* psp)
 
 void C_DECL A_ShutdownPhoenixPL2(player_t *player, pspdef_t *psp)
 {
+    if(IS_CLIENT)
+        return;
+    
     P_ShotAmmo(player);
 }
 

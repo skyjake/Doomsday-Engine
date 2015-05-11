@@ -313,11 +313,17 @@ String Time::asText(Format format) const
         }
         else if(format == BuildNumberAndSecondsSinceStart)
         {
-            DENG2_ASSERT(d->flags & Instance::HighPerformance);
-
-            TimeDelta const elapsed = d->highPerfElapsed;
+            TimeDelta elapsed;
+            if(d->flags.testFlag(Instance::HighPerformance))
+            {
+                elapsed = d->highPerfElapsed;
+            }
+            else if(d->flags.testFlag(Instance::DateTime))
+            {
+                elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
+            }
             int hours = elapsed.asHours();
-            double sec = elapsed - hours * 3600.0;
+            TimeDelta sec = elapsed - hours * 3600.0;
             if(hours > 0)
             {
                 return QString("#%1 %2h%3")
@@ -417,6 +423,7 @@ void Time::operator >> (Writer &to) const
     {
         Block bytes;
         QDataStream s(&bytes, QIODevice::WriteOnly);
+        s.setVersion(QDataStream::Qt_4_8);
         s << d->dateTime;
         to << bytes;
     }
@@ -448,6 +455,7 @@ void Time::operator << (Reader &from)
             Block bytes;
             from >> bytes;
             QDataStream s(bytes);
+            s.setVersion(QDataStream::Qt_4_8);
             s >> d->dateTime;
         }
 
@@ -480,6 +488,7 @@ void Time::operator << (Reader &from)
         Block bytes;
         from >> bytes;
         QDataStream s(bytes);
+        s.setVersion(QDataStream::Qt_4_8);
         s >> d->dateTime;
         d->flags = Instance::DateTime;
     }
