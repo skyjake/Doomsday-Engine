@@ -63,6 +63,7 @@ void G_ConsoleRegistration()
     Common_Register();
 
     // View/Refresh
+    // TODO Audio feedback for view resize (for jDoom feature parity)
     C_VAR_INT  ("view-size",                            &cfg.common.setBlocks,              0, 3, 11);
     C_VAR_BYTE ("hud-title",                            &cfg.common.mapTitle,               0, 0, 1);
     C_VAR_BYTE ("hud-title-author-noiwad",              &cfg.common.hideIWADAuthor,         0, 0, 1);

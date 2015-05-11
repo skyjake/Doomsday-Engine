@@ -250,6 +250,9 @@ public:
         Vector2 vecAbs = abs();
         return vecAbs.x > vecAbs.y? 1 : 0;
     }
+    inline void decompose(Type *array) const {
+        for(int i = 0; i < 2; ++i) array[i] = (*this)[i];
+    }
 public:
     Type x;
     Type y;

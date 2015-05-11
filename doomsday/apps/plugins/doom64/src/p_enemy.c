@@ -481,20 +481,54 @@ int P_Massacre(void)
     return count;
 }
 
+// MOBJ Enumeration
+// ==============================================================================================================
+
 typedef struct {
     mobjtype_t          type;
     size_t              count;
 } countmobjoftypeparams_t;
 
-static int countMobjOfType(thinker_t* th, void* context)
+typedef struct {
+    mobj_t*     excludedMobj;
+    mobjtype_t  type;
+    int         minHealth;
+    int         count;
+} countmobjworker_params_t;
+
+static int countMobjWorker(thinker_t* th, void* parms)
 {
-    countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t* mo = (mobj_t*) th;
+    countmobjworker_params_t* p = (countmobjworker_params_t*) parms;
 
-    if(params->type == mo->type && mo->health > 0)
-        params->count++;
+    if(p->excludedMobj == mo)       return false;   // Exluded Mobj Check
+    if(p->type != mo->type)          return false;   // Type Check
+    if(mo->health < p->minHealth)   return false;   // Minimum Health Check
 
-    return false; // Continue iteration.
+    if(p->count < 0)                return true;    // Early out
+
+    ++p->count;
+
+    return false;
+}
+
+static int countMobjs(countmobjworker_params_t* parm)
+{
+    DENG_ASSERT(parm != 0);
+    parm->count = 0;
+    Thinker_Iterate(P_MobjThinker, countMobjWorker, parm);
+    return parm->count;
+}
+
+/*
+ * Helper function for 100% of the countMobjs use cases in this file
+ * Creates parameters for countMobjs, passes them to countMobjs,
+ * and returns the result.
+ */
+static int countMobjsWithType(mobjtype_t type)
+{
+    countmobjworker_params_t params = { .type = type };
+    return countMobjs(&params);
 }
 
 /**
@@ -510,7 +544,6 @@ static int countMobjOfType(thinker_t* th, void* context)
  */
 void C_DECL A_RectSpecial(mobj_t* actor)
 {
-    countmobjoftypeparams_t params;
     coord_t pos[3];
     mobj_t* mo;
     int sound;
@@ -565,13 +598,8 @@ void C_DECL A_RectSpecial(mobj_t* actor)
     {
         P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
     }
-
-    // Check if there are no more Bitches left in the map.
-    params.type = actor->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    
+    if(countMobjsWithType(actor->type) > 0)
     {   // No Bitches left alive.
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -580,67 +608,14 @@ void C_DECL A_RectSpecial(mobj_t* actor)
         P_FreeDummyLine(dummyLine);
     }
 }
-
-/**
- * kaiser - Used for special stuff. works only per monster!!!
- */
-void C_DECL A_PossSpecial(mobj_t* mo)
-{
-    countmobjoftypeparams_t params;
-
-    A_Fall(mo);
-
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
-    {
-        Line*               dummyLine = P_AllocDummyLine();
-
-        P_ToXLine(dummyLine)->tag = 4444;
-        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-        P_FreeDummyLine(dummyLine);
-    }
-}
-
-/**
- * kaiser - used for special stuff. works only per monster!!!
- */
-void C_DECL A_SposSpecial(mobj_t* mo)
-{
-    countmobjoftypeparams_t params;
-
-    A_Fall(mo);
-
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
-    {
-        Line*               dummyLine = P_AllocDummyLine();
-
-        P_ToXLine(dummyLine)->tag = 4445;
-        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-        P_FreeDummyLine(dummyLine);
-    }
-}
-
 /**
  * kaiser - used for special stuff. works only per monster!!!
  */
 void C_DECL A_TrooSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
-
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -649,44 +624,14 @@ void C_DECL A_TrooSpecial(mobj_t* mo)
         P_FreeDummyLine(dummyLine);
     }
 }
-
-/**
- * kaiser - used for special stuff. works only per monster!!!
- */
-void C_DECL A_SargSpecial(mobj_t* mo)
-{
-    countmobjoftypeparams_t params;
-
-    A_Fall(mo);
-
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
-    {
-        Line*               dummyLine = P_AllocDummyLine();
-
-        P_ToXLine(dummyLine)->tag = 4448;
-        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
-        P_FreeDummyLine(dummyLine);
-    }
-}
-
 /**
  * kaiser - used for special stuff. works only per monster!!!
  */
 void C_DECL A_HeadSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -701,15 +646,9 @@ void C_DECL A_HeadSpecial(mobj_t* mo)
  */
 void C_DECL A_SkulSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -724,15 +663,9 @@ void C_DECL A_SkulSpecial(mobj_t* mo)
  */
 void C_DECL A_Bos2Special(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -747,15 +680,9 @@ void C_DECL A_Bos2Special(mobj_t* mo)
  */
 void C_DECL A_BossSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -770,15 +697,9 @@ void C_DECL A_BossSpecial(mobj_t* mo)
  */
 void C_DECL A_PainSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -793,15 +714,9 @@ void C_DECL A_PainSpecial(mobj_t* mo)
  */
 void C_DECL A_FattSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -816,15 +731,9 @@ void C_DECL A_FattSpecial(mobj_t* mo)
  */
 void C_DECL A_BabySpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -839,15 +748,9 @@ void C_DECL A_BabySpecial(mobj_t* mo)
  */
 void C_DECL A_CybrSpecial(mobj_t* mo)
 {
-    countmobjoftypeparams_t params;
-
     A_Fall(mo);
 
-    params.type = mo->type;
-    params.count = 0;
-    Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-    if(!params.count)
+    if(countMobjsWithType(mo->type) > 0)
     {
         Line*               dummyLine = P_AllocDummyLine();
 
@@ -855,6 +758,76 @@ void C_DECL A_CybrSpecial(mobj_t* mo)
         EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
         P_FreeDummyLine(dummyLine);
     }
+}
+
+/**
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_SposSpecial(mobj_t* mo)
+{
+    A_Fall(mo);
+
+    if(countMobjsWithType(mo->type) > 0)
+    {
+        Line*               dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4445;
+        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
+        P_FreeDummyLine(dummyLine);
+    }
+}
+
+/**
+ * kaiser - Used for special stuff. works only per monster!!!
+ */
+void C_DECL A_PossSpecial(mobj_t* mo)
+{
+    A_Fall(mo);
+
+    if(countMobjsWithType(mo->type) > 0)
+    {
+        Line*               dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4444;
+        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
+        P_FreeDummyLine(dummyLine);
+    }
+}
+
+// END CLUSTER FUCK
+
+// Shared Actions
+// ==============================================================================================================
+
+void C_DECL A_FaceTarget(mobj_t *actor)
+{
+    if(!actor->target)
+        return;
+
+    actor->turnTime = true; // $visangle-facetarget
+    actor->flags &= ~MF_AMBUSH;
+    actor->angle = M_PointToAngle2(actor->origin, actor->target->origin);
+
+    if(actor->target->flags & MF_SHADOW)
+        actor->angle += (P_Random() - P_Random()) << 21;
+}
+
+void C_DECL A_PosAttack(mobj_t* actor)
+{
+    int damage;
+    angle_t angle;
+    float slope;
+
+    if(!actor->target) return;
+
+    A_FaceTarget(actor);
+    angle = actor->angle;
+    slope = P_AimLineAttack(actor, angle, MISSILERANGE);
+
+    S_StartSound(SFX_PISTOL, actor);
+    angle += (P_Random() - P_Random()) << 20;
+    damage = ((P_Random() % 5) + 1) * 3;
+    P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
 }
 
 /**
@@ -1038,7 +1011,8 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(!G_Ruleset_Fast() && actor->moveCount))
+        if(!(!G_Ruleset_Fast() && actor->moveCount
+              && !G_Ruleset_Skill() != SM_HARD))
         {
             if(checkMissileRange(actor))
             {
@@ -1070,46 +1044,11 @@ void C_DECL A_Chase(mobj_t *actor)
     }
 }
 
-void C_DECL A_RectChase(mobj_t* actor)
-{
-    A_Chase(actor);
-}
+// Zombie
+// ==============================================================================================================
 
-void C_DECL A_FaceTarget(mobj_t *actor)
-{
-    if(!actor->target)
-        return;
-
-    actor->turnTime = true; // $visangle-facetarget
-    actor->flags &= ~MF_AMBUSH;
-    actor->angle = M_PointToAngle2(actor->origin, actor->target->origin);
-
-    if(actor->target->flags & MF_SHADOW)
-        actor->angle += (P_Random() - P_Random()) << 21;
-}
-
-void C_DECL A_BspiFaceTarget(mobj_t* actor)
-{
-    A_FaceTarget(actor);
-}
-
-void C_DECL A_PosAttack(mobj_t* actor)
-{
-    int damage;
-    angle_t angle;
-    float slope;
-
-    if(!actor->target) return;
-
-    A_FaceTarget(actor);
-    angle = actor->angle;
-    slope = P_AimLineAttack(actor, angle, MISSILERANGE);
-
-    S_StartSound(SFX_PISTOL, actor);
-    angle += (P_Random() - P_Random()) << 20;
-    damage = ((P_Random() % 5) + 1) * 3;
-    P_LineAttack(actor, angle, MISSILERANGE, slope, damage, MT_PUFF);
-}
+// Shotgun Guy
+// ==============================================================================================================
 
 void C_DECL A_SPosAttack(mobj_t *actor)
 {
@@ -1134,10 +1073,50 @@ void C_DECL A_SPosAttack(mobj_t *actor)
     }
 }
 
+// Seargent
+// ==============================================================================================================
+
+void C_DECL A_SargAttack(mobj_t* actor)
+{
+    int damage;
+
+    if(!actor->target) return;
+
+    A_FaceTarget(actor);
+    if(checkMeleeRange(actor))
+    {
+        damage = ((P_Random() % 10) + 1) * 4;
+        P_DamageMobj(actor->target, actor, actor, damage, false);
+    }
+}
+
+/**
+ * kaiser - used for special stuff. works only per monster!!!
+ */
+void C_DECL A_SargSpecial(mobj_t* mo)
+{
+    A_Fall(mo);
+
+    if(countMobjsWithType(mo->type) > 0)
+    {
+        Line*               dummyLine = P_AllocDummyLine();
+
+        P_ToXLine(dummyLine)->tag = 4448;
+        EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
+        P_FreeDummyLine(dummyLine);
+    }
+}
+
+// Player
+// ==============================================================================================================
+
 void C_DECL A_EMarineAttack2(mobj_t* actor)
 {
     // STUB: What is this meant to do?
 }
+
+// Arachnotron
+// ==============================================================================================================
 
 void C_DECL A_SpidRefire(mobj_t *actor)
 {
@@ -1154,10 +1133,18 @@ void C_DECL A_SpidRefire(mobj_t *actor)
     }
 }
 
+// Baby Arachnotron
+// ==============================================================================================================
+
+void C_DECL A_BspiFaceTarget(mobj_t* actor)
+{
+    A_FaceTarget(actor);
+}
+
 /**
  * d64tc: BspiAttack. Throw projectile.
  */
-void BabyFire(mobj_t* actor, int type, dd_bool right)
+static void BabyFire(mobj_t* actor, int type, dd_bool right)
 {
 #define BSPISPREAD                  (ANG90/8) //its cheap but it works
 #define BABY_DELTAANGLE             (85*ANGLE_1)
@@ -1208,6 +1195,15 @@ void C_DECL A_BspiAttack(mobj_t *actor)
     BabyFire(actor, MT_ARACHPLAZ, true);
 }
 
+void C_DECL A_BabyMetal(mobj_t *mo)
+{
+    S_StartSound(SFX_BSPWLK, mo);
+    A_Chase(mo);
+}
+
+// Imp & Nightmare Imp
+// ==============================================================================================================
+
 /**
  * Formerly A_BspiAttack? - DJS
  */
@@ -1231,6 +1227,8 @@ void C_DECL A_TroopAttack(mobj_t *actor)
 
 /**
  * Formerly A_TroopAttack? - DJS
+ * 
+ * Correctly assumed, noticed this while doing side-by-side for upgrade - RH
  */
 void C_DECL A_TroopClaw(mobj_t *actor)
 {
@@ -1248,6 +1246,9 @@ void C_DECL A_TroopClaw(mobj_t *actor)
         return;
     }
 }
+
+// Mother Demon
+// ==============================================================================================================
 
 /**
  * Mother Demon: Floorfire attack.
@@ -1334,27 +1335,6 @@ void C_DECL A_MotherMissle(mobj_t *actor)
 }
 
 /**
- * d64tc - Unused?
- */
-void C_DECL A_SetFloorFire(mobj_t* actor)
-{
-/*
-    mobj_t* mo;
-    coord_t pos[3];
-
-    actor->origin[VZ] = actor->floorZ;
-
-    memcpy(pos, actor->origin, sizeof(pos));
-    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
-    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
-    pos[VZ]  = ONFLOORZ;
-
-    if((mo = P_SpawnMobj(MT_SPAWNFIRE, pos)))
-        mo->target = actor->target;
-*/
-}
-
-/**
  * d64tc
  */
 void C_DECL A_MotherBallExplode(mobj_t* spread)
@@ -1377,38 +1357,8 @@ void C_DECL A_MotherBallExplode(mobj_t* spread)
     }
 }
 
-/**
- * d64tc: Spawns a smoke sprite during the missle attack.
- */
-void C_DECL A_RectTracerPuff(mobj_t* smoke)
-{
-    if(!smoke) return;
-    P_SpawnMobj(MT_MOTHERPUFF, smoke->origin, P_Random() << 24, 0);
-}
-
-void C_DECL A_SargAttack(mobj_t* actor)
-{
-    int damage;
-
-    if(!actor->target) return;
-
-    A_FaceTarget(actor);
-    if(checkMeleeRange(actor))
-    {
-        damage = ((P_Random() % 10) + 1) * 4;
-        P_DamageMobj(actor->target, actor, actor, damage, false);
-    }
-}
-
-void C_DECL A_ShadowsAction1(mobj_t* actor)
-{
-    // STUB: What is this meant to do?
-}
-
-void C_DECL A_ShadowsAction2(mobj_t* actor)
-{
-    // STUB: What is this meant to do?
-}
+// Cacodemon
+// ==============================================================================================================
 
 void C_DECL A_HeadAttack(mobj_t* actor)
 {
@@ -1427,6 +1377,9 @@ void C_DECL A_HeadAttack(mobj_t* actor)
     // Launch a missile.
     P_SpawnMissile(MT_HEADSHOT, actor, actor->target);
 }
+
+// Cyberdemon
+// ==============================================================================================================
 
 /**
  * Cyber Demon: Missile Attack.
@@ -1458,6 +1411,163 @@ void C_DECL A_CyberAttack(mobj_t* actor)
 #undef CYBER_ARM1_HEIGHT
 }
 
+/*
+ * Used for field `special` in `BossTrigger`
+ */
+typedef enum {
+    ST_SPAWN_FLOOR,
+    ST_SPAWN_DOOR,
+    ST_LEAVEMAP
+} BossTriggerType;
+
+/* 
+ * Used by A_CyberDeath
+ *
+ * @TODO Should be defined in MapInfo
+ */
+typedef struct {
+    //int gameModeBits;
+    char const *mapPath;
+    //dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
+    mobjtype_t bossType;
+    //dd_bool massacreOnDeath;
+    BossTriggerType special;
+    int tag;
+    int type;
+} BossTrigger;
+
+/*
+ * Called by A_CyberDeath
+ */
+static void cyberKaboom(mobj_t *actor)
+{
+    coord_t pos[3];
+    mobj_t *mo;
+
+    DENG_ASSERT(actor != 0);
+
+    memcpy(pos, actor->origin, sizeof(pos));
+    pos[VX] += FIX2FLT((P_Random() - 128) << 11);
+    pos[VY] += FIX2FLT((P_Random() - 128) << 11);
+    pos[VZ] += actor->height / 2;
+
+    if((mo = P_SpawnMobj(MT_KABOOM, pos, P_Random() << 24, 0)))
+    {
+        S_StartSound(SFX_BAREXP, mo);
+        mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
+        mo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
+        mo->target = actor;
+    }
+
+    actor->reactionTime--;
+    if(actor->reactionTime <= 0)
+    {
+        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
+    }
+
+    S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
+}
+
+/**
+ * d64tc
+ */
+void C_DECL A_CyberDeath(mobj_t *mo)
+{
+    static BossTrigger const bossTriggers[] =
+    {
+        { "MAP32", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
+        { "MAP33", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
+        { "MAP35", MT_NONE, ST_LEAVEMAP,   0,   0 }
+    };
+    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
+
+    AutoStr *currentMapPath = G_CurrentMapUriPath();
+    int i;
+
+    // Cyber deaths cause a rather spectacular kaboom.
+    cyberKaboom(mo);
+
+    // Make sure there is a player alive.
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(players[i].plr->inGame && players[i].health > 0)
+            break;
+    }
+    if(i == MAXPLAYERS) return;
+
+    for(i = 0; i < numBossTriggers; ++i)
+    {
+        BossTrigger const *trigger = &bossTriggers[i];
+
+        //if(!(trigger->gameModeBits & gameModeBits)) continue;
+
+        // Mobj type requirement change in DOOM ver 1.9
+        //if(!(cfg.anyBossDeath && trigger->compatAnyBoss))
+        {
+            // Not a boss on this map?
+            if(mo->type != MT_NONE && mo->type != trigger->bossType) continue;
+        }
+
+        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
+
+        // Scan the remaining thinkers to determine if this is indeed the last boss.
+        if(countMobjsWithType(mo->type)) continue;
+
+        // Kill all remaining enemies?
+        /*if(trigger->massacreOnDeath)
+        {
+            P_Massacre();
+        }*/
+
+        // Trigger the special.
+        switch(trigger->special)
+        {
+        case ST_SPAWN_FLOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
+
+        case ST_SPAWN_DOOR: {
+            Line *dummyLine = P_AllocDummyLine();
+            P_ToXLine(dummyLine)->tag = trigger->tag;
+            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
+            P_FreeDummyLine(dummyLine);
+            break; }
+
+        case ST_LEAVEMAP:
+            G_SetGameActionMapCompletedAndSetNextMap();
+            break;
+
+        default: DENG_ASSERT(!"A_CyberDeath: Unknown trigger special type");
+        }
+    }
+}
+
+void C_DECL A_Hoof(mobj_t *mo)
+{
+    /**
+     * @todo Kludge: Only play very loud sounds in map 8.
+     * \todo: Implement a MAPINFO option for this.
+     */
+    S_StartSound(SFX_HOOF | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
+    A_Chase(mo);
+}
+
+void C_DECL A_Metal(mobj_t *mo)
+{
+    /**
+     * @todo Kludge: Only play very loud sounds in map 8.
+     * \todo: Implement a MAPINFO option for this.
+     */
+    S_StartSound(SFX_MEAL | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
+    A_Chase(mo);
+}
+
+// Baron of Hell
+// ==============================================================================================================
+
 void C_DECL A_BruisAttack(mobj_t *actor)
 {
     int                 damage;
@@ -1483,21 +1593,51 @@ void C_DECL A_BruisAttack(mobj_t *actor)
     P_SpawnMissile(missileType, actor, actor->target);
 }
 
+// SPRITE = DART
+// ==============================================================================================================
+
 void C_DECL A_SkelMissile(mobj_t* actor)
 {
-    mobj_t* mo;
-
     if(!actor->target) return;
 
     A_FaceTarget(actor);
 
-    if((mo = P_SpawnMissile(MT_TRACER, actor, actor->target)))
+    mobj_t* mo = P_SpawnMissile(MT_TRACER, actor, actor->target);
+    if(mo)
     {
         mo->origin[VX] += mo->mom[MX];
         mo->origin[VY] += mo->mom[MY];
         mo->tracer = actor->target;
     }
 }
+
+// XXX Unreferenced in objects.ded
+void C_DECL A_SkelWhoosh(mobj_t* actor)
+{
+    if(!actor->target) return;
+
+    A_FaceTarget(actor);
+    S_StartSound(SFX_SKESWG, actor);
+}
+
+// XXX Unreferenced in objects.ded
+void C_DECL A_SkelFist(mobj_t* actor)
+{
+    int damage;
+
+    if(!actor->target) return;
+
+    A_FaceTarget(actor);
+    if(checkMeleeRange(actor))
+    {
+        damage = ((P_Random() % 10) + 1) * 6;
+        S_StartSound(SFX_SKEPCH, actor);
+        P_DamageMobj(actor->target, actor, actor, damage, false);
+    }
+}
+
+// SPRITE = MANF
+// ==============================================================================================================
 
 void C_DECL A_Tracer(mobj_t* actor)
 {
@@ -1576,28 +1716,8 @@ void C_DECL A_Tracer(mobj_t* actor)
         actor->mom[MZ] += 1 / 8;
 }
 
-void C_DECL A_SkelWhoosh(mobj_t* actor)
-{
-    if(!actor->target) return;
-
-    A_FaceTarget(actor);
-    S_StartSound(SFX_SKESWG, actor);
-}
-
-void C_DECL A_SkelFist(mobj_t* actor)
-{
-    int damage;
-
-    if(!actor->target) return;
-
-    A_FaceTarget(actor);
-    if(checkMeleeRange(actor))
-    {
-        damage = ((P_Random() % 10) + 1) * 6;
-        S_StartSound(SFX_SKEPCH, actor);
-        P_DamageMobj(actor->target, actor, actor, damage, false);
-    }
-}
+// Mancubus
+// ==============================================================================================================
 
 void C_DECL A_FatRaise(mobj_t* actor)
 {
@@ -1607,6 +1727,7 @@ void C_DECL A_FatRaise(mobj_t* actor)
 
 /**
  * d64tc: Used for mancubus projectile.
+ * Called by A_FatAttack1, A_FatAttack2, and A_FatAttack3
  */
 static void fatFire(mobj_t* actor, int type, angle_t spread, angle_t angle,
     coord_t distance, float height)
@@ -1663,6 +1784,9 @@ void C_DECL A_FatAttack3(mobj_t *actor)
             FAT_ARM_EXTENSION_SHORT, FAT_ARM_HEIGHT);
 }
 
+// Lost Soul
+// ==============================================================================================================
+
 /**
  * LostSoul Attack: Fly at the player like a missile.
  */
@@ -1692,6 +1816,9 @@ void C_DECL A_SkullAttack(mobj_t* actor)
     actor->mom[MZ] = (dest->origin[VZ] + (dest->height / 2) - actor->origin[VZ]) / dist;
 }
 
+// Pain Elemental
+// ==============================================================================================================
+
 /**
  * PainElemental Attack: Spawn a lost soul and launch it at the target.
  */
@@ -1702,18 +1829,9 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
     Sector* sec;
     uint an;
 
-    if(cfg.maxSkulls)
+    if(cfg.maxSkulls && (countMobjsWithType(MT_SKULL) > 20))
     {
-        // Limit the number of MT_SKULL's we should spawn.
-        countmobjoftypeparams_t params;
-
-        // Count total number currently on the map.
-        params.type = MT_SKULL;
-        params.count = 0;
-        Thinker_Iterate(P_MobjThinker, countMobjOfType, &params);
-
-        if(params.count > 20)
-            return; // Too many, don't spit another.
+        return; // Too many, don't spit another.
     }
 
     an = angle >> ANGLETOFINESHIFT;
@@ -1802,6 +1920,9 @@ void C_DECL A_PainDie(mobj_t* actor)
     A_PainShootSkull(actor, actor->angle + an);
 }
 
+// Missile
+// ==============================================================================================================
+
 /**
  * d64tc: Rocket Trail Puff
  * kaiser - Current Rocket Puff code unknown because I know squat.
@@ -1837,6 +1958,43 @@ void A_Rocketshootpuff(mobj_t* actor, angle_t angle)
     }
 }
 
+/**
+ * d64tc: Spawns a smoke sprite during the missle attack
+ */
+void C_DECL A_Rocketpuff(mobj_t *actor)
+{
+    if(!actor)
+        return;
+
+    P_SpawnMobj(MT_ROCKETPUFF, actor->origin, P_Random() << 24, 0);
+}
+
+void C_DECL A_Explode(mobj_t *mo)
+{
+    P_RadiusAttack(mo, mo->target, 128, 127);
+}
+
+/**
+ * Mother Demon: Spawns a smoke sprite during the missle attack
+ */
+void C_DECL A_RectTracerPuff(mobj_t* smoke)
+{
+    if(!smoke) return;
+    P_SpawnMobj(MT_MOTHERPUFF, smoke->origin, P_Random() << 24, 0);
+}
+
+void C_DECL A_RectChase(mobj_t* actor)
+{
+    A_Chase(actor);
+}
+
+// Generic Actions
+// ==============================================================================================================
+
+/*
+ * Generic scream.
+ * Used by more than one object
+ */
 void C_DECL A_Scream(mobj_t* actor)
 {
     int sound;
@@ -1889,160 +2047,9 @@ void C_DECL A_Scream(mobj_t* actor)
     }
 }
 
-static void cyberKaboom(mobj_t *actor)
-{
-    coord_t pos[3];
-    mobj_t *mo;
-
-    DENG_ASSERT(actor != 0);
-
-    memcpy(pos, actor->origin, sizeof(pos));
-    pos[VX] += FIX2FLT((P_Random() - 128) << 11);
-    pos[VY] += FIX2FLT((P_Random() - 128) << 11);
-    pos[VZ] += actor->height / 2;
-
-    if((mo = P_SpawnMobj(MT_KABOOM, pos, P_Random() << 24, 0)))
-    {
-        S_StartSound(SFX_BAREXP, mo);
-        mo->mom[MX] = FIX2FLT((P_Random() - 128) << 11);
-        mo->mom[MY] = FIX2FLT((P_Random() - 128) << 11);
-        mo->target = actor;
-    }
-
-    actor->reactionTime--;
-    if(actor->reactionTime <= 0)
-    {
-        P_MobjChangeState(actor, P_GetState(actor->type, SN_DEATH) + 2);
-    }
-
-    S_StartSound(actor->info->deathSound | DDSF_NO_ATTENUATION, NULL);
-}
-
-typedef enum {
-    ST_SPAWN_FLOOR,
-    ST_SPAWN_DOOR,
-    ST_LEAVEMAP
-} SpecialType;
-
-/// @todo Should be defined in MapInfo.
-typedef struct {
-    //int gameModeBits;
-    char const *mapPath;
-    //dd_bool compatAnyBoss; ///< @c true= type requirement optional by compat option.
-    mobjtype_t bossType;
-    //dd_bool massacreOnDeath;
-    SpecialType special;
-    int tag;
-    int type;
-} BossTrigger;
-
-/**
- * d64tc
+/*
+ * Generic scream action
  */
-void C_DECL A_CyberDeath(mobj_t *mo)
-{
-    static BossTrigger const bossTriggers[] =
-    {
-        { "MAP32", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
-        { "MAP33", MT_NONE, ST_SPAWN_DOOR, 666, (int)DT_BLAZERAISE },
-        { "MAP35", MT_NONE, ST_LEAVEMAP,   0,   0 }
-    };
-    static int const numBossTriggers = sizeof(bossTriggers) / sizeof(bossTriggers[0]);
-
-    AutoStr *currentMapPath = G_CurrentMapUriPath();
-    int i;
-
-    // Cyber deaths cause a rather spectacular kaboom.
-    cyberKaboom(mo);
-
-    // Make sure there is a player alive.
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(players[i].plr->inGame && players[i].health > 0)
-            break;
-    }
-    if(i == MAXPLAYERS) return;
-
-    for(i = 0; i < numBossTriggers; ++i)
-    {
-        BossTrigger const *trigger = &bossTriggers[i];
-
-        //if(!(trigger->gameModeBits & gameModeBits)) continue;
-
-        // Mobj type requirement change in DOOM ver 1.9
-        //if(!(cfg.anyBossDeath && trigger->compatAnyBoss))
-        {
-            // Not a boss on this map?
-            if(mo->type != MT_NONE && mo->type != trigger->bossType) continue;
-        }
-
-        if(Str_CompareIgnoreCase(currentMapPath, trigger->mapPath)) continue;
-
-        // Scan the remaining thinkers to determine if this is indeed the last boss.
-        {
-            countmobjoftypeparams_t parm;
-            parm.type  = mo->type;
-            parm.count = 0;
-            Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
-
-            // Anything left alive?
-            if(parm.count) continue;
-        }
-
-        // Kill all remaining enemies?
-        /*if(trigger->massacreOnDeath)
-        {
-            P_Massacre();
-        }*/
-
-        // Trigger the special.
-        switch(trigger->special)
-        {
-        case ST_SPAWN_FLOOR: {
-            Line *dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = trigger->tag;
-            EV_DoFloor(dummyLine, (floortype_e)trigger->type);
-            P_FreeDummyLine(dummyLine);
-            break; }
-
-        case ST_SPAWN_DOOR: {
-            Line *dummyLine = P_AllocDummyLine();
-            P_ToXLine(dummyLine)->tag = trigger->tag;
-            EV_DoDoor(dummyLine, (doortype_e)trigger->type);
-            P_FreeDummyLine(dummyLine);
-            break; }
-
-        case ST_LEAVEMAP:
-            G_SetGameActionMapCompletedAndSetNextMap();
-            break;
-
-        default: DENG_ASSERT(!"A_CyberDeath: Unknown trigger special type");
-        }
-    }
-}
-
-/**
- * d64tc: Spawns a smoke sprite during the missle attack
- */
-void C_DECL A_Rocketpuff(mobj_t *actor)
-{
-    if(!actor)
-        return;
-
-    P_SpawnMobj(MT_ROCKETPUFF, actor->origin, P_Random() << 24, 0);
-}
-
-/**
- * d64tc
- */
-void C_DECL A_Lasersmoke(mobj_t *mo)
-{
-    if(!mo)
-        return;
-
-    P_SpawnMobj(MT_LASERDUST, mo->origin, P_Random() << 24, 0);
-}
-
 void C_DECL A_XScream(mobj_t *actor)
 {
     S_StartSound(SFX_SLOP, actor);
@@ -2060,10 +2067,22 @@ void C_DECL A_Fall(mobj_t *actor)
     actor->flags &= ~MF_SOLID;
 }
 
-void C_DECL A_Explode(mobj_t *mo)
+// Laser
+// ==============================================================================================================
+
+/*
+ * Emit smoke when firing the laser 
+ */
+void C_DECL A_Lasersmoke(mobj_t *mo)
 {
-    P_RadiusAttack(mo, mo->target, 128, 127);
+    if(!mo)
+        return;
+
+    P_SpawnMobj(MT_LASERDUST, mo->origin, P_Random() << 24, 0);
 }
+
+// Barrel
+// ==============================================================================================================
 
 void C_DECL A_BarrelExplode(mobj_t *actor)
 {
@@ -2084,18 +2103,11 @@ void C_DECL A_BarrelExplode(mobj_t *actor)
         if(players[i].plr->inGame && players[i].health > 0)
             break;
     }
+
     if(i == MAXPLAYERS) return;
 
-    // Scan the remaining thinkers to see if all bosses are dead.
-    {
-        countmobjoftypeparams_t parm;
-        parm.type = actor->type;
-        parm.count = 0;
-        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
-
-        // Other boss not dead?
-        if(parm.count) return;
-    }
+    // Other boss not dead?
+    if(countMobjsWithType(actor->type)) return;
 
     {
         Line *dummyLine = P_AllocDummyLine();
@@ -2105,6 +2117,42 @@ void C_DECL A_BarrelExplode(mobj_t *actor)
     }
 }
 
+// TODO Unreferenced throughout entire source base except for in a DED file
+//      this looks like it is either being used to stub a callback, or was meant to be implemented
+//      it is used by the sprite SARG when running (state id SHAD_RUN in objects.ded)
+void C_DECL A_ShadowsAction1(mobj_t* actor)
+{
+    // STUB: What is this meant to do?
+}
+
+// XXX  See comment for A_ShadowsAction1
+void C_DECL A_ShadowsAction2(mobj_t* actor)
+{
+    // STUB: What is this meant to do?
+}
+
+/**
+ * d64tc - Unused?
+ */
+void C_DECL A_SetFloorFire(mobj_t* actor)
+{
+/*
+    mobj_t* mo;
+    coord_t pos[3];
+
+    actor->origin[VZ] = actor->floorZ;
+
+    memcpy(pos, actor->origin, sizeof(pos));
+    pos[VX] += FIX2FLT((P_Random() - P_Random()) << 10);
+    pos[VY] += FIX2FLT((P_Random() - P_Random()) << 10);
+    pos[VZ]  = ONFLOORZ;
+
+    if((mo = P_SpawnMobj(MT_SPAWNFIRE, pos)))
+        mo->target = actor->target;
+*/
+}
+
+// XXX Unreferenced in objects.ded
 /**
  * Possibly trigger special effects if on first boss level
  *
@@ -2127,44 +2175,11 @@ void C_DECL A_BossDeath(mobj_t *mo)
         if(players[i].plr->inGame && players[i].health > 0)
             break;
     }
+    
     if(i == MAXPLAYERS) return;
 
-    // Scan the remaining thinkers to see if all bosses are dead.
-    {
-        countmobjoftypeparams_t parm;
-        parm.type = mo->type;
-        parm.count = 0;
-        Thinker_Iterate(P_MobjThinker, countMobjOfType, &parm);
-
-        // Other boss not dead?
-        if(parm.count) return;
-    }
+    // Other boss not dead?
+    if(countMobjsWithType(mo->type)) return;
 
     G_SetGameActionMapCompletedAndSetNextMap();
-}
-
-void C_DECL A_Hoof(mobj_t *mo)
-{
-    /**
-     * @todo Kludge: Only play very loud sounds in map 8.
-     * \todo: Implement a MAPINFO option for this.
-     */
-    S_StartSound(SFX_HOOF | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
-    A_Chase(mo);
-}
-
-void C_DECL A_Metal(mobj_t *mo)
-{
-    /**
-     * @todo Kludge: Only play very loud sounds in map 8.
-     * \todo: Implement a MAPINFO option for this.
-     */
-    S_StartSound(SFX_MEAL | (!Str_CompareIgnoreCase(G_CurrentMapUriPath(), "MAP08")? DDSF_NO_ATTENUATION : 0), mo);
-    A_Chase(mo);
-}
-
-void C_DECL A_BabyMetal(mobj_t *mo)
-{
-    S_StartSound(SFX_BSPWLK, mo);
-    A_Chase(mo);
 }

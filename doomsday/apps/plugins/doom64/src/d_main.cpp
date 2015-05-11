@@ -25,11 +25,12 @@
 
 #include <cstring>
 #include <de/App>
-#include "am_map.h"
 #include "d_netsv.h"
 #include "g_defs.h"
 #include "gamesession.h"
 #include "hu_menu.h"
+#include "hu_stuff.h"
+#include "hud/widgets/automapwidget.h"
 #include "m_argv.h"
 #include "p_inventory.h"
 #include "p_map.h"
@@ -135,6 +136,10 @@ void D_PreInit()
     cfg.common.menuTextGlitter = .5f;
     cfg.common.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
+    // TODO: Config options present in jDoom but not here:
+    //          - menuSlam
+    //          - menuShortcutsEnabled
+    //          - menuGameSaveSuggestDescription
     cfg.common.menuEffectFlags = MEF_TEXT_TYPEIN | MEF_TEXT_SHADOW | MEF_TEXT_GLITTER;
     cfg.common.menuTextFlashColor[0] = .7f;
     cfg.common.menuTextFlashColor[1] = .9f;
@@ -145,6 +150,7 @@ void D_PreInit()
     cfg.common.inludePatchReplaceMode = PRM_ALLOW_TEXT;
 
     cfg.common.hudPatchReplaceMode = PRM_ALLOW_TEXT;
+    // TODO: jDoom parity: hudKeysCombine
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_ARMOR] = true;
     cfg.hudShown[HUD_AMMO] = true;
@@ -221,6 +227,11 @@ void D_PreInit()
     cfg.avoidDropoffs = true;
     cfg.moveBlock = false;
     cfg.fallOff = true;
+    // TODO jDoom feature parity
+    //      - ouchFace
+    //      - statusbarScale
+    //      - statusbarOpacity
+    //      - statusbarCounterAlpha
 
     cfg.common.automapCustomColors = 0; // Never.
     cfg.common.automapL0[0] = .4f; // Unseen areas.
@@ -257,7 +268,7 @@ void D_PreInit()
     cfg.common.automapZoomSpeed = .1f;
     cfg.common.automapPanSpeed = .5f;
     cfg.common.automapPanResetOnOpen = true;
-    cfg.common.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
+    cfg.common.automapOpenSeconds = AUTOMAPWIDGET_OPEN_SECONDS;
 
     cfg.common.hudCheatCounterScale = .7f;
     cfg.common.hudCheatCounterShowWithAutomap = true;

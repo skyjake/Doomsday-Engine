@@ -27,14 +27,12 @@
 #include <cstdio>
 #include <cstring>
 #include <de/NativePath>
-#include "am_map.h"
 #include "d_net.h"
 #include "d_netsv.h"
 #include "dmu_lib.h"
 #include "gamesession.h"
 #include "g_common.h"
 #include "g_defs.h"
-#include "hu_chat.h"
 #include "hu_stuff.h"
 #include "p_actor.h"
 #include "p_inventory.h"

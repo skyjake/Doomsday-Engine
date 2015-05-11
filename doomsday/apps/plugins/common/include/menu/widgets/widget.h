@@ -28,7 +28,6 @@
 #include <de/Rectangle>
 #include <de/String>
 #include "common.h"
-#include "hu_lib.h"
 
 namespace common {
 namespace menu {

@@ -32,7 +32,7 @@ PROVIDES = 2
 OFFERS = 3
 
 # File name extensions of the supported addon formats.
-EXTENSIONS = ['box', 'addon', 'pk3', 'zip', 'lmp', 'wad', 'ded', 'deh']
+EXTENSIONS = ['box', 'addon', 'pk3', 'zip', 'lmp', 'wad', 'gwa', 'ded', 'deh']
 
 # All the possible names of the addon metadata file.
 META_NAMES = ['Info', 'Info.conf', 'info', 'info.conf']
@@ -741,6 +741,8 @@ class WADAddon (Addon):
                     category += 'ns/'	 
                 if base[0] in 'tuvwxyz':	 
                     category += 'tz/'	 
+            else:
+                category += 'other/'
              
             metadata += "category: %s\n" % category
 
@@ -825,6 +827,21 @@ class WADAddon (Addon):
 
         return lumps
 
+class GLBSPAddon (WADAddon):
+    def __init__(self, identifier, source):
+        WADAddon.__init__(self, identifier, source)
+
+    def getType(self):
+        return 'addon-type-glbsp'
+
+    def getCommandLine(self, profile):
+        """GWA are just WAD files with partial definitions"""
+        return '-file ' + paths.quote(self.source)
+
+    def readMetaData(self):
+        metadata = 'category: gamedata/glbsp'
+
+        self.parseConfiguration(metadata)
         
 class DehackedAddon (Addon):
     def __init__(self, identifier, source):

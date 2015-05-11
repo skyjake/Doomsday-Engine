@@ -2292,7 +2292,7 @@ void XL_Message(mobj_t *act, char *msg, dd_bool global)
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
-                P_SetMessage(players + i, 0, msg);
+                P_SetMessage(&players[i], msg);
         }
         return;
     }
@@ -2312,7 +2312,7 @@ void XL_Message(mobj_t *act, char *msg, dd_bool global)
         LOG_MAP_MSG_XGDEVONLY2("'%s'\nNO DESTINATION, MESSAGE DISCARDED", msg);
         return;
     }
-    P_SetMessage(pl, 0, msg);
+    P_SetMessage(pl, msg);
 }
 
 void XL_ActivateLine(dd_bool activating, linetype_t *info, Line *line, int sidenum,

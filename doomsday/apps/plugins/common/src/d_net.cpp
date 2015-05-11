@@ -18,6 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#include "common.h"
 #include "d_net.h"
 
 #include <de/RecordValue>
@@ -536,12 +537,12 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 #if __JHEXEN__
         if(type == GPT_YELLOW_MESSAGE)
         {
-            P_SetYellowMessage(&players[CONSOLEPLAYER], 0, msg);
+            P_SetYellowMessage(&players[CONSOLEPLAYER], msg);
         }
         else
 #endif
         {
-            P_SetMessage(&players[CONSOLEPLAYER], 0, msg);
+            P_SetMessage(&players[CONSOLEPLAYER], msg);
         }
         Z_Free(msg);
         break; }
@@ -677,9 +678,9 @@ static void D_NetMessageEx(int player, char const *msg, dd_bool playSound)
         return;
 
     // This is intended to be a local message.
-    // Let's make sure P_SetMessage doesn't forward it anywhere.
+    // Let's make sure P_SetMessageWithFlags doesn't forward it anywhere.
     netSvAllowSendMsg = false;
-    P_SetMessage(plr, 0, msg);
+    P_SetMessage(plr, msg);
 
     if(playSound)
     {

@@ -44,6 +44,12 @@ HEADERS += \
     include/doomv9mapstatereader.h \
     include/dstrings.h \
     include/g_game.h \
+    include/hud/widgets/ammowidget.h \
+    include/hud/widgets/armoriconwidget.h \
+    include/hud/widgets/facewidget.h \
+    include/hud/widgets/healthiconwidget.h \
+    include/hud/widgets/maxammowidget.h \
+    include/hud/widgets/weaponslotwidget.h \
     include/info.h \
     include/intermission.h \
     include/jdoom.h \
@@ -74,6 +80,12 @@ SOURCES += \
     src/d_main.cpp \
     src/d_refresh.cpp \
     src/doomv9mapstatereader.cpp \
+    src/hud/widgets/ammowidget.cpp \
+    src/hud/widgets/armoriconwidget.cpp \
+    src/hud/widgets/facewidget.cpp \
+    src/hud/widgets/healthiconwidget.cpp \
+    src/hud/widgets/maxammowidget.cpp \
+    src/hud/widgets/weaponslotwidget.cpp \
     src/intermission.cpp \
     src/m_cheat.cpp \
     src/m_random.c \

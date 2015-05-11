@@ -328,7 +328,10 @@ category-sound: Sound
 category-effects: Effects
 category-effects-particle: Particle Effects
 category-effects-light: Lighting Effects
+category-skies: Skyboxes
 category-gamedata: Game Data
+category-gamedata-other: Miscellaneous
+category-gamedata-glbsp: GLBSP Node Data
 category-gamedata-doomsday: Doomsday Game Files
 category-gamedata-primary: Primary Data Files
 category-gamedata-maps: Maps

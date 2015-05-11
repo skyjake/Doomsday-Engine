@@ -21,7 +21,8 @@
 #include "common.h"
 #include "menu/widgets/buttonwidget.h"
 
-#include "hu_menu.h" // menu sounds
+#include "hu_menu.h"   // menu sounds
+#include "hu_stuff.h"
 #include "menu/page.h" // mnRendState
 
 using namespace de;

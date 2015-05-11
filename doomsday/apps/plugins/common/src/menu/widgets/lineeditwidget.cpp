@@ -21,7 +21,8 @@
 #include "common.h"
 #include "menu/widgets/lineeditwidget.h"
 
-#include "hu_menu.h" // menu sounds
+#include "hu_menu.h"   // menu sounds
+#include "hu_stuff.h"  // shiftXForm
 #include "menu/page.h" // mnRendState
 
 using namespace de;
@@ -105,7 +106,7 @@ void LineEditWidget::draw() const
     Vector2i origin = geometry().topLeft + Vector2i(MNDATA_EDIT_OFFSET_X, MNDATA_EDIT_OFFSET_Y);
 
     String useText;
-    float light = 1, textAlpha = mnRendState->pageAlpha;
+    float light = 1, textOpacity = mnRendState->pageAlpha;
     if(!d->text.isEmpty())
     {
         useText = d->text;
@@ -114,7 +115,7 @@ void LineEditWidget::draw() const
     {
         useText = d->emptyText;
         light *= .5f;
-        textAlpha = mnRendState->pageAlpha * .75f;
+        textOpacity = mnRendState->pageAlpha * .75f;
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -138,7 +139,7 @@ void LineEditWidget::draw() const
 
         Vector4f color = de::lerp(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.common.menuTextFlashColor), t);
         color *= light;
-        color.w = textAlpha;
+        color.w = textOpacity;
 
         // Draw the text:
         FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);

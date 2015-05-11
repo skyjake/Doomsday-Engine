@@ -102,7 +102,7 @@ static dd_bool CheckedLockedDoor(mobj_t *mo, byte lock)
         char LockedBuffer[80];
         sprintf(LockedBuffer, "YOU NEED THE %s\n", GET_TXT(TextKeyMessages[lock - 1]));
 
-        P_SetMessage(mo->player, 0, LockedBuffer);
+        P_SetMessage(mo->player, LockedBuffer);
         S_StartSound(SFX_DOOR_LOCKED, mo);
         return false;
     }
@@ -413,7 +413,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             if(!(mo->player->keys & (1 << (lock - 1))))
             {
                 auto const msg = String("You need the ") + String(GET_TXT(TextKeyMessages[lock - 1]));
-                P_SetMessage(mo->player, 0, msg.toUtf8().constData());
+                P_SetMessage(mo->player, msg.toUtf8().constData());
                 S_StartSound(SFX_DOOR_LOCKED, mo);
                 break;
             }

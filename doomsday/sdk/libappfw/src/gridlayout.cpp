@@ -211,19 +211,25 @@ DENG2_PIMPL(GridLayout)
             addMetric(list);
         }
         DENG2_ASSERT(index < list.size());
+        
 
-        Metric &metric = *list[index];
-        if(!metric.fixedLength)
-        {
-            changeRef(metric.current, OperatorRule::maximum(rule, metric.current));
+        if (list[index]) {
+            
+            Metric &metric = *list[index];
 
-            // Update the indirection.
-            metric.final->setSource(*metric.current);
-        }
-        else
-        {
-            // Fixed lengths are never affected.
-            metric.final->setSource(*metric.fixedLength);
+            if(!metric.fixedLength)
+            {
+                changeRef(metric.current, OperatorRule::maximum(rule, metric.current));
+
+                // Update the indirection.
+                metric.final->setSource(*metric.current);
+            }
+            else
+            {
+                // Fixed lengths are never affected.
+                metric.final->setSource(*metric.fixedLength);
+            }
+
         }
     }
 

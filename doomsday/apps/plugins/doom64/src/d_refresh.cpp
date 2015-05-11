@@ -28,8 +28,6 @@
 #include "hu_menu.h"
 #include "hu_pspr.h"
 #include "hu_msg.h"
-#include "hu_log.h"
-#include "hu_automap.h"
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"
@@ -124,7 +122,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
 
 void R_UpdateViewFilter(int player)
 {
-#define RADIATIONPAL (13) /// Radiation suit, green shift.
+    static const int RADIATIONPAL = 13;
 
     player_t *plr = players + player;
     if(player < 0 || player >= MAXPLAYERS)
@@ -179,7 +177,6 @@ void R_UpdateViewFilter(int player)
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
     }
 
-#undef RADIATIONPAL
 }
 
 void G_RendPlayerView(int player)
@@ -214,55 +211,6 @@ void G_RendPlayerView(int player)
     // Render the view with possible custom filters.
     R_RenderPlayerView(player);
 }
-
-#if 0
-static void rendHUD(int player, RectRaw const *portGeometry)
-{
-    if(player < 0 || player >= MAXPLAYERS) return;
-    if(G_GameState() != GS_MAP) return;
-    if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-    if(!DD_GetInteger(DD_GAME_DRAW_HUD_HINT)) return; // The engine advises not to draw any HUD displays.
-
-    ST_Drawer(player);
-    HU_DrawScoreBoard(player);
-    Hu_MapTitleDrawer(portGeometry);
-}
-
-void D_DrawViewPort(int port, RectRaw const *portGeometry,
-    RectRaw const *windowGeometry, int player, int layer)
-{
-    if(layer != 0)
-    {
-        rendHUD(player, portGeometry);
-        return;
-    }
-
-    switch(G_GameState())
-    {
-    case GS_MAP: {
-        player_t *plr = players + player;
-
-        if(!ST_AutomapObscures2(player, windowGeometry))
-        {
-            if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME))) return;
-
-            rendPlayerView(player);
-            rendSpecialFilter(player, windowGeometry);
-
-            // Crosshair.
-            if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
-                X_Drawer(player);
-        }
-        break;
-      }
-    case GS_STARTUP:
-        DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height, 0, 0, 0, 1);
-        break;
-
-    default: break;
-    }
-}
-#endif
 
 void D_DrawWindow(Size2Raw const * /*windowSize*/)
 {
@@ -328,6 +276,7 @@ void P_SetDoomsdayFlags(mobj_t *mo)
         Mobj_UpdateColorMap(mo);    
         return;
     }
+
     // Reset the flags for a new frame.
     mo->ddFlags &= DDMF_CLEAR_MASK;
 

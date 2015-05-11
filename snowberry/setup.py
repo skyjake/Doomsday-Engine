@@ -19,7 +19,7 @@
 
 
 from distutils.core import setup
-import py2exe
+# import py2exe
 
 # The manifest enables the use of the XP theme in wxWidgets.
 # How logical and intuitive.

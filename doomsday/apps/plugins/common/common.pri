@@ -13,7 +13,6 @@ HEADERS += \
     $$common_inc/acs/module.h \
     $$common_inc/acs/script.h \
     $$common_inc/acs/system.h \
-    $$common_inc/am_map.h \
     $$common_inc/animdefs.h \
     $$common_inc/common.h \
     $$common_inc/config.h \
@@ -32,15 +31,31 @@ HEADERS += \
     $$common_inc/gamesession.h \
     $$common_inc/gl_drawpatch.h \
     $$common_inc/hexlex.h \
-    $$common_inc/hu_automap.h \
-    $$common_inc/hu_chat.h \
     $$common_inc/hu_inventory.h \
     $$common_inc/hu_lib.h \
-    $$common_inc/hu_log.h \
     $$common_inc/hu_menu.h \
     $$common_inc/hu_msg.h \
     $$common_inc/hu_pspr.h \
     $$common_inc/hu_stuff.h \
+    $$common_inc/hud/automapstyle.h \
+    $$common_inc/hud/hudwidget.h \
+    $$common_inc/hud/widgets/armorwidget.h \
+    $$common_inc/hud/widgets/automapwidget.h \
+    $$common_inc/hud/widgets/chainwidget.h \
+    $$common_inc/hud/widgets/chatwidget.h \
+    $$common_inc/hud/widgets/flightwidget.h \
+    $$common_inc/hud/widgets/fragswidget.h \
+    $$common_inc/hud/widgets/groupwidget.h \
+    $$common_inc/hud/widgets/healthwidget.h \
+    $$common_inc/hud/widgets/itemswidget.h \
+    $$common_inc/hud/widgets/keyslotwidget.h \
+    $$common_inc/hud/widgets/keyswidget.h \
+    $$common_inc/hud/widgets/killswidget.h \
+    $$common_inc/hud/widgets/playerlogwidget.h \
+    $$common_inc/hud/widgets/readyammowidget.h \
+    $$common_inc/hud/widgets/readyammoiconwidget.h \
+    $$common_inc/hud/widgets/readyitemwidget.h \
+    $$common_inc/hud/widgets/secretswidget.h \
     $$common_inc/m_argv.h \
     $$common_inc/mapstatereader.h \
     $$common_inc/mapstatewriter.h \
@@ -101,7 +116,6 @@ SOURCES += \
     $$common_src/acs/module.cpp \
     $$common_src/acs/script.cpp \
     $$common_src/acs/system.cpp \
-    $$common_src/am_map.c \
     $$common_src/animdefs.cpp \
     $$common_src/common.c \
     $$common_src/d_net.cpp \
@@ -118,11 +132,27 @@ SOURCES += \
     $$common_src/gamesession.cpp \
     $$common_src/gl_drawpatch.cpp \
     $$common_src/hexlex.cpp \
-    $$common_src/hu_automap.cpp \
-    $$common_src/hu_chat.cpp \
+    $$common_src/hud/automapstyle.cpp \
+    $$common_src/hud/hudwidget.cpp \
+    $$common_src/hud/widgets/armorwidget.cpp \
+    $$common_src/hud/widgets/automapwidget.cpp \
+    $$common_src/hud/widgets/chainwidget.cpp \
+    $$common_src/hud/widgets/chatwidget.cpp \
+    $$common_src/hud/widgets/flightwidget.cpp \
+    $$common_src/hud/widgets/fragswidget.cpp \
+    $$common_src/hud/widgets/groupwidget.cpp \
+    $$common_src/hud/widgets/healthwidget.cpp \
+    $$common_src/hud/widgets/itemswidget.cpp \
+    $$common_src/hud/widgets/keyslotwidget.cpp \
+    $$common_src/hud/widgets/keyswidget.cpp \
+    $$common_src/hud/widgets/killswidget.cpp \
+    $$common_src/hud/widgets/playerlogwidget.cpp \
+    $$common_src/hud/widgets/readyammowidget.cpp \
+    $$common_src/hud/widgets/readyammoiconwidget.cpp \
+    $$common_src/hud/widgets/readyitemwidget.cpp \
+    $$common_src/hud/widgets/secretswidget.cpp \
     $$common_src/hu_inventory.cpp \
     $$common_src/hu_lib.cpp \
-    $$common_src/hu_log.cpp \
     $$common_src/hu_menu.cpp \
     $$common_src/hu_msg.cpp \
     $$common_src/hu_pspr.c \

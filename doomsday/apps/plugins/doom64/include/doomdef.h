@@ -122,7 +122,7 @@ typedef enum {
     NUM_PLAYER_CLASSES
 } playerclass_t;
 
-#define PCLASS_INFO(class)  (&classInfo[class])
+#define PCLASS_INFO(plrClass)  (&classInfo[plrClass])
 
 typedef struct classinfo_s{
     playerclass_t plrClass;
@@ -219,7 +219,8 @@ typedef enum {
 
 // Power ups.
 typedef enum {
-    PT_INVULNERABILITY,
+    PT_FIRST,
+    PT_INVULNERABILITY = PT_FIRST,
     PT_STRENGTH,
     PT_INVISIBILITY,
     PT_IRONFEET,
