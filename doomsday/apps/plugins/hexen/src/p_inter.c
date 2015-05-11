@@ -1555,10 +1555,7 @@ void P_KillMobj(mobj_t *source, mobj_t *target)
         }
 
         // Don't die with the automap open.
-        ST_AutomapOpen(target->player - players, false, false);
-#if __JHERETIC__ || __JHEXEN__
-        Hu_InventoryOpen(target->player - players, false);
-#endif
+        ST_CloseAll(target->player - players, false);
     }
     else
     {   // Target is some monster or an object.

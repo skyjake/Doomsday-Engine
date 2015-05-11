@@ -77,6 +77,14 @@ void NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics);
 void NetSv_PlayerMobjImpulse(mobj_t *mobj, float mx, float my, float mz);
 
 /**
+ * Forcibly dismisses HUDs (automap, inventory) of a particular player.
+ *
+ * @param player  Player number.
+ * @param fast    Quick dismiss.
+ */
+void NetSv_DismissHUDs(int player, dd_bool fast);
+    
+/**
  * @param origin
  * @param soundId
  * @param toPlr    @c 0= broadcast.

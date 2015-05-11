@@ -1190,8 +1190,11 @@ void P_PlayerThinkItems(player_t *player)
 #if __JHERETIC__ || __JHEXEN__
     if(player->brain.upMove > 0 && !player->powers[PT_FLIGHT])
     {
-        // Start flying automatically.
-        P_InventoryUse(pnum, IIT_FLY, false);
+        // Start flying automatically, if Wings are available.
+        if(P_InventoryCount(pnum, IIT_FLY))
+        {
+            P_InventoryUse(pnum, IIT_FLY, false);
+        }
     }
 #endif
 }
