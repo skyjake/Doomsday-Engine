@@ -449,8 +449,6 @@ def load(fileName, containingBox=None):
         addon = ao.DehackedAddon(identifier, fileName)
     elif extension == 'lmp':
         addon = ao.LumpAddon(identifier, fileName)
-    elif extension == 'gwa':
-        addon = ao.GLBSPAddon(identifier, fileName)
     else:
         raise LoadError('unknown format')
 
