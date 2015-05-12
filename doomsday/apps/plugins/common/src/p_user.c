@@ -143,9 +143,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_FIGHTER_FAILED_USE,
         {25 * FRACUNIT, 20 * FRACUNIT, 15 * FRACUNIT, 5 * FRACUNIT},
-        {190, 225, 234},
-        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 }
-
+        { TXT_SKILLF1, TXT_SKILLF2, TXT_SKILLF3, TXT_SKILLF4, TXT_SKILLF5 },
+        { { { 190, 0 }, "WPIECEF1" }, { { 225, 0 }, "WPIECEF2" }, { { 234, 0 }, "WPIECEF3" } },
+        "WPFULL0"
     },
     {   // Cleric
         PCLASS_CLERIC, NULL, true,
@@ -164,8 +164,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_CLERIC_FAILED_USE,
         {10 * FRACUNIT, 25 * FRACUNIT, 5 * FRACUNIT, 20 * FRACUNIT},
-        {190, 212, 225},
-        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 }
+        { TXT_SKILLC1, TXT_SKILLC2, TXT_SKILLC3, TXT_SKILLC4, TXT_SKILLC5 },
+        { { { 190, 0 }, "WPIECEC1" }, { { 212, 0 }, "WPIECEC2" }, { { 225, 0 }, "WPIECEC3" } },
+        "WPFULL1"
     },
     {   // Mage
         PCLASS_MAGE, NULL, true,
@@ -184,8 +185,9 @@ classinfo_t classInfo[NUM_PLAYER_CLASSES] = {
         18,
         SFX_PLAYER_MAGE_FAILED_USE,
         {5 * FRACUNIT, 15 * FRACUNIT, 10 * FRACUNIT, 25 * FRACUNIT},
-        {190, 205, 224},
-        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 }
+        { TXT_SKILLM1, TXT_SKILLM2, TXT_SKILLM3, TXT_SKILLM4, TXT_SKILLM5 },
+        { { { 190, 0 }, "WPIECEM1" }, { { 205, 0 }, "WPIECEM2" }, { { 224, 0 }, "WPIECEM3" } },
+        "WPFULL2"
     },
     {   // Pig
         PCLASS_PIG, NULL, false,

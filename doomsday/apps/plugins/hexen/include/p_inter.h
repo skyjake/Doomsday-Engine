@@ -40,10 +40,16 @@ dd_bool P_GiveKey(player_t *player, keytype_t keyType);
  * @return  @c true if the weapon or its ammo was accepted.
  */
 dd_bool P_GiveWeapon2(player_t *player, weapontype_t weaponType, playerclass_t matchClass);
-dd_bool P_GiveWeapon(player_t *player, weapontype_t weaponType/*, playerclass_t matchClass = player->class_*/);
+dd_bool P_GiveWeapon (player_t *player, weapontype_t weaponType/*, playerclass_t matchClass = player->class_*/);
 
+/**
+ * @param player       Player to receive the weapon pieces.
+ * @param weaponPiece  Logical fourth-weapon piece number. Use @c WEAPON_FOURTH_PIECE_COUNT
+ *                     to give one of each fourth-weapon piece.
+ * @param matchClass   Only give the piece(s) if the player-class matches.
+ */
 dd_bool P_GiveWeaponPiece2(player_t *player, int pieceValue, playerclass_t matchClass);
-dd_bool P_GiveWeaponPiece(player_t *player, int pieceValue/*, playerclass_t matchClass = player->class_*/);
+dd_bool P_GiveWeaponPiece (player_t *player, int pieceValue/*, playerclass_t matchClass = player->class_*/);
 
 dd_bool P_GiveArmor(player_t *player, armortype_t armorType);
 

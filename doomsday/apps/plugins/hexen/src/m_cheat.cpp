@@ -412,9 +412,7 @@ D_CMD(CheatReveal)
 static void giveAllWeaponsAndPieces(player_t *plr)
 {
     P_GiveWeapon(plr, NUM_WEAPON_TYPES /*all types*/);
-    P_GiveWeaponPiece(plr, WPIECE1);
-    P_GiveWeaponPiece(plr, WPIECE2);
-    P_GiveWeaponPiece(plr, WPIECE3);
+    P_GiveWeaponPiece(plr, WEAPON_FOURTH_PIECE_COUNT /*all pieces*/);
 }
 
 D_CMD(CheatGive)
